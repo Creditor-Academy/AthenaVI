@@ -1,7 +1,7 @@
-function Login() {
+function Login({ onSuccess }) {
   const handleSubmit = (event) => {
     event.preventDefault()
-    // TODO: wire up with real auth API
+    if (onSuccess) onSuccess()
   }
 
   return (

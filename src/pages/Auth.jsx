@@ -11,7 +11,7 @@ const styles = `
   align-items: center;
   justify-content: center;
   padding: 24px 12px;
-  background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
+  background: linear-gradient(to bottom, #0a1c3f, #0f3a8c, #0c2d64);
   font-family: 'Jost', sans-serif;
 }
 
@@ -65,7 +65,7 @@ button {
   margin: 10px auto;
   display: block;
   color: #fff;
-  background: #573b8a;
+  background: linear-gradient(135deg, #2d6cf6 0%, #5cc6ff 100%);
   font-size: 1em;
   font-weight: bold;
   margin-top: 30px;
@@ -77,7 +77,7 @@ button {
 }
 
 button:hover {
-  background: #6d44b8;
+  background: linear-gradient(135deg, #1f5adc 0%, #4bb4f0 100%);
 }
 
 .login {
@@ -89,7 +89,7 @@ button:hover {
 }
 
 .login label {
-  color: #573b8a;
+  color: #1f4bc2;
   transform: scale(0.6);
 }
 
@@ -106,7 +106,7 @@ button:hover {
 }
 `
 
-function Auth() {
+function Auth({ onAuthComplete }) {
   const [activeTab, setActiveTab] = useState('signin')
 
   const handleToggle = (event) => {
@@ -127,11 +127,11 @@ function Auth() {
           />
 
           <div className="signup">
-            <Signup />
+            <Signup onSuccess={onAuthComplete} />
           </div>
 
           <div className="login">
-            <Login />
+            <Login onSuccess={onAuthComplete} />
           </div>
         </div>
       </div>

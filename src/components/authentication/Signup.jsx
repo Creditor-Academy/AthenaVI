@@ -1,7 +1,7 @@
-function Signup() {
+function Signup({ onSuccess }) {
   const handleSubmit = (event) => {
     event.preventDefault()
-    // TODO: hook into signup flow
+    if (onSuccess) onSuccess()
   }
 
   return (
@@ -31,7 +31,7 @@ function Signup() {
         id="signup-phone"
         name="phone"
         type="number"
-        placeholder="BrojTelefona"
+        placeholder="Phone Number"
         required
       />
 
