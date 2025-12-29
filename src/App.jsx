@@ -35,7 +35,7 @@ function App() {
   return (
     <div className="app">
       <Auth onAuthComplete={handleAuthComplete} />
-    </div>
+      </div>
   )
 }
 
