@@ -1,4 +1,4 @@
-import { MdPlayCircle, MdArrowOutward } from 'react-icons/md'
+import { MdArrowOutward } from 'react-icons/md'
 
 const styles = `
 .video-section {
@@ -44,10 +44,13 @@ const styles = `
 .video-card {
   background: #ffffff;
   border-radius: 16px;
-  padding: 24px;
+  padding: 0;
   box-shadow: 0 4px 20px rgba(30, 64, 175, 0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .video-card:hover {
@@ -55,17 +58,17 @@ const styles = `
   box-shadow: 0 8px 30px rgba(30, 64, 175, 0.15);
 }
 
-.video-icon {
-  width: 64px;
-  height: 64px;
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 20px;
-  color: #ffffff;
-  font-size: 32px;
+.video-card-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+  margin: 0;
+  padding: 0;
+}
+
+.video-card-content {
+  padding: 24px;
 }
 
 .video-card-title {
@@ -118,31 +121,43 @@ function VideoSection() {
           </p>
           <div className="video-grid">
             <div className="video-card">
-              <div className="video-icon">
-                <MdPlayCircle />
+              <img
+                src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=600&fit=crop&q=80"
+                alt="AI-Powered Creation"
+                className="video-card-image"
+              />
+              <div className="video-card-content">
+                <h3 className="video-card-title">AI-Powered Creation</h3>
+                <p className="video-card-description">
+                  Generate professional videos in minutes with our advanced AI technology
+                </p>
               </div>
-              <h3 className="video-card-title">AI-Powered Creation</h3>
-              <p className="video-card-description">
-                Generate professional videos in minutes with our advanced AI technology
-              </p>
             </div>
             <div className="video-card">
-              <div className="video-icon">
-                <MdPlayCircle />
+              <img
+                src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=600&fit=crop&q=80"
+                alt="Easy Customization"
+                className="video-card-image"
+              />
+              <div className="video-card-content">
+                <h3 className="video-card-title">Easy Customization</h3>
+                <p className="video-card-description">
+                  Personalize every aspect of your videos with intuitive editing tools
+                </p>
               </div>
-              <h3 className="video-card-title">Easy Customization</h3>
-              <p className="video-card-description">
-                Personalize every aspect of your videos with intuitive editing tools
-              </p>
             </div>
             <div className="video-card">
-              <div className="video-icon">
-                <MdPlayCircle />
+              <img
+                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=600&fit=crop&q=80"
+                alt="Multi-Language Support"
+                className="video-card-image"
+              />
+              <div className="video-card-content">
+                <h3 className="video-card-title">Multi-Language Support</h3>
+                <p className="video-card-description">
+                  Create videos in any language with automatic translation features
+                </p>
               </div>
-              <h3 className="video-card-title">Multi-Language Support</h3>
-              <p className="video-card-description">
-                Create videos in any language with automatic translation features
-              </p>
             </div>
           </div>
         </div>
