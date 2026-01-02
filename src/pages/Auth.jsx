@@ -106,7 +106,7 @@ button:hover {
 }
 `
 
-function Auth({ onAuthComplete }) {
+function Auth({ onAuthComplete, onBackToHero }) {
   const [activeTab, setActiveTab] = useState('signin')
 
   const handleToggle = (event) => {
@@ -117,6 +117,53 @@ function Auth({ onAuthComplete }) {
     <>
       <style>{styles}</style>
       <div className="app">
+        {/* Home Icon Button */}
+        <button
+          onClick={onBackToHero}
+          style={{
+            position: 'absolute',
+            top: '30px',
+            left: '30px',
+            width: '50px',
+            height: '50px',
+            background: 'rgba(255, 255, 255, 0.2)',
+            border: '2px solid rgba(255, 255, 255, 0.3)',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease-in-out',
+            zIndex: 1000,
+            backdropFilter: 'blur(10px)'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.background = 'rgba(255, 255, 255, 0.3)'
+            e.target.style.borderColor = 'rgba(255, 255, 255, 0.5)'
+            e.target.style.transform = 'scale(1.1)'
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.background = 'rgba(255, 255, 255, 0.2)'
+            e.target.style.borderColor = 'rgba(255, 255, 255, 0.3)'
+            e.target.style.transform = 'scale(1)'
+          }}
+          aria-label="Go to home"
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+        </button>
+
         <div className="main">
           <input
             type="checkbox"
