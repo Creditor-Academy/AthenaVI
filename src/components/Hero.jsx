@@ -1,35 +1,232 @@
 import { useState, useEffect } from 'react'
+import { MdArrowOutward } from 'react-icons/md'
 import avatar1 from '../assets/avatar1.png'
 import avatar2 from '../assets/avatar2.png'
 import avatar3 from '../assets/avatar3.png'
 import avatar4 from '../assets/avatar4.png'
 import avatar5 from '../assets/avatar5.png'
 
-function Hero({ onLoginClick }) {
+const styles = `
+.hero-container {
+  width: 100%;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Arial', sans-serif;
+}
+
+.hero-top {
+  position: relative;
+  width: 100%;
+  padding: 80px 40px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  text-align: center;
+}
+
+.hero-title-top {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 72px;
+  font-weight: 500;
+  color: #ffffff;
+  margin: 0 0 24px;
+  line-height: 1.1;
+  text-align: center;
+  width: 100%;
+  max-width: 1200px;
+  padding: 0 20px;
+}
+
+.hero-subtitle-top {
+  font-family: 'Arial', sans-serif;
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: center;
+  max-width: 700px;
+}
+
+.hero-avatars {
+  position: relative;
+  width: 100%;
+  min-height: 400px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  overflow: hidden;
+  padding: 40px 0;
+}
+
+.avatar-container {
+  position: relative;
+  width: min(1200px, 90vw);
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.avatar-item {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transition: all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  pointer-events: none;
+}
+
+.avatar-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.hero-bottom {
+  padding: 40px 40px 80px;
+  max-width: 1400px;
+  margin: 0 auto;
+  text-align: center;
+  position: relative;
+  z-index: 50;
+}
+
+.hero-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.btn-outline {
+  font-family: 'Arial', sans-serif;
+  background: transparent;
+  border: 1px solid #fff;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn-outline:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-primary {
+  font-family: 'Arial', sans-serif;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  border: none;
+  color: #000;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(251, 191, 36, 0.4);
+}
+
+.hero-cta .btn-primary {
+  padding: 16px 32px;
+  font-size: 16px;
+}
+
+.hero-cta .btn-outline {
+  padding: 16px 32px;
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  .hero-top {
+    padding: 60px 24px 30px;
+  }
+
+  .hero-title-top {
+    font-size: 48px;
+  }
+
+  .hero-subtitle-top {
+    font-size: 18px;
+    padding: 0 16px;
+  }
+
+  .hero-avatars {
+    min-height: 300px;
+    padding: 20px 0;
+  }
+
+  .hero-bottom {
+    padding: 30px 24px 60px;
+  }
+
+  .hero-cta {
+    flex-direction: column;
+    padding: 0 16px;
+  }
+
+  .hero-cta .btn-primary,
+  .hero-cta .btn-outline {
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-title-top {
+    font-size: 36px;
+  }
+
+  .hero-subtitle-top {
+    font-size: 16px;
+  }
+}
+`
+
+function Hero() {
   const [activeIndex, setActiveIndex] = useState(0)
 
-  // Use avatar4 twice to make 5 avatars total
   const avatars = [avatar2, avatar1, avatar5, avatar3, avatar4]
 
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % avatars.length)
-    }, 3000) // Rotate every 3 seconds
+    }, 3000)
 
     return () => clearInterval(interval)
   }, [avatars.length])
 
-  // Calculate which avatar should be at each horizontal position
-  // For smooth sliding from left to right
   const getAvatarAtPosition = (position) => {
-    // Position 0 is leftmost, position 4 is rightmost
-    // When activeIndex increases, avatars slide from left to right
-    // We want the active avatar to appear at center (position 2)
     const offset = (activeIndex + position - 2 + avatars.length) % avatars.length
     return offset
   }
 
-  // Calculate horizontal position (left to right)
   const getHorizontalPosition = (position) => {
     const totalPositions = avatars.length
     const containerWidth = Math.min(1200, window.innerWidth * 0.9)
@@ -39,178 +236,69 @@ function Hero({ onLoginClick }) {
   }
 
   return (
-    <div style={{
-      width: '100vw',
-      height: '100vh',
-      background: 'linear-gradient(135deg, #f0f8ff 0%, #e0f0ff 50%, #cce5ff 100%)',
-      position: 'relative',
-      overflow: 'hidden',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-      fontFamily: "'Roboto', 'Arial', sans-serif"
-    }}>
-      {/* Title Text - At the top, above avatars */}
-      <div style={{
-        position: 'absolute',
-        top: '8%',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        textAlign: 'center',
-        zIndex: 100,
-        width: '100%',
-        maxWidth: '1200px',
-        padding: '0 20px'
-      }}>
-        <h1 style={{
-          fontSize: 'clamp(2.5rem, 6vw, 5rem)',
-          fontWeight: '900',
-          color: '#0d47a1',
-          margin: 0,
-          textShadow: '2px 2px 4px rgba(255, 255, 255, 0.9), 0 0 20px rgba(13, 71, 161, 0.2)',
-          letterSpacing: '4px',
-          lineHeight: '1.2',
-          fontFamily: "'Roboto', 'Arial', sans-serif"
-        }}>
-          VIRTUAL INSTRUCTOR
-        </h1>
-        <p style={{
-          fontSize: 'clamp(1.1rem, 2.5vw, 1.5rem)',
-          color: '#1565c0',
-          marginTop: '20px',
-          fontWeight: '400',
-          letterSpacing: '0.5px',
-          fontFamily: "'Roboto', 'Arial', sans-serif"
-        }}>
-          Learn with confidence from expert virtual instructors
-        </p>
-        <p style={{
-          fontSize: 'clamp(0.95rem, 2vw, 1.2rem)',
-          color: '#1976d2',
-          marginTop: '25px',
-          fontWeight: '300',
-          lineHeight: '1.6',
-          maxWidth: '800px',
-          margin: '25px auto 0',
-          fontFamily: "'Roboto', 'Arial', sans-serif"
-        }}>
-          Experience personalized learning with our AI-powered virtual instructors. 
-          Get expert guidance, interactive lessons, and tailored support to achieve your educational goals.
-        </p>
-      </div>
+    <>
+      <style>{styles}</style>
+      <div className="hero-container">
+        {/* Top Section with Heading and Subheading */}
+        <div className="hero-top">
+          <h1 className="hero-title-top">
+            Create AI-Powered Videos
+            <br />
+            That Speak Your Language
+          </h1>
+          <p className="hero-subtitle-top">
+            Transform text into engaging video content with lifelike AI avatars.
+            Create professional videos in minutes, not hours.
+          </p>
+        </div>
 
-      {/* Hero Section with Avatars - Positioned below text */}
-      <div style={{
-        position: 'absolute',
-        top: '38%',
-        width: '100%',
-        height: '50%',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 10,
-        overflow: 'hidden'
-      }}>
-        {/* Avatar Container */}
-        <div style={{
-          position: 'relative',
-          width: 'min(1200px, 90vw)',
-          height: '100%',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}>
-          {avatars.map((avatar, index) => {
-            const position = index // Position 0, 1, 2, 3, 4 from left to right
-            const avatarIndex = getAvatarAtPosition(position)
-            const x = getHorizontalPosition(position)
-            // Position 2 is the center (middle of 5 avatars)
-            const isActive = position === 2
-            
-            return (
-              <div
-                key={index}
-                style={{
-                  position: 'absolute',
-                  left: '50%',
-                  top: '50%',
-                  transform: `translate(calc(-50% + ${x}px), -50%)`,
-                  transition: 'all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                  width: isActive ? 'clamp(280px, 22vw, 350px)' : 'clamp(160px, 13vw, 200px)',
-                  height: isActive ? 'clamp(280px, 22vw, 350px)' : 'clamp(160px, 13vw, 200px)',
-                  opacity: isActive ? 1 : 0.6,
-                  filter: isActive ? 'blur(0px)' : 'blur(3px)',
-                  zIndex: isActive ? 20 : 10 - Math.abs(position - 2),
-                  pointerEvents: 'none'
-                }}
-              >
-                <img
-                  src={avatars[avatarIndex]}
-                  alt={`Instructor ${avatarIndex + 1}`}
+        {/* Middle Section with Avatar Carousel */}
+        <div className="hero-avatars">
+          <div className="avatar-container">
+            {avatars.map((avatar, index) => {
+              const position = index
+              const avatarIndex = getAvatarAtPosition(position)
+              const x = getHorizontalPosition(position)
+              const isActive = position === 2
+              
+              return (
+                <div
+                  key={index}
+                  className="avatar-item"
                   style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain',
-                    transition: 'all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                    transform: `translate(calc(-50% + ${x}px), -50%)`,
+                    width: isActive ? 'clamp(280px, 22vw, 350px)' : 'clamp(160px, 13vw, 200px)',
+                    height: isActive ? 'clamp(280px, 22vw, 350px)' : 'clamp(160px, 13vw, 200px)',
+                    opacity: isActive ? 1 : 0.6,
+                    filter: isActive ? 'blur(0px)' : 'blur(3px)',
+                    zIndex: isActive ? 20 : 10 - Math.abs(position - 2),
                   }}
-                />
-              </div>
-            )
-          })}
+                >
+                  <img
+                    src={avatars[avatarIndex]}
+                    alt={`Instructor ${avatarIndex + 1}`}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Bottom Section with CTA Buttons */}
+        <div className="hero-bottom">
+          <div className="hero-cta">
+            <button className="btn-primary">
+              START FREE TRIAL
+              <MdArrowOutward />
+            </button>
+            <button className="btn-outline">
+              CONTACT SALES
+              <MdArrowOutward />
+            </button>
+          </div>
         </div>
       </div>
-
-      {/* Login Button - Bottom Right */}
-      <button
-        onClick={onLoginClick}
-        style={{
-          position: 'absolute',
-          bottom: '40px',
-          right: '40px',
-          padding: '16px 32px',
-          background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
-          color: '#ffffff',
-          border: 'none',
-          borderRadius: '50px',
-          fontSize: '1.1rem',
-          fontWeight: 'bold',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          boxShadow: '0 8px 25px rgba(25, 118, 210, 0.4)',
-          transition: 'all 0.3s ease-in-out',
-          zIndex: 200,
-          fontFamily: "'Roboto', 'Arial', sans-serif"
-        }}
-        onMouseEnter={(e) => {
-          e.target.style.transform = 'translateY(-2px)'
-          e.target.style.boxShadow = '0 12px 35px rgba(25, 118, 210, 0.6)'
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.transform = 'translateY(0)'
-          e.target.style.boxShadow = '0 8px 25px rgba(25, 118, 210, 0.4)'
-        }}
-      >
-        <span>Login</span>
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{
-            transition: 'transform 0.3s ease-in-out'
-          }}
-        >
-          <path d="M5 12h14M12 5l7 7-7 7" />
-        </svg>
-      </button>
-    </div>
+    </>
   )
 }
 
