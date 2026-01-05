@@ -638,13 +638,14 @@ const styles = `
 }
 `
 
-function Navbar({ onLoginClick }) {
+function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick }) {
   const [activeDropdown, setActiveDropdown] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileDropdowns, setMobileDropdowns] = useState({})
   const dropdownRefs = useRef({})
   const mobileMenuRef = useRef(null)
   const mobileMenuBtnRef = useRef(null)
+  const clickTimeoutRef = useRef(null)
 
   const productsItems = [
     'Visual AI Agents',
@@ -688,6 +689,11 @@ function Navbar({ onLoginClick }) {
       })
       
       if (!clickedInside && activeDropdown) {
+        // Clear click timeout if dropdown is closed
+        if (clickTimeoutRef.current) {
+          clearTimeout(clickTimeoutRef.current)
+          clickTimeoutRef.current = null
+        }
         setActiveDropdown(null)
       }
     }
@@ -704,6 +710,15 @@ function Navbar({ onLoginClick }) {
       }
     }
   }, [activeDropdown])
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (clickTimeoutRef.current) {
+        clearTimeout(clickTimeoutRef.current)
+      }
+    }
+  }, [])
 
   // Handle mobile menu overlay clicks and body scroll lock
   useEffect(() => {
@@ -779,7 +794,17 @@ function Navbar({ onLoginClick }) {
       <style>{styles}</style>
       <nav className="navbar">
         <div className="nav-left">
-          <a href="#" className="logo" onClick={() => setMobileMenuOpen(false)}>
+          <a 
+            href="#" 
+            className="logo" 
+            onClick={(e) => {
+              e.preventDefault()
+              setMobileMenuOpen(false)
+              if (onLogoClick) {
+                onLogoClick()
+              }
+            }}
+          >
             <div className="logo-icon"></div>
             Athena VI
           </a>
@@ -789,15 +814,35 @@ function Navbar({ onLoginClick }) {
           <div
             className="nav-link-wrapper"
             ref={el => dropdownRefs.current.products = el}
-            onMouseEnter={() => setActiveDropdown('products')}
-            onMouseLeave={() => setActiveDropdown(null)}
+            onMouseEnter={() => {
+              if (clickTimeoutRef.current) {
+                clearTimeout(clickTimeoutRef.current)
+                clickTimeoutRef.current = null
+              }
+              setActiveDropdown('products')
+            }}
+            onMouseLeave={() => {
+              // Only close if not clicked (clicked dropdowns stay open for 3-4 seconds)
+              if (!clickTimeoutRef.current) {
+                setActiveDropdown(null)
+              }
+            }}
           >
             <a
               href="#"
               className={`nav-link ${activeDropdown === 'products' ? 'active' : ''}`}
               onClick={(e) => {
                 e.preventDefault()
-                toggleDropdown('products')
+                // Clear any existing timeout
+                if (clickTimeoutRef.current) {
+                  clearTimeout(clickTimeoutRef.current)
+                }
+                setActiveDropdown('products')
+                // Keep dropdown open for 3.5 seconds after click
+                clickTimeoutRef.current = setTimeout(() => {
+                  setActiveDropdown(null)
+                  clickTimeoutRef.current = null
+                }, 3500)
               }}
             >
               Products
@@ -805,7 +850,23 @@ function Navbar({ onLoginClick }) {
             </a>
             <div className={`dropdown ${activeDropdown === 'products' ? 'active' : ''}`}>
               {productsItems.map((item, index) => (
-                <a key={index} href="#" className="dropdown-item">
+                <a 
+                  key={index} 
+                  href="#" 
+                  className="dropdown-item"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    // Clear timeout when item is clicked
+                    if (clickTimeoutRef.current) {
+                      clearTimeout(clickTimeoutRef.current)
+                      clickTimeoutRef.current = null
+                    }
+                    if (onNavigateToProduct) {
+                      onNavigateToProduct(item)
+                    }
+                    setActiveDropdown(null)
+                  }}
+                >
                   {item}
                 </a>
               ))}
@@ -967,7 +1028,13 @@ function Navbar({ onLoginClick }) {
                 key={index} 
                 href="#" 
                 className="mobile-dropdown-item"
-                onClick={handleMobileActionClick}
+                onClick={(e) => {
+                  e.preventDefault()
+                  handleMobileActionClick()
+                  if (onNavigateToProduct) {
+                    onNavigateToProduct(item)
+                  }
+                }}
               >
                 {item}
               </a>

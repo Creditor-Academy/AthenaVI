@@ -3,6 +3,7 @@ import Landing from './pages/Landing.jsx'
 import Auth from './pages/Auth.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Create from './pages/Create.jsx'
+import Products from './pages/Products.jsx'
 
 function App() {
   const [view, setView] = useState(() => {
@@ -19,6 +20,7 @@ function App() {
     // Always default to landing page for new visitors or unauthenticated users
     return 'landing'
   })
+  const [productSection, setProductSection] = useState(null)
 
   useEffect(() => {
     // Only persist authenticated views
@@ -55,15 +57,58 @@ function App() {
   }
 
   if (view === 'auth') {
-  return (
-    <div className="app">
-      <Auth onAuthComplete={handleAuthComplete} />
+    return (
+      <div className="app">
+        <Auth onAuthComplete={handleAuthComplete} />
       </div>
     )
   }
 
+  if (view === 'products') {
+    return (
+      <Products 
+        onLoginClick={() => setView('auth')}
+        initialSection={productSection}
+        onNavigateToProduct={(section) => {
+          setProductSection(section)
+          // Already on products page, just scroll to section
+          setTimeout(() => {
+            const sectionMap = {
+              'Visual AI Agents': 'visual-ai-agents',
+              'Creative Reality™ Studio': 'creative-reality-studio',
+              'Video Translate': 'video-translate',
+              'Video Campaigns': 'video-campaigns',
+              'Personal Avatars': 'personal-avatars'
+            }
+            const sectionId = sectionMap[section]
+            if (sectionId) {
+              const element = document.getElementById(sectionId)
+              if (element) {
+                const navHeight = 80
+                const elementPosition = element.getBoundingClientRect().top
+                const offsetPosition = elementPosition + window.pageYOffset - navHeight
+                window.scrollTo({
+                  top: offsetPosition,
+                  behavior: 'smooth'
+                })
+              }
+            }
+          }, 100)
+        }}
+        onLogoClick={() => setView('landing')}
+      />
+    )
+  }
+
   return (
-    <Landing onLoginClick={() => setView('auth')} />
+    <Landing 
+      onLoginClick={() => setView('auth')}
+      onNavigateToProduct={(section) => {
+        setProductSection(section)
+        setView('products')
+      }}
+      onLogoClick={() => setView('landing')}
+    />
   )
 }
 
