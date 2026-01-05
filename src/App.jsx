@@ -20,7 +20,9 @@ function App() {
     // Always default to landing page for new visitors or unauthenticated users
     return 'landing'
   })
+  
   const [productSection, setProductSection] = useState(null)
+  const [showAuthModal, setShowAuthModal] = useState(false)
 
   useEffect(() => {
     // Only persist authenticated views
@@ -109,6 +111,16 @@ function App() {
       }}
       onLogoClick={() => setView('landing')}
     />
+  return (
+    <>
+      <Landing onLoginClick={() => setShowAuthModal(true)} />
+      {showAuthModal && (
+        <Auth
+          onAuthComplete={handleAuthComplete}
+          onClose={() => setShowAuthModal(false)}
+        />
+      )}
+    </>
   )
 }
 
