@@ -60,12 +60,16 @@ const styles = `
 }
 `
 
-function Landing({ onLoginClick }) {
+function Landing({ onLoginClick, onNavigateToProduct, onLogoClick }) {
   return (
     <>
       <style>{styles}</style>
       <div className="landing-page">
-        <Navbar onLoginClick={onLoginClick} />
+        <Navbar 
+          onLoginClick={onLoginClick} 
+          onNavigateToProduct={onNavigateToProduct}
+          onLogoClick={onLogoClick}
+        />
         <Hero />
         <VideoSection />
         <ProductsSection />
