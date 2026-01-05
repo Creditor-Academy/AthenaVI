@@ -9,7 +9,7 @@ const styles = `
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(30, 64, 175, 0.4);
+  background: transparent;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   z-index: 2000;
@@ -543,7 +543,7 @@ function Auth({ onAuthComplete, onClose }) {
           <div className={`auth-modal-content ${isSignupActive ? 'signup-active' : ''}`}>
             <button
               className="auth-close-btn"
-              onClick={onClose}
+              onClick={() => onClose && onClose()}
               aria-label="Close"
             >
               <svg
