@@ -1,3 +1,5 @@
+import avatarBg from '../../assets/AvatarBg.png'
+
 const styles = `
 .product-section {
   min-height: 100vh;
@@ -151,6 +153,37 @@ const styles = `
   box-shadow: 0 6px 16px rgba(251, 191, 36, 0.4);
 }
 
+.product-image-container {
+  margin-top: 80px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.product-image {
+  width: 100%;
+  max-width: 1200px;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease;
+}
+
+.product-section.light .product-image {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+}
+
+.product-section.dark .product-image {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.product-image:hover {
+  transform: scale(1.02);
+}
+
 @media (max-width: 768px) {
   .product-section {
     padding: 80px 24px;
@@ -167,6 +200,14 @@ const styles = `
   .product-features {
     grid-template-columns: 1fr;
     gap: 24px;
+  }
+
+  .product-image-container {
+    margin-top: 60px;
+  }
+
+  .product-image {
+    border-radius: 16px;
   }
 }
 `
@@ -207,6 +248,14 @@ function PersonalAvatars({ variant = 'light' }) {
             <button className="product-cta-button">
               CREATE AVATAR
             </button>
+          </div>
+
+          <div className="product-image-container">
+            <img
+              src={avatarBg}
+              alt="Personal Avatars"
+              className="product-image"
+            />
           </div>
         </div>
       </section>
