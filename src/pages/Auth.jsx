@@ -139,7 +139,7 @@ const styles = `
 }
 
 .auth-promo-title {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Georgia', 'Times New Roman', serif;
   font-size: 42px;
   font-weight: 700;
   margin: 0 0 16px 0;
@@ -203,7 +203,7 @@ const styles = `
 }
 
 .auth-form-title {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Georgia', 'Times New Roman', serif;
   font-size: 32px;
   font-weight: 700;
   color: #1e40af;

@@ -4,6 +4,7 @@ import Auth from './pages/Auth.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Create from './pages/Create.jsx'
 import Products from './pages/Products.jsx'
+import MarketingSuite from './pages/MarketingSuite.jsx'
 
 function App() {
   const [view, setView] = useState('landing')
@@ -73,6 +74,11 @@ function App() {
         <Products 
           onLoginClick={handleLoginClick}
           initialSection={productSection}
+          onNavigateToSolution={(solution) => {
+            if (solution === 'Marketing Suite') {
+              setView('marketing-suite')
+            }
+          }}
           onNavigateToProduct={(section) => {
             setProductSection(section)
             // Already on products page, just scroll to section
@@ -111,6 +117,23 @@ function App() {
     )
   }
 
+  if (view === 'marketing-suite') {
+    return (
+      <>
+        <MarketingSuite 
+          onLoginClick={handleLoginClick}
+          onLogoClick={() => setView('landing')}
+        />
+        {showAuthModal && (
+          <Auth 
+            onAuthComplete={handleAuthComplete}
+            onClose={() => setShowAuthModal(false)}
+          />
+        )}
+      </>
+    )
+  }
+
   return (
     <>
       <Landing 
@@ -118,6 +141,11 @@ function App() {
         onNavigateToProduct={(section) => {
           setProductSection(section)
           setView('products')
+        }}
+        onNavigateToSolution={(solution) => {
+          if (solution === 'Marketing Suite') {
+            setView('marketing-suite')
+          }
         }}
         onLogoClick={() => setView('landing')}
       />

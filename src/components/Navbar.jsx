@@ -638,7 +638,7 @@ const styles = `
 }
 `
 
-function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick }) {
+function Navbar({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onLogoClick }) {
   const [activeDropdown, setActiveDropdown] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileDropdowns, setMobileDropdowns] = useState({})
@@ -892,7 +892,23 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick }) {
             </a>
             <div className={`dropdown ${activeDropdown === 'solutions' ? 'active' : ''}`}>
               {solutionsItems.map((item, index) => (
-                <a key={index} href="#" className="dropdown-item">
+                <a 
+                  key={index} 
+                  href="#" 
+                  className="dropdown-item"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    // Clear timeout when item is clicked
+                    if (clickTimeoutRef.current) {
+                      clearTimeout(clickTimeoutRef.current)
+                      clickTimeoutRef.current = null
+                    }
+                    if (onNavigateToSolution) {
+                      onNavigateToSolution(item)
+                    }
+                    setActiveDropdown(null)
+                  }}
+                >
                   {item}
                 </a>
               ))}
@@ -1056,7 +1072,13 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick }) {
                 key={index} 
                 href="#" 
                 className="mobile-dropdown-item"
-                onClick={handleMobileActionClick}
+                onClick={(e) => {
+                  e.preventDefault()
+                  handleMobileActionClick()
+                  if (onNavigateToSolution) {
+                    onNavigateToSolution(item)
+                  }
+                }}
               >
                 {item}
               </a>
