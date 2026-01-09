@@ -1,9 +1,7 @@
-import avatarBg from '../../assets/AvatarBg.png'
-
 const styles = `
 .product-section {
   min-height: 100vh;
-  padding: 120px 40px;
+  padding: 100px 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -26,10 +24,11 @@ const styles = `
 
 .product-section-title {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 64px;
+  font-size: 56px;
   font-weight: 500;
-  text-align: center;
-  margin: 0 0 40px;
+  text-align: left;
+  margin: 0 0 24px;
+  max-width: 800px;
 }
 
 .product-section.light .product-section-title {
@@ -42,11 +41,11 @@ const styles = `
 
 .product-section-description {
   font-family: 'Arial', sans-serif;
-  font-size: 20px;
-  line-height: 1.8;
-  text-align: center;
-  max-width: 800px;
-  margin: 0 auto 60px;
+  font-size: 18px;
+  line-height: 1.7;
+  text-align: left;
+  max-width: 700px;
+  margin: 0 0 80px;
 }
 
 .product-section.light .product-section-description {
@@ -58,10 +57,11 @@ const styles = `
 }
 
 .product-features {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 32px;
-  margin-top: 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 60px;
+  max-width: 900px;
 }
 
 .product-section.light .product-feature {
@@ -75,9 +75,12 @@ const styles = `
 }
 
 .product-feature {
-  border-radius: 16px;
-  padding: 32px;
+  border-radius: 12px;
+  padding: 28px 32px;
   transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  position: relative;
 }
 
 .product-section.light .product-feature:hover {
@@ -98,9 +101,28 @@ const styles = `
 
 .product-feature-title {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 500;
-  margin: 0 0 16px;
+  margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.product-feature-title::before {
+  content: '';
+  width: 4px;
+  height: 24px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.product-section.light .product-feature-title::before {
+  background: #1e40af;
+}
+
+.product-section.dark .product-feature-title::before {
+  background: #ffffff;
 }
 
 .product-section.light .product-feature-title {
@@ -113,9 +135,10 @@ const styles = `
 
 .product-feature-description {
   font-family: 'Arial', sans-serif;
-  font-size: 16px;
-  line-height: 1.6;
+  font-size: 15px;
+  line-height: 1.7;
   margin: 0;
+  padding-left: 16px;
 }
 
 .product-section.light .product-feature-description {
@@ -127,8 +150,8 @@ const styles = `
 }
 
 .product-cta {
-  text-align: center;
-  margin-top: 60px;
+  text-align: left;
+  margin-top: 40px;
 }
 
 .product-cta-button {
@@ -153,61 +176,32 @@ const styles = `
   box-shadow: 0 6px 16px rgba(251, 191, 36, 0.4);
 }
 
-.product-image-container {
-  margin-top: 80px;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.product-image {
-  width: 100%;
-  max-width: 1200px;
-  height: auto;
-  display: block;
-  object-fit: contain;
-  border-radius: 20px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-  transition: transform 0.3s ease;
-}
-
-.product-section.light .product-image {
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-}
-
-.product-section.dark .product-image {
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
-
-.product-image:hover {
-  transform: scale(1.02);
-}
-
 @media (max-width: 768px) {
   .product-section {
     padding: 80px 24px;
   }
 
   .product-section-title {
-    font-size: 42px;
+    font-size: 36px;
+    text-align: left;
   }
 
   .product-section-description {
-    font-size: 18px;
+    font-size: 16px;
+    text-align: left;
+    margin-bottom: 50px;
   }
 
   .product-features {
-    grid-template-columns: 1fr;
-    gap: 24px;
+    gap: 20px;
   }
 
-  .product-image-container {
-    margin-top: 60px;
+  .product-feature {
+    padding: 24px;
   }
 
-  .product-image {
-    border-radius: 16px;
+  .product-cta {
+    text-align: left;
   }
 }
 `
@@ -248,14 +242,6 @@ function PersonalAvatars({ variant = 'light' }) {
             <button className="product-cta-button">
               CREATE AVATAR
             </button>
-          </div>
-
-          <div className="product-image-container">
-            <img
-              src={avatarBg}
-              alt="Personal Avatars"
-              className="product-image"
-            />
           </div>
         </div>
       </section>

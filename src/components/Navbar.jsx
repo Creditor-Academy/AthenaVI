@@ -638,7 +638,7 @@ const styles = `
 }
 `
 
-function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick }) {
+function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCompany }) {
   const [activeDropdown, setActiveDropdown] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileDropdowns, setMobileDropdowns] = useState({})
@@ -666,7 +666,6 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick }) {
   const companyItems = [
     'About Us',
     'Blog',
-    'Careers',
     'Leadership',
     'Partners',
     'News',
@@ -675,6 +674,14 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick }) {
     'Privacy Policy',
     'Help Center'
   ]
+
+  const handleCompanyItemClick = (item) => {
+    if (onNavigateToCompany) {
+      onNavigateToCompany(item)
+    }
+    setActiveDropdown(null)
+    setMobileMenuOpen(false)
+  }
 
   // Handle desktop dropdown clicks outside
   useEffect(() => {
@@ -944,7 +951,19 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick }) {
             </a>
             <div className={`dropdown ${activeDropdown === 'company' ? 'active' : ''}`}>
               {companyItems.map((item, index) => (
-                <a key={index} href="#" className="dropdown-item">
+                <a 
+                  key={index} 
+                  href="#" 
+                  className="dropdown-item"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    if (clickTimeoutRef.current) {
+                      clearTimeout(clickTimeoutRef.current)
+                      clickTimeoutRef.current = null
+                    }
+                    handleCompanyItemClick(item)
+                  }}
+                >
                   {item}
                 </a>
               ))}
@@ -1103,7 +1122,10 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick }) {
                 key={index} 
                 href="#" 
                 className="mobile-dropdown-item"
-                onClick={handleMobileActionClick}
+                onClick={(e) => {
+                  e.preventDefault()
+                  handleCompanyItemClick(item)
+                }}
               >
                 {item}
               </a>

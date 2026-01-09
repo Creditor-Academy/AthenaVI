@@ -4,6 +4,10 @@ import Auth from './pages/Auth.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Create from './pages/Create.jsx'
 import Products from './pages/Products.jsx'
+import AboutUsBlog from './pages/AboutUsBlog.jsx'
+import News from './pages/News.jsx'
+import Resources from './pages/Resources.jsx'
+import HelpCenter from './pages/HelpCenter.jsx'
 
 function App() {
   const [view, setView] = useState('landing')
@@ -30,6 +34,21 @@ function App() {
 
   const handleLoginClick = () => {
     setShowAuthModal(true)
+  }
+
+  const handleNavigateToCompany = (item) => {
+    const companyPageMap = {
+      'About Us': 'about-us-blog',
+      'Blog': 'about-us-blog',
+      'News': 'news',
+      'Resources': 'resources',
+      'Help Center': 'help-center'
+    }
+    
+    const page = companyPageMap[item]
+    if (page) {
+      setView(page)
+    }
   }
 
   if (view === 'create') {
@@ -100,6 +119,79 @@ function App() {
             }, 100)
           }}
           onLogoClick={() => setView('landing')}
+          onNavigateToCompany={handleNavigateToCompany}
+        />
+        {showAuthModal && (
+          <Auth 
+            onAuthComplete={handleAuthComplete}
+            onClose={() => setShowAuthModal(false)}
+          />
+        )}
+      </>
+    )
+  }
+
+  if (view === 'about-us-blog') {
+    return (
+      <>
+        <AboutUsBlog 
+          onLoginClick={handleLoginClick}
+          onLogoClick={() => setView('landing')}
+          onNavigateToCompany={handleNavigateToCompany}
+        />
+        {showAuthModal && (
+          <Auth 
+            onAuthComplete={handleAuthComplete}
+            onClose={() => setShowAuthModal(false)}
+          />
+        )}
+      </>
+    )
+  }
+
+  if (view === 'news') {
+    return (
+      <>
+        <News 
+          onLoginClick={handleLoginClick}
+          onLogoClick={() => setView('landing')}
+          onNavigateToCompany={handleNavigateToCompany}
+        />
+        {showAuthModal && (
+          <Auth 
+            onAuthComplete={handleAuthComplete}
+            onClose={() => setShowAuthModal(false)}
+          />
+        )}
+      </>
+    )
+  }
+
+  if (view === 'resources') {
+    return (
+      <>
+        <Resources 
+          onLoginClick={handleLoginClick}
+          onLogoClick={() => setView('landing')}
+          onNavigateToCompany={handleNavigateToCompany}
+        />
+        {showAuthModal && (
+          <Auth 
+            onAuthComplete={handleAuthComplete}
+            onClose={() => setShowAuthModal(false)}
+          />
+        )}
+      </>
+    )
+  }
+
+  if (view === 'help-center') {
+    return (
+      <>
+        <HelpCenter 
+          onLoginClick={handleLoginClick}
+          onLogoClick={() => setView('landing')}
+          onNavigateToCompany={handleNavigateToCompany}
         />
         {showAuthModal && (
           <Auth 
@@ -120,6 +212,7 @@ function App() {
           setView('products')
         }}
         onLogoClick={() => setView('landing')}
+        onNavigateToCompany={handleNavigateToCompany}
       />
       {showAuthModal && (
         <Auth 
