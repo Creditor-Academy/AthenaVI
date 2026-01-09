@@ -111,16 +111,6 @@ function App() {
       }}
       onLogoClick={() => setView('landing')}
     />
-  return (
-    <>
-      <Landing onLoginClick={() => setShowAuthModal(true)} />
-      {showAuthModal && (
-        <Auth
-          onAuthComplete={handleAuthComplete}
-          onClose={() => setShowAuthModal(false)}
-        />
-      )}
-    </>
   )
 }
 

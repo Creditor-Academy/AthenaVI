@@ -8,6 +8,7 @@ import {
   MdDeleteForever,
   MdGridOn,
   MdViewList,
+  MdArrowBack,
 } from 'react-icons/md'
 
 const thumbnailUrl =
@@ -17,6 +18,7 @@ function Trash() {
   const [activeTab, setActiveTab] = useState('videos')
   const [viewMode, setViewMode] = useState('grid')
   const [cardMenu, setCardMenu] = useState(null)
+  const [selectedFolder, setSelectedFolder] = useState(null)
   const menuRef = useRef(null)
 
   // Close dropdown when clicking outside
@@ -43,36 +45,66 @@ function Trash() {
         name: 'Recruitment, Staffing & Training',
         deletedDate: '5 days ago',
         videosCount: 12,
+        videos: [
+          { id: 'v1-1', title: 'HR Introduction Video', deletedDate: '5 days ago', duration: '02:15', thumbnail: thumbnailUrl },
+          { id: 'v1-2', title: 'Training Module 1', deletedDate: '5 days ago', duration: '05:30', thumbnail: thumbnailUrl },
+          { id: 'v1-3', title: 'Staff Onboarding', deletedDate: '5 days ago', duration: '03:45', thumbnail: thumbnailUrl },
+          { id: 'v1-4', title: 'Recruitment Process', deletedDate: '5 days ago', duration: '04:20', thumbnail: thumbnailUrl },
+        ],
       },
       {
         id: 'f2',
         name: 'Marketing Campaigns',
         deletedDate: '1 week ago',
         videosCount: 8,
+        videos: [
+          { id: 'v2-1', title: 'Summer Campaign 2024', deletedDate: '1 week ago', duration: '01:30', thumbnail: thumbnailUrl },
+          { id: 'v2-2', title: 'Product Launch Video', deletedDate: '1 week ago', duration: '02:00', thumbnail: thumbnailUrl },
+          { id: 'v2-3', title: 'Brand Awareness Ad', deletedDate: '1 week ago', duration: '00:45', thumbnail: thumbnailUrl },
+        ],
       },
       {
         id: 'f3',
         name: 'Product Demos',
         deletedDate: '2 weeks ago',
         videosCount: 15,
+        videos: [
+          { id: 'v3-1', title: 'Product Overview', deletedDate: '2 weeks ago', duration: '03:20', thumbnail: thumbnailUrl },
+          { id: 'v3-2', title: 'Feature Walkthrough', deletedDate: '2 weeks ago', duration: '04:15', thumbnail: thumbnailUrl },
+          { id: 'v3-3', title: 'Demo Video 1', deletedDate: '2 weeks ago', duration: '02:45', thumbnail: thumbnailUrl },
+        ],
       },
       {
         id: 'f4',
         name: 'Client Testimonials',
         deletedDate: '3 weeks ago',
         videosCount: 6,
+        videos: [
+          { id: 'v4-1', title: 'Customer Success Story', deletedDate: '3 weeks ago', duration: '02:30', thumbnail: thumbnailUrl },
+          { id: 'v4-2', title: 'Client Review Video', deletedDate: '3 weeks ago', duration: '01:45', thumbnail: thumbnailUrl },
+        ],
       },
       {
         id: 'f5',
         name: 'Training Materials',
         deletedDate: '1 month ago',
         videosCount: 24,
+        videos: [
+          { id: 'v5-1', title: 'Training Course 1', deletedDate: '1 month ago', duration: '10:00', thumbnail: thumbnailUrl },
+          { id: 'v5-2', title: 'Training Course 2', deletedDate: '1 month ago', duration: '08:30', thumbnail: thumbnailUrl },
+          { id: 'v5-3', title: 'Tutorial Series', deletedDate: '1 month ago', duration: '15:20', thumbnail: thumbnailUrl },
+        ],
       },
       {
         id: 'f6',
         name: 'Social Media Content',
         deletedDate: '1 month ago',
         videosCount: 18,
+        videos: [
+          { id: 'v6-1', title: 'Instagram Reel 1', deletedDate: '1 month ago', duration: '00:30', thumbnail: thumbnailUrl },
+          { id: 'v6-2', title: 'TikTok Video', deletedDate: '1 month ago', duration: '00:15', thumbnail: thumbnailUrl },
+          { id: 'v6-3', title: 'YouTube Short', deletedDate: '1 month ago', duration: '00:60', thumbnail: thumbnailUrl },
+        ],
       },
     ],
     []
@@ -129,15 +161,19 @@ function Trash() {
 
   const restoreItem = (type, id) => {
     // Implementation for restoring items
-    console.log(`Restoring ${type} with id: ${id}`)
+    alert(`Restoring ${type} with id: ${id}`)
     setCardMenu(null)
   }
 
   const permanentlyDelete = (type, id) => {
     // Implementation for permanent deletion
-    console.log(`Permanently deleting ${type} with id: ${id}`)
-    setCardMenu(null)
+    if (window.confirm(`Are you sure you want to permanently delete this ${type}? This action cannot be undone.`)) {
+      alert(`Permanently deleting ${type} with id: ${id}`)
+      setCardMenu(null)
+    }
   }
+
+  const currentFolder = trashFolders.find(f => f.id === selectedFolder)
 
   return (
     <>
@@ -182,51 +218,119 @@ function Trash() {
 
       {activeTab === 'videos' && (
         <>
-          {trashFolders.length > 0 && (
-            <div className="trash-section">
-              <h2 className="section-title">Folders</h2>
-              <div className="folders-grid">
-                {trashFolders.map((folder) => (
-                  <div className="folder-card" key={folder.id}>
-                    <button
-                      className="dot-btn"
-                      aria-label="Folder actions"
-                      onClick={() => setCardMenu((m) => (m === `folder-${folder.id}` ? null : `folder-${folder.id}`))}
-                    >
-                      <MdMoreVert />
-                    </button>
-                    {cardMenu === `folder-${folder.id}` && (
-                      <div className="card-menu" ref={menuRef}>
+          {selectedFolder && currentFolder ? (
+            <>
+              <button 
+                className="back-button"
+                onClick={() => setSelectedFolder(null)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '10px 16px',
+                  marginBottom: '24px',
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  color: '#334155',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <MdArrowBack size={18} />
+                Back to folders
+              </button>
+              
+              <div className="trash-section">
+                <h2 className="section-title">{currentFolder.name}</h2>
+                <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '20px' }}>
+                  {currentFolder.videos.length} {currentFolder.videos.length === 1 ? 'video' : 'videos'} • Deleted {currentFolder.deletedDate}
+                </p>
+                <div className="video-list">
+                  {currentFolder.videos.map((video) => (
+                    <div className="video-list-item" key={video.id}>
+                      <div className="video-list-info">
+                        <h3 className="video-list-title">{video.title}</h3>
+                        <p className="video-list-meta">Deleted {video.deletedDate}</p>
+                      </div>
+                      <div className="video-list-actions">
                         <button
-                          onClick={() => restoreItem('folder', folder.id)}
+                          className="action-btn restore-btn"
+                          onClick={() => restoreItem('video', video.id)}
                         >
-                          <MdRestore /> Restore
+                          <MdRestore size={18} />
+                          Restore
                         </button>
                         <button
-                          onClick={() => permanentlyDelete('folder', folder.id)}
-                          style={{ color: '#dc2626' }}
+                          className="action-btn delete-btn"
+                          onClick={() => permanentlyDelete('video', video.id)}
                         >
-                          <MdDeleteForever /> Delete forever
+                          <MdDeleteForever size={18} />
+                          Delete forever
                         </button>
                       </div>
-                    )}
-                    <div className="folder-icon">
-                      <MdFolder />
                     </div>
-                    <div className="folder-body">
-                      <h3 className="folder-name">{folder.name}</h3>
-                      <p className="folder-meta">{folder.videosCount} videos • Deleted {folder.deletedDate}</p>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            </>
+          ) : (
+            <>
+              {trashFolders.length > 0 && (
+                <div className="trash-section">
+                  <h2 className="section-title">Folders</h2>
+                  <div className="folders-grid">
+                    {trashFolders.map((folder) => (
+                      <div 
+                        className="folder-card" 
+                        key={folder.id}
+                        onClick={() => setSelectedFolder(folder.id)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <button
+                          className="dot-btn"
+                          aria-label="Folder actions"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setCardMenu((m) => (m === `folder-${folder.id}` ? null : `folder-${folder.id}`))
+                          }}
+                        >
+                          <MdMoreVert />
+                        </button>
+                        {cardMenu === `folder-${folder.id}` && (
+                          <div className="card-menu" ref={menuRef} onClick={(e) => e.stopPropagation()}>
+                            <button
+                              onClick={() => restoreItem('folder', folder.id)}
+                            >
+                              <MdRestore /> Restore
+                            </button>
+                            <button
+                              onClick={() => permanentlyDelete('folder', folder.id)}
+                              style={{ color: '#dc2626' }}
+                            >
+                              <MdDeleteForever /> Delete forever
+                            </button>
+                          </div>
+                        )}
+                        <div className="folder-icon">
+                          <MdFolder />
+                        </div>
+                        <div className="folder-body">
+                          <h3 className="folder-name">{folder.name}</h3>
+                          <p className="folder-meta">{folder.videosCount} videos • Deleted {folder.deletedDate}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-          <div className="trash-section">
-            <h2 className="section-title">Videos</h2>
-            <div className="video-grid">
-              {trashVideos.map((video) => (
+              <div className="trash-section">
+                <h2 className="section-title">Videos</h2>
+                <div className="video-grid">
+                  {trashVideos.map((video) => (
                 <div className="video-card" key={video.id}>
                   <button
                     className="dot-btn"
@@ -269,9 +373,11 @@ function Trash() {
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </>
       )}
 
@@ -629,6 +735,111 @@ function Trash() {
           padding: 60px 20px;
           color: #9ca3af;
           font-size: 16px;
+        }
+
+        .back-button:hover {
+          background: #f8fafc;
+          border-color: #cbd5e1;
+          transform: translateX(-2px);
+        }
+
+        .video-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .video-list-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 16px 20px;
+          background: #ffffff;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          transition: all 0.2s ease;
+        }
+
+        .video-list-item:hover {
+          border-color: #d1d5db;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .video-list-info {
+          flex: 1;
+        }
+
+        .video-list-title {
+          font-size: 15px;
+          font-weight: 600;
+          color: #374151;
+          margin: 0 0 4px;
+        }
+
+        .video-list-meta {
+          font-size: 13px;
+          color: #6b7280;
+          margin: 0;
+        }
+
+        .video-list-actions {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .action-btn {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 16px;
+          border: 1px solid #e5e7eb;
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          background: #ffffff;
+        }
+
+        .restore-btn {
+          color: #3b82f6;
+          border-color: #bfdbfe;
+        }
+
+        .restore-btn:hover {
+          background: #eff6ff;
+          border-color: #93c5fd;
+          color: #2563eb;
+        }
+
+        .delete-btn {
+          color: #dc2626;
+          border-color: #fecaca;
+        }
+
+        .delete-btn:hover {
+          background: #fef2f2;
+          border-color: #fca5a5;
+          color: #b91c1c;
+        }
+
+        @media (max-width: 768px) {
+          .video-list-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+          }
+
+          .video-list-actions {
+            width: 100%;
+            justify-content: flex-end;
+          }
+
+          .action-btn {
+            flex: 1;
+            justify-content: center;
+          }
         }
       `}</style>
     </>
