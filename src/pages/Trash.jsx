@@ -169,7 +169,7 @@ function Trash() {
     // Implementation for permanent deletion
     if (window.confirm(`Are you sure you want to permanently delete this ${type}? This action cannot be undone.`)) {
       alert(`Permanently deleting ${type} with id: ${id}`)
-      setCardMenu(null)
+    setCardMenu(null)
     }
   }
 
@@ -277,60 +277,60 @@ function Trash() {
               </div>
             </>
           ) : (
-            <>
-              {trashFolders.length > 0 && (
-                <div className="trash-section">
-                  <h2 className="section-title">Folders</h2>
-                  <div className="folders-grid">
-                    {trashFolders.map((folder) => (
+        <>
+          {trashFolders.length > 0 && (
+            <div className="trash-section">
+              <h2 className="section-title">Folders</h2>
+              <div className="folders-grid">
+                {trashFolders.map((folder) => (
                       <div 
                         className="folder-card" 
                         key={folder.id}
                         onClick={() => setSelectedFolder(folder.id)}
                         style={{ cursor: 'pointer' }}
                       >
-                        <button
-                          className="dot-btn"
-                          aria-label="Folder actions"
+                    <button
+                      className="dot-btn"
+                      aria-label="Folder actions"
                           onClick={(e) => {
                             e.stopPropagation()
                             setCardMenu((m) => (m === `folder-${folder.id}` ? null : `folder-${folder.id}`))
                           }}
-                        >
-                          <MdMoreVert />
-                        </button>
-                        {cardMenu === `folder-${folder.id}` && (
+                    >
+                      <MdMoreVert />
+                    </button>
+                    {cardMenu === `folder-${folder.id}` && (
                           <div className="card-menu" ref={menuRef} onClick={(e) => e.stopPropagation()}>
-                            <button
-                              onClick={() => restoreItem('folder', folder.id)}
-                            >
-                              <MdRestore /> Restore
-                            </button>
-                            <button
-                              onClick={() => permanentlyDelete('folder', folder.id)}
-                              style={{ color: '#dc2626' }}
-                            >
-                              <MdDeleteForever /> Delete forever
-                            </button>
-                          </div>
-                        )}
-                        <div className="folder-icon">
-                          <MdFolder />
-                        </div>
-                        <div className="folder-body">
-                          <h3 className="folder-name">{folder.name}</h3>
-                          <p className="folder-meta">{folder.videosCount} videos • Deleted {folder.deletedDate}</p>
-                        </div>
+                        <button
+                          onClick={() => restoreItem('folder', folder.id)}
+                        >
+                          <MdRestore /> Restore
+                        </button>
+                        <button
+                          onClick={() => permanentlyDelete('folder', folder.id)}
+                          style={{ color: '#dc2626' }}
+                        >
+                          <MdDeleteForever /> Delete forever
+                        </button>
                       </div>
-                    ))}
+                    )}
+                    <div className="folder-icon">
+                      <MdFolder />
+                    </div>
+                    <div className="folder-body">
+                      <h3 className="folder-name">{folder.name}</h3>
+                      <p className="folder-meta">{folder.videosCount} videos • Deleted {folder.deletedDate}</p>
+                    </div>
                   </div>
-                </div>
-              )}
+                ))}
+              </div>
+            </div>
+          )}
 
-              <div className="trash-section">
-                <h2 className="section-title">Videos</h2>
-                <div className="video-grid">
-                  {trashVideos.map((video) => (
+          <div className="trash-section">
+            <h2 className="section-title">Videos</h2>
+            <div className="video-grid">
+              {trashVideos.map((video) => (
                 <div className="video-card" key={video.id}>
                   <button
                     className="dot-btn"
@@ -373,9 +373,9 @@ function Trash() {
                     </div>
                   </div>
                 </div>
-                  ))}
-                </div>
-              </div>
+              ))}
+            </div>
+          </div>
             </>
           )}
         </>

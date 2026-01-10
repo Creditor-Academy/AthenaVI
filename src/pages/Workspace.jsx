@@ -699,7 +699,7 @@ const styles = `
 }
 `
 
-const thumbnailUrl = 'https://media.istockphoto.com/id/1480023591/video/creating-a-female-video-game-character.jpg?s=640x640&k=20&c=S1LW6oZZDQYgsqp4GRL0bj9wE1oRIaBfQSV-UQXv2II='
+const thumbnailUrl = 'https://media.istockphoto.com/id/1475888355/video/timelapse-of-the-creation-of-an-online-avatar-start-to-finish.jpg?s=640x640&k=20&c=pFzBOkU7LjC1DF0DeNCAUhS8MCiNwSDwkqI9v9C7IgQ='
 
 const initialFolders = [
   {
@@ -796,7 +796,7 @@ const filterOptions = [
   { value: 'name', label: 'Name (A-Z)' },
 ]
 
-function Workspace() {
+function Workspace({ onCreate }) {
   const [folders, setFolders] = useState(initialFolders)
   const [selectedFolder, setSelectedFolder] = useState(null)
   const [selectedSubfolder, setSelectedSubfolder] = useState(null)
@@ -842,6 +842,27 @@ function Workspace() {
     setRenameDialog(newFolder.id)
     setRenameType('folder')
     setNewName('New Folder')
+  }
+
+  const createNewSubfolder = (folderId) => {
+    const newSubfolder = {
+      id: `sf${Date.now()}`,
+      name: 'New Subfolder',
+      videos: [],
+    }
+    setFolders((prev) =>
+      prev.map((folder) =>
+        folder.id === folderId
+          ? {
+              ...folder,
+              subfolders: [...(folder.subfolders || []), newSubfolder],
+            }
+          : folder
+      )
+    )
+    setRenameDialog({ folderId, subfolderId: newSubfolder.id })
+    setRenameType('subfolder')
+    setNewName('New Subfolder')
   }
 
   const renameFolder = (folderId, newName) => {
@@ -1005,6 +1026,10 @@ function Workspace() {
                   <MdViewList />
                 </button>
               </div>
+              <button className="new-folder-btn" onClick={onCreate}>
+                <MdAdd size={18} />
+                New video
+              </button>
             </div>
           </div>
 
@@ -1023,18 +1048,16 @@ function Workspace() {
                   ref={el => menuRefs.current[`video-${video.id}`] = el}
                 >
                   <div className="video-thumb">
-                    <div style={{
-                      width: '100%',
-                      height: '100%',
-                      background: '#f1f5f9',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#94a3b8',
-                      fontSize: '32px'
-                    }}>
-                      <MdPlayArrow />
-                    </div>
+                    <img
+                      src={thumbnailUrl}
+                      alt={video.title}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        display: 'block'
+                      }}
+                    />
                     <div className="video-thumb-overlay">
                       <div className={`video-badge ${video.status}`}>
                         {video.status === 'draft' ? 'DRAFT' : 'PUBLISHED'}
@@ -1075,6 +1098,26 @@ function Workspace() {
                           </button>
                         </div>
                       )}
+                    </div>
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '50%',
+                      background: 'rgba(255, 255, 255, 0.95)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#334155',
+                      fontSize: '24px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      zIndex: 10
+                    }}>
+                      <MdPlayArrow />
                     </div>
                     {video.duration && (
                       <div className="video-duration">
@@ -1144,6 +1187,10 @@ function Workspace() {
                   <MdViewList />
                 </button>
               </div>
+              <button className="new-folder-btn" onClick={() => createNewSubfolder(selectedFolder)}>
+                <MdAdd size={18} />
+                New folder
+              </button>
             </div>
           </div>
 
