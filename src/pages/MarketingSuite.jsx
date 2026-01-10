@@ -13,13 +13,14 @@ const styles = `
 }
 `
 
-function MarketingSuite({ onLoginClick, onLogoClick }) {
+function MarketingSuite({ onLoginClick, onNavigateToEthics, onLogoClick }) {
   return (
     <>
       <style>{styles}</style>
       <div className="marketing-suite-page">
         <Navbar 
           onLoginClick={onLoginClick} 
+          onNavigateToEthics={onNavigateToEthics}
           onLogoClick={onLogoClick}
         />
         

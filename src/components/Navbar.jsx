@@ -638,7 +638,7 @@ const styles = `
 }
 `
 
-function Navbar({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onLogoClick }) {
+function Navbar({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onNavigateToEthics, onLogoClick }) {
   const [activeDropdown, setActiveDropdown] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileDropdowns, setMobileDropdowns] = useState({})
@@ -646,6 +646,7 @@ function Navbar({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onLog
   const mobileMenuRef = useRef(null)
   const mobileMenuBtnRef = useRef(null)
   const clickTimeoutRef = useRef(null)
+  const clickedDropdownRef = useRef(null)
 
   const productsItems = [
     'Visual AI Agents',
@@ -694,6 +695,7 @@ function Navbar({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onLog
           clearTimeout(clickTimeoutRef.current)
           clickTimeoutRef.current = null
         }
+        clickedDropdownRef.current = null
         setActiveDropdown(null)
       }
     }
@@ -822,8 +824,8 @@ function Navbar({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onLog
               setActiveDropdown('products')
             }}
             onMouseLeave={() => {
-              // Only close if not clicked (clicked dropdowns stay open for 3-4 seconds)
-              if (!clickTimeoutRef.current) {
+              // Only close if not clicked (clicked dropdowns stay open)
+              if (clickedDropdownRef.current !== 'products') {
                 setActiveDropdown(null)
               }
             }}
@@ -837,12 +839,9 @@ function Navbar({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onLog
                 if (clickTimeoutRef.current) {
                   clearTimeout(clickTimeoutRef.current)
                 }
+                // Mark this dropdown as clicked so it stays open
+                clickedDropdownRef.current = 'products'
                 setActiveDropdown('products')
-                // Keep dropdown open for 3.5 seconds after click
-                clickTimeoutRef.current = setTimeout(() => {
-                  setActiveDropdown(null)
-                  clickTimeoutRef.current = null
-                }, 3500)
               }}
             >
               Products
@@ -861,6 +860,7 @@ function Navbar({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onLog
                       clearTimeout(clickTimeoutRef.current)
                       clickTimeoutRef.current = null
                     }
+                    clickedDropdownRef.current = null
                     if (onNavigateToProduct) {
                       onNavigateToProduct(item)
                     }
@@ -876,15 +876,32 @@ function Navbar({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onLog
           <div
             className="nav-link-wrapper"
             ref={el => dropdownRefs.current.solutions = el}
-            onMouseEnter={() => setActiveDropdown('solutions')}
-            onMouseLeave={() => setActiveDropdown(null)}
+            onMouseEnter={() => {
+              if (clickTimeoutRef.current) {
+                clearTimeout(clickTimeoutRef.current)
+                clickTimeoutRef.current = null
+              }
+              setActiveDropdown('solutions')
+            }}
+            onMouseLeave={() => {
+              // Only close if not clicked (clicked dropdowns stay open)
+              if (clickedDropdownRef.current !== 'solutions') {
+                setActiveDropdown(null)
+              }
+            }}
           >
             <a
               href="#"
               className={`nav-link ${activeDropdown === 'solutions' ? 'active' : ''}`}
               onClick={(e) => {
                 e.preventDefault()
-                toggleDropdown('solutions')
+                // Clear any existing timeout
+                if (clickTimeoutRef.current) {
+                  clearTimeout(clickTimeoutRef.current)
+                }
+                // Mark this dropdown as clicked so it stays open
+                clickedDropdownRef.current = 'solutions'
+                setActiveDropdown('solutions')
               }}
             >
               Solutions
@@ -903,6 +920,7 @@ function Navbar({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onLog
                       clearTimeout(clickTimeoutRef.current)
                       clickTimeoutRef.current = null
                     }
+                    clickedDropdownRef.current = null
                     if (onNavigateToSolution) {
                       onNavigateToSolution(item)
                     }
@@ -918,41 +936,116 @@ function Navbar({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onLog
           <div
             className="nav-link-wrapper"
             ref={el => dropdownRefs.current.technology = el}
-            onMouseEnter={() => setActiveDropdown('technology')}
-            onMouseLeave={() => setActiveDropdown(null)}
+            onMouseEnter={() => {
+              if (clickTimeoutRef.current) {
+                clearTimeout(clickTimeoutRef.current)
+                clickTimeoutRef.current = null
+              }
+              setActiveDropdown('technology')
+            }}
+            onMouseLeave={() => {
+              // Only close if not clicked (clicked dropdowns stay open)
+              if (clickedDropdownRef.current !== 'technology') {
+                setActiveDropdown(null)
+              }
+            }}
           >
             <a
               href="#"
               className={`nav-link ${activeDropdown === 'technology' ? 'active' : ''}`}
               onClick={(e) => {
                 e.preventDefault()
-                toggleDropdown('technology')
+                // Clear any existing timeout
+                if (clickTimeoutRef.current) {
+                  clearTimeout(clickTimeoutRef.current)
+                }
+                // Mark this dropdown as clicked so it stays open
+                clickedDropdownRef.current = 'technology'
+                setActiveDropdown('technology')
               }}
             >
               Technology
               <MdKeyboardArrowDown />
             </a>
             <div className={`dropdown ${activeDropdown === 'technology' ? 'active' : ''}`}>
-              <a href="#" className="dropdown-item">AI Technology</a>
-              <a href="#" className="dropdown-item">API Documentation</a>
+              <a 
+                href="#" 
+                className="dropdown-item"
+                onClick={(e) => {
+                  e.preventDefault()
+                  // Clear timeout when item is clicked
+                  if (clickTimeoutRef.current) {
+                    clearTimeout(clickTimeoutRef.current)
+                    clickTimeoutRef.current = null
+                  }
+                  clickedDropdownRef.current = null
+                  setActiveDropdown(null)
+                }}
+              >
+                AI Technology
+              </a>
+              <a 
+                href="#" 
+                className="dropdown-item"
+                onClick={(e) => {
+                  e.preventDefault()
+                  // Clear timeout when item is clicked
+                  if (clickTimeoutRef.current) {
+                    clearTimeout(clickTimeoutRef.current)
+                    clickTimeoutRef.current = null
+                  }
+                  clickedDropdownRef.current = null
+                  setActiveDropdown(null)
+                }}
+              >
+                API Documentation
+              </a>
             </div>
           </div>
 
-          <a href="#" className="nav-link">Ethics</a>
+          <a 
+            href="#" 
+            className="nav-link"
+            onClick={(e) => {
+              e.preventDefault()
+              if (onNavigateToEthics) {
+                onNavigateToEthics()
+              }
+            }}
+          >
+            Ethics
+          </a>
           <a href="#" className="nav-link">Pricing</a>
 
           <div
             className="nav-link-wrapper"
             ref={el => dropdownRefs.current.company = el}
-            onMouseEnter={() => setActiveDropdown('company')}
-            onMouseLeave={() => setActiveDropdown(null)}
+            onMouseEnter={() => {
+              if (clickTimeoutRef.current) {
+                clearTimeout(clickTimeoutRef.current)
+                clickTimeoutRef.current = null
+              }
+              setActiveDropdown('company')
+            }}
+            onMouseLeave={() => {
+              // Only close if not clicked (clicked dropdowns stay open)
+              if (clickedDropdownRef.current !== 'company') {
+                setActiveDropdown(null)
+              }
+            }}
           >
             <a
               href="#"
               className={`nav-link ${activeDropdown === 'company' ? 'active' : ''}`}
               onClick={(e) => {
                 e.preventDefault()
-                toggleDropdown('company')
+                // Clear any existing timeout
+                if (clickTimeoutRef.current) {
+                  clearTimeout(clickTimeoutRef.current)
+                }
+                // Mark this dropdown as clicked so it stays open
+                clickedDropdownRef.current = 'company'
+                setActiveDropdown('company')
               }}
             >
               Company
@@ -960,7 +1053,21 @@ function Navbar({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onLog
             </a>
             <div className={`dropdown ${activeDropdown === 'company' ? 'active' : ''}`}>
               {companyItems.map((item, index) => (
-                <a key={index} href="#" className="dropdown-item">
+                <a 
+                  key={index} 
+                  href="#" 
+                  className="dropdown-item"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    // Clear timeout when item is clicked
+                    if (clickTimeoutRef.current) {
+                      clearTimeout(clickTimeoutRef.current)
+                      clickTimeoutRef.current = null
+                    }
+                    clickedDropdownRef.current = null
+                    setActiveDropdown(null)
+                  }}
+                >
                   {item}
                 </a>
               ))}
@@ -1023,7 +1130,9 @@ function Navbar({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onLog
           onClick={(e) => {
             e.preventDefault()
             handleMobileActionClick()
-            window.scrollTo({ top: 0, behavior: 'smooth' })
+            if (onLogoClick) {
+              onLogoClick()
+            }
           }}
         >
           Home
@@ -1103,7 +1212,17 @@ function Navbar({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onLog
             </a>
           </div>
 
-          <a href="#" className="mobile-nav-link" onClick={handleMobileActionClick}>
+          <a 
+            href="#" 
+            className="mobile-nav-link" 
+            onClick={(e) => {
+              e.preventDefault()
+              setMobileMenuOpen(false)
+              if (onNavigateToEthics) {
+                onNavigateToEthics()
+              }
+            }}
+          >
             Ethics
           </a>
           <a href="#" className="mobile-nav-link" onClick={handleMobileActionClick}>
