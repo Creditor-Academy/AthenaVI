@@ -185,10 +185,10 @@ function CTASection() {
       <style>{styles}</style>
       <section className="cta-section">
         <div className="cta-content">
-          <h2 className="cta-title">Ready to Transform Your Marketing?</h2>
+          <h2 className="cta-title">Ready to Transform Your Sales Strategy?</h2>
           <p className="cta-description">
-            Join thousands of marketers who are already using our AI-powered Marketing Suite 
-            to create better campaigns, engage their audience, and drive real results.
+            Join thousands of sales professionals who are already using our AI-powered Sales Solutions 
+            to create better connections, engage their prospects, and close more deals.
           </p>
           <div className="cta-buttons">
             <a href="#" className="primary-cta">
@@ -210,4 +210,7 @@ function CTASection() {
 }
 
 export default CTASection
+
+
+
 

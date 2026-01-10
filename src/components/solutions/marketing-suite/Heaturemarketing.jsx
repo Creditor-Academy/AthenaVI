@@ -2,7 +2,7 @@ import { MdArrowForward } from 'react-icons/md'
 
 const styles = `
 .feature-marketing-section {
-  padding: 120px 40px;
+  padding: 60px 40px;
   background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   color: #1e40af;
   position: relative;
@@ -124,7 +124,7 @@ const styles = `
 .feature-marketing-card-image-wrapper {
   position: relative;
   width: 100%;
-  height: 260px;
+  height: 180px;
   overflow: hidden;
   background: #f1f5f9;
 }
@@ -211,6 +211,7 @@ const styles = `
 .feature-marketing-card-cta {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   color: #1e40af;
   font-family: 'Arial', sans-serif;
@@ -219,30 +220,46 @@ const styles = `
   text-transform: uppercase;
   letter-spacing: 0.8px;
   text-decoration: none;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   width: fit-content;
-  padding: 4px 0;
+  padding: 12px 24px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(30, 64, 175, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%);
+  border: 2px solid rgba(30, 64, 175, 0.15);
   position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(30, 64, 175, 0.08);
 }
 
-.feature-marketing-card-cta::after {
+.feature-marketing-card-cta::before {
   content: '';
   position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: linear-gradient(90deg, #1e40af 0%, #3b82f6 100%);
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 0;
+}
+
+.feature-marketing-card-cta span,
+.feature-marketing-card-cta svg {
+  position: relative;
+  z-index: 1;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .feature-marketing-card-cta:hover {
-  gap: 14px;
-  color: #3b82f6;
+  gap: 12px;
+  color: #ffffff;
+  border-color: #1e40af;
+  box-shadow: 0 4px 16px rgba(30, 64, 175, 0.2), 0 2px 8px rgba(30, 64, 175, 0.15);
+  transform: translateY(-2px);
 }
 
-.feature-marketing-card-cta:hover::after {
-  width: 100%;
+.feature-marketing-card-cta:hover::before {
+  left: 0;
 }
 
 .feature-marketing-card-cta svg {
@@ -251,12 +268,12 @@ const styles = `
 }
 
 .feature-marketing-card-cta:hover svg {
-  transform: translateX(6px);
+  transform: translateX(4px);
 }
 
 @media (max-width: 1024px) {
   .feature-marketing-section {
-    padding: 100px 40px;
+    padding: 60px 40px;
   }
 
   .feature-marketing-grid {
@@ -267,11 +284,15 @@ const styles = `
   .feature-marketing-header {
     margin-bottom: 80px;
   }
+
+  .feature-marketing-card-image-wrapper {
+    height: 170px;
+  }
 }
 
 @media (max-width: 768px) {
   .feature-marketing-section {
-    padding: 80px 24px;
+    padding: 60px 24px;
   }
 
   .feature-marketing-title {
@@ -292,7 +313,7 @@ const styles = `
   }
 
   .feature-marketing-card-image-wrapper {
-    height: 240px;
+    height: 160px;
   }
 
   .feature-marketing-header {
@@ -316,6 +337,15 @@ const styles = `
   .feature-marketing-card-content {
     padding: 24px;
   }
+
+  .feature-marketing-card-image-wrapper {
+    height: 140px;
+  }
+
+  .feature-marketing-card-cta {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
 }
 `
 
@@ -331,7 +361,7 @@ function Heaturemarketing() {
       title: 'Video Campaigns',
       description: 'Effortlessly create tailored, AI-driven video content for email campaigns and other personalized marketing efforts to maximize engagement.',
       image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop&q=80',
-      enterpriseOnly: true
+      enterpriseOnly: false
     },
     {
       title: 'Express Avatars',
@@ -391,7 +421,7 @@ function Heaturemarketing() {
                   <h3 className="feature-marketing-card-title">{feature.title}</h3>
                   <p className="feature-marketing-card-description">{feature.description}</p>
                   <a href="#" className="feature-marketing-card-cta">
-                    LEARN MORE
+                    <span>LEARN MORE</span>
                     <MdArrowForward />
                   </a>
                 </div>
