@@ -137,6 +137,17 @@ function App() {
           onLoginClick={handleLoginClick}
           onNavigateToEthics={() => setView('ethics')}
           onLogoClick={() => setView('landing')}
+          onNavigateToProduct={(section) => {
+            setProductSection(section)
+            setView('products')
+          }}
+          onNavigateToSolution={(solution) => {
+            if (solution === 'Marketing Suite') {
+              setView('marketing-suite')
+            } else if (solution === 'Sales Solutions') {
+              setView('sales-suite')
+            }
+          }}
         />
         {showAuthModal && (
           <Auth 

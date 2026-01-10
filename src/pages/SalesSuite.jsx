@@ -33,7 +33,12 @@ function SalesSuite({ onLoginClick, onLogoClick, onNavigateToSolution, onNavigat
         <BenefitsSection />
         <CTASection />
         
-        <Footer />
+        <Footer 
+          onLogoClick={onLogoClick}
+          onNavigateToProduct={onNavigateToProduct}
+          onNavigateToSolution={onNavigateToSolution}
+          onNavigateToEthics={onNavigateToEthics}
+        />
       </div>
     </>
   )

@@ -62,7 +62,12 @@ function Products({ onLoginClick, initialSection = null, onNavigateToProduct, on
         <VideoCampaigns variant="dark" />
         <PersonalAvatars variant="light" />
         
-        <Footer />
+        <Footer 
+          onLogoClick={onLogoClick}
+          onNavigateToProduct={onNavigateToProduct}
+          onNavigateToSolution={onNavigateToSolution}
+          onNavigateToEthics={onNavigateToEthics}
+        />
       </div>
     </>
   )

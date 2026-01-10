@@ -336,14 +336,47 @@ const styles = `
 }
 `
 
-function Footer() {
+function Footer({ 
+  onLogoClick, 
+  onNavigateToProduct, 
+  onNavigateToSolution, 
+  onNavigateToEthics 
+}) {
+  const handleProductClick = (e, productName) => {
+    e.preventDefault()
+    if (onNavigateToProduct) {
+      onNavigateToProduct(productName)
+    }
+  }
+
+  const handleSolutionClick = (e, solutionName) => {
+    e.preventDefault()
+    if (onNavigateToSolution) {
+      onNavigateToSolution(solutionName)
+    }
+  }
+
+  const handleLogoClick = (e) => {
+    e.preventDefault()
+    if (onLogoClick) {
+      onLogoClick()
+    }
+  }
+
+  const handleEthicsClick = (e) => {
+    e.preventDefault()
+    if (onNavigateToEthics) {
+      onNavigateToEthics()
+    }
+  }
+
   return (
     <>
       <style>{styles}</style>
       <footer className="footer">
         <div className="footer-content">
           <div className="footer-brand">
-            <a href="#" className="footer-logo">
+            <a href="#" className="footer-logo" onClick={handleLogoClick}>
               <div className="footer-logo-icon"></div>
               Athena VI
             </a>
@@ -376,17 +409,17 @@ function Footer() {
 
           <div className="footer-column">
             <h3 className="footer-column-title">Products</h3>
-            <a href="#" className="footer-link">Visual AI Agents</a>
-            <a href="#" className="footer-link">Creative Reality™ Studio</a>
-            <a href="#" className="footer-link">Video Translate</a>
-            <a href="#" className="footer-link">Video Campaigns</a>
-            <a href="#" className="footer-link">Personal Avatars</a>
+            <a href="#" className="footer-link" onClick={(e) => handleProductClick(e, 'Visual AI Agents')}>Visual AI Agents</a>
+            <a href="#" className="footer-link" onClick={(e) => handleProductClick(e, 'Creative Reality™ Studio')}>Creative Reality™ Studio</a>
+            <a href="#" className="footer-link" onClick={(e) => handleProductClick(e, 'Video Translate')}>Video Translate</a>
+            <a href="#" className="footer-link" onClick={(e) => handleProductClick(e, 'Video Campaigns')}>Video Campaigns</a>
+            <a href="#" className="footer-link" onClick={(e) => handleProductClick(e, 'Personal Avatars')}>Personal Avatars</a>
           </div>
 
           <div className="footer-column">
             <h3 className="footer-column-title">Solutions</h3>
-            <a href="#" className="footer-link">Marketing Suite</a>
-            <a href="#" className="footer-link">Sales Solutions</a>
+            <a href="#" className="footer-link" onClick={(e) => handleSolutionClick(e, 'Marketing Suite')}>Marketing Suite</a>
+            <a href="#" className="footer-link" onClick={(e) => handleSolutionClick(e, 'Sales Solutions')}>Sales Solutions</a>
             <a href="#" className="footer-link">Customer Experience</a>
             <a href="#" className="footer-link">Learning & Development</a>
             <a href="#" className="footer-link">AI Videos</a>
@@ -431,7 +464,7 @@ function Footer() {
             © {new Date().getFullYear()} Athena VI. All rights reserved.
           </div>
           <div className="footer-bottom-links">
-            <a href="#" className="footer-bottom-link">Trust Center</a>
+            <a href="#" className="footer-bottom-link" onClick={handleEthicsClick}>Trust Center</a>
             <a href="#" className="footer-bottom-link">Privacy Policy</a>
             <a href="#" className="footer-bottom-link">Terms of Service</a>
             <a href="#" className="footer-bottom-link">Help Center</a>

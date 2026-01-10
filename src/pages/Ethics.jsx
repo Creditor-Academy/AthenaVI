@@ -257,7 +257,12 @@ function Ethics({ onLoginClick, onLogoClick, onNavigateToSolution, onNavigateToP
           </div>
         </div>
         
-        <Footer />
+        <Footer 
+          onLogoClick={onLogoClick}
+          onNavigateToProduct={onNavigateToProduct}
+          onNavigateToSolution={onNavigateToSolution}
+          onNavigateToEthics={onNavigateToEthics}
+        />
       </div>
     </>
   )

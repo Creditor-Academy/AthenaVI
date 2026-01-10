@@ -76,7 +76,12 @@ function Landing({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onNa
         <VideoSection />
         <ProductsSection />
         <ReadySection />
-        <Footer />
+        <Footer 
+          onLogoClick={onLogoClick}
+          onNavigateToProduct={onNavigateToProduct}
+          onNavigateToSolution={onNavigateToSolution}
+          onNavigateToEthics={onNavigateToEthics}
+        />
       </div>
     </>
   )
