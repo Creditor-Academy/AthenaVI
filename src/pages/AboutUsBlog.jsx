@@ -25,7 +25,7 @@ function AboutUsBlog({ onLoginClick, onLogoClick, onNavigateToCompany }) {
         <AboutUsSection variant="light" />
         <BlogSection variant="dark" />
         
-        <Footer />
+        <Footer onNavigateToCompany={onNavigateToCompany} />
       </div>
     </>
   )

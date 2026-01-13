@@ -666,11 +666,8 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
   const companyItems = [
     'About Us',
     'Blog',
-    'Leadership',
-    'Partners',
     'News',
     'Resources',
-    'Trust Center',
     'Privacy Policy',
     'Help Center'
   ]

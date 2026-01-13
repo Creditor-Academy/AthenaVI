@@ -8,6 +8,7 @@ import AboutUsBlog from './pages/AboutUsBlog.jsx'
 import News from './pages/News.jsx'
 import Resources from './pages/Resources.jsx'
 import HelpCenter from './pages/HelpCenter.jsx'
+import PrivacyPolicy from './pages/PrivacyPolicy.jsx'
 
 function App() {
   const [view, setView] = useState('landing')
@@ -42,6 +43,7 @@ function App() {
       'Blog': 'about-us-blog',
       'News': 'news',
       'Resources': 'resources',
+      'Privacy Policy': 'privacy-policy',
       'Help Center': 'help-center'
     }
     
@@ -189,6 +191,24 @@ function App() {
     return (
       <>
         <HelpCenter 
+          onLoginClick={handleLoginClick}
+          onLogoClick={() => setView('landing')}
+          onNavigateToCompany={handleNavigateToCompany}
+        />
+        {showAuthModal && (
+          <Auth 
+            onAuthComplete={handleAuthComplete}
+            onClose={() => setShowAuthModal(false)}
+          />
+        )}
+      </>
+    )
+  }
+
+  if (view === 'privacy-policy') {
+    return (
+      <>
+        <PrivacyPolicy 
           onLoginClick={handleLoginClick}
           onLogoClick={() => setView('landing')}
           onNavigateToCompany={handleNavigateToCompany}

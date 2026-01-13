@@ -1,4 +1,11 @@
 import { useState } from 'react'
+import { 
+  MdKeyboardArrowDown,
+  MdSearch,
+  MdSupport,
+  MdHelpOutline,
+  MdQuestionAnswer
+} from 'react-icons/md'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 
@@ -48,9 +55,24 @@ const styles = `
   position: relative;
 }
 
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 20px;
+  color: rgba(30, 64, 175, 0.5);
+  font-size: 24px;
+  pointer-events: none;
+  z-index: 1;
+}
+
 .search-input {
   width: 100%;
-  padding: 18px 24px;
+  padding: 18px 24px 18px 60px;
   font-family: 'Arial', sans-serif;
   font-size: 16px;
   border: 2px solid rgba(30, 64, 175, 0.2);
@@ -66,11 +88,16 @@ const styles = `
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
 }
 
+.search-input:focus + .search-icon,
+.search-input:focus ~ .search-icon {
+  color: #3b82f6;
+}
+
 .search-input::placeholder {
   color: rgba(30, 64, 175, 0.5);
 }
 
-.categories-section {
+.faq-section {
   margin-bottom: 60px;
 }
 
@@ -78,116 +105,148 @@ const styles = `
   font-family: 'Georgia', 'Times New Roman', serif;
   font-size: 42px;
   font-weight: 500;
-  margin: 0 0 24px;
+  margin: 0 0 40px;
   color: #1e40af;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
 }
 
-.categories-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
-  margin-bottom: 40px;
-}
-
-.category-card {
-  background: rgba(30, 64, 175, 0.05);
-  border: 1px solid rgba(30, 64, 175, 0.2);
-  border-radius: 12px;
-  padding: 32px;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  text-align: center;
-}
-
-.category-card:hover {
-  background: rgba(30, 64, 175, 0.1);
-  border-color: rgba(59, 130, 246, 0.4);
-  box-shadow: 0 8px 24px rgba(30, 64, 175, 0.15);
-  transform: translateY(-4px);
-}
-
-.category-icon {
-  font-size: 40px;
-  margin-bottom: 16px;
-}
-
-.category-title {
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 22px;
-  font-weight: 500;
-  margin: 0 0 8px;
-  color: #1e40af;
-}
-
-.category-count {
-  font-family: 'Arial', sans-serif;
-  font-size: 14px;
+.section-title-icon {
   color: #3b82f6;
-  margin: 0;
+  font-size: 42px;
 }
 
-.faq-section {
-  margin-bottom: 60px;
+.faq-container {
+  max-width: 900px;
+  margin: 0 auto;
 }
 
 .faq-item {
-  background: rgba(30, 64, 175, 0.05);
-  border: 1px solid rgba(30, 64, 175, 0.2);
-  border-radius: 12px;
-  margin-bottom: 16px;
+  background: linear-gradient(135deg, rgba(30, 64, 175, 0.03) 0%, rgba(59, 130, 246, 0.03) 100%);
+  border: 2px solid rgba(30, 64, 175, 0.15);
+  border-radius: 16px;
+  margin-bottom: 20px;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.faq-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  transform: scaleY(0);
+  transition: transform 0.4s ease;
+  transform-origin: top;
 }
 
 .faq-item.active {
-  border-color: rgba(59, 130, 246, 0.4);
-  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.1);
+  border-color: rgba(59, 130, 246, 0.5);
+  box-shadow: 0 8px 24px rgba(30, 64, 175, 0.15);
+  background: linear-gradient(135deg, rgba(30, 64, 175, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%);
+  transform: translateX(4px);
+}
+
+.faq-item.active::before {
+  transform: scaleY(1);
 }
 
 .faq-question {
   font-family: 'Arial', sans-serif;
-  font-size: 18px;
-  font-weight: 500;
+  font-size: 20px;
+  font-weight: 600;
   color: #1e40af;
-  padding: 24px 32px;
+  padding: 28px 36px;
   margin: 0;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 24px;
   transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
 }
 
 .faq-question:hover {
   color: #3b82f6;
+  padding-left: 40px;
+}
+
+.faq-question-number {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 18px;
+  font-weight: 500;
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.faq-item.active .faq-question-number {
+  background: rgba(59, 130, 246, 0.2);
+  color: #2563eb;
+  transform: scale(1.1);
+}
+
+.faq-question-text {
+  flex: 1;
+  line-height: 1.5;
 }
 
 .faq-icon {
-  font-size: 20px;
-  transition: transform 0.3s ease;
+  font-size: 28px;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   color: #3b82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 10px;
 }
 
 .faq-item.active .faq-icon {
   transform: rotate(180deg);
+  background: rgba(59, 130, 246, 0.2);
 }
 
 .faq-answer {
   font-family: 'Arial', sans-serif;
-  font-size: 16px;
-  line-height: 1.7;
-  color: #1e40af;
-  padding: 0 32px 24px;
+  font-size: 17px;
+  line-height: 1.8;
+  color: #333333;
+  padding: 0 36px;
   margin: 0;
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.3s ease, padding 0.3s ease;
+  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s ease;
+  position: relative;
 }
 
 .faq-item.active .faq-answer {
-  max-height: 500px;
-  padding-top: 0;
+  max-height: 1000px;
+  padding: 0 36px 28px;
+}
+
+.faq-answer-content {
+  padding-top: 8px;
+  color: #4b5563;
 }
 
 .contact-section {
@@ -223,21 +282,26 @@ const styles = `
   border: none;
   color: #000;
   padding: 16px 32px;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  transition: all 0.2s ease;
+  gap: 10px;
+  transition: all 0.3s ease;
   box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
   text-decoration: none;
 }
 
 .contact-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(251, 191, 36, 0.4);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(251, 191, 36, 0.4);
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.contact-button svg {
+  font-size: 20px;
 }
 
 @media (max-width: 768px) {
@@ -259,20 +323,43 @@ const styles = `
 
   .section-title {
     font-size: 32px;
+    flex-direction: column;
+    gap: 12px;
   }
 
-  .categories-grid {
-    grid-template-columns: 1fr;
+  .section-title-icon {
+    font-size: 32px;
   }
 
   .faq-question {
     padding: 20px 24px;
+    font-size: 18px;
+    gap: 16px;
+  }
+
+  .faq-question:hover {
+    padding-left: 24px;
+  }
+
+  .faq-question-number {
+    width: 32px;
+    height: 32px;
     font-size: 16px;
   }
 
+  .faq-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 24px;
+  }
+
   .faq-answer {
-    padding: 0 24px 20px;
-    font-size: 15px;
+    padding: 0 24px;
+    font-size: 16px;
+  }
+
+  .faq-item.active .faq-answer {
+    padding: 0 24px 24px;
   }
 
   .contact-section {
@@ -288,39 +375,54 @@ const styles = `
 function HelpCenter({ onLoginClick, onLogoClick, onNavigateToCompany }) {
   const [activeFaq, setActiveFaq] = useState(null)
 
-  const categories = [
-    { icon: '🚀', title: 'Getting Started', count: '12 articles' },
-    { icon: '🎬', title: 'Video Creation', count: '28 articles' },
-    { icon: '👤', title: 'Avatars & Voices', count: '15 articles' },
-    { icon: '🔧', title: 'Account & Billing', count: '10 articles' },
-    { icon: '💼', title: 'Business Features', count: '18 articles' },
-    { icon: '🔌', title: 'API & Integrations', count: '22 articles' }
-  ]
-
   const faqs = [
     {
       question: 'How do I create my first video?',
-      answer: 'Creating your first video is easy! Start by selecting a template or uploading your own content. Then choose an avatar, add your script, and customize the settings. Our AI will handle the rest, generating a professional video in minutes.'
+      answer: 'Creating your first video is easy! Start by selecting a template or uploading your own content. Then choose an avatar, add your script, and customize the settings. Our AI will handle the rest, generating a professional video in minutes. You can preview your video before finalizing and make any adjustments needed.'
     },
     {
       question: 'Can I use my own voice for avatars?',
-      answer: 'Yes! AthenaVI supports voice cloning technology. Simply record a few minutes of your voice, and our AI will create a voice model that can speak any text you provide in your natural voice.'
+      answer: 'Yes! AthenaVI supports voice cloning technology. Simply record a few minutes of your voice (we recommend 5-10 minutes for best results), and our AI will create a voice model that can speak any text you provide in your natural voice. The voice cloning feature is available on our Pro and Enterprise plans.'
     },
     {
       question: 'What video formats are supported?',
-      answer: 'We support all major video formats including MP4, MOV, AVI, and WebM. You can export your videos in various resolutions from 720p to 4K, depending on your subscription plan.'
+      answer: 'We support all major video formats including MP4, MOV, AVI, and WebM. You can export your videos in various resolutions from 720p to 4K, depending on your subscription plan. All videos are optimized for web, social media, and professional use.'
     },
     {
       question: 'How does the pricing work?',
-      answer: 'We offer flexible pricing plans to suit different needs. Our plans are based on the number of videos you create per month and the features you need. You can upgrade or downgrade your plan at any time.'
+      answer: 'We offer flexible pricing plans to suit different needs. Our plans are based on the number of videos you create per month and the features you need. You can upgrade or downgrade your plan at any time. We also offer annual billing with a 20% discount. All plans include access to our library of avatars and basic templates.'
     },
     {
       question: 'Is my content secure and private?',
-      answer: 'Absolutely. We take security and privacy seriously. All your content is encrypted and stored securely. We never share your videos or data with third parties without your explicit consent.'
+      answer: 'Absolutely. We take security and privacy seriously. All your content is encrypted and stored securely using industry-standard encryption. We never share your videos or data with third parties without your explicit consent. Your content remains private and you have full control over who can access it.'
     },
     {
       question: 'Can I cancel my subscription anytime?',
-      answer: 'Yes, you can cancel your subscription at any time. Your access will continue until the end of your current billing period, and you won\'t be charged for the next cycle.'
+      answer: 'Yes, you can cancel your subscription at any time. Your access will continue until the end of your current billing period, and you won\'t be charged for the next cycle. You can cancel directly from your account settings, and there are no cancellation fees.'
+    },
+    {
+      question: 'What languages are supported for video creation?',
+      answer: 'AthenaVI supports over 50 languages for video creation, including English, Spanish, French, German, Chinese, Japanese, Arabic, and many more. Our AI avatars can speak in any of these languages with natural pronunciation and intonation.'
+    },
+    {
+      question: 'Can I customize the appearance of avatars?',
+      answer: 'Yes! You can customize various aspects of avatars including clothing, background, gestures, and expressions. Our Creative Reality™ Studio offers advanced customization options for creating unique avatar appearances that match your brand identity.'
+    },
+    {
+      question: 'How long does it take to generate a video?',
+      answer: 'Video generation time depends on the length and complexity of your video. Typically, a 1-minute video takes 2-5 minutes to generate. Longer videos or videos with complex animations may take up to 10-15 minutes. You\'ll receive a notification when your video is ready.'
+    },
+    {
+      question: 'Do you offer API access for developers?',
+      answer: 'Yes! We offer comprehensive API access for developers on our Enterprise plan. Our API allows you to integrate AthenaVI\'s video generation capabilities directly into your applications, automate video creation workflows, and build custom solutions. Documentation and support are included.'
+    },
+    {
+      question: 'What kind of support do you provide?',
+      answer: 'We provide multiple support channels including email support, live chat (for Pro and Enterprise users), comprehensive documentation, video tutorials, and a community forum. Our support team is available 24/7 to help you with any questions or issues.'
+    },
+    {
+      question: 'Can I use AthenaVI for commercial purposes?',
+      answer: 'Yes! All our plans allow commercial use of the videos you create. You can use the videos for marketing, advertising, training, education, and any other business purposes. We also offer extended licensing options for Enterprise customers who need additional usage rights.'
     }
   ]
 
@@ -346,44 +448,42 @@ function HelpCenter({ onLoginClick, onLogoClick, onNavigateToCompany }) {
         <div className="help-container">
           <div className="search-section">
             <div className="search-box">
-              <input
-                type="text"
-                className="search-input"
-                placeholder="Search for help articles, tutorials, or FAQs..."
-              />
-            </div>
-          </div>
-
-          <div className="categories-section">
-            <h2 className="section-title">Browse by Category</h2>
-            <div className="categories-grid">
-              {categories.map((category, index) => (
-                <div key={index} className="category-card">
-                  <div className="category-icon">{category.icon}</div>
-                  <h3 className="category-title">{category.title}</h3>
-                  <p className="category-count">{category.count}</p>
-                </div>
-              ))}
+              <div className="search-input-wrapper">
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="Search for help articles, tutorials, or FAQs..."
+                />
+                <MdSearch className="search-icon" />
+              </div>
             </div>
           </div>
 
           <div className="faq-section">
-            <h2 className="section-title">Frequently Asked Questions</h2>
-            {faqs.map((faq, index) => (
-              <div 
-                key={index} 
-                className={`faq-item ${activeFaq === index ? 'active' : ''}`}
-              >
+            <h2 className="section-title">
+              <MdQuestionAnswer className="section-title-icon" />
+              Frequently Asked Questions
+            </h2>
+            <div className="faq-container">
+              {faqs.map((faq, index) => (
                 <div 
-                  className="faq-question"
-                  onClick={() => toggleFaq(index)}
+                  key={index} 
+                  className={`faq-item ${activeFaq === index ? 'active' : ''}`}
                 >
-                  <span>{faq.question}</span>
-                  <span className="faq-icon">▼</span>
+                  <div 
+                    className="faq-question"
+                    onClick={() => toggleFaq(index)}
+                  >
+                    <div className="faq-question-number">{index + 1}</div>
+                    <div className="faq-question-text">{faq.question}</div>
+                    <MdKeyboardArrowDown className="faq-icon" />
+                  </div>
+                  <div className="faq-answer">
+                    <div className="faq-answer-content">{faq.answer}</div>
+                  </div>
                 </div>
-                <p className="faq-answer">{faq.answer}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
           <div className="contact-section">
@@ -392,12 +492,13 @@ function HelpCenter({ onLoginClick, onLogoClick, onNavigateToCompany }) {
               Can't find what you're looking for? Our support team is here to help you 24/7.
             </p>
             <a href="#" className="contact-button">
-              Contact Support →
+              <MdSupport />
+              Contact Support
             </a>
           </div>
         </div>
 
-        <Footer />
+        <Footer onNavigateToCompany={onNavigateToCompany} />
       </div>
     </>
   )

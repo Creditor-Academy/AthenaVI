@@ -23,7 +23,7 @@ function Resources({ onLoginClick, onLogoClick, onNavigateToCompany }) {
         
         <ResourcesSection variant="light" />
         
-        <Footer />
+        <Footer onNavigateToCompany={onNavigateToCompany} />
       </div>
     </>
   )

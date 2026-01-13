@@ -23,7 +23,7 @@ function News({ onLoginClick, onLogoClick, onNavigateToCompany }) {
         
         <NewsSection variant="light" />
         
-        <Footer />
+        <Footer onNavigateToCompany={onNavigateToCompany} />
       </div>
     </>
   )
