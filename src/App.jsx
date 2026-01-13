@@ -12,6 +12,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy.jsx'
 import MarketingSuite from './pages/MarketingSuite.jsx'
 import SalesSuite from './pages/SalesSuite.jsx'
 import Ethics from './pages/Ethics.jsx'
+import Technology from './pages/Technology.jsx'
 
 function App() {
   // Initialize view from localStorage on mount to persist page on refresh
@@ -113,6 +114,7 @@ function App() {
             }
           }}
           onNavigateToEthics={() => setView('ethics')}
+          onNavigateToTechnology={() => setView('technology')}
           onNavigateToProduct={(section) => {
             setProductSection(section)
             // Already on products page, just scroll to section
@@ -167,6 +169,7 @@ function App() {
             }
           }}
           onNavigateToEthics={() => setView('ethics')}
+          onNavigateToTechnology={() => setView('technology')}
         />
         {showAuthModal && (
           <Auth 
@@ -193,6 +196,7 @@ function App() {
             }
           }}
           onNavigateToEthics={() => setView('ethics')}
+          onNavigateToTechnology={() => setView('technology')}
         />
         {showAuthModal && (
           <Auth 
@@ -219,6 +223,7 @@ function App() {
             }
           }}
           onNavigateToEthics={() => setView('ethics')}
+          onNavigateToTechnology={() => setView('technology')}
         />
         {showAuthModal && (
           <Auth 
@@ -245,6 +250,7 @@ function App() {
             }
           }}
           onNavigateToEthics={() => setView('ethics')}
+          onNavigateToTechnology={() => setView('technology')}
         />
         {showAuthModal && (
           <Auth 
@@ -263,6 +269,37 @@ function App() {
           onLoginClick={handleLoginClick}
           onLogoClick={() => setView('landing')}
           onNavigateToCompany={handleNavigateToCompany}
+          onNavigateToSolution={(solution) => {
+            if (solution === 'Marketing Suite') {
+              setView('marketing-suite')
+            } else if (solution === 'Sales Solutions') {
+              setView('sales-suite')
+            }
+          }}
+          onNavigateToEthics={() => setView('ethics')}
+          onNavigateToTechnology={() => setView('technology')}
+        />
+        {showAuthModal && (
+          <Auth 
+            onAuthComplete={handleAuthComplete}
+            onClose={() => setShowAuthModal(false)}
+          />
+        )}
+      </>
+    )
+  }
+
+  if (view === 'technology') {
+    return (
+      <>
+        <Technology 
+          onLoginClick={handleLoginClick}
+          onLogoClick={() => setView('landing')}
+          onNavigateToCompany={handleNavigateToCompany}
+          onNavigateToProduct={(section) => {
+            setProductSection(section)
+            setView('products')
+          }}
           onNavigateToSolution={(solution) => {
             if (solution === 'Marketing Suite') {
               setView('marketing-suite')
@@ -298,6 +335,7 @@ function App() {
           }
         }}
         onNavigateToEthics={() => setView('ethics')}
+        onNavigateToTechnology={() => setView('technology')}
         onLogoClick={() => setView('landing')}
         onNavigateToCompany={handleNavigateToCompany}
       />

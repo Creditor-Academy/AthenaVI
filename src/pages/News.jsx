@@ -10,7 +10,7 @@ const styles = `
 }
 `
 
-function News({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics }) {
+function News({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology }) {
   return (
     <>
       <style>{styles}</style>
@@ -21,6 +21,7 @@ function News({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolu
           onNavigateToCompany={onNavigateToCompany}
           onNavigateToSolution={onNavigateToSolution}
           onNavigateToEthics={onNavigateToEthics}
+          onNavigateToTechnology={onNavigateToTechnology}
         />
         
         <NewsSection variant="light" />
