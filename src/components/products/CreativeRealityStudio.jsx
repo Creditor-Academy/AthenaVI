@@ -27,7 +27,7 @@ const styles = `
   font-size: 64px;
   font-weight: 500;
   text-align: center;
-  margin: 0 0 40px;
+  margin: 0 0 60px;
 }
 
 .product-section.light .product-section-title {
@@ -38,90 +38,134 @@ const styles = `
   color: #ffffff;
 }
 
-.product-section-description {
-  font-family: 'Arial', sans-serif;
-  font-size: 20px;
-  line-height: 1.8;
-  text-align: center;
-  max-width: 800px;
-  margin: 0 auto 60px;
-}
-
-.product-section.light .product-section-description {
-  color: #1e40af;
-}
-
-.product-section.dark .product-section-description {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.product-features {
+.product-grid-layout {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 32px;
+  grid-template-columns: 1fr 1.5fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 24px;
   margin-top: 60px;
+  min-height: 600px;
 }
 
-.product-section.light .product-feature {
-  background: rgba(30, 64, 175, 0.05);
-  border: 1px solid rgba(30, 64, 175, 0.2);
-}
-
-.product-section.dark .product-feature {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.product-feature {
+.product-grid-card {
   border-radius: 16px;
   padding: 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   transition: all 0.3s ease;
 }
 
-.product-section.light .product-feature:hover {
-  background: rgba(30, 64, 175, 0.1);
-  border-color: rgba(59, 130, 246, 0.4);
-  box-shadow: 0 8px 24px rgba(30, 64, 175, 0.15);
-}
-
-.product-section.dark .product-feature:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-}
-
-.product-feature:hover {
-  transform: translateY(-4px);
-}
-
-.product-feature-title {
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 24px;
-  font-weight: 500;
-  margin: 0 0 16px;
-}
-
-.product-section.light .product-feature-title {
+.product-grid-card.light-beige {
+  background: #f5f5dc;
   color: #1e40af;
 }
 
-.product-section.dark .product-feature-title {
-  color: #ffffff;
+.product-grid-card.light-purple {
+  background: #e6e6fa;
+  color: #1e40af;
 }
 
-.product-feature-description {
+.product-grid-column {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  height: 100%;
+  grid-row: 1 / 3;
+}
+
+.product-grid-column:first-child {
+  grid-column: 1;
+}
+
+.product-grid-column:last-child {
+  grid-column: 3;
+}
+
+.product-grid-card-text {
   font-family: 'Arial', sans-serif;
   font-size: 16px;
   line-height: 1.6;
+  margin: 0 0 16px;
+}
+
+.product-grid-card-stat {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 48px;
+  font-weight: 500;
+  margin: 0 0 8px;
+}
+
+.product-grid-card-description {
+  font-family: 'Arial', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
   margin: 0;
+  opacity: 0.8;
 }
 
-.product-section.light .product-feature-description {
-  color: #1e40af;
+.product-grid-image {
+  border-radius: 16px;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  overflow: hidden;
 }
 
-.product-section.dark .product-feature-description {
-  color: rgba(255, 255, 255, 0.9);
+.product-grid-image-container {
+  border-radius: 16px;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  min-height: 280px;
+}
+
+.product-grid-center {
+  grid-row: 1 / 3;
+  grid-column: 2;
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  min-height: 100%;
+}
+
+.product-grid-center-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-grid-center-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(30, 64, 175, 0.9) 0%, rgba(59, 130, 246, 0.8) 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  text-align: center;
+}
+
+.product-grid-center-stat {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 64px;
+  font-weight: 500;
+  color: #ffffff;
+  margin: 0 0 16px;
+}
+
+.product-grid-center-text {
+  font-family: 'Arial', sans-serif;
+  font-size: 18px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0;
+  max-width: 400px;
 }
 
 .product-cta {
@@ -151,6 +195,28 @@ const styles = `
   box-shadow: 0 6px 16px rgba(251, 191, 36, 0.4);
 }
 
+@media (max-width: 1024px) {
+  .product-grid-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+
+  .product-grid-center {
+    grid-row: auto;
+    grid-column: 1;
+    min-height: 400px;
+  }
+
+  .product-grid-column {
+    grid-row: auto;
+    grid-column: 1;
+  }
+
+  .product-grid-image-container {
+    min-height: 300px;
+  }
+}
+
 @media (max-width: 768px) {
   .product-section {
     padding: 80px 24px;
@@ -160,13 +226,20 @@ const styles = `
     font-size: 42px;
   }
 
-  .product-section-description {
-    font-size: 18px;
+  .product-grid-card {
+    padding: 24px;
   }
 
-  .product-features {
-    grid-template-columns: 1fr;
-    gap: 24px;
+  .product-grid-card-stat {
+    font-size: 36px;
+  }
+
+  .product-grid-center-stat {
+    font-size: 48px;
+  }
+
+  .product-grid-center-text {
+    font-size: 16px;
   }
 }
 `
@@ -178,28 +251,56 @@ function CreativeRealityStudio({ variant = 'light' }) {
       <section id="creative-reality-studio" className={`product-section ${variant}`}>
         <div className="product-section-content">
           <h1 className="product-section-title">Creative Reality™ Studio</h1>
-          <p className="product-section-description">
-            Create professional videos with our advanced video editing tools and AI-powered features. Transform your content into stunning visual experiences.
-          </p>
           
-          <div className="product-features">
-            <div className="product-feature">
-              <h3 className="product-feature-title">Advanced Editing</h3>
-              <p className="product-feature-description">
-                Professional-grade video editing tools that make it easy to create polished, engaging content without the complexity.
-              </p>
+          <div className="product-grid-layout">
+            {/* First Column: Text Card on top, Image below */}
+            <div className="product-grid-column">
+              <div className="product-grid-card light-beige">
+                <p className="product-grid-card-text">
+                  Our advanced AI-powered platform ensures you deliver engaging, high-quality virtual instruction that meets the highest educational standards.
+                </p>
+                <div className="product-grid-card-stat">99.8%</div>
+                <p className="product-grid-card-description">Student Satisfaction</p>
+              </div>
+              <div className="product-grid-image-container">
+                <img 
+                  src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&h=400&fit=crop" 
+                  alt="Virtual classroom instruction" 
+                  className="product-grid-image"
+                />
+              </div>
             </div>
-            <div className="product-feature">
-              <h3 className="product-feature-title">AI-Powered Features</h3>
-              <p className="product-feature-description">
-                Leverage cutting-edge AI to enhance your videos, automate editing tasks, and create stunning visual effects effortlessly.
-              </p>
+
+            {/* Second Column: Full image with overlay text (spans 2 rows) - CENTER */}
+            <div className="product-grid-center">
+              <img 
+                src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&h=800&fit=crop" 
+                alt="Creative studio professional" 
+                className="product-grid-center-image"
+              />
+              <div className="product-grid-center-overlay">
+                <div className="product-grid-center-stat">98%</div>
+                <p className="product-grid-center-text">
+                  Completion Rate. Students consistently complete courses with our engaging virtual instruction platform.
+                </p>
+              </div>
             </div>
-            <div className="product-feature">
-              <h3 className="product-feature-title">Creative Templates</h3>
-              <p className="product-feature-description">
-                Access a library of professionally designed templates to jumpstart your creative projects and maintain brand consistency.
-              </p>
+
+            {/* Third Column: Image on top, Text Card below */}
+            <div className="product-grid-column">
+              <div className="product-grid-image-container">
+                <img 
+                  src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&h=400&fit=crop" 
+                  alt="Virtual instructor platform" 
+                  className="product-grid-image"
+                />
+              </div>
+              <div className="product-grid-card light-purple">
+                <div className="product-grid-card-stat">10K+</div>
+                <p className="product-grid-card-description">
+                  Active Learners. Empower your students with interactive virtual instruction and personalized learning experiences.
+                </p>
+              </div>
             </div>
           </div>
 

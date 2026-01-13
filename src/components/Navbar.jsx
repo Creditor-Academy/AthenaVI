@@ -638,7 +638,7 @@ const styles = `
 }
 `
 
-function Navbar({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onNavigateToEthics, onLogoClick }) {
+function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics }) {
   const [activeDropdown, setActiveDropdown] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileDropdowns, setMobileDropdowns] = useState({})
@@ -667,15 +667,19 @@ function Navbar({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onNav
   const companyItems = [
     'About Us',
     'Blog',
-    'Careers',
-    'Leadership',
-    'Partners',
     'News',
     'Resources',
-    'Trust Center',
     'Privacy Policy',
     'Help Center'
   ]
+
+  const handleCompanyItemClick = (item) => {
+    if (onNavigateToCompany) {
+      onNavigateToCompany(item)
+    }
+    setActiveDropdown(null)
+    setMobileMenuOpen(false)
+  }
 
   // Handle desktop dropdown clicks outside
   useEffect(() => {
@@ -1059,13 +1063,11 @@ function Navbar({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onNav
                   className="dropdown-item"
                   onClick={(e) => {
                     e.preventDefault()
-                    // Clear timeout when item is clicked
                     if (clickTimeoutRef.current) {
                       clearTimeout(clickTimeoutRef.current)
                       clickTimeoutRef.current = null
                     }
-                    clickedDropdownRef.current = null
-                    setActiveDropdown(null)
+                    handleCompanyItemClick(item)
                   }}
                 >
                   {item}
@@ -1244,7 +1246,10 @@ function Navbar({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onNav
                 key={index} 
                 href="#" 
                 className="mobile-dropdown-item"
-                onClick={handleMobileActionClick}
+                onClick={(e) => {
+                  e.preventDefault()
+                  handleCompanyItemClick(item)
+                }}
               >
                 {item}
               </a>

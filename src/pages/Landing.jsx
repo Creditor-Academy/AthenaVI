@@ -60,7 +60,7 @@ const styles = `
 }
 `
 
-function Landing({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onNavigateToEthics, onLogoClick }) {
+function Landing({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics }) {
   return (
     <>
       <style>{styles}</style>
@@ -71,12 +71,13 @@ function Landing({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onNa
           onNavigateToSolution={onNavigateToSolution}
           onNavigateToEthics={onNavigateToEthics}
           onLogoClick={onLogoClick}
+          onNavigateToCompany={onNavigateToCompany}
         />
         <Hero />
         <VideoSection />
         <ProductsSection />
         <ReadySection />
-        <Footer />
+        <Footer onNavigateToCompany={onNavigateToCompany} />
       </div>
     </>
   )
