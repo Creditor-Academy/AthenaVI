@@ -1,3 +1,5 @@
+import { MdArrowDownward, MdTrendingUp, MdPeople, MdLanguage, MdVideoLibrary } from 'react-icons/md'
+
 const styles = `
 .hero-section {
   min-height: 90vh;
@@ -18,7 +20,7 @@ const styles = `
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url('https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1920&h=1080&fit=crop&q=80');
+  background-image: url('https://images.unsplash.com/photo-1552664730-d307ca884978?w=1920&h=1080&fit=crop&q=80');
   background-size: cover;
   background-position: center;
   opacity: 0.15;
@@ -61,6 +63,7 @@ const styles = `
   line-height: 1.2;
   margin: 0;
   color: #ffffff;
+  letter-spacing: -0.5px;
 }
 
 .hero-description {
@@ -69,6 +72,33 @@ const styles = `
   line-height: 1.7;
   margin: 0;
   color: rgba(255, 255, 255, 0.9);
+}
+
+.hero-stats {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.hero-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hero-stat-value {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 32px;
+  font-weight: 500;
+  color: #fbbf24;
+}
+
+.hero-stat-label {
+  font-family: 'Arial', sans-serif;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .primary-cta {
@@ -164,71 +194,38 @@ const styles = `
   right: 0;
   bottom: 0;
   pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.speech-bubble {
-  position: absolute;
-  background: rgba(255, 255, 255, 0.95);
-  padding: 8px 12px;
+.feature-icon {
+  width: 60px;
+  height: 60px;
+  background: rgba(251, 191, 36, 0.95);
   border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: #000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.sales-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(251, 191, 36, 0.95);
+  color: #000;
+  padding: 6px 12px;
+  border-radius: 20px;
   font-family: 'Arial', sans-serif;
-  font-size: 12px;
-  color: #000000;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.speech-bubble::after {
-  content: '';
-  position: absolute;
-  bottom: -8px;
-  left: 20px;
-  width: 0;
-  height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-top: 8px solid rgba(255, 255, 255, 0.95);
-}
-
-.flag-icons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  position: absolute;
-  top: 10px;
-  right: 10px;
-}
-
-.flag-icon {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.envelope-icons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  position: absolute;
-  top: 10px;
-  right: 10px;
-}
-
-.envelope-icon {
-  width: 32px;
-  height: 32px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 @media (max-width: 1024px) {
@@ -259,6 +256,14 @@ const styles = `
     font-size: 16px;
   }
 
+  .hero-stats {
+    gap: 24px;
+  }
+
+  .hero-stat-value {
+    font-size: 28px;
+  }
+
   .hero-right {
     max-width: 400px;
   }
@@ -281,6 +286,14 @@ const styles = `
     font-size: 15px;
   }
 
+  .hero-stats {
+    gap: 20px;
+  }
+
+  .hero-stat-value {
+    font-size: 24px;
+  }
+
   .hero-right {
     max-width: 350px;
   }
@@ -291,44 +304,45 @@ const styles = `
 }
 `
 
-import { MdArrowDownward } from 'react-icons/md'
-
 function HeroSection() {
   const features = [
     {
-      label: 'Interactive Agents',
-      image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=400&h=300&fit=crop&q=80',
+      label: 'Personalized Outreach',
+      image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=300&fit=crop&q=80',
       overlay: (
         <div className="feature-overlay">
-          <div className="speech-bubble" style={{ top: '20px', left: '20px' }}>
-            Hello there!
-          </div>
-          <div className="speech-bubble" style={{ top: '60px', right: '20px' }}>
-            How can we help?
+          <div className="feature-icon">
+            <MdPeople />
           </div>
         </div>
       )
     },
     {
-      label: 'Integrations',
-      image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=400&h=300&fit=crop&q=80'
+      label: 'Sales Videos',
+      image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=400&h=300&fit=crop&q=80',
+      badge: 'AI Powered'
     },
     {
-      label: 'Video Translate',
+      label: 'Multi-Language',
+      image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=400&h=300&fit=crop&q=80',
+      overlay: (
+        <div className="feature-overlay">
+          <div className="feature-icon">
+            <MdLanguage />
+          </div>
+        </div>
+      )
+    },
+    {
+      label: 'Video Library',
       image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=300&fit=crop&q=80',
       overlay: (
         <div className="feature-overlay">
-          <div className="flag-icons">
-            {['🇪🇬', '🇮🇳', '🇷🇺', '🇪🇸', '🇫🇷', '🇩🇪', '🇨🇳', '🇯🇵'].map((flag, i) => (
-              <div key={i} className="flag-icon">{flag}</div>
-            ))}
+          <div className="feature-icon">
+            <MdVideoLibrary />
           </div>
         </div>
       )
-    },
-    {
-      label: 'Premium +',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop&q=80'
     }
   ]
 
@@ -338,10 +352,24 @@ function HeroSection() {
       <section className="hero-section">
         <div className="hero-content">
           <div className="hero-left">
-            <h1 className="hero-title">Personalized AI Marketing Suite</h1>
+            <h1 className="hero-title">Transform Your Sales Strategy with AI</h1>
             <p className="hero-description">
-              Elevate every phase of your marketing funnel with our innovative suite of AI-powered avatars, designed to boost engagement and drive your business growth.
+              In today's competitive sales landscape, grabbing your prospects' attention has never been more important. Athena VI focuses on harnessing state-of-the-art artificial intelligence to produce customized, compelling video materials that enable sales teams to achieve remarkable results across all their interactions.
             </p>
+            <div className="hero-stats">
+              <div className="hero-stat">
+                <div className="hero-stat-value">82%</div>
+                <div className="hero-stat-label">Higher Engagement</div>
+              </div>
+              <div className="hero-stat">
+                <div className="hero-stat-value">3x</div>
+                <div className="hero-stat-label">Faster Response</div>
+              </div>
+              <div className="hero-stat">
+                <div className="hero-stat-value">120+</div>
+                <div className="hero-stat-label">Languages</div>
+              </div>
+            </div>
             <a href="#" className="primary-cta">
               CONTACT SALES
               <MdArrowDownward style={{ transform: 'rotate(-45deg)' }} />
@@ -358,6 +386,9 @@ function HeroSection() {
                     className="feature-panel-image"
                     loading="lazy"
                   />
+                  {feature.badge && (
+                    <div className="sales-badge">{feature.badge}</div>
+                  )}
                   {feature.overlay}
                 </div>
               ))}
@@ -370,4 +401,3 @@ function HeroSection() {
 }
 
 export default HeroSection
-

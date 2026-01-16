@@ -1,3 +1,7 @@
+import { FaMicrophoneAlt, FaLanguage, FaRegSmileBeam } from 'react-icons/fa'
+import VideosectionImage from '../../assets/Videosection.PNG'
+import ProductVideo from '../../assets/Product.mp4'
+
 const styles = `
 .product-section {
   min-height: 100vh;
@@ -27,15 +31,7 @@ const styles = `
   font-size: 64px;
   font-weight: 500;
   text-align: center;
-  margin: 0 0 40px;
-}
-
-.product-section.light .product-section-title {
-  color: #1e40af;
-}
-
-.product-section.dark .product-section-title {
-  color: #ffffff;
+  margin-bottom: 32px;
 }
 
 .product-section-description {
@@ -44,111 +40,157 @@ const styles = `
   line-height: 1.8;
   text-align: center;
   max-width: 800px;
-  margin: 0 auto 60px;
+  margin: 0 auto 80px;
 }
 
-.product-section.light .product-section-description {
-  color: #1e40af;
-}
-
-.product-section.dark .product-section-description {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.product-features {
+.product-grid-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 32px;
-  margin-top: 60px;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
 }
 
-.product-section.light .product-feature {
-  background: rgba(30, 64, 175, 0.05);
-  border: 1px solid rgba(30, 64, 175, 0.2);
+/* MOCKUP CONTAINER */
+.product-mockup-container {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  overflow: visible;
 }
 
-.product-section.dark .product-feature {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.product-image-wrapper {
+  position: relative;
+  width: 100%;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
 }
 
-.product-feature {
-  border-radius: 16px;
-  padding: 32px;
-  transition: all 0.3s ease;
+.product-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 20px;
 }
 
-.product-section.light .product-feature:hover {
-  background: rgba(30, 64, 175, 0.1);
-  border-color: rgba(59, 130, 246, 0.4);
-  box-shadow: 0 8px 24px rgba(30, 64, 175, 0.15);
+/* BLACK OVERLAY ON IMAGE */
+.product-image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 20px;
+  pointer-events: none;
+  z-index: 1;
 }
 
-.product-section.dark .product-feature:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+/* VIDEO CONTAINER - SHIFTED OUTSIDE */
+.product-video-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 85%;
+  height: 45%;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  /* Shift more to the right to extend outside the image container */
+  transform: translate(calc(-50% + 80px), calc(-50% - 8px));
+  z-index: 2;
 }
 
-.product-feature:hover {
-  transform: translateY(-4px);
+.product-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
 }
 
-.product-feature-title {
-  font-family: 'Georgia', 'Times New Roman', serif;
+/* RIGHT SIDE – FEATURE LIST */
+.feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+.feature-item {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  padding-bottom: 28px;
+  border-bottom: 1px solid rgba(255,255,255,0.25);
+}
+
+.product-section.light .feature-item {
+  border-color: rgba(30,64,175,0.15);
+}
+
+.feature-icon {
+  font-size: 28px;
+  margin-top: 4px;
+  color: #fbbf24;
+  flex-shrink: 0;
+}
+
+.product-section.light .feature-icon {
+  color: #f59e0b;
+}
+
+.feature-text h3 {
+  font-family: 'Georgia', serif;
   font-size: 24px;
   font-weight: 500;
-  margin: 0 0 16px;
+  margin-bottom: 8px;
 }
 
-.product-section.light .product-feature-title {
-  color: #1e40af;
-}
-
-.product-section.dark .product-feature-title {
-  color: #ffffff;
-}
-
-.product-feature-description {
+.feature-text p {
   font-family: 'Arial', sans-serif;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.6;
-  margin: 0;
-}
-
-.product-section.light .product-feature-description {
-  color: #1e40af;
-}
-
-.product-section.dark .product-feature-description {
-  color: rgba(255, 255, 255, 0.9);
+  opacity: 0.95;
 }
 
 .product-cta {
   text-align: center;
-  margin-top: 60px;
+  margin-top: 80px;
 }
 
 .product-cta-button {
-  font-family: 'Arial', sans-serif;
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
   border: none;
   color: #000;
-  padding: 16px 32px;
-  border-radius: 8px;
+  padding: 16px 36px;
+  border-radius: 10px;
   font-size: 16px;
-  font-weight: 400;
   cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+  transition: all 0.25s ease;
+  box-shadow: 0 6px 16px rgba(251,191,36,0.35);
 }
 
 .product-cta-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(251, 191, 36, 0.4);
+  box-shadow: 0 10px 24px rgba(251,191,36,0.45);
+}
+
+@media (max-width: 968px) {
+  .product-grid-container {
+    grid-template-columns: 1fr;
+    gap: 60px;
+  }
+
+  .product-mockup-container {
+    max-width: 100%;
+  }
+
+  .product-video-container {
+    width: 80%;
+    height: 42%;
+    transform: translate(calc(-50% + 50px), calc(-50% - 5px));
+  }
 }
 
 @media (max-width: 768px) {
@@ -160,46 +202,97 @@ const styles = `
     font-size: 42px;
   }
 
-  .product-section-description {
-    font-size: 18px;
+  .product-mockup-container {
+    max-width: 100%;
   }
 
-  .product-features {
-    grid-template-columns: 1fr;
-    gap: 24px;
+  .product-video-container {
+    width: 75%;
+    height: 40%;
+    transform: translate(calc(-50% + 35px), calc(-50% - 3px));
+    border-radius: 10px;
+  }
+
+  .product-video {
+    border-radius: 10px;
   }
 }
 `
 
-function VideoTranslate({ variant = 'light' }) {
+function VideoTranslate({ variant = 'dark' }) {
   return (
     <>
       <style>{styles}</style>
-      <section id="video-translate" className={`product-section ${variant}`}>
+
+      <section className={`product-section ${variant}`}>
         <div className="product-section-content">
+
           <h1 className="product-section-title">Video Translate</h1>
           <p className="product-section-description">
-            Automatically translate your videos into multiple languages with perfect lip-sync and natural voice. Break language barriers and reach global audiences effortlessly.
+            Automatically translate your videos into multiple languages with perfect lip-sync and natural voice. Reach global audiences without losing authenticity.
           </p>
-          
-          <div className="product-features">
-            <div className="product-feature">
-              <h3 className="product-feature-title">Perfect Lip-Sync</h3>
-              <p className="product-feature-description">
-                Advanced AI technology ensures that translated speech perfectly matches lip movements for a natural, authentic appearance.
-              </p>
+
+          <div className="product-grid-container">
+
+            {/* LEFT - MOCKUP WITH VIDEO OVERLAY */}
+            <div className="product-mockup-container">
+              <div className="product-image-wrapper">
+                <img
+                  src={VideosectionImage}
+                  alt="Video Translation Mockup"
+                  className="product-image"
+                />
+                <div className="product-image-overlay"></div>
+              </div>
+              <div className="product-video-container">
+                <video
+                  className="product-video"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                >
+                  <source src={ProductVideo} type="video/mp4" />
+                </video>
+              </div>
             </div>
-            <div className="product-feature">
-              <h3 className="product-feature-title">Natural Voice</h3>
-              <p className="product-feature-description">
-                Preserve the original speaker's voice characteristics and emotional tone across all translated versions.
-              </p>
-            </div>
-            <div className="product-feature">
-              <h3 className="product-feature-title">Multiple Languages</h3>
-              <p className="product-feature-description">
-                Translate your content into dozens of languages simultaneously, expanding your reach to global markets.
-              </p>
+
+            {/* RIGHT – CLEAN VERTICAL LIST */}
+            <div className="feature-list">
+
+              <div className="feature-item">
+                <FaRegSmileBeam className="feature-icon" />
+                <div className="feature-text">
+                  <h3>Perfect Lip-Sync</h3>
+                  <p>
+                    AI precisely aligns translated speech with mouth movements,
+                    making videos feel naturally recorded in every language.
+                  </p>
+                </div>
+              </div>
+
+              <div className="feature-item">
+                <FaMicrophoneAlt className="feature-icon" />
+                <div className="feature-text">
+                  <h3>Natural Voice</h3>
+                  <p>
+                    Retains the speaker’s tone, emotion, and personality so
+                    translations don’t sound robotic or flat.
+                  </p>
+                </div>
+              </div>
+
+              <div className="feature-item">
+                <FaLanguage className="feature-icon" />
+                <div className="feature-text">
+                  <h3>Multiple Languages</h3>
+                  <p>
+                    Translate once and publish everywhere — reach global markets
+                    simultaneously without extra production work.
+                  </p>
+                </div>
+              </div>
+
             </div>
           </div>
 
@@ -208,6 +301,7 @@ function VideoTranslate({ variant = 'light' }) {
               TRY TRANSLATE
             </button>
           </div>
+
         </div>
       </section>
     </>
@@ -215,4 +309,3 @@ function VideoTranslate({ variant = 'light' }) {
 }
 
 export default VideoTranslate
-
