@@ -446,6 +446,175 @@ const styles = `
 .ctx-item:hover {
   background: #f5f7fb;
 }
+
+.credit-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.credit-modal {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 32px;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.3),
+    0 8px 24px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.credit-modal-header {
+  margin-bottom: 24px;
+}
+
+.credit-modal-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 8px 0;
+}
+
+.credit-modal-subtitle {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+}
+
+.credit-info {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.credit-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.credit-info-row:last-child {
+  border-bottom: none;
+  font-weight: 700;
+  font-size: 16px;
+  color: #0f172a;
+}
+
+.credit-info-label {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.credit-info-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.credit-balance {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  margin-bottom: 24px;
+}
+
+.credit-balance-label {
+  font-size: 13px;
+  color: #1e40af;
+  font-weight: 600;
+}
+
+.credit-balance-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1e40af;
+}
+
+.credit-modal-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.credit-modal-btn {
+  flex: 1;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.credit-modal-btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #5cc6ff 100%);
+  color: #ffffff;
+  box-shadow: 
+    0 4px 12px rgba(59, 130, 246, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.credit-modal-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 6px 20px rgba(59, 130, 246, 0.4),
+    0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.credit-modal-btn-secondary {
+  background: #ffffff;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.credit-modal-btn-secondary:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.credit-modal-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
 `
 
 function Create({ onBack }) {
@@ -501,6 +670,8 @@ function Create({ onBack }) {
     startTextY: 0,
   })
   const [cropMode, setCropMode] = useState(false)
+  const [showCreditModal, setShowCreditModal] = useState(false)
+  const [userCredits, setUserCredits] = useState(1250)
   const canvasRef = useRef(null)
 
   const activeScene = scenes.find((s) => s.id === activeId) || scenes[0]
@@ -788,6 +959,35 @@ function Create({ onBack }) {
     return () => window.removeEventListener('click', closeMenu)
   }, [])
 
+  const calculateVideoCost = () => {
+    // Calculate cost based on number of scenes and duration
+    const baseCost = 25
+    const sceneCost = scenes.length * 10
+    const estimatedDuration = scenes.reduce((total, scene) => {
+      const [min, sec] = scene.duration.split(':').map(Number)
+      return total + min * 60 + sec
+    }, 0)
+    const durationCost = Math.ceil(estimatedDuration / 30) * 5 // 5 credits per 30 seconds
+    return baseCost + sceneCost + durationCost
+  }
+
+  const handleGenerate = () => {
+    const cost = calculateVideoCost()
+    if (userCredits < cost) {
+      alert(`Insufficient credits! You need ${cost} credits but only have ${userCredits}. Please purchase more credits.`)
+      return
+    }
+    setShowCreditModal(true)
+  }
+
+  const confirmGenerate = () => {
+    const cost = calculateVideoCost()
+    setUserCredits((prev) => prev - cost)
+    setShowCreditModal(false)
+    // Here you would actually trigger the video generation
+    alert(`Video generation started! ${cost} credits deducted. Remaining: ${userCredits - cost}`)
+  }
+
   return (
     <>
       <style>{styles}</style>
@@ -829,7 +1029,7 @@ function Create({ onBack }) {
             <button className="icon-btn" title="Preview">
               <MdPlayCircleOutline /> Preview
             </button>
-            <button className="primary-btn">Generate</button>
+            <button className="primary-btn" onClick={handleGenerate}>Generate</button>
           </div>
         </div>
 
@@ -1241,6 +1441,77 @@ function Create({ onBack }) {
             >
               ↺ Replace layout
             </button>
+          </div>
+        )}
+
+        {showCreditModal && (
+          <div className="credit-modal-overlay" onClick={() => setShowCreditModal(false)}>
+            <div className="credit-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="credit-modal-header">
+                <h2 className="credit-modal-title">Confirm Video Generation</h2>
+                <p className="credit-modal-subtitle">Review the credit cost before generating your video</p>
+              </div>
+
+              <div className="credit-balance">
+                <span className="credit-balance-label">Available Credits:</span>
+                <span className="credit-balance-value">{userCredits.toLocaleString()}</span>
+              </div>
+
+              <div className="credit-info">
+                <div className="credit-info-row">
+                  <span className="credit-info-label">Base Cost</span>
+                  <span className="credit-info-value">25 credits</span>
+                </div>
+                <div className="credit-info-row">
+                  <span className="credit-info-label">Scenes ({scenes.length} × 10)</span>
+                  <span className="credit-info-value">{scenes.length * 10} credits</span>
+                </div>
+                <div className="credit-info-row">
+                  <span className="credit-info-label">Estimated Duration</span>
+                  <span className="credit-info-value">
+                    {scenes.reduce((total, scene) => {
+                      const [min, sec] = scene.duration.split(':').map(Number)
+                      return total + min * 60 + sec
+                    }, 0)}s
+                  </span>
+                </div>
+                <div className="credit-info-row">
+                  <span className="credit-info-label">Total Cost</span>
+                  <span className="credit-info-value">{calculateVideoCost()} credits</span>
+                </div>
+              </div>
+
+              {userCredits < calculateVideoCost() && (
+                <div style={{
+                  padding: '12px',
+                  background: '#fef2f2',
+                  border: '1px solid #fecaca',
+                  borderRadius: '10px',
+                  marginBottom: '20px',
+                  color: '#991b1b',
+                  fontSize: '14px',
+                  fontWeight: '600'
+                }}>
+                  ⚠️ Insufficient credits! Please purchase more credits to generate this video.
+                </div>
+              )}
+
+              <div className="credit-modal-actions">
+                <button
+                  className="credit-modal-btn credit-modal-btn-secondary"
+                  onClick={() => setShowCreditModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="credit-modal-btn credit-modal-btn-primary"
+                  onClick={confirmGenerate}
+                  disabled={userCredits < calculateVideoCost()}
+                >
+                  Generate Video ({calculateVideoCost()} credits)
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

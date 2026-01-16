@@ -21,6 +21,7 @@ import {
   MdTrendingUp,
   MdPlayArrow,
   MdMoreVert,
+  MdAccountBalanceWallet,
 } from 'react-icons/md'
 import Videos from './Videos.jsx'
 import Trash from './Trash.jsx'
@@ -31,6 +32,7 @@ import SharedWithMe from './SharedWithMe.jsx'
 import Workspace from './Workspace.jsx'
 import Profile from './Profile.jsx'
 import BrandKits from './BrandKits.jsx'
+import Credits from './Credits.jsx'
 import VoiceCreatePanel from '../components/VoiceCreatePanel.jsx'
 
 const styles = `
@@ -141,6 +143,33 @@ const styles = `
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.credit-display-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.credit-display-btn:hover {
+  background: #f8fafc;
+  border-color: #3b82f6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.credit-display-btn svg {
+  color: #3b82f6;
 }
 
 .create-btn::before {
@@ -1393,6 +1422,15 @@ function Dashboard({ onLogout, onCreate }) {
           </div>
           <div className="top-actions">
             <input className="search" placeholder="Search" />
+            <button 
+              className="credit-display-btn" 
+              type="button" 
+              onClick={() => setSection('credits')}
+              title="View credits"
+            >
+              <MdAccountBalanceWallet size={18} />
+              <span>1,250</span>
+            </button>
             <button className="create-btn" type="button" onClick={onCreate}>
               Create
             </button>
@@ -1478,12 +1516,19 @@ function Dashboard({ onLogout, onCreate }) {
               >
                 <MdPerson /> Avatars
               </div>
-                <div
-                  className={`nav-item ${section === 'voices' ? 'active' : ''}`}
-                  role="button"
-                  onClick={() => setSection('voices')}
-                >
+              <div
+                className={`nav-item ${section === 'voices' ? 'active' : ''}`}
+                role="button"
+                onClick={() => setSection('voices')}
+              >
                 <MdRecordVoiceOver /> Voices
+              </div>
+              <div
+                className={`nav-item ${section === 'credits' ? 'active' : ''}`}
+                role="button"
+                onClick={() => setSection('credits')}
+              >
+                <MdAccountBalanceWallet /> Credits
               </div>
             </div>
           </aside>
@@ -1531,6 +1576,10 @@ function Dashboard({ onLogout, onCreate }) {
 
               {section === 'brandkits' && (
                 <BrandKits />
+              )}
+
+              {section === 'credits' && (
+                <Credits onBack={() => setSection('home')} />
               )}
           </main>
         </div>
