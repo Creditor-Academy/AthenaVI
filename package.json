@@ -10,10 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@remotion/player": "^4.0.407",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-icons": "^5.5.0",
-    "react-router-dom": "^7.11.0"
+    "react-router-dom": "^7.11.0",
+    "remotion": "^4.0.407"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

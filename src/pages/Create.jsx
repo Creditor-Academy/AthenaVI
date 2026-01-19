@@ -1,11 +1,13 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
+import { Player } from '@remotion/player'
+import { useCurrentFrame } from 'remotion'
 import {
   MdUndo,
   MdRedo,
   MdPlayArrow,
-  MdCloudUpload,
-  MdMicNone,
+  MdPause,
   MdStop,
+  MdCloudUpload,
   MdPerson,
   MdTextFields,
   MdCropFree,
@@ -13,1502 +15,1854 @@ import {
   MdCategory,
   MdMic,
   MdPlayCircleOutline,
+  MdZoomIn,
+  MdZoomOut,
+  MdFullscreen,
+  MdSettings,
+  MdSave,
+  MdContentCut,
+  MdContentCopy,
+  MdContentPaste,
+  MdDelete,
+  MdAdd,
+  MdVideoLibrary,
+  MdMusicNote,
+  MdPalette,
+  MdTransform,
+  MdLayers,
+  MdTimer,
+  MdAspectRatio,
+  MdClose,
 } from 'react-icons/md'
+import avatar1 from '../assets/avatar1.png'
+import avatar2 from '../assets/avatar2.png'
+import avatar3 from '../assets/avatar3.png'
+import avatar4 from '../assets/avatar4.png'
+import avatar5 from '../assets/avatar5.png'
+
+// Predefined avatars
+const predefinedAvatars = [
+  { id: 'avatar1', name: 'Avatar 1', image: avatar1 },
+  { id: 'avatar2', name: 'Avatar 2', image: avatar2 },
+  { id: 'avatar3', name: 'Avatar 3', image: avatar3 },
+  { id: 'avatar4', name: 'Avatar 4', image: avatar4 },
+  { id: 'avatar5', name: 'Avatar 5', image: avatar5 },
+]
 
 const avatarUrl =
   'https://media.istockphoto.com/id/1480023591/video/creating-a-female-video-game-character.jpg?s=640x640&k=20&c=S1LW6oZZDQYgsqp4GRL0bj9wE1oRIaBfQSV-UQXv2II='
 const localAvatar = '/public/Avatar.png'
 
 const styles = `
-.create-shell {
+.video-editor-shell {
   min-height: 100vh;
   height: 100vh;
-  background: #f7f9fc;
+  background: #0f0f0f;
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: 60px 1fr 200px;
   overflow: hidden;
   box-sizing: border-box;
 }
 
-.create-topbar {
+.editor-topbar {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
-  background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.07);
-  border-radius: 0 0 12px 12px;
+  padding: 8px 16px;
+  background: #1a1a1a;
+  border-bottom: 1px solid #333;
 }
 
 .top-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
-.doc-title {
+.project-title {
   border: none;
-  font-weight: 800;
-  font-size: 16px;
+  font-weight: 700;
+  font-size: 14px;
   outline: none;
   background: transparent;
+  color: #fff;
   min-width: 140px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: #2a2a2a;
 }
 
 .top-center {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
+  justify-content: center;
 }
 
 .icon-btn {
-  border: 1px solid #e5e7eb;
-  background: linear-gradient(145deg, #ffffff, #f6f8fb);
-  border-radius: 14px;
-  padding: 10px 14px;
+  border: 1px solid #333;
+  background: #2a2a2a;
+  border-radius: 8px;
+  padding: 8px 12px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   cursor: pointer;
-  box-shadow:
-    0 6px 14px rgba(15, 23, 42, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
-  min-width: 44px;
+  transition: all 0.2s ease;
+  min-width: 40px;
   justify-content: center;
-  font-size: 16px;
+  font-size: 14px;
+  color: #fff;
 }
 
 .icon-btn:hover {
-  transform: translateY(-1px);
-  box-shadow:
-    0 8px 16px rgba(15, 23, 42, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  background: #3a3a3a;
+  border-color: #555;
 }
+
+.icon-btn.active {
+  background: #0066cc;
+  border-color: #0066cc;
+}
+
 .top-right {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
 }
 
 .primary-btn {
   border: none;
-  border-radius: 12px;
-  padding: 10px 16px;
-  font-weight: 800;
-  letter-spacing: 0.01em;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 700;
   cursor: pointer;
-  background: linear-gradient(135deg, #2d6cf6 0%, #5cc6ff 100%);
+  background: linear-gradient(135deg, #0066cc 0%, #004499 100%);
   color: #ffffff;
-  box-shadow:
-    0 10px 22px rgba(15, 23, 42, 0.14),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition: all 0.2s ease;
 }
 
 .primary-btn:hover {
-  transform: translateY(-1px);
-  box-shadow:
-    0 12px 26px rgba(15, 23, 42, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  background: linear-gradient(135deg, #0052a3 0%, #003366 100%);
 }
 
-.creator-wrap {
+.editor-main {
   display: grid;
-  grid-template-columns: 240px 1fr 300px;
-  gap: 16px;
-  align-items: start;
-  padding: 12px 16px 16px;
-  max-height: calc(100vh - 72px);
+  grid-template-columns: 280px 1fr 320px;
+  gap: 0;
+  background: #1a1a1a;
   overflow: hidden;
-  box-sizing: border-box;
+  position: relative;
+  height: 100%;
 }
 
-.creator-left {
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 12px;
-  display: grid;
-  gap: 10px;
-  max-height: calc(100vh - 140px);
-  overflow-y: auto;
-}
-
-.scene-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 8px;
-  background: #ffffff;
-  display: grid;
-  gap: 6px;
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
-  cursor: pointer;
-}
-
-.scene-card.active {
-  border-color: #2d6cf6;
-  box-shadow: 0 8px 18px rgba(45, 108, 246, 0.2);
-}
-
-.scene-thumb {
-  background-size: cover;
-  background-position: center;
-  border-radius: 8px;
-  height: 90px;
-}
-
-.creator-main {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 14px;
-  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06);
-  display: grid;
-  gap: 10px;
-  min-width: 0;
+.editor-main > * {
   overflow: hidden;
+  height: 100%;
 }
 
-.canvas {
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  min-height: 420px;
-  background: #ffffff;
-  display: grid;
-  place-items: center;
+.media-library {
+  background: #1e1e1e;
+  border-right: 1px solid #333;
   padding: 16px;
-  position: relative;
-  overflow: hidden;
-}
-
-.canvas img {
-  max-height: 320px;
-}
-
-.hero-layout {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  background: #ffffff;
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  align-items: center;
-  padding: 24px;
-}
-
-.text-wrapper {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.text-move {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: #2d6cf6;
-  color: #ffffff;
-  display: grid;
-  place-items: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  cursor: move;
-}
-
-.hero-title {
-  font-size: 34px;
-  font-weight: 800;
-  margin: 0;
-  color: #0f172a;
-  background: transparent;
-  border: none;
-  padding: 6px 10px;
-  min-width: 200px;
-}
-
-.hero-subtitle {
-  margin: 0;
-  color: #475467;
-  font-size: 15px;
-  background: transparent;
-  border: none;
-  padding: 6px 10px;
-  min-width: 200px;
-}
-
-.hero-avatar {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  max-height: 320px;
-  object-fit: contain;
-}
-
-.avatar-wrapper {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  cursor: move;
-  user-select: none;
-}
-
-.resize-handle {
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  background: #ffffff;
-  border: 1px solid #2d6cf6;
-  border-radius: 3px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-}
-
-.handle-tl { top: -10px; left: -10px; cursor: nwse-resize; }
-.handle-tr { top: -10px; right: -10px; cursor: nesw-resize; }
-.handle-bl { bottom: -10px; left: -10px; cursor: nesw-resize; }
-.handle-br { bottom: -10px; right: -10px; cursor: nwse-resize; }
-.handle-top { top: -10px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
-.handle-bottom { bottom: -10px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
-.handle-left { left: -10px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
-.handle-right { right: -10px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
-
-.drag-handle {
-  position: absolute;
-  top: -28px;
-  left: 50%;
-  transform: translate(-50%, 0);
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: #2d6cf6;
-  color: #fff;
-  font-size: 12px;
-  display: grid;
-  place-items: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  cursor: move;
-}
-
-.crop-handle {
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  background: #2d6cf6;
-  border-radius: 50%;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-}
-
-.crop-top { top: -6px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
-.crop-bottom { bottom: -6px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
-.crop-left { left: -6px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
-.crop-right { right: -6px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
-}
-
-.split-layout {
-  width: 100%;
-  height: 100%;
-  display: grid;
-  grid-template-rows: auto 220px;
-  background: #ffffff;
-}
-
-.split-top {
-  padding: 22px 24px;
-  display: grid;
-  gap: 8px;
-}
-
-.split-title {
-  font-size: 30px;
-  font-weight: 800;
-  margin: 0;
-}
-
-.split-subtitle {
-  margin: 0;
-  color: #475467;
-}
-
-.split-bottom {
-  background: #f1f3f5;
-  border-top: 1px solid #e5e7eb;
-  display: grid;
-  place-items: center;
-  position: relative;
-}
-
-.split-avatar {
-  max-height: 180px;
-}
-
-.timeline {
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 10px 12px;
-  background: #f8fafc;
-  min-height: 130px;
-  display: grid;
-  gap: 8px;
-  overflow: hidden;
-}
-
-.script-input {
-  width: 100%;
-  min-height: 80px;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 10px;
-  font-size: 14px;
-  resize: vertical;
-}
-
-.creator-right {
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 12px;
+  overflow-y: auto;
   display: grid;
   gap: 12px;
-  max-height: calc(100vh - 140px);
-  overflow-y: auto;
 }
 
-.panel {
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 10px;
-  background: #ffffff;
+.library-section {
   display: grid;
-  gap: 6px;
+  gap: 8px;
 }
 
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
+.section-title {
+  color: #fff;
   font-weight: 600;
-  color: #0f172a;
+  font-size: 12px;
+  text-transform: uppercase;
+  margin: 0;
+  padding: 8px 0;
+  border-bottom: 1px solid #333;
+}
+
+.upload-area {
+  border: 2px dashed #444;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  color: #888;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
 }
 
-.pill:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
+.upload-area:hover {
+  border-color: #0066cc;
+  color: #0066cc;
 }
 
-.transport {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 8px 10px;
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
 }
 
-.transport .time {
-  font-weight: 700;
-  color: #0f172a;
+.media-item {
+  aspect-ratio: 16/9;
+  background: #2a2a2a;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: grid;
+  place-items: center;
+  color: #666;
+  font-size: 20px;
 }
 
-.ctx-menu {
-  position: fixed;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.16);
-  z-index: 20;
-  min-width: 200px;
-  padding: 6px 0;
+.media-item:hover {
+  background: #3a3a3a;
+  transform: scale(1.05);
+}
+
+.canvas-area {
+  background: #0a0a0a;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 0;
   overflow: hidden;
 }
 
-.ctx-item {
-  width: 100%;
+.preview-container {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  border: none;
+  justify-content: center;
+  padding: 20px;
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+.preview-wrapper {
   background: transparent;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  border: 2px solid #333;
+}
+
+.preview-controls {
+  background: #1a1a1a;
+  border-top: 1px solid #333;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.playback-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.time-display {
+  color: #fff;
+  font-weight: 600;
+  font-size: 12px;
+  min-width: 100px;
+}
+
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.properties-panel {
+  background: #1e1e1e;
+  border-left: 1px solid #333;
+  padding: 16px;
+  overflow-y: auto;
+  display: grid;
+  gap: 16px;
+}
+
+.property-group {
+  display: grid;
+  gap: 12px;
+}
+
+.property-title {
+  color: #fff;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  margin: 0;
+  padding: 8px 0;
+  border-bottom: 1px solid #333;
+}
+
+.property-row {
+  display: grid;
+  gap: 8px;
+}
+
+.property-label {
+  color: #aaa;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.property-input {
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 6px 8px;
+  color: #fff;
+  font-size: 12px;
+}
+
+.property-input:focus {
+  outline: none;
+  border-color: #0066cc;
+}
+
+.timeline-area {
+  background: #1a1a1a;
+  border-top: 1px solid #333;
+  display: grid;
+  grid-template-rows: 40px 1fr;
+  gap: 0;
+}
+
+.timeline-header {
+  background: #1e1e1e;
+  border-bottom: 1px solid #333;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.timeline-tracks {
+  background: #0a0a0a;
+  overflow-x: auto;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.track {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+  min-height: 40px;
+}
+
+.track-label {
+  background: #2a2a2a;
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.track-content {
+  background: #1a1a1a;
+  border-radius: 6px;
+  border: 1px solid #333;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+}
+
+.clip {
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 4px 8px;
+  color: #fff;
+  font-size: 11px;
   cursor: pointer;
-  font-weight: 700;
-  color: #0f172a;
-  transition: background 0.12s ease;
+  transition: all 0.2s ease;
+  min-width: 60px;
+  text-align: center;
 }
 
-.ctx-item:hover {
-  background: #f5f7fb;
+.clip:hover {
+  background: #3a3a3a;
+  border-color: #0066cc;
 }
 
-.credit-modal-overlay {
+.clip.selected {
+  background: #0066cc;
+  border-color: #0066cc;
+}
+
+.playhead {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: #ff3333;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.tools-palette {
+  position: fixed;
+  left: 50%;
+  bottom: 220px;
+  transform: translateX(-50%);
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 8px;
+  display: flex;
+  gap: 4px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  z-index: 100;
+}
+
+.tool-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: #2a2a2a;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all 0.2s ease;
+}
+
+.tool-btn:hover {
+  background: #3a3a3a;
+}
+
+.tool-btn.active {
+  background: #0066cc;
+}
+
+.modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.8);
   display: grid;
   place-items: center;
   z-index: 1000;
-  animation: fadeIn 0.2s ease;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.credit-modal {
-  background: #ffffff;
-  border-radius: 20px;
-  padding: 32px;
-  max-width: 480px;
-  width: 90%;
-  box-shadow: 
-    0 20px 60px rgba(0, 0, 0, 0.3),
-    0 8px 24px rgba(0, 0, 0, 0.2);
-  animation: slideUp 0.3s ease;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.credit-modal-header {
-  margin-bottom: 24px;
-}
-
-.credit-modal-title {
-  font-size: 24px;
-  font-weight: 800;
-  color: #0f172a;
-  margin: 0 0 8px 0;
-}
-
-.credit-modal-subtitle {
-  font-size: 14px;
-  color: #64748b;
-  margin: 0;
-}
-
-.credit-info {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+.modal-content {
+  background: #1a1a1a;
   border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 24px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  border: 1px solid #333;
 }
 
-.credit-info-row {
+.preview-modal {
+  background: #1a1a1a;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 90vw;
+  width: 1200px;
+  max-height: 90vh;
+  border: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.preview-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 8px;
 }
 
-.credit-info-row:last-child {
-  border-bottom: none;
+.preview-modal-title {
+  color: #fff;
+  font-size: 20px;
   font-weight: 700;
-  font-size: 16px;
-  color: #0f172a;
+  margin: 0;
 }
 
-.credit-info-label {
-  font-size: 14px;
-  color: #64748b;
-  font-weight: 600;
-}
-
-.credit-info-value {
-  font-size: 16px;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.credit-balance {
+.preview-modal-close {
+  background: transparent;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  border: 1px solid #bfdbfe;
-  border-radius: 10px;
-  margin-bottom: 24px;
+  justify-content: center;
+  transition: background 0.2s ease;
 }
 
-.credit-balance-label {
-  font-size: 13px;
-  color: #1e40af;
-  font-weight: 600;
+.preview-modal-close:hover {
+  background: #2a2a2a;
 }
 
-.credit-balance-value {
+.preview-modal-content {
+  background: #0a0a0a;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #333;
+}
+
+.modal-title {
+  color: #fff;
   font-size: 18px;
-  font-weight: 800;
-  color: #1e40af;
+  font-weight: 700;
+  margin: 0 0 16px 0;
 }
 
-.credit-modal-actions {
+.modal-body {
+  color: #aaa;
+  margin-bottom: 20px;
+}
+
+.modal-actions {
   display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.btn-secondary {
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 8px 16px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: #0066cc;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: #0052a3;
+}
+
+/* Avatar Selection Styles */
+.avatar-selection {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
 }
 
-.credit-modal-btn {
-  flex: 1;
-  padding: 14px 24px;
-  border: none;
-  border-radius: 12px;
-  font-weight: 700;
-  font-size: 15px;
+.avatar-options {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px;
+}
+
+.avatar-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  border: 2px solid #333;
+  border-radius: 8px;
+  background: #2a2a2a;
   cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 80px;
+}
+
+.avatar-option:hover {
+  border-color: #0066cc;
+  background: #333;
+}
+
+.avatar-option.active {
+  border-color: #0066cc;
+  background: #0066cc;
+  color: white;
+}
+
+.avatar-option span {
+  font-size: 11px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.upload-avatar-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #333;
+  border: 1px solid #444;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
   transition: all 0.2s ease;
 }
 
-.credit-modal-btn-primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #5cc6ff 100%);
-  color: #ffffff;
-  box-shadow: 
-    0 4px 12px rgba(59, 130, 246, 0.3),
-    0 2px 4px rgba(0, 0, 0, 0.1);
+.upload-avatar-btn:hover {
+  background: #444;
+  border-color: #555;
 }
 
-.credit-modal-btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 
-    0 6px 20px rgba(59, 130, 246, 0.4),
-    0 4px 8px rgba(0, 0, 0, 0.15);
+/* Script Section Styles */
+.script-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.credit-modal-btn-secondary {
-  background: #ffffff;
-  color: #475569;
-  border: 1px solid #e2e8f0;
+.script-input {
+  width: 100%;
+  min-height: 120px;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 12px;
+  color: #fff;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.2s ease;
 }
 
-.credit-modal-btn-secondary:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
+.script-input:focus {
+  outline: none;
+  border-color: #0066cc;
 }
 
-.credit-modal-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
+.script-input::placeholder {
+  color: #666;
+}
+
+.script-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.script-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #333;
+  border: 1px solid #444;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.script-btn:hover {
+  background: #444;
+  border-color: #555;
 }
 `
 
-function Create({ onBack }) {
-  const initialScenes = useMemo(
-    () => [
-      {
-        id: 's1',
-        title: 'Scene 1',
-        duration: '00:08',
-        script:
-          'Start your video by greeting your audience and introducing your topic. Create a clear title and give more context with a subheadline.',
-        layout: 'hero',
-        titleText: 'Insert your video title here',
-        subtitleText: 'Add sub-headline here',
-        showAvatar: true,
-        avatarSrc: localAvatar,
-        avatarWidth: 260,
-        avatarHeight: 320,
-        avatarX: 65,
-        avatarY: 55,
-        cropTop: 0,
-        cropRight: 0,
-        cropBottom: 0,
-        cropLeft: 0,
-        titleX: 35,
-        titleY: 42,
-        subtitleX: 35,
-        subtitleY: 52,
-      },
-    ],
-    []
+// Remotion Composition Component
+const VideoComposition = ({ inputProps }) => {
+  const frame = useCurrentFrame()
+  const { scenes } = inputProps || { scenes: [] }
+  
+  // Find which scene we're in based on current frame
+  let frameCount = 0
+  let currentScene = scenes[0] || {}
+  let frameInScene = 0
+  
+  for (const scene of scenes) {
+    const sceneFrames = (scene.duration || 8) * 30
+    if (frame < frameCount + sceneFrames) {
+      currentScene = scene
+      frameInScene = frame - frameCount
+      break
+    }
+    frameCount += sceneFrames
+  }
+  
+  return (
+    <div style={{
+      width: '100%',
+      height: '100%',
+      backgroundColor: '#ffffff',
+      color: '#000000',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'relative',
+      overflow: 'hidden',
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+      padding: '40px'
+    }}>
+      {/* Main Content Container */}
+      <div style={{
+        width: '100%',
+        height: '100%',
+        maxWidth: '1200px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '60px',
+        position: 'relative',
+        opacity: frameInScene > 10 ? 1 : frameInScene / 10,
+        transition: 'opacity 0.3s ease'
+      }}>
+        {/* Left Side - Text Content */}
+        <div style={{
+          flex: '1',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'flex-start',
+          gap: '24px',
+          maxWidth: '600px',
+          zIndex: 2
+        }}>
+          {/* Title */}
+          <h1 style={{
+            fontSize: '48px',
+            fontWeight: '700',
+            margin: '0',
+            lineHeight: '1.2',
+            color: '#000000',
+            fontFamily: 'system-ui, -apple-system, sans-serif'
+          }}>
+            {currentScene?.titleText || 'Insert your video title here'}
+          </h1>
+          
+          {/* Subtitle */}
+          <h2 style={{
+            fontSize: '24px',
+            fontWeight: '400',
+            margin: '0',
+            lineHeight: '1.4',
+            color: '#333333',
+            fontFamily: 'system-ui, -apple-system, sans-serif'
+          }}>
+            {currentScene?.subtitleText || 'Add sub-headline here'}
+          </h2>
+          
+          {/* Logo Placeholder */}
+          <div style={{
+            width: '80px',
+            height: '80px',
+            borderRadius: '50%',
+            backgroundColor: '#f0f0f0',
+            border: '2px dashed #cccccc',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop: '8px',
+            fontSize: '10px',
+            color: '#999999',
+            fontWeight: '600',
+            textAlign: 'center',
+            padding: '8px'
+          }}>
+            YOUR LOGO
+          </div>
+        </div>
+        
+        {/* Right Side - Avatar Display */}
+        <div style={{
+          flex: '0 0 auto',
+          width: '300px',
+          height: '400px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative',
+          zIndex: 2
+        }}>
+          {currentScene?.avatar ? (
+            <img 
+              src={currentScene.avatar} 
+              alt="Avatar"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                objectPosition: 'center'
+              }}
+            />
+          ) : (
+            <div style={{
+              width: '100%',
+              height: '100%',
+              backgroundColor: '#f5f5f5',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '2px dashed #cccccc'
+            }}>
+              <MdPerson size={120} color="#999999" />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   )
+}
 
-  const [scenes, setScenes] = useState(initialScenes)
-  const [activeId, setActiveId] = useState(initialScenes[0].id)
-  const [clipboard, setClipboard] = useState(null)
-  const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, sceneId: null })
-  const [dragState, setDragState] = useState({
-    mode: null,
-    corner: null,
-    startX: 0,
-    startY: 0,
-    startW: 0,
-    startH: 0,
-    startPosX: 0,
-    startPosY: 0,
-    startCropTop: 0,
-    startCropRight: 0,
-    startCropBottom: 0,
-    startCropLeft: 0,
-    textKey: null,
-    startTextX: 0,
-    startTextY: 0,
-  })
-  const [cropMode, setCropMode] = useState(false)
-  const [showCreditModal, setShowCreditModal] = useState(false)
-  const [userCredits, setUserCredits] = useState(1250)
-  const canvasRef = useRef(null)
+// Static Preview Component (for thumbnail view)
+const StaticPreview = ({ scene }) => {
+  // Debug: log scene data
+  console.log('StaticPreview scene:', scene)
+  
+  return (
+    <div style={{
+      width: '100%',
+      height: '100%',
+      backgroundColor: '#ffffff',
+      color: '#000000',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'relative',
+      overflow: 'hidden',
+      padding: '30px 40px',
+      boxSizing: 'border-box'
+    }}>
+      {/* Main Content Container */}
+      <div style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '40px',
+        position: 'relative',
+        maxWidth: '100%'
+      }}>
+        {/* Left Side - Text Content */}
+        <div style={{
+          flex: '1',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'flex-start',
+          gap: '20px',
+          minWidth: '0',
+          zIndex: 10,
+          position: 'relative'
+        }}>
+          {/* Title */}
+          <h1 style={{
+            fontSize: 'clamp(28px, 4vw, 42px)',
+            fontWeight: '700',
+            margin: '0',
+            lineHeight: '1.2',
+            color: '#000000',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            wordWrap: 'break-word',
+            width: '100%'
+          }}>
+            {scene?.titleText || 'Insert your video title here'}
+          </h1>
+          
+          {/* Subtitle */}
+          <h2 style={{
+            fontSize: 'clamp(16px, 2.5vw, 22px)',
+            fontWeight: '400',
+            margin: '0',
+            lineHeight: '1.4',
+            color: '#333333',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            wordWrap: 'break-word',
+            width: '100%'
+          }}>
+            {scene?.subtitleText || 'Add sub-headline here'}
+          </h2>
+          
+          {/* Logo Placeholder */}
+          <div style={{
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            backgroundColor: '#f0f0f0',
+            border: '2px dashed #cccccc',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop: '4px',
+            fontSize: '9px',
+            color: '#999999',
+            fontWeight: '600',
+            textAlign: 'center',
+            padding: '6px',
+            flexShrink: 0
+          }}>
+            YOUR LOGO
+          </div>
+        </div>
+        
+        {/* Right Side - Avatar Display */}
+        <div style={{
+          flex: '0 0 auto',
+          width: 'clamp(200px, 25vw, 280px)',
+          height: 'clamp(250px, 35vh, 350px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative',
+          zIndex: 10
+        }}>
+          {scene?.avatar ? (
+            <img 
+              src={scene.avatar} 
+              alt="Avatar"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                objectPosition: 'center',
+                display: 'block',
+                maxWidth: '100%',
+                maxHeight: '100%'
+              }}
+              onError={(e) => {
+                console.error('Avatar image failed to load:', scene.avatar)
+                e.target.style.display = 'none'
+              }}
+              onLoad={() => {
+                console.log('Avatar image loaded successfully:', scene.avatar)
+              }}
+            />
+          ) : (
+            <div style={{
+              width: '100%',
+              height: '100%',
+              backgroundColor: '#f5f5f5',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '2px dashed #cccccc'
+            }}>
+              <MdPerson size={80} color="#999999" />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
 
-  const activeScene = scenes.find((s) => s.id === activeId) || scenes[0]
-
-  const addScene = () => {
-    const idx = scenes.length + 1
-    const newScene = {
-      id: `s${idx}`,
-      title: `Scene ${idx}`,
-      duration: '00:08',
-      script: 'New scene script...',
-      layout: 'split',
+function Create({ onBack }) {
+  const [scenes, setScenes] = useState([
+    {
+      id: 'scene1',
+      title: 'Scene 1',
+      duration: 8,
       titleText: 'Insert your video title here',
       subtitleText: 'Add sub-headline here',
-      showAvatar: true,
-      avatarSrc: localAvatar,
-      avatarWidth: 200,
-      avatarHeight: 200,
-      avatarX: 50,
-      avatarY: 50,
-      cropTop: 0,
-      cropRight: 0,
-      cropBottom: 0,
-      cropLeft: 0,
-      titleX: 50,
-      titleY: 15,
-      subtitleX: 50,
-      subtitleY: 24,
+      script: 'Start your video by greeting your audience and introducing your topic. Create a clear title and give more context with a compelling sub-headline.',
+      avatar: avatar1,
+      avatarType: 'avatar1',
+      type: 'video'
     }
-    setScenes((prev) => [...prev, newScene])
-    setActiveId(newScene.id)
-  }
-
-  const updateScript = (text) => {
-    setScenes((prev) => prev.map((s) => (s.id === activeId ? { ...s, script: text } : s)))
-  }
-
-  const updateTitle = (text) => {
-    setScenes((prev) => prev.map((s) => (s.id === activeId ? { ...s, titleText: text } : s)))
-  }
-
-  const updateSubtitle = (text) => {
-    setScenes((prev) => prev.map((s) => (s.id === activeId ? { ...s, subtitleText: text } : s)))
-  }
-
-  const toggleAvatar = (val) => {
-    setScenes((prev) => prev.map((s) => (s.id === activeId ? { ...s, showAvatar: val } : s)))
-  }
-
-  const updateAvatarProp = (key, val) => {
-    setScenes((prev) => prev.map((s) => (s.id === activeId ? { ...s, [key]: val } : s)))
-  }
-
-  const applyTemplate = (template) => {
-    setScenes((prev) =>
-      prev.map((s) =>
-        s.id === activeId
-          ? {
-              ...s,
-              layout: template === 'hero' ? 'hero' : 'split',
-              titleText: 'Insert your video title here',
-              subtitleText: 'Add sub-headline here',
-              showAvatar: true,
-              avatarSrc: localAvatar,
-              avatarWidth: template === 'hero' ? 260 : 200,
-              avatarHeight: template === 'hero' ? 320 : 200,
-              avatarX: template === 'hero' ? 65 : 50,
-              avatarY: template === 'hero' ? 55 : 50,
-              cropTop: 0,
-              cropRight: 0,
-              cropBottom: 0,
-              cropLeft: 0,
-            }
-          : s
-      )
+  ])
+  const [activeSceneId, setActiveSceneId] = useState('scene1')
+  const [selectedTool, setSelectedTool] = useState('select')
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [zoomLevel, setZoomLevel] = useState(100)
+  const [showExportModal, setShowExportModal] = useState(false)
+  const [showPreviewModal, setShowPreviewModal] = useState(false)
+  const [selectedAvatar, setSelectedAvatar] = useState('avatar1')
+  const playerRef = useRef(null)
+  const speechSynthesisRef = useRef(null)
+  
+  const activeScene = scenes.find(s => s.id === activeSceneId)
+  
+  // Text-to-speech function
+  const speakText = (text, sceneId) => {
+    // Stop any ongoing speech
+    if (speechSynthesisRef.current) {
+      window.speechSynthesis.cancel()
+    }
+    
+    if (!text || text.trim() === '') return
+    
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.rate = 0.9 // Slightly slower for natural speech
+    utterance.pitch = 1
+    utterance.volume = 1
+    
+    // Use a more natural voice if available
+    const voices = window.speechSynthesis.getVoices()
+    const preferredVoice = voices.find(voice => 
+      voice.name.includes('Google') || 
+      voice.name.includes('Microsoft') ||
+      voice.lang.startsWith('en')
     )
-  }
-
-  const deleteScene = (id) => {
-    setScenes((prev) => {
-      if (prev.length === 1) return prev
-      const next = prev.filter((s) => s.id !== id)
-      if (activeId === id && next.length) setActiveId(next[0].id)
-      return next
-    })
-  }
-
-  const duplicateScene = (id) => {
-    setScenes((prev) => {
-      const index = prev.findIndex((s) => s.id === id)
-      if (index === -1) return prev
-      const source = prev[index]
-      const newScene = { ...source, id: `s${prev.length + 1}`, title: `${source.title} copy` }
-      const next = [...prev]
-      next.splice(index + 1, 0, newScene)
-      return next
-    })
-  }
-
-  const copyScene = (id) => {
-    const scene = scenes.find((s) => s.id === id)
-    if (scene) setClipboard({ ...scene, copied: true })
-  }
-
-  const cutScene = (id) => {
-    const scene = scenes.find((s) => s.id === id)
-    if (!scene) return
-    setClipboard({ ...scene, copied: false })
-    deleteScene(id)
-  }
-
-  const pasteScene = (afterId) => {
-    if (!clipboard) return
-    setScenes((prev) => {
-      const index = prev.findIndex((s) => s.id === afterId)
-      const insertAt = index >= 0 ? index + 1 : prev.length
-      const newScene = { ...clipboard, id: `s${prev.length + 1}`, title: `${clipboard.title} (pasted)` }
-      const next = [...prev]
-      next.splice(insertAt, 0, newScene)
-      return next
-    })
-    if (!clipboard.copied) {
-      setClipboard(null)
+    if (preferredVoice) {
+      utterance.voice = preferredVoice
+    }
+    
+    speechSynthesisRef.current = utterance
+    window.speechSynthesis.speak(utterance)
+    
+    utterance.onend = () => {
+      speechSynthesisRef.current = null
     }
   }
-
-  const replaceLayout = (id) => {
-    setScenes((prev) =>
-      prev.map((s) =>
-        s.id === id
-          ? {
-              ...s,
-              layout: s.layout === 'hero' ? 'split' : 'hero',
-              titleX: s.layout === 'hero' ? 50 : 35,
-              titleY: s.layout === 'hero' ? 15 : 42,
-              subtitleX: s.layout === 'hero' ? 50 : 35,
-              subtitleY: s.layout === 'hero' ? 24 : 52,
-            }
-          : s
-      )
-    )
-  }
-
-  const handleContextMenu = (e, sceneId) => {
-    e.preventDefault()
-    setContextMenu({ visible: true, x: e.clientX, y: e.clientY, sceneId })
-  }
-
-  const beginTextDrag = (e, textKey) => {
-    e.stopPropagation()
-    const canvas = canvasRef.current
-    if (!canvas || !activeScene) return
-    const rect = canvas.getBoundingClientRect()
-    setDragState({
-      ...dragState,
-      mode: 'text',
-      textKey,
-      startX: e.clientX,
-      startY: e.clientY,
-      startTextX: activeScene[`${textKey}X`] || 0,
-      startTextY: activeScene[`${textKey}Y`] || 0,
-      rect,
-    })
-  }
-
-  const beginDrag = (e, mode, corner = null) => {
-    e.stopPropagation()
-    const canvas = canvasRef.current
-    if (!canvas || !activeScene) return
-    const rect = canvas.getBoundingClientRect()
-    setDragState({
-      mode,
-      corner,
-      startX: e.clientX,
-      startY: e.clientY,
-      startW: activeScene.avatarWidth || 0,
-      startH: activeScene.avatarHeight || 0,
-      startPosX: activeScene.avatarX || 0,
-      startPosY: activeScene.avatarY || 0,
-      startCropTop: activeScene.cropTop || 0,
-      startCropRight: activeScene.cropRight || 0,
-      startCropBottom: activeScene.cropBottom || 0,
-      startCropLeft: activeScene.cropLeft || 0,
-      rect,
-    })
-  }
-
+  
+  // Stop speech when component unmounts or preview closes
   useEffect(() => {
-    const onMove = (e) => {
-      if (!dragState.mode || !activeScene || !dragState.rect) return
-      const { rect } = dragState
-      const dx = e.clientX - dragState.startX
-      const dy = e.clientY - dragState.startY
-      if (dragState.mode === 'drag') {
-        const newX = dragState.startPosX + (dx / rect.width) * 100
-        const newY = dragState.startPosY + (dy / rect.height) * 100
-        updateAvatarProp('avatarX', Math.min(100, Math.max(0, newX)))
-        updateAvatarProp('avatarY', Math.min(100, Math.max(0, newY)))
-      }
-    if (dragState.mode === 'text') {
-      const newX = dragState.startTextX + (dx / rect.width) * 100
-      const newY = dragState.startTextY + (dy / rect.height) * 100
-      const keyX = `${dragState.textKey}X`
-      const keyY = `${dragState.textKey}Y`
-      setScenes((prev) =>
-        prev.map((s) =>
-          s.id === activeId
-            ? {
-                ...s,
-                [keyX]: Math.min(100, Math.max(0, newX)),
-                [keyY]: Math.min(100, Math.max(0, newY)),
-              }
-            : s
-        )
-      )
-    }
-      if (dragState.mode === 'resize') {
-        let newW = dragState.startW
-        let newH = dragState.startH
-        let newX = dragState.startPosX
-        let newY = dragState.startPosY
-        const pctX = (dx / rect.width) * 100
-        const pctY = (dy / rect.height) * 100
-        const pxW = dragState.startW + pctX * 3
-        const pxH = dragState.startH + pctY * 3
-        if (dragState.corner === 'br') {
-          newW = Math.max(40, pxW)
-          newH = Math.max(40, pxH)
-        } else if (dragState.corner === 'bl') {
-          newW = Math.max(40, dragState.startW - pctX * 3)
-          newH = Math.max(40, pxH)
-          newX = dragState.startPosX + pctX
-        } else if (dragState.corner === 'tr') {
-          newW = Math.max(40, pxW)
-          newH = Math.max(40, dragState.startH - pctY * 3)
-          newY = dragState.startPosY + pctY
-        } else if (dragState.corner === 'tl') {
-          newW = Math.max(40, dragState.startW - pctX * 3)
-          newH = Math.max(40, dragState.startH - pctY * 3)
-          newX = dragState.startPosX + pctX
-          newY = dragState.startPosY + pctY
-        }
-        if (dragState.corner === 'top') {
-          newH = Math.max(40, dragState.startH - pctY * 3)
-          newY = dragState.startPosY + pctY
-        } else if (dragState.corner === 'bottom') {
-          newH = Math.max(40, pxH)
-        } else if (dragState.corner === 'left') {
-          newW = Math.max(40, dragState.startW - pctX * 3)
-          newX = dragState.startPosX + pctX
-        } else if (dragState.corner === 'right') {
-          newW = Math.max(40, pxW)
-        }
-        updateAvatarProp('avatarWidth', newW)
-        updateAvatarProp('avatarHeight', newH)
-        updateAvatarProp('avatarX', Math.min(100, Math.max(0, newX)))
-        updateAvatarProp('avatarY', Math.min(100, Math.max(0, newY)))
-      }
-      if (dragState.mode === 'crop') {
-        const pctX = (dx / rect.width) * 100
-        const pctY = (dy / rect.height) * 100
-        if (dragState.corner === 'top') {
-          updateAvatarProp('cropTop', Math.min(90, Math.max(0, dragState.startCropTop + pctY)))
-        } else if (dragState.corner === 'bottom') {
-          updateAvatarProp('cropBottom', Math.min(90, Math.max(0, dragState.startCropBottom - pctY)))
-        } else if (dragState.corner === 'left') {
-          updateAvatarProp('cropLeft', Math.min(90, Math.max(0, dragState.startCropLeft + pctX)))
-        } else if (dragState.corner === 'right') {
-          updateAvatarProp('cropRight', Math.min(90, Math.max(0, dragState.startCropRight - pctX)))
-        }
-      }
-    }
-    const onUp = () => setDragState((s) => ({ ...s, mode: null, corner: null, textKey: null }))
-    window.addEventListener('mousemove', onMove)
-    window.addEventListener('mouseup', onUp)
     return () => {
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('mouseup', onUp)
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel()
+      }
     }
-  }, [dragState, activeScene])
-
-  useEffect(() => {
-    const closeMenu = () => setContextMenu((m) => ({ ...m, visible: false }))
-    window.addEventListener('click', closeMenu)
-    return () => window.removeEventListener('click', closeMenu)
   }, [])
-
-  const calculateVideoCost = () => {
-    // Calculate cost based on number of scenes and duration
-    const baseCost = 25
-    const sceneCost = scenes.length * 10
-    const estimatedDuration = scenes.reduce((total, scene) => {
-      const [min, sec] = scene.duration.split(':').map(Number)
-      return total + min * 60 + sec
-    }, 0)
-    const durationCost = Math.ceil(estimatedDuration / 30) * 5 // 5 credits per 30 seconds
-    return baseCost + sceneCost + durationCost
-  }
-
-  const handleGenerate = () => {
-    const cost = calculateVideoCost()
-    if (userCredits < cost) {
-      alert(`Insufficient credits! You need ${cost} credits but only have ${userCredits}. Please purchase more credits.`)
-      return
+  
+  // Load voices when component mounts
+  useEffect(() => {
+    if (window.speechSynthesis) {
+      const loadVoices = () => {
+        window.speechSynthesis.getVoices()
+      }
+      loadVoices()
+      window.speechSynthesis.onvoiceschanged = loadVoices
     }
-    setShowCreditModal(true)
+  }, [])
+  
+  // Calculate total duration in frames (30 fps)
+  const totalDurationInFrames = useMemo(() => {
+    return scenes.reduce((total, scene) => total + ((scene.duration || 8) * 30), 0)
+  }, [scenes])
+  
+  // Get current scene based on frame
+  const getSceneForFrame = (frame) => {
+    let currentFrame = 0
+    for (const scene of scenes) {
+      const sceneFrames = (scene.duration || 8) * 30
+      if (frame < currentFrame + sceneFrames) {
+        return { scene, frameInScene: frame - currentFrame }
+      }
+      currentFrame += sceneFrames
+    }
+    return { scene: scenes[scenes.length - 1] || scenes[0], frameInScene: 0 }
   }
+  
+  // Handle player frame updates
+  useEffect(() => {
+    if (playerRef.current && isPlaying) {
+      const player = playerRef.current
+      const updateTime = () => {
+        try {
+          const frame = player.getCurrentFrame()
+          setCurrentTime(frame / 30) // Convert frames to seconds
+          const { scene } = getSceneForFrame(frame)
+          if (scene && scene.id !== activeSceneId) {
+            setActiveSceneId(scene.id)
+          }
+        } catch (e) {
+          // Player might not be ready
+        }
+      }
+      
+      const interval = setInterval(updateTime, 100)
+      return () => clearInterval(interval)
+    }
+  }, [isPlaying, scenes, activeSceneId])
 
-  const confirmGenerate = () => {
-    const cost = calculateVideoCost()
-    setUserCredits((prev) => prev - cost)
-    setShowCreditModal(false)
-    // Here you would actually trigger the video generation
-    alert(`Video generation started! ${cost} credits deducted. Remaining: ${userCredits - cost}`)
+  const addScene = () => {
+    const newScene = {
+      id: `scene${scenes.length + 1}`,
+      title: `Scene ${scenes.length + 1}`,
+      duration: 8,
+      titleText: 'New Scene',
+      subtitleText: 'Add your content here',
+      type: 'video'
+    }
+    setScenes([...scenes, newScene])
+    setActiveSceneId(newScene.id)
+  }
+  
+  const deleteScene = (id) => {
+    if (scenes.length === 1) return
+    const newScenes = scenes.filter(s => s.id !== id)
+    setScenes(newScenes)
+    if (activeSceneId === id) {
+      setActiveSceneId(newScenes[0].id)
+    }
+  }
+  
+  const updateScene = (id, updates) => {
+    setScenes(scenes.map(scene => 
+      scene.id === id ? { ...scene, ...updates } : scene
+    ))
+  }
+  
+  const exportVideo = () => {
+    setShowExportModal(true)
+  }
+  
+  const selectAvatar = (avatarId) => {
+    setSelectedAvatar(avatarId)
+    const avatar = predefinedAvatars.find(a => a.id === avatarId)
+    updateScene(activeSceneId, { 
+      avatarType: avatarId,
+      avatar: avatar ? avatar.image : null
+    })
+  }
+  
+  // Handle preview with text-to-speech
+  const handlePreview = () => {
+    setShowPreviewModal(true)
+    // Start speaking the script when preview opens
+    if (activeScene?.script) {
+      setTimeout(() => {
+        speakText(activeScene.script, activeSceneId)
+      }, 500)
+    }
+  }
+  
+  // Handle play/pause with speech
+  const handlePlayPause = () => {
+    if (isPlaying) {
+      // Pause
+      if (playerRef.current) {
+        playerRef.current.pause()
+      }
+      window.speechSynthesis.pause()
+      setIsPlaying(false)
+    } else {
+      // Play
+      if (playerRef.current) {
+        playerRef.current.play()
+      }
+      // Resume or start speaking
+      const currentScene = scenes.find(s => s.id === activeSceneId)
+      if (currentScene?.script && window.speechSynthesis.paused) {
+        window.speechSynthesis.resume()
+      } else if (currentScene?.script) {
+        speakText(currentScene.script, activeSceneId)
+      }
+      setIsPlaying(true)
+    }
+  }
+  
+  // Handle stop with speech
+  const handleStop = () => {
+    if (playerRef.current) {
+      playerRef.current.pause()
+      playerRef.current.seekTo(0)
+    }
+    window.speechSynthesis.cancel()
+    setIsPlaying(false)
+    setCurrentTime(0)
   }
 
   return (
     <>
       <style>{styles}</style>
-      <div className="create-shell">
-        <div className="create-topbar">
+      <div className="video-editor-shell">
+        <div className="editor-topbar">
           <div className="top-left">
             <button className="icon-btn" onClick={onBack}>
-              ←
+              ← Back
             </button>
-            <input className="doc-title" defaultValue="Untitled" />
-            <button className="icon-btn">
+            <input 
+              className="project-title" 
+              defaultValue="Untitled Video Project" 
+            />
+            <button 
+              className="icon-btn" 
+              title="Undo"
+              onClick={() => {
+                console.log('Undo clicked')
+                // TODO: Implement undo functionality
+              }}
+            >
               <MdUndo />
             </button>
-            <button className="icon-btn">
+            <button 
+              className="icon-btn" 
+              title="Redo"
+              onClick={() => {
+                console.log('Redo clicked')
+                // TODO: Implement redo functionality
+              }}
+            >
               <MdRedo />
             </button>
+            <button 
+              className="icon-btn" 
+              title="Save"
+              onClick={() => {
+                alert('Project saved!')
+                // TODO: Implement save functionality
+              }}
+            >
+              <MdSave />
+            </button>
           </div>
+          
           <div className="top-center">
-            <button className="icon-btn" title="Avatar">
+            <button 
+              className={`icon-btn ${selectedTool === 'avatar' ? 'active' : ''}`}
+              title="Avatar"
+              onClick={() => setSelectedTool('avatar')}
+            >
               <MdPerson />
             </button>
-            <button className="icon-btn" title="Text">
+            <button 
+              className={`icon-btn ${selectedTool === 'text' ? 'active' : ''}`}
+              title="Text"
+              onClick={() => setSelectedTool('text')}
+            >
               <MdTextFields />
             </button>
-            <button className="icon-btn" title="Shape">
-              <MdCropFree />
-            </button>
-            <button className="icon-btn" title="Media">
+            <button 
+              className={`icon-btn ${selectedTool === 'media' ? 'active' : ''}`}
+              title="Media"
+              onClick={() => setSelectedTool('media')}
+            >
               <MdPhotoLibrary />
             </button>
-            <button className="icon-btn" title="Element">
-              <MdCategory />
+            <button 
+              className={`icon-btn ${selectedTool === 'audio' ? 'active' : ''}`}
+              title="Audio"
+              onClick={() => setSelectedTool('audio')}
+            >
+              <MdMusicNote />
             </button>
-            <button className="icon-btn" title="Record">
-              <MdMic />
+            <button 
+              className={`icon-btn ${selectedTool === 'effects' ? 'active' : ''}`}
+              title="Effects"
+              onClick={() => setSelectedTool('effects')}
+            >
+              <MdPalette />
+            </button>
+            <button 
+              className={`icon-btn ${selectedTool === 'layers' ? 'active' : ''}`}
+              title="Layers"
+              onClick={() => setSelectedTool('layers')}
+            >
+              <MdLayers />
             </button>
           </div>
+          
           <div className="top-right">
-            <button className="icon-btn" title="Preview">
+            <button 
+              className="icon-btn" 
+              title="Preview"
+              onClick={handlePreview}
+            >
               <MdPlayCircleOutline /> Preview
             </button>
-            <button className="primary-btn" onClick={handleGenerate}>Generate</button>
+            <button 
+              className="icon-btn" 
+              title="Settings"
+              onClick={() => {
+                alert('Settings panel coming soon!')
+                // TODO: Implement settings panel
+              }}
+            >
+              <MdSettings />
+            </button>
+            <button className="primary-btn" onClick={exportVideo}>
+              Export Video
+            </button>
           </div>
         </div>
 
-        <div className="creator-wrap">
-          <aside className="creator-left">
-            <button className="pill" style={{ justifyContent: 'center' }} onClick={addScene}>
-              + Add scene
-            </button>
-            {scenes.map((scene) => (
-              <div
-                key={scene.id}
-                className={`scene-card ${scene.id === activeId ? 'active' : ''}`}
-                onClick={() => setActiveId(scene.id)}
-                onContextMenu={(e) => handleContextMenu(e, scene.id)}
+        <div className="editor-main">
+          {/* Media Library */}
+          <div className="media-library">
+            <div className="library-section">
+              <h3 className="section-title">Media Library</h3>
+              <div 
+                className="upload-area"
+                onClick={() => {
+                  const input = document.createElement('input')
+                  input.type = 'file'
+                  input.accept = 'image/*,video/*,audio/*'
+                  input.multiple = true
+                  input.onchange = (e) => {
+                    const files = Array.from(e.target.files)
+                    console.log('Files selected:', files)
+                    // TODO: Handle file uploads
+                    alert(`${files.length} file(s) selected. Upload functionality coming soon!`)
+                  }
+                  input.click()
+                }}
               >
-                <div
-                  className="scene-thumb"
-                  style={{ backgroundImage: `url('${avatarUrl}')` }}
-                />
-                <strong>{scene.title}</strong>
-                <span className="card-meta">{scene.duration}</span>
+                <MdCloudUpload size={24} />
+                <div>Upload Media</div>
               </div>
-            ))}
-          </aside>
-
-          <section className="creator-main">
-            <div className="canvas" ref={canvasRef}>
-              {activeScene?.layout === 'hero' ? (
-                <div className="hero-layout">
-                  <div
-                    className="text-wrapper"
-                    style={{
-                      top: `${activeScene?.titleY || 40}%`,
-                      left: `${activeScene?.titleX || 35}%`,
-                    }}
-                  >
-                    <span className="text-move" onMouseDown={(e) => beginTextDrag(e, 'title')}>
-                      ⤧
-                    </span>
-                    <input
-                      className="hero-title"
-                      value={activeScene?.titleText || ''}
-                      onChange={(e) => updateTitle(e.target.value)}
-                    />
-                  </div>
-                  <div
-                    className="text-wrapper"
-                    style={{
-                      top: `${activeScene?.subtitleY || 50}%`,
-                      left: `${activeScene?.subtitleX || 35}%`,
-                    }}
-                  >
-                    <span className="text-move" onMouseDown={(e) => beginTextDrag(e, 'subtitle')}>
-                      ⤧
-                    </span>
-                    <input
-                      className="hero-subtitle"
-                      value={activeScene?.subtitleText || ''}
-                      onChange={(e) => updateSubtitle(e.target.value)}
-                    />
-                  </div>
-                  {activeScene?.showAvatar && (
-                    <div
-                      className="avatar-wrapper"
-                      style={{
-                        top: `${activeScene?.avatarY || 50}%`,
-                        left: `${activeScene?.avatarX || 50}%`,
-                      }}
-                      onMouseDown={(e) => beginDrag(e, 'drag')}
-                    >
-                      <div className="drag-handle" onMouseDown={(e) => beginDrag(e, 'drag')}>⤧</div>
-                      <img
-                        src={activeScene?.avatarSrc || localAvatar}
-                        alt="Avatar"
-                        className="hero-avatar"
-                        style={{
-                          width: `${activeScene?.avatarWidth || 260}px`,
-                          height: `${activeScene?.avatarHeight || 320}px`,
-                          clipPath: `inset(${activeScene?.cropTop || 0}% ${activeScene?.cropRight || 0}% ${
-                            activeScene?.cropBottom || 0
-                          }% ${activeScene?.cropLeft || 0}%)`,
-                          pointerEvents: 'none',
-                        }}
-                      />
-                      <span className="resize-handle handle-tl" onMouseDown={(e) => beginDrag(e, 'resize', 'tl')} />
-                      <span className="resize-handle handle-tr" onMouseDown={(e) => beginDrag(e, 'resize', 'tr')} />
-                      <span className="resize-handle handle-bl" onMouseDown={(e) => beginDrag(e, 'resize', 'bl')} />
-                      <span className="resize-handle handle-br" onMouseDown={(e) => beginDrag(e, 'resize', 'br')} />
-                      <span className="resize-handle handle-top" onMouseDown={(e) => beginDrag(e, 'resize', 'top')} />
-                      <span className="resize-handle handle-bottom" onMouseDown={(e) => beginDrag(e, 'resize', 'bottom')} />
-                      <span className="resize-handle handle-left" onMouseDown={(e) => beginDrag(e, 'resize', 'left')} />
-                      <span className="resize-handle handle-right" onMouseDown={(e) => beginDrag(e, 'resize', 'right')} />
-                      {cropMode && (
-                        <>
-                          <span className="crop-handle crop-top" onMouseDown={(e) => beginDrag(e, 'crop', 'top')} />
-                          <span className="crop-handle crop-bottom" onMouseDown={(e) => beginDrag(e, 'crop', 'bottom')} />
-                          <span className="crop-handle crop-left" onMouseDown={(e) => beginDrag(e, 'crop', 'left')} />
-                          <span className="crop-handle crop-right" onMouseDown={(e) => beginDrag(e, 'crop', 'right')} />
-                        </>
-                      )}
+              <div className="media-grid">
+                <div className="media-item">
+                  <MdPhotoLibrary />
+                </div>
+                <div className="media-item">
+                  <MdVideoLibrary />
+                </div>
+                <div className="media-item">
+                  <MdMusicNote />
+                </div>
+                <div className="media-item">
+                  <MdPhotoLibrary />
+                </div>
+              </div>
+            </div>
+            
+            <div className="library-section">
+              <h3 className="section-title">Templates</h3>
+              <div className="media-grid">
+                <div className="media-item">
+                  <MdVideoLibrary />
+                </div>
+                <div className="media-item">
+                  <MdVideoLibrary />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Canvas Area */}
+          <div className="canvas-area">
+            <div className="preview-container">
+              <div className="preview-wrapper">
+                <div 
+                  style={{
+                    width: '100%',
+                    maxWidth: '900px',
+                    aspectRatio: '16/9',
+                    backgroundColor: '#ffffff',
+                    border: '2px solid #e0e0e0',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    position: 'relative',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                    height: 'calc(100% - 40px)',
+                    maxHeight: '500px',
+                    margin: '0 auto'
+                  }}
+                >
+                  {showPreviewModal ? (
+                    <div style={{
+                      width: '100%',
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#666',
+                      fontSize: '14px',
+                      backgroundColor: '#f9f9f9'
+                    }}>
+                      Preview is open in modal
                     </div>
+                  ) : (
+                    <StaticPreview scene={activeScene} />
                   )}
                 </div>
-              ) : (
-                <div className="split-layout">
-                  <div className="split-top">
-                    <div
-                      className="text-wrapper"
-                      style={{
-                        top: `${activeScene?.titleY || 15}%`,
-                        left: `${activeScene?.titleX || 50}%`,
-                        position: 'relative',
-                        transform: 'translate(-50%, -50%)',
-                      }}
-                    >
-                      <span className="text-move" onMouseDown={(e) => beginTextDrag(e, 'title')}>
-                        ⤧
-                      </span>
-                      <input
-                        className="split-title"
-                        value={activeScene?.titleText || ''}
-                        onChange={(e) => updateTitle(e.target.value)}
-                      />
-                    </div>
-                    <div
-                      className="text-wrapper"
-                      style={{
-                        top: `${activeScene?.subtitleY || 24}%`,
-                        left: `${activeScene?.subtitleX || 50}%`,
-                        position: 'relative',
-                        transform: 'translate(-50%, -50%)',
-                      }}
-                    >
-                      <span className="text-move" onMouseDown={(e) => beginTextDrag(e, 'subtitle')}>
-                        ⤧
-                      </span>
-                      <input
-                        className="split-subtitle"
-                        value={activeScene?.subtitleText || ''}
-                        onChange={(e) => updateSubtitle(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <div className="split-bottom">
-                    {activeScene?.showAvatar && (
-                      <div
-                        className="avatar-wrapper"
-                        style={{
-                          top: `${activeScene?.avatarY || 50}%`,
-                          left: `${activeScene?.avatarX || 50}%`,
-                        }}
-                        onMouseDown={(e) => beginDrag(e, 'drag')}
-                      >
-                        <div className="drag-handle" onMouseDown={(e) => beginDrag(e, 'drag')}>⤧</div>
-                        <img
-                          src={activeScene?.avatarSrc || localAvatar}
-                          alt="Avatar"
-                          className="split-avatar"
-                          style={{
-                            width: `${activeScene?.avatarWidth || 200}px`,
-                            height: `${activeScene?.avatarHeight || 200}px`,
-                            clipPath: `inset(${activeScene?.cropTop || 0}% ${activeScene?.cropRight || 0}% ${
-                              activeScene?.cropBottom || 0
-                            }% ${activeScene?.cropLeft || 0}%)`,
-                            pointerEvents: 'none',
-                          }}
-                        />
-                        <span className="resize-handle handle-tl" onMouseDown={(e) => beginDrag(e, 'resize', 'tl')} />
-                        <span className="resize-handle handle-tr" onMouseDown={(e) => beginDrag(e, 'resize', 'tr')} />
-                        <span className="resize-handle handle-bl" onMouseDown={(e) => beginDrag(e, 'resize', 'bl')} />
-                        <span className="resize-handle handle-br" onMouseDown={(e) => beginDrag(e, 'resize', 'br')} />
-                        <span className="resize-handle handle-top" onMouseDown={(e) => beginDrag(e, 'resize', 'top')} />
-                        <span className="resize-handle handle-bottom" onMouseDown={(e) => beginDrag(e, 'resize', 'bottom')} />
-                        <span className="resize-handle handle-left" onMouseDown={(e) => beginDrag(e, 'resize', 'left')} />
-                        <span className="resize-handle handle-right" onMouseDown={(e) => beginDrag(e, 'resize', 'right')} />
-                        {cropMode && (
-                          <>
-                            <span className="crop-handle crop-top" onMouseDown={(e) => beginDrag(e, 'crop', 'top')} />
-                            <span className="crop-handle crop-bottom" onMouseDown={(e) => beginDrag(e, 'crop', 'bottom')} />
-                            <span className="crop-handle crop-left" onMouseDown={(e) => beginDrag(e, 'crop', 'left')} />
-                            <span className="crop-handle crop-right" onMouseDown={(e) => beginDrag(e, 'crop', 'right')} />
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </div>
+              </div>
+            </div>
+            
+            <div className="preview-controls">
+              <div className="playback-controls">
+                <button 
+                  className="icon-btn" 
+                  title="Stop"
+                  onClick={handleStop}
+                >
+                  <MdStop />
+                </button>
+                <button 
+                  className="icon-btn" 
+                  title="Play/Pause"
+                  onClick={handlePlayPause}
+                >
+                  {isPlaying ? <MdPause /> : <MdPlayArrow />}
+                </button>
+                <div className="time-display">
+                  {String(Math.floor(currentTime / 60)).padStart(2, '0')}:{String(Math.floor(currentTime % 60)).padStart(2, '0')} / {String(Math.floor((totalDurationInFrames / 30) / 60)).padStart(2, '0')}:{String(Math.floor((totalDurationInFrames / 30) % 60)).padStart(2, '0')}
                 </div>
-              )}
+              </div>
+              
+              <div className="zoom-controls">
+                <button 
+                  className="icon-btn" 
+                  title="Zoom Out"
+                  onClick={() => setZoomLevel(Math.max(25, zoomLevel - 25))}
+                >
+                  <MdZoomOut />
+                </button>
+                <span style={{ color: '#aaa', fontSize: '12px', margin: '0 8px' }}>
+                  {zoomLevel}%
+                </span>
+                <button 
+                  className="icon-btn" 
+                  title="Zoom In"
+                  onClick={() => setZoomLevel(Math.min(200, zoomLevel + 25))}
+                >
+                  <MdZoomIn />
+                </button>
+                <button 
+                  className="icon-btn" 
+                  title="Fullscreen"
+                  onClick={() => {
+                    const elem = document.querySelector('.preview-wrapper')
+                    if (elem.requestFullscreen) {
+                      elem.requestFullscreen()
+                    }
+                  }}
+                >
+                  <MdFullscreen />
+                </button>
+              </div>
             </div>
-            <div className="transport">
-              <button className="icon-btn">
-                <MdStop />
-              </button>
-              <button className="icon-btn">
-                <MdPlayArrow />
-              </button>
-              <span className="time">00:00</span>
-              <button className="icon-btn">
-                <MdMicNone /> EN
-              </button>
+          </div>
+          
+          {/* Properties Panel */}
+          <div className="properties-panel">
+            {/* Avatar Section */}
+            <div className="property-group">
+              <h3 className="property-title">
+                <MdPerson style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                Avatar
+              </h3>
+              <div className="avatar-selection">
+                <div className="avatar-options" style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+                  gap: '8px'
+                }}>
+                  {predefinedAvatars.map((avatar) => (
+                    <div 
+                      key={avatar.id}
+                      className={`avatar-option ${activeScene?.avatarType === avatar.id ? 'active' : ''}`}
+                      onClick={() => selectAvatar(avatar.id)}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '12px',
+                        border: `2px solid ${activeScene?.avatarType === avatar.id ? '#0066cc' : '#333'}`,
+                        borderRadius: '8px',
+                        background: activeScene?.avatarType === avatar.id ? '#0066cc' : '#2a2a2a',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <img 
+                        src={avatar.image} 
+                        alt={avatar.name}
+                        style={{
+                          width: '60px',
+                          height: '60px',
+                          borderRadius: '50%',
+                          objectFit: 'cover',
+                          border: '2px solid rgba(255,255,255,0.2)'
+                        }}
+                      />
+                      <span style={{ 
+                        fontSize: '11px', 
+                        textAlign: 'center',
+                        fontWeight: 600,
+                        color: activeScene?.avatarType === avatar.id ? '#fff' : '#aaa'
+                      }}>
+                        {avatar.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-            <div className="timeline">
-              <strong>Script</strong>
-              <textarea
-                className="script-input"
-                value={activeScene?.script || ''}
-                onChange={(e) => updateScript(e.target.value)}
-              />
-            </div>
-          </section>
-
-          <aside className="creator-right">
-            <div className="panel">
-              <strong>Scene layout</strong>
-              <button className="pill" style={{ justifyContent: 'center' }}>
-                Replace
-              </button>
-              <label className="card-meta">Template</label>
-              <select
-                value={activeScene?.layout || 'hero'}
-                onChange={(e) => applyTemplate(e.target.value)}
-              >
-                <option value="hero">Hero (text + avatar)</option>
-                <option value="split">Split (text top, avatar band)</option>
-              </select>
-            </div>
-            <div className="panel">
-              <strong>Theme</strong>
-              <select>
-                <option>Theme 1</option>
-                <option>Theme 2</option>
-              </select>
-            </div>
-            <div className="panel">
-              <strong>Color</strong>
-              <input type="color" defaultValue="#FFFFFF" />
-            </div>
-            <div className="panel">
-              <strong>Background media</strong>
-              <button className="pill" style={{ justifyContent: 'center' }}>
-                <MdCloudUpload /> Upload
-              </button>
-            </div>
-            <div className="panel">
-              <strong>Music</strong>
-              <button className="pill" style={{ justifyContent: 'center' }}>
-                Select track
-              </button>
-            </div>
-            <div className="panel">
-              <strong>Scene transition</strong>
-              <select>
-                <option>None</option>
-                <option>Fade</option>
-              </select>
-            </div>
-            <div className="panel">
-              <strong>After this scene</strong>
-              <select>
-                <option>Next scene</option>
-              </select>
-            </div>
-            <div className="panel">
-              <strong>Avatar</strong>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input
-                  type="checkbox"
-                  checked={!!activeScene?.showAvatar}
-                  onChange={(e) => toggleAvatar(e.target.checked)}
+            
+            {/* Script Section */}
+            <div className="property-group">
+              <h3 className="property-title">
+                <MdTextFields style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                Script
+              </h3>
+              <div className="script-container">
+                <textarea
+                  className="script-input"
+                  placeholder="Enter your script here..."
+                  value={activeScene?.script || ''}
+                  onChange={(e) => updateScene(activeSceneId, { script: e.target.value })}
+                  rows={6}
                 />
-                Show avatar
-              </label>
-              <button
-                className="pill"
-                style={{ justifyContent: 'center' }}
-                onClick={() =>
-                  setScenes((prev) =>
-                    prev.map((s) => (s.id === activeId ? { ...s, avatarSrc: localAvatar } : s))
-                  )
-                }
-              >
-                Reset avatar
-              </button>
-              <label className="card-meta">Width (px)</label>
-              <input
-                type="number"
-                value={activeScene?.avatarWidth || 0}
-                onChange={(e) => updateAvatarProp('avatarWidth', Number(e.target.value || 0))}
-              />
-              <label className="card-meta">Height (px)</label>
-              <input
-                type="number"
-                value={activeScene?.avatarHeight || 0}
-                onChange={(e) => updateAvatarProp('avatarHeight', Number(e.target.value || 0))}
-              />
-              <label className="card-meta">Position X (%)</label>
-              <input
-                type="number"
-                value={activeScene?.avatarX || 0}
-                onChange={(e) => updateAvatarProp('avatarX', Number(e.target.value || 0))}
-              />
-              <label className="card-meta">Position Y (%)</label>
-              <input
-                type="number"
-                value={activeScene?.avatarY || 0}
-                onChange={(e) => updateAvatarProp('avatarY', Number(e.target.value || 0))}
-              />
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input
-                  type="checkbox"
-                  checked={cropMode}
-                  onChange={(e) => setCropMode(e.target.checked)}
-                />
-                Crop mode
-              </label>
-              <label className="card-meta">Crop top (%)</label>
-              <input
-                type="number"
-                value={activeScene?.cropTop || 0}
-                onChange={(e) => updateAvatarProp('cropTop', Number(e.target.value || 0))}
-              />
-              <label className="card-meta">Crop right (%)</label>
-              <input
-                type="number"
-                value={activeScene?.cropRight || 0}
-                onChange={(e) => updateAvatarProp('cropRight', Number(e.target.value || 0))}
-              />
-              <label className="card-meta">Crop bottom (%)</label>
-              <input
-                type="number"
-                value={activeScene?.cropBottom || 0}
-                onChange={(e) => updateAvatarProp('cropBottom', Number(e.target.value || 0))}
-              />
-              <label className="card-meta">Crop left (%)</label>
-              <input
-                type="number"
-                value={activeScene?.cropLeft || 0}
-                onChange={(e) => updateAvatarProp('cropLeft', Number(e.target.value || 0))}
-              />
+                <div className="script-actions">
+                  <button className="script-btn">
+                    <MdMic />
+                    Record Audio
+                  </button>
+                  <button className="script-btn">
+                    <MdMusicNote />
+                    Add Voiceover
+                  </button>
+                </div>
+              </div>
             </div>
-          </aside>
+            
+            <div className="property-group">
+              <h3 className="property-title">Scene Properties</h3>
+              <div className="property-row">
+                <label className="property-label">Scene Name</label>
+                <input 
+                  className="property-input"
+                  value={activeScene?.title || ''}
+                  onChange={(e) => updateScene(activeSceneId, { title: e.target.value })}
+                />
+              </div>
+              <div className="property-row">
+                <label className="property-label">Duration (seconds)</label>
+                <input 
+                  className="property-input"
+                  type="number"
+                  value={activeScene?.duration || 8}
+                  onChange={(e) => updateScene(activeSceneId, { duration: Number(e.target.value) })}
+                />
+              </div>
+            </div>
+            
+            <div className="property-group">
+              <h3 className="property-title">Text Properties</h3>
+              <div className="property-row">
+                <label className="property-label">Title Text</label>
+                <input 
+                  className="property-input"
+                  value={activeScene?.titleText || ''}
+                  onChange={(e) => updateScene(activeSceneId, { titleText: e.target.value })}
+                />
+              </div>
+              <div className="property-row">
+                <label className="property-label">Subtitle Text</label>
+                <input 
+                  className="property-input"
+                  value={activeScene?.subtitleText || ''}
+                  onChange={(e) => updateScene(activeSceneId, { subtitleText: e.target.value })}
+                />
+              </div>
+            </div>
+            
+            <div className="property-group">
+              <h3 className="property-title">Transform</h3>
+              <div className="property-row">
+                <label className="property-label">Position X</label>
+                <input className="property-input" type="number" defaultValue="0" />
+              </div>
+              <div className="property-row">
+                <label className="property-label">Position Y</label>
+                <input className="property-input" type="number" defaultValue="0" />
+              </div>
+              <div className="property-row">
+                <label className="property-label">Scale</label>
+                <input className="property-input" type="number" defaultValue="100" />
+              </div>
+              <div className="property-row">
+                <label className="property-label">Rotation</label>
+                <input className="property-input" type="number" defaultValue="0" />
+              </div>
+            </div>
+            
+            <div className="property-group">
+              <h3 className="property-title">Appearance</h3>
+              <div className="property-row">
+                <label className="property-label">Opacity</label>
+                <input className="property-input" type="number" defaultValue="100" />
+              </div>
+              <div className="property-row">
+                <label className="property-label">Background Color</label>
+                <input className="property-input" type="color" defaultValue="#000000" />
+              </div>
+            </div>
+          </div>
         </div>
-        {contextMenu.visible && (
-          <div
-            className="ctx-menu"
-            style={{ top: contextMenu.y, left: contextMenu.x }}
-            onClick={(e) => e.stopPropagation()}
+        {/* Timeline */}
+        <div className="timeline-area">
+          <div className="timeline-header">
+            <button className="icon-btn" onClick={addScene}>
+              <MdAdd /> Add Scene
+            </button>
+            <button className="icon-btn" title="Cut" onClick={() => {
+              if (activeSceneId) {
+                console.log('Cut scene:', activeSceneId)
+                // TODO: Implement cut functionality
+              }
+            }}>
+              <MdContentCut />
+            </button>
+            <button className="icon-btn" title="Copy" onClick={() => {
+              if (activeSceneId) {
+                console.log('Copy scene:', activeSceneId)
+                // TODO: Implement copy functionality
+              }
+            }}>
+              <MdContentCopy />
+            </button>
+            <button className="icon-btn" title="Paste" onClick={() => {
+              console.log('Paste scene')
+              // TODO: Implement paste functionality
+            }}>
+              <MdContentPaste />
+            </button>
+            <button className="icon-btn" title="Delete" onClick={() => {
+              if (activeSceneId) {
+                deleteScene(activeSceneId)
+              }
+            }}>
+              <MdDelete />
+            </button>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+              <button className="icon-btn" title="Snap to Grid">
+                <MdTimer />
+              </button>
+              <button className="icon-btn" title="Aspect Ratio">
+                <MdAspectRatio />
+              </button>
+            </div>
+          </div>
+          
+          <div className="timeline-tracks">
+            {scenes.map((scene) => (
+              <div key={scene.id} className="track">
+                <div 
+                  className={`track-label ${scene.id === activeSceneId ? 'active' : ''}`}
+                  onClick={() => setActiveSceneId(scene.id)}
+                  style={{ 
+                    background: scene.id === activeSceneId ? '#0066cc' : '#2a2a2a',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <MdVideoLibrary size={14} />
+                  {scene.title}
+                </div>
+                <div className="track-content">
+                  <div 
+                    className={`clip ${scene.id === activeSceneId ? 'selected' : ''}`}
+                    onClick={() => {
+                      setActiveSceneId(scene.id)
+                      // Calculate frame position for this scene
+                      let frameCount = 0
+                      for (const s of scenes) {
+                        if (s.id === scene.id) break
+                        frameCount += (s.duration || 8) * 30
+                      }
+                      setCurrentTime(frameCount / 30)
+                      if (playerRef.current) {
+                        playerRef.current.seekTo(frameCount)
+                      }
+                    }}
+                    style={{ 
+                      width: `${(scene.duration || 8) * 20}px`,
+                      background: scene.id === activeSceneId ? '#0066cc' : '#2a2a2a'
+                    }}
+                  >
+                    {scene.duration || 8}s
+                  </div>
+                  <div 
+                    className="playhead" 
+                    style={{ 
+                      left: `${Math.min(currentTime * 20, (scene.duration || 8) * 20)}px`,
+                      display: scene.id === activeSceneId ? 'block' : 'none'
+                    }} 
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Tools Palette */}
+        <div className="tools-palette">
+          <button 
+            className={`tool-btn ${selectedTool === 'select' ? 'active' : ''}`}
+            onClick={() => setSelectedTool('select')}
+            title="Select Tool"
           >
-            <button
-              className="ctx-item"
-              onClick={() => {
-                addScene()
-                setContextMenu({ ...contextMenu, visible: false })
-              }}
-            >
-              + Add scene
-            </button>
-            <button
-              className="ctx-item"
-              onClick={() => {
-                cutScene(contextMenu.sceneId)
-                setContextMenu({ ...contextMenu, visible: false })
-              }}
-            >
-              ✂ Cut
-            </button>
-            <button
-              className="ctx-item"
-              onClick={() => {
-                copyScene(contextMenu.sceneId)
-                setContextMenu({ ...contextMenu, visible: false })
-              }}
-            >
-              📋 Copy
-            </button>
-            <button
-              className="ctx-item"
-              onClick={() => {
-                pasteScene(contextMenu.sceneId)
-                setContextMenu({ ...contextMenu, visible: false })
-              }}
-            >
-              📥 Paste
-            </button>
-            <button
-              className="ctx-item"
-              onClick={() => {
-                deleteScene(contextMenu.sceneId)
-                setContextMenu({ ...contextMenu, visible: false })
-              }}
-            >
-              🗑 Delete
-            </button>
-            <button
-              className="ctx-item"
-              onClick={() => {
-                duplicateScene(contextMenu.sceneId)
-                setContextMenu({ ...contextMenu, visible: false })
-              }}
-            >
-              ⧉ Duplicate
-            </button>
-            <button
-              className="ctx-item"
-              onClick={() => {
-                replaceLayout(contextMenu.sceneId)
-                setContextMenu({ ...contextMenu, visible: false })
-              }}
-            >
-              ↺ Replace layout
-            </button>
+            <MdTextFields />
+          </button>
+          <button 
+            className={`tool-btn ${selectedTool === 'text' ? 'active' : ''}`}
+            onClick={() => setSelectedTool('text')}
+            title="Text Tool"
+          >
+            <MdTextFields />
+          </button>
+          <button 
+            className={`tool-btn ${selectedTool === 'crop' ? 'active' : ''}`}
+            onClick={() => setSelectedTool('crop')}
+            title="Crop Tool"
+          >
+            <MdCropFree />
+          </button>
+          <button 
+            className={`tool-btn ${selectedTool === 'transform' ? 'active' : ''}`}
+            onClick={() => setSelectedTool('transform')}
+            title="Transform Tool"
+          >
+            <MdTransform />
+          </button>
+        </div>
+        
+        {/* Preview Modal */}
+        {showPreviewModal && (
+          <div className="modal-overlay" onClick={() => {
+            setShowPreviewModal(false)
+            if (playerRef.current) {
+              playerRef.current.pause()
+            }
+            setIsPlaying(false)
+          }}>
+            <div className="preview-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="preview-modal-header">
+                <h2 className="preview-modal-title">Video Preview</h2>
+                <button 
+                  className="preview-modal-close"
+                  onClick={() => {
+                    setShowPreviewModal(false)
+                    if (playerRef.current) {
+                      playerRef.current.pause()
+                    }
+                    window.speechSynthesis.cancel()
+                    setIsPlaying(false)
+                  }}
+                >
+                  <MdClose size={24} />
+                </button>
+              </div>
+              <div className="preview-modal-content">
+                <Player
+                  ref={playerRef}
+                  component={VideoComposition}
+                  durationInFrames={Math.max(totalDurationInFrames, 240)}
+                  compositionWidth={1920}
+                  compositionHeight={1080}
+                  fps={30}
+                  controls
+                  style={{
+                    width: '100%',
+                    maxHeight: '70vh'
+                  }}
+                  inputProps={{
+                    scenes: scenes
+                  }}
+                  onPlay={() => {
+                    setIsPlaying(true)
+                    // Start speaking when play starts
+                    const currentScene = scenes.find(s => s.id === activeSceneId)
+                    if (currentScene?.script) {
+                      speakText(currentScene.script, activeSceneId)
+                    }
+                  }}
+                  onPause={() => {
+                    setIsPlaying(false)
+                    window.speechSynthesis.pause()
+                  }}
+                  onSeek={(frame) => {
+                    setCurrentTime(frame / 30)
+                    const { scene } = getSceneForFrame(frame)
+                    if (scene) {
+                      setActiveSceneId(scene.id)
+                      // Speak the new scene's script
+                      if (scene.script) {
+                        window.speechSynthesis.cancel()
+                        setTimeout(() => speakText(scene.script, scene.id), 300)
+                      }
+                    }
+                  }}
+                  onFrameUpdate={(frame) => {
+                    setCurrentTime(frame / 30)
+                    const { scene } = getSceneForFrame(frame)
+                    if (scene && scene.id !== activeSceneId) {
+                      setActiveSceneId(scene.id)
+                      // Speak the new scene's script when scene changes
+                      if (scene.script) {
+                        window.speechSynthesis.cancel()
+                        setTimeout(() => speakText(scene.script, scene.id), 300)
+                      }
+                    }
+                  }}
+                />
+              </div>
+            </div>
           </div>
         )}
-
-        {showCreditModal && (
-          <div className="credit-modal-overlay" onClick={() => setShowCreditModal(false)}>
-            <div className="credit-modal" onClick={(e) => e.stopPropagation()}>
-              <div className="credit-modal-header">
-                <h2 className="credit-modal-title">Confirm Video Generation</h2>
-                <p className="credit-modal-subtitle">Review the credit cost before generating your video</p>
+        
+        {/* Export Modal */}
+        {showExportModal && (
+          <div className="modal-overlay" onClick={() => setShowExportModal(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <h2 className="modal-title">Export Video</h2>
+              <div className="modal-body">
+                <div className="property-group">
+                  <div className="property-row">
+                    <label className="property-label">Format</label>
+                    <select className="property-input">
+                      <option>MP4</option>
+                      <option>WebM</option>
+                      <option>GIF</option>
+                    </select>
+                  </div>
+                  <div className="property-row">
+                    <label className="property-label">Resolution</label>
+                    <select className="property-input">
+                      <option>1920x1080 (Full HD)</option>
+                      <option>1280x720 (HD)</option>
+                      <option>3840x2160 (4K)</option>
+                    </select>
+                  </div>
+                  <div className="property-row">
+                    <label className="property-label">Frame Rate</label>
+                    <select className="property-input">
+                      <option>30 fps</option>
+                      <option>24 fps</option>
+                      <option>60 fps</option>
+                    </select>
+                  </div>
+                  <div className="property-row">
+                    <label className="property-label">Quality</label>
+                    <select className="property-input">
+                      <option>High</option>
+                      <option>Medium</option>
+                      <option>Low</option>
+                    </select>
+                  </div>
+                </div>
               </div>
-
-              <div className="credit-balance">
-                <span className="credit-balance-label">Available Credits:</span>
-                <span className="credit-balance-value">{userCredits.toLocaleString()}</span>
-              </div>
-
-              <div className="credit-info">
-                <div className="credit-info-row">
-                  <span className="credit-info-label">Base Cost</span>
-                  <span className="credit-info-value">25 credits</span>
-                </div>
-                <div className="credit-info-row">
-                  <span className="credit-info-label">Scenes ({scenes.length} × 10)</span>
-                  <span className="credit-info-value">{scenes.length * 10} credits</span>
-                </div>
-                <div className="credit-info-row">
-                  <span className="credit-info-label">Estimated Duration</span>
-                  <span className="credit-info-value">
-                    {scenes.reduce((total, scene) => {
-                      const [min, sec] = scene.duration.split(':').map(Number)
-                      return total + min * 60 + sec
-                    }, 0)}s
-                  </span>
-                </div>
-                <div className="credit-info-row">
-                  <span className="credit-info-label">Total Cost</span>
-                  <span className="credit-info-value">{calculateVideoCost()} credits</span>
-                </div>
-              </div>
-
-              {userCredits < calculateVideoCost() && (
-                <div style={{
-                  padding: '12px',
-                  background: '#fef2f2',
-                  border: '1px solid #fecaca',
-                  borderRadius: '10px',
-                  marginBottom: '20px',
-                  color: '#991b1b',
-                  fontSize: '14px',
-                  fontWeight: '600'
-                }}>
-                  ⚠️ Insufficient credits! Please purchase more credits to generate this video.
-                </div>
-              )}
-
-              <div className="credit-modal-actions">
-                <button
-                  className="credit-modal-btn credit-modal-btn-secondary"
-                  onClick={() => setShowCreditModal(false)}
-                >
+              <div className="modal-actions">
+                <button className="btn-secondary" onClick={() => setShowExportModal(false)}>
                   Cancel
                 </button>
-                <button
-                  className="credit-modal-btn credit-modal-btn-primary"
-                  onClick={confirmGenerate}
-                  disabled={userCredits < calculateVideoCost()}
-                >
-                  Generate Video ({calculateVideoCost()} credits)
+                <button className="btn-primary" onClick={() => {
+                  alert('Video export started! This will take a few moments...')
+                  setShowExportModal(false)
+                }}>
+                  Start Export
                 </button>
               </div>
             </div>
