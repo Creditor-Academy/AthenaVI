@@ -638,7 +638,7 @@ const styles = `
 }
 `
 
-function Navbar({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onNavigateToEthics, onLogoClick }) {
+function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology }) {
   const [activeDropdown, setActiveDropdown] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileDropdowns, setMobileDropdowns] = useState({})
@@ -667,15 +667,19 @@ function Navbar({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onNav
   const companyItems = [
     'About Us',
     'Blog',
-    'Careers',
-    'Leadership',
-    'Partners',
     'News',
     'Resources',
-    'Trust Center',
     'Privacy Policy',
     'Help Center'
   ]
+
+  const handleCompanyItemClick = (item) => {
+    if (onNavigateToCompany) {
+      onNavigateToCompany(item)
+    }
+    setActiveDropdown(null)
+    setMobileMenuOpen(false)
+  }
 
   // Handle desktop dropdown clicks outside
   useEffect(() => {
@@ -766,9 +770,6 @@ function Navbar({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onNav
     return () => document.removeEventListener('keydown', handleEscape)
   }, [mobileMenuOpen])
 
-  const toggleDropdown = (dropdownName) => {
-    setActiveDropdown(activeDropdown === dropdownName ? null : dropdownName)
-  }
 
   const toggleMobileDropdown = (dropdownName) => {
     setMobileDropdowns(prev => ({
@@ -933,75 +934,18 @@ function Navbar({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onNav
             </div>
           </div>
 
-          <div
-            className="nav-link-wrapper"
-            ref={el => dropdownRefs.current.technology = el}
-            onMouseEnter={() => {
-              if (clickTimeoutRef.current) {
-                clearTimeout(clickTimeoutRef.current)
-                clickTimeoutRef.current = null
-              }
-              setActiveDropdown('technology')
-            }}
-            onMouseLeave={() => {
-              // Only close if not clicked (clicked dropdowns stay open)
-              if (clickedDropdownRef.current !== 'technology') {
-                setActiveDropdown(null)
+          <a 
+            href="#" 
+            className="nav-link"
+            onClick={(e) => {
+              e.preventDefault()
+              if (onNavigateToTechnology) {
+                onNavigateToTechnology()
               }
             }}
           >
-            <a
-              href="#"
-              className={`nav-link ${activeDropdown === 'technology' ? 'active' : ''}`}
-              onClick={(e) => {
-                e.preventDefault()
-                // Clear any existing timeout
-                if (clickTimeoutRef.current) {
-                  clearTimeout(clickTimeoutRef.current)
-                }
-                // Mark this dropdown as clicked so it stays open
-                clickedDropdownRef.current = 'technology'
-                setActiveDropdown('technology')
-              }}
-            >
-              Technology
-              <MdKeyboardArrowDown />
-            </a>
-            <div className={`dropdown ${activeDropdown === 'technology' ? 'active' : ''}`}>
-              <a 
-                href="#" 
-                className="dropdown-item"
-                onClick={(e) => {
-                  e.preventDefault()
-                  // Clear timeout when item is clicked
-                  if (clickTimeoutRef.current) {
-                    clearTimeout(clickTimeoutRef.current)
-                    clickTimeoutRef.current = null
-                  }
-                  clickedDropdownRef.current = null
-                  setActiveDropdown(null)
-                }}
-              >
-                AI Technology
-              </a>
-              <a 
-                href="#" 
-                className="dropdown-item"
-                onClick={(e) => {
-                  e.preventDefault()
-                  // Clear timeout when item is clicked
-                  if (clickTimeoutRef.current) {
-                    clearTimeout(clickTimeoutRef.current)
-                    clickTimeoutRef.current = null
-                  }
-                  clickedDropdownRef.current = null
-                  setActiveDropdown(null)
-                }}
-              >
-                API Documentation
-              </a>
-            </div>
-          </div>
+            Technology
+          </a>
 
           <a 
             href="#" 
@@ -1059,13 +1003,11 @@ function Navbar({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onNav
                   className="dropdown-item"
                   onClick={(e) => {
                     e.preventDefault()
-                    // Clear timeout when item is clicked
                     if (clickTimeoutRef.current) {
                       clearTimeout(clickTimeoutRef.current)
                       clickTimeoutRef.current = null
                     }
-                    clickedDropdownRef.current = null
-                    setActiveDropdown(null)
+                    handleCompanyItemClick(item)
                   }}
                 >
                   {item}
@@ -1194,23 +1136,19 @@ function Navbar({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onNav
             ))}
           </div>
 
-          <a
-            href="#"
-            className={`mobile-nav-link has-dropdown ${mobileDropdowns.technology ? 'active' : ''}`}
-            data-dropdown="technology"
-            onClick={(e) => handleMobileLinkClick(e, true)}
-          >
-            Technology
-            <MdKeyboardArrowDown />
-          </a>
-          <div className={`mobile-dropdown ${mobileDropdowns.technology ? 'active' : ''}`}>
-            <a href="#" className="mobile-dropdown-item" onClick={handleMobileActionClick}>
-              AI Technology
-            </a>
-            <a href="#" className="mobile-dropdown-item" onClick={handleMobileActionClick}>
-              API Documentation
-            </a>
-          </div>
+           <a
+             href="#"
+             className="mobile-nav-link"
+             onClick={(e) => {
+               e.preventDefault()
+               handleMobileActionClick()
+               if (onNavigateToTechnology) {
+                 onNavigateToTechnology()
+               }
+             }}
+           >
+             Technology
+           </a>
 
           <a 
             href="#" 
@@ -1244,7 +1182,10 @@ function Navbar({ onLoginClick, onNavigateToProduct, onNavigateToSolution, onNav
                 key={index} 
                 href="#" 
                 className="mobile-dropdown-item"
-                onClick={handleMobileActionClick}
+                onClick={(e) => {
+                  e.preventDefault()
+                  handleCompanyItemClick(item)
+                }}
               >
                 {item}
               </a>

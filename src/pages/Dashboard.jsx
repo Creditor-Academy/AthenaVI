@@ -21,6 +21,7 @@ import {
   MdTrendingUp,
   MdPlayArrow,
   MdMoreVert,
+  MdAccountBalanceWallet,
 } from 'react-icons/md'
 import Videos from './Videos.jsx'
 import Trash from './Trash.jsx'
@@ -31,6 +32,7 @@ import SharedWithMe from './SharedWithMe.jsx'
 import Workspace from './Workspace.jsx'
 import Profile from './Profile.jsx'
 import BrandKits from './BrandKits.jsx'
+import Credits from './Credits.jsx'
 import VoiceCreatePanel from '../components/VoiceCreatePanel.jsx'
 
 const styles = `
@@ -123,20 +125,51 @@ const styles = `
 
 .create-btn {
   border: none;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: #ffffff;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 15px;
-  padding: 12px 24px;
-  border-radius: 16px;
+  padding: 11px 22px;
+  border-radius: 10px;
   cursor: pointer;
   box-shadow: 
-    0 4px 12px rgba(59, 130, 246, 0.25),
-    0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
+    0 2px 8px rgba(59, 130, 246, 0.3),
+    0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.credit-display-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.credit-display-btn:hover {
+  background: #f8fafc;
+  border-color: #3b82f6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.credit-display-btn svg {
+  color: #3b82f6;
 }
 
 .create-btn::before {
@@ -146,8 +179,8 @@ const styles = `
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.6s ease;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+  transition: left 0.5s ease;
 }
 
 .create-btn:hover::before {
@@ -155,17 +188,17 @@ const styles = `
 }
 
 .create-btn:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   box-shadow: 
-    0 8px 20px rgba(59, 130, 246, 0.35),
-    0 4px 8px rgba(0, 0, 0, 0.15);
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #1e40af 100%);
+    0 4px 16px rgba(59, 130, 246, 0.4),
+    0 2px 6px rgba(0, 0, 0, 0.12);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
 }
 
 .create-btn:active {
   transform: translateY(0);
   box-shadow: 
-    0 2px 8px rgba(59, 130, 246, 0.3),
+    0 2px 6px rgba(59, 130, 246, 0.3),
     0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -1134,6 +1167,8 @@ const styles = `
 }
 `
 
+const defaultThumbnailUrl = 'https://media.istockphoto.com/id/1475888355/video/timelapse-of-the-creation-of-an-online-avatar-start-to-finish.jpg?s=640x640&k=20&c=pFzBOkU7LjC1DF0DeNCAUhS8MCiNwSDwkqI9v9C7IgQ='
+
 function HomeSection({ onCreate }) {
   const [activeTab, setActiveTab] = useState('recents')
   const [viewMode, setViewMode] = useState('grid')
@@ -1307,22 +1342,11 @@ function HomeSection({ onCreate }) {
               className={`recent-video-card ${viewMode === 'list' ? 'list-view' : ''}`}
             >
               <div className="recent-video-thumb">
-                {video.thumbnail ? (
-                  <img src={video.thumbnail} alt={video.title} className="recent-video-thumb-image" />
-                ) : (
-                  <div style={{
-                    width: '100%',
-                    height: '100%',
-                    background: '#f1f5f9',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#94a3b8',
-                    fontSize: '36px'
-                  }}>
-                    <MdPlayArrow />
-                  </div>
-                )}
+                <img 
+                  src={video.thumbnail || defaultThumbnailUrl} 
+                  alt={video.title} 
+                  className="recent-video-thumb-image" 
+                />
                 <div className="recent-video-overlay">
                   {video.status === 'draft' && (
                     <div className={`recent-video-badge draft`}>
@@ -1398,7 +1422,16 @@ function Dashboard({ onLogout, onCreate }) {
           </div>
           <div className="top-actions">
             <input className="search" placeholder="Search" />
-            <button className="create-btn" type="button">
+            <button 
+              className="credit-display-btn" 
+              type="button" 
+              onClick={() => setSection('credits')}
+              title="View credits"
+            >
+              <MdAccountBalanceWallet size={18} />
+              <span>1,250</span>
+            </button>
+            <button className="create-btn" type="button" onClick={onCreate}>
               Create
             </button>
             <button className="avatar-btn" onClick={() => setMenuOpen((v) => !v)} aria-label="Profile menu">
@@ -1483,12 +1516,19 @@ function Dashboard({ onLogout, onCreate }) {
               >
                 <MdPerson /> Avatars
               </div>
-                <div
-                  className={`nav-item ${section === 'voices' ? 'active' : ''}`}
-                  role="button"
-                  onClick={() => setSection('voices')}
-                >
+              <div
+                className={`nav-item ${section === 'voices' ? 'active' : ''}`}
+                role="button"
+                onClick={() => setSection('voices')}
+              >
                 <MdRecordVoiceOver /> Voices
+              </div>
+              <div
+                className={`nav-item ${section === 'credits' ? 'active' : ''}`}
+                role="button"
+                onClick={() => setSection('credits')}
+              >
+                <MdAccountBalanceWallet /> Credits
               </div>
             </div>
           </aside>
@@ -1498,7 +1538,7 @@ function Dashboard({ onLogout, onCreate }) {
             )}
 
             {section === 'videos' && (
-              <Videos />
+              <Videos onCreate={onCreate} />
             )}
 
             {section === 'avatars' && (
@@ -1531,11 +1571,15 @@ function Dashboard({ onLogout, onCreate }) {
               )}
 
               {section === 'workspace' && (
-                <Workspace />
+                <Workspace onCreate={onCreate} />
               )}
 
               {section === 'brandkits' && (
                 <BrandKits />
+              )}
+
+              {section === 'credits' && (
+                <Credits onBack={() => setSection('home')} />
               )}
           </main>
         </div>

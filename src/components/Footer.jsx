@@ -427,13 +427,47 @@ function Footer({
 
           <div className="footer-column">
             <h3 className="footer-column-title">Company</h3>
-            <a href="#" className="footer-link">About Us</a>
-            <a href="#" className="footer-link">Blog</a>
+            <a 
+              href="#" 
+              className="footer-link"
+              onClick={(e) => {
+                e.preventDefault()
+                handleCompanyClick('About Us')
+              }}
+            >
+              About Us
+            </a>
+            <a 
+              href="#" 
+              className="footer-link"
+              onClick={(e) => {
+                e.preventDefault()
+                handleCompanyClick('Blog')
+              }}
+            >
+              Blog
+            </a>
             <a href="#" className="footer-link">Careers</a>
-            <a href="#" className="footer-link">Leadership</a>
-            <a href="#" className="footer-link">Partners</a>
-            <a href="#" className="footer-link">News</a>
-            <a href="#" className="footer-link">Resources</a>
+            <a 
+              href="#" 
+              className="footer-link"
+              onClick={(e) => {
+                e.preventDefault()
+                handleCompanyClick('News')
+              }}
+            >
+              News
+            </a>
+            <a 
+              href="#" 
+              className="footer-link"
+              onClick={(e) => {
+                e.preventDefault()
+                handleCompanyClick('Resources')
+              }}
+            >
+              Resources
+            </a>
           </div>
 
           <div className="footer-newsletter">
@@ -467,7 +501,16 @@ function Footer({
             <a href="#" className="footer-bottom-link" onClick={handleEthicsClick}>Trust Center</a>
             <a href="#" className="footer-bottom-link">Privacy Policy</a>
             <a href="#" className="footer-bottom-link">Terms of Service</a>
-            <a href="#" className="footer-bottom-link">Help Center</a>
+            <a 
+              href="#" 
+              className="footer-bottom-link"
+              onClick={(e) => {
+                e.preventDefault()
+                handleCompanyClick('Help Center')
+              }}
+            >
+              Help Center
+            </a>
           </div>
           <div className="footer-language">
             <MdLanguage />

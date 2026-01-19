@@ -374,9 +374,9 @@ function Library() {
 
   const [libraryItems, setLibraryItems] = useState({
     media: [
-      { id: 1, name: 'equifax-logo.png', type: 'image', url: null, size: '2.4 MB', date: '2 days ago' },
-      { id: 2, name: 'cityscape-video.mp4', type: 'video', url: null, size: '15.2 MB', date: '1 week ago', duration: '00:17' },
-      { id: 3, name: 'office-photo.jpg', type: 'image', url: null, size: '1.8 MB', date: '3 days ago' },
+      { id: 1, name: 'equifax-logo.png', type: 'image', url: 'https://img.freepik.com/free-vector/bird-colorful-gradient-design-vector_343694-2506.jpg?semt=ais_hybrid&w=740&q=80', size: '2.4 MB', date: '2 days ago' },
+      { id: 2, name: 'cityscape-video.mp4', type: 'video', url: 'https://i.ytimg.com/vi/qy0vb4V3B-4/hqdefault.jpg?v=5d65cbf3', size: '15.2 MB', date: '1 week ago', duration: '00:17' },
+      { id: 3, name: 'office-photo.jpg', type: 'image', url: 'https://img.freepik.com/free-photo/empty-financial-department-office_482257-112016.jpg?semt=ais_hybrid&w=740&q=80', size: '1.8 MB', date: '3 days ago' },
     ],
     music: [
       { id: 4, name: 'background-music.mp3', type: 'audio', url: null, size: '4.2 MB', date: '5 days ago' },
@@ -577,7 +577,7 @@ function Library() {
                 ref={el => menuRefs.current[item.id] = el}
               >
                 <div className="item-preview">
-                  {item.url && item.type === 'image' ? (
+                  {item.url && (item.type === 'image' || item.type === 'video') ? (
                     <img src={item.url} alt={item.name} className="item-preview-image" />
                   ) : (
                     getPreviewIcon(item.type)
