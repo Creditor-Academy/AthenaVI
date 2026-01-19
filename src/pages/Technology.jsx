@@ -225,16 +225,17 @@ const styles = `
 }
 
 .feature-card {
-  background: #f8fafc;
+  background: #ffffff;
   border: 2px solid #e2e8f0;
   border-radius: 20px;
   padding: 40px;
   position: relative;
   overflow: hidden;
-  transition: all 0.4s ease;
+  transition: all 0.3s ease;
   min-height: 400px;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .feature-card-bg {
@@ -245,14 +246,13 @@ const styles = `
   bottom: 0;
   background-size: cover;
   background-position: center;
-  opacity: 0.3;
+  opacity: 0.25;
   z-index: 0;
-  transition: all 0.4s ease;
+  transition: opacity 0.3s ease;
 }
 
 .feature-card:hover .feature-card-bg {
-  opacity: 0.5;
-  transform: scale(1.05);
+  opacity: 0.3;
 }
 
 .feature-card::before {
@@ -262,37 +262,27 @@ const styles = `
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(30, 64, 175, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
-  opacity: 0;
-  transition: opacity 0.4s ease;
+  background: rgba(255, 255, 255, 0.75);
+  opacity: 0.2;
+  transition: opacity 0.3s ease;
   border-radius: 20px;
   z-index: 1;
-}
-
-.feature-card-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
-  z-index: 1;
-  border-radius: 20px;
-}
-
-.feature-card:hover {
-  transform: translateY(-8px);
-  border-color: #3b82f6;
-  box-shadow: 0 16px 48px rgba(59, 130, 246, 0.2);
 }
 
 .feature-card:hover::before {
-  opacity: 1;
+  opacity: 0.85;
 }
 
-.feature-card:hover .feature-card-overlay {
-  background: rgba(0, 0, 0, 0.3);
+.feature-card-overlay {
+  display: none;
 }
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  border-color: #3b82f6;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
+}
+
 
 .feature-card-content-wrapper {
   display: flex;
@@ -316,14 +306,12 @@ const styles = `
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: all 0.4s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .feature-card:hover .feature-card-icon-circle {
-  transform: scale(1.15) rotate(5deg);
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-  border-color: #1e40af;
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
 }
 
 .feature-card-icon-circle svg {
@@ -335,43 +323,45 @@ const styles = `
   font-family: 'Arial', sans-serif;
   font-size: 28px;
   font-weight: 700;
-  color: #ffffff;
+  color: #1e40af;
   margin: 0 0 16px;
   position: relative;
   z-index: 2;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  line-height: 1.3;
 }
 
 .feature-card-description {
   font-family: 'Arial', sans-serif;
   font-size: 16px;
   line-height: 1.7;
-  color: rgba(255, 255, 255, 0.9);
+  color: #475569;
   margin: 0;
   position: relative;
   z-index: 2;
   flex: 1;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 .feature-card-metric {
   font-family: 'Arial', sans-serif;
   font-size: 48px;
   font-weight: 700;
-  color: #ffffff;
+  color: #1e40af;
   margin: 24px 0 8px;
   position: relative;
   z-index: 2;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .feature-card-metric-label {
   font-family: 'Arial', sans-serif;
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.9);
+  color: #64748b;
   position: relative;
   z-index: 2;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  font-weight: 500;
 }
 
 .feature-card-arrow {
@@ -380,19 +370,20 @@ const styles = `
   right: 24px;
   width: 48px;
   height: 48px;
-  background: rgba(30, 30, 30, 0.8);
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .feature-card-arrow:hover {
-  background: rgba(30, 30, 30, 0.95);
-  transform: scale(1.1);
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
 }
 
 .feature-card-arrow svg {
