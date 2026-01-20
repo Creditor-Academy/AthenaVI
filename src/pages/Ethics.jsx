@@ -52,6 +52,25 @@ const styles = `
   font-weight: 400;
 }
 
+.ethics-list {
+  font-family: 'Arial', sans-serif;
+  font-size: 16px;
+  line-height: 1.8;
+  margin: 0 0 20px 0;
+  color: #64748b;
+  font-weight: 400;
+  padding-left: 24px;
+}
+
+.ethics-list-item {
+  margin-bottom: 12px;
+  position: relative;
+}
+
+.ethics-list-item::marker {
+  color: #1e40af;
+}
+
 .ethics-signature {
   margin-top: 60px;
   padding-top: 40px;
@@ -93,7 +112,8 @@ const styles = `
     font-size: 24px;
   }
 
-  .ethics-text {
+  .ethics-text,
+  .ethics-list {
     font-size: 15px;
   }
 }
@@ -110,10 +130,14 @@ const styles = `
   .ethics-section-title {
     font-size: 22px;
   }
+
+  .ethics-list {
+    padding-left: 20px;
+  }
 }
 `
 
-function Ethics({ onLoginClick, onLogoClick, onNavigateToSolution, onNavigateToProduct }) {
+function Ethics({ onLoginClick, onLogoClick, onNavigateToSolution, onNavigateToProduct, onNavigateToEthics }) {
   return (
     <>
       <style>{styles}</style>
@@ -123,60 +147,125 @@ function Ethics({ onLoginClick, onLogoClick, onNavigateToSolution, onNavigateToP
           onLogoClick={onLogoClick}
           onNavigateToSolution={onNavigateToSolution}
           onNavigateToProduct={onNavigateToProduct}
+          onNavigateToEthics={onNavigateToEthics}
         />
         
         <div className="ethics-content">
           <div className="ethics-header">
-            <h1 className="ethics-title">Pledge for the ethical use of synthetic media</h1>
+            <h1 className="ethics-title">Athena VI Ethical Pledge for the Use of Synthetic Media</h1>
           </div>
 
           <div className="ethics-section">
             <p className="ethics-text">
-              As privacy experts and leaders in the AI synthetic media space, we are well aware of the vast opportunities this sector presents. Synthetic media leverages creativity through the use of generative AI and can also streamline processes to generate significant time and resource savings.
+              At Athena Virtual Instructor, we believe synthetic media represents one of the most powerful technological advancements of our generation. Through generative AI, we can unlock creativity, increase access to knowledge, and dramatically improve how people learn, communicate, and build businesses.
             </p>
             <p className="ethics-text">
-              However, as with many modern technologies, it also brings with it risks such as bias, misuse by malicious actors, and the potential to spread disinformation.
-            </p>
-          </div>
-
-          <div className="ethics-section">
-            <h2 className="ethics-section-title">The use of our technology</h2>
-            <p className="ethics-text">
-              We strive to use our technology for good, and to see this young and exciting industry evolve in a positive direction. We see it as our responsibility to help ensure that synthetic media is used in an ethical way, and to help lead the industry in achieving this.
+              However, we also recognize that with this power comes responsibility. Synthetic media must be developed and deployed with care. Without ethical guardrails, these technologies can introduce risks — including bias, privacy violations, misinformation, and misuse by bad actors.
             </p>
             <p className="ethics-text">
-              As the use of this powerful technology grows exponentially, it creates an urgency to establish clear industry guidelines.
-            </p>
-            <p className="ethics-text">
-              To that end, Athena VI has partnered with leading privacy experts and ethicists to establish ethical guidelines and codes-of-conduct for this technology. This is a pledge we are making to bring transparency and fairness to our product and how we and our partners deploy them.
+              This pledge defines how Athena VI commits to leading this industry with integrity, accountability, and transparency.
             </p>
           </div>
 
           <div className="ethics-section">
-            <h2 className="ethics-section-title">Our Pledge</h2>
+            <h2 className="ethics-section-title">Our Responsibility</h2>
             <p className="ethics-text">
-              We have issued a pledge for how we intend to operate our business in an ethical way, and also intend it as a call for others in the industry to adopt it.
+              We believe synthetic media should empower people — not deceive, exploit, or manipulate them.
             </p>
             <p className="ethics-text">
-              This pledge begins, but does not end, our commitment. It represents the start of an ongoing dialogue with our customers, the wider industry and consumers, as well as regulators and lawmakers. We will continue to work to maintain and build on these commitments.
+              As a company operating at the frontier of AI-powered communication and education, Athena VI accepts its responsibility to protect individuals, safeguard data, and ensure our technology is used to create real value for society.
             </p>
             <p className="ethics-text">
-              We hope more partners will join us in making this a reality, to seize this opportunity to earn and grow consumer trust in what we all do.
+              We are committed not only to what we build, but to how it is used.
+            </p>
+          </div>
+
+          <div className="ethics-section">
+            <h2 className="ethics-section-title">Our Commitment</h2>
+            <p className="ethics-text">
+              Athena VI has partnered with privacy experts, AI ethicists, and industry advisors to establish clear ethical guidelines governing the creation, distribution, and use of synthetic media on our platform.
+            </p>
+            <p className="ethics-text">
+              These standards guide every product we release, every partnership we form, and every deployment of our technology.
+            </p>
+            <p className="ethics-text">
+              We pledge to operate with:
+            </p>
+            <ul className="ethics-list">
+              <li className="ethics-list-item">
+                <strong>Transparency</strong> — Users will always know when content is AI-generated.
+              </li>
+              <li className="ethics-list-item">
+                <strong>Consent</strong> — No voice, likeness, or identity will be used without explicit permission.
+              </li>
+              <li className="ethics-list-item">
+                <strong>Privacy</strong> — Personal data will be protected and never exploited.
+              </li>
+              <li className="ethics-list-item">
+                <strong>Fairness</strong> — We actively work to minimize bias and harmful outputs.
+              </li>
+              <li className="ethics-list-item">
+                <strong>Accountability</strong> — We take responsibility for how our tools are used.
+              </li>
+            </ul>
+          </div>
+
+          <div className="ethics-section">
+            <h2 className="ethics-section-title">How We Will Lead</h2>
+            <p className="ethics-text">
+              Athena VI commits to:
+            </p>
+            <ul className="ethics-list">
+              <li className="ethics-list-item">
+                Preventing the use of our technology for impersonation, fraud, deception, or harm.
+              </li>
+              <li className="ethics-list-item">
+                Requiring proper authorization for the use of any real person's image, voice, or identity.
+              </li>
+              <li className="ethics-list-item">
+                Maintaining strong safeguards to prevent abuse, deepfake misuse, and disinformation.
+              </li>
+              <li className="ethics-list-item">
+                Providing clear labeling and disclosure when content is AI-generated.
+              </li>
+              <li className="ethics-list-item">
+                Continuously auditing and improving our systems for safety, fairness, and compliance.
+              </li>
+              <li className="ethics-list-item">
+                Cooperating with regulators, researchers, and industry partners to uphold public trust.
+              </li>
+            </ul>
+          </div>
+
+          <div className="ethics-section">
+            <h2 className="ethics-section-title">An Ongoing Promise</h2>
+            <p className="ethics-text">
+              This pledge is not a one-time statement — it is a living commitment.
+            </p>
+            <p className="ethics-text">
+              We will continue to engage with our customers, industry leaders, policymakers, and the public to ensure our technology evolves responsibly as the world changes.
+            </p>
+            <p className="ethics-text">
+              We invite our partners and the broader AI community to join us in building a future where synthetic media is trusted, ethical, and beneficial for everyone.
             </p>
           </div>
 
           <div className="ethics-signature">
-            <p className="ethics-date">January, 2024</p>
+            <p className="ethics-date">January 2024</p>
             <p className="ethics-name">Paulmichael Rowland</p>
-            <p className="ethics-role">Founder</p>
+            <p className="ethics-role">Founder, Athena Virtual Instructor</p>
           </div>
         </div>
         
-        <Footer />
+        <Footer 
+          onLogoClick={onLogoClick}
+          onNavigateToProduct={onNavigateToProduct}
+          onNavigateToSolution={onNavigateToSolution}
+          onNavigateToEthics={onNavigateToEthics}
+        />
       </div>
     </>
   )
 }
 
 export default Ethics
-
