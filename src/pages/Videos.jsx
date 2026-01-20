@@ -122,12 +122,12 @@ const styles = `
 .folders-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+  gap: 24px;
 }
 
 .folder-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border: 1px solid #f1f5f9;
+  border-radius: 20px;
   padding: 24px;
   background: #ffffff;
   cursor: pointer;
@@ -136,13 +136,15 @@ const styles = `
   display: flex;
   flex-direction: column;
   gap: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 6px -2px rgba(0, 0, 0, 0.03);
 }
 
 .folder-card:hover {
   border-color: #cbd5e1;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
+  box-shadow: 
+    0 20px 25px -5px rgba(0, 0, 0, 0.08),
+    0 8px 10px -6px rgba(0, 0, 0, 0.01);
+  transform: translateY(-4px);
 }
 
 .folder-header {
@@ -154,15 +156,22 @@ const styles = `
 .folder-icon-wrapper {
   width: 56px;
   height: 56px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-radius: 16px;
+  background: #eff6ff;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #3b82f6;
   font-size: 28px;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+  transition: all 0.3s ease;
+}
+
+.folder-card:hover .folder-icon-wrapper {
+  background: #3b82f6;
+  color: #ffffff;
+  transform: scale(1.1) rotate(-3deg);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .folder-menu-btn {
@@ -171,7 +180,7 @@ const styles = `
   border-radius: 8px;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #94a3b8;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -190,18 +199,18 @@ const styles = `
 }
 
 .folder-name {
-  font-size: 17px;
-  font-weight: 600;
-  color: #0f172a;
-  margin: 0 0 8px;
-  line-height: 1.4;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 6px;
+  line-height: 1.3;
 }
 
 .folder-meta {
   font-size: 13px;
   color: #64748b;
   margin: 0 0 16px;
-  font-weight: 400;
+  font-weight: 500;
 }
 
 .folder-preview {
@@ -860,11 +869,11 @@ function Videos({ onCreate }) {
     const handleClickOutside = (event) => {
       Object.keys(menuRefs.current).forEach((itemId) => {
         if (menuRefs.current[itemId] && !menuRefs.current[itemId].contains(event.target)) {
-        setCardMenu(null)
-      }
+          setCardMenu(null)
+        }
       })
     }
-      document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
@@ -885,11 +894,11 @@ function Videos({ onCreate }) {
       prev.map((folder) =>
         folder.id === folderId
           ? {
-              ...folder,
-              videos: folder.videos.map((v) =>
-                v.id === videoId ? { ...v, title: newTitle } : v
-              )
-            }
+            ...folder,
+            videos: folder.videos.map((v) =>
+              v.id === videoId ? { ...v, title: newTitle } : v
+            )
+          }
           : folder
       )
     )
@@ -901,8 +910,8 @@ function Videos({ onCreate }) {
 
   const deleteFolder = (folderId) => {
     if (window.confirm('Are you sure you want to delete this folder?')) {
-    setFolders((prev) => prev.filter((f) => f.id !== folderId))
-    setCardMenu(null)
+      setFolders((prev) => prev.filter((f) => f.id !== folderId))
+      setCardMenu(null)
       if (selectedFolder === folderId) {
         setSelectedFolder(null)
       }
@@ -918,7 +927,7 @@ function Videos({ onCreate }) {
             : folder
         )
       )
-    setCardMenu(null)
+      setCardMenu(null)
     }
   }
 
@@ -944,7 +953,7 @@ function Videos({ onCreate }) {
           <button className="back-button" onClick={() => setSelectedFolder(null)}>
             <MdArrowBack size={18} />
             Back to folders
-            </button>
+          </button>
 
           <div className="folder-view-header">
             <div>
@@ -967,13 +976,13 @@ function Videos({ onCreate }) {
                 >
                   <MdViewList />
                 </button>
-          </div>
+              </div>
               <button className="new-folder-btn" onClick={onCreate}>
                 <MdAdd size={18} />
                 New video
-            </button>
+              </button>
+            </div>
           </div>
-        </div>
 
           {currentFolder.videos.length === 0 ? (
             <div className="empty-folder">
@@ -983,7 +992,7 @@ function Videos({ onCreate }) {
             </div>
           ) : (
             <div className={viewMode === 'grid' ? 'videos-grid' : 'videos-list'}>
-          {currentFolder.videos.map((video) => (
+              {currentFolder.videos.map((video) => (
                 <div className={`video-card ${viewMode === 'list' ? 'list-view' : ''}`} key={video.id} ref={el => menuRefs.current[`video-${video.id}`] = el}>
                   <div className="video-thumb">
                     <img
@@ -1000,43 +1009,43 @@ function Videos({ onCreate }) {
                       <div className={`video-badge ${video.status}`}>
                         {video.status === 'draft' ? 'DRAFT' : 'PUBLISHED'}
                       </div>
-              <button
+                      <button
                         className="video-menu-btn"
                         onClick={(e) => {
                           e.stopPropagation()
                           setCardMenu(cardMenu === `video-${video.id}` ? null : `video-${video.id}`)
                         }}
-              >
-                <MdMoreVert />
-              </button>
+                      >
+                        <MdMoreVert />
+                      </button>
                       {cardMenu === `video-${video.id}` && (
                         <div className="video-menu" onClick={(e) => e.stopPropagation()}>
-                  <button
+                          <button
                             className="video-menu-item"
                             onClick={(e) => {
                               e.stopPropagation()
                               setRenameDialog({ folderId: currentFolder.id, videoId: video.id })
                               setRenameType('video')
                               setNewName(video.title)
-                      setCardMenu(null)
-                    }}
-                  >
+                              setCardMenu(null)
+                            }}
+                          >
                             <MdEdit className="video-menu-icon" />
                             Rename
-                  </button>
-                  <button
+                          </button>
+                          <button
                             className="video-menu-item delete"
                             onClick={(e) => {
                               e.stopPropagation()
                               deleteVideo(currentFolder.id, video.id)
                             }}
-                  >
+                          >
                             <MdDelete className="video-menu-icon" />
                             Delete
-                  </button>
-                </div>
-              )}
-              </div>
+                          </button>
+                        </div>
+                      )}
+                    </div>
                     <div style={{
                       position: 'absolute',
                       top: '50%',
@@ -1056,7 +1065,7 @@ function Videos({ onCreate }) {
                       zIndex: 10
                     }}>
                       <MdPlayArrow />
-                </div>
+                    </div>
                     {video.duration && (
                       <div className="video-duration">
                         {video.duration}
@@ -1066,9 +1075,9 @@ function Videos({ onCreate }) {
                   <div className="video-info">
                     <h4 className="video-title">{video.title}</h4>
                     <p className="video-meta">Updated {video.updated}</p>
-              </div>
-            </div>
-          ))}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -1084,7 +1093,7 @@ function Videos({ onCreate }) {
           <div className="videos-title-section">
             <h1 className="videos-title">Videos</h1>
             <p className="videos-subtitle">Organize your videos in folders</p>
-        </div>
+          </div>
           <div className="videos-actions">
             <div className="view-toggle">
               <button
@@ -1103,85 +1112,85 @@ function Videos({ onCreate }) {
             <button className="new-folder-btn" onClick={createNewFolder}>
               <MdAdd size={18} />
               New folder
-          </button>
+            </button>
+          </div>
         </div>
-      </div>
 
         <div className={viewMode === 'grid' ? 'folders-grid' : 'folders-list'}>
-        {folders.map((folder) => (
-          <div 
-            key={folder.id}
+          {folders.map((folder) => (
+            <div
+              key={folder.id}
               className={`folder-card ${viewMode === 'list' ? 'list-view' : ''}`}
-            onClick={() => setSelectedFolder(folder.id)}
+              onClick={() => setSelectedFolder(folder.id)}
               ref={el => menuRefs.current[`folder-${folder.id}`] = el}
-          >
+            >
               <div className="folder-header">
                 <div className="folder-icon-wrapper">
                   <MdFolder size={28} />
                 </div>
-            <button
+                <button
                   className="folder-menu-btn"
-              onClick={(e) => {
-                e.stopPropagation()
+                  onClick={(e) => {
+                    e.stopPropagation()
                     setCardMenu(cardMenu === `folder-${folder.id}` ? null : `folder-${folder.id}`)
-              }}
-            >
-              <MdMoreVert />
-            </button>
+                  }}
+                >
+                  <MdMoreVert />
+                </button>
                 {cardMenu === `folder-${folder.id}` && (
                   <div className="folder-menu" onClick={(e) => e.stopPropagation()}>
-                <button
+                    <button
                       className="folder-menu-item"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setRenameDialog(folder.id)
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setRenameDialog(folder.id)
                         setRenameType('folder')
                         setNewName(folder.name)
-                    setCardMenu(null)
-                  }}
-                >
+                        setCardMenu(null)
+                      }}
+                    >
                       <MdEdit className="folder-menu-icon" />
                       Rename
-                </button>
-                <button
+                    </button>
+                    <button
                       className="folder-menu-item delete"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    deleteFolder(folder.id)
-                  }}
-                >
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        deleteFolder(folder.id)
+                      }}
+                    >
                       <MdDelete className="folder-menu-icon" />
                       Delete
-                </button>
-              </div>
-            )}
-            </div>
-              <div className="folder-info">
-              <h3 className="folder-name">{folder.name}</h3>
-                <p className="folder-meta">{folder.videos.length} {folder.videos.length === 1 ? 'video' : 'videos'}</p>
-                {folder.videos.length > 0 && (
-              <div className="folder-preview">
-                {folder.videos.slice(0, 3).map((video, index) => (
-                  <div 
-                    key={video.id}
-                    className="preview-thumb"
-                    style={{ 
-                      backgroundImage: `url('${thumbnailUrl}')`,
-                          marginLeft: index > 0 ? '-12px' : '0',
-                      zIndex: 3 - index
-                    }}
-                  />
-                ))}
-                {folder.videos.length > 3 && (
-                      <div className="more-count" style={{ marginLeft: '-12px' }}>
-                    +{folder.videos.length - 3}
+                    </button>
                   </div>
                 )}
               </div>
+              <div className="folder-info">
+                <h3 className="folder-name">{folder.name}</h3>
+                <p className="folder-meta">{folder.videos.length} {folder.videos.length === 1 ? 'video' : 'videos'}</p>
+                {folder.videos.length > 0 && (
+                  <div className="folder-preview">
+                    {folder.videos.slice(0, 3).map((video, index) => (
+                      <div
+                        key={video.id}
+                        className="preview-thumb"
+                        style={{
+                          backgroundImage: `url('${thumbnailUrl}')`,
+                          marginLeft: index > 0 ? '-12px' : '0',
+                          zIndex: 3 - index
+                        }}
+                      />
+                    ))}
+                    {folder.videos.length > 3 && (
+                      <div className="more-count" style={{ marginLeft: '-12px' }}>
+                        +{folder.videos.length - 3}
+                      </div>
+                    )}
+                  </div>
                 )}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
         </div>
       </div>
 
@@ -1247,7 +1256,7 @@ function Videos({ onCreate }) {
                       renameFolder(renameDialog, newName.trim())
                     } else if (renameType === 'video') {
                       renameVideo(renameDialog.folderId, renameDialog.videoId, newName.trim())
-                  }
+                    }
                   }
                 }}
               >
