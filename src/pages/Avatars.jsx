@@ -319,6 +319,34 @@ const styles = `
   justify-content: center;
   color: #cbd5e1;
   font-size: 48px;
+  position: relative;
+  overflow: hidden;
+}
+
+.option-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.option-image video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.option-image video:hover {
+  pointer-events: none;
+  cursor: default;
+}
+
+.create-option-card:hover .option-image video {
+  pointer-events: none;
 }
 
 .option-content {
@@ -1313,9 +1341,10 @@ function Avatars() {
   const [myAvatars, setMyAvatars] = useState([
     {
       id: 1,
-      name: 'Paulmichael Rowland',
-      type: 'Personal Avatar',
+      name: 'Michael Johnson',
+      type: 'Personal Avatar', 
       created: '2 days ago',
+      imageUrl: 'https://static.vecteezy.com/system/resources/previews/024/183/525/non_2x/avatar-of-a-man-portrait-of-a-young-guy-illustration-of-male-character-in-modern-color-style-vector.jpg',
     },
   ])
 
@@ -1434,27 +1463,31 @@ function Avatars() {
 
   const renderMainView = () => (
     <>
-      <div className="avatars-header">
-        <h1 className="avatars-title">Avatars</h1>
-        <button 
-          className="create-avatar-btn"
+        <div className="avatars-header">
+          <h1 className="avatars-title">Avatars</h1>
+          <button 
+            className="create-avatar-btn"
           onClick={() => setShowCreateModal(true)}
-        >
+          >
           <MdAdd size={18} /> Create Avatar
-        </button>
-      </div>
+          </button>
+        </div>
 
-      <div className="my-avatars-section">
-        <h2 className="section-title">My Avatars</h2>
-        <div className="avatars-grid">
-          {myAvatars.map((avatar) => (
+        <div className="my-avatars-section">
+            <h2 className="section-title">My Avatars</h2>
+          <div className="avatars-grid">
+            {myAvatars.map((avatar) => (
             <div key={avatar.id} className="avatar-card" ref={el => menuRefs.current[avatar.id] = el}>
-              <div className="avatar-preview">
-                <div className="avatar-preview-icon">
-                  <MdPerson />
-                </div>
-                <div className="avatar-actions">
-                  <button 
+                <div className="avatar-preview">
+                  {avatar.imageUrl ? (
+                    <img src={avatar.imageUrl} alt={avatar.name} />
+                  ) : (
+                    <div className="avatar-preview-icon">
+                      <MdPerson />
+                    </div>
+                  )}
+                  <div className="avatar-actions">
+                    <button 
                     className="avatar-menu-btn"
                     onClick={(e) => toggleMenu(e, avatar.id)}
                   >
@@ -1477,12 +1510,12 @@ function Avatars() {
                       <button className="menu-item delete" onClick={(e) => handleDelete(e, avatar)}>
                         <MdDelete className="menu-icon" />
                         Delete
-                      </button>
+                    </button>
                     </div>
                   )}
+                  </div>
                 </div>
-              </div>
-              <div className="avatar-info">
+                <div className="avatar-info">
                 {editingAvatarId === avatar.id ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <input
@@ -1530,11 +1563,11 @@ function Avatars() {
                 ) : (
                   <h3 className="avatar-name">{avatar.name}</h3>
                 )}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
     </>
   )
 
@@ -1598,8 +1631,8 @@ function Avatars() {
           </button>
           <button style={{ display: 'flex', alignItems: 'center', padding: '8px', border: 'none', background: 'transparent', cursor: 'pointer', color: '#64748b' }}>
             <MdRedo size={20} />
-          </button>
-        </div>
+              </button>
+            </div>
         <h1 className="builder-customize-title">Avatar Builder</h1>
         <p className="builder-customize-text">Customize an Avatar by recoloring clothes and adding logos.</p>
         
@@ -1609,11 +1642,11 @@ function Avatars() {
             <div className="builder-avatar-preview">
               <div className="builder-avatar-thumb"></div>
               <span className="builder-avatar-name">{selectedBuilderAvatar?.name || 'Alex'}</span>
-            </div>
+                </div>
             <MdArrowForward size={20} color="#64748b" />
-          </div>
-        </div>
-
+                </div>
+              </div>
+              
         <div className="builder-section">
           <div className="builder-section-label">Look name</div>
           <input
@@ -1623,7 +1656,7 @@ function Avatars() {
             value={lookName}
             onChange={(e) => setLookName(e.target.value)}
           />
-        </div>
+                </div>
 
         <div className="builder-section">
           <div className="builder-section-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1641,16 +1674,16 @@ function Avatars() {
               value={dressColor}
               onChange={(e) => setDressColor(e.target.value)}
             />
-          </div>
-        </div>
-
+                </div>
+              </div>
+              
         <div className="builder-section">
           <div className="builder-section-label">Logos</div>
           <button className="builder-logo-btn">
             <MdAdd size={18} />
             Add logo
           </button>
-        </div>
+                </div>
 
         <div className="builder-actions">
           <button className="builder-btn secondary">
@@ -1658,13 +1691,13 @@ function Avatars() {
             Preview
           </button>
           <button className="builder-btn primary">Generate Avatar</button>
-        </div>
-      </div>
+                </div>
+              </div>
       <div className="builder-preview">
         <div className="builder-preview-grid"></div>
         <div className="builder-preview-avatar">
           <MdPerson size={64} />
-        </div>
+            </div>
       </div>
     </div>
   )
@@ -1677,7 +1710,7 @@ function Avatars() {
             <MdArrowBack size={20} />
           </button>
           <div className="personal-avatar-name">
-            <span>Paulmichael Rowland</span>
+            <span>Michael Johnson</span>
             <MdEdit size={16} color="#64748b" style={{ cursor: 'pointer' }} />
           </div>
         </div>
@@ -1742,7 +1775,7 @@ function Avatars() {
             <MdArrowBack size={20} />
           </button>
           <div className="personal-avatar-name">
-            <span>Paulmichael Rowland</span>
+            <span>Michael Johnson</span>
             <MdEdit size={16} color="#64748b" style={{ cursor: 'pointer' }} />
           </div>
         </div>
@@ -2112,7 +2145,7 @@ function Avatars() {
               <div className="studio-avatar-footer">
                 <button className="studio-avatar-nav-btn secondary" onClick={handleStudioPrevious}>
                   Previous
-                </button>
+              </button>
                 <button className="studio-avatar-nav-btn primary" onClick={handleStudioNext}>
                   Next
                 </button>
@@ -2187,7 +2220,10 @@ function Avatars() {
               <div className="create-options-grid">
                 <div className="create-option-card">
                   <div className="option-image">
-                    <MdPerson size={48} />
+                    <img 
+                      src="https://t3.ftcdn.net/jpg/16/03/27/12/360_F_1603271296_XAZBebPZGbkeS0wzziabkoxDRDwLl17Q.jpg" 
+                      alt="Avatar Builder" 
+                    />
                   </div>
                   <div className="option-content">
                     <h3 className="option-title">Avatar Builder</h3>
@@ -2207,7 +2243,20 @@ function Avatars() {
 
                 <div className="create-option-card">
                   <div className="option-image">
-                    <MdVideocam size={48} />
+                    <video 
+                      src="https://www.shutterstock.com/shutterstock/videos/3525181057/preview/stock-footage-virtual-ai-assistant-chat-bot-talking-on-camera-metaverse-female-avatar-in-virtual-chat-world-for.webm"
+                      preload="metadata"
+                      muted
+                      playsInline
+                      controls={false}
+                      autoPlay={false}
+                      loop={false}
+                      onMouseEnter={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                      onMouseLeave={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                      onLoadedMetadata={(e) => { e.target.currentTime = 0; }}
+                      style={{ pointerEvents: 'none', userSelect: 'none', WebkitUserSelect: 'none' }}
+                    />
                   </div>
                   <div className="option-content">
                     <h3 className="option-title">Personal Avatar</h3>
@@ -2219,8 +2268,8 @@ function Avatars() {
                     </ul>
                     <div className="option-buttons">
                       <button className="option-btn primary" onClick={() => handleCreateOption('personal')}>
-                        Create
-                      </button>
+                Create
+              </button>
                       <button className="option-btn secondary">
                         Request
                       </button>
@@ -2230,7 +2279,20 @@ function Avatars() {
 
                 <div className="create-option-card">
                   <div className="option-image">
-                    <MdCloudUpload size={48} />
+                    <video 
+                      src="https://www.shutterstock.com/shutterstock/videos/3781392015/preview/stock-footage-remote-worker-uses-conversational-ai-bot-to-help-solve-daily-tasks-chatting-with-machine-learning.webm"
+                      preload="metadata"
+                      muted
+                      playsInline
+                      controls={false}
+                      autoPlay={false}
+                      loop={false}
+                      onMouseEnter={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                      onMouseLeave={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                      onLoadedMetadata={(e) => { e.target.currentTime = 0; }}
+                      style={{ pointerEvents: 'none', userSelect: 'none', WebkitUserSelect: 'none' }}
+                    />
                   </div>
                   <div className="option-content">
                     <h3 className="option-title">Studio Avatar</h3>

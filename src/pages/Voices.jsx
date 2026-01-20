@@ -342,7 +342,7 @@ function Voices({ onCreateVoice, onVoiceClick }) {
   const [voices, setVoices] = useState([
     {
       id: 1,
-      name: 'Paulmichael Rowland',
+      name: 'Michael Johnson',
       language: 'EN',
       updated: '10 June',
       hasMultiLanguage: true

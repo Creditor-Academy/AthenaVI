@@ -9,6 +9,12 @@ import {
   MdDelete,
   MdShare,
   MdAccessTime,
+  MdPlayArrow,
+  MdVideocam,
+  MdPictureAsPdf,
+  MdDescription,
+  MdFolderZip,
+  MdSlideshow,
 } from 'react-icons/md'
 
 const styles = `
@@ -137,13 +143,29 @@ const styles = `
 .item-preview {
   width: 100%;
   height: 140px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
+}
+
+.item-preview.video {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.item-preview.document {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.item-preview.presentation {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.item-preview.archive {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
 }
 
 .shared-item.list-view .item-preview {
@@ -159,8 +181,34 @@ const styles = `
 }
 
 .item-preview-icon {
-  font-size: 40px;
-  color: #94a3b8;
+  font-size: 48px;
+  color: rgba(255, 255, 255, 0.9);
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2));
+}
+
+.item-preview-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #667eea;
+  font-size: 28px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 5;
+}
+
+.item-preview:hover .item-preview-play {
+  transform: translate(-50%, -50%) scale(1.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
 .item-actions {
@@ -434,16 +482,25 @@ function SharedWithMe() {
     },
   ]
 
-  const getPreviewIcon = (type) => {
+  const getPreviewContent = (type, name) => {
     switch (type) {
       case 'video':
-        return <MdAccessTime className="item-preview-icon" />
+        return (
+          <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+            <MdVideocam className="item-preview-icon" style={{ opacity: 0.3, fontSize: '64px' }} />
+            <div className="item-preview-play">
+              <MdPlayArrow />
+            </div>
+          </div>
+        )
       case 'document':
-        return <MdPerson className="item-preview-icon" />
+        return <MdPictureAsPdf className="item-preview-icon" />
       case 'presentation':
-        return <MdPerson className="item-preview-icon" />
+        return <MdSlideshow className="item-preview-icon" />
+      case 'archive':
+        return <MdFolderZip className="item-preview-icon" />
       default:
-        return <MdPerson className="item-preview-icon" />
+        return <MdDescription className="item-preview-icon" />
     }
   }
 
@@ -514,11 +571,11 @@ function SharedWithMe() {
                 className={`shared-item ${viewMode === 'list' ? 'list-view' : ''}`}
                 ref={el => menuRefs.current[item.id] = el}
               >
-                <div className="item-preview">
+                <div className={`item-preview ${item.type}`}>
                   {item.url && item.type === 'image' ? (
                     <img src={item.url} alt={item.name} className="item-preview-image" />
                   ) : (
-                    getPreviewIcon(item.type)
+                    getPreviewContent(item.type, item.name)
                   )}
                   <div className="item-actions">
                     <button

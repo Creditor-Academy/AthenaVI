@@ -13,7 +13,7 @@ const styles = `
 }
 `
 
-function MarketingSuite({ onLoginClick, onNavigateToEthics, onLogoClick }) {
+function MarketingSuite({ onLoginClick, onNavigateToEthics, onLogoClick, onNavigateToProduct, onNavigateToSolution }) {
   return (
     <>
       <style>{styles}</style>
@@ -29,7 +29,12 @@ function MarketingSuite({ onLoginClick, onNavigateToEthics, onLogoClick }) {
         <EngagementSection />
         <CTASection />
         
-        <Footer />
+        <Footer 
+          onLogoClick={onLogoClick}
+          onNavigateToProduct={onNavigateToProduct}
+          onNavigateToSolution={onNavigateToSolution}
+          onNavigateToEthics={onNavigateToEthics}
+        />
       </div>
     </>
   )

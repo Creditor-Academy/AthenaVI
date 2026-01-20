@@ -1006,7 +1006,7 @@ function VoiceCreatePanel({ voice, onClose, onNext }) {
   const [speedDropdownOpen, setSpeedDropdownOpen] = useState(false)
   const [isConsentRecording, setIsConsentRecording] = useState(false)
   const [consentRecordingTime, setConsentRecordingTime] = useState(0)
-  const [userName, setUserName] = useState(voice?.name || 'Paulmichael Rowland')
+  const [userName, setUserName] = useState(voice?.name || 'Michael Johnson')
   const [isEditingName, setIsEditingName] = useState(false)
   const [availableMicrophones, setAvailableMicrophones] = useState([])
   const mediaRecorderRef = useRef(null)

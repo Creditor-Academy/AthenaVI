@@ -122,12 +122,12 @@ const styles = `
 .folders-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+  gap: 24px;
 }
 
 .folder-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border: 1px solid #f1f5f9;
+  border-radius: 20px;
   padding: 24px;
   background: #ffffff;
   cursor: pointer;
@@ -136,13 +136,15 @@ const styles = `
   display: flex;
   flex-direction: column;
   gap: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 6px -2px rgba(0, 0, 0, 0.03);
 }
 
 .folder-card:hover {
   border-color: #cbd5e1;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
+  box-shadow: 
+    0 20px 25px -5px rgba(0, 0, 0, 0.08),
+    0 8px 10px -6px rgba(0, 0, 0, 0.01);
+  transform: translateY(-4px);
 }
 
 .folder-header {
@@ -154,15 +156,22 @@ const styles = `
 .folder-icon-wrapper {
   width: 56px;
   height: 56px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-radius: 16px;
+  background: #eff6ff;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #3b82f6;
   font-size: 28px;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+  transition: all 0.3s ease;
+}
+
+.folder-card:hover .folder-icon-wrapper {
+  background: #3b82f6;
+  color: #ffffff;
+  transform: scale(1.1) rotate(-3deg);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .folder-menu-btn {
@@ -171,7 +180,7 @@ const styles = `
   border-radius: 8px;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #94a3b8;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -190,18 +199,18 @@ const styles = `
 }
 
 .folder-name {
-  font-size: 17px;
-  font-weight: 600;
-  color: #0f172a;
-  margin: 0 0 8px;
-  line-height: 1.4;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 6px;
+  line-height: 1.3;
 }
 
 .folder-meta {
   font-size: 13px;
   color: #64748b;
   margin: 0 0 16px;
-  font-weight: 400;
+  font-weight: 500;
 }
 
 .folder-preview {
@@ -769,7 +778,7 @@ const styles = `
 }
 `
 
-const thumbnailUrl = 'https://media.istockphoto.com/id/1480023591/video/creating-a-female-video-game-character.jpg?s=640x640&k=20&c=S1LW6oZZDQYgsqp4GRL0bj9wE1oRIaBfQSV-UQXv2II='
+const thumbnailUrl = 'https://media.istockphoto.com/id/1475888355/video/timelapse-of-the-creation-of-an-online-avatar-start-to-finish.jpg?s=640x640&k=20&c=pFzBOkU7LjC1DF0DeNCAUhS8MCiNwSDwkqI9v9C7IgQ='
 
 const initialFolders = [
   {
@@ -846,7 +855,7 @@ const initialFolders = [
   },
 ]
 
-function Videos() {
+function Videos({ onCreate }) {
   const [selectedFolder, setSelectedFolder] = useState(null)
   const [cardMenu, setCardMenu] = useState(null)
   const [renameDialog, setRenameDialog] = useState(null) // folderId or { folderId, videoId }
@@ -885,11 +894,11 @@ function Videos() {
       prev.map((folder) =>
         folder.id === folderId
           ? {
-              ...folder,
-              videos: folder.videos.map((v) =>
-                v.id === videoId ? { ...v, title: newTitle } : v
-              )
-            }
+            ...folder,
+            videos: folder.videos.map((v) =>
+              v.id === videoId ? { ...v, title: newTitle } : v
+            )
+          }
           : folder
       )
     )
@@ -968,7 +977,7 @@ function Videos() {
                   <MdViewList />
                 </button>
               </div>
-              <button className="new-folder-btn">
+              <button className="new-folder-btn" onClick={onCreate}>
                 <MdAdd size={18} />
                 New video
               </button>
@@ -986,18 +995,16 @@ function Videos() {
               {currentFolder.videos.map((video) => (
                 <div className={`video-card ${viewMode === 'list' ? 'list-view' : ''}`} key={video.id} ref={el => menuRefs.current[`video-${video.id}`] = el}>
                   <div className="video-thumb">
-                    <div style={{
-                      width: '100%',
-                      height: '100%',
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#ffffff',
-                      fontSize: '48px'
-                    }}>
-                      <MdPlayArrow />
-                    </div>
+                    <img
+                      src={thumbnailUrl}
+                      alt={video.title}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        display: 'block'
+                      }}
+                    />
                     <div className="video-thumb-overlay">
                       <div className={`video-badge ${video.status}`}>
                         {video.status === 'draft' ? 'DRAFT' : 'PUBLISHED'}
@@ -1038,6 +1045,26 @@ function Videos() {
                           </button>
                         </div>
                       )}
+                    </div>
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '50%',
+                      background: 'rgba(255, 255, 255, 0.95)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#334155',
+                      fontSize: '24px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      zIndex: 10
+                    }}>
+                      <MdPlayArrow />
                     </div>
                     {video.duration && (
                       <div className="video-duration">

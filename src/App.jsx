@@ -187,6 +187,10 @@ function App() {
         <News 
           onLoginClick={handleLoginClick}
           onLogoClick={() => setView('landing')}
+          onNavigateToProduct={(section) => {
+            setProductSection(section)
+            setView('products')
+          }}
           onNavigateToCompany={handleNavigateToCompany}
           onNavigateToSolution={(solution) => {
             if (solution === 'Marketing Suite') {
