@@ -13,10 +13,10 @@ import {
 
 const styles = `
 .credits-container {
-  padding: 32px;
-  max-width: 1400px;
+  padding: 40px 48px;
+  max-width: 1600px;
   margin: 0 auto;
-  background: #ffffff;
+  background: #f8fafc;
   min-height: calc(100vh - 64px);
 }
 
@@ -24,17 +24,17 @@ const styles = `
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-bottom: 32px;
+  margin-bottom: 40px;
 }
 
 .back-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 10px;
   background: #ffffff;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -42,97 +42,104 @@ const styles = `
 }
 
 .back-btn:hover {
-  background: #f8fafc;
+  background: #f1f5f9;
   border-color: #cbd5e1;
-  transform: translateX(-2px);
+  color: #334155;
 }
 
 .credits-title {
-  font-size: 32px;
-  font-weight: 800;
+  font-size: 28px;
+  font-weight: 600;
   color: #0f172a;
   margin: 0;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 
 .credits-overview {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-  margin-bottom: 32px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+@media (max-width: 1024px) {
+  .credits-overview {
+    grid-template-columns: 1fr;
+  }
 }
 
 .credit-card {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 32px;
   transition: all 0.2s ease;
-  position: relative;
 }
 
 .credit-card:hover {
-  border-color: #d1d5db;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
 }
 
 .credit-card-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .credit-card-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 6px;
-  background: #f3f4f6;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: #f1f5f9;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #3b82f6;
-  font-size: 20px;
+  color: #475569;
+  font-size: 22px;
+  flex-shrink: 0;
 }
 
 .credit-card-content {
   flex: 1;
+  margin-right: 16px;
 }
 
 .credit-card-title {
   font-size: 13px;
-  font-weight: 600;
-  color: #6b7280;
+  font-weight: 500;
+  color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin: 0 0 12px 0;
 }
 
 .credit-card-value {
-  font-size: 32px;
-  font-weight: 700;
-  color: #111827;
-  margin: 0 0 4px 0;
+  font-size: 36px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 6px 0;
   letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
 .credit-card-subtitle {
-  font-size: 13px;
-  color: #6b7280;
+  font-size: 14px;
+  color: #64748b;
   margin: 0;
+  font-weight: 400;
 }
 
 .credit-card-trend {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #f3f4f6;
-  font-size: 12px;
+  padding-top: 20px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 13px;
   font-weight: 500;
-  color: #6b7280;
+  color: #64748b;
 }
 
 .trend-up {
@@ -145,12 +152,12 @@ const styles = `
 
 .credits-sections {
   display: grid;
-  grid-template-columns: 1fr 400px;
+  grid-template-columns: 1fr 420px;
   gap: 32px;
   margin-bottom: 40px;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
   .credits-sections {
     grid-template-columns: 1fr;
   }
@@ -158,110 +165,158 @@ const styles = `
 
 .section-card {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0;
+  overflow: hidden;
 }
 
 .section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 24px 32px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #ffffff;
 }
 
 .section-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
-  color: #111827;
+  color: #0f172a;
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .section-icon {
-  color: #6b7280;
+  color: #64748b;
   font-size: 20px;
 }
 
-.usage-list {
-  display: grid;
-  gap: 16px;
+.usage-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-.usage-item {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 16px;
-  padding: 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  background: #ffffff;
-  transition: all 0.15s ease;
+.usage-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
 }
 
-.usage-item:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
+@media (max-width: 768px) {
+  .credits-container {
+    padding: 24px 20px;
+  }
+  
+  .credits-title {
+    font-size: 24px;
+  }
+  
+  .credit-card {
+    padding: 24px;
+  }
+  
+  .credit-card-value {
+    font-size: 28px;
+  }
+  
+  .section-header {
+    padding: 20px 24px;
+  }
+  
+  .usage-table th,
+  .usage-table td {
+    padding: 12px 16px;
+  }
+  
+  .purchase-plans {
+    padding: 20px 24px;
+  }
+  
+  .purchase-btn-wrapper {
+    padding: 0 24px 24px 24px;
+  }
+  
+  .stats-section {
+    padding: 20px 24px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 }
 
-.usage-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
-  background: #f3f4f6;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #3b82f6;
-  font-size: 18px;
+.usage-table thead {
+  background: #f8fafc;
 }
 
-.usage-info {
-  display: grid;
-  gap: 4px;
-}
-
-.usage-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #111827;
-  margin: 0 0 4px 0;
-}
-
-.usage-meta {
+.usage-table th {
+  padding: 14px 32px;
+  text-align: left;
   font-size: 12px;
-  color: #6b7280;
-  margin: 0 0 8px 0;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #f1f5f9;
 }
 
-.usage-credits {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 15px;
+.usage-table td {
+  padding: 18px 32px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.usage-table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.usage-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.usage-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.usage-name-cell {
+  font-weight: 500;
+  color: #0f172a;
+}
+
+.usage-date-cell {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.usage-credits-cell {
   font-weight: 600;
-  color: #111827;
+  color: #0f172a;
+  text-align: right;
+}
+
+.usage-status-cell {
+  text-align: center;
 }
 
 .usage-status {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 11px;
+  gap: 6px;
+  font-size: 12px;
   font-weight: 500;
-  padding: 3px 8px;
-  border-radius: 4px;
-  margin-top: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
 }
 
 .status-success {
-  background: #ecfdf5;
-  color: #047857;
+  background: #f0fdf4;
+  color: #166534;
 }
 
 .status-failed {
@@ -276,30 +331,32 @@ const styles = `
 
 .purchase-section {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0;
+  overflow: hidden;
 }
 
 .purchase-plans {
+  padding: 24px 32px;
   display: grid;
-  gap: 16px;
+  gap: 12px;
   margin-bottom: 24px;
 }
 
 .purchase-plan {
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  padding: 16px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 20px;
   background: #ffffff;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
   position: relative;
 }
 
 .purchase-plan:hover {
-  border-color: #3b82f6;
-  background: #f9fafb;
+  border-color: #94a3b8;
+  background: #f8fafc;
 }
 
 .purchase-plan.selected {
@@ -312,54 +369,59 @@ const styles = `
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .purchase-plan-name {
   font-size: 15px;
   font-weight: 600;
-  color: #111827;
+  color: #0f172a;
   margin: 0;
 }
 
 .purchase-plan-price {
   font-size: 20px;
-  font-weight: 700;
-  color: #111827;
+  font-weight: 600;
+  color: #0f172a;
   margin: 0;
 }
 
 .purchase-plan-credits {
   font-size: 13px;
-  color: #6b7280;
-  margin: 8px 0 0 0;
+  color: #64748b;
+  margin: 0;
+  font-weight: 400;
 }
 
 .purchase-plan-badge {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 16px;
+  right: 16px;
   background: #3b82f6;
   color: #ffffff;
   font-size: 10px;
   font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
+.purchase-btn-wrapper {
+  padding: 0 32px 32px 32px;
+}
+
 .purchase-btn {
   width: 100%;
-  padding: 12px 20px;
+  padding: 14px 20px;
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
   background: #3b82f6;
   color: #ffffff;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -380,75 +442,79 @@ const styles = `
   transform: none;
 }
 
+.stats-section {
+  padding: 24px 32px;
+  border-top: 1px solid #f1f5f9;
+  background: #f8fafc;
+}
+
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin-top: 32px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
 }
 
 .stat-card {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  padding: 16px;
   text-align: center;
+  padding: 16px;
 }
 
 .stat-value {
   font-size: 24px;
-  font-weight: 700;
-  color: #111827;
-  margin: 4px 0;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+  line-height: 1.2;
 }
 
 .stat-label {
   font-size: 12px;
-  color: #6b7280;
+  color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 500;
+  margin: 0;
 }
 
 .empty-state {
   text-align: center;
-  padding: 48px 20px;
-  color: #6b7280;
+  padding: 64px 32px;
+  color: #64748b;
 }
 
 .empty-state-icon {
   font-size: 48px;
-  color: #d1d5db;
-  margin-bottom: 12px;
-  opacity: 0.5;
+  color: #cbd5e1;
+  margin-bottom: 16px;
+  opacity: 0.6;
 }
 
 .empty-state-text {
   font-size: 14px;
   font-weight: 500;
   margin: 0;
-  color: #6b7280;
+  color: #64748b;
 }
 
 .refresh-btn {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  padding: 8px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
   background: #ffffff;
-  color: #6b7280;
+  color: #64748b;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
 }
 
 .refresh-btn:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
-  color: #111827;
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
 }
 `
 
@@ -547,6 +613,27 @@ function Credits({ onBack }) {
     }
   }
 
+  const formatDate = (dateString) => {
+    // Parse format: "2024-01-15 14:30"
+    const [datePart, timePart] = dateString.split(' ')
+    const [year, month, day] = datePart.split('-')
+    const [hour, minute] = timePart.split(':')
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute))
+    const now = new Date()
+    const diffTime = Math.abs(now - date)
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+    
+    if (diffDays === 0) {
+      return 'Today, ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    } else if (diffDays === 1) {
+      return 'Yesterday, ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    } else if (diffDays < 7) {
+      return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + ', ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    } else {
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ', ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    }
+  }
+
   const getStatusIcon = (status) => {
     switch (status) {
       case 'success':
@@ -594,7 +681,7 @@ function Credits({ onBack }) {
                 <div className="credit-card-value">{totalUsed.toLocaleString()}</div>
                 <p className="credit-card-subtitle">All time</p>
               </div>
-              <div className="credit-card-icon" style={{ color: '#059669' }}>
+              <div className="credit-card-icon">
                 <MdHistory />
               </div>
             </div>
@@ -617,7 +704,7 @@ function Credits({ onBack }) {
                 </div>
                 <p className="credit-card-subtitle">Credits per video</p>
               </div>
-              <div className="credit-card-icon" style={{ color: '#d97706' }}>
+              <div className="credit-card-icon">
                 <MdShoppingCart />
               </div>
             </div>
@@ -638,23 +725,32 @@ function Credits({ onBack }) {
             </div>
 
             {usageHistory.length > 0 ? (
-              <div className="usage-list">
-                {usageHistory.map((item) => (
-                  <div key={item.id} className="usage-item">
-                    <div className="usage-icon">
-                      <MdDownload />
-                    </div>
-                    <div className="usage-info">
-                      <h4 className="usage-name">{item.name}</h4>
-                      <p className="usage-meta">{item.date}</p>
-                      <span className={`usage-status status-${item.status}`}>
-                        {getStatusIcon(item.status)}
-                        {item.status === 'success' ? 'Completed' : item.status === 'failed' ? 'Failed' : 'Pending'}
-                      </span>
-                    </div>
-                    <div className="usage-credits">-{item.credits}</div>
-                  </div>
-                ))}
+              <div className="usage-table-wrapper">
+                <table className="usage-table">
+                  <thead>
+                    <tr>
+                      <th>Video Name</th>
+                      <th>Date</th>
+                      <th>Status</th>
+                      <th style={{ textAlign: 'right' }}>Credits</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {usageHistory.map((item) => (
+                      <tr key={item.id}>
+                        <td className="usage-name-cell">{item.name}</td>
+                        <td className="usage-date-cell">{formatDate(item.date)}</td>
+                        <td className="usage-status-cell">
+                          <span className={`usage-status status-${item.status}`}>
+                            {getStatusIcon(item.status)}
+                            {item.status === 'success' ? 'Completed' : item.status === 'failed' ? 'Failed' : 'Pending'}
+                          </span>
+                        </td>
+                        <td className="usage-credits-cell">-{item.credits}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             ) : (
               <div className="empty-state">
@@ -691,29 +787,33 @@ function Credits({ onBack }) {
               ))}
             </div>
 
-            <button
-              className="purchase-btn"
-              onClick={handlePurchase}
-              disabled={!selectedPlan}
-            >
-              <MdShoppingCart />
-              Purchase Credits
-            </button>
+            <div className="purchase-btn-wrapper">
+              <button
+                className="purchase-btn"
+                onClick={handlePurchase}
+                disabled={!selectedPlan}
+              >
+                <MdShoppingCart />
+                Purchase Credits
+              </button>
+            </div>
 
-            <div className="stats-grid" style={{ marginTop: '24px' }}>
-              <div className="stat-card">
-                <div className="stat-value">{usageHistory.length}</div>
-                <div className="stat-label">Total Videos</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-value">{totalFailed}</div>
-                <div className="stat-label">Failed</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-value">
-                  {usageHistory.filter((u) => u.status === 'success').length}
+            <div className="stats-section">
+              <div className="stats-grid">
+                <div className="stat-card">
+                  <div className="stat-value">{usageHistory.length}</div>
+                  <div className="stat-label">Total Videos</div>
                 </div>
-                <div className="stat-label">Completed</div>
+                <div className="stat-card">
+                  <div className="stat-value">{totalFailed}</div>
+                  <div className="stat-label">Failed</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-value">
+                    {usageHistory.filter((u) => u.status === 'success').length}
+                  </div>
+                  <div className="stat-label">Completed</div>
+                </div>
               </div>
             </div>
           </div>

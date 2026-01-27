@@ -34,6 +34,9 @@ import Profile from './Profile.jsx'
 import BrandKits from './BrandKits.jsx'
 import Credits from './Credits.jsx'
 import VoiceCreatePanel from '../components/VoiceCreatePanel.jsx'
+import AIVideoAssistant from '../components/AIVideoAssistant.jsx'
+import ImportPowerPointModal from '../components/ImportPowerPointModal.jsx'
+import TranslateVideoModal from '../components/TranslateVideoModal.jsx'
 
 const styles = `
 .dashboard-shell {
@@ -518,69 +521,77 @@ const styles = `
 
 .quick-actions {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
   margin-bottom: 48px;
 }
 
 .qa-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border: 1px solid #f1f5f9;
+  border-radius: 16px;
   padding: 20px;
   background: #ffffff;
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  box-shadow: 0 4px 6px -2px rgba(0, 0, 0, 0.03);
 }
 
 .qa-card:hover {
   border-color: #cbd5e1;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 
+    0 20px 25px -5px rgba(0, 0, 0, 0.08),
+    0 8px 10px -6px rgba(0, 0, 0, 0.01);
+  transform: translateY(-4px);
 }
 
 .qa-card-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 6px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 22px;
   flex-shrink: 0;
-  background: #f1f5f9;
-  color: #475569;
+  transition: all 0.3s ease;
+}
+
+.qa-card:hover .qa-card-icon {
+  transform: scale(1.1) rotate(3deg);
 }
 
 .qa-card-icon.primary {
-  background: #f1f5f9;
-  color: #475569;
+  background: #eff6ff;
+  color: #3b82f6;
 }
 
 .qa-card-icon.purple {
-  background: #f1f5f9;
-  color: #475569;
+  background: #f5f3ff;
+  color: #7c3aed;
 }
 
 .qa-card-icon.orange {
-  background: #f1f5f9;
-  color: #475569;
+  background: #fff7ed;
+  color: #ea580c;
 }
 
 .qa-card-title {
-  font-weight: 600;
-  color: #0f172a;
-  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 16px;
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 .qa-meta {
-  font-weight: 400;
-  color: #64748b;
-  font-size: 12px;
+  font-weight: 500;
+  color: #94a3b8;
+  font-size: 13px;
   margin: 0;
   line-height: 1.4;
 }
@@ -1165,11 +1176,85 @@ const styles = `
   display: grid;
   gap: 6px;
 }
+
+.create-menu {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 
+    0 10px 40px rgba(0, 0, 0, 0.12),
+    0 4px 12px rgba(0, 0, 0, 0.08);
+  min-width: 240px;
+  overflow: hidden;
+  display: grid;
+  backdrop-filter: blur(10px);
+  animation: slideDown 0.2s ease;
+  z-index: 100;
+}
+
+.create-menu button {
+  padding: 12px 16px;
+  text-align: left;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #f1f5f9;
+  transition: all 0.2s ease;
+}
+
+.create-menu button:last-child {
+  border-bottom: none;
+}
+
+.create-menu button:hover {
+  background: #f8fafc;
+}
+
+.create-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eff6ff;
+  color: #3b82f6;
+  font-size: 18px;
+}
+
+.create-icon-box.ai {
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  color: #7c3aed;
+}
+
+.menu-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.menu-title {
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 14px;
+}
+
+.menu-desc {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
+}
 `
 
 const defaultThumbnailUrl = 'https://media.istockphoto.com/id/1475888355/video/timelapse-of-the-creation-of-an-online-avatar-start-to-finish.jpg?s=640x640&k=20&c=pFzBOkU7LjC1DF0DeNCAUhS8MCiNwSDwkqI9v9C7IgQ='
 
-function HomeSection({ onCreate }) {
+function HomeSection({ onCreate, onShowAIAssistant, onImportClick, onTranslateClick }) {
   const [activeTab, setActiveTab] = useState('recents')
   const [viewMode, setViewMode] = useState('grid')
 
@@ -1270,7 +1355,18 @@ function HomeSection({ onCreate }) {
             <p className="qa-meta">From template or blank</p>
           </div>
         </div>
-        <div className="qa-card">
+        <div
+          className="qa-card"
+          onClick={() => {
+            console.log('Create with AI clicked')
+            if (onShowAIAssistant) {
+              onShowAIAssistant()
+            } else {
+              console.error('onShowAIAssistant prop not provided')
+            }
+          }}
+          style={{ cursor: 'pointer' }}
+        >
           <div className="qa-card-icon purple">
             <MdAutoAwesome />
           </div>
@@ -1279,7 +1375,7 @@ function HomeSection({ onCreate }) {
             <p className="qa-meta">From any source</p>
           </div>
         </div>
-        <div className="qa-card">
+        <div className="qa-card" onClick={onTranslateClick}>
           <div className="qa-card-icon primary">
             <MdTranslate />
           </div>
@@ -1288,7 +1384,7 @@ function HomeSection({ onCreate }) {
             <p className="qa-meta">Dub into any language</p>
           </div>
         </div>
-        <div className="qa-card">
+        <div className="qa-card" onClick={onImportClick}>
           <div className="qa-card-icon orange">
             <MdSlideshow />
           </div>
@@ -1342,10 +1438,10 @@ function HomeSection({ onCreate }) {
               className={`recent-video-card ${viewMode === 'list' ? 'list-view' : ''}`}
             >
               <div className="recent-video-thumb">
-                <img 
-                  src={video.thumbnail || defaultThumbnailUrl} 
-                  alt={video.title} 
-                  className="recent-video-thumb-image" 
+                <img
+                  src={video.thumbnail || defaultThumbnailUrl}
+                  alt={video.title}
+                  className="recent-video-thumb-image"
                 />
                 <div className="recent-video-overlay">
                   {video.status === 'draft' && (
@@ -1398,9 +1494,13 @@ function HomeSection({ onCreate }) {
 
 function Dashboard({ onLogout, onCreate }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [createMenuOpen, setCreateMenuOpen] = useState(false)
   const [section, setSection] = useState('home')
   const [showVoicePanel, setShowVoicePanel] = useState(false)
   const [selectedVoice, setSelectedVoice] = useState(null)
+  const [showAIAssistant, setShowAIAssistant] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [showTranslateModal, setShowTranslateModal] = useState(false)
 
   const handleViewProfile = () => {
     setSection('profile')
@@ -1422,18 +1522,52 @@ function Dashboard({ onLogout, onCreate }) {
           </div>
           <div className="top-actions">
             <input className="search" placeholder="Search" />
-            <button 
-              className="credit-display-btn" 
-              type="button" 
+            <button
+              className="credit-display-btn"
+              type="button"
               onClick={() => setSection('credits')}
               title="View credits"
             >
               <MdAccountBalanceWallet size={18} />
               <span>1,250</span>
             </button>
-            <button className="create-btn" type="button" onClick={onCreate}>
-              Create
-            </button>
+            <div style={{ position: 'relative' }}>
+              <button
+                className="create-btn"
+                type="button"
+                onClick={() => setCreateMenuOpen(!createMenuOpen)}
+              >
+                Create
+              </button>
+              {createMenuOpen && (
+                <div className="create-menu">
+                  <button onClick={() => {
+                    if (onCreate) onCreate()
+                    setCreateMenuOpen(false)
+                  }}>
+                    <div className="create-icon-box">
+                      <MdPlayCircleFilled />
+                    </div>
+                    <div className="menu-text">
+                      <span className="menu-title">Create from scratch</span>
+                      <span className="menu-desc">Start with a blank canvas</span>
+                    </div>
+                  </button>
+                  <button onClick={() => {
+                    setShowAIAssistant(true)
+                    setCreateMenuOpen(false)
+                  }}>
+                    <div className="create-icon-box ai">
+                      <MdAutoAwesome />
+                    </div>
+                    <div className="menu-text">
+                      <span className="menu-title">Create with AI</span>
+                      <span className="menu-desc">Automated generation</span>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
             <button className="avatar-btn" onClick={() => setMenuOpen((v) => !v)} aria-label="Profile menu">
               P
             </button>
@@ -1453,101 +1587,106 @@ function Dashboard({ onLogout, onCreate }) {
         {section === 'profile' ? (
           <Profile onBack={() => setSection('home')} />
         ) : (
-        <div className="layout">
-          <aside className="sidebar">
-            <div className="sidebar-section">
-              <div className="sidebar-title">Navigation</div>
-              <div
-                className={`nav-item ${section === 'home' ? 'active' : ''}`}
-                role="button"
-                onClick={() => setSection('home')}
-              >
-                <MdHomeFilled /> Home
-              </div>
-              <div
-                className={`nav-item ${section === 'videos' ? 'active' : ''}`}
-                role="button"
-                onClick={() => setSection('videos')}
-              >
-                <MdVideoLibrary /> Videos
-              </div>
+          <div className="layout">
+            <aside className="sidebar">
+              <div className="sidebar-section">
+                <div className="sidebar-title">Navigation</div>
+                <div
+                  className={`nav-item ${section === 'home' ? 'active' : ''}`}
+                  role="button"
+                  onClick={() => setSection('home')}
+                >
+                  <MdHomeFilled /> Home
+                </div>
+                <div
+                  className={`nav-item ${section === 'videos' ? 'active' : ''}`}
+                  role="button"
+                  onClick={() => setSection('videos')}
+                >
+                  <MdVideoLibrary /> Videos
+                </div>
                 <div
                   className={`nav-item ${section === 'workspace' ? 'active' : ''}`}
                   role="button"
                   onClick={() => setSection('workspace')}
                 >
-                <MdWorkspaces /> Workspace
+                  <MdWorkspaces /> Workspace
+                </div>
+                <div
+                  className={`nav-item ${section === 'shared' ? 'active' : ''}`}
+                  role="button"
+                  onClick={() => setSection('shared')}
+                >
+                  <MdGroup /> Shared with me
+                </div>
+                <div
+                  className={`nav-item ${section === 'trash' ? 'active' : ''}`}
+                  role="button"
+                  onClick={() => setSection('trash')}
+                >
+                  <MdDelete /> Trash
+                </div>
               </div>
-              <div
-                className={`nav-item ${section === 'shared' ? 'active' : ''}`}
-                role="button"
-                onClick={() => setSection('shared')}
-              >
-                <MdGroup /> Shared with me
-              </div>
-              <div
-                className={`nav-item ${section === 'trash' ? 'active' : ''}`}
-                role="button"
-                onClick={() => setSection('trash')}
-              >
-                <MdDelete /> Trash
-              </div>
-            </div>
-            <div className="sidebar-section">
-              <div className="sidebar-title">Assets</div>
+              <div className="sidebar-section">
+                <div className="sidebar-title">Assets</div>
                 <div
                   className={`nav-item ${section === 'library' ? 'active' : ''}`}
                   role="button"
                   onClick={() => setSection('library')}
                 >
-                <MdCollectionsBookmark /> Library
-              </div>
+                  <MdCollectionsBookmark /> Library
+                </div>
                 <div
                   className={`nav-item ${section === 'brandkits' ? 'active' : ''}`}
                   role="button"
                   onClick={() => setSection('brandkits')}
                 >
-                <MdColorLens /> Brand Kits
+                  <MdColorLens /> Brand Kits
+                </div>
+                <div
+                  className={`nav-item ${section === 'avatars' ? 'active' : ''}`}
+                  role="button"
+                  onClick={() => setSection('avatars')}
+                >
+                  <MdPerson /> Avatars
+                </div>
+                <div
+                  className={`nav-item ${section === 'voices' ? 'active' : ''}`}
+                  role="button"
+                  onClick={() => setSection('voices')}
+                >
+                  <MdRecordVoiceOver /> Voices
+                </div>
+                <div
+                  className={`nav-item ${section === 'credits' ? 'active' : ''}`}
+                  role="button"
+                  onClick={() => setSection('credits')}
+                >
+                  <MdAccountBalanceWallet /> Credits
+                </div>
               </div>
-              <div
-                className={`nav-item ${section === 'avatars' ? 'active' : ''}`}
-                role="button"
-                onClick={() => setSection('avatars')}
-              >
-                <MdPerson /> Avatars
-              </div>
-              <div
-                className={`nav-item ${section === 'voices' ? 'active' : ''}`}
-                role="button"
-                onClick={() => setSection('voices')}
-              >
-                <MdRecordVoiceOver /> Voices
-              </div>
-              <div
-                className={`nav-item ${section === 'credits' ? 'active' : ''}`}
-                role="button"
-                onClick={() => setSection('credits')}
-              >
-                <MdAccountBalanceWallet /> Credits
-              </div>
-            </div>
-          </aside>
-          <main className="content">
-            {section === 'home' && (
-                <HomeSection onCreate={onCreate} />
-            )}
+            </aside>
+            <main className="content">
+              {section === 'home' && (
+                <HomeSection
+                  onCreate={onCreate}
+                  onShowAIAssistant={() => setShowAIAssistant(true)}
+                  onImportClick={() => setShowImportModal(true)}
+                  onTranslateClick={() => setShowTranslateModal(true)}
+                />
+              )}
 
-            {section === 'videos' && (
-              <Videos onCreate={onCreate} />
-            )}
+              {section === 'videos' && (
+                <Videos onCreate={onCreate} />
+              )}
 
-            {section === 'avatars' && (
-              <Avatars />
-            )}
+              {section === 'avatars' && (
+                <Avatars />
+              )}
 
-            {section === 'trash' && (
-              <Trash />
-            )}
+              {section === 'trash' && (
+                <Trash />
+              )}
 
               {section === 'voices' && (
                 <Voices
@@ -1581,8 +1720,8 @@ function Dashboard({ onLogout, onCreate }) {
               {section === 'credits' && (
                 <Credits onBack={() => setSection('home')} />
               )}
-          </main>
-        </div>
+            </main>
+          </div>
         )}
       </div>
       {showVoicePanel && (
@@ -1598,6 +1737,26 @@ function Dashboard({ onLogout, onCreate }) {
             setSelectedVoice(null)
           }}
         />
+      )}
+      {showAIAssistant && (
+        <AIVideoAssistant
+          onClose={() => setShowAIAssistant(false)}
+          onCreate={(data) => {
+            console.log('AI Assistant data:', data)
+            // TODO: Navigate to Create page with AI-generated content
+            setShowAIAssistant(false)
+            if (onCreate) {
+              onCreate()
+            }
+          }}
+        />
+      )}
+      {showImportModal && (
+        <ImportPowerPointModal onClose={() => setShowImportModal(false)} />
+      )}
+
+      {showTranslateModal && (
+        <TranslateVideoModal onClose={() => setShowTranslateModal(false)} />
       )}
     </>
   )
