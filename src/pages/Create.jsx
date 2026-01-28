@@ -243,11 +243,16 @@ const styles = `
 }
 
 .preview-wrapper {
-  background: transparent;
+  background: #ffffff;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-  border: 2px solid #333;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  border: 1px solid #333;
+  width: 100%;
+  max-width: 900px;
+  aspect-ratio: 16/9;
+  display: flex;
+  flex-direction: column;
 }
 
 .preview-controls {
@@ -413,7 +418,164 @@ const styles = `
   height: 100%;
   background: #ff3333;
   pointer-events: none;
+  z-index: 100;
+}
+
+.playhead-head {
+  position: absolute;
+  top: 0;
+  left: -6px;
+  width: 14px;
+  height: 12px;
+  background: #ff3333;
+  border-radius: 2px 2px 0 0;
+  clip-path: polygon(0% 0%, 100% 0%, 50% 100%);
+}
+
+.timeline-area {
+  background: #141414;
+  border-top: 1px solid #333;
+  display: grid;
+  grid-template-rows: 44px 1fr;
+  color: #fff;
+}
+
+.timeline-header {
+  background: #1e1e1e;
+  border-bottom: 1px solid #333;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.timeline-content {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  overflow: hidden;
+}
+
+.timeline-sidebar {
+  background: #1a1a1a;
+  border-right: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+}
+
+.layer-item {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-bottom: 1px solid #2a2a2a;
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+}
+
+.layer-item.active {
+  color: #fff;
+  background: #252525;
+}
+
+.timeline-viewport {
+  overflow-x: auto;
+  overflow-y: hidden;
+  position: relative;
+  background: #0d0d0d;
+}
+
+.timeline-ruler {
+  height: 24px;
+  background: #1a1a1a;
+  border-bottom: 1px solid #333;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: fit-content;
+  min-width: 100%;
+}
+
+.ruler-tick {
+  position: absolute;
+  bottom: 0;
+  width: 1px;
+  background: #444;
+}
+
+.ruler-tick.major {
+  height: 10px;
+  background: #666;
+}
+
+.ruler-tick.minor {
+  height: 5px;
+}
+
+.ruler-label {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  font-size: 9px;
+  color: #888;
+  font-family: monospace;
+}
+
+.timeline-tracks-container {
+  position: relative;
+  height: calc(100% - 24px);
+  width: fit-content;
+  min-width: 100%;
+}
+
+.timeline-track {
+  height: 60px;
+  position: relative;
+  border-bottom: 1px solid #2a2a2a;
+  display: flex;
+  align-items: center;
+}
+
+.timeline-clip {
+  position: absolute;
+  height: 44px;
+  background: #0066cc;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: hidden;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.timeline-clip:hover {
+  filter: brightness(1.2);
+  border-color: #fff;
+}
+
+.timeline-clip.active {
+  background: #0088ff;
+  border-color: #fff;
+  box-shadow: 0 0 0 2px rgba(0, 136, 255, 0.4), 0 4px 12px rgba(0,0,0,0.5);
   z-index: 10;
+}
+
+.timeline-clip-icon {
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.timeline-clip-meta {
+  margin-left: auto;
+  font-size: 10px;
+  opacity: 0.8;
 }
 
 .tools-palette {
@@ -686,16 +848,24 @@ const styles = `
 `
 
 // Remotion Composition Component
-const VideoComposition = ({ inputProps }) => {
+const VideoComposition = ({ scenes }) => {
   const frame = useCurrentFrame()
-  const { scenes } = inputProps || { scenes: [] }
-  
+  const scenesList = scenes || []
+
+  if (!scenesList || scenesList.length === 0) {
+    return (
+      <div style={{ flex: 1, backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
+        No scenes provided
+      </div>
+    )
+  }
+
   // Find which scene we're in based on current frame
   let frameCount = 0
-  let currentScene = scenes[0] || {}
+  let currentScene = scenesList[0] || {}
   let frameInScene = 0
-  
-  for (const scene of scenes) {
+
+  for (const scene of scenesList) {
     const sceneFrames = (scene.duration || 8) * 30
     if (frame < frameCount + sceneFrames) {
       currentScene = scene
@@ -704,7 +874,7 @@ const VideoComposition = ({ inputProps }) => {
     }
     frameCount += sceneFrames
   }
-  
+
   return (
     <div style={{
       width: '100%',
@@ -729,8 +899,7 @@ const VideoComposition = ({ inputProps }) => {
         justifyContent: 'space-between',
         gap: '60px',
         position: 'relative',
-        opacity: frameInScene > 10 ? 1 : frameInScene / 10,
-        transition: 'opacity 0.3s ease'
+        opacity: 1, // Fixed: Always visible in editor
       }}>
         {/* Left Side - Text Content */}
         <div style={{
@@ -754,7 +923,7 @@ const VideoComposition = ({ inputProps }) => {
           }}>
             {currentScene?.titleText || 'Insert your video title here'}
           </h1>
-          
+
           {/* Subtitle */}
           <h2 style={{
             fontSize: '24px',
@@ -766,7 +935,7 @@ const VideoComposition = ({ inputProps }) => {
           }}>
             {currentScene?.subtitleText || 'Add sub-headline here'}
           </h2>
-          
+
           {/* Logo Placeholder */}
           <div style={{
             width: '80px',
@@ -787,7 +956,7 @@ const VideoComposition = ({ inputProps }) => {
             YOUR LOGO
           </div>
         </div>
-        
+
         {/* Right Side - Avatar Display */}
         <div style={{
           flex: '0 0 auto',
@@ -800,8 +969,8 @@ const VideoComposition = ({ inputProps }) => {
           zIndex: 2
         }}>
           {currentScene?.avatar ? (
-            <img 
-              src={currentScene.avatar} 
+            <img
+              src={currentScene.avatar}
               alt="Avatar"
               style={{
                 width: '100%',
@@ -834,7 +1003,7 @@ const VideoComposition = ({ inputProps }) => {
 const StaticPreview = ({ scene }) => {
   // Debug: log scene data
   console.log('StaticPreview scene:', scene)
-  
+
   return (
     <div style={{
       width: '100%',
@@ -885,7 +1054,7 @@ const StaticPreview = ({ scene }) => {
           }}>
             {scene?.titleText || 'Insert your video title here'}
           </h1>
-          
+
           {/* Subtitle */}
           <h2 style={{
             fontSize: 'clamp(16px, 2.5vw, 22px)',
@@ -899,7 +1068,7 @@ const StaticPreview = ({ scene }) => {
           }}>
             {scene?.subtitleText || 'Add sub-headline here'}
           </h2>
-          
+
           {/* Logo Placeholder */}
           <div style={{
             width: '60px',
@@ -921,7 +1090,7 @@ const StaticPreview = ({ scene }) => {
             YOUR LOGO
           </div>
         </div>
-        
+
         {/* Right Side - Avatar Display */}
         <div style={{
           flex: '0 0 auto',
@@ -934,8 +1103,8 @@ const StaticPreview = ({ scene }) => {
           zIndex: 10
         }}>
           {scene?.avatar ? (
-            <img 
-              src={scene.avatar} 
+            <img
+              src={scene.avatar}
               alt="Avatar"
               style={{
                 width: '100%',
@@ -996,44 +1165,93 @@ function Create({ onBack }) {
   const [showExportModal, setShowExportModal] = useState(false)
   const [showPreviewModal, setShowPreviewModal] = useState(false)
   const [selectedAvatar, setSelectedAvatar] = useState('avatar1')
+  
+  // Export settings state
+  const [exportFormat, setExportFormat] = useState('MP4')
+  const [exportResolution, setExportResolution] = useState('1920x1080')
+  const [exportFrameRate, setExportFrameRate] = useState('30')
+  const [exportQuality, setExportQuality] = useState('High')
+  
   const playerRef = useRef(null)
   const speechSynthesisRef = useRef(null)
-  
+
+  // Credit calculation function
+  const calculateCredits = () => {
+    let baseCredits = 100
+    
+    // Format multipliers
+    const formatMultipliers = {
+      'MP4': 1.0,
+      'WebM': 0.8,
+      'GIF': 0.5
+    }
+    
+    // Resolution multipliers
+    const resolutionMultipliers = {
+      '1920x1080': 1.0,
+      '1280x720': 0.7,
+      '3840x2160': 2.0
+    }
+    
+    // Frame rate multipliers
+    const frameRateMultipliers = {
+      '30': 1.0,
+      '24': 0.8,
+      '60': 1.5
+    }
+    
+    // Quality multipliers
+    const qualityMultipliers = {
+      'High': 1.2,
+      'Medium': 1.0,
+      'Low': 0.7
+    }
+    
+    const formatMultiplier = formatMultipliers[exportFormat] || 1.0
+    const resolutionMultiplier = resolutionMultipliers[exportResolution] || 1.0
+    const frameRateMultiplier = frameRateMultipliers[exportFrameRate] || 1.0
+    const qualityMultiplier = qualityMultipliers[exportQuality] || 1.0
+    
+    const totalCredits = Math.round(baseCredits * formatMultiplier * resolutionMultiplier * frameRateMultiplier * qualityMultiplier)
+    
+    return totalCredits
+  }
+
   const activeScene = scenes.find(s => s.id === activeSceneId)
-  
+
   // Text-to-speech function
   const speakText = (text, sceneId) => {
     // Stop any ongoing speech
     if (speechSynthesisRef.current) {
       window.speechSynthesis.cancel()
     }
-    
+
     if (!text || text.trim() === '') return
-    
+
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.rate = 0.9 // Slightly slower for natural speech
     utterance.pitch = 1
     utterance.volume = 1
-    
+
     // Use a more natural voice if available
     const voices = window.speechSynthesis.getVoices()
-    const preferredVoice = voices.find(voice => 
-      voice.name.includes('Google') || 
+    const preferredVoice = voices.find(voice =>
+      voice.name.includes('Google') ||
       voice.name.includes('Microsoft') ||
       voice.lang.startsWith('en')
     )
     if (preferredVoice) {
       utterance.voice = preferredVoice
     }
-    
+
     speechSynthesisRef.current = utterance
     window.speechSynthesis.speak(utterance)
-    
+
     utterance.onend = () => {
       speechSynthesisRef.current = null
     }
   }
-  
+
   // Stop speech when component unmounts or preview closes
   useEffect(() => {
     return () => {
@@ -1042,7 +1260,7 @@ function Create({ onBack }) {
       }
     }
   }, [])
-  
+
   // Load voices when component mounts
   useEffect(() => {
     if (window.speechSynthesis) {
@@ -1053,12 +1271,12 @@ function Create({ onBack }) {
       window.speechSynthesis.onvoiceschanged = loadVoices
     }
   }, [])
-  
+
   // Calculate total duration in frames (30 fps)
   const totalDurationInFrames = useMemo(() => {
     return scenes.reduce((total, scene) => total + ((scene.duration || 8) * 30), 0)
   }, [scenes])
-  
+
   // Get current scene based on frame
   const getSceneForFrame = (frame) => {
     let currentFrame = 0
@@ -1071,7 +1289,7 @@ function Create({ onBack }) {
     }
     return { scene: scenes[scenes.length - 1] || scenes[0], frameInScene: 0 }
   }
-  
+
   // Handle player frame updates
   useEffect(() => {
     if (playerRef.current && isPlaying) {
@@ -1088,7 +1306,7 @@ function Create({ onBack }) {
           // Player might not be ready
         }
       }
-      
+
       const interval = setInterval(updateTime, 100)
       return () => clearInterval(interval)
     }
@@ -1106,7 +1324,7 @@ function Create({ onBack }) {
     setScenes([...scenes, newScene])
     setActiveSceneId(newScene.id)
   }
-  
+
   const deleteScene = (id) => {
     if (scenes.length === 1) return
     const newScenes = scenes.filter(s => s.id !== id)
@@ -1115,26 +1333,26 @@ function Create({ onBack }) {
       setActiveSceneId(newScenes[0].id)
     }
   }
-  
+
   const updateScene = (id, updates) => {
-    setScenes(scenes.map(scene => 
+    setScenes(scenes.map(scene =>
       scene.id === id ? { ...scene, ...updates } : scene
     ))
   }
-  
+
   const exportVideo = () => {
     setShowExportModal(true)
   }
-  
+
   const selectAvatar = (avatarId) => {
     setSelectedAvatar(avatarId)
     const avatar = predefinedAvatars.find(a => a.id === avatarId)
-    updateScene(activeSceneId, { 
+    updateScene(activeSceneId, {
       avatarType: avatarId,
       avatar: avatar ? avatar.image : null
     })
   }
-  
+
   // Handle preview with text-to-speech
   const handlePreview = () => {
     setShowPreviewModal(true)
@@ -1145,32 +1363,32 @@ function Create({ onBack }) {
       }, 500)
     }
   }
-  
+
   // Handle play/pause with speech
   const handlePlayPause = () => {
     if (isPlaying) {
-      // Pause
       if (playerRef.current) {
         playerRef.current.pause()
       }
       window.speechSynthesis.pause()
       setIsPlaying(false)
     } else {
-      // Play
       if (playerRef.current) {
         playerRef.current.play()
       }
       // Resume or start speaking
-      const currentScene = scenes.find(s => s.id === activeSceneId)
-      if (currentScene?.script && window.speechSynthesis.paused) {
-        window.speechSynthesis.resume()
-      } else if (currentScene?.script) {
-        speakText(currentScene.script, activeSceneId)
+      const { scene } = getSceneForFrame(currentTime * 30)
+      if (scene?.script) {
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume()
+        } else {
+          speakText(scene.script, scene.id)
+        }
       }
       setIsPlaying(true)
     }
   }
-  
+
   // Handle stop with speech
   const handleStop = () => {
     if (playerRef.current) {
@@ -1191,12 +1409,12 @@ function Create({ onBack }) {
             <button className="icon-btn" onClick={onBack}>
               ← Back
             </button>
-            <input 
-              className="project-title" 
-              defaultValue="Untitled Video Project" 
+            <input
+              className="project-title"
+              defaultValue="Untitled Video Project"
             />
-            <button 
-              className="icon-btn" 
+            <button
+              className="icon-btn"
               title="Undo"
               onClick={() => {
                 console.log('Undo clicked')
@@ -1205,8 +1423,8 @@ function Create({ onBack }) {
             >
               <MdUndo />
             </button>
-            <button 
-              className="icon-btn" 
+            <button
+              className="icon-btn"
               title="Redo"
               onClick={() => {
                 console.log('Redo clicked')
@@ -1215,8 +1433,8 @@ function Create({ onBack }) {
             >
               <MdRedo />
             </button>
-            <button 
-              className="icon-btn" 
+            <button
+              className="icon-btn"
               title="Save"
               onClick={() => {
                 alert('Project saved!')
@@ -1226,44 +1444,44 @@ function Create({ onBack }) {
               <MdSave />
             </button>
           </div>
-          
+
           <div className="top-center">
-            <button 
+            <button
               className={`icon-btn ${selectedTool === 'avatar' ? 'active' : ''}`}
               title="Avatar"
               onClick={() => setSelectedTool('avatar')}
             >
               <MdPerson />
             </button>
-            <button 
+            <button
               className={`icon-btn ${selectedTool === 'text' ? 'active' : ''}`}
               title="Text"
               onClick={() => setSelectedTool('text')}
             >
               <MdTextFields />
             </button>
-            <button 
+            <button
               className={`icon-btn ${selectedTool === 'media' ? 'active' : ''}`}
               title="Media"
               onClick={() => setSelectedTool('media')}
             >
               <MdPhotoLibrary />
             </button>
-            <button 
+            <button
               className={`icon-btn ${selectedTool === 'audio' ? 'active' : ''}`}
               title="Audio"
               onClick={() => setSelectedTool('audio')}
             >
               <MdMusicNote />
             </button>
-            <button 
+            <button
               className={`icon-btn ${selectedTool === 'effects' ? 'active' : ''}`}
               title="Effects"
               onClick={() => setSelectedTool('effects')}
             >
               <MdPalette />
             </button>
-            <button 
+            <button
               className={`icon-btn ${selectedTool === 'layers' ? 'active' : ''}`}
               title="Layers"
               onClick={() => setSelectedTool('layers')}
@@ -1271,17 +1489,17 @@ function Create({ onBack }) {
               <MdLayers />
             </button>
           </div>
-          
+
           <div className="top-right">
-            <button 
-              className="icon-btn" 
+            <button
+              className="icon-btn"
               title="Preview"
               onClick={handlePreview}
             >
               <MdPlayCircleOutline /> Preview
             </button>
-            <button 
-              className="icon-btn" 
+            <button
+              className="icon-btn"
               title="Settings"
               onClick={() => {
                 alert('Settings panel coming soon!')
@@ -1301,7 +1519,7 @@ function Create({ onBack }) {
           <div className="media-library">
             <div className="library-section">
               <h3 className="section-title">Media Library</h3>
-              <div 
+              <div
                 className="upload-area"
                 onClick={() => {
                   const input = document.createElement('input')
@@ -1335,7 +1553,7 @@ function Create({ onBack }) {
                 </div>
               </div>
             </div>
-            
+
             <div className="library-section">
               <h3 className="section-title">Templates</h3>
               <div className="media-grid">
@@ -1348,58 +1566,55 @@ function Create({ onBack }) {
               </div>
             </div>
           </div>
-          
+
           {/* Canvas Area */}
           <div className="canvas-area">
             <div className="preview-container">
               <div className="preview-wrapper">
-                <div 
+                <Player
+                  ref={playerRef}
+                  component={VideoComposition}
+                  durationInFrames={Math.max(totalDurationInFrames, 1)}
+                  compositionWidth={1920}
+                  compositionHeight={1080}
+                  fps={30}
                   style={{
                     width: '100%',
-                    maxWidth: '900px',
-                    aspectRatio: '16/9',
-                    backgroundColor: '#ffffff',
-                    border: '2px solid #e0e0e0',
-                    borderRadius: '8px',
-                    overflow: 'hidden',
-                    position: 'relative',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    height: 'calc(100% - 40px)',
-                    maxHeight: '500px',
-                    margin: '0 auto'
+                    height: '100%',
+                    backgroundColor: 'white'
                   }}
-                >
-                  {showPreviewModal ? (
-                    <div style={{
-                      width: '100%',
-                      height: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#666',
-                      fontSize: '14px',
-                      backgroundColor: '#f9f9f9'
-                    }}>
-                      Preview is open in modal
-                    </div>
-                  ) : (
-                    <StaticPreview scene={activeScene} />
-                  )}
-                </div>
+                  inputProps={{
+                    scenes: scenes
+                  }}
+                  showOutlines={false}
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                  onFrameUpdate={(frame) => {
+                    const time = frame / 30
+                    setCurrentTime(time)
+                    const { scene } = getSceneForFrame(frame)
+                    if (scene && scene.id !== activeSceneId) {
+                      setActiveSceneId(scene.id)
+                      if (isPlaying && scene.script) {
+                        speakText(scene.script, scene.id)
+                      }
+                    }
+                  }}
+                />
               </div>
             </div>
-            
+
             <div className="preview-controls">
               <div className="playback-controls">
-                <button 
-                  className="icon-btn" 
+                <button
+                  className="icon-btn"
                   title="Stop"
                   onClick={handleStop}
                 >
                   <MdStop />
                 </button>
-                <button 
-                  className="icon-btn" 
+                <button
+                  className="icon-btn"
                   title="Play/Pause"
                   onClick={handlePlayPause}
                 >
@@ -1409,10 +1624,10 @@ function Create({ onBack }) {
                   {String(Math.floor(currentTime / 60)).padStart(2, '0')}:{String(Math.floor(currentTime % 60)).padStart(2, '0')} / {String(Math.floor((totalDurationInFrames / 30) / 60)).padStart(2, '0')}:{String(Math.floor((totalDurationInFrames / 30) % 60)).padStart(2, '0')}
                 </div>
               </div>
-              
+
               <div className="zoom-controls">
-                <button 
-                  className="icon-btn" 
+                <button
+                  className="icon-btn"
                   title="Zoom Out"
                   onClick={() => setZoomLevel(Math.max(25, zoomLevel - 25))}
                 >
@@ -1421,15 +1636,15 @@ function Create({ onBack }) {
                 <span style={{ color: '#aaa', fontSize: '12px', margin: '0 8px' }}>
                   {zoomLevel}%
                 </span>
-                <button 
-                  className="icon-btn" 
+                <button
+                  className="icon-btn"
                   title="Zoom In"
                   onClick={() => setZoomLevel(Math.min(200, zoomLevel + 25))}
                 >
                   <MdZoomIn />
                 </button>
-                <button 
-                  className="icon-btn" 
+                <button
+                  className="icon-btn"
                   title="Fullscreen"
                   onClick={() => {
                     const elem = document.querySelector('.preview-wrapper')
@@ -1443,7 +1658,7 @@ function Create({ onBack }) {
               </div>
             </div>
           </div>
-          
+
           {/* Properties Panel */}
           <div className="properties-panel">
             {/* Avatar Section */}
@@ -1453,13 +1668,13 @@ function Create({ onBack }) {
                 Avatar
               </h3>
               <div className="avatar-selection">
-                <div className="avatar-options" style={{ 
-                  display: 'grid', 
+                <div className="avatar-options" style={{
+                  display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
                   gap: '8px'
                 }}>
                   {predefinedAvatars.map((avatar) => (
-                    <div 
+                    <div
                       key={avatar.id}
                       className={`avatar-option ${activeScene?.avatarType === avatar.id ? 'active' : ''}`}
                       onClick={() => selectAvatar(avatar.id)}
@@ -1476,8 +1691,8 @@ function Create({ onBack }) {
                         transition: 'all 0.2s ease'
                       }}
                     >
-                      <img 
-                        src={avatar.image} 
+                      <img
+                        src={avatar.image}
                         alt={avatar.name}
                         style={{
                           width: '60px',
@@ -1487,8 +1702,8 @@ function Create({ onBack }) {
                           border: '2px solid rgba(255,255,255,0.2)'
                         }}
                       />
-                      <span style={{ 
-                        fontSize: '11px', 
+                      <span style={{
+                        fontSize: '11px',
                         textAlign: 'center',
                         fontWeight: 600,
                         color: activeScene?.avatarType === avatar.id ? '#fff' : '#aaa'
@@ -1500,7 +1715,7 @@ function Create({ onBack }) {
                 </div>
               </div>
             </div>
-            
+
             {/* Script Section */}
             <div className="property-group">
               <h3 className="property-title">
@@ -1527,12 +1742,12 @@ function Create({ onBack }) {
                 </div>
               </div>
             </div>
-            
+
             <div className="property-group">
               <h3 className="property-title">Scene Properties</h3>
               <div className="property-row">
                 <label className="property-label">Scene Name</label>
-                <input 
+                <input
                   className="property-input"
                   value={activeScene?.title || ''}
                   onChange={(e) => updateScene(activeSceneId, { title: e.target.value })}
@@ -1540,7 +1755,7 @@ function Create({ onBack }) {
               </div>
               <div className="property-row">
                 <label className="property-label">Duration (seconds)</label>
-                <input 
+                <input
                   className="property-input"
                   type="number"
                   value={activeScene?.duration || 8}
@@ -1548,12 +1763,12 @@ function Create({ onBack }) {
                 />
               </div>
             </div>
-            
+
             <div className="property-group">
               <h3 className="property-title">Text Properties</h3>
               <div className="property-row">
                 <label className="property-label">Title Text</label>
-                <input 
+                <input
                   className="property-input"
                   value={activeScene?.titleText || ''}
                   onChange={(e) => updateScene(activeSceneId, { titleText: e.target.value })}
@@ -1561,14 +1776,14 @@ function Create({ onBack }) {
               </div>
               <div className="property-row">
                 <label className="property-label">Subtitle Text</label>
-                <input 
+                <input
                   className="property-input"
                   value={activeScene?.subtitleText || ''}
                   onChange={(e) => updateScene(activeSceneId, { subtitleText: e.target.value })}
                 />
               </div>
             </div>
-            
+
             <div className="property-group">
               <h3 className="property-title">Transform</h3>
               <div className="property-row">
@@ -1588,7 +1803,7 @@ function Create({ onBack }) {
                 <input className="property-input" type="number" defaultValue="0" />
               </div>
             </div>
-            
+
             <div className="property-group">
               <h3 className="property-title">Appearance</h3>
               <div className="property-row">
@@ -1608,10 +1823,10 @@ function Create({ onBack }) {
             <button className="icon-btn" onClick={addScene}>
               <MdAdd /> Add Scene
             </button>
+            <div style={{ width: '1px', height: '24px', background: '#333', margin: '0 8px' }} />
             <button className="icon-btn" title="Cut" onClick={() => {
               if (activeSceneId) {
                 console.log('Cut scene:', activeSceneId)
-                // TODO: Implement cut functionality
               }
             }}>
               <MdContentCut />
@@ -1619,14 +1834,12 @@ function Create({ onBack }) {
             <button className="icon-btn" title="Copy" onClick={() => {
               if (activeSceneId) {
                 console.log('Copy scene:', activeSceneId)
-                // TODO: Implement copy functionality
               }
             }}>
               <MdContentCopy />
             </button>
             <button className="icon-btn" title="Paste" onClick={() => {
               console.log('Paste scene')
-              // TODO: Implement paste functionality
             }}>
               <MdContentPaste />
             </button>
@@ -1637,7 +1850,11 @@ function Create({ onBack }) {
             }}>
               <MdDelete />
             </button>
+
             <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+              <div className="time-display" style={{ background: '#000', padding: '4px 12px', borderRadius: '4px', border: '1px solid #333', fontFamily: 'monospace', fontSize: '14px', color: '#00ff00' }}>
+                {String(Math.floor(currentTime / 60)).padStart(2, '0')}:{String(Math.floor(currentTime % 60)).padStart(2, '0')}:{String(Math.floor((currentTime % 1) * 30)).padStart(2, '0')}
+              </div>
               <button className="icon-btn" title="Snap to Grid">
                 <MdTimer />
               </button>
@@ -1646,81 +1863,100 @@ function Create({ onBack }) {
               </button>
             </div>
           </div>
-          
-          <div className="timeline-tracks">
-            {scenes.map((scene) => (
-              <div key={scene.id} className="track">
-                <div 
-                  className={`track-label ${scene.id === activeSceneId ? 'active' : ''}`}
-                  onClick={() => setActiveSceneId(scene.id)}
-                  style={{ 
-                    background: scene.id === activeSceneId ? '#0066cc' : '#2a2a2a',
-                    cursor: 'pointer'
+
+          <div className="timeline-content">
+            <div className="timeline-sidebar">
+              <div className="layer-item active">
+                <MdVideoLibrary style={{ marginRight: '8px' }} />
+                Video Track
+              </div>
+              <div className="layer-item">
+                <MdMusicNote style={{ marginRight: '8px' }} />
+                Audio Track
+              </div>
+            </div>
+
+            <div className="timeline-viewport">
+              <div className="timeline-ruler" style={{ width: `${Math.max(totalDurationInFrames / 30 * 40 + 200, 1000)}px` }}>
+                {Array.from({ length: Math.ceil(totalDurationInFrames / 30) + 10 }).map((_, i) => (
+                  <div key={i} className="ruler-tick major" style={{ left: `${i * 40}px` }}>
+                    <span className="ruler-label">{i}s</span>
+                  </div>
+                ))}
+                {Array.from({ length: (Math.ceil(totalDurationInFrames / 30) + 10) * 5 }).map((_, i) => (
+                  i % 5 !== 0 && (
+                    <div key={`minor-${i}`} className="ruler-tick minor" style={{ left: `${i * 8}px` }} />
+                  )
+                ))}
+              </div>
+
+              <div className="timeline-tracks-container" style={{ width: `${Math.max(totalDurationInFrames / 30 * 40 + 200, 1000)}px` }}>
+                <div className="timeline-track">
+                  {scenes.reduce((acc, scene, index) => {
+                    const prevDuration = scenes.slice(0, index).reduce((sum, s) => sum + (s.duration || 8), 0)
+                    acc.push(
+                      <div
+                        key={scene.id}
+                        className={`timeline-clip ${scene.id === activeSceneId ? 'active' : ''}`}
+                        onClick={() => {
+                          setActiveSceneId(scene.id)
+                          setCurrentTime(prevDuration)
+                          if (playerRef.current) {
+                            playerRef.current.seekTo(prevDuration * 30)
+                          }
+                        }}
+                        style={{
+                          left: `${prevDuration * 40}px`,
+                          width: `${(scene.duration || 8) * 40}px`
+                        }}
+                      >
+                        <MdVideoLibrary className="timeline-clip-icon" size={14} />
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{scene.title}</span>
+                        <span className="timeline-clip-meta">{scene.duration || 8}s</span>
+                      </div>
+                    )
+                    return acc
+                  }, [])}
+                </div>
+
+                <div
+                  className="playhead"
+                  style={{
+                    left: `${currentTime * 40}px`,
+                    transition: isPlaying ? 'none' : 'left 0.1s ease-out'
                   }}
                 >
-                  <MdVideoLibrary size={14} />
-                  {scene.title}
-                </div>
-                <div className="track-content">
-                  <div 
-                    className={`clip ${scene.id === activeSceneId ? 'selected' : ''}`}
-                    onClick={() => {
-                      setActiveSceneId(scene.id)
-                      // Calculate frame position for this scene
-                      let frameCount = 0
-                      for (const s of scenes) {
-                        if (s.id === scene.id) break
-                        frameCount += (s.duration || 8) * 30
-                      }
-                      setCurrentTime(frameCount / 30)
-                      if (playerRef.current) {
-                        playerRef.current.seekTo(frameCount)
-                      }
-                    }}
-                    style={{ 
-                      width: `${(scene.duration || 8) * 20}px`,
-                      background: scene.id === activeSceneId ? '#0066cc' : '#2a2a2a'
-                    }}
-                  >
-                    {scene.duration || 8}s
-                  </div>
-                  <div 
-                    className="playhead" 
-                    style={{ 
-                      left: `${Math.min(currentTime * 20, (scene.duration || 8) * 20)}px`,
-                      display: scene.id === activeSceneId ? 'block' : 'none'
-                    }} 
-                  />
+                  <div className="playhead-head" />
                 </div>
               </div>
-            ))}
+            </div>
           </div>
         </div>
-        
+
         {/* Tools Palette */}
         <div className="tools-palette">
-          <button 
+          <button
             className={`tool-btn ${selectedTool === 'select' ? 'active' : ''}`}
             onClick={() => setSelectedTool('select')}
             title="Select Tool"
           >
             <MdTextFields />
           </button>
-          <button 
+          <button
             className={`tool-btn ${selectedTool === 'text' ? 'active' : ''}`}
             onClick={() => setSelectedTool('text')}
             title="Text Tool"
           >
             <MdTextFields />
           </button>
-          <button 
+          <button
             className={`tool-btn ${selectedTool === 'crop' ? 'active' : ''}`}
             onClick={() => setSelectedTool('crop')}
             title="Crop Tool"
           >
             <MdCropFree />
           </button>
-          <button 
+          <button
             className={`tool-btn ${selectedTool === 'transform' ? 'active' : ''}`}
             onClick={() => setSelectedTool('transform')}
             title="Transform Tool"
@@ -1728,7 +1964,7 @@ function Create({ onBack }) {
             <MdTransform />
           </button>
         </div>
-        
+
         {/* Preview Modal */}
         {showPreviewModal && (
           <div className="modal-overlay" onClick={() => {
@@ -1741,7 +1977,7 @@ function Create({ onBack }) {
             <div className="preview-modal" onClick={(e) => e.stopPropagation()}>
               <div className="preview-modal-header">
                 <h2 className="preview-modal-title">Video Preview</h2>
-                <button 
+                <button
                   className="preview-modal-close"
                   onClick={() => {
                     setShowPreviewModal(false)
@@ -1812,7 +2048,7 @@ function Create({ onBack }) {
             </div>
           </div>
         )}
-        
+
         {/* Export Modal */}
         {showExportModal && (
           <div className="modal-overlay" onClick={() => setShowExportModal(false)}>
@@ -1822,7 +2058,11 @@ function Create({ onBack }) {
                 <div className="property-group">
                   <div className="property-row">
                     <label className="property-label">Format</label>
-                    <select className="property-input">
+                    <select 
+                      className="property-input"
+                      value={exportFormat}
+                      onChange={(e) => setExportFormat(e.target.value)}
+                    >
                       <option>MP4</option>
                       <option>WebM</option>
                       <option>GIF</option>
@@ -1830,27 +2070,71 @@ function Create({ onBack }) {
                   </div>
                   <div className="property-row">
                     <label className="property-label">Resolution</label>
-                    <select className="property-input">
-                      <option>1920x1080 (Full HD)</option>
-                      <option>1280x720 (HD)</option>
-                      <option>3840x2160 (4K)</option>
+                    <select 
+                      className="property-input"
+                      value={exportResolution}
+                      onChange={(e) => setExportResolution(e.target.value)}
+                    >
+                      <option>1920x1080</option>
+                      <option>1280x720</option>
+                      <option>3840x2160</option>
                     </select>
                   </div>
                   <div className="property-row">
                     <label className="property-label">Frame Rate</label>
-                    <select className="property-input">
-                      <option>30 fps</option>
-                      <option>24 fps</option>
-                      <option>60 fps</option>
+                    <select 
+                      className="property-input"
+                      value={exportFrameRate}
+                      onChange={(e) => setExportFrameRate(e.target.value)}
+                    >
+                      <option>30</option>
+                      <option>24</option>
+                      <option>60</option>
                     </select>
                   </div>
                   <div className="property-row">
                     <label className="property-label">Quality</label>
-                    <select className="property-input">
+                    <select 
+                      className="property-input"
+                      value={exportQuality}
+                      onChange={(e) => setExportQuality(e.target.value)}
+                    >
                       <option>High</option>
                       <option>Medium</option>
                       <option>Low</option>
                     </select>
+                  </div>
+                </div>
+                
+                {/* Credit Display */}
+                <div className="credit-display" style={{
+                  marginTop: '20px',
+                  padding: '15px',
+                  backgroundColor: '#2a2a2a',
+                  borderRadius: '8px',
+                  border: '1px solid #444'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '8px'
+                  }}>
+                    <span style={{ color: '#fff', fontSize: '14px' }}>Credit Consumption:</span>
+                    <span style={{ 
+                      color: '#4CAF50', 
+                      fontSize: '18px', 
+                      fontWeight: 'bold' 
+                    }}>
+                      {calculateCredits()} credits
+                    </span>
+                  </div>
+                  <div style={{ 
+                    color: '#888', 
+                    fontSize: '12px',
+                    textAlign: 'center'
+                  }}>
+                    Credits vary based on format, resolution, frame rate, and quality
                   </div>
                 </div>
               </div>
@@ -1859,7 +2143,7 @@ function Create({ onBack }) {
                   Cancel
                 </button>
                 <button className="btn-primary" onClick={() => {
-                  alert('Video export started! This will take a few moments...')
+                  alert(`Video export started! This will consume ${calculateCredits()} credits.`)
                   setShowExportModal(false)
                 }}>
                   Start Export
