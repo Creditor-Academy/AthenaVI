@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { Player } from '@remotion/player'
-import { useCurrentFrame } from 'remotion'
+import { useCurrentFrame, spring, interpolate, useVideoConfig } from 'remotion'
 import {
   MdUndo,
   MdRedo,
@@ -34,6 +34,7 @@ import {
   MdAspectRatio,
   MdClose,
 } from 'react-icons/md'
+import TimelineEditor from '../components/TimelineEditor'
 import avatar1 from '../assets/avatar1.png'
 import avatar2 from '../assets/avatar2.png'
 import avatar3 from '../assets/avatar3.png'
@@ -47,6 +48,14 @@ const predefinedAvatars = [
   { id: 'avatar3', name: 'Avatar 3', image: avatar3 },
   { id: 'avatar4', name: 'Avatar 4', image: avatar4 },
   { id: 'avatar5', name: 'Avatar 5', image: avatar5 },
+]
+
+const predefinedMedia = [
+  { id: 'm1', name: 'Abstract Tech', image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=500', full: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=2070', type: 'image' },
+  { id: 'm2', name: 'Nature Peak', image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=500', full: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=2070', type: 'image' },
+  { id: 'm3', name: 'Modern Office', image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=500', full: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2070', type: 'image' },
+  { id: 'm4', name: 'City Lights', image: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&q=80&w=500', full: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&q=80&w=2070', type: 'image' },
+  { id: 'm5', name: 'Minimal Workspace', image: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&q=80&w=500', full: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&q=80&w=2070', type: 'image' },
 ]
 
 const avatarUrl =
@@ -841,158 +850,354 @@ const styles = `
   transition: all 0.2s ease;
 }
 
-.script-btn:hover {
-  background: #444;
-  border-color: #555;
+.timeline-clip {
+  position: absolute;
+  top: 4px;
+  height: 32px;
+  background: #333;
+  border: 1px solid #444;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  color: #fff;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.timeline-clip.active {
+  background: #0066cc;
+  border-color: #0088ff;
+  box-shadow: 0 0 10px rgba(0, 102, 204, 0.5);
+}
+
+.trim-handle {
+  position: absolute;
+  top: 0;
+  width: 6px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.3);
+  cursor: ew-resize;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.timeline-clip:hover .trim-handle {
+  opacity: 1;
+}
+
+.trim-handle.left { left: 0; border-radius: 4px 0 0 4px; }
+.trim-handle.right { right: 0; border-radius: 0 4px 4px 0; }
+
+.layer-item-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #2a2a2a;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  border: 1px solid #333;
+}
+
+.layer-item-preview span {
+  font-size: 12px;
+  color: #eee;
+  text-transform: capitalize;
+}
+
+.layer-item-preview button {
+  background: none;
+  border: none;
+  color: #ff4444;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.layer-item-preview button:hover {
+  background: rgba(255, 68, 68, 0.1);
+}
+
+.timeline-track.layers {
+  background: rgba(255, 255, 255, 0.02);
+  height: 40px;
+  margin-top: 4px;
+}
+
+.layer-clip {
+  position: absolute;
+  height: 24px;
+  top: 8px;
+  background: #2d6a4f;
+  border: 1px solid #40916c;
+  border-radius: 3px;
+  font-size: 10px;
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+  color: #fff;
 }
 `
 
 // Remotion Composition Component
 const VideoComposition = ({ scenes }) => {
   const frame = useCurrentFrame()
+  const { fps } = useVideoConfig()
   const scenesList = scenes || []
 
-  if (!scenesList || scenesList.length === 0) {
+  if (scenesList.length === 0) {
     return (
-      <div style={{ flex: 1, backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
+      <div style={{ flex: 1, backgroundColor: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
         No scenes provided
       </div>
     )
   }
 
-  // Find which scene we're in based on current frame
-  let frameCount = 0
-  let currentScene = scenesList[0] || {}
-  let frameInScene = 0
+  // Find current scene
+  let totalFramesSoFar = 0
+  let currentScene = scenesList[0]
+  let frameInScene = frame
 
-  for (const scene of scenesList) {
-    const sceneFrames = (scene.duration || 8) * 30
-    if (frame < frameCount + sceneFrames) {
+  for (let i = 0; i < scenesList.length; i++) {
+    const scene = scenesList[i]
+    const sceneFrames = Math.max((scene.duration || 8) * 30, 1)
+    if (frame < totalFramesSoFar + sceneFrames) {
       currentScene = scene
-      frameInScene = frame - frameCount
+      frameInScene = frame - totalFramesSoFar
       break
     }
-    frameCount += sceneFrames
+    totalFramesSoFar += sceneFrames
+    if (i === scenesList.length - 1) {
+      currentScene = scene
+      frameInScene = frame - (totalFramesSoFar - sceneFrames)
+    }
+  }
+
+  const sceneDurationFrames = (currentScene.duration || 8) * 30
+
+  // Transition logic
+  let opacity = 1
+  const transitionFrames = 10
+  if (frameInScene < transitionFrames) {
+    opacity = Math.max(0.1, frameInScene / transitionFrames)
+  } else if (frameInScene > sceneDurationFrames - transitionFrames) {
+    opacity = Math.max(0, (sceneDurationFrames - frameInScene) / transitionFrames)
+  }
+
+  if (frameInScene < 1) opacity = 1
+
+  // Animation values
+  const entrance = spring({
+    frame: frameInScene,
+    fps,
+    config: { damping: 12 }
+  })
+
+  const zoomFactor = interpolate(
+    frameInScene,
+    [0, sceneDurationFrames],
+    [1, 1.05]
+  )
+
+  const titleStyle = {
+    fontSize: 48,
+    color: '#000000',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    fontWeight: '700',
+    textAlign: 'left',
+    ...(currentScene.titleStyle || {})
+  }
+
+  const subtitleStyle = {
+    fontSize: 24,
+    color: '#333333',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    fontWeight: '400',
+    textAlign: 'left',
+    ...(currentScene.subtitleStyle || {})
   }
 
   return (
     <div style={{
       width: '100%',
       height: '100%',
-      backgroundColor: '#ffffff',
-      color: '#000000',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
       position: 'relative',
       overflow: 'hidden',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
-      padding: '40px'
+      opacity: opacity,
+      backgroundColor: currentScene.backgroundColor || '#ffffff'
     }}>
-      {/* Main Content Container */}
-      <div style={{
-        width: '100%',
-        height: '100%',
-        maxWidth: '1200px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '60px',
-        position: 'relative',
-        opacity: 1, // Fixed: Always visible in editor
-      }}>
-        {/* Left Side - Text Content */}
+      {/* BASE LAYER: Background Image/Video (Full Screen) */}
+      {currentScene.backgroundImage && (
         <div style={{
-          flex: '1',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'flex-start',
-          gap: '24px',
-          maxWidth: '600px',
-          zIndex: 2
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 0
         }}>
-          {/* Title */}
-          <h1 style={{
-            fontSize: '48px',
-            fontWeight: '700',
-            margin: '0',
-            lineHeight: '1.2',
-            color: '#000000',
-            fontFamily: 'system-ui, -apple-system, sans-serif'
-          }}>
-            {currentScene?.titleText || 'Insert your video title here'}
-          </h1>
-
-          {/* Subtitle */}
-          <h2 style={{
-            fontSize: '24px',
-            fontWeight: '400',
-            margin: '0',
-            lineHeight: '1.4',
-            color: '#333333',
-            fontFamily: 'system-ui, -apple-system, sans-serif'
-          }}>
-            {currentScene?.subtitleText || 'Add sub-headline here'}
-          </h2>
-
-          {/* Logo Placeholder */}
-          <div style={{
-            width: '80px',
-            height: '80px',
-            borderRadius: '50%',
-            backgroundColor: '#f0f0f0',
-            border: '2px dashed #cccccc',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: '8px',
-            fontSize: '10px',
-            color: '#999999',
-            fontWeight: '600',
-            textAlign: 'center',
-            padding: '8px'
-          }}>
-            YOUR LOGO
-          </div>
-        </div>
-
-        {/* Right Side - Avatar Display */}
-        <div style={{
-          flex: '0 0 auto',
-          width: '300px',
-          height: '400px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'relative',
-          zIndex: 2
-        }}>
-          {currentScene?.avatar ? (
-            <img
-              src={currentScene.avatar}
-              alt="Avatar"
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-                objectPosition: 'center'
-              }}
-            />
-          ) : (
-            <div style={{
+          <img
+            src={currentScene.backgroundImage}
+            alt="Background"
+            style={{
               width: '100%',
               height: '100%',
-              backgroundColor: '#f5f5f5',
-              borderRadius: '12px',
+              objectFit: 'cover',
+              transform: `scale(${zoomFactor})`
+            }}
+          />
+        </div>
+      )}
+
+      {/* LAYER 1: Additional B-roll/Overlay Layers from Media Library */}
+      {(currentScene.layers || []).filter(l => l.type === 'image' || l.type === 'video').map(layer => {
+        const layerStart = (layer.start || 0) * 30
+        const layerDuration = (layer.duration || currentScene.duration) * 30
+        if (frameInScene < layerStart || frameInScene > layerStart + layerDuration) return null
+
+        return (
+          <div key={layer.id} style={{
+            position: 'absolute',
+            left: `${layer.x || 0}px`,
+            top: `${layer.y || 0}px`,
+            width: `${layer.width || '100%'}`,
+            height: `${layer.height || '100%'}`,
+            transform: `scale(${zoomFactor * (layer.scale || 1)})`,
+            zIndex: 5,
+            pointerEvents: 'none'
+          }}>
+            {layer.type === 'image' && <img src={layer.content} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+            {layer.type === 'video' && <video src={layer.content} style={{ width: '100%', height: '100%', objectFit: 'cover' }} autoPlay muted loop />}
+          </div>
+        )
+      })}
+
+      {/* OVERLAY LAYER: Text and Avatar Content */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 10,
+        padding: '0 80px'
+      }}>
+        <div style={{
+          width: '100%',
+          height: '100%',
+          maxWidth: '1200px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '60px',
+          position: 'relative',
+          transform: `translateY(${(1 - entrance) * 30}px) scale(${interpolate(entrance, [0, 1], [0.95, 1])})`,
+          opacity: entrance
+        }}>
+          {/* Left Side - Text Content */}
+          <div style={{
+            flex: '1',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: titleStyle.textAlign === 'center' ? 'center' : 'flex-start',
+            gap: '24px',
+            maxWidth: '600px',
+            textAlign: titleStyle.textAlign || 'left'
+          }}>
+            {/* Title */}
+            <h1 style={{
+              fontSize: `${titleStyle.fontSize || 48}px`,
+              fontWeight: titleStyle.fontWeight || '700',
+              margin: '0',
+              lineHeight: '1.2',
+              color: titleStyle.color || '#000000',
+              fontFamily: titleStyle.fontFamily || 'inherit',
+              transform: `translateX(${(1 - entrance) * -40}px)`,
+              textShadow: '0 2px 10px rgba(0,0,0,0.3)'
+            }}>
+              {currentScene?.titleText || 'Insert your video title here'}
+            </h1>
+
+            {/* Subtitle */}
+            <h2 style={{
+              fontSize: `${subtitleStyle.fontSize || 24}px`,
+              fontWeight: subtitleStyle.fontWeight || '400',
+              margin: '0',
+              lineHeight: '1.4',
+              color: subtitleStyle.color || '#333333',
+              fontFamily: subtitleStyle.fontFamily || 'inherit',
+              transform: `translateX(${(1 - entrance) * -20}px)`,
+              textShadow: '0 1px 5px rgba(0,0,0,0.2)'
+            }}>
+              {currentScene?.subtitleText || 'Add sub-headline here'}
+            </h2>
+
+            {/* Logo Placeholder */}
+            <div style={{
+              width: '80px',
+              height: '80px',
+              borderRadius: '50%',
+              backgroundColor: '#f0f0f0',
+              border: '2px dashed #cccccc',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              border: '2px dashed #cccccc'
+              marginTop: '8px',
+              fontSize: '10px',
+              color: '#999999',
+              fontWeight: '600',
+              textAlign: 'center',
+              padding: '8px',
+              transform: `scale(${entrance})`,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
             }}>
-              <MdPerson size={120} color="#999999" />
+              YOUR LOGO
             </div>
-          )}
+          </div>
+
+          {/* Right Side - Avatar Display */}
+          <div style={{
+            flex: '0 0 auto',
+            width: '300px',
+            height: '400px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative',
+            transform: `scale(${interpolate(entrance, [0, 1], [0.8, 1])})`,
+            filter: `blur(${(1 - entrance) * 20}px) drop-shadow(0 4px 20px rgba(0,0,0,0.3))`
+          }}>
+            {currentScene?.avatar ? (
+              <img
+                src={currentScene.avatar}
+                alt="Avatar"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  objectPosition: 'center'
+                }}
+              />
+            ) : (
+              <div style={{
+                width: '100%',
+                height: '100%',
+                backgroundColor: '#f5f5f5',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '2px dashed #cccccc'
+              }}>
+                <MdPerson size={120} color="#999999" />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -1001,14 +1206,28 @@ const VideoComposition = ({ scenes }) => {
 
 // Static Preview Component (for thumbnail view)
 const StaticPreview = ({ scene }) => {
-  // Debug: log scene data
-  console.log('StaticPreview scene:', scene)
+  // Default styles if not provided
+  const titleStyle = scene.titleStyle || {
+    fontSize: 42,
+    color: '#000000',
+    fontFamily: 'system-ui',
+    fontWeight: '700',
+    textAlign: 'left'
+  }
+
+  const subtitleStyle = scene.subtitleStyle || {
+    fontSize: 22,
+    color: '#333333',
+    fontFamily: 'system-ui',
+    fontWeight: '400',
+    textAlign: 'left'
+  }
 
   return (
     <div style={{
       width: '100%',
       height: '100%',
-      backgroundColor: '#ffffff',
+      backgroundColor: scene.backgroundColor || '#ffffff',
       color: '#000000',
       display: 'flex',
       justifyContent: 'center',
@@ -1018,6 +1237,25 @@ const StaticPreview = ({ scene }) => {
       padding: '30px 40px',
       boxSizing: 'border-box'
     }}>
+      {/* BACKGROUND LAYERS */}
+      {(scene.layers || []).filter(l => l.type === 'image' || l.type === 'video').map(layer => {
+        return (
+          <div key={layer.id} style={{
+            position: 'absolute',
+            left: `${layer.x || 0}px`,
+            top: `${layer.y || 0}px`,
+            width: `${layer.width || '100%'}`,
+            height: `${layer.height || '100%'}`,
+            transform: `scale(${layer.scale || 1})`,
+            zIndex: 1,
+            pointerEvents: 'none'
+          }}>
+            {layer.type === 'image' && <img src={layer.content} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+            {layer.type === 'video' && <div style={{ width: '100%', height: '100%', background: '#000' }} />} {/* Placeholder for video in static */}
+          </div>
+        )
+      })}
+
       {/* Main Content Container */}
       <div style={{
         width: '100%',
@@ -1027,7 +1265,8 @@ const StaticPreview = ({ scene }) => {
         justifyContent: 'space-between',
         gap: '40px',
         position: 'relative',
-        maxWidth: '100%'
+        maxWidth: '100%',
+        zIndex: 2
       }}>
         {/* Left Side - Text Content */}
         <div style={{
@@ -1035,20 +1274,21 @@ const StaticPreview = ({ scene }) => {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          alignItems: 'flex-start',
+          alignItems: titleStyle.textAlign === 'center' ? 'center' : 'flex-start',
           gap: '20px',
           minWidth: '0',
           zIndex: 10,
-          position: 'relative'
+          position: 'relative',
+          textAlign: titleStyle.textAlign || 'left'
         }}>
           {/* Title */}
           <h1 style={{
-            fontSize: 'clamp(28px, 4vw, 42px)',
-            fontWeight: '700',
+            fontSize: `clamp(20px, 4vw, ${titleStyle.fontSize || 42}px)`,
+            fontWeight: titleStyle.fontWeight || '700',
             margin: '0',
             lineHeight: '1.2',
-            color: '#000000',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
+            color: titleStyle.color || '#000000',
+            fontFamily: titleStyle.fontFamily || 'system-ui, -apple-system, sans-serif',
             wordWrap: 'break-word',
             width: '100%'
           }}>
@@ -1057,12 +1297,12 @@ const StaticPreview = ({ scene }) => {
 
           {/* Subtitle */}
           <h2 style={{
-            fontSize: 'clamp(16px, 2.5vw, 22px)',
-            fontWeight: '400',
+            fontSize: `clamp(12px, 2.5vw, ${subtitleStyle.fontSize || 22}px)`,
+            fontWeight: subtitleStyle.fontWeight || '400',
             margin: '0',
             lineHeight: '1.4',
-            color: '#333333',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
+            color: subtitleStyle.color || '#333333',
+            fontFamily: subtitleStyle.fontFamily || 'system-ui, -apple-system, sans-serif',
             wordWrap: 'break-word',
             width: '100%'
           }}>
@@ -1115,13 +1355,6 @@ const StaticPreview = ({ scene }) => {
                 maxWidth: '100%',
                 maxHeight: '100%'
               }}
-              onError={(e) => {
-                console.error('Avatar image failed to load:', scene.avatar)
-                e.target.style.display = 'none'
-              }}
-              onLoad={() => {
-                console.log('Avatar image loaded successfully:', scene.avatar)
-              }}
             />
           ) : (
             <div style={{
@@ -1149,8 +1382,23 @@ function Create({ onBack }) {
       id: 'scene1',
       title: 'Scene 1',
       duration: 8,
-      titleText: 'Insert your video title here',
-      subtitleText: 'Add sub-headline here',
+      titleText: 'Build Your Brand with AI',
+      titleStyle: {
+        fontSize: 48,
+        color: '#0066cc',
+        fontFamily: 'Inter',
+        fontWeight: '700',
+        textAlign: 'left'
+      },
+      subtitleText: 'The future of video creation is here.',
+      subtitleStyle: {
+        fontSize: 24,
+        color: '#333333',
+        fontFamily: 'Inter',
+        fontWeight: '400',
+        textAlign: 'left'
+      },
+      layers: [], // Support for B-roll, images, etc.
       script: 'Start your video by greeting your audience and introducing your topic. Create a clear title and give more context with a compelling sub-headline.',
       avatar: avatar1,
       avatarType: 'avatar1',
@@ -1158,66 +1406,93 @@ function Create({ onBack }) {
     }
   ])
   const [activeSceneId, setActiveSceneId] = useState('scene1')
-  const [selectedTool, setSelectedTool] = useState('select')
+  const [selectedTool, setSelectedTool] = useState('avatar')
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [zoomLevel, setZoomLevel] = useState(100)
   const [showExportModal, setShowExportModal] = useState(false)
   const [showPreviewModal, setShowPreviewModal] = useState(false)
   const [selectedAvatar, setSelectedAvatar] = useState('avatar1')
-  
+
+  const addLayer = (type, content) => {
+    const activeScene = scenes.find(s => s.id === activeSceneId)
+    const newLayer = {
+      id: `layer-${Date.now()}`,
+      type,
+      content,
+      start: 0,
+      duration: activeScene?.duration || 8,
+      x: 0,
+      y: 0,
+      scale: 1,
+      width: '100%',
+      height: '100%'
+    }
+    updateScene(activeSceneId, {
+      layers: [...(activeScene?.layers || []), newLayer]
+    })
+  }
+
   // Export settings state
   const [exportFormat, setExportFormat] = useState('MP4')
   const [exportResolution, setExportResolution] = useState('1920x1080')
   const [exportFrameRate, setExportFrameRate] = useState('30')
   const [exportQuality, setExportQuality] = useState('High')
-  
+
   const playerRef = useRef(null)
   const speechSynthesisRef = useRef(null)
 
   // Credit calculation function
   const calculateCredits = () => {
     let baseCredits = 100
-    
+
     // Format multipliers
     const formatMultipliers = {
       'MP4': 1.0,
       'WebM': 0.8,
       'GIF': 0.5
     }
-    
+
     // Resolution multipliers
     const resolutionMultipliers = {
       '1920x1080': 1.0,
       '1280x720': 0.7,
       '3840x2160': 2.0
     }
-    
+
     // Frame rate multipliers
     const frameRateMultipliers = {
       '30': 1.0,
       '24': 0.8,
       '60': 1.5
     }
-    
+
     // Quality multipliers
     const qualityMultipliers = {
       'High': 1.2,
       'Medium': 1.0,
       'Low': 0.7
     }
-    
+
     const formatMultiplier = formatMultipliers[exportFormat] || 1.0
     const resolutionMultiplier = resolutionMultipliers[exportResolution] || 1.0
     const frameRateMultiplier = frameRateMultipliers[exportFrameRate] || 1.0
     const qualityMultiplier = qualityMultipliers[exportQuality] || 1.0
-    
+
     const totalCredits = Math.round(baseCredits * formatMultiplier * resolutionMultiplier * frameRateMultiplier * qualityMultiplier)
-    
+
     return totalCredits
   }
 
   const activeScene = scenes.find(s => s.id === activeSceneId)
+
+  const totalDurationInFrames = useMemo(() => {
+    return scenes.reduce((sum, s) => sum + (s.duration || 8), 0) * 30
+  }, [scenes])
+
+  const handleReorderScenes = (newScenes) => {
+    setScenes(newScenes)
+  }
 
   // Text-to-speech function
   const speakText = (text, sceneId) => {
@@ -1272,10 +1547,6 @@ function Create({ onBack }) {
     }
   }, [])
 
-  // Calculate total duration in frames (30 fps)
-  const totalDurationInFrames = useMemo(() => {
-    return scenes.reduce((total, scene) => total + ((scene.duration || 8) * 30), 0)
-  }, [scenes])
 
   // Get current scene based on frame
   const getSceneForFrame = (frame) => {
@@ -1400,6 +1671,13 @@ function Create({ onBack }) {
     setCurrentTime(0)
   }
 
+  const handleSeek = (time) => {
+    setCurrentTime(time)
+    if (playerRef.current) {
+      playerRef.current.seekTo(time * 30)
+    }
+  }
+
   return (
     <>
       <style>{styles}</style>
@@ -1468,11 +1746,11 @@ function Create({ onBack }) {
               <MdPhotoLibrary />
             </button>
             <button
-              className={`icon-btn ${selectedTool === 'audio' ? 'active' : ''}`}
-              title="Audio"
-              onClick={() => setSelectedTool('audio')}
+              className={`icon-btn ${selectedTool === 'layers' ? 'active' : ''}`}
+              title="Layers"
+              onClick={() => setSelectedTool('layers')}
             >
-              <MdMusicNote />
+              <MdLayers />
             </button>
             <button
               className={`icon-btn ${selectedTool === 'effects' ? 'active' : ''}`}
@@ -1480,13 +1758,6 @@ function Create({ onBack }) {
               onClick={() => setSelectedTool('effects')}
             >
               <MdPalette />
-            </button>
-            <button
-              className={`icon-btn ${selectedTool === 'layers' ? 'active' : ''}`}
-              title="Layers"
-              onClick={() => setSelectedTool('layers')}
-            >
-              <MdLayers />
             </button>
           </div>
 
@@ -1528,9 +1799,10 @@ function Create({ onBack }) {
                   input.multiple = true
                   input.onchange = (e) => {
                     const files = Array.from(e.target.files)
-                    console.log('Files selected:', files)
-                    // TODO: Handle file uploads
-                    alert(`${files.length} file(s) selected. Upload functionality coming soon!`)
+                    files.forEach(file => {
+                      const url = URL.createObjectURL(file)
+                      addLayer(file.type.split('/')[0], url)
+                    })
                   }
                   input.click()
                 }}
@@ -1539,18 +1811,16 @@ function Create({ onBack }) {
                 <div>Upload Media</div>
               </div>
               <div className="media-grid">
-                <div className="media-item">
-                  <MdPhotoLibrary />
-                </div>
-                <div className="media-item">
-                  <MdVideoLibrary />
-                </div>
-                <div className="media-item">
-                  <MdMusicNote />
-                </div>
-                <div className="media-item">
-                  <MdPhotoLibrary />
-                </div>
+                {predefinedMedia.map((media) => (
+                  <div
+                    key={media.id}
+                    className="media-item"
+                    onClick={() => addLayer('image', media.full)}
+                    title={`Add ${media.name}`}
+                  >
+                    <img src={media.image} alt={media.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} />
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -1661,98 +1931,189 @@ function Create({ onBack }) {
 
           {/* Properties Panel */}
           <div className="properties-panel">
-            {/* Avatar Section */}
-            <div className="property-group">
-              <h3 className="property-title">
-                <MdPerson style={{ marginRight: '8px', verticalAlign: 'middle' }} />
-                Avatar
-              </h3>
-              <div className="avatar-selection">
-                <div className="avatar-options" style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
-                  gap: '8px'
-                }}>
-                  {predefinedAvatars.map((avatar) => (
-                    <div
-                      key={avatar.id}
-                      className={`avatar-option ${activeScene?.avatarType === avatar.id ? 'active' : ''}`}
-                      onClick={() => selectAvatar(avatar.id)}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '12px',
-                        border: `2px solid ${activeScene?.avatarType === avatar.id ? '#0066cc' : '#333'}`,
-                        borderRadius: '8px',
-                        background: activeScene?.avatarType === avatar.id ? '#0066cc' : '#2a2a2a',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      <img
-                        src={avatar.image}
-                        alt={avatar.name}
+            {selectedTool === 'avatar' && (
+              <div className="property-group">
+                <h3 className="property-title">
+                  <MdPerson style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                  Avatar Selection
+                </h3>
+                <div className="avatar-selection">
+                  <div className="avatar-options" style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+                    gap: '8px'
+                  }}>
+                    {predefinedAvatars.map((avatar) => (
+                      <div
+                        key={avatar.id}
+                        className={`avatar-option ${activeScene?.avatarType === avatar.id ? 'active' : ''}`}
+                        onClick={() => selectAvatar(avatar.id)}
                         style={{
-                          width: '60px',
-                          height: '60px',
-                          borderRadius: '50%',
-                          objectFit: 'cover',
-                          border: '2px solid rgba(255,255,255,0.2)'
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '12px',
+                          border: `2px solid ${activeScene?.avatarType === avatar.id ? '#0066cc' : '#333'}`,
+                          borderRadius: '8px',
+                          background: activeScene?.avatarType === avatar.id ? '#0066cc' : '#2a2a2a',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
                         }}
-                      />
-                      <span style={{
-                        fontSize: '11px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: activeScene?.avatarType === avatar.id ? '#fff' : '#aaa'
-                      }}>
-                        {avatar.name}
-                      </span>
+                      >
+                        <img
+                          src={avatar.image}
+                          alt={avatar.name}
+                          style={{
+                            width: '60px',
+                            height: '60px',
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                            border: '2px solid rgba(255,255,255,0.2)'
+                          }}
+                        />
+                        <span style={{
+                          fontSize: '11px',
+                          textAlign: 'center',
+                          fontWeight: 600,
+                          color: activeScene?.avatarType === avatar.id ? '#fff' : '#aaa'
+                        }}>
+                          {avatar.name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {selectedTool === 'text' && (
+              <div className="property-group">
+                <h3 className="property-title">
+                  <MdTextFields style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                  Text Styling
+                </h3>
+                <div className="property-row">
+                  <label className="property-label">Title Text</label>
+                  <input
+                    className="property-input"
+                    value={activeScene?.titleText || ''}
+                    onChange={(e) => updateScene(activeSceneId, { titleText: e.target.value })}
+                  />
+                </div>
+                <div className="property-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div>
+                    <label className="property-label">Font Size</label>
+                    <input
+                      className="property-input"
+                      type="number"
+                      value={activeScene?.titleStyle?.fontSize || 48}
+                      onChange={(e) => updateScene(activeSceneId, {
+                        titleStyle: { ...(activeScene?.titleStyle || {}), fontSize: Number(e.target.value) }
+                      })}
+                    />
+                  </div>
+                  <div>
+                    <label className="property-label">Color</label>
+                    <input
+                      className="property-input"
+                      type="color"
+                      style={{ height: '32px', padding: '2px' }}
+                      value={activeScene?.titleStyle?.color || '#000000'}
+                      onChange={(e) => updateScene(activeSceneId, {
+                        titleStyle: { ...(activeScene?.titleStyle || {}), color: e.target.value }
+                      })}
+                    />
+                  </div>
+                </div>
+                <div className="property-row">
+                  <label className="property-label">Alignment</label>
+                  <select
+                    className="property-input"
+                    value={activeScene?.titleStyle?.textAlign || 'left'}
+                    onChange={(e) => updateScene(activeSceneId, {
+                      titleStyle: { ...(activeScene?.titleStyle || {}), textAlign: e.target.value }
+                    })}
+                  >
+                    <option value="left">Left</option>
+                    <option value="center">Center</option>
+                    <option value="right">Right</option>
+                  </select>
+                </div>
+
+                <div style={{ height: '16px' }} />
+
+                <div className="property-row">
+                  <label className="property-label">Subtitle Text</label>
+                  <input
+                    className="property-input"
+                    value={activeScene?.subtitleText || ''}
+                    onChange={(e) => updateScene(activeSceneId, { subtitleText: e.target.value })}
+                  />
+                </div>
+                <div className="property-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div>
+                    <label className="property-label">Font Size</label>
+                    <input
+                      className="property-input"
+                      type="number"
+                      value={activeScene?.subtitleStyle?.fontSize || 24}
+                      onChange={(e) => updateScene(activeSceneId, {
+                        subtitleStyle: { ...(activeScene?.subtitleStyle || {}), fontSize: Number(e.target.value) }
+                      })}
+                    />
+                  </div>
+                  <div>
+                    <label className="property-label">Color</label>
+                    <input
+                      className="property-input"
+                      type="color"
+                      style={{ height: '32px', padding: '2px' }}
+                      value={activeScene?.subtitleStyle?.color || '#333333'}
+                      onChange={(e) => updateScene(activeSceneId, {
+                        subtitleStyle: { ...(activeScene?.subtitleStyle || {}), color: e.target.value }
+                      })}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {selectedTool === 'layers' && (
+              <div className="property-group">
+                <h3 className="property-title">
+                  <MdLayers style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                  B-Roll & Overlays
+                </h3>
+                <div className="layers-list">
+                  {(activeScene?.layers || []).length === 0 ? (
+                    <div style={{ padding: '20px', textAlign: 'center', color: '#666', fontSize: '12px', border: '1px dashed #444', borderRadius: '8px' }}>
+                      No extra layers in this scene. Add media from the library to see them here.
                     </div>
-                  ))}
+                  ) : (
+                    activeScene.layers.map(layer => (
+                      <div key={layer.id} className="layer-item-preview">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {layer.type === 'image' ? <MdPhotoLibrary size={14} /> : <MdVideoLibrary size={14} />}
+                          <span>{layer.type}</span>
+                        </div>
+                        <button onClick={() => {
+                          updateScene(activeSceneId, {
+                            layers: activeScene.layers.filter(l => l.id !== layer.id)
+                          })
+                        }}>
+                          <MdDelete size={16} />
+                        </button>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* Script Section */}
+            {/* General Properties */}
             <div className="property-group">
-              <h3 className="property-title">
-                <MdTextFields style={{ marginRight: '8px', verticalAlign: 'middle' }} />
-                Script
-              </h3>
-              <div className="script-container">
-                <textarea
-                  className="script-input"
-                  placeholder="Enter your script here..."
-                  value={activeScene?.script || ''}
-                  onChange={(e) => updateScene(activeSceneId, { script: e.target.value })}
-                  rows={6}
-                />
-                <div className="script-actions">
-                  <button className="script-btn">
-                    <MdMic />
-                    Record Audio
-                  </button>
-                  <button className="script-btn">
-                    <MdMusicNote />
-                    Add Voiceover
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="property-group">
-              <h3 className="property-title">Scene Properties</h3>
-              <div className="property-row">
-                <label className="property-label">Scene Name</label>
-                <input
-                  className="property-input"
-                  value={activeScene?.title || ''}
-                  onChange={(e) => updateScene(activeSceneId, { title: e.target.value })}
-                />
-              </div>
+              <h3 className="property-title">Scene Configuration</h3>
               <div className="property-row">
                 <label className="property-label">Duration (seconds)</label>
                 <input
@@ -1762,289 +2123,159 @@ function Create({ onBack }) {
                   onChange={(e) => updateScene(activeSceneId, { duration: Number(e.target.value) })}
                 />
               </div>
-            </div>
-
-            <div className="property-group">
-              <h3 className="property-title">Text Properties</h3>
               <div className="property-row">
-                <label className="property-label">Title Text</label>
-                <input
-                  className="property-input"
-                  value={activeScene?.titleText || ''}
-                  onChange={(e) => updateScene(activeSceneId, { titleText: e.target.value })}
-                />
-              </div>
-              <div className="property-row">
-                <label className="property-label">Subtitle Text</label>
-                <input
-                  className="property-input"
-                  value={activeScene?.subtitleText || ''}
-                  onChange={(e) => updateScene(activeSceneId, { subtitleText: e.target.value })}
-                />
+                <label className="property-label">Transition</label>
+                <select className="property-input" defaultValue="fade">
+                  <option value="none">None (Cut)</option>
+                  <option value="fade">Fade</option>
+                  <option value="slide">Slide</option>
+                </select>
               </div>
             </div>
 
             <div className="property-group">
-              <h3 className="property-title">Transform</h3>
-              <div className="property-row">
-                <label className="property-label">Position X</label>
-                <input className="property-input" type="number" defaultValue="0" />
-              </div>
-              <div className="property-row">
-                <label className="property-label">Position Y</label>
-                <input className="property-input" type="number" defaultValue="0" />
-              </div>
-              <div className="property-row">
-                <label className="property-label">Scale</label>
-                <input className="property-input" type="number" defaultValue="100" />
-              </div>
-              <div className="property-row">
-                <label className="property-label">Rotation</label>
-                <input className="property-input" type="number" defaultValue="0" />
-              </div>
-            </div>
-
-            <div className="property-group">
-              <h3 className="property-title">Appearance</h3>
-              <div className="property-row">
-                <label className="property-label">Opacity</label>
-                <input className="property-input" type="number" defaultValue="100" />
-              </div>
-              <div className="property-row">
-                <label className="property-label">Background Color</label>
-                <input className="property-input" type="color" defaultValue="#000000" />
-              </div>
+              <h3 className="property-title">
+                <MdMic style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                Voiceover Script
+              </h3>
+              <textarea
+                className="script-input"
+                placeholder="What will the AI say?"
+                value={activeScene?.script || ''}
+                onChange={(e) => updateScene(activeSceneId, { script: e.target.value })}
+                rows={4}
+              />
             </div>
           </div>
         </div>
-        {/* Timeline */}
-        <div className="timeline-area">
-          <div className="timeline-header">
-            <button className="icon-btn" onClick={addScene}>
-              <MdAdd /> Add Scene
-            </button>
-            <div style={{ width: '1px', height: '24px', background: '#333', margin: '0 8px' }} />
-            <button className="icon-btn" title="Cut" onClick={() => {
-              if (activeSceneId) {
-                console.log('Cut scene:', activeSceneId)
-              }
-            }}>
-              <MdContentCut />
-            </button>
-            <button className="icon-btn" title="Copy" onClick={() => {
-              if (activeSceneId) {
-                console.log('Copy scene:', activeSceneId)
-              }
-            }}>
-              <MdContentCopy />
-            </button>
-            <button className="icon-btn" title="Paste" onClick={() => {
-              console.log('Paste scene')
-            }}>
-              <MdContentPaste />
-            </button>
-            <button className="icon-btn" title="Delete" onClick={() => {
-              if (activeSceneId) {
-                deleteScene(activeSceneId)
-              }
-            }}>
-              <MdDelete />
-            </button>
-
-            <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
-              <div className="time-display" style={{ background: '#000', padding: '4px 12px', borderRadius: '4px', border: '1px solid #333', fontFamily: 'monospace', fontSize: '14px', color: '#00ff00' }}>
-                {String(Math.floor(currentTime / 60)).padStart(2, '0')}:{String(Math.floor(currentTime % 60)).padStart(2, '0')}:{String(Math.floor((currentTime % 1) * 30)).padStart(2, '0')}
-              </div>
-              <button className="icon-btn" title="Snap to Grid">
-                <MdTimer />
-              </button>
-              <button className="icon-btn" title="Aspect Ratio">
-                <MdAspectRatio />
-              </button>
-            </div>
-          </div>
-
-          <div className="timeline-content">
-            <div className="timeline-sidebar">
-              <div className="layer-item active">
-                <MdVideoLibrary style={{ marginRight: '8px' }} />
-                Video Track
-              </div>
-              <div className="layer-item">
-                <MdMusicNote style={{ marginRight: '8px' }} />
-                Audio Track
-              </div>
-            </div>
-
-            <div className="timeline-viewport">
-              <div className="timeline-ruler" style={{ width: `${Math.max(totalDurationInFrames / 30 * 40 + 200, 1000)}px` }}>
-                {Array.from({ length: Math.ceil(totalDurationInFrames / 30) + 10 }).map((_, i) => (
-                  <div key={i} className="ruler-tick major" style={{ left: `${i * 40}px` }}>
-                    <span className="ruler-label">{i}s</span>
-                  </div>
-                ))}
-                {Array.from({ length: (Math.ceil(totalDurationInFrames / 30) + 10) * 5 }).map((_, i) => (
-                  i % 5 !== 0 && (
-                    <div key={`minor-${i}`} className="ruler-tick minor" style={{ left: `${i * 8}px` }} />
-                  )
-                ))}
-              </div>
-
-              <div className="timeline-tracks-container" style={{ width: `${Math.max(totalDurationInFrames / 30 * 40 + 200, 1000)}px` }}>
-                <div className="timeline-track">
-                  {scenes.reduce((acc, scene, index) => {
-                    const prevDuration = scenes.slice(0, index).reduce((sum, s) => sum + (s.duration || 8), 0)
-                    acc.push(
-                      <div
-                        key={scene.id}
-                        className={`timeline-clip ${scene.id === activeSceneId ? 'active' : ''}`}
-                        onClick={() => {
-                          setActiveSceneId(scene.id)
-                          setCurrentTime(prevDuration)
-                          if (playerRef.current) {
-                            playerRef.current.seekTo(prevDuration * 30)
-                          }
-                        }}
-                        style={{
-                          left: `${prevDuration * 40}px`,
-                          width: `${(scene.duration || 8) * 40}px`
-                        }}
-                      >
-                        <MdVideoLibrary className="timeline-clip-icon" size={14} />
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{scene.title}</span>
-                        <span className="timeline-clip-meta">{scene.duration || 8}s</span>
-                      </div>
-                    )
-                    return acc
-                  }, [])}
-                </div>
-
-                <div
-                  className="playhead"
-                  style={{
-                    left: `${currentTime * 40}px`,
-                    transition: isPlaying ? 'none' : 'left 0.1s ease-out'
-                  }}
-                >
-                  <div className="playhead-head" />
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* Enhanced Timeline Component */}
+        <div className="timeline-area" style={{ height: '300px', display: 'block' }}>
+          <TimelineEditor
+            scenes={scenes}
+            activeSceneId={activeSceneId}
+            currentTime={currentTime}
+            isPlaying={isPlaying}
+            onSeek={handleSeek}
+            onSelectScene={setActiveSceneId}
+            onUpdateScene={updateScene}
+            onAddScene={addScene}
+            onDeleteScene={deleteScene}
+            onReorderScenes={handleReorderScenes}
+          />
         </div>
 
-        {/* Tools Palette */}
-        <div className="tools-palette">
-          <button
-            className={`tool-btn ${selectedTool === 'select' ? 'active' : ''}`}
-            onClick={() => setSelectedTool('select')}
-            title="Select Tool"
-          >
-            <MdTextFields />
-          </button>
-          <button
-            className={`tool-btn ${selectedTool === 'text' ? 'active' : ''}`}
-            onClick={() => setSelectedTool('text')}
-            title="Text Tool"
-          >
-            <MdTextFields />
-          </button>
-          <button
-            className={`tool-btn ${selectedTool === 'crop' ? 'active' : ''}`}
-            onClick={() => setSelectedTool('crop')}
-            title="Crop Tool"
-          >
-            <MdCropFree />
-          </button>
-          <button
-            className={`tool-btn ${selectedTool === 'transform' ? 'active' : ''}`}
-            onClick={() => setSelectedTool('transform')}
-            title="Transform Tool"
-          >
-            <MdTransform />
-          </button>
-        </div>
+        {/* Removed redundant overlay tools palette as requested */}
 
-        {/* Preview Modal */}
+        {/* Preview Modal (Updated to "Fullscreen Mode") */}
         {showPreviewModal && (
-          <div className="modal-overlay" onClick={() => {
-            setShowPreviewModal(false)
-            if (playerRef.current) {
-              playerRef.current.pause()
-            }
-            setIsPlaying(false)
-          }}>
-            <div className="preview-modal" onClick={(e) => e.stopPropagation()}>
-              <div className="preview-modal-header">
-                <h2 className="preview-modal-title">Video Preview</h2>
-                <button
-                  className="preview-modal-close"
-                  onClick={() => {
-                    setShowPreviewModal(false)
-                    if (playerRef.current) {
-                      playerRef.current.pause()
-                    }
-                    window.speechSynthesis.cancel()
-                    setIsPlaying(false)
-                  }}
-                >
-                  <MdClose size={24} />
-                </button>
+          <div className="fullscreen-preview-page">
+            <style>{`
+              .fullscreen-preview-page {
+                position: fixed;
+                inset: 0;
+                background: #000;
+                z-index: 2000;
+                display: flex;
+                flex-direction: column;
+                color: #fff;
+              }
+              .preview-topbar {
+                height: 60px;
+                padding: 0 24px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                background: rgba(255,255,255,0.05);
+                backdrop-filter: blur(10px);
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 100;
+              }
+              .preview-content {
+                flex: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #0a0a0a;
+              }
+              .close-preview {
+                background: #ff4d4d;
+                border: none;
+                color: #fff;
+                padding: 8px 16px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 600;
+              }
+            `}</style>
+            <div className="preview-topbar">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontWeight: 700, fontSize: '18px' }}>AthenaVI Preview</span>
+                <span style={{ color: '#888', fontSize: '14px' }}>Draft - {scenes.length} Scenes</span>
               </div>
-              <div className="preview-modal-content">
-                <Player
-                  ref={playerRef}
-                  component={VideoComposition}
-                  durationInFrames={Math.max(totalDurationInFrames, 240)}
-                  compositionWidth={1920}
-                  compositionHeight={1080}
-                  fps={30}
-                  controls
-                  style={{
-                    width: '100%',
-                    maxHeight: '70vh'
-                  }}
-                  inputProps={{
-                    scenes: scenes
-                  }}
-                  onPlay={() => {
-                    setIsPlaying(true)
-                    // Start speaking when play starts
-                    const currentScene = scenes.find(s => s.id === activeSceneId)
-                    if (currentScene?.script) {
-                      speakText(currentScene.script, activeSceneId)
+              <button className="close-preview" onClick={() => {
+                setShowPreviewModal(false)
+                setIsPlaying(false)
+                if (playerRef.current) playerRef.current.pause()
+                window.speechSynthesis.cancel()
+              }}>
+                Exit Preview
+              </button>
+            </div>
+            <div className="preview-content">
+              <Player
+                ref={playerRef}
+                component={VideoComposition}
+                durationInFrames={Math.max(totalDurationInFrames, 30)}
+                compositionWidth={1920}
+                compositionHeight={1080}
+                fps={30}
+                controls
+                autoPlay
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  maxHeight: '100vh'
+                }}
+                inputProps={{
+                  scenes: scenes
+                }}
+                onPlay={() => {
+                  setIsPlaying(true)
+                  const currentScene = scenes.find(s => s.id === activeSceneId)
+                  if (currentScene?.script) {
+                    speakText(currentScene.script, activeSceneId)
+                  }
+                }}
+                onPause={() => {
+                  setIsPlaying(false)
+                  window.speechSynthesis.pause()
+                }}
+                onSeek={(frame) => {
+                  setCurrentTime(frame / 30)
+                  const { scene } = getSceneForFrame(frame)
+                  if (scene) {
+                    setActiveSceneId(scene.id)
+                    if (scene.script) {
+                      window.speechSynthesis.cancel()
+                      setTimeout(() => speakText(scene.script, scene.id), 300)
                     }
-                  }}
-                  onPause={() => {
-                    setIsPlaying(false)
-                    window.speechSynthesis.pause()
-                  }}
-                  onSeek={(frame) => {
-                    setCurrentTime(frame / 30)
-                    const { scene } = getSceneForFrame(frame)
-                    if (scene) {
-                      setActiveSceneId(scene.id)
-                      // Speak the new scene's script
-                      if (scene.script) {
-                        window.speechSynthesis.cancel()
-                        setTimeout(() => speakText(scene.script, scene.id), 300)
-                      }
+                  }
+                }}
+                onFrameUpdate={(frame) => {
+                  setCurrentTime(frame / 30)
+                  const { scene } = getSceneForFrame(frame)
+                  if (scene && scene.id !== activeSceneId) {
+                    setActiveSceneId(scene.id)
+                    if (scene.script) {
+                      window.speechSynthesis.cancel()
+                      setTimeout(() => speakText(scene.script, scene.id), 300)
                     }
-                  }}
-                  onFrameUpdate={(frame) => {
-                    setCurrentTime(frame / 30)
-                    const { scene } = getSceneForFrame(frame)
-                    if (scene && scene.id !== activeSceneId) {
-                      setActiveSceneId(scene.id)
-                      // Speak the new scene's script when scene changes
-                      if (scene.script) {
-                        window.speechSynthesis.cancel()
-                        setTimeout(() => speakText(scene.script, scene.id), 300)
-                      }
-                    }
-                  }}
-                />
-              </div>
+                  }
+                }}
+              />
             </div>
           </div>
         )}
@@ -2058,7 +2289,7 @@ function Create({ onBack }) {
                 <div className="property-group">
                   <div className="property-row">
                     <label className="property-label">Format</label>
-                    <select 
+                    <select
                       className="property-input"
                       value={exportFormat}
                       onChange={(e) => setExportFormat(e.target.value)}
@@ -2070,7 +2301,7 @@ function Create({ onBack }) {
                   </div>
                   <div className="property-row">
                     <label className="property-label">Resolution</label>
-                    <select 
+                    <select
                       className="property-input"
                       value={exportResolution}
                       onChange={(e) => setExportResolution(e.target.value)}
@@ -2082,7 +2313,7 @@ function Create({ onBack }) {
                   </div>
                   <div className="property-row">
                     <label className="property-label">Frame Rate</label>
-                    <select 
+                    <select
                       className="property-input"
                       value={exportFrameRate}
                       onChange={(e) => setExportFrameRate(e.target.value)}
@@ -2094,7 +2325,7 @@ function Create({ onBack }) {
                   </div>
                   <div className="property-row">
                     <label className="property-label">Quality</label>
-                    <select 
+                    <select
                       className="property-input"
                       value={exportQuality}
                       onChange={(e) => setExportQuality(e.target.value)}
@@ -2105,7 +2336,7 @@ function Create({ onBack }) {
                     </select>
                   </div>
                 </div>
-                
+
                 {/* Credit Display */}
                 <div className="credit-display" style={{
                   marginTop: '20px',
@@ -2121,16 +2352,16 @@ function Create({ onBack }) {
                     marginBottom: '8px'
                   }}>
                     <span style={{ color: '#fff', fontSize: '14px' }}>Credit Consumption:</span>
-                    <span style={{ 
-                      color: '#4CAF50', 
-                      fontSize: '18px', 
-                      fontWeight: 'bold' 
+                    <span style={{
+                      color: '#4CAF50',
+                      fontSize: '18px',
+                      fontWeight: 'bold'
                     }}>
                       {calculateCredits()} credits
                     </span>
                   </div>
-                  <div style={{ 
-                    color: '#888', 
+                  <div style={{
+                    color: '#888',
                     fontSize: '12px',
                     textAlign: 'center'
                   }}>
