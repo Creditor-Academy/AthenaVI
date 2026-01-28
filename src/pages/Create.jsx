@@ -1165,8 +1165,57 @@ function Create({ onBack }) {
   const [showExportModal, setShowExportModal] = useState(false)
   const [showPreviewModal, setShowPreviewModal] = useState(false)
   const [selectedAvatar, setSelectedAvatar] = useState('avatar1')
+  
+  // Export settings state
+  const [exportFormat, setExportFormat] = useState('MP4')
+  const [exportResolution, setExportResolution] = useState('1920x1080')
+  const [exportFrameRate, setExportFrameRate] = useState('30')
+  const [exportQuality, setExportQuality] = useState('High')
+  
   const playerRef = useRef(null)
   const speechSynthesisRef = useRef(null)
+
+  // Credit calculation function
+  const calculateCredits = () => {
+    let baseCredits = 100
+    
+    // Format multipliers
+    const formatMultipliers = {
+      'MP4': 1.0,
+      'WebM': 0.8,
+      'GIF': 0.5
+    }
+    
+    // Resolution multipliers
+    const resolutionMultipliers = {
+      '1920x1080': 1.0,
+      '1280x720': 0.7,
+      '3840x2160': 2.0
+    }
+    
+    // Frame rate multipliers
+    const frameRateMultipliers = {
+      '30': 1.0,
+      '24': 0.8,
+      '60': 1.5
+    }
+    
+    // Quality multipliers
+    const qualityMultipliers = {
+      'High': 1.2,
+      'Medium': 1.0,
+      'Low': 0.7
+    }
+    
+    const formatMultiplier = formatMultipliers[exportFormat] || 1.0
+    const resolutionMultiplier = resolutionMultipliers[exportResolution] || 1.0
+    const frameRateMultiplier = frameRateMultipliers[exportFrameRate] || 1.0
+    const qualityMultiplier = qualityMultipliers[exportQuality] || 1.0
+    
+    const totalCredits = Math.round(baseCredits * formatMultiplier * resolutionMultiplier * frameRateMultiplier * qualityMultiplier)
+    
+    return totalCredits
+  }
 
   const activeScene = scenes.find(s => s.id === activeSceneId)
 
@@ -2009,7 +2058,11 @@ function Create({ onBack }) {
                 <div className="property-group">
                   <div className="property-row">
                     <label className="property-label">Format</label>
-                    <select className="property-input">
+                    <select 
+                      className="property-input"
+                      value={exportFormat}
+                      onChange={(e) => setExportFormat(e.target.value)}
+                    >
                       <option>MP4</option>
                       <option>WebM</option>
                       <option>GIF</option>
@@ -2017,27 +2070,71 @@ function Create({ onBack }) {
                   </div>
                   <div className="property-row">
                     <label className="property-label">Resolution</label>
-                    <select className="property-input">
-                      <option>1920x1080 (Full HD)</option>
-                      <option>1280x720 (HD)</option>
-                      <option>3840x2160 (4K)</option>
+                    <select 
+                      className="property-input"
+                      value={exportResolution}
+                      onChange={(e) => setExportResolution(e.target.value)}
+                    >
+                      <option>1920x1080</option>
+                      <option>1280x720</option>
+                      <option>3840x2160</option>
                     </select>
                   </div>
                   <div className="property-row">
                     <label className="property-label">Frame Rate</label>
-                    <select className="property-input">
-                      <option>30 fps</option>
-                      <option>24 fps</option>
-                      <option>60 fps</option>
+                    <select 
+                      className="property-input"
+                      value={exportFrameRate}
+                      onChange={(e) => setExportFrameRate(e.target.value)}
+                    >
+                      <option>30</option>
+                      <option>24</option>
+                      <option>60</option>
                     </select>
                   </div>
                   <div className="property-row">
                     <label className="property-label">Quality</label>
-                    <select className="property-input">
+                    <select 
+                      className="property-input"
+                      value={exportQuality}
+                      onChange={(e) => setExportQuality(e.target.value)}
+                    >
                       <option>High</option>
                       <option>Medium</option>
                       <option>Low</option>
                     </select>
+                  </div>
+                </div>
+                
+                {/* Credit Display */}
+                <div className="credit-display" style={{
+                  marginTop: '20px',
+                  padding: '15px',
+                  backgroundColor: '#2a2a2a',
+                  borderRadius: '8px',
+                  border: '1px solid #444'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '8px'
+                  }}>
+                    <span style={{ color: '#fff', fontSize: '14px' }}>Credit Consumption:</span>
+                    <span style={{ 
+                      color: '#4CAF50', 
+                      fontSize: '18px', 
+                      fontWeight: 'bold' 
+                    }}>
+                      {calculateCredits()} credits
+                    </span>
+                  </div>
+                  <div style={{ 
+                    color: '#888', 
+                    fontSize: '12px',
+                    textAlign: 'center'
+                  }}>
+                    Credits vary based on format, resolution, frame rate, and quality
                   </div>
                 </div>
               </div>
@@ -2046,7 +2143,7 @@ function Create({ onBack }) {
                   Cancel
                 </button>
                 <button className="btn-primary" onClick={() => {
-                  alert('Video export started! This will take a few moments...')
+                  alert(`Video export started! This will consume ${calculateCredits()} credits.`)
                   setShowExportModal(false)
                 }}>
                   Start Export
