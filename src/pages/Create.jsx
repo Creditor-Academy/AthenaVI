@@ -1745,7 +1745,7 @@ const VideoComposition = ({ scenes }) => {
 const StaticPreview = ({ scene }) => {
   // Default styles if not provided
   const titleStyle = scene.titleStyle || {
-    fontSize: 42,
+    fontSize: 18, // Reduced from 42 for thumbnail
     color: '#000000',
     fontFamily: 'system-ui',
     fontWeight: '700',
@@ -1753,7 +1753,7 @@ const StaticPreview = ({ scene }) => {
   }
 
   const subtitleStyle = scene.subtitleStyle || {
-    fontSize: 22,
+    fontSize: 12, // Reduced from 22 for thumbnail
     color: '#333333',
     fontFamily: 'system-ui',
     fontWeight: '400',
@@ -1771,7 +1771,7 @@ const StaticPreview = ({ scene }) => {
       alignItems: 'center',
       position: 'relative',
       overflow: 'hidden',
-      padding: '20px 30px',
+      padding: '16px', // Reduced padding
       boxSizing: 'border-box'
     }}>
       {/* BACKGROUND LAYERS */}
@@ -1801,7 +1801,7 @@ const StaticPreview = ({ scene }) => {
         flexDirection: scene.layout === 'split-left' ? 'row-reverse' : (scene.layout === 'centered' || scene.layout === 'quote' ? 'column-reverse' : 'row'),
         alignItems: 'center',
         justifyContent: scene.layout === 'centered' || scene.layout === 'quote' ? 'center' : 'space-between',
-        gap: '20px',
+        gap: '12px',
         position: 'relative',
         maxWidth: '100%',
         zIndex: 2,
@@ -1814,7 +1814,7 @@ const StaticPreview = ({ scene }) => {
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: (scene.layout === 'centered' || scene.layout === 'quote') ? 'center' : (scene.layout === 'split-left' ? 'flex-end' : 'flex-start'),
-          gap: '10px',
+          gap: '6px',
           minWidth: '0',
           zIndex: 10,
           position: 'relative',
@@ -1822,7 +1822,7 @@ const StaticPreview = ({ scene }) => {
         }}>
           {/* Title */}
           <h1 style={{
-            fontSize: `clamp(16px, 3.5vw, ${scene.layout === 'quote' ? 32 : (titleStyle.fontSize || 42)}px)`,
+            fontSize: `${scene.layout === 'quote' ? 16 : (18)}px`, // Fixed thumbnail size
             fontWeight: titleStyle.fontWeight || '700',
             margin: '0',
             lineHeight: '1.2',
@@ -1837,7 +1837,7 @@ const StaticPreview = ({ scene }) => {
 
           {/* Subtitle / Author */}
           <h2 style={{
-            fontSize: `clamp(10px, 2vw, ${subtitleStyle.fontSize || 22}px)`,
+            fontSize: `${11}px`, // Fixed thumbnail size
             fontWeight: subtitleStyle.fontWeight || '400',
             margin: '0',
             lineHeight: '1.4',
@@ -1861,8 +1861,8 @@ const StaticPreview = ({ scene }) => {
             }}>
               {[1, 2, 3].map(i => scene[`bullet${i}`] && (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#0066cc', display: 'grid', placeItems: 'center', color: '#fff', fontSize: '8px' }}>{i}</div>
-                  <div style={{ fontSize: '10px', color: '#444' }}>{scene[`bullet${i}`]}</div>
+                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#0066cc', display: 'grid', placeItems: 'center', color: '#fff', fontSize: '7px' }}>{i}</div>
+                  <div style={{ fontSize: '9px', color: '#444' }}>{scene[`bullet${i}`]}</div>
                 </div>
               ))}
             </div>
@@ -1873,8 +1873,8 @@ const StaticPreview = ({ scene }) => {
             <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
               {[1, 2].map(i => scene[`stat${i}_value`] && (
                 <div key={i} style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '24px', fontWeight: '800', color: '#0066cc', lineHeight: '1' }}>{scene[`stat${i}_value`]}</div>
-                  <div style={{ fontSize: '8px', color: '#666', textTransform: 'uppercase' }}>{scene[`stat${i}_label`]}</div>
+                  <div style={{ fontSize: '18px', fontWeight: '800', color: '#0066cc', lineHeight: '1' }}>{scene[`stat${i}_value`]}</div>
+                  <div style={{ fontSize: '7px', color: '#666', textTransform: 'uppercase' }}>{scene[`stat${i}_label`]}</div>
                 </div>
               ))}
             </div>
@@ -1892,7 +1892,7 @@ const StaticPreview = ({ scene }) => {
             }}>
               {[1, 2, 3].map(i => scene[`step${i}`] && (
                 <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', flex: 1 }}>
-                  <div style={{ width: '14px', height: '14px', borderRadius: '50%', border: '1px solid #0066cc', display: 'grid', placeItems: 'center', color: '#0066cc', fontSize: '7px', fontWeight: 'bold', background: '#fff' }}>{i}</div>
+                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', border: '1px solid #0066cc', display: 'grid', placeItems: 'center', color: '#0066cc', fontSize: '6px', fontWeight: 'bold', background: '#fff' }}>{i}</div>
                   <div style={{ fontSize: '6px', color: '#333', textAlign: 'center' }}>{scene[`step${i}`]}</div>
                 </div>
               ))}
@@ -1911,14 +1911,14 @@ const StaticPreview = ({ scene }) => {
               {[1, 2, 3, 4].map(i => scene[`feat${i}`] && (
                 <div key={i} style={{
                   background: 'rgba(0,102,204,0.05)',
-                  padding: '6px',
+                  padding: '4px',
                   borderRadius: '4px',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '4px'
                 }}>
                   <div style={{ color: '#0066cc', fontSize: '10px' }}><MdCheckCircle /></div>
-                  <div style={{ fontSize: '8px', color: '#444' }}>{scene[`feat${i}`]}</div>
+                  <div style={{ fontSize: '7px', color: '#444' }}>{scene[`feat${i}`]}</div>
                 </div>
               ))}
             </div>
@@ -1936,9 +1936,9 @@ const StaticPreview = ({ scene }) => {
               borderRadius: '8px',
               overflow: 'hidden'
             }}>
-              <div style={{ flex: 1, padding: '10px', background: '#f9f9f9', textAlign: 'center', fontSize: '10px', fontWeight: 'bold' }}>{scene.leftItem}</div>
-              <div style={{ width: '20px', background: '#0066cc', display: 'grid', placeItems: 'center', color: '#fff', fontSize: '12px' }}><MdCompareArrows /></div>
-              <div style={{ flex: 1, padding: '10px', background: '#fff', textAlign: 'center', fontSize: '10px', fontWeight: 'bold', color: '#0066cc' }}>{scene.rightItem}</div>
+              <div style={{ flex: 1, padding: '8px', background: '#f9f9f9', textAlign: 'center', fontSize: '8px', fontWeight: 'bold' }}>{scene.leftItem}</div>
+              <div style={{ width: '16px', background: '#0066cc', display: 'grid', placeItems: 'center', color: '#fff', fontSize: '10px' }}><MdCompareArrows /></div>
+              <div style={{ flex: 1, padding: '8px', background: '#fff', textAlign: 'center', fontSize: '8px', fontWeight: 'bold', color: '#0066cc' }}>{scene.rightItem}</div>
             </div>
           )}
 
@@ -1952,7 +1952,7 @@ const StaticPreview = ({ scene }) => {
               borderLeft: '4px solid #0066cc',
               width: '100%'
             }}>
-              <div style={{ fontSize: '14px', fontWeight: '800', color: '#0066cc' }}>
+              <div style={{ fontSize: '12px', fontWeight: '800', color: '#0066cc' }}>
                 {scene.highlightText}
               </div>
             </div>
@@ -1969,12 +1969,12 @@ const StaticPreview = ({ scene }) => {
               boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
               border: '1px solid #eee'
             }}>
-              <div style={{ fontSize: '10px', lineHeight: '1.4', color: '#444', fontStyle: 'italic', marginBottom: '8px' }}>
+              <div style={{ fontSize: '8px', lineHeight: '1.4', color: '#444', fontStyle: 'italic', marginBottom: '8px' }}>
                 "{scene.testimonialText?.substring(0, 60)}..."
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#eee' }} />
-                <div style={{ fontSize: '8px', fontWeight: 'bold' }}>{scene.author}</div>
+                <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#eee' }} />
+                <div style={{ fontSize: '7px', fontWeight: 'bold' }}>{scene.author}</div>
               </div>
             </div>
           )}
@@ -1989,24 +1989,24 @@ const StaticPreview = ({ scene }) => {
               gap: '8px'
             }}>
               <div style={{
-                padding: '6px 16px',
+                padding: '4px 12px',
                 background: '#0066cc',
                 borderRadius: '20px',
                 color: '#fff',
-                fontSize: '10px',
+                fontSize: '8px',
                 fontWeight: 'bold'
               }}>
                 Action
               </div>
-              <div style={{ fontSize: '8px', color: '#0066cc', fontWeight: 'bold' }}>{scene.website}</div>
+              <div style={{ fontSize: '7px', color: '#0066cc', fontWeight: 'bold' }}>{scene.website}</div>
             </div>
           )}
 
           {/* Logo Placeholder */}
           {scene.layout !== 'quote' && (
             <div style={{
-              width: '40px',
-              height: '40px',
+              width: '28px',
+              height: '28px',
               borderRadius: '50%',
               backgroundColor: '#f0f0f0',
               border: '1px dashed #cccccc',
@@ -2014,11 +2014,11 @@ const StaticPreview = ({ scene }) => {
               alignItems: 'center',
               justifyContent: 'center',
               marginTop: '4px',
-              fontSize: '6px',
+              fontSize: '5px',
               color: '#999999',
               fontWeight: '600',
               textAlign: 'center',
-              padding: '4px',
+              padding: '2px',
               flexShrink: 0
             }}>
               LOGO
@@ -2030,8 +2030,9 @@ const StaticPreview = ({ scene }) => {
         {scene.layout !== 'quote' && (
           <div style={{
             flex: '0 0 auto',
-            width: scene.layout === 'centered' ? '80px' : 'clamp(140px, 20vw, 220px)',
-            height: scene.layout === 'centered' ? '80px' : 'clamp(180px, 30vh, 280px)',
+            width: scene.layout === 'centered' ? '60px' : '40%',
+            height: scene.layout === 'centered' ? '60px' : '100%',
+            maxHeight: '120px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -2063,7 +2064,7 @@ const StaticPreview = ({ scene }) => {
                 justifyContent: 'center',
                 border: '1px dashed #cccccc'
               }}>
-                <MdPerson size={scene.layout === 'centered' ? 40 : 60} color="#999999" />
+                <MdPerson size={scene.layout === 'centered' ? 30 : 40} color="#999999" />
               </div>
             )}
           </div>
