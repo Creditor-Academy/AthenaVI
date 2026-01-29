@@ -515,6 +515,243 @@ const VideoComposition = ({ scenes }) => {
                             </div>
                         )}
 
+                        {/* Layout Specific Content: Three Column */}
+                        {currentScene.layout === 'three-col' && (
+                            <div style={{
+                                display: 'flex',
+                                gap: '24px',
+                                marginTop: '20px',
+                                width: '100%'
+                            }}>
+                                {[1, 2, 3].map(i => currentScene[`col${i}_title`] && (
+                                    <div key={i} style={{
+                                        flex: 1,
+                                        background: '#f9f9f9',
+                                        borderRadius: '16px',
+                                        padding: '24px',
+                                        textAlign: 'center',
+                                        transform: `translateY(${(1 - entrance) * 30 * i}px)`,
+                                        opacity: entrance,
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                                    }}>
+                                        <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#0066cc', marginBottom: '12px' }}>{currentScene[`col${i}_title`]}</div>
+                                        <div style={{ fontSize: '16px', color: '#666', lineHeight: '1.5' }}>{currentScene[`col${i}_content`]}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Layout Specific Content: Ranked List */}
+                        {currentScene.layout === 'ranked-list' && (
+                            <div style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '16px',
+                                marginTop: '20px',
+                                width: '100%'
+                            }}>
+                                {[1, 2, 3].map(i => currentScene[`rank${i}`] && (
+                                    <div key={i} style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '20px',
+                                        background: i === 1 ? 'linear-gradient(135deg, #fff9e6 0%, #ffecbd 100%)' : '#f9f9f9',
+                                        padding: '20px',
+                                        borderRadius: '12px',
+                                        border: i === 1 ? '2px solid #ffd700' : '1px solid #eee',
+                                        transform: `translateX(${(1 - entrance) * -30 * i}px)`,
+                                        opacity: entrance,
+                                        boxShadow: i === 1 ? '0 8px 20px rgba(255,215,0,0.2)' : '0 2px 8px rgba(0,0,0,0.05)'
+                                    }}>
+                                        <div style={{
+                                            width: '48px',
+                                            height: '48px',
+                                            borderRadius: '8px',
+                                            background: i === 1 ? 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)' : 'linear-gradient(135deg, #0066cc 0%, #004499 100%)',
+                                            color: i === 1 ? '#5c4000' : '#fff',
+                                            display: 'grid',
+                                            placeItems: 'center',
+                                            fontSize: '24px',
+                                            fontWeight: 'bold',
+                                            flexShrink: 0,
+                                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                                        }}>#{i}</div>
+                                        <div style={{ fontSize: '20px', color: '#333', flex: 1, fontWeight: '500' }}>{currentScene[`rank${i}`]}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Layout Specific Content: Breaking News */}
+                        {currentScene.layout === 'breaking-news' && (
+                            <div style={{
+                                marginTop: '30px',
+                                width: '100%',
+                                background: 'linear-gradient(135deg, #cc0000 0%, #990000 100%)',
+                                color: '#fff',
+                                padding: '30px',
+                                borderRadius: '16px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '16px',
+                                transform: `translateX(${(1 - entrance) * -50}px)`,
+                                opacity: entrance,
+                                boxShadow: '0 10px 30px rgba(204,0,0,0.3)'
+                            }}>
+                                <div style={{
+                                    background: '#fff',
+                                    color: '#cc0000',
+                                    fontSize: '14px',
+                                    fontWeight: '900',
+                                    padding: '6px 16px',
+                                    alignSelf: 'flex-start',
+                                    borderRadius: '4px',
+                                    letterSpacing: '1px'
+                                }}>{currentScene.newsCategory || 'BREAKING'}</div>
+                                <div style={{ fontSize: '28px', fontWeight: 'bold', lineHeight: '1.3' }}>{currentScene.subtitleText}</div>
+                            </div>
+                        )}
+
+                        {/* Layout Specific Content: Caption */}
+                        {currentScene.layout === 'caption' && (
+                            <div style={{
+                                marginTop: '30px',
+                                width: '100%',
+                                borderTop: '4px solid #000',
+                                paddingTop: '20px',
+                                transform: `translateY(${(1 - entrance) * 20}px)`,
+                                opacity: entrance
+                            }}>
+                                <div style={{ fontSize: '18px', color: '#666', fontStyle: 'italic', lineHeight: '1.5' }}>
+                                    {currentScene.captionText || 'Image caption here'}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Layout Specific Content: Code Snippet */}
+                        {currentScene.layout === 'code' && (
+                            <div style={{
+                                marginTop: '30px',
+                                width: '100%',
+                                background: '#1e1e1e',
+                                borderRadius: '16px',
+                                padding: '24px',
+                                border: '1px solid #333',
+                                transform: `scale(${entrance})`,
+                                opacity: entrance,
+                                boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
+                            }}>
+                                <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+                                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ff5f56' }} />
+                                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ffbd2e' }} />
+                                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#27c93f' }} />
+                                </div>
+                                <div style={{ height: '8px', background: '#4ec9b0', width: '70%', marginBottom: '8px', borderRadius: '2px' }} />
+                                <div style={{ height: '8px', background: '#ce9178', width: '90%', marginBottom: '8px', borderRadius: '2px' }} />
+                                <div style={{ height: '8px', background: '#dcdcaa', width: '60%', marginBottom: '8px', borderRadius: '2px' }} />
+                                <div style={{ height: '8px', background: '#569cd6', width: '80%', borderRadius: '2px' }} />
+                            </div>
+                        )}
+
+                        {/* Layout Specific Content: Definition */}
+                        {currentScene.layout === 'definition' && (
+                            <div style={{
+                                marginTop: '30px',
+                                width: '100%',
+                                background: 'linear-gradient(135deg, #fffaf0 0%, #fff5e6 100%)',
+                                borderRadius: '16px',
+                                padding: '32px',
+                                borderLeft: '8px solid #d4a373',
+                                transform: `translateX(${(1 - entrance) * -40}px)`,
+                                opacity: entrance,
+                                boxShadow: '0 8px 24px rgba(212,163,115,0.15)'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', marginBottom: '16px' }}>
+                                    <div style={{ fontSize: '32px', fontWeight: 'bold', fontFamily: 'Georgia, serif', color: '#333' }}>
+                                        {currentScene.titleText}
+                                    </div>
+                                    <div style={{ fontSize: '18px', fontStyle: 'italic', color: '#888' }}>
+                                        {currentScene.pronunciation || 'noun'}
+                                    </div>
+                                </div>
+                                <div style={{ fontSize: '20px', color: '#555', lineHeight: '1.6' }}>
+                                    {currentScene.definition}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Layout Specific Content: Quiz */}
+                        {currentScene.layout === 'quiz' && (
+                            <div style={{
+                                marginTop: '20px',
+                                width: '100%',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '16px'
+                            }}>
+                                {[1, 2, 3].map(i => currentScene[`opt${i}`] && (
+                                    <div key={i} style={{
+                                        padding: '20px',
+                                        borderRadius: '12px',
+                                        border: i.toString() === currentScene.correctOpt ? '3px solid #00c853' : '2px solid #eee',
+                                        background: i.toString() === currentScene.correctOpt ? '#e8f5e9' : '#fff',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '16px',
+                                        fontSize: '20px',
+                                        transform: `translateX(${(1 - entrance) * -30 * i}px)`,
+                                        opacity: entrance,
+                                        boxShadow: i.toString() === currentScene.correctOpt ? '0 4px 16px rgba(0,200,83,0.2)' : '0 2px 8px rgba(0,0,0,0.05)',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.3s ease'
+                                    }}>
+                                        <div style={{
+                                            width: '40px',
+                                            height: '40px',
+                                            borderRadius: '50%',
+                                            border: '2px solid #ccc',
+                                            display: 'grid',
+                                            placeItems: 'center',
+                                            fontSize: '18px',
+                                            background: i.toString() === currentScene.correctOpt ? '#00c853' : 'transparent',
+                                            color: i.toString() === currentScene.correctOpt ? '#fff' : '#666',
+                                            fontWeight: 'bold',
+                                            flexShrink: 0
+                                        }}>{String.fromCharCode(64 + i)}</div>
+                                        <div style={{ flex: 1 }}>{currentScene[`opt${i}`]}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Layout Specific Content: Pro Tip */}
+                        {currentScene.layout === 'tip' && (
+                            <div style={{
+                                marginTop: '30px',
+                                width: '100%',
+                                background: 'linear-gradient(135deg, #fff9e6 0%, #ffecbd 100%)',
+                                border: '3px solid #ffca28',
+                                borderRadius: '16px',
+                                padding: '32px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '16px',
+                                textAlign: 'center',
+                                transform: `scale(${entrance})`,
+                                opacity: entrance,
+                                boxShadow: '0 10px 30px rgba(255,202,40,0.2)'
+                            }}>
+                                <div style={{ fontSize: '48px' }}>💡</div>
+                                <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#5c4000', textTransform: 'uppercase', letterSpacing: '2px' }}>
+                                    PRO TIP
+                                </div>
+                                <div style={{ fontSize: '22px', color: '#5c4000', fontStyle: 'italic', lineHeight: '1.5', maxWidth: '500px' }}>
+                                    "{currentScene.tipContent}"
+                                </div>
+                            </div>
+                        )}
+
                         {/* Logo Placeholder */}
                         {currentScene.layout !== 'quote' && (
                             <div style={{

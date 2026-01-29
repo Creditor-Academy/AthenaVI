@@ -5,10 +5,10 @@ import {
     MdCompareArrows,
 } from 'react-icons/md'
 
-const StaticPreview = ({ scene }) => {
+const StaticPreview = ({ scene, isThumbnail = true }) => {
     // Default styles if not provided
     const titleStyle = scene.titleStyle || {
-        fontSize: 42,
+        fontSize: isThumbnail ? 18 : 42,
         color: '#000000',
         fontFamily: 'system-ui',
         fontWeight: '700',
@@ -16,7 +16,7 @@ const StaticPreview = ({ scene }) => {
     }
 
     const subtitleStyle = scene.subtitleStyle || {
-        fontSize: 22,
+        fontSize: isThumbnail ? 12 : 22,
         color: '#333333',
         fontFamily: 'system-ui',
         fontWeight: '400',
@@ -34,7 +34,7 @@ const StaticPreview = ({ scene }) => {
             alignItems: 'center',
             position: 'relative',
             overflow: 'hidden',
-            padding: '20px 30px',
+            padding: isThumbnail ? '16px' : '20px 30px',
             boxSizing: 'border-box'
         }}>
             {/* BACKGROUND LAYERS */}
@@ -64,7 +64,7 @@ const StaticPreview = ({ scene }) => {
                 flexDirection: scene.layout === 'split-left' ? 'row-reverse' : (scene.layout === 'centered' || scene.layout === 'quote' ? 'column-reverse' : 'row'),
                 alignItems: 'center',
                 justifyContent: scene.layout === 'centered' || scene.layout === 'quote' ? 'center' : 'space-between',
-                gap: '20px',
+                gap: isThumbnail ? '12px' : '20px',
                 position: 'relative',
                 maxWidth: '100%',
                 zIndex: 2,
@@ -77,7 +77,7 @@ const StaticPreview = ({ scene }) => {
                     flexDirection: 'column',
                     justifyContent: 'center',
                     alignItems: (scene.layout === 'centered' || scene.layout === 'quote') ? 'center' : (scene.layout === 'split-left' ? 'flex-end' : 'flex-start'),
-                    gap: '10px',
+                    gap: isThumbnail ? '6px' : '10px',
                     minWidth: '0',
                     zIndex: 10,
                     position: 'relative',
@@ -85,7 +85,7 @@ const StaticPreview = ({ scene }) => {
                 }}>
                     {/* Title */}
                     <h1 style={{
-                        fontSize: `clamp(16px, 3.5vw, ${scene.layout === 'quote' ? 32 : (titleStyle.fontSize || 42)}px)`,
+                        fontSize: `${scene.layout === 'quote' ? (isThumbnail ? 14 : 32) : (isThumbnail ? 16 : (titleStyle.fontSize || 42))}px`,
                         fontWeight: titleStyle.fontWeight || '700',
                         margin: '0',
                         lineHeight: '1.2',
@@ -100,7 +100,7 @@ const StaticPreview = ({ scene }) => {
 
                     {/* Subtitle / Author */}
                     <h2 style={{
-                        fontSize: `clamp(10px, 2vw, ${subtitleStyle.fontSize || 22}px)`,
+                        fontSize: `${isThumbnail ? 10 : (subtitleStyle.fontSize || 22)}px`,
                         fontWeight: subtitleStyle.fontWeight || '400',
                         margin: '0',
                         lineHeight: '1.4',
@@ -265,11 +265,173 @@ const StaticPreview = ({ scene }) => {
                         </div>
                     )}
 
+                    {/* Layout Specific: Three Column (Compact) */}
+                    {scene.layout === 'three-col' && (
+                        <div style={{
+                            display: 'flex',
+                            gap: '8px',
+                            marginTop: '10px',
+                            width: '100%'
+                        }}>
+                            {[1, 2, 3].map(i => scene[`col${i}_title`] && (
+                                <div key={i} style={{
+                                    flex: 1,
+                                    background: '#f9f9f9',
+                                    borderRadius: '6px',
+                                    padding: '8px',
+                                    textAlign: 'center'
+                                }}>
+                                    <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#0066cc', marginBottom: '4px' }}>{scene[`col${i}_title`]}</div>
+                                    <div style={{ fontSize: '7px', color: '#666' }}>{scene[`col${i}_content`]?.substring(0, 30)}...</div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Layout Specific: Ranked List (Compact) */}
+                    {scene.layout === 'ranked-list' && (
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '6px',
+                            marginTop: '8px',
+                            width: '100%'
+                        }}>
+                            {[1, 2, 3].map(i => scene[`rank${i}`] && (
+                                <div key={i} style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    background: i === 1 ? '#fff9e6' : '#f9f9f9',
+                                    padding: '6px',
+                                    borderRadius: '4px',
+                                    border: i === 1 ? '1px solid #ffd700' : '1px solid #eee'
+                                }}>
+                                    <div style={{
+                                        width: '18px',
+                                        height: '18px',
+                                        borderRadius: '4px',
+                                        background: i === 1 ? '#ffd700' : '#0066cc',
+                                        color: '#fff',
+                                        display: 'grid',
+                                        placeItems: 'center',
+                                        fontSize: '9px',
+                                        fontWeight: 'bold'
+                                    }}>#{i}</div>
+                                    <div style={{ fontSize: '8px', color: '#333', flex: 1 }}>{scene[`rank${i}`]}</div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Layout Specific: Breaking News (Compact) */}
+                    {scene.layout === 'breaking-news' && (
+                        <div style={{
+                            marginTop: '10px',
+                            width: '100%',
+                            background: '#cc0000',
+                            color: '#fff',
+                            padding: '8px',
+                            borderRadius: '4px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px'
+                        }}>
+                            <div style={{ background: '#fff', color: '#cc0000', fontSize: '7px', fontWeight: '900', padding: '2px 6px', alignSelf: 'flex-start' }}>{scene.newsCategory || 'BREAKING'}</div>
+                            <div style={{ fontSize: '8px', fontWeight: 'bold' }}>{scene.subtitleText}</div>
+                        </div>
+                    )}
+
+                    {/* Layout Specific: Caption (Compact) */}
+                    {scene.layout === 'caption' && (
+                        <div style={{ marginTop: '10px', width: '100%', borderTop: '2px solid #000', paddingTop: '6px' }}>
+                            <div style={{ fontSize: '7px', color: '#666', fontStyle: 'italic' }}>{scene.captionText || 'Image caption here'}</div>
+                        </div>
+                    )}
+
+                    {/* Layout Specific: Code Snippet (Compact) */}
+                    {scene.layout === 'code' && (
+                        <div style={{ marginTop: '10px', width: '100%', background: '#1e1e1e', borderRadius: '6px', padding: '8px', border: '1px solid #333' }}>
+                            <div style={{ display: 'flex', gap: '3px', marginBottom: '6px' }}>
+                                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ff5f56' }} />
+                                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ffbd2e' }} />
+                                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#27c93f' }} />
+                            </div>
+                            <div style={{ height: '3px', background: '#4ec9b0', width: '60%', marginBottom: '3px', borderRadius: '1px' }} />
+                            <div style={{ height: '3px', background: '#ce9178', width: '80%', marginBottom: '3px', borderRadius: '1px' }} />
+                            <div style={{ height: '3px', background: '#dcdcaa', width: '50%', borderRadius: '1px' }} />
+                        </div>
+                    )}
+
+                    {/* Layout Specific: Definition (Compact) */}
+                    {scene.layout === 'definition' && (
+                        <div style={{ marginTop: '10px', width: '100%', background: '#fffaf0', borderRadius: '6px', padding: '8px', borderLeft: '4px solid #d4a373' }}>
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '4px' }}>
+                                <div style={{ fontSize: '11px', fontWeight: 'bold', fontFamily: 'serif', color: '#333' }}>{scene.titleText}</div>
+                                <div style={{ fontSize: '7px', fontStyle: 'italic', color: '#888' }}>{scene.pronunciation || 'noun'}</div>
+                            </div>
+                            <div style={{ fontSize: '8px', color: '#555', lineHeight: '1.3' }}>{scene.definition?.substring(0, 60)}...</div>
+                        </div>
+                    )}
+
+                    {/* Layout Specific: Quiz (Compact) */}
+                    {scene.layout === 'quiz' && (
+                        <div style={{ marginTop: '8px', width: '100%', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                            {[1, 2, 3].map(i => scene[`opt${i}`] && (
+                                <div key={i} style={{
+                                    padding: '6px',
+                                    borderRadius: '4px',
+                                    border: i.toString() === scene.correctOpt ? '2px solid #00c853' : '1px solid #eee',
+                                    background: i.toString() === scene.correctOpt ? '#e8f5e9' : '#fff',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    fontSize: '8px'
+                                }}>
+                                    <div style={{
+                                        width: '14px',
+                                        height: '14px',
+                                        borderRadius: '50%',
+                                        border: '1px solid #ccc',
+                                        display: 'grid',
+                                        placeItems: 'center',
+                                        fontSize: '7px',
+                                        background: i.toString() === scene.correctOpt ? '#00c853' : 'transparent',
+                                        color: i.toString() === scene.correctOpt ? '#fff' : '#666',
+                                        fontWeight: 'bold'
+                                    }}>{String.fromCharCode(64 + i)}</div>
+                                    {scene[`opt${i}`]}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Layout Specific: Pro Tip (Compact) */}
+                    {scene.layout === 'tip' && (
+                        <div style={{
+                            marginTop: '10px',
+                            width: '100%',
+                            background: 'linear-gradient(135deg, #fff9e6 0%, #ffecbd 100%)',
+                            border: '2px solid #ffca28',
+                            borderRadius: '6px',
+                            padding: '8px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '4px',
+                            textAlign: 'center'
+                        }}>
+                            <div style={{ fontSize: '16px', color: '#ffca28' }}>💡</div>
+                            <div style={{ fontSize: '8px', fontWeight: 'bold', color: '#5c4000' }}>PRO TIP</div>
+                            <div style={{ fontSize: '7px', color: '#5c4000', fontStyle: 'italic' }}>"{scene.tipContent?.substring(0, 50)}..."</div>
+                        </div>
+                    )}
+
                     {/* Logo Placeholder */}
                     {scene.layout !== 'quote' && (
                         <div style={{
-                            width: '40px',
-                            height: '40px',
+                            width: isThumbnail ? '28px' : '40px',
+                            height: isThumbnail ? '28px' : '40px',
                             borderRadius: '50%',
                             backgroundColor: '#f0f0f0',
                             border: '1px dashed #cccccc',
@@ -277,7 +439,7 @@ const StaticPreview = ({ scene }) => {
                             alignItems: 'center',
                             justifyContent: 'center',
                             marginTop: '4px',
-                            fontSize: '6px',
+                            fontSize: isThumbnail ? '5px' : '6px',
                             color: '#999999',
                             fontWeight: '600',
                             textAlign: 'center',
@@ -293,8 +455,9 @@ const StaticPreview = ({ scene }) => {
                 {scene.layout !== 'quote' && (
                     <div style={{
                         flex: '0 0 auto',
-                        width: scene.layout === 'centered' ? '80px' : 'clamp(140px, 20vw, 220px)',
-                        height: scene.layout === 'centered' ? '80px' : 'clamp(180px, 30vh, 280px)',
+                        width: scene.layout === 'centered' ? (isThumbnail ? '60px' : '80px') : (isThumbnail ? '40%' : 'clamp(140px, 20vw, 220px)'),
+                        height: scene.layout === 'centered' ? (isThumbnail ? '60px' : '80px') : '100%',
+                        maxHeight: isThumbnail ? '120px' : 'none',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -326,7 +489,7 @@ const StaticPreview = ({ scene }) => {
                                 justifyContent: 'center',
                                 border: '1px dashed #cccccc'
                             }}>
-                                <MdPerson size={scene.layout === 'centered' ? 40 : 60} color="#999999" />
+                                <MdPerson size={scene.layout === 'centered' ? (isThumbnail ? 30 : 40) : (isThumbnail ? 40 : 60)} color="#999999" />
                             </div>
                         )}
                     </div>

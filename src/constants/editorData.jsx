@@ -9,6 +9,12 @@ import {
     MdLightbulbOutline,
     MdPerson,
     MdPlayCircleOutline,
+    MdAnnouncement,
+    MdViewColumn,
+    MdFormatListNumbered,
+    MdCode,
+    MdSchool,
+    MdHelp
 } from 'react-icons/md'
 import avatar1 from '../assets/avatar1.png'
 import avatar2 from '../assets/avatar2.png'
@@ -178,6 +184,106 @@ export const pageTemplates = [
             { key: 'titleText', label: 'Main Heading', type: 'text', default: 'Start Your Journey Today' },
             { key: 'subtitleText', label: 'Secondary Text', type: 'text', default: 'Join over 10,000+ satisfied creators.' },
             { key: 'website', label: 'Website/Link', type: 'text', default: 'www.athenavi.com' }
+        ]
+    },
+    {
+        id: 'breaking-news',
+        name: 'Breaking News',
+        layout: 'breaking-news',
+        description: 'News sticker style.',
+        icon: <MdAnnouncement />,
+        fields: [
+            { key: 'titleText', label: 'Headline', type: 'text', default: 'BREAKING NEWS' },
+            { key: 'subtitleText', label: 'Ticker Text', type: 'text', default: 'Live updates from the scene • Developing story • Stay tuned' },
+            { key: 'newsCategory', label: 'Category', type: 'text', default: 'LIVE' }
+        ]
+    },
+    {
+        id: 'three-col',
+        name: 'Three Pillars',
+        layout: 'three-col',
+        description: '3 columns of content.',
+        icon: <MdViewColumn />,
+        fields: [
+            { key: 'titleText', label: 'Main Title', type: 'text', default: 'Core Values' },
+            { key: 'col1_title', label: 'Col 1 Title', type: 'text', default: 'Vision' },
+            { key: 'col1_content', label: 'Col 1 Content', type: 'text', default: 'Looking ahead to the future' },
+            { key: 'col2_title', label: 'Col 2 Title', type: 'text', default: 'Mission' },
+            { key: 'col2_content', label: 'Col 2 Content', type: 'text', default: 'Driving force behind our work' },
+            { key: 'col3_title', label: 'Col 3 Title', type: 'text', default: 'Values' },
+            { key: 'col3_content', label: 'Col 3 Content', type: 'text', default: 'Our foundation and principles' }
+        ]
+    },
+    {
+        id: 'ranked-list',
+        name: 'Ranked List',
+        layout: 'ranked-list',
+        description: 'Top 5 list style.',
+        icon: <MdFormatListNumbered />,
+        fields: [
+            { key: 'titleText', label: 'Ranking Title', type: 'text', default: 'Top Priorities' },
+            { key: 'rank1', label: 'Rank 1', type: 'text', default: 'Customer First' },
+            { key: 'rank2', label: 'Rank 2', type: 'text', default: 'Innovation' },
+            { key: 'rank3', label: 'Rank 3', type: 'text', default: 'Quality' }
+        ]
+    },
+    {
+        id: 'caption',
+        name: 'Minimal Caption',
+        layout: 'caption',
+        description: 'Clean, large visuals with minimal text.',
+        icon: <MdTextFields />,
+        fields: [
+            { key: 'titleText', label: 'Main Title', type: 'text', default: 'Visual Story' },
+            { key: 'captionText', label: 'Caption', type: 'textarea', default: 'Designed for clarity. Less is more.' }
+        ]
+    },
+    {
+        id: 'code-snippet',
+        name: 'Code Snippet',
+        layout: 'code',
+        description: 'Display code for tutorials.',
+        icon: <MdCode />,
+        fields: [
+            { key: 'titleText', label: 'File Name/Title', type: 'text', default: 'script.js' },
+            { key: 'codeContent', label: 'Code', type: 'textarea', default: 'const greeting = "Hello World";\nconsole.log(greeting);' },
+        ]
+    },
+    {
+        id: 'definition',
+        name: 'Definition',
+        layout: 'definition',
+        description: 'Define a term clearly.',
+        icon: <MdSchool />,
+        fields: [
+            { key: 'titleText', label: 'Term', type: 'text', default: 'Algorithm' },
+            { key: 'pronunciation', label: 'Pronunciation/Type', type: 'text', default: 'noun' },
+            { key: 'definition', label: 'Definition', type: 'textarea', default: 'A process or set of rules to be followed in calculations or problem-solving operations.' }
+        ]
+    },
+    {
+        id: 'quiz',
+        name: 'Pop Quiz',
+        layout: 'quiz',
+        description: 'Multiple choice question.',
+        icon: <MdHelp />,
+        fields: [
+            { key: 'titleText', label: 'Question', type: 'text', default: 'Which is the fastest planet?' },
+            { key: 'opt1', label: 'Option A', type: 'text', default: 'Earth' },
+            { key: 'opt2', label: 'Option B', type: 'text', default: 'Mercury' },
+            { key: 'opt3', label: 'Option C', type: 'text', default: 'Jupiter' },
+            { key: 'correctOpt', label: 'Correct Option (1/2/3)', type: 'text', default: '2' }
+        ]
+    },
+    {
+        id: 'pro-tip',
+        name: 'Pro Tip',
+        layout: 'tip',
+        description: 'Highlight a key takeaway.',
+        icon: <MdLightbulbOutline />,
+        fields: [
+            { key: 'titleText', label: 'Tip Heading', type: 'text', default: 'Pro Tip' },
+            { key: 'tipContent', label: 'The Tip', type: 'textarea', default: 'Consistency is key when building a personal brand.' }
         ]
     }
 ]
