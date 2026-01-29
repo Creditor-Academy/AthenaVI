@@ -38,6 +38,12 @@ import {
   MdCompareArrows,
   MdCheckCircle,
   MdLightbulbOutline,
+  MdViewColumn,
+  MdAnnouncement,
+  MdFormatListNumbered,
+  MdCode,
+  MdSchool,
+  MdHelp
 } from 'react-icons/md'
 import TimelineEditor from '../components/TimelineEditor'
 import avatar1 from '../assets/avatar1.png'
@@ -209,6 +215,109 @@ const pageTemplates = [
       { key: 'titleText', label: 'Main Heading', type: 'text', default: 'Start Your Journey Today' },
       { key: 'subtitleText', label: 'Secondary Text', type: 'text', default: 'Join over 10,000+ satisfied creators.' },
       { key: 'website', label: 'Website/Link', type: 'text', default: 'www.athenavi.com' }
+    ]
+  },
+  {
+    id: 'breaking-news',
+    name: 'Breaking News',
+    layout: 'breaking-news',
+    description: 'News sticker style.',
+    icon: <MdAnnouncement />,
+    fields: [
+      { key: 'titleText', label: 'Headline', type: 'text', default: 'BREAKING NEWS' },
+      { key: 'subtitleText', label: 'Ticker Text', type: 'text', default: 'Live updates from the scene • Developing story • Stay tuned' },
+      { key: 'newsCategory', label: 'Category', type: 'text', default: 'LIVE' }
+    ]
+  },
+  {
+    id: 'three-col',
+    name: 'Three Pillars',
+    layout: 'three-col',
+    description: '3 columns of content.',
+    icon: <MdViewColumn />,
+    fields: [
+      { key: 'titleText', label: 'Main Title', type: 'text', default: 'Core Values' },
+      { key: 'col1_title', label: 'Col 1 Title', type: 'text', default: 'Vision' },
+      { key: 'col1_desc', label: 'Col 1 Desc', type: 'text', default: 'Looking ahead' },
+      { key: 'col2_title', label: 'Col 2 Title', type: 'text', default: 'Mission' },
+      { key: 'col2_desc', label: 'Col 2 Desc', type: 'text', default: 'Driving force' },
+      { key: 'col3_title', label: 'Col 3 Title', type: 'text', default: 'Values' },
+      { key: 'col3_desc', label: 'Col 3 Desc', type: 'text', default: 'Our foundation' }
+    ]
+  },
+  {
+    id: 'ranked-list',
+    name: 'Ranked List',
+    layout: 'ranked-list',
+    description: 'Top 5 list style.',
+    icon: <MdFormatListNumbered />,
+    fields: [
+      { key: 'titleText', label: 'Ranking Title', type: 'text', default: 'Top Priorities' },
+      { key: 'item1', label: 'Rank 1', type: 'text', default: 'Customer First' },
+      { key: 'item2', label: 'Rank 2', type: 'text', default: 'Innovation' },
+      { key: 'item3', label: 'Rank 3', type: 'text', default: 'Quality' },
+      { key: 'item4', label: 'Rank 4', type: 'text', default: 'Speed' },
+      { key: 'item5', label: 'Rank 5', type: 'text', default: 'Impact' }
+    ]
+  },
+  {
+    id: 'caption',
+    name: 'Minimal Caption',
+    layout: 'caption',
+    description: 'Clean, large visuals with minimal text.',
+    icon: <MdTextFields />,
+    fields: [
+      { key: 'titleText', label: 'Caption', type: 'textarea', default: 'Designed for clarity.' },
+      { key: 'subtitleText', label: 'Subtext', type: 'text', default: 'Less is more.' }
+    ]
+  },
+  {
+    id: 'code-snippet',
+    name: 'Code Snippet',
+    layout: 'code',
+    description: 'Display code for tutorials.',
+    icon: <MdCode />,
+    fields: [
+      { key: 'titleText', label: 'File Name/Title', type: 'text', default: 'script.js' },
+      { key: 'codeContent', label: 'Code', type: 'textarea', default: 'const greeting = "Hello World";\nconsole.log(greeting);' },
+    ]
+  },
+  {
+    id: 'definition',
+    name: 'Definition',
+    layout: 'definition',
+    description: 'Explain a term or concept.',
+    icon: <MdSchool />,
+    fields: [
+      { key: 'titleText', label: 'Term', type: 'text', default: 'Algorithm' },
+      { key: 'subtitleText', label: 'Pronunciation/Type', type: 'text', default: '(noun)' },
+      { key: 'definition', label: 'Definition', type: 'textarea', default: 'A process or set of rules to be followed in calculations.' },
+      { key: 'example', label: 'Example', type: 'text', default: '"The algorithm sorts the data."' }
+    ]
+  },
+  {
+    id: 'quiz',
+    name: 'Pop Quiz',
+    layout: 'quiz',
+    description: 'Multiple choice question.',
+    icon: <MdHelp />,
+    fields: [
+      { key: 'titleText', label: 'Question', type: 'text', default: 'What is the capital of France?' },
+      { key: 'opt1', label: 'Option A', type: 'text', default: 'London' },
+      { key: 'opt2', label: 'Option B', type: 'text', default: 'Berlin' },
+      { key: 'opt3', label: 'Option C', type: 'text', default: 'Paris' },
+      { key: 'correctOpt', label: 'Correct Option (1-3)', type: 'text', default: '3' }
+    ]
+  },
+  {
+    id: 'pro-tip',
+    name: 'Pro Tip',
+    layout: 'tip',
+    description: 'Highlight a key takeaway.',
+    icon: <MdLightbulbOutline />,
+    fields: [
+      { key: 'titleText', label: 'Tip Heading', type: 'text', default: 'Pro Tip' },
+      { key: 'tipContent', label: 'The Tip', type: 'textarea', default: 'Consistency is key when building a personal brand.' }
     ]
   }
 ]
@@ -1667,6 +1776,265 @@ const VideoComposition = ({ scenes }) => {
               </div>
             )}
 
+            {/* Layout Specific Content: Three Columns */}
+            {currentScene.layout === 'three-col' && (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr 1fr',
+                gap: '20px',
+                marginTop: '30px',
+                width: '100%'
+              }}>
+                {[1, 2, 3].map(i => currentScene[`col${i}_title`] && (
+                  <div key={i} style={{
+                    background: '#fff',
+                    padding: '24px',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '12px',
+                    textAlign: 'center',
+                    transform: `translateY(${(1 - entrance) * 30 * i}px)`,
+                    opacity: entrance
+                  }}>
+                    <div style={{ width: '40px', height: '40px', background: '#e6f0ff', borderRadius: '50%', display: 'grid', placeItems: 'center', color: '#0066cc', fontWeight: 'bold' }}>{i}</div>
+                    <div style={{ fontWeight: '700', color: '#333', fontSize: '18px' }}>{currentScene[`col${i}_title`]}</div>
+                    <div style={{ color: '#666', fontSize: '14px' }}>{currentScene[`col${i}_desc`]}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Layout Specific Content: Ranked List */}
+            {currentScene.layout === 'ranked-list' && (
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                marginTop: '20px',
+                width: '100%'
+              }}>
+                {[1, 2, 3, 4, 5].map(i => currentScene[`item${i}`] && (
+                  <div key={i} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px',
+                    background: '#fff',
+                    padding: '12px 20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
+                    transform: `translateX(${(1 - entrance) * (i % 2 === 0 ? 30 : -30)}px)`,
+                    opacity: entrance
+                  }}>
+                    <div style={{ fontSize: '24px', fontWeight: '900', color: '#ddd', width: '30px' }}>{i}</div>
+                    <div style={{ fontSize: '18px', fontWeight: '600', color: '#333' }}>{currentScene[`item${i}`]}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Layout Specific Content: Breaking News */}
+            {currentScene.layout === 'breaking-news' && (
+              <div style={{
+                position: 'absolute',
+                bottom: '-100px',
+                left: '-200px',
+                right: '-200px',
+                background: '#cc0000',
+                color: '#fff',
+                padding: '20px 200px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '30px',
+                transform: `translateY(${(1 - entrance) * 100}px)`,
+                boxShadow: '0 -4px 20px rgba(0,0,0,0.3)'
+              }}>
+                <div style={{
+                  background: '#fff',
+                  color: '#cc0000',
+                  padding: '4px 12px',
+                  fontWeight: '900',
+                  textTransform: 'uppercase',
+                  fontSize: '20px',
+                  borderRadius: '4px'
+                }}>
+                  {currentScene.newsCategory || 'LIVE'}
+                </div>
+                <div style={{
+                  fontSize: '24px',
+                  fontWeight: '600',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {currentScene.subtitleText}
+                </div>
+              </div>
+            )}
+
+            {/* Layout Specific Content: Minimal Caption */}
+            {currentScene.layout === 'caption' && (
+              <div style={{
+                marginTop: '40px',
+                width: '100%',
+                borderTop: '1px solid #000',
+                paddingTop: '20px',
+                transform: `scaleX(${entrance})`,
+                transformOrigin: 'left'
+              }}>
+              </div>
+            )}
+
+            {/* Layout Specific Content: Code Snippet */}
+            {currentScene.layout === 'code' && (
+              <div style={{
+                marginTop: '10px',
+                width: '100%',
+                background: '#1e1e1e',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                fontFamily: 'monospace',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+                transform: `translateY(${(1 - entrance) * 40}px)`,
+                opacity: entrance,
+                border: '1px solid #333'
+              }}>
+                <div style={{
+                  background: '#252526',
+                  padding: '10px 20px',
+                  borderBottom: '1px solid #333',
+                  display: 'flex',
+                  gap: '8px',
+                  alignItems: 'center'
+                }}>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ff5f56' }} />
+                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ffbd2e' }} />
+                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#27c93f' }} />
+                  <div style={{ marginLeft: '10px', color: '#888', fontSize: '12px' }}>{currentScene.titleText}</div>
+                </div>
+                <div style={{ padding: '24px', color: '#d4d4d4', fontSize: '18px', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
+                  {currentScene.codeContent}
+                </div>
+              </div>
+            )}
+
+            {/* Layout Specific Content: Definition */}
+            {currentScene.layout === 'definition' && (
+              <div style={{
+                marginTop: '20px',
+                width: '100%',
+                background: '#fffaf0',
+                padding: '40px',
+                borderRadius: '8px',
+                borderLeft: '6px solid #d4a373',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                transform: `scale(${entrance})`,
+                opacity: entrance,
+                color: '#333'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '16px', marginBottom: '16px' }}>
+                  <h1 style={{ margin: 0, fontSize: '48px', fontFamily: 'serif', fontWeight: 'bold' }}>{currentScene.titleText}</h1>
+                  <span style={{ fontSize: '24px', fontStyle: 'italic', color: '#666', fontFamily: 'serif' }}>{currentScene.subtitleText}</span>
+                </div>
+                <div style={{ fontSize: '24px', lineHeight: '1.5', marginBottom: '20px' }}>
+                  {currentScene.definition}
+                </div>
+                <div style={{ fontSize: '20px', color: '#666', fontStyle: 'italic' }}>
+                  {currentScene.example}
+                </div>
+              </div>
+            )}
+
+            {/* Layout Specific Content: Quiz */}
+            {currentScene.layout === 'quiz' && (
+              <div style={{
+                marginTop: '20px',
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px'
+              }}>
+                {[1, 2, 3].map(i => currentScene[`opt${i}`] && (
+                  <div key={i} style={{
+                    padding: '20px 30px',
+                    background: '#fff',
+                    borderRadius: '12px',
+                    border: i.toString() === currentScene.correctOpt ? '3px solid #00c853' : '1px solid #ddd',
+                    fontSize: '20px',
+                    fontWeight: '500',
+                    color: '#333',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '20px',
+                    transform: `translateX(${(1 - entrance) * (i % 2 === 0 ? 50 : -50)}px)`,
+                    opacity: entrance,
+                    boxShadow: i.toString() === currentScene.correctOpt ? '0 4px 20px rgba(0, 200, 83, 0.2)' : 'none'
+                  }}>
+                    <div style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '50%',
+                      border: '2px solid #ccc',
+                      display: 'grid',
+                      placeItems: 'center',
+                      background: i.toString() === currentScene.correctOpt ? '#00c853' : 'transparent',
+                      color: i.toString() === currentScene.correctOpt ? '#fff' : '#ccc',
+                      fontWeight: 'bold',
+                      fontSize: '16px'
+                    }}>
+                      {String.fromCharCode(64 + i)}
+                    </div>
+                    {currentScene[`opt${i}`]}
+                    {i.toString() === currentScene.correctOpt && (
+                      <MdCheckCircle style={{ marginLeft: 'auto', color: '#00c853', fontSize: '28px' }} />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Layout Specific Content: Pro Tip */}
+            {currentScene.layout === 'tip' && (
+              <div style={{
+                marginTop: '30px',
+                width: '100%',
+                background: '#ffecbd',
+                color: '#5c4000',
+                padding: '40px',
+                borderRadius: '16px',
+                border: '2px solid #ffca28',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                textAlign: 'center',
+                gap: '20px',
+                boxShadow: '0 8px 30px rgba(255, 202, 40, 0.3)',
+                transform: `scale(${entrance})`,
+                opacity: entrance
+              }}>
+                <div style={{
+                  width: '64px',
+                  height: '64px',
+                  background: '#ffca28',
+                  borderRadius: '50%',
+                  display: 'grid',
+                  placeItems: 'center',
+                  fontSize: '36px',
+                  color: '#fff',
+                  marginBottom: '-10px'
+                }}>
+                  <MdLightbulbOutline />
+                </div>
+                <div style={{ fontSize: '28px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '2px' }}>
+                  {currentScene.titleText}
+                </div>
+                <div style={{ width: '60px', height: '4px', background: '#ffca28', borderRadius: '2px' }} />
+                <div style={{ fontSize: '24px', fontWeight: '500', lineHeight: '1.4' }}>
+                  {currentScene.tipContent}
+                </div>
+              </div>
+            )}
+
             {/* Logo Placeholder */}
             {currentScene.layout !== 'quote' && (
               <div style={{
@@ -1999,6 +2367,119 @@ const StaticPreview = ({ scene }) => {
                 Action
               </div>
               <div style={{ fontSize: '7px', color: '#0066cc', fontWeight: 'bold' }}>{scene.website}</div>
+            </div>
+          )}
+
+          {/* Layout Specific: Three Col (Compact) */}
+          {scene.layout === 'three-col' && (
+            <div style={{ display: 'flex', gap: '4px', marginTop: '8px', width: '100%' }}>
+              {[1, 2, 3].map(i => scene[`col${i}_title`] && (
+                <div key={i} style={{ flex: 1, padding: '4px', background: '#f5f5f5', borderRadius: '4px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '6px', fontWeight: 'bold', color: '#333' }}>{scene[`col${i}_title`]}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Layout Specific: Ranked List (Compact) */}
+          {scene.layout === 'ranked-list' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '4px', width: '100%' }}>
+              {[1, 2, 3].map(i => scene[`item${i}`] && (
+                <div key={i} style={{ display: 'flex', gap: '4px', alignItems: 'center', background: '#fff', padding: '2px 4px', borderRadius: '2px', border: '1px solid #eee' }}>
+                  <div style={{ fontSize: '6px', fontWeight: '900', color: '#ccc' }}>{i}</div>
+                  <div style={{ fontSize: '6px', color: '#333' }}>{scene[`item${i}`]}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Layout Specific: Breaking News (Compact) */}
+          {scene.layout === 'breaking-news' && (
+            <div style={{
+              marginTop: '8px',
+              background: '#cc0000',
+              padding: '6px',
+              borderRadius: '2px',
+              color: '#fff',
+              display: 'flex',
+              gap: '6px',
+              alignItems: 'center',
+              width: '100%'
+            }}>
+              <div style={{ background: '#fff', color: '#cc0000', fontSize: '6px', fontWeight: '900', padding: '1px 3px' }}>{scene.newsCategory}</div>
+              <div style={{ fontSize: '6px' }}>{scene.subtitleText}</div>
+            </div>
+          )}
+
+          {/* Layout Specific: Caption (Compact) */}
+          {scene.layout === 'caption' && (
+            <div style={{ marginTop: '10px', width: '100%', borderTop: '1px solid #000' }}></div>
+          )}
+
+          {/* Layout Specific: Code Snippet (Compact) */}
+          {scene.layout === 'code' && (
+            <div style={{ marginTop: '10px', width: '100%', background: '#1e1e1e', borderRadius: '4px', padding: '4px', border: '1px solid #333' }}>
+              <div style={{ display: 'flex', gap: '2px', marginBottom: '4px' }}>
+                <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#ff5f56' }} />
+                <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#ffbd2e' }} />
+                <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#27c93f' }} />
+              </div>
+              <div style={{ height: '2px', background: '#555', width: '40%', marginBottom: '2px' }} />
+              <div style={{ height: '2px', background: '#444', width: '70%', marginBottom: '2px' }} />
+              <div style={{ height: '2px', background: '#333', width: '50%' }} />
+            </div>
+          )}
+
+          {/* Layout Specific: Definition (Compact) */}
+          {scene.layout === 'definition' && (
+            <div style={{ marginTop: '10px', width: '100%', background: '#fffaf0', borderRadius: '4px', padding: '6px', borderLeft: '3px solid #d4a373' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                <div style={{ fontSize: '10px', fontWeight: 'bold', fontFamily: 'serif' }}>{scene.titleText}</div>
+                <div style={{ fontSize: '6px', fontStyle: 'italic', color: '#666' }}>{scene.subtitleText}</div>
+              </div>
+              <div style={{ fontSize: '5px', color: '#444', marginTop: '4px' }}>{scene.definition}</div>
+            </div>
+          )}
+
+          {/* Layout Specific: Quiz (Compact) */}
+          {scene.layout === 'quiz' && (
+            <div style={{ marginTop: '8px', width: '100%', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              {[1, 2, 3].map(i => scene[`opt${i}`] && (
+                <div key={i} style={{
+                  padding: '4px',
+                  borderRadius: '3px',
+                  border: i.toString() === scene.correctOpt ? '1px solid #00c853' : '1px solid #eee',
+                  background: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontSize: '6px'
+                }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', border: '1px solid #ccc', display: 'grid', placeItems: 'center', fontSize: '5px', background: i.toString() === scene.correctOpt ? '#00c853' : 'transparent', color: i.toString() === scene.correctOpt ? '#fff' : '#ccc' }}>{String.fromCharCode(64 + i)}</div>
+                  {scene[`opt${i}`]}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Layout Specific: Pro Tip (Compact) */}
+          {scene.layout === 'tip' && (
+            <div style={{
+              marginTop: '10px',
+              width: '100%',
+              background: '#ffecbd',
+              border: '1px solid #ffca28',
+              borderRadius: '4px',
+              padding: '6px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '2px',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '8px', color: '#ffca28' }}><MdLightbulbOutline /></div>
+              <div style={{ fontSize: '6px', fontWeight: 'bold', color: '#5c4000' }}>{scene.titleText}</div>
+              <div style={{ fontSize: '5px', color: '#5c4000', fontStyle: 'italic' }}>"{scene.tipContent}"</div>
             </div>
           )}
 
