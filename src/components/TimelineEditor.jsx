@@ -126,8 +126,11 @@ const TimelineEditor = ({
 
         .timeline-container {
           display: grid;
-          grid-template-columns: 200px 1fr;
-          overflow: hidden;
+          grid-template-columns: 160px 1fr;
+          overflow-x: hidden;
+          overflow-y: auto;
+          flex: 1;
+          border-bottom: 1px solid #222;
         }
 
         .timeline-labels {
@@ -145,6 +148,12 @@ const TimelineEditor = ({
           font-size: 13px;
           color: #aaa;
           border-bottom: 1px solid #222;
+          box-sizing: border-box;
+          background: #121212;
+        }
+
+        .track-label.small {
+          height: 60px;
         }
 
         .track-label.active {
@@ -154,12 +163,28 @@ const TimelineEditor = ({
 
         .timeline-viewport {
           position: relative;
-          overflow-x: auto;
+          overflow-x: scroll;
           overflow-y: hidden;
           background: #080808;
           cursor: crosshair;
           scrollbar-width: thin;
-          scrollbar-color: #333 transparent;
+          scrollbar-color: #444 transparent;
+          user-select: none;
+          min-height: 100%;
+        }
+
+        .timeline-viewport::-webkit-scrollbar {
+          height: 10px;
+          background: #111;
+        }
+
+        .timeline-viewport::-webkit-scrollbar-thumb {
+          background: #444;
+          border-radius: 5px;
+        }
+
+        .timeline-viewport::-webkit-scrollbar-track {
+          background: #080808;
         }
 
         .timeline-ruler {
@@ -185,6 +210,11 @@ const TimelineEditor = ({
           height: 80px;
           position: relative;
           border-bottom: 1px solid #222;
+          overflow: visible;
+        }
+
+        .clip-track.small {
+          height: 60px;
         }
 
         .canva-clip {
@@ -312,6 +342,29 @@ const TimelineEditor = ({
           font-size: 11px;
           color: #d8f3dc;
         }
+
+        .music-track {
+          height: 60px;
+          background: rgba(142, 68, 173, 0.15);
+          border-bottom: 1px solid #222;
+          position: relative;
+          box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .music-clip {
+          position: absolute;
+          height: 24px;
+          top: 8px;
+          background: #8e44ad;
+          border: 1px solid #9b59b6;
+          border-radius: 4px;
+          display: flex;
+          align-items: center;
+          padding: 0 10px;
+          font-size: 11px;
+          color: #fff;
+          white-space: nowrap;
+        }
       `}</style>
 
             <div className="timeline-toolbar">
@@ -345,15 +398,20 @@ const TimelineEditor = ({
                 </div>
             </div>
 
-            <div className="timeline-container">
-                <div className="timeline-labels">
+            <div className="timeline-container" style={{ overflow: 'hidden' }}>
+                <div className="timeline-labels" style={{ marginTop: '-1px' }}>
+                    <div style={{ height: '28px', backgroundColor: '#111', borderBottom: '1px solid #333' }}></div>
                     <div className="track-label active">
                         <MdVideoLibrary style={{ marginRight: '10px' }} />
                         Main Scenes
                     </div>
-                    <div className="track-label">
+                    <div className="track-label small">
                         <MdPhotoLibrary style={{ marginRight: '10px' }} />
                         Overlays
+                    </div>
+                    <div className="track-label small">
+                        <MdMusicNote style={{ marginRight: '10px' }} />
+                        Audio Track
                     </div>
                 </div>
 
@@ -409,7 +467,7 @@ const TimelineEditor = ({
                         </div>
 
                         {/* Overlays Track */}
-                        <div className="clip-track" style={{ height: '50px' }}>
+                        <div className="clip-track small">
                             {scenes.map((scene, index) => {
                                 const prevDuration = scenes.slice(0, index).reduce((sum, s) => sum + (s.duration || 8), 0)
                                 return (scene.layers || []).map(layer => (
@@ -425,6 +483,20 @@ const TimelineEditor = ({
                                     </div>
                                 ))
                             })}
+                        </div>
+
+                        {/* Music Track */}
+                        <div className="music-track">
+                            <div
+                                className="music-clip"
+                                style={{
+                                    left: 0,
+                                    width: `${totalDuration * zoom}px`
+                                }}
+                            >
+                                <MdMusicNote size={14} style={{ marginRight: 6 }} />
+                                Background Music: Acoustic Guitar
+                            </div>
                         </div>
 
                         <div

@@ -1,12 +1,12 @@
 import React from 'react'
-import { useCurrentFrame, spring, interpolate, useVideoConfig } from 'remotion'
+import { useCurrentFrame, spring, interpolate, useVideoConfig, Audio } from 'remotion'
 import {
     MdPerson,
     MdCheckCircle,
     MdCompareArrows,
 } from 'react-icons/md'
 
-const VideoComposition = ({ scenes }) => {
+const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
     const frame = useCurrentFrame()
     const { fps } = useVideoConfig()
     const scenesList = scenes || []
@@ -92,6 +92,15 @@ const VideoComposition = ({ scenes }) => {
             opacity: opacity,
             backgroundColor: currentScene.backgroundColor || '#ffffff'
         }}>
+            {/* AUDIO: Background Music */}
+            {bgMusic && (
+                <Audio
+                    src={bgMusic}
+                    volume={bgMusicVolume}
+                    placeholder={null}
+                />
+            )}
+
             {/* BASE LAYER: Background Image/Video (Full Screen) */}
             {currentScene.backgroundImage && (
                 <div style={{

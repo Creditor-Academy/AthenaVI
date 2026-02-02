@@ -65,6 +65,8 @@ function Create({ onBack }) {
   const [showPreviewModal, setShowPreviewModal] = useState(false)
   const [selectedAvatar, setSelectedAvatar] = useState('avatar1')
   const [showTemplateModal, setShowTemplateModal] = useState(false)
+  const [bgMusic, setBgMusic] = useState('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3')
+  const [bgMusicVolume, setBgMusicVolume] = useState(0.3)
 
   const addLayer = (type, content) => {
     const activeScene = scenes.find(s => s.id === activeSceneId)
@@ -444,7 +446,9 @@ function Create({ onBack }) {
                     backgroundColor: 'white'
                   }}
                   inputProps={{
-                    scenes: scenes
+                    scenes: scenes,
+                    bgMusic: bgMusic,
+                    bgMusicVolume: bgMusicVolume
                   }}
                   showOutlines={false}
                   onPlay={() => setIsPlaying(true)}
@@ -743,6 +747,45 @@ function Create({ onBack }) {
                 rows={4}
               />
             </div>
+            {selectedTool === 'media' && (
+              <div className="property-group">
+                <h3 className="property-title">
+                  <MdMusicNote style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                  Background Music
+                </h3>
+                <div className="property-row">
+                  <label className="property-label">Select Audio</label>
+                  <select
+                    className="property-input"
+                    value={bgMusic}
+                    onChange={(e) => setBgMusic(e.target.value)}
+                  >
+                    <option value="">None</option>
+                    <option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">Acoustic Guitar</option>
+                    <option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3">Upbeat Tech</option>
+                    <option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3">Ambient Corporate</option>
+                  </select>
+                </div>
+                <div className="property-row">
+                  <label className="property-label">Volume: {Math.round(bgMusicVolume * 100)}%</label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={bgMusicVolume}
+                    onChange={(e) => setBgMusicVolume(Number(e.target.value))}
+                    className="property-input"
+                  />
+                </div>
+                <div style={{ marginTop: '20px' }}>
+                  <label className="property-label">Voiceover Settings</label>
+                  <p style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
+                    AI voiceover will play automatically when you preview scenes.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         {/* Enhanced Timeline Component */}
@@ -837,7 +880,9 @@ function Create({ onBack }) {
                   maxHeight: '100vh'
                 }}
                 inputProps={{
-                  scenes: scenes
+                  scenes: scenes,
+                  bgMusic: bgMusic,
+                  bgMusicVolume: bgMusicVolume
                 }}
                 onPlay={() => {
                   setIsPlaying(true)
