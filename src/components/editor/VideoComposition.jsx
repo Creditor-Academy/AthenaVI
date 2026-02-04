@@ -83,6 +83,9 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
         ...(currentScene.subtitleStyle || {})
     }
 
+    const fullWidthLayouts = ['centered', 'quote', 'bullets', 'ranked-list', 'steps', 'grid', 'three-col', 'quiz', 'code', 'definition', 'tip']
+    const isFullWidth = fullWidthLayouts.includes(currentScene.layout)
+
     return (
         <div style={{
             width: '100%',
@@ -163,9 +166,9 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
                     height: '100%',
                     maxWidth: '1200px',
                     display: 'flex',
-                    flexDirection: currentScene.layout === 'split-left' ? 'row-reverse' : (currentScene.layout === 'centered' || currentScene.layout === 'quote' ? 'column-reverse' : 'row'),
+                    flexDirection: isFullWidth ? 'column-reverse' : (currentScene.layout === 'split-left' ? 'row-reverse' : 'row'),
                     alignItems: 'center',
-                    justifyContent: currentScene.layout === 'centered' || currentScene.layout === 'quote' ? 'center' : 'space-between',
+                    justifyContent: isFullWidth ? 'center' : 'space-between',
                     gap: '60px',
                     position: 'relative',
                     transform: `translateY(${(1 - entrance) * 30}px) scale(${interpolate(entrance, [0, 1], [0.95, 1])})`,
@@ -178,10 +181,10 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'center',
-                        alignItems: (currentScene.layout === 'centered' || currentScene.layout === 'quote') ? 'center' : (currentScene.layout === 'split-left' ? 'flex-end' : 'flex-start'),
+                        alignItems: isFullWidth ? 'center' : (currentScene.layout === 'split-left' ? 'flex-end' : 'flex-start'),
                         gap: '24px',
-                        maxWidth: currentScene.layout === 'centered' || currentScene.layout === 'quote' ? '900px' : '650px',
-                        textAlign: (currentScene.layout === 'centered' || currentScene.layout === 'quote' || titleStyle.textAlign === 'center') ? 'center' : (currentScene.layout === 'split-left' ? 'right' : 'left')
+                        maxWidth: isFullWidth ? '1000px' : '650px',
+                        textAlign: (isFullWidth || titleStyle.textAlign === 'center') ? 'center' : (currentScene.layout === 'split-left' ? 'right' : 'left')
                     }}>
                         {/* Title */}
                         <h1 style={{
@@ -787,7 +790,7 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
                     </div>
 
                     {/* Right Side - Avatar Display */}
-                    {currentScene.layout !== 'quote' && (
+                    {!isFullWidth && (
                         <div style={{
                             flex: '0 0 auto',
                             width: currentScene.layout === 'centered' ? '180px' : '300px',
