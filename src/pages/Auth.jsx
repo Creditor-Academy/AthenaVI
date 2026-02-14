@@ -55,7 +55,7 @@ const styles = `
   border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 20px 60px rgba(30, 64, 175, 0.3);
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   position: relative;
 }
 
@@ -147,7 +147,7 @@ const styles = `
 }
 
 .auth-promo-subtitle {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   margin: 0 0 40px 0;
   opacity: 0.95;
@@ -156,7 +156,7 @@ const styles = `
 
 .auth-promo-btn {
   padding: 14px 32px;
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 600;
   color: #ffffff;
@@ -212,7 +212,7 @@ const styles = `
 }
 
 .auth-form-subtitle {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   color: rgba(30, 64, 175, 0.6);
   margin: 0 0 24px 0;
@@ -289,7 +289,7 @@ const styles = `
 .auth-input {
   width: 100%;
   padding: 12px 16px 12px 44px;
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   color: #1e40af;
   background: rgba(30, 64, 175, 0.05);
@@ -339,7 +339,7 @@ const styles = `
 .auth-submit-btn {
   width: 100%;
   padding: 14px 24px;
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 600;
   color: #ffffff;
@@ -369,7 +369,7 @@ const styles = `
 }
 
 .auth-forgot-link a {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   color: rgba(30, 64, 175, 0.7);
   text-decoration: none;

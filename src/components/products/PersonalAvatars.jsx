@@ -40,7 +40,7 @@ const styles = `
 }
 
 .product-section-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   line-height: 1.7;
   text-align: left;
@@ -134,7 +134,7 @@ const styles = `
 }
 
 .product-feature-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 15px;
   line-height: 1.7;
   margin: 0;
@@ -155,7 +155,7 @@ const styles = `
 }
 
 .product-cta-button {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   border: none;
   color: #000;

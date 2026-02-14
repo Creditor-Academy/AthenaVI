@@ -35,6 +35,7 @@ const styles = `
   flex-direction: column;
   animation: slideIn 0.3s ease;
   overflow: hidden;
+  font-family: 'Inter', sans-serif;
 }
 
 @keyframes slideIn {
@@ -59,10 +60,12 @@ const styles = `
 }
 
 .voice-panel-title {
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
   color: #1e293b;
   margin: 0;
+  line-height: 1.25;
 }
 
 .voice-panel-close {
@@ -160,10 +163,13 @@ const styles = `
 }
 
 .voice-panel-section-title {
-  font-size: 32px;
-  font-weight: 800;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: clamp(40px, 4vw, 48px);
+  font-weight: 400;
   color: #1e293b;
   margin: 0 0 8px 0;
+  letter-spacing: -1.5px;
+  line-height: 1.15;
 }
 
 .voice-panel-section-title .highlight {
@@ -171,10 +177,12 @@ const styles = `
 }
 
 .voice-panel-description {
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   color: #64748b;
   margin: 0 0 32px 0;
-  line-height: 1.6;
+  line-height: 1.65;
+  font-weight: 400;
 }
 
 .voice-video-container {
@@ -235,10 +243,12 @@ const styles = `
 }
 
 .voice-instruction-text {
+  font-family: 'Inter', sans-serif;
   font-size: 15px;
   color: #334155;
-  line-height: 1.6;
+  line-height: 1.65;
   margin: 0;
+  font-weight: 400;
 }
 
 .voice-instruction-text strong {
@@ -343,17 +353,21 @@ const styles = `
 }
 
 .voice-option-title {
-  font-size: 18px;
-  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
   color: #1e293b;
   margin: 0;
+  line-height: 1.25;
 }
 
 .voice-option-description {
-  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
   color: #64748b;
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.65;
+  font-weight: 400;
 }
 
 .voice-step.completed .voice-step-number {
@@ -756,10 +770,12 @@ const styles = `
 }
 
 .consent-section-title {
-  font-size: 20px;
-  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  font-size: 24px;
+  font-weight: 600;
   color: #1e293b;
   margin: 0 0 16px 0;
+  line-height: 1.25;
 }
 
 .consent-field {
@@ -804,10 +820,12 @@ const styles = `
 }
 
 .consent-text {
-  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
   color: #334155;
-  line-height: 1.6;
+  line-height: 1.65;
   margin: 0;
+  font-weight: 400;
 }
 
 .consent-link {
@@ -829,11 +847,13 @@ const styles = `
 }
 
 .script-text {
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   color: #1e293b;
-  line-height: 1.8;
+  line-height: 1.65;
   margin: 0;
   white-space: pre-wrap;
+  font-weight: 400;
 }
 
 .script-editable-name {

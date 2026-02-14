@@ -17,13 +17,15 @@ const styles = `
 
 .page-header h1 {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 56px;
-  font-weight: 500;
+  font-size: clamp(40px, 5vw, 64px);
+  font-weight: 400;
+  letter-spacing: -1.5px;
+  line-height: 1.15;
   margin: 0 0 20px;
 }
 
 .page-header p {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 20px;
   line-height: 1.6;
   max-width: 800px;
@@ -42,9 +44,10 @@ const styles = `
 }
 
 .privacy-section h2 {
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 32px;
-  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(24px, 3vw, 40px);
+  font-weight: 600;
+  line-height: 1.25;
   color: #1e40af;
   margin: 0 0 20px;
   padding-bottom: 12px;
@@ -52,15 +55,16 @@ const styles = `
 }
 
 .privacy-section h3 {
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 24px;
-  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(24px, 2.5vw, 32px);
+  font-weight: 600;
+  line-height: 1.25;
   color: #1e40af;
   margin: 32px 0 16px;
 }
 
 .privacy-section p {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   line-height: 1.8;
   color: #333333;
@@ -68,7 +72,7 @@ const styles = `
 }
 
 .privacy-section ul {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   line-height: 1.8;
   color: #333333;
@@ -86,7 +90,7 @@ const styles = `
 }
 
 .last-updated {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   color: #666666;
   font-style: italic;

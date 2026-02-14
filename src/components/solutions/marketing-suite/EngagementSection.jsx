@@ -60,7 +60,7 @@ const styles = `
 }
 
 .engagement-subtitle {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 20px;
   line-height: 1.7;
   margin: 0;
@@ -274,7 +274,7 @@ const styles = `
 }
 
 .engagement-card-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   line-height: 1.7;
   margin: 0;
@@ -299,7 +299,7 @@ const styles = `
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   border: 2px solid transparent;
   color: #000000;
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 15px;
   font-weight: 700;
   text-transform: uppercase;

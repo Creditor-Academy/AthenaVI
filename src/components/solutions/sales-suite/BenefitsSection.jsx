@@ -59,7 +59,7 @@ const styles = `
 }
 
 .benefits-subtitle {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 20px;
   line-height: 1.7;
   margin: 0;
@@ -165,7 +165,7 @@ const styles = `
 }
 
 .benefits-card-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   line-height: 1.7;
   margin: 0;
@@ -175,7 +175,7 @@ const styles = `
 }
 
 .benefits-card-link {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 600;
   color: #1e40af;

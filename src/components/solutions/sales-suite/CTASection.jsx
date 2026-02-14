@@ -22,7 +22,7 @@ const styles = `
 }
 
 .cta-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 20px;
   line-height: 1.7;
   margin: 0 0 48px 0;
@@ -37,7 +37,7 @@ const styles = `
 }
 
 .primary-cta {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   border: none;
   color: #000;
@@ -60,7 +60,7 @@ const styles = `
 }
 
 .secondary-cta {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: transparent;
   border: 2px solid rgba(255, 255, 255, 0.3);
   color: #ffffff;
@@ -92,7 +92,7 @@ const styles = `
 }
 
 .trust-badge {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   color: rgba(255, 255, 255, 0.8);
   display: flex;
@@ -210,6 +210,15 @@ function CTASection() {
 }
 
 export default CTASection
+
+
+
+
+
+
+
+
+
 
 
 

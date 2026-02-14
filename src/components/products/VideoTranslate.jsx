@@ -35,7 +35,7 @@ const styles = `
 }
 
 .product-section-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 20px;
   line-height: 1.8;
   text-align: center;
@@ -148,7 +148,7 @@ const styles = `
 }
 
 .feature-text p {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 17px;
   line-height: 1.6;
   opacity: 0.95;

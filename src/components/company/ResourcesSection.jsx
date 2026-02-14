@@ -40,7 +40,7 @@ const styles = `
 }
 
 .resources-header-title {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 56px;
   font-weight: 700;
   color: #000000;
@@ -51,7 +51,7 @@ const styles = `
 }
 
 .resources-header-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 20px;
   color: #666666;
   margin: 0;
@@ -176,7 +176,7 @@ const styles = `
 }
 
 .resource-card-type {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 11px;
   font-weight: 700;
   color: #ffffff;
@@ -188,7 +188,7 @@ const styles = `
 }
 
 .resource-card-title {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 32px;
   font-weight: 700;
   color: #ffffff;
@@ -203,7 +203,7 @@ const styles = `
 }
 
 .resource-card-button {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 15px;
   font-weight: 600;
   color: #ffffff;
@@ -438,7 +438,7 @@ const styles = `
 }
 
 .resource-modal-type {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 700;
   color: #ffffff;
@@ -449,7 +449,7 @@ const styles = `
 }
 
 .resource-modal-title {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 36px;
   font-weight: 700;
   color: #ffffff;
@@ -465,7 +465,7 @@ const styles = `
 }
 
 .resource-modal-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   line-height: 1.8;
   color: #333333;
@@ -477,7 +477,7 @@ const styles = `
 }
 
 .resource-modal-content-section h4 {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 22px;
   font-weight: 700;
   color: #1e40af;
@@ -485,7 +485,7 @@ const styles = `
 }
 
 .resource-modal-content-section p {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   line-height: 1.7;
   color: #666666;
@@ -493,7 +493,7 @@ const styles = `
 }
 
 .resource-modal-content-section ul {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   line-height: 1.7;
   color: #666666;
@@ -514,7 +514,7 @@ const styles = `
 }
 
 .resource-modal-primary-btn {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   font-weight: 600;
   color: #ffffff;
@@ -536,7 +536,7 @@ const styles = `
 }
 
 .resource-modal-secondary-btn {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   font-weight: 600;
   color: #1e40af;

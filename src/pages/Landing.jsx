@@ -10,11 +10,11 @@ const styles = `
   min-height: 100vh;
   background: #ffffff;
   color: #1e40af;
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 .btn-outline {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: transparent;
   border: 1px solid #fff;
   color: #fff;
@@ -36,7 +36,7 @@ const styles = `
 }
 
 .btn-primary {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   border: none;
   color: #000;

@@ -59,7 +59,7 @@ const styles = `
 }
 
 .feature-marketing-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 19px;
   line-height: 1.8;
   margin: 0;
@@ -165,7 +165,7 @@ const styles = `
   background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
   color: #92400e;
   padding: 10px 20px;
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 11px;
   font-weight: 700;
   text-align: center;
@@ -199,7 +199,7 @@ const styles = `
 }
 
 .feature-marketing-card-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   line-height: 1.7;
   margin: 0 0 28px 0;
@@ -214,7 +214,7 @@ const styles = `
   justify-content: center;
   gap: 10px;
   color: #1e40af;
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 700;
   text-transform: uppercase;
