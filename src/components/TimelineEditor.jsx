@@ -106,22 +106,22 @@ const TimelineEditor = ({
         <div className="timeline-editor-root">
             <style>{`
         .timeline-editor-root {
-          background: #0f0f0f;
+          background: #ffffff;
           height: 100%;
           display: grid;
           grid-template-rows: 48px 1fr;
-          border-top: 1px solid #222;
-          color: #fff;
-          font-family: 'Inter', sans-serif;
+          border-top: 1px solid #e8eaed;
+          color: #202124;
+          font-family: 'Inter', 'Roboto', system-ui, sans-serif;
         }
 
         .timeline-toolbar {
-          padding: 0 20px;
+          padding: 0 24px;
           display: flex;
           align-items: center;
           gap: 16px;
-          background: #181818;
-          border-bottom: 1px solid #222;
+          background: #ffffff;
+          border-bottom: 1px solid #e8eaed;
         }
 
         .timeline-container {
@@ -134,8 +134,8 @@ const TimelineEditor = ({
         }
 
         .timeline-labels {
-          background: #121212;
-          border-right: 1px solid #222;
+          background: #f8f9fa;
+          border-right: 1px solid #e8eaed;
           display: flex;
           flex-direction: column;
         }
@@ -146,104 +146,80 @@ const TimelineEditor = ({
           align-items: center;
           padding: 0 16px;
           font-size: 13px;
-          color: #aaa;
-          border-bottom: 1px solid #222;
-          box-sizing: border-box;
-          background: #121212;
-        }
-
-        .track-label.small {
-          height: 60px;
+          color: #5f6368;
+          border-bottom: 1px solid #e8eaed;
         }
 
         .track-label.active {
-          color: #fff;
-          background: #1a1a1a;
+          color: #202124;
+          background: #ffffff;
+          font-weight: 500;
         }
 
         .timeline-viewport {
           position: relative;
           overflow-x: scroll;
           overflow-y: hidden;
-          background: #080808;
+          background: #f8f9fa;
           cursor: crosshair;
           scrollbar-width: thin;
-          scrollbar-color: #444 transparent;
-          user-select: none;
-          min-height: 100%;
-        }
-
-        .timeline-viewport::-webkit-scrollbar {
-          height: 10px;
-          background: #111;
-        }
-
-        .timeline-viewport::-webkit-scrollbar-thumb {
-          background: #444;
-          border-radius: 5px;
-        }
-
-        .timeline-viewport::-webkit-scrollbar-track {
-          background: #080808;
+          scrollbar-color: #dadce0 transparent;
         }
 
         .timeline-ruler {
           height: 28px;
-          background: #121212;
+          background: #ffffff;
           position: sticky;
           top: 0;
           z-index: 30;
-          border-bottom: 1px solid #333;
+          border-bottom: 1px solid #e8eaed;
         }
 
         .ruler-second {
           position: absolute;
-          border-left: 1px solid #444;
+          border-left: 1px solid #dadce0;
           height: 100%;
           padding-left: 4px;
           font-size: 10px;
-          color: #666;
+          color: #80868b;
           font-family: monospace;
         }
 
         .clip-track {
           height: 80px;
           position: relative;
-          border-bottom: 1px solid #222;
-          overflow: visible;
-        }
-
-        .clip-track.small {
-          height: 60px;
+          border-bottom: 1px solid #e8eaed;
         }
 
         .canva-clip {
           position: absolute;
           height: 64px;
-          background: #2a2a2a;
-          border-radius: 8px;
-          border: 2px solid transparent;
+          background: #ffffff;
+          border-radius: 12px;
+          border: 1px solid #dadce0;
           cursor: grab;
           display: flex;
           align-items: center;
           overflow: hidden;
-          transition: transform 0.2s, border-color 0.2s;
+          transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
         }
 
         .canva-clip.active {
-          border-color: #0088ff;
-          box-shadow: 0 0 15px rgba(0, 136, 256, 0.3);
+          border-color: #1a73e8;
+          background: #e8f0fe;
+          box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.1), 0 2px 4px 0 rgba(60, 64, 67, 0.3), 0 4px 12px 4px rgba(60, 64, 67, 0.15);
         }
 
         .canva-clip.drag-over {
-          background: #3a3a3a;
+          background: #f1f3f4;
           transform: scale(1.02);
         }
 
         .clip-thumb {
           width: 80px;
           height: 100%;
-          background: #000;
+          background: #f1f3f4;
           flex-shrink: 0;
           position: relative;
         }
@@ -252,7 +228,7 @@ const TimelineEditor = ({
           width: 100%;
           height: 100%;
           object-fit: cover;
-          opacity: 0.8;
+          opacity: 1;
         }
 
         .clip-info {
@@ -263,8 +239,8 @@ const TimelineEditor = ({
 
         .clip-name {
           font-size: 12px;
-          font-weight: 600;
-          color: #fff;
+          font-weight: 500;
+          color: #202124;
           white-space: nowrap;
           text-overflow: ellipsis;
           overflow: hidden;
@@ -272,7 +248,7 @@ const TimelineEditor = ({
 
         .clip-meta {
           font-size: 10px;
-          color: #888;
+          color: #80868b;
           margin-top: 2px;
         }
 
@@ -281,7 +257,7 @@ const TimelineEditor = ({
           top: 0;
           bottom: 0;
           width: 2px;
-          background: #ff4d4d;
+          background: #1a73e8;
           z-index: 100;
           pointer-events: none;
         }
@@ -292,78 +268,58 @@ const TimelineEditor = ({
           left: -7px;
           width: 14px;
           height: 14px;
-          background: #ff4d4d;
-          border-radius: 2px;
+          background: #1a73e8;
+          border-radius: 50%;
           cursor: grab;
           pointer-events: auto;
-          box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+          box-shadow: 0 2px 4px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
         }
 
         .playhead-head:active { cursor: grabbing; }
 
         .time-display {
-          background: #000;
-          padding: 4px 12px;
-          border-radius: 6px;
-          color: #00ff00;
+          background: #ffffff;
+          padding: 6px 12px;
+          border-radius: 8px;
+          color: #202124;
           font-family: monospace;
-          font-size: 14px;
-          border: 1px solid #333;
+          font-size: 13px;
+          border: 1px solid #dadce0;
+          font-weight: 500;
         }
 
         .toolbar-btn {
           background: transparent;
           border: none;
-          color: #aaa;
-          padding: 8px;
-          border-radius: 4px;
+          color: #5f6368;
+          padding: 8px 12px;
+          border-radius: 8px;
           cursor: pointer;
           display: flex;
           align-items: center;
           gap: 6px;
-          transition: all 0.2s;
+          transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
           font-size: 13px;
         }
 
         .toolbar-btn:hover {
-          color: #fff;
-          background: #333;
+          color: #202124;
+          background: #f1f3f4;
         }
 
         .layer-item {
           position: absolute;
           height: 32px;
-          background: #1b4332;
-          border: 1px solid #2d6a4f;
-          border-radius: 6px;
+          background: #e8f0fe;
+          border: 1px solid #a8c7fa;
+          border-radius: 8px;
           display: flex;
           align-items: center;
           padding: 0 10px;
           font-size: 11px;
-          color: #d8f3dc;
-        }
-
-        .music-track {
-          height: 60px;
-          background: rgba(142, 68, 173, 0.15);
-          border-bottom: 1px solid #222;
-          position: relative;
-          box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-        }
-
-        .music-clip {
-          position: absolute;
-          height: 24px;
-          top: 8px;
-          background: #8e44ad;
-          border: 1px solid #9b59b6;
-          border-radius: 4px;
-          display: flex;
-          align-items: center;
-          padding: 0 10px;
-          font-size: 11px;
-          color: #fff;
-          white-space: nowrap;
+          color: #1a73e8;
+          font-weight: 500;
+          box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
         }
       `}</style>
 
@@ -372,14 +328,14 @@ const TimelineEditor = ({
                     <MdAdd size={20} />
                     <span>Add Page</span>
                 </button>
-                <div style={{ width: '1px', height: '24px', background: '#333' }} />
+                <div style={{ width: '1px', height: '24px', background: '#e8eaed' }} />
                 <button className="toolbar-btn" title="Delete" onClick={() => onDeleteScene(activeSceneId)}>
                     <MdDelete size={18} />
                 </button>
 
                 <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div className="zoom-controls" style={{ display: 'flex', alignItems: 'center', background: '#000', borderRadius: '20px', padding: '0 10px' }}>
-                        <MdZoomOut size={14} color="#666" />
+                    <div className="zoom-controls" style={{ display: 'flex', alignItems: 'center', background: '#f1f3f4', borderRadius: '20px', padding: '0 10px' }}>
+                        <MdZoomOut size={14} color="#5f6368" />
                         <input
                             type="range"
                             min="20"
@@ -388,7 +344,7 @@ const TimelineEditor = ({
                             onChange={(e) => setZoom(Number(e.target.value))}
                             style={{ width: '80px', margin: '0 8px' }}
                         />
-                        <MdZoomIn size={14} color="#666" />
+                        <MdZoomIn size={14} color="#5f6368" />
                     </div>
                     <div className="time-display">
                         {Math.floor(currentTime / 60).toString().padStart(2, '0')}:
@@ -453,7 +409,7 @@ const TimelineEditor = ({
                                     >
                                         <div className="clip-thumb">
                                             <img src={scene.avatar} alt="" />
-                                            <div style={{ position: 'absolute', top: 4, left: 4, background: 'rgba(0,0,0,0.5)', borderRadius: '4px', padding: '2px 4px', fontSize: '9px' }}>
+                                            <div style={{ position: 'absolute', top: 4, left: 4, background: 'rgba(255,255,255,0.9)', borderRadius: '4px', padding: '2px 4px', fontSize: '9px', color: '#202124', fontWeight: '600' }}>
                                                 {index + 1}
                                             </div>
                                         </div>

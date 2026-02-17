@@ -107,7 +107,7 @@ const styles = `
 
 /* Enhanced description */
 .video-campaigns-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 22px;
   line-height: 1.8;
   max-width: 680px;
@@ -185,7 +185,7 @@ const styles = `
   font-weight: 500;
   color: rgba(255, 255, 255, 0.95);
   transition: all 0.3s ease;
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   letter-spacing: 0.3px;
 }
 

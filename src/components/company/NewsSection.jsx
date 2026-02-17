@@ -24,8 +24,10 @@ const styles = `
 
 .news-section-title {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 64px;
-  font-weight: 500;
+  font-size: clamp(40px, 5vw, 64px);
+  font-weight: 400;
+  letter-spacing: -1.5px;
+  line-height: 1.15;
   text-align: center;
   margin: 0 0 40px;
 }
@@ -39,7 +41,7 @@ const styles = `
 }
 
 .news-section-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 20px;
   line-height: 1.8;
   text-align: center;
@@ -96,7 +98,7 @@ const styles = `
 }
 
 .news-category {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12px;
   color: #ffffff;
   background: #3b82f6;
@@ -114,7 +116,7 @@ const styles = `
 }
 
 .news-date {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   margin-bottom: 12px;
   font-weight: 500;
@@ -129,9 +131,10 @@ const styles = `
 }
 
 .news-title {
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 24px;
-  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(24px, 2.5vw, 32px);
+  font-weight: 600;
+  line-height: 1.25;
   margin: 0 0 12px;
 }
 
@@ -144,7 +147,7 @@ const styles = `
 }
 
 .news-excerpt {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   line-height: 1.7;
   margin: 0 0 16px;
@@ -159,7 +162,7 @@ const styles = `
 }
 
 .news-read-more {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   text-decoration: none;
   font-weight: 500;

@@ -27,11 +27,12 @@ const styles = `
 
 .blog-section-title {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 64px;
-  font-weight: 500;
+  font-size: clamp(40px, 5vw, 64px);
+  font-weight: 400;
+  letter-spacing: -1.5px;
+  line-height: 1.15;
   text-align: center;
   margin: 0 0 40px;
-  letter-spacing: -0.5px;
 }
 
 .blog-section.light .blog-section-title {
@@ -43,7 +44,7 @@ const styles = `
 }
 
 .blog-section-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 20px;
   line-height: 1.8;
   text-align: center;
@@ -139,7 +140,7 @@ const styles = `
 }
 
 .blog-date {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   margin-bottom: 16px;
   font-weight: 600;
@@ -156,12 +157,11 @@ const styles = `
 }
 
 .blog-title {
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 26px;
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(24px, 2.5vw, 32px);
   font-weight: 600;
+  line-height: 1.25;
   margin: 0 0 16px;
-  line-height: 1.3;
-  letter-spacing: -0.3px;
 }
 
 .blog-section.light .blog-title {
@@ -173,7 +173,7 @@ const styles = `
 }
 
 .blog-excerpt {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 15px;
   line-height: 1.7;
   margin: 0 0 24px;
@@ -189,7 +189,7 @@ const styles = `
 }
 
 .blog-read-more {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 15px;
   text-decoration: none;
   font-weight: 600;

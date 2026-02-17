@@ -43,8 +43,10 @@ const styles = `
 
 .about-hero-title {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 72px;
-  font-weight: 500;
+  font-size: clamp(40px, 5vw, 64px);
+  font-weight: 400;
+  letter-spacing: -1.5px;
+  line-height: 1.15;
   color: #ffffff;
   text-align: center;
   margin: 0;
@@ -67,9 +69,10 @@ const styles = `
 
 .about-intro-heading {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 56px;
-  font-weight: 500;
-  line-height: 1.2;
+  font-size: clamp(40px, 5vw, 64px);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -1.5px;
   margin: 0;
 }
 
@@ -82,7 +85,7 @@ const styles = `
 }
 
 .about-intro-text {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   line-height: 1.7;
   color: #4b5563;
@@ -129,9 +132,10 @@ const styles = `
 }
 
 .about-card-title {
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 24px;
-  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(24px, 2.5vw, 32px);
+  font-weight: 600;
+  line-height: 1.25;
   margin: 0 0 16px;
 }
 
@@ -144,7 +148,7 @@ const styles = `
 }
 
 .about-card-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   line-height: 1.7;
   margin: 0;

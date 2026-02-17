@@ -23,7 +23,7 @@ const styles = `
   min-height: 100vh;
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
   color: #ffffff;
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 /* Hero Section */
@@ -87,17 +87,18 @@ const styles = `
 }
 
 .hero-title {
-  font-family: 'Arial', sans-serif;
-  font-size: 64px;
-  font-weight: 700;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: clamp(40px, 5vw, 64px);
+  font-weight: 400;
+  letter-spacing: -1.5px;
+  line-height: 1.15;
   color: #ffffff;
   margin: 0 0 24px;
-  line-height: 1.2;
   text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
 }
 
 .hero-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 20px;
   line-height: 1.8;
   color: rgba(255, 255, 255, 0.9);
@@ -108,7 +109,7 @@ const styles = `
 }
 
 .hero-cta {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: rgba(30, 30, 30, 0.8);
   border: 2px solid rgba(255, 255, 255, 0.3);
   color: #ffffff;
@@ -173,7 +174,7 @@ const styles = `
 }
 
 .features-section-title {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 48px;
   font-weight: 700;
   color: #1e40af;
@@ -182,7 +183,7 @@ const styles = `
 }
 
 .features-section-subtitle {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   color: #64748b;
   margin: 0 0 60px;
@@ -320,7 +321,7 @@ const styles = `
 }
 
 .feature-card-title {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 28px;
   font-weight: 700;
   color: #1e40af;
@@ -331,7 +332,7 @@ const styles = `
 }
 
 .feature-card-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   line-height: 1.7;
   color: #475569;
@@ -342,7 +343,7 @@ const styles = `
 }
 
 .feature-card-metric {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 48px;
   font-weight: 700;
   color: #1e40af;
@@ -356,7 +357,7 @@ const styles = `
 }
 
 .feature-card-metric-label {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   color: #64748b;
   position: relative;
@@ -414,7 +415,7 @@ const styles = `
 }
 
 .solutions-title {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 48px;
   font-weight: 700;
   color: #ffffff;
@@ -423,7 +424,7 @@ const styles = `
 }
 
 .solutions-cta {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: rgba(30, 30, 30, 0.8);
   border: 2px solid rgba(255, 255, 255, 0.3);
   color: #ffffff;
@@ -489,7 +490,7 @@ const styles = `
 }
 
 .solution-title {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 24px;
   font-weight: 700;
   color: #ffffff;
@@ -497,7 +498,7 @@ const styles = `
 }
 
 .solution-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   line-height: 1.7;
   color: rgba(255, 255, 255, 0.7);

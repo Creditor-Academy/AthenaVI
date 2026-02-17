@@ -15,7 +15,7 @@ const styles = `
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 .hero-top {
@@ -32,11 +32,12 @@ const styles = `
 
 .hero-title-top {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 72px;
-  font-weight: 500;
+  font-size: clamp(40px, 5vw, 64px);
+  font-weight: 400;
   color: #ffffff;
   margin: 0 0 24px;
-  line-height: 1.1;
+  line-height: 1.15;
+  letter-spacing: -1.5px;
   text-align: center;
   width: 100%;
   max-width: 1200px;
@@ -44,14 +45,16 @@ const styles = `
 }
 
 .hero-subtitle-top {
-  font-family: 'Arial', sans-serif;
-  font-size: 24px;
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0;
-  font-weight: 400;
-  line-height: 1.5;
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(18px, 2.2vw, 22px);
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0 auto;
+  font-weight: 300;
+  line-height: 1.6;
+  letter-spacing: 0.2px;
   text-align: center;
   max-width: 700px;
+  padding: 0 20px;
 }
 
 .hero-avatars {
@@ -108,7 +111,7 @@ const styles = `
 }
 
 .btn-outline {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: transparent;
   border: 1px solid #fff;
   color: #fff;
@@ -130,7 +133,7 @@ const styles = `
 }
 
 .btn-primary {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   border: none;
   color: #000;
@@ -201,10 +204,13 @@ const styles = `
 @media (max-width: 480px) {
   .hero-title-top {
     font-size: 36px;
+    margin: 0 0 20px;
   }
 
   .hero-subtitle-top {
     font-size: 16px;
+    line-height: 1.5;
+    padding: 0 16px;
   }
 }
 `

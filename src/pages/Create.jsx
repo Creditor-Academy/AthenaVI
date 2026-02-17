@@ -15,8 +15,14 @@ import {
   MdMic,
   MdFullscreen,
   MdVideoLibrary,
-  MdDelete, // Add MdDelete
-  MdClose
+  MdDelete,
+  MdClose,
+  MdVideocam,
+  MdFolder,
+  MdClosedCaption,
+  MdAutoAwesome,
+  MdShapeLine,
+  MdAdd
 } from 'react-icons/md'
 import TimelineEditor from '../components/TimelineEditor'
 import './Create.css'
@@ -27,6 +33,11 @@ import avatar1 from '../assets/avatar1.png'
 import EditorTopbar from '../components/editor/EditorTopbar'
 
 function Create({ onBack }) {
+  // Debug: Log when component mounts
+  useEffect(() => {
+    console.log('Create component mounted')
+  }, [])
+
   const [scenes, setScenes] = useState([
     {
       id: 'scene1',
@@ -57,7 +68,7 @@ function Create({ onBack }) {
     }
   ])
   const [activeSceneId, setActiveSceneId] = useState('scene1')
-  const [selectedTool, setSelectedTool] = useState('avatar')
+  const [selectedTool, setSelectedTool] = useState(null) // Start with no tool selected
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [zoomLevel, setZoomLevel] = useState(100)
@@ -69,7 +80,17 @@ function Create({ onBack }) {
   const [bgMusicVolume, setBgMusicVolume] = useState(0.3)
 
   const addLayer = (type, content) => {
+    if (!activeSceneId) {
+      console.warn('No active scene selected for adding layer')
+      alert('Please select a scene first')
+      return
+    }
     const activeScene = scenes.find(s => s.id === activeSceneId)
+    if (!activeScene) {
+      console.warn('Active scene not found:', activeSceneId)
+      return
+    }
+    console.log('Adding layer:', type, content, 'to scene:', activeSceneId)
     const newLayer = {
       id: `layer-${Date.now()}`,
       type,
@@ -242,6 +263,10 @@ function Create({ onBack }) {
   }
 
   const handleAddTemplateScene = (template) => {
+    // Get default avatar if no active scene
+    const defaultAvatar = activeScene?.avatar || avatar1
+    const defaultAvatarType = activeScene?.avatarType || 'avatar1'
+    
     const newScene = {
       id: `scene${Date.now()}`,
       title: `Scene ${scenes.length + 1}`,
@@ -249,19 +274,21 @@ function Create({ onBack }) {
       titleText: template.fields.find(f => f.key === 'titleText')?.default || 'New Scene',
       subtitleText: template.fields.find(f => f.key === 'subtitleText')?.default || 'Add your content here',
       layout: template.layout,
-      avatar: activeScene?.avatar || avatar1,
-      avatarType: activeScene?.avatarType || 'avatar1',
+      avatar: defaultAvatar,
+      avatarType: defaultAvatarType,
       type: 'video',
+      script: template.fields.find(f => f.key === 'script')?.default || 'Start your video by greeting your audience and introducing your topic.',
+      layers: [],
       titleStyle: {
         fontSize: 48,
-        color: '#0066cc',
+        color: '#1a73e8',
         fontFamily: 'Inter',
         fontWeight: '700',
         textAlign: 'left'
       },
       subtitleStyle: {
         fontSize: 24,
-        color: '#333333',
+        color: '#202124',
         fontFamily: 'Inter',
         fontWeight: '400',
         textAlign: 'left'
@@ -270,14 +297,31 @@ function Create({ onBack }) {
 
     // Add other template fields as data
     template.fields.forEach(field => {
-      if (field.key !== 'titleText' && field.key !== 'subtitleText') {
+      if (field.key !== 'titleText' && field.key !== 'subtitleText' && field.key !== 'script') {
         newScene[field.key] = field.default
       }
     })
 
-    setScenes([...scenes, newScene])
+    // Ensure avatar is set - fallback to first predefined avatar if needed
+    if (!newScene.avatar) {
+      const firstAvatar = predefinedAvatars[0]
+      if (firstAvatar) {
+        newScene.avatar = firstAvatar.image
+        newScene.avatarType = firstAvatar.id
+      } else {
+        newScene.avatar = avatar1
+        newScene.avatarType = 'avatar1'
+      }
+    }
+
+    console.log('Adding new scene:', newScene)
+    const updatedScenes = [...scenes, newScene]
+    setScenes(updatedScenes)
     setActiveSceneId(newScene.id)
     setShowTemplateModal(false)
+    setSelectedTool(null) // Close the tool panel after adding
+    
+    console.log('Updated scenes count:', updatedScenes.length)
   }
 
   const deleteScene = (id) => {
@@ -290,9 +334,18 @@ function Create({ onBack }) {
   }
 
   const updateScene = (id, updates) => {
-    setScenes(scenes.map(scene =>
-      scene.id === id ? { ...scene, ...updates } : scene
-    ))
+    if (!id) {
+      console.warn('updateScene called with no id')
+      return
+    }
+    console.log('Updating scene:', id, updates)
+    setScenes(prevScenes => {
+      const updated = prevScenes.map(scene =>
+        scene.id === id ? { ...scene, ...updates } : scene
+      )
+      console.log('Scenes after update:', updated)
+      return updated
+    })
   }
 
   const exportVideo = () => {
@@ -300,11 +353,20 @@ function Create({ onBack }) {
   }
 
   const selectAvatar = (avatarId) => {
+    if (!activeSceneId) {
+      console.warn('No active scene selected')
+      return
+    }
+    console.log('Selecting avatar:', avatarId, 'for scene:', activeSceneId)
     setSelectedAvatar(avatarId)
     const avatar = predefinedAvatars.find(a => a.id === avatarId)
+    if (!avatar) {
+      console.warn('Avatar not found:', avatarId)
+      return
+    }
     updateScene(activeSceneId, {
       avatarType: avatarId,
-      avatar: avatar ? avatar.image : null
+      avatar: avatar.image
     })
   }
 
@@ -362,6 +424,15 @@ function Create({ onBack }) {
     }
   }
 
+  // Safety check
+  if (!scenes || scenes.length === 0) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        <h2>Loading editor...</h2>
+      </div>
+    )
+  }
+
   return (
     <>
       <div className="video-editor-shell">
@@ -373,61 +444,395 @@ function Create({ onBack }) {
           exportVideo={exportVideo}
         />
 
-        <div className="editor-main">
-          {/* Media Library */}
-          <div className="media-library">
-            <div className="library-section">
-              <h3 className="section-title">Media Library</h3>
-              <div
-                className="upload-area"
-                onClick={() => {
-                  const input = document.createElement('input')
-                  input.type = 'file'
-                  input.accept = 'image/*,video/*,audio/*'
-                  input.multiple = true
-                  input.onchange = (e) => {
-                    const files = Array.from(e.target.files)
-                    files.forEach(file => {
-                      const url = URL.createObjectURL(file)
-                      addLayer(file.type.split('/')[0], url)
-                    })
-                  }
-                  input.click()
-                }}
-              >
-                <MdCloudUpload size={24} />
-                <div>Upload Media</div>
-              </div>
-              <div className="media-grid">
-                {predefinedMedia.map((media) => (
-                  <div
-                    key={media.id}
-                    className="media-item"
-                    onClick={() => addLayer('image', media.full)}
-                    title={`Add ${media.name}`}
-                  >
-                    <img src={media.image} alt={media.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} />
-                  </div>
-                ))}
-              </div>
-            </div>
+        <div className={`editor-main ${selectedTool ? 'with-tool-panel' : ''}`}>
+          {/* Left Sidebar with Tool Icons */}
+          <aside className="tool-sidebar">
+            <button
+              className={`tool-sidebar-item ${selectedTool === 'avatar' ? 'active' : ''}`}
+              onClick={() => setSelectedTool(selectedTool === 'avatar' ? null : 'avatar')}
+              title="Avatar"
+            >
+              <MdPerson size={24} />
+              <span className="tool-sidebar-item-label">Avatar</span>
+            </button>
+            <button
+              className={`tool-sidebar-item ${selectedTool === 'voiceover' ? 'active' : ''}`}
+              onClick={() => setSelectedTool(selectedTool === 'voiceover' ? null : 'voiceover')}
+              title="Voiceover"
+            >
+              <MdMic size={24} />
+              <span className="tool-sidebar-item-label">Voiceover</span>
+            </button>
+            <button
+              className={`tool-sidebar-item ${selectedTool === 'image' ? 'active' : ''}`}
+              onClick={() => setSelectedTool(selectedTool === 'image' ? null : 'image')}
+              title="Image"
+            >
+              <MdPhotoLibrary size={24} />
+              <span className="tool-sidebar-item-label">Image</span>
+            </button>
+            <button
+              className={`tool-sidebar-item ${selectedTool === 'record' ? 'active' : ''}`}
+              onClick={() => setSelectedTool(selectedTool === 'record' ? null : 'record')}
+              title="Record"
+            >
+              <MdVideocam size={24} />
+              <span className="tool-sidebar-item-label">Record</span>
+            </button>
+            <button
+              className={`tool-sidebar-item ${selectedTool === 'uploads' ? 'active' : ''}`}
+              onClick={() => setSelectedTool(selectedTool === 'uploads' ? null : 'uploads')}
+              title="Uploads"
+            >
+              <MdCloudUpload size={24} />
+              <span className="tool-sidebar-item-label">Uploads</span>
+            </button>
+            <button
+              className={`tool-sidebar-item ${selectedTool === 'stock' ? 'active' : ''}`}
+              onClick={() => setSelectedTool(selectedTool === 'stock' ? null : 'stock')}
+              title="Stock"
+            >
+              <MdFolder size={24} />
+              <span className="tool-sidebar-item-label">Stock</span>
+            </button>
+            <button
+              className={`tool-sidebar-item ${selectedTool === 'captions' ? 'active' : ''}`}
+              onClick={() => setSelectedTool(selectedTool === 'captions' ? null : 'captions')}
+              title="Captions"
+            >
+              <MdClosedCaption size={24} />
+              <span className="tool-sidebar-item-label">Captions</span>
+            </button>
+            <button
+              className={`tool-sidebar-item ${selectedTool === 'text' ? 'active' : ''}`}
+              onClick={() => setSelectedTool(selectedTool === 'text' ? null : 'text')}
+              title="Text"
+            >
+              <MdTextFields size={24} />
+              <span className="tool-sidebar-item-label">Text</span>
+            </button>
+            <button
+              className={`tool-sidebar-item ${selectedTool === 'templates' ? 'active' : ''}`}
+              onClick={() => {
+                if (selectedTool === 'templates') {
+                  setSelectedTool(null)
+                } else {
+                  setSelectedTool('templates')
+                  setShowTemplateModal(true)
+                }
+              }}
+              title="Templates"
+            >
+              <MdAutoAwesome size={24} />
+              <span className="tool-sidebar-item-label">Templates</span>
+            </button>
+            <button
+              className={`tool-sidebar-item ${selectedTool === 'shapes' ? 'active' : ''}`}
+              onClick={() => setSelectedTool(selectedTool === 'shapes' ? null : 'shapes')}
+              title="Shapes"
+            >
+              <MdShapeLine size={24} />
+              <span className="tool-sidebar-item-label">Shapes</span>
+            </button>
+            <button
+              className={`tool-sidebar-item ${selectedTool === 'layers' ? 'active' : ''}`}
+              onClick={() => setSelectedTool(selectedTool === 'layers' ? null : 'layers')}
+              title="Layers"
+            >
+              <MdLayers size={24} />
+              <span className="tool-sidebar-item-label">Layers</span>
+            </button>
+            <button
+              className="tool-sidebar-add-btn"
+              title="Add more"
+            >
+              <MdAdd size={24} />
+            </button>
+          </aside>
 
-            <div className="library-section">
-              <h3 className="section-title">Page Templates</h3>
-              <div className="media-grid">
-                {pageTemplates.map(template => (
-                  <div
-                    key={template.id}
-                    className="media-item"
-                    title={template.name}
-                    onClick={() => handleAddTemplateScene(template)}
-                  >
-                    {template.icon}
+          {/* Content Panel - Shows based on selected tool */}
+          {selectedTool && (
+            <div className="tool-content-panel">
+              {selectedTool === 'avatar' && (
+                <div className="tool-panel-content">
+                  <h3 className="tool-panel-title">Avatar Selection</h3>
+                  <div className="avatar-selection">
+                    <div className="avatar-options" style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+                      gap: '12px'
+                    }}>
+                      {predefinedAvatars.map((avatar) => (
+                        <div
+                          key={avatar.id}
+                          className={`avatar-option ${activeScene?.avatarType === avatar.id ? 'active' : ''}`}
+                          onClick={() => selectAvatar(avatar.id)}
+                        >
+                          <img
+                            src={avatar.image}
+                            alt={avatar.name}
+                            style={{
+                              width: '60px',
+                              height: '60px',
+                              borderRadius: '50%',
+                              objectFit: 'cover'
+                            }}
+                          />
+                          <span>{avatar.name}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+
+              {selectedTool === 'voiceover' && (
+                <div className="tool-panel-content">
+                  <h3 className="tool-panel-title">Voiceover Script</h3>
+                  <textarea
+                    className="script-input"
+                    placeholder="What will the AI say?"
+                    value={activeScene?.script || ''}
+                    onChange={(e) => updateScene(activeSceneId, { script: e.target.value })}
+                    rows={8}
+                  />
+                </div>
+              )}
+
+              {selectedTool === 'image' && (
+                <div className="tool-panel-content">
+                  <h3 className="tool-panel-title">Image Library</h3>
+                  <div className="media-grid">
+                    {predefinedMedia.map((media) => (
+                      <div
+                        key={media.id}
+                        className="media-item"
+                        onClick={() => addLayer('image', media.full)}
+                        title={`Add ${media.name}`}
+                      >
+                        <img src={media.image} alt={media.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedTool === 'uploads' && (
+                <div className="tool-panel-content">
+                  <h3 className="tool-panel-title">Upload Media</h3>
+                  <div
+                    className="upload-area"
+                    onClick={() => {
+                      const input = document.createElement('input')
+                      input.type = 'file'
+                      input.accept = 'image/*,video/*,audio/*'
+                      input.multiple = true
+                      input.onchange = (e) => {
+                        const files = Array.from(e.target.files)
+                        files.forEach(file => {
+                          const url = URL.createObjectURL(file)
+                          addLayer(file.type.split('/')[0], url)
+                        })
+                      }
+                      input.click()
+                    }}
+                  >
+                    <MdCloudUpload size={32} />
+                    <div>Click to Upload Media</div>
+                    <p style={{ fontSize: '12px', color: '#80868b', marginTop: '8px' }}>From Drive, Photos or your computer</p>
+                  </div>
+                  <div className="media-grid" style={{ marginTop: '16px' }}>
+                    {predefinedMedia.map((media) => (
+                      <div
+                        key={media.id}
+                        className="media-item"
+                        onClick={() => addLayer('image', media.full)}
+                        title={`Add ${media.name}`}
+                      >
+                        <img src={media.image} alt={media.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedTool === 'templates' && (
+                <div className="tool-panel-content">
+                  <h3 className="tool-panel-title">Page Templates</h3>
+                  <div className="media-grid">
+                    {pageTemplates.map(template => (
+                      <div
+                        key={template.id}
+                        className="media-item"
+                        title={template.name}
+                        onClick={() => handleAddTemplateScene(template)}
+                      >
+                        {template.icon}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedTool === 'text' && (
+                <div className="tool-panel-content">
+                  <h3 className="tool-panel-title">Text Styling</h3>
+                  {!activeSceneId ? (
+                    <div style={{ padding: '20px', textAlign: 'center', color: '#5f6368' }}>
+                      Please select a scene first
+                    </div>
+                  ) : (
+                    <>
+                      {/* Dynamically render fields based on template */}
+                      {(pageTemplates.find(t => t.layout === (activeScene?.layout || 'split-right'))?.fields || []).map(field => (
+                        <div key={field.key} className="property-row">
+                          <label className="property-label">{field.label}</label>
+                          {field.type === 'textarea' ? (
+                            <textarea
+                              className="property-input"
+                              style={{ minHeight: '60px', resize: 'vertical' }}
+                              value={activeScene?.[field.key] || ''}
+                              onChange={(e) => {
+                                console.log('Updating text field:', field.key, e.target.value)
+                                updateScene(activeSceneId, { [field.key]: e.target.value })
+                              }}
+                            />
+                          ) : (
+                            <input
+                              className="property-input"
+                              value={activeScene?.[field.key] || ''}
+                              onChange={(e) => {
+                                console.log('Updating text field:', field.key, e.target.value)
+                                updateScene(activeSceneId, { [field.key]: e.target.value })
+                              }}
+                            />
+                          )}
+                        </div>
+                      ))}
+                      <div style={{ height: '8px', borderBottom: '1px solid #e8eaed', margin: '16px 0' }} />
+                      <div className="property-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                        <div>
+                          <label className="property-label">Title Size</label>
+                          <input
+                            className="property-input"
+                            type="number"
+                            value={activeScene?.titleStyle?.fontSize || 48}
+                            onChange={(e) => updateScene(activeSceneId, {
+                              titleStyle: { ...(activeScene?.titleStyle || {}), fontSize: Number(e.target.value) }
+                            })}
+                          />
+                        </div>
+                        <div>
+                          <label className="property-label">Title Color</label>
+                          <input
+                            className="property-input"
+                            type="color"
+                            style={{ height: '32px', padding: '2px' }}
+                            value={activeScene?.titleStyle?.color || '#1a73e8'}
+                            onChange={(e) => updateScene(activeSceneId, {
+                              titleStyle: { ...(activeScene?.titleStyle || {}), color: e.target.value }
+                            })}
+                          />
+                        </div>
+                      </div>
+                      <div className="property-row">
+                        <label className="property-label">Alignment</label>
+                        <select
+                          className="property-input"
+                          value={activeScene?.titleStyle?.textAlign || 'left'}
+                          onChange={(e) => updateScene(activeSceneId, {
+                            titleStyle: { ...(activeScene?.titleStyle || {}), textAlign: e.target.value }
+                          })}
+                        >
+                          <option value="left">Left</option>
+                          <option value="center">Center</option>
+                          <option value="right">Right</option>
+                        </select>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {selectedTool === 'layers' && (
+                <div className="tool-panel-content">
+                  <h3 className="tool-panel-title">B-Roll & Overlays</h3>
+                  <div className="layers-list">
+                    {(activeScene?.layers || []).length === 0 ? (
+                      <div style={{ padding: '20px', textAlign: 'center', color: '#5f6368', fontSize: '13px', border: '1px dashed #dadce0', borderRadius: '8px', background: '#f8f9fa' }}>
+                        No extra layers in this scene. Add media from the library to see them here.
+                      </div>
+                    ) : (
+                      activeScene.layers.map(layer => (
+                        <div key={layer.id} className="layer-item-preview">
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            {layer.type === 'image' ? <MdPhotoLibrary size={14} /> : <MdVideoLibrary size={14} />}
+                            <span>{layer.type}</span>
+                          </div>
+                          <button onClick={() => {
+                            updateScene(activeSceneId, {
+                              layers: activeScene.layers.filter(l => l.id !== layer.id)
+                            })
+                          }}>
+                            <MdDelete size={16} />
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {selectedTool === 'record' && (
+                <div className="tool-panel-content">
+                  <h3 className="tool-panel-title">Record</h3>
+                  <div style={{ padding: '40px', textAlign: 'center' }}>
+                    <MdVideocam size={64} style={{ color: '#1a73e8', marginBottom: '16px' }} />
+                    <p style={{ color: '#5f6368', marginBottom: '24px' }}>Record yourself, your screen or both</p>
+                    <button className="primary-btn">Start Recording</button>
+                  </div>
+                </div>
+              )}
+
+              {selectedTool === 'stock' && (
+                <div className="tool-panel-content">
+                  <h3 className="tool-panel-title">Stock Media</h3>
+                  <div className="media-grid">
+                    {predefinedMedia.map((media) => (
+                      <div
+                        key={media.id}
+                        className="media-item"
+                        onClick={() => addLayer('image', media.full)}
+                        title={`Add ${media.name}`}
+                      >
+                        <img src={media.image} alt={media.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedTool === 'captions' && (
+                <div className="tool-panel-content">
+                  <h3 className="tool-panel-title">Captions</h3>
+                  <div style={{ padding: '20px', textAlign: 'center', color: '#5f6368' }}>
+                    <MdClosedCaption size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
+                    <p>Caption editing coming soon</p>
+                  </div>
+                </div>
+              )}
+
+              {selectedTool === 'shapes' && (
+                <div className="tool-panel-content">
+                  <h3 className="tool-panel-title">Shapes</h3>
+                  <div style={{ padding: '20px', textAlign: 'center', color: '#5f6368' }}>
+                    <MdShapeLine size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
+                    <p>Shape library coming soon</p>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
+          )}
 
           {/* Canvas Area */}
           <div className="canvas-area">
@@ -497,7 +902,7 @@ function Create({ onBack }) {
                 >
                   <MdZoomOut />
                 </button>
-                <span style={{ color: '#aaa', fontSize: '12px', margin: '0 8px' }}>
+                <span style={{ color: '#5f6368', fontSize: '13px', margin: '0 8px' }}>
                   {zoomLevel}%
                 </span>
                 <button
@@ -523,195 +928,8 @@ function Create({ onBack }) {
             </div>
           </div>
 
-          {/* Properties Panel */}
+          {/* Right Properties Panel - Always visible for scene config */}
           <div className="properties-panel">
-            {selectedTool === 'avatar' && (
-              <div className="property-group">
-                <h3 className="property-title">
-                  <MdPerson style={{ marginRight: '8px', verticalAlign: 'middle' }} />
-                  Avatar Selection
-                </h3>
-                <div className="avatar-selection">
-                  <div className="avatar-options" style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
-                    gap: '8px'
-                  }}>
-                    {predefinedAvatars.map((avatar) => (
-                      <div
-                        key={avatar.id}
-                        className={`avatar-option ${activeScene?.avatarType === avatar.id ? 'active' : ''}`}
-                        onClick={() => selectAvatar(avatar.id)}
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: '8px',
-                          padding: '12px',
-                          border: `2px solid ${activeScene?.avatarType === avatar.id ? '#0066cc' : '#333'}`,
-                          borderRadius: '8px',
-                          background: activeScene?.avatarType === avatar.id ? '#0066cc' : '#2a2a2a',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        <img
-                          src={avatar.image}
-                          alt={avatar.name}
-                          style={{
-                            width: '60px',
-                            height: '60px',
-                            borderRadius: '50%',
-                            objectFit: 'cover',
-                            border: '2px solid rgba(255,255,255,0.2)'
-                          }}
-                        />
-                        <span style={{
-                          fontSize: '11px',
-                          textAlign: 'center',
-                          fontWeight: 600,
-                          color: activeScene?.avatarType === avatar.id ? '#fff' : '#aaa'
-                        }}>
-                          {avatar.name}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {selectedTool === 'text' && (
-              <div className="property-group">
-                <h3 className="property-title">
-                  <MdTextFields style={{ marginRight: '8px', verticalAlign: 'middle' }} />
-                  Text Styling
-                </h3>
-
-                {/* Dynamically render fields based on template */}
-                {(pageTemplates.find(t => t.layout === (activeScene?.layout || 'split-right'))?.fields || []).map(field => (
-                  <div key={field.key} className="property-row">
-                    <label className="property-label">{field.label}</label>
-                    {field.type === 'textarea' ? (
-                      <textarea
-                        className="property-input"
-                        style={{ minHeight: '60px', resize: 'vertical' }}
-                        value={activeScene?.[field.key] || ''}
-                        onChange={(e) => updateScene(activeSceneId, { [field.key]: e.target.value })}
-                      />
-                    ) : (
-                      <input
-                        className="property-input"
-                        value={activeScene?.[field.key] || ''}
-                        onChange={(e) => updateScene(activeSceneId, { [field.key]: e.target.value })}
-                      />
-                    )
-                    }
-                  </div>
-                ))}
-
-                <div style={{ height: '8px', borderBottom: '1px solid #333', margin: '8px 0' }} />
-
-                <div className="property-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  <div>
-                    <label className="property-label">Title Size</label>
-                    <input
-                      className="property-input"
-                      type="number"
-                      value={activeScene?.titleStyle?.fontSize || 48}
-                      onChange={(e) => updateScene(activeSceneId, {
-                        titleStyle: { ...(activeScene?.titleStyle || {}), fontSize: Number(e.target.value) }
-                      })}
-                    />
-                  </div>
-                  <div>
-                    <label className="property-label">Title Color</label>
-                    <input
-                      className="property-input"
-                      type="color"
-                      style={{ height: '32px', padding: '2px' }}
-                      value={activeScene?.titleStyle?.color || '#000000'}
-                      onChange={(e) => updateScene(activeSceneId, {
-                        titleStyle: { ...(activeScene?.titleStyle || {}), color: e.target.value }
-                      })}
-                    />
-                  </div>
-                </div>
-                <div className="property-row">
-                  <label className="property-label">Alignment</label>
-                  <select
-                    className="property-input"
-                    value={activeScene?.titleStyle?.textAlign || 'left'}
-                    onChange={(e) => updateScene(activeSceneId, {
-                      titleStyle: { ...(activeScene?.titleStyle || {}), textAlign: e.target.value }
-                    })}
-                  >
-                    <option value="left">Left</option>
-                    <option value="center">Center</option>
-                    <option value="right">Right</option>
-                  </select>
-                </div>
-
-                <div className="property-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  <div>
-                    <label className="property-label">Sub Size</label>
-                    <input
-                      className="property-input"
-                      type="number"
-                      value={activeScene?.subtitleStyle?.fontSize || 24}
-                      onChange={(e) => updateScene(activeSceneId, {
-                        subtitleStyle: { ...(activeScene?.subtitleStyle || {}), fontSize: Number(e.target.value) }
-                      })}
-                    />
-                  </div>
-                  <div>
-                    <label className="property-label">Sub Color</label>
-                    <input
-                      className="property-input"
-                      type="color"
-                      style={{ height: '32px', padding: '2px' }}
-                      value={activeScene?.subtitleStyle?.color || '#333333'}
-                      onChange={(e) => updateScene(activeSceneId, {
-                        subtitleStyle: { ...(activeScene?.subtitleStyle || {}), color: e.target.value }
-                      })}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {selectedTool === 'layers' && (
-              <div className="property-group">
-                <h3 className="property-title">
-                  <MdLayers style={{ marginRight: '8px', verticalAlign: 'middle' }} />
-                  B-Roll & Overlays
-                </h3>
-                <div className="layers-list">
-                  {(activeScene?.layers || []).length === 0 ? (
-                    <div style={{ padding: '20px', textAlign: 'center', color: '#666', fontSize: '12px', border: '1px dashed #444', borderRadius: '8px' }}>
-                      No extra layers in this scene. Add media from the library to see them here.
-                    </div>
-                  ) : (
-                    activeScene.layers.map(layer => (
-                      <div key={layer.id} className="layer-item-preview">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          {layer.type === 'image' ? <MdPhotoLibrary size={14} /> : <MdVideoLibrary size={14} />}
-                          <span>{layer.type}</span>
-                        </div>
-                        <button onClick={() => {
-                          updateScene(activeSceneId, {
-                            layers: activeScene.layers.filter(l => l.id !== layer.id)
-                          })
-                        }}>
-                          <MdDelete size={16} />
-                        </button>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-
             {/* General Properties */}
             <div className="property-group">
               <h3 className="property-title">Scene Configuration</h3>
@@ -747,45 +965,38 @@ function Create({ onBack }) {
                 rows={4}
               />
             </div>
-            {selectedTool === 'media' && (
-              <div className="property-group">
-                <h3 className="property-title">
-                  <MdMusicNote style={{ marginRight: '8px', verticalAlign: 'middle' }} />
-                  Background Music
-                </h3>
-                <div className="property-row">
-                  <label className="property-label">Select Audio</label>
-                  <select
-                    className="property-input"
-                    value={bgMusic}
-                    onChange={(e) => setBgMusic(e.target.value)}
-                  >
-                    <option value="">None</option>
-                    <option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">Acoustic Guitar</option>
-                    <option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3">Upbeat Tech</option>
-                    <option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3">Ambient Corporate</option>
-                  </select>
-                </div>
-                <div className="property-row">
-                  <label className="property-label">Volume: {Math.round(bgMusicVolume * 100)}%</label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    value={bgMusicVolume}
-                    onChange={(e) => setBgMusicVolume(Number(e.target.value))}
-                    className="property-input"
-                  />
-                </div>
-                <div style={{ marginTop: '20px' }}>
-                  <label className="property-label">Voiceover Settings</label>
-                  <p style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
-                    AI voiceover will play automatically when you preview scenes.
-                  </p>
-                </div>
+
+            <div className="property-group">
+              <h3 className="property-title">
+                <MdPhotoLibrary style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                Background Music
+              </h3>
+              <div className="property-row">
+                <label className="property-label">Select Audio</label>
+                <select
+                  className="property-input"
+                  value={bgMusic}
+                  onChange={(e) => setBgMusic(e.target.value)}
+                >
+                  <option value="">None</option>
+                  <option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">Acoustic Guitar</option>
+                  <option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3">Upbeat Tech</option>
+                  <option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3">Ambient Corporate</option>
+                </select>
               </div>
-            )}
+              <div className="property-row">
+                <label className="property-label">Volume: {Math.round(bgMusicVolume * 100)}%</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={bgMusicVolume}
+                  onChange={(e) => setBgMusicVolume(Number(e.target.value))}
+                  className="property-input"
+                />
+              </div>
+            </div>
           </div>
         </div>
         {/* Enhanced Timeline Component */}
@@ -813,11 +1024,11 @@ function Create({ onBack }) {
               .fullscreen-preview-page {
                 position: fixed;
                 inset: 0;
-                background: #000;
+                background: #f8f9fa;
                 z-index: 2000;
                 display: flex;
                 flex-direction: column;
-                color: #fff;
+                color: #202124;
               }
               .preview-topbar {
                 height: 60px;
@@ -825,35 +1036,41 @@ function Create({ onBack }) {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                background: rgba(255,255,255,0.05);
+                background: rgba(255,255,255,0.95);
                 backdrop-filter: blur(10px);
                 position: absolute;
                 top: 0;
                 left: 0;
                 right: 0;
                 z-index: 100;
+                border-bottom: 1px solid #e8eaed;
+                box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
               }
               .preview-content {
                 flex: 1;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                background: #0a0a0a;
+                background: #f8f9fa;
               }
               .close-preview {
-                background: #ff4d4d;
+                background: #1a73e8;
                 border: none;
-                color: #fff;
+                color: #ffffff;
                 padding: 8px 16px;
-                border-radius: 6px;
+                border-radius: 8px;
                 cursor: pointer;
-                font-weight: 600;
+                font-weight: 500;
+                transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+              }
+              .close-preview:hover {
+                background: #1557b0;
               }
             `}</style>
             <div className="preview-topbar">
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <span style={{ fontWeight: 700, fontSize: '18px' }}>AthenaVI Preview</span>
-                <span style={{ color: '#888', fontSize: '14px' }}>Draft - {scenes.length} Scenes</span>
+                <span style={{ color: '#5f6368', fontSize: '14px' }}>Draft - {scenes.length} Scenes</span>
               </div>
               <button className="close-preview" onClick={() => {
                 setShowPreviewModal(false)
@@ -983,9 +1200,9 @@ function Create({ onBack }) {
                 <div className="credit-display" style={{
                   marginTop: '20px',
                   padding: '15px',
-                  backgroundColor: '#2a2a2a',
+                  backgroundColor: '#f8f9fa',
                   borderRadius: '8px',
-                  border: '1px solid #444'
+                  border: '1px solid #dadce0'
                 }}>
                   <div style={{
                     display: 'flex',
@@ -993,17 +1210,17 @@ function Create({ onBack }) {
                     alignItems: 'center',
                     marginBottom: '8px'
                   }}>
-                    <span style={{ color: '#fff', fontSize: '14px' }}>Credit Consumption:</span>
+                    <span style={{ color: '#202124', fontSize: '14px', fontWeight: '500' }}>Credit Consumption:</span>
                     <span style={{
-                      color: '#4CAF50',
+                      color: '#34a853',
                       fontSize: '18px',
-                      fontWeight: 'bold'
+                      fontWeight: '600'
                     }}>
                       {calculateCredits()} credits
                     </span>
                   </div>
                   <div style={{
-                    color: '#888',
+                    color: '#5f6368',
                     fontSize: '12px',
                     textAlign: 'center'
                   }}>
@@ -1045,11 +1262,11 @@ function Create({ onBack }) {
                     <div className="template-preview-wrapper" style={{
                       width: '100%',
                       aspectRatio: '16/9',
-                      borderRadius: '6px',
+                      borderRadius: '8px',
                       overflow: 'hidden',
                       position: 'relative',
-                      border: '1px solid #444',
-                      background: '#000',
+                      border: '1px solid #dadce0',
+                      background: '#f8f9fa',
                       pointerEvents: 'none'
                     }}>
                       <StaticPreview scene={{
@@ -1062,8 +1279,8 @@ function Create({ onBack }) {
                     </div>
                     <div className="template-info">
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                        <div style={{ color: '#0066cc', fontSize: '18px', display: 'flex' }}>{template.icon}</div>
-                        <h4 style={{ margin: 0 }}>{template.name}</h4>
+                        <div style={{ color: '#1a73e8', fontSize: '18px', display: 'flex' }}>{template.icon}</div>
+                        <h4 style={{ margin: 0, color: '#202124' }}>{template.name}</h4>
                       </div>
                       <p>{template.description}</p>
                     </div>

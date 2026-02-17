@@ -58,16 +58,16 @@ const styles = `
 
 .hero-title {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 56px;
-  font-weight: 500;
-  line-height: 1.2;
+  font-size: clamp(40px, 5vw, 64px);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -1.5px;
   margin: 0;
   color: #ffffff;
-  letter-spacing: -0.5px;
 }
 
 .hero-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   line-height: 1.7;
   margin: 0;
@@ -94,7 +94,7 @@ const styles = `
 }
 
 .hero-stat-label {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   color: rgba(255, 255, 255, 0.7);
   text-transform: uppercase;
@@ -102,7 +102,7 @@ const styles = `
 }
 
 .primary-cta {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   border: none;
   color: #000;
@@ -220,7 +220,7 @@ const styles = `
   color: #000;
   padding: 6px 12px;
   border-radius: 20px;
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;

@@ -645,13 +645,13 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
                             <div style={{
                                 marginTop: '30px',
                                 width: '100%',
-                                background: '#1e1e1e',
+                                background: '#f8f9fa',
                                 borderRadius: '16px',
                                 padding: '24px',
-                                border: '1px solid #333',
+                                border: '1px solid #dadce0',
                                 transform: `scale(${entrance})`,
                                 opacity: entrance,
-                                boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
+                                boxShadow: '0 2px 4px 0 rgba(60, 64, 67, 0.3), 0 4px 12px 4px rgba(60, 64, 67, 0.15)'
                             }}>
                                 <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
                                     <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ff5f56' }} />

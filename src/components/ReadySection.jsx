@@ -15,15 +15,16 @@ const styles = `
 
 .ready-section-title {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 56px;
-  font-weight: 500;
-  line-height: 1.1;
+  font-size: clamp(40px, 5vw, 64px);
+  font-weight: 400;
+  letter-spacing: -1.5px;
+  line-height: 1.15;
   margin: 0 0 24px;
   color: #ffffff;
 }
 
 .ready-section-subtitle {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 20px;
   font-weight: 400;
   color: rgba(255, 255, 255, 0.8);
@@ -53,7 +54,7 @@ const styles = `
 }
 
 .btn-outline {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: transparent;
   border: 1px solid #fff;
   color: #fff;
@@ -75,7 +76,7 @@ const styles = `
 }
 
 .btn-primary {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   border: none;
   color: #000;

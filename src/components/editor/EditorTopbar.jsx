@@ -8,7 +8,13 @@ import {
     MdLayers,
     MdPalette,
     MdPlayCircleOutline,
-    MdSettings
+    MdSettings,
+    MdZoomIn,
+    MdZoomOut,
+    MdFitScreen,
+    MdSelectAll,
+    MdShare,
+    MdAccountCircle
 } from 'react-icons/md'
 
 const EditorTopbar = ({
@@ -21,13 +27,30 @@ const EditorTopbar = ({
     return (
         <div className="editor-topbar">
             <div className="top-left">
-                <button className="icon-btn" onClick={onBack}>
-                    ← Back
+                <button className="icon-btn" onClick={onBack} title="Back">
+                    ←
                 </button>
-                <input
-                    className="project-title"
-                    defaultValue="Untitled Video Project"
-                />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: '8px' }}>
+                    <div style={{ 
+                        width: '32px', 
+                        height: '32px', 
+                        borderRadius: '8px', 
+                        background: 'linear-gradient(135deg, #1a73e8 0%, #4285f4 100%)', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        color: 'white', 
+                        fontWeight: '600',
+                        fontSize: '16px'
+                    }}>
+                        A
+                    </div>
+                    <input
+                        className="project-title"
+                        defaultValue="Untitled Video Project"
+                    />
+                </div>
+                <div style={{ width: '1px', height: '24px', background: '#e8eaed', margin: '0 4px' }} />
                 <button
                     className="icon-btn"
                     title="Undo"
@@ -36,7 +59,7 @@ const EditorTopbar = ({
                         // TODO: Implement undo functionality
                     }}
                 >
-                    <MdUndo />
+                    <MdUndo size={20} />
                 </button>
                 <button
                     className="icon-btn"
@@ -46,55 +69,34 @@ const EditorTopbar = ({
                         // TODO: Implement redo functionality
                     }}
                 >
-                    <MdRedo />
-                </button>
-                <button
-                    className="icon-btn"
-                    title="Save"
-                    onClick={() => {
-                        alert('Project saved!')
-                        // TODO: Implement save functionality
-                    }}
-                >
-                    <MdSave />
+                    <MdRedo size={20} />
                 </button>
             </div>
 
             <div className="top-center">
                 <button
-                    className={`icon-btn ${selectedTool === 'avatar' ? 'active' : ''}`}
-                    title="Avatar"
-                    onClick={() => setSelectedTool('avatar')}
+                    className="icon-btn"
+                    title="Select"
                 >
-                    <MdPerson />
+                    <MdSelectAll size={20} />
                 </button>
                 <button
-                    className={`icon-btn ${selectedTool === 'text' ? 'active' : ''}`}
-                    title="Text"
-                    onClick={() => setSelectedTool('text')}
+                    className="icon-btn"
+                    title="Zoom In"
                 >
-                    <MdTextFields />
+                    <MdZoomIn size={20} />
                 </button>
                 <button
-                    className={`icon-btn ${selectedTool === 'media' ? 'active' : ''}`}
-                    title="Media"
-                    onClick={() => setSelectedTool('media')}
+                    className="icon-btn"
+                    title="Zoom Out"
                 >
-                    <MdPhotoLibrary />
+                    <MdZoomOut size={20} />
                 </button>
                 <button
-                    className={`icon-btn ${selectedTool === 'layers' ? 'active' : ''}`}
-                    title="Layers"
-                    onClick={() => setSelectedTool('layers')}
+                    className="icon-btn"
+                    title="Fit to Screen"
                 >
-                    <MdLayers />
-                </button>
-                <button
-                    className={`icon-btn ${selectedTool === 'effects' ? 'active' : ''}`}
-                    title="Effects"
-                    onClick={() => setSelectedTool('effects')}
-                >
-                    <MdPalette />
+                    <MdFitScreen size={20} />
                 </button>
             </div>
 
@@ -104,21 +106,35 @@ const EditorTopbar = ({
                     title="Preview"
                     onClick={handlePreview}
                 >
-                    <MdPlayCircleOutline /> Preview
+                    <MdPlayCircleOutline size={20} />
                 </button>
                 <button
                     className="icon-btn"
-                    title="Settings"
-                    onClick={() => {
-                        alert('Settings panel coming soon!')
-                        // TODO: Implement settings panel
-                    }}
+                    title="Share"
                 >
-                    <MdSettings />
+                    <MdShare size={20} />
                 </button>
-                <button className="primary-btn" onClick={exportVideo}>
-                    Export Video
-                </button>
+                <div style={{ 
+                    width: '32px', 
+                    height: '32px', 
+                    borderRadius: '50%', 
+                    background: '#f1f3f4', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    color: '#5f6368',
+                    cursor: 'pointer',
+                    transition: 'all 150ms cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+                onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#e8eaed'
+                }}
+                onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '#f1f3f4'
+                }}
+                >
+                    <MdAccountCircle size={24} />
+                </div>
             </div>
         </div>
     )

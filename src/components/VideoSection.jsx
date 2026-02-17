@@ -14,16 +14,16 @@ const styles = `
 }
 
 .video-section-title {
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 56px;
-  font-weight: 500;
-  line-height: 1.1;
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(24px, 3vw, 40px);
+  font-weight: 600;
+  line-height: 1.25;
   margin: 0 0 24px;
   color: #1e40af;
 }
 
 .video-section-subtitle {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 20px;
   font-weight: 400;
   color: #3b82f6;
@@ -72,15 +72,16 @@ const styles = `
 }
 
 .video-card-title {
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 24px;
-  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(24px, 2.5vw, 32px);
+  font-weight: 600;
+  line-height: 1.25;
   color: #1e40af;
   margin: 0 0 12px;
 }
 
 .video-card-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   color: #3b82f6;
   line-height: 1.6;

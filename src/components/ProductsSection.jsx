@@ -14,9 +14,10 @@ const styles = `
 }
 
 .products-section-title {
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 48px;
-  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(24px, 3vw, 40px);
+  font-weight: 600;
+  line-height: 1.25;
   text-align: center;
   margin: 0 0 60px;
   color: #ffffff;
@@ -58,9 +59,10 @@ const styles = `
 }
 
 .product-card-title {
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 24px;
-  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(24px, 2.5vw, 32px);
+  font-weight: 600;
+  line-height: 1.25;
   color: #ffffff;
   margin: 0;
 }
@@ -86,7 +88,7 @@ const styles = `
 }
 
 .product-card-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.8);
@@ -94,7 +96,7 @@ const styles = `
 }
 
 .product-card-button {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   border: none;
   color: #000;
