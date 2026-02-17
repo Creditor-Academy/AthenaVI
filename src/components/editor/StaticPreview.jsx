@@ -51,7 +51,7 @@ const StaticPreview = ({ scene, isThumbnail = true }) => {
                         pointerEvents: 'none'
                     }}>
                         {layer.type === 'image' && <img src={layer.content} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
-                        {layer.type === 'video' && <div style={{ width: '100%', height: '100%', background: '#000' }} />}
+                        {layer.type === 'video' && <div style={{ width: '100%', height: '100%', background: '#f1f3f4', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#5f6368', fontSize: '12px' }}>Video</div>}
                     </div>
                 )
             })}
@@ -351,7 +351,7 @@ const StaticPreview = ({ scene, isThumbnail = true }) => {
 
                     {/* Layout Specific: Code Snippet (Compact) */}
                     {scene.layout === 'code' && (
-                        <div style={{ marginTop: '10px', width: '100%', background: '#1e1e1e', borderRadius: '6px', padding: '8px', border: '1px solid #333' }}>
+                        <div style={{ marginTop: '10px', width: '100%', background: '#f8f9fa', borderRadius: '6px', padding: '8px', border: '1px solid #dadce0' }}>
                             <div style={{ display: 'flex', gap: '3px', marginBottom: '6px' }}>
                                 <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ff5f56' }} />
                                 <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ffbd2e' }} />
