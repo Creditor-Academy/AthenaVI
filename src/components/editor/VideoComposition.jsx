@@ -66,7 +66,7 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
     )
 
     const titleStyle = {
-        fontSize: 48,
+        fontSize: 64,
         color: '#000000',
         fontFamily: 'Inter, system-ui, sans-serif',
         fontWeight: '700',
@@ -75,7 +75,7 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
     }
 
     const subtitleStyle = {
-        fontSize: 24,
+        fontSize: 32,
         color: '#333333',
         fontFamily: 'Inter, system-ui, sans-serif',
         fontWeight: '400',
@@ -111,7 +111,7 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
                     inset: 0,
                     width: '100%',
                     height: '100%',
-                    zIndex: 0
+                    zIndex: 1
                 }}>
                     <img
                         src={currentScene.backgroundImage}
@@ -158,7 +158,7 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-                zIndex: 10,
+                zIndex: 100,
                 padding: '0 80px'
             }}>
                 <div style={{
@@ -188,7 +188,7 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
                     }}>
                         {/* Title */}
                         <h1 style={{
-                            fontSize: `${currentScene.layout === 'quote' ? 64 : (titleStyle.fontSize || 48)}px`,
+                            fontSize: `${currentScene.layout === 'quote' ? 80 : (titleStyle.fontSize || 64)}px`,
                             fontWeight: titleStyle.fontWeight || '700',
                             margin: '0',
                             lineHeight: '1.2',
@@ -203,7 +203,7 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
 
                         {/* Subtitle / Author */}
                         <h2 style={{
-                            fontSize: `${subtitleStyle.fontSize || 24}px`,
+                            fontSize: `${subtitleStyle.fontSize || 32}px`,
                             fontWeight: subtitleStyle.fontWeight || '400',
                             margin: '0',
                             lineHeight: '1.4',
@@ -793,8 +793,8 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
                     {!isFullWidth && (
                         <div style={{
                             flex: '0 0 auto',
-                            width: currentScene.layout === 'centered' ? '180px' : '300px',
-                            height: currentScene.layout === 'centered' ? '180px' : '400px',
+                            width: currentScene.layout === 'centered' ? '240px' : '400px',
+                            height: currentScene.layout === 'centered' ? '240px' : '500px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -806,6 +806,12 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
                                 <img
                                     src={currentScene.avatar}
                                     alt="Avatar"
+                                    onError={(e) => {
+                                        console.log('Avatar image failed to load:', currentScene.avatar)
+                                        // Fallback to show placeholder
+                                        e.target.style.display = 'none'
+                                        e.target.nextSibling.style.display = 'flex'
+                                    }}
                                     style={{
                                         width: '100%',
                                         height: '100%',
@@ -827,9 +833,22 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
                                     justifyContent: 'center',
                                     border: '2px dashed #cccccc'
                                 }}>
-                                    <MdPerson size={currentScene.layout === 'centered' ? 80 : 120} color="#999999" />
+                                    <MdPerson size={currentScene.layout === 'centered' ? 120 : 160} color="#999999" />
                                 </div>
                             )}
+                            {/* Fallback placeholder when avatar fails to load */}
+                            <div style={{
+                                display: 'none',
+                                width: '100%',
+                                height: '100%',
+                                backgroundColor: '#f5f5f5',
+                                borderRadius: currentScene.layout === 'centered' ? '50%' : '12px',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                border: '2px dashed #cccccc'
+                            }}>
+                                <MdPerson size={currentScene.layout === 'centered' ? 80 : 120} color="#999999" />
+                            </div>
                         </div>
                     )}
                 </div>

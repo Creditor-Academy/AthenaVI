@@ -12,7 +12,10 @@ import {
     MdZoomIn,
     MdZoomOut,
     MdPhotoLibrary,
-    MdDragIndicator
+    MdDragIndicator,
+    MdPlayArrow,
+    MdPause,
+    MdStop
 } from 'react-icons/md'
 
 const TimelineEditor = ({
@@ -25,7 +28,10 @@ const TimelineEditor = ({
     onUpdateScene,
     onAddScene,
     onDeleteScene,
-    onReorderScenes
+    onReorderScenes,
+    onPlayPause,
+    onStop,
+    totalDuration
 }) => {
     const [zoom, setZoom] = useState(60)
     const [draggedSceneId, setDraggedSceneId] = useState(null)
@@ -33,9 +39,28 @@ const TimelineEditor = ({
     const scrollContainerRef = useRef(null)
     const isDraggingPlayhead = useRef(false)
 
-    const totalDuration = useMemo(() => {
-        return scenes.reduce((sum, s) => sum + (s.duration || 8), 0)
-    }, [scenes])
+    // Auto-scroll during playback
+    useEffect(() => {
+        if (isPlaying && scrollContainerRef.current) {
+            const container = scrollContainerRef.current
+            const playheadPosition = currentTime * zoom
+            const containerWidth = container.clientWidth
+            const scrollLeft = container.scrollLeft
+            
+            // Keep playhead in view with some padding
+            if (playheadPosition > scrollLeft + containerWidth - 100) {
+                container.scrollTo({
+                    left: playheadPosition - containerWidth + 150,
+                    behavior: 'smooth'
+                })
+            } else if (playheadPosition < scrollLeft + 50) {
+                container.scrollTo({
+                    left: Math.max(0, playheadPosition - 50),
+                    behavior: 'smooth'
+                })
+            }
+        }
+    }, [currentTime, isPlaying, zoom])
 
     // Scrubbing logic
     const handleTimelineAction = (clientX) => {
@@ -106,11 +131,10 @@ const TimelineEditor = ({
         <div className="timeline-editor-root">
             <style>{`
         .timeline-editor-root {
-          background: #ffffff;
+          background: transparent;
           height: 100%;
           display: grid;
           grid-template-rows: 48px 1fr;
-          border-top: 1px solid #e8eaed;
           color: #202124;
           font-family: 'Inter', 'Roboto', system-ui, sans-serif;
         }
@@ -121,7 +145,7 @@ const TimelineEditor = ({
           align-items: center;
           gap: 16px;
           background: #ffffff;
-          border-bottom: 1px solid #e8eaed;
+          border-bottom: 1px solid #e5e7eb;
         }
 
         .timeline-container {
@@ -289,9 +313,9 @@ const TimelineEditor = ({
         }
 
         .toolbar-btn {
-          background: transparent;
-          border: none;
-          color: #5f6368;
+          background: #ffffff;
+          border: 1px solid #e5e7eb;
+          color: #374151;
           padding: 8px 12px;
           border-radius: 8px;
           cursor: pointer;
@@ -300,11 +324,15 @@ const TimelineEditor = ({
           gap: 6px;
           transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
           font-size: 13px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .toolbar-btn:hover {
-          color: #202124;
-          background: #f1f3f4;
+          color: #000000;
+          background: #f8f9fa;
+          border-color: #d1d5db;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
 
         .layer-item {
@@ -324,6 +352,23 @@ const TimelineEditor = ({
       `}</style>
 
             <div className="timeline-toolbar">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button className="toolbar-btn" title="Stop" onClick={onStop}>
+                        <MdStop size={18} />
+                    </button>
+                    <button className="toolbar-btn" title="Play/Pause" onClick={onPlayPause}>
+                        {isPlaying ? <MdPause size={18} /> : <MdPlayArrow size={18} />}
+                    </button>
+                    <div className="time-display" style={{ padding: '6px 12px', fontSize: '12px', color: '#5f6368' }}>
+                        {Math.floor(currentTime / 60).toString().padStart(2, '0')}:
+                        {Math.floor(currentTime % 60).toString().padStart(2, '0')} /
+                        {Math.floor(totalDuration / 60).toString().padStart(2, '0')}:
+                        {Math.floor(totalDuration % 60).toString().padStart(2, '0')}
+                    </div>
+                </div>
+                
+                <div style={{ width: '1px', height: '24px', background: '#e8eaed' }} />
+                
                 <button className="toolbar-btn" onClick={onAddScene}>
                     <MdAdd size={20} />
                     <span>Add Page</span>
@@ -345,11 +390,6 @@ const TimelineEditor = ({
                             style={{ width: '80px', margin: '0 8px' }}
                         />
                         <MdZoomIn size={14} color="#5f6368" />
-                    </div>
-                    <div className="time-display">
-                        {Math.floor(currentTime / 60).toString().padStart(2, '0')}:
-                        {Math.floor(currentTime % 60).toString().padStart(2, '0')}.
-                        {Math.floor((currentTime % 1) * 30).toString().padStart(2, '0')}
                     </div>
                 </div>
             </div>
@@ -459,7 +499,7 @@ const TimelineEditor = ({
                             className="playhead"
                             style={{
                                 left: `${currentTime * zoom}px`,
-                                transition: isPlaying ? 'none' : 'left 0.1s ease-out'
+                                transition: isPlaying ? 'left 0.1s linear' : 'left 0.1s ease-out'
                             }}
                         >
                             <div className="playhead-head" />
