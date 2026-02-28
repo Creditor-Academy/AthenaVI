@@ -46,7 +46,7 @@ const TimelineEditor = ({
             const playheadPosition = currentTime * zoom
             const containerWidth = container.clientWidth
             const scrollLeft = container.scrollLeft
-            
+
             // Keep playhead in view with some padding
             if (playheadPosition > scrollLeft + containerWidth - 100) {
                 container.scrollTo({
@@ -133,26 +133,27 @@ const TimelineEditor = ({
         .timeline-editor-root {
           background: transparent;
           height: 100%;
-          display: grid;
-          grid-template-rows: 48px 1fr;
+          display: flex;
+          flex-direction: column;
           color: #202124;
           font-family: 'Inter', 'Roboto', system-ui, sans-serif;
         }
 
         .timeline-toolbar {
-          padding: 0 24px;
+          padding: 8px 24px;
           display: flex;
           align-items: center;
           gap: 16px;
           background: #ffffff;
           border-bottom: 1px solid #e5e7eb;
+          height: 64px;
+          flex-shrink: 0;
         }
 
         .timeline-container {
           display: grid;
           grid-template-columns: 160px 1fr;
-          overflow-x: hidden;
-          overflow-y: auto;
+          overflow: hidden;
           flex: 1;
           border-bottom: 1px solid #222;
         }
@@ -165,13 +166,18 @@ const TimelineEditor = ({
         }
 
         .track-label {
-          height: 80px;
+          height: 64px;
           display: flex;
           align-items: center;
           padding: 0 16px;
           font-size: 13px;
           color: #5f6368;
           border-bottom: 1px solid #e8eaed;
+          box-sizing: border-box;
+        }
+
+        .track-label.small {
+          height: 40px;
         }
 
         .track-label.active {
@@ -197,6 +203,7 @@ const TimelineEditor = ({
           top: 0;
           z-index: 30;
           border-bottom: 1px solid #e8eaed;
+          box-sizing: border-box;
         }
 
         .ruler-second {
@@ -210,14 +217,21 @@ const TimelineEditor = ({
         }
 
         .clip-track {
-          height: 80px;
+          height: 64px;
           position: relative;
           border-bottom: 1px solid #e8eaed;
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+        }
+
+        .clip-track.small {
+          height: 40px;
         }
 
         .canva-clip {
           position: absolute;
-          height: 64px;
+          height: 48px;
           background: #ffffff;
           border-radius: 12px;
           border: 1px solid #dadce0;
@@ -366,9 +380,9 @@ const TimelineEditor = ({
                         {Math.floor(totalDuration % 60).toString().padStart(2, '0')}
                     </div>
                 </div>
-                
+
                 <div style={{ width: '1px', height: '24px', background: '#e8eaed' }} />
-                
+
                 <button className="toolbar-btn" onClick={onAddScene}>
                     <MdAdd size={20} />
                     <span>Add Page</span>
@@ -471,8 +485,10 @@ const TimelineEditor = ({
                                         key={layer.id}
                                         className="layer-item"
                                         style={{
+                                            position: 'absolute',
                                             left: `${(prevDuration + (layer.start || 0)) * zoom}px`,
-                                            width: `${(layer.duration || scene.duration) * zoom}px`
+                                            width: `${(layer.duration || scene.duration) * zoom}px`,
+                                            top: '4px'
                                         }}
                                     >
                                         {layer.type} overlay

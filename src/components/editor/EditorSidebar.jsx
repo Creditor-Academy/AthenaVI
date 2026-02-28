@@ -10,20 +10,25 @@ import {
   MdTextFields,
   MdAutoAwesome,
   MdShapeLine,
-  MdLayers
+  MdLayers,
+  MdClose
 } from 'react-icons/md'
 import { predefinedAvatars, predefinedMedia, pageTemplates } from '../../constants/editorData'
+import StaticPreview from './StaticPreview'
+import avatar1 from '../../assets/avatar1.png'
 
-const EditorSidebar = ({ 
-  selectedTool, 
-  setSelectedTool, 
-  activeSceneId, 
-  addLayer, 
-  updateScene, 
+const EditorSidebar = ({
+  selectedTool,
+  setSelectedTool,
+  activeSceneId,
+  addLayer,
+  updateScene,
   activeScene,
   handleAddTemplateScene,
+  setShowTemplateModal,
   showPanelOnly = false
 }) => {
+  const [previewTemplate, setPreviewTemplate] = useState(null)
   const tools = [
     { id: 'avatar', icon: MdPerson, label: 'Avatar' },
     { id: 'mic', icon: MdMic, label: 'Voice' },
@@ -51,9 +56,9 @@ const EditorSidebar = ({
                 <div
                   key={avatar.id}
                   className={`avatar-item ${activeScene?.avatarType === avatar.id ? 'selected' : ''}`}
-                  onClick={() => updateScene(activeSceneId, { 
-                    avatar: avatar.image, 
-                    avatarType: avatar.id 
+                  onClick={() => updateScene(activeSceneId, {
+                    avatar: avatar.image,
+                    avatarType: avatar.id
                   })}
                   title={avatar.name}
                 >
@@ -133,12 +138,76 @@ const EditorSidebar = ({
                   key={template.id}
                   className="media-item"
                   title={template.name}
-                  onClick={() => handleAddTemplateScene(template)}
+                  onClick={() => setPreviewTemplate(template)}
                 >
                   {template.icon}
                 </div>
               ))}
             </div>
+
+            {/* Short Preview Modal */}
+            {previewTemplate && (
+              <div className="modal-overlay" style={{ zIndex: 110 }}>
+                <div className="template-modal" style={{ maxWidth: '400px', width: '90%' }}>
+                  <div className="preview-modal-header">
+                    <h3 className="preview-modal-title" style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ color: '#1a73e8', display: 'flex' }}>{previewTemplate.icon}</span>
+                      {previewTemplate.name}
+                    </h3>
+                    <button className="preview-modal-close" onClick={() => setPreviewTemplate(null)}>
+                      <MdClose size={24} />
+                    </button>
+                  </div>
+
+                  <div style={{ padding: '0 24px 16px 24px' }}>
+                    <div style={{
+                      width: '100%',
+                      aspectRatio: '16/9',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      position: 'relative',
+                      border: '1px solid #dadce0',
+                      background: '#f8f9fa',
+                      pointerEvents: 'none',
+                      marginBottom: '16px'
+                    }}>
+                      <StaticPreview scene={{
+                        layout: previewTemplate.layout,
+                        titleText: previewTemplate.fields.find(f => f.key === 'titleText')?.default || previewTemplate.name,
+                        subtitleText: previewTemplate.fields.find(f => f.key === 'subtitleText')?.default || '',
+                        avatar: avatar1,
+                        ...previewTemplate.fields.reduce((acc, f) => ({ ...acc, [f.key]: f.default }), {})
+                      }} />
+                    </div>
+
+                    <p style={{ color: '#5f6368', fontSize: '14px', marginBottom: '24px' }}>
+                      {previewTemplate.description}
+                    </p>
+
+                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                      <button
+                        className="btn-secondary"
+                        onClick={() => {
+                          setPreviewTemplate(null)
+                          if (setShowTemplateModal) setShowTemplateModal(true)
+                        }}
+                      >
+                        See more
+                      </button>
+                      <button
+                        className="btn-primary"
+                        onClick={() => {
+                          handleAddTemplateScene(previewTemplate)
+                          setPreviewTemplate(null)
+                        }}
+                      >
+                        Add this template
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )
 
@@ -304,14 +373,14 @@ const EditorSidebar = ({
           ))}
         </div>
       )}
-      
+
       {selectedTool && showPanelOnly && (
         <div className="tool-panel">
           <div className="tool-panel-header">
             <h3 className="tool-panel-title">
               {tools.find(t => t.id === selectedTool)?.label || 'Tool Panel'}
             </h3>
-            <button 
+            <button
               className="tool-panel-close"
               onClick={() => setSelectedTool(null)}
               title="Close panel"
@@ -319,7 +388,7 @@ const EditorSidebar = ({
               ×
             </button>
           </div>
-          <div className="tool-panel-content">
+          <div className="tool-panel-body">
             {renderToolPanel()}
           </div>
         </div>

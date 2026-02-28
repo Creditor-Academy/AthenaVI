@@ -386,6 +386,7 @@ function Create({ onBack }) {
               updateScene={updateScene}
               activeScene={activeScene}
               handleAddTemplateScene={handleAddTemplateScene}
+              setShowTemplateModal={setShowTemplateModal}
             />
           </div>
 
@@ -400,6 +401,7 @@ function Create({ onBack }) {
                 updateScene={updateScene}
                 activeScene={activeScene}
                 handleAddTemplateScene={handleAddTemplateScene}
+                setShowTemplateModal={setShowTemplateModal}
                 showPanelOnly={true}
               />
             </div>
@@ -428,58 +430,6 @@ function Create({ onBack }) {
                 speakText={speakText}
                 onPlayerReady={setPlayerMethods}
               />
-            </div>
-
-            {/* Properties Panel Toggle Button */}
-            <button
-              onClick={() => setIsRightSidebarOpen(!isRightSidebarOpen)}
-              style={{
-                position: 'absolute',
-                right: isRightSidebarOpen ? '320px' : '0px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                zIndex: 50,
-                width: '24px',
-                height: '48px',
-                background: '#ffffff',
-                border: '1px solid #e8eaed',
-                borderRight: 'none',
-                borderRadius: '8px 0 0 8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                boxShadow: '-2px 0 8px rgba(0,0,0,0.05)',
-                transition: 'right 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                padding: 0
-              }}
-              title={isRightSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
-            >
-              {isRightSidebarOpen ? <MdChevronRight size={20} color="#5f6368" /> : <MdChevronLeft size={20} color="#5f6368" />}
-            </button>
-
-            {/* Properties Panel (Script, Duration, Audio, etc.) */}
-            <div style={{
-              width: isRightSidebarOpen ? '320px' : '0px',
-              flexShrink: 0,
-              height: '100%',
-              borderLeft: isRightSidebarOpen ? '1px solid #e8eaed' : 'none',
-              background: '#ffffff',
-              overflowY: 'auto',
-              overflowX: 'hidden',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-            }}>
-              <div style={{ width: '320px', height: '100%' }}>
-                <SceneConfigurationPanel
-                  activeScene={activeScene}
-                  activeSceneId={activeSceneId}
-                  updateScene={updateScene}
-                  bgMusic={bgMusic}
-                  setBgMusic={setBgMusic}
-                  bgMusicVolume={bgMusicVolume}
-                  setBgMusicVolume={setBgMusicVolume}
-                />
-              </div>
             </div>
           </div>
 
@@ -519,33 +469,86 @@ function Create({ onBack }) {
           </div>
         </div>
 
-        {/* Modals */}
-        <PreviewModal
-          showPreviewModal={showPreviewModal}
-          setShowPreviewModal={setShowPreviewModal}
-          scenes={scenes}
-          activeSceneId={activeSceneId}
-          totalDurationInFrames={totalDurationInFrames}
-          bgMusic={bgMusic}
-          bgMusicVolume={bgMusicVolume}
-          setIsPlaying={setIsPlaying}
-          speakText={speakText}
-          getSceneForFrame={getSceneForFrame}
-          setActiveSceneId={setActiveSceneId}
-        />
+        {/* Right Sidebar Section */}
+        <div className="right-section" style={{ position: 'relative', display: 'flex', height: '100%', zIndex: 40 }}>
+          {/* Properties Panel Toggle Button */}
+          <button
+            onClick={() => setIsRightSidebarOpen(!isRightSidebarOpen)}
+            style={{
+              position: 'absolute',
+              left: '-24px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 50,
+              width: '24px',
+              height: '48px',
+              background: '#ffffff',
+              border: '1px solid #e8eaed',
+              borderRight: 'none',
+              borderRadius: '8px 0 0 8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              boxShadow: '-2px 0 8px rgba(0,0,0,0.05)',
+              padding: 0
+            }}
+            title={isRightSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+          >
+            {isRightSidebarOpen ? <MdChevronRight size={20} color="#5f6368" /> : <MdChevronLeft size={20} color="#5f6368" />}
+          </button>
 
-        <ExportModal
-          showExportModal={showExportModal}
-          setShowExportModal={setShowExportModal}
-          calculateCredits={calculateCredits}
-        />
-
-        <TemplateModal
-          showTemplateModal={showTemplateModal}
-          setShowTemplateModal={setShowTemplateModal}
-          handleAddTemplateScene={handleAddTemplateScene}
-        />
+          {/* Properties Panel (Script, Duration, Audio, etc.) */}
+          <div style={{
+            width: isRightSidebarOpen ? '300px' : '0px',
+            flexShrink: 0,
+            height: '100%',
+            borderLeft: isRightSidebarOpen ? '1px solid #e5e7eb' : 'none',
+            background: '#ffffff',
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}>
+            <div style={{ width: '300px', height: '100%' }}>
+              <SceneConfigurationPanel
+                activeScene={activeScene}
+                activeSceneId={activeSceneId}
+                updateScene={updateScene}
+                bgMusic={bgMusic}
+                setBgMusic={setBgMusic}
+                bgMusicVolume={bgMusicVolume}
+                setBgMusicVolume={setBgMusicVolume}
+              />
+            </div>
+          </div>
+        </div>
       </div>
+
+      <PreviewModal
+        showPreviewModal={showPreviewModal}
+        setShowPreviewModal={setShowPreviewModal}
+        scenes={scenes}
+        activeSceneId={activeSceneId}
+        totalDurationInFrames={totalDurationInFrames}
+        bgMusic={bgMusic}
+        bgMusicVolume={bgMusicVolume}
+        setIsPlaying={setIsPlaying}
+        speakText={speakText}
+        getSceneForFrame={getSceneForFrame}
+        setActiveSceneId={setActiveSceneId}
+      />
+
+      <ExportModal
+        showExportModal={showExportModal}
+        setShowExportModal={setShowExportModal}
+        calculateCredits={calculateCredits}
+      />
+
+      <TemplateModal
+        showTemplateModal={showTemplateModal}
+        setShowTemplateModal={setShowTemplateModal}
+        handleAddTemplateScene={handleAddTemplateScene}
+      />
     </div>
   )
 }
