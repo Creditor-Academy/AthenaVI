@@ -52,12 +52,13 @@ function Create({ onBack }) {
   const [selectedTool, setSelectedTool] = useState(null) // Start with no tool selected
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
-  const [zoomLevel, setZoomLevel] = useState(100)
+  const [zoomLevel, setZoomLevel] = useState(70)
   const [showExportModal, setShowExportModal] = useState(false)
   const [showPreviewModal, setShowPreviewModal] = useState(false)
   const [showTemplateModal, setShowTemplateModal] = useState(false)
   const [bgMusic, setBgMusic] = useState('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3')
   const [bgMusicVolume, setBgMusicVolume] = useState(0.3)
+  const [musicDuration, setMusicDuration] = useState(null) // null means full project duration
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true)
 
   const addLayer = (type, content) => {
@@ -87,6 +88,23 @@ function Create({ onBack }) {
     updateScene(activeSceneId, {
       layers: [...(activeScene?.layers || []), newLayer]
     })
+  }
+
+  const deleteLayer = (sceneId, layerId) => {
+    const scene = scenes.find(s => s.id === sceneId)
+    if (!scene) return
+    updateScene(sceneId, {
+      layers: scene.layers.filter(l => l.id !== layerId)
+    })
+  }
+
+  const deleteMusic = () => {
+    setBgMusic(null)
+    setMusicDuration(null)
+  }
+
+  const handleMusicDurationChange = (newDuration) => {
+    setMusicDuration(newDuration)
   }
 
   // Export settings state
@@ -371,6 +389,8 @@ function Create({ onBack }) {
         setSelectedTool={setSelectedTool}
         handlePreview={handlePreview}
         exportVideo={exportVideo}
+        zoomLevel={zoomLevel}
+        setZoomLevel={setZoomLevel}
       />
 
       <div className="editor-container">
@@ -437,6 +457,7 @@ function Create({ onBack }) {
           <div className="timeline-area">
             <TimelineEditor
               scenes={scenes}
+              bgMusic={bgMusic}
               activeSceneId={activeSceneId}
               currentTime={currentTime}
               isPlaying={isPlaying}
@@ -446,6 +467,10 @@ function Create({ onBack }) {
               onAddScene={addScene}
               onDeleteScene={deleteScene}
               onReorderScenes={handleReorderScenes}
+              onDeleteLayer={deleteLayer}
+              onDeleteMusic={deleteMusic}
+              musicDuration={musicDuration || (totalDurationInFrames / 30)}
+              onMusicDurationChange={handleMusicDurationChange}
               onPlayPause={() => {
                 if (playerMethods.current) {
                   if (isPlaying) {

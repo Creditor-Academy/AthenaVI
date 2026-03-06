@@ -3,20 +3,20 @@ import { Player } from '@remotion/player'
 import { MdPlayArrow, MdPause, MdStop, MdZoomIn, MdZoomOut, MdFullscreen } from 'react-icons/md'
 import VideoComposition from './VideoComposition'
 
-const VideoCanvas = forwardRef(({ 
-  scenes, 
-  bgMusic, 
-  bgMusicVolume, 
-  isPlaying, 
-  setIsPlaying, 
-  currentTime, 
-  setCurrentTime, 
-  zoomLevel, 
-  setZoomLevel, 
-  activeSceneId, 
-  setActiveSceneId, 
-  totalDurationInFrames, 
-  getSceneForFrame, 
+const VideoCanvas = forwardRef(({
+  scenes,
+  bgMusic,
+  bgMusicVolume,
+  isPlaying,
+  setIsPlaying,
+  currentTime,
+  setCurrentTime,
+  zoomLevel,
+  setZoomLevel,
+  activeSceneId,
+  setActiveSceneId,
+  totalDurationInFrames,
+  getSceneForFrame,
   speakText,
   onPlayerReady
 }, ref) => {
@@ -80,7 +80,10 @@ const VideoCanvas = forwardRef(({
   return (
     <div className="canvas-area">
       <div className="preview-container">
-        <div className="preview-wrapper">
+        <div
+          className="preview-wrapper"
+          style={{ width: `${zoomLevel}%` }}
+        >
           <Player
             ref={playerRef}
             component={VideoComposition}

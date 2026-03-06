@@ -83,7 +83,7 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
         ...(currentScene.subtitleStyle || {})
     }
 
-    const fullWidthLayouts = ['centered', 'quote', 'bullets', 'ranked-list', 'steps', 'grid', 'three-col', 'quiz', 'code', 'definition', 'tip']
+    const fullWidthLayouts = ['quote']
     const isFullWidth = fullWidthLayouts.includes(currentScene.layout)
 
     return (
@@ -169,7 +169,7 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
                     flexDirection: isFullWidth ? 'column-reverse' : (currentScene.layout === 'split-left' ? 'row-reverse' : 'row'),
                     alignItems: 'center',
                     justifyContent: isFullWidth ? 'center' : 'space-between',
-                    gap: '60px',
+                    gap: isFullWidth ? '30px' : '60px',
                     position: 'relative',
                     transform: `translateY(${(1 - entrance) * 30}px) scale(${interpolate(entrance, [0, 1], [0.95, 1])})`,
                     opacity: entrance,
@@ -181,7 +181,7 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'center',
-                        alignItems: isFullWidth ? 'center' : (currentScene.layout === 'split-left' ? 'flex-end' : 'flex-start'),
+                        alignItems: isFullWidth ? 'center' : (currentScene.layout === 'centered' ? 'center' : (currentScene.layout === 'split-left' ? 'flex-end' : 'flex-start')),
                         gap: '24px',
                         maxWidth: isFullWidth ? '1000px' : '650px',
                         textAlign: (isFullWidth || titleStyle.textAlign === 'center') ? 'center' : (currentScene.layout === 'split-left' ? 'right' : 'left')
@@ -476,8 +476,12 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
                                     {currentScene.testimonialText}
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#eee', flexShrink: 0 }}>
-                                        <MdPerson size={32} style={{ margin: '8px', color: '#999' }} />
+                                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#eee', flexShrink: 0, overflow: 'hidden' }}>
+                                        {currentScene.avatar ? (
+                                            <img src={currentScene.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        ) : (
+                                            <MdPerson size={32} style={{ margin: '8px', color: '#999' }} />
+                                        )}
                                     </div>
                                     <div>
                                         <div style={{ fontWeight: 'bold', color: '#111' }}>{currentScene.author}</div>
@@ -789,18 +793,18 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
                         )}
                     </div>
 
-                    {/* Right Side - Avatar Display */}
-                    {!isFullWidth && (
+                    {/* Right Side / Top - Avatar Display */}
+                    {(currentScene?.avatar || !isFullWidth) && (
                         <div style={{
                             flex: '0 0 auto',
-                            width: currentScene.layout === 'centered' ? '240px' : '400px',
-                            height: currentScene.layout === 'centered' ? '240px' : '500px',
+                            width: (isFullWidth || currentScene.layout === 'centered') ? '300px' : '450px',
+                            height: (isFullWidth || currentScene.layout === 'centered') ? '300px' : '600px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             position: 'relative',
                             transform: `scale(${interpolate(entrance, [0, 1], [0.8, 1])})`,
-                            filter: `blur(${(1 - entrance) * 20}px) drop-shadow(0 4px 20px rgba(0,0,0,0.3))`
+                            filter: `blur(${(1 - entrance) * 20}px) drop-shadow(0 4px 30px rgba(0,0,0,0.25))`
                         }}>
                             {currentScene?.avatar ? (
                                 <img
@@ -808,7 +812,6 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
                                     alt="Avatar"
                                     onError={(e) => {
                                         console.log('Avatar image failed to load:', currentScene.avatar)
-                                        // Fallback to show placeholder
                                         e.target.style.display = 'none'
                                         e.target.nextSibling.style.display = 'flex'
                                     }}
@@ -816,10 +819,11 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
                                         width: '100%',
                                         height: '100%',
                                         objectFit: 'contain',
-                                        objectPosition: 'center',
-                                        borderRadius: currentScene.layout === 'centered' ? '50%' : '0',
-                                        border: currentScene.layout === 'centered' ? '4px solid #fff' : 'none',
-                                        boxShadow: currentScene.layout === 'centered' ? '0 8px 30px rgba(0,0,0,0.2)' : 'none'
+                                        objectPosition: 'center bottom',
+                                        borderRadius: (isFullWidth || currentScene.layout === 'centered') ? '50%' : '20px',
+                                        background: (isFullWidth || currentScene.layout === 'centered') ? 'rgba(255,255,255,0.1)' : 'transparent',
+                                        border: (isFullWidth || currentScene.layout === 'centered') ? '6px solid #fff' : 'none',
+                                        boxShadow: (isFullWidth || currentScene.layout === 'centered') ? '0 12px 40px rgba(0,0,0,0.2)' : 'none'
                                     }}
                                 />
                             ) : (
@@ -827,13 +831,13 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
                                     width: '100%',
                                     height: '100%',
                                     backgroundColor: '#f5f5f5',
-                                    borderRadius: currentScene.layout === 'centered' ? '50%' : '12px',
+                                    borderRadius: (isFullWidth || currentScene.layout === 'centered') ? '50%' : '12px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     border: '2px dashed #cccccc'
                                 }}>
-                                    <MdPerson size={currentScene.layout === 'centered' ? 120 : 160} color="#999999" />
+                                    <MdPerson size={(isFullWidth || currentScene.layout === 'centered') ? 100 : 160} color="#999999" />
                                 </div>
                             )}
                             {/* Fallback placeholder when avatar fails to load */}
@@ -842,12 +846,12 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
                                 width: '100%',
                                 height: '100%',
                                 backgroundColor: '#f5f5f5',
-                                borderRadius: currentScene.layout === 'centered' ? '50%' : '12px',
+                                borderRadius: (isFullWidth || currentScene.layout === 'centered') ? '50%' : '12px',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 border: '2px dashed #cccccc'
                             }}>
-                                <MdPerson size={currentScene.layout === 'centered' ? 80 : 120} color="#999999" />
+                                <MdPerson size={(isFullWidth || currentScene.layout === 'centered') ? 80 : 120} color="#999999" />
                             </div>
                         </div>
                     )}

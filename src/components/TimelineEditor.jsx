@@ -20,6 +20,7 @@ import {
 
 const TimelineEditor = ({
     scenes,
+    bgMusic,
     activeSceneId,
     currentTime,
     isPlaying,
@@ -31,13 +32,18 @@ const TimelineEditor = ({
     onReorderScenes,
     onPlayPause,
     onStop,
-    totalDuration
+    totalDuration,
+    onDeleteLayer,
+    onDeleteMusic,
+    musicDuration,
+    onMusicDurationChange
 }) => {
     const [zoom, setZoom] = useState(60)
     const [draggedSceneId, setDraggedSceneId] = useState(null)
     const [dragOverSceneId, setDragOverSceneId] = useState(null)
     const scrollContainerRef = useRef(null)
     const isDraggingPlayhead = useRef(false)
+    const isDraggingMusicTrim = useRef(false)
 
     // Auto-scroll during playback
     useEffect(() => {
@@ -77,17 +83,27 @@ const TimelineEditor = ({
             handleTimelineAction(e.clientX)
             window.addEventListener('mousemove', handleMouseMove)
             window.addEventListener('mouseup', handleMouseUp)
+        } else if (e.target.closest('.music-trim-handle')) {
+            isDraggingMusicTrim.current = true
+            window.addEventListener('mousemove', handleMouseMove)
+            window.addEventListener('mouseup', handleMouseUp)
         }
     }
 
     const handleMouseMove = (e) => {
         if (isDraggingPlayhead.current) {
             handleTimelineAction(e.clientX)
+        } else if (isDraggingMusicTrim.current) {
+            const rect = scrollContainerRef.current.getBoundingClientRect()
+            const x = e.clientX - rect.left + scrollContainerRef.current.scrollLeft
+            const newDuration = Math.max(1, Math.min(x / zoom, totalDuration))
+            if (onMusicDurationChange) onMusicDurationChange(newDuration)
         }
     }
 
     const handleMouseUp = () => {
         isDraggingPlayhead.current = false
+        isDraggingMusicTrim.current = false
         window.removeEventListener('mousemove', handleMouseMove)
         window.removeEventListener('mouseup', handleMouseUp)
     }
@@ -159,21 +175,37 @@ const TimelineEditor = ({
         }
 
         .timeline-labels {
-          background: #f8f9fa;
-          border-right: 1px solid #e8eaed;
+          background: #ffffff;
+          border-right: 1px solid #e5e7eb;
           display: flex;
           flex-direction: column;
+          box-shadow: 2px 0 8px rgba(0,0,0,0.02);
+          z-index: 40;
         }
 
         .track-label {
-          height: 64px;
+          height: 80px;
           display: flex;
           align-items: center;
           padding: 0 16px;
           font-size: 13px;
-          color: #5f6368;
-          border-bottom: 1px solid #e8eaed;
+          font-weight: 500;
+          color: #4b5563;
+          border-bottom: 1px solid #f3f4f6;
           box-sizing: border-box;
+          transition: all 0.2s;
+        }
+
+        .track-label-icon {
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-right: 12px;
+          background: #f3f4f6;
+          color: #6b7280;
         }
 
         .track-label.small {
@@ -217,21 +249,43 @@ const TimelineEditor = ({
         }
 
         .clip-track {
-          height: 64px;
+          height: 80px;
           position: relative;
-          border-bottom: 1px solid #e8eaed;
+          border-bottom: 1px solid #f3f4f6;
           box-sizing: border-box;
           display: flex;
           align-items: center;
         }
 
         .clip-track.small {
-          height: 40px;
+          height: 48px;
+        }
+
+        .music-track {
+           height: 48px;
+           border-bottom: 1px solid #f3f4f6;
+           position: relative;
+           display: flex;
+           align-items: center;
+        }
+
+        .music-clip {
+          position: absolute;
+          height: 32px;
+          background: #ecfdf5;
+          border: 1px solid #a7f3d0;
+          border-radius: 8px;
+          color: #065f46;
+          font-size: 12px;
+          display: flex;
+          align-items: center;
+          padding: 0 12px;
+          font-weight: 500;
         }
 
         .canva-clip {
           position: absolute;
-          height: 48px;
+          height: 60px;
           background: #ffffff;
           border-radius: 12px;
           border: 1px solid #dadce0;
@@ -357,11 +411,90 @@ const TimelineEditor = ({
           border-radius: 8px;
           display: flex;
           align-items: center;
+          justify-content: space-between;
           padding: 0 10px;
           font-size: 11px;
           color: #1a73e8;
           font-weight: 500;
           box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .layer-item:hover {
+          background: #d2e3fc;
+          transform: translateY(-1px);
+        }
+
+        .delete-clip-btn {
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          border: none;
+          background: rgba(0, 0, 0, 0.1);
+          color: #5f6368;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-left: 8px;
+          cursor: pointer;
+          font-size: 14px;
+          line-height: 1;
+          transition: all 0.2s;
+        }
+
+        .delete-clip-btn:hover {
+          background: #ea4335;
+          color: white;
+        }
+
+        .music-clip {
+          position: absolute;
+          height: 32px;
+          background: #ecfdf5;
+          border: 1px solid #a7f3d0;
+          border-radius: 8px;
+          color: #065f46;
+          font-size: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 12px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .music-clip:hover {
+          background: #d1fae5;
+        }
+
+        .music-trim-handle {
+          position: absolute;
+          right: 0;
+          top: 0;
+          bottom: 0;
+          width: 8px;
+          background: #34d399;
+          cursor: ew-resize;
+          border-radius: 0 8px 8px 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+        }
+
+        .music-trim-handle:hover {
+          width: 12px;
+          background: #10b981;
+        }
+
+        .music-trim-handle::after {
+          content: "";
+          width: 2px;
+          height: 12px;
+          background: rgba(255, 255, 255, 0.5);
+          border-radius: 1px;
         }
       `}</style>
 
@@ -408,19 +541,34 @@ const TimelineEditor = ({
                 </div>
             </div>
 
-            <div className="timeline-container" style={{ overflow: 'hidden' }}>
-                <div className="timeline-labels" style={{ marginTop: '-1px' }}>
-                    <div style={{ height: '28px', backgroundColor: '#111', borderBottom: '1px solid #333' }}></div>
+            <div className="timeline-container" style={{ borderTop: '1px solid #e5e7eb' }}>
+                <div className="timeline-labels">
+                    <div style={{
+                        height: '28px',
+                        backgroundColor: '#ffffff',
+                        borderBottom: '1px solid #e5e7eb',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}>
+                        <MdDragIndicator color="#e5e7eb" />
+                    </div>
                     <div className="track-label active">
-                        <MdVideoLibrary style={{ marginRight: '10px' }} />
+                        <div className="track-label-icon" style={{ background: '#eef2ff', color: '#4f46e5' }}>
+                            <MdVideoLibrary size={18} />
+                        </div>
                         Main Scenes
                     </div>
-                    <div className="track-label small">
-                        <MdPhotoLibrary style={{ marginRight: '10px' }} />
+                    <div className="track-label small" style={{ height: '48px' }}>
+                        <div className="track-label-icon" style={{ background: '#fef2f2', color: '#ef4444', width: '24px', height: '24px' }}>
+                            <MdPhotoLibrary size={14} />
+                        </div>
                         Overlays
                     </div>
-                    <div className="track-label small">
-                        <MdMusicNote style={{ marginRight: '10px' }} />
+                    <div className="track-label small" style={{ height: '48px' }}>
+                        <div className="track-label-icon" style={{ background: '#ecfdf5', color: '#10b981', width: '24px', height: '24px' }}>
+                            <MdMusicNote size={14} />
+                        </div>
                         Audio Track
                     </div>
                 </div>
@@ -490,25 +638,55 @@ const TimelineEditor = ({
                                             width: `${(layer.duration || scene.duration) * zoom}px`,
                                             top: '4px'
                                         }}
+                                        onClick={() => onSeek(prevDuration + (layer.start || 0))}
                                     >
-                                        {layer.type} overlay
+                                        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            {layer.type} overlay
+                                        </span>
+                                        <button
+                                            className="delete-clip-btn"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onDeleteLayer(scene.id, layer.id);
+                                            }}
+                                            title="Delete overlay"
+                                        >
+                                            ×
+                                        </button>
                                     </div>
                                 ))
                             })}
                         </div>
 
-                        {/* Music Track */}
                         <div className="music-track">
-                            <div
-                                className="music-clip"
-                                style={{
-                                    left: 0,
-                                    width: `${totalDuration * zoom}px`
-                                }}
-                            >
-                                <MdMusicNote size={14} style={{ marginRight: 6 }} />
-                                Background Music: Acoustic Guitar
-                            </div>
+                            {bgMusic && (
+                                <div
+                                    className="music-clip"
+                                    style={{
+                                        left: 0,
+                                        width: `${musicDuration * zoom}px`
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
+                                        <MdMusicNote size={14} style={{ marginRight: 8 }} />
+                                        <span>Background Music</span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                        <button
+                                            className="delete-clip-btn"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onDeleteMusic();
+                                            }}
+                                            title="Remove music"
+                                            style={{ marginRight: '12px' }}
+                                        >
+                                            ×
+                                        </button>
+                                        <div className="music-trim-handle" title="Adjust duration" />
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div

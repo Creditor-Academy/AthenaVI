@@ -13,7 +13,7 @@ import {
   MdLayers,
   MdClose
 } from 'react-icons/md'
-import { predefinedAvatars, predefinedMedia, pageTemplates } from '../../constants/editorData'
+import { predefinedAvatars, predefinedMedia, pageTemplates, predefinedVideos, predefinedAudios, predefinedShapes } from '../../constants/editorData'
 import StaticPreview from './StaticPreview'
 import avatar1 from '../../assets/avatar1.png'
 
@@ -51,6 +51,9 @@ const EditorSidebar = ({
         return (
           <div className="tool-panel-content">
             <h3 className="tool-panel-title">Select Avatar</h3>
+            <div className="search-box">
+              <input type="text" placeholder="Search avatars..." className="search-input" />
+            </div>
             <div className="avatar-grid">
               {predefinedAvatars.map((avatar) => (
                 <div
@@ -73,6 +76,9 @@ const EditorSidebar = ({
         return (
           <div className="tool-panel-content">
             <h3 className="tool-panel-title">Image Library</h3>
+            <div className="search-box">
+              <input type="text" placeholder="Search images..." className="search-input" />
+            </div>
             <div className="media-grid">
               {predefinedMedia.map((media) => (
                 <div
@@ -315,19 +321,95 @@ const EditorSidebar = ({
           </div>
         )
 
+      case 'video':
+        return (
+          <div className="tool-panel-content">
+            <h3 className="tool-panel-title">Video Library</h3>
+            <div className="media-grid">
+              {predefinedVideos.map((video) => (
+                <div
+                  key={video.id}
+                  className="media-item"
+                  onClick={() => addLayer('video', video.full)}
+                  title={`Add ${video.name}`}
+                >
+                  <img src={video.image} alt={video.name} />
+                  <div className="media-badge">VIDEO</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+
+      case 'mic':
+        return (
+          <div className="tool-panel-content">
+            <div className="tool-section">
+              <h3 className="tool-panel-title">AI Voices</h3>
+              <div className="voice-tabs">
+                <button className="voice-tab active">SULTAN</button>
+                <button className="voice-tab">MODERN</button>
+              </div>
+              <div className="audio-list">
+                {[
+                  { id: 'v1', name: 'James', type: 'Professional', gender: 'Male' },
+                  { id: 'v2', name: 'Sarah', type: 'Natural', gender: 'Female' },
+                  { id: 'v3', name: 'Michael', type: 'Deep', gender: 'Male' },
+                  { id: 'v4', name: 'Emma', type: 'Friendly', gender: 'Female' }
+                ].map((voice) => (
+                  <div key={voice.id} className="audio-item">
+                    <div className="audio-info">
+                      <div className="voice-avatar">
+                        {voice.name[0]}
+                      </div>
+                      <div className="voice-details">
+                        <span className="voice-name">{voice.name}</span>
+                        <span className="voice-meta">{voice.type} • {voice.gender}</span>
+                      </div>
+                    </div>
+                    <button className="play-preview-btn">▶</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="tool-section" style={{ marginTop: '24px' }}>
+              <h3 className="tool-panel-title">Background Music</h3>
+              <div className="audio-list">
+                {predefinedAudios.map((audio) => (
+                  <div
+                    key={audio.id}
+                    className="audio-item"
+                    onClick={() => alert(`Applied ${audio.name}`)}
+                  >
+                    <div className="audio-info">
+                      <MdMic size={20} color="#1a73e8" />
+                      <span>{audio.name}</span>
+                    </div>
+                    <span className="audio-duration">
+                      {Math.floor(audio.duration / 60)}:{(audio.duration % 60).toString().padStart(2, '0')}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )
+
       case 'stock':
         return (
           <div className="tool-panel-content">
-            <h3 className="tool-panel-title">Stock Media</h3>
+            <h3 className="tool-panel-title">Stock Library</h3>
             <div className="media-grid">
-              {predefinedMedia.map((media) => (
+              {[...predefinedMedia, ...predefinedVideos].map((media) => (
                 <div
                   key={media.id}
                   className="media-item"
-                  onClick={() => addLayer('image', media.full)}
+                  onClick={() => addLayer(media.type, media.full)}
                   title={`Add ${media.name}`}
                 >
                   <img src={media.image} alt={media.name} />
+                  {media.type === 'video' && <div className="media-badge">VIDEO</div>}
                 </div>
               ))}
             </div>
@@ -338,9 +420,23 @@ const EditorSidebar = ({
         return (
           <div className="tool-panel-content">
             <h3 className="tool-panel-title">Shapes</h3>
-            <div style={{ padding: '20px', textAlign: 'center', color: '#5f6368' }}>
-              <MdShapeLine size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
-              <p>Shape library coming soon</p>
+            <div className="shape-grid">
+              {predefinedShapes.map((shape) => (
+                <div
+                  key={shape.id}
+                  className="shape-item"
+                  onClick={() => addLayer('shape', shape)}
+                  title={`Add ${shape.name}`}
+                >
+                  <div className="shape-preview" style={{
+                    ...shape.style,
+                    width: '40px',
+                    height: '40px',
+                    transform: 'scale(0.8)'
+                  }} />
+                  <span style={{ fontSize: '11px', marginTop: '4px' }}>{shape.name}</span>
+                </div>
+              ))}
             </div>
           </div>
         )
