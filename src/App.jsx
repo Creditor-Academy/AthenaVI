@@ -565,6 +565,7 @@ function App() {
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
+            onNavigateToTechnology={() => setView('technology')}
           />
           {showAuthModal && (
             <Auth 
