@@ -374,7 +374,7 @@ const styles = `
 }
 `
 
-function HelpCenter({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology }) {
+function HelpCenter({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology, onNavigateToProduct }) {
   const [activeFaq, setActiveFaq] = useState(null)
 
   const faqs = [
@@ -443,6 +443,7 @@ function HelpCenter({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigate
           onNavigateToSolution={onNavigateToSolution}
           onNavigateToEthics={onNavigateToEthics}
           onNavigateToTechnology={onNavigateToTechnology}
+          onNavigateToProduct={onNavigateToProduct}
         />
         
         <div className="page-header">
@@ -503,7 +504,13 @@ function HelpCenter({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigate
           </div>
         </div>
 
-        <Footer onNavigateToCompany={onNavigateToCompany} />
+        <Footer 
+          onLogoClick={onLogoClick}
+          onNavigateToProduct={onNavigateToProduct}
+          onNavigateToSolution={onNavigateToSolution}
+          onNavigateToEthics={onNavigateToEthics}
+          onNavigateToCompany={onNavigateToCompany}
+        />
       </div>
     </>
   )

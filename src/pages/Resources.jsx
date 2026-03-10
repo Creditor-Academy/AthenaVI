@@ -10,7 +10,7 @@ const styles = `
 }
 `
 
-function Resources({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology }) {
+function Resources({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology, onNavigateToProduct }) {
   return (
     <>
       <style>{styles}</style>
@@ -22,11 +22,18 @@ function Resources({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateT
           onNavigateToSolution={onNavigateToSolution}
           onNavigateToEthics={onNavigateToEthics}
           onNavigateToTechnology={onNavigateToTechnology}
+          onNavigateToProduct={onNavigateToProduct}
         />
         
         <ResourcesSection variant="light" />
         
-        <Footer onNavigateToCompany={onNavigateToCompany} />
+        <Footer 
+          onLogoClick={onLogoClick}
+          onNavigateToProduct={onNavigateToProduct}
+          onNavigateToSolution={onNavigateToSolution}
+          onNavigateToEthics={onNavigateToEthics}
+          onNavigateToCompany={onNavigateToCompany}
+        />
       </div>
     </>
   )

@@ -340,7 +340,8 @@ function Footer({
   onLogoClick, 
   onNavigateToProduct, 
   onNavigateToSolution, 
-  onNavigateToEthics 
+  onNavigateToEthics,
+  onNavigateToCompany
 }) {
   const handleProductClick = (e, productName) => {
     e.preventDefault()
@@ -356,10 +357,9 @@ function Footer({
     }
   }
 
-  const handleLogoClick = (e) => {
-    e.preventDefault()
-    if (onLogoClick) {
-      onLogoClick()
+  const handleCompanyClick = (item) => {
+    if (onNavigateToCompany) {
+      onNavigateToCompany(item)
     }
   }
 
@@ -367,6 +367,13 @@ function Footer({
     e.preventDefault()
     if (onNavigateToEthics) {
       onNavigateToEthics()
+    }
+  }
+
+  const handleLogoClick = (e) => {
+    e.preventDefault()
+    if (onLogoClick) {
+      onLogoClick()
     }
   }
 
@@ -499,7 +506,10 @@ function Footer({
           </div>
           <div className="footer-bottom-links">
             <a href="#" className="footer-bottom-link" onClick={handleEthicsClick}>Trust Center</a>
-            <a href="#" className="footer-bottom-link">Privacy Policy</a>
+            <a href="#" className="footer-bottom-link" onClick={(e) => {
+                e.preventDefault()
+                handleCompanyClick('Privacy Policy')
+              }}>Privacy Policy</a>
             <a href="#" className="footer-bottom-link">Terms of Service</a>
             <a 
               href="#" 

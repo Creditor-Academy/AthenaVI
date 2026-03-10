@@ -771,7 +771,13 @@ function Technology({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigate
           </div>
         </section>
 
-        <Footer onNavigateToCompany={onNavigateToCompany} />
+        <Footer 
+          onLogoClick={onLogoClick}
+          onNavigateToProduct={onNavigateToProduct}
+          onNavigateToSolution={onNavigateToSolution}
+          onNavigateToEthics={onNavigateToEthics}
+          onNavigateToCompany={onNavigateToCompany}
+        />
       </div>
     </>
   )

@@ -138,7 +138,7 @@ const styles = `
 }
 `
 
-function PrivacyPolicy({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology }) {
+function PrivacyPolicy({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology, onNavigateToProduct }) {
   return (
     <>
       <style>{styles}</style>
@@ -150,6 +150,7 @@ function PrivacyPolicy({ onLoginClick, onLogoClick, onNavigateToCompany, onNavig
           onNavigateToSolution={onNavigateToSolution}
           onNavigateToEthics={onNavigateToEthics}
           onNavigateToTechnology={onNavigateToTechnology}
+          onNavigateToProduct={onNavigateToProduct}
         />
         
         <div className="page-header">
@@ -298,7 +299,13 @@ function PrivacyPolicy({ onLoginClick, onLogoClick, onNavigateToCompany, onNavig
           </div>
         </div>
 
-        <Footer onNavigateToCompany={onNavigateToCompany} />
+        <Footer 
+          onLogoClick={onLogoClick}
+          onNavigateToProduct={onNavigateToProduct}
+          onNavigateToSolution={onNavigateToSolution}
+          onNavigateToEthics={onNavigateToEthics}
+          onNavigateToCompany={onNavigateToCompany}
+        />
       </div>
     </>
   )

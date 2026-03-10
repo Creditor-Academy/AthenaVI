@@ -69,6 +69,7 @@ function Products({ onLoginClick, initialSection = null, onNavigateToProduct, on
           onNavigateToProduct={onNavigateToProduct}
           onNavigateToSolution={onNavigateToSolution}
           onNavigateToEthics={onNavigateToEthics}
+          onNavigateToCompany={onNavigateToCompany}
         />
       </div>
     </>

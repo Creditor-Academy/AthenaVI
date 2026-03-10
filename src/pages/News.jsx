@@ -535,7 +535,7 @@ const styles = `
 }
 `
 
-function News({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology }) {
+function News({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology, onNavigateToProduct }) {
   const [activeCategory, setActiveCategory] = useState('All')
 
   const categories = ['All', 'Product Updates', 'Technology', 'Company News', 'Partnerships', 'Industry Insights']
@@ -603,6 +603,7 @@ function News({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolu
           onNavigateToSolution={onNavigateToSolution}
           onNavigateToEthics={onNavigateToEthics}
           onNavigateToTechnology={onNavigateToTechnology}
+          onNavigateToProduct={onNavigateToProduct}
         />
         
         {/* Hero Section */}
@@ -748,7 +749,13 @@ function News({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolu
           </div>
         </section>
         
-        <Footer onNavigateToCompany={onNavigateToCompany} />
+        <Footer 
+          onLogoClick={onLogoClick}
+          onNavigateToProduct={onNavigateToProduct}
+          onNavigateToSolution={onNavigateToSolution}
+          onNavigateToEthics={onNavigateToEthics}
+          onNavigateToCompany={onNavigateToCompany}
+        />
       </div>
     </>
   )
