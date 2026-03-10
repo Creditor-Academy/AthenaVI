@@ -110,47 +110,53 @@ const styles = `
 .btn-outline {
   font-family: 'Arial', sans-serif;
   background: transparent;
-  border: 1px solid #fff;
+  border: 2px solid rgba(255, 255, 255, 0.85);
   color: #fff;
-  padding: 10px 20px;
+  padding: 14px 28px;
   border-radius: 8px;
-  font-size: 14px;
-  font-weight: 400;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   text-decoration: none;
   white-space: nowrap;
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(4px);
 }
 
 .btn-outline:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.18);
+  border-color: #fff;
+  transform: translateY(-2px);
 }
 
 .btn-primary {
   font-family: 'Arial', sans-serif;
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   border: none;
-  color: #000;
-  padding: 10px 20px;
+  color: #1a1a1a;
+  padding: 14px 28px;
   border-radius: 8px;
-  font-size: 14px;
-  font-weight: 400;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   text-decoration: none;
   white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+  box-shadow: 0 6px 20px rgba(251, 191, 36, 0.45);
+  letter-spacing: 0.5px;
 }
 
 .btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(251, 191, 36, 0.4);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 10px 28px rgba(251, 191, 36, 0.55);
+  background: linear-gradient(135deg, #f3c42aff 0%, #fbbf24 100%);
 }
 
 .hero-cta .btn-primary {
@@ -260,7 +266,7 @@ function Hero() {
               const avatarIndex = getAvatarAtPosition(position)
               const x = getHorizontalPosition(position)
               const isActive = position === 2
-              
+
               return (
                 <div
                   key={index}
