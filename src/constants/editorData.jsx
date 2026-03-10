@@ -36,6 +36,29 @@ export const predefinedMedia = [
     { id: 'm3', name: 'Modern Office', image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=500', full: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2070', type: 'image' },
     { id: 'm4', name: 'City Lights', image: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&q=80&w=500', full: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&q=80&w=2070', type: 'image' },
     { id: 'm5', name: 'Minimal Workspace', image: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&q=80&w=500', full: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&q=80&w=2070', type: 'image' },
+    { id: 'm6', name: 'Mountain Lake', image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=500', full: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=2070', type: 'image' },
+    { id: 'm7', name: 'Golden Gate', image: 'https://images.unsplash.com/photo-1449034446853-66c86144b0ad?auto=format&fit=crop&q=80&w=500', full: 'https://images.unsplash.com/photo-1449034446853-66c86144b0ad?auto=format&fit=crop&q=80&w=2070', type: 'image' },
+    { id: 'm8', name: 'Forest Path', image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=80&w=500', full: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=80&w=2070', type: 'image' },
+]
+
+export const predefinedVideos = [
+    { id: 'v1', name: 'Abstract Waves', image: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=500', full: 'https://assets.mixkit.co/videos/preview/mixkit-abstract-video-of-a-blue-liquid-ink-surface-43562-large.mp4', type: 'video' },
+    { id: 'v2', name: 'Cloudy Sky', image: 'https://images.unsplash.com/photo-1496450681664-3df85efbd29f?auto=format&fit=crop&q=80&w=500', full: 'https://assets.mixkit.co/videos/preview/mixkit-beautiful-white-clouds-moving-slowly-in-the-sky-42526-large.mp4', type: 'video' },
+    { id: 'v3', name: 'Networking', image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=500', full: 'https://assets.mixkit.co/videos/preview/mixkit-network-graphics-of-plexus-lines-background-27415-large.mp4', type: 'video' },
+]
+
+export const predefinedAudios = [
+    { id: 'a1', name: 'Acoustic Guitar', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', duration: 372 },
+    { id: 'a2', name: 'Smooth Jazz', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', duration: 425 },
+    { id: 'a3', name: 'Upbeat Tech', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3', duration: 318 },
+    { id: 'a4', name: 'Ambient Lo-fi', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3', duration: 350 },
+]
+
+export const predefinedShapes = [
+    { id: 's1', type: 'rect', name: 'Square', style: { width: '100px', height: '100px', background: '#3b82f6' } },
+    { id: 's2', type: 'circle', name: 'Circle', style: { width: '100px', height: '100px', background: '#ef4444', borderRadius: '50%' } },
+    { id: 's3', type: 'rect', name: 'Rectangle', style: { width: '200px', height: '100px', background: '#10b981' } },
+    { id: 's4', type: 'rect', name: 'Pill', style: { width: '150px', height: '60px', background: '#8b5cf6', borderRadius: '30px' } },
 ]
 
 export const pageTemplates = [

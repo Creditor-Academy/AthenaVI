@@ -45,7 +45,7 @@ const styles = `
   grid-template-rows: 64px 1fr;
   background: #ffffff;
   color: #0f172a;
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   overflow: hidden;
 }
 

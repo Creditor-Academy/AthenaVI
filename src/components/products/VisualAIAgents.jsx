@@ -253,7 +253,7 @@ const styles = `
 }
 
 .eyebrow-text {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 400;
   text-transform: uppercase;
@@ -286,7 +286,7 @@ const styles = `
 }
 
 .hero-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   line-height: 1.7;
   margin: 0;
@@ -308,7 +308,7 @@ const styles = `
 }
 
 .primary-cta {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   border: none;
   color: #000;
@@ -331,7 +331,7 @@ const styles = `
 }
 
 .secondary-cta {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: transparent;
   border: none;
   padding: 12px 0;

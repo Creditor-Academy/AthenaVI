@@ -14,7 +14,7 @@ const styles = `
 }
 `
 
-function SalesSuite({ onLoginClick, onLogoClick, onNavigateToSolution, onNavigateToProduct, onNavigateToEthics }) {
+function SalesSuite({ onLoginClick, onLogoClick, onNavigateToSolution, onNavigateToProduct, onNavigateToEthics, onNavigateToCompany }) {
   return (
     <>
       <style>{styles}</style>
@@ -25,6 +25,7 @@ function SalesSuite({ onLoginClick, onLogoClick, onNavigateToSolution, onNavigat
           onNavigateToSolution={onNavigateToSolution}
           onNavigateToProduct={onNavigateToProduct}
           onNavigateToEthics={onNavigateToEthics}
+          onNavigateToCompany={onNavigateToCompany}
         />
         
         <HeroSection />
@@ -38,6 +39,7 @@ function SalesSuite({ onLoginClick, onLogoClick, onNavigateToSolution, onNavigat
           onNavigateToProduct={onNavigateToProduct}
           onNavigateToSolution={onNavigateToSolution}
           onNavigateToEthics={onNavigateToEthics}
+          onNavigateToCompany={onNavigateToCompany}
         />
       </div>
     </>

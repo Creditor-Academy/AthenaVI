@@ -78,7 +78,7 @@ const styles = `
 }
 
 .footer-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   color: rgba(255, 255, 255, 0.7);
   font-size: 14px;
   line-height: 1.6;
@@ -127,7 +127,7 @@ const styles = `
 }
 
 .footer-link {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
   font-size: 14px;
@@ -161,7 +161,7 @@ const styles = `
 }
 
 .newsletter-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   color: rgba(255, 255, 255, 0.7);
   font-size: 14px;
   line-height: 1.5;
@@ -175,7 +175,7 @@ const styles = `
 }
 
 .newsletter-input {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   flex: 1;
   padding: 12px 16px;
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -197,7 +197,7 @@ const styles = `
 }
 
 .newsletter-button {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   padding: 12px 20px;
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   border: none;
@@ -232,7 +232,7 @@ const styles = `
 }
 
 .footer-copyright {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   color: rgba(255, 255, 255, 0.7);
   font-size: 14px;
 }
@@ -244,7 +244,7 @@ const styles = `
 }
 
 .footer-bottom-link {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
   font-size: 14px;
@@ -256,7 +256,7 @@ const styles = `
 }
 
 .footer-language {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -340,7 +340,8 @@ function Footer({
   onLogoClick, 
   onNavigateToProduct, 
   onNavigateToSolution, 
-  onNavigateToEthics 
+  onNavigateToEthics,
+  onNavigateToCompany
 }) {
   const handleProductClick = (e, productName) => {
     e.preventDefault()
@@ -356,10 +357,9 @@ function Footer({
     }
   }
 
-  const handleLogoClick = (e) => {
-    e.preventDefault()
-    if (onLogoClick) {
-      onLogoClick()
+  const handleCompanyClick = (item) => {
+    if (onNavigateToCompany) {
+      onNavigateToCompany(item)
     }
   }
 
@@ -367,6 +367,13 @@ function Footer({
     e.preventDefault()
     if (onNavigateToEthics) {
       onNavigateToEthics()
+    }
+  }
+
+  const handleLogoClick = (e) => {
+    e.preventDefault()
+    if (onLogoClick) {
+      onLogoClick()
     }
   }
 
@@ -499,7 +506,10 @@ function Footer({
           </div>
           <div className="footer-bottom-links">
             <a href="#" className="footer-bottom-link" onClick={handleEthicsClick}>Trust Center</a>
-            <a href="#" className="footer-bottom-link">Privacy Policy</a>
+            <a href="#" className="footer-bottom-link" onClick={(e) => {
+                e.preventDefault()
+                handleCompanyClick('Privacy Policy')
+              }}>Privacy Policy</a>
             <a href="#" className="footer-bottom-link">Terms of Service</a>
             <a 
               href="#" 

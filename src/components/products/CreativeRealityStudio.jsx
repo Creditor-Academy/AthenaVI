@@ -83,7 +83,7 @@ const styles = `
 }
 
 .product-grid-card-text {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   line-height: 1.6;
   margin: 0 0 16px;
@@ -97,7 +97,7 @@ const styles = `
 }
 
 .product-grid-card-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   line-height: 1.5;
   margin: 0;
@@ -160,7 +160,7 @@ const styles = `
 }
 
 .product-grid-center-text {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.95);
@@ -174,7 +174,7 @@ const styles = `
 }
 
 .product-cta-button {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   border: none;
   color: #000;

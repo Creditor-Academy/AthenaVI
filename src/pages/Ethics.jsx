@@ -6,7 +6,7 @@ const styles = `
   min-height: 100vh;
   background: #ffffff;
   color: #1e40af;
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 .ethics-content {
@@ -22,12 +22,12 @@ const styles = `
 
 .ethics-title {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 48px;
-  font-weight: 500;
-  line-height: 1.2;
+  font-size: clamp(40px, 4vw, 64px);
+  font-weight: 400;
+  line-height: 1.15;
   margin: 0 0 24px 0;
   color: #1e40af;
-  letter-spacing: -0.5px;
+  letter-spacing: -1.5px;
 }
 
 .ethics-section {
@@ -35,27 +35,27 @@ const styles = `
 }
 
 .ethics-section-title {
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 28px;
-  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(24px, 2.5vw, 32px);
+  font-weight: 600;
   margin: 0 0 20px 0;
   color: #1e293b;
-  line-height: 1.3;
+  line-height: 1.25;
 }
 
 .ethics-text {
-  font-family: 'Arial', sans-serif;
-  font-size: 16px;
-  line-height: 1.8;
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(15px, 1.5vw, 18px);
+  line-height: 1.65;
   margin: 0 0 20px 0;
   color: #64748b;
   font-weight: 400;
 }
 
 .ethics-list {
-  font-family: 'Arial', sans-serif;
-  font-size: 16px;
-  line-height: 1.8;
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(15px, 1.5vw, 18px);
+  line-height: 1.65;
   margin: 0 0 20px 0;
   color: #64748b;
   font-weight: 400;
@@ -78,25 +78,28 @@ const styles = `
 }
 
 .ethics-date {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   color: #64748b;
   margin: 0 0 20px 0;
 }
 
 .ethics-name {
-  font-family: 'Georgia', 'Times New Roman', serif;
+  font-family: 'Inter', sans-serif;
   font-size: 20px;
-  font-weight: 500;
+  font-weight: 600;
   color: #1e293b;
   margin: 0 0 8px 0;
+  line-height: 1.25;
 }
 
 .ethics-role {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   color: #64748b;
   margin: 0;
+  line-height: 1.65;
+  font-weight: 400;
 }
 
 @media (max-width: 768px) {

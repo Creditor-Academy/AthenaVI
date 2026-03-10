@@ -184,7 +184,7 @@ const styles = `
 }
 
 .dropdown-item {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   display: block;
   padding: 12px 20px;
   color: #1e40af;
@@ -201,7 +201,7 @@ const styles = `
 }
 
 .nav-center .login-link {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
   border: none;
   color: #fff;
@@ -226,7 +226,7 @@ const styles = `
 }
 
 .nav-center .btn-primary {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   border: none;
   color: #000;
@@ -259,7 +259,7 @@ const styles = `
 }
 
 .btn-outline {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: transparent;
   border: 1px solid #fff;
   color: #fff;
@@ -282,7 +282,7 @@ const styles = `
 }
 
 .btn-primary {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   border: none;
   color: #000;
@@ -307,7 +307,7 @@ const styles = `
 }
 
 .login-link {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
   border: none;
   color: #fff;
@@ -415,7 +415,7 @@ const styles = `
 }
 
 .mobile-nav-link {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -462,7 +462,7 @@ const styles = `
 }
 
 .mobile-dropdown-item {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   display: block;
   padding: 12px 24px;
   color: #3b82f6;
