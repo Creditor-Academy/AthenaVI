@@ -15,6 +15,7 @@ import SalesSuite from './pages/SalesSuite.jsx'
 import Ethics from './pages/Ethics.jsx'
 import Technology from './pages/Technology.jsx'
 import ResetPassword from './components/authentication/ResetPassword.jsx'
+import Settings from './pages/Settings.jsx'
 
 // Import auth styles from Auth.jsx
 const authStyles = `
@@ -136,7 +137,8 @@ function App() {
       '/marketing-suite': 'marketing-suite',
       '/sales-suite': 'sales-suite',
       '/ethics': 'ethics',
-      '/technology': 'technology'
+      '/technology': 'technology',
+      '/settings': 'settings'
     }
     
     // Get current path (handle both hash and regular routing)
@@ -178,7 +180,8 @@ function App() {
       'marketing-suite': '/marketing-suite',
       'sales-suite': '/sales-suite',
       'ethics': '/ethics',
-      'technology': '/technology'
+      'technology': '/technology',
+      'settings': '/settings'
     }
     
     const newUrl = urlMap[view] || '/'
@@ -224,7 +227,8 @@ function App() {
         '/marketing-suite': 'marketing-suite',
         '/sales-suite': 'sales-suite',
         '/ethics': 'ethics',
-        '/technology': 'technology'
+        '/technology': 'technology',
+        '/settings': 'settings'
       }
       
       const currentPath = window.location.pathname
@@ -341,6 +345,18 @@ function App() {
             }}
             onCreate={() => setView('create')}
           />
+          {showAuthModal && (
+            <Auth 
+              onAuthComplete={handleAuthComplete}
+              onClose={() => setShowAuthModal(false)}
+            />
+          )}
+        </>
+      )}
+
+      {view === 'settings' && (
+        <>
+          <Settings onBack={() => setView('dashboard')} />
           {showAuthModal && (
             <Auth 
               onAuthComplete={handleAuthComplete}
