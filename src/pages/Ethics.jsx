@@ -140,7 +140,7 @@ const styles = `
 }
 `
 
-function Ethics({ onLoginClick, onLogoClick, onNavigateToSolution, onNavigateToProduct, onNavigateToEthics }) {
+function Ethics({ onLoginClick, onLogoClick, onNavigateToSolution, onNavigateToProduct, onNavigateToEthics, onNavigateToTechnology, onNavigateToCompany }) {
   return (
     <>
       <style>{styles}</style>
@@ -151,6 +151,8 @@ function Ethics({ onLoginClick, onLogoClick, onNavigateToSolution, onNavigateToP
           onNavigateToSolution={onNavigateToSolution}
           onNavigateToProduct={onNavigateToProduct}
           onNavigateToEthics={onNavigateToEthics}
+          onNavigateToTechnology={onNavigateToTechnology}
+          onNavigateToCompany={onNavigateToCompany}
         />
         
         <div className="ethics-content">
@@ -265,6 +267,8 @@ function Ethics({ onLoginClick, onLogoClick, onNavigateToSolution, onNavigateToP
           onNavigateToProduct={onNavigateToProduct}
           onNavigateToSolution={onNavigateToSolution}
           onNavigateToEthics={onNavigateToEthics}
+          onNavigateToTechnology={onNavigateToTechnology}
+          onNavigateToCompany={onNavigateToCompany}
         />
       </div>
     </>

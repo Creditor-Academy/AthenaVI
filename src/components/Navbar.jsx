@@ -88,13 +88,22 @@ const styles = `
 .nav-center {
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: 4px;
   flex: 1 1 auto;
-  justify-content: center;
+  justify-content: center
   flex-wrap: nowrap;
   min-width: 0;
   max-width: 100%;
   overflow: visible;
+  margin-left: 48px;
+}
+
+.nav-pills-group {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  border-radius: 999px;
+  padding: 5px 8px;
 }
 
 .nav-link-wrapper {
@@ -104,24 +113,33 @@ const styles = `
 }
 
 .nav-link {
-  font-family: 'Inter', sans-serif;
-  color: #1e40af;
+  font-family: 'Arial', sans-serif;
+  color: #374151;
   text-decoration: none;
   font-size: 15px;
-  font-weight: 400;
+  font-weight: 550;
   display: flex;
   align-items: center;
   gap: 6px;
   cursor: pointer;
-  transition: color 0.2s ease;
+  transition: all 0.22s ease;
   position: relative;
   white-space: nowrap;
   flex-shrink: 0;
-  padding: 8px 4px;
+  padding: 8px 18px;
+  border-radius: 999px;
 }
 
 .nav-link:hover {
-  color: #3b82f6;
+  background: #3b82f6;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.nav-link.active {
+  background:  #3b82f6;
+  color: #ffffff;
+  font-weight: 600;
 }
 
 .nav-link svg {
@@ -131,6 +149,14 @@ const styles = `
 
 .nav-link.active svg {
   transform: rotate(180deg);
+}
+
+.nav-divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(30, 64, 175, 0.15);
+  margin: 0 12px 0 auto;
+  flex-shrink: 0;
 }
 
 .dropdown {
@@ -685,14 +711,14 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
   useEffect(() => {
     const handleClickOutside = (event) => {
       let clickedInside = false
-      
+
       Object.keys(dropdownRefs.current).forEach((key) => {
         const ref = dropdownRefs.current[key]
         if (ref && ref.contains(event.target)) {
           clickedInside = true
         }
       })
-      
+
       if (!clickedInside && activeDropdown) {
         // Clear click timeout if dropdown is closed
         if (clickTimeoutRef.current) {
@@ -709,7 +735,7 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
       const timeoutId = setTimeout(() => {
         document.addEventListener('mousedown', handleClickOutside)
       }, 0)
-      
+
       return () => {
         clearTimeout(timeoutId)
         document.removeEventListener('mousedown', handleClickOutside)
@@ -731,7 +757,7 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
     if (mobileMenuOpen) {
       // Lock body scroll
       document.body.style.overflow = 'hidden'
-      
+
       const handleClickOutside = (event) => {
         if (
           mobileMenuRef.current &&
@@ -797,9 +823,9 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
       <style>{styles}</style>
       <nav className="navbar">
         <div className="nav-left">
-          <a 
-            href="#" 
-            className="logo" 
+          <a
+            href="#"
+            className="logo"
             onClick={(e) => {
               e.preventDefault()
               setMobileMenuOpen(false)
@@ -814,211 +840,207 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
         </div>
 
         <div className="nav-center">
-          <div
-            className="nav-link-wrapper"
-            ref={el => dropdownRefs.current.products = el}
-            onMouseEnter={() => {
-              if (clickTimeoutRef.current) {
-                clearTimeout(clickTimeoutRef.current)
-                clickTimeoutRef.current = null
-              }
-              setActiveDropdown('products')
-            }}
-            onMouseLeave={() => {
-              // Only close if not clicked (clicked dropdowns stay open)
-              if (clickedDropdownRef.current !== 'products') {
-                setActiveDropdown(null)
-              }
-            }}
-          >
-            <a
-              href="#"
-              className={`nav-link ${activeDropdown === 'products' ? 'active' : ''}`}
-              onClick={(e) => {
-                e.preventDefault()
-                // Clear any existing timeout
+          {/* Pill group for nav links */}
+          <div className="nav-pills-group">
+            <div
+              className="nav-link-wrapper"
+              ref={el => dropdownRefs.current.products = el}
+              onMouseEnter={() => {
                 if (clickTimeoutRef.current) {
                   clearTimeout(clickTimeoutRef.current)
+                  clickTimeoutRef.current = null
                 }
-                // Mark this dropdown as clicked so it stays open
-                clickedDropdownRef.current = 'products'
                 setActiveDropdown('products')
               }}
+              onMouseLeave={() => {
+                if (clickedDropdownRef.current !== 'products') {
+                  setActiveDropdown(null)
+                }
+              }}
             >
-              Products
-              <MdKeyboardArrowDown />
-            </a>
-            <div className={`dropdown ${activeDropdown === 'products' ? 'active' : ''}`}>
-              {productsItems.map((item, index) => (
-                <a 
-                  key={index} 
-                  href="#" 
-                  className="dropdown-item"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    // Clear timeout when item is clicked
-                    if (clickTimeoutRef.current) {
-                      clearTimeout(clickTimeoutRef.current)
-                      clickTimeoutRef.current = null
-                    }
-                    clickedDropdownRef.current = null
-                    if (onNavigateToProduct) {
-                      onNavigateToProduct(item)
-                    }
-                    setActiveDropdown(null)
-                  }}
-                >
-                  {item}
-                </a>
-              ))}
+              <a
+                href="#"
+                className={`nav-link ${activeDropdown === 'products' ? 'active' : ''}`}
+                onClick={(e) => {
+                  e.preventDefault()
+                  if (clickTimeoutRef.current) {
+                    clearTimeout(clickTimeoutRef.current)
+                  }
+                  clickedDropdownRef.current = 'products'
+                  setActiveDropdown('products')
+                }}
+              >
+                Products
+                <MdKeyboardArrowDown />
+              </a>
+              <div className={`dropdown ${activeDropdown === 'products' ? 'active' : ''}`}>
+                {productsItems.map((item, index) => (
+                  <a
+                    key={index}
+                    href="#"
+                    className="dropdown-item"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      if (clickTimeoutRef.current) {
+                        clearTimeout(clickTimeoutRef.current)
+                        clickTimeoutRef.current = null
+                      }
+                      clickedDropdownRef.current = null
+                      if (onNavigateToProduct) {
+                        onNavigateToProduct(item)
+                      }
+                      setActiveDropdown(null)
+                    }}
+                  >
+                    {item}
+                  </a>
+                ))}
+              </div>
             </div>
-          </div>
 
-          <div
-            className="nav-link-wrapper"
-            ref={el => dropdownRefs.current.solutions = el}
-            onMouseEnter={() => {
-              if (clickTimeoutRef.current) {
-                clearTimeout(clickTimeoutRef.current)
-                clickTimeoutRef.current = null
-              }
-              setActiveDropdown('solutions')
-            }}
-            onMouseLeave={() => {
-              // Only close if not clicked (clicked dropdowns stay open)
-              if (clickedDropdownRef.current !== 'solutions') {
-                setActiveDropdown(null)
-              }
-            }}
-          >
-            <a
-              href="#"
-              className={`nav-link ${activeDropdown === 'solutions' ? 'active' : ''}`}
-              onClick={(e) => {
-                e.preventDefault()
-                // Clear any existing timeout
+            <div
+              className="nav-link-wrapper"
+              ref={el => dropdownRefs.current.solutions = el}
+              onMouseEnter={() => {
                 if (clickTimeoutRef.current) {
                   clearTimeout(clickTimeoutRef.current)
+                  clickTimeoutRef.current = null
                 }
-                // Mark this dropdown as clicked so it stays open
-                clickedDropdownRef.current = 'solutions'
                 setActiveDropdown('solutions')
               }}
-            >
-              Solutions
-              <MdKeyboardArrowDown />
-            </a>
-            <div className={`dropdown ${activeDropdown === 'solutions' ? 'active' : ''}`}>
-              {solutionsItems.map((item, index) => (
-                <a 
-                  key={index} 
-                  href="#" 
-                  className="dropdown-item"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    // Clear timeout when item is clicked
-                    if (clickTimeoutRef.current) {
-                      clearTimeout(clickTimeoutRef.current)
-                      clickTimeoutRef.current = null
-                    }
-                    clickedDropdownRef.current = null
-                    if (onNavigateToSolution) {
-                      onNavigateToSolution(item)
-                    }
-                    setActiveDropdown(null)
-                  }}
-                >
-                  {item}
-                </a>
-              ))}
-            </div>
-          </div>
-
-          <a 
-            href="#" 
-            className="nav-link"
-            onClick={(e) => {
-              e.preventDefault()
-              if (onNavigateToTechnology) {
-                onNavigateToTechnology()
-              }
-            }}
-          >
-            Technology
-          </a>
-
-          <a 
-            href="#" 
-            className="nav-link"
-            onClick={(e) => {
-              e.preventDefault()
-              if (onNavigateToEthics) {
-                onNavigateToEthics()
-              }
-            }}
-          >
-            Ethics
-          </a>
-          <a href="#" className="nav-link">Pricing</a>
-
-          <div
-            className="nav-link-wrapper"
-            ref={el => dropdownRefs.current.company = el}
-            onMouseEnter={() => {
-              if (clickTimeoutRef.current) {
-                clearTimeout(clickTimeoutRef.current)
-                clickTimeoutRef.current = null
-              }
-              setActiveDropdown('company')
-            }}
-            onMouseLeave={() => {
-              // Only close if not clicked (clicked dropdowns stay open)
-              if (clickedDropdownRef.current !== 'company') {
-                setActiveDropdown(null)
-              }
-            }}
-          >
-            <a
-              href="#"
-              className={`nav-link ${activeDropdown === 'company' ? 'active' : ''}`}
-              onClick={(e) => {
-                e.preventDefault()
-                // Clear any existing timeout
-                if (clickTimeoutRef.current) {
-                  clearTimeout(clickTimeoutRef.current)
+              onMouseLeave={() => {
+                if (clickedDropdownRef.current !== 'solutions') {
+                  setActiveDropdown(null)
                 }
-                // Mark this dropdown as clicked so it stays open
-                clickedDropdownRef.current = 'company'
-                setActiveDropdown('company')
               }}
             >
-              Company
-              <MdKeyboardArrowDown />
+              <a
+                href="#"
+                className={`nav-link ${activeDropdown === 'solutions' ? 'active' : ''}`}
+                onClick={(e) => {
+                  e.preventDefault()
+                  if (clickTimeoutRef.current) {
+                    clearTimeout(clickTimeoutRef.current)
+                  }
+                  clickedDropdownRef.current = 'solutions'
+                  setActiveDropdown('solutions')
+                }}
+              >
+                Solutions
+                <MdKeyboardArrowDown />
+              </a>
+              <div className={`dropdown ${activeDropdown === 'solutions' ? 'active' : ''}`}>
+                {solutionsItems.map((item, index) => (
+                  <a
+                    key={index}
+                    href="#"
+                    className="dropdown-item"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      if (clickTimeoutRef.current) {
+                        clearTimeout(clickTimeoutRef.current)
+                        clickTimeoutRef.current = null
+                      }
+                      clickedDropdownRef.current = null
+                      if (onNavigateToSolution) {
+                        onNavigateToSolution(item)
+                      }
+                      setActiveDropdown(null)
+                    }}
+                  >
+                    {item}
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            <a
+              href="#"
+              className="nav-link"
+              onClick={(e) => {
+                e.preventDefault()
+                if (onNavigateToTechnology) {
+                  onNavigateToTechnology()
+                }
+              }}
+            >
+              Technology
             </a>
-            <div className={`dropdown ${activeDropdown === 'company' ? 'active' : ''}`}>
-              {companyItems.map((item, index) => (
-                <a 
-                  key={index} 
-                  href="#" 
-                  className="dropdown-item"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    if (clickTimeoutRef.current) {
-                      clearTimeout(clickTimeoutRef.current)
-                      clickTimeoutRef.current = null
-                    }
-                    handleCompanyItemClick(item)
-                  }}
-                >
-                  {item}
-                </a>
-              ))}
+
+            <a
+              href="#"
+              className="nav-link"
+              onClick={(e) => {
+                e.preventDefault()
+                if (onNavigateToEthics) {
+                  onNavigateToEthics()
+                }
+              }}
+            >
+              Ethics
+            </a>
+
+            <a href="#" className="nav-link">Pricing</a>
+
+            <div
+              className="nav-link-wrapper"
+              ref={el => dropdownRefs.current.company = el}
+              onMouseEnter={() => {
+                if (clickTimeoutRef.current) {
+                  clearTimeout(clickTimeoutRef.current)
+                  clickTimeoutRef.current = null
+                }
+                setActiveDropdown('company')
+              }}
+              onMouseLeave={() => {
+                if (clickedDropdownRef.current !== 'company') {
+                  setActiveDropdown(null)
+                }
+              }}
+            >
+              <a
+                href="#"
+                className={`nav-link ${activeDropdown === 'company' ? 'active' : ''}`}
+                onClick={(e) => {
+                  e.preventDefault()
+                  if (clickTimeoutRef.current) {
+                    clearTimeout(clickTimeoutRef.current)
+                  }
+                  clickedDropdownRef.current = 'company'
+                  setActiveDropdown('company')
+                }}
+              >
+                Company
+                <MdKeyboardArrowDown />
+              </a>
+              <div className={`dropdown ${activeDropdown === 'company' ? 'active' : ''}`}>
+                {companyItems.map((item, index) => (
+                  <a
+                    key={index}
+                    href="#"
+                    className="dropdown-item"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      if (clickTimeoutRef.current) {
+                        clearTimeout(clickTimeoutRef.current)
+                        clickTimeoutRef.current = null
+                      }
+                      handleCompanyItemClick(item)
+                    }}
+                  >
+                    {item}
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
 
-          <a 
-            href="#" 
-            className="login-link" 
+          {/* Separator between nav pill group and auth buttons */}
+          <div className="nav-divider" />
+
+          <a
+            href="#"
+            className="login-link"
             onClick={(e) => {
               e.preventDefault()
               if (onLoginClick) onLoginClick()
@@ -1028,7 +1050,7 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
             <MdArrowOutward />
           </a>
 
-          <button className="btn-primary">
+          <button className="btn-primary" style={{ marginLeft: '8px' }}>
             CONTACT US
             <MdArrowOutward />
           </button>
@@ -1046,19 +1068,19 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
       </nav>
 
       {/* Mobile Menu Overlay */}
-      <div 
+      <div
         className={`mobile-menu-overlay ${mobileMenuOpen ? 'active' : ''}`}
         onClick={() => setMobileMenuOpen(false)}
         aria-hidden={!mobileMenuOpen}
       />
 
       {/* Mobile Menu */}
-      <div 
+      <div
         ref={mobileMenuRef}
         className={`mobile-menu ${mobileMenuOpen ? 'active' : ''}`}
         aria-hidden={!mobileMenuOpen}
       >
-        <button 
+        <button
           className="mobile-menu-close-btn"
           onClick={() => setMobileMenuOpen(false)}
           aria-label="Close menu"
@@ -1066,8 +1088,8 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
           <MdClose />
         </button>
 
-        <a 
-          href="#" 
+        <a
+          href="#"
           className="mobile-nav-link"
           onClick={(e) => {
             e.preventDefault()
@@ -1089,108 +1111,108 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
           Products
           <MdKeyboardArrowDown />
         </a>
-          <div className={`mobile-dropdown ${mobileDropdowns.products ? 'active' : ''}`}>
-            {productsItems.map((item, index) => (
-              <a 
-                key={index} 
-                href="#" 
-                className="mobile-dropdown-item"
-                onClick={(e) => {
-                  e.preventDefault()
-                  handleMobileActionClick()
-                  if (onNavigateToProduct) {
-                    onNavigateToProduct(item)
-                  }
-                }}
-              >
-                {item}
-              </a>
-            ))}
-          </div>
+        <div className={`mobile-dropdown ${mobileDropdowns.products ? 'active' : ''}`}>
+          {productsItems.map((item, index) => (
+            <a
+              key={index}
+              href="#"
+              className="mobile-dropdown-item"
+              onClick={(e) => {
+                e.preventDefault()
+                handleMobileActionClick()
+                if (onNavigateToProduct) {
+                  onNavigateToProduct(item)
+                }
+              }}
+            >
+              {item}
+            </a>
+          ))}
+        </div>
 
-          <a
-            href="#"
-            className={`mobile-nav-link has-dropdown ${mobileDropdowns.solutions ? 'active' : ''}`}
-            data-dropdown="solutions"
-            onClick={(e) => handleMobileLinkClick(e, true)}
-          >
-            Solutions
-            <MdKeyboardArrowDown />
-          </a>
-          <div className={`mobile-dropdown ${mobileDropdowns.solutions ? 'active' : ''}`}>
-            {solutionsItems.map((item, index) => (
-              <a 
-                key={index} 
-                href="#" 
-                className="mobile-dropdown-item"
-                onClick={(e) => {
-                  e.preventDefault()
-                  handleMobileActionClick()
-                  if (onNavigateToSolution) {
-                    onNavigateToSolution(item)
-                  }
-                }}
-              >
-                {item}
-              </a>
-            ))}
-          </div>
+        <a
+          href="#"
+          className={`mobile-nav-link has-dropdown ${mobileDropdowns.solutions ? 'active' : ''}`}
+          data-dropdown="solutions"
+          onClick={(e) => handleMobileLinkClick(e, true)}
+        >
+          Solutions
+          <MdKeyboardArrowDown />
+        </a>
+        <div className={`mobile-dropdown ${mobileDropdowns.solutions ? 'active' : ''}`}>
+          {solutionsItems.map((item, index) => (
+            <a
+              key={index}
+              href="#"
+              className="mobile-dropdown-item"
+              onClick={(e) => {
+                e.preventDefault()
+                handleMobileActionClick()
+                if (onNavigateToSolution) {
+                  onNavigateToSolution(item)
+                }
+              }}
+            >
+              {item}
+            </a>
+          ))}
+        </div>
 
-           <a
-             href="#"
-             className="mobile-nav-link"
-             onClick={(e) => {
-               e.preventDefault()
-               handleMobileActionClick()
-               if (onNavigateToTechnology) {
-                 onNavigateToTechnology()
-               }
-             }}
-           >
-             Technology
-           </a>
+        <a
+          href="#"
+          className="mobile-nav-link"
+          onClick={(e) => {
+            e.preventDefault()
+            handleMobileActionClick()
+            if (onNavigateToTechnology) {
+              onNavigateToTechnology()
+            }
+          }}
+        >
+          Technology
+        </a>
 
-          <a 
-            href="#" 
-            className="mobile-nav-link" 
-            onClick={(e) => {
-              e.preventDefault()
-              setMobileMenuOpen(false)
-              if (onNavigateToEthics) {
-                onNavigateToEthics()
-              }
-            }}
-          >
-            Ethics
-          </a>
-          <a href="#" className="mobile-nav-link" onClick={handleMobileActionClick}>
-            Pricing
-          </a>
+        <a
+          href="#"
+          className="mobile-nav-link"
+          onClick={(e) => {
+            e.preventDefault()
+            setMobileMenuOpen(false)
+            if (onNavigateToEthics) {
+              onNavigateToEthics()
+            }
+          }}
+        >
+          Ethics
+        </a>
+        <a href="#" className="mobile-nav-link" onClick={handleMobileActionClick}>
+          Pricing
+        </a>
 
-          <a
-            href="#"
-            className={`mobile-nav-link has-dropdown ${mobileDropdowns.company ? 'active' : ''}`}
-            data-dropdown="company"
-            onClick={(e) => handleMobileLinkClick(e, true)}
-          >
-            Company
-            <MdKeyboardArrowDown />
-          </a>
-          <div className={`mobile-dropdown ${mobileDropdowns.company ? 'active' : ''}`}>
-            {companyItems.map((item, index) => (
-              <a 
-                key={index} 
-                href="#" 
-                className="mobile-dropdown-item"
-                onClick={(e) => {
-                  e.preventDefault()
-                  handleCompanyItemClick(item)
-                }}
-              >
-                {item}
-              </a>
-            ))}
-          </div>
+        <a
+          href="#"
+          className={`mobile-nav-link has-dropdown ${mobileDropdowns.company ? 'active' : ''}`}
+          data-dropdown="company"
+          onClick={(e) => handleMobileLinkClick(e, true)}
+        >
+          Company
+          <MdKeyboardArrowDown />
+        </a>
+        <div className={`mobile-dropdown ${mobileDropdowns.company ? 'active' : ''}`}>
+          {companyItems.map((item, index) => (
+            <a
+              key={index}
+              href="#"
+              className="mobile-dropdown-item"
+              onClick={(e) => {
+                e.preventDefault()
+                handleCompanyItemClick(item)
+              }}
+            >
+              {item}
+            </a>
+          ))}
+        </div>
 
         <div className="mobile-actions">
           <button className="btn-outline" onClick={handleMobileActionClick}>
@@ -1201,9 +1223,9 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
             CONTACT US
             <MdArrowOutward />
           </button>
-          <a 
-            href="#" 
-            className="login-link" 
+          <a
+            href="#"
+            className="login-link"
             onClick={(e) => {
               e.preventDefault()
               handleMobileActionClick()

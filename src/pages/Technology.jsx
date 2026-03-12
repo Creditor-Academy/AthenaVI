@@ -564,7 +564,7 @@ const styles = `
 }
 `
 
-function Technology({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToProduct, onNavigateToSolution, onNavigateToEthics }) {
+function Technology({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToProduct, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology }) {
   const [currentSlide, setCurrentSlide] = useState(0)
 
   const heroSlides = [
@@ -653,7 +653,7 @@ function Technology({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigate
           onNavigateToProduct={onNavigateToProduct}
           onNavigateToSolution={onNavigateToSolution}
           onNavigateToEthics={onNavigateToEthics}
-          onNavigateToTechnology={() => {}}
+          onNavigateToTechnology={onNavigateToTechnology}
         />
 
         {/* Hero Section */}
@@ -776,6 +776,7 @@ function Technology({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigate
           onNavigateToProduct={onNavigateToProduct}
           onNavigateToSolution={onNavigateToSolution}
           onNavigateToEthics={onNavigateToEthics}
+          onNavigateToTechnology={onNavigateToTechnology}
           onNavigateToCompany={onNavigateToCompany}
         />
       </div>
