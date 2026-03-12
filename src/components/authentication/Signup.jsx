@@ -16,9 +16,21 @@ function Signup({ onSuccess }) {
   const { register, generateOTP, resendOTP, googleLogin } = useAuth()
 
   const handleInputChange = (e) => {
+    const { name, value } = e.target
+    
+    // If it's OTP, only allow digits
+    if (name === 'otp') {
+      const numericValue = value.replace(/[^0-9]/g, '')
+      setFormData({
+        ...formData,
+        [name]: numericValue
+      })
+      return
+    }
+
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     })
   }
 
@@ -59,7 +71,7 @@ function Signup({ onSuccess }) {
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        otp: formData.otp
+        otp: Number(formData.otp)
       })
       
       console.log('Registration result:', result)
@@ -238,6 +250,8 @@ function Signup({ onSuccess }) {
               id="signup-otp"
               name="otp"
               type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               placeholder="Enter OTP"
               className="auth-input"
               value={formData.otp}
