@@ -1,7 +1,10 @@
 import Navbar from '../components/Navbar.jsx'
 import Hero from '../components/Hero.jsx'
 import VideoSection from '../components/VideoSection.jsx'
+import HowItWorks from '../components/HowItWorks.jsx'
 import ProductsSection from '../components/ProductsSection.jsx'
+import PlatformFeatures from '../components/PlatformFeatures.jsx'
+import UseCases from '../components/UseCases.jsx'
 import ReadySection from '../components/ReadySection.jsx'
 import Footer from '../components/Footer.jsx'
 
@@ -65,8 +68,8 @@ function Landing({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToC
     <>
       <style>{styles}</style>
       <div className="landing-page">
-        <Navbar 
-          onLoginClick={onLoginClick} 
+        <Navbar
+          onLoginClick={onLoginClick}
           onNavigateToProduct={onNavigateToProduct}
           onNavigateToSolution={onNavigateToSolution}
           onNavigateToEthics={onNavigateToEthics}
@@ -76,9 +79,12 @@ function Landing({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToC
         />
         <Hero />
         <VideoSection />
+        <HowItWorks />
         <ProductsSection />
+        <PlatformFeatures />
+        <UseCases />
         <ReadySection />
-        <Footer 
+        <Footer
           onLogoClick={onLogoClick}
           onNavigateToProduct={onNavigateToProduct}
           onNavigateToSolution={onNavigateToSolution}

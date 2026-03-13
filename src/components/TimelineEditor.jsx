@@ -12,11 +12,15 @@ import {
     MdZoomIn,
     MdZoomOut,
     MdPhotoLibrary,
-    MdDragIndicator
+    MdDragIndicator,
+    MdPlayArrow,
+    MdPause,
+    MdStop
 } from 'react-icons/md'
 
 const TimelineEditor = ({
     scenes,
+    bgMusic,
     activeSceneId,
     currentTime,
     isPlaying,
@@ -25,17 +29,44 @@ const TimelineEditor = ({
     onUpdateScene,
     onAddScene,
     onDeleteScene,
-    onReorderScenes
+    onReorderScenes,
+    onPlayPause,
+    onStop,
+    totalDuration,
+    onDeleteLayer,
+    onDeleteMusic,
+    musicDuration,
+    onMusicDurationChange
 }) => {
     const [zoom, setZoom] = useState(60)
     const [draggedSceneId, setDraggedSceneId] = useState(null)
     const [dragOverSceneId, setDragOverSceneId] = useState(null)
     const scrollContainerRef = useRef(null)
     const isDraggingPlayhead = useRef(false)
+    const isDraggingMusicTrim = useRef(false)
 
-    const totalDuration = useMemo(() => {
-        return scenes.reduce((sum, s) => sum + (s.duration || 8), 0)
-    }, [scenes])
+    // Auto-scroll during playback
+    useEffect(() => {
+        if (isPlaying && scrollContainerRef.current) {
+            const container = scrollContainerRef.current
+            const playheadPosition = currentTime * zoom
+            const containerWidth = container.clientWidth
+            const scrollLeft = container.scrollLeft
+
+            // Keep playhead in view with some padding
+            if (playheadPosition > scrollLeft + containerWidth - 100) {
+                container.scrollTo({
+                    left: playheadPosition - containerWidth + 150,
+                    behavior: 'smooth'
+                })
+            } else if (playheadPosition < scrollLeft + 50) {
+                container.scrollTo({
+                    left: Math.max(0, playheadPosition - 50),
+                    behavior: 'smooth'
+                })
+            }
+        }
+    }, [currentTime, isPlaying, zoom])
 
     // Scrubbing logic
     const handleTimelineAction = (clientX) => {
@@ -52,17 +83,27 @@ const TimelineEditor = ({
             handleTimelineAction(e.clientX)
             window.addEventListener('mousemove', handleMouseMove)
             window.addEventListener('mouseup', handleMouseUp)
+        } else if (e.target.closest('.music-trim-handle')) {
+            isDraggingMusicTrim.current = true
+            window.addEventListener('mousemove', handleMouseMove)
+            window.addEventListener('mouseup', handleMouseUp)
         }
     }
 
     const handleMouseMove = (e) => {
         if (isDraggingPlayhead.current) {
             handleTimelineAction(e.clientX)
+        } else if (isDraggingMusicTrim.current) {
+            const rect = scrollContainerRef.current.getBoundingClientRect()
+            const x = e.clientX - rect.left + scrollContainerRef.current.scrollLeft
+            const newDuration = Math.max(1, Math.min(x / zoom, totalDuration))
+            if (onMusicDurationChange) onMusicDurationChange(newDuration)
         }
     }
 
     const handleMouseUp = () => {
         isDraggingPlayhead.current = false
+        isDraggingMusicTrim.current = false
         window.removeEventListener('mousemove', handleMouseMove)
         window.removeEventListener('mouseup', handleMouseUp)
     }
@@ -106,35 +147,40 @@ const TimelineEditor = ({
         <div className="timeline-editor-root">
             <style>{`
         .timeline-editor-root {
-          background: #ffffff;
+          background: transparent;
           height: 100%;
-          display: grid;
-          grid-template-rows: 48px 1fr;
-          border-top: 1px solid #e8eaed;
+          display: flex;
+          flex-direction: column;
           color: #202124;
           font-family: 'Inter', 'Roboto', system-ui, sans-serif;
         }
 
         .timeline-toolbar {
-          padding: 0 24px;
+          padding: 8px 24px;
           display: flex;
           align-items: center;
           gap: 16px;
           background: #ffffff;
-          border-bottom: 1px solid #e8eaed;
+          border-bottom: 1px solid #e5e7eb;
+          height: 64px;
+          flex-shrink: 0;
         }
 
         .timeline-container {
           display: grid;
-          grid-template-columns: 200px 1fr;
+          grid-template-columns: 160px 1fr;
           overflow: hidden;
+          flex: 1;
+          border-bottom: 1px solid #222;
         }
 
         .timeline-labels {
-          background: #f8f9fa;
-          border-right: 1px solid #e8eaed;
+          background: #ffffff;
+          border-right: 1px solid #e5e7eb;
           display: flex;
           flex-direction: column;
+          box-shadow: 2px 0 8px rgba(0,0,0,0.02);
+          z-index: 40;
         }
 
         .track-label {
@@ -143,8 +189,27 @@ const TimelineEditor = ({
           align-items: center;
           padding: 0 16px;
           font-size: 13px;
-          color: #5f6368;
-          border-bottom: 1px solid #e8eaed;
+          font-weight: 500;
+          color: #4b5563;
+          border-bottom: 1px solid #f3f4f6;
+          box-sizing: border-box;
+          transition: all 0.2s;
+        }
+
+        .track-label-icon {
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-right: 12px;
+          background: #f3f4f6;
+          color: #6b7280;
+        }
+
+        .track-label.small {
+          height: 40px;
         }
 
         .track-label.active {
@@ -155,7 +220,7 @@ const TimelineEditor = ({
 
         .timeline-viewport {
           position: relative;
-          overflow-x: auto;
+          overflow-x: scroll;
           overflow-y: hidden;
           background: #f8f9fa;
           cursor: crosshair;
@@ -170,6 +235,7 @@ const TimelineEditor = ({
           top: 0;
           z-index: 30;
           border-bottom: 1px solid #e8eaed;
+          box-sizing: border-box;
         }
 
         .ruler-second {
@@ -185,12 +251,41 @@ const TimelineEditor = ({
         .clip-track {
           height: 80px;
           position: relative;
-          border-bottom: 1px solid #e8eaed;
+          border-bottom: 1px solid #f3f4f6;
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+        }
+
+        .clip-track.small {
+          height: 48px;
+        }
+
+        .music-track {
+           height: 48px;
+           border-bottom: 1px solid #f3f4f6;
+           position: relative;
+           display: flex;
+           align-items: center;
+        }
+
+        .music-clip {
+          position: absolute;
+          height: 32px;
+          background: #ecfdf5;
+          border: 1px solid #a7f3d0;
+          border-radius: 8px;
+          color: #065f46;
+          font-size: 12px;
+          display: flex;
+          align-items: center;
+          padding: 0 12px;
+          font-weight: 500;
         }
 
         .canva-clip {
           position: absolute;
-          height: 64px;
+          height: 60px;
           background: #ffffff;
           border-radius: 12px;
           border: 1px solid #dadce0;
@@ -286,9 +381,9 @@ const TimelineEditor = ({
         }
 
         .toolbar-btn {
-          background: transparent;
-          border: none;
-          color: #5f6368;
+          background: #ffffff;
+          border: 1px solid #e5e7eb;
+          color: #374151;
           padding: 8px 12px;
           border-radius: 8px;
           cursor: pointer;
@@ -297,11 +392,15 @@ const TimelineEditor = ({
           gap: 6px;
           transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
           font-size: 13px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .toolbar-btn:hover {
-          color: #202124;
-          background: #f1f3f4;
+          color: #000000;
+          background: #f8f9fa;
+          border-color: #d1d5db;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
 
         .layer-item {
@@ -312,15 +411,111 @@ const TimelineEditor = ({
           border-radius: 8px;
           display: flex;
           align-items: center;
+          justify-content: space-between;
           padding: 0 10px;
           font-size: 11px;
           color: #1a73e8;
           font-weight: 500;
           box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .layer-item:hover {
+          background: #d2e3fc;
+          transform: translateY(-1px);
+        }
+
+        .delete-clip-btn {
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          border: none;
+          background: rgba(0, 0, 0, 0.1);
+          color: #5f6368;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-left: 8px;
+          cursor: pointer;
+          font-size: 14px;
+          line-height: 1;
+          transition: all 0.2s;
+        }
+
+        .delete-clip-btn:hover {
+          background: #ea4335;
+          color: white;
+        }
+
+        .music-clip {
+          position: absolute;
+          height: 32px;
+          background: #ecfdf5;
+          border: 1px solid #a7f3d0;
+          border-radius: 8px;
+          color: #065f46;
+          font-size: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 12px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .music-clip:hover {
+          background: #d1fae5;
+        }
+
+        .music-trim-handle {
+          position: absolute;
+          right: 0;
+          top: 0;
+          bottom: 0;
+          width: 8px;
+          background: #34d399;
+          cursor: ew-resize;
+          border-radius: 0 8px 8px 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+        }
+
+        .music-trim-handle:hover {
+          width: 12px;
+          background: #10b981;
+        }
+
+        .music-trim-handle::after {
+          content: "";
+          width: 2px;
+          height: 12px;
+          background: rgba(255, 255, 255, 0.5);
+          border-radius: 1px;
         }
       `}</style>
 
             <div className="timeline-toolbar">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button className="toolbar-btn" title="Stop" onClick={onStop}>
+                        <MdStop size={18} />
+                    </button>
+                    <button className="toolbar-btn" title="Play/Pause" onClick={onPlayPause}>
+                        {isPlaying ? <MdPause size={18} /> : <MdPlayArrow size={18} />}
+                    </button>
+                    <div className="time-display" style={{ padding: '6px 12px', fontSize: '12px', color: '#5f6368' }}>
+                        {Math.floor(currentTime / 60).toString().padStart(2, '0')}:
+                        {Math.floor(currentTime % 60).toString().padStart(2, '0')} /
+                        {Math.floor(totalDuration / 60).toString().padStart(2, '0')}:
+                        {Math.floor(totalDuration % 60).toString().padStart(2, '0')}
+                    </div>
+                </div>
+
+                <div style={{ width: '1px', height: '24px', background: '#e8eaed' }} />
+
                 <button className="toolbar-btn" onClick={onAddScene}>
                     <MdAdd size={20} />
                     <span>Add Page</span>
@@ -343,23 +538,38 @@ const TimelineEditor = ({
                         />
                         <MdZoomIn size={14} color="#5f6368" />
                     </div>
-                    <div className="time-display">
-                        {Math.floor(currentTime / 60).toString().padStart(2, '0')}:
-                        {Math.floor(currentTime % 60).toString().padStart(2, '0')}.
-                        {Math.floor((currentTime % 1) * 30).toString().padStart(2, '0')}
-                    </div>
                 </div>
             </div>
 
-            <div className="timeline-container">
+            <div className="timeline-container" style={{ borderTop: '1px solid #e5e7eb' }}>
                 <div className="timeline-labels">
+                    <div style={{
+                        height: '28px',
+                        backgroundColor: '#ffffff',
+                        borderBottom: '1px solid #e5e7eb',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}>
+                        <MdDragIndicator color="#e5e7eb" />
+                    </div>
                     <div className="track-label active">
-                        <MdVideoLibrary style={{ marginRight: '10px' }} />
+                        <div className="track-label-icon" style={{ background: '#eef2ff', color: '#4f46e5' }}>
+                            <MdVideoLibrary size={18} />
+                        </div>
                         Main Scenes
                     </div>
-                    <div className="track-label">
-                        <MdPhotoLibrary style={{ marginRight: '10px' }} />
+                    <div className="track-label small" style={{ height: '48px' }}>
+                        <div className="track-label-icon" style={{ background: '#fef2f2', color: '#ef4444', width: '24px', height: '24px' }}>
+                            <MdPhotoLibrary size={14} />
+                        </div>
                         Overlays
+                    </div>
+                    <div className="track-label small" style={{ height: '48px' }}>
+                        <div className="track-label-icon" style={{ background: '#ecfdf5', color: '#10b981', width: '24px', height: '24px' }}>
+                            <MdMusicNote size={14} />
+                        </div>
+                        Audio Track
                     </div>
                 </div>
 
@@ -415,7 +625,7 @@ const TimelineEditor = ({
                         </div>
 
                         {/* Overlays Track */}
-                        <div className="clip-track" style={{ height: '50px' }}>
+                        <div className="clip-track small">
                             {scenes.map((scene, index) => {
                                 const prevDuration = scenes.slice(0, index).reduce((sum, s) => sum + (s.duration || 8), 0)
                                 return (scene.layers || []).map(layer => (
@@ -423,21 +633,67 @@ const TimelineEditor = ({
                                         key={layer.id}
                                         className="layer-item"
                                         style={{
+                                            position: 'absolute',
                                             left: `${(prevDuration + (layer.start || 0)) * zoom}px`,
-                                            width: `${(layer.duration || scene.duration) * zoom}px`
+                                            width: `${(layer.duration || scene.duration) * zoom}px`,
+                                            top: '4px'
                                         }}
+                                        onClick={() => onSeek(prevDuration + (layer.start || 0))}
                                     >
-                                        {layer.type} overlay
+                                        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            {layer.type} overlay
+                                        </span>
+                                        <button
+                                            className="delete-clip-btn"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onDeleteLayer(scene.id, layer.id);
+                                            }}
+                                            title="Delete overlay"
+                                        >
+                                            ×
+                                        </button>
                                     </div>
                                 ))
                             })}
+                        </div>
+
+                        <div className="music-track">
+                            {bgMusic && (
+                                <div
+                                    className="music-clip"
+                                    style={{
+                                        left: 0,
+                                        width: `${musicDuration * zoom}px`
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
+                                        <MdMusicNote size={14} style={{ marginRight: 8 }} />
+                                        <span>Background Music</span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                        <button
+                                            className="delete-clip-btn"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onDeleteMusic();
+                                            }}
+                                            title="Remove music"
+                                            style={{ marginRight: '12px' }}
+                                        >
+                                            ×
+                                        </button>
+                                        <div className="music-trim-handle" title="Adjust duration" />
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div
                             className="playhead"
                             style={{
                                 left: `${currentTime * zoom}px`,
-                                transition: isPlaying ? 'none' : 'left 0.1s ease-out'
+                                transition: isPlaying ? 'left 0.1s linear' : 'left 0.1s ease-out'
                             }}
                         >
                             <div className="playhead-head" />

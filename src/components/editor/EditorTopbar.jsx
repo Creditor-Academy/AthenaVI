@@ -22,7 +22,9 @@ const EditorTopbar = ({
     selectedTool,
     setSelectedTool,
     handlePreview,
-    exportVideo
+    exportVideo,
+    zoomLevel,
+    setZoomLevel
 }) => {
     return (
         <div className="editor-topbar">
@@ -31,15 +33,15 @@ const EditorTopbar = ({
                     ←
                 </button>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: '8px' }}>
-                    <div style={{ 
-                        width: '32px', 
-                        height: '32px', 
-                        borderRadius: '8px', 
-                        background: 'linear-gradient(135deg, #1a73e8 0%, #4285f4 100%)', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        color: 'white', 
+                    <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '8px',
+                        background: 'linear-gradient(135deg, #1a73e8 0%, #4285f4 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
                         fontWeight: '600',
                         fontSize: '16px'
                     }}>
@@ -83,18 +85,21 @@ const EditorTopbar = ({
                 <button
                     className="icon-btn"
                     title="Zoom In"
+                    onClick={() => setZoomLevel(Math.min(200, zoomLevel + 10))}
                 >
                     <MdZoomIn size={20} />
                 </button>
                 <button
                     className="icon-btn"
                     title="Zoom Out"
+                    onClick={() => setZoomLevel(Math.max(25, zoomLevel - 10))}
                 >
                     <MdZoomOut size={20} />
                 </button>
                 <button
                     className="icon-btn"
                     title="Fit to Screen"
+                    onClick={() => setZoomLevel(100)}
                 >
                     <MdFitScreen size={20} />
                 </button>
@@ -114,24 +119,24 @@ const EditorTopbar = ({
                 >
                     <MdShare size={20} />
                 </button>
-                <div style={{ 
-                    width: '32px', 
-                    height: '32px', 
-                    borderRadius: '50%', 
-                    background: '#f1f3f4', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
+                <div style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    background: '#f1f3f4',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     color: '#5f6368',
                     cursor: 'pointer',
                     transition: 'all 150ms cubic-bezier(0.4, 0, 0.2, 1)'
                 }}
-                onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#e8eaed'
-                }}
-                onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#f1f3f4'
-                }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = '#e8eaed'
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = '#f1f3f4'
+                    }}
                 >
                     <MdAccountCircle size={24} />
                 </div>
