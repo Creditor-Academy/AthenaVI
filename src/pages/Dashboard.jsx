@@ -30,7 +30,8 @@ import {
   MdCloudUpload,
   MdImage,
   MdAudiotrack,
-  MdWallpaper
+  MdWallpaper,
+  MdAdminPanelSettings
 } from 'react-icons/md'
 import Videos from './Videos.jsx'
 import Trash from './Trash.jsx'
@@ -45,6 +46,8 @@ import Profile from './Profile.jsx'
 import Settings from './Settings.jsx'
 import BrandKits from './BrandKits.jsx'
 import Credits from './Credits.jsx'
+import TeamWorkspace from './TeamWorkspace.jsx'
+import AdminPortal from './AdminPortal.jsx'
 import VoiceCreatePanel from '../components/VoiceCreatePanel.jsx'
 import AIVideoAssistant from '../components/AIVideoAssistant.jsx'
 import ImportPowerPointModal from '../components/ImportPowerPointModal.jsx'
@@ -218,6 +221,7 @@ function Dashboard({ onLogout, onCreate }) {
     { id: 'avatars', label: 'Avatars', icon: <MdPerson /> },
     { id: 'templates', label: 'Templates', icon: <MdColorLens /> },
     { id: 'library', label: 'Media Library', icon: <MdCollectionsBookmark /> },
+    { id: 'team-workspace', label: 'Team Workspace', icon: <MdGroup /> },
   ]
 
   const creationItems = [
@@ -225,6 +229,7 @@ function Dashboard({ onLogout, onCreate }) {
   ]
 
   const systemItems = [
+    { id: 'admin-portal', label: 'Admin Portal', icon: <MdAdminPanelSettings /> },
     { id: 'settings', label: 'Settings', icon: <MdSettings /> },
   ]
 
@@ -294,7 +299,7 @@ function Dashboard({ onLogout, onCreate }) {
           </div>
         </aside>
 
-        <main className={`content ${!['library', 'avatars', 'templates', 'template-details'].includes(section) ? 'with-padding' : ''}`}>
+        <main className={`content ${!['library', 'avatars', 'templates', 'template-details', 'team-workspace', 'admin-portal'].includes(section) ? 'with-padding' : ''}`}>
           {section === 'home' && (
             <HomeSection 
               onCreate={onCreate}
@@ -331,6 +336,8 @@ function Dashboard({ onLogout, onCreate }) {
           )}
           {section === 'shared' && <SharedWithMe />}
           {section === 'workspace' && <Workspace onCreate={onCreate} />}
+          {section === 'team-workspace' && <TeamWorkspace onCreate={onCreate} />}
+          {section === 'admin-portal' && <AdminPortal />}
           {section === 'brandkits' && <BrandKits />}
           {section === 'credits' && <Credits onBack={() => setSection('home')} />}
           {section === 'profile' && <Profile onBack={() => setSection('home')} />}
