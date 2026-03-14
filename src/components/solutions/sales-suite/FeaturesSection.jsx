@@ -59,7 +59,7 @@ const styles = `
 }
 
 .features-subtitle {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 20px;
   line-height: 1.7;
   margin: 0;
@@ -111,7 +111,7 @@ const styles = `
 }
 
 .features-image-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   line-height: 1.6;
   margin: 0;
@@ -158,7 +158,7 @@ const styles = `
 }
 
 .feature-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   line-height: 1.7;
   margin: 0 0 16px 0;
@@ -172,7 +172,7 @@ const styles = `
 }
 
 .feature-benefit {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   color: rgba(255, 255, 255, 0.7);
   display: flex;
@@ -228,7 +228,7 @@ const styles = `
 }
 
 .use-case-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 15px;
   line-height: 1.6;
   margin: 0;

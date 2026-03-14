@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import Login from '../components/authentication/Login.jsx'
 import Signup from '../components/authentication/Signup.jsx'
+import ForgotPassword from '../components/authentication/ForgotPassword.jsx'
 
 const styles = `
 .auth-modal-overlay {
@@ -9,37 +10,37 @@ const styles = `
   left: 0;
   right: 0;
   bottom: 0;
-  background: transparent;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 2000;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px 12px;
-  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 20px;
+  animation: fadeIn 0.3s ease-out;
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .auth-modal-container {
   position: relative;
   width: 100%;
-  max-width: 900px;
-  height: 600px;
+  max-width: 720px;
+  min-height: 500px;
+  background: #ffffff;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes slideUp {
   from {
-    transform: translateY(30px) scale(0.95);
+    transform: translateY(20px) scale(0.98);
     opacity: 0;
   }
   to {
@@ -49,76 +50,69 @@ const styles = `
 }
 
 .auth-modal-content {
-  width: 100%;
-  height: 100%;
   display: flex;
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(30, 64, 175, 0.3);
-  font-family: 'Arial', sans-serif;
+  width: 100%;
+  height: 500px;
   position: relative;
+  transition: all 0.5s ease;
 }
 
 .auth-close-btn {
   position: absolute;
-  top: 20px;
-  right: 20px;
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(30, 64, 175, 0.15);
-  border-radius: 10px;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.2s ease;
   z-index: 100;
-  box-shadow: 0 2px 8px rgba(30, 64, 175, 0.1);
 }
 
 .auth-close-btn:hover {
-  background: rgba(30, 64, 175, 0.1);
-  border-color: rgba(30, 64, 175, 0.3);
-  transform: rotate(90deg) scale(1.05);
-  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2);
+  background: #f1f5f9;
+  transform: scale(1.1);
 }
 
 .auth-close-btn svg {
-  width: 20px;
-  height: 20px;
-  stroke: #1e40af;
+  width: 16px;
+  height: 16px;
+  stroke: #64748b;
   stroke-width: 2.5;
 }
 
 .auth-left-panel {
-  flex: 0 0 50%;
-  background: #ffffff;
-  padding: 50px 50px;
+  flex: 1;
+  padding: 32px 40px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  position: relative;
+  background: #ffffff;
   z-index: 2;
-  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .auth-modal-content.signup-active .auth-left-panel {
   transform: translateX(-100%);
-  pointer-events: none;
 }
 
 .auth-right-panel {
-  flex: 0 0 50%;
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
-  padding: 50px 40px;
+  flex: 0.85;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  padding: 40px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
+  color: #ffffff;
   position: relative;
-  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   z-index: 1;
 }
 
@@ -127,143 +121,122 @@ const styles = `
   z-index: 3;
 }
 
-.auth-promo-content {
-  color: #ffffff;
-  transition: opacity 0.3s ease;
-  width: 100%;
-}
-
-.auth-modal-content.signup-active .auth-promo-content {
-  opacity: 0;
-  pointer-events: none;
-}
-
 .auth-promo-title {
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 42px;
-  font-weight: 700;
-  margin: 0 0 16px 0;
-  letter-spacing: -1px;
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  line-height: 1.2;
 }
 
 .auth-promo-subtitle {
-  font-family: 'Arial', sans-serif;
-  font-size: 16px;
-  margin: 0 0 40px 0;
-  opacity: 0.95;
-  line-height: 1.6;
+  font-size: 15px;
+  opacity: 0.9;
+  margin-bottom: 32px;
+  line-height: 1.5;
 }
 
 .auth-promo-btn {
-  padding: 14px 32px;
-  font-family: 'Arial', sans-serif;
+  padding: 10px 28px;
   font-size: 14px;
   font-weight: 600;
   color: #ffffff;
-  background: transparent;
-  border: 2px solid #ffffff;
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1.5px solid #ffffff;
+  border-radius: 99px;
   cursor: pointer;
   transition: all 0.3s ease;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
 }
 
 .auth-promo-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.auth-form-container {
-  width: 100%;
-  max-width: 100%;
+  background: #ffffff;
+  color: #2563eb;
 }
 
 .auth-login-form-container {
   width: 100%;
-  max-width: 100%;
-  transition: opacity 0.3s ease;
-}
-
-.auth-modal-content.signup-active .auth-login-form-container {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.auth-form-header {
-  text-align: center;
-  margin-bottom: 8px;
+  animation: fadeIn 0.5s ease;
 }
 
 .auth-form-title {
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 32px;
-  font-weight: 700;
-  color: #1e40af;
-  margin: 0 0 8px 0;
-  letter-spacing: -0.5px;
+  font-size: 26px;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 8px;
+  text-align: left;
 }
 
 .auth-form-subtitle {
-  font-family: 'Arial', sans-serif;
-  font-size: 13px;
-  color: rgba(30, 64, 175, 0.6);
-  margin: 0 0 24px 0;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.auth-signup-form-container {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+  padding: 24px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transform: translateX(100%);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 4;
+  opacity: 0;
+}
+
+.auth-modal-content.signup-active .auth-signup-form-container {
+  transform: translateX(0);
+  opacity: 1;
+  width: 55%;
+}
+
+.auth-blue-panel-left {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 45%;
+  height: 100%;
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: #ffffff;
+  transform: translateX(-100%);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 5;
+  opacity: 0;
+}
+
+.auth-modal-content.signup-active .auth-blue-panel-left {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+/* Form Styles */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-form-header {
+  margin-bottom: 8px;
 }
 
 .auth-social-buttons {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.auth-social-btn {
-  width: 100%;
-  aspect-ratio: 1;
-  background: #ffffff;
-  border: 1px solid rgba(30, 64, 175, 0.15);
-  border-radius: 8px;
   display: flex;
-  align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 18px;
-  font-weight: 600;
-  color: #1e40af;
-  padding: 0;
-}
-
-.auth-social-btn:hover {
-  border-color: rgba(30, 64, 175, 0.3);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(30, 64, 175, 0.15);
-}
-
-.auth-social-btn.google {
-  color: #4285F4;
-}
-
-.auth-social-btn.facebook {
-  color: #1877F2;
-}
-
-.auth-social-btn.github {
-  color: #333333;
-}
-
-.auth-social-btn.linkedin {
-  color: #0077B5;
+  margin-bottom: 20px;
 }
 
 .auth-input-wrapper {
@@ -274,45 +247,29 @@ const styles = `
 
 .auth-input-icon {
   position: absolute;
-  left: 16px;
-  color: rgba(30, 64, 175, 0.5);
+  left: 14px;
+  color: #94a3b8;
   font-size: 18px;
   pointer-events: none;
-  transition: color 0.2s ease;
   z-index: 1;
-}
-
-.auth-input-wrapper:focus-within .auth-input-icon {
-  color: #3b82f6;
 }
 
 .auth-input {
   width: 100%;
-  padding: 12px 16px 12px 44px;
-  font-family: 'Arial', sans-serif;
+  padding: 10px 14px 10px 42px;
   font-size: 14px;
-  color: #1e40af;
-  background: rgba(30, 64, 175, 0.05);
-  border: 1px solid rgba(30, 64, 175, 0.15);
-  border-radius: 8px;
+  color: #1e293b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   outline: none;
-  transition: all 0.3s ease;
-  box-sizing: border-box;
-}
-
-.auth-input::placeholder {
-  color: rgba(30, 64, 175, 0.5);
-}
-
-.auth-input:hover {
-  border-color: rgba(30, 64, 175, 0.25);
-  background: rgba(30, 64, 175, 0.08);
+  transition: all 0.2s ease;
 }
 
 .auth-input:focus {
-  border-color: #3b82f6;
   background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
 }
 
 .auth-password-toggle {
@@ -320,180 +277,124 @@ const styles = `
   right: 12px;
   background: transparent;
   border: none;
-  color: rgba(30, 64, 175, 0.5);
+  color: #94a3b8;
   cursor: pointer;
-  padding: 4px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  border-radius: 6px;
-  font-size: 20px;
-}
-
-.auth-password-toggle:hover {
-  color: #3b82f6;
-  background: rgba(30, 64, 175, 0.05);
-}
-
-.auth-submit-btn {
-  width: 100%;
-  padding: 14px 24px;
-  font-family: 'Arial', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  color: #ffffff;
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
-  margin-top: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.auth-submit-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(30, 64, 175, 0.4);
-}
-
-.auth-submit-btn:active {
-  transform: translateY(0);
+  font-size: 18px;
 }
 
 .auth-forgot-link {
   text-align: right;
-  margin-top: 4px;
+  margin-top: -4px;
 }
 
 .auth-forgot-link a {
-  font-family: 'Arial', sans-serif;
   font-size: 13px;
-  color: rgba(30, 64, 175, 0.7);
+  color: #2563eb;
   text-decoration: none;
-  transition: color 0.2s ease;
+  font-weight: 500;
 }
 
-.auth-forgot-link a:hover {
-  color: #3b82f6;
-  text-decoration: underline;
+.auth-submit-btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  background: #2563eb;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 8px;
 }
 
-.auth-signup-form-container {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 50%;
-  height: 100%;
-  background: #ffffff;
-  padding: 50px 40px;
+.auth-submit-btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+.auth-divider {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  transform: translateX(100%);
-  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: 4;
-  overflow-y: auto;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.auth-modal-content.signup-active .auth-signup-form-container {
-  transform: translateX(0);
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.auth-blue-panel-left {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
-  padding: 50px 40px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
   align-items: center;
-  text-align: center;
-  transform: translateX(-100%);
-  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: 5;
-  opacity: 0;
-  pointer-events: none;
+  margin: 12px 0;
+  gap: 12px;
 }
 
-.auth-modal-content.signup-active .auth-blue-panel-left {
-  transform: translateX(0);
-  opacity: 1;
-  pointer-events: auto;
+.auth-divider::before, .auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e2e8f0;
 }
 
-.auth-blue-panel-left .auth-promo-content {
-  opacity: 0;
-  transition: opacity 0.3s ease 0.4s;
-  pointer-events: auto;
+.auth-divider span {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
-.auth-modal-content.signup-active .auth-blue-panel-left .auth-promo-content {
-  opacity: 1;
-  pointer-events: auto;
+.auth-google-alt-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 10px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auth-google-alt-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
 }
 
 @media (max-width: 768px) {
   .auth-modal-container {
-    max-width: 100%;
-    height: auto;
-    max-height: 90vh;
+    max-width: 400px;
+    min-height: auto;
   }
-  
+
   .auth-modal-content {
-    flex-direction: column;
     height: auto;
+    min-height: 480px;
   }
-  
-  .auth-left-panel,
-  .auth-right-panel {
-    flex: 1 1 auto;
-    min-height: 400px;
+
+  .auth-right-panel, .auth-blue-panel-left {
+    display: none;
   }
-  
-  .auth-modal-content.signup-active .auth-left-panel,
-  .auth-modal-content.signup-active .auth-right-panel {
-    transform: none;
-  }
-  
-  .auth-signup-form-container,
-  .auth-blue-panel-left {
-    position: static;
-    width: 100%;
-    transform: none;
-    padding: 40px 30px;
-  }
-  
+
   .auth-left-panel {
-    padding: 40px 30px;
+    flex: 1;
+    padding: 32px 24px;
   }
-  
-  .auth-right-panel {
-    padding: 40px 30px;
+
+  .auth-modal-content.signup-active .auth-signup-form-container {
+    width: 100%;
+    position: relative;
+    transform: none;
+    opacity: 1;
+    padding: 32px 24px;
   }
-  
-  .auth-promo-title {
-    font-size: 32px;
-  }
-  
-  .auth-form-title {
-    font-size: 28px;
+
+  .auth-modal-content.signup-active .auth-left-panel {
+    display: none;
   }
 }
 `
 
 function Auth({ onAuthComplete, onClose }) {
   const [isSignupActive, setIsSignupActive] = useState(false)
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
 
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget && onClose) {
@@ -508,6 +409,14 @@ function Auth({ onAuthComplete, onClose }) {
     if (onClose) {
       onClose()
     }
+  }
+
+  const handleForgotPasswordClick = () => {
+    setShowForgotPassword(true)
+  }
+
+  const handleBackToLogin = () => {
+    setShowForgotPassword(false)
   }
 
   const handleSignupClick = () => {
@@ -560,19 +469,36 @@ function Auth({ onAuthComplete, onClose }) {
             {/* Left Column - Sign In Form (when login active) */}
             <div className="auth-left-panel">
               <div className="auth-login-form-container">
-                <Login onSuccess={handleAuthSuccess} />
+                {showForgotPassword ? (
+                  <ForgotPassword onBack={handleBackToLogin} onSuccess={handleAuthSuccess} />
+                ) : (
+                  <Login onSuccess={handleAuthSuccess} onForgotPassword={handleForgotPasswordClick} />
+                )}
               </div>
             </div>
 
             {/* Right Column - Blue Promotional Panel with Sign Up Button (when login active) */}
             <div className="auth-right-panel">
-              <div className="auth-promo-content">
-                <h2 className="auth-promo-title">Hello World</h2>
-                <p className="auth-promo-subtitle">Sign up now and enjoy our site</p>
-                <button className="auth-promo-btn" onClick={handleSignupClick}>
-                  Sign Up
-                </button>
-              </div>
+              {showForgotPassword ? (
+                <div className="auth-promo-content">
+                  <h2 className="auth-promo-title">Secure Recovery</h2>
+                  <p className="auth-promo-subtitle">Follow the steps to safely reset your account password and regain access.</p>
+                  <div style={{
+                    fontSize: '64px',
+                    marginTop: '20px',
+                    opacity: '0.9',
+                    filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))'
+                  }}>🛡️</div>
+                </div>
+              ) : (
+                <div className="auth-promo-content">
+                  <h2 className="auth-promo-title">Hello World</h2>
+                  <p className="auth-promo-subtitle">Sign up now and enjoy our site</p>
+                  <button className="auth-promo-btn" onClick={handleSignupClick}>
+                    Sign Up
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Sign Up Form - Slides in from right when signup is active */}

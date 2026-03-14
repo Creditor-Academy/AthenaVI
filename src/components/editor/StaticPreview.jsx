@@ -51,7 +51,7 @@ const StaticPreview = ({ scene, isThumbnail = true }) => {
                         pointerEvents: 'none'
                     }}>
                         {layer.type === 'image' && <img src={layer.content} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
-                        {layer.type === 'video' && <div style={{ width: '100%', height: '100%', background: '#000' }} />}
+                        {layer.type === 'video' && <div style={{ width: '100%', height: '100%', background: '#f1f3f4', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#5f6368', fontSize: '12px' }}>Video</div>}
                     </div>
                 )
             })}
@@ -61,9 +61,9 @@ const StaticPreview = ({ scene, isThumbnail = true }) => {
                 width: '100%',
                 height: '100%',
                 display: 'flex',
-                flexDirection: scene.layout === 'split-left' ? 'row-reverse' : (scene.layout === 'centered' || scene.layout === 'quote' ? 'column-reverse' : 'row'),
+                flexDirection: scene.layout === 'quote' ? 'column-reverse' : (scene.layout === 'split-left' ? 'row-reverse' : 'row'),
                 alignItems: 'center',
-                justifyContent: scene.layout === 'centered' || scene.layout === 'quote' ? 'center' : 'space-between',
+                justifyContent: scene.layout === 'quote' ? 'center' : 'space-between',
                 gap: isThumbnail ? '12px' : '20px',
                 position: 'relative',
                 maxWidth: '100%',
@@ -76,7 +76,7 @@ const StaticPreview = ({ scene, isThumbnail = true }) => {
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'center',
-                    alignItems: (scene.layout === 'centered' || scene.layout === 'quote') ? 'center' : (scene.layout === 'split-left' ? 'flex-end' : 'flex-start'),
+                    alignItems: scene.layout === 'quote' ? 'center' : (scene.layout === 'centered' ? 'center' : (scene.layout === 'split-left' ? 'flex-end' : 'flex-start')),
                     gap: isThumbnail ? '6px' : '10px',
                     minWidth: '0',
                     zIndex: 10,
@@ -351,7 +351,7 @@ const StaticPreview = ({ scene, isThumbnail = true }) => {
 
                     {/* Layout Specific: Code Snippet (Compact) */}
                     {scene.layout === 'code' && (
-                        <div style={{ marginTop: '10px', width: '100%', background: '#1e1e1e', borderRadius: '6px', padding: '8px', border: '1px solid #333' }}>
+                        <div style={{ marginTop: '10px', width: '100%', background: '#f8f9fa', borderRadius: '6px', padding: '8px', border: '1px solid #dadce0' }}>
                             <div style={{ display: 'flex', gap: '3px', marginBottom: '6px' }}>
                                 <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ff5f56' }} />
                                 <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ffbd2e' }} />

@@ -13,7 +13,7 @@ const styles = `
 }
 `
 
-function MarketingSuite({ onLoginClick, onNavigateToEthics, onLogoClick, onNavigateToProduct, onNavigateToSolution }) {
+function MarketingSuite({ onLoginClick, onNavigateToEthics, onLogoClick, onNavigateToProduct, onNavigateToSolution, onNavigateToCompany }) {
   return (
     <>
       <style>{styles}</style>
@@ -22,6 +22,9 @@ function MarketingSuite({ onLoginClick, onNavigateToEthics, onLogoClick, onNavig
           onLoginClick={onLoginClick} 
           onNavigateToEthics={onNavigateToEthics}
           onLogoClick={onLogoClick}
+          onNavigateToProduct={onNavigateToProduct}
+          onNavigateToSolution={onNavigateToSolution}
+          onNavigateToCompany={onNavigateToCompany}
         />
         
         <HeroSection />
@@ -34,6 +37,7 @@ function MarketingSuite({ onLoginClick, onNavigateToEthics, onLogoClick, onNavig
           onNavigateToProduct={onNavigateToProduct}
           onNavigateToSolution={onNavigateToSolution}
           onNavigateToEthics={onNavigateToEthics}
+          onNavigateToCompany={onNavigateToCompany}
         />
       </div>
     </>

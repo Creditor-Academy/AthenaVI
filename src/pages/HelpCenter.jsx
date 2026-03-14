@@ -31,7 +31,7 @@ const styles = `
 }
 
 .page-header p {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 20px;
   line-height: 1.6;
   max-width: 800px;
@@ -73,7 +73,7 @@ const styles = `
 .search-input {
   width: 100%;
   padding: 18px 24px 18px 60px;
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   border: 2px solid rgba(30, 64, 175, 0.2);
   border-radius: 12px;
@@ -103,8 +103,10 @@ const styles = `
 
 .section-title {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 42px;
-  font-weight: 500;
+  font-size: clamp(40px, 4vw, 64px);
+  font-weight: 400;
+  letter-spacing: -1.5px;
+  line-height: 1.15;
   margin: 0 0 40px;
   color: #1e40af;
   text-align: center;
@@ -159,7 +161,7 @@ const styles = `
 }
 
 .faq-question {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 20px;
   font-weight: 600;
   color: #1e40af;
@@ -227,7 +229,7 @@ const styles = `
 }
 
 .faq-answer {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 17px;
   line-height: 1.8;
   color: #333333;
@@ -266,7 +268,7 @@ const styles = `
 }
 
 .contact-description {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   line-height: 1.7;
   color: #1e40af;
@@ -277,7 +279,7 @@ const styles = `
 }
 
 .contact-button {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   border: none;
   color: #000;
@@ -372,7 +374,7 @@ const styles = `
 }
 `
 
-function HelpCenter({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology }) {
+function HelpCenter({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology, onNavigateToProduct }) {
   const [activeFaq, setActiveFaq] = useState(null)
 
   const faqs = [
@@ -441,6 +443,7 @@ function HelpCenter({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigate
           onNavigateToSolution={onNavigateToSolution}
           onNavigateToEthics={onNavigateToEthics}
           onNavigateToTechnology={onNavigateToTechnology}
+          onNavigateToProduct={onNavigateToProduct}
         />
         
         <div className="page-header">
@@ -501,7 +504,13 @@ function HelpCenter({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigate
           </div>
         </div>
 
-        <Footer onNavigateToCompany={onNavigateToCompany} />
+        <Footer 
+          onLogoClick={onLogoClick}
+          onNavigateToProduct={onNavigateToProduct}
+          onNavigateToSolution={onNavigateToSolution}
+          onNavigateToEthics={onNavigateToEthics}
+          onNavigateToCompany={onNavigateToCompany}
+        />
       </div>
     </>
   )

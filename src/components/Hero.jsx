@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { MdArrowOutward } from 'react-icons/md'
+import { MdArrowOutward, MdPayments } from 'react-icons/md'
+import { HiTrendingUp } from 'react-icons/hi'
 import avatar1 from '../assets/avatar1.png'
 import avatar2 from '../assets/avatar2.png'
 import avatar3 from '../assets/avatar3.png'
@@ -15,13 +16,13 @@ const styles = `
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 .hero-top {
   position: relative;
   width: 100%;
-  padding: 80px 40px 40px;
+  padding: 40px 40px 40px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -32,11 +33,12 @@ const styles = `
 
 .hero-title-top {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 72px;
-  font-weight: 500;
+  font-size: clamp(40px, 5vw, 64px);
+  font-weight: 550;
   color: #ffffff;
   margin: 0 0 24px;
-  line-height: 1.1;
+  line-height: 1.15;
+  letter-spacing: -1.5px;
   text-align: center;
   width: 100%;
   max-width: 1200px;
@@ -44,14 +46,16 @@ const styles = `
 }
 
 .hero-subtitle-top {
-  font-family: 'Arial', sans-serif;
-  font-size: 24px;
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0;
-  font-weight: 400;
-  line-height: 1.5;
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(18px, 2.2vw, 22px);
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0 auto;
+  font-weight: 300;
+  line-height: 1.6;
+  letter-spacing: 0.2px;
   text-align: center;
   max-width: 700px;
+  padding: 0 20px;
 }
 
 .hero-avatars {
@@ -66,7 +70,7 @@ const styles = `
   padding: 40px 0;
 }
 
-.avatar-container {
+.hero-avatar-container {
   position: relative;
   width: min(1200px, 90vw);
   height: 100%;
@@ -75,7 +79,7 @@ const styles = `
   align-items: center;
 }
 
-.avatar-item {
+.hero-avatar-item {
   position: absolute;
   left: 50%;
   top: 50%;
@@ -83,7 +87,7 @@ const styles = `
   pointer-events: none;
 }
 
-.avatar-item img {
+.hero-avatar-item img {
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -108,7 +112,7 @@ const styles = `
 }
 
 .btn-outline {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: transparent;
   border: 2px solid rgba(255, 255, 255, 0.85);
   color: #fff;
@@ -134,7 +138,7 @@ const styles = `
 }
 
 .btn-primary {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   border: none;
   color: #1a1a1a;
@@ -167,6 +171,48 @@ const styles = `
 .hero-cta .btn-outline {
   padding: 16px 32px;
   font-size: 16px;
+}
+
+.floating-card {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(16px);
+  border-radius: 24px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  width: 320px;
+  min-height: 400px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.card-icon-wrapper {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.left-card {
+  left: 15%;
+  top: 50%;
+  transform: translate(-100%, -50%);
+  --hover-x: -110%;
+}
+
+.right-card {
+  right: 15%;
+  top: 50%;
+  transform: translate(100%, -50%);
+  --hover-x: 110%;
 }
 
 @media (max-width: 768px) {
@@ -207,10 +253,13 @@ const styles = `
 @media (max-width: 480px) {
   .hero-title-top {
     font-size: 36px;
+    margin: 0 0 20px;
   }
 
   .hero-subtitle-top {
     font-size: 16px;
+    line-height: 1.5;
+    padding: 0 16px;
   }
 }
 `
@@ -260,35 +309,58 @@ function Hero() {
 
         {/* Middle Section with Avatar Carousel */}
         <div className="hero-avatars">
-          <div className="avatar-container">
-            {avatars.map((avatar, index) => {
-              const position = index
-              const avatarIndex = getAvatarAtPosition(position)
-              const x = getHorizontalPosition(position)
-              const isActive = position === 2
+  <div className="hero-avatar-container">
 
-              return (
-                <div
-                  key={index}
-                  className="avatar-item"
-                  style={{
-                    transform: `translate(calc(-50% + ${x}px), -50%)`,
-                    width: isActive ? 'clamp(280px, 22vw, 350px)' : 'clamp(160px, 13vw, 200px)',
-                    height: isActive ? 'clamp(280px, 22vw, 350px)' : 'clamp(160px, 13vw, 200px)',
-                    opacity: isActive ? 1 : 0.6,
-                    filter: isActive ? 'blur(0px)' : 'blur(3px)',
-                    zIndex: isActive ? 20 : 10 - Math.abs(position - 2),
-                  }}
-                >
-                  <img
-                    src={avatars[avatarIndex]}
-                    alt={`Instructor ${avatarIndex + 1}`}
-                  />
-                </div>
-              )
-            })}
-          </div>
+    {[1,2,3].map((position) => {
+      const avatarIndex = getAvatarAtPosition(position)
+      const x = getHorizontalPosition(position)
+      const isActive = position === 2
+
+      return (
+        <div
+          key={position}
+          className="hero-avatar-item"
+          style={{
+            transform: `translate(calc(-50% + ${x}px), -50%)`,
+            width: isActive ? 'clamp(280px, 22vw, 350px)' : 'clamp(160px, 13vw, 200px)',
+            height: isActive ? 'clamp(280px, 22vw, 350px)' : 'clamp(160px, 13vw, 200px)',
+            opacity: isActive ? 1 : 0.6,
+            filter: isActive ? 'blur(0px)' : 'blur(3px)',
+            zIndex: isActive ? 20 : 10,
+          }}
+        >
+          <img
+            src={avatars[avatarIndex]}
+            alt={`Instructor ${avatarIndex + 1}`}
+          />
         </div>
+      )
+    })}
+
+    {/* LEFT CARD */}
+    <div className="floating-card left-card">
+      <div className="card-icon-wrapper" style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)' }}>
+        <MdPayments size={30} />
+      </div>
+      <div>
+        <strong style={{ fontSize: '18px', display: 'block', color: '#1e40af' }}>Send & Receive</strong>
+        <div style={{ fontSize: '14px', color: '#64748b', marginTop: '2px' }}>Money Worldwide</div>
+      </div>
+    </div>
+
+    {/* RIGHT CARD */}
+    <div className="floating-card right-card">
+      <div className="card-icon-wrapper" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)' }}>
+        <HiTrendingUp size={30} />
+      </div>
+      <div>
+        <strong style={{ fontSize: '24px', display: 'block', color: '#1e40af' }}>90M+</strong>
+        <div style={{ fontSize: '14px', color: '#64748b', marginTop: '2px' }}>Payments Processed</div>
+      </div>
+    </div>
+
+  </div>
+</div>
 
         {/* Bottom Section with CTA Buttons */}
         <div className="hero-bottom">
