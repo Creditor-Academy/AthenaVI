@@ -32,7 +32,7 @@ const styles = `
   background: #020617;
   color: #ffffff;
   font-family: 'Inter', sans-serif;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* Futuristic Hero Section */

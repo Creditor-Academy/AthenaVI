@@ -64,54 +64,54 @@ export default function UseCases() {
         paddingBottom: "14vh",
         overflow: "hidden"
       }}>
-      {/* Visual Enhancement: Radial Background Glows */}
-      <div style={{
-        position: "absolute",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-        width: "100%",
-        height: "100%",
-        zIndex: 0,
-        pointerEvents: "none"
-      }}>
+        {/* Visual Enhancement: Radial Background Glows */}
         <div style={{
           position: "absolute",
-          top: "20%",
+          top: "50%",
           left: "50%",
-          transform: "translateX(-50%)",
-          width: "1200px",
-          height: "1200px",
-          background: "radial-gradient(circle, rgba(37, 99, 235, 0.06) 0%, rgba(255, 255, 255, 0) 70%)",
-          borderRadius: "50%"
-        }} />
-      </div>
-
-      {/* Bottom Center Content - Visible from start, gliding down */}
-      <motion.div
-        style={{
-          zIndex: 100,
-          textAlign: "center",
-          maxWidth: "900px",
-          padding: "0 20px",
-          y: textY,
-          opacity: textOpacity
+          transform: "translate(-50%, -50%)",
+          width: "100%",
+          height: "100%",
+          zIndex: 0,
+          pointerEvents: "none"
         }}>
-        <motion.span
+          <div style={{
+            position: "absolute",
+            top: "20%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "1200px",
+            height: "1200px",
+            background: "radial-gradient(circle, rgba(37, 99, 235, 0.06) 0%, rgba(255, 255, 255, 0) 70%)",
+            borderRadius: "50%"
+          }} />
+        </div>
+
+        {/* Bottom Center Content - Visible from start, gliding down */}
+        <motion.div
           style={{
-            display: "inline-block",
-            padding: "8px 20px",
-            background: "linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)",
-            borderRadius: "100px",
-            fontSize: "11px",
-            fontWeight: 700,
-            color: "#334155",
-            marginBottom: "36px",
-            boxShadow: "0 4px 15px rgba(0,0,0,0.03)",
-            border: "1px solid rgba(226,232,240,0.8)",
-            textTransform: "uppercase",
-            letterSpacing: "0.08em"
+            zIndex: 100,
+            textAlign: "center",
+            maxWidth: "900px",
+            padding: "0 20px",
+            y: textY,
+            opacity: textOpacity
           }}>
+          <motion.span
+            style={{
+              display: "inline-block",
+              padding: "8px 20px",
+              background: "linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)",
+              borderRadius: "100px",
+              fontSize: "11px",
+              fontWeight: 700,
+              color: "#334155",
+              marginBottom: "36px",
+              boxShadow: "0 4px 15px rgba(0,0,0,0.03)",
+              border: "1px solid rgba(226,232,240,0.8)",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em"
+            }}>
             Use Cases
           </motion.span>
           <h2 style={{
@@ -194,45 +194,45 @@ export default function UseCases() {
                   overflow: "hidden"
                 }}>
 
-  <img
-    src={card.image}
-    alt={card.title}
-    style={{
-      position: "absolute",
-      inset: 0,
-      width: "100%",
-      height: "100%",
-      objectFit: "cover"
-    }}
-  />
+                  <img
+                    src={card.image}
+                    alt={card.title}
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover"
+                    }}
+                  />
 
-  {/* overlay gradient for readability */}
-  <div style={{
-    position: "absolute",
-    inset: 0,
-    background: "linear-gradient(to top, rgba(0,0,0,0.65), rgba(0,0,0,0.15))"
-  }}/>
+                  {/* overlay gradient for readability */}
+                  <div style={{
+                    position: "absolute",
+                    inset: 0,
+                    background: "linear-gradient(to top, rgba(0,0,0,0.65), rgba(0,0,0,0.15))"
+                  }} />
 
-  {/* text above image */}
-  <div style={{
-    position: "absolute",
-    bottom: "16px",
-    left: "16px",
-    right: "16px",
-    color: "white"
-  }}>
-    <h4 style={{
-      fontSize: "17px",
-      fontWeight: 800,
-      margin: 0,
-      lineHeight: 1.25
-    }}>
-      {card.title}
-    </h4>
-  </div>
+                  {/* text above image */}
+                  <div style={{
+                    position: "absolute",
+                    bottom: "16px",
+                    left: "16px",
+                    right: "16px",
+                    color: "white"
+                  }}>
+                    <h4 style={{
+                      fontSize: "17px",
+                      fontWeight: 800,
+                      margin: 0,
+                      lineHeight: 1.25
+                    }}>
+                      {card.title}
+                    </h4>
+                  </div>
 
-</div>
-            </motion.div>
+                </div>
+              </motion.div>
             </motion.div>
           );
         })}
