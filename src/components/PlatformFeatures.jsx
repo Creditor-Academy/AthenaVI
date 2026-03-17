@@ -60,9 +60,10 @@ function useReveal(threshold = 0.12) {
 /* ── Styles ── */
 const css = `
   .pf-section {
-    padding: 100px 20px;
-    background: #ffffff;
+    padding: 100px 20px 160px;
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
     font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+    position: relative;
     overflow: hidden;
   }
 
@@ -75,27 +76,28 @@ const css = `
     font-weight: 700;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: #6366f1;
-    background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(59,130,246,0.08));
-    border: 1px solid rgba(99,102,241,0.15);
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     margin-bottom: 18px;
+    backdrop-filter: blur(4px);
   }
   .pf-heading {
     font-size: clamp(28px, 4vw, 44px);
     font-weight: 800;
-    color: #0f172a;
+    color: #ffffff;
     line-height: 1.2;
     margin: 0 0 14px;
   }
   .pf-heading span {
-    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    background: linear-gradient(135deg, #fde047, #fbbf24);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
   .pf-subtext {
     font-size: clamp(15px, 1.6vw, 17px);
-    color: #64748b;
+    color: rgba(255, 255, 255, 0.85);
     max-width: 620px;
     margin: 0 auto;
     line-height: 1.7;
@@ -109,14 +111,17 @@ const css = `
     max-width: 1060px;
     margin: 64px auto 0;
     align-items: center;
+    position: relative;
+    z-index: 2;
   }
 
   /* ── Left: Editor preview ── */
   .pf-preview {
     border-radius: 20px;
-    border: 1px solid #e2e8f0;
-    background: linear-gradient(145deg, #f8fafc, #f1f5f9);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.06);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
     overflow: hidden;
     transition: transform 0.5s ease, box-shadow 0.5s ease;
     opacity: 0;
@@ -130,7 +135,7 @@ const css = `
   }
   .pf-preview:hover {
     transform: translateY(-4px);
-    box-shadow: 0 28px 70px rgba(59,130,246,0.1);
+    box-shadow: 0 28px 70px rgba(0,0,0,0.3);
   }
 
   /* toolbar */
@@ -139,8 +144,8 @@ const css = `
     align-items: center;
     gap: 7px;
     padding: 13px 18px;
-    border-bottom: 1px solid #e2e8f0;
-    background: #fff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
   }
   .pf-dot { width: 10px; height: 10px; border-radius: 50%; }
   .pf-dot--r { background: #f87171; }
@@ -149,7 +154,7 @@ const css = `
   .pf-toolbar-title {
     margin-left: 10px;
     font-size: 11px;
-    color: #94a3b8;
+    color: rgba(255, 255, 255, 0.4);
     font-family: 'SF Mono', 'Fira Code', monospace;
   }
 
@@ -175,12 +180,12 @@ const css = `
   .pf-canvas-sidebar-item {
     height: 36px;
     border-radius: 8px;
-    background: #e2e8f0;
-    border: 1px solid #cbd5e1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
   .pf-canvas-sidebar-item.active {
-    background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(99,102,241,0.08));
-    border-color: rgba(59,130,246,0.3);
+    background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.08));
+    border-color: rgba(255,255,255,0.3);
   }
 
   .pf-canvas-main {
@@ -192,8 +197,8 @@ const css = `
   .pf-canvas-video {
     flex: 1;
     border-radius: 14px;
-    border: 2px dashed #cbd5e1;
-    background: linear-gradient(135deg, rgba(59,130,246,0.03), rgba(99,102,241,0.03));
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.03);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -205,15 +210,15 @@ const css = `
     width: 48px;
     height: 48px;
     border-radius: 14px;
-    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
     display: flex;
     align-items: center;
     justify-content: center;
   }
-  .pf-canvas-icon svg { width: 22px; height: 22px; color: #fff; }
+  .pf-canvas-icon svg { width: 22px; height: 22px; color: #000; }
   .pf-canvas-label {
     font-size: 11px;
-    color: #94a3b8;
+    color: rgba(255, 255, 255, 0.45);
     font-family: 'SF Mono', 'Fira Code', monospace;
   }
 
@@ -224,10 +229,10 @@ const css = `
     align-items: center;
   }
   .pf-strip-bar { height: 7px; border-radius: 4px; }
-  .pf-strip-1 { width: 70px; background: linear-gradient(90deg, #3b82f6, #6366f1); }
-  .pf-strip-2 { width: 45px; background: rgba(59,130,246,0.22); }
-  .pf-strip-3 { width: 55px; background: rgba(99,102,241,0.17); }
-  .pf-strip-4 { flex: 1; background: #e2e8f0; }
+  .pf-strip-1 { width: 70px; background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+  .pf-strip-2 { width: 45px; background: rgba(255, 255, 255, 0.15); }
+  .pf-strip-3 { width: 55px; background: rgba(255, 255, 255, 0.1); }
+  .pf-strip-4 { flex: 1; background: rgba(255, 255, 255, 0.05); }
 
   /* Scene thumbnails */
   .pf-scenes {
@@ -238,8 +243,8 @@ const css = `
     flex: 1;
     height: 48px;
     border-radius: 8px;
-    background: #e2e8f0;
-    border: 1px solid #cbd5e1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
   /* ── Right: Feature list ── */
@@ -255,9 +260,10 @@ const css = `
     gap: 16px;
     padding: 18px 20px;
     border-radius: 14px;
-    border: 1px solid #f1f5f9;
-    background: #fff;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     cursor: default;
     opacity: 0;
     transform: translateX(30px);
@@ -269,8 +275,9 @@ const css = `
   }
   .pf-feature:hover {
     transform: translateY(-3px);
-    box-shadow: 0 12px 32px rgba(59,130,246,0.08);
-    border-color: rgba(59,130,246,0.2);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.08);
   }
 
   .pf-feature-icon {
@@ -282,24 +289,26 @@ const css = `
     justify-content: center;
     flex-shrink: 0;
     transition: transform 0.3s ease;
+    background: rgba(255, 255, 255, 0.1) !important;
   }
   .pf-feature:hover .pf-feature-icon {
     transform: scale(1.1);
   }
-  .pf-feature-icon svg { width: 20px; height: 20px; }
+  .pf-feature-icon svg { width: 20px; height: 20px; color: #fbbf24 !important; }
 
   .pf-feature-text h4 {
     font-size: 15px;
     font-weight: 700;
-    color: #0f172a;
+    color: #ffffff;
     margin: 0 0 4px;
   }
   .pf-feature-text p {
     font-size: 13px;
-    color: #64748b;
+    color: rgba(255, 255, 255, 0.75);
     line-height: 1.55;
     margin: 0;
   }
+
 
   /* ── Responsive ── */
   @media (max-width: 860px) {
@@ -310,8 +319,8 @@ const css = `
     }
     .pf-preview.visible { transform: translateX(0); }
   }
-  @media (max-width: 540px) {
-    .pf-section { padding: 64px 16px; }
+    @media (max-width: 540px) {
+    .pf-section { padding: 64px 16px 120px; }
     .pf-canvas { padding: 16px; min-height: 240px; }
     .pf-canvas-sidebar { width: 72px; }
   }
@@ -326,7 +335,7 @@ const PlatformFeatures = () => {
             <style>{css}</style>
             <section className="pf-section">
                 {/* Header */}
-                <div style={{ textAlign: 'center' }}>
+                <div style={{ textAlign: 'center', position: 'relative', zIndex: 2 }}>
                     <div className="pf-badge">Platform Features</div>
                     <h2 className="pf-heading">
                         Powerful AI Video <span>Creation Platform</span>
@@ -398,9 +407,8 @@ const PlatformFeatures = () => {
                                 >
                                     <div
                                         className="pf-feature-icon"
-                                        style={{ background: feat.bg }}
                                     >
-                                        <Icon style={{ color: feat.color }} />
+                                        <Icon />
                                     </div>
                                     <div className="pf-feature-text">
                                         <h4>{feat.title}</h4>
@@ -411,6 +419,7 @@ const PlatformFeatures = () => {
                         })}
                     </div>
                 </div>
+
             </section>
         </>
     );

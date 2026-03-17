@@ -1,7 +1,6 @@
 import Navbar from '../components/Navbar.jsx'
 import Hero from '../components/Hero.jsx'
-import VideoSection from '../components/VideoSection.jsx'
-import HowItWorks from '../components/HowItWorks.jsx'
+import UnifiedVideoSection from '../components/UnifiedVideoSection.jsx'
 import ProductsSection from '../components/ProductsSection.jsx'
 import PlatformFeatures from '../components/PlatformFeatures.jsx'
 import UseCases from '../components/UseCases.jsx'
@@ -78,8 +77,7 @@ function Landing({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToC
           onNavigateToCompany={onNavigateToCompany}
         />
         <Hero />
-        <VideoSection />
-        <HowItWorks />
+        <UnifiedVideoSection />
         <ProductsSection />
         <PlatformFeatures />
         <UseCases />

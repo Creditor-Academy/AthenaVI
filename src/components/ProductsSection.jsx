@@ -5,7 +5,7 @@ const styles = `
 /* ── Section ── */
 .ps-section {
   padding: 80px 40px;
-  background: #f1f5f9;
+  background: #e1ecf7ff;
   overflow: hidden;
 }
 
