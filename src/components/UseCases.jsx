@@ -119,28 +119,6 @@ export default function UseCases() {
             borderRadius: "50%"
           }} />
         </div>
-        {/* Visual Enhancement: Radial Background Glows */}
-        <div style={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          width: "100%",
-          height: "100%",
-          zIndex: 0,
-          pointerEvents: "none"
-        }}>
-          <div style={{
-            position: "absolute",
-            top: "20%",
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: "1200px",
-            height: "1200px",
-            background: "radial-gradient(circle, rgba(37, 99, 235, 0.06) 0%, rgba(255, 255, 255, 0) 70%)",
-            borderRadius: "50%"
-          }} />
-        </div>
 
         {/* Bottom Center Content - Visible from start, gliding down */}
         <motion.div
@@ -262,24 +240,7 @@ export default function UseCases() {
                       objectFit: "cover"
                     }}
                   />
-                  <img
-                    src={card.image}
-                    alt={card.title}
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover"
-                    }}
-                  />
 
-                  {/* overlay gradient for readability */}
-                  <div style={{
-                    position: "absolute",
-                    inset: 0,
-                    background: "linear-gradient(to top, rgba(0,0,0,0.65), rgba(0,0,0,0.15))"
-                  }} />
                   {/* overlay gradient for readability */}
                   <div style={{
                     position: "absolute",
@@ -304,26 +265,7 @@ export default function UseCases() {
                       {card.title}
                     </h4>
                   </div>
-                  {/* text above image */}
-                  <div style={{
-                    position: "absolute",
-                    bottom: "16px",
-                    left: "16px",
-                    right: "16px",
-                    color: "white"
-                  }}>
-                    <h4 style={{
-                      fontSize: "17px",
-                      fontWeight: 800,
-                      margin: 0,
-                      lineHeight: 1.25
-                    }}>
-                      {card.title}
-                    </h4>
-                  </div>
 
-                </div>
-              </motion.div>
                 </div>
               </motion.div>
             </motion.div>
