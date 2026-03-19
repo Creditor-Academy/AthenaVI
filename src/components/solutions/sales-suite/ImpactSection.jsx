@@ -42,7 +42,7 @@ const styles = `
 
 .card-number {
   font-size: 20px;
-  color: #a3e635;
+  color: #1585edff;
   font-family: 'Inter', sans-serif;
   font-weight: 600;
   margin-bottom: 16px;
@@ -86,17 +86,6 @@ const styles = `
   transform: translateY(-6px);
   border-color: rgba(0, 0, 0, 0.15);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-}
-
-
-
-/* Background grid lines for the dark theme */
-.grid-line {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: rgba(0, 0, 0, 0.03);
 }
 
 /* Hide desktop logic on small screens */
@@ -200,9 +189,9 @@ function ImpactSection() {
 
   // Calculate a scale factor for smaller desktop screens (e.g., 1024px to 1700px)
   // Cluster width is 1650px (3 * 550px)
-  const baseClusterWidth = 1750 
-  const scale = windowWidth < baseClusterWidth && windowWidth > 1024 
-    ? windowWidth / baseClusterWidth 
+  const baseClusterWidth = 1750
+  const scale = windowWidth < baseClusterWidth && windowWidth > 1024
+    ? windowWidth / baseClusterWidth
     : 1
 
   const cards = [
@@ -242,29 +231,51 @@ function ImpactSection() {
     restDelta: 0.001
   })
 
+  const baseEntranceY = 300; // controls how much cards come from bottom
+
   // Horizontal positions (440px step = 550px - 20% overlap, centered relative to -275)
   const finalX0 = -825; const finalX1 = -275; const finalX2 = 275;
 
   // Vertical stagger (75% step = 285px distance for 25% overlap)
-  const shiftY0 = -570; const shiftY1 = -285; const shiftY2 = 0;
+  const overlap = 200;
+
+  const shiftY1 = -260;
+  const shiftY0 = shiftY1 - overlap; // ensures fixed overlap
+  const shiftY2 = shiftY1 + overlap;
 
   // Shared animation progress for the entire cluster
-  const clusterOpacity = useTransform(smoothProgress, [0, 0.1], [0, 1])
+  const clusterOpacity = useTransform(smoothProgress, [0, 0.15], [0, 1])
 
   // Card 0: Moves from 0 up to shiftY0
   const x0Desktop = useTransform(smoothProgress, [0, 1], [finalX0, finalX0])
-  const y0Desktop = useTransform(smoothProgress, [0, 0.2, 0.6], [0, 0, shiftY0])
-  
+  const y0Desktop = useTransform(
+  smoothProgress,
+  [0, 0.15, 0.3, 1.0],
+  [baseEntranceY, 0, 0, shiftY0]
+)
+
   // Card 1: Moves from 0 up to shiftY1
   const x1Desktop = useTransform(smoothProgress, [0, 1], [finalX1, finalX1])
-  const y1Desktop = useTransform(smoothProgress, [0, 0.2, 0.6], [0, 0, shiftY1])
+  const y1Desktop = useTransform(
+  smoothProgress,
+  [0, 0.15, 0.3, 1.0],
+  [baseEntranceY, 0, 0, shiftY1]
+)
+
 
   // Card 2: Stays at 0
   const x2Desktop = useTransform(smoothProgress, [0, 1], [finalX2, finalX2])
-  const y2Desktop = useTransform(smoothProgress, [0, 0.2, 0.6], [0, 0, shiftY2])
+  const y2Desktop = useTransform(
+  smoothProgress,
+  [0, 0.15, 0.5, 1.0],
+  [baseEntranceY, 0, 0, shiftY2]
+)
+
+  // Header transform: Starts moving up as the cards begin their staggered rise
+  const headerY = useTransform(smoothProgress, [0.3, 0.8], [0, -150])
 
   // Wrapper vertical shift starts as the internal move finishes to scroll the whole group away
-  const wrapperY = useTransform(smoothProgress, [0.4, 1.0], [0, -500])
+ const wrapperY = useTransform(smoothProgress, [0.8, 1.0], [0, -500])
 
   return (
     <>
@@ -273,31 +284,21 @@ function ImpactSection() {
       {/* Primary Animated Desktop Scroll Section */}
       <div className="desktop-impact-only" style={{ background: "#ffffff", paddingBottom: "20px" }}>
 
-        {/* Background Grid Lines as seen in reference */}
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none", display: "flex", justifyContent: "space-between", padding: "0 10%" }}>
-          <div className="grid-line" style={{ left: '10%' }}></div>
-          <div className="grid-line" style={{ left: '30%' }}></div>
-          <div className="grid-line" style={{ left: '50%' }}></div>
-          <div className="grid-line" style={{ left: '70%' }}></div>
-          <div className="grid-line" style={{ left: '90%' }}></div>
-        </div>
+        <section ref={containerRef} style={{ height: "110vh", position: "relative" }}>
 
-        {/* 200vh height manages scroll span */}
-        <section ref={containerRef} style={{ height: "160vh", position: "relative" }}>
-
-          <div style={{ position: "sticky", top: 0, height: "100vh", overflow: "hidden", paddingTop: "6vh" }}>
+          <div style={{ position: "sticky", top: 0, height: "100vh", overflow: "hidden", paddingTop: "8vh" }}>
 
             <motion.div style={{ y: wrapperY, scale: scale, width: "100%", maxWidth: "1400px", margin: "0 auto", position: "relative", zIndex: 10 }}>
 
-              <div className="impact-header" style={{ padding: "0 40px" }}>
+              <motion.div className="impact-header" style={{ y: headerY, padding: "0 40px" }}>
                 <h2 className="impact-title">High impact content that converts</h2>
                 <p className="impact-subtitle">
                   Did you know that video content can increase purchase intent by a staggering 82%? And that 73% of consumers are more likely to purchase after watching a product video. Ready to elevate your marketing game with AI video presenters?
                 </p>
-              </div>
+              </motion.div>
 
               {/* Increased height to accommodate the 800px vertical span + card height */}
-              <div style={{ position: "relative", width: "100%", height: "800px", marginTop: "600px" }}>
+              <div style={{ position: "relative", width: "100%", height: "600px", marginTop: "200px" }}>
                 {cards.map((card, index) => {
                   let x, y, opacity;
                   if (index === 0) { x = x0Desktop; y = y0Desktop; opacity = clusterOpacity; }

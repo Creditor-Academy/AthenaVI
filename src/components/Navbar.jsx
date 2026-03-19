@@ -5,6 +5,7 @@ import {
   FiBriefcase, FiDollarSign, FiUsers, FiBookOpen, FiMail,
   FiInfo, FiFileText, FiRss, FiLayers, FiShield, FiHelpCircle
 } from 'react-icons/fi'
+import ProductVideo from '../assets/ProductVideo.mp4'
 
 const styles = `
 .navbar {
@@ -95,12 +96,12 @@ const styles = `
   align-items: center;
   gap: 4px;
   flex: 1 1 auto;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: nowrap;
   min-width: 0;
   max-width: 100%;
   overflow: visible;
-  margin-left: 48px;
+  margin-left: 40px;
 }
 
 .nav-pills-group {
@@ -158,7 +159,7 @@ const styles = `
   width: 1px;
   height: 24px;
   background: rgba(30, 64, 175, 0.15);
-  margin: 0 12px 0 12px;
+  margin: 0 12px 0 auto;
   flex-shrink: 0;
 }
 
@@ -182,6 +183,88 @@ const styles = `
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   z-index: 1100;
+}
+
+.dropdown.products-mega {
+  width: min(980px, 95vw);
+  display: grid;
+  grid-template-columns: 1.6fr 1.2fr;
+  padding: 0;
+  overflow: hidden;
+  gap: 0;
+}
+
+.dropdown.products-mega.active {
+  transform: translateX(-22%) translateY(0);
+}
+
+.dropdown-links-side {
+  padding: 24px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.dropdown-video-side {
+  background: #f1f5f9;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  gap: 16px;
+  border-left: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.dropdown-video-container {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  background: #000;
+}
+
+.dropdown-video-container video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.video-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.video-info-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.video-info-desc {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.see-all-link {
+  margin-top: auto;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e40af;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  transition: gap 0.2s ease;
+}
+
+.see-all-link:hover {
+  gap: 8px;
 }
 
 .dropdown::before {
@@ -752,7 +835,7 @@ const styles = `
 }
 `
 
-function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology }) {
+function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology, onNavigateToUseCases }) {
   const [activeDropdown, setActiveDropdown] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileDropdowns, setMobileDropdowns] = useState({})
@@ -767,7 +850,8 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
     { title: 'Creative Reality™ Studio', desc: 'AI video studio', icon: <FiPlayCircle /> },
     { title: 'Video Translate', desc: 'Multilingual video', icon: <FiGlobe /> },
     { title: 'Video Campaigns', desc: 'Marketing videos', icon: <FiTrendingUp /> },
-    { title: 'Personal Avatars', desc: 'Digital instructors', icon: <FiUserCheck /> }
+    { title: 'Personal Avatars', desc: 'Digital instructors', icon: <FiUserCheck /> },
+    { title: 'Technology', desc: 'Technology overview', icon: <FiCpu /> }
   ]
 
   const solutionsItems = [
@@ -775,20 +859,23 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
     { title: 'Sales Solutions', desc: 'Video outreach', icon: <FiDollarSign /> },
     { title: 'Customer Experience', desc: 'Customer engagement', icon: <FiUsers /> },
     { title: 'Learning & Development', desc: 'Corporate training', icon: <FiBookOpen /> },
-    { title: 'AI Videos', desc: 'Automated communication', icon: <FiMail /> }
+    { title: 'AI Videos', desc: 'Automated communication', icon: <FiMail /> },
   ]
 
   const companyItems = [
     { title: 'About Us', desc: 'Company overview', icon: <FiInfo /> },
     { title: 'Blog', desc: 'Insights articles', icon: <FiFileText /> },
     { title: 'News', desc: 'Platform updates', icon: <FiRss /> },
+    { title: 'Ethics', desc: 'AI Ethics pledge', icon: <FiShield /> },
     { title: 'Resources', desc: 'Learning materials', icon: <FiLayers /> },
     { title: 'Privacy Policy', desc: 'Data protection', icon: <FiShield /> },
     { title: 'Help Center', desc: 'Customer support', icon: <FiHelpCircle /> }
   ]
 
   const handleCompanyItemClick = (item) => {
-    if (onNavigateToCompany) {
+    if (item === 'Ethics') {
+      if (onNavigateToEthics) onNavigateToEthics()
+    } else if (onNavigateToCompany) {
       onNavigateToCompany(item)
     }
     setActiveDropdown(null)
@@ -962,32 +1049,64 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
                 Products
                 <MdKeyboardArrowDown />
               </a>
-              <div className={`dropdown ${activeDropdown === 'products' ? 'active' : ''}`}>
-                {productsItems.map((item, index) => (
-                  <a
-                    key={index}
-                    href="#"
-                    className="dropdown-item"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      if (clickTimeoutRef.current) {
-                        clearTimeout(clickTimeoutRef.current)
-                        clickTimeoutRef.current = null
-                      }
-                      clickedDropdownRef.current = null
-                      if (onNavigateToProduct) {
-                        onNavigateToProduct(item.title)
-                      }
-                      setActiveDropdown(null)
-                    }}
-                  >
-                    <div className="dropdown-icon">{item.icon}</div>
-                    <div className="dropdown-content">
-                      <div className="dropdown-title">{item.title}</div>
-                      <div className="dropdown-desc">{item.desc}</div>
+              <div className={`dropdown products-mega ${activeDropdown === 'products' ? 'active' : ''}`}>
+                <div className="dropdown-links-side">
+                  {productsItems.map((item, index) => (
+                    <a
+                      key={index}
+                      href="#"
+                      className="dropdown-item"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        if (clickTimeoutRef.current) {
+                          clearTimeout(clickTimeoutRef.current)
+                          clickTimeoutRef.current = null
+                        }
+                        clickedDropdownRef.current = null
+                        if (item.title === 'Technology') {
+                          if (onNavigateToTechnology) onNavigateToTechnology()
+                        } else if (onNavigateToProduct) {
+                          onNavigateToProduct(item.title)
+                        }
+                        setActiveDropdown(null)
+                      }}
+                    >
+                      <div className="dropdown-icon">{item.icon}</div>
+                      <div className="dropdown-content">
+                        <div className="dropdown-title">{item.title}</div>
+                        <div className="dropdown-desc">{item.desc}</div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+                
+                <div className="dropdown-video-side">
+                  <div className="dropdown-video-container">
+                    <video 
+                      autoPlay 
+                      muted 
+                      loop 
+                      playsInline
+                    >
+                      <source src={ProductVideo} type="video/mp4" />
+                    </video>
+                  </div>
+                  <div className="video-info">
+                    <div className="video-info-title">
+                      Translate audio and captions <MdArrowOutward />
                     </div>
+                    <p className="video-info-desc">
+                      Save time and money on localization with AI-powered video translation. Adapt audio and captions into dozens of languages fast.
+                    </p>
+                  </div>
+                  <a href="#" className="see-all-link" onClick={(e) => {
+                    e.preventDefault()
+                    if (onNavigateToTechnology) onNavigateToTechnology()
+                    setActiveDropdown(null)
+                  }}>
+                    See all Technology <MdArrowOutward />
                   </a>
-                ))}
+                </div>
               </div>
             </div>
 
@@ -1056,38 +1175,12 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
               className="nav-link"
               onClick={(e) => {
                 e.preventDefault()
-                if (onNavigateToTechnology) {
-                  onNavigateToTechnology()
-                }
-              }}
-            >
-              Technology
-            </a>
-
-            <a
-              href="#"
-              className="nav-link"
-              onClick={(e) => {
-                e.preventDefault()
-                if (onNavigateToTechnology) {
-                  onNavigateToTechnology()
+                if (onNavigateToUseCases) {
+                  onNavigateToUseCases()
                 }
               }}
             >
               Use Cases
-            </a>
-
-            <a
-              href="#"
-              className="nav-link"
-              onClick={(e) => {
-                e.preventDefault()
-                if (onNavigateToEthics) {
-                  onNavigateToEthics()
-                }
-              }}
-            >
-              Ethics
             </a>
 
             <a href="#" className="nav-link">Pricing</a>
@@ -1234,7 +1327,9 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
               onClick={(e) => {
                 e.preventDefault()
                 handleMobileActionClick()
-                if (onNavigateToProduct) {
+                if (item.title === 'Technology') {
+                  if (onNavigateToTechnology) onNavigateToTechnology()
+                } else if (onNavigateToProduct) {
                   onNavigateToProduct(item.title)
                 }
               }}
@@ -1286,27 +1381,15 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
           onClick={(e) => {
             e.preventDefault()
             handleMobileActionClick()
-            if (onNavigateToTechnology) {
-              onNavigateToTechnology()
+            if (onNavigateToUseCases) {
+              onNavigateToUseCases()
             }
           }}
         >
-          Technology
+          Use Cases
         </a>
 
-        <a
-          href="#"
-          className="mobile-nav-link"
-          onClick={(e) => {
-            e.preventDefault()
-            setMobileMenuOpen(false)
-            if (onNavigateToEthics) {
-              onNavigateToEthics()
-            }
-          }}
-        >
-          Ethics
-        </a>
+
         <a href="#" className="mobile-nav-link" onClick={handleMobileActionClick}>
           Pricing
         </a>

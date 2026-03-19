@@ -62,7 +62,7 @@ const styles = `
 }
 `
 
-function Landing({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology }) {
+function Landing({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology, onNavigateToUseCases }) {
   return (
     <>
       <style>{styles}</style>
@@ -75,6 +75,7 @@ function Landing({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToC
           onNavigateToTechnology={onNavigateToTechnology}
           onLogoClick={onLogoClick}
           onNavigateToCompany={onNavigateToCompany}
+          onNavigateToUseCases={onNavigateToUseCases}
         />
         <Hero />
         <UnifiedVideoSection />
@@ -87,6 +88,7 @@ function Landing({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToC
           onNavigateToProduct={onNavigateToProduct}
           onNavigateToSolution={onNavigateToSolution}
           onNavigateToEthics={onNavigateToEthics}
+          onNavigateToUseCases={onNavigateToUseCases}
         />
       </div>
     </>
