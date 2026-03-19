@@ -11,7 +11,7 @@ const styles = `
 }
 `
 
-function AboutUsBlog({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology, onNavigateToProduct }) {
+function AboutUsBlog({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology, onNavigateToProduct, onNavigateToUseCases }) {
   return (
     <>
       <style>{styles}</style>
@@ -24,6 +24,7 @@ function AboutUsBlog({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigat
           onNavigateToEthics={onNavigateToEthics}
           onNavigateToTechnology={onNavigateToTechnology}
           onNavigateToProduct={onNavigateToProduct}
+          onNavigateToUseCases={onNavigateToUseCases}
         />
         
         <AboutUsSection variant="light" />
@@ -35,6 +36,7 @@ function AboutUsBlog({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigat
           onNavigateToSolution={onNavigateToSolution}
           onNavigateToEthics={onNavigateToEthics}
           onNavigateToCompany={onNavigateToCompany}
+          onNavigateToUseCases={onNavigateToUseCases}
         />
       </div>
     </>

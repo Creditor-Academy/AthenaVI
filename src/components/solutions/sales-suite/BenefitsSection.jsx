@@ -1,8 +1,9 @@
+import { useState } from 'react'
 import { MdArrowForward, MdPersonalVideo, MdSpeed, MdTouchApp, MdPublic, MdEdit, MdPlayCircle } from 'react-icons/md'
 
 const styles = `
 .benefits-section {
-  padding: 100px 40px;
+  padding: 50px 0;
   background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   color: #1e40af;
   position: relative;
@@ -23,29 +24,43 @@ const styles = `
   z-index: 0;
 }
 
+/* Glassmorphism background blur when hovering any card */
+.benefits-section.is-hovering .benefits-header,
+.benefits-section.is-hovering .benefits-card:not(:hover) {
+  filter: blur(8px);
+  opacity: 0.7;
+  transition: all 0.4s ease;
+}
+
+.benefits-section.is-hovering::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.1);
+  z-index: 5;
+  pointer-events: none;
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 .benefits-content {
-  max-width: 1400px;
   width: 100%;
-  margin: 0 auto;
   position: relative;
   z-index: 1;
 }
 
 .benefits-header {
   text-align: center;
-  margin-bottom: 80px;
-  animation: fadeInUp 0.8s ease-out;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  margin-bottom: 10px;
+  padding: 0 40px;
+  transition: all 0.4s ease;
 }
 
 .benefits-title {
@@ -69,105 +84,98 @@ const styles = `
   margin-right: auto;
 }
 
-.benefits-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 32px;
+/* Marquee Styles */
+.marquee-container {
+  padding: 80px 0;
+  width: 100vw;
+  overflow: visible;
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: scroll 30s linear infinite;
+  gap: 24px;
+  padding: 20px;
+}
+
+.marquee-container:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+@keyframes scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 .benefits-card {
   background: #ffffff;
   border-radius: 20px;
-  padding: 0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 300px;
+  flex-shrink: 0;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
   border: 1px solid rgba(0, 0, 0, 0.05);
   position: relative;
   overflow: hidden;
-  animation: fadeInUp 0.8s ease-out;
-  animation-fill-mode: both;
   display: flex;
   flex-direction: column;
-}
-
-.benefits-card:nth-child(1) { animation-delay: 0.1s; }
-.benefits-card:nth-child(2) { animation-delay: 0.2s; }
-.benefits-card:nth-child(3) { animation-delay: 0.3s; }
-.benefits-card:nth-child(4) { animation-delay: 0.4s; }
-.benefits-card:nth-child(5) { animation-delay: 0.5s; }
-.benefits-card:nth-child(6) { animation-delay: 0.6s; }
-
-.benefits-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 50%, #fbbf24 100%);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 1;
-}
-
-.benefits-card:hover::before {
-  transform: scaleX(1);
+  cursor: pointer;
+  z-index: 2;
+  will-change: transform, filter;
 }
 
 .benefits-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08);
-  border-color: rgba(251, 191, 36, 0.2);
+  transform: scale(1.13);
+  z-index: 80 !important;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
+  border-color: #d0d0d0ff;
+  filter: blur(1) !important;
+  opacity: 1 !important;
 }
 
 .benefits-card-image {
   width: 100%;
-  height: 200px;
+  height: 160px;
   object-fit: cover;
   display: block;
 }
 
 .benefits-card-content {
-  padding: 32px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   flex: 1;
 }
 
 .benefits-card-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #000;
-  font-size: 24px;
-  margin-bottom: 8px;
+  font-size: 20px;
+  margin-bottom: 4px;
   box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
 }
 
 .benefits-card-title {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 24px;
-  font-weight: 500;
+  font-size: 20px;
+  font-weight: 600;
   margin: 0;
   color: #1e293b;
   line-height: 1.3;
-  transition: color 0.3s ease;
-}
-
-.benefits-card:hover .benefits-card-title {
-  color: #0f172a;
 }
 
 .benefits-card-description {
   font-family: 'Inter', sans-serif;
-  font-size: 16px;
-  line-height: 1.7;
+  font-size: 14px;
+  line-height: 1.5;
   margin: 0;
   color: #64748b;
   font-weight: 400;
@@ -191,84 +199,19 @@ const styles = `
   gap: 10px;
 }
 
-@media (max-width: 1024px) {
-  .benefits-section {
-    padding: 80px 40px;
-  }
-
-  .benefits-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 28px;
-  }
-
-  .benefits-card-content {
-    padding: 28px;
-  }
-}
-
 @media (max-width: 768px) {
-  .benefits-section {
-    padding: 60px 24px;
-  }
-
-  .benefits-header {
-    margin-bottom: 60px;
-  }
-
   .benefits-title {
     font-size: 38px;
   }
-
-  .benefits-subtitle {
-    font-size: 18px;
-  }
-
-  .benefits-grid {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-
-  .benefits-card-content {
-    padding: 24px;
-  }
-
-  .benefits-card-title {
-    font-size: 22px;
-  }
-}
-
-@media (max-width: 480px) {
-  .benefits-section {
-    padding: 60px 20px;
-  }
-
-  .benefits-title {
-    font-size: 32px;
-  }
-
-  .benefits-subtitle {
-    font-size: 16px;
-  }
-
-  .benefits-card-content {
-    padding: 20px;
-  }
-
-  .benefits-card-title {
-    font-size: 20px;
-  }
-
-  .benefits-card-description {
-    font-size: 15px;
-  }
-
-  .benefits-card-image {
-    height: 180px;
+  .benefits-card {
+    width: 320px;
   }
 }
 `
 
 function BenefitsSection() {
+  const [hoveredIndex, setHoveredIndex] = useState(null)
+
   const benefits = [
     {
       icon: <MdPersonalVideo />,
@@ -308,10 +251,13 @@ function BenefitsSection() {
     }
   ]
 
+  // Duplicate for seamless loop
+  const marqueeItems = [...benefits, ...benefits]
+
   return (
     <>
       <style>{styles}</style>
-      <section className="benefits-section">
+      <section className={`benefits-section ${hoveredIndex !== null ? 'is-hovering' : ''}`}>
         <div className="benefits-content">
           <div className="benefits-header">
             <h2 className="benefits-title">The Benefits of Athena VI's Sales Platform</h2>
@@ -321,27 +267,34 @@ function BenefitsSection() {
             </p>
           </div>
 
-          <div className="benefits-grid">
-            {benefits.map((benefit, index) => (
-              <div key={index} className="benefits-card">
-                <img 
-                  src={benefit.image} 
-                  alt={benefit.title}
-                  className="benefits-card-image"
-                  loading="lazy"
-                />
-                <div className="benefits-card-content">
-                  <div className="benefits-card-icon">
-                    {benefit.icon}
+          <div className="marquee-container">
+            <div className="marquee-track">
+              {marqueeItems.map((benefit, index) => (
+                <div 
+                  key={index} 
+                  className="benefits-card"
+                  onMouseEnter={() => setHoveredIndex(index)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                >
+                  <img 
+                    src={benefit.image} 
+                    alt={benefit.title}
+                    className="benefits-card-image"
+                    loading="lazy"
+                  />
+                  <div className="benefits-card-content">
+                    <div className="benefits-card-icon">
+                      {benefit.icon}
+                    </div>
+                    <h3 className="benefits-card-title">{benefit.title}</h3>
+                    <p className="benefits-card-description">{benefit.description}</p>
+                    <a href="#" className="benefits-card-link" onClick={(e) => e.preventDefault()}>
+                      Learn more <MdArrowForward />
+                    </a>
                   </div>
-                  <h3 className="benefits-card-title">{benefit.title}</h3>
-                  <p className="benefits-card-description">{benefit.description}</p>
-                  <a href="#" className="benefits-card-link">
-                    Learn more <MdArrowForward />
-                  </a>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>

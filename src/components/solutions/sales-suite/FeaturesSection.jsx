@@ -380,14 +380,14 @@ function FeaturesSection() {
           <div className="features-header">
             <h2 className="features-title">Powerful Sales Features</h2>
             <p className="features-subtitle">
-              Everything you need to create, personalize, and scale your sales video content 
+              Everything you need to create, personalize, and scale your sales video content
               across all channels and touchpoints.
             </p>
           </div>
 
           <div className="features-layout">
             <div className="features-image-container">
-              <img 
+              <img
                 src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=600&fit=crop&q=80"
                 alt="Sales team collaboration"
                 className="features-image"
@@ -396,7 +396,7 @@ function FeaturesSection() {
               <div className="features-image-overlay">
                 <h3 className="features-image-title">AI-Powered Sales Videos</h3>
                 <p className="features-image-description">
-                  Create professional sales videos in minutes, not weeks. Our AI handles everything 
+                  Create professional sales videos in minutes, not weeks. Our AI handles everything
                   from script to delivery, allowing your team to focus on closing deals.
                 </p>
               </div>

@@ -16,6 +16,7 @@ import Ethics from './pages/Ethics.jsx'
 import Technology from './pages/Technology.jsx'
 import ResetPassword from './components/authentication/ResetPassword.jsx'
 import Settings from './pages/Settings.jsx'
+import UseCases from './pages/UseCases.jsx'
 
 // Import auth styles from Auth.jsx
 const authStyles = `
@@ -138,6 +139,7 @@ function App() {
       '/sales-suite': 'sales-suite',
       '/ethics': 'ethics',
       '/technology': 'technology',
+      '/use-cases': 'use-cases',
       '/settings': 'settings'
     }
     
@@ -181,6 +183,7 @@ function App() {
       'sales-suite': '/sales-suite',
       'ethics': '/ethics',
       'technology': '/technology',
+      'use-cases': '/use-cases',
       'settings': '/settings'
     }
     
@@ -228,6 +231,7 @@ function App() {
         '/sales-suite': 'sales-suite',
         '/ethics': 'ethics',
         '/technology': 'technology',
+        '/use-cases': 'use-cases',
         '/settings': 'settings'
       }
       
@@ -408,6 +412,7 @@ function App() {
             }}
             onLogoClick={() => setView('landing')}
             onNavigateToCompany={handleNavigateToCompany}
+            onNavigateToUseCases={() => setView('use-cases')}
           />
           {showAuthModal && (
             <Auth 
@@ -437,6 +442,7 @@ function App() {
             }}
             onNavigateToEthics={() => setView('ethics')}
             onNavigateToTechnology={() => setView('technology')}
+            onNavigateToUseCases={() => setView('use-cases')}
           />
           {showAuthModal && (
             <Auth 
@@ -466,6 +472,7 @@ function App() {
             }}
             onNavigateToEthics={() => setView('ethics')}
             onNavigateToTechnology={() => setView('technology')}
+            onNavigateToUseCases={() => setView('use-cases')}
           />
           {showAuthModal && (
             <Auth 
@@ -495,6 +502,7 @@ function App() {
             }}
             onNavigateToEthics={() => setView('ethics')}
             onNavigateToTechnology={() => setView('technology')}
+            onNavigateToUseCases={() => setView('use-cases')}
           />
           {showAuthModal && (
             <Auth 
@@ -524,6 +532,7 @@ function App() {
             }}
             onNavigateToEthics={() => setView('ethics')}
             onNavigateToTechnology={() => setView('technology')}
+            onNavigateToUseCases={() => setView('use-cases')}
           />
           {showAuthModal && (
             <Auth 
@@ -553,6 +562,7 @@ function App() {
             }}
             onNavigateToEthics={() => setView('ethics')}
             onNavigateToTechnology={() => setView('technology')}
+            onNavigateToUseCases={() => setView('use-cases')}
           />
           {showAuthModal && (
             <Auth 
@@ -582,6 +592,7 @@ function App() {
             }}
             onNavigateToEthics={() => setView('ethics')}
             onNavigateToTechnology={() => setView('technology')}
+            onNavigateToUseCases={() => setView('use-cases')}
           />
           {showAuthModal && (
             <Auth 
@@ -610,6 +621,7 @@ function App() {
               }
             }}
             onNavigateToTechnology={() => setView('technology')}
+            onNavigateToUseCases={() => setView('use-cases')}
           />
           {showAuthModal && (
             <Auth 
@@ -639,6 +651,7 @@ function App() {
             }}
             onNavigateToEthics={() => setView('ethics')}
             onNavigateToTechnology={() => setView('technology')}
+            onNavigateToUseCases={() => setView('use-cases')}
           />
           {showAuthModal && (
             <Auth 
@@ -668,6 +681,7 @@ function App() {
             }}
             onNavigateToEthics={() => setView('ethics')}
             onNavigateToTechnology={() => setView('technology')}
+            onNavigateToUseCases={() => setView('use-cases')}
           />
           {showAuthModal && (
             <Auth 
@@ -678,7 +692,37 @@ function App() {
         </>
       )}
 
-      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite'].includes(view) && (
+      {view === 'use-cases' && (
+        <>
+          <UseCases 
+            onLoginClick={handleLoginClick}
+            onLogoClick={() => setView('landing')}
+            onNavigateToCompany={handleNavigateToCompany}
+            onNavigateToProduct={(section) => {
+              setProductSection(section)
+              setView('products')
+            }}
+            onNavigateToSolution={(solution) => {
+              if (solution === 'Marketing Suite') {
+                setView('marketing-suite')
+              } else if (solution === 'Sales Solutions') {
+                setView('sales-suite')
+              }
+            }}
+            onNavigateToEthics={() => setView('ethics')}
+            onNavigateToTechnology={() => setView('technology')}
+            onNavigateToUseCases={() => setView('use-cases')}
+          />
+          {showAuthModal && (
+            <Auth 
+              onAuthComplete={handleAuthComplete}
+              onClose={() => setShowAuthModal(false)}
+            />
+          )}
+        </>
+      )}
+
+      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases'].includes(view) && (
         <>
           <Landing 
             onLoginClick={handleLoginClick}
@@ -695,6 +739,7 @@ function App() {
             }}
             onNavigateToEthics={() => setView('ethics')}
             onNavigateToTechnology={() => setView('technology')}
+            onNavigateToUseCases={() => setView('use-cases')}
             onLogoClick={() => setView('landing')}
             onNavigateToCompany={handleNavigateToCompany}
           />

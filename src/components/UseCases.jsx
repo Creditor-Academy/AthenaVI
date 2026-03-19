@@ -12,7 +12,7 @@ const CARDS = [
     image: "https://images.unsplash.com/photo-1541339907198-e08756dee402?q=80&w=600&auto=format&fit=crop",
     x: -385, y: 140, rotate: -10
   },
-  {
+  { 
     title: "Corporate Training Teams",
     image: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=600&auto=format&fit=crop",
     x: -135, y: 70, rotate: -5
@@ -47,12 +47,45 @@ export default function UseCases() {
     restDelta: 0.001
   });
 
-  // Heading Animation: Start visible (opacity 1), glide from top (-200) to position
-  const textY = useTransform(smoothProgress, [0, 0.3], [-200, 10]);
-  const textOpacity = useTransform(smoothProgress, [0, 0.03], [1, 1]);
+  // Heading Animation: Entry (0-0.1) and Glide Down (0.15-0.35) to a fixed "stop" point
+  const textY = useTransform(smoothProgress, [0, 0.1, 0.15, 0.35], [50, 0, 0, 380]);
+  const textScale = useTransform(smoothProgress, [0, 0.1, 0.15, 0.35], [0.95, 1, 1, 0.94]);
+  const textOpacity = 1;
 
   return (
     <div ref={containerRef} style={{ height: "450vh", position: "relative", background: "#ffffffff", fontFamily: "'Inter', sans-serif" }}>
+      {/* Decorative Wave Divider at Top */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        zIndex: 5,
+        lineHeight: 0,
+        pointerEvents: 'none'
+      }}>
+        <svg viewBox="0 0 1200 140" preserveAspectRatio="none" style={{ width: '100%', height: '200px', display: 'block' }}>
+          <defs>
+            <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#1e40af" />
+              <stop offset="100%" stopColor="#3b82f6" />
+            </linearGradient>
+          </defs>
+
+          {/* Base Blue Section (Matches PlatformFeatures) */}
+          <path d="M0 0 H1200 V100 C1050 100 900 20 600 20 C300 20 150 100 0 100 Z" fill="url(#waveGradient)" />
+          
+          {/* Gold Decorative Line 1 */}
+          <path d="M0 105 C150 105 300 25 600 25 C900 25 1050 105 1200 105" fill="none" stroke="#fbbf24" strokeWidth="3" opacity="0.6" />
+          
+          {/* Gold Decorative Line 2 (Offset for depth) */}
+          <path d="M0 112 C150 112 300 32 600 32 C900 32 1050 112 1200 112" fill="none" stroke="#f59e0b" strokeWidth="1.5" opacity="0.4" />
+          
+          {/* Subtle Light Blue Accent Line */}
+          <path d="M0 100 C150 100 300 20 600 20 C900 20 1050 100 1200 100" fill="none" stroke="#60a5fa" strokeWidth="1" opacity="0.3" />
+        </svg>
+      </div>
+
       <div style={{
         position: "sticky",
         top: 0,
@@ -60,8 +93,8 @@ export default function UseCases() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "flex-end",
-        paddingBottom: "14vh",
+        justifyContent: "flex-start",
+        paddingTop: "80px",
         overflow: "hidden"
       }}>
         {/* Visual Enhancement: Radial Background Glows */}
@@ -95,6 +128,7 @@ export default function UseCases() {
             maxWidth: "900px",
             padding: "0 20px",
             y: textY,
+            scale: textScale,
             opacity: textOpacity
           }}>
           <motion.span
@@ -137,10 +171,11 @@ export default function UseCases() {
         {/* Animated Cards - Perfectly equal 230px spacing */}
         {CARDS.map((card, i) => {
           // Stagger triggers starting after heading settles
-          const startTrigger = 0.3 + (i * 0.06);
-          const endTrigger = startTrigger + 0.12;
+          // Cards appear much earlier (start at 8% vs 30%)
+          const startTrigger = 0.05 + (i * 0.04);
+          const endTrigger = startTrigger + 0.1;
 
-          const y = useTransform(smoothProgress, [startTrigger, endTrigger], [1200, card.y]);
+          const y = useTransform(smoothProgress, [startTrigger, endTrigger], [800, card.y]);
           const x = useTransform(smoothProgress, [startTrigger, endTrigger], [0, card.x]);
           const opacity = useTransform(smoothProgress, [startTrigger, startTrigger + 0.05], [0, 1]);
           const scale = useTransform(smoothProgress, [startTrigger, endTrigger], [0.35, 1]);

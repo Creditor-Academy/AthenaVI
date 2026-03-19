@@ -1,5 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { MdKeyboardArrowDown, MdArrowOutward, MdMenu, MdClose } from 'react-icons/md'
+import { 
+  FiCpu, FiPlayCircle, FiGlobe, FiTrendingUp, FiUserCheck,
+  FiBriefcase, FiDollarSign, FiUsers, FiBookOpen, FiMail,
+  FiInfo, FiFileText, FiRss, FiLayers, FiShield, FiHelpCircle
+} from 'react-icons/fi'
+import ProductVideo from '../assets/ProductVideo.mp4'
 
 const styles = `
 .navbar {
@@ -90,18 +96,18 @@ const styles = `
   align-items: center;
   gap: 4px;
   flex: 1 1 auto;
-  justify-content: center
+  justify-content: flex-start;
   flex-wrap: nowrap;
   min-width: 0;
   max-width: 100%;
   overflow: visible;
-  margin-left: 48px;
+  margin-left: 40px;
 }
 
 .nav-pills-group {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 8px;
   border-radius: 999px;
   padding: 5px 8px;
 }
@@ -133,18 +139,16 @@ const styles = `
 .nav-link:hover {
   background: #3b82f6;
   color: #ffffff;
-  font-weight: 600;
 }
 
 .nav-link.active {
   background:  #3b82f6;
   color: #ffffff;
-  font-weight: 600;
 }
 
 .nav-link svg {
-  font-size: 16px;
-  transition: transform 0.2s ease;
+  font-size: 18px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .nav-link.active svg {
@@ -159,45 +163,220 @@ const styles = `
   flex-shrink: 0;
 }
 
+/* Mega Dropdown Styles */
 .dropdown {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 15px);
   left: 50%;
-  transform: translateX(-50%);
-  background: #FFFFFF;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(30, 64, 175, 0.15);
-  border: 1px solid rgba(30, 64, 175, 0.1);
-  min-width: 240px;
-  padding: 8px 0;
+  transform: translateX(-50%) translateY(10px);
+  background: #F8FAFC;
+  border-radius: 16px;
+  box-shadow: 2px 30px 60px -12px rgba(0, 0, 0, 0.20), 0 18px 36px -18px rgba(0, 0, 0, 0.20), 0 0 0 1px rgba(0, 0, 0, 0.20);
+  border: none;
+  width: min(650px, 80vw);
+  padding: 24px;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
   z-index: 1100;
+}
+
+.dropdown.products-mega {
+  width: min(980px, 95vw);
+  display: grid;
+  grid-template-columns: 1.6fr 1.2fr;
+  padding: 0;
+  overflow: hidden;
+  gap: 0;
+}
+
+.dropdown.products-mega.active {
+  transform: translateX(-22%) translateY(0);
+}
+
+.dropdown-links-side {
+  padding: 24px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.dropdown-video-side {
+  background: #f1f5f9;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  gap: 16px;
+  border-left: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.dropdown-video-container {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  background: #000;
+}
+
+.dropdown-video-container video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.video-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.video-info-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.video-info-desc {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.see-all-link {
+  margin-top: auto;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e40af;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  transition: gap 0.2s ease;
+}
+
+.see-all-link:hover {
+  gap: 8px;
+}
+
+.dropdown::before {
+  content: '';
+  position: absolute;
+  top: -15px;
+  left: 0;
+  right: 0;
+  height: 15px;
+  background: transparent;
+}
+
+.dropdown::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 12px;
+  height: 12px;
+  background: #F8FAFC;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  border-left: 1px solid rgba(0, 0, 0, 0.05);
+  z-index: -1;
 }
 
 .dropdown.active {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
 }
 
 .dropdown-item {
-  font-family: 'Inter', sans-serif;
-  display: block;
-  padding: 12px 20px;
-  color: #1e40af;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 12px;
   text-decoration: none;
-  font-size: 14px;
-  font-weight: 400;
   transition: all 0.2s ease;
   cursor: pointer;
 }
 
 .dropdown-item:hover {
-  background: rgba(30, 64, 175, 0.1);
+  background: #EFF6FF;
+}
+
+.dropdown-icon {
+  width: 44px;
+  height: 44px;
+  background: #ffffff;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1e40af;
+  font-size: 22px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.dropdown-item:hover .dropdown-icon {
+  background: #3b82f6;
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+.dropdown-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dropdown-title {
+  color: #1e293b;
+  font-size: 15px;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.dropdown-desc {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.dropdown-item:hover .dropdown-title {
   color: #3b82f6;
+}
+
+/* Backdrop for active dropdowns */
+.nav-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(34, 48, 82, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 150;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.nav-backdrop.active {
+  opacity: 1;
+  visibility: visible;
 }
 
 .nav-center .login-link {
@@ -422,8 +601,8 @@ const styles = `
   color: #1e40af;
   text-decoration: none;
   font-size: 15px;
-  font-weight: 400;
-  padding: 12px 0;
+  font-weight: 600;
+  padding: 16px 0;
   border-bottom: 1px solid rgba(30, 64, 175, 0.1);
   cursor: pointer;
   transition: color 0.2s ease;
@@ -455,26 +634,43 @@ const styles = `
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.3s ease;
+  background: #F8FAFC;
+  border-radius: 8px;
 }
 
 .mobile-dropdown.active {
   max-height: 1000px;
+  margin-bottom: 8px;
 }
 
 .mobile-dropdown-item {
-  font-family: 'Inter', sans-serif;
-  display: block;
-  padding: 12px 24px;
-  color: #3b82f6;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
   text-decoration: none;
-  font-size: 16px;
-  border-bottom: 1px solid rgba(30, 64, 175, 0.05);
   transition: all 0.2s ease;
 }
 
-.mobile-dropdown-item:hover {
+.mobile-item-icon {
+  font-size: 18px;
   color: #1e40af;
-  background: rgba(30, 64, 175, 0.05);
+}
+
+.mobile-item-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-item-title {
+  color: #1e293b;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.mobile-item-desc {
+  color: #64748b;
+  font-size: 11px;
 }
 
 .mobile-actions {
@@ -539,6 +735,10 @@ const styles = `
   .login-link {
     font-size: 13px;
   }
+
+  .dropdown {
+    width: 700px;
+  }
 }
 
 @media (max-width: 1024px) {
@@ -547,11 +747,12 @@ const styles = `
   }
   
   .nav-center {
-    gap: 18px;
+    gap: 12px;
   }
   
   .nav-link {
     font-size: 13px;
+    padding: 8px 12px;
   }
   
   .btn-outline,
@@ -607,11 +808,6 @@ const styles = `
     font-size: 14px;
     padding: 12px 0;
   }
-  
-  .mobile-dropdown-item {
-    font-size: 15px;
-    padding: 10px 20px;
-  }
 }
 
 @media (max-width: 480px) {
@@ -636,35 +832,10 @@ const styles = `
   .mobile-menu {
     padding: 16px;
   }
-  
-  .mobile-menu-close-btn {
-    top: 12px;
-    right: 12px;
-    width: 32px;
-    height: 32px;
-    font-size: 20px;
-  }
-  
-  .mobile-nav-link {
-    font-size: 14px;
-    padding: 10px 0;
-  }
-  
-  .mobile-dropdown-item {
-    font-size: 14px;
-    padding: 8px 16px;
-  }
-  
-  .mobile-actions .btn-outline,
-  .mobile-actions .btn-primary,
-  .mobile-actions .login-link {
-    padding: 12px 20px;
-    font-size: 14px;
-  }
 }
 `
 
-function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology }) {
+function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology, onNavigateToUseCases }) {
   const [activeDropdown, setActiveDropdown] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileDropdowns, setMobileDropdowns] = useState({})
@@ -675,32 +846,36 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
   const clickedDropdownRef = useRef(null)
 
   const productsItems = [
-    'Visual AI Agents',
-    'Creative Reality™ Studio',
-    'Video Translate',
-    'Video Campaigns',
-    'Personal Avatars'
+    { title: 'Visual AI Agents', desc: 'AI teaching avatars', icon: <FiCpu /> },
+    { title: 'Creative Reality™ Studio', desc: 'AI video studio', icon: <FiPlayCircle /> },
+    { title: 'Video Translate', desc: 'Multilingual video', icon: <FiGlobe /> },
+    { title: 'Video Campaigns', desc: 'Marketing videos', icon: <FiTrendingUp /> },
+    { title: 'Personal Avatars', desc: 'Digital instructors', icon: <FiUserCheck /> },
+    { title: 'Technology', desc: 'Technology overview', icon: <FiCpu /> }
   ]
 
   const solutionsItems = [
-    'Marketing Suite',
-    'Sales Solutions',
-    'Customer Experience',
-    'Learning & Development',
-    'AI Videos'
+    { title: 'Marketing Suite', desc: 'Campaign automation', icon: <FiBriefcase /> },
+    { title: 'Sales Solutions', desc: 'Video outreach', icon: <FiDollarSign /> },
+    { title: 'Customer Experience', desc: 'Customer engagement', icon: <FiUsers /> },
+    { title: 'Learning & Development', desc: 'Corporate training', icon: <FiBookOpen /> },
+    { title: 'AI Videos', desc: 'Automated communication', icon: <FiMail /> },
   ]
 
   const companyItems = [
-    'About Us',
-    'Blog',
-    'News',
-    'Resources',
-    'Privacy Policy',
-    'Help Center'
+    { title: 'About Us', desc: 'Company overview', icon: <FiInfo /> },
+    { title: 'Blog', desc: 'Insights articles', icon: <FiFileText /> },
+    { title: 'News', desc: 'Platform updates', icon: <FiRss /> },
+    { title: 'Ethics', desc: 'AI Ethics pledge', icon: <FiShield /> },
+    { title: 'Resources', desc: 'Learning materials', icon: <FiLayers /> },
+    { title: 'Privacy Policy', desc: 'Data protection', icon: <FiShield /> },
+    { title: 'Help Center', desc: 'Customer support', icon: <FiHelpCircle /> }
   ]
 
   const handleCompanyItemClick = (item) => {
-    if (onNavigateToCompany) {
+    if (item === 'Ethics') {
+      if (onNavigateToEthics) onNavigateToEthics()
+    } else if (onNavigateToCompany) {
       onNavigateToCompany(item)
     }
     setActiveDropdown(null)
@@ -821,6 +996,7 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
   return (
     <>
       <style>{styles}</style>
+      <div className={`nav-backdrop ${activeDropdown ? 'active' : ''}`} />
       <nav className="navbar">
         <div className="nav-left">
           <a
@@ -873,28 +1049,64 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
                 Products
                 <MdKeyboardArrowDown />
               </a>
-              <div className={`dropdown ${activeDropdown === 'products' ? 'active' : ''}`}>
-                {productsItems.map((item, index) => (
-                  <a
-                    key={index}
-                    href="#"
-                    className="dropdown-item"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      if (clickTimeoutRef.current) {
-                        clearTimeout(clickTimeoutRef.current)
-                        clickTimeoutRef.current = null
-                      }
-                      clickedDropdownRef.current = null
-                      if (onNavigateToProduct) {
-                        onNavigateToProduct(item)
-                      }
-                      setActiveDropdown(null)
-                    }}
-                  >
-                    {item}
+              <div className={`dropdown products-mega ${activeDropdown === 'products' ? 'active' : ''}`}>
+                <div className="dropdown-links-side">
+                  {productsItems.map((item, index) => (
+                    <a
+                      key={index}
+                      href="#"
+                      className="dropdown-item"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        if (clickTimeoutRef.current) {
+                          clearTimeout(clickTimeoutRef.current)
+                          clickTimeoutRef.current = null
+                        }
+                        clickedDropdownRef.current = null
+                        if (item.title === 'Technology') {
+                          if (onNavigateToTechnology) onNavigateToTechnology()
+                        } else if (onNavigateToProduct) {
+                          onNavigateToProduct(item.title)
+                        }
+                        setActiveDropdown(null)
+                      }}
+                    >
+                      <div className="dropdown-icon">{item.icon}</div>
+                      <div className="dropdown-content">
+                        <div className="dropdown-title">{item.title}</div>
+                        <div className="dropdown-desc">{item.desc}</div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+                
+                <div className="dropdown-video-side">
+                  <div className="dropdown-video-container">
+                    <video 
+                      autoPlay 
+                      muted 
+                      loop 
+                      playsInline
+                    >
+                      <source src={ProductVideo} type="video/mp4" />
+                    </video>
+                  </div>
+                  <div className="video-info">
+                    <div className="video-info-title">
+                      Translate audio and captions <MdArrowOutward />
+                    </div>
+                    <p className="video-info-desc">
+                      Save time and money on localization with AI-powered video translation. Adapt audio and captions into dozens of languages fast.
+                    </p>
+                  </div>
+                  <a href="#" className="see-all-link" onClick={(e) => {
+                    e.preventDefault()
+                    if (onNavigateToTechnology) onNavigateToTechnology()
+                    setActiveDropdown(null)
+                  }}>
+                    See all Technology <MdArrowOutward />
                   </a>
-                ))}
+                </div>
               </div>
             </div>
 
@@ -943,12 +1155,16 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
                       }
                       clickedDropdownRef.current = null
                       if (onNavigateToSolution) {
-                        onNavigateToSolution(item)
+                        onNavigateToSolution(item.title)
                       }
                       setActiveDropdown(null)
                     }}
                   >
-                    {item}
+                    <div className="dropdown-icon">{item.icon}</div>
+                    <div className="dropdown-content">
+                      <div className="dropdown-title">{item.title}</div>
+                      <div className="dropdown-desc">{item.desc}</div>
+                    </div>
                   </a>
                 ))}
               </div>
@@ -959,25 +1175,12 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
               className="nav-link"
               onClick={(e) => {
                 e.preventDefault()
-                if (onNavigateToTechnology) {
-                  onNavigateToTechnology()
+                if (onNavigateToUseCases) {
+                  onNavigateToUseCases()
                 }
               }}
             >
-              Technology
-            </a>
-
-            <a
-              href="#"
-              className="nav-link"
-              onClick={(e) => {
-                e.preventDefault()
-                if (onNavigateToEthics) {
-                  onNavigateToEthics()
-                }
-              }}
-            >
-              Ethics
+              Use Cases
             </a>
 
             <a href="#" className="nav-link">Pricing</a>
@@ -1025,10 +1228,14 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
                         clearTimeout(clickTimeoutRef.current)
                         clickTimeoutRef.current = null
                       }
-                      handleCompanyItemClick(item)
+                      handleCompanyItemClick(item.title)
                     }}
                   >
-                    {item}
+                    <div className="dropdown-icon">{item.icon}</div>
+                    <div className="dropdown-content">
+                      <div className="dropdown-title">{item.title}</div>
+                      <div className="dropdown-desc">{item.desc}</div>
+                    </div>
                   </a>
                 ))}
               </div>
@@ -1120,12 +1327,18 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
               onClick={(e) => {
                 e.preventDefault()
                 handleMobileActionClick()
-                if (onNavigateToProduct) {
-                  onNavigateToProduct(item)
+                if (item.title === 'Technology') {
+                  if (onNavigateToTechnology) onNavigateToTechnology()
+                } else if (onNavigateToProduct) {
+                  onNavigateToProduct(item.title)
                 }
               }}
             >
-              {item}
+              <div className="mobile-item-icon">{item.icon}</div>
+              <div className="mobile-item-info">
+                <span className="mobile-item-title">{item.title}</span>
+                <span className="mobile-item-desc">{item.desc}</span>
+              </div>
             </a>
           ))}
         </div>
@@ -1149,11 +1362,15 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
                 e.preventDefault()
                 handleMobileActionClick()
                 if (onNavigateToSolution) {
-                  onNavigateToSolution(item)
+                  onNavigateToSolution(item.title)
                 }
               }}
             >
-              {item}
+              <div className="mobile-item-icon">{item.icon}</div>
+              <div className="mobile-item-info">
+                <span className="mobile-item-title">{item.title}</span>
+                <span className="mobile-item-desc">{item.desc}</span>
+              </div>
             </a>
           ))}
         </div>
@@ -1164,27 +1381,15 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
           onClick={(e) => {
             e.preventDefault()
             handleMobileActionClick()
-            if (onNavigateToTechnology) {
-              onNavigateToTechnology()
+            if (onNavigateToUseCases) {
+              onNavigateToUseCases()
             }
           }}
         >
-          Technology
+          Use Cases
         </a>
 
-        <a
-          href="#"
-          className="mobile-nav-link"
-          onClick={(e) => {
-            e.preventDefault()
-            setMobileMenuOpen(false)
-            if (onNavigateToEthics) {
-              onNavigateToEthics()
-            }
-          }}
-        >
-          Ethics
-        </a>
+
         <a href="#" className="mobile-nav-link" onClick={handleMobileActionClick}>
           Pricing
         </a>
@@ -1206,10 +1411,14 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
               className="mobile-dropdown-item"
               onClick={(e) => {
                 e.preventDefault()
-                handleCompanyItemClick(item)
+                handleCompanyItemClick(item.title)
               }}
             >
-              {item}
+              <div className="mobile-item-icon">{item.icon}</div>
+              <div className="mobile-item-info">
+                <span className="mobile-item-title">{item.title}</span>
+                <span className="mobile-item-desc">{item.desc}</span>
+              </div>
             </a>
           ))}
         </div>
