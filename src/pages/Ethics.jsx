@@ -26,13 +26,17 @@ import {
 import { useState, useEffect, useRef } from 'react'
 
 const styles = `
+.ethics-outer-wrap {
+  overflow-x: clip; /* clip does NOT create a scroll container — sticky still works */
+  position: relative;
+}
+
 .ethics-page {
   min-height: 100vh;
   position: relative;
   background: #ffffff;
   color: #1e293b;
   font-family: 'Inter', sans-serif;
-  overflow-x: hidden;
 }
 
 /* Progress Bar */
@@ -606,85 +610,265 @@ const styles = `
   scroll-snap-align: center;
 }
 
-.leadership-grid-layout {
-  display: grid;
-  grid-template-columns: 0.8fr 2fr;
-  gap: 60px;
-  align-items: start;
-  padding: 80px 40px;
+/* ── Leadership sticky section ────────────────────────────── */
+.leadership-scroll-section {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 80px;
+  padding: 100px 60px 140px;
   position: relative;
-  background: rgba(30, 64, 175, 0.02);
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #1a2e1a 100%);
   border-radius: 40px;
-  margin: 40px 0;
-  border: 1px solid rgba(30, 64, 175, 0.04);
+  margin: 60px 0;
+  overflow: hidden;
 }
 
+/* Decorative blobs */
+.leadership-scroll-section::before {
+  content: '';
+  position: absolute;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(34,197,94,0.12) 0%, transparent 70%);
+  top: -100px; left: -100px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.leadership-scroll-section::after {
+  content: '';
+  position: absolute;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
+  bottom: -80px; right: -60px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Kept for backward compat */
+.leadership-grid-layout {
+  display: none;
+}
+
+/* LEFT — sticky sidebar */
 .leadership-side-header {
+  flex: 0 0 340px;
+  position: sticky;
+  top: 100px;
+  align-self: flex-start;
   text-align: left;
-  margin-top: 20px;
+  padding-top: 8px;
+  z-index: 2;
+}
+
+.leadership-side-header .values-tag {
+  background: rgba(34, 197, 94, 0.15) !important;
+  color: #4ade80 !important;
+  border-color: rgba(34, 197, 94, 0.3) !important;
 }
 
 .leadership-side-header .ethics-section-title {
-  font-size: 42px;
-  line-height: 1.1;
+  font-size: 40px;
+  line-height: 1.15;
   margin-top: 16px;
-  color: #0f172a;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
 }
 
+.leadership-side-subtext {
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.5);
+  margin-top: 16px;
+  font-weight: 400;
+  max-width: 280px;
+}
+
+.leadership-side-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.leadership-side-stat {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.leadership-side-stat-bar {
+  width: 3px;
+  height: 36px;
+  background: linear-gradient(to bottom, #22c55e, #16a34a);
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.leadership-side-stat-label {
+  font-size: 13px;
+  color: rgba(255,255,255,0.4);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.leadership-side-stat-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+/* RIGHT — cards */
 .leadership-slider-container {
+  flex: 1;
+  min-width: 0;
   position: relative;
-  min-width: 0; /* Important for grid slider */
+  z-index: 1;
 }
 
 .leadership-grid {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding: 20px 0;
+  gap: 20px;
+  padding: 0;
 }
 
 .leadership-card {
   width: 100%;
-  padding: 32px;
-  background: #ffffff;
-  border: 1px solid rgba(30, 64, 175, 0.08);
-  border-radius: 24px;
-  transition: all 0.4s ease;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  padding: 28px 32px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 24px;
+  align-items: start;
+  backdrop-filter: blur(12px);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Glow effect on hover */
+.leadership-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(34,197,94,0.08) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  border-radius: 20px;
+}
+
+.leadership-card:hover::before {
+  opacity: 1;
 }
 
 .leadership-card:hover {
-  transform: translateY(-8px);
   border-color: rgba(34, 197, 94, 0.3);
-  box-shadow: 0 20px 40px rgba(34, 197, 94, 0.1);
+  transform: translateX(8px);
+  box-shadow: -4px 0 0 0 #22c55e, 0 8px 40px rgba(34,197,94,0.12);
+}
+
+/* Left: numbered icon block */
+.leadership-card-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.leadership-card-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(34,197,94,0.15);
+  border: 1px solid rgba(34,197,94,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #4ade80;
+  letter-spacing: 0;
+  flex-shrink: 0;
+  transition: all 0.4s ease;
+}
+
+.leadership-card:hover .leadership-card-num {
+  background: #22c55e;
+  color: #ffffff;
+  border-color: #22c55e;
+  box-shadow: 0 0 16px rgba(34,197,94,0.4);
+}
+
+.leadership-card-connector {
+  width: 1px;
+  flex: 1;
+  min-height: 20px;
+  background: linear-gradient(to bottom, rgba(34,197,94,0.3), transparent);
 }
 
 .leadership-card-icon {
   width: 48px;
   height: 48px;
-  background: rgba(34, 197, 94, 0.1);
-  color: #16a34a;
-  border-radius: 12px;
+  background: rgba(34,197,94,0.12);
+  border: 1px solid rgba(34,197,94,0.2);
+  color: #4ade80;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.4s ease;
+  flex-shrink: 0;
+}
+
+.leadership-card:hover .leadership-card-icon {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 6px 20px rgba(34,197,94,0.35);
+  transform: rotate(-5deg) scale(1.05);
+}
+
+/* Right: text content */
+.leadership-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .leadership-card h3 {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
-  margin: 0;
-  color: #0f172a;
+  margin: 0 0 10px;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
 }
 
-.leadership-card p {
+.leadership-card-desc {
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.55);
+  margin: 0 0 14px;
+  font-weight: 400;
+}
+
+.leadership-card-detail {
   font-size: 14px;
-  line-height: 1.6;
-  color: #64748b;
+  line-height: 1.65;
+  color: rgba(255,255,255,0.35);
   margin: 0;
+  font-weight: 400;
+  padding-left: 12px;
+  border-left: 2px solid rgba(34, 197, 94, 0.3);
 }
 
 .leadership-nav-btn {
@@ -719,10 +903,19 @@ const styles = `
 .l-prev { left: -22px; }
 .l-next { right: -22px; }
 
-@media (max-width: 1200px) {
-  .leadership-grid-layout {
-    grid-template-columns: 1fr;
+@media (max-width: 1024px) {
+  .leadership-scroll-section {
+    flex-direction: column;
     gap: 40px;
+    padding: 60px 24px;
+  }
+  .leadership-side-header {
+    position: static;
+    flex: none;
+    width: 100%;
+  }
+  .leadership-side-header .ethics-section-title {
+    white-space: normal;
   }
 }
 
@@ -1130,6 +1323,7 @@ function Ethics({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToPr
 
 
 
+      <div className="ethics-outer-wrap">
       <div className="ethics-page">
         <Navbar
           onLoginClick={onLoginClick}
@@ -1421,11 +1615,12 @@ function Ethics({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToPr
           </div>
 
           {/* Section 5: How We Will Lead */}
-          <div className="leadership-grid-layout" id="Leadership">
+          <div className="leadership-scroll-section" id="Leadership">
+            {/* LEFT — sticky header */}
             <div className="leadership-side-header">
               <motion.div
                 className="values-tag"
-                style={{ background: 'rgba(34, 197, 94, 0.08)', color: '#16a34a', borderColor: 'rgba(34, 197, 94, 0.2)' }}
+                style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#4ade80', borderColor: 'rgba(34, 197, 94, 0.3)' }}
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
@@ -1441,39 +1636,90 @@ function Ethics({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToPr
               >
                 How We Will Lead
               </motion.h2>
+              <p className="leadership-side-subtext">
+                Our commitments aren't aspirational — they're operational. Every principle below is actively enforced across our platform.
+              </p>
+
+              {/* Stats */}
+              <div className="leadership-side-stats">
+                {[
+                  { value: '24/7', label: 'Active Monitoring' },
+                  { value: '100%', label: 'Consent Required' },
+                  { value: 'Zero', label: 'Tolerance Policy' },
+                ].map((s) => (
+                  <div key={s.label} className="leadership-side-stat">
+                    <div className="leadership-side-stat-bar" />
+                    <div>
+                      <div className="leadership-side-stat-value">{s.value}</div>
+                      <div className="leadership-side-stat-label">{s.label}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
+            {/* RIGHT — cards scroll with the page */}
             <div className="leadership-slider-container">
               <div className="leadership-grid">
                 {[
-                  { icon: <UserCheck />, title: "Identity Protection", desc: "Requiring proper authorization for any real person's identity before synthesis." },
-                  { icon: <ShieldAlert />, title: "Abuse Prevention", desc: "Maintaining strong safeguards and active monitoring to prevent deepfake misuse." },
-                  { icon: <Tag />, title: "Clear Labeling", desc: "Providing unequivocal labeling for all AI-generated content to ensure viewer clarity." },
-                  { icon: <Activity />, title: "Continuous Audit", desc: "Regularly auditing our systems for safety, fairness, and potential algorithmic bias." },
-                  { icon: <AlertCircle />, title: "Safety First", desc: "Preventing the use of our technology for impersonation, fraud, or intentional harm." }
+                  {
+                    icon: <UserCheck size={22} />,
+                    title: 'Identity Protection',
+                    desc: "Requiring proper authorization for any real person's identity before synthesis.",
+                    detail: "Every use of a real person's face, voice, or likeness requires verified, explicit written consent — stored securely and auditable at any time.",
+                  },
+                  {
+                    icon: <ShieldAlert size={22} />,
+                    title: 'Abuse Prevention',
+                    desc: 'Maintaining strong safeguards and active monitoring to prevent deepfake misuse.',
+                    detail: 'Our real-time content scanning system flags potential misuse patterns and escalates to human review within minutes — 24/7, 365 days a year.',
+                  },
+                  {
+                    icon: <Tag size={22} />,
+                    title: 'Clear Labeling',
+                    desc: 'Providing unequivocal labeling for all AI-generated content to ensure viewer clarity.',
+                    detail: 'All synthetic media produced with our platform includes a cryptographically verified provenance tag — always detectable by inspection tools.',
+                  },
+                  {
+                    icon: <Activity size={22} />,
+                    title: 'Continuous Audit',
+                    desc: 'Regularly auditing our systems for safety, fairness, and potential algorithmic bias.',
+                    detail: 'An independent third-party panel conducts quarterly reviews of our AI outputs across demographic groups to eliminate systemic bias.',
+                  },
+                  {
+                    icon: <AlertCircle size={22} />,
+                    title: 'Safety First',
+                    desc: 'Preventing the use of our technology for impersonation, fraud, or intentional harm.',
+                    detail: 'Our policy framework prohibits use in election interference, financial fraud, or non-consensual content — violations result in immediate account termination.',
+                  },
                 ].map((item, i) => (
                   <motion.div
                     key={i}
                     className="leadership-card"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, x: 30 }}
+                    whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
-                    transition={{ delay: i * 0.1 }}
+                    transition={{ duration: 0.5, delay: i * 0.1 }}
                   >
-                    <div className="leadership-card-icon">
-                      {item.icon}
+                    {/* Left col: number → connector → icon */}
+                    <div className="leadership-card-left">
+                      <div className="leadership-card-num">{String(i + 1).padStart(2, '0')}</div>
+                      <div className="leadership-card-connector" />
+                      <div className="leadership-card-icon">{item.icon}</div>
                     </div>
-                    <h3>{item.title}</h3>
-                    <p>{item.desc}</p>
-                    <div className="card-arrow" style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', fontWeight: 700, color: '#16a34a' }}>
-                      Read Policy
-                      <Check size={14} />
+
+                    {/* Right col: text */}
+                    <div className="leadership-card-body">
+                      <h3>{item.title}</h3>
+                      <p className="leadership-card-desc">{item.desc}</p>
+                      <p className="leadership-card-detail">{item.detail}</p>
                     </div>
                   </motion.div>
                 ))}
               </div>
             </div>
           </div>
+
         </div>
 
         {/* Section 6: Ongoing Promise */}
@@ -1542,6 +1788,7 @@ function Ethics({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToPr
           onNavigateToCompany={onNavigateToCompany}
           onNavigateToUseCases={onNavigateToUseCases}
         />
+      </div>
       </div>
     </>
   )
