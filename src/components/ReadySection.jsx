@@ -15,24 +15,22 @@ const styles = `
 
 .ready-section-title {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: clamp(40px, 5vw, 64px);
+  font-size: 55px;
   font-weight: 400;
   letter-spacing: -1.5px;
-  line-height: 1.15;
+  line-height: 1.2;
   margin: 0 0 24px;
   color: #ffffff;
 }
 
 .ready-section-subtitle {
   font-family: 'Inter', sans-serif;
-  font-size: 20px;
+  font-size: clamp(15px, 2vw, 18px);
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.8);
-  margin: 0 0 48px;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 auto 48px;
   max-width: 700px;
-  margin-left: auto;
-  margin-right: auto;
-  line-height: 1.5;
+  line-height: 1.7;
 }
 
 .ready-cta {

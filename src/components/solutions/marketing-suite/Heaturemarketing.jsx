@@ -50,12 +50,12 @@ const styles = `
 
 .feature-marketing-title {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 52px;
-  font-weight: 500;
+  font-size: 55px;
+  font-weight: 400;
   line-height: 1.2;
   margin: 0 0 28px 0;
   color: #1e40af;
-  letter-spacing: -0.5px;
+  letter-spacing: -1.5px;
 }
 
 .feature-marketing-description {

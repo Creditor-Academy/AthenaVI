@@ -122,8 +122,9 @@ const styles = `
 }
 
 .auth-promo-title {
+  font-family: 'Georgia', 'Times New Roman', serif;
   font-size: 32px;
-  font-weight: 800;
+  font-weight: 400;
   margin-bottom: 12px;
   line-height: 1.2;
 }
@@ -160,8 +161,9 @@ const styles = `
 }
 
 .auth-form-title {
+  font-family: 'Georgia', 'Times New Roman', serif;
   font-size: 26px;
-  font-weight: 800;
+  font-weight: 400;
   color: #1e293b;
   margin-bottom: 8px;
   text-align: left;

@@ -20,12 +20,12 @@ const styles = `
 
 .impact-title {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 56px;
-  font-weight: 500;
+  font-size: 55px;
+  font-weight: 400;
   line-height: 1.2;
   margin: 0 0 10px 0;
   color: #0f172a;
-  letter-spacing: -0.5px;
+  letter-spacing: -1.5px;
 }
 
 .impact-subtitle {
