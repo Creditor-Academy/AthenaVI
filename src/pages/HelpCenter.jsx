@@ -25,9 +25,12 @@ const styles = `
 
 .page-header h1 {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 56px;
-  font-weight: 500;
+  font-size: 64px;
+  font-weight: 400;
   margin: 0 0 20px;
+  letter-spacing: -1.5px;
+  line-height: 1.1;
+  color: #ffffff;
 }
 
 .page-header p {
@@ -37,6 +40,7 @@ const styles = `
   max-width: 800px;
   margin: 0 auto;
   opacity: 0.95;
+  color: #ffffff;
 }
 
 .help-container {
@@ -103,10 +107,10 @@ const styles = `
 
 .section-title {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: clamp(40px, 4vw, 64px);
+  font-size: 55px;
   font-weight: 400;
   letter-spacing: -1.5px;
-  line-height: 1.15;
+  line-height: 1.2;
   margin: 0 0 40px;
   color: #1e40af;
   text-align: center;
@@ -124,6 +128,9 @@ const styles = `
 .faq-container {
   max-width: 900px;
   margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, 2fr);
+  gap: 20px;
 }
 
 .faq-item {
@@ -261,10 +268,12 @@ const styles = `
 
 .contact-title {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 32px;
-  font-weight: 500;
+  font-size: 55px;
+  font-weight: 400;
   margin: 0 0 16px;
   color: #1e40af;
+  letter-spacing: -1.5px;
+  line-height: 1.2;
 }
 
 .contact-description {

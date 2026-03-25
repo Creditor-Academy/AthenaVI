@@ -80,10 +80,11 @@ const styles = `
 }
 
 .hero-title {
-  font-size: clamp(48px, 6vw, 84px);
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  line-height: 1;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: clamp(40px, 6vw, 64px);
+  font-weight: 400;
+  letter-spacing: -1.5px;
+  line-height: 1.1;
   margin-bottom: 24px;
   background: linear-gradient(to bottom right, #ffffff 30%, rgba(255,255,255,0.7));
   -webkit-background-clip: text;
@@ -253,12 +254,14 @@ const styles = `
 }
 
 .features-section-title {
-  font-family: 'Inter', sans-serif;
-  font-size: 48px;
-  font-weight: 700;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 55px;
+  font-weight: 400;
   color: #1e40af;
   margin: 0 0 20px;
   text-align: center;
+  letter-spacing: -1.5px;
+  line-height: 1.2;
 }
 
 .features-section-subtitle {
@@ -528,12 +531,13 @@ const styles = `
 }
 
 .solutions-title {
-  font-family: 'Inter', sans-serif;
-  font-size: 48px;
-  font-weight: 700;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 55px;
+  font-weight: 400;
   color: #ffffff;
   margin: 0;
-  line-height: 1.3;
+  line-height: 1.2;
+  letter-spacing: -1.5px;
 }
 
 .solutions-cta {

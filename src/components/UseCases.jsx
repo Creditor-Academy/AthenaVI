@@ -149,11 +149,12 @@ export default function UseCases() {
             Use Cases
           </motion.span>
           <h2 style={{
-            fontSize: "50px",
-            fontWeight: 900,
+            fontFamily: "'Georgia', 'Times New Roman', serif",
+            fontSize: "55px",
+            fontWeight: 400,
             color: "#0F172A",
-            lineHeight: 0.95,
-            letterSpacing: "-0.05em",
+            lineHeight: 1.2,
+            letterSpacing: "-1.5px",
             margin: 0,
             background: "linear-gradient(to bottom, #0F172A 0%, #334155 100%)",
             WebkitBackgroundClip: "text",
@@ -161,7 +162,16 @@ export default function UseCases() {
           }}>
             Who use Athena VI
           </h2>
-          <p style={{ marginTop: "36px", fontSize: "20px", color: "#64748B", lineHeight: 1.5, fontWeight: 450, maxWidth: "750px", margin: "36px auto 0" }}>
+          <p style={{ 
+            fontFamily: "'Inter', sans-serif", 
+            marginTop: "36px", 
+            fontSize: "clamp(15px, 2vw, 18px)", 
+            color: "#64748B", 
+            lineHeight: 1.7, 
+            fontWeight: 400, 
+            maxWidth: "750px", 
+            margin: "36px auto 0" 
+          }}>
             Professionals across education, corporate training, marketing, and digital platforms use Athena VI to create
             <span style={{ color: "#0F172A", fontWeight: 600 }}> high-quality videos </span>
             quickly with AI-powered instructors.
@@ -257,10 +267,11 @@ export default function UseCases() {
                     color: "white"
                   }}>
                     <h4 style={{
+                      fontFamily: "'Inter', sans-serif",
                       fontSize: "17px",
-                      fontWeight: 800,
+                      fontWeight: 600,
                       margin: 0,
-                      lineHeight: 1.25
+                      lineHeight: 1.3
                     }}>
                       {card.title}
                     </h4>

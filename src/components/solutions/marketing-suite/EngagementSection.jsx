@@ -37,11 +37,12 @@ const styles = `
 
 .section-title {
   color: #101050;
-  font-family: 'Georgia', 'Playfair Display', serif;
-  font-size: 42px;
-  font-weight: 600;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 55px;
+  font-weight: 400;
   margin: 0 0 10px 0;
-  letter-spacing: -0.5px;
+  letter-spacing: -1.5px;
+  line-height: 1.2;
 }
 
 .section-subtitle {
@@ -128,10 +129,12 @@ const styles = `
 }
 
 .detail-title {
+  font-family: 'Georgia', 'Times New Roman', serif;
   font-size: 42px;
-  font-weight: 550;
+  font-weight: 400;
   margin: 0 0 20px 0;
   line-height: 1.2;
+  letter-spacing: -1.5px;
 }
 
 .detail-desc {

@@ -22,6 +22,7 @@ const styles = `
   letter-spacing: -1.5px;
   line-height: 1.15;
   margin: 0 0 20px;
+  color: #ffffff;
 }
 
 .page-header p {
@@ -31,6 +32,7 @@ const styles = `
   max-width: 800px;
   margin: 0 auto;
   opacity: 0.95;
+  color: #ffffff;
 }
 
 .privacy-container {

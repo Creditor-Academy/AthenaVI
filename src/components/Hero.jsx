@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { MdArrowOutward, MdPayments } from 'react-icons/md'
 import { HiTrendingUp } from 'react-icons/hi'
 import avatar1 from '../assets/avatar1.png'
@@ -6,6 +7,8 @@ import avatar2 from '../assets/avatar2.png'
 import avatar3 from '../assets/avatar3.png'
 import avatar4 from '../assets/avatar4.png'
 import avatar5 from '../assets/avatar5.png'
+import LeftCard from './LeftCard'
+import RightCardCarousel from './RightCardCarousel'
 
 const styles = `
 .hero-container {
@@ -17,6 +20,7 @@ const styles = `
   display: flex;
   flex-direction: column;
   font-family: 'Inter', sans-serif;
+  color: #ffffff;
 }
 
 .hero-top {
@@ -37,8 +41,8 @@ const styles = `
   font-weight: 550;
   color: #ffffff;
   margin: 0 0 24px;
-  line-height: 1.15;
-  letter-spacing: -1.5px;
+  line-height: 1.1;
+  letter-spacing: -2px;
   text-align: center;
   width: 100%;
   max-width: 1200px;
@@ -47,12 +51,12 @@ const styles = `
 
 .hero-subtitle-top {
   font-family: 'Inter', sans-serif;
-  font-size: clamp(18px, 2.2vw, 22px);
-  color: rgba(255, 255, 255, 0.85);
+  font-size: clamp(15px, 2vw, 18px);
+  color: rgba(255, 255, 255, 0.9);
   margin: 0 auto;
-  font-weight: 300;
-  line-height: 1.6;
-  letter-spacing: 0.2px;
+  font-weight: 400;
+  line-height: 1.7;
+  letter-spacing: 0;
   text-align: center;
   max-width: 700px;
   padding: 0 20px;
@@ -67,13 +71,24 @@ const styles = `
   align-items: center;
   z-index: 10;
   overflow: hidden;
-  padding: 40px 0;
+  padding: 40px 20px;
 }
 
 .hero-avatar-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 150px;
+  width: 100%;
+  max-width: 1800px;
   position: relative;
-  width: min(1200px, 90vw);
-  height: 100%;
+  padding: 0 60px;
+}
+
+.center-avatar-wrapper {
+  position: relative;
+  width: 400px;
+  height: 400px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -92,6 +107,28 @@ const styles = `
   height: 100%;
   object-fit: contain;
   transition: all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.avatar-label-container {
+  position: absolute;
+  bottom: -40px;
+  left: 0;
+  text-align: left;
+  width: max-content;
+  pointer-events: none;
+  z-index: 40;
+}
+
+.avatar-message {
+  font-size: 18px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.avatar-message span {
+  color: #fbbf24;
 }
 
 .hero-bottom {
@@ -201,18 +238,31 @@ const styles = `
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }
 
-.left-card {
-  left: 15%;
-  top: 50%;
-  transform: translate(-100%, -50%);
-  --hover-x: -110%;
+@media (max-width: 1200px) {
+  .hero-avatar-container {
+    gap: 20px;
+  }
 }
 
-.right-card {
-  right: 15%;
-  top: 50%;
-  transform: translate(100%, -50%);
-  --hover-x: 110%;
+@media (max-width: 1024px) {
+  .hero-avatar-container {
+    flex-direction: column;
+    gap: 40px;
+  }
+  
+  .center-avatar-wrapper {
+    width: 300px;
+    height: 300px;
+    order: 1;
+  }
+  
+  .left-card-wrapper {
+    order: 2;
+  }
+  
+  .right-card-container {
+    order: 3;
+  }
 }
 
 @media (max-width: 768px) {
@@ -267,7 +317,13 @@ const styles = `
 function Hero() {
   const [activeIndex, setActiveIndex] = useState(0)
 
-  const avatars = [avatar2, avatar1, avatar5, avatar3, avatar4]
+  const avatars = [
+    { src: avatar2, name: "Sophia", role: "an AI Video Assistant" },
+    { src: avatar1, name: "Liam", role: "a Virtual Instructor" },
+    { src: avatar5, name: "Emma", role: "a Digital Host" },
+    { src: avatar3, name: "Noah", role: "a Technical Expert" },
+    { src: avatar4, name: "Olivia", role: "a Language Coach" }
+  ]
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -309,58 +365,64 @@ function Hero() {
 
         {/* Middle Section with Avatar Carousel */}
         <div className="hero-avatars">
-  <div className="hero-avatar-container">
+          <div className="hero-avatar-container">
+            {/* LEFT SIDE: Static Card */}
+            <LeftCard />
 
-    {[1,2,3].map((position) => {
-      const avatarIndex = getAvatarAtPosition(position)
-      const x = getHorizontalPosition(position)
-      const isActive = position === 2
+            {/* CENTER: AI Avatars */}
+            <div className="center-avatar-wrapper">
+              {[1, 2, 3].map((position) => {
+                const avatarIndex = getAvatarAtPosition(position)
+                const x = getHorizontalPosition(position)
+                const isActive = position === 2
+                const currentAvatar = avatars[avatarIndex]
 
-      return (
-        <div
-          key={position}
-          className="hero-avatar-item"
-          style={{
-            transform: `translate(calc(-50% + ${x}px), -50%)`,
-            width: isActive ? 'clamp(280px, 22vw, 350px)' : 'clamp(160px, 13vw, 200px)',
-            height: isActive ? 'clamp(280px, 22vw, 350px)' : 'clamp(160px, 13vw, 200px)',
-            opacity: isActive ? 1 : 0.6,
-            filter: isActive ? 'blur(0px)' : 'blur(3px)',
-            zIndex: isActive ? 20 : 10,
-          }}
-        >
-          <img
-            src={avatars[avatarIndex]}
-            alt={`Instructor ${avatarIndex + 1}`}
-          />
+                return (
+                  <div
+                    key={position}
+                    className="hero-avatar-item"
+                    style={{
+                      transform: `translate(calc(-50% + ${x}px), -50%)`,
+                      width: isActive ? 'clamp(280px, 22vw, 350px)' : 'clamp(200px, 15vw, 250px)',
+                      height: isActive ? 'clamp(280px, 22vw, 350px)' : 'clamp(200px, 15vw, 250px)',
+                      opacity: isActive ? 1 : 0.3,
+                      filter: isActive ? 'blur(0px)' : 'blur(4px)',
+                      zIndex: isActive ? 20 : 10,
+                      left: '50%',
+                      top: '50%',
+                    }}
+                  >
+                    <img
+                      src={currentAvatar.src}
+                      alt={currentAvatar.name}
+                    />
+
+                    {/* AVATAR LABEL (Only for Active) */}
+                    {isActive && (
+                      <AnimatePresence mode="wait">
+                        <motion.div
+                          key={currentAvatar.name}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          transition={{ duration: 0.5 }}
+                          className="avatar-label-container"
+                        >
+                          <p className="avatar-message">
+                            Hello, I am <span>{currentAvatar.name}</span> and I am {currentAvatar.role}
+                          </p>
+                        </motion.div>
+                      </AnimatePresence>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* RIGHT SIDE: Auto-Rotating Cards */}
+            <RightCardCarousel />
+          </div>
         </div>
-      )
-    })}
-
-    {/* LEFT CARD */}
-    <div className="floating-card left-card">
-      <div className="card-icon-wrapper" style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)' }}>
-        <MdPayments size={30} />
-      </div>
-      <div>
-        <strong style={{ fontSize: '18px', display: 'block', color: '#1e40af' }}>Send & Receive</strong>
-        <div style={{ fontSize: '14px', color: '#64748b', marginTop: '2px' }}>Money Worldwide</div>
-      </div>
-    </div>
-
-    {/* RIGHT CARD */}
-    <div className="floating-card right-card">
-      <div className="card-icon-wrapper" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)' }}>
-        <HiTrendingUp size={30} />
-      </div>
-      <div>
-        <strong style={{ fontSize: '24px', display: 'block', color: '#1e40af' }}>90M+</strong>
-        <div style={{ fontSize: '14px', color: '#64748b', marginTop: '2px' }}>Payments Processed</div>
-      </div>
-    </div>
-
-  </div>
-</div>
 
         {/* Bottom Section with CTA Buttons */}
         <div className="hero-bottom">

@@ -33,8 +33,8 @@ const styles = `
 }
 
 .hero-title {
-  font-family: 'Georgia', serif;
-  font-size: clamp(40px, 5vw, 72px);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: clamp(40px, 5vw, 64px);
   font-weight: 400;
   line-height: 1.1;
   color: #1e3a8a;
@@ -42,6 +42,7 @@ const styles = `
   max-width: 1000px;
   margin-left: auto;
   margin-right: auto;
+  letter-spacing: -1.5px;
 }
 
 .hero-subtitle {
@@ -148,9 +149,12 @@ const styles = `
 }
 
 .industry-title {
-  font-size: clamp(32px, 3.5vw, 48px);
-  font-family: 'Georgia', serif;
+  font-size: 55px;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-weight: 400;
   margin-bottom: 20px;
+  letter-spacing: -1.5px;
+  line-height: 1.2;
 }
 
 .industry-tabs {

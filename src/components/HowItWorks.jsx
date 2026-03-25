@@ -66,11 +66,13 @@ const css = `
     margin-bottom: 18px;
   }
   .hiw-heading {
-    font-size: clamp(28px, 4vw, 46px);
-    font-weight: 800;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 55px;
+    font-weight: 400;
     color: #0f172a;
     line-height: 1.2;
     margin: 0 0 14px;
+    letter-spacing: -1.5px;
   }
   .hiw-heading span {
     background: linear-gradient(135deg, #3b82f6, #6366f1);
