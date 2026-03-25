@@ -18,16 +18,11 @@ export const AuthProvider = ({ children }) => {
           const userData = authService.getStoredUser()
           setUser(userData)
           setIsAuthenticated(true)
-          
-          // Optionally verify token with backend
-          const currentUser = await authService.getCurrentUser()
-          setUser(currentUser)
         }
       } catch (error) {
         console.error('Auth check failed:', error)
-        // Clear invalid tokens
-        localStorage.removeItem('authToken')
-        localStorage.removeItem('refreshToken')
+        // Clear invalid tokens - use the same keys as authService
+        localStorage.removeItem('accessToken')
         localStorage.removeItem('user')
       } finally {
         setLoading(false)

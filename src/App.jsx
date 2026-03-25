@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { AuthProvider } from './contexts/AuthContext'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
 import Landing from './pages/Landing.jsx'
 import Auth from './pages/Auth.jsx'
 import Dashboard from './pages/Dashboard.jsx'
@@ -17,6 +17,74 @@ import Technology from './pages/Technology.jsx'
 import ResetPassword from './components/authentication/ResetPassword.jsx'
 import Settings from './pages/Settings.jsx'
 import UseCases from './pages/UseCases.jsx'
+import InviteAcceptance from './pages/InviteAcceptance.jsx'
+
+// Protected Route Component
+const ProtectedRoute = ({ children, view, setView }) => {
+  const { isAuthenticated, loading } = useAuth()
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      // Redirect to landing page if not authenticated
+      setView('landing')
+    }
+  }, [isAuthenticated, loading, setView])
+
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        background: 'white',
+        position: 'relative'
+      }}>
+        <div style={{
+          textAlign: 'center',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '16px'
+        }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            border: '4px solid #f1f5f9',
+            borderTop: '4px solid #2563eb',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite'
+          }}></div>
+          <div style={{
+            color: '#1e293b',
+            fontSize: '16px',
+            fontWeight: '500'
+          }}>
+            Loading...
+          </div>
+          <div style={{
+            color: '#64748b',
+            fontSize: '14px'
+          }}>
+            Please wait
+          </div>
+        </div>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return null // Will redirect in useEffect
+  }
+
+  return children
+}
 
 // Import auth styles from Auth.jsx
 const authStyles = `
@@ -121,6 +189,7 @@ const authStyles = `
 }
 `
 
+// App Component with Auth Protection
 function App() {
   // Initialize view from localStorage on mount to persist page on refresh
   const [view, setView] = useState(() => {
@@ -128,6 +197,13 @@ function App() {
     const pathToViewMap = {
       '/': 'landing',
       '/dashboard': 'dashboard',
+      '/dashboard/videos': 'dashboard',
+      '/dashboard/avatars': 'dashboard',
+      '/dashboard/templates': 'dashboard',
+      '/dashboard/library': 'dashboard',
+      '/dashboard/team-workspace': 'dashboard',
+      '/dashboard/admin-portal': 'dashboard',
+      '/dashboard/settings': 'dashboard',
       '/create': 'create',
       '/products': 'products',
       '/about-us': 'about-us-blog',
@@ -200,13 +276,6 @@ function App() {
         window.location.hash = newUrl
       }
     }
-    
-    if (view === 'dashboard' || view === 'create') {
-      window.localStorage.setItem('athenavi:authenticated', 'true')
-    } else if (view === 'landing') {
-      // Clear authentication state when showing landing page
-      window.localStorage.removeItem('athenavi:authenticated')
-    }
   }, [view])
 
   // Scroll to top whenever view changes
@@ -220,6 +289,13 @@ function App() {
       const pathToViewMap = {
         '/': 'landing',
         '/dashboard': 'dashboard',
+        '/dashboard/videos': 'dashboard',
+        '/dashboard/avatars': 'dashboard',
+        '/dashboard/templates': 'dashboard',
+        '/dashboard/library': 'dashboard',
+        '/dashboard/team-workspace': 'dashboard',
+        '/dashboard/admin-portal': 'dashboard',
+        '/dashboard/settings': 'dashboard',
         '/create': 'create',
         '/products': 'products',
         '/about-us': 'about-us-blog',
@@ -248,7 +324,6 @@ function App() {
   }, [])
 
   const handleAuthComplete = () => {
-    window.localStorage.setItem('athenavi:authenticated', 'true')
     setShowAuthModal(false)
     setView('dashboard')
   }
@@ -273,22 +348,21 @@ function App() {
     }
   }
 
-  // Handle URL-based routing for reset password
+  // Handle URL-based routing for reset password and invite acceptance
   useEffect(() => {
     const currentPath = window.location.pathname
-    if (currentPath.includes('/reset-password')) {
-      // Don't show auth modal, let reset password component handle it
+    if (currentPath.includes('/reset-password') || currentPath.includes('/invite/accept')) {
+      // Don't show auth modal, let reset password or invite acceptance component handle it
       return
     }
   }, [])
 
   // Inject auth styles into document head
   useEffect(() => {
-    if (window.location.pathname.includes('/reset-password')) {
+    if (window.location.pathname.includes('/reset-password') || window.location.pathname.includes('/invite/accept')) {
       const styleElement = document.createElement('style')
       styleElement.textContent = authStyles
       document.head.appendChild(styleElement)
-      
       return () => {
         document.head.removeChild(styleElement)
       }
@@ -327,8 +401,28 @@ function App() {
         </div>
       )}
 
+      {/* Invite Acceptance Page - Standalone */}
+      {window.location.pathname.includes('/invite/accept') && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          zIndex: 2002,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <InviteAcceptance />
+        </div>
+      )}
+
+      {/* Protected Routes */}
       {view === 'create' && (
-        <>
+        <ProtectedRoute view={view} setView={setView}>
           <Create onBack={() => setView('dashboard')} />
           {showAuthModal && (
             <Auth 
@@ -336,18 +430,25 @@ function App() {
               onClose={() => setShowAuthModal(false)}
             />
           )}
-        </>
+        </ProtectedRoute>
       )}
 
       {view === 'dashboard' && (
-        <>
+        <ProtectedRoute view={view} setView={setView}>
           <Dashboard
             onLogout={() => {
-              window.localStorage.removeItem('athenavi:authenticated')
-              window.localStorage.removeItem('athenavi:view')
+              // AuthContext will handle logout
               setView('landing')
             }}
             onCreate={() => setView('create')}
+            initialSection={(() => {
+              // Pass the initial section from URL to Dashboard
+              const currentPath = window.location.pathname
+              if (currentPath.startsWith('/dashboard/')) {
+                return currentPath.replace('/dashboard/', '') || 'home'
+              }
+              return 'home'
+            })()}
           />
           {showAuthModal && (
             <Auth 
@@ -355,11 +456,11 @@ function App() {
               onClose={() => setShowAuthModal(false)}
             />
           )}
-        </>
+        </ProtectedRoute>
       )}
 
       {view === 'settings' && (
-        <>
+        <ProtectedRoute view={view} setView={setView}>
           <Settings onBack={() => setView('dashboard')} />
           {showAuthModal && (
             <Auth 
@@ -367,7 +468,7 @@ function App() {
               onClose={() => setShowAuthModal(false)}
             />
           )}
-        </>
+        </ProtectedRoute>
       )}
 
       {view === 'products' && (

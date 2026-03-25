@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   MdSettings, 
@@ -7,19 +7,59 @@ import {
   MdVideoLibrary, 
   MdGroup, 
   MdStorage, 
-  MdAdd, 
-  MdMoreVert, 
-  MdEdit, 
-  MdImage, 
-  MdArchive,
-  MdHistory,
-  MdCreditCard,
+  MdAdd,
   MdBusiness
 } from 'react-icons/md';
+import WorkspaceCreateForm from '../components/workspace/WorkspaceCreateForm.jsx';
+import WorkspaceSettings from '../components/workspace/WorkspaceSettings.jsx';
+import WorkspaceSelector from '../components/workspace/WorkspaceSelector.jsx';
+import InviteMembersModal from '../components/workspace/InviteMembersModal.jsx';
+import workspaceService from '../services/workspaceService.js';
 import './TeamWorkspace.css';
 
 const TeamWorkspace = ({ onCreate }) => {
-  const [activeTab, setActiveTab] = useState('projects');
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [workspaces, setWorkspaces] = useState([]);
+  const [currentWorkspace, setCurrentWorkspace] = useState(null);
+  const [workspaceMembers, setWorkspaceMembers] = useState([]);
+
+  // Load workspaces on component mount
+  useEffect(() => {
+    loadWorkspaces();
+  }, []);
+
+  const loadWorkspaces = async () => {
+    try {
+      setLoading(true);
+      const workspaceList = await workspaceService.listWorkspaces();
+      setWorkspaces(workspaceList);
+      
+      // Set current workspace to first team workspace, or first workspace if no team workspaces
+      const teamWorkspace = workspaceList.find(ws => ws.type === 'TEAM') || workspaceList[0];
+      if (teamWorkspace) {
+        setCurrentWorkspace(teamWorkspace);
+        loadWorkspaceMembers(teamWorkspace.id);
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadWorkspaceMembers = async (workspaceId) => {
+    try {
+      const memberList = await workspaceService.listWorkspaceMembers(workspaceId);
+      setWorkspaceMembers(memberList);
+    } catch (err) {
+      console.error('Failed to load workspace members:', err);
+      // Don't show error for members loading failure
+    }
+  };
 
   const stats = [
     { label: 'Active Projects', value: '18', trend: '+12%', icon: <MdVideoLibrary />, colorClass: 'blue-bg' },
@@ -41,11 +81,93 @@ const TeamWorkspace = ({ onCreate }) => {
     { name: 'Elena Gilbert', role: 'Editor', avatar: 'https://ui-avatars.com/api/?name=Elena+Gilbert&background=F59E0B&color=fff' }
   ];
 
-  const activities = [
-    { user: 'Sarah Chen', action: 'uploaded a new asset', target: 'Logo_Final.png', time: '10 mins ago' },
-    { user: 'Mike Ross', action: 'commented on', target: 'Marketing Video', time: '45 mins ago' },
-    { user: 'System', action: 'completed export of', target: 'Training_V2', time: '2 hours ago' }
-  ];
+  const handleCreateWorkspace = async (formData) => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const newWorkspace = await workspaceService.createWorkspace(formData);
+      setWorkspaces(prev => [...prev, newWorkspace]);
+      setShowCreateForm(false);
+      
+      // Switch to the newly created workspace
+      setCurrentWorkspace(newWorkspace);
+      await loadWorkspaceMembers(newWorkspace.id);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateWorkspace = async (formData) => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const updatedWorkspace = await workspaceService.updateWorkspace(currentWorkspace.id, formData);
+      setCurrentWorkspace(updatedWorkspace);
+      setWorkspaces(prev => prev.map(ws => 
+        ws.id === updatedWorkspace.id ? updatedWorkspace : ws
+      ));
+      setShowSettings(false);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteWorkspace = async (workspaceId) => {
+    try {
+      setLoading(true);
+      await workspaceService.deleteWorkspace(workspaceId);
+      
+      // Remove from workspaces list
+      setWorkspaces(prev => prev.filter(ws => ws.id !== workspaceId));
+      
+      // Switch to another workspace or create new one
+      const remainingWorkspaces = workspaces.filter(ws => ws.id !== workspaceId);
+      if (remainingWorkspaces.length > 0) {
+        const nextWorkspace = remainingWorkspaces[0];
+        setCurrentWorkspace(nextWorkspace);
+        await loadWorkspaceMembers(nextWorkspace.id);
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleWorkspaceChange = async (workspace) => {
+    try {
+      setCurrentWorkspace(workspace);
+      await loadWorkspaceMembers(workspace.id);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleInviteMembers = async (inviteData) => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const inviteResult = await workspaceService.inviteMember(currentWorkspace.id, inviteData);
+      setShowInviteModal(false);
+      
+      // Reload members to get updated list
+      await loadWorkspaceMembers(currentWorkspace.id);
+      
+      // TODO: Show success message with invite link
+      console.log('Invitation sent:', inviteResult.inviteLink);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <motion.div 
@@ -57,14 +179,29 @@ const TeamWorkspace = ({ onCreate }) => {
         {/* Header */}
         <header className="workspace-header-container">
           <div className="workspace-identity">
-            <motion.h1 layoutId="ws-title">Team Marketing Workspace</motion.h1>
-            <p>Collaborative space for high-impact video marketing projects.</p>
+            {/* Workspace Selector */}
+            <WorkspaceSelector
+              workspaces={workspaces}
+              currentWorkspace={currentWorkspace}
+              onWorkspaceChange={handleWorkspaceChange}
+              onCreateWorkspace={() => setShowCreateForm(true)}
+              loading={loading}
+            />
+            <p>
+              Collaborative space for high-impact video marketing projects.
+            </p>
           </div>
           <div className="workspace-header-actions">
-            <button className="btn-settings-icon">
+            <button 
+              className="btn-settings-icon"
+              onClick={() => setShowSettings(true)}
+            >
               <MdSettings size={22} />
             </button>
-            <button className="btn-invite">
+            <button 
+              className="btn-invite"
+              onClick={() => setShowInviteModal(true)}
+            >
               <MdPersonAdd size={20} />
               Invite Members
             </button>
@@ -105,18 +242,11 @@ const TeamWorkspace = ({ onCreate }) => {
           ))}
         </section>
 
-        {/* Tabs & Projects */}
-        <section className="workspace-tabs-section">
-          <div className="tabs-header">
-            {['projects', 'members', 'assets', 'archived'].map((tab) => (
-              <button 
-                key={tab}
-                className={`tab-trigger ${activeTab === tab ? 'active' : ''}`}
-                onClick={() => setActiveTab(tab)}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            ))}
+        {/* Projects Grid */}
+        <section className="workspace-projects-section">
+          <div className="section-header">
+            <h2>Projects</h2>
+            <p>Recent video projects and collaborations</p>
           </div>
 
           <div className="projects-grid-team">
@@ -167,60 +297,66 @@ const TeamWorkspace = ({ onCreate }) => {
         <div className="sidebar-glass-card">
           <h2>Workspace Members</h2>
           <div className="members-list">
-            {members.slice(0, 4).map((member, i) => (
+            {workspaceMembers.slice(0, 4).map((member, i) => (
               <div key={i} className="member-item">
-                <img src={member.avatar} alt={member.name} style={{ width: 40, height: 40, borderRadius: 12 }} />
+                <img src={member.user?.avatar || member.avatar} alt={member.user?.name || member.name} />
                 <div className="member-info-text">
-                  <span className="member-name">{member.name}</span>
+                  <span className="member-name">{member.user?.name || member.name}</span>
                   <span className="member-role">{member.role}</span>
                 </div>
-                {member.role === 'Owner' && <span className="role-tag">Owner</span>}
+                {member.role === 'OWNER' && <span className="role-tag">Owner</span>}
               </div>
             ))}
           </div>
-          <button className="action-link" style={{ marginTop: '16px', justifyContent: 'center', width: '100%', border: '1px solid #f1f5f9' }}>
+          <button className="action-link view-all">
             View All Members
           </button>
         </div>
 
         <div className="sidebar-glass-card">
-          <h2>Activity Feed</h2>
-          <div className="activity-feed-list">
-            {activities.map((activity, i) => (
-              <div key={i} className="activity-item">
-                <div className="activity-dot-line"></div>
-                <div className="activity-dot"></div>
-                <div className="activity-content-text">
-                  <strong>{activity.user}</strong> {activity.action} <strong>{activity.target}</strong>
-                  <div className="activity-time">{activity.time}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="sidebar-glass-card">
           <h2>Quick Actions</h2>
           <div className="quick-actions-list">
-            <div className="action-link">
-              <MdEdit />
-              <span>Rename Workspace</span>
-            </div>
-            <div className="action-link">
-              <MdImage />
-              <span>Change Logo</span>
-            </div>
-            <div className="action-link">
-              <MdCreditCard />
-              <span>Manage Billing</span>
+            <div className="action-link" onClick={() => setShowSettings(true)}>
+              <MdSettings />
+              <span>Workspace Settings</span>
             </div>
             <div className="action-link">
               <MdBusiness />
-              <span>Workspace Settings</span>
+              <span>Manage Billing</span>
             </div>
           </div>
         </div>
       </aside>
+
+      {/* Invite Members Modal */}
+      <InviteMembersModal
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        workspace={currentWorkspace}
+        onInvite={handleInviteMembers}
+        loading={loading}
+        error={error}
+      />
+
+      {/* Workspace Create Form Modal */}
+      <WorkspaceCreateForm
+        isOpen={showCreateForm}
+        onClose={() => setShowCreateForm(false)}
+        onSubmit={handleCreateWorkspace}
+        loading={loading}
+        error={error}
+      />
+
+      {/* Workspace Settings Modal */}
+      <WorkspaceSettings
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        workspace={currentWorkspace}
+        onUpdate={handleUpdateWorkspace}
+        onDelete={handleDeleteWorkspace}
+        loading={loading}
+        error={error}
+      />
     </motion.div>
   );
 };
