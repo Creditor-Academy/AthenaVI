@@ -32,7 +32,7 @@ const styles = `
   background: #020617;
   color: #ffffff;
   font-family: 'Inter', sans-serif;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* Futuristic Hero Section */
@@ -677,7 +677,7 @@ const styles = `
 }
 `
 
-function Technology({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToProduct, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology }) {
+function Technology({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToProduct, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology, onNavigateToUseCases }) {
   const [currentSlide, setCurrentSlide] = useState(0)
 
   const heroSlides = [
@@ -810,8 +810,9 @@ function Technology({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigate
           onNavigateToCompany={onNavigateToCompany}
           onNavigateToProduct={onNavigateToProduct}
           onNavigateToSolution={onNavigateToSolution}
-          onNavigateToEthics={onNavigateToEthics}
+          onNavigateToEthics={() => {}}
           onNavigateToTechnology={onNavigateToTechnology}
+          onNavigateToUseCases={onNavigateToUseCases}
         />
 
         {/* Hero Section */}
@@ -943,9 +944,9 @@ function Technology({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigate
           onLogoClick={onLogoClick}
           onNavigateToProduct={onNavigateToProduct}
           onNavigateToSolution={onNavigateToSolution}
-          onNavigateToEthics={onNavigateToEthics}
           onNavigateToTechnology={onNavigateToTechnology}
           onNavigateToCompany={onNavigateToCompany}
+          onNavigateToUseCases={onNavigateToUseCases}
         />
       </div>
     </>

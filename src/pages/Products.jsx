@@ -24,7 +24,7 @@ const productSectionMap = {
   'Personal Avatars': 'personal-avatars'
 }
 
-function Products({ onLoginClick, initialSection = null, onNavigateToProduct, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology }) {
+function Products({ onLoginClick, initialSection = null, onNavigateToProduct, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology, onNavigateToUseCases }) {
   useEffect(() => {
     // Scroll to initial section if provided
     if (initialSection) {
@@ -56,6 +56,7 @@ function Products({ onLoginClick, initialSection = null, onNavigateToProduct, on
           onNavigateToTechnology={onNavigateToTechnology}
           onLogoClick={onLogoClick}
           onNavigateToCompany={onNavigateToCompany}
+          onNavigateToUseCases={onNavigateToUseCases}
         />
         
         <VisualAIAgents variant="light" />
@@ -70,6 +71,7 @@ function Products({ onLoginClick, initialSection = null, onNavigateToProduct, on
           onNavigateToSolution={onNavigateToSolution}
           onNavigateToEthics={onNavigateToEthics}
           onNavigateToCompany={onNavigateToCompany}
+          onNavigateToUseCases={onNavigateToUseCases}
         />
       </div>
     </>

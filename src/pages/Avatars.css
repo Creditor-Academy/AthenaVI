@@ -8,7 +8,7 @@
 /* Left side - Avatar Grid */
 .avatars-list-container {
   flex: 7;
-  padding: 60px 60px; /* Reduced side padding to give cards more width */
+  padding: 60px 40px;
   overflow-y: auto;
   background: #fbfcfd;
   display: flex;
@@ -78,23 +78,27 @@
 
 .avatar-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 24px;
-  width: 100%;
-  padding-bottom: 80px;
+  padding: 20px 0;
+  justify-items: center;
 }
 
 .avatar-showcase-card {
   background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px; /* Classic project card radius */
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   position: relative;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  align-items: center;
+  padding: 16px;
+  min-width: 120px;
+  max-width: 120px;
+  text-align: center;
 }
 
 .avatar-showcase-card:hover {
@@ -111,11 +115,13 @@
 }
 
 .avatar-showcase-thumb {
-  width: 100%;
-  aspect-ratio: 16/9; /* Landscape as per project cards */
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
   background: #f1f5f9;
   overflow: hidden;
   position: relative;
+  margin-bottom: 8px;
 }
 
 .avatar-showcase-thumb img {
@@ -130,30 +136,35 @@
 }
 
 .avatar-card-info {
-  padding: 16px 20px;
-  text-align: left;
+  padding: 0;
+  text-align: center;
   background: white;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+  align-items: center;
 }
 
 .avatar-card-info h3 {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
   color: #0f172a;
   margin: 0;
-  letter-spacing: -0.01em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  width: 100%;
 }
 
 .avatar-card-info p {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 500;
   color: #64748b;
-  margin: 0 0 12px 0;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
 }
 
 .avatar-card-footer {
@@ -193,17 +204,17 @@
 
 .selection-check {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 28px;
-  height: 28px;
+  top: -4px;
+  right: -4px;
+  width: 24px;
+  height: 24px;
   background: #2563eb;
   color: white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 14px;
   z-index: 10;
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   border: 2px solid white;
@@ -517,6 +528,25 @@
   0% { transform: scale(1); opacity: 0.8; }
   50% { transform: scale(1.1); opacity: 0.6; }
   100% { transform: scale(1); opacity: 0.8; }
+}
+
+/* Horizontal scrollbar styling */
+.avatar-grid::-webkit-scrollbar {
+  height: 6px;
+}
+
+.avatar-grid::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.avatar-grid::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.avatar-grid::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 /* Scrollbar refinement */

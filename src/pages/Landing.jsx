@@ -1,7 +1,6 @@
 import Navbar from '../components/Navbar.jsx'
 import Hero from '../components/Hero.jsx'
-import VideoSection from '../components/VideoSection.jsx'
-import HowItWorks from '../components/HowItWorks.jsx'
+import UnifiedVideoSection from '../components/UnifiedVideoSection.jsx'
 import ProductsSection from '../components/ProductsSection.jsx'
 import PlatformFeatures from '../components/PlatformFeatures.jsx'
 import UseCases from '../components/UseCases.jsx'
@@ -63,7 +62,7 @@ const styles = `
 }
 `
 
-function Landing({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology }) {
+function Landing({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology, onNavigateToUseCases }) {
   return (
     <>
       <style>{styles}</style>
@@ -76,10 +75,10 @@ function Landing({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToC
           onNavigateToTechnology={onNavigateToTechnology}
           onLogoClick={onLogoClick}
           onNavigateToCompany={onNavigateToCompany}
+          onNavigateToUseCases={onNavigateToUseCases}
         />
         <Hero />
-        <VideoSection />
-        <HowItWorks />
+        <UnifiedVideoSection />
         <ProductsSection />
         <PlatformFeatures />
         <UseCases />
@@ -89,6 +88,7 @@ function Landing({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToC
           onNavigateToProduct={onNavigateToProduct}
           onNavigateToSolution={onNavigateToSolution}
           onNavigateToEthics={onNavigateToEthics}
+          onNavigateToUseCases={onNavigateToUseCases}
         />
       </div>
     </>

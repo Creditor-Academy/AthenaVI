@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import { 
-  MdVisibility, 
-  MdFavorite, 
+import { useState, useEffect } from 'react'
+import {
+  MdVisibility,
+  MdFavorite,
   MdComment,
   MdPerson,
   MdArrowForward
@@ -268,7 +268,7 @@ const styles = `
 
 .trending-content {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-columns: 700px 330px 250px;
   gap: 32px;
 }
 
@@ -302,7 +302,7 @@ const styles = `
 }
 
 .trending-main-card .trending-card-image {
-  height: 420px;
+  height: 360px;
 }
 
 .trending-card-overlay {
@@ -382,6 +382,43 @@ const styles = `
 .trending-card-link:hover {
   gap: 12px;
   color: #1e40af;
+}
+
+/* Sidebar Slider */
+.trending-sidebar-column {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+}
+
+.trending-sidebar-slider {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.trending-sidebar-track {
+  display: flex;
+  flex-direction: row;
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 100%;
+}
+
+.trending-sidebar-slide {
+  flex: 0 0 100%;
+  height: 100%;
+  width: 100%;
+}
+
+.trending-sidebar-slide .trending-card {
+  height: 100%;
+  margin: 0;
+  border-radius: 0;
+  border: none;
+}
+
+.trending-sidebar-slide:not(:last-child) .trending-card {
+  border-bottom: 1px solid #e2e8f0;
 }
 
 /* Categories Sidebar */
@@ -535,10 +572,18 @@ const styles = `
 }
 `
 
-function News({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology, onNavigateToProduct }) {
+function News({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology, onNavigateToProduct, onNavigateToUseCases }) {
   const [activeCategory, setActiveCategory] = useState('All')
+  const [currentSlide, setCurrentSlide] = useState(0)
 
   const categories = ['All', 'Product Updates', 'Technology', 'Company News', 'Partnerships', 'Industry Insights']
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % 3)
+    }, 5000)
+    return () => clearInterval(timer)
+  }, [])
 
   const featuredArticles = [
     {
@@ -596,7 +641,7 @@ function News({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolu
     <>
       <style>{styles}</style>
       <div className="news-page">
-        <Navbar 
+        <Navbar
           onLoginClick={onLoginClick}
           onLogoClick={onLogoClick}
           onNavigateToCompany={onNavigateToCompany}
@@ -604,12 +649,13 @@ function News({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolu
           onNavigateToEthics={onNavigateToEthics}
           onNavigateToTechnology={onNavigateToTechnology}
           onNavigateToProduct={onNavigateToProduct}
+          onNavigateToUseCases={onNavigateToUseCases}
         />
-        
+
         {/* Hero Section */}
         <section className="hero-section">
           <div className="hero-background">
-            <img 
+            <img
               src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1920&h=1080&fit=crop&q=80"
               alt="AthenaVI AI Technology"
               className="hero-background-image"
@@ -650,8 +696,8 @@ function News({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolu
         <div className="featured-cards">
           {featuredArticles.map((article, index) => (
             <div key={index} className="featured-card">
-              <img 
-                src={article.image} 
+              <img
+                src={article.image}
                 alt={article.title}
                 className="featured-card-image"
               />
@@ -684,8 +730,8 @@ function News({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolu
             {/* Main Large Card */}
             <div className="trending-card trending-main-card">
               <div style={{ position: 'relative' }}>
-                <img 
-                  src={trendingArticles[0].image} 
+                <img
+                  src={trendingArticles[0].image}
                   alt={trendingArticles[0].title}
                   className="trending-card-image"
                 />
@@ -703,29 +749,40 @@ function News({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolu
               </div>
             </div>
 
-            {/* Smaller Cards */}
-            {trendingArticles.slice(1).map((article, index) => (
-              <div key={index} className="trending-card">
-                <div style={{ position: 'relative' }}>
-                  <img 
-                    src={article.image} 
-                    alt={article.title}
-                    className="trending-card-image"
-                  />
-                  <div className="trending-card-overlay">
-                    <span className="trending-card-category">{article.category}</span>
-                    <span className="trending-card-date">{article.date}</span>
-                  </div>
-                </div>
-                <div className="trending-card-content">
-                  <h3 className="trending-card-title">{article.title}</h3>
-                  <p className="trending-card-excerpt">{article.excerpt}</p>
-                  <a href="#" className="trending-card-link">
-                    Read More <MdArrowForward />
-                  </a>
+            {/* Sliding Sidebar Cards */}
+            <div className="trending-sidebar-column">
+              <div className="trending-sidebar-slider">
+                <div
+                  className="trending-sidebar-track"
+                  style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+                >
+                  {trendingArticles.slice(1).map((article, index) => (
+                    <div key={index} className="trending-sidebar-slide">
+                      <div className="trending-card">
+                        <div style={{ position: 'relative' }}>
+                          <img
+                            src={article.image}
+                            alt={article.title}
+                            className="trending-card-image"
+                          />
+                          <div className="trending-card-overlay">
+                            <span className="trending-card-category">{article.category}</span>
+                            <span className="trending-card-date">{article.date}</span>
+                          </div>
+                        </div>
+                        <div className="trending-card-content">
+                          <h3 className="trending-card-title">{article.title}</h3>
+                          <p className="trending-card-excerpt">{article.excerpt}</p>
+                          <a href="#" className="trending-card-link">
+                            Read More <MdArrowForward />
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
+            </div>
 
             {/* Categories Sidebar */}
             <div className="categories-sidebar">
@@ -733,8 +790,8 @@ function News({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolu
               <div className="categories-list">
                 {categoryList.map((category, index) => (
                   <div key={index} className="category-item">
-                    <img 
-                      src={category.image} 
+                    <img
+                      src={category.image}
                       alt={category.name}
                       className="category-image"
                     />
@@ -748,13 +805,14 @@ function News({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolu
             </div>
           </div>
         </section>
-        
-        <Footer 
+
+        <Footer
           onLogoClick={onLogoClick}
           onNavigateToProduct={onNavigateToProduct}
           onNavigateToSolution={onNavigateToSolution}
           onNavigateToEthics={onNavigateToEthics}
           onNavigateToCompany={onNavigateToCompany}
+          onNavigateToUseCases={onNavigateToUseCases}
         />
       </div>
     </>
