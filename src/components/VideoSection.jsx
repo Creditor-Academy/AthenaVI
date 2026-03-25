@@ -60,14 +60,15 @@ const styles = `
 
 .video-section-title {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 58px;
-  font-weight: 700;
-  line-height: 1.1;
+  font-size: 55px;
+  font-weight: 400;
+  line-height: 1.2;
   margin: 0 0 20px;
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  letter-spacing: -1.5px;
 }
 
 .video-section-subtitle {

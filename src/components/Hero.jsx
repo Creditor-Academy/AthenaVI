@@ -41,8 +41,8 @@ const styles = `
   font-weight: 550;
   color: #ffffff;
   margin: 0 0 24px;
-  line-height: 1.15;
-  letter-spacing: -1.5px;
+  line-height: 1.1;
+  letter-spacing: -2px;
   text-align: center;
   width: 100%;
   max-width: 1200px;
@@ -51,12 +51,12 @@ const styles = `
 
 .hero-subtitle-top {
   font-family: 'Inter', sans-serif;
-  font-size: clamp(18px, 2.2vw, 22px);
-  color: rgba(255, 255, 255, 0.85);
+  font-size: clamp(15px, 2vw, 18px);
+  color: rgba(255, 255, 255, 0.9);
   margin: 0 auto;
-  font-weight: 300;
-  line-height: 1.6;
-  letter-spacing: 0.2px;
+  font-weight: 400;
+  line-height: 1.7;
+  letter-spacing: 0;
   text-align: center;
   max-width: 700px;
   padding: 0 20px;

@@ -14,11 +14,12 @@ const styles = `
 
 .cta-title {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 48px;
-  font-weight: 500;
+  font-size: 55px;
+  font-weight: 400;
   line-height: 1.2;
   margin: 0 0 24px 0;
   color: #ffffff;
+  letter-spacing: -1.5px;
 }
 
 .cta-description {

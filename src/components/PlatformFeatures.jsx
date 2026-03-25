@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import { FiLayers, FiMove, FiFileText, FiCloud, FiFilm, FiPlay, FiCheck } from 'react-icons/fi';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 /* ── Feature data ── */
 const features = [
@@ -36,22 +36,6 @@ const features = [
     },
 ];
 
-/* ── Intersection Observer hook ── */
-function useReveal(threshold = 0.12) {
-    const ref = useRef(null);
-    const [visible, setVisible] = useState(false);
-    useEffect(() => {
-        const el = ref.current;
-        if (!el) return;
-        const obs = new IntersectionObserver(
-            ([e]) => { if (e.isIntersecting) setVisible(true); },
-            { threshold }
-        );
-        obs.observe(el);
-        return () => obs.disconnect();
-    }, [threshold]);
-    return [ref, visible];
-}
 
 /* ── Feature Card with cursor glow ── */
 const FeatureCard = ({ feat, index, isActive, onActivate }) => {
@@ -80,14 +64,6 @@ const FeatureCard = ({ feat, index, isActive, onActivate }) => {
     return (
         <motion.div
             ref={cardRef}
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{
-                opacity: { duration: 0.5, delay: index * 0.15 },
-                x: { duration: 0.5, delay: index * 0.15 },
-            }}
-            animate={{ y: [0, -5, 0] }}
             onMouseMove={handleMouseMove}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
@@ -109,7 +85,6 @@ const FeatureCard = ({ feat, index, isActive, onActivate }) => {
                 position: 'relative',
                 overflow: 'hidden',
                 transform: isActive ? 'scale(1.03)' : isHovered ? 'translateX(8px) scale(1.02)' : 'none',
-                transition: 'all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)',
             }}
         >
             {/* Accent strip on active card */}
@@ -135,7 +110,6 @@ const FeatureCard = ({ feat, index, isActive, onActivate }) => {
                 background: isHovered
                     ? `radial-gradient(circle at ${glowPos.x} ${glowPos.y}, rgba(59,130,246,0.12), transparent 60%)`
                     : 'transparent',
-                transition: 'background 0.15s ease',
             }} />
 
             {/* Connector line */}
@@ -149,14 +123,11 @@ const FeatureCard = ({ feat, index, isActive, onActivate }) => {
                 opacity: isActive ? 0.7 : 0,
                 transform: isActive ? 'scaleX(1)' : 'scaleX(0)',
                 transformOrigin: 'right',
-                transition: 'all 0.4s ease',
                 pointerEvents: 'none',
             }} />
 
             {/* Icon */}
             <motion.div
-                animate={isHovered ? { scale: 1.12, rotate: 4 } : { scale: 1, rotate: 0 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 15 }}
                 style={{
                     width: '50px',
                     height: '50px',
@@ -169,7 +140,6 @@ const FeatureCard = ({ feat, index, isActive, onActivate }) => {
                     boxShadow: isHovered
                         ? '0 12px 24px rgba(59,130,246,0.45)'
                         : '0 6px 16px rgba(59,130,246,0.25)',
-                    transition: 'box-shadow 0.3s ease',
                     position: 'relative',
                     zIndex: 1,
                 }}
@@ -180,19 +150,23 @@ const FeatureCard = ({ feat, index, isActive, onActivate }) => {
             {/* Text */}
             <div style={{ position: 'relative', zIndex: 1 }}>
                 <h4 style={{
+                    fontFamily: "'Inter', sans-serif",
                     fontSize: '17px',
-                    fontWeight: 700,
+                    fontWeight: 600,
                     color: '#1e293b',
                     margin: '0 0 5px',
                     letterSpacing: '-0.01em',
+                    lineHeight: '1.4',
                 }}>
                     {feat.title}
                 </h4>
                 <p style={{
+                    fontFamily: "'Inter', sans-serif",
                     fontSize: '14px',
                     color: '#475569',
-                    lineHeight: 1.6,
+                    lineHeight: '1.6',
                     margin: 0,
+                    fontWeight: 400,
                 }}>
                     {feat.description}
                 </p>
@@ -205,14 +179,12 @@ const FeatureCard = ({ feat, index, isActive, onActivate }) => {
 const EditorPreview = ({ activeKey }) => {
     const previews = {
         scenes: (
-            <motion.div key="scenes" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
+            <motion.div key="scenes">
                 <div style={{ display: 'flex', gap: '12px', flex: 1 }}>
                     <div style={{ width: '100px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {[1, 2, 3, 4].map(i => (
                             <motion.div
                                 key={i}
-                                animate={{ borderColor: i === 1 ? 'rgba(59,130,246,0.8)' : 'rgba(255,255,255,0.1)' }}
-                                transition={{ duration: 0.4, delay: i * 0.05 }}
                                 style={{
                                     height: '36px',
                                     borderRadius: '8px',
@@ -239,8 +211,6 @@ const EditorPreview = ({ activeKey }) => {
                             boxShadow: 'inset 0 0 20px rgba(59,130,246,0.06)',
                         }}>
                             <motion.div
-                                animate={{ scale: [1, 1.08, 1] }}
-                                transition={{ duration: 2, repeat: Infinity }}
                                 style={{
                                     width: '52px', height: '52px', borderRadius: '50%',
                                     background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
@@ -257,7 +227,7 @@ const EditorPreview = ({ activeKey }) => {
         ),
 
         dragdrop: (
-            <motion.div key="dragdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
+            <motion.div key="dragdrop">
                 <div style={{ flex: 1, position: 'relative', minHeight: '180px' }}>
                     {[
                         { label: 'Avatar', x: '10%', y: '10%', w: '40%', h: '60%', color: '#3b82f6' },
@@ -266,9 +236,6 @@ const EditorPreview = ({ activeKey }) => {
                     ].map((box, i) => (
                         <motion.div
                             key={box.label}
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: i * 0.1, duration: 0.3 }}
                             style={{
                                 position: 'absolute', left: box.x, top: box.y,
                                 width: box.w, height: box.h,
@@ -282,8 +249,6 @@ const EditorPreview = ({ activeKey }) => {
                         </motion.div>
                     ))}
                     <motion.div
-                        animate={{ x: [0, 30, 10, 0], y: [0, 10, -10, 0], rotate: [0, 2, -1, 0] }}
-                        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                         style={{
                             position: 'absolute', bottom: '10%', right: '5%',
                             width: '20px', height: '20px', cursor: 'grab',
@@ -297,7 +262,7 @@ const EditorPreview = ({ activeKey }) => {
         ),
 
         script: (
-            <motion.div key="script" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
+            <motion.div key="script">
                 <div style={{
                     flex: 1, borderRadius: '10px',
                     background: 'rgba(255,255,255,0.04)',
@@ -310,17 +275,12 @@ const EditorPreview = ({ activeKey }) => {
                     {['Welcome to AthenaVI, your AI-powered', 'video creation platform.', '', 'Today we explore Scene 2.'].map((line, i) => (
                         <motion.div
                             key={i}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: i * 0.25, duration: 0.3 }}
                             style={{ color: line === '' ? 'transparent' : 'rgba(255,255,255,0.7)', marginBottom: '6px', minHeight: '18px' }}
                         >
                             {line || '​'}
                         </motion.div>
                     ))}
                     <motion.span
-                        animate={{ opacity: [1, 0, 1] }}
-                        transition={{ duration: 1, repeat: Infinity }}
                         style={{ display: 'inline-block', width: '2px', height: '14px', background: '#3b82f6', verticalAlign: 'middle' }}
                     />
                 </div>
@@ -328,7 +288,7 @@ const EditorPreview = ({ activeKey }) => {
         ),
 
         cloud: (
-            <motion.div key="cloud" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
+            <motion.div key="cloud">
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '14px', minHeight: '160px', justifyContent: 'center' }}>
                     <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontSize: '11px', letterSpacing: '0.1em', fontFamily: 'monospace' }}>
                         RENDERING IN PROGRESS
@@ -345,10 +305,7 @@ const EditorPreview = ({ activeKey }) => {
                             </div>
                             <div style={{ height: '6px', borderRadius: '4px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
                                 <motion.div
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${item.pct}%` }}
-                                    transition={{ duration: 1.2, ease: 'easeOut' }}
-                                    style={{ height: '100%', borderRadius: '4px', background: `linear-gradient(90deg, ${item.color}, ${item.color}aa)` }}
+                                    style={{ height: '100%', borderRadius: '4px', background: `linear-gradient(90deg, ${item.color}, ${item.color}aa)`, width: `${item.pct}%` }}
                                 />
                             </div>
                         </div>
@@ -358,11 +315,9 @@ const EditorPreview = ({ activeKey }) => {
         ),
 
         hd: (
-            <motion.div key="hd" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
+            <motion.div key="hd">
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px', minHeight: '160px', justifyContent: 'center', alignItems: 'center' }}>
                     <motion.div
-                        animate={{ scale: [1, 1.04, 1] }}
-                        transition={{ duration: 2, repeat: Infinity }}
                         style={{
                             padding: '8px 20px', borderRadius: '100px',
                             background: 'linear-gradient(135deg, #10b981, #3b82f6)',
@@ -377,9 +332,6 @@ const EditorPreview = ({ activeKey }) => {
                         {['720p', '1080p', '4K'].map((res, i) => (
                             <motion.div
                                 key={res}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: i * 0.1 }}
                                 style={{
                                     padding: '5px 14px', borderRadius: '8px',
                                     background: res === '1080p' ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.05)',
@@ -441,12 +393,13 @@ const css = `
     backdrop-filter: blur(4px);
   }
   .pf-heading {
-    font-size: clamp(34px, 5.5vw, 60px);
-    font-weight: 850;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 55px;
+    font-weight: 400;
     color: #ffffff;
-    line-height: 1.1;
+    line-height: 1.2;
     margin: 0 0 20px;
-    letter-spacing: -0.025em;
+    letter-spacing: -1.5px;
   }
   .pf-heading span {
     background: linear-gradient(135deg, #fde047, #fbbf24);
@@ -456,12 +409,14 @@ const css = `
     display: inline-block;
   }
   .pf-subtext {
-    font-size: clamp(16px, 1.8vw, 19px);
-    color: rgba(255, 255, 255, 0.65);
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(15px, 1.8vw, 18px);
+    color: rgba(255, 255, 255, 0.75);
     max-width: 680px;
     margin: 0 auto;
-    line-height: 1.6;
-    letter-spacing: -0.01em;
+    line-height: 1.7;
+    letter-spacing: 0;
+    font-weight: 400;
   }
 
   .pf-grid {
@@ -508,13 +463,7 @@ const css = `
     top: 0; left: -150%; width: 100%; height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
     transform: skewX(-20deg);
-    animation: sweep 6s infinite ease-in-out;
-    pointer-events: none;
-  }
-  @keyframes sweep {
-    0% { left: -150%; }
-    20% { left: 150%; }
-    100% { left: 150%; }
+    /* animation removed */
   }
 
   .pf-toolbar {
@@ -588,7 +537,6 @@ const css = `
 `;
 
 const PlatformFeatures = () => {
-    const [previewRef, previewVisible] = useReveal(0.1);
     const [activeIndex, setActiveIndex] = useState(0);
 
     const activeFeature = features[activeIndex];
@@ -599,10 +547,6 @@ const PlatformFeatures = () => {
             <section className="pf-section">
                 {/* Header */}
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.8 }}
                     style={{ textAlign: 'center', position: 'relative', zIndex: 2 }}
                 >
                     <div className="pf-badge">Platform Features</div>
@@ -618,14 +562,9 @@ const PlatformFeatures = () => {
                 {/* Two-column layout */}
                 <div className="pf-grid">
                     {/* ── Left: Editor Preview ── */}
-                    <div className="pf-preview-container" ref={previewRef}>
+                    <div className="pf-preview-container">
                         <div className="pf-editor-glow" />
                         <motion.div
-                            animate={{ y: previewVisible ? [0, -12, 0] : 0 }}
-                            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-                            initial={{ opacity: 0, x: -40 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            viewport={{ once: true }}
                             className="pf-preview"
                         >
                             <div className="pf-toolbar">
@@ -636,9 +575,7 @@ const PlatformFeatures = () => {
                             </div>
 
                             <div className="pf-canvas">
-                                <AnimatePresence mode="wait">
                                     <EditorPreview key={activeFeature.previewKey} activeKey={activeFeature.previewKey} />
-                                </AnimatePresence>
 
                                 <div className="pf-strip">
                                     <div className="pf-strip-bar pf-strip-1" />
@@ -651,7 +588,8 @@ const PlatformFeatures = () => {
                                     {[1, 2, 3, 4].map(i => (
                                         <motion.div
                                             key={i}
-                                            animate={{
+                                            className="pf-scene-thumb"
+                                            style={{
                                                 background: i - 1 === activeIndex % 4
                                                     ? 'linear-gradient(135deg, rgba(59,130,246,0.2), rgba(147,51,234,0.1))'
                                                     : 'rgba(255,255,255,0.05)',
@@ -659,8 +597,6 @@ const PlatformFeatures = () => {
                                                     ? 'rgba(59,130,246,0.4)'
                                                     : 'rgba(255,255,255,0.08)',
                                             }}
-                                            transition={{ duration: 0.4 }}
-                                            className="pf-scene-thumb"
                                         />
                                     ))}
                                 </div>

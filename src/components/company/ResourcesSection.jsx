@@ -40,13 +40,13 @@ const styles = `
 }
 
 .resources-header-title {
-  font-family: 'Inter', sans-serif;
-  font-size: 56px;
-  font-weight: 700;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 55px;
+  font-weight: 400;
   color: #000000;
   margin: 0 0 20px;
   text-align: left;
-  letter-spacing: -0.5px;
+  letter-spacing: -1.5px;
   line-height: 1.2;
 }
 

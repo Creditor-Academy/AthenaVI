@@ -135,12 +135,13 @@ const css = `
     border-radius: 2px;
   }
   .ts-title {
-    font-size: clamp(30px, 5vw, 50px);
-    font-weight: 850;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 55px;
+    font-weight: 400;
     color: #0f172a;
-    line-height: 1.1;
+    line-height: 1.2;
     margin: 0 0 14px;
-    letter-spacing: -0.025em;
+    letter-spacing: -1.5px;
   }
   .ts-title span {
     background: linear-gradient(135deg, #1e40af, #7c3aed);
@@ -149,11 +150,13 @@ const css = `
     background-clip: text;
   }
   .ts-subtitle {
-    font-size: clamp(15px, 1.5vw, 17px);
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(15px, 2vw, 18px);
+    font-weight: 400;
     color: #64748b;
     max-width: 520px;
     margin: 0 auto;
-    line-height: 1.6;
+    line-height: 1.7;
   }
 
   /* Main Layout */
@@ -319,17 +322,21 @@ const css = `
     top: 120px;
   }
   .ts-panel-title {
-    font-size: 24px;
-    font-weight: 800;
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(24px, 4vw, 32px);
+    font-weight: 600;
     color: #0f172a;
     margin: 0 0 8px;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
   }
   .ts-panel-sub {
-    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 400;
     color: #64748b;
     margin: 0 0 32px;
-    line-height: 1.55;
+    line-height: 1.7;
   }
 
   .ts-feature-list {
@@ -375,9 +382,11 @@ const css = `
     margin: 0 0 4px;
   }
   .ts-feature-desc {
-    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
     color: #64748b;
-    line-height: 1.5;
+    line-height: 1.6;
     margin: 0;
   }
 

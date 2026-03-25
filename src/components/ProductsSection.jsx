@@ -18,7 +18,9 @@ const styles = `
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font: 700 12px/1 Arial,sans-serif;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
   color: #f59e0b;
   letter-spacing: 2px;
   text-transform: uppercase;
@@ -32,9 +34,13 @@ const styles = `
 }
 
 .ps-section-title {
-  font: 700 48px/1.1 Georgia,serif;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 55px;
+  font-weight: 400;
   color: #0f172a;
   margin: 0 0 12px;
+  line-height: 1.2;
+  letter-spacing: -1.5px;
 }
 
 .ps-section-title span {
@@ -42,10 +48,13 @@ const styles = `
 }
 
 .ps-section-sub {
-  font: 400 17px/1.65 Arial,sans-serif;
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(15px, 2vw, 18px);
+  font-weight: 400;
   color: #64748b;
   max-width: 500px;
   margin: 0 auto;
+  line-height: 1.7;
 }
 
 /* ── Card track ── */
@@ -221,15 +230,21 @@ const styles = `
 }
 
 .ps-expanded-title {
-  font: 700 32px/1.2 Georgia,serif;
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(24px, 4vw, 32px);
+  font-weight: 600;
   color: #0f172a;
   margin: 0;
+  line-height: 1.3;
 }
 
 .ps-expanded-desc {
-  font: 400 15px/1.65 Arial,sans-serif;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 400;
   color: #64748b;
   margin: 0;
+  line-height: 1.7;
   display: -webkit-box;
   -webkit-line-clamp: 5;
   -webkit-box-orient: vertical;

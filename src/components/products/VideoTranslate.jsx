@@ -28,10 +28,12 @@ const styles = `
 
 .product-section-title {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 64px;
-  font-weight: 500;
+  font-size: 55px;
+  font-weight: 400;
   text-align: center;
   margin-bottom: 32px;
+  letter-spacing: -1.5px;
+  line-height: 1.2;
 }
 
 .product-section-description {

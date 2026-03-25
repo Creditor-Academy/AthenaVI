@@ -120,12 +120,13 @@ const styles = `
 }
 
 .ethics-title {
-  font-size: clamp(40px, 8vw, 96px);
-  font-weight: 900;
-  line-height: 0.95;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: clamp(40px, 8vw, 64px);
+  font-weight: 400;
+  line-height: 1.1;
   margin: 0 0 32px 0;
   color: #0f172a;
-  letter-spacing: -0.06em;
+  letter-spacing: -1.5px;
 }
 
 .ethics-subtitle {
@@ -229,11 +230,12 @@ const styles = `
 }
 
 .split-heading {
-  font-size: clamp(30px, 3.5vw, 44px);
-  font-weight: 800;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 55px;
+  font-weight: 400;
   color: #0f172a;
-  line-height: 1.15;
-  letter-spacing: -0.03em;
+  line-height: 1.2;
+  letter-spacing: -1.5px;
   margin: 0 0 24px;
 }
 

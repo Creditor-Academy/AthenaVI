@@ -43,11 +43,12 @@ const styles = `
 
 #personal-avatars .product-section-title {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: clamp(40px, 5vw, 64px);
-  font-weight: 500;
+  font-size: 55px;
+  font-weight: 400;
   text-align: left;
   margin: 0;
-  line-height: 1.1;
+  line-height: 1.2;
+  letter-spacing: -1.5px;
 }
 
 #personal-avatars.product-section.light .product-section-title {
