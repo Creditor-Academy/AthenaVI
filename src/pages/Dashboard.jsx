@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   MdHomeFilled,
   MdVideoLibrary,
@@ -48,6 +48,7 @@ import BrandKits from './BrandKits.jsx'
 import Credits from './Credits.jsx'
 import TeamWorkspace from './TeamWorkspace.jsx'
 import AdminPortal from './AdminPortal.jsx'
+import ProfileDropdown from '../components/ProfileDropdown.jsx'
 import VoiceCreatePanel from '../components/VoiceCreatePanel.jsx'
 import AIVideoAssistant from '../components/AIVideoAssistant.jsx'
 import ImportPowerPointModal from '../components/ImportPowerPointModal.jsx'
@@ -206,14 +207,50 @@ function HomeSection({ onCreate, onShowAIAssistant }) {
   )
 }
 
-function Dashboard({ onLogout, onCreate }) {
-  const [section, setSection] = useState('home')
+function Dashboard({ onLogout, onCreate, initialSection }) {
+  const [section, setSection] = useState(() => {
+    // Use initialSection from props if provided, otherwise get from URL
+    if (initialSection) {
+      return initialSection
+    }
+    
+    // Fallback: Initialize section based on current URL path
+    const currentPath = window.location.pathname
+    if (currentPath.startsWith('/dashboard/')) {
+      return currentPath.replace('/dashboard/', '') || 'home'
+    }
+    return 'home'
+  })
   const [showVoicePanel, setShowVoicePanel] = useState(false)
   const [selectedVoice, setSelectedVoice] = useState(null)
   const [showAIAssistant, setShowAIAssistant] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
   const [showTranslateModal, setShowTranslateModal] = useState(false)
   const [selectedTemplateForDetails, setSelectedTemplateForDetails] = useState(null)
+
+  // Update URL when section changes
+  useEffect(() => {
+    const newPath = section === 'home' ? '/dashboard' : `/dashboard/${section}`
+    if (window.location.pathname !== newPath) {
+      window.history.pushState({ section }, '', newPath)
+    }
+  }, [section])
+
+  // Handle browser back/forward for dashboard sections
+  useEffect(() => {
+    const handlePopState = (event) => {
+      const currentPath = window.location.pathname
+      if (currentPath.startsWith('/dashboard/')) {
+        const newSection = currentPath.replace('/dashboard/', '') || 'home'
+        setSection(newSection)
+      } else if (currentPath === '/dashboard') {
+        setSection('home')
+      }
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
 
   const navItems = [
     { id: 'home', label: 'Dashboard', icon: <MdHomeFilled /> },
@@ -251,7 +288,7 @@ function Dashboard({ onLogout, onCreate }) {
         <div className="top-right-actions">
           <button className="icon-btn"><MdHelpOutline /></button>
           <button className="icon-btn"><MdNotificationsNone /></button>
-          <img src="https://ui-avatars.com/api/?name=Alex+Johnson&background=0D8ABC&color=fff" alt="Profile" className="profile-avatar" onClick={() => setSection('profile')} />
+          <ProfileDropdown onProfileClick={() => setSection('profile')} />
         </div>
       </header>
 
