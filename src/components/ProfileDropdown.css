@@ -19,6 +19,15 @@
   background: rgba(0, 0, 0, 0.05);
 }
 
+.profile-avatar-btn--compact {
+  padding: 2px;
+  border-radius: 50%;
+}
+
+.profile-avatar-btn--compact:hover {
+  background: rgba(15, 23, 42, 0.06);
+}
+
 .profile-avatar {
   width: 36px;
   height: 36px;

@@ -7,17 +7,17 @@ const getApiBaseUrl = () => {
   if (window && window.ATHENAVI_API_URL) {
     return window.ATHENAVI_API_URL;
   }
-  
+
   // Check import.meta (for Vite)
   if (typeof import.meta !== 'undefined' && import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
-  
+
   // Check process.env (for Create React App)
   if (typeof process !== 'undefined' && process.env.REACT_APP_API_URL) {
     return process.env.REACT_APP_API_URL;
   }
-  
+
   // Fallback to localhost:9000 (matches backend default port)
   return 'http://localhost:9000/api';
 };
@@ -31,18 +31,18 @@ class WorkspaceService {
 
   // Get authentication token from localStorage or context
   getAuthHeaders() {
-    const token = localStorage.getItem('accessToken') || 
-                  sessionStorage.getItem('accessToken');
-    
+    const token = localStorage.getItem('accessToken') ||
+      sessionStorage.getItem('accessToken');
+
     const headers = {
       'Content-Type': 'application/json'
     };
-    
+
     // Only add Authorization header if token exists
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
-    
+
     return headers;
   }
 
@@ -50,25 +50,25 @@ class WorkspaceService {
   async listWorkspaces() {
     try {
       console.log('Fetching workspaces...');
-      
+
       const response = await fetch(`${this.baseURL}/workspaces`, {
         method: 'GET',
         headers: this.getAuthHeaders()
       });
 
       console.log('Workspace list response status:', response.status);
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch workspaces: ${response.status}`);
       }
 
       const data = await response.json();
       console.log('Workspace list response data:', data);
-      
+
       // Extract workspaces from nested structure
       const workspaces = data.data?.workspaces || data.workspaces || [];
       console.log('Extracted workspaces:', workspaces);
-      
+
       return workspaces;
     } catch (error) {
       console.error('Error in listWorkspaces:', error);
@@ -79,12 +79,9 @@ class WorkspaceService {
   // Get specific workspace details
   async getWorkspace(workspaceId) {
     try {
-      const response = await fetch(`/api/workspace/${workspaceId}`, {
+      const response = await fetch(`${this.baseURL}/workspaces/${workspaceId}`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
+        headers: this.getAuthHeaders()
       });
 
       if (!response.ok) {
@@ -103,14 +100,11 @@ class WorkspaceService {
   async createWorkspace(name) {
     try {
       console.log('Creating workspace with name:', name);
-      
-      const response = await fetch('/api/workspace', {
+
+      const response = await fetch(`${this.baseURL}/workspaces`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ name })
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(typeof name === 'object' ? name : { name })
       });
 
       console.log('Create workspace response status:', response.status);
@@ -124,13 +118,13 @@ class WorkspaceService {
 
       const data = await response.json();
       console.log('Create workspace success response:', data);
-      
+
       // Extract workspace from nested structure
       const workspace = data.data?.workspace || data.workspace;
       if (!workspace) {
         throw new Error('Workspace not found in response');
       }
-      
+
       return workspace;
     } catch (error) {
       console.error('Error in createWorkspace:', error);
@@ -141,12 +135,9 @@ class WorkspaceService {
   // Update workspace
   async updateWorkspace(workspaceId, formData) {
     try {
-      const response = await fetch(`/api/workspace/${workspaceId}`, {
+      const response = await fetch(`${this.baseURL}/workspaces/${workspaceId}`, {
         method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
+        headers: this.getAuthHeaders(),
         body: JSON.stringify(formData)
       });
 
@@ -165,12 +156,9 @@ class WorkspaceService {
   // Delete workspace (TEAM only)
   async deleteWorkspace(workspaceId) {
     try {
-      const response = await fetch(`/api/workspace/${workspaceId}`, {
+      const response = await fetch(`${this.baseURL}/workspaces/${workspaceId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
+        headers: this.getAuthHeaders()
       });
 
       if (!response.ok) {
@@ -187,12 +175,9 @@ class WorkspaceService {
   // Get workspace members
   async listWorkspaceMembers(workspaceId) {
     try {
-      const response = await fetch(`/api/workspace/${workspaceId}/members`, {
+      const response = await fetch(`${this.baseURL}/workspaces/${workspaceId}/members`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
+        headers: this.getAuthHeaders()
       });
 
       if (!response.ok) {
@@ -216,10 +201,10 @@ class WorkspaceService {
       console.log('📧 Sending invitation to:', inviteData.email);
       console.log('🏢 For workspace:', workspaceId);
       console.log('👤 Role:', inviteData.role);
-      
+
       // Ensure role is uppercase according to API docs
       const role = inviteData.role ? inviteData.role.toUpperCase() : 'MEMBER';
-      
+
       const headers = this.getAuthHeaders();
       const response = await fetch(`${this.baseURL}/workspaces/${workspaceId}/invite`, {
         method: 'POST',
@@ -235,7 +220,7 @@ class WorkspaceService {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.log('❌ Invite failed:', errorData);
-        
+
         if (response.status === 409) {
           throw new Error('User is already a member of this workspace');
         }
@@ -244,7 +229,7 @@ class WorkspaceService {
 
       const data = await response.json();
       console.log('✅ Invitation sent successfully:', data);
-      
+
       // According to your API docs, this returns empty object {}
       return { success: true, message: 'Invitation sent successfully' };
     } catch (error) {

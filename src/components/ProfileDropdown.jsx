@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { MdPerson, MdLogout, MdArrowDropDown } from 'react-icons/md'
 import './ProfileDropdown.css'
 
-const ProfileDropdown = ({ onProfileClick }) => {
+const ProfileDropdown = ({ onProfileClick, compact = false }) => {
   const { user, logout } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef(null)
@@ -53,18 +53,23 @@ const ProfileDropdown = ({ onProfileClick }) => {
   return (
     <div className="profile-dropdown" ref={dropdownRef}>
       <button 
-        className="profile-avatar-btn"
+        type="button"
+        className={`profile-avatar-btn ${compact ? 'profile-avatar-btn--compact' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
         title="Profile menu"
+        aria-label="Profile menu"
+        aria-expanded={isOpen}
       >
         <div className="profile-avatar">
           {user?.profileImage ? (
-            <img src={user.profileImage} alt="Profile" />
+            <img src={user.profileImage} alt="" />
           ) : (
             getUserInitial()
           )}
         </div>
-        <MdArrowDropDown className={`dropdown-arrow ${isOpen ? 'open' : ''}`} />
+        {!compact && (
+          <MdArrowDropDown className={`dropdown-arrow ${isOpen ? 'open' : ''}`} aria-hidden />
+        )}
       </button>
 
       {isOpen && (
