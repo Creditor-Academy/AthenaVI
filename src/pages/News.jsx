@@ -86,6 +86,7 @@ const styles = `
   max-width: 900px;
   text-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
   letter-spacing: -1.5px;
+  color: #ffffff;
 }
 
 .hero-meta {

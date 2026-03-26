@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { MdDescription, MdSchool, MdPlayCircle, MdClose } from 'react-icons/md'
+import { motion } from 'framer-motion'
 
 const styles = `
 @keyframes fadeInUp {
@@ -31,38 +32,98 @@ const styles = `
 }
 
 .resources-header {
-  background: #ffffff;
-  padding: 100px 40px 80px;
-  max-width: 1400px;
+  background: #234cbdff;
+  background-image: 
+    radial-gradient(circle at 15% 15%, rgba(59, 130, 246, 0.4) 0%, transparent 40%),
+    radial-gradient(circle at 85% 85%, rgba(147, 51, 234, 0.3) 0%, transparent 40%),
+    linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  padding: 120px 80px 100px;
   width: 100%;
-  margin: 0 auto;
-  animation: fadeInUp 0.8s ease-out;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 80px;
+  text-align: left;
+}
+
+.resources-header::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.05;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.resources-header-content {
+  flex: 1;
+  max-width: 680px;
+  position: relative;
+  z-index: 2;
+}
+
+.resources-header-avatar-container {
+  flex: 0 0 420px;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.resources-header-avatar {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 20px 50px rgba(0, 0, 0, 0.4));
+}
+
+.resources-header-badge {
+  display: inline-block;
+  padding: 6px 18px;
+  border-radius: 100px;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  margin-bottom: 24px;
+  backdrop-filter: blur(4px);
 }
 
 .resources-header-title {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 55px;
+  font-size: 64px;
   font-weight: 400;
-  color: #000000;
-  margin: 0 0 20px;
-  text-align: left;
-  letter-spacing: -1.5px;
-  line-height: 1.2;
+  color: #ffffff;
+  margin: 0 0 24px;
+  letter-spacing: -2px;
+  line-height: 1.1;
+}
+
+.resources-header-title span {
+  background: linear-gradient(135deg, #fde047, #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .resources-header-description {
   font-family: 'Inter', sans-serif;
   font-size: 20px;
-  color: #666666;
+  color: rgba(255, 255, 255, 0.85);
   margin: 0;
-  text-align: left;
   line-height: 1.7;
-  max-width: 800px;
 }
 
 .resources-cards-section {
-  background: linear-gradient(135deg, #e6f2ff 0%, #dbeafe 100%);
-  padding: 80px 40px 120px;
+  background: #f1f5f9;
+  padding: 100px 40px 140px;
   display: flex;
   justify-content: center;
   position: relative;
@@ -93,7 +154,7 @@ const styles = `
 }
 
 .resource-card {
-  border-radius: 16px;
+  border-radius: 20px;
   overflow: hidden;
   position: relative;
   min-height: 550px;
@@ -101,10 +162,12 @@ const styles = `
   flex-direction: column;
   justify-content: space-between;
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
   animation: fadeInUp 0.8s ease-out;
   animation-fill-mode: both;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .resource-card:nth-child(1) {
@@ -121,7 +184,8 @@ const styles = `
 
 .resource-card:hover {
   transform: translateY(-12px) scale(1.02);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+  border-color: rgba(59, 130, 246, 0.3);
 }
 
 .resource-card-background {
@@ -284,20 +348,37 @@ const styles = `
   background: rgba(255, 255, 255, 0.3);
 }
 
-@media (max-width: 1024px) {
-  .resources-cards-container {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
-  
-  .resource-card {
-    min-height: 450px;
-  }
+  @media (max-width: 1024px) {
+    .resources-header {
+      flex-direction: column;
+      padding: 100px 40px 80px;
+      text-align: center;
+      gap: 40px;
+    }
+    
+    .resources-header-content {
+      max-width: 100%;
+    }
+    
+    .resources-header-avatar-container {
+      flex: 0 0 auto;
+      width: 100%;
+      max-width: 320px;
+    }
 
-  .resources-header-title {
-    font-size: 48px;
+    .resources-cards-container {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+    
+    .resource-card {
+      min-height: 450px;
+    }
+
+    .resources-header-title {
+      font-size: 48px;
+    }
   }
-}
 
 @media (max-width: 768px) {
   .resources-header {
@@ -691,10 +772,35 @@ function ResourcesSection(props) {
       <style>{styles}</style>
       <section id="resources" className="resources-section">
         <div className="resources-header">
-          <h1 className="resources-header-title">Resource Center</h1>
-          <p className="resources-header-description">
-            Learn about everything from customer success stories, product info, to viewpoints from the core team. Discover how AI-powered virtual instructors are transforming education and training.
-          </p>
+          <motion.div 
+            className="resources-header-content"
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+          >
+            <div className="resources-header-badge">Knowledge Base</div>
+            <h1 className="resources-header-title">
+              AthenaVI <span>Resource Center</span>
+            </h1>
+            <p className="resources-header-description">
+              Learn about everything from customer success stories, product info, to viewpoints from the core team. Discover how AI-powered virtual instructors are transforming education and training.
+            </p>
+          </motion.div>
+
+          <motion.div 
+            className="resources-header-avatar-container"
+            initial={{ opacity: 0, x: 30, scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+          >
+            <motion.img 
+              src="/avatar4.png" 
+              alt="AI Instructor" 
+              className="resources-header-avatar"
+              animate={{ y: [0, -15, 0] }}
+              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+            />
+          </motion.div>
         </div>
         
         <div className="resources-cards-section">
