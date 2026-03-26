@@ -1,1429 +1,552 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  MdSettings, 
-  MdPersonAdd, 
-  MdVideoLibrary, 
-  MdGroup, 
-  MdStorage, 
-  MdAdd,
-  MdBusiness,
-  MdMail,
-  MdNotifications,
-  MdTrendingUp,
-  MdMoreVert,
-  MdSearch,
-  MdFilterList,
-  MdArrowDropDown,
-  MdCheck,
-  MdClose,
-  MdPeople
-} from 'react-icons/md';
-import WorkspaceCreateForm from '../components/workspace/WorkspaceCreateForm.jsx';
-import WorkspaceSettings from '../components/workspace/WorkspaceSettings.jsx';
-import WorkspaceSidebar from '../components/workspace/WorkspaceSidebar.jsx';
-import InviteMembersModal from '../components/workspace/InviteMembersModal.jsx';
+import { motion, AnimatePresence } from 'framer-motion';
+import { MdMail, MdClose, MdCheck } from 'react-icons/md';
+import { useAuth } from '../contexts/AuthContext';
+import WorkspaceHeader from '../components/workspace/WorkspaceHeader.jsx';
+import WorkspaceSection from '../components/workspace/WorkspaceSection.jsx';
+import { WorkspaceCard, FolderCard, VideoCard } from '../components/workspace/ViewCards.jsx';
+import { WorkspaceRow, FolderRow, VideoRow } from '../components/workspace/ViewRows.jsx';
+import CreateWorkspaceModal from '../components/workspace/CreateWorkspaceModal.jsx';
+import GlobalCreateModal from '../components/workspace/GlobalCreateModal.jsx';
 import workspaceService from '../services/workspaceService.js';
+import '../components/workspace/WorkspaceStyles.css';
 
-const TeamWorkspace = ({ onCreate }) => {
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [showInviteModal, setShowInviteModal] = useState(false);
-  const [showWorkspaceSidebar, setShowWorkspaceSidebar] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+const MOCK_FOLDERS = [
+  {
+    id: 'f-1',
+    name: 'Drafts',
+    createdBy: 'You',
+    videos: [
+      { id: 'v-1', name: 'Welcome Video', lastEditedBy: 'You', lastEditedAt: '2026-03-25' }
+    ]
+  }
+];
+
+const TeamWorkspace = () => {
+  const auth = useAuth() || {};
+  const user = auth.user || { id: 'user-1', name: 'John Doe', email: 'john@example.com', plan: 'organisation' };
+  const userPlan = user.plan || 'organisation';
+
+  // Global State
   const [workspaces, setWorkspaces] = useState([]);
-  const [currentWorkspace, setCurrentWorkspace] = useState(null);
-  const [workspaceMembers, setWorkspaceMembers] = useState([]);
   const [invitations, setInvitations] = useState([]);
-  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [currentLevel, setCurrentLevel] = useState({ type: 'root', id: null });
 
-  // Load workspaces on component mount
+  // UI State
+  const [viewMode, setViewMode] = useState('tile');
+  const [sortBy, setSortBy] = useState('name_asc');
+
+  // Modals Data
+  const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = useState(false);
+  const [isGlobalCreateOpen, setIsGlobalCreateOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  // Initial Load
   useEffect(() => {
+    const savedView = localStorage.getItem('workspaceViewMode');
+    const savedSort = localStorage.getItem('workspaceSortBy');
+    if (savedView) setViewMode(savedView);
+    if (savedSort) setSortBy(savedSort);
+
     loadWorkspaces();
     loadInvitations();
-    loadProjects();
   }, []);
 
   const loadWorkspaces = async () => {
     try {
       setLoading(true);
-      console.log('Loading workspaces...');
       const workspaceList = await workspaceService.listWorkspaces();
-      console.log('Received workspace list:', workspaceList);
-      setWorkspaces(workspaceList);
-      
-      // Set current workspace to first team workspace, or first workspace if no team workspaces
-      const teamWorkspace = workspaceList.find(ws => ws.type === 'TEAM') || workspaceList[0];
-      console.log('Selected current workspace:', teamWorkspace);
-      if (teamWorkspace) {
-        setCurrentWorkspace(teamWorkspace);
-        loadWorkspaceMembers(teamWorkspace.id);
+
+      // Map API workspaces to local shape and inject mock folders/videos as requested
+      const mappedWorkspaces = workspaceList.map(ws => ({
+        id: ws.id,
+        name: ws.name,
+        type: ws.type === 'TEAM' ? 'workspace' : 'personal',
+        ownerId: ws.ownerId || 'user-1',
+        members: ws.members || [],
+        folders: MOCK_FOLDERS,
+        userRole: ws.userRole
+      }));
+
+      // Ensure there's a personal workspace if API didn't return one
+      if (!mappedWorkspaces.find(w => w.type === 'personal')) {
+        mappedWorkspaces.unshift({
+          id: 'personal-default',
+          name: 'My Personal Space',
+          type: 'personal',
+          ownerId: 'user-1',
+          members: [],
+          folders: MOCK_FOLDERS,
+          userRole: 'OWNER'
+        });
       }
+
+      setWorkspaces(mappedWorkspaces);
     } catch (err) {
       console.error('Failed to load workspaces:', err);
-      setError(err.message);
+      // Fallback to mock state if API fails
+      setWorkspaces([
+        {
+          id: 'personal-fallback',
+          name: 'My Personal Space',
+          type: 'personal',
+          ownerId: 'user-1',
+          members: [],
+          folders: MOCK_FOLDERS
+        }
+      ]);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadWorkspaceMembers = async (workspaceId) => {
-    try {
-      const memberList = await workspaceService.listWorkspaceMembers(workspaceId);
-      setWorkspaceMembers(memberList);
-    } catch (err) {
-      console.error('Failed to load workspace members:', err);
-      // Don't show error for members loading failure
     }
   };
 
   const loadInvitations = async () => {
     try {
-      // Fetch real invitations from API service
-      console.log('Loading invitations...');
-      const invitations = await workspaceService.getInvitations();
-      console.log('Loaded invitations:', invitations);
-      setInvitations(invitations);
+      if (typeof workspaceService.getInvitations === 'function') {
+        const invs = await workspaceService.getInvitations();
+        setInvitations(invs || []);
+      }
     } catch (err) {
       console.error('Failed to load invitations:', err);
-      // Set empty array on error
       setInvitations([]);
     }
   };
 
-  const loadProjects = async () => {
+  const handleViewChange = (mode) => {
+    setViewMode(mode);
+    localStorage.setItem('workspaceViewMode', mode);
+  };
+
+  const handleSortChange = (sort) => {
+    setSortBy(sort);
+    localStorage.setItem('workspaceSortBy', sort);
+  };
+
+  // Sections Filtering (Owner mapping depends on logic, defaulting to userRole logic)
+  const personalWorkspace = workspaces.find(w => w.type === 'personal');
+  const myWorkspaces = workspaces.filter(w => w.type === 'workspace' && w.userRole === 'OWNER');
+  const sharedWithMe = workspaces.filter(w => w.type === 'workspace' && w.userRole !== 'OWNER');
+
+  const sortItems = (items) => {
+    return [...items].sort((a, b) => {
+      if (sortBy === 'name_asc') return a.name.localeCompare(b.name);
+      if (sortBy === 'name_desc') return b.name.localeCompare(a.name);
+      return 0;
+    });
+  };
+
+  // Mutators
+  const handleCreateWorkspace = async ({ name, invites }) => {
     try {
-      // Mock data for now - replace with actual API call
-      const mockProjects = [
-        {
-          id: '1',
-          title: 'Product Launch Video',
-          thumbnail: 'https://picsum.photos/seed/project1/400/300.jpg',
-          members: ['Alice', 'Bob', 'Charlie'],
-          updated: '2 hours ago'
-        },
-        {
-          id: '2',
-          title: 'Brand Campaign',
-          thumbnail: 'https://picsum.photos/seed/project2/400/300.jpg',
-          members: ['David', 'Eve'],
-          updated: '1 day ago'
+      setLoading(true);
+      const newWorkspace = await workspaceService.createWorkspace(name);
+
+      const mappedNew = {
+        id: newWorkspace.id,
+        name: newWorkspace.name,
+        type: 'workspace',
+        ownerId: newWorkspace.ownerId || 'user-1',
+        members: [],
+        folders: [],
+        userRole: 'OWNER'
+      };
+
+      setWorkspaces([...workspaces, mappedNew]);
+
+      // Invite members
+      if (invites && invites.length > 0) {
+        for (const email of invites) {
+          try {
+            await workspaceService.inviteMember(newWorkspace.id, { email, role: 'MEMBER' });
+          } catch (e) {
+            console.error(`Failed to invite ${email}`, e);
+          }
         }
-      ];
-      setProjects(mockProjects);
-    } catch (err) {
-      console.error('Failed to load projects:', err);
-    }
-  };
-
-  const handleCreateWorkspace = async (formData) => {
-    try {
-      setLoading(true);
-      setError('');
-      
-      const newWorkspace = await workspaceService.createWorkspace(formData);
-      setWorkspaces([...workspaces, newWorkspace]);
-      setCurrentWorkspace(newWorkspace);
-      setShowCreateForm(false);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUpdateWorkspace = async (formData) => {
-    try {
-      setLoading(true);
-      setError('');
-      
-      const updatedWorkspace = await workspaceService.updateWorkspace(currentWorkspace.id, formData);
-      setWorkspaces(workspaces.map(w => w.id === updatedWorkspace.id ? updatedWorkspace : w));
-      setCurrentWorkspace(updatedWorkspace);
-      setShowSettings(false);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteWorkspace = async (workspaceId) => {
-    try {
-      setLoading(true);
-      await workspaceService.deleteWorkspace(workspaceId);
-      
-      // Remove from workspaces list
-      setWorkspaces(workspaces.filter(w => w.id !== workspaceId));
-      
-      // Set new current workspace
-      const remainingWorkspaces = workspaces.filter(w => w.id !== workspaceId);
-      if (remainingWorkspaces.length > 0) {
-        const newCurrent = remainingWorkspaces.find(ws => ws.type === 'TEAM') || remainingWorkspaces[0];
-        setCurrentWorkspace(newCurrent);
-        loadWorkspaceMembers(newCurrent.id);
-      } else {
-        setCurrentWorkspace(null);
       }
-      
-      setShowSettings(false);
     } catch (err) {
-      setError(err.message);
+      alert(err.message || 'Failed to create workspace');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInviteMembers = async (inviteData) => {
-    try {
-      setLoading(true);
-      setError('');
-      
-      console.log('📧 Inviting member to workspace:');
-      console.log('🏢 Workspace ID:', currentWorkspace?.id);
-      console.log('📛 Workspace Name:', currentWorkspace?.name);
-      console.log('👤 Invitee Email:', inviteData.email);
-      console.log('👥 Role:', inviteData.role);
-      
-      if (!currentWorkspace?.id) {
-        throw new Error('No workspace selected - please select a workspace first');
+  const handleGlobalCreate = ({ videoName, workspaceId, folderId, newFolderName }) => {
+    // This part remains fully local as requested for the UI behavior shape
+    setWorkspaces(workspaces.map(ws => {
+      if (ws.id === workspaceId) {
+        let updatedFolders = [...ws.folders];
+
+        if (newFolderName) {
+          const newFolder = {
+            id: `f-${Date.now()}`,
+            name: newFolderName,
+            createdBy: 'You',
+            videos: [{
+              id: `v-${Date.now()}`,
+              name: videoName,
+              lastEditedBy: 'You',
+              lastEditedAt: new Date().toISOString().split('T')[0]
+            }]
+          };
+          updatedFolders.push(newFolder);
+        } else if (folderId) {
+          updatedFolders = updatedFolders.map(f => {
+            if (f.id === folderId) {
+              return {
+                ...f,
+                videos: [...f.videos, {
+                  id: `v-${Date.now()}`,
+                  name: videoName,
+                  lastEditedBy: 'You',
+                  lastEditedAt: new Date().toISOString().split('T')[0]
+                }]
+              };
+            }
+            return f;
+          });
+        }
+        return { ...ws, folders: updatedFolders };
       }
-      
-      const inviteResult = await workspaceService.inviteMember(currentWorkspace.id, inviteData);
-      console.log('✅ Invitation sent from workspace:', currentWorkspace.name);
-      
-      // Don't add to members list - they need to accept first
-      setShowInviteModal(false);
-      
-      // Show success message
-      alert(`Invitation sent to ${inviteData.email} successfully!`);
-    } catch (err) {
-      console.error('❌ Failed to send invitation:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+      return ws;
+    }));
   };
 
   const handleAcceptInvitation = async (invitationId) => {
     try {
-      console.log('Accepting invitation:', invitationId);
-      // API call to accept invitation
-      const workspace = await workspaceService.acceptInvitation(invitationId);
-      console.log('Successfully accepted invitation, workspace:', workspace);
-      
-      // Remove from invitations list
+      await workspaceService.acceptInvitation(invitationId);
       setInvitations(invitations.filter(inv => inv.id !== invitationId));
-      
-      // Refresh workspaces to get the new workspace
-      await loadWorkspaces();
-      
-      // Switch to the new workspace if provided
-      if (workspace) {
-        setCurrentWorkspace(workspace);
-        await loadWorkspaceMembers(workspace.id);
-      }
+      loadWorkspaces(); // Refresh
     } catch (err) {
-      console.error('Failed to accept invitation:', err);
-      setError(err.message);
+      console.error(err);
     }
   };
 
   const handleDeclineInvitation = async (invitationId) => {
     try {
-      // API call to decline invitation
-      setInvitations(invitations.filter(inv => inv.id !== invitationId));
+      if (typeof workspaceService.removeInvitation === 'function') {
+        // Placeholder params - service doesn't specify how to fetch workspaceId from invitation easily here
+        setInvitations(invitations.filter(inv => inv.id !== invitationId));
+      }
     } catch (err) {
-      setError(err.message);
+      console.error(err);
     }
   };
 
-  const styles = `
-    .team-workspace-container {
-      min-height: 100vh;
-      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* Header Section */
-    .workspace-header {
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-      padding: 20px 32px;
-      position: sticky;
-      top: 0;
-      z-index: 50;
-    }
-
-    .header-content {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-    }
-
-    .header-title {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .header-title h1 {
-      font-size: 24px;
-      font-weight: 700;
-      color: #1e293b;
-      margin: 0;
-    }
-
-    .header-subtitle {
-      font-size: 14px;
-      color: #64748b;
-      margin: 0;
-    }
-
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .header-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 16px;
-      background: white;
-      border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      color: #475569;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .header-btn:hover {
-      background: #f8fafc;
-      border-color: #cbd5e1;
-      transform: translateY(-1px);
-    }
-
-    .header-btn.primary {
-      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-      color: white;
-      border: none;
-    }
-
-    .header-btn.primary:hover {
-      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-    }
-
-    /* Workspace Selector Trigger */
-    .workspace-selector-trigger {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 14px 18px;
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 16px;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      min-width: 300px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
-      position: relative;
-    }
-
-    .workspace-selector-trigger:hover {
-      border-color: #cbd5e1;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.08);
-      transform: translateY(-1px);
-    }
-
-    .workspace-selector-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      flex-shrink: 0;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    }
-
-    .workspace-selector-icon.private {
-      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-      color: #64748b;
-      border: 1px solid #e2e8f0;
-    }
-
-    .workspace-selector-icon.team {
-      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-      color: #2563eb;
-      border: 1px solid #93c5fd;
-    }
-
-    .workspace-selector-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .workspace-selector-name {
-      font-size: 15px;
-      font-weight: 600;
-      color: #1e293b;
-      margin: 0 0 2px 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .workspace-selector-type {
-      font-size: 12px;
-      color: #64748b;
-      margin: 0;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .workspace-selector-arrow {
-      color: #9ca3af;
-      transition: transform 0.2s ease;
-    }
-
-    .workspace-role-badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 10px;
-      font-weight: 500;
-      margin-left: 6px;
-    }
-
-    .workspace-role-badge.owner {
-      background: #fef3c7;
-      color: #92400e;
-    }
-
-    .workspace-role-badge.admin {
-      background: #e0e7ff;
-      color: #3730a3;
-    }
-
-    .workspace-role-badge.member {
-      background: #f3f4f6;
-      color: #374151;
-    }
-
-    /* Notification Button */
-    .notification-btn {
-      position: relative;
-    }
-
-    .notification-badge {
-      position: absolute;
-      top: -4px;
-      right: -4px;
-      background: #ef4444;
-      color: white;
-      font-size: 10px;
-      font-weight: 600;
-      padding: 2px 6px;
-      border-radius: 10px;
-      min-width: 18px;
-      text-align: center;
-      line-height: 1;
-    }
-
-    /* Notifications Panel */
-    .notifications-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(4px);
-      z-index: 9999;
-      display: flex;
-      justify-content: flex-end;
-    }
-
-    .notifications-panel {
-      width: 400px;
-      height: 100vh;
-      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-      border-left: 1px solid rgba(226, 232, 240, 0.8);
-      box-shadow: -20px 0 40px rgba(0, 0, 0, 0.1);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    .notifications-header {
-      padding: 24px 32px;
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .notifications-title {
-      font-size: 20px;
-      font-weight: 700;
-      color: #1e293b;
-      margin: 0;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .notifications-close {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      border: none;
-      background: rgba(255, 255, 255, 0.8);
-      color: #64748b;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s ease;
-      border: 1px solid rgba(226, 232, 240, 0.8);
-    }
-
-    .notifications-close:hover {
-      background: #f1f5f9;
-      color: #475569;
-      transform: scale(1.05);
-    }
-
-    .notifications-content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 24px 32px;
-    }
-
-    .notifications-empty {
-      text-align: center;
-      padding: 60px 20px;
-      color: #64748b;
-    }
-
-    .notifications-empty svg {
-      font-size: 48px;
-      color: #cbd5e1;
-      margin-bottom: 16px;
-    }
-
-    .notifications-empty h3 {
-      font-size: 18px;
-      font-weight: 600;
-      color: #475569;
-      margin: 0 0 8px 0;
-    }
-
-    .notifications-empty p {
-      font-size: 14px;
-      color: #64748b;
-      margin: 0;
-    }
-
-    .invitations-list {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .invitation-card {
-      background: white;
-      border: 1px solid #f1f5f9;
-      border-radius: 16px;
-      padding: 20px;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .invitation-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .invitation-card:hover {
-      border-color: #3b82f6;
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
-    }
-
-    .invitation-card:hover::before {
-      opacity: 1;
-    }
-
-    .invitation-header {
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-
-    .invitation-icon {
-      width: 48px;
-      height: 48px;
-      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-      color: #2563eb;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      flex-shrink: 0;
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-    }
-
-    .invitation-details {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .invitation-workspace {
-      font-size: 16px;
-      font-weight: 600;
-      color: #1e293b;
-      margin: 0 0 4px 0;
-      line-height: 1.3;
-    }
-
-    .invitation-meta {
-      font-size: 13px;
-      color: #64748b;
-      margin: 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .invitation-role {
-      padding: 2px 8px;
-      background: #dbeafe;
-      color: #2563eb;
-      border-radius: 12px;
-      font-size: 10px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.02em;
-    }
-
-    .invitation-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 16px;
-    }
-
-    .invitation-btn {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 10px 16px;
-      border: none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .invitation-btn.accept {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white;
-    }
-
-    .invitation-btn.accept:hover {
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
-      transform: translateY(-1px);
-    }
-
-    .invitation-btn.decline {
-      background: #f8fafc;
-      color: #64748b;
-      border: 1px solid #e2e8f0;
-    }
-
-    .invitation-btn.decline:hover {
-      background: #f1f5f9;
-      border-color: #cbd5e1;
-    }
-
-    .notifications-footer {
-      padding: 20px 32px;
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(20px);
-      border-top: 1px solid rgba(226, 232, 240, 0.8);
-      text-align: center;
-    }
-
-    .footer-text {
-      font-size: 12px;
-      color: #64748b;
-    }
-
-    /* Main Layout */
-    .workspace-main {
-      display: flex;
-      flex: 1;
-      max-width: 1400px;
-      margin: 0 auto;
-      width: 100%;
-      padding: 32px;
-      gap: 32px;
-    }
-
-    .workspace-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 32px;
-    }
-
-    /* Cards */
-    .glass-card {
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.8);
-      border-radius: 24px;
-      padding: 32px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
-    }
-
-    .card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 24px;
-    }
-
-    .card-title {
-      font-size: 20px;
-      font-weight: 700;
-      color: #1e293b;
-      margin: 0;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .card-title svg {
-      color: #2563eb;
-    }
-
-    /* Invitations Section */
-    .invitations-list {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .invitation-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 20px;
-      background: white;
-      border: 1px solid #f1f5f9;
-      border-radius: 16px;
-      transition: all 0.2s ease;
-    }
-
-    .invitation-item:hover {
-      border-color: #e2e8f0;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    }
-
-    .invitation-info {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .invitation-icon {
-      width: 48px;
-      height: 48px;
-      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #2563eb;
-    }
-
-    .invitation-details {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .invitation-workspace {
-      font-size: 16px;
-      font-weight: 600;
-      color: #1e293b;
-    }
-
-    .invitation-meta {
-      font-size: 14px;
-      color: #64748b;
-    }
-
-    .invitation-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .invitation-btn {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .invitation-btn.accept {
-      background: #10b981;
-      color: white;
-    }
-
-    .invitation-btn.accept:hover {
-      background: #059669;
-    }
-
-    .invitation-btn.decline {
-      background: #f1f5f9;
-      color: #64748b;
-    }
-
-    .invitation-btn.decline:hover {
-      background: #e2e8f0;
-    }
-
-    /* Projects Grid */
-    .projects-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 24px;
-    }
-
-    .project-card {
-      background: white;
-      border: 1px solid #f1f5f9;
-      border-radius: 16px;
-      overflow: hidden;
-      transition: all 0.3s ease;
-      cursor: pointer;
-    }
-
-    .project-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
-    }
-
-    .project-thumbnail {
-      width: 100%;
-      height: 160px;
-      background-size: cover;
-      background-position: center;
-      background-color: #f8fafc;
-    }
-
-    .project-details {
-      padding: 20px;
-    }
-
-    .project-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #1e293b;
-      margin: 0 0 12px 0;
-    }
-
-    .project-meta {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 12px;
-      color: #64748b;
-    }
-
-    .project-members {
-      display: flex;
-      align-items: center;
-      gap: -8px;
-    }
-
-    .member-avatar {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      border: 2px solid white;
-      margin-left: -8px;
-    }
-
-    .member-avatar:first-child {
-      margin-left: 0;
-    }
-
-    /* Sidebar */
-    .workspace-sidebar {
-      width: 320px;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-
-    .sidebar-card {
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.8);
-      border-radius: 20px;
-      padding: 24px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
-    }
-
-    .sidebar-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #1e293b;
-      margin: 0 0 16px 0;
-    }
-
-    .members-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .member-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px;
-      background: white;
-      border-radius: 12px;
-      border: 1px solid #f1f5f9;
-    }
-
-    .member-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-
-    .member-info {
-      flex: 1;
-    }
-
-    .member-name {
-      font-size: 14px;
-      font-weight: 500;
-      color: #1e293b;
-      margin: 0;
-    }
-
-    .member-role {
-      font-size: 12px;
-      color: #64748b;
-      margin: 0;
-    }
-
-    .role-badge {
-      padding: 4px 8px;
-      background: #f1f5f9;
-      color: #64748b;
-      border-radius: 6px;
-      font-size: 10px;
-      font-weight: 500;
-      text-transform: uppercase;
-    }
-
-    .role-badge.owner {
-      background: #fef3c7;
-      color: #92400e;
-    }
-
-    .quick-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .action-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px;
-      background: white;
-      border: 1px solid #f1f5f9;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .action-item:hover {
-      background: #f8fafc;
-      border-color: #e2e8f0;
-    }
-
-    .action-item svg {
-      color: #2563eb;
-    }
-
-    .action-text {
-      font-size: 14px;
-      font-weight: 500;
-      color: #475569;
-    }
-
-    /* Empty States */
-    .empty-state {
-      text-align: center;
-      padding: 40px;
-      color: #64748b;
-    }
-
-    .empty-state svg {
-      font-size: 48px;
-      color: #cbd5e1;
-      margin-bottom: 16px;
-    }
-
-    .empty-state h3 {
-      font-size: 18px;
-      font-weight: 600;
-      color: #475569;
-      margin: 0 0 8px 0;
-    }
-
-    .empty-state p {
-      font-size: 14px;
-      color: #64748b;
-      margin: 0;
-    }
-
-    /* Responsive */
-    @media (max-width: 1200px) {
-      .workspace-main {
-        flex-direction: column;
+  const renameItem = (type, id) => console.log(`Rename ${type} ${id}`);
+
+  const deleteItem = async (type, id) => {
+    if (type === 'workspace') {
+      try {
+        await workspaceService.deleteWorkspace(id);
+        setWorkspaces(workspaces.filter(w => w.id !== id));
+        if (currentLevel.id === id) setCurrentLevel({ type: 'root', id: null });
+      } catch (err) {
+        alert(err.message || 'Error deleting workspace');
       }
-
-      .workspace-sidebar {
-        width: 100%;
-        flex-direction: row;
-        overflow-x: auto;
-      }
-
-      .sidebar-card {
-        min-width: 300px;
-      }
+    } else if (type === 'folder') {
+      const parentWsId = currentLevel.ws?.id;
+      setWorkspaces(workspaces.map(w => {
+        if (w.id === parentWsId) {
+          return { ...w, folders: w.folders.filter(f => f.id !== id) };
+        }
+        return w;
+      }));
+      if (currentLevel.id === id) setCurrentLevel({ type: 'workspace', id: parentWsId, ws: currentLevel.ws });
+    } else if (type === 'video') {
+      const parentWsId = currentLevel.ws?.id;
+      const parentFolderId = currentLevel.folder?.id;
+      setWorkspaces(workspaces.map(w => {
+        if (w.id === parentWsId) {
+          return {
+            ...w,
+            folders: w.folders.map(f => {
+              if (f.id === parentFolderId) {
+                return { ...f, videos: f.videos.filter(v => v.id !== id) };
+              }
+              return f;
+            })
+          };
+        }
+        return w;
+      }));
     }
+  };
 
-    @media (max-width: 768px) {
-      .workspace-header {
-        padding: 16px 20px;
-      }
-
-      .header-content {
-        flex-direction: column;
-        gap: 16px;
-        align-items: flex-start;
-      }
-
-      .workspace-main {
-        padding: 20px;
-        gap: 24px;
-      }
-
-      .projects-grid {
-        grid-template-columns: 1fr;
-      }
+  // Render Helpers
+  const renderWorkspaceItems = (items) => {
+    const sorted = sortItems(items);
+    if (viewMode === 'tile') {
+      return sorted.map(ws => (
+        <WorkspaceCard
+          key={ws.id}
+          workspace={ws}
+          onClick={() => setCurrentLevel({ type: 'workspace', id: ws.id, ws })}
+          contextProps={{
+            onRename: () => renameItem('workspace', ws.id),
+            onAddMembers: ws.type === 'workspace' && ws.userRole === 'OWNER' ? () => alert('Add Members Modal') : null,
+            onSort: () => handleSortChange('name_desc'),
+            onView: () => handleViewChange(viewMode === 'tile' ? 'list' : 'tile'),
+            onDelete: ws.type !== 'personal' && ws.userRole === 'OWNER' ? () => deleteItem('workspace', ws.id) : null
+          }}
+        />
+      ));
     }
-  `;
+    return sorted.map(ws => (
+      <WorkspaceRow
+        key={ws.id}
+        workspace={ws}
+        onClick={() => setCurrentLevel({ type: 'workspace', id: ws.id, ws })}
+        contextProps={{
+          onRename: () => renameItem('workspace', ws.id),
+          onAddMembers: ws.type === 'workspace' && ws.userRole === 'OWNER' ? () => alert('Add Members Modal') : null,
+          onSort: () => handleSortChange('name_desc'),
+          onView: () => handleViewChange(viewMode === 'tile' ? 'list' : 'tile'),
+          onDelete: ws.type !== 'personal' && ws.userRole === 'OWNER' ? () => deleteItem('workspace', ws.id) : null
+        }}
+      />
+    ));
+  };
+
+  const renderFolderItems = (folders) => {
+    const sorted = sortItems(folders);
+    if (viewMode === 'tile') {
+      return sorted.map(f => (
+        <FolderCard
+          key={f.id}
+          folder={f}
+          onClick={() => setCurrentLevel({ type: 'folder', id: f.id, folder: f, ws: currentLevel.ws })}
+          contextProps={{
+            onRename: () => renameItem('folder', f.id),
+            onSort: () => handleSortChange('name_desc'),
+            onView: () => handleViewChange(viewMode === 'tile' ? 'list' : 'tile'),
+            onDelete: () => deleteItem('folder', f.id)
+          }}
+        />
+      ));
+    }
+    return sorted.map(f => (
+      <FolderRow
+        key={f.id}
+        folder={f}
+        onClick={() => setCurrentLevel({ type: 'folder', id: f.id, folder: f, ws: currentLevel.ws })}
+        contextProps={{
+          onRename: () => renameItem('folder', f.id),
+          onSort: () => handleSortChange('name_desc'),
+          onView: () => handleViewChange(viewMode === 'tile' ? 'list' : 'tile'),
+          onDelete: () => deleteItem('folder', f.id)
+        }}
+      />
+    ));
+  };
+
+  const renderVideoItems = (videos) => {
+    const sorted = sortItems(videos);
+    if (viewMode === 'tile') {
+      return sorted.map(v => (
+        <VideoCard
+          key={v.id}
+          video={v}
+          onClick={() => alert(`Play video ${v.name}`)}
+          contextProps={{
+            onRename: () => renameItem('video', v.id),
+            onDelete: () => deleteItem('video', v.id)
+          }}
+        />
+      ));
+    }
+    return sorted.map(v => (
+      <VideoRow
+        key={v.id}
+        video={v}
+        onClick={() => alert(`Play video ${v.name}`)}
+        contextProps={{
+          onRename: () => renameItem('video', v.id),
+          onDelete: () => deleteItem('video', v.id)
+        }}
+      />
+    ));
+  };
+
+  const renderRoot = () => (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <WorkspaceSection
+        title="Personal Workspace"
+        count={personalWorkspace ? 1 : 0}
+        viewMode={viewMode}
+      >
+        {personalWorkspace && renderWorkspaceItems([personalWorkspace])}
+      </WorkspaceSection>
+
+      <WorkspaceSection
+        title="My Workspaces"
+        count={myWorkspaces.length}
+        viewMode={viewMode}
+        emptyMessage="You don't have any custom workspaces yet."
+        emptyActionLabel="Create Workspace"
+        onEmptyAction={() => setIsCreateWorkspaceOpen(true)}
+      >
+        {renderWorkspaceItems(myWorkspaces)}
+      </WorkspaceSection>
+
+      <WorkspaceSection
+        title="Shared with Me"
+        count={sharedWithMe.length}
+        viewMode={viewMode}
+      >
+        {renderWorkspaceItems(sharedWithMe)}
+      </WorkspaceSection>
+    </motion.div>
+  );
+
+  const renderWorkspaceLevel = () => {
+    const ws = workspaces.find(w => w.id === currentLevel.ws?.id);
+    if (!ws) return null;
+
+    return (
+      <motion.div initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
+        <div className="workspace-breadcrumbs">
+          <span className="breadcrumb-link" onClick={() => setCurrentLevel({ type: 'root', id: null })}>Workspaces</span>
+          <span className="breadcrumb-separator">/</span>
+          <span>{ws.name}</span>
+        </div>
+        <WorkspaceSection
+          title="Folders"
+          count={ws.folders.length}
+          viewMode={viewMode}
+          emptyMessage="This workspace is empty. Create a folder to get started."
+          emptyActionLabel="Create Video & Folder"
+          onEmptyAction={() => setIsGlobalCreateOpen(true)}
+        >
+          {renderFolderItems(ws.folders)}
+        </WorkspaceSection>
+      </motion.div>
+    );
+  };
+
+  const renderFolderLevel = () => {
+    const ws = workspaces.find(w => w.id === currentLevel.ws?.id);
+    const folder = ws?.folders.find(f => f.id === currentLevel.folder?.id);
+    if (!ws || !folder) return null;
+
+    return (
+      <motion.div initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
+        <div className="workspace-breadcrumbs">
+          <span className="breadcrumb-link" onClick={() => setCurrentLevel({ type: 'root', id: null })}>Workspaces</span>
+          <span className="breadcrumb-separator">/</span>
+          <span className="breadcrumb-link" onClick={() => setCurrentLevel({ type: 'workspace', id: ws.id, ws })}>{ws.name}</span>
+          <span className="breadcrumb-separator">/</span>
+          <span>{folder.name}</span>
+        </div>
+        <WorkspaceSection
+          title="Videos"
+          count={folder.videos.length}
+          viewMode={viewMode}
+          emptyMessage="This folder is empty. Create a video to get started."
+          emptyActionLabel="Create Video"
+          onEmptyAction={() => setIsGlobalCreateOpen(true)}
+        >
+          {renderVideoItems(folder.videos)}
+        </WorkspaceSection>
+      </motion.div>
+    );
+  };
 
   return (
-    <motion.div 
+    <motion.div
       className="team-workspace-container"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
     >
-      <style>{styles}</style>
-
-      {/* Header */}
-      <header className="workspace-header">
-        <div className="header-content">
-          <div className="header-left">
-            <button 
-              className="workspace-selector-trigger"
-              onClick={() => setShowWorkspaceSidebar(true)}
-            >
-              <div className={`workspace-selector-icon ${currentWorkspace?.type?.toLowerCase() || 'private'}`}>
-                {currentWorkspace?.type === 'TEAM' ? <MdGroup /> : <MdBusiness />}
-              </div>
-              <div className="workspace-selector-info">
-                <h3 className="workspace-selector-name">
-                  {currentWorkspace?.name || 'Select Workspace'}
-                </h3>
-                <p className="workspace-selector-type">
-                  {currentWorkspace?.type === 'TEAM' ? <MdGroup /> : <MdBusiness />}
-                  {currentWorkspace?.type === 'TEAM' ? 'Team Workspace' : 'Private Workspace'}
-                  {currentWorkspace?.userRole && (
-                    <span className={`workspace-role-badge ${currentWorkspace.userRole.toLowerCase()}`}>
-                      {currentWorkspace.userRole}
-                    </span>
-                  )}
-                </p>
-              </div>
-              <MdArrowDropDown className="workspace-selector-arrow" size={20} />
-            </button>
-          </div>
-          <div className="header-actions">
-            <button 
-              className="header-btn notification-btn"
-              onClick={() => setShowNotifications(true)}
-            >
-              <MdNotifications size={18} />
-              {invitations.length > 0 && (
-                <span className="notification-badge">{invitations.length}</span>
-              )}
-            </button>
-            <button className="header-btn" onClick={() => setShowInviteModal(true)}>
-              <MdPersonAdd size={18} />
-              Invite Members
-            </button>
-            <button className="header-btn" onClick={() => setShowSettings(true)}>
-              <MdSettings size={18} />
-              Settings
-            </button>
-            <button className="header-btn primary" onClick={onCreate}>
-              <MdAdd size={18} />
-              New Project
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <div className="workspace-main">
-        <main className="workspace-content">
-          {/* Invitations Section */}
-          {invitations.length > 0 && (
-            <section className="glass-card">
-              <div className="card-header">
-                <h2 className="card-title">
-                  <MdMail size={20} />
-                  Pending Invitations
-                </h2>
-                <span style={{ color: '#64748b', fontSize: '14px' }}>
-                  {invitations.length} invitations
-                </span>
-              </div>
-              <div className="invitations-list">
-                {invitations.map((invitation) => (
-                  <div key={invitation.id} className="invitation-item">
-                    <div className="invitation-info">
-                      <div className="invitation-icon">
-                        <MdMail size={24} />
-                      </div>
-                      <div className="invitation-details">
-                        <div className="invitation-workspace">{invitation.workspaceName}</div>
-                        <div className="invitation-meta">
-                          Invited by {invitation.invitedBy} • {invitation.role} role
-                        </div>
-                      </div>
-                    </div>
-                    <div className="invitation-actions">
-                      <button 
-                        className="invitation-btn accept"
-                        onClick={() => handleAcceptInvitation(invitation.id)}
-                      >
-                        Accept
-                      </button>
-                      <button 
-                        className="invitation-btn decline"
-                        onClick={() => handleDeclineInvitation(invitation.id)}
-                      >
-                        Decline
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Projects Section */}
-          <section className="glass-card">
-            <div className="card-header">
-              <h2 className="card-title">
-                <MdVideoLibrary size={20} />
-                Recent Projects
-              </h2>
-              <button className="header-btn" onClick={onCreate}>
-                <MdAdd size={16} />
-                Create New
-              </button>
-            </div>
-            {projects.length > 0 ? (
-              <div className="projects-grid">
-                {projects.map((project) => (
-                  <motion.div 
-                    key={project.id}
-                    className="project-card"
-                    whileHover={{ y: -4 }}
-                    onClick={() => console.log('Open project:', project.id)}
-                  >
-                    <div 
-                      className="project-thumbnail" 
-                      style={{ backgroundImage: `url(${project.thumbnail})` }}
-                    />
-                    <div className="project-details">
-                      <h3 className="project-title">{project.title}</h3>
-                      <div className="project-meta">
-                        <span>{project.updated}</span>
-                        <div className="project-members">
-                          {project.members.map((member, idx) => (
-                            <img 
-                              key={idx}
-                              src={`https://ui-avatars.com/api/?name=${member}&background=2563eb&color=fff&size=24`}
-                              alt={member}
-                              className="member-avatar"
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            ) : (
-              <div className="empty-state">
-                <MdVideoLibrary size={48} />
-                <h3>No projects yet</h3>
-                <p>Create your first video project to get started</p>
-              </div>
-            )}
-          </section>
-        </main>
-
-        {/* Sidebar */}
-        <aside className="workspace-sidebar">
-          {/* Members Card */}
-          <div className="sidebar-card">
-            <h3 className="sidebar-title">Workspace Members</h3>
-            {workspaceMembers.length > 0 ? (
-              <div className="members-list">
-                {workspaceMembers.slice(0, 5).map((member, idx) => (
-                  <div key={idx} className="member-item">
-                    <img 
-                      src={member.user?.avatar || `https://ui-avatars.com/api/?name=${member.user?.name || member.name}&background=2563eb&color=fff&size=40`}
-                      alt={member.user?.name || member.name}
-                      className="member-avatar"
-                    />
-                    <div className="member-info">
-                      <div className="member-name">{member.user?.name || member.name}</div>
-                      <div className="member-role">{member.role}</div>
-                    </div>
-                    {member.role === 'OWNER' && (
-                      <span className="role-badge owner">Owner</span>
-                    )}
-                  </div>
-                ))}
-                {workspaceMembers.length > 5 && (
-                  <button className="action-item">
-                    <span className="action-text">View all {workspaceMembers.length} members</span>
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="empty-state">
-                <p>No members yet</p>
-              </div>
-            )}
-          </div>
-
-          {/* Quick Actions Card */}
-          <div className="sidebar-card">
-            <h3 className="sidebar-title">Quick Actions</h3>
-            <div className="quick-actions">
-              <div className="action-item" onClick={() => setShowInviteModal(true)}>
-                <MdPersonAdd size={18} />
-                <span className="action-text">Invite Members</span>
-              </div>
-              <div className="action-item" onClick={() => setShowSettings(true)}>
-                <MdSettings size={18} />
-                <span className="action-text">Workspace Settings</span>
-              </div>
-              <div className="action-item">
-                <MdTrendingUp size={18} />
-                <span className="action-text">View Analytics</span>
-              </div>
-              <div className="action-item">
-                <MdStorage size={18} />
-                <span className="action-text">Manage Storage</span>
-              </div>
-            </div>
-          </div>
-        </aside>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '-16px', position: 'relative', zIndex: 10 }}>
+        <button className="icon-btn" style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 12px', marginRight: '16px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={() => setShowNotifications(true)}>
+          <MdMail size={18} color="#64748b" />
+          {invitations.length > 0 && <span style={{ background: '#ef4444', color: 'white', borderRadius: '12px', padding: '2px 6px', fontSize: '10px', fontWeight: 'bold' }}>{invitations.length}</span>}
+        </button>
       </div>
 
-      {/* Modals */}
-      <WorkspaceSidebar
-        isOpen={showWorkspaceSidebar}
-        onClose={() => setShowWorkspaceSidebar(false)}
-        workspaces={workspaces}
-        currentWorkspace={currentWorkspace}
-        onWorkspaceChange={setCurrentWorkspace}
-        onCreateWorkspace={() => setShowCreateForm(true)}
-        loading={loading}
+      <WorkspaceHeader
+        viewMode={viewMode}
+        onViewChange={handleViewChange}
+        sortBy={sortBy}
+        onSortChange={handleSortChange}
+        onCreateClick={() => setIsGlobalCreateOpen(true)}
       />
 
-      {/* Notifications Panel */}
-      {showNotifications && (
-        <motion.div 
-          className="notifications-overlay"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          onClick={() => setShowNotifications(false)}
-        >
-          <motion.div 
-            className="notifications-panel"
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="notifications-header">
-              <h2 className="notifications-title">
-                <MdMail size={20} />
-                Workspace Invitations
-              </h2>
-              <button className="notifications-close" onClick={() => setShowNotifications(false)}>
-                <MdClose size={18} />
-              </button>
-            </div>
+      <div className="workspace-content-area" style={{ flex: 1 }}>
+        {loading && workspaces.length === 0 ? (
+          <p style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Loading workspaces...</p>
+        ) : (
+          <>
+            {currentLevel.type === 'root' && renderRoot()}
+            {currentLevel.type === 'workspace' && renderWorkspaceLevel()}
+            {currentLevel.type === 'folder' && renderFolderLevel()}
+          </>
+        )}
+      </div>
 
-            {/* Content */}
-            <div className="notifications-content">
-              {invitations.length > 0 ? (
-                <div className="invitations-list">
-                  {invitations.map((invitation) => (
-                    <div key={invitation.id} className="invitation-card">
-                      <div className="invitation-header">
-                        <div className="invitation-icon">
-                          <MdMail />
-                        </div>
-                        <div className="invitation-details">
-                          <h4 className="invitation-workspace">{invitation.workspaceName}</h4>
-                          <div className="invitation-meta">
-                            <span>Invited by {invitation.invitedBy}</span>
-                            <span className="invitation-role">{invitation.role}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="invitation-actions">
-                        <button 
-                          className="invitation-btn accept"
-                          onClick={() => handleAcceptInvitation(invitation.id)}
-                        >
-                          <MdCheck size={16} />
-                          Accept
-                        </button>
-                        <button 
-                          className="invitation-btn decline"
-                          onClick={() => handleDeclineInvitation(invitation.id)}
-                        >
-                          <MdClose size={16} />
-                          Decline
-                        </button>
+      <CreateWorkspaceModal
+        isOpen={isCreateWorkspaceOpen}
+        onClose={() => setIsCreateWorkspaceOpen(false)}
+        onCreate={handleCreateWorkspace}
+        userPlan={userPlan}
+        currentWorkspaceCount={myWorkspaces.length}
+      />
+
+      <GlobalCreateModal
+        isOpen={isGlobalCreateOpen}
+        onClose={() => setIsGlobalCreateOpen(false)}
+        onCreateVideo={handleGlobalCreate}
+        workspaces={workspaces}
+      />
+
+      {/* Notifications Panel Restored */}
+      <AnimatePresence>
+        {showNotifications && (
+          <motion.div
+            className="notifications-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', justifyContent: 'flex-end' }}
+            onClick={() => setShowNotifications(false)}
+          >
+            <motion.div
+              className="notifications-panel"
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              style={{ width: '400px', background: 'white', height: '100vh', padding: '24px', display: 'flex', flexDirection: 'column' }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <h2 style={{ margin: 0, fontSize: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}><MdMail /> Invitations</h2>
+                <button onClick={() => setShowNotifications(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}><MdClose size={20} /></button>
+              </div>
+
+              <div style={{ flex: 1, overflowY: 'auto' }}>
+                {invitations.length > 0 ? (
+                  invitations.map(inv => (
+                    <div key={inv.id} style={{ border: '1px solid #e2e8f0', padding: '16px', borderRadius: '12px', marginBottom: '12px' }}>
+                      <h4 style={{ margin: '0 0 4px 0' }}>{inv.workspaceName}</h4>
+                      <p style={{ margin: '0 0 12px 0', fontSize: '12px', color: '#64748b' }}>Invited by {inv.invitedBy} • Role: {inv.role}</p>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button onClick={() => handleAcceptInvitation(inv.id)} style={{ padding: '6px 12px', background: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', flex: 1 }}><MdCheck /> Accept</button>
+                        <button onClick={() => handleDeclineInvitation(inv.id)} style={{ padding: '6px 12px', background: '#f1f5f9', color: '#64748b', border: 'none', borderRadius: '6px', cursor: 'pointer', flex: 1 }}><MdClose /> Decline</button>
                       </div>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="notifications-empty">
-                  <MdMail size={48} />
-                  <h3>No Pending Invitations</h3>
-                  <p>You don't have any workspace invitations at the moment.</p>
-                </div>
-              )}
-            </div>
-
-            {/* Footer */}
-            <div className="notifications-footer">
-              <p className="footer-text">
-                {invitations.length} {invitations.length === 1 ? 'invitation' : 'invitations'} pending
-              </p>
-            </div>
+                  ))
+                ) : (
+                  <div style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0' }}>No pending invitations</div>
+                )}
+              </div>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
+        )}
+      </AnimatePresence>
 
-      <InviteMembersModal
-        isOpen={showInviteModal}
-        onClose={() => setShowInviteModal(false)}
-        workspace={currentWorkspace}
-        onInvite={handleInviteMembers}
-        loading={loading}
-        error={error}
-      />
-
-      <WorkspaceCreateForm
-        isOpen={showCreateForm}
-        onClose={() => setShowCreateForm(false)}
-        onSubmit={handleCreateWorkspace}
-        loading={loading}
-        error={error}
-      />
-
-      <WorkspaceSettings
-        workspace={currentWorkspace}
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-        onUpdate={handleUpdateWorkspace}
-        onDelete={handleDeleteWorkspace}
-        loading={loading}
-        error={error}
-      />
     </motion.div>
   );
 };

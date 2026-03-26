@@ -1,0 +1,83 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { MdViewModule, MdViewList, MdSort, MdAdd, MdKeyboardArrowDown } from 'react-icons/md';
+
+const WorkspaceHeader = ({ viewMode, onViewChange, sortBy, onSortChange, onCreateClick }) => {
+    const [isSortOpen, setIsSortOpen] = useState(false);
+    const sortRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (sortRef.current && !sortRef.current.contains(event.target)) {
+                setIsSortOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const sortOptions = [
+        { value: 'name_asc', label: 'Name (A-Z)' },
+        { value: 'name_desc', label: 'Name (Z-A)' },
+        { value: 'date_created', label: 'Date Created' },
+        { value: 'last_modified', label: 'Last Modified' }
+    ];
+
+    const currentSortLabel = sortOptions.find(opt => opt.value === sortBy)?.label || 'Sort By';
+
+    return (
+        <div className="workspace-header-container">
+            <div className="workspace-header-title">
+                <h2>Workspaces</h2>
+            </div>
+            <div className="workspace-header-actions">
+                <div
+                    className="view-toggle-switch"
+                    onClick={() => onViewChange(viewMode === 'tile' ? 'list' : 'tile')}
+                    title={viewMode === 'tile' ? 'Switch to List View' : 'Switch to Tile View'}
+                >
+                    <div className={`switch-knob ${viewMode}`}></div>
+                    <div className={`switch-icon ${viewMode === 'tile' ? 'active' : ''}`}>
+                        <MdViewModule size={16} />
+                    </div>
+                    <div className={`switch-icon ${viewMode === 'list' ? 'active' : ''}`}>
+                        <MdViewList size={16} />
+                    </div>
+                </div>
+
+                <div className="custom-sort-dropdown" ref={sortRef}>
+                    <button
+                        className="sort-dropdown-btn"
+                        onClick={() => setIsSortOpen(!isSortOpen)}
+                    >
+                        <MdSort size={18} className="sort-icon" />
+                        <span className="sort-label">{currentSortLabel}</span>
+                        <MdKeyboardArrowDown size={18} className={`sort-arrow ${isSortOpen ? 'open' : ''}`} />
+                    </button>
+
+                    {isSortOpen && (
+                        <div className="sort-dropdown-menu fade-in-fast">
+                            {sortOptions.map(option => (
+                                <button
+                                    key={option.value}
+                                    className={`sort-menu-item ${sortBy === option.value ? 'active' : ''}`}
+                                    onClick={() => {
+                                        onSortChange(option.value);
+                                        setIsSortOpen(false);
+                                    }}
+                                >
+                                    {option.label}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                <button className="btn-primary" onClick={onCreateClick}>
+                    <MdAdd size={18} /> Create
+                </button>
+            </div>
+        </div>
+    );
+};
+
+export default WorkspaceHeader;
