@@ -66,11 +66,12 @@ const styles = `
 
 /* Title */
 .video-campaigns-title {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 72px;
-  font-weight: 600;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 55px;
+  font-weight: 400;
   margin-bottom: 32px;
-  line-height: 1.1;
+  line-height: 1.2;
+  letter-spacing: -1.5px;
 }
 
 /* Description */

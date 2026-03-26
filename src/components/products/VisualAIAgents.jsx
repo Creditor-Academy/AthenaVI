@@ -117,8 +117,11 @@ const styles = `
 
 .hero-section .hero-title {
   color: #ffffff !important;
-  font-size: 54px;
-  line-height: 1.15;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-weight: 400;
+  letter-spacing: -1.5px;
+  line-height: 1.2;
+  font-size: 55px;
   text-shadow: 0 2px 20px rgba(0,0,0,0.4);
 }
 

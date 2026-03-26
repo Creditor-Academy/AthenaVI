@@ -78,13 +78,15 @@ const styles = `
 }
 
 .hero-title {
+  font-family: 'Georgia', 'Times New Roman', serif;
   font-size: 64px;
-  font-weight: 700;
+  font-weight: 400;
   line-height: 1.15;
   margin: 0 0 32px;
   max-width: 900px;
   text-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-  letter-spacing: -0.5px;
+  letter-spacing: -1.5px;
+  color: #ffffff;
 }
 
 .hero-meta {
@@ -226,11 +228,13 @@ const styles = `
 }
 
 .trending-title {
-  font-size: 42px;
-  font-weight: 700;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 55px;
+  font-weight: 400;
   color: #1e40af;
   margin: 0;
-  letter-spacing: -0.5px;
+  letter-spacing: -1.5px;
+  line-height: 1.2;
 }
 
 .trending-nav {

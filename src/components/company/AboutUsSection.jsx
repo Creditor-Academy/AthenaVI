@@ -43,10 +43,10 @@ const styles = `
 
 .about-hero-title {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: clamp(40px, 5vw, 64px);
+  font-size: 55px;
   font-weight: 400;
   letter-spacing: -1.5px;
-  line-height: 1.15;
+  line-height: 1.2;
   color: #ffffff;
   text-align: center;
   margin: 0;
@@ -69,9 +69,9 @@ const styles = `
 
 .about-intro-heading {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: clamp(40px, 5vw, 64px);
+  font-size: 55px;
   font-weight: 400;
-  line-height: 1.15;
+  line-height: 1.2;
   letter-spacing: -1.5px;
   margin: 0;
 }

@@ -27,10 +27,10 @@ const styles = `
 
 .blog-section-title {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: clamp(40px, 5vw, 64px);
+  font-size: 55px;
   font-weight: 400;
   letter-spacing: -1.5px;
-  line-height: 1.15;
+  line-height: 1.2;
   text-align: center;
   margin: 0 0 40px;
 }
@@ -90,18 +90,6 @@ const styles = `
   display: none;
 }
 
-.blog-section.light .blog-card {
-  background: #ffffff;
-  border: 1px solid rgba(30, 64, 175, 0.1);
-  box-shadow: 0 2px 8px rgba(30, 64, 175, 0.08);
-}
-
-.blog-section.dark .blog-card {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-}
-
 .blog-card {
   border-radius: 20px;
   padding: 0;
@@ -112,18 +100,6 @@ const styles = `
   flex-direction: column;
 }
 
-.blog-section.light .blog-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 32px rgba(30, 64, 175, 0.2);
-  border-color: rgba(59, 130, 246, 0.3);
-}
-
-.blog-section.dark .blog-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
-  border-color: rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.12);
-}
 
 .blog-card-image {
   width: 100%;
@@ -199,17 +175,7 @@ const styles = `
   transition: all 0.3s ease;
   margin-top: auto;
   padding-top: 16px;
-  border-top: 1px solid;
-}
-
-.blog-section.light .blog-read-more {
-  color: #3b82f6;
-  border-color: rgba(30, 64, 175, 0.1);
-}
-
-.blog-section.dark .blog-read-more {
-  color: rgba(255, 255, 255, 0.9);
-  border-color: rgba(255, 255, 255, 0.15);
+  border-top: 1px solid transparent;
 }
 
 .blog-read-more:hover {
@@ -328,6 +294,45 @@ const styles = `
     font-size: 22px;
   }
 }
+
+/* Specific Card Theme Overrides - High Priority */
+.blog-section .blog-card.blue-card {
+  background: #3b82f6;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.blog-section .blog-card.white-card {
+  background: #ffffff;
+  border: 1px solid rgba(30, 64, 175, 0.1);
+  box-shadow: 0 10px 30px rgba(30, 64, 175, 0.08);
+}
+
+.blog-section .blog-card.blue-card:hover {
+  background: #2563eb;
+  box-shadow: 0 20px 40px rgba(59, 130, 246, 0.4);
+}
+
+.blog-section .blog-card.white-card:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 20px 40px rgba(30, 64, 175, 0.2);
+}
+
+.blog-section .blog-card.blue-card .blog-date { color: rgba(255, 255, 255, 0.9) !important; }
+.blog-section .blog-card.blue-card .blog-title { color: #ffffff !important; }
+.blog-section .blog-card.blue-card .blog-excerpt { color: rgba(255, 255, 255, 0.9) !important; }
+.blog-section .blog-card.blue-card .blog-read-more { 
+  color: #ffffff !important; 
+  border-top-color: rgba(255, 255, 255, 0.3) !important; 
+}
+
+.blog-section .blog-card.white-card .blog-date { color: #3b82f6 !important; }
+.blog-section .blog-card.white-card .blog-title { color: #1e4dd0ff !important; }
+.blog-section .blog-card.white-card .blog-excerpt { color: #1e4dd0ff !important; }
+.blog-section .blog-card.white-card .blog-read-more { 
+  color: #2563eb !important; 
+  border-top-color: rgba(30, 64, 175, 0.1) !important; 
+}
 `
 
 function BlogSection({ variant = 'light' }) {
@@ -434,7 +439,10 @@ function BlogSection({ variant = 'light' }) {
               onScroll={checkScrollability}
             >
               {blogPosts.map((post, index) => (
-                <div key={index} className="blog-card">
+                <div 
+                  key={index} 
+                  className={`blog-card ${index % 2 === 0 ? 'blue-card' : 'white-card'}`}
+                >
                   <img 
                     src={post.image} 
                     alt={post.title}
