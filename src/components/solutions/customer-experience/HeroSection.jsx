@@ -1,13 +1,13 @@
 import { MdArrowOutward, MdCheckCircle } from 'react-icons/md'
 import { motion } from 'framer-motion'
-import AIVirtualAssistant from '../../../assets/AI virtual assistant.png'
+import AIVirtualAssistant from '../../../assets/CustomerExpHero.png'
 import CustomerSatisfaction from '../../../assets/CustomerSatisfaction.jpg'
 
 const styles = `
 .cx-hero {
-  min-height: 100vh;
-  margin-top: -80px; /* Offset for navbar */
-  padding: 160px 80px 100px;
+  min-height: 80vh;
+  margin-top: -80px;
+  padding: 150px 80px 40px;
   position: relative;
   display: flex;
   align-items: center;
@@ -26,14 +26,14 @@ const styles = `
   background-image: linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.75)), url(${CustomerSatisfaction});
   background-size: cover;
   background-position: center;
-  filter: blur(8px);
-  transform: scale(1.1); /* Prevent white edges from blur */
+  filter: blur(4px);
+  transform: scale(1.1);
   z-index: 1;
 }
 
 .cx-hero-content {
   flex: 1.2;
-  max-width: 650px;
+  max-width: 700px;
   position: relative;
   z-index: 2;
 }
@@ -48,7 +48,8 @@ const styles = `
   color: #ffffff;
   font-size: 14px;
   font-weight: 600;
-  margin-bottom: 24px;
+  margin-bottom: 10px;
+  margin-top: -5px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -56,11 +57,11 @@ const styles = `
 
 .cx-hero-title {
   font-family: 'Georgia', serif;
-  font-size: 64px;
+  font-size: 48px;
   color: #ffffff;
   margin-bottom: 24px;
   line-height: 1.1;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.02em;
 }
 
@@ -155,18 +156,49 @@ const styles = `
 }
 
 .visual-image-wrapper {
-  background: #ffffff;
-  padding: 20px;
-  border-radius: 32px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
   position: relative;
+  display: inline-flex;
 }
 
 .visual-image-wrapper img {
   width: 100%;
   max-width: 500px;
-  height: auto;
+  height: 550px;
   border-radius: 20px;
+}
+
+.floating-bubble {
+  position: absolute;
+  padding: 16px 18px;
+  border-radius: 24px;
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 10;
+  white-space: nowrap;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.bubble-1 {
+  top: 5%;
+  left: 220px;
+  background: rgba(255, 255, 255, 0.65);
+  color: #1e293b;
+  border-bottom-left-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.bubble-2 {
+  bottom: 18%;
+  right: -50px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.7) 0%, rgba(29, 78, 216, 0.8) 100%);
+  color: #ffffff;
+  border-bottom-right-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 @media (max-width: 1024px) {
@@ -246,7 +278,7 @@ function HeroSection() {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="cx-hero-subheading"
         >
-          Deliver real-time, human-like conversations powered by AI. Create intelligent virtual assistants that engage, respond, and guide users seamlessly—enhancing support, sales, and customer interactions at scale.
+          Deliver real-time, human-like conversations powered by AI. Use intelligent virtual assistants that engage, respond, and guide users seamlessly—enhancing support, sales, and customer interactions at scale.
         </motion.p>
         
         <motion.p 
@@ -300,19 +332,25 @@ function HeroSection() {
         transition={{ duration: 0.7, delay: 0.2 }}
         className="cx-hero-visual"
       >
-        <motion.div 
-          animate={{ 
-            y: [0, -20, 0],
-          }}
-          transition={{ 
-            duration: 4,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-          className="visual-image-wrapper"
-        >
+        <div className="visual-image-wrapper">
           <img src={AIVirtualAssistant} alt="AI Virtual Assistant Dashboard" />
-        </motion.div>
+          
+          <motion.div 
+            className="floating-bubble bubble-1"
+            animate={{ y: [0, -15, 0] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <span style={{ fontSize: '20px' }}></span> Hello there!
+          </motion.div>
+
+          <motion.div 
+            className="floating-bubble bubble-2"
+            animate={{ y: [0, -18, 0] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          >
+            How can I help you?
+          </motion.div>
+        </div>
       </motion.div>
     </section>
   )

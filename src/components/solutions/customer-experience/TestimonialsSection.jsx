@@ -1,87 +1,6 @@
-const styles = `
-.cx-testimonials {
-  padding: 100px 40px;
-  background: #f8fafc;
-  text-align: center;
-}
-
-.cx-testimonials-title {
-  font-family: 'Georgia', serif;
-  font-size: 48px;
-  color: #1e3a8a;
-  margin-bottom: 60px;
-}
-
-.cx-testimonials-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 32px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.cx-testimonial-card {
-  background: white;
-  padding: 40px;
-  border-radius: 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-}
-
-.cx-testimonial-quote {
-  font-size: 18px;
-  color: #475569;
-  line-height: 1.6;
-  margin-bottom: 24px;
-  font-style: italic;
-}
-
-.cx-testimonial-author {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-top: auto;
-}
-
-.cx-author-avatar {
-  width: 48px;
-  height: 48px;
-  background: #e2e8f0;
-  border-radius: 50%;
-  overflow: hidden;
-}
-
-.cx-author-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.cx-author-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.cx-author-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e3a8a;
-}
-
-.cx-author-role {
-  font-size: 14px;
-  color: #64748b;
-}
-
-@media (max-width: 1024px) {
-  .cx-testimonials-grid {
-    grid-template-columns: 1fr;
-    max-width: 600px;
-  }
-}
-`
+import React from 'react';
+import { motion } from 'framer-motion';
+import styles from './TestimonialsSection.module.css';
 
 function TestimonialsSection() {
   const testimonials = [
@@ -103,30 +22,73 @@ function TestimonialsSection() {
       role: "Global Ops, Mundo",
       image: "https://i.pravatar.cc/150?u=elena"
     }
-  ]
+  ];
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.6, ease: "easeOut" }
+    }
+  };
 
   return (
-    <section className="cx-testimonials">
-      <style>{styles}</style>
-      <h2 className="cx-testimonials-title">What Our Customers Say</h2>
-      <div className="cx-testimonials-grid">
-        {testimonials.map((t, i) => (
-          <div key={i} className="cx-testimonial-card">
-            <p className="cx-testimonial-quote">"{t.quote}"</p>
-            <div className="cx-testimonial-author">
-              <div className="cx-author-avatar">
-                <img src={t.image} alt={t.name} />
+    <section className={styles.section}>
+      <div className={`${styles.glowBlob} ${styles.glowTop}`}></div>
+      <div className={`${styles.glowBlob} ${styles.glowBottom}`}></div>
+      
+      <div className={styles.container}>
+        <motion.h2 
+          className={styles.title}
+          initial={{ opacity: 0, y: -20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          viewport={{ once: true }}
+        >
+          What Our Customers Say
+        </motion.h2>
+
+        <motion.div 
+          className={styles.grid}
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+        >
+          {testimonials.map((t, i) => (
+            <motion.div 
+              key={i} 
+              className={styles.card}
+              variants={itemVariants}
+              whileHover={{ y: -8, transition: { duration: 0.3 } }}
+            >
+              <p className={styles.quote}>"{t.quote}"</p>
+              <div className={styles.author}>
+                <div className={styles.avatar}>
+                  <img src={t.image} alt={t.name} />
+                </div>
+                <div className={styles.info}>
+                  <span className={styles.name}>{t.name}</span>
+                  <span className={styles.role}>{t.role}</span>
+                </div>
               </div>
-              <div className="cx-author-info">
-                <span className="cx-author-name">{t.name}</span>
-                <span className="cx-author-role">{t.role}</span>
-              </div>
-            </div>
-          </div>
-        ))}
+            </motion.div>
+          ))}
+        </motion.div>
       </div>
     </section>
-  )
+  );
 }
 
-export default TestimonialsSection
+export default TestimonialsSection;

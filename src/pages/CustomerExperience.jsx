@@ -1,12 +1,11 @@
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import HeroSection from '../components/solutions/customer-experience/HeroSection.jsx'
-import ProblemSolution from '../components/solutions/customer-experience/ProblemSolution.jsx'
 import CoreCapabilities from '../components/solutions/customer-experience/CoreCapabilities.jsx'
-import InteractiveAIExperience from '../components/solutions/customer-experience/InteractiveAIExperience.jsx'
-import ExperienceFeatures from '../components/solutions/customer-experience/ExperienceFeatures.jsx'
+import CXComparison from '../components/solutions/customer-experience/CXComparison.jsx'
+import CXImpact from '../components/solutions/customer-experience/CXImpact.jsx'
 import TestimonialsSection from '../components/solutions/customer-experience/TestimonialsSection.jsx'
-import CTASection from '../components/solutions/customer-experience/CTASection.jsx'
+import CXFinalCTA from '../components/solutions/customer-experience/CXFinalCTA.jsx'
 
 const styles = `
 .customer-experience-page {
@@ -33,12 +32,11 @@ function CustomerExperience({ onLoginClick, onNavigateToEthics, onLogoClick, onN
         />
         
         <HeroSection />
-        <ProblemSolution />
+        <CXComparison />
         <CoreCapabilities />
-        <InteractiveAIExperience />
-        <ExperienceFeatures />
+        <CXImpact />
         <TestimonialsSection />
-        <CTASection />
+        <CXFinalCTA />
         
         <Footer 
           onLogoClick={onLogoClick}

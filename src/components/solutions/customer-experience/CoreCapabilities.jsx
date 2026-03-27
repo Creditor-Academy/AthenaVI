@@ -1,3 +1,4 @@
+import React from 'react'
 import { motion } from 'framer-motion'
 import { 
   HiOutlineChatBubbleLeftRight, 
@@ -5,113 +6,10 @@ import {
   HiOutlineLightBulb, 
   HiOutlineUserGroup, 
   HiOutlineArrowPath, 
-  HiOutlineCubeTransparent 
+  HiOutlineCubeTransparent,
+  HiGlobeAmericas
 } from 'react-icons/hi2'
-
-const styles = `
-.cx-capabilities {
-  padding: 100px 80px;
-  background: #f8fafc;
-  text-align: center;
-}
-
-.cx-capabilities-header {
-  max-width: 800px;
-  margin: 0 auto 60px;
-}
-
-.cx-capabilities-title {
-  font-family: 'Georgia', serif;
-  font-size: 48px;
-  color: #0f172a;
-  margin-bottom: 20px;
-  font-weight: 700;
-}
-
-.cx-capabilities-subheading {
-  font-size: 18px;
-  color: #64748b;
-  line-height: 1.6;
-}
-
-.cx-capabilities-grid {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 32px;
-}
-
-.cx-capability-card {
-  background: #ffffff;
-  padding: 40px 32px;
-  border-radius: 20px;
-  text-align: left;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  border: 1px solid #f1f5f9;
-}
-
-.cx-capability-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  border-color: #e2e8f0;
-}
-
-.cx-capability-icon {
-  width: 56px;
-  height: 56px;
-  background: #eff6ff;
-  color: #2563eb;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  margin-bottom: 8px;
-}
-
-.cx-capability-title {
-  font-size: 22px;
-  color: #1e293b;
-  font-weight: 600;
-  margin-bottom: 12px;
-}
-
-.cx-capability-desc {
-  font-size: 16px;
-  color: #64748b;
-  line-height: 1.6;
-}
-
-@media (max-width: 1024px) {
-  .cx-capabilities {
-    padding: 80px 40px;
-  }
-  .cx-capabilities-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .cx-capabilities-title {
-    font-size: 36px;
-  }
-  .cx-capabilities-grid {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-}
-
-@media (max-width: 480px) {
-  .cx-capabilities {
-    padding: 60px 20px;
-  }
-}
-`
+import styles from './CoreCapabilities.module.css'
 
 const capabilities = [
   {
@@ -135,65 +33,72 @@ const capabilities = [
     desc: "Use realistic AI avatars to create engaging and relatable interactions."
   },
   {
-    icon: <HiOutlineArrowPath />,
-    title: "Seamless Conversation Flow",
-    desc: "Pause, respond, and resume conversations without breaking the user experience."
-  },
-  {
     icon: <HiOutlineCubeTransparent />,
     title: "Scalable Interaction System",
     desc: "Handle multiple users and sessions efficiently without performance loss."
   }
 ]
 
-function CoreCapabilities() {
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  }
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-  }
-
+const CoreCapabilities = () => {
   return (
-    <section className="cx-capabilities">
-      <style>{styles}</style>
-      
-      <div className="cx-capabilities-header">
-        <h2 className="cx-capabilities-title">Powerful AI Capabilities</h2>
-        <p className="cx-capabilities-subheading">
-          Our platform combines conversational intelligence with human-like interaction to deliver a superior customer experience.
-        </p>
-      </div>
-
-      <motion.div 
-        variants={container}
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true }}
-        className="cx-capabilities-grid"
-      >
-        {capabilities.map((cap, index) => (
+    <section className={styles.section}>
+      <div className={styles.layout}>
+        {/* Left Side: The "Core" Disc and Arc */}
+        <div className={styles.leftContainer}>
+          <div className={styles.arcCircle}></div>
           <motion.div 
-            key={index}
-            variants={item}
-            className="cx-capability-card"
+            className={styles.centralDisc}
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
           >
-            <div className="cx-capability-icon">
-              {cap.icon}
+            <div className={styles.discIcon}>
+              <HiGlobeAmericas />
             </div>
-            <h3 className="cx-capability-title">{cap.title}</h3>
-            <p className="cx-capability-desc">{cap.desc}</p>
+            <h2 className={styles.discTitle}>POWERFUL<br />CAPABILITIES</h2>
+            <div className={styles.discDivider} />
+            <p className={styles.discDesc}>
+              Our platform combines conversational intelligence with human-like interaction to deliver a superior customer experience.
+            </p>
           </motion.div>
-        ))}
-      </motion.div>
+        </div>
+
+        {/* Right Side: The Infographic Stream */}
+        <div className={styles.rightSide}>
+          {capabilities.map((cap, index) => (
+            <motion.div 
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.1, duration: 0.6, ease: "easeOut" }}
+              viewport={{ once: true }}
+              key={index}
+              className={`${styles.itemRow} ${styles[`row${index + 1}`]}`}
+            >
+              {/* Connector Line from Arc to Icon */}
+              <div className={styles.connectorLine}>
+                <div className={styles.connectorDot} />
+              </div>
+
+              {/* Icon Circle */}
+              <div className={styles.iconCircle}>
+                {cap.icon}
+              </div>
+              
+              {/* Dark Card */}
+              <div className={styles.card}>
+                {/* Number Overlay */}
+                <div className={styles.itemNumber}>
+                  0{index + 1}
+                </div>
+                
+                <h3 className={styles.cardTitle}>{cap.title}</h3>
+                <p className={styles.cardDesc}>{cap.desc}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
     </section>
   )
 }
