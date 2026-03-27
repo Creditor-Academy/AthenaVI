@@ -478,19 +478,14 @@ const TeamWorkspace = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
     >
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '-16px', position: 'relative', zIndex: 10 }}>
-        <button className="icon-btn" style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 12px', marginRight: '16px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={() => setShowNotifications(true)}>
-          <MdMail size={18} color="#64748b" />
-          {invitations.length > 0 && <span style={{ background: '#ef4444', color: 'white', borderRadius: '12px', padding: '2px 6px', fontSize: '10px', fontWeight: 'bold' }}>{invitations.length}</span>}
-        </button>
-      </div>
-
       <WorkspaceHeader
         viewMode={viewMode}
         onViewChange={handleViewChange}
         sortBy={sortBy}
         onSortChange={handleSortChange}
         onCreateClick={() => setIsGlobalCreateOpen(true)}
+        invitationCount={invitations.length}
+        onInviteClick={() => setShowNotifications(true)}
       />
 
       <div className="workspace-content-area" style={{ flex: 1 }}>
