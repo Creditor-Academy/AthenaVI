@@ -11,7 +11,8 @@ import {
   MdAutoAwesome,
   MdShapeLine,
   MdLayers,
-  MdClose
+  MdClose,
+  MdSearch
 } from 'react-icons/md'
 import { predefinedAvatars, predefinedMedia, pageTemplates, predefinedVideos, predefinedAudios, predefinedShapes } from '../../constants/editorData'
 import StaticPreview from './StaticPreview'
@@ -30,17 +31,16 @@ const EditorSidebar = ({
 }) => {
   const [previewTemplate, setPreviewTemplate] = useState(null)
   const tools = [
-    { id: 'avatar', icon: MdPerson, label: 'Avatar' },
-    { id: 'mic', icon: MdMic, label: 'Voice' },
-    { id: 'image', icon: MdPhotoLibrary, label: 'Images' },
-    { id: 'video', icon: MdVideoLibrary, label: 'Videos' },
-    { id: 'uploads', icon: MdCloudUpload, label: 'Uploads' },
-    { id: 'stock', icon: MdFolder, label: 'Stock' },
-    { id: 'templates', icon: MdAutoAwesome, label: 'Templates' },
-    { id: 'text', icon: MdTextFields, label: 'Text' },
-    { id: 'magic', icon: MdAutoAwesome, label: 'AI Tools' },
-    { id: 'shapes', icon: MdShapeLine, label: 'Shapes' },
-    { id: 'layers', icon: MdLayers, label: 'Layers' }
+    { id: 'avatar',    icon: MdPerson,        label: 'Avatar' },
+    { id: 'mic',       icon: MdMic,           label: 'Voice' },
+    { id: 'image',     icon: MdPhotoLibrary,  label: 'Images' },
+    { id: 'video',     icon: MdVideoLibrary,  label: 'Videos' },
+    { id: 'uploads',   icon: MdCloudUpload,   label: 'Uploads' },
+    { id: 'templates', icon: MdAutoAwesome,   label: 'Templates' },
+    { id: 'text',      icon: MdTextFields,    label: 'Text' },
+    { id: 'magic',     icon: MdAutoAwesome,   label: 'AI Tools' },
+    { id: 'shapes',    icon: MdShapeLine,     label: 'Shapes' },
+    { id: 'layers',    icon: MdLayers,        label: 'Layers' }
   ]
 
   const renderToolPanel = () => {
@@ -50,8 +50,8 @@ const EditorSidebar = ({
       case 'avatar':
         return (
           <div className="tool-panel-content">
-            <h3 className="tool-panel-title">Select Avatar</h3>
             <div className="search-box">
+              <MdSearch className="search-icon" size={18} />
               <input type="text" placeholder="Search avatars..." className="search-input" />
             </div>
             <div className="avatar-grid">
@@ -75,8 +75,8 @@ const EditorSidebar = ({
       case 'image':
         return (
           <div className="tool-panel-content">
-            <h3 className="tool-panel-title">Image Library</h3>
             <div className="search-box">
+              <MdSearch className="search-icon" size={18} />
               <input type="text" placeholder="Search images..." className="search-input" />
             </div>
             <div className="media-grid">
@@ -97,7 +97,6 @@ const EditorSidebar = ({
       case 'uploads':
         return (
           <div className="tool-panel-content">
-            <h3 className="tool-panel-title">Upload Media</h3>
             <div
               className="upload-area"
               onClick={() => {
@@ -137,7 +136,6 @@ const EditorSidebar = ({
       case 'templates':
         return (
           <div className="tool-panel-content">
-            <h3 className="tool-panel-title">Page Templates</h3>
             <div className="media-grid">
               {pageTemplates.map(template => (
                 <div
@@ -157,7 +155,7 @@ const EditorSidebar = ({
                 <div className="template-modal" style={{ maxWidth: '400px', width: '90%' }}>
                   <div className="preview-modal-header">
                     <h3 className="preview-modal-title" style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ color: '#1a73e8', display: 'flex' }}>{previewTemplate.icon}</span>
+                      <span style={{ color: 'var(--primary)', display: 'flex' }}>{previewTemplate.icon}</span>
                       {previewTemplate.name}
                     </h3>
                     <button className="preview-modal-close" onClick={() => setPreviewTemplate(null)}>
@@ -172,8 +170,8 @@ const EditorSidebar = ({
                       borderRadius: '8px',
                       overflow: 'hidden',
                       position: 'relative',
-                      border: '1px solid #dadce0',
-                      background: '#f8f9fa',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-surface)',
                       pointerEvents: 'none',
                       marginBottom: '16px'
                     }}>
@@ -186,7 +184,7 @@ const EditorSidebar = ({
                       }} />
                     </div>
 
-                    <p style={{ color: '#5f6368', fontSize: '14px', marginBottom: '24px' }}>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px' }}>
                       {previewTemplate.description}
                     </p>
 
@@ -220,9 +218,8 @@ const EditorSidebar = ({
       case 'text':
         return (
           <div className="tool-panel-content">
-            <h3 className="tool-panel-title">Text Styling</h3>
             {!activeSceneId ? (
-              <div style={{ padding: '20px', textAlign: 'center', color: '#5f6368' }}>
+              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
                 Please select a scene first
               </div>
             ) : (
@@ -246,7 +243,7 @@ const EditorSidebar = ({
                     )}
                   </div>
                 ))}
-                <div style={{ height: '8px', borderBottom: '1px solid #e8eaed', margin: '16px 0' }} />
+                <div style={{ height: '8px', borderBottom: '1px solid var(--border-color)', margin: '16px 0' }} />
                 <div className="property-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                   <div>
                     <label className="property-label">Title Size</label>
@@ -294,10 +291,9 @@ const EditorSidebar = ({
       case 'layers':
         return (
           <div className="tool-panel-content">
-            <h3 className="tool-panel-title">B-Roll & Overlays</h3>
             <div className="layers-list">
               {(activeScene?.layers || []).length === 0 ? (
-                <div style={{ padding: '20px', textAlign: 'center', color: '#5f6368', fontSize: '13px', border: '1px dashed #dadce0', borderRadius: '8px', background: '#f8f9fa' }}>
+                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px', border: '1px dashed var(--border-color)', borderRadius: '8px', background: 'var(--bg-surface)' }}>
                   No extra layers in this scene. Add media from the library to see them here.
                 </div>
               ) : (
@@ -324,7 +320,6 @@ const EditorSidebar = ({
       case 'video':
         return (
           <div className="tool-panel-content">
-            <h3 className="tool-panel-title">Video Library</h3>
             <div className="media-grid">
               {predefinedVideos.map((video) => (
                 <div
@@ -345,7 +340,7 @@ const EditorSidebar = ({
         return (
           <div className="tool-panel-content">
             <div className="tool-section">
-              <h3 className="tool-panel-title">AI Voices</h3>
+              <h4 className="tool-section-title">AI Voices</h4>
               <div className="voice-tabs">
                 <button className="voice-tab active">SULTAN</button>
                 <button className="voice-tab">MODERN</button>
@@ -374,7 +369,7 @@ const EditorSidebar = ({
             </div>
 
             <div className="tool-section" style={{ marginTop: '24px' }}>
-              <h3 className="tool-panel-title">Background Music</h3>
+              <h4 className="tool-section-title">Background Music</h4>
               <div className="audio-list">
                 {predefinedAudios.map((audio) => (
                   <div
@@ -383,7 +378,7 @@ const EditorSidebar = ({
                     onClick={() => alert(`Applied ${audio.name}`)}
                   >
                     <div className="audio-info">
-                      <MdMic size={20} color="#1a73e8" />
+                      <MdMic size={20} color="var(--primary)" />
                       <span>{audio.name}</span>
                     </div>
                     <span className="audio-duration">
@@ -399,7 +394,6 @@ const EditorSidebar = ({
       case 'stock':
         return (
           <div className="tool-panel-content">
-            <h3 className="tool-panel-title">Stock Library</h3>
             <div className="media-grid">
               {[...predefinedMedia, ...predefinedVideos].map((media) => (
                 <div
@@ -419,7 +413,6 @@ const EditorSidebar = ({
       case 'shapes':
         return (
           <div className="tool-panel-content">
-            <h3 className="tool-panel-title">Shapes</h3>
             <div className="shape-grid">
               {predefinedShapes.map((shape) => (
                 <div
@@ -444,9 +437,20 @@ const EditorSidebar = ({
       default:
         return (
           <div className="tool-panel-content">
-            <h3 className="tool-panel-title">{selectedTool}</h3>
-            <div style={{ padding: '20px', textAlign: 'center', color: '#5f6368' }}>
-              Tool panel coming soon
+            <div style={{
+              padding: '32px 20px',
+              textAlign: 'center',
+              color: 'var(--text-muted)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '12px'
+            }}>
+              <div style={{ fontSize: '36px', opacity: 0.3 }}>🔧</div>
+              <div style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-main)' }}>
+                {tools.find(t => t.id === selectedTool)?.label}
+              </div>
+              <div style={{ fontSize: '13px' }}>This tool panel is coming soon.</div>
             </div>
           </div>
         )
@@ -464,7 +468,7 @@ const EditorSidebar = ({
               onClick={() => setSelectedTool(selectedTool === tool.id ? null : tool.id)}
               title={tool.label}
             >
-              <tool.icon size={20} />
+              <tool.icon size={22} />
             </button>
           ))}
         </div>
@@ -473,15 +477,21 @@ const EditorSidebar = ({
       {selectedTool && showPanelOnly && (
         <div className="tool-panel">
           <div className="tool-panel-header">
-            <h3 className="tool-panel-title">
-              {tools.find(t => t.id === selectedTool)?.label || 'Tool Panel'}
-            </h3>
+            <div className="tool-panel-header-left">
+              {(() => {
+                const t = tools.find(t => t.id === selectedTool)
+                return t ? <t.icon size={18} style={{ color: 'var(--primary)', flexShrink: 0 }} /> : null
+              })()}
+              <h3 className="tool-panel-title">
+                {tools.find(t => t.id === selectedTool)?.label || 'Tool Panel'}
+              </h3>
+            </div>
             <button
               className="tool-panel-close"
               onClick={() => setSelectedTool(null)}
-              title="Close panel"
+              title="Close panel  (Esc)"
             >
-              ×
+              ✕
             </button>
           </div>
           <div className="tool-panel-body">
