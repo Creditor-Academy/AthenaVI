@@ -10,40 +10,50 @@ const styles = `
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 14px 18px;
   background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 280px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 300px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+  position: relative;
 }
 
 .workspace-selector-trigger:hover {
-  border-color: #d1d5db;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.workspace-selector-trigger.open {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .workspace-selector-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 20px;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .workspace-selector-icon.private {
-  background: #f3f4f6;
-  color: #6b7280;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  color: #64748b;
+  border: 1px solid #e2e8f0;
 }
 
 .workspace-selector-icon.team {
-  background: #dbeafe;
-  color: #3b82f6;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #2563eb;
+  border: 1px solid #93c5fd;
 }
 
 .workspace-selector-info {
@@ -81,88 +91,98 @@ const styles = `
 
 .workspace-dropdown {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 12px);
   left: 0;
   right: 0;
   background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.12), 0 12px 25px rgba(0, 0, 0, 0.08);
+  z-index: 9999;
   overflow: hidden;
-  animation: slideDown 0.2s ease;
-  max-height: 400px;
+  animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  max-height: 480px;
   overflow-y: auto;
+  backdrop-filter: blur(20px);
 }
 
 @keyframes slideDown {
   from {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: translateY(-12px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
 .workspace-dropdown-header {
-  padding: 16px;
+  padding: 20px 24px;
   border-bottom: 1px solid #f1f5f9;
-  background: #f8fafc;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
 .workspace-dropdown-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
   margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .workspace-list {
-  padding: 8px;
+  padding: 12px;
 }
 
 .workspace-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 8px;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: 14px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid transparent;
+  position: relative;
+  margin-bottom: 4px;
 }
 
 .workspace-item:hover {
-  background: #f8fafc;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-color: #e2e8f0;
+  transform: translateX(4px);
 }
 
 .workspace-item.active {
-  background: #eff6ff;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .workspace-item-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 18px;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .workspace-item-icon.private {
-  background: #f3f4f6;
-  color: #6b7280;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  color: #64748b;
+  border: 1px solid #e2e8f0;
 }
 
 .workspace-item-icon.team {
-  background: #dbeafe;
-  color: #3b82f6;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #2563eb;
+  border: 1px solid #93c5fd;
 }
 
 .workspace-item-info {
@@ -172,17 +192,19 @@ const styles = `
 
 .workspace-item-name {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   color: #1e293b;
-  margin: 0 0 2px 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin: 0;
+  line-height: 1.4;
 }
 
 .workspace-item-type {
-  font-size: 11px;
+  font-size: 12px;
   color: #64748b;
+  margin: 2px 0 0 0;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
   margin: 0;
   display: flex;
   align-items: center;
@@ -327,7 +349,9 @@ function WorkspaceSelector({
     document.addEventListener('click', handleClickOutside)
   }
 
-  const currentWorkspaceData = workspaces.find(w => w.id === currentWorkspace?.id) || currentWorkspace
+  const currentWorkspaceData = currentWorkspace?.id 
+    ? workspaces.find(w => w.id === currentWorkspace.id) || currentWorkspace
+    : currentWorkspace
 
   return (
     <>
@@ -364,7 +388,7 @@ function WorkspaceSelector({
             </div>
 
             <div className="workspace-list">
-              {workspaces.map((workspace) => (
+              {workspaces.filter(workspace => workspace && workspace.id).map((workspace) => (
                 <div
                   key={workspace.id}
                   className={`workspace-item ${workspace.id === currentWorkspace?.id ? 'active' : ''}`}

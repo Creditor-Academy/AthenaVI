@@ -1,38 +1,5 @@
-import { useState, useEffect } from 'react'
-import {
-  MdHomeFilled,
-  MdVideoLibrary,
-  MdWorkspaces,
-  MdGroup,
-  MdVideoCameraBack,
-  MdDelete,
-  MdCollectionsBookmark,
-  MdColorLens,
-  MdPerson,
-  MdRecordVoiceOver,
-  MdPlayCircleFilled,
-  MdAutoAwesome,
-  MdTranslate,
-  MdSlideshow,
-  MdAccessTime,
-  MdCheckCircle,
-  MdGridView,
-  MdViewList,
-  MdTrendingUp,
-  MdPlayArrow,
-  MdMoreVert,
-  MdAccountBalanceWallet,
-  MdSearch,
-  MdHelpOutline,
-  MdNotificationsNone,
-  MdAdd,
-  MdSettings,
-  MdCloudUpload,
-  MdImage,
-  MdAudiotrack,
-  MdWallpaper,
-  MdAdminPanelSettings
-} from 'react-icons/md'
+import { useState, useEffect, useCallback } from 'react'
+import Home from './Home.jsx'
 import Videos from './Videos.jsx'
 import Trash from './Trash.jsx'
 import Avatars from './Avatars.jsx'
@@ -48,164 +15,14 @@ import BrandKits from './BrandKits.jsx'
 import Credits from './Credits.jsx'
 import TeamWorkspace from './TeamWorkspace.jsx'
 import AdminPortal from './AdminPortal.jsx'
-import ProfileDropdown from '../components/ProfileDropdown.jsx'
+import DashboardTopbar from '../components/DashboardTopbar.jsx'
+import DashboardSidebar from '../components/DashboardSidebar.jsx'
 import VoiceCreatePanel from '../components/VoiceCreatePanel.jsx'
 import AIVideoAssistant from '../components/AIVideoAssistant.jsx'
 import ImportPowerPointModal from '../components/ImportPowerPointModal.jsx'
 import TranslateVideoModal from '../components/TranslateVideoModal.jsx'
 import './Dashboard.css'
 
-function HomeSection({ onCreate, onShowAIAssistant }) {
-  const stats = [
-    { label: 'Total Videos', value: '24', trend: '+2', icon: <MdVideoLibrary />, color: 'blue' },
-    { label: 'Draft Projects', value: '12', trend: null, icon: <MdCollectionsBookmark />, color: 'purple' },
-    { label: 'Published Videos', value: '12', trend: null, icon: <MdCheckCircle />, color: 'green' }
-  ]
-
-  const recentProjects = [
-    { id: 1, title: 'Introduction to Digital Marketing', scenes: 8, updated: '2 hours ago', thumb: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=400' },
-    { id: 2, title: 'UI/UX Design Fundamentals', scenes: 5, updated: 'Yesterday', thumb: 'https://images.unsplash.com/photo-1586717791821-3f44a563eb4c?auto=format&fit=crop&q=80&w=400' }
-  ]
-
-  const templates = [
-    { title: 'Educational Lecture', meta: '12 scenes • Academic style', thumb: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80&w=300' },
-    { title: 'Corporate Onboarding', meta: '8 scenes • Professional', thumb: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&q=80&w=300' },
-    { title: 'Software Tutorial', meta: '15 scenes • Dynamic', thumb: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=300' },
-    { title: 'Product Reveal', meta: '6 scenes • High Energy', thumb: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=300' }
-  ]
-
-  const media = [
-    { name: 'instructor_profile_01.png', meta: 'Image • 2.4 MB', type: 'image', icon: <MdImage /> },
-    { name: 'background_music_uplifting.mp3', meta: 'Audio • 4.1 MB', type: 'audio', icon: <MdAudiotrack /> },
-    { name: 'modern_office_backdrop.jpg', meta: 'Image • 1.8 MB', type: 'bg', icon: <MdWallpaper /> }
-  ]
-
-  return (
-    <div className="home-container">
-      <div className="welcome-header">
-        <div className="welcome-text">
-          <h1>Welcome back, Alex!</h1>
-          <p>Create and manage your instructor videos.</p>
-        </div>
-        <div className="header-actions">
-          <button className="btn-secondary">Browse Templates</button>
-          <button className="btn-primary" onClick={onCreate}>Create New Video</button>
-        </div>
-      </div>
-
-      <div className="stats-container">
-        {stats.map((stat, i) => (
-          <div key={i} className={`stat-card ${stat.color}`}>
-            <div className="stat-card-left">
-              <div className="stat-label">{stat.label}</div>
-              <div className="stat-value">
-                <span className="stat-number">{stat.value}</span>
-                {stat.trend && <span className="stat-trend">{stat.trend}</span>}
-              </div>
-            </div>
-            <div className="stat-card-icon">
-              {stat.icon}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="main-grid">
-        <div className="main-left">
-          <div className="section-header">
-            <h2>Recent Projects</h2>
-            <div className="view-all">View all projects</div>
-          </div>
-          <div className="projects-grid">
-            {recentProjects.map(project => (
-              <div key={project.id} className="project-card">
-                <div className="project-thumb-container">
-                  <img src={project.thumb} alt={project.title} className="project-thumb" />
-                  <div className="project-overlay">
-                    <button className="btn-edit-premium" onClick={onCreate}>Open Editor</button>
-                  </div>
-                </div>
-                <div className="project-content">
-                  <div className="project-info">
-                    <h3>{project.title}</h3>
-                    <div className="project-meta">
-                      <MdAccessTime size={14} /> {project.updated} • {project.scenes} scenes
-                    </div>
-                  </div>
-                  <div className="project-actions">
-                    <button className="btn-edit-premium" style={{ width: '100%' }} onClick={onCreate}>Edit Video</button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="section-header" style={{ marginTop: '24px' }}>
-            <h2>Recommended Templates</h2>
-            <div className="view-all">Browse all</div>
-          </div>
-          <div className="templates-scroll">
-            {templates.map((template, i) => (
-              <div key={i} className="template-card">
-                <img src={template.thumb} alt={template.title} className="template-thumb" />
-                <div className="template-info">
-                  <h4>{template.title}</h4>
-                  <div className="template-meta">{template.meta}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="main-right">
-          <div className="sidebar-glass-panel">
-            <div className="sidebar-section">
-              <div className="section-header">
-                <h2>Quick Actions</h2>
-              </div>
-              <div className="quick-actions-grid">
-                <div className="action-btn" onClick={onCreate}>
-                  <div className="action-icon blue"><MdAdd /></div>
-                  <div className="action-label">New Video</div>
-                </div>
-                <div className="action-btn">
-                  <div className="action-icon purple"><MdCloudUpload /></div>
-                  <div className="action-label">Upload</div>
-                </div>
-                <div className="action-btn">
-                  <div className="action-icon orange"><MdCollectionsBookmark /></div>
-                  <div className="action-label">Templates</div>
-                </div>
-                <div className="action-btn">
-                  <div className="action-icon green"><MdVideoLibrary /></div>
-                  <div className="action-label">Library</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="sidebar-section">
-              <div className="section-header">
-                <h2>Recent Media</h2>
-              </div>
-              <div className="media-preview-list">
-                {media.map((item, i) => (
-                  <div key={i} className="media-row">
-                    <div className={`media-row-icon ${item.type}`}>{item.icon}</div>
-                    <div className="media-row-details">
-                      <p className="media-row-name">{item.name}</p>
-                      <p className="media-row-meta">{item.meta}</p>
-                    </div>
-                    <button className="more-btn"><MdMoreVert /></button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function Dashboard({ onLogout, onCreate, initialSection }) {
   const [section, setSection] = useState(() => {
@@ -227,6 +44,17 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
   const [showImportModal, setShowImportModal] = useState(false)
   const [showTranslateModal, setShowTranslateModal] = useState(false)
   const [selectedTemplateForDetails, setSelectedTemplateForDetails] = useState(null)
+  const [topbarMobileOpen, setTopbarMobileOpen] = useState(false)
+  const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false)
+
+  const cartCount = 2
+  const notificationCount = 9
+
+  const goToSection = useCallback((id) => {
+    setTopbarMobileOpen(false)
+    setSidebarMobileOpen(false)
+    setSection(id)
+  }, [])
 
   // Update URL when section changes
   useEffect(() => {
@@ -238,7 +66,7 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
 
   // Handle browser back/forward for dashboard sections
   useEffect(() => {
-    const handlePopState = (event) => {
+    const handlePopState = () => {
       const currentPath = window.location.pathname
       if (currentPath.startsWith('/dashboard/')) {
         const newSection = currentPath.replace('/dashboard/', '') || 'home'
@@ -252,93 +80,60 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
 
-  const navItems = [
-    { id: 'home', label: 'Dashboard', icon: <MdHomeFilled /> },
-    { id: 'videos', label: 'My Videos', icon: <MdVideoLibrary /> },
-    { id: 'avatars', label: 'Avatars', icon: <MdPerson /> },
-    { id: 'templates', label: 'Templates', icon: <MdColorLens /> },
-    { id: 'library', label: 'Media Library', icon: <MdCollectionsBookmark /> },
-    { id: 'team-workspace', label: 'Team Workspace', icon: <MdGroup /> },
-  ]
-
-  const creationItems = [
-    { id: 'create', label: 'Create Video', icon: <MdAdd /> },
-  ]
-
-  const systemItems = [
-    { id: 'admin-portal', label: 'Admin Portal', icon: <MdAdminPanelSettings /> },
-    { id: 'settings', label: 'Settings', icon: <MdSettings /> },
-  ]
-
   return (
-    <div className="dashboard-shell">
-      <header className="topbar">
-        <div className="top-left">
-          <div className="brand">
-            <div className="brand-logo">V</div>
-            <span>Virtual Instructor</span>
-          </div>
+    <div
+      className={`dashboard-shell ${sidebarMobileOpen ? 'dashboard-shell--sidebar-open' : ''}`}
+    >
+      {sidebarMobileOpen && (
+        <button
+          type="button"
+          className="dashboard-sidebar-backdrop"
+          aria-label="Close menu"
+          onClick={() => setSidebarMobileOpen(false)}
+        />
+      )}
+
+      <div className="dashboard-sidebar-column">
+        <div className="dashboard-sidebar-header">
+          <button
+            type="button"
+            className="dashboard-sidebar-brand"
+            onClick={() => goToSection('home')}
+            aria-label="Virtual Instructor, go to home"
+          >
+            <span className="dashboard-sidebar-brand-logo" aria-hidden>
+              V
+            </span>
+            <span className="dashboard-sidebar-brand-name">Virtual Instructor</span>
+          </button>
         </div>
-        
-        <div className="search-container">
-          <MdSearch className="search-icon" />
-          <input className="search-input" placeholder="Search videos, templates, or media..." />
-        </div>
 
-        <div className="top-right-actions">
-          <button className="icon-btn"><MdHelpOutline /></button>
-          <button className="icon-btn"><MdNotificationsNone /></button>
-          <ProfileDropdown onProfileClick={() => setSection('profile')} />
-        </div>
-      </header>
+        <DashboardSidebar
+          section={section}
+          onNavigate={goToSection}
+          onOpenTranslate={() => setShowTranslateModal(true)}
+          onOpenAI={() => setShowAIAssistant(true)}
+          onCloseMobile={() => setSidebarMobileOpen(false)}
+        />
+      </div>
 
-      <div className="layout">
-        <aside className="sidebar">
-          <div className="sidebar-group">
-            {navItems.map(item => (
-              <div 
-                key={item.id} 
-                className={`nav-item ${section === item.id ? 'active' : ''}`}
-                onClick={() => setSection(item.id)}
-              >
-                {item.icon} {item.label}
-              </div>
-            ))}
-          </div>
+      <div className="dashboard-main-column">
+        <DashboardTopbar 
+          sidebarMobileOpen={sidebarMobileOpen}
+          setSidebarMobileOpen={setSidebarMobileOpen}
+          topbarMobileOpen={topbarMobileOpen}
+          setTopbarMobileOpen={setTopbarMobileOpen}
+          onCreate={onCreate}
+          notificationCount={notificationCount}
+          cartCount={cartCount}
+          goToSection={goToSection}
+        />
 
-          <div className="sidebar-group">
-            <div className="sidebar-label">Creation</div>
-            {creationItems.map(item => (
-              <div 
-                key={item.id} 
-                className={`nav-item ${section === item.id ? 'active' : ''}`}
-                onClick={() => {
-                  if(item.id === 'create') onCreate()
-                  else setSection(item.id)
-                }}
-              >
-                {item.icon} {item.label}
-              </div>
-            ))}
-          </div>
-
-          <div className="sidebar-group">
-            <div className="sidebar-label">System</div>
-            {systemItems.map(item => (
-              <div 
-                key={item.id} 
-                className={`nav-item ${section === item.id ? 'active' : ''}`}
-                onClick={() => setSection(item.id)}
-              >
-                {item.icon} {item.label}
-              </div>
-            ))}
-          </div>
-        </aside>
-
-        <main className={`content ${!['library', 'avatars', 'templates', 'template-details', 'team-workspace', 'admin-portal'].includes(section) ? 'with-padding' : ''}`}>
+        <main
+          className={`content ${!['library', 'avatars', 'templates', 'template-details', 'team-workspace', 'admin-portal', 'settings'].includes(section) ? 'with-padding' : ''}`}
+        >
           {section === 'home' && (
-            <HomeSection 
+            <Home 
               onCreate={onCreate}
               onShowAIAssistant={() => setShowAIAssistant(true)}
             />
@@ -357,14 +152,14 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
             <Templates 
               onSelect={(template) => {
                 setSelectedTemplateForDetails(template)
-                setSection('template-details')
+                goToSection('template-details')
               }} 
             />
           )}
           {section === 'template-details' && (
             <TemplateDetails 
               template={selectedTemplateForDetails} 
-              onBack={() => setSection('templates')}
+              onBack={() => goToSection('templates')}
               onUse={() => {
                 // Future implementation for using template
                 onCreate()
@@ -376,8 +171,9 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
           {section === 'team-workspace' && <TeamWorkspace onCreate={onCreate} />}
           {section === 'admin-portal' && <AdminPortal />}
           {section === 'brandkits' && <BrandKits />}
-          {section === 'credits' && <Credits onBack={() => setSection('home')} />}
-          {section === 'profile' && <Profile onBack={() => setSection('home')} />}
+          {section === 'credits' && <Credits onBack={() => goToSection('home')} />}
+          {section === 'profile' && <Profile onBack={() => goToSection('home')} />}
+          {section === 'settings' && <Settings onBack={() => goToSection('home')} />}
         </main>
       </div>
 
@@ -391,7 +187,7 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
       {showAIAssistant && (
         <AIVideoAssistant
           onClose={() => setShowAIAssistant(false)}
-          onCreate={(data) => {
+          onCreate={() => {
             setShowAIAssistant(false);
             if (onCreate) onCreate();
           }}

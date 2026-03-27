@@ -1,362 +1,552 @@
-
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  MdSettings, 
-  MdPersonAdd, 
-  MdVideoLibrary, 
-  MdGroup, 
-  MdStorage, 
-  MdAdd,
-  MdBusiness
-} from 'react-icons/md';
-import WorkspaceCreateForm from '../components/workspace/WorkspaceCreateForm.jsx';
-import WorkspaceSettings from '../components/workspace/WorkspaceSettings.jsx';
-import WorkspaceSelector from '../components/workspace/WorkspaceSelector.jsx';
-import InviteMembersModal from '../components/workspace/InviteMembersModal.jsx';
+import { motion, AnimatePresence } from 'framer-motion';
+import { MdMail, MdClose, MdCheck } from 'react-icons/md';
+import { useAuth } from '../contexts/AuthContext';
+import WorkspaceHeader from '../components/workspace/WorkspaceHeader.jsx';
+import WorkspaceSection from '../components/workspace/WorkspaceSection.jsx';
+import { WorkspaceCard, FolderCard, VideoCard } from '../components/workspace/ViewCards.jsx';
+import { WorkspaceRow, FolderRow, VideoRow } from '../components/workspace/ViewRows.jsx';
+import CreateWorkspaceModal from '../components/workspace/CreateWorkspaceModal.jsx';
+import GlobalCreateModal from '../components/workspace/GlobalCreateModal.jsx';
 import workspaceService from '../services/workspaceService.js';
-import './TeamWorkspace.css';
+import '../components/workspace/WorkspaceStyles.css';
 
-const TeamWorkspace = ({ onCreate }) => {
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [showInviteModal, setShowInviteModal] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+const MOCK_FOLDERS = [
+  {
+    id: 'f-1',
+    name: 'Drafts',
+    createdBy: 'You',
+    videos: [
+      { id: 'v-1', name: 'Welcome Video', lastEditedBy: 'You', lastEditedAt: '2026-03-25' }
+    ]
+  }
+];
+
+const TeamWorkspace = () => {
+  const auth = useAuth() || {};
+  const user = auth.user || { id: 'user-1', name: 'John Doe', email: 'john@example.com', plan: 'organisation' };
+  const userPlan = user.plan || 'organisation';
+
+  // Global State
   const [workspaces, setWorkspaces] = useState([]);
-  const [currentWorkspace, setCurrentWorkspace] = useState(null);
-  const [workspaceMembers, setWorkspaceMembers] = useState([]);
+  const [invitations, setInvitations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [currentLevel, setCurrentLevel] = useState({ type: 'root', id: null });
 
-  // Load workspaces on component mount
+  // UI State
+  const [viewMode, setViewMode] = useState('tile');
+  const [sortBy, setSortBy] = useState('name_asc');
+
+  // Modals Data
+  const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = useState(false);
+  const [isGlobalCreateOpen, setIsGlobalCreateOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  // Initial Load
   useEffect(() => {
+    const savedView = localStorage.getItem('workspaceViewMode');
+    const savedSort = localStorage.getItem('workspaceSortBy');
+    if (savedView) setViewMode(savedView);
+    if (savedSort) setSortBy(savedSort);
+
     loadWorkspaces();
+    loadInvitations();
   }, []);
 
   const loadWorkspaces = async () => {
     try {
       setLoading(true);
       const workspaceList = await workspaceService.listWorkspaces();
-      setWorkspaces(workspaceList);
-      
-      // Set current workspace to first team workspace, or first workspace if no team workspaces
-      const teamWorkspace = workspaceList.find(ws => ws.type === 'TEAM') || workspaceList[0];
-      if (teamWorkspace) {
-        setCurrentWorkspace(teamWorkspace);
-        loadWorkspaceMembers(teamWorkspace.id);
+
+      // Map API workspaces to local shape and inject mock folders/videos as requested
+      const mappedWorkspaces = workspaceList.map(ws => ({
+        id: ws.id,
+        name: ws.name,
+        type: ws.type === 'TEAM' ? 'workspace' : 'personal',
+        ownerId: ws.ownerId || 'user-1',
+        members: ws.members || [],
+        folders: MOCK_FOLDERS,
+        userRole: ws.userRole
+      }));
+
+      // Ensure there's a personal workspace if API didn't return one
+      if (!mappedWorkspaces.find(w => w.type === 'personal')) {
+        mappedWorkspaces.unshift({
+          id: 'personal-default',
+          name: 'My Personal Space',
+          type: 'personal',
+          ownerId: 'user-1',
+          members: [],
+          folders: MOCK_FOLDERS,
+          userRole: 'OWNER'
+        });
+      }
+
+      setWorkspaces(mappedWorkspaces);
+    } catch (err) {
+      console.error('Failed to load workspaces:', err);
+      // Fallback to mock state if API fails
+      setWorkspaces([
+        {
+          id: 'personal-fallback',
+          name: 'My Personal Space',
+          type: 'personal',
+          ownerId: 'user-1',
+          members: [],
+          folders: MOCK_FOLDERS
+        }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadInvitations = async () => {
+    try {
+      if (typeof workspaceService.getInvitations === 'function') {
+        const invs = await workspaceService.getInvitations();
+        setInvitations(invs || []);
       }
     } catch (err) {
-      setError(err.message);
+      console.error('Failed to load invitations:', err);
+      setInvitations([]);
+    }
+  };
+
+  const handleViewChange = (mode) => {
+    setViewMode(mode);
+    localStorage.setItem('workspaceViewMode', mode);
+  };
+
+  const handleSortChange = (sort) => {
+    setSortBy(sort);
+    localStorage.setItem('workspaceSortBy', sort);
+  };
+
+  // Sections Filtering (Owner mapping depends on logic, defaulting to userRole logic)
+  const personalWorkspace = workspaces.find(w => w.type === 'personal');
+  const myWorkspaces = workspaces.filter(w => w.type === 'workspace' && w.userRole === 'OWNER');
+  const sharedWithMe = workspaces.filter(w => w.type === 'workspace' && w.userRole !== 'OWNER');
+
+  const sortItems = (items) => {
+    return [...items].sort((a, b) => {
+      if (sortBy === 'name_asc') return a.name.localeCompare(b.name);
+      if (sortBy === 'name_desc') return b.name.localeCompare(a.name);
+      return 0;
+    });
+  };
+
+  // Mutators
+  const handleCreateWorkspace = async ({ name, invites }) => {
+    try {
+      setLoading(true);
+      const newWorkspace = await workspaceService.createWorkspace(name);
+
+      const mappedNew = {
+        id: newWorkspace.id,
+        name: newWorkspace.name,
+        type: 'workspace',
+        ownerId: newWorkspace.ownerId || 'user-1',
+        members: [],
+        folders: [],
+        userRole: 'OWNER'
+      };
+
+      setWorkspaces([...workspaces, mappedNew]);
+
+      // Invite members
+      if (invites && invites.length > 0) {
+        for (const email of invites) {
+          try {
+            await workspaceService.inviteMember(newWorkspace.id, { email, role: 'MEMBER' });
+          } catch (e) {
+            console.error(`Failed to invite ${email}`, e);
+          }
+        }
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to create workspace');
     } finally {
       setLoading(false);
     }
   };
 
-  const loadWorkspaceMembers = async (workspaceId) => {
+  const handleGlobalCreate = ({ videoName, workspaceId, folderId, newFolderName }) => {
+    // This part remains fully local as requested for the UI behavior shape
+    setWorkspaces(workspaces.map(ws => {
+      if (ws.id === workspaceId) {
+        let updatedFolders = [...ws.folders];
+
+        if (newFolderName) {
+          const newFolder = {
+            id: `f-${Date.now()}`,
+            name: newFolderName,
+            createdBy: 'You',
+            videos: [{
+              id: `v-${Date.now()}`,
+              name: videoName,
+              lastEditedBy: 'You',
+              lastEditedAt: new Date().toISOString().split('T')[0]
+            }]
+          };
+          updatedFolders.push(newFolder);
+        } else if (folderId) {
+          updatedFolders = updatedFolders.map(f => {
+            if (f.id === folderId) {
+              return {
+                ...f,
+                videos: [...f.videos, {
+                  id: `v-${Date.now()}`,
+                  name: videoName,
+                  lastEditedBy: 'You',
+                  lastEditedAt: new Date().toISOString().split('T')[0]
+                }]
+              };
+            }
+            return f;
+          });
+        }
+        return { ...ws, folders: updatedFolders };
+      }
+      return ws;
+    }));
+  };
+
+  const handleAcceptInvitation = async (invitationId) => {
     try {
-      const memberList = await workspaceService.listWorkspaceMembers(workspaceId);
-      setWorkspaceMembers(memberList);
+      await workspaceService.acceptInvitation(invitationId);
+      setInvitations(invitations.filter(inv => inv.id !== invitationId));
+      loadWorkspaces(); // Refresh
     } catch (err) {
-      console.error('Failed to load workspace members:', err);
-      // Don't show error for members loading failure
+      console.error(err);
     }
   };
 
-  const stats = [
-    { label: 'Active Projects', value: '18', trend: '+12%', icon: <MdVideoLibrary />, colorClass: 'blue-bg' },
-    { label: 'Team Members', value: '12', subValue: '2 Admins, 10 Editors', icon: <MdGroup />, colorClass: 'purple-bg' },
-    { label: 'Storage Usage', value: '64%', subValue: '128GB of 200GB', icon: <MdStorage />, colorClass: 'orange-bg', isStorage: true }
-  ];
-
-  const projects = [
-    { id: 1, title: 'Quarterly Marketing Video', updated: '2 hours ago', thumbnail: 'https://images.unsplash.com/photo-1492619334764-22c52488814d?auto=format&fit=crop&q=80&w=400', members: ['A', 'B', 'C'] },
-    { id: 2, title: 'Product Launch Teaser', updated: 'Yesterday', thumbnail: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=400', members: ['D', 'E'] },
-    { id: 3, title: 'Internal Training Series', updated: '3 days ago', thumbnail: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=400', members: ['A', 'F', 'G', 'H'] },
-    { id: 4, title: 'Social Media Campaign', updated: '5 days ago', thumbnail: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=400', members: ['B', 'I'] }
-  ];
-
-  const members = [
-    { name: 'Alex Johnson', role: 'Owner', avatar: 'https://ui-avatars.com/api/?name=Alex+Johnson&background=0D8ABC&color=fff' },
-    { name: 'Sarah Chen', role: 'Admin', avatar: 'https://ui-avatars.com/api/?name=Sarah+Chen&background=6366F1&color=fff' },
-    { name: 'Mike Ross', role: 'Editor', avatar: 'https://ui-avatars.com/api/?name=Mike+Ross&background=10B981&color=fff' },
-    { name: 'Elena Gilbert', role: 'Editor', avatar: 'https://ui-avatars.com/api/?name=Elena+Gilbert&background=F59E0B&color=fff' }
-  ];
-
-  const handleCreateWorkspace = async (formData) => {
+  const handleDeclineInvitation = async (invitationId) => {
     try {
-      setLoading(true);
-      setError('');
-      
-      const newWorkspace = await workspaceService.createWorkspace(formData);
-      setWorkspaces(prev => [...prev, newWorkspace]);
-      setShowCreateForm(false);
-      
-      // Switch to the newly created workspace
-      setCurrentWorkspace(newWorkspace);
-      await loadWorkspaceMembers(newWorkspace.id);
+      if (typeof workspaceService.removeInvitation === 'function') {
+        // Placeholder params - service doesn't specify how to fetch workspaceId from invitation easily here
+        setInvitations(invitations.filter(inv => inv.id !== invitationId));
+      }
     } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      console.error(err);
     }
   };
 
-  const handleUpdateWorkspace = async (formData) => {
-    try {
-      setLoading(true);
-      setError('');
-      
-      const updatedWorkspace = await workspaceService.updateWorkspace(currentWorkspace.id, formData);
-      setCurrentWorkspace(updatedWorkspace);
-      setWorkspaces(prev => prev.map(ws => 
-        ws.id === updatedWorkspace.id ? updatedWorkspace : ws
+  const renameItem = (type, id) => console.log(`Rename ${type} ${id}`);
+
+  const deleteItem = async (type, id) => {
+    if (type === 'workspace') {
+      try {
+        await workspaceService.deleteWorkspace(id);
+        setWorkspaces(workspaces.filter(w => w.id !== id));
+        if (currentLevel.id === id) setCurrentLevel({ type: 'root', id: null });
+      } catch (err) {
+        alert(err.message || 'Error deleting workspace');
+      }
+    } else if (type === 'folder') {
+      const parentWsId = currentLevel.ws?.id;
+      setWorkspaces(workspaces.map(w => {
+        if (w.id === parentWsId) {
+          return { ...w, folders: w.folders.filter(f => f.id !== id) };
+        }
+        return w;
+      }));
+      if (currentLevel.id === id) setCurrentLevel({ type: 'workspace', id: parentWsId, ws: currentLevel.ws });
+    } else if (type === 'video') {
+      const parentWsId = currentLevel.ws?.id;
+      const parentFolderId = currentLevel.folder?.id;
+      setWorkspaces(workspaces.map(w => {
+        if (w.id === parentWsId) {
+          return {
+            ...w,
+            folders: w.folders.map(f => {
+              if (f.id === parentFolderId) {
+                return { ...f, videos: f.videos.filter(v => v.id !== id) };
+              }
+              return f;
+            })
+          };
+        }
+        return w;
+      }));
+    }
+  };
+
+  // Render Helpers
+  const renderWorkspaceItems = (items) => {
+    const sorted = sortItems(items);
+    if (viewMode === 'tile') {
+      return sorted.map(ws => (
+        <WorkspaceCard
+          key={ws.id}
+          workspace={ws}
+          onClick={() => setCurrentLevel({ type: 'workspace', id: ws.id, ws })}
+          contextProps={{
+            onRename: () => renameItem('workspace', ws.id),
+            onAddMembers: ws.type === 'workspace' && ws.userRole === 'OWNER' ? () => alert('Add Members Modal') : null,
+            onSort: () => handleSortChange('name_desc'),
+            onView: () => handleViewChange(viewMode === 'tile' ? 'list' : 'tile'),
+            onDelete: ws.type !== 'personal' && ws.userRole === 'OWNER' ? () => deleteItem('workspace', ws.id) : null
+          }}
+        />
       ));
-      setShowSettings(false);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
     }
+    return sorted.map(ws => (
+      <WorkspaceRow
+        key={ws.id}
+        workspace={ws}
+        onClick={() => setCurrentLevel({ type: 'workspace', id: ws.id, ws })}
+        contextProps={{
+          onRename: () => renameItem('workspace', ws.id),
+          onAddMembers: ws.type === 'workspace' && ws.userRole === 'OWNER' ? () => alert('Add Members Modal') : null,
+          onSort: () => handleSortChange('name_desc'),
+          onView: () => handleViewChange(viewMode === 'tile' ? 'list' : 'tile'),
+          onDelete: ws.type !== 'personal' && ws.userRole === 'OWNER' ? () => deleteItem('workspace', ws.id) : null
+        }}
+      />
+    ));
   };
 
-  const handleDeleteWorkspace = async (workspaceId) => {
-    try {
-      setLoading(true);
-      await workspaceService.deleteWorkspace(workspaceId);
-      
-      // Remove from workspaces list
-      setWorkspaces(prev => prev.filter(ws => ws.id !== workspaceId));
-      
-      // Switch to another workspace or create new one
-      const remainingWorkspaces = workspaces.filter(ws => ws.id !== workspaceId);
-      if (remainingWorkspaces.length > 0) {
-        const nextWorkspace = remainingWorkspaces[0];
-        setCurrentWorkspace(nextWorkspace);
-        await loadWorkspaceMembers(nextWorkspace.id);
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+  const renderFolderItems = (folders) => {
+    const sorted = sortItems(folders);
+    if (viewMode === 'tile') {
+      return sorted.map(f => (
+        <FolderCard
+          key={f.id}
+          folder={f}
+          onClick={() => setCurrentLevel({ type: 'folder', id: f.id, folder: f, ws: currentLevel.ws })}
+          contextProps={{
+            onRename: () => renameItem('folder', f.id),
+            onSort: () => handleSortChange('name_desc'),
+            onView: () => handleViewChange(viewMode === 'tile' ? 'list' : 'tile'),
+            onDelete: () => deleteItem('folder', f.id)
+          }}
+        />
+      ));
     }
+    return sorted.map(f => (
+      <FolderRow
+        key={f.id}
+        folder={f}
+        onClick={() => setCurrentLevel({ type: 'folder', id: f.id, folder: f, ws: currentLevel.ws })}
+        contextProps={{
+          onRename: () => renameItem('folder', f.id),
+          onSort: () => handleSortChange('name_desc'),
+          onView: () => handleViewChange(viewMode === 'tile' ? 'list' : 'tile'),
+          onDelete: () => deleteItem('folder', f.id)
+        }}
+      />
+    ));
   };
 
-  const handleWorkspaceChange = async (workspace) => {
-    try {
-      setCurrentWorkspace(workspace);
-      await loadWorkspaceMembers(workspace.id);
-    } catch (err) {
-      setError(err.message);
+  const renderVideoItems = (videos) => {
+    const sorted = sortItems(videos);
+    if (viewMode === 'tile') {
+      return sorted.map(v => (
+        <VideoCard
+          key={v.id}
+          video={v}
+          onClick={() => alert(`Play video ${v.name}`)}
+          contextProps={{
+            onRename: () => renameItem('video', v.id),
+            onDelete: () => deleteItem('video', v.id)
+          }}
+        />
+      ));
     }
+    return sorted.map(v => (
+      <VideoRow
+        key={v.id}
+        video={v}
+        onClick={() => alert(`Play video ${v.name}`)}
+        contextProps={{
+          onRename: () => renameItem('video', v.id),
+          onDelete: () => deleteItem('video', v.id)
+        }}
+      />
+    ));
   };
 
-  const handleInviteMembers = async (inviteData) => {
-    try {
-      setLoading(true);
-      setError('');
-      
-      const inviteResult = await workspaceService.inviteMember(currentWorkspace.id, inviteData);
-      setShowInviteModal(false);
-      
-      // Reload members to get updated list
-      await loadWorkspaceMembers(currentWorkspace.id);
-      
-      // TODO: Show success message with invite link
-      console.log('Invitation sent:', inviteResult.inviteLink);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+  const renderRoot = () => (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <WorkspaceSection
+        title="Personal Workspace"
+        count={personalWorkspace ? 1 : 0}
+        viewMode={viewMode}
+      >
+        {personalWorkspace && renderWorkspaceItems([personalWorkspace])}
+      </WorkspaceSection>
+
+      <WorkspaceSection
+        title="My Workspaces"
+        count={myWorkspaces.length}
+        viewMode={viewMode}
+        emptyMessage="You don't have any custom workspaces yet."
+        emptyActionLabel="Create Workspace"
+        onEmptyAction={() => setIsCreateWorkspaceOpen(true)}
+      >
+        {renderWorkspaceItems(myWorkspaces)}
+      </WorkspaceSection>
+
+      <WorkspaceSection
+        title="Shared with Me"
+        count={sharedWithMe.length}
+        viewMode={viewMode}
+      >
+        {renderWorkspaceItems(sharedWithMe)}
+      </WorkspaceSection>
+    </motion.div>
+  );
+
+  const renderWorkspaceLevel = () => {
+    const ws = workspaces.find(w => w.id === currentLevel.ws?.id);
+    if (!ws) return null;
+
+    return (
+      <motion.div initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
+        <div className="workspace-breadcrumbs">
+          <span className="breadcrumb-link" onClick={() => setCurrentLevel({ type: 'root', id: null })}>Workspaces</span>
+          <span className="breadcrumb-separator">/</span>
+          <span>{ws.name}</span>
+        </div>
+        <WorkspaceSection
+          title="Folders"
+          count={ws.folders.length}
+          viewMode={viewMode}
+          emptyMessage="This workspace is empty. Create a folder to get started."
+          emptyActionLabel="Create Video & Folder"
+          onEmptyAction={() => setIsGlobalCreateOpen(true)}
+        >
+          {renderFolderItems(ws.folders)}
+        </WorkspaceSection>
+      </motion.div>
+    );
+  };
+
+  const renderFolderLevel = () => {
+    const ws = workspaces.find(w => w.id === currentLevel.ws?.id);
+    const folder = ws?.folders.find(f => f.id === currentLevel.folder?.id);
+    if (!ws || !folder) return null;
+
+    return (
+      <motion.div initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
+        <div className="workspace-breadcrumbs">
+          <span className="breadcrumb-link" onClick={() => setCurrentLevel({ type: 'root', id: null })}>Workspaces</span>
+          <span className="breadcrumb-separator">/</span>
+          <span className="breadcrumb-link" onClick={() => setCurrentLevel({ type: 'workspace', id: ws.id, ws })}>{ws.name}</span>
+          <span className="breadcrumb-separator">/</span>
+          <span>{folder.name}</span>
+        </div>
+        <WorkspaceSection
+          title="Videos"
+          count={folder.videos.length}
+          viewMode={viewMode}
+          emptyMessage="This folder is empty. Create a video to get started."
+          emptyActionLabel="Create Video"
+          onEmptyAction={() => setIsGlobalCreateOpen(true)}
+        >
+          {renderVideoItems(folder.videos)}
+        </WorkspaceSection>
+      </motion.div>
+    );
   };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+    <motion.div
       className="team-workspace-container"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
     >
-      <div className="workspace-main-content">
-        {/* Header */}
-        <header className="workspace-header-container">
-          <div className="workspace-identity">
-            {/* Workspace Selector */}
-            <WorkspaceSelector
-              workspaces={workspaces}
-              currentWorkspace={currentWorkspace}
-              onWorkspaceChange={handleWorkspaceChange}
-              onCreateWorkspace={() => setShowCreateForm(true)}
-              loading={loading}
-            />
-            <p>
-              Collaborative space for high-impact video marketing projects.
-            </p>
-          </div>
-          <div className="workspace-header-actions">
-            <button 
-              className="btn-settings-icon"
-              onClick={() => setShowSettings(true)}
-            >
-              <MdSettings size={22} />
-            </button>
-            <button 
-              className="btn-invite"
-              onClick={() => setShowInviteModal(true)}
-            >
-              <MdPersonAdd size={20} />
-              Invite Members
-            </button>
-          </div>
-        </header>
-
-        {/* Stats */}
-        <section className="stats-grid">
-          {stats.map((stat, i) => (
-            <motion.div 
-              key={i}
-              whileHover={{ scale: 1.02 }}
-              className="stat-card-team"
-            >
-              <div className="stat-card-header">
-                <div className={`stat-icon-bg ${stat.colorClass}`}>
-                  {stat.icon}
-                </div>
-                {stat.trend && (
-                  <span className="stat-trend-tag trend-up">{stat.trend}</span>
-                )}
-              </div>
-              <div className="stat-info">
-                <span className="stat-value-text">{stat.value}</span>
-                <span className="stat-label-text">{stat.label}</span>
-                {stat.isStorage && (
-                  <div className="storage-bar-container">
-                    <div className="storage-bar-progress" style={{ width: stat.value }}></div>
-                  </div>
-                )}
-                {stat.subValue && !stat.isStorage && (
-                  <span className="stat-label-text" style={{ fontSize: '0.8rem', marginTop: '4px' }}>
-                    {stat.subValue}
-                  </span>
-                )}
-              </div>
-            </motion.div>
-          ))}
-        </section>
-
-        {/* Projects Grid */}
-        <section className="workspace-projects-section">
-          <div className="section-header">
-            <h2>Projects</h2>
-            <p>Recent video projects and collaborations</p>
-          </div>
-
-          <div className="projects-grid-team">
-            <motion.div 
-              whileHover={{ scale: 0.98 }}
-              className="create-project-card"
-              onClick={onCreate}
-            >
-              <MdAdd size={40} />
-              <span>Create New Project</span>
-            </motion.div>
-
-            {projects.map((project) => (
-              <motion.div 
-                key={project.id}
-                initial={{ scale: 0.9 }}
-                animate={{ scale: 1 }}
-                whileHover={{ y: -5 }}
-                className="project-card-team"
-              >
-                <div className="project-thumbnail" style={{ backgroundImage: `url(${project.thumbnail})` }}>
-                  {/* Overlay or actions could go here */}
-                </div>
-                <div className="project-details-team">
-                  <h3>{project.title}</h3>
-                  <div className="project-meta-bottom">
-                    <span className="time-stamp">{project.updated}</span>
-                    <div className="member-avatars-group">
-                      {project.members.map((m, idx) => (
-                        <img 
-                          key={idx}
-                          src={`https://ui-avatars.com/api/?name=${m}&background=random&color=fff`} 
-                          alt="member" 
-                          className="member-avatar-mini"
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </section>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '-16px', position: 'relative', zIndex: 10 }}>
+        <button className="icon-btn" style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 12px', marginRight: '16px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={() => setShowNotifications(true)}>
+          <MdMail size={18} color="#64748b" />
+          {invitations.length > 0 && <span style={{ background: '#ef4444', color: 'white', borderRadius: '12px', padding: '2px 6px', fontSize: '10px', fontWeight: 'bold' }}>{invitations.length}</span>}
+        </button>
       </div>
 
-      {/* Right Sidebar */}
-      <aside className="workspace-sidebar-right">
-        <div className="sidebar-glass-card">
-          <h2>Workspace Members</h2>
-          <div className="members-list">
-            {workspaceMembers.slice(0, 4).map((member, i) => (
-              <div key={i} className="member-item">
-                <img src={member.user?.avatar || member.avatar} alt={member.user?.name || member.name} />
-                <div className="member-info-text">
-                  <span className="member-name">{member.user?.name || member.name}</span>
-                  <span className="member-role">{member.role}</span>
-                </div>
-                {member.role === 'OWNER' && <span className="role-tag">Owner</span>}
+      <WorkspaceHeader
+        viewMode={viewMode}
+        onViewChange={handleViewChange}
+        sortBy={sortBy}
+        onSortChange={handleSortChange}
+        onCreateClick={() => setIsGlobalCreateOpen(true)}
+      />
+
+      <div className="workspace-content-area" style={{ flex: 1 }}>
+        {loading && workspaces.length === 0 ? (
+          <p style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Loading workspaces...</p>
+        ) : (
+          <>
+            {currentLevel.type === 'root' && renderRoot()}
+            {currentLevel.type === 'workspace' && renderWorkspaceLevel()}
+            {currentLevel.type === 'folder' && renderFolderLevel()}
+          </>
+        )}
+      </div>
+
+      <CreateWorkspaceModal
+        isOpen={isCreateWorkspaceOpen}
+        onClose={() => setIsCreateWorkspaceOpen(false)}
+        onCreate={handleCreateWorkspace}
+        userPlan={userPlan}
+        currentWorkspaceCount={myWorkspaces.length}
+      />
+
+      <GlobalCreateModal
+        isOpen={isGlobalCreateOpen}
+        onClose={() => setIsGlobalCreateOpen(false)}
+        onCreateVideo={handleGlobalCreate}
+        workspaces={workspaces}
+      />
+
+      {/* Notifications Panel Restored */}
+      <AnimatePresence>
+        {showNotifications && (
+          <motion.div
+            className="notifications-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', justifyContent: 'flex-end' }}
+            onClick={() => setShowNotifications(false)}
+          >
+            <motion.div
+              className="notifications-panel"
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              style={{ width: '400px', background: 'white', height: '100vh', padding: '24px', display: 'flex', flexDirection: 'column' }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <h2 style={{ margin: 0, fontSize: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}><MdMail /> Invitations</h2>
+                <button onClick={() => setShowNotifications(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}><MdClose size={20} /></button>
               </div>
-            ))}
-          </div>
-          <button className="action-link view-all">
-            View All Members
-          </button>
-        </div>
 
-        <div className="sidebar-glass-card">
-          <h2>Quick Actions</h2>
-          <div className="quick-actions-list">
-            <div className="action-link" onClick={() => setShowSettings(true)}>
-              <MdSettings />
-              <span>Workspace Settings</span>
-            </div>
-            <div className="action-link">
-              <MdBusiness />
-              <span>Manage Billing</span>
-            </div>
-          </div>
-        </div>
-      </aside>
+              <div style={{ flex: 1, overflowY: 'auto' }}>
+                {invitations.length > 0 ? (
+                  invitations.map(inv => (
+                    <div key={inv.id} style={{ border: '1px solid #e2e8f0', padding: '16px', borderRadius: '12px', marginBottom: '12px' }}>
+                      <h4 style={{ margin: '0 0 4px 0' }}>{inv.workspaceName}</h4>
+                      <p style={{ margin: '0 0 12px 0', fontSize: '12px', color: '#64748b' }}>Invited by {inv.invitedBy} • Role: {inv.role}</p>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button onClick={() => handleAcceptInvitation(inv.id)} style={{ padding: '6px 12px', background: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', flex: 1 }}><MdCheck /> Accept</button>
+                        <button onClick={() => handleDeclineInvitation(inv.id)} style={{ padding: '6px 12px', background: '#f1f5f9', color: '#64748b', border: 'none', borderRadius: '6px', cursor: 'pointer', flex: 1 }}><MdClose /> Decline</button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0' }}>No pending invitations</div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Invite Members Modal */}
-      <InviteMembersModal
-        isOpen={showInviteModal}
-        onClose={() => setShowInviteModal(false)}
-        workspace={currentWorkspace}
-        onInvite={handleInviteMembers}
-        loading={loading}
-        error={error}
-      />
-
-      {/* Workspace Create Form Modal */}
-      <WorkspaceCreateForm
-        isOpen={showCreateForm}
-        onClose={() => setShowCreateForm(false)}
-        onSubmit={handleCreateWorkspace}
-        loading={loading}
-        error={error}
-      />
-
-      {/* Workspace Settings Modal */}
-      <WorkspaceSettings
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-        workspace={currentWorkspace}
-        onUpdate={handleUpdateWorkspace}
-        onDelete={handleDeleteWorkspace}
-        loading={loading}
-        error={error}
-      />
     </motion.div>
   );
 };
