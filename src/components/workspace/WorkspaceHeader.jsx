@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MdViewModule, MdViewList, MdSort, MdAdd, MdKeyboardArrowDown } from 'react-icons/md';
+import { MdViewModule, MdViewList, MdSort, MdAdd, MdKeyboardArrowDown, MdMail } from 'react-icons/md';
 
-const WorkspaceHeader = ({ viewMode, onViewChange, sortBy, onSortChange, onCreateClick }) => {
+const WorkspaceHeader = ({ viewMode, onViewChange, sortBy, onSortChange, onCreateClick, invitationCount = 0, onInviteClick }) => {
     const [isSortOpen, setIsSortOpen] = useState(false);
     const sortRef = useRef(null);
 
@@ -71,6 +71,15 @@ const WorkspaceHeader = ({ viewMode, onViewChange, sortBy, onSortChange, onCreat
                         </div>
                     )}
                 </div>
+
+                {onInviteClick && (
+                    <button className="invite-icon-btn" onClick={onInviteClick} title="Invitations">
+                        <MdMail size={18} />
+                        {invitationCount > 0 && (
+                            <span className="invite-badge">{invitationCount}</span>
+                        )}
+                    </button>
+                )}
 
                 <button className="btn-primary" onClick={onCreateClick}>
                     <MdAdd size={18} /> Create
