@@ -411,6 +411,7 @@ const TeamWorkspace = () => {
         title="Shared with Me"
         count={sharedWithMe.length}
         viewMode={viewMode}
+        emptyMessage="No workspaces have been shared with you yet."
       >
         {renderWorkspaceItems(sharedWithMe)}
       </WorkspaceSection>
