@@ -229,10 +229,10 @@ function Trash() {
                   gap: '8px',
                   padding: '10px 16px',
                   marginBottom: '24px',
-                  background: '#ffffff',
-                  border: '1px solid #e2e8f0',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
                   borderRadius: '8px',
-                  color: '#334155',
+                  color: 'var(--text-main)',
                   fontWeight: 600,
                   fontSize: '14px',
                   cursor: 'pointer',
@@ -394,13 +394,13 @@ function Trash() {
           justify-content: space-between;
           margin-bottom: 24px;
           padding-bottom: 16px;
-          border-bottom: 1px solid #e5e7eb;
+          border-bottom: 1px solid var(--border-color);
         }
 
         .trash-title {
           font-size: 28px;
           font-weight: 700;
-          color: #1f2937;
+          color: var(--text-main);
           margin: 0;
         }
 
@@ -471,7 +471,7 @@ function Trash() {
         .section-title {
           font-size: 20px;
           font-weight: 600;
-          color: #1f2937;
+          color: var(--text-main);
           margin: 0 0 20px;
         }
 
@@ -497,10 +497,10 @@ function Trash() {
         }
 
         .folder-card {
-          border: 1px solid #e5e7eb;
+          border: 1px solid var(--border-color);
           border-radius: 16px;
           padding: 24px;
-          background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+          background: var(--bg-card);
           box-shadow: 
             0 1px 3px rgba(0, 0, 0, 0.05),
             0 4px 12px rgba(0, 0, 0, 0.03);
@@ -560,7 +560,7 @@ function Trash() {
         .folder-name {
           font-weight: 700;
           font-size: 16px;
-          color: #374151;
+          color: var(--text-main);
           margin: 0 0 8px;
           line-height: 1.3;
           transition: color 0.2s ease;
@@ -584,9 +584,9 @@ function Trash() {
         }
 
         .video-card {
-          border: 1px solid #e5e7eb;
+          border: 1px solid var(--border-color);
           border-radius: 12px;
-          background: #ffffff;
+          background: var(--bg-card);
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
           overflow: hidden;
           position: relative;
@@ -650,7 +650,7 @@ function Trash() {
         .video-title {
           font-weight: 600;
           font-size: 14px;
-          color: #374151;
+          color: var(--text-main);
           margin: 0 0 6px;
           line-height: 1.4;
         }
@@ -702,8 +702,8 @@ function Trash() {
           position: absolute;
           top: 40px;
           right: 8px;
-          background: #ffffff;
-          border: 1px solid #e5e7eb;
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
           border-radius: 8px;
           box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
           display: grid;
@@ -754,8 +754,8 @@ function Trash() {
           align-items: center;
           justify-content: space-between;
           padding: 16px 20px;
-          background: #ffffff;
-          border: 1px solid #e5e7eb;
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
           border-radius: 8px;
           transition: all 0.2s ease;
         }
@@ -772,7 +772,7 @@ function Trash() {
         .video-list-title {
           font-size: 15px;
           font-weight: 600;
-          color: #374151;
+          color: var(--text-main);
           margin: 0 0 4px;
         }
 

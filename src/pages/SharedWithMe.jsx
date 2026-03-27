@@ -24,6 +24,7 @@ const styles = `
   overflow-y: auto;
   max-width: 1400px;
   margin: 0 auto;
+  background: var(--bg-main);
 }
 
 .shared-header {
@@ -32,13 +33,13 @@ const styles = `
   justify-content: space-between;
   margin-bottom: 32px;
   padding-bottom: 24px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .shared-title {
   font-size: 28px;
   font-weight: 800;
-  color: #1e293b;
+  color: var(--text-main);
   margin: 0;
   letter-spacing: -0.01em;
 }
@@ -55,14 +56,14 @@ const styles = `
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: 14px;
   font-weight: 500;
-  color: #334155;
+  color: var(--text-main);
 }
 
 .sort-dropdown:hover {
@@ -100,8 +101,8 @@ const styles = `
 }
 
 .view-toggle-btn.active {
-  background: #ffffff;
-  color: #3b82f6;
+  background: var(--bg-card);
+  color: var(--primary);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -118,8 +119,8 @@ const styles = `
 }
 
 .shared-item {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: 10px;
   overflow: hidden;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -261,7 +262,7 @@ const styles = `
 .item-name {
   font-size: 13px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--text-main);
   margin: 0 0 4px;
   white-space: nowrap;
   overflow: hidden;
@@ -328,8 +329,8 @@ const styles = `
   position: absolute;
   top: 40px;
   right: 8px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
   min-width: 160px;
