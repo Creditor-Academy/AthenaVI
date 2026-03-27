@@ -58,17 +58,21 @@ const TeamWorkspace = () => {
     try {
       setLoading(true);
       const workspaceList = await workspaceService.listWorkspaces();
+      console.log('Raw workspace list from API:', workspaceList);
 
       // Map API workspaces to local shape and inject mock folders/videos as requested
       const mappedWorkspaces = workspaceList.map(ws => ({
         id: ws.id,
         name: ws.name,
         type: ws.type === 'TEAM' ? 'workspace' : 'personal',
-        ownerId: ws.ownerId || 'user-1',
+        ownerId: ws.ownerId || ws.createdBy || user.id, // Fallback to current user if missing
         members: ws.members || [],
         folders: MOCK_FOLDERS,
-        userRole: ws.userRole
+        userRole: ws.userRole || (ws.ownerId === user.id || ws.createdBy === user.id ? 'OWNER' : 'MEMBER')
       }));
+      
+      console.log('Mapped workspaces:', mappedWorkspaces);
+      console.log('Current user ID:', user.id);
 
       // Ensure there's a personal workspace if API didn't return one
       if (!mappedWorkspaces.find(w => w.type === 'personal')) {
@@ -126,8 +130,19 @@ const TeamWorkspace = () => {
 
   // Sections Filtering (Owner mapping depends on logic, defaulting to userRole logic)
   const personalWorkspace = workspaces.find(w => w.type === 'personal');
-  const myWorkspaces = workspaces.filter(w => w.type === 'workspace' && w.userRole === 'OWNER');
-  const sharedWithMe = workspaces.filter(w => w.type === 'workspace' && w.userRole !== 'OWNER');
+  const myWorkspaces = workspaces.filter(w => 
+    w.type === 'workspace' && 
+    (w.userRole === 'OWNER' || w.ownerId === user.id)
+  );
+  const sharedWithMe = workspaces.filter(w => 
+    w.type === 'workspace' && 
+    w.userRole !== 'OWNER' && 
+    w.ownerId !== user.id
+  );
+
+  // Debug logging
+  console.log('My Workspaces filtered:', myWorkspaces);
+  console.log('Shared with Me filtered:', sharedWithMe);
 
   const sortItems = (items) => {
     return [...items].sort((a, b) => {
@@ -147,7 +162,7 @@ const TeamWorkspace = () => {
         id: newWorkspace.id,
         name: newWorkspace.name,
         type: 'workspace',
-        ownerId: newWorkspace.ownerId || 'user-1',
+        ownerId: newWorkspace.ownerId || newWorkspace.createdBy || user.id,
         members: [],
         folders: [],
         userRole: 'OWNER'
@@ -386,6 +401,8 @@ const TeamWorkspace = () => {
         emptyMessage="You don't have any custom workspaces yet."
         emptyActionLabel="Create Workspace"
         onEmptyAction={() => setIsCreateWorkspaceOpen(true)}
+        showCreateButton={true}
+        onCreateClick={() => setIsCreateWorkspaceOpen(true)}
       >
         {renderWorkspaceItems(myWorkspaces)}
       </WorkspaceSection>

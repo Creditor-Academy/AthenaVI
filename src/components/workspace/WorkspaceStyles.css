@@ -194,6 +194,12 @@
   margin-bottom: 32px;
 }
 
+.section-header-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .section-header-compact h3 {
   font-size: 18px;
   font-weight: 600;
