@@ -1,0 +1,211 @@
+.interactiveSection {
+  padding: 120px 80px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #faf5ff 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.container {
+  max-width: 1200px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 80px;
+  align-items: center;
+}
+
+/* Left Column */
+.textContent {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.headingWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.heading {
+  font-family: 'Georgia', serif;
+  font-size: 48px;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.subheading {
+  font-size: 20px;
+  color: #475569;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.bulletList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.bulletItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 18px;
+  color: #334155;
+}
+
+.bulletIcon {
+  width: 24px;
+  height: 24px;
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.highlight {
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.closingLine {
+  font-size: 18px;
+  color: #64748b;
+  font-style: italic;
+  border-left: 4px solid #3b82f6;
+  padding-left: 20px;
+  margin-top: 10px;
+}
+
+.highlightBox {
+  margin-top: 20px;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  border: 1px solid rgba(59, 130, 246, 0.1);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+}
+
+.highlightBox p {
+  margin: 0;
+  font-size: 16px;
+  color: #1e40af;
+  line-height: 1.6;
+}
+
+/* Right Column - Interaction Flow Visual */
+.visualContent {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  padding: 40px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 20px 20px 60px rgba(0, 0, 0, 0.05);
+}
+
+.flowContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 60px;
+  position: relative;
+}
+
+.flowLine {
+  position: absolute;
+  left: 28px;
+  top: 40px;
+  bottom: 40px;
+  width: 2px;
+  background: linear-gradient(to bottom, #dbeafe, #e0e7ff, #dbeafe);
+  z-index: 1;
+}
+
+.flowStep {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  position: relative;
+  z-index: 2;
+}
+
+.iconWrapper {
+  width: 56px;
+  height: 56px;
+  background: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #2563eb;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: 2px solid #eff6ff;
+  transition: all 0.3s ease;
+}
+
+.flowStep:hover .iconWrapper {
+  transform: scale(1.1);
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.stepInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stepTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.stepDesc {
+  font-size: 14px;
+  color: #64748b;
+}
+
+/* Animations */
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.8; }
+}
+
+.pulsingNode {
+  animation: pulse 2s infinite ease-in-out;
+}
+
+/* Responsiveness */
+@media (max-width: 1024px) {
+  .interactiveSection {
+    padding: 80px 40px;
+  }
+  .container {
+    gap: 40px;
+    grid-template-columns: 1fr;
+  }
+  .visualContent {
+    order: 2;
+  }
+}
+
+@media (max-width: 768px) {
+  .interactiveSection {
+    padding: 60px 20px;
+  }
+  .heading {
+    font-size: 36px;
+  }
+}
