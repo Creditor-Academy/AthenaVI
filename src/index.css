@@ -1,10 +1,10 @@
 :root {
-  /* Default Theme Colors (Indigo/Violet) */
-  --primary-rgb: 99, 102, 241;
-  --primary: rgb(var(--primary-rgb));
-  --primary-hover: #4f46e5;
-  --primary-light: #818cf8;
-  --primary-dark: #3730a3;
+  /* Default Theme Colors: Sapphire (Corporate Blue) */
+  --primary-rgb: 37, 99, 235;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-light: #60a5fa;
+  --primary-dark: #1e40af;
   
   --secondary-rgb: 168, 85, 247;
   --secondary: rgb(var(--secondary-rgb));

@@ -10,7 +10,9 @@ function DashboardTopbar({
     onCreate,
     notificationCount = 9,
     cartCount = 2,
-    goToSection
+    goToSection,
+    onNotificationClick,
+    onCartClick
 }) {
     return (
         <header className="topbar topbar--main">
@@ -51,7 +53,12 @@ function DashboardTopbar({
                     </button>
 
                     <div className="topbar-icon-group topbar-icon-group--desktop">
-                        <button type="button" className="topbar-icon-btn" aria-label="Notifications">
+                        <button 
+                            type="button" 
+                            className="topbar-icon-btn" 
+                            aria-label="Notifications"
+                            onClick={onNotificationClick}
+                        >
                             <span className="topbar-icon-badge-wrap">
                                 <Bell size={18} strokeWidth={1.75} aria-hidden />
                                 {notificationCount > 0 && (
@@ -59,7 +66,12 @@ function DashboardTopbar({
                                 )}
                             </span>
                         </button>
-                        <button type="button" className="topbar-icon-btn" aria-label={`Cart, ${cartCount} items`}>
+                        <button 
+                            type="button" 
+                            className="topbar-icon-btn" 
+                            aria-label={`Cart, ${cartCount} items`}
+                            onClick={onCartClick}
+                        >
                             <ShoppingBag size={18} strokeWidth={1.75} aria-hidden />
                         </button>
                     </div>
@@ -91,7 +103,12 @@ function DashboardTopbar({
                         />
                     </label>
                     <div className="topbar-mobile-icons">
-                        <button type="button" className="topbar-icon-btn" aria-label="Notifications">
+                        <button 
+                            type="button" 
+                            className="topbar-icon-btn" 
+                            aria-label="Notifications"
+                            onClick={onNotificationClick}
+                        >
                             <span className="topbar-icon-badge-wrap">
                                 <Bell size={18} strokeWidth={1.75} aria-hidden />
                                 {notificationCount > 0 && (
@@ -99,7 +116,12 @@ function DashboardTopbar({
                                 )}
                             </span>
                         </button>
-                        <button type="button" className="topbar-icon-btn" aria-label={`Cart, ${cartCount} items`}>
+                        <button 
+                            type="button" 
+                            className="topbar-icon-btn" 
+                            aria-label={`Cart, ${cartCount} items`}
+                            onClick={onCartClick}
+                        >
                             <ShoppingBag size={18} strokeWidth={1.75} aria-hidden />
                         </button>
                     </div>
