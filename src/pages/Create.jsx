@@ -507,8 +507,8 @@ function Create({ onBack }) {
               zIndex: 50,
               width: '24px',
               height: '48px',
-              background: '#ffffff',
-              border: '1px solid #e8eaed',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
               borderRight: 'none',
               borderRadius: '8px 0 0 8px',
               display: 'flex',
@@ -520,7 +520,7 @@ function Create({ onBack }) {
             }}
             title={isRightSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
           >
-            {isRightSidebarOpen ? <MdChevronRight size={20} color="#5f6368" /> : <MdChevronLeft size={20} color="#5f6368" />}
+            {isRightSidebarOpen ? <MdChevronRight size={20} color="var(--text-muted)" /> : <MdChevronLeft size={20} color="var(--text-muted)" />}
           </button>
 
           {/* Properties Panel (Script, Duration, Audio, etc.) */}
@@ -528,8 +528,8 @@ function Create({ onBack }) {
             width: isRightSidebarOpen ? '300px' : '0px',
             flexShrink: 0,
             height: '100%',
-            borderLeft: isRightSidebarOpen ? '1px solid #e5e7eb' : 'none',
-            background: '#ffffff',
+            borderLeft: isRightSidebarOpen ? '1px solid var(--border-color)' : 'none',
+            background: 'var(--bg-card)',
             overflowY: 'auto',
             overflowX: 'hidden',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',

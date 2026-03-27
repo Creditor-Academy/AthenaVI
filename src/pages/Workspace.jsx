@@ -29,7 +29,7 @@ const styles = `
   justify-content: space-between;
   margin-bottom: 32px;
   padding-bottom: 20px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .workspace-title-section {
@@ -41,7 +41,7 @@ const styles = `
 .workspace-title {
   font-size: 28px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-main);
   margin: 0;
   letter-spacing: -0.01em;
 }
@@ -50,9 +50,9 @@ const styles = `
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  color: #334155;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
   font-weight: 600;
   font-size: 14px;
   padding: 10px 20px;
@@ -62,8 +62,8 @@ const styles = `
 }
 
 .new-folder-btn:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
+  background: var(--bg-surface);
+  border-color: var(--text-muted);
 }
 
 .workspace-controls {
@@ -81,10 +81,10 @@ const styles = `
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  color: #334155;
+  color: var(--text-main);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -92,16 +92,16 @@ const styles = `
 }
 
 .dropdown-btn:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
+  background: var(--bg-surface);
+  border-color: var(--text-muted);
 }
 
 .dropdown-menu {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
   min-width: 180px;
@@ -126,7 +126,7 @@ const styles = `
   cursor: pointer;
   transition: background 0.15s ease;
   font-size: 14px;
-  color: #334155;
+  color: var(--text-muted);
   border: none;
   background: transparent;
   width: 100%;
@@ -134,16 +134,18 @@ const styles = `
 }
 
 .dropdown-item:hover {
-  background: #f8fafc;
+  background: var(--bg-surface);
+  color: var(--text-main);
 }
 
 .view-toggle {
   display: flex;
   align-items: center;
   gap: 0;
-  background: #f1f5f9;
+  background: var(--bg-surface);
   border-radius: 8px;
   padding: 2px;
+  border: 1px solid var(--border-color);
 }
 
 .view-toggle-btn {
@@ -151,7 +153,7 @@ const styles = `
   height: 36px;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: var(--text-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -162,8 +164,8 @@ const styles = `
 }
 
 .view-toggle-btn.active {
-  background: #ffffff;
-  color: #3b82f6;
+  background: var(--bg-card);
+  color: var(--primary);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -174,7 +176,7 @@ const styles = `
 .section-heading {
   font-size: 16px;
   font-weight: 600;
-  color: #334155;
+  color: var(--text-main);
   margin: 0 0 20px;
 }
 
@@ -191,10 +193,10 @@ const styles = `
 }
 
 .folder-card {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 20px;
-  background: #ffffff;
+  background: var(--bg-card);
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
@@ -204,7 +206,7 @@ const styles = `
 }
 
 .folder-card:hover {
-  border-color: #cbd5e1;
+  border-color: var(--text-muted);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
@@ -216,13 +218,14 @@ const styles = `
   width: 48px;
   height: 48px;
   border-radius: 8px;
-  background: #f1f5f9;
+  background: var(--bg-surface);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #475569;
+  color: var(--text-muted);
   font-size: 24px;
   flex-shrink: 0;
+  border: 1px solid var(--border-color);
 }
 
 .folder-info {
@@ -233,7 +236,7 @@ const styles = `
 .folder-name {
   font-size: 15px;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--text-main);
   margin: 0;
   line-height: 1.4;
   overflow: hidden;
@@ -247,31 +250,27 @@ const styles = `
   border-radius: 6px;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: var(--text-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.15s ease;
   font-size: 18px;
-  opacity: 0;
-}
-
-.folder-card:hover .folder-menu-btn {
   opacity: 1;
 }
 
 .folder-menu-btn:hover {
-  background: #f1f5f9;
-  color: #334155;
+  background: var(--bg-surface);
+  color: var(--text-main);
 }
 
 .folder-menu {
   position: absolute;
   top: 40px;
   right: 10px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
   min-width: 160px;
@@ -293,29 +292,30 @@ const styles = `
   text-align: left;
   font-size: 13px;
   font-weight: 500;
-  color: #334155;
+  color: var(--text-muted);
 }
 
 .folder-menu-item:hover {
-  background: #f8fafc;
+  background: var(--bg-surface);
+  color: var(--text-main);
 }
 
 .folder-menu-item.delete {
-  color: #ef4444;
+  color: var(--delete-red);
 }
 
 .folder-menu-item.delete:hover {
-  background: #fef2f2;
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .folder-menu-icon {
   font-size: 18px;
-  color: #64748b;
+  color: var(--text-muted);
   flex-shrink: 0;
 }
 
 .folder-menu-item.delete .folder-menu-icon {
-  color: #ef4444;
+  color: var(--delete-red);
 }
 
 .rename-dialog-overlay {
@@ -330,6 +330,7 @@ const styles = `
   justify-content: center;
   z-index: 1000;
   animation: fadeIn 0.2s ease;
+  backdrop-filter: blur(4px);
 }
 
 @keyframes fadeIn {
@@ -342,13 +343,14 @@ const styles = `
 }
 
 .rename-dialog {
-  background: #ffffff;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 24px;
   width: 90%;
   max-width: 400px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
   animation: slideUp 0.2s ease;
+  border: 1px solid var(--border-color);
 }
 
 @keyframes slideUp {
@@ -373,7 +375,7 @@ const styles = `
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--text-main);
 }
 
 .rename-dialog-close {
@@ -382,7 +384,7 @@ const styles = `
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
-  color: #64748b;
+  color: var(--text-muted);
   transition: all 0.15s ease;
   display: flex;
   align-items: center;
@@ -390,14 +392,16 @@ const styles = `
 }
 
 .rename-dialog-close:hover {
-  background: #f1f5f9;
-  color: #334155;
+  background: var(--bg-surface);
+  color: var(--text-main);
 }
 
 .rename-input {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-main);
   border-radius: 6px;
   font-size: 14px;
   margin-bottom: 20px;
@@ -407,8 +411,8 @@ const styles = `
 }
 
 .rename-input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
 }
 
 .rename-dialog-actions {
@@ -419,26 +423,26 @@ const styles = `
 
 .btn-secondary {
   padding: 8px 16px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
-  color: #334155;
+  color: var(--text-main);
   transition: all 0.2s ease;
 }
 
 .btn-secondary:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
+  background: var(--bg-surface);
+  border-color: var(--text-muted);
 }
 
 .btn-primary {
   padding: 8px 16px;
   border: none;
-  background: #3b82f6;
-  color: #ffffff;
+  background: var(--primary);
+  color: var(--text-main);
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
@@ -447,25 +451,25 @@ const styles = `
 }
 
 .btn-primary:hover {
-  background: #2563eb;
+  background: var(--primary-hover);
 }
 
 .empty-state {
   text-align: center;
   padding: 80px 20px;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .empty-state-icon {
   font-size: 64px;
-  color: #cbd5e1;
+  color: var(--border-color);
   margin-bottom: 16px;
 }
 
 .empty-state-title {
   font-size: 18px;
   font-weight: 600;
-  color: #334155;
+  color: var(--text-main);
   margin: 0 0 8px;
 }
 
@@ -479,9 +483,9 @@ const styles = `
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  color: #334155;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-main);
   font-weight: 500;
   font-size: 14px;
   border-radius: 8px;
@@ -492,8 +496,8 @@ const styles = `
 }
 
 .back-button:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
+  background: var(--bg-surface);
+  border-color: var(--text-muted);
 }
 
 .videos-grid {
@@ -509,9 +513,9 @@ const styles = `
 }
 
 .video-card {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--bg-card);
   overflow: hidden;
   transition: all 0.2s ease;
   cursor: pointer;
@@ -519,7 +523,7 @@ const styles = `
 }
 
 .video-card:hover {
-  border-color: #cbd5e1;
+  border-color: var(--text-muted);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
@@ -555,7 +559,7 @@ const styles = `
 .video-thumb {
   width: 100%;
   height: 120px;
-  background: #f1f5f9;
+  background: var(--bg-surface);
   position: relative;
   overflow: hidden;
 }
@@ -580,14 +584,15 @@ const styles = `
   padding: 3px 7px;
   font-size: 9px;
   font-weight: 600;
-  color: #334155;
+  color: var(--text-main);
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
 .video-badge.draft {
-  background: rgba(255, 243, 224, 0.95);
-  color: #f59e0b;
+  background: rgba(var(--primary-rgb), 0.1);
+  color: var(--primary);
+  border: 1px solid rgba(var(--primary-rgb), 0.2);
 }
 
 .video-menu-btn {
@@ -595,9 +600,9 @@ const styles = `
   height: 24px;
   border-radius: 4px;
   border: none;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--bg-card);
   backdrop-filter: blur(8px);
-  color: #334155;
+  color: var(--text-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -607,7 +612,8 @@ const styles = `
 }
 
 .video-menu-btn:hover {
-  background: #ffffff;
+  background: var(--bg-surface);
+  color: var(--text-main);
 }
 
 .video-duration {
@@ -615,7 +621,7 @@ const styles = `
   bottom: 6px;
   left: 6px;
   background: rgba(0, 0, 0, 0.7);
-  color: #ffffff;
+  color: var(--text-main);
   padding: 2px 6px;
   border-radius: 3px;
   font-size: 10px;
@@ -630,7 +636,7 @@ const styles = `
 .video-title {
   font-size: 13px;
   font-weight: 500;
-  color: #0f172a;
+  color: var(--text-main);
   margin: 0 0 4px;
   line-height: 1.4;
   display: -webkit-box;
@@ -641,7 +647,7 @@ const styles = `
 
 .video-meta {
   font-size: 11px;
-  color: #64748b;
+  color: var(--text-muted);
   margin: 0;
   font-weight: 400;
 }
@@ -650,8 +656,8 @@ const styles = `
   position: absolute;
   top: 40px;
   right: 8px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
   min-width: 140px;
@@ -673,31 +679,32 @@ const styles = `
   text-align: left;
   font-size: 13px;
   font-weight: 500;
-  color: #334155;
+  color: var(--text-muted);
 }
 
 .video-menu-item:hover {
-  background: #f8fafc;
+  background: var(--bg-surface);
+  color: var(--text-main);
 }
 
 .video-menu-item.delete {
-  color: #ef4444;
+  color: var(--delete-red);
 }
 
 .video-menu-item.delete:hover {
-  background: #fef2f2;
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .video-menu-icon {
   font-size: 16px;
-  color: #64748b;
+  color: var(--text-muted);
   flex-shrink: 0;
 }
 
 .video-menu-item.delete .video-menu-icon {
-  color: #ef4444;
+  color: var(--delete-red);
 }
-`
+`;
 
 const thumbnailUrl = 'https://media.istockphoto.com/id/1475888355/video/timelapse-of-the-creation-of-an-online-avatar-start-to-finish.jpg?s=640x640&k=20&c=pFzBOkU7LjC1DF0DeNCAUhS8MCiNwSDwkqI9v9C7IgQ='
 
@@ -991,9 +998,9 @@ function Workspace({ onCreate }) {
               alignItems: 'center',
               gap: '8px',
               padding: '8px 16px',
-              border: '1px solid #e2e8f0',
-              background: '#ffffff',
-              color: '#334155',
+              border: '1px solid var(--border-color)',
+              background: 'var(--bg-card)',
+              color: 'var(--text-main)',
               fontWeight: '500',
               fontSize: '14px',
               borderRadius: '8px',
@@ -1111,7 +1118,7 @@ function Workspace({ onCreate }) {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: '#334155',
+                      color: 'var(--text-muted)',
                       fontSize: '24px',
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
@@ -1152,9 +1159,9 @@ function Workspace({ onCreate }) {
               alignItems: 'center',
               gap: '8px',
               padding: '8px 16px',
-              border: '1px solid #e2e8f0',
-              background: '#ffffff',
-              color: '#334155',
+              border: '1px solid var(--border-color)',
+              background: 'var(--bg-card)',
+              color: 'var(--text-main)',
               fontWeight: '500',
               fontSize: '14px',
               borderRadius: '8px',
@@ -1216,7 +1223,7 @@ function Workspace({ onCreate }) {
                     </div>
                     <div className="folder-info">
                       <h3 className="folder-name">{subfolder.name}</h3>
-                      <p className="folder-meta" style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 0' }}>
+                      <p className="folder-meta" style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0' }}>
                         {subfolder.videos?.length || 0} {subfolder.videos?.length === 1 ? 'video' : 'videos'}
                       </p>
                     </div>
@@ -1371,7 +1378,7 @@ function Workspace({ onCreate }) {
                   <div className="folder-info">
                     <h3 className="folder-name">{folder.name}</h3>
                     {folder.subfolders && (
-                      <p className="folder-meta" style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 0' }}>
+                      <p className="folder-meta" style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0' }}>
                         {folder.subfolders.length} {folder.subfolders.length === 1 ? 'subfolder' : 'subfolders'}
                       </p>
                     )}

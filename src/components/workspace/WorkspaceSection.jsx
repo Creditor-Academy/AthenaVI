@@ -1,11 +1,16 @@
 import React from 'react';
 import { MdAdd } from 'react-icons/md';
 
-const WorkspaceSection = ({ title, count, viewMode, emptyMessage, onEmptyAction, emptyActionLabel, children }) => {
+const WorkspaceSection = ({ title, count, viewMode, emptyMessage, onEmptyAction, emptyActionLabel, children, showCreateButton = false, onCreateClick }) => {
     return (
         <div className="workspace-section">
             <div className="section-header-compact">
                 <h3>{title} <span className="item-count">({count})</span></h3>
+                {showCreateButton && onCreateClick && (
+                    <button className="btn-secondary add-btn-small" onClick={onCreateClick}>
+                        <MdAdd size={16} /> Create
+                    </button>
+                )}
             </div>
 
             {count === 0 ? (

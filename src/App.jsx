@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 import Landing from './pages/Landing.jsx'
 import Auth from './pages/Auth.jsx'
 import Dashboard from './pages/Dashboard.jsx'
@@ -370,7 +371,8 @@ function App() {
   }, [])
 
   return (
-    <AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
       {/* Reset Password Page - Standalone */}
       {window.location.pathname.includes('/reset-password') && (
         <div style={{
@@ -853,6 +855,7 @@ function App() {
         </>
       )}
     </AuthProvider>
+    </ThemeProvider>
   )
 }
 
