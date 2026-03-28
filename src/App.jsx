@@ -16,6 +16,7 @@ import SalesSuite from './pages/SalesSuite.jsx'
 import Ethics from './pages/Ethics.jsx'
 import Technology from './pages/Technology.jsx'
 import CustomerExperience from './pages/CustomerExperience.jsx'
+import LearningDevelopment from './pages/LearningDevelopment.jsx'
 import ResetPassword from './components/authentication/ResetPassword.jsx'
 import Settings from './pages/Settings.jsx'
 import UseCases from './pages/UseCases.jsx'
@@ -219,6 +220,7 @@ function App() {
       '/technology': 'technology',
       '/use-cases': 'use-cases',
       '/customer-experience': 'customer-experience',
+      '/learning-development': 'learning-development',
       '/settings': 'settings'
     }
     
@@ -264,6 +266,7 @@ function App() {
       'technology': '/technology',
       'use-cases': '/use-cases',
       'customer-experience': '/customer-experience',
+      'learning-development': '/learning-development',
       'settings': '/settings'
     }
     
@@ -313,6 +316,7 @@ function App() {
         '/technology': 'technology',
         '/use-cases': 'use-cases',
         '/customer-experience': 'customer-experience',
+        '/learning-development': 'learning-development',
         '/settings': 'settings'
       }
       
@@ -489,6 +493,8 @@ function App() {
                 setView('sales-suite')
               } else if (solution === 'Customer Experience') {
                 setView('customer-experience')
+              } else if (solution === 'Learning & Development') {
+                setView('learning-development')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -549,6 +555,8 @@ function App() {
                 setView('sales-suite')
               } else if (solution === 'Customer Experience') {
                 setView('customer-experience')
+              } else if (solution === 'Learning & Development') {
+                setView('learning-development')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -581,6 +589,8 @@ function App() {
                 setView('sales-suite')
               } else if (solution === 'Customer Experience') {
                 setView('customer-experience')
+              } else if (solution === 'Learning & Development') {
+                setView('learning-development')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -613,6 +623,8 @@ function App() {
                 setView('sales-suite')
               } else if (solution === 'Customer Experience') {
                 setView('customer-experience')
+              } else if (solution === 'Learning & Development') {
+                setView('learning-development')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -645,6 +657,8 @@ function App() {
                 setView('sales-suite')
               } else if (solution === 'Customer Experience') {
                 setView('customer-experience')
+              } else if (solution === 'Learning & Development') {
+                setView('learning-development')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -677,6 +691,8 @@ function App() {
                 setView('sales-suite')
               } else if (solution === 'Customer Experience') {
                 setView('customer-experience')
+              } else if (solution === 'Learning & Development') {
+                setView('learning-development')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -709,6 +725,8 @@ function App() {
                 setView('sales-suite')
               } else if (solution === 'Customer Experience') {
                 setView('customer-experience')
+              } else if (solution === 'Learning & Development') {
+                setView('learning-development')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -741,6 +759,8 @@ function App() {
                 setView('sales-suite')
               } else if (solution === 'Customer Experience') {
                 setView('customer-experience')
+              } else if (solution === 'Learning & Development') {
+                setView('learning-development')
               }
             }}
             onNavigateToTechnology={() => setView('technology')}
@@ -772,6 +792,8 @@ function App() {
                 setView('sales-suite')
               } else if (solution === 'Customer Experience') {
                 setView('customer-experience')
+              } else if (solution === 'Learning & Development') {
+                setView('learning-development')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -804,6 +826,8 @@ function App() {
                 setView('sales-suite')
               } else if (solution === 'Customer Experience') {
                 setView('customer-experience')
+              } else if (solution === 'Learning & Development') {
+                setView('learning-development')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -836,6 +860,8 @@ function App() {
                 setView('sales-suite')
               } else if (solution === 'Customer Experience') {
                 setView('customer-experience')
+              } else if (solution === 'Learning & Development') {
+                setView('learning-development')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -868,6 +894,8 @@ function App() {
                 setView('sales-suite')
               } else if (solution === 'Customer Experience') {
                 setView('customer-experience')
+              } else if (solution === 'Learning & Development') {
+                setView('learning-development')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -883,7 +911,41 @@ function App() {
         </>
       )}
 
-      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience'].includes(view) && (
+      {view === 'learning-development' && (
+        <>
+          <LearningDevelopment 
+            onLoginClick={handleLoginClick}
+            onLogoClick={() => setView('landing')}
+            onNavigateToCompany={handleNavigateToCompany}
+            onNavigateToProduct={(section) => {
+              setProductSection(section)
+              setView('products')
+            }}
+            onNavigateToSolution={(solution) => {
+              if (solution === 'Marketing Suite') {
+                setView('marketing-suite')
+              } else if (solution === 'Sales Solutions') {
+                setView('sales-suite')
+              } else if (solution === 'Customer Experience') {
+                setView('customer-experience')
+              } else if (solution === 'Learning & Development') {
+                setView('learning-development')
+              }
+            }}
+            onNavigateToEthics={() => setView('ethics')}
+            onNavigateToTechnology={() => setView('technology')}
+            onNavigateToUseCases={() => setView('use-cases')}
+          />
+          {showAuthModal && (
+            <Auth 
+              onAuthComplete={handleAuthComplete}
+              onClose={() => setShowAuthModal(false)}
+            />
+          )}
+        </>
+      )}
+
+      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development'].includes(view) && (
         <>
           <Landing 
             onLoginClick={handleLoginClick}
@@ -898,6 +960,8 @@ function App() {
                 setView('sales-suite')
               } else if (solution === 'Customer Experience') {
                 setView('customer-experience')
+              } else if (solution === 'Learning & Development') {
+                setView('learning-development')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
