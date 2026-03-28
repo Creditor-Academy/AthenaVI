@@ -2,14 +2,14 @@
   display: grid;
   grid-template-columns: 240px 1fr;
   height: 100%;
-  background: white;
+  background: var(--bg-main);
   width: 100%;
 }
 
 /* Page Sidebar - Refined to feel like part of main sidebar */
 .library-sidebar {
-  background: #f8fafc;
-  border-right: 1px solid #f1f5f9;
+  background: var(--bg-card);
+  border-right: 1px solid var(--border-color);
   padding: 32px 12px;
   display: flex;
   flex-direction: column;
@@ -29,7 +29,7 @@
   border-radius: 12px;
   font-size: 14px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-muted);
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -39,30 +39,30 @@
 }
 
 .library-nav-item:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+  background: var(--bg-surface);
+  color: var(--text-main);
 }
 
 .library-nav-item.active {
-  background: white;
-  color: #2563eb;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
 }
 
 /* Storage Meter */
 .storage-info {
   margin-top: auto;
-  background: white;
+  background: var(--bg-surface);
   border-radius: 20px;
   padding: 20px;
-  border: 1px solid #f1f5f9;
+  border: 1px solid var(--border-color);
   box-shadow: 0 2px 4px rgba(0,0,0,0.01);
 }
 
 .storage-label {
   font-size: 11px;
   font-weight: 800;
-  color: #94a3b8;
+  color: var(--text-muted);
   text-transform: uppercase;
   margin-bottom: 12px;
   display: flex;
@@ -71,7 +71,7 @@
 
 .storage-bar {
   height: 6px;
-  background: #f1f5f9;
+  background: var(--bg-card);
   border-radius: 3px;
   overflow: hidden;
   margin-bottom: 8px;
@@ -85,7 +85,7 @@
 
 .storage-text {
   font-size: 11px;
-  color: #64748b;
+  color: var(--text-muted);
   font-weight: 500;
 }
 
@@ -93,14 +93,14 @@
 .library-main {
   display: flex;
   flex-direction: column;
-  background: white;
+  background: var(--bg-main);
   overflow: hidden;
 }
 
 .library-filters-bar {
   padding: 24px 40px;
-  border-bottom: 1px solid #f1f5f9;
-  background: white;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-main);
 }
 
 .filters-top-row {
@@ -117,7 +117,7 @@
 .type-tab {
   font-size: 15px;
   font-weight: 700;
-  color: #94a3b8;
+  color: var(--text-muted);
   padding-bottom: 12px;
   cursor: pointer;
   position: relative;
@@ -125,11 +125,11 @@
 }
 
 .type-tab:hover {
-  color: #64748b;
+  color: var(--text-main);
 }
 
 .type-tab.active {
-  color: #0f172a;
+  color: var(--text-main);
 }
 
 .type-tab.active::after {
@@ -139,7 +139,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: #2563eb;
+  background: var(--primary);
   border-radius: 4px;
 }
 
@@ -151,7 +151,7 @@
 
 .btn-upload-primary {
   padding: 10px 20px;
-  background: #2563eb;
+  background: var(--primary);
   color: white;
   border: none;
   border-radius: 10px;
@@ -166,13 +166,13 @@
 }
 
 .btn-upload-primary:hover {
-  background: #1d4ed8;
+  background: var(--primary-hover);
   transform: translateY(-1px);
 }
 
 .view-toggles {
   display: flex;
-  background: #f1f5f9;
+  background: var(--bg-surface);
   padding: 3px;
   border-radius: 10px;
 }
@@ -185,15 +185,15 @@
   justify-content: center;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: var(--text-muted);
   cursor: pointer;
   border-radius: 8px;
   transition: all 0.2s;
 }
 
 .toggle-btn.active {
-  background: white;
-  color: #2563eb;
+  background: var(--bg-card);
+  color: var(--primary);
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
@@ -202,7 +202,7 @@
   flex: 1;
   padding: 40px;
   overflow-y: auto;
-  background: #fbfcfd;
+  background: var(--bg-main);
 }
 
 .assets-grid {
@@ -212,8 +212,8 @@
 }
 
 .asset-card.grid {
-  background: white;
-  border: 1px solid #f1f5f9;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: 18px;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);
@@ -221,14 +221,14 @@
 
 .asset-card.grid:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0,0,0,0.06);
-  border-color: #2563eb;
+  box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+  border-color: var(--primary);
 }
 
 .asset-card.grid .asset-preview {
   width: 100%;
   aspect-ratio: 16/10;
-  background: #f8fafc;
+  background: var(--bg-surface);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -243,7 +243,7 @@
 
 .asset-preview-icon {
   font-size: 32px;
-  color: #2563eb;
+  color: var(--primary);
 }
 
 .asset-card.grid .asset-details {
@@ -260,8 +260,8 @@
 .asset-card.list {
   display: flex;
   align-items: center;
-  background: white;
-  border: 1px solid #f1f5f9;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   padding: 12px 20px;
   gap: 20px;
   border-radius: 16px;
@@ -269,10 +269,10 @@
 }
 
 .asset-card.list:hover {
-  background: white;
-  border-color: #2563eb;
+  background: var(--bg-card);
+  border-color: var(--primary);
   transform: translateX(4px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 .asset-card.list .asset-preview {
@@ -280,7 +280,7 @@
   height: 40px;
   border-radius: 8px;
   overflow: hidden;
-  background: #f8fafc;
+  background: var(--bg-surface);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -304,16 +304,17 @@
 .asset-name {
   font-size: 15px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--text-main);
   margin-bottom: 2px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  width: 100%;
 }
 
 .asset-meta {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--text-muted);
   font-weight: 500;
   display: flex;
   gap: 16px;
@@ -321,14 +322,14 @@
 
 /* Drag-and-Drop Placeholder */
 .upload-placeholder {
-  border: 2px dashed #e2e8f0;
+  border: 2px dashed var(--border-color);
   border-radius: 18px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  color: #94a3b8;
+  color: var(--text-muted);
   cursor: pointer;
   background: transparent;
   min-height: 180px;
@@ -336,9 +337,9 @@
 }
 
 .upload-placeholder:hover {
-  border-color: #2563eb;
-  background: #eff6ff;
-  color: #2563eb;
+  border-color: var(--primary);
+  background: var(--bg-surface);
+  color: var(--primary);
 }
 
 .upload-placeholder-icon {
@@ -363,12 +364,13 @@
 }
 
 .upload-modal {
-  background: white;
+  background: var(--bg-card);
   width: 90%;
   max-width: 480px;
   border-radius: 28px;
   padding: 32px;
-  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-color);
 }
 
 .upload-modal-header {
@@ -381,13 +383,13 @@
 .upload-modal-header h3 {
   font-size: 24px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text-main);
   margin: 0;
   letter-spacing: -0.02em;
 }
 
 .close-modal {
-  background: #f1f5f9;
+  background: var(--bg-surface);
   border: none;
   width: 36px;
   height: 36px;
@@ -395,7 +397,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #64748b;
+  color: var(--text-muted);
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -413,7 +415,7 @@
 
 .upload-option {
   padding: 24px 12px;
-  border: 1px solid #f1f5f9;
+  border: 1px solid var(--border-color);
   border-radius: 20px;
   display: flex;
   flex-direction: column;
@@ -421,12 +423,14 @@
   gap: 12px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--bg-surface);
 }
 
 .upload-option:hover {
-  background: #f8fafc;
-  border-color: #2563eb;
+  background: var(--bg-card);
+  border-color: var(--primary);
   transform: translateY(-4px);
+  box-shadow: var(--shadow);
 }
 
 .option-icon {
@@ -439,12 +443,12 @@
   font-size: 26px;
 }
 
-.option-icon.image { background: #eff6ff; color: #3b82f6; }
-.option-icon.video { background: #f5f3ff; color: #7c3aed; }
-.option-icon.music { background: #fff7ed; color: #ea580c; }
+.option-icon.image { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+.option-icon.video { background: rgba(124, 58, 237, 0.1); color: #7c3aed; }
+.option-icon.music { background: rgba(234, 88, 12, 0.1); color: #ea580c; }
 
 .upload-option span {
   font-size: 14px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--text-main);
 }

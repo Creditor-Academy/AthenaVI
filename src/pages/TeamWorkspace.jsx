@@ -58,17 +58,21 @@ const TeamWorkspace = () => {
     try {
       setLoading(true);
       const workspaceList = await workspaceService.listWorkspaces();
+      console.log('Raw workspace list from API:', workspaceList);
 
       // Map API workspaces to local shape and inject mock folders/videos as requested
       const mappedWorkspaces = workspaceList.map(ws => ({
         id: ws.id,
         name: ws.name,
         type: ws.type === 'TEAM' ? 'workspace' : 'personal',
-        ownerId: ws.ownerId || 'user-1',
+        ownerId: ws.ownerId || ws.createdBy || user.id, // Fallback to current user if missing
         members: ws.members || [],
         folders: MOCK_FOLDERS,
-        userRole: ws.userRole
+        userRole: ws.userRole || (ws.ownerId === user.id || ws.createdBy === user.id ? 'OWNER' : 'MEMBER')
       }));
+      
+      console.log('Mapped workspaces:', mappedWorkspaces);
+      console.log('Current user ID:', user.id);
 
       // Ensure there's a personal workspace if API didn't return one
       if (!mappedWorkspaces.find(w => w.type === 'personal')) {
@@ -126,8 +130,19 @@ const TeamWorkspace = () => {
 
   // Sections Filtering (Owner mapping depends on logic, defaulting to userRole logic)
   const personalWorkspace = workspaces.find(w => w.type === 'personal');
-  const myWorkspaces = workspaces.filter(w => w.type === 'workspace' && w.userRole === 'OWNER');
-  const sharedWithMe = workspaces.filter(w => w.type === 'workspace' && w.userRole !== 'OWNER');
+  const myWorkspaces = workspaces.filter(w => 
+    w.type === 'workspace' && 
+    (w.userRole === 'OWNER' || w.ownerId === user.id)
+  );
+  const sharedWithMe = workspaces.filter(w => 
+    w.type === 'workspace' && 
+    w.userRole !== 'OWNER' && 
+    w.ownerId !== user.id
+  );
+
+  // Debug logging
+  console.log('My Workspaces filtered:', myWorkspaces);
+  console.log('Shared with Me filtered:', sharedWithMe);
 
   const sortItems = (items) => {
     return [...items].sort((a, b) => {
@@ -147,7 +162,7 @@ const TeamWorkspace = () => {
         id: newWorkspace.id,
         name: newWorkspace.name,
         type: 'workspace',
-        ownerId: newWorkspace.ownerId || 'user-1',
+        ownerId: newWorkspace.ownerId || newWorkspace.createdBy || user.id,
         members: [],
         folders: [],
         userRole: 'OWNER'
@@ -386,6 +401,8 @@ const TeamWorkspace = () => {
         emptyMessage="You don't have any custom workspaces yet."
         emptyActionLabel="Create Workspace"
         onEmptyAction={() => setIsCreateWorkspaceOpen(true)}
+        showCreateButton={true}
+        onCreateClick={() => setIsCreateWorkspaceOpen(true)}
       >
         {renderWorkspaceItems(myWorkspaces)}
       </WorkspaceSection>
@@ -394,6 +411,7 @@ const TeamWorkspace = () => {
         title="Shared with Me"
         count={sharedWithMe.length}
         viewMode={viewMode}
+        emptyMessage="No workspaces have been shared with you yet."
       >
         {renderWorkspaceItems(sharedWithMe)}
       </WorkspaceSection>
@@ -460,24 +478,19 @@ const TeamWorkspace = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
     >
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '-16px', position: 'relative', zIndex: 10 }}>
-        <button className="icon-btn" style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 12px', marginRight: '16px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={() => setShowNotifications(true)}>
-          <MdMail size={18} color="#64748b" />
-          {invitations.length > 0 && <span style={{ background: '#ef4444', color: 'white', borderRadius: '12px', padding: '2px 6px', fontSize: '10px', fontWeight: 'bold' }}>{invitations.length}</span>}
-        </button>
-      </div>
-
       <WorkspaceHeader
         viewMode={viewMode}
         onViewChange={handleViewChange}
         sortBy={sortBy}
         onSortChange={handleSortChange}
         onCreateClick={() => setIsGlobalCreateOpen(true)}
+        invitationCount={invitations.length}
+        onInviteClick={() => setShowNotifications(true)}
       />
 
       <div className="workspace-content-area" style={{ flex: 1 }}>
         {loading && workspaces.length === 0 ? (
-          <p style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Loading workspaces...</p>
+          <p style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Loading workspaces...</p>
         ) : (
           <>
             {currentLevel.type === 'root' && renderRoot()}
@@ -518,7 +531,7 @@ const TeamWorkspace = () => {
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
-              style={{ width: '400px', background: 'white', height: '100vh', padding: '24px', display: 'flex', flexDirection: 'column' }}
+              style={{ width: '400px', background: 'var(--bg-card)', borderLeft: '1px solid var(--border-color)', height: '100vh', padding: '24px', display: 'flex', flexDirection: 'column' }}
               onClick={e => e.stopPropagation()}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
@@ -529,12 +542,12 @@ const TeamWorkspace = () => {
               <div style={{ flex: 1, overflowY: 'auto' }}>
                 {invitations.length > 0 ? (
                   invitations.map(inv => (
-                    <div key={inv.id} style={{ border: '1px solid #e2e8f0', padding: '16px', borderRadius: '12px', marginBottom: '12px' }}>
+                    <div key={inv.id} style={{ border: '1px solid var(--border-color)', padding: '16px', borderRadius: '12px', marginBottom: '12px', background: 'var(--bg-card)' }}>
                       <h4 style={{ margin: '0 0 4px 0' }}>{inv.workspaceName}</h4>
-                      <p style={{ margin: '0 0 12px 0', fontSize: '12px', color: '#64748b' }}>Invited by {inv.invitedBy} • Role: {inv.role}</p>
+                      <p style={{ margin: '0 0 12px 0', fontSize: '12px', color: 'var(--text-muted)' }}>Invited by {inv.invitedBy} • Role: {inv.role}</p>
                       <div style={{ display: 'flex', gap: '8px' }}>
-                        <button onClick={() => handleAcceptInvitation(inv.id)} style={{ padding: '6px 12px', background: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', flex: 1 }}><MdCheck /> Accept</button>
-                        <button onClick={() => handleDeclineInvitation(inv.id)} style={{ padding: '6px 12px', background: '#f1f5f9', color: '#64748b', border: 'none', borderRadius: '6px', cursor: 'pointer', flex: 1 }}><MdClose /> Decline</button>
+                        <button onClick={() => handleAcceptInvitation(inv.id)} style={{ padding: '6px 12px', background: 'var(--success-green)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', flex: 1 }}><MdCheck /> Accept</button>
+                        <button onClick={() => handleDeclineInvitation(inv.id)} style={{ padding: '6px 12px', background: 'var(--bg-surface)', color: 'var(--text-muted)', border: 'none', borderRadius: '6px', cursor: 'pointer', flex: 1 }}><MdClose /> Decline</button>
                       </div>
                     </div>
                   ))

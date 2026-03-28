@@ -10,12 +10,16 @@ import {
   MdArrowBack,
   MdPerson,
   MdUpload,
-  MdVerifiedUser
+  MdVerifiedUser,
+  MdNotifications,
+  MdVideoLibrary,
+  MdGeneratingTokens,
+  MdSecurity
 } from 'react-icons/md'
 import userService from '../services/userService.js'
 
 const Profile = ({ onBack }) => {
-  const { user, isAuthenticated } = useAuth()
+  const { user, isAuthenticated, updateUser } = useAuth()
   const [profile, setProfile] = useState({
     name: '',
     email: '',
@@ -53,6 +57,7 @@ const Profile = ({ onBack }) => {
         profileImage: userData?.profileImage || null
       }
       setProfile(newProfile)
+      updateUser(newProfile)
       setImageLoading(false)
     } catch (err) {
       console.error('Error loading profile:', err)
@@ -77,6 +82,7 @@ const Profile = ({ onBack }) => {
       await userService.updateUserProfile(updatedProfile)
       
       setProfile(updatedProfile)
+      updateUser(updatedProfile)
       setEditing(null)
       setEditValue('')
     } catch (err) {
@@ -125,6 +131,7 @@ const Profile = ({ onBack }) => {
           const updatedProfile = { ...profile, profileImage: newProfileImageUrl }
           console.log('Updating profile with:', updatedProfile)
           setProfile(updatedProfile)
+          updateUser(updatedProfile)
         } else {
           console.error('No profile image URL found in response')
           setError('Profile image uploaded but URL not found in response')
@@ -481,6 +488,81 @@ const Profile = ({ onBack }) => {
         padding: 40px 24px;
       }
     }
+
+    .profile-section-card {
+      background: white;
+      border: 1px solid #f1f5f9;
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.02);
+      margin-bottom: 24px;
+    }
+
+    .notif-item-rich {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 20px;
+      border-radius: 20px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid transparent;
+      margin-bottom: 8px;
+    }
+
+    .notif-item-rich:hover {
+      background: #f8fafc;
+      border-color: #f1f5f9;
+      transform: translateX(4px);
+    }
+
+    .notif-icon-box {
+      width: 48px;
+      height: 48px;
+      background: #f0f9ff;
+      color: #0369a1;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .notif-icon-box.success { background: #ecfdf5; color: #059669; }
+    .notif-icon-box.warning { background: #fffbeb; color: #d97706; }
+    .notif-icon-box.info { background: #f0f4ff; color: #3b82f6; }
+
+    .notif-main {
+      flex: 1;
+    }
+
+    .notif-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .notif-title-text {
+      font-size: 15px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .notif-time-tag {
+      font-size: 11px;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .notif-body-text {
+      font-size: 13px;
+      color: #64748b;
+      line-height: 1.5;
+      margin: 0;
+    }
   `
 
   return (
@@ -549,18 +631,24 @@ const Profile = ({ onBack }) => {
           
           <div className="profile-stats-mini">
             <div className="profile-stat-item">
-              <span className="profile-stat-value">Free</span>
-              <span className="profile-stat-label">Plan</span>
+              <span className="profile-stat-label">Current Plan</span>
+              <span className="profile-stat-value" style={{ color: '#2563eb' }}>Pro Elite</span>
+            </div>
+          </div>
+          <div className="profile-stats-mini" style={{ marginTop: '12px', borderTop: 'none', paddingTop: 0 }}>
+            <div className="profile-stat-item">
+              <span className="profile-stat-label">Videos Created</span>
+              <span className="profile-stat-value">48 / 100</span>
             </div>
             <div className="profile-stat-item">
-              <span className="profile-stat-value">12</span>
-              <span className="profile-stat-label">Videos</span>
+              <span className="profile-stat-label">Credits</span>
+              <span className="profile-stat-value">1,240</span>
             </div>
           </div>
         </aside>
 
         <div className="profile-main-content">
-          <section className="profile-detail-card">
+          <section className="profile-section-card">
             <h3 className="profile-section-title">
               <MdPerson size={22} />
               Personal Details
@@ -657,6 +745,34 @@ const Profile = ({ onBack }) => {
                   <MdEdit size={16} />
                 </button>
               )}
+            </div>
+          </section>
+
+          <section className="profile-section-card">
+            <h3 className="profile-section-title">
+              <MdNotifications size={22} />
+              Recent Notifications
+            </h3>
+            
+            <div className="notifications-list-rich">
+              {[
+                { title: 'Video Exported', desc: 'Your video "Product Demo Alpha" is now available for download.', time: '2 hours ago', type: 'success', icon: <MdVideoLibrary /> },
+                { title: 'Credits Refilled', desc: 'Your monthly credit balance has been renewed successfully.', time: '1 day ago', type: 'info', icon: <MdGeneratingTokens /> },
+                { title: 'Security Alert', desc: 'Your password was successfully updated.', time: '3 days ago', type: 'warning', icon: <MdSecurity /> }
+              ].map((notif, idx) => (
+                <div key={idx} className="notif-item-rich">
+                  <div className={`notif-icon-box ${notif.type}`}>
+                    {notif.icon}
+                  </div>
+                  <div className="notif-main">
+                    <div className="notif-header-row">
+                      <span className="notif-title-text">{notif.title}</span>
+                      <span className="notif-time-tag">{notif.time}</span>
+                    </div>
+                    <p className="notif-body-text">{notif.desc}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </section>
         </div>
