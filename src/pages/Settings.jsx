@@ -9,10 +9,11 @@ import {
 import ThemePage from '../components/settings/ThemePage'; // what user called themepage.jsx
 import NotificationSettings from '../components/settings/NotificationSettings';
 import SecuritySettings from '../components/settings/SecuritySettings';
+import Credits from './Credits';
 import './Settings.css';
 
-const Settings = ({ onBack }) => {
-  const [activeTab, setActiveTab] = useState('preferences');
+const Settings = ({ onBack, initialTab = 'preferences' }) => {
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   const menuItems = [
     { id: 'preferences', label: 'Appearance', icon: <MdPalette /> },
@@ -50,19 +51,7 @@ const Settings = ({ onBack }) => {
         {activeTab === 'preferences' && <ThemePage />}
         {activeTab === 'notifications' && <NotificationSettings />}
         {activeTab === 'security' && <SecuritySettings />}
-        {activeTab === 'billing' && (
-           <div className="settings-section">
-             <header className="settings-section-header">
-               <h3>Billing</h3>
-               <p>Manage your subscription and payment methods.</p>
-             </header>
-             <div className="settings-card">
-               <div className="settings-group">
-                 <p style={{ color: 'var(--text-muted)' }}>No billing information available.</p>
-               </div>
-             </div>
-           </div>
-        )}
+        {activeTab === 'billing' && <Credits asSection />}
       </main>
     </div>
   );

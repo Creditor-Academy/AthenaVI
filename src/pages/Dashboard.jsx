@@ -21,10 +21,14 @@ import VoiceCreatePanel from '../components/VoiceCreatePanel.jsx'
 import AIVideoAssistant from '../components/AIVideoAssistant.jsx'
 import ImportPowerPointModal from '../components/ImportPowerPointModal.jsx'
 import TranslateVideoModal from '../components/TranslateVideoModal.jsx'
+import { X } from 'lucide-react'
+import userService from '../services/userService.js'
+import { useAuth } from '../contexts/AuthContext'
 import './Dashboard.css'
 
 
 function Dashboard({ onLogout, onCreate, initialSection }) {
+  const { user, updateUser } = useAuth()
   const [section, setSection] = useState(() => {
     // Use initialSection from props if provided, otherwise get from URL
     if (initialSection) {
@@ -43,6 +47,10 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
   const [showAIAssistant, setShowAIAssistant] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
   const [showTranslateModal, setShowTranslateModal] = useState(false)
+  const [showProcessingModal, setShowProcessingModal] = useState(false)
+  const [showNotificationsModal, setShowNotificationsModal] = useState(false)
+  const [showCreditsModal, setShowCreditsModal] = useState(false)
+  const [pendingSection, setPendingSection] = useState(null)
   const [selectedTemplateForDetails, setSelectedTemplateForDetails] = useState(null)
   const [topbarMobileOpen, setTopbarMobileOpen] = useState(false)
   const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false)
@@ -55,6 +63,18 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
     setSidebarMobileOpen(false)
     setSection(id)
   }, [])
+
+  const handleNavigationWithModal = (targetSection) => {
+    setPendingSection(targetSection)
+    setShowProcessingModal(true)
+    
+    // Auto-proceed after a short "processing" delay to feel premium but fast
+    setTimeout(() => {
+      setShowProcessingModal(false)
+      goToSection(targetSection)
+      setPendingSection(null)
+    }, 1200)
+  }
 
   // Update URL when section changes
   useEffect(() => {
@@ -78,6 +98,21 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
 
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
+  // Eagerly fetch and sync user profile on dashboard mount
+  useEffect(() => {
+    const syncProfile = async () => {
+      try {
+        const profileData = await userService.getUserProfile()
+        if (profileData) {
+          updateUser(profileData)
+        }
+      } catch (err) {
+        console.error('Failed to sync profile on mount:', err)
+      }
+    }
+    syncProfile()
   }, [])
 
   return (
@@ -126,7 +161,9 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
           onCreate={onCreate}
           notificationCount={notificationCount}
           cartCount={cartCount}
-          goToSection={goToSection}
+          goToSection={handleNavigationWithModal}
+          onNotificationClick={() => setShowNotificationsModal(true)}
+          onCartClick={() => setShowCreditsModal(true)}
         />
 
         <main
@@ -171,7 +208,7 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
           {section === 'team-workspace' && <TeamWorkspace onCreate={onCreate} />}
           {section === 'admin-portal' && <AdminPortal />}
           {section === 'brandkits' && <BrandKits />}
-          {section === 'credits' && <Credits onBack={() => goToSection('home')} />}
+          {section === 'credits' && <Settings onBack={() => goToSection('home')} initialTab="billing" />}
           {section === 'profile' && <Profile onBack={() => goToSection('home')} />}
           {section === 'settings' && <Settings onBack={() => goToSection('home')} />}
         </main>
@@ -194,7 +231,70 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
         />
       )}
       {showImportModal && <ImportPowerPointModal onClose={() => setShowImportModal(false)} />}
-      {showTranslateModal && <TranslateVideoModal onClose={() => setShowTranslateModal(false)} />}
+      {showTranslateModal && <TranslateVideoModal onClose={() => setShowTranslateModal(true)} />}
+
+      {/* Navigation Processing Modal */}
+      {showProcessingModal && (
+        <div className="processing-navigation-modal">
+          <div className="processing-content">
+            <div className="processing-spinner">
+              <div className="spinner-ring"></div>
+              <div className="spinner-center">V</div>
+            </div>
+            <h4>Preparing {pendingSection?.charAt(0).toUpperCase() + pendingSection?.slice(1)}</h4>
+            <p>Optimizing your workspace for excellence...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Notifications Modal Overlay */}
+      {showNotificationsModal && (
+        <div className="quick-access-modal-overlay" onClick={() => setShowNotificationsModal(false)}>
+          <div className="quick-access-modal notifications-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header-sleek">
+              <h4>Notifications</h4>
+              <button className="close-mini-btn" onClick={() => setShowNotificationsModal(false)}><X size={18} /></button>
+            </div>
+            <div className="notifications-list-mini">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="notification-item-mini">
+                  <div className="notif-dot"></div>
+                  <div className="notif-content-mini">
+                    <h6>Video Generated Successfully</h6>
+                    <p>Your video "Project Athena" is ready for review.</p>
+                    <span>2 hours ago</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="modal-footer-sleek">
+              <button className="btn-link-action" onClick={() => { setShowNotificationsModal(false); handleNavigationWithModal('profile'); }}>View All History</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Credits Modal Overlay */}
+      {showCreditsModal && (
+        <div className="quick-access-modal-overlay" onClick={() => setShowCreditsModal(false)}>
+          <div className="quick-access-modal credits-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header-sleek">
+              <h4>Credits & Billing</h4>
+              <button className="close-mini-btn" onClick={() => setShowCreditsModal(false)}><X size={18} /></button>
+            </div>
+            <div className="credits-display-mini">
+              <div className="credits-amount-card">
+                <span className="credits-value">1,240</span>
+                <span className="credits-label">Available Credits</span>
+              </div>
+              <p className="credits-subtext">Credits are used for generating videos and high-quality avatars.</p>
+            </div>
+            <div className="modal-footer-sleek">
+              <button className="btn-primary-apply full-width" onClick={() => { setShowCreditsModal(false); handleNavigationWithModal('credits'); }}>View More & Upgrade</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
