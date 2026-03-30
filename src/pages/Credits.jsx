@@ -16,8 +16,13 @@ const styles = `
   padding: 40px 48px;
   max-width: 1600px;
   margin: 0 auto;
-  background: #f8fafc;
-  min-height: calc(100vh - 64px);
+  background: white;
+}
+
+.credits-container.section-mode {
+  padding: 0;
+  background: none;
+  min-height: auto;
 }
 
 .credits-header {
@@ -518,7 +523,7 @@ const styles = `
 }
 `
 
-function Credits({ onBack }) {
+function Credits({ onBack, asSection = false }) {
   const [selectedPlan, setSelectedPlan] = useState(null)
   const [credits, setCredits] = useState(1250)
   const [usageHistory] = useState([
@@ -648,13 +653,15 @@ function Credits({ onBack }) {
   return (
     <>
       <style>{styles}</style>
-      <div className="credits-container">
-        <div className="credits-header">
-          <button className="back-btn" onClick={onBack}>
-            <MdArrowBack size={20} />
-          </button>
-          <h1 className="credits-title">Credits & Billing</h1>
-        </div>
+      <div className={`credits-container ${asSection ? 'section-mode' : ''}`}>
+        {!asSection && (
+          <div className="credits-header">
+            <button className="back-btn" onClick={onBack}>
+              <MdArrowBack size={20} />
+            </button>
+            <h1 className="credits-title">Credits & Billing</h1>
+          </div>
+        )}
 
         <div className="credits-overview">
           <div className="credit-card">

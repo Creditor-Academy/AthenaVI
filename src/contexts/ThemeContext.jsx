@@ -14,12 +14,17 @@ export const ThemeProvider = ({ children }) => {
   // We keep track of the "saved" state and the "current" active state
   const [theme, setTheme] = useState(() => {
     const savedTheme = localStorage.getItem('athenavi-theme');
-    return savedTheme || 'default';
+    return savedTheme || 'sapphire';
   });
-
   const [mode, setMode] = useState(() => {
     const savedMode = localStorage.getItem('athenavi-mode');
     return savedMode || 'light';
+  });
+
+  const [savedSettings, setSavedSettings] = useState(() => {
+    const st = localStorage.getItem('athenavi-theme') || 'sapphire';
+    const sm = localStorage.getItem('athenavi-mode') || 'light';
+    return { theme: st, mode: sm };
   });
 
   // These are for the "applied but not yet saved" or preview state
@@ -40,19 +45,16 @@ export const ThemeProvider = ({ children }) => {
   const saveSettings = () => {
     localStorage.setItem('athenavi-theme', theme);
     localStorage.setItem('athenavi-mode', mode);
+    setSavedSettings({ theme, mode });
   };
 
   const rollbackSettings = () => {
-    const savedTheme = localStorage.getItem('athenavi-theme') || 'default';
-    const savedMode = localStorage.getItem('athenavi-mode') || 'light';
-    setTheme(savedTheme);
-    setMode(savedMode);
+    setTheme(savedSettings.theme);
+    setMode(savedSettings.mode);
   };
 
   const hasUnsavedChanges = () => {
-    const savedTheme = localStorage.getItem('athenavi-theme') || 'default';
-    const savedMode = localStorage.getItem('athenavi-mode') || 'light';
-    return theme !== savedTheme || mode !== savedMode;
+    return theme !== savedSettings.theme || mode !== savedSettings.mode;
   };
 
   return (

@@ -151,8 +151,8 @@ const TimelineEditor = ({
           height: 100%;
           display: flex;
           flex-direction: column;
-          color: #202124;
-          font-family: 'Inter', 'Roboto', system-ui, sans-serif;
+          color: var(--text-main);
+          font-family: var(--font-family);
         }
 
         .timeline-toolbar {
@@ -160,8 +160,8 @@ const TimelineEditor = ({
           display: flex;
           align-items: center;
           gap: 16px;
-          background: #ffffff;
-          border-bottom: 1px solid #e5e7eb;
+          background: var(--bg-card);
+          border-bottom: 1px solid var(--border-color);
           height: 64px;
           flex-shrink: 0;
         }
@@ -171,12 +171,12 @@ const TimelineEditor = ({
           grid-template-columns: 160px 1fr;
           overflow: hidden;
           flex: 1;
-          border-bottom: 1px solid #222;
+          border-bottom: 1px solid var(--border-color);
         }
 
         .timeline-labels {
-          background: #ffffff;
-          border-right: 1px solid #e5e7eb;
+          background: var(--bg-card);
+          border-right: 1px solid var(--border-color);
           display: flex;
           flex-direction: column;
           box-shadow: 2px 0 8px rgba(0,0,0,0.02);
@@ -190,8 +190,8 @@ const TimelineEditor = ({
           padding: 0 16px;
           font-size: 13px;
           font-weight: 500;
-          color: #4b5563;
-          border-bottom: 1px solid #f3f4f6;
+          color: var(--text-muted);
+          border-bottom: 1px solid var(--border-color);
           box-sizing: border-box;
           transition: all 0.2s;
         }
@@ -204,8 +204,8 @@ const TimelineEditor = ({
           align-items: center;
           justify-content: center;
           margin-right: 12px;
-          background: #f3f4f6;
-          color: #6b7280;
+          background: var(--bg-surface);
+          color: var(--text-muted);
         }
 
         .track-label.small {
@@ -213,8 +213,8 @@ const TimelineEditor = ({
         }
 
         .track-label.active {
-          color: #202124;
-          background: #ffffff;
+          color: var(--text-main);
+          background: var(--bg-card);
           font-weight: 500;
         }
 
@@ -222,19 +222,19 @@ const TimelineEditor = ({
           position: relative;
           overflow-x: scroll;
           overflow-y: hidden;
-          background: #f8f9fa;
+          background: var(--bg-surface);
           cursor: crosshair;
           scrollbar-width: thin;
-          scrollbar-color: #dadce0 transparent;
+          scrollbar-color: var(--border-color) transparent;
         }
 
         .timeline-ruler {
           height: 28px;
-          background: #ffffff;
+          background: var(--bg-card);
           position: sticky;
           top: 0;
           z-index: 30;
-          border-bottom: 1px solid #e8eaed;
+          border-bottom: 1px solid var(--border-color);
           box-sizing: border-box;
         }
 
@@ -251,7 +251,7 @@ const TimelineEditor = ({
         .clip-track {
           height: 80px;
           position: relative;
-          border-bottom: 1px solid #f3f4f6;
+          border-bottom: 1px solid var(--border-color);
           box-sizing: border-box;
           display: flex;
           align-items: center;
@@ -259,11 +259,12 @@ const TimelineEditor = ({
 
         .clip-track.small {
           height: 48px;
+          border-bottom: 1px solid var(--border-color);
         }
 
         .music-track {
            height: 48px;
-           border-bottom: 1px solid #f3f4f6;
+           border-bottom: 1px solid var(--border-color);
            position: relative;
            display: flex;
            align-items: center;
@@ -286,21 +287,21 @@ const TimelineEditor = ({
         .canva-clip {
           position: absolute;
           height: 60px;
-          background: #ffffff;
+          background: var(--bg-card);
           border-radius: 12px;
-          border: 1px solid #dadce0;
+          border: 1px solid var(--border-color);
           cursor: grab;
           display: flex;
           align-items: center;
           overflow: hidden;
           transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+          box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.15);
         }
 
         .canva-clip.active {
-          border-color: #1a73e8;
-          background: #e8f0fe;
-          box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.1), 0 2px 4px 0 rgba(60, 64, 67, 0.3), 0 4px 12px 4px rgba(60, 64, 67, 0.15);
+          border-color: var(--primary);
+          background: var(--bg-surface);
+          box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.1), 0 2px 4px 0 rgba(0, 0, 0, 0.3), 0 4px 12px 4px rgba(0, 0, 0, 0.15);
         }
 
         .canva-clip.drag-over {
@@ -311,7 +312,7 @@ const TimelineEditor = ({
         .clip-thumb {
           width: 80px;
           height: 100%;
-          background: #f1f3f4;
+          background: var(--bg-surface);
           flex-shrink: 0;
           position: relative;
         }
@@ -332,7 +333,7 @@ const TimelineEditor = ({
         .clip-name {
           font-size: 12px;
           font-weight: 500;
-          color: #202124;
+          color: var(--text-main);
           white-space: nowrap;
           text-overflow: ellipsis;
           overflow: hidden;
@@ -349,7 +350,7 @@ const TimelineEditor = ({
           top: 0;
           bottom: 0;
           width: 2px;
-          background: #1a73e8;
+          background: var(--primary);
           z-index: 100;
           pointer-events: none;
         }
@@ -360,30 +361,30 @@ const TimelineEditor = ({
           left: -7px;
           width: 14px;
           height: 14px;
-          background: #1a73e8;
+          background: var(--primary);
           border-radius: 50%;
           cursor: grab;
           pointer-events: auto;
-          box-shadow: 0 2px 4px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+          box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.15);
         }
 
         .playhead-head:active { cursor: grabbing; }
 
         .time-display {
-          background: #ffffff;
+          background: var(--bg-card);
           padding: 6px 12px;
           border-radius: 8px;
-          color: #202124;
+          color: var(--text-main);
           font-family: monospace;
           font-size: 13px;
-          border: 1px solid #dadce0;
+          border: 1px solid var(--border-color);
           font-weight: 500;
         }
 
         .toolbar-btn {
-          background: #ffffff;
-          border: 1px solid #e5e7eb;
-          color: #374151;
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
+          color: var(--text-main);
           padding: 8px 12px;
           border-radius: 8px;
           cursor: pointer;
@@ -396,9 +397,9 @@ const TimelineEditor = ({
         }
 
         .toolbar-btn:hover {
-          color: #000000;
-          background: #f8f9fa;
-          border-color: #d1d5db;
+          color: var(--text-main);
+          background: var(--bg-surface);
+          border-color: var(--border-color);
           transform: translateY(-1px);
           box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
@@ -406,17 +407,17 @@ const TimelineEditor = ({
         .layer-item {
           position: absolute;
           height: 32px;
-          background: #e8f0fe;
-          border: 1px solid #a8c7fa;
+          background: var(--bg-surface);
+          border: 1px solid var(--border-color);
           border-radius: 8px;
           display: flex;
           align-items: center;
           justify-content: space-between;
           padding: 0 10px;
           font-size: 11px;
-          color: #1a73e8;
+          color: var(--primary);
           font-weight: 500;
-          box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+          box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.15);
           cursor: pointer;
           transition: all 0.2s;
         }
@@ -444,7 +445,7 @@ const TimelineEditor = ({
         }
 
         .delete-clip-btn:hover {
-          background: #ea4335;
+          background: var(--delete-red);
           color: white;
         }
 
@@ -506,7 +507,7 @@ const TimelineEditor = ({
                     <button className="toolbar-btn" title="Play/Pause" onClick={onPlayPause}>
                         {isPlaying ? <MdPause size={18} /> : <MdPlayArrow size={18} />}
                     </button>
-                    <div className="time-display" style={{ padding: '6px 12px', fontSize: '12px', color: '#5f6368' }}>
+                    <div className="time-display" style={{ padding: '6px 12px', fontSize: '12px', color: 'var(--text-muted)' }}>
                         {Math.floor(currentTime / 60).toString().padStart(2, '0')}:
                         {Math.floor(currentTime % 60).toString().padStart(2, '0')} /
                         {Math.floor(totalDuration / 60).toString().padStart(2, '0')}:
@@ -514,20 +515,20 @@ const TimelineEditor = ({
                     </div>
                 </div>
 
-                <div style={{ width: '1px', height: '24px', background: '#e8eaed' }} />
+                <div style={{ width: '1px', height: '24px', background: 'var(--border-color)' }} />
 
                 <button className="toolbar-btn" onClick={onAddScene}>
                     <MdAdd size={20} />
                     <span>Add Page</span>
                 </button>
-                <div style={{ width: '1px', height: '24px', background: '#e8eaed' }} />
+                <div style={{ width: '1px', height: '24px', background: 'var(--border-color)' }} />
                 <button className="toolbar-btn" title="Delete" onClick={() => onDeleteScene(activeSceneId)}>
                     <MdDelete size={18} />
                 </button>
 
                 <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div className="zoom-controls" style={{ display: 'flex', alignItems: 'center', background: '#f1f3f4', borderRadius: '20px', padding: '0 10px' }}>
-                        <MdZoomOut size={14} color="#5f6368" />
+                    <div className="zoom-controls" style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-surface)', borderRadius: '20px', padding: '0 10px' }}>
+                        <MdZoomOut size={14} color="var(--text-muted)" />
                         <input
                             type="range"
                             min="20"
@@ -536,37 +537,37 @@ const TimelineEditor = ({
                             onChange={(e) => setZoom(Number(e.target.value))}
                             style={{ width: '80px', margin: '0 8px' }}
                         />
-                        <MdZoomIn size={14} color="#5f6368" />
+                        <MdZoomIn size={14} color="var(--text-muted)" />
                     </div>
                 </div>
             </div>
 
-            <div className="timeline-container" style={{ borderTop: '1px solid #e5e7eb' }}>
+            <div className="timeline-container" style={{ borderTop: '1px solid var(--border-color)' }}>
                 <div className="timeline-labels">
                     <div style={{
                         height: '28px',
-                        backgroundColor: '#ffffff',
-                        borderBottom: '1px solid #e5e7eb',
+                        backgroundColor: 'var(--bg-card)',
+                        borderBottom: '1px solid var(--border-color)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center'
                     }}>
-                        <MdDragIndicator color="#e5e7eb" />
+                        <MdDragIndicator color="var(--border-color)" />
                     </div>
                     <div className="track-label active">
-                        <div className="track-label-icon" style={{ background: '#eef2ff', color: '#4f46e5' }}>
+                        <div className="track-label-icon" style={{ background: 'var(--bg-surface)', color: 'var(--primary)' }}>
                             <MdVideoLibrary size={18} />
                         </div>
                         Main Scenes
                     </div>
                     <div className="track-label small" style={{ height: '48px' }}>
-                        <div className="track-label-icon" style={{ background: '#fef2f2', color: '#ef4444', width: '24px', height: '24px' }}>
+                        <div className="track-label-icon" style={{ background: 'var(--bg-surface)', color: '#ef4444', width: '24px', height: '24px' }}>
                             <MdPhotoLibrary size={14} />
                         </div>
                         Overlays
                     </div>
                     <div className="track-label small" style={{ height: '48px' }}>
-                        <div className="track-label-icon" style={{ background: '#ecfdf5', color: '#10b981', width: '24px', height: '24px' }}>
+                        <div className="track-label-icon" style={{ background: 'var(--bg-surface)', color: '#10b981', width: '24px', height: '24px' }}>
                             <MdMusicNote size={14} />
                         </div>
                         Audio Track
@@ -611,7 +612,7 @@ const TimelineEditor = ({
                                     >
                                         <div className="clip-thumb">
                                             <img src={scene.avatar} alt="" />
-                                            <div style={{ position: 'absolute', top: 4, left: 4, background: 'rgba(255,255,255,0.9)', borderRadius: '4px', padding: '2px 4px', fontSize: '9px', color: '#202124', fontWeight: '600' }}>
+                                            <div style={{ position: 'absolute', top: 4, left: 4, background: 'var(--bg-card)', borderRadius: '4px', padding: '2px 4px', fontSize: '9px', color: 'var(--text-main)', fontWeight: '600' }}>
                                                 {index + 1}
                                             </div>
                                         </div>
