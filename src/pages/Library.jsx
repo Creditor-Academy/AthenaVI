@@ -7,7 +7,8 @@ import {
   MdMusicNote,
   MdGridView,
   MdViewList,
-  MdClose
+  MdClose,
+  MdDeleteOutline
 } from 'react-icons/md'
 import './Library.css'
 
@@ -31,7 +32,7 @@ function Library() {
     { id: 'videos', label: 'Videos' }
   ]
 
-  const [assets] = useState({
+  const [assets, setAssets] = useState({
     images: [
       { id: 1, name: 'instructor_profile_01.png', size: '2.4 MB', type: 'PNG', thumb: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200' },
       { id: 2, name: 'modern_office_backdrop.jpg', size: '1.8 MB', type: 'JPG', thumb: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=200' },
@@ -69,6 +70,15 @@ function Library() {
     if (t === 'fonts' || t === 'templates') return assets[t] || []
     return assets[t] || []
   }
+
+  const handleDeleteAsset = (assetId) => {
+    setAssets((prev) => ({
+      ...prev,
+      [activeTab]: (prev[activeTab] || []).filter((asset) => asset.id !== assetId)
+    }))
+  }
+
+  const isCurrentTabEmpty = currentAssetList().length === 0
 
   return (
     <div className="library-page">
@@ -157,34 +167,72 @@ function Library() {
             />
 
             <div className="assets-scroller">
-              {(activeTab === 'fonts' || activeTab === 'templates') && currentAssetList().length === 0 ? (
-                <p className="library-empty-hint">
-                  {activeTab === 'fonts'
-                    ? 'No font files yet. Upload fonts to use in your projects.'
-                    : 'No template assets here. Browse Templates from the dashboard to get started.'}
-                </p>
+              {isCurrentTabEmpty ? (
+                <div className="library-empty-state">
+                  <p className="library-empty-title">Library is empty</p>
+                  <button
+                    type="button"
+                    className="library-empty-add-btn"
+                    onClick={() => setShowUploadModal(true)}
+                  >
+                    <span className="library-empty-plus" aria-hidden>+</span>
+                    <span>Add assets</span>
+                  </button>
+                </div>
               ) : (
                 <div className={activeView === 'grid' ? 'assets-grid' : 'assets-list'}>
                   {currentAssetList().map((asset) => (
                     <div key={asset.id} className={`asset-card ${activeView}`}>
-                      <div className="asset-preview">
-                        {asset.thumb ? (
-                          <img src={asset.thumb} alt={asset.name} />
-                        ) : (
-                          <div className="asset-preview-icon">{asset.icon}</div>
-                        )}
-                      </div>
-                      <div className="asset-details">
-                        <div className="asset-name">{asset.name}</div>
-                        <div className="asset-meta">
-                          <span>{asset.size}</span>
-                          <span>{asset.type}</span>
-                        </div>
-                      </div>
+                      {activeView === 'grid' ? (
+                        <>
+                          <div className="asset-preview">
+                            {asset.thumb ? (
+                              <img src={asset.thumb} alt={asset.name} />
+                            ) : (
+                              <div className="asset-preview-icon">{asset.icon}</div>
+                            )}
+                          </div>
+
+                          <div className="asset-title-row">
+                            <div className="asset-name" title={asset.name}>{asset.name}</div>
+                            <button
+                              type="button"
+                              className="asset-delete-btn"
+                              aria-label={`Delete ${asset.name}`}
+                              onClick={() => handleDeleteAsset(asset.id)}
+                            >
+                              <MdDeleteOutline />
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="asset-preview">
+                            {asset.thumb ? (
+                              <img src={asset.thumb} alt={asset.name} />
+                            ) : (
+                              <div className="asset-preview-icon">{asset.icon}</div>
+                            )}
+                          </div>
+
+                          <div className="asset-list-text">
+                            <div className="asset-name" title={asset.name}>{asset.name}</div>
+                          </div>
+
+                          <button
+                            type="button"
+                            className="asset-delete-btn asset-delete-btn--list"
+                            aria-label={`Delete ${asset.name}`}
+                            onClick={() => handleDeleteAsset(asset.id)}
+                          >
+                            <MdDeleteOutline />
+                          </button>
+                        </>
+                      )}
                     </div>
                   ))}
 
-                  {activeView === 'grid' && activeTab !== 'fonts' && activeTab !== 'templates' && (
+                  {activeView === 'grid' && (
                     <button
                       type="button"
                       className="upload-placeholder"
