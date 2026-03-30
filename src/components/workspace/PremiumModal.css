@@ -1,0 +1,205 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap");
+
+/* Premium Modal Styles */
+.modal-overlay-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.professional-modal {
+  width: 100%;
+  max-width: 540px;
+  background: var(--bg-card);
+  border-radius: 20px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2), 0 0 0 1px var(--border-color);
+  overflow: visible;
+  z-index: 2600;
+  font-family: 'Outfit', var(--font-family);
+}
+
+.modal-header {
+  padding: 24px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.header-icon-title {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-icon-container {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.folder-icon-bg {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.modal-subtitle {
+  margin: 2px 0 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.icon-btn-close-outside {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  background: white;
+  border: none;
+  color: #64748b;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 2700;
+  padding: 0;
+  transition: transform 0.2s;
+}
+
+.icon-btn-close-outside:active {
+  transform: scale(0.9);
+}
+
+.modal-body-premium {
+  padding: 24px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-main);
+}
+
+.form-input-premium {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-main);
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 500;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.form-input-premium:focus {
+  border-color: var(--primary);
+  background: var(--bg-main);
+  box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
+}
+
+.input-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  display: block;
+}
+
+.modal-footer-premium {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.btn-secondary-premium {
+  padding: 12px 24px;
+  border-radius: 12px;
+  background: var(--bg-surface);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary-premium:hover {
+  background: var(--bg-card);
+  border-color: var(--text-muted);
+}
+
+.btn-primary-premium {
+  padding: 12px 24px;
+  border-radius: 12px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-primary-premium:hover:not(:disabled) {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.4);
+}
+
+.btn-primary-premium:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.input-error {
+  border-color: #ef4444 !important;
+  background: #fef2f2 !important;
+}
+
+.error-message-modal {
+  display: block;
+  font-size: 12px;
+  color: #ef4444;
+  margin-top: 6px;
+  font-weight: 600;
+  animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
+}

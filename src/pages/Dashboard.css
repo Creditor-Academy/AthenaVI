@@ -562,13 +562,13 @@
 }
 
 .dashboard-sidebar-brand-logo {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   color: var(--text-inverse);
-  font-weight: 800;
-  font-size: 17px;
+  font-weight: 700;
+  font-size: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -577,8 +577,8 @@
 }
 
 .dashboard-sidebar-brand-name {
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--text-main);
   line-height: 1.2;
@@ -614,27 +614,27 @@
 }
 
 .dashboard-sidebar-section-label {
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 9px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   color: var(--text-muted);
-  padding: 14px 10px 6px;
+  padding: 12px 10px 5px;
 }
 
 .dashboard-nav-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
-  padding: 8px 10px;
+  padding: 7px 9px;
   margin: 1px 0;
   border: none;
   border-radius: 8px;
   background: transparent;
   color: var(--text-main);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 400;
   font-family: inherit;
   text-align: left;
   cursor: pointer;
@@ -649,7 +649,7 @@
 .dashboard-nav-item--active {
   background: var(--bg-main);
   color: var(--primary);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .dashboard-nav-item-icon {
@@ -672,12 +672,12 @@
 
 .dashboard-nav-item-badge {
   flex-shrink: 0;
-  font-size: 9px;
-  font-weight: 700;
+  font-size: 8px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   color: var(--text-muted);
-  padding: 2px 6px;
+  padding: 2px 5px;
   border-radius: 4px;
   background: #e5e7eb;
 }
@@ -687,6 +687,79 @@
   padding: 10px 10px 14px;
   border-top: 1px solid var(--border-color);
   background: var(--bg-sidebar);
+}
+
+.dashboard-sidebar-storage {
+  margin-bottom: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 86, 210, 0.18);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.dashboard-storage-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #64748b);
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dashboard-storage-bar {
+  height: 6px;
+  background: rgba(0, 86, 210, 0.12);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.dashboard-storage-progress {
+  height: 100%;
+  max-width: 100%;
+  background: #0056d2;
+  border-radius: 3px;
+  transition: width 0.25s ease;
+}
+
+.dashboard-storage-text {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--text-muted, #64748b);
+  margin-bottom: 8px;
+}
+
+.dashboard-storage-upgrade-btn {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 7px 9px;
+  border: 1px solid #0056d2;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0056d2;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.dashboard-storage-upgrade-btn:hover {
+  background: #0056d2;
+  color: #ffffff;
+}
+
+.dashboard-storage-upgrade-btn:focus-visible {
+  outline: 2px solid #0056d2;
+  outline-offset: 2px;
 }
 
 .dashboard-sidebar-help {

@@ -130,7 +130,7 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
         />
 
         <main
-          className={`content ${!['library', 'avatars', 'templates', 'template-details', 'team-workspace', 'admin-portal', 'settings'].includes(section) ? 'with-padding' : ''}`}
+          className={`content ${!['avatars', 'templates', 'template-details', 'team-workspace', 'admin-portal', 'settings'].includes(section) ? 'with-padding' : ''}`}
         >
           {section === 'home' && (
             <Home 

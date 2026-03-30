@@ -1,22 +1,22 @@
 import { useState, useRef } from 'react'
+import { Image, Music2, Type, LayoutGrid } from 'lucide-react'
 import {
-  MdSearch,
   MdCloudUpload,
-  MdSettings,
-  MdFolder,
-  MdAccessTime,
-  MdStar,
-  MdDelete,
   MdImage,
   MdPlayCircleFilled,
   MdMusicNote,
   MdGridView,
   MdViewList,
-  MdAdd,
-  MdPerson,
   MdClose
 } from 'react-icons/md'
 import './Library.css'
+
+const CATEGORY_CARDS = [
+  { id: 'media', label: 'Media', Icon: Image },
+  { id: 'music', label: 'Music', Icon: Music2 },
+  { id: 'fonts', label: 'Fonts', Icon: Type },
+  { id: 'templates', label: 'Templates', Icon: LayoutGrid }
+]
 
 function Library() {
   const [activeView, setActiveView] = useState('grid')
@@ -24,156 +24,241 @@ function Library() {
   const [showUploadModal, setShowUploadModal] = useState(false)
   const fileInputRef = useRef(null)
   const [uploadType, setUploadType] = useState('images')
+  const [selectedCategory, setSelectedCategory] = useState(null)
 
-  const folders = [
-    { id: 'all', label: 'Media Library', icon: <MdFolder /> },
-    { id: 'recent', label: 'Recently Added', icon: <MdAccessTime /> },
-    { id: 'starred', label: 'Starred Assets', icon: <MdStar /> },
-    { id: 'trash', label: 'Trash', icon: <MdDelete /> },
+  const mediaTabs = [
+    { id: 'images', label: 'Photos' },
+    { id: 'videos', label: 'Videos' }
   ]
 
-  const tabs = [
-    { id: 'images', label: 'Images' },
-    { id: 'videos', label: 'Videos' },
-    { id: 'music', label: 'Music' },
-  ]
-
-  const [assets, setAssets] = useState({
+  const [assets] = useState({
     images: [
       { id: 1, name: 'instructor_profile_01.png', size: '2.4 MB', type: 'PNG', thumb: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200' },
       { id: 2, name: 'modern_office_backdrop.jpg', size: '1.8 MB', type: 'JPG', thumb: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=200' },
-      { id: 3, name: 'product_demo_04.jpg', size: '3.1 MB', type: 'JPG', thumb: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=200' },
+      { id: 3, name: 'product_demo_04.jpg', size: '3.1 MB', type: 'JPG', thumb: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=200' }
     ],
     videos: [
-      { id: 4, name: 'intro_animation_hq.mp4', size: '12.4 MB', type: 'MP4', thumb: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&q=80&w=200' },
+      { id: 4, name: 'intro_animation_hq.mp4', size: '12.4 MB', type: 'MP4', thumb: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&q=80&w=200' }
     ],
     music: [
-      { id: 5, name: 'uplifting_background.mp3', size: '4.1 MB', type: 'MP3', icon: <MdMusicNote /> },
-    ]
+      { id: 5, name: 'uplifting_background.mp3', size: '4.1 MB', type: 'MP3', icon: <MdMusicNote /> }
+    ],
+    fonts: [],
+    templates: []
   })
 
-  const storageUsed = 0.82 // GB
-  const storageLimit = 2.0
+  const handleCategoryClick = (cat) => {
+    setSelectedCategory(cat.id)
+    if (cat.id === 'media') setActiveTab('images')
+    if (cat.id === 'music') setActiveTab('music')
+    if (cat.id === 'fonts') setActiveTab('fonts')
+    if (cat.id === 'templates') setActiveTab('templates')
+  }
+
+  const visibleTabs = () => {
+    if (!selectedCategory) return []
+    if (selectedCategory === 'media') return mediaTabs
+    if (selectedCategory === 'music') return [{ id: 'music', label: 'Music' }]
+    if (selectedCategory === 'fonts') return [{ id: 'fonts', label: 'Fonts' }]
+    if (selectedCategory === 'templates') return [{ id: 'templates', label: 'Templates' }]
+    return mediaTabs
+  }
+
+  const currentAssetList = () => {
+    const t = activeTab
+    if (t === 'fonts' || t === 'templates') return assets[t] || []
+    return assets[t] || []
+  }
 
   return (
     <div className="library-page">
-      <aside className="library-sidebar">
-        <div className="sidebar-label" style={{ paddingLeft: '16px', marginBottom: '16px' }}>Storage</div>
-        <div className="library-nav-group">
-          {folders.map(folder => (
-            <div key={folder.id} className={`library-nav-item ${folder.id === 'all' ? 'active' : ''}`}>
-              {folder.icon} {folder.label}
-            </div>
-          ))}
-        </div>
+      <div className="library-shell">
+        <header className="library-page-header">
+          <h1 className="library-page-title">Library</h1>
+        </header>
 
-        <div className="storage-info">
-          <div className="storage-label">
-            <span>Storage Used</span>
-            <span>{Math.round((storageUsed / storageLimit) * 100)}%</span>
-          </div>
-          <div className="storage-bar">
-            <div className="storage-progress" style={{ width: `${(storageUsed / storageLimit) * 100}%` }}></div>
-          </div>
-          <div className="storage-text">{storageUsed} GB of {storageLimit} GB used</div>
-        </div>
-      </aside>
-
-      <div className="library-main">
-        <div className="library-filters-bar">
-          <div className="filters-top-row">
-            <div className="asset-type-tabs">
-              {tabs.map(tab => (
-                <div 
-                  key={tab.id} 
-                  className={`type-tab ${activeTab === tab.id ? 'active' : ''}`}
-                  onClick={() => setActiveTab(tab.id)}
-                >
-                  {tab.label}
-                </div>
-              ))}
-            </div>
-            
-            <div className="filters-right-actions">
-              <button className="btn-upload-primary" onClick={() => setShowUploadModal(true)}>
-                <MdCloudUpload /> Upload
+        <div className="library-category-row">
+          {CATEGORY_CARDS.map((cat) => {
+            const Icon = cat.Icon
+            const isSelected = selectedCategory === cat.id
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                className={`library-category-card ${isSelected ? 'library-category-card--selected' : ''}`}
+                onClick={() => handleCategoryClick(cat)}
+                aria-pressed={isSelected}
+              >
+                <span className="library-category-card-shine" aria-hidden />
+                <Icon className="library-category-card-icon" size={20} strokeWidth={1.75} aria-hidden />
+                <span className="library-category-label">{cat.label}</span>
               </button>
-              <div className="view-toggles">
-                <button 
-                  className={`toggle-btn ${activeView === 'grid' ? 'active' : ''}`}
-                  onClick={() => setActiveView('grid')}
-                >
-                  <MdGridView />
-                </button>
-                <button 
-                  className={`toggle-btn ${activeView === 'list' ? 'active' : ''}`}
-                  onClick={() => setActiveView('list')}
-                >
-                  <MdViewList />
-                </button>
-              </div>
-            </div>
-          </div>
+            )
+          })}
         </div>
-        <input 
-          type="file" 
-          style={{ display: 'none' }} 
-          ref={fileInputRef} 
-          multiple 
-          accept={uploadType === 'images' ? 'image/*' : uploadType === 'videos' ? 'video/*' : 'audio/*'} 
-        />
 
-        <div className="assets-scroller">
-          <div className={activeView === 'grid' ? 'assets-grid' : 'assets-list'}>
-            {assets[activeTab].map(asset => (
-              <div key={asset.id} className={`asset-card ${activeView}`}>
-                <div className="asset-preview">
-                  {asset.thumb ? (
-                    <img src={asset.thumb} alt={asset.name} />
-                  ) : (
-                    <div className="asset-preview-icon">{asset.icon}</div>
-                  )}
+        {selectedCategory && (
+          <div className="library-browse">
+            <div className="library-filters-bar">
+              <div className="filters-top-row">
+                <div className="asset-type-tabs">
+                  {visibleTabs().map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      className={`type-tab ${activeTab === tab.id ? 'active' : ''}`}
+                      onClick={() => setActiveTab(tab.id)}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
                 </div>
-                <div className="asset-details">
-                  <div className="asset-name">{asset.name}</div>
-                  <div className="asset-meta">
-                    <span>{asset.size}</span>
-                    <span>{asset.type}</span>
+
+                <div className="filters-right-actions">
+                  <button type="button" className="btn-upload-primary" onClick={() => setShowUploadModal(true)}>
+                    <MdCloudUpload /> Upload
+                  </button>
+                  <div className="view-toggles">
+                    <button
+                      type="button"
+                      className={`toggle-btn ${activeView === 'grid' ? 'active' : ''}`}
+                      onClick={() => setActiveView('grid')}
+                      aria-label="Grid view"
+                    >
+                      <MdGridView />
+                    </button>
+                    <button
+                      type="button"
+                      className={`toggle-btn ${activeView === 'list' ? 'active' : ''}`}
+                      onClick={() => setActiveView('list')}
+                      aria-label="List view"
+                    >
+                      <MdViewList />
+                    </button>
                   </div>
                 </div>
               </div>
-            ))}
-            
-            {activeView === 'grid' && (
-              <div className="upload-placeholder" onClick={() => setShowUploadModal(true)}>
-                <MdCloudUpload className="upload-placeholder-icon" />
-                <div className="upload-placeholder-text">Drop files here</div>
-              </div>
-            )}
+            </div>
+
+            <input
+              type="file"
+              style={{ display: 'none' }}
+              ref={fileInputRef}
+              multiple
+              accept={
+                uploadType === 'images'
+                  ? 'image/*'
+                  : uploadType === 'videos'
+                    ? 'video/*'
+                    : uploadType === 'music'
+                      ? 'audio/*'
+                      : '*'
+              }
+            />
+
+            <div className="assets-scroller">
+              {(activeTab === 'fonts' || activeTab === 'templates') && currentAssetList().length === 0 ? (
+                <p className="library-empty-hint">
+                  {activeTab === 'fonts'
+                    ? 'No font files yet. Upload fonts to use in your projects.'
+                    : 'No template assets here. Browse Templates from the dashboard to get started.'}
+                </p>
+              ) : (
+                <div className={activeView === 'grid' ? 'assets-grid' : 'assets-list'}>
+                  {currentAssetList().map((asset) => (
+                    <div key={asset.id} className={`asset-card ${activeView}`}>
+                      <div className="asset-preview">
+                        {asset.thumb ? (
+                          <img src={asset.thumb} alt={asset.name} />
+                        ) : (
+                          <div className="asset-preview-icon">{asset.icon}</div>
+                        )}
+                      </div>
+                      <div className="asset-details">
+                        <div className="asset-name">{asset.name}</div>
+                        <div className="asset-meta">
+                          <span>{asset.size}</span>
+                          <span>{asset.type}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {activeView === 'grid' && activeTab !== 'fonts' && activeTab !== 'templates' && (
+                    <button
+                      type="button"
+                      className="upload-placeholder"
+                      onClick={() => setShowUploadModal(true)}
+                    >
+                      <MdCloudUpload className="upload-placeholder-icon" />
+                      <div className="upload-placeholder-text">Drop files here</div>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {showUploadModal && (
-        <div className="upload-modal-overlay">
+        <div className="upload-modal-overlay" role="presentation">
           <div className="upload-modal">
             <div className="upload-modal-header">
               <h3>Select Upload Type</h3>
-              <button className="close-modal" onClick={() => setShowUploadModal(false)}><MdClose /></button>
+              <button type="button" className="close-modal" onClick={() => setShowUploadModal(false)} aria-label="Close">
+                <MdClose />
+              </button>
             </div>
             <div className="upload-options">
-              <div className="upload-option" onClick={() => { setUploadType('images'); fileInputRef.current.click(); setShowUploadModal(false); }}>
-                <div className="option-icon image"><MdImage /></div>
-                <span>Images</span>
-              </div>
-              <div className="upload-option" onClick={() => { setUploadType('videos'); fileInputRef.current.click(); setShowUploadModal(false); }}>
-                <div className="option-icon video"><MdPlayCircleFilled /></div>
-                <span>Videos</span>
-              </div>
-              <div className="upload-option" onClick={() => { setUploadType('music'); fileInputRef.current.click(); setShowUploadModal(false); }}>
-                <div className="option-icon music"><MdMusicNote /></div>
-                <span>Music</span>
-              </div>
+              {selectedCategory !== 'music' && (
+                <>
+                  <button
+                    type="button"
+                    className="upload-option"
+                    onClick={() => {
+                      setUploadType('images')
+                      fileInputRef.current?.click()
+                      setShowUploadModal(false)
+                    }}
+                  >
+                    <div className="option-icon image">
+                      <MdImage />
+                    </div>
+                    <span>{selectedCategory === 'media' ? 'Photos' : 'Images'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="upload-option"
+                    onClick={() => {
+                      setUploadType('videos')
+                      fileInputRef.current?.click()
+                      setShowUploadModal(false)
+                    }}
+                  >
+                    <div className="option-icon video">
+                      <MdPlayCircleFilled />
+                    </div>
+                    <span>Videos</span>
+                  </button>
+                </>
+              )}
+              {selectedCategory !== 'media' && (
+                <button
+                  type="button"
+                  className="upload-option"
+                  onClick={() => {
+                    setUploadType('music')
+                    fileInputRef.current?.click()
+                    setShowUploadModal(false)
+                  }}
+                >
+                  <div className="option-icon music">
+                    <MdMusicNote />
+                  </div>
+                  <span>Music</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
