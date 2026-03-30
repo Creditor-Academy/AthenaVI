@@ -19,36 +19,8 @@ function Create({ onBack }) {
     console.log('Create component mounted')
   }, [])
 
-  const [scenes, setScenes] = useState([
-    {
-      id: 'scene1',
-      title: 'Scene 1',
-      duration: 8,
-      titleText: 'Build Your Brand with AI',
-      titleStyle: {
-        fontSize: 48,
-        color: '#0066cc',
-        fontFamily: 'Inter',
-        fontWeight: '700',
-        textAlign: 'left'
-      },
-      subtitleText: 'The future of video creation is here.',
-      subtitleStyle: {
-        fontSize: 24,
-        color: '#333333',
-        fontFamily: 'Inter',
-        fontWeight: '400',
-        textAlign: 'left'
-      },
-      layers: [], // Support for B-roll, images, etc.
-      script: 'Start your video by greeting your audience and introducing your topic. Create a clear title and give more context with a compelling sub-headline.',
-      avatar: avatar1,
-      avatarType: 'avatar1',
-      type: 'video',
-      layout: 'split-right'
-    }
-  ])
-  const [activeSceneId, setActiveSceneId] = useState('scene1')
+  const [scenes, setScenes] = useState([])
+  const [activeSceneId, setActiveSceneId] = useState(null)
   const [selectedTool, setSelectedTool] = useState(null) // Start with no tool selected
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -60,35 +32,112 @@ function Create({ onBack }) {
   const [bgMusicVolume, setBgMusicVolume] = useState(0.3)
   const [musicDuration, setMusicDuration] = useState(null) // null means full project duration
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true)
+  const [selectedLayerId, setSelectedLayerId] = useState(null)
+
+  // Auto-create a default blank scene and return the new scene + updated scenes array
+  const autoCreateScene = () => {
+    const defaultAvatar = predefinedAvatars[0]
+    const newScene = {
+      id: `scene${Date.now()}`,
+      title: 'Scene 1',
+      duration: 8,
+      titleText: 'New Scene',
+      subtitleText: 'Start creating your content',
+      layout: 'default',
+      avatar: defaultAvatar?.image || avatar1,
+      avatarType: defaultAvatar?.id || 'avatar1',
+      type: 'video',
+      script: '',
+      layers: [],
+      titleStyle: {
+        fontSize: 48,
+        color: '#1a73e8',
+        fontFamily: 'Inter',
+        fontWeight: '700',
+        textAlign: 'left'
+      },
+      subtitleStyle: {
+        fontSize: 24,
+        color: '#202124',
+        fontFamily: 'Inter',
+        fontWeight: '400',
+        textAlign: 'left'
+      }
+    }
+    const updatedScenes = [...scenes, newScene]
+    setScenes(updatedScenes)
+    setActiveSceneId(newScene.id)
+    console.log('Auto-created default scene:', newScene.id)
+    return { newScene, updatedScenes }
+  }
 
   const addLayer = (type, content) => {
-    if (!activeSceneId) {
-      console.warn('No active scene selected for adding layer')
-      alert('Please select a scene first')
+    let targetSceneId = activeSceneId
+    let targetScenes = scenes
+
+    // Auto-create a scene if none exist
+    if (!targetSceneId || scenes.length === 0) {
+      const { newScene, updatedScenes } = autoCreateScene()
+      targetSceneId = newScene.id
+      targetScenes = updatedScenes
+    }
+
+    const targetScene = targetScenes.find(s => s.id === targetSceneId)
+    if (!targetScene) {
+      console.warn('Target scene not found:', targetSceneId)
       return
     }
-    const activeScene = scenes.find(s => s.id === activeSceneId)
-    if (!activeScene) {
-      console.warn('Active scene not found:', activeSceneId)
-      return
-    }
-    console.log('Adding layer:', type, content, 'to scene:', activeSceneId)
+    console.log('Adding layer:', type, content, 'to scene:', targetSceneId)
     const newLayer = {
       id: `layer-${Date.now()}`,
       type,
       content,
       start: 0,
-      duration: activeScene.duration || 8,
+      duration: targetScene.duration || 8,
       x: 0,
       y: 0,
       scale: 1,
       width: '100%',
       height: '100%'
     }
-    updateScene(activeSceneId, {
-      layers: [...(activeScene?.layers || []), newLayer]
-    })
+    // Use functional update to ensure we get the latest state (in case autoCreateScene just set it)
+    setScenes(prev => prev.map(scene =>
+      scene.id === targetSceneId
+        ? { ...scene, layers: [...(scene.layers || []), newLayer] }
+        : scene
+    ))
+    return newLayer.id
   }
+
+  // Update a specific layer's position within the active scene
+  const updateLayerPosition = (layerId, x, y) => {
+    if (!activeSceneId) return
+    setScenes(prev => prev.map(scene => {
+      if (scene.id !== activeSceneId) return scene
+      return {
+        ...scene,
+        layers: (scene.layers || []).map(layer =>
+          layer.id === layerId ? { ...layer, x, y } : layer
+        )
+      }
+    }))
+  }
+
+  // Listen for canvas-drop events (drag from sidebar to canvas)
+  useEffect(() => {
+    const handleCanvasDrop = (e) => {
+      const { type, content, x, y } = e.detail
+      const layerId = addLayer(type, content)
+      // Update the newly added layer's position
+      if (layerId) {
+        setTimeout(() => {
+          updateLayerPosition(layerId, x, y)
+        }, 50)
+      }
+    }
+    window.addEventListener('canvas-drop', handleCanvasDrop)
+    return () => window.removeEventListener('canvas-drop', handleCanvasDrop)
+  }, [activeSceneId, scenes])
 
   const deleteLayer = (sceneId, layerId) => {
     const scene = scenes.find(s => s.id === sceneId)
@@ -259,6 +308,82 @@ function Create({ onBack }) {
     }
   }, [isPlaying, scenes, activeSceneId])
 
+  // Global Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Don't trigger if user is typing in an input or textarea
+      if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+        // Allow escape even if focused
+        if (e.key === 'Escape') {
+          setSelectedTool(null)
+          document.activeElement.blur()
+        }
+        return
+      }
+
+      // Space: Play/Pause
+      if (e.code === 'Space') {
+        e.preventDefault()
+        if (playerMethods) {
+          if (isPlaying) {
+            playerMethods.pause()
+          } else {
+            playerMethods.play()
+          }
+        }
+      }
+
+      // Escape: Close sidebar tool panel
+      if (e.key === 'Escape') {
+        setSelectedTool(null)
+      }
+
+      // Delete: Delete active scene
+      if (e.key === 'Delete') {
+        if (activeSceneId && scenes.length > 1) {
+          if (window.confirm('Delete this scene?')) {
+            deleteScene(activeSceneId)
+          }
+        }
+      }
+
+      // Meta/Ctrl Shortcuts
+      if (e.metaKey || e.ctrlKey) {
+        switch (e.key.toLowerCase()) {
+          case 's':
+            e.preventDefault()
+            alert('Project saved automatically!')
+            break
+          case 'e':
+            e.preventDefault()
+            exportVideo()
+            break
+          case 'z':
+            e.preventDefault()
+            // Undo logic would go here
+            console.log('Undo triggered')
+            break
+          case 'y':
+            e.preventDefault()
+            // Redo logic would go here
+            console.log('Redo triggered')
+            break
+        }
+      }
+
+      // Arrow Keys: Step frame (0.1s increments)
+      if (e.key === 'ArrowLeft') {
+        handleSeek(Math.max(0, currentTime - 0.1))
+      }
+      if (e.key === 'ArrowRight') {
+        handleSeek(Math.min(totalDurationInFrames / 30, currentTime + 0.1))
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isPlaying, playerMethods, activeSceneId, scenes.length, currentTime, totalDurationInFrames])
+
   const addScene = () => {
     setShowTemplateModal(true)
   }
@@ -372,14 +497,8 @@ function Create({ onBack }) {
     }
   }
 
-  // Safety check
-  if (!scenes || scenes.length === 0) {
-    return (
-      <div style={{ padding: '20px', textAlign: 'center' }}>
-        <h2>Loading editor...</h2>
-      </div>
-    )
-  }
+  // Safety check - removed forced loading screen for empty scenes
+  // We want to show the empty editor instead
 
   return (
     <div className="video-editor-shell">
@@ -396,36 +515,21 @@ function Create({ onBack }) {
       <div className="editor-container">
         {/* Left Sidebar + Tool Panel Container */}
         <div className="left-section">
-          {/* Left Sidebar - Full Height */}
-          <div className="left-sidebar">
-            <EditorSidebar
-              selectedTool={selectedTool}
-              setSelectedTool={setSelectedTool}
-              activeSceneId={activeSceneId}
-              addLayer={addLayer}
-              updateScene={updateScene}
-              activeScene={activeScene}
-              handleAddTemplateScene={handleAddTemplateScene}
-              setShowTemplateModal={setShowTemplateModal}
-            />
-          </div>
-
-          {/* Tool Panel - Beside Left Sidebar */}
-          {selectedTool && (
-            <div className="tool-panel-beside">
-              <EditorSidebar
-                selectedTool={selectedTool}
-                setSelectedTool={setSelectedTool}
-                activeSceneId={activeSceneId}
-                addLayer={addLayer}
-                updateScene={updateScene}
-                activeScene={activeScene}
-                handleAddTemplateScene={handleAddTemplateScene}
-                setShowTemplateModal={setShowTemplateModal}
-                showPanelOnly={true}
-              />
-            </div>
-          )}
+          {/* Sidebar Section handles both Nav and Panel internally */}
+          <EditorSidebar
+            selectedTool={selectedTool}
+            setSelectedTool={setSelectedTool}
+            activeSceneId={activeSceneId}
+            addLayer={addLayer}
+            updateScene={updateScene}
+            activeScene={activeScene}
+            handleAddTemplateScene={handleAddTemplateScene}
+            setShowTemplateModal={setShowTemplateModal}
+            bgMusic={bgMusic}
+            setBgMusic={setBgMusic}
+            scenes={scenes}
+            autoCreateScene={autoCreateScene}
+          />
         </div>
 
         {/* Main Content Area */}
@@ -449,6 +553,9 @@ function Create({ onBack }) {
                 getSceneForFrame={getSceneForFrame}
                 speakText={speakText}
                 onPlayerReady={setPlayerMethods}
+                selectedLayerId={selectedLayerId}
+                setSelectedLayerId={setSelectedLayerId}
+                onUpdateLayerPosition={updateLayerPosition}
               />
             </div>
           </div>
@@ -472,24 +579,24 @@ function Create({ onBack }) {
               musicDuration={musicDuration || (totalDurationInFrames / 30)}
               onMusicDurationChange={handleMusicDurationChange}
               onPlayPause={() => {
-                if (playerMethods.current) {
+                if (playerMethods) {
                   if (isPlaying) {
-                    playerMethods.current.pause()
+                    playerMethods.pause()
                   } else {
-                    playerMethods.current.play()
+                    playerMethods.play()
                   }
                 }
               }}
               onStop={() => {
-                if (playerMethods.current) {
-                  playerMethods.current.pause()
-                  playerMethods.current.seekTo(0)
+                if (playerMethods) {
+                  playerMethods.pause()
+                  playerMethods.seekTo(0)
                 }
                 setIsPlaying(false)
                 setCurrentTime(0)
                 window.speechSynthesis.cancel()
               }}
-              totalDuration={totalDurationInFrames / 30}
+              totalDuration={(totalDurationInFrames || 0) / 30}
             />
           </div>
         </div>
@@ -525,16 +632,16 @@ function Create({ onBack }) {
 
           {/* Properties Panel (Script, Duration, Audio, etc.) */}
           <div style={{
-            width: isRightSidebarOpen ? '300px' : '0px',
+            width: isRightSidebarOpen ? '320px' : '0px',
             flexShrink: 0,
             height: '100%',
+            overflow: 'hidden',
+            transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             borderLeft: isRightSidebarOpen ? '1px solid var(--border-color)' : 'none',
-            background: 'var(--bg-card)',
-            overflowY: 'auto',
-            overflowX: 'hidden',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            background: 'var(--bg-panel)',
+            zIndex: 40
           }}>
-            <div style={{ width: '300px', height: '100%' }}>
+            <div style={{ width: '320px', height: '100%', overflowY: 'auto' }}>
               <SceneConfigurationPanel
                 activeScene={activeScene}
                 activeSceneId={activeSceneId}

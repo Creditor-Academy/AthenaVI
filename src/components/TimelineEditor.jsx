@@ -3,19 +3,18 @@ import {
     MdVideoLibrary,
     MdMusicNote,
     MdAdd,
-    MdContentCut,
-    MdContentCopy,
-    MdContentPaste,
     MdDelete,
-    MdTimer,
-    MdAspectRatio,
     MdZoomIn,
     MdZoomOut,
-    MdPhotoLibrary,
-    MdDragIndicator,
+    MdUndo,
+    MdRedo,
     MdPlayArrow,
     MdPause,
-    MdStop
+    MdStop,
+    MdSkipNext,
+    MdSkipPrevious,
+    MdFastForward,
+    MdFastRewind
 } from 'react-icons/md'
 
 const TimelineEditor = ({
@@ -146,263 +145,260 @@ const TimelineEditor = ({
     return (
         <div className="timeline-editor-root">
             <style>{`
-        .timeline-editor-root {
-          background: transparent;
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-          color: var(--text-main);
-          font-family: var(--font-family);
-        }
+          /* =====================================================
+             PREMIUM TIMELINE STYLING
+             ===================================================== */
+          /* =====================================================
+             ULTRACLEAN WHITE TIMELINE (REF-MATCHED)
+             ===================================================== */
+          .timeline-editor-root {
+            background: var(--bg-main);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            color: var(--text-main);
+            font-family: 'Inter', system-ui, sans-serif;
+            border-top: 1px solid var(--border-color);
+          }
 
-        .timeline-toolbar {
-          padding: 8px 24px;
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          background: var(--bg-card);
-          border-bottom: 1px solid var(--border-color);
-          height: 64px;
-          flex-shrink: 0;
-        }
+          .timeline-toolbar {
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            height: 64px;
+            flex-shrink: 0;
+          }
 
-        .timeline-container {
-          display: grid;
-          grid-template-columns: 160px 1fr;
-          overflow: hidden;
-          flex: 1;
-          border-bottom: 1px solid var(--border-color);
-        }
+          .toolbar-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+          }
 
-        .timeline-labels {
-          background: var(--bg-card);
-          border-right: 1px solid var(--border-color);
-          display: flex;
-          flex-direction: column;
-          box-shadow: 2px 0 8px rgba(0,0,0,0.02);
-          z-index: 40;
-        }
+          .timeline-container {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            overflow: hidden;
+            flex: 1;
+            background: var(--bg-card);
+          }
 
-        .track-label {
-          height: 80px;
-          display: flex;
-          align-items: center;
-          padding: 0 16px;
-          font-size: 13px;
-          font-weight: 500;
-          color: var(--text-muted);
-          border-bottom: 1px solid var(--border-color);
-          box-sizing: border-box;
-          transition: all 0.2s;
-        }
+          .timeline-labels {
+            background: var(--bg-card);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding-top: 40px; /* Offset for ruler */
+          }
 
-        .track-label-icon {
-          width: 32px;
-          height: 32px;
-          border-radius: 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-right: 12px;
-          background: var(--bg-surface);
-          color: var(--text-muted);
-        }
+          .track-label {
+            height: 100px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+          }
 
-        .track-label.small {
-          height: 40px;
-        }
+          .track-label-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            background: var(--bg-surface);
+            color: var(--text-muted);
+          }
 
-        .track-label.active {
-          color: var(--text-main);
-          background: var(--bg-card);
-          font-weight: 500;
-        }
+          .timeline-viewport {
+            position: relative;
+            overflow-x: scroll;
+            overflow-y: hidden;
+            background: var(--bg-surface);
+            scrollbar-width: thin;
+          }
 
-        .timeline-viewport {
-          position: relative;
-          overflow-x: scroll;
-          overflow-y: hidden;
-          background: var(--bg-surface);
-          cursor: crosshair;
-          scrollbar-width: thin;
-          scrollbar-color: var(--border-color) transparent;
-        }
+          .timeline-ruler {
+            height: 40px;
+            background: var(--bg-card);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: flex-end;
+            pointer-events: none; /* Let clicks pass through to viewport for scrubbing */
+          }
 
-        .timeline-ruler {
-          height: 28px;
-          background: var(--bg-card);
-          position: sticky;
-          top: 0;
-          z-index: 30;
-          border-bottom: 1px solid var(--border-color);
-          box-sizing: border-box;
-        }
+          .ruler-tick {
+            position: absolute;
+            height: 8px;
+            width: 1px;
+            background: #ddd;
+            bottom: 0;
+          }
 
-        .ruler-second {
-          position: absolute;
-          border-left: 1px solid #dadce0;
-          height: 100%;
-          padding-left: 4px;
-          font-size: 10px;
-          color: #80868b;
-          font-family: monospace;
-        }
+          .ruler-tick.major {
+            height: 14px;
+            background: #999;
+          }
 
-        .clip-track {
-          height: 80px;
-          position: relative;
-          border-bottom: 1px solid var(--border-color);
-          box-sizing: border-box;
-          display: flex;
-          align-items: center;
-        }
+          .ruler-label {
+            position: absolute;
+            bottom: 18px;
+            font-size: 10px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            transform: translateX(-50%);
+          }
 
-        .clip-track.small {
-          height: 48px;
-          border-bottom: 1px solid var(--border-color);
-        }
+          .canva-clip {
+            position: absolute;
+            height: 80px;
+            background: rgba(0,0,0,0.85); /* Cinematic Black */
+            border-radius: 16px;
+            border: 2px solid transparent;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          }
 
-        .music-track {
-           height: 48px;
-           border-bottom: 1px solid var(--border-color);
-           position: relative;
-           display: flex;
-           align-items: center;
-        }
+          .canva-clip.active {
+            border-color: #d4ff3f; /* Neon/Yellow accent from ref */
+            box-shadow: 0 0 20px rgba(212, 255, 63, 0.3);
+          }
 
-        .music-clip {
-          position: absolute;
-          height: 32px;
-          background: #ecfdf5;
-          border: 1px solid #a7f3d0;
-          border-radius: 8px;
-          color: #065f46;
-          font-size: 12px;
-          display: flex;
-          align-items: center;
-          padding: 0 12px;
-          font-weight: 500;
-        }
+          .clip-thumb {
+            width: 120px;
+            height: 100%;
+            border-right: 1px solid rgba(255,255,255,0.1);
+          }
 
-        .canva-clip {
-          position: absolute;
-          height: 60px;
-          background: var(--bg-card);
-          border-radius: 12px;
-          border: 1px solid var(--border-color);
-          cursor: grab;
-          display: flex;
-          align-items: center;
-          overflow: hidden;
-          transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.15);
-        }
+          .clip-info {
+            padding: 0 15px;
+            color: #fff;
+          }
 
-        .canva-clip.active {
-          border-color: var(--primary);
-          background: var(--bg-surface);
-          box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.1), 0 2px 4px 0 rgba(0, 0, 0, 0.3), 0 4px 12px 4px rgba(0, 0, 0, 0.15);
-        }
+          .clip-name {
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: -0.2px;
+          }
 
-        .canva-clip.drag-over {
-          background: #f1f3f4;
-          transform: scale(1.02);
-        }
+          .clip-meta {
+            font-size: 11px;
+            opacity: 0.6;
+            margin-top: 4px;
+          }
 
-        .clip-thumb {
-          width: 80px;
-          height: 100%;
-          background: var(--bg-surface);
-          flex-shrink: 0;
-          position: relative;
-        }
+          .playhead {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #d4ff3f;
+            z-index: 100;
+            pointer-events: none;
+          }
 
-        .clip-thumb img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          opacity: 1;
-        }
+          .playhead-tooltip {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #d4ff3f;
+            color: #000;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 800;
+            font-size: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            white-space: nowrap;
+          }
 
-        .clip-info {
-          padding: 8px 12px;
-          flex: 1;
-          min-width: 0;
-        }
+          .playhead-head {
+            position: absolute;
+            top: 24px;
+            left: -5px;
+            width: 12px;
+            height: 12px;
+            background: #d4ff3f;
+            border-radius: 50%;
+            border: 2px solid #fff;
+          }
 
-        .clip-name {
-          font-size: 12px;
-          font-weight: 500;
-          color: var(--text-main);
-          white-space: nowrap;
-          text-overflow: ellipsis;
-          overflow: hidden;
-        }
+          .music-track {
+            height: 60px;
+            display: flex;
+            align-items: center;
+          }
 
-        .clip-meta {
-          font-size: 10px;
-          color: #80868b;
-          margin-top: 2px;
-        }
+          .music-clip {
+            position: absolute;
+            height: 2px;
+            background: #d4ff3f;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          }
 
-        .playhead {
-          position: absolute;
-          top: 0;
-          bottom: 0;
-          width: 2px;
-          background: var(--primary);
-          z-index: 100;
-          pointer-events: none;
-        }
+          .music-node {
+            width: 8px;
+            height: 8px;
+            background: #d4ff3f;
+            border: 1px solid #fff;
+            border-radius: 1px;
+          }
 
-        .playhead-head {
-          position: absolute;
-          top: 0;
-          left: -7px;
-          width: 14px;
-          height: 14px;
-          background: var(--primary);
-          border-radius: 50%;
-          cursor: grab;
-          pointer-events: auto;
-          box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.15);
-        }
+          .toolbar-btn {
+            background: var(--bg-surface);
+            border: none;
+            color: var(--text-main);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+          }
 
-        .playhead-head:active { cursor: grabbing; }
+          .toolbar-btn:hover {
+            background: var(--border-color);
+            transform: scale(1.05);
+          }
 
-        .time-display {
-          background: var(--bg-card);
-          padding: 6px 12px;
-          border-radius: 8px;
-          color: var(--text-main);
-          font-family: monospace;
-          font-size: 13px;
-          border: 1px solid var(--border-color);
-          font-weight: 500;
-        }
+          .toolbar-btn.primary {
+            width: 48px;
+            height: 48px;
+            background: var(--bg-surface);
+            color: var(--text-main);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+          }
 
-        .toolbar-btn {
-          background: var(--bg-card);
-          border: 1px solid var(--border-color);
-          color: var(--text-main);
-          padding: 8px 12px;
-          border-radius: 8px;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
-          font-size: 13px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .toolbar-btn:hover {
-          color: var(--text-main);
-          background: var(--bg-surface);
-          border-color: var(--border-color);
-          transform: translateY(-1px);
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-        }
+          .music-clip {
+              background: linear-gradient(90deg, #065f46 0%, #047857 100%);
+              border: 1px solid #059669;
+              color: #fff;
+              border-radius: 6px;
+              height: 36px;
+              margin-top: 6px;
+          }
 
         .layer-item {
           position: absolute;
@@ -497,80 +493,112 @@ const TimelineEditor = ({
           background: rgba(255, 255, 255, 0.5);
           border-radius: 1px;
         }
+
+        .timeline-empty-state {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-card);
+            z-index: 60;
+        }
+
+        .empty-state-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            border: 2px dashed var(--border-color);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--bg-surface);
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .empty-state-card:hover {
+            border-color: var(--primary);
+            background: var(--bg-card);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+
+        .empty-add-btn {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+            transition: transform 0.3s;
+        }
+
+        .empty-state-card:hover .empty-add-btn {
+            transform: rotate(90deg) scale(1.1);
+        }
+
+        .empty-state-card h3 {
+            margin: 0 0 8px 0;
+            color: var(--text-main);
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .empty-state-card p {
+            margin: 0 0 12px 0;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .empty-hint {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--primary);
+            background: rgba(var(--primary-rgb), 0.1);
+            padding: 4px 12px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
       `}</style>
 
             <div className="timeline-toolbar">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <button className="toolbar-btn" title="Stop" onClick={onStop}>
-                        <MdStop size={18} />
-                    </button>
-                    <button className="toolbar-btn" title="Play/Pause" onClick={onPlayPause}>
-                        {isPlaying ? <MdPause size={18} /> : <MdPlayArrow size={18} />}
-                    </button>
-                    <div className="time-display" style={{ padding: '6px 12px', fontSize: '12px', color: 'var(--text-muted)' }}>
-                        {Math.floor(currentTime / 60).toString().padStart(2, '0')}:
-                        {Math.floor(currentTime % 60).toString().padStart(2, '0')} /
-                        {Math.floor(totalDuration / 60).toString().padStart(2, '0')}:
-                        {Math.floor(totalDuration % 60).toString().padStart(2, '0')}
-                    </div>
+                <div className="toolbar-section">
+                    <button className="toolbar-btn" title="Undo"><MdUndo /></button>
+                    <button className="toolbar-btn" title="Redo"><MdRedo /></button>
                 </div>
 
-                <div style={{ width: '1px', height: '24px', background: 'var(--border-color)' }} />
+                <div className="toolbar-section">
+                    <button className="toolbar-btn" title="Rewind"><MdFastRewind /></button>
+                    <button className="toolbar-btn" title="Previous"><MdSkipPrevious /></button>
+                    <button className="toolbar-btn primary" onClick={onPlayPause}>
+                        {isPlaying ? <MdPause size={24} /> : <MdPlayArrow size={24} />}
+                    </button>
+                    <button className="toolbar-btn" title="Next"><MdSkipNext /></button>
+                    <button className="toolbar-btn" title="Fast Forward"><MdFastForward /></button>
+                </div>
 
-                <button className="toolbar-btn" onClick={onAddScene}>
-                    <MdAdd size={20} />
-                    <span>Add Page</span>
-                </button>
-                <div style={{ width: '1px', height: '24px', background: 'var(--border-color)' }} />
-                <button className="toolbar-btn" title="Delete" onClick={() => onDeleteScene(activeSceneId)}>
-                    <MdDelete size={18} />
-                </button>
-
-                <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div className="zoom-controls" style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-surface)', borderRadius: '20px', padding: '0 10px' }}>
-                        <MdZoomOut size={14} color="var(--text-muted)" />
-                        <input
-                            type="range"
-                            min="20"
-                            max="150"
-                            value={zoom}
-                            onChange={(e) => setZoom(Number(e.target.value))}
-                            style={{ width: '80px', margin: '0 8px' }}
-                        />
-                        <MdZoomIn size={14} color="var(--text-muted)" />
-                    </div>
+                <div className="toolbar-section">
+                   <button className="toolbar-btn" onClick={onAddScene} title="Add Scene"><MdAdd size={20} /></button>
+                   <button className="toolbar-btn" title="Delete" onClick={() => onDeleteScene(activeSceneId)}><MdDelete size={18} /></button>
                 </div>
             </div>
 
-            <div className="timeline-container" style={{ borderTop: '1px solid var(--border-color)' }}>
+            <div className="timeline-container">
                 <div className="timeline-labels">
-                    <div style={{
-                        height: '28px',
-                        backgroundColor: 'var(--bg-card)',
-                        borderBottom: '1px solid var(--border-color)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}>
-                        <MdDragIndicator color="var(--border-color)" />
+                    <div className="track-label">
+                        <div className="track-label-icon"><MdVideoLibrary size={18} /></div>
+                        Scenes
                     </div>
-                    <div className="track-label active">
-                        <div className="track-label-icon" style={{ background: 'var(--bg-surface)', color: 'var(--primary)' }}>
-                            <MdVideoLibrary size={18} />
-                        </div>
-                        Main Scenes
-                    </div>
-                    <div className="track-label small" style={{ height: '48px' }}>
-                        <div className="track-label-icon" style={{ background: 'var(--bg-surface)', color: '#ef4444', width: '24px', height: '24px' }}>
-                            <MdPhotoLibrary size={14} />
-                        </div>
-                        Overlays
-                    </div>
-                    <div className="track-label small" style={{ height: '48px' }}>
-                        <div className="track-label-icon" style={{ background: 'var(--bg-surface)', color: '#10b981', width: '24px', height: '24px' }}>
-                            <MdMusicNote size={14} />
-                        </div>
-                        Audio Track
+                    <div className="track-label" style={{ height: '60px' }}>
+                        <div className="track-label-icon"><MdMusicNote size={18} /></div>
+                        Audio
                     </div>
                 </div>
 
@@ -580,125 +608,99 @@ const TimelineEditor = ({
                     onMouseDown={handleMouseDown}
                 >
                     <div className="timeline-ruler" style={{ width: `${totalDuration * zoom + 500}px` }}>
-                        {Array.from({ length: Math.ceil(totalDuration) + 10 }).map((_, i) => (
-                            <div key={i} className="ruler-second" style={{ left: `${i * zoom}px` }}>
-                                {i}s
-                            </div>
-                        ))}
+                        {Array.from({ length: Math.ceil(totalDuration) * 2 + 10 }).map((_, i) => {
+                            const time = i * 0.5;
+                            const isMajor = i % 2 === 0;
+                            return (
+                                <div 
+                                    key={i} 
+                                    className={`ruler-tick ${isMajor ? 'major' : ''}`} 
+                                    style={{ left: `${time * zoom}px` }}
+                                >
+                                    {isMajor && <span className="ruler-label">{time.toFixed(1)}s</span>}
+                                </div>
+                            )
+                        })}
                     </div>
 
-                    <div className="timeline-tracks" style={{ width: `${totalDuration * zoom + 500}px` }}>
-                        {/* Main Track */}
-                        <div className="clip-track">
-                            {scenes.map((scene, index) => {
-                                const prevDuration = scenes.slice(0, index).reduce((sum, s) => sum + (s.duration || 8), 0)
-                                return (
-                                    <div
-                                        key={scene.id}
-                                        draggable
-                                        onDragStart={(e) => onDragStart(e, scene.id)}
-                                        onDragOver={(e) => onDragOver(e, scene.id)}
-                                        onDrop={(e) => onDrop(e, scene.id)}
-                                        className={`canva-clip ${scene.id === activeSceneId ? 'active' : ''} ${dragOverSceneId === scene.id ? 'drag-over' : ''}`}
-                                        style={{
-                                            left: `${prevDuration * zoom}px`,
-                                            width: `${(scene.duration || 8) * zoom}px`
-                                        }}
-                                        onClick={(e) => {
-                                            e.stopPropagation()
-                                            onSelectScene(scene.id)
-                                            onSeek(prevDuration)
-                                        }}
-                                    >
-                                        <div className="clip-thumb">
-                                            <img src={scene.avatar} alt="" />
-                                            <div style={{ position: 'absolute', top: 4, left: 4, background: 'var(--bg-card)', borderRadius: '4px', padding: '2px 4px', fontSize: '9px', color: 'var(--text-main)', fontWeight: '600' }}>
-                                                {index + 1}
+                    <div className="timeline-tracks" style={{ width: `${Math.max(totalDuration, 60) * zoom + 500}px` }}>
+                        {scenes.length === 0 ? (
+                            <div className="timeline-empty-state">
+                                <div className="empty-state-card" onClick={onAddScene}>
+                                    <div className="empty-add-btn">
+                                        <MdAdd size={32} />
+                                    </div>
+                                    <h3>Start Your Masterpiece</h3>
+                                    <p>Select a scene template to begin your story</p>
+                                    <div className="empty-hint">Scenes always start from 0:00</div>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Main Track */}
+                                <div className="clip-track" style={{ height: '100px' }}>
+                                    {scenes.map((scene, index) => {
+                                        const prevDuration = scenes.slice(0, index).reduce((sum, s) => sum + (s.duration || 8), 0)
+                                        return (
+                                            <div
+                                                key={scene.id}
+                                                draggable
+                                                className={`canva-clip ${scene.id === activeSceneId ? 'active' : ''}`}
+                                                style={{
+                                                    left: `${prevDuration * zoom}px`,
+                                                    width: `${(scene.duration || 8) * zoom}px`
+                                                }}
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    onSelectScene(scene.id)
+                                                    onSeek(prevDuration)
+                                                }}
+                                            >
+                                                <div className="clip-thumb">
+                                                    <img src={scene.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                </div>
+                                                <div className="clip-info">
+                                                    <div className="clip-name">{scene.titleText || 'Untitled'}</div>
+                                                    <div className="clip-meta">{(scene.duration || 8).toFixed(1)}s</div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="clip-info">
-                                            <div className="clip-name">{scene.titleText || 'Untitled'}</div>
-                                            <div className="clip-meta">{(scene.duration || 8).toFixed(1)}s</div>
-                                        </div>
-                                    </div>
-                                )
-                            })}
-                        </div>
+                                        )
+                                    })}
+                                </div>
 
-                        {/* Overlays Track */}
-                        <div className="clip-track small">
-                            {scenes.map((scene, index) => {
-                                const prevDuration = scenes.slice(0, index).reduce((sum, s) => sum + (s.duration || 8), 0)
-                                return (scene.layers || []).map(layer => (
-                                    <div
-                                        key={layer.id}
-                                        className="layer-item"
-                                        style={{
-                                            position: 'absolute',
-                                            left: `${(prevDuration + (layer.start || 0)) * zoom}px`,
-                                            width: `${(layer.duration || scene.duration) * zoom}px`,
-                                            top: '4px'
-                                        }}
-                                        onClick={() => onSeek(prevDuration + (layer.start || 0))}
-                                    >
-                                        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                            {layer.type} overlay
-                                        </span>
-                                        <button
-                                            className="delete-clip-btn"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onDeleteLayer(scene.id, layer.id);
+                                <div className="music-track">
+                                    {bgMusic && (
+                                        <div
+                                            className="music-clip"
+                                            style={{
+                                                left: 0,
+                                                width: `${musicDuration * zoom}px`
                                             }}
-                                            title="Delete overlay"
                                         >
-                                            ×
-                                        </button>
-                                    </div>
-                                ))
-                            })}
-                        </div>
+                                            <div className="music-node" style={{ position: 'absolute', left: 0 }} />
+                                            {Array.from({ length: Math.floor(musicDuration / 2) }).map((_, i) => (
+                                                <div key={i} className="music-node" style={{ position: 'absolute', left: `${(i + 1) * 2 * zoom}px` }} />
+                                            ))}
+                                            <div className="music-node" style={{ position: 'absolute', right: 0 }} />
+                                        </div>
+                                    )}
+                                </div>
 
-                        <div className="music-track">
-                            {bgMusic && (
                                 <div
-                                    className="music-clip"
+                                    className="playhead"
                                     style={{
-                                        left: 0,
-                                        width: `${musicDuration * zoom}px`
+                                        left: `${currentTime * zoom}px`,
+                                        transition: isPlaying ? 'left 0.1s linear' : 'left 0.1s ease-out'
                                     }}
                                 >
-                                    <div style={{ display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
-                                        <MdMusicNote size={14} style={{ marginRight: 8 }} />
-                                        <span>Background Music</span>
+                                    <div className="playhead-tooltip">
+                                        {Math.floor(currentTime / 60).toString().padStart(2, '0')}:
+                                        {Math.floor(currentTime % 60).toString().padStart(2, '0')}
                                     </div>
-                                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                                        <button
-                                            className="delete-clip-btn"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onDeleteMusic();
-                                            }}
-                                            title="Remove music"
-                                            style={{ marginRight: '12px' }}
-                                        >
-                                            ×
-                                        </button>
-                                        <div className="music-trim-handle" title="Adjust duration" />
-                                    </div>
+                                    <div className="playhead-head" />
                                 </div>
-                            )}
-                        </div>
-
-                        <div
-                            className="playhead"
-                            style={{
-                                left: `${currentTime * zoom}px`,
-                                transition: isPlaying ? 'left 0.1s linear' : 'left 0.1s ease-out'
-                            }}
-                        >
-                            <div className="playhead-head" />
-                        </div>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

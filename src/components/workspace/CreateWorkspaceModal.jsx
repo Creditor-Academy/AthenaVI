@@ -1,22 +1,16 @@
 import React, { useState } from 'react';
 import { MdClose, MdAdd } from 'react-icons/md';
 
-const PLAN_LIMITS = {
-    individual: { maxWorkspaces: 0, canInvite: false },
-    team: { maxWorkspaces: 5, canInvite: true },
-    organisation: { maxWorkspaces: 15, canInvite: true }
-};
 
-const CreateWorkspaceModal = ({ isOpen, onClose, onCreate, userPlan, currentWorkspaceCount }) => {
+
+const CreateWorkspaceModal = ({ isOpen, onClose, onCreate, workspaces = [] }) => {
     const [name, setName] = useState('');
     const [invites, setInvites] = useState([]);
     const [emailInput, setEmailInput] = useState('');
 
-    if (!isOpen) return null;
+    const isDuplicate = workspaces.some(w => w.name.toLowerCase() === name.trim().toLowerCase());
 
-    const plan = userPlan || 'individual';
-    const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.individual;
-    const canCreate = currentWorkspaceCount < limits.maxWorkspaces;
+    if (!isOpen) return null;
 
     const handleAddEmail = (e) => {
         e.preventDefault();
@@ -28,7 +22,7 @@ const CreateWorkspaceModal = ({ isOpen, onClose, onCreate, userPlan, currentWork
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (!name || !canCreate) return;
+        if (!name) return;
         onCreate({ name, invites });
         setName('');
         setInvites([]);
@@ -38,69 +32,60 @@ const CreateWorkspaceModal = ({ isOpen, onClose, onCreate, userPlan, currentWork
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content" onClick={e => e.stopPropagation()}>
+                <button className="icon-btn-close-outside" onClick={onClose} title="Close">
+                    <MdClose size={20} />
+                </button>
                 <div className="modal-header">
                     <h2>Create New Workspace</h2>
-                    <button className="icon-btn" onClick={onClose}><MdClose size={20} /></button>
                 </div>
 
-                {!canCreate ? (
-                    <div className="modal-body">
-                        <div className="upgrade-prompt">
-                            <h3>Upgrade Required</h3>
-                            <p>Your {plan} plan limits you to {limits.maxWorkspaces} custom workspaces.</p>
-                            <button className="btn-primary mt-3">Upgrade Plan</button>
-                        </div>
+                <form onSubmit={handleSubmit} className="modal-body">
+                    <div className="form-group">
+                        <label>Workspace Name *</label>
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={e => setName(e.target.value)}
+                            placeholder="e.g. Marketing Team"
+                            required
+                            className={`form-input ${isDuplicate ? 'input-error' : ''}`}
+                        />
+                        {isDuplicate && <span className="error-message-modal" style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px', display: 'block' }}>This workspace name already exists</span>}
                     </div>
-                ) : (
-                    <form onSubmit={handleSubmit} className="modal-body">
-                        <div className="form-group">
-                            <label>Workspace Name *</label>
+
+                    <div className="form-group">
+                        <label>Invite Members (Optional)</label>
+                        <div className="email-input-group">
                             <input
-                                type="text"
-                                value={name}
-                                onChange={e => setName(e.target.value)}
-                                placeholder="e.g. Marketing Team"
-                                required
+                                type="email"
+                                value={emailInput}
+                                onChange={e => setEmailInput(e.target.value)}
+                                placeholder="colleague@example.com"
                                 className="form-input"
                             />
+                            <button type="button" className="btn-add-circle" onClick={handleAddEmail} title="Add member">
+                                <MdAdd size={20} />
+                            </button>
                         </div>
-
-                        {limits.canInvite && (
-                            <div className="form-group">
-                                <label>Invite Members (Optional)</label>
-                                <div className="email-input-group">
-                                    <input
-                                        type="email"
-                                        value={emailInput}
-                                        onChange={e => setEmailInput(e.target.value)}
-                                        placeholder="colleague@example.com"
-                                        className="form-input"
-                                    />
-                                    <button type="button" className="btn-secondary" onClick={handleAddEmail}>
-                                        <MdAdd size={18} /> Add
-                                    </button>
-                                </div>
-                                {invites.length > 0 && (
-                                    <div className="invites-list">
-                                        {invites.map(email => (
-                                            <span key={email} className="invite-chip">
-                                                {email}
-                                                <button type="button" onClick={() => setInvites(invites.filter(e => e !== email))}>
-                                                    <MdClose size={12} />
-                                                </button>
-                                            </span>
-                                        ))}
-                                    </div>
-                                )}
+                        {invites.length > 0 && (
+                            <div className="invites-list">
+                                {invites.map(email => (
+                                    <span key={email} className="invite-chip">
+                                        {email}
+                                        <button type="button" onClick={() => setInvites(invites.filter(e => e !== email))}>
+                                            <MdClose size={12} />
+                                        </button>
+                                    </span>
+                                ))}
                             </div>
                         )}
+                    </div>
 
-                        <div className="modal-footer mt-4">
-                            <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
-                            <button type="submit" className="btn-primary" disabled={!name}>Create Workspace</button>
-                        </div>
-                    </form>
-                )}
+                    <div className="modal-footer mt-4">
+                        <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
+                        <button type="submit" className="btn-primary" disabled={!name || isDuplicate}>Create Workspace</button>
+                    </div>
+                </form>
             </div>
         </div>
     );

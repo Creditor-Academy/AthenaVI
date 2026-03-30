@@ -17,7 +17,7 @@ export const WorkspaceCard = ({ workspace, onClick, contextProps }) => {
                 <div className="meta-left">
                     <h4>{workspace.name}</h4>
                     <span className="subtitle">
-                        {workspace.type === 'personal' ? 'Private' : `${workspace.members.length + 1} Members`}
+                        {workspace.type === 'personal' ? 'Private' : `${(workspace.members?.length || 0) + 1} Members`}
                     </span>
                 </div>
                 <ContextMenu type="workspace" {...contextProps} />

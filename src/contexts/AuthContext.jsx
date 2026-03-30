@@ -15,7 +15,24 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = async () => {
       try {
         if (authService.isAuthenticated()) {
-          const userData = authService.getStoredUser()
+          let userData = authService.getStoredUser()
+          
+          // If id is missing (due to previous bug), fetch profile to get it
+          if (userData && !userData.id) {
+            console.log('User ID missing from stored data, fetching profile...')
+            try {
+              // Import userService dynamically to avoid circular dependencies if any
+              const { default: userService } = await import('../services/userService.js')
+              const profile = await userService.getUserProfile()
+              if (profile && profile.id) {
+                userData = { ...userData, ...profile }
+                localStorage.setItem('user', JSON.stringify(userData))
+              }
+            } catch (profileError) {
+              console.error('Failed to fetch profile for ID recovery:', profileError)
+            }
+          }
+          
           setUser(userData)
           setIsAuthenticated(true)
         }
