@@ -149,7 +149,8 @@ const Profile = ({ onBack }) => {
       max-width: 1000px;
       margin: 0 auto;
       padding: 20px;
-      font-family: 'Inter', sans-serif;
+      font-family: var(--font-family, 'Inter', sans-serif);
+      color: var(--text-main);
     }
 
     .profile-header-new {
@@ -162,7 +163,7 @@ const Profile = ({ onBack }) => {
     .profile-header-new h1 {
       font-size: 28px;
       font-weight: 800;
-      color: #1e293b;
+      color: var(--text-main);
       margin: 0;
       letter-spacing: -0.02em;
     }
@@ -174,16 +175,15 @@ const Profile = ({ onBack }) => {
     }
 
     .profile-sidebar-card {
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.8);
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
       border-radius: 24px;
       padding: 32px;
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     }
 
     .profile-avatar-wrapper {
@@ -196,23 +196,23 @@ const Profile = ({ onBack }) => {
       height: 120px;
       border-radius: 40px;
       object-fit: cover;
-      border: 4px solid white;
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+      border: 4px solid var(--bg-card);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
     }
 
     .profile-avatar-large.loading-avatar {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #ffffff;
-      color: #64748b;
+      background: var(--bg-surface);
+      color: var(--text-muted);
     }
 
     .avatar-loading-spinner {
       width: 24px;
       height: 24px;
       border: 3px solid rgba(37, 99, 235, 0.3);
-      border-top: 3px solid #2563eb;
+      border-top: 3px solid var(--primary);
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
@@ -226,7 +226,7 @@ const Profile = ({ onBack }) => {
       position: absolute;
       bottom: -8px;
       right: -8px;
-      background: #2563eb;
+      background: var(--primary);
       color: white;
       width: 36px;
       height: 36px;
@@ -235,26 +235,26 @@ const Profile = ({ onBack }) => {
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      border: 3px solid white;
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+      border: 3px solid var(--bg-card);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .profile-avatar-edit:hover {
       transform: scale(1.1);
-      background: #1d4ed8;
+      background: var(--primary-hover, #1d4ed8);
     }
 
     .profile-name-title {
       font-size: 20px;
       font-weight: 700;
-      color: #0f172a;
+      color: var(--text-main);
       margin: 0 0 4px 0;
     }
 
     .profile-email-subtitle {
       font-size: 14px;
-      color: #64748b;
+      color: var(--text-muted);
       margin: 0;
     }
 
@@ -263,7 +263,7 @@ const Profile = ({ onBack }) => {
       gap: 16px;
       margin-top: 24px;
       padding-top: 24px;
-      border-top: 1px solid rgba(226, 232, 240, 0.6);
+      border-top: 1px solid var(--border-color);
       width: 100%;
     }
 
@@ -275,13 +275,13 @@ const Profile = ({ onBack }) => {
       display: block;
       font-size: 18px;
       font-weight: 700;
-      color: #1e293b;
+      color: var(--text-main);
     }
 
     .profile-stat-label {
       font-size: 12px;
       font-weight: 600;
-      color: #94a3b8;
+      color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
@@ -293,17 +293,17 @@ const Profile = ({ onBack }) => {
     }
 
     .profile-detail-card {
-      background: white;
-      border: 1px solid #f1f5f9;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
       border-radius: 24px;
       padding: 32px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     }
 
     .profile-section-title {
       font-size: 18px;
       font-weight: 700;
-      color: #0f172a;
+      color: var(--text-main);
       margin-bottom: 24px;
       display: flex;
       align-items: center;
@@ -311,7 +311,7 @@ const Profile = ({ onBack }) => {
     }
 
     .profile-section-title svg {
-      color: #2563eb;
+      color: var(--primary);
     }
 
     .profile-detail-item {
@@ -325,8 +325,8 @@ const Profile = ({ onBack }) => {
     }
 
     .profile-detail-item:hover {
-      background: #f8fafc;
-      border-color: #f1f5f9;
+      background: var(--bg-surface);
+      border-color: var(--border-color);
     }
 
     .profile-detail-left {
@@ -338,8 +338,8 @@ const Profile = ({ onBack }) => {
     .profile-detail-icon {
       width: 44px;
       height: 44px;
-      background: #eff6ff;
-      color: #2563eb;
+      background: rgba(37, 99, 235, 0.1);
+      color: var(--primary);
       border-radius: 12px;
       display: flex;
       align-items: center;
@@ -355,7 +355,7 @@ const Profile = ({ onBack }) => {
     .profile-detail-label {
       font-size: 12px;
       font-weight: 600;
-      color: #94a3b8;
+      color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
@@ -363,26 +363,26 @@ const Profile = ({ onBack }) => {
     .profile-detail-value {
       font-size: 15px;
       font-weight: 600;
-      color: #1e293b;
+      color: var(--text-main);
     }
 
     .profile-detail-edit-btn {
       width: 36px;
       height: 36px;
       border-radius: 10px;
-      background: #f1f5f9;
-      color: #64748b;
+      background: var(--bg-surface);
+      color: var(--text-muted);
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      border: none;
+      border: 1px solid var(--border-color);
       transition: all 0.2s;
     }
 
     .profile-detail-edit-btn:hover {
-      background: #e2e8f0;
-      color: #1e293b;
+      background: var(--bg-main);
+      color: var(--text-main);
     }
 
     .profile-input-group {
@@ -394,19 +394,19 @@ const Profile = ({ onBack }) => {
     .profile-edit-input {
       flex: 1;
       padding: 10px 16px;
-      border: 2px solid #e2e8f0;
+      border: 2px solid var(--border-color);
       border-radius: 12px;
       font-size: 15px;
       font-weight: 600;
-      color: #1e293b;
+      color: var(--text-main);
       outline: none;
-      background: #f8fafc;
+      background: var(--bg-surface);
       transition: all 0.2s;
     }
 
     .profile-edit-input:focus {
-      border-color: #2563eb;
-      background: white;
+      border-color: var(--primary);
+      background: var(--bg-card);
       box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
     }
 
@@ -428,24 +428,25 @@ const Profile = ({ onBack }) => {
     }
 
     .profile-btn-save-new {
-      background: #2563eb;
+      background: var(--primary);
       color: white;
       box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
     }
 
     .profile-btn-save-new:hover {
-      background: #1d4ed8;
+      background: var(--primary-hover, #1d4ed8);
       transform: translateY(-2px);
     }
 
     .profile-btn-cancel-new {
-      background: #f1f5f9;
-      color: #64748b;
+      background: var(--bg-surface);
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
     }
 
     .profile-btn-cancel-new:hover {
-      background: #e2e8f0;
-      color: #1e293b;
+      background: var(--bg-main);
+      color: var(--text-main);
     }
 
     .error-toast {
@@ -461,7 +462,7 @@ const Profile = ({ onBack }) => {
       display: flex;
       align-items: center;
       gap: 12px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
       z-index: 1000;
     }
 
@@ -469,7 +470,7 @@ const Profile = ({ onBack }) => {
       display: inline-block;
       width: 12px;
       height: 12px;
-      background: #2563eb;
+      background: var(--primary);
       border-radius: 50%;
       margin: 0 4px;
       animation: pulse 1s infinite alternate;
@@ -490,11 +491,11 @@ const Profile = ({ onBack }) => {
     }
 
     .profile-section-card {
-      background: white;
-      border: 1px solid #f1f5f9;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
       border-radius: 24px;
       padding: 32px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.02);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
       margin-bottom: 24px;
     }
 
@@ -510,16 +511,16 @@ const Profile = ({ onBack }) => {
     }
 
     .notif-item-rich:hover {
-      background: #f8fafc;
-      border-color: #f1f5f9;
+      background: var(--bg-surface);
+      border-color: var(--border-color);
       transform: translateX(4px);
     }
 
     .notif-icon-box {
       width: 48px;
       height: 48px;
-      background: #f0f9ff;
-      color: #0369a1;
+      background: rgba(3, 105, 161, 0.1);
+      color: #0ea5e9;
       border-radius: 14px;
       display: flex;
       align-items: center;
@@ -528,9 +529,9 @@ const Profile = ({ onBack }) => {
       flex-shrink: 0;
     }
 
-    .notif-icon-box.success { background: #ecfdf5; color: #059669; }
-    .notif-icon-box.warning { background: #fffbeb; color: #d97706; }
-    .notif-icon-box.info { background: #f0f4ff; color: #3b82f6; }
+    .notif-icon-box.success { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+    .notif-icon-box.warning { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+    .notif-icon-box.info { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
 
     .notif-main {
       flex: 1;
@@ -546,20 +547,20 @@ const Profile = ({ onBack }) => {
     .notif-title-text {
       font-size: 15px;
       font-weight: 700;
-      color: #0f172a;
+      color: var(--text-main);
     }
 
     .notif-time-tag {
       font-size: 11px;
       font-weight: 600;
-      color: #94a3b8;
+      color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.03em;
     }
 
     .notif-body-text {
       font-size: 13px;
-      color: #64748b;
+      color: var(--text-muted);
       line-height: 1.5;
       margin: 0;
     }
