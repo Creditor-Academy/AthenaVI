@@ -633,7 +633,7 @@ const Profile = ({ onBack }) => {
           <div className="profile-stats-mini">
             <div className="profile-stat-item">
               <span className="profile-stat-label">Current Plan</span>
-              <span className="profile-stat-value" style={{ color: '#2563eb' }}>Pro Elite</span>
+              <span className="profile-stat-value" style={{ color: 'var(--primary)' }}>Pro Elite</span>
             </div>
           </div>
           <div className="profile-stats-mini" style={{ marginTop: '12px', borderTop: 'none', paddingTop: 0 }}>
