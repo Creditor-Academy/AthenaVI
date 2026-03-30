@@ -12,7 +12,14 @@ import {
   MdShapeLine,
   MdLayers,
   MdClose,
-  MdSearch
+  MdSearch,
+  MdFormatAlignLeft,
+  MdFormatAlignCenter,
+  MdFormatAlignRight,
+  MdLayersClear,
+  MdChatBubbleOutline,
+  MdOutlineImageSearch,
+  MdAdd
 } from 'react-icons/md'
 import { predefinedAvatars, predefinedMedia, pageTemplates, predefinedVideos, predefinedAudios, predefinedShapes } from '../../constants/editorData'
 import StaticPreview from './StaticPreview'
@@ -27,20 +34,20 @@ const EditorSidebar = ({
   activeScene,
   handleAddTemplateScene,
   setShowTemplateModal,
-  showPanelOnly = false
+  showPanelOnly = false,
+  scenes = [],
+  autoCreateScene
 }) => {
   const [previewTemplate, setPreviewTemplate] = useState(null)
   const tools = [
-    { id: 'avatar',    icon: MdPerson,        label: 'Avatar' },
-    { id: 'mic',       icon: MdMic,           label: 'Voice' },
-    { id: 'image',     icon: MdPhotoLibrary,  label: 'Images' },
-    { id: 'video',     icon: MdVideoLibrary,  label: 'Videos' },
-    { id: 'uploads',   icon: MdCloudUpload,   label: 'Uploads' },
-    { id: 'templates', icon: MdAutoAwesome,   label: 'Templates' },
-    { id: 'text',      icon: MdTextFields,    label: 'Text' },
-    { id: 'magic',     icon: MdAutoAwesome,   label: 'AI Tools' },
-    { id: 'shapes',    icon: MdShapeLine,     label: 'Shapes' },
-    { id: 'layers',    icon: MdLayers,        label: 'Layers' }
+    { id: 'avatar', icon: MdPerson, label: 'Avatar' },
+    { id: 'mic', icon: MdMic, label: 'Voice' },
+    { id: 'image', icon: MdPhotoLibrary, label: 'Images' },
+    { id: 'video', icon: MdVideoLibrary, label: 'Videos' },
+    { id: 'uploads', icon: MdCloudUpload, label: 'Uploads' },
+    { id: 'text', icon: MdTextFields, label: 'Text' },
+    { id: 'shapes', icon: MdShapeLine, label: 'Shapes' },
+    { id: 'layers', icon: MdLayers, label: 'Layers' }
   ]
 
   const renderToolPanel = () => {
@@ -49,25 +56,60 @@ const EditorSidebar = ({
     switch (selectedTool) {
       case 'avatar':
         return (
-          <div className="tool-panel-content">
-            <div className="search-box">
-              <MdSearch className="search-icon" size={18} />
-              <input type="text" placeholder="Search avatars..." className="search-input" />
+          <div className="tool-panel-content elements-ui">
+            <div className="elements-search-container">
+              <div className="elements-search-bar">
+                <MdAdd className="search-plus" />
+                <input type="text" placeholder="Search avatars..." />
+                <MdMic className="search-mic" />
+              </div>
             </div>
-            <div className="avatar-grid">
-              {predefinedAvatars.map((avatar) => (
-                <div
-                  key={avatar.id}
-                  className={`avatar-item ${activeScene?.avatarType === avatar.id ? 'selected' : ''}`}
-                  onClick={() => updateScene(activeSceneId, {
-                    avatar: avatar.image,
-                    avatarType: avatar.id
-                  })}
-                  title={avatar.name}
-                >
-                  <img src={avatar.image} alt={avatar.name} />
-                </div>
-              ))}
+
+            <div className="elements-section">
+              <h4 className="elements-section-title">Popular categories</h4>
+              <div className="elements-chips-scroll">
+                <button className="elements-chip">Realistic</button>
+                <button className="elements-chip">Cartoon</button>
+                <button className="elements-chip">3D Render</button>
+                <button className="elements-chip">Business</button>
+              </div>
+            </div>
+
+            <div className="elements-section">
+              <h4 className="elements-section-title">AI Avatars</h4>
+              <div className="elements-category-grid">
+                {predefinedAvatars.map((avatar) => (
+                  <div
+                    key={avatar.id}
+                    className={`elements-category-item ${activeScene?.avatarType === avatar.id ? 'active' : ''}`}
+                    onClick={() => {
+                        if (!activeSceneId || scenes.length === 0) {
+                            // Auto-create scene, then update the avatar on it
+                            if (autoCreateScene) {
+                                const { newScene } = autoCreateScene();
+                                updateScene(newScene.id, {
+                                    avatar: avatar.image,
+                                    avatarType: avatar.id
+                                });
+                            } else {
+                                alert('Please add a scene or template first!');
+                                if (setShowTemplateModal) setShowTemplateModal(true);
+                            }
+                            return;
+                        }
+                        updateScene(activeSceneId, {
+                            avatar: avatar.image,
+                            avatarType: avatar.id
+                        });
+                    }}
+                  >
+                    <div className="category-image-stack">
+                        <img src={avatar.image} alt={avatar.name} />
+                    </div>
+                    <span>{avatar.name}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )
@@ -84,7 +126,10 @@ const EditorSidebar = ({
                 <div
                   key={media.id}
                   className="media-item"
-                  onClick={() => addLayer('image', media.full)}
+                  onClick={() => {
+                      // addLayer now auto-creates a scene if needed
+                      addLayer('image', media.full);
+                  }}
                   title={`Add ${media.name}`}
                 >
                   <img src={media.image} alt={media.name} />
@@ -97,38 +142,48 @@ const EditorSidebar = ({
       case 'uploads':
         return (
           <div className="tool-panel-content">
-            <div
-              className="upload-area"
-              onClick={() => {
-                const input = document.createElement('input')
-                input.type = 'file'
-                input.accept = 'image/*,video/*,audio/*'
-                input.multiple = true
-                input.onchange = (e) => {
-                  const files = Array.from(e.target.files)
-                  files.forEach(file => {
-                    const url = URL.createObjectURL(file)
-                    addLayer(file.type.split('/')[0], url)
-                  })
-                }
-                input.click()
-              }}
-            >
-              <MdCloudUpload size={32} />
-              <div>Click to Upload Media</div>
-              <p>From Drive, Photos or your computer</p>
-            </div>
-            <div className="media-grid">
-              {predefinedMedia.map((media) => (
-                <div
-                  key={media.id}
-                  className="media-item"
-                  onClick={() => addLayer('image', media.full)}
-                  title={`Add ${media.name}`}
-                >
-                  <img src={media.image} alt={media.name} />
+            <div className="tool-section">
+              <div
+                className="premium-upload-zone"
+                onClick={() => {
+                  const input = document.createElement('input')
+                  input.type = 'file'
+                  input.accept = 'image/*,video/*,audio/*'
+                  input.multiple = true
+                  input.onchange = (e) => {
+                    const files = Array.from(e.target.files)
+                    files.forEach(file => {
+                      const url = URL.createObjectURL(file)
+                      addLayer(file.type.split('/')[0], url)
+                    })
+                  }
+                  input.click()
+                }}
+              >
+                <div className="upload-icon-circle">
+                  <MdCloudUpload size={24} />
                 </div>
-              ))}
+                <div className="upload-text">
+                  <h5>Upload Assets</h5>
+                  <p>Support for Image, Video and Audio</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="tool-section">
+              <h4 className="tool-section-title">My Assets</h4>
+              <div className="media-grid premium-scrollbar">
+                {predefinedMedia.map((media) => (
+                  <div
+                    key={media.id}
+                    className="media-item"
+                    onClick={() => addLayer('image', media.full)}
+                    title={`Add ${media.name}`}
+                  >
+                    <img src={media.image} alt={media.name} />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )
@@ -217,73 +272,65 @@ const EditorSidebar = ({
 
       case 'text':
         return (
-          <div className="tool-panel-content">
-            {!activeSceneId ? (
-              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                Please select a scene first
+          <div className="tool-panel-content elements-ui">
+            <div className="elements-search-container">
+              <div className="elements-search-bar">
+                <MdAdd className="search-plus" />
+                <input type="text" placeholder="Search fonts & styles..." />
               </div>
-            ) : (
-              <>
-                {(pageTemplates.find(t => t.layout === (activeScene?.layout || 'split-right'))?.fields || []).map(field => (
-                  <div key={field.key} className="property-row">
-                    <label className="property-label">{field.label}</label>
-                    {field.type === 'textarea' ? (
-                      <textarea
-                        className="property-input"
-                        style={{ minHeight: '60px', resize: 'vertical' }}
-                        value={activeScene?.[field.key] || ''}
-                        onChange={(e) => updateScene(activeSceneId, { [field.key]: e.target.value })}
-                      />
-                    ) : (
-                      <input
-                        className="property-input"
-                        value={activeScene?.[field.key] || ''}
-                        onChange={(e) => updateScene(activeSceneId, { [field.key]: e.target.value })}
-                      />
-                    )}
-                  </div>
-                ))}
-                <div style={{ height: '8px', borderBottom: '1px solid var(--border-color)', margin: '16px 0' }} />
-                <div className="property-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  <div>
-                    <label className="property-label">Title Size</label>
-                    <input
-                      className="property-input"
-                      type="number"
-                      value={activeScene?.titleStyle?.fontSize || 48}
-                      onChange={(e) => updateScene(activeSceneId, {
-                        titleStyle: { ...(activeScene?.titleStyle || {}), fontSize: Number(e.target.value) }
-                      })}
-                    />
-                  </div>
-                  <div>
-                    <label className="property-label">Title Color</label>
-                    <input
-                      className="property-input"
-                      type="color"
-                      style={{ height: '32px', padding: '2px' }}
-                      value={activeScene?.titleStyle?.color || '#1a73e8'}
-                      onChange={(e) => updateScene(activeSceneId, {
-                        titleStyle: { ...(activeScene?.titleStyle || {}), color: e.target.value }
-                      })}
-                    />
-                  </div>
+            </div>
+
+            <div className="elements-section">
+              <h4 className="elements-section-title">Add text to scene</h4>
+              <div className="text-presets-stack">
+                <button 
+                  className="text-preset-btn heading"
+                  onClick={() => addLayer('text', 'Add a heading')}
+                >
+                  Add a heading
+                </button>
+                <button 
+                  className="text-preset-btn subheading"
+                  onClick={() => addLayer('text', 'Add a subheading')}
+                >
+                  Add a subheading
+                </button>
+                <button 
+                  className="text-preset-btn body"
+                  onClick={() => addLayer('text', 'Add a little bit of body text')}
+                >
+                  Add a little bit of body text
+                </button>
+              </div>
+            </div>
+
+            {activeSceneId && (
+              <div className="elements-section">
+                <h4 className="elements-section-title" style={{ marginTop: '24px' }}>Scene Text Properties</h4>
+                <div className="text-properties-wrapper">
+                    {(pageTemplates.find(t => t.layout === (activeScene?.layout || 'split-right'))?.fields || []).map(field => (
+                    <div key={field.key} className="premium-property-row">
+                        <label className="premium-property-label">{field.label}</label>
+                        {field.type === 'textarea' ? (
+                        <textarea
+                            className="premium-property-input"
+                            style={{ minHeight: '80px', resize: 'vertical' }}
+                            value={activeScene?.[field.key] || ''}
+                            onChange={(e) => updateScene(activeSceneId, { [field.key]: e.target.value })}
+                            placeholder={`Enter ${field.label.toLowerCase()}...`}
+                        />
+                        ) : (
+                        <input
+                            className="premium-property-input"
+                            value={activeScene?.[field.key] || ''}
+                            onChange={(e) => updateScene(activeSceneId, { [field.key]: e.target.value })}
+                            placeholder={`Enter ${field.label.toLowerCase()}...`}
+                        />
+                        )}
+                    </div>
+                    ))}
                 </div>
-                <div className="property-row">
-                  <label className="property-label">Alignment</label>
-                  <select
-                    className="property-input"
-                    value={activeScene?.titleStyle?.textAlign || 'left'}
-                    onChange={(e) => updateScene(activeSceneId, {
-                      titleStyle: { ...(activeScene?.titleStyle || {}), textAlign: e.target.value }
-                    })}
-                  >
-                    <option value="left">Left</option>
-                    <option value="center">Center</option>
-                    <option value="right">Right</option>
-                  </select>
-                </div>
-              </>
+              </div>
             )}
           </div>
         )
@@ -293,8 +340,10 @@ const EditorSidebar = ({
           <div className="tool-panel-content">
             <div className="layers-list">
               {(activeScene?.layers || []).length === 0 ? (
-                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px', border: '1px dashed var(--border-color)', borderRadius: '8px', background: 'var(--bg-surface)' }}>
-                  No extra layers in this scene. Add media from the library to see them here.
+                <div className="empty-state-panel">
+                  <MdLayersClear size={42} className="empty-state-icon" />
+                  <h4>No External Layers</h4>
+                  <p>Add media, shapes, or text from the library to build your scene composition.</p>
                 </div>
               ) : (
                 activeScene.layers.map(layer => (
@@ -434,6 +483,59 @@ const EditorSidebar = ({
           </div>
         )
 
+      case 'magic':
+        return (
+          <div className="tool-panel-content">
+            <div className="tool-section">
+              <h4 className="tool-section-title">
+                <MdAutoAwesome className="magic-icon" /> AI Studio
+              </h4>
+              <p className="magic-subtitle">Supercharge your video creation with AI.</p>
+
+              <div className="magic-card">
+                <div className="magic-card-header">
+                  <MdChatBubbleOutline size={18} />
+                  <h5>Script Generator</h5>
+                </div>
+                <textarea
+                  className="premium-property-input"
+                  placeholder="What is your video about? e.g. 'A 30 second intro about digital marketing...'"
+                  style={{ minHeight: '80px', marginBottom: '8px' }}
+                />
+                <button className="btn-primary magic-btn w-100" style={{ background: 'linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)', border: 'none' }}>
+                  <MdAutoAwesome /> Generate Script
+                </button>
+              </div>
+
+              <div className="magic-card">
+                <div className="magic-card-header">
+                  <MdClosedCaption size={18} />
+                  <h5>Auto-Captions</h5>
+                </div>
+                <p className="magic-desc">Automatically transcribe and sync subtitles based on the audio track.</p>
+                <button className="btn-secondary magic-btn w-100" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)' }}>
+                  Fetch Audio & Caption
+                </button>
+              </div>
+
+              <div className="magic-card">
+                <div className="magic-card-header">
+                  <MdOutlineImageSearch size={18} />
+                  <h5>AI Image Generator</h5>
+                </div>
+                <input
+                  className="premium-property-input"
+                  placeholder="Describe an image..."
+                  style={{ marginBottom: '8px' }}
+                />
+                <button className="btn-secondary magic-btn w-100" style={{ borderColor: 'rgba(168, 85, 247, 0.4)', color: '#d8b4fe' }}>
+                  <MdAutoAwesome /> Dream Image
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+
       default:
         return (
           <div className="tool-panel-content">
@@ -458,43 +560,31 @@ const EditorSidebar = ({
   }
 
   return (
-    <div className="tools-panel">
-      {!showPanelOnly && (
-        <div className="tools-list">
-          {tools.map(tool => (
-            <button
-              key={tool.id}
-              className={`tool-btn ${selectedTool === tool.id ? 'active' : ''}`}
-              onClick={() => setSelectedTool(selectedTool === tool.id ? null : tool.id)}
-              title={tool.label}
-            >
-              <tool.icon size={22} />
-            </button>
-          ))}
-        </div>
-      )}
-
-      {selectedTool && showPanelOnly && (
-        <div className="tool-panel">
-          <div className="tool-panel-header">
-            <div className="tool-panel-header-left">
-              {(() => {
-                const t = tools.find(t => t.id === selectedTool)
-                return t ? <t.icon size={18} style={{ color: 'var(--primary)', flexShrink: 0 }} /> : null
-              })()}
-              <h3 className="tool-panel-title">
-                {tools.find(t => t.id === selectedTool)?.label || 'Tool Panel'}
-              </h3>
+    <div className="tools-panel-new">
+      <div className="sidebar-nav">
+        {tools.map(tool => (
+          <button
+            key={tool.id}
+            className={`nav-item ${selectedTool === tool.id ? 'active' : ''}`}
+            onClick={() => setSelectedTool(selectedTool === tool.id ? null : tool.id)}
+          >
+            <div className="nav-icon-box">
+              <tool.icon />
             </div>
-            <button
-              className="tool-panel-close"
-              onClick={() => setSelectedTool(null)}
-              title="Close panel  (Esc)"
-            >
-              ✕
-            </button>
+            <span className="nav-label">{tool.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {selectedTool && (
+        <div className="content-side-panel">
+          <div className="panel-header-new">
+            <h3 className="panel-title-new">
+              {tools.find(t => t.id === selectedTool)?.label || 'Library'}
+            </h3>
+            <button className="panel-close-new" onClick={() => setSelectedTool(null)}>✕</button>
           </div>
-          <div className="tool-panel-body">
+          <div className="panel-body-new premium-scrollbar">
             {renderToolPanel()}
           </div>
         </div>
