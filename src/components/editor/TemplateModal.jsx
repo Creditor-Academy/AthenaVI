@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react'
 import { MdClose, MdSearch, MdAutoAwesome, MdHistory, MdFavoriteBorder, MdDashboardCustomize } from 'react-icons/md'
 import StaticPreview from './StaticPreview'
-import { pageTemplates } from '../../constants/editorData'
-import avatar1 from '../../assets/avatar1.png'
+import { pageTemplates, predefinedAvatars } from '../../constants/editorData'
+import projectTemplate from '../../constants/projectTemplate.json'
+const placeholderAvatar = predefinedAvatars[0].image;
 
 const TemplateModal = ({ showTemplateModal, setShowTemplateModal, handleAddTemplateScene }) => {
   const [searchQuery, setSearchQuery] = useState('')
@@ -11,11 +12,9 @@ const TemplateModal = ({ showTemplateModal, setShowTemplateModal, handleAddTempl
   const categories = ['All', 'Marketing', 'Educational', 'Corporate', 'Social', 'Personal']
 
   const filteredTemplates = useMemo(() => {
-    return pageTemplates.filter(template => {
-      const matchesSearch = template.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                           template.description.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesCategory = activeCategory === 'All' // Add logic if tags are added to templates
-      return matchesSearch && matchesCategory
+    return projectTemplate.project.scenes.filter(template => {
+      const matchesSearch = (template.title || '').toLowerCase().includes(searchQuery.toLowerCase())
+      return matchesSearch
     })
   }, [searchQuery, activeCategory])
 
@@ -72,12 +71,12 @@ const TemplateModal = ({ showTemplateModal, setShowTemplateModal, handleAddTempl
                 >
                   <div className="template-preview-container">
                     <div className="template-preview-content">
-                      <StaticPreview scene={{
-                        layout: template.layout,
-                        titleText: template.fields.find(f => f.key === 'titleText')?.default || template.name,
-                        subtitleText: template.fields.find(f => f.key === 'subtitleText')?.default || '',
-                        avatar: avatar1,
-                        ...template.fields.reduce((acc, f) => ({ ...acc, [f.key]: f.default }), {})
+                       <StaticPreview scene={{
+                        layout: template.layout || 'split-right',
+                        titleText: template.title,
+                        avatar: placeholderAvatar,
+                        clips: template.clips,
+                        background: template.background
                       }} />
                     </div>
                     <div className="template-card-overlay">
@@ -91,9 +90,9 @@ const TemplateModal = ({ showTemplateModal, setShowTemplateModal, handleAddTempl
                   </div>
                   <div className="template-card-footer">
                     <div className="template-icon-box">{template.icon}</div>
-                    <div className="template-text">
-                      <h4>{template.name}</h4>
-                      <p>{template.description}</p>
+                     <div className="template-text">
+                      <h4>{template.title}</h4>
+                      <p>{template.duration}s Sequence</p>
                     </div>
                   </div>
                 </div>

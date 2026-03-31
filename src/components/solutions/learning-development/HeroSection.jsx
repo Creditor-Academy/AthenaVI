@@ -1,8 +1,8 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { 
-  HiOutlineArrowUpRight, 
-  HiOutlinePlay, 
+import {
+  HiOutlineArrowUpRight,
+  HiOutlinePlay,
   HiOutlineSparkles,
   HiOutlineArrowUp
 } from 'react-icons/hi2'
@@ -23,7 +23,7 @@ const SameSamePlayHub = () => {
           </svg>
         </div>
         <div className="same-play-hub-btn">
-          <HiOutlinePlay style={{ fill: '#ff6834' }} />
+          <HiOutlinePlay style={{ fill: '#1e40af' }} />
         </div>
       </div>
     </div>
@@ -32,7 +32,7 @@ const SameSamePlayHub = () => {
 
 const styles = `
 .cb-hero-section {
-  padding: 80px 24px 100px;
+  padding: 50px 24px 100px;
   background: #ffffff;
   color: #0f172a;
   min-height: 90vh;
@@ -44,7 +44,7 @@ const styles = `
 }
 
 .cb-hero-container {
-  max-width: 1400px;
+  max-width: 1350px;
   width: 100%;
   display: grid;
   grid-template-columns: 1fr 1.35fr;
@@ -57,25 +57,30 @@ const styles = `
   align-items: center;
   gap: 8px;
   padding: 8px 20px;
-  background: rgba(255, 104, 52, 0.08); 
-  color: #ff6834;
+  background: rgba(69, 106, 255, 0.08); 
+  color: #1e40af;
   border-radius: 99px;
   font-size: 14px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   width: fit-content;
-  border: 1px solid rgba(255, 104, 52, 0.15);
+  border: 1px solid rgba(52, 66, 255, 0.15);
+  margin-bottom: 40px;
+}
+
+.cb-hero-left {
+  margin-top: -100px;
 }
 
 .cb-hero-title {
-  font-family: 'Outfit', sans-serif;
-  font-size: 76px;
+  font-family: 'Georgia, Times New Roman, serif';
+  font-size: 64px;
   line-height: 1.02;
-  font-weight: 800;
+  font-weight: 600;
   color: #0f172a;
-  margin: 20px 0 28px;
-  letter-spacing: -0.04em;
+  margin: 0 0 28px;
+  line-height: 1.1;
 }
 
 .cb-hero-subheading {
@@ -92,7 +97,7 @@ const styles = `
   color: #64748b;
   font-weight: 500;
   padding-left: 24px;
-  border-left: 4px solid #ff6834;
+  border-left: 4px solid #1e40af;
   max-width: 580px;
   line-height: 1.55;
   margin-bottom: 40px;
@@ -105,42 +110,45 @@ const styles = `
 }
 
 .cb-btn-primary {
-  background: #2563eb;
+  background: linear-gradient(90deg, #3854b1 60%, #2182e3 100%);
   color: #ffffff;
-  padding: 18px 44px;
-  border-radius: 14px;
-  font-weight: 700;
-  font-size: 19px;
+  padding: 14px 32px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 16px;
   text-decoration: none;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.15);
+  box-shadow: 0 4px 15px rgba(56, 84, 177, 0.25);
 }
 
 .cb-btn-primary:hover {
-  background: #1d4ed8;
-  transform: translateY(-4px);
-  box-shadow: 0 15px 30px rgba(37, 99, 235, 0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(56, 84, 177, 0.35);
 }
 
-.cb-btn-sec-box {
-  background: #0f172a;
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+.cb-btn-secondary {
+  background: transparent;
+  color: #3b82f6;
+  padding: 12px 30px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  text-decoration: none;
+  border: 2px solid #3b82f6;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
+  gap: 10px;
   justify-content: center;
-  color: #ff6834;
-  font-size: 22px;
 }
 
-.cb-btn-sec-label {
-  color: #64748b;
-  font-weight: 700;
-  font-size: 17px;
+.cb-btn-secondary:hover {
+  background: rgba(59, 130, 246, 0.05);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
 }
 
 /* RIGHT SECTION - 1:1 "Same Same" Overhaul */
@@ -152,10 +160,9 @@ const styles = `
   gap: 20px;
 }
 
-/* Exact Top Left Orange Card */
 .same-card-orange {
   grid-column: 1 / 2;
-  background: #ff6834;
+  background: #1e40af;
   border-radius: 40px; 
   padding: 32px 28px;
   color: #ffffff;
@@ -182,7 +189,7 @@ const styles = `
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  border: 2px solid #ff6834;
+  border: 2px solid #1e40af;
   margin-left: -12px;
   background: #f1f5f9;
   overflow: hidden;
@@ -200,7 +207,8 @@ const styles = `
 }
 .val-sub-msg { 
   font-size: 11px; 
-  opacity: 0.9; 
+  color: #ffffff;
+  opacity: 1; 
   line-height: 1.5; 
   font-weight: 500; 
   max-width: 160px;
@@ -242,7 +250,7 @@ const styles = `
 .same-play-hub-btn {
   width: 44px;
   height: 44px;
-  color: #ff6834;
+  color: #1e40af;
   font-size: 32px;
   z-index: 2;
   display: flex;
@@ -253,7 +261,7 @@ const styles = `
 /* Exact Growth Card */
 .same-card-graph {
   grid-column: 1 / 2;
-  background: #ff6834;
+  background: #1e40af;
   border-radius: 40px;
   padding: 32px 28px;
   color: #ffffff;
@@ -308,8 +316,8 @@ const styles = `
   grid-column: 1 / 3;
   border-radius: 40px;
   overflow: hidden;
-  height: 280px;
-  margin-top: 20px;
+  height: 230px;
+  margin-top: -5px;
 }
 .team-collaboration-visual img { width: 100%; height: 100%; object-fit: cover; }
 
@@ -326,16 +334,44 @@ const styles = `
 }
 
 .stat-box-navy {
-  background: #0f172a;
-  border-radius: 20px;
-  padding: 16px 20px;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 4px solid #347effff;
+  border-radius: 16px;
+  padding: 18px 24px;
   color: #ffffff;
-  box-shadow: 0 15px 40px rgba(0,0,0,0.3);
-  width: 140px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+  width: 170px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.st-label-orange { font-size: 10px; text-transform: lowercase; color: #ff6834; font-weight: 800; letter-spacing: 0.05em; margin-bottom: 4px; display: block; }
-.st-value-orange { font-family: 'Outfit', sans-serif; font-size: 28px; font-weight: 800; color: #ff6834; line-height: 1; }
+.stat-box-navy:hover {
+  transform: translateX(10px);
+  background: rgba(15, 23, 42, 1);
+  border-left-width: 6px;
+  box-shadow: 0 20px 50px rgba(255, 103, 52, 0.2);
+}
+
+.st-label-orange { 
+  font-size: 11px; 
+  text-transform: uppercase; 
+  color: rgba(255, 255, 255, 0.85); 
+  font-weight: 700; 
+  letter-spacing: 0.05em; 
+  display: block; 
+}
+
+.st-value-orange { 
+  font-family: 'Outfit', sans-serif; 
+  font-size: 30px; 
+  font-weight: 800; 
+  color: #ffffff; 
+  line-height: 1; 
+}
 
 @media (max-width: 1200px) {
   .cb-hero-container { grid-template-columns: 1fr; }
@@ -348,11 +384,11 @@ const HeroSection = () => {
   return (
     <section className="cb-hero-section">
       <style>{styles}</style>
-      
+
       <div className="cb-hero-container">
         {/* Left Side Content */}
         <div className="cb-hero-left">
-          <motion.div 
+          <motion.div
             className="cb-hero-badge"
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -361,7 +397,7 @@ const HeroSection = () => {
             AI Powered Development
           </motion.div>
 
-          <motion.h1 
+          <motion.h1
             className="cb-hero-title"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -369,28 +405,28 @@ const HeroSection = () => {
           >
             E-Learning & Corporate Training Videos Powered by AI
           </motion.h1>
-          
-          <motion.p 
+
+          <motion.p
             className="cb-hero-subheading"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            Create engaging training videos at scale for onboarding, internal communication, 
+            Create engaging training videos at scale for onboarding, internal communication,
             and employee development using generative AI.
           </motion.p>
-          
-          <motion.div 
+
+          <motion.div
             className="cb-supporting-line"
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
           >
-            Turn simple text, documents, or audio into professional learning videos 
+            Turn simple text, documents, or audio into professional learning videos
             with AI instructors in minutes.
           </motion.div>
-          
-          <motion.div 
+
+          <motion.div
             className="cb-hero-actions"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -398,16 +434,13 @@ const HeroSection = () => {
           >
             <a href="#" className="cb-btn-primary">Get Started for Free</a>
             <a href="#" className="cb-btn-secondary">
-              <div className="cb-btn-sec-box">
-                <HiOutlineArrowUpRight />
-              </div>
-              <span className="cb-btn-sec-label">Watch Demo</span>
+              <HiOutlineArrowUpRight />
+              Watch Demo
             </a>
           </motion.div>
         </div>
 
-        {/* Right Side "Same Same" Redesign */}
-        <motion.div 
+        <motion.div
           className="cb-hero-right"
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -454,16 +487,13 @@ const HeroSection = () => {
           {/* Far Right Stats Column matching reference styles */}
           <div className="same-stat-column">
             <div className="stat-box-navy">
-              <span className="st-label-orange">satisfied rate</span>
-              <span className="st-value-orange">98%</span>
+              <span className="st-label-orange">AI Video Generation </span>
             </div>
             <div className="stat-box-navy">
-              <span className="st-label-orange">successful projects</span>
-              <span className="st-value-orange">14K</span>
+                <span className="st-label-orange">No Studio Required</span>
             </div>
             <div className="stat-box-navy">
-              <span className="st-label-orange">clients served</span>
-              <span className="st-value-orange">5,8K</span>
+                <span className="st-label-orange">Instant Updates</span>
             </div>
           </div>
         </motion.div>

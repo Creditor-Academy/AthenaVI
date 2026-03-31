@@ -450,7 +450,7 @@ const MiniPreview = ({ gradient, layout }) => (
         display: 'flex', gap: '3px', padding: '6px 8px',
         borderBottom: '1px solid rgba(255,255,255,0.1)',
       }}>
-        {['#f87171','#fbbf24','#34d399'].map(c => (
+        {['#f87171', '#fbbf24', '#34d399'].map(c => (
           <div key={c} style={{ width: 5, height: 5, borderRadius: '50%', background: c }} />
         ))}
       </div>
@@ -483,7 +483,7 @@ const MiniPreview = ({ gradient, layout }) => (
 )
 
 /* ── Main Component ── */
-function TemplatesSection() {
+function TemplatesSection({ onNavigateToSolution }) {
   const featured = TEMPLATES[0]
   const rest = TEMPLATES.slice(1)
 
@@ -615,7 +615,10 @@ function TemplatesSection() {
               ))}
             </div>
 
-            <button className="ts-panel-cta">
+            <button 
+              className="ts-panel-cta"
+              onClick={() => onNavigateToSolution && onNavigateToSolution('AI Videos')}
+            >
               Browse All Templates <FiArrowRight />
             </button>
           </motion.div>

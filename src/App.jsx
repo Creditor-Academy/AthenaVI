@@ -21,6 +21,7 @@ import ResetPassword from './components/authentication/ResetPassword.jsx'
 import Settings from './pages/Settings.jsx'
 import UseCases from './pages/UseCases.jsx'
 import InviteAcceptance from './pages/InviteAcceptance.jsx'
+import AIVideos from './pages/AIVideos.jsx'
 
 // Protected Route Component
 const ProtectedRoute = ({ children, view, setView }) => {
@@ -221,7 +222,8 @@ function App() {
       '/use-cases': 'use-cases',
       '/customer-experience': 'customer-experience',
       '/learning-development': 'learning-development',
-      '/settings': 'settings'
+      '/settings': 'settings',
+      '/ai-videos': 'ai-videos'
     }
     
     // Get current path (handle both hash and regular routing)
@@ -267,7 +269,8 @@ function App() {
       'use-cases': '/use-cases',
       'customer-experience': '/customer-experience',
       'learning-development': '/learning-development',
-      'settings': '/settings'
+      'settings': '/settings',
+      'ai-videos': '/ai-videos'
     }
     
     const newUrl = urlMap[view] || '/'
@@ -317,7 +320,8 @@ function App() {
         '/use-cases': 'use-cases',
         '/customer-experience': 'customer-experience',
         '/learning-development': 'learning-development',
-        '/settings': 'settings'
+        '/settings': 'settings',
+        '/ai-videos': 'ai-videos'
       }
       
       const currentPath = window.location.pathname
@@ -468,6 +472,41 @@ function App() {
           )}
         </ProtectedRoute>
       )}
+      {view === 'ai-videos' && (
+        <>
+          <AIVideos 
+            onLoginClick={handleLoginClick}
+            onLogoClick={() => setView('landing')}
+            onNavigateToCompany={handleNavigateToCompany}
+            onNavigateToProduct={(section) => {
+              setProductSection(section)
+              setView('products')
+            }}
+            onNavigateToSolution={(solution) => {
+              if (solution === 'Marketing Suite') {
+                setView('marketing-suite')
+              } else if (solution === 'Sales Solutions') {
+                setView('sales-suite')
+              } else if (solution === 'Customer Experience') {
+                setView('customer-experience')
+              } else if (solution === 'Learning & Development') {
+                setView('learning-development')
+              } else if (solution === 'AI Videos') {
+                setView('ai-videos')
+              }
+            }}
+            onNavigateToEthics={() => setView('ethics')}
+            onNavigateToTechnology={() => setView('technology')}
+            onNavigateToUseCases={() => setView('use-cases')}
+          />
+          {showAuthModal && (
+            <Auth 
+              onAuthComplete={handleAuthComplete}
+              onClose={() => setShowAuthModal(false)}
+            />
+          )}
+        </>
+      )}
 
       {view === 'settings' && (
         <ProtectedRoute view={view} setView={setView}>
@@ -495,6 +534,8 @@ function App() {
                 setView('customer-experience')
               } else if (solution === 'Learning & Development') {
                 setView('learning-development')
+              } else if (solution === 'AI Videos') {
+                setView('ai-videos')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -557,6 +598,8 @@ function App() {
                 setView('customer-experience')
               } else if (solution === 'Learning & Development') {
                 setView('learning-development')
+              } else if (solution === 'AI Videos') {
+                setView('ai-videos')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -591,6 +634,8 @@ function App() {
                 setView('customer-experience')
               } else if (solution === 'Learning & Development') {
                 setView('learning-development')
+              } else if (solution === 'AI Videos') {
+                setView('ai-videos')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -625,6 +670,8 @@ function App() {
                 setView('customer-experience')
               } else if (solution === 'Learning & Development') {
                 setView('learning-development')
+              } else if (solution === 'AI Videos') {
+                setView('ai-videos')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -659,6 +706,8 @@ function App() {
                 setView('customer-experience')
               } else if (solution === 'Learning & Development') {
                 setView('learning-development')
+              } else if (solution === 'AI Videos') {
+                setView('ai-videos')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -693,6 +742,8 @@ function App() {
                 setView('customer-experience')
               } else if (solution === 'Learning & Development') {
                 setView('learning-development')
+              } else if (solution === 'AI Videos') {
+                setView('ai-videos')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -727,6 +778,8 @@ function App() {
                 setView('customer-experience')
               } else if (solution === 'Learning & Development') {
                 setView('learning-development')
+              } else if (solution === 'AI Videos') {
+                setView('ai-videos')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -761,6 +814,8 @@ function App() {
                 setView('customer-experience')
               } else if (solution === 'Learning & Development') {
                 setView('learning-development')
+              } else if (solution === 'AI Videos') {
+                setView('ai-videos')
               }
             }}
             onNavigateToTechnology={() => setView('technology')}
@@ -794,6 +849,8 @@ function App() {
                 setView('customer-experience')
               } else if (solution === 'Learning & Development') {
                 setView('learning-development')
+              } else if (solution === 'AI Videos') {
+                setView('ai-videos')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -828,6 +885,8 @@ function App() {
                 setView('customer-experience')
               } else if (solution === 'Learning & Development') {
                 setView('learning-development')
+              } else if (solution === 'AI Videos') {
+                setView('ai-videos')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -862,6 +921,8 @@ function App() {
                 setView('customer-experience')
               } else if (solution === 'Learning & Development') {
                 setView('learning-development')
+              } else if (solution === 'AI Videos') {
+                setView('ai-videos')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -896,6 +957,8 @@ function App() {
                 setView('customer-experience')
               } else if (solution === 'Learning & Development') {
                 setView('learning-development')
+              } else if (solution === 'AI Videos') {
+                setView('ai-videos')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -930,6 +993,8 @@ function App() {
                 setView('customer-experience')
               } else if (solution === 'Learning & Development') {
                 setView('learning-development')
+              } else if (solution === 'AI Videos') {
+                setView('ai-videos')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -962,6 +1027,8 @@ function App() {
                 setView('customer-experience')
               } else if (solution === 'Learning & Development') {
                 setView('learning-development')
+              } else if (solution === 'AI Videos') {
+                setView('ai-videos')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}

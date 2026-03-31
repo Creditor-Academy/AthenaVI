@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react'
+import { useRef, useState, useCallback, forwardRef, useImperativeHandle, useEffect, useMemo } from 'react'
 import { Player } from '@remotion/player'
 import { MdOpenWith, MdClose, MdZoomOutMap } from 'react-icons/md'
 import VideoComposition from './VideoComposition'
@@ -21,7 +21,8 @@ const VideoCanvas = forwardRef(({
   onPlayerReady,
   selectedLayerId,
   setSelectedLayerId,
-  onUpdateLayerPosition
+  onUpdateLayerPosition,
+  onAddScene
 }, ref) => {
   const playerRef = useRef(null)
   const overlayRef = useRef(null)
@@ -29,8 +30,8 @@ const VideoCanvas = forwardRef(({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [dropIndicator, setDropIndicator] = useState(null)
 
-  const activeScene = scenes.find(s => s.id === activeSceneId)
-  const layers = activeScene?.layers || []
+  const activeScene = (scenes || []).find(s => s.id === activeSceneId)
+  const clips = activeScene?.clips || []
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60)
@@ -110,42 +111,42 @@ const VideoCanvas = forwardRef(({
       transform: `scale(${s})`,
       transformOrigin: 'top left',
       cursor: isDragging ? 'grabbing' : 'grab',
-      zIndex: selectedLayerId === layer.id ? 20 : 10,
+      zIndex: selectedLayerId === clip.id ? 20 : 10,
     }
   }
 
-  // Handle layer drag start
-  const handleLayerMouseDown = useCallback((e, layer) => {
+  // Handle clip drag start
+  const handleLayerMouseDown = useCallback((e, clip) => {
     e.stopPropagation()
     e.preventDefault()
-    if (setSelectedLayerId) setSelectedLayerId(layer.id)
+    if (setSelectedLayerId) setSelectedLayerId(clip.id)
     setIsDragging(true)
 
     const overlay = overlayRef.current
     if (!overlay) return
     const rect = overlay.getBoundingClientRect()
     
-    const layerX = typeof layer.x === 'number' ? layer.x : 0
-    const layerY = typeof layer.y === 'number' ? layer.y : 0
+    const clipX = clip.position?.x ?? 0
+    const clipY = clip.position?.y ?? 0
     
-    // Calculate offset of mouse from layer origin in percentage of canvas
+    // Calculate offset of mouse from clip origin in percentage of canvas
     const mouseXPct = ((e.clientX - rect.left) / rect.width) * 100
     const mouseYPct = ((e.clientY - rect.top) / rect.height) * 100
     
     setDragOffset({
-      x: mouseXPct - layerX,
-      y: mouseYPct - layerY
+      x: mouseXPct - clipX,
+      y: mouseYPct - clipY
     })
 
     const handleMouseMove = (moveEvent) => {
       const newMouseXPct = ((moveEvent.clientX - rect.left) / rect.width) * 100
       const newMouseYPct = ((moveEvent.clientY - rect.top) / rect.height) * 100
       
-      const newX = Math.max(-100, Math.min(100, newMouseXPct - (mouseXPct - layerX)))
-      const newY = Math.max(-100, Math.min(100, newMouseYPct - (mouseYPct - layerY)))
+      const newX = Math.max(-100, Math.min(100, newMouseXPct - (mouseXPct - clipX)))
+      const newY = Math.max(-100, Math.min(100, newMouseYPct - (mouseYPct - clipY)))
 
       if (onUpdateLayerPosition) {
-        onUpdateLayerPosition(layer.id, newX, newY)
+        onUpdateLayerPosition(clip.id, newX, newY)
       }
     }
 
@@ -229,7 +230,8 @@ const VideoCanvas = forwardRef(({
             inputProps={{
               scenes: scenes,
               bgMusic: bgMusic,
-              bgMusicVolume: bgMusicVolume
+              bgMusicVolume: bgMusicVolume,
+              onAddScene: onAddScene
             }}
             showOutlines={false}
             onPlay={() => setIsPlaying(true)}
@@ -248,7 +250,7 @@ const VideoCanvas = forwardRef(({
           />
 
           {/* Interactive Overlay — sits on top of the Remotion Player when NOT playing */}
-          {!isPlaying && layers.length > 0 && (
+          {!isPlaying && clips.length > 0 && (
             <div
               ref={overlayRef}
               className="canvas-interactive-overlay"
@@ -264,25 +266,25 @@ const VideoCanvas = forwardRef(({
                 pointerEvents: 'all'
               }}
             >
-              {/* Layer selection handles */}
-              {layers.filter(l => l.type === 'image' || l.type === 'video').map(layer => {
-                const isSelected = selectedLayerId === layer.id
-                const x = typeof layer.x === 'number' ? layer.x : 0
-                const y = typeof layer.y === 'number' ? layer.y : 0
-                const w = layer.width || '100%'
-                const h = layer.height || '100%'
+              {/* Clip selection handles */}
+              {clips.map(clip => {
+                const isSelected = selectedLayerId === clip.id
+                const x = clip.position?.x ?? 0
+                const y = clip.position?.y ?? 0
+                const w = clip.size?.width || 'auto'
+                const h = clip.size?.height || 'auto'
 
                 return (
                   <div
-                    key={layer.id}
-                    onMouseDown={(e) => handleLayerMouseDown(e, layer)}
+                    key={clip.id}
+                    onMouseDown={(e) => handleLayerMouseDown(e, clip)}
                     style={{
                       position: 'absolute',
                       left: `${x}%`,
                       top: `${y}%`,
                       width: w,
                       height: h,
-                      transform: `scale(${layer.scale || 1})`,
+                      transform: `scale(${clip.scale || 1})`,
                       transformOrigin: 'top left',
                       cursor: isDragging ? 'grabbing' : 'pointer',
                       border: isSelected ? '2px solid #1a73e8' : '2px solid transparent',

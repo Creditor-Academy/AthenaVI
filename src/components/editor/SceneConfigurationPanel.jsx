@@ -25,9 +25,101 @@ const SceneConfigurationPanel = ({
   bgMusic, 
   setBgMusic, 
   bgMusicVolume, 
-  setBgMusicVolume 
+  setBgMusicVolume,
+  selectedLayerId
 }) => {
   if (!activeScene) return null;
+
+  const clips = activeScene.clips || [];
+  const activeLayer = clips.find(l => l.id === selectedLayerId);
+  
+  const updateLayer = (updates) => {
+      const newClips = clips.map(l => l.id === selectedLayerId ? { ...l, ...updates } : l);
+      updateScene(activeSceneId, { clips: newClips });
+  }
+
+  if (activeLayer) {
+    return (
+      <div className="premium-properties-panel premium-scrollbar">
+        <div className="panel-header">
+          <MdTune className="header-icon" />
+          <h3>Layer Properties</h3>
+        </div>
+
+        <div className="property-section accent-cyan">
+          <div className="section-label">
+            <span>Opacity</span>
+          </div>
+          <div className="slider-group">
+            <input 
+              type="range" 
+              min="0" max="1" step="0.05" 
+              value={activeLayer.opacity ?? 1} 
+              onChange={(e) => updateLayer({ opacity: Number(e.target.value) })} 
+              className="premium-slider slider-cyan" 
+            />
+            <span className="slider-value">{Math.round((activeLayer.opacity ?? 1) * 100)}%</span>
+          </div>
+
+          <div className="section-label" style={{marginTop: '16px'}}>
+            <span>Brightness</span>
+          </div>
+          <div className="slider-group">
+            <input 
+              type="range" 
+              min="0" max="2" step="0.05" 
+              value={activeLayer.effects?.brightness ?? 1} 
+              onChange={(e) => updateLayer({ effects: { ...activeLayer.effects, brightness: Number(e.target.value) } })} 
+              className="premium-slider slider-cyan" 
+            />
+            <span className="slider-value">{Math.round((activeLayer.effects?.brightness ?? 1) * 100)}%</span>
+          </div>
+
+          <div className="section-label" style={{marginTop: '16px'}}>
+            <span>Contrast</span>
+          </div>
+          <div className="slider-group">
+            <input 
+              type="range" 
+              min="0" max="2" step="0.05" 
+              value={activeLayer.effects?.contrast ?? 1} 
+              onChange={(e) => updateLayer({ effects: { ...activeLayer.effects, contrast: Number(e.target.value) } })} 
+              className="premium-slider slider-cyan" 
+            />
+            <span className="slider-value">{Math.round((activeLayer.effects?.contrast ?? 1) * 100)}%</span>
+          </div>
+
+          <div className="section-label" style={{marginTop: '16px'}}>
+            <span>Saturation</span>
+          </div>
+          <div className="slider-group">
+            <input 
+              type="range" 
+              min="0" max="2" step="0.05" 
+              value={activeLayer.effects?.saturation ?? 1} 
+              onChange={(e) => updateLayer({ effects: { ...activeLayer.effects, saturation: Number(e.target.value) } })} 
+              className="premium-slider slider-cyan" 
+            />
+            <span className="slider-value">{Math.round((activeLayer.effects?.saturation ?? 1) * 100)}%</span>
+          </div>
+
+          <div className="section-label" style={{marginTop: '16px'}}>
+            <span>Blur</span>
+          </div>
+          <div className="slider-group">
+            <input 
+              type="range" 
+              min="0" max="20" step="1" 
+              value={activeLayer.effects?.blur ?? 0} 
+              onChange={(e) => updateLayer({ effects: { ...activeLayer.effects, blur: Number(e.target.value) } })} 
+              className="premium-slider slider-cyan" 
+            />
+            <span className="slider-value">{activeLayer.effects?.blur ?? 0}px</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="premium-properties-panel premium-scrollbar">
