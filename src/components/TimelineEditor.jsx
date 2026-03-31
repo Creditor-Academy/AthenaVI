@@ -160,14 +160,6 @@ const TimelineEditor = ({
         window.removeEventListener('mouseup', handleMouseUp)
     }
 
-    const updateLayer = (layerId, updates) => {
-        if (!activeScene) return
-        const newLayers = activeScene.layers.map(l => 
-            l.id === layerId ? { ...l, ...updates } : l
-        )
-        onUpdateScene(activeScene.id, { layers: newLayers })
-    }
-
     const handleViewportScroll = (e) => {
         if (labelsRef.current && labelsRef.current.scrollTop !== e.target.scrollTop) {
             labelsRef.current.scrollTop = e.target.scrollTop;
@@ -180,19 +172,19 @@ const TimelineEditor = ({
         }
     }
 
-    const startLayerDrag = (e, layer) => {
+    const startLayerDrag = (e, clip) => {
         e.stopPropagation()
         const rect = scrollContainerRef.current.getBoundingClientRect()
         const x = e.clientX - rect.left + scrollContainerRef.current.scrollLeft
         const timeAtCursor = (x / zoom) - activeSceneStart
-        draggingLayerRef.current = { layer, offsetX: timeAtCursor - (layer.start || 0) }
+        draggingLayerRef.current = { clip, offsetX: timeAtCursor - (clip.startTime || 0) }
         window.addEventListener('mousemove', handleMouseMove)
         window.addEventListener('mouseup', handleMouseUp)
     }
 
-    const startLayerResize = (e, layer, side) => {
+    const startLayerResize = (e, clip, side) => {
         e.stopPropagation()
-        resizingLayerRef.current = { layer }
+        resizingLayerRef.current = { clip }
         resizeSideRef.current = side
         window.addEventListener('mousemove', handleMouseMove)
         window.addEventListener('mouseup', handleMouseUp)
@@ -236,35 +228,26 @@ const TimelineEditor = ({
     const moveLayerUp = (e, index) => {
         e.stopPropagation()
         if (index === 0) return
-        const newLayers = [...activeScene.layers]
-        const temp = newLayers[index - 1]
-        newLayers[index - 1] = newLayers[index]
-        newLayers[index] = temp
-        onUpdateScene(activeScene.id, { layers: newLayers })
+        const newClips = [...activeScene.clips]
+        const temp = newClips[index - 1]
+        newClips[index - 1] = newClips[index]
+        newClips[index] = temp
+        onUpdateScene(activeScene.id, { clips: newClips })
     }
 
     const moveLayerDown = (e, index) => {
         e.stopPropagation()
-        if (index === activeScene.layers.length - 1) return
-        const newLayers = [...activeScene.layers]
-        const temp = newLayers[index + 1]
-        newLayers[index + 1] = newLayers[index]
-        newLayers[index] = temp
-        onUpdateScene(activeScene.id, { layers: newLayers })
-    }
-
-    const duplicateLayer = (e, layer) => {
-        e.stopPropagation()
-        const newLayer = { ...layer, id: `layer-${Date.now()}`, y: (layer.y || 0) + 5, x: (layer.x || 0) + 5 }
-        onUpdateScene(activeScene.id, { layers: [...activeScene.layers, newLayer] })
+        if (index === activeScene.clips.length - 1) return
+        const newClips = [...activeScene.clips]
+        const temp = newClips[index + 1]
+        newClips[index + 1] = newClips[index]
+        newClips[index] = temp
+        onUpdateScene(activeScene.id, { clips: newClips })
     }
 
     return (
         <div className="timeline-editor-root">
             <style>{`
-          /* =====================================================
-             PREMIUM TIMELINE STYLING (THEME-AWARE)
-             ===================================================== */
           .timeline-editor-root {
             background: var(--bg-main);
             height: 100%;
@@ -454,10 +437,6 @@ const TimelineEditor = ({
             border-radius: 2px;
           }
 
-          .clip-meta {
-            display: none;
-          }
-
           .playhead {
             position: absolute;
             top: 0;
@@ -492,10 +471,6 @@ const TimelineEditor = ({
              height: 2px;
              background: #4b5563;
              border-radius: 1px;
-          }
-
-          .playhead-tooltip {
-            display: none;
           }
 
           .toolbar-btn {
@@ -666,11 +641,6 @@ const TimelineEditor = ({
             color: var(--text-muted);
             font-size: 13px;
         }
-
-        .empty-hint {
-            font-size: 11px;
-            color: #9ca3af;
-        }
       `}</style>
 
             <div className="timeline-toolbar">
@@ -699,15 +669,14 @@ const TimelineEditor = ({
 
             <div className="timeline-container">
                 <div className="timeline-labels" ref={labelsRef} onScroll={handleLabelsScroll}>
-                    {/* Layer Tracks (Rendered ABOVE Scenes) */}
                     {(() => {
                         const currentActiveScene = scenes.find(s => s.id === activeSceneId);
-                        return currentActiveScene?.layers?.map((layer, idx) => (
-                            <div key={`layer-label-${layer.id}`} className="track-label" style={{ height: '38px', justifyContent: 'space-between', paddingRight: '10px' }}>
+                        return (currentActiveScene?.clips || []).map((clip, idx) => (
+                            <div key={`clip-label-${clip.id}`} className="track-label" style={{ height: '38px', justifyContent: 'space-between', paddingRight: '10px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', maxWidth: '80%' }}>
                                     <div className="track-label-icon" style={{width: 16, height: 16, fontSize: 10}}><MdContentCopy size={12}/></div>
                                     <div style={{overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
-                                        Ef : {layer.type}
+                                        Ef : {clip.type}
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
@@ -763,47 +732,46 @@ const TimelineEditor = ({
                             </div>
                         ) : (
                             <>
-                                {/* Active Scene Layer Tracks (TOP) */}
                                 {(() => {
                                    const activeScene = scenes.find(s => s.id === activeSceneId);
-                                   const activeSceneStartLocal = scenes.slice(0, scenes.findIndex(s => s.id === activeSceneId)).reduce((sum, s) => sum + (s.duration || 8), 0)
-                                   return activeScene?.layers?.map((layer, index) => {
-                                       const layerStart = layer.start || 0
-                                       const layerDuration = layer.duration || activeScene.duration || 8
-                                       const layerAbsoluteStart = activeSceneStartLocal + layerStart
+                                   const activeSceneStartLocal = (scenes || []).slice(0, (scenes || []).findIndex(s => s.id === activeSceneId)).reduce((sum, s) => sum + (s.duration || 8), 0)
+                                   return (activeScene?.clips || []).map((clip, index) => {
+                                       const clipStart = clip.startTime || 0
+                                       const clipDuration = (clip.endTime || (clip.startTime + 5)) - clipStart
+                                       const clipAbsoluteStart = activeSceneStartLocal + clipStart
                                        return (
-                                           <div key={layer.id} className="layer-track">
+                                           <div key={clip.id} className="layer-track">
                                                <div 
                                                    className="layer-clip" 
-                                                   onMouseDown={(e) => startLayerDrag(e, layer)}
+                                                   onMouseDown={(e) => startLayerDrag(e, clip)}
                                                    onClick={(e) => {
                                                        e.stopPropagation();
-                                                       if (onSelectLayer) onSelectLayer(layer.id);
+                                                       if (onSelectLayer) onSelectLayer(clip.id);
                                                    }}
                                                    style={{
-                                                       left: layerAbsoluteStart * zoom,
-                                                       width: layerDuration * zoom,
+                                                       left: clipAbsoluteStart * zoom,
+                                                       width: clipDuration * zoom,
                                                        cursor: 'grab'
                                                    }}
                                                >
                                                    <div className="layer-clip-icon">
                                                        <MdContentCopy size={12} />
                                                    </div>
-                                                   <span>{layer.type.toUpperCase()}</span>
-                                                   <button className="delete-clip-btn" onClick={(e) => { e.stopPropagation(); onDeleteLayer(activeScene.id, layer.id) }}>×</button>
+                                                   <span>{clip.type.toUpperCase()}</span>
+                                                   <button className="delete-clip-btn" onClick={(e) => { e.stopPropagation(); onDeleteLayer(activeScene.id, clip.id) }}>×</button>
                                                    
                                                    <div 
                                                        style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '4px', cursor: 'ew-resize'}} 
-                                                       onMouseDown={(e) => startLayerResize(e, layer, 'left')} 
+                                                       onMouseDown={(e) => startLayerResize(e, clip, 'left')} 
                                                    />
                                                    <div 
                                                        style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '4px', cursor: 'ew-resize'}} 
-                                                       onMouseDown={(e) => startLayerResize(e, layer, 'right')} 
+                                                       onMouseDown={(e) => startLayerResize(e, clip, 'right')} 
                                                    />
                                                </div>
                                            </div>
                                        )
-                                   })
+                                   });
                                 })()}
 
                                 {/* Main Track (MIDDLE) */}

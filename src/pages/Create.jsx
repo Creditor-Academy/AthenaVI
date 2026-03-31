@@ -3,7 +3,7 @@ import { MdChevronRight, MdChevronLeft } from 'react-icons/md'
 import { useCurrentFrame, spring, interpolate, useVideoConfig } from 'remotion'
 import TimelineEditor from '../components/TimelineEditor'
 import './Create.css'
-import { predefinedAvatars, pageTemplates } from '../constants/editorData'
+import { predefinedAvatars } from '../constants/editorData'
 import EditorTopbar from '../components/editor/EditorTopbar'
 import EditorSidebar from '../components/editor/EditorSidebar'
 import VideoCanvas from '../components/editor/VideoCanvas'
@@ -11,7 +11,8 @@ import SceneConfigurationPanel from '../components/editor/SceneConfigurationPane
 import ExportModal from '../components/editor/ExportModal'
 import TemplateModal from '../components/editor/TemplateModal'
 import PreviewModal from '../components/editor/PreviewModal'
-import avatar1 from '../assets/avatar1.png'
+import avatar1 from '../assets/Avatarr1.png'
+import projectTemplate from '../constants/projectTemplate.json'
 
 function Create({ onBack }) {
   // Debug: Log when component mounts
@@ -19,107 +20,138 @@ function Create({ onBack }) {
     console.log('Create component mounted')
   }, [])
 
-  const [scenes, setScenes] = useState([])
+  const [project, setProject] = useState({
+    ...projectTemplate.project,
+    scenes: [],
+    updatedAt: new Date().toISOString()
+  })
   const [activeSceneId, setActiveSceneId] = useState(null)
-  const [selectedTool, setSelectedTool] = useState(null) // Start with no tool selected
+  const [selectedTool, setSelectedTool] = useState(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [zoomLevel, setZoomLevel] = useState(70)
   const [showExportModal, setShowExportModal] = useState(false)
   const [showPreviewModal, setShowPreviewModal] = useState(false)
   const [showTemplateModal, setShowTemplateModal] = useState(false)
-  const [bgMusic, setBgMusic] = useState('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3')
-  const [bgMusicVolume, setBgMusicVolume] = useState(0.3)
-  const [musicDuration, setMusicDuration] = useState(null) // null means full project duration
-  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true)
+  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false)
   const [selectedLayerId, setSelectedLayerId] = useState(null)
+  const [musicDuration, setMusicDuration] = useState(null)
+
+  // Memoized access for convenience
+  const scenes = project.scenes;
+  const bgMusic = scenes.find(s => s.clips.some(c => c.type === 'audio'))?.clips.find(c => c.type === 'audio')?.src || null;
+  const [bgMusicVolume, setBgMusicVolume] = useState(0.6);
+
+  const setBgMusic = (url) => {
+    // Update or add audio clip to the first scene as a simple management strategy for now
+    setProject(prev => {
+      const newScenes = [...prev.scenes];
+      if (newScenes.length > 0) {
+        const audioClip = newScenes[0].clips.find(c => c.type === 'audio');
+        if (audioClip) {
+          newScenes[0].clips = newScenes[0].clips.map(c => c.type === 'audio' ? { ...c, src: url } : c);
+        } else {
+          newScenes[0].clips.push({
+            id: `audio_${Date.now()}`,
+            type: 'audio',
+            src: url,
+            startTime: 0,
+            endTime: newScenes[0].duration,
+            volume: bgMusicVolume
+          });
+        }
+      }
+      return { ...prev, scenes: newScenes };
+    });
+  }
 
   // Auto-create a default blank scene and return the new scene + updated scenes array
   const autoCreateScene = () => {
-    const defaultAvatar = predefinedAvatars[0]
     const newScene = {
-      id: `scene${Date.now()}`,
-      title: 'Scene 1',
-      duration: 8,
+      id: `scene_${Date.now()}`,
+      title: 'Intro',
+      order: project.scenes.length,
+      locked: false,
+      thumbnail: avatar1,
+      duration: 8.0,
+      transition: {
+        type: "fade",
+        duration: 0.5,
+        direction: null
+      },
+      avatar: avatar1, // Legacy support for now
       titleText: 'New Scene',
       subtitleText: 'Start creating your content',
       layout: 'default',
-      avatar: defaultAvatar?.image || avatar1,
-      avatarType: defaultAvatar?.id || 'avatar1',
-      type: 'video',
-      script: '',
-      layers: [],
-      titleStyle: {
-        fontSize: 48,
-        color: '#1a73e8',
-        fontFamily: 'Inter',
-        fontWeight: '700',
-        textAlign: 'left'
-      },
-      subtitleStyle: {
-        fontSize: 24,
-        color: '#202124',
-        fontFamily: 'Inter',
-        fontWeight: '400',
-        textAlign: 'left'
-      }
+      clips: []
     }
-    const updatedScenes = [...scenes, newScene]
-    setScenes(updatedScenes)
+    
+    setProject(prev => ({
+      ...prev,
+      updatedAt: new Date().toISOString(),
+      scenes: [...prev.scenes, newScene]
+    }))
+    
     setActiveSceneId(newScene.id)
-    console.log('Auto-created default scene:', newScene.id)
-    return { newScene, updatedScenes }
+    return { newScene, updatedScenes: [...project.scenes, newScene] }
   }
 
   const addLayer = (type, content) => {
     let targetSceneId = activeSceneId
-    let targetScenes = scenes
+    let currentScenes = project.scenes
 
-    // Auto-create a scene if none exist
-    if (!targetSceneId || scenes.length === 0) {
+    if (!targetSceneId || currentScenes.length === 0) {
       const { newScene, updatedScenes } = autoCreateScene()
       targetSceneId = newScene.id
-      targetScenes = updatedScenes
+      currentScenes = updatedScenes
     }
 
-    const targetScene = targetScenes.find(s => s.id === targetSceneId)
-    if (!targetScene) {
-      console.warn('Target scene not found:', targetSceneId)
-      return
+    const targetScene = currentScenes.find(s => s.id === targetSceneId)
+    if (!targetScene) return
+
+    const newClip = {
+      id: `clip_${Date.now()}`,
+      type: type === 'image' ? 'image' : type === 'video' ? 'video' : 'text',
+      src: type !== 'text' ? content : null,
+      content: type === 'text' ? content : null,
+      layer: targetScene.clips.length,
+      startTime: 0.0,
+      endTime: targetScene.duration || 8.0,
+      position: { x: 50, y: 50 },
+      size: { width: 400, height: 400 },
+      opacity: 1.0,
+      effects: {
+        brightness: 1,
+        contrast: 1,
+        saturation: 1,
+        blur: 0
+      }
     }
-    console.log('Adding layer:', type, content, 'to scene:', targetSceneId)
-    const newLayer = {
-      id: `layer-${Date.now()}`,
-      type,
-      content,
-      start: 0,
-      duration: targetScene.duration || 8,
-      x: 0,
-      y: 0,
-      scale: 1,
-      width: '100%',
-      height: '100%'
-    }
-    // Use functional update to ensure we get the latest state (in case autoCreateScene just set it)
-    setScenes(prev => prev.map(scene =>
-      scene.id === targetSceneId
-        ? { ...scene, layers: [...(scene.layers || []), newLayer] }
-        : scene
-    ))
-    return newLayer.id
+
+    setProject(prev => ({
+      ...prev,
+      updatedAt: new Date().toISOString(),
+      scenes: prev.scenes.map(s => 
+        s.id === targetSceneId 
+          ? { ...s, clips: [...s.clips, newClip] }
+          : s
+      )
+    }))
+    return newClip.id
   }
 
   // Update a specific layer's position within the active scene
   const updateLayerPosition = (layerId, x, y) => {
     if (!activeSceneId) return
-    setScenes(prev => prev.map(scene => {
-      if (scene.id !== activeSceneId) return scene
-      return {
-        ...scene,
-        layers: (scene.layers || []).map(layer =>
-          layer.id === layerId ? { ...layer, x, y } : layer
-        )
-      }
+    setProject(prev => ({
+      ...prev,
+      scenes: prev.scenes.map(s => {
+        if (s.id !== activeSceneId) return s
+        return {
+          ...s,
+          clips: s.clips.map(c => c.id === layerId ? { ...c, position: { x, y } } : c)
+        }
+      })
     }))
   }
 
@@ -137,19 +169,25 @@ function Create({ onBack }) {
     }
     window.addEventListener('canvas-drop', handleCanvasDrop)
     return () => window.removeEventListener('canvas-drop', handleCanvasDrop)
-  }, [activeSceneId, scenes])
+  }, [activeSceneId, project.scenes])
 
   const deleteLayer = (sceneId, layerId) => {
-    const scene = scenes.find(s => s.id === sceneId)
-    if (!scene) return
-    updateScene(sceneId, {
-      layers: scene.layers.filter(l => l.id !== layerId)
-    })
+    setProject(prev => ({
+      ...prev,
+      scenes: prev.scenes.map(s => 
+        s.id === sceneId ? { ...s, clips: s.clips.filter(c => c.id !== layerId) } : s
+      )
+    }))
   }
 
   const deleteMusic = () => {
-    setBgMusic(null)
-    setMusicDuration(null)
+    setProject(prev => ({
+      ...prev,
+      scenes: prev.scenes.map(s => ({
+        ...s,
+        clips: s.clips.filter(c => c.type !== 'audio')
+      }))
+    }));
   }
 
   const handleMusicDurationChange = (newDuration) => {
@@ -171,53 +209,27 @@ function Create({ onBack }) {
   // Credit calculation function
   const calculateCredits = () => {
     let baseCredits = 100
-
-    // Format multipliers
-    const formatMultipliers = {
-      'MP4': 1.0,
-      'WebM': 0.8,
-      'GIF': 0.5
-    }
-
-    // Resolution multipliers
-    const resolutionMultipliers = {
-      '1920x1080': 1.0,
-      '1280x720': 0.7,
-      '3840x2160': 2.0
-    }
-
-    // Frame rate multipliers
-    const frameRateMultipliers = {
-      '30': 1.0,
-      '24': 0.8,
-      '60': 1.5
-    }
-
-    // Quality multipliers
-    const qualityMultipliers = {
-      'High': 1.2,
-      'Medium': 1.0,
-      'Low': 0.7
-    }
+    const formatMultipliers = { 'MP4': 1.0, 'WebM': 0.8, 'GIF': 0.5 }
+    const resolutionMultipliers = { '1920x1080': 1.0, '1280x720': 0.7, '3840x2160': 2.0 }
+    const frameRateMultipliers = { '30': 1.0, '24': 0.8, '60': 1.5 }
+    const qualityMultipliers = { 'High': 1.2, 'Medium': 1.0, 'Low': 0.7 }
 
     const formatMultiplier = formatMultipliers[exportFormat] || 1.0
     const resolutionMultiplier = resolutionMultipliers[exportResolution] || 1.0
     const frameRateMultiplier = frameRateMultipliers[exportFrameRate] || 1.0
     const qualityMultiplier = qualityMultipliers[exportQuality] || 1.0
 
-    const totalCredits = Math.round(baseCredits * formatMultiplier * resolutionMultiplier * frameRateMultiplier * qualityMultiplier)
-
-    return totalCredits
+    return Math.round(baseCredits * formatMultiplier * resolutionMultiplier * frameRateMultiplier * qualityMultiplier)
   }
 
-  const activeScene = scenes.find(s => s.id === activeSceneId)
+  const activeScene = project.scenes.find(s => s.id === activeSceneId)
 
   const totalDurationInFrames = useMemo(() => {
-    return scenes.reduce((sum, s) => sum + (s.duration || 8), 0) * 30
-  }, [scenes])
+    return project.scenes.reduce((sum, s) => sum + (s.duration || 8), 0) * 30
+  }, [project.scenes])
 
   const handleReorderScenes = (newScenes) => {
-    setScenes(newScenes)
+    setProject(prev => ({ ...prev, scenes: newScenes }))
   }
 
   // Text-to-speech function
@@ -389,89 +401,41 @@ function Create({ onBack }) {
   }
 
   const handleAddTemplateScene = (template) => {
-    // Get default avatar if no active scene
-    const defaultAvatar = activeScene?.avatar || avatar1
-    const defaultAvatarType = activeScene?.avatarType || 'avatar1'
-
-    const newScene = {
-      id: `scene${Date.now()}`,
-      title: `Scene ${scenes.length + 1}`,
-      duration: 8,
-      titleText: template.fields.find(f => f.key === 'titleText')?.default || 'New Scene',
-      subtitleText: template.fields.find(f => f.key === 'subtitleText')?.default || 'Add your content here',
-      layout: template.layout,
-      avatar: defaultAvatar,
-      avatarType: defaultAvatarType,
-      type: 'video',
-      script: template.fields.find(f => f.key === 'script')?.default || 'Start your video by greeting your audience and introducing your topic.',
-      layers: [],
-      titleStyle: {
-        fontSize: 48,
-        color: '#1a73e8',
-        fontFamily: 'Inter',
-        fontWeight: '700',
-        textAlign: 'left'
-      },
-      subtitleStyle: {
-        fontSize: 24,
-        color: '#202124',
-        fontFamily: 'Inter',
-        fontWeight: '400',
-        textAlign: 'left'
-      }
+    // Deep copy the scene template to avoid shared references
+    const newScene = JSON.parse(JSON.stringify(template));
+    
+    // Assign unique IDs to scene and all its clips
+    newScene.id = `scene_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+    newScene.order = project.scenes.length;
+    
+    if (newScene.clips) {
+        newScene.clips = newScene.clips.map(clip => ({
+            ...clip,
+            id: `clip_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`
+        }));
     }
 
-    // Add other template fields as data
-    template.fields.forEach(field => {
-      if (field.key !== 'titleText' && field.key !== 'subtitleText' && field.key !== 'script') {
-        newScene[field.key] = field.default
-      }
-    })
-
-    // Ensure avatar is set - fallback to first predefined avatar if needed
-    if (!newScene.avatar) {
-      const firstAvatar = predefinedAvatars[0]
-      if (firstAvatar) {
-        newScene.avatar = firstAvatar.image
-        newScene.avatarType = firstAvatar.id
-      } else {
-        newScene.avatar = avatar1
-        newScene.avatarType = 'avatar1'
-      }
-    }
-
-    console.log('Adding new scene:', newScene)
-    const updatedScenes = [...scenes, newScene]
-    setScenes(updatedScenes)
+    setProject(prev => ({
+      ...prev,
+      updatedAt: new Date().toISOString(),
+      scenes: [...prev.scenes, newScene]
+    }))
+    
     setActiveSceneId(newScene.id)
-    setShowTemplateModal(false)
-    setSelectedTool(null) // Close the tool panel after adding
-
-    console.log('Updated scenes count:', updatedScenes.length)
   }
 
   const deleteScene = (id) => {
-    if (scenes.length === 1) return
-    const newScenes = scenes.filter(s => s.id !== id)
-    setScenes(newScenes)
-    if (activeSceneId === id) {
-      setActiveSceneId(newScenes[0].id)
-    }
+    if (project.scenes.length === 1) return
+    const newScenes = project.scenes.filter(s => s.id !== id)
+    setProject(prev => ({ ...prev, scenes: newScenes }))
+    if (activeSceneId === id) setActiveSceneId(newScenes[0]?.id || null)
   }
 
   const updateScene = (id, updates) => {
-    if (!id) {
-      console.warn('updateScene called with no id')
-      return
-    }
-    console.log('Updating scene:', id, updates)
-    setScenes(prevScenes => {
-      const updated = prevScenes.map(scene =>
-        scene.id === id ? { ...scene, ...updates } : scene
-      )
-      console.log('Scenes after update:', updated)
-      return updated
-    })
+    setProject(prev => ({
+      ...prev,
+      scenes: prev.scenes.map(s => s.id === id ? { ...s, ...updates } : s)
+    }))
   }
 
   const exportVideo = () => {
@@ -496,9 +460,6 @@ function Create({ onBack }) {
       playerMethods.seekTo(time)
     }
   }
-
-  // Safety check - removed forced loading screen for empty scenes
-  // We want to show the empty editor instead
 
   return (
     <div className="video-editor-shell">
