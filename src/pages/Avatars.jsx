@@ -1,198 +1,277 @@
 import { useState } from 'react'
-import {
-  MdCheckCircle,
-  MdPlayCircleFilled,
-  MdVideocam,
-  MdMic,
-  MdSearch,
-  MdFilterList,
-  MdClose
-} from 'react-icons/md'
+import { Search, Filter, Play, Video, ChevronRight, X, Info, Layers } from 'lucide-react'
 import './Avatars.css'
 
-function Avatars() {
-  const [selectedId, setSelectedId] = useState(1)
-  const [filter, setFilter] = useState('All')
+// Importing avatar assets
+import pro1 from '../assets/pro_avatar_1.png'
+import pro2 from '../assets/pro_avatar_2.png'
+import pro3 from '../assets/pro_avatar_3.png'
+import pro4 from '../assets/pro_avatar_4.png'
+import av1 from '../assets/avatar1.png'
+import av2 from '../assets/avatar2.png'
+import av3 from '../assets/avatar3.png'
+import sampleVideo from '../assets/Personal Avatar.mp4'
+
+const AVATARS_DATA = [
+  {
+    id: 'marcus-01',
+    name: 'Marcus',
+    role: 'Executive Presenter',
+    description: 'A professional and authoritative persona, ideal for corporate presentations and formal reports.',
+    image: pro1,
+    preview: sampleVideo,
+    category: 'Professional',
+    gender: 'Male',
+    style: 'Modern Suite',
+    rating: 4.9
+  },
+  {
+    id: 'sarah-02',
+    name: 'Sarah',
+    role: 'Tech Lead',
+    description: 'Enthusiastic and clear-spoken, Sarah is perfect for software tutorials and engineering updates.',
+    image: pro2,
+    preview: sampleVideo,
+    category: 'Tech',
+    gender: 'Female',
+    style: 'Casual Business',
+    rating: 4.8
+  },
+  {
+    id: 'alex-03',
+    name: 'Alex',
+    role: 'Creative Director',
+    description: 'Vibrant and energetic, Alex brings a creative flair to your marketing videos and social content.',
+    image: pro3,
+    preview: sampleVideo,
+    category: 'Creative',
+    gender: 'Male',
+    style: 'Creative Studio',
+    rating: 4.7
+  },
+  {
+    id: 'lisa-04',
+    name: 'Lisa',
+    role: 'Support Specialist',
+    description: 'Calm and reassuring, Lisa excels in customer-facing help videos and onboarding guides.',
+    image: pro4,
+    preview: sampleVideo,
+    category: 'Service',
+    gender: 'Female',
+    style: 'Casual',
+    rating: 4.9
+  },
+  {
+    id: 'james-05',
+    name: 'James',
+    role: 'Product Expert',
+    description: 'A versatile speaker with a focus on product features and detailed explainer videos.',
+    image: av1,
+    preview: sampleVideo,
+    category: 'Professional',
+    gender: 'Male',
+    style: 'Formal',
+    rating: 4.6
+  },
+  {
+    id: 'elena-06',
+    name: 'Elena',
+    role: 'AI Researcher',
+    description: 'Highly intelligent and articulate, Elena is the perfect fit for technical and scientific content.',
+    image: av2,
+    preview: sampleVideo,
+    category: 'Academic',
+    gender: 'Female',
+    style: 'Academic',
+    rating: 4.8
+  },
+  {
+    id: 'sophie-07',
+    name: 'Sophie',
+    role: 'Lifestyle Coach',
+    description: 'Warm and inviting, Sophie is great for wellness, health, and personal development content.',
+    image: av3,
+    preview: sampleVideo,
+    category: 'Lifestyle',
+    gender: 'Female',
+    style: 'Relaxed',
+    rating: 4.7
+  }
+]
+
+function Avatars({ onCreate }) {
+  const [selectedAvatar, setSelectedAvatar] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterCategory, setFilterCategory] = useState('All')
   const [isPreviewing, setIsPreviewing] = useState(false)
 
-  const avatars = [
-    { 
-      id: 1, 
-      name: 'Amelia', 
-      role: 'Global Presenter', 
-      tags: ['Professional', 'Studio'], 
-      thumb: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=400',
-      voice: 'Amelia (US)',
-      description: 'A professional and friendly instructor perfect for corporate training and educational walkthroughs. Amelia provides clear articulation and a warm tone.'
-    },
-    { 
-      id: 2, 
-      name: 'James', 
-      role: 'Executive Instructor', 
-      tags: ['Corporate', 'Male'], 
-      thumb: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=400',
-      voice: 'James (UK)',
-      description: 'James delivers a confident and authoritative performance, making him ideal for executive communications and high-level strategy presentations.'
-    },
-    { 
-      id: 3, 
-      name: 'Sophia', 
-      role: 'Lifestyle Coach', 
-      tags: ['Casual', 'Modern'], 
-      thumb: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=400',
-      voice: 'Sophia (US)',
-      description: 'Sophia brings a modern and relatable energy to her presentations. She is perfect for lifestyle, tech tutorials, and brand storytelling.'
-    },
-    { 
-      id: 4, 
-      name: 'Ethan', 
-      role: 'Tech Evangelist', 
-      tags: ['Modern', 'Male'], 
-      thumb: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400',
-      voice: 'Ethan (US)',
-      description: 'Ethan is enthusiastic and knowledgeable. His dynamic presentation style works great for product reveals and software demos.'
-    },
-    { 
-      id: 5, 
-      name: 'Olivia', 
-      role: 'Marketing Lead', 
-      tags: ['Creative', 'Studio'], 
-      thumb: 'https://images.unsplash.com/photo-1554151228-14d9def656e4?auto=format&fit=crop&q=80&w=400',
-      voice: 'Olivia (AU)',
-      description: 'With a creative flair and natural warmth, Olivia is excellent for marketing campaigns and community engagement videos.'
-    },
-    { 
-      id: 6, 
-      name: 'Daniel', 
-      role: 'Support Specialist', 
-      tags: ['Professional', 'Male'], 
-      thumb: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400',
-      voice: 'Daniel (CA)',
-      description: 'Daniel provides a reassuring and helpful presence, ideal for customer support guides and step-by-step documentation.'
-    },
-  ]
+  const categories = ['All', 'Professional', 'Tech', 'Creative', 'Service', 'Academic', 'Lifestyle']
 
-  const activeAvatar = avatars.find(a => a.id === selectedId) || avatars[0]
+  const filteredAvatars = AVATARS_DATA.filter(avatar => {
+    const matchesSearch = avatar.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          avatar.role.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesCategory = filterCategory === 'All' || avatar.category === filterCategory
+    return matchesSearch && matchesCategory
+  })
 
-  const filters = ['All', 'Professional', 'Casual', 'Studio', 'Modern']
+  const openAvatarDetails = (avatar) => {
+    setSelectedAvatar(avatar)
+    setIsPreviewing(false)
+  }
+
+  const closeDetails = () => {
+    setSelectedAvatar(null)
+    setIsPreviewing(false)
+  }
+
+  const handleCreateVideo = (avatar) => {
+    console.log('Creating video from', avatar.name)
+    if (onCreate) {
+      onCreate()
+    }
+    closeDetails()
+  }
 
   return (
-    <div className="avatars-showcase">
-      <div className="avatars-list-container">
-        <div className="showcase-header">
-          <h1>AI Instructors</h1>
-          <div className="search-wrapper-premium">
-             <MdSearch className="search-icon" />
-             <input placeholder="Search instructors..." />
-          </div>
-        </div>
-
-        <div className="avatars-filters">
-          {filters.map(f => (
-            <button 
-              key={f} 
-              className={`filter-pill-premium ${filter === f ? 'active' : ''}`}
-              onClick={() => setFilter(f)}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
-
-        <div className="avatar-grid">
-          {avatars.filter(a => filter === 'All' || a.tags.includes(filter)).map(avatar => (
+    <div className={`avatars-workspace ${selectedAvatar ? 'details-active' : ''}`}>
+      {/* Left Sidebar: Mini-Gallery (visible only when an avatar is selected) */}
+      <div className="workspace-sidebar">
+        <header className="sidebar-header">
+          <button className="back-to-grid" onClick={closeDetails}>
+            <X size={18} /> <span>Close Explorer</span>
+          </button>
+        </header>
+        <div className="mini-grid">
+          {AVATARS_DATA.map(avatar => (
             <div 
               key={avatar.id} 
-              className={`avatar-showcase-card ${selectedId === avatar.id ? 'active' : ''}`}
-              onClick={() => setSelectedId(avatar.id)}
+              className={`mini-card ${selectedAvatar?.id === avatar.id ? 'active' : ''}`}
+              onClick={() => setSelectedAvatar(avatar)}
             >
-              <div className="avatar-showcase-thumb">
-                <img src={avatar.thumb} alt={avatar.name} />
-                {selectedId === avatar.id && (
-                  <div className="selection-check">
-                    <MdCheckCircle />
-                  </div>
-                )}
-              </div>
-              <div className="avatar-card-info">
-                <h3>{avatar.name}</h3>
-                <p>{avatar.role}</p>
+              <img src={avatar.image} alt={avatar.name} />
+              <div className="mini-info">
+                <span>{avatar.name}</span>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      <aside className="avatar-details-pane">
-        <div className="preview-stage">
-          <div className="main-preview-canvas">
-            <img src={activeAvatar.thumb} alt={activeAvatar.name} />
-            <div className="canvas-overlay-ui">
-              <MdVideocam /> Live Preview Active
-            </div>
-          </div>
-        </div>
-
-        <div className="details-content">
-          <div className="details-main-info">
-            <div className="details-header-info">
-              <h2>{activeAvatar.name}</h2>
-              <div className="details-tags">
-                {activeAvatar.tags.map(tag => (
-                  <span key={tag} className="tag">{tag}</span>
-                ))}
+      {/* Main Content Area */}
+      <main className="workspace-main">
+        {!selectedAvatar ? (
+          <div className="grid-container">
+            <header className="avatars-header">
+              <div className="header-info">
+                <h1>Neural Identity Explorer</h1>
+                <p>Select a digital representative to start your project. Powered by AthenaVI.</p>
               </div>
-            </div>
-
-            <p className="details-description">
-              {activeAvatar.description}
-            </p>
-
-            <div className="voice-preview-section">
-              <div className="details-section-label">Voice Persona</div>
-              <div className="voice-info-display">
-                <div className="voice-icon">
-                  <MdMic />
+              
+              <div className="header-actions">
+                <div className="search-bar">
+                  <Search size={18} />
+                  <input 
+                    type="text" 
+                    placeholder="Search neural units..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
                 </div>
-                <div className="voice-details-text">
-                  <span className="voice-details-name">{activeAvatar.voice}</span>
-                  <span className="voice-details-meta">Natural Narration • Pro Grade</span>
+                
+                <div className="filter-chips">
+                  {categories.map(cat => (
+                    <button 
+                      key={cat}
+                      className={`filter-chip ${filterCategory === cat ? 'active' : ''}`}
+                      onClick={() => setFilterCategory(cat)}
+                    >
+                      {cat}
+                    </button>
+                  ))}
                 </div>
               </div>
+            </header>
+
+            <div className="avatars-grid">
+              {filteredAvatars.map(avatar => (
+                <div key={avatar.id} className="avatar-card" onClick={() => openAvatarDetails(avatar)}>
+                  <div className="avatar-image-container">
+                    <img src={avatar.image} alt={avatar.name} />
+                    <div className="avatar-overlay">
+                      <div className="workspace-action-badge">
+                        <ChevronRight size={20} />
+                        <span>Enter Workspace</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="avatar-info">
+                    <h3>{avatar.name}</h3>
+                    <p>{avatar.role}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
+        ) : (
+          <div className="hero-showcase">
+            <div className="hero-visual">
+              {!isPreviewing ? (
+                <div className="hero-still" onClick={() => setIsPreviewing(true)}>
+                  <img src={selectedAvatar.image} alt={selectedAvatar.name} />
+                  <div className="hero-play-indicator">
+                    <Play size={40} fill="currentColor" />
+                  </div>
+                  <div className="hero-instruction">Tap to preview sync</div>
+                </div>
+              ) : (
+                <div className="hero-motion">
+                  <video 
+                    src={selectedAvatar.preview} 
+                    autoPlay 
+                    loop 
+                    className="hero-video"
+                  />
+                  <button className="exit-preview-corner" onClick={() => setIsPreviewing(false)}>
+                    <X size={20} />
+                  </button>
+                </div>
+              )}
+            </div>
 
-          <div className="details-actions">
-            <button className="btn-primary btn-full">
-              <MdVideocam /> Create Video with {activeAvatar.name}
-            </button>
-            <button 
-              className="btn-secondary btn-full" 
-              onClick={() => setIsPreviewing(true)}
-            >
-              <MdPlayCircleFilled /> Preview Sample
-            </button>
-          </div>
-        </div>
-      </aside>
+            <div className="hero-details">
+              <div className="hero-glass-pan">
+                <div className="hero-top-meta">Unit {selectedAvatar.id} // v4.2</div>
+                <h1 className="hero-title">{selectedAvatar.name}</h1>
+                <div className="hero-badge">{selectedAvatar.category} Model</div>
+                
+                <p className="hero-bio">{selectedAvatar.description}</p>
+                
+                <div className="hero-specs">
+                  <div className="spec-tile">
+                    <label>Oral Expression</label>
+                    <span>{selectedAvatar.style}</span>
+                  </div>
+                  <div className="spec-tile">
+                    <label>Quality Score</label>
+                    <span>{selectedAvatar.rating} Index</span>
+                  </div>
+                  <div className="spec-tile">
+                    <label>Integration</label>
+                    <span>Athena Ready</span>
+                  </div>
+                </div>
 
-      {isPreviewing && (
-        <div className="preview-modal-overlay" onClick={() => setIsPreviewing(false)}>
-          <div className="preview-modal-content" onClick={e => e.stopPropagation()}>
-            <button className="preview-close-btn" onClick={() => setIsPreviewing(false)}><MdClose /></button>
-            <div className="preview-video-container">
-              <img src={activeAvatar.thumb} alt="Preview" className="preview-placeholder" />
-              <div className="preview-play-icon">
-                <MdPlayCircleFilled />
-              </div>
-              <div className="preview-overlay-info">
-                <h3>{activeAvatar.name} Preview</h3>
-                <p>Generating high-fidelity sample...</p>
+                <div className="hero-actions">
+                  <button className="btn-action-primary" onClick={() => handleCreateVideo(selectedAvatar)}>
+                    <Video size={22} />
+                    <span>Start Video with this Avatar</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </main>
     </div>
   )
 }

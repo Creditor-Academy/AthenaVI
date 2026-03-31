@@ -176,7 +176,7 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
             />
           )}
           {section === 'videos' && <Videos onCreate={onCreate} />}
-          {section === 'avatars' && <Avatars />}
+          {section === 'avatars' && <Avatars onCreate={onCreate} goToSection={goToSection} />}
           {section === 'trash' && <Trash />}
           {section === 'voices' && (
             <Voices
