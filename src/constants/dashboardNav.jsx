@@ -34,7 +34,6 @@ export const dashboardSidebarGroups = [
     items: [
       { id: 'library', label: 'Library', Icon: Library },
       { id: 'brandkits', label: 'Brand Kits', Icon: Palette },
-      { id: 'templates', label: 'Templates', Icon: BookOpen },
       { id: 'avatars', label: 'Avatars', Icon: User },
       { id: 'voices', label: 'Voices', Icon: Volume2 }
     ]
