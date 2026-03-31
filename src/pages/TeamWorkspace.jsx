@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MdMail, MdClose, MdCheck } from 'react-icons/md';
+import { MdMail, MdClose, MdCheck, MdAdd, MdFolderOpen, MdVideoLibrary } from 'react-icons/md';
 import { useAuth } from '../contexts/AuthContext';
 import WorkspaceHeader from '../components/workspace/WorkspaceHeader.jsx';
 import WorkspaceSection from '../components/workspace/WorkspaceSection.jsx';
 import { WorkspaceCard, FolderCard, VideoCard } from '../components/workspace/ViewCards.jsx';
 import { WorkspaceRow, FolderRow, VideoRow } from '../components/workspace/ViewRows.jsx';
 import CreateWorkspaceModal from '../components/workspace/CreateWorkspaceModal.jsx';
+import CreateFolderModal from '../components/workspace/CreateFolderModal.jsx';
 import GlobalCreateModal from '../components/workspace/GlobalCreateModal.jsx';
 import workspaceService from '../services/workspaceService.js';
 import '../components/workspace/WorkspaceStyles.css';
@@ -24,8 +25,9 @@ const MOCK_FOLDERS = [
 
 const TeamWorkspace = () => {
   const auth = useAuth() || {};
-  const user = auth.user || { id: 'user-1', name: 'John Doe', email: 'john@example.com', plan: 'organisation' };
-  const userPlan = user.plan || 'organisation';
+  // Use a more distinct fallback ID to make debugging easier if auth fails
+  const user = auth.user || { id: 'no-auth-id', name: 'Guest', email: '', plan: 'free' };
+  const userPlan = user.plan || 'free';
 
   // Global State
   const [workspaces, setWorkspaces] = useState([]);
@@ -39,9 +41,21 @@ const TeamWorkspace = () => {
   const [sortBy, setSortBy] = useState('name_asc');
 
   // Modals Data
+  const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
+  const [selectedWorkspaceForFolder, setSelectedWorkspaceForFolder] = useState(null);
   const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = useState(false);
   const [isGlobalCreateOpen, setIsGlobalCreateOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+
+  // Local Session Persistence (to keep items across navigation)
+  const [localAdditions, setLocalAdditions] = useState(() => {
+    const saved = sessionStorage.getItem('workspaceLocalAdditions');
+    return saved ? JSON.parse(saved) : { workspaces: [], folders: {}, videos: {} };
+  });
+
+  useEffect(() => {
+    sessionStorage.setItem('workspaceLocalAdditions', JSON.stringify(localAdditions));
+  }, [localAdditions]);
 
   // Initial Load
   useEffect(() => {
@@ -64,11 +78,11 @@ const TeamWorkspace = () => {
       const mappedWorkspaces = workspaceList.map(ws => ({
         id: ws.id,
         name: ws.name,
-        type: ws.type === 'TEAM' ? 'workspace' : 'personal',
-        ownerId: ws.ownerId || ws.createdBy || user.id, // Fallback to current user if missing
+        type: ws.type === 'PRIVATE' ? 'personal' : 'workspace',
+        ownerId: ws.ownerId || ws.owner?.id || user.id,
         members: ws.members || [],
-        folders: MOCK_FOLDERS,
-        userRole: ws.userRole || (ws.ownerId === user.id || ws.createdBy === user.id ? 'OWNER' : 'MEMBER')
+        folders: ws.folders && ws.folders.length > 0 ? ws.folders : MOCK_FOLDERS,
+        userRole: ws.ownerId === user.id || ws.owner?.id === user.id || ws.type === 'PRIVATE' ? 'OWNER' : 'MEMBER'
       }));
       
       console.log('Mapped workspaces:', mappedWorkspaces);
@@ -87,7 +101,45 @@ const TeamWorkspace = () => {
         });
       }
 
-      setWorkspaces(mappedWorkspaces);
+      // Merge with local additions
+      let allWorkspaces = [...mappedWorkspaces];
+      
+      // Add locally created workspaces
+      localAdditions.workspaces.forEach(localWS => {
+        if (!allWorkspaces.find(ws => ws.id === localWS.id)) {
+          allWorkspaces.push({
+            ...localWS,
+            folders: localWS.folders || [],
+            userRole: 'OWNER'
+          });
+        }
+      });
+
+      // Inject local folders and videos
+      allWorkspaces = allWorkspaces.map(ws => {
+        const localFolders = localAdditions.folders[ws.id] || [];
+        const existingFolders = Array.isArray(ws.folders) && ws.folders.length > 0 && ws.folders[0].id !== 'f-1' 
+          ? ws.folders 
+          : [];
+        
+        let mergedFolders = [...existingFolders, ...localFolders];
+
+        // Also inject local videos into these folders
+        mergedFolders = mergedFolders.map(f => {
+          const localVideos = localAdditions.videos[f.id] || [];
+          return {
+            ...f,
+            videos: [...(f.videos || []), ...localVideos]
+          };
+        });
+        
+        return {
+          ...ws,
+          folders: mergedFolders.length > 0 ? mergedFolders : MOCK_FOLDERS
+        };
+      });
+
+      setWorkspaces(allWorkspaces);
     } catch (err) {
       console.error('Failed to load workspaces:', err);
       // Fallback to mock state if API fails
@@ -140,9 +192,15 @@ const TeamWorkspace = () => {
     w.ownerId !== user.id
   );
 
-  // Debug logging
-  console.log('My Workspaces filtered:', myWorkspaces);
-  console.log('Shared with Me filtered:', sharedWithMe);
+  // Debug logging for filtering
+  useEffect(() => {
+    if (workspaces.length > 0) {
+      console.log('Filtering debug:', {
+        userId: user.id,
+        workspaces: workspaces.map(w => ({ id: w.id, name: w.name, ownerId: w.ownerId, userRole: w.userRole }))
+      });
+    }
+  }, [workspaces, user.id]);
 
   const sortItems = (items) => {
     return [...items].sort((a, b) => {
@@ -162,7 +220,7 @@ const TeamWorkspace = () => {
         id: newWorkspace.id,
         name: newWorkspace.name,
         type: 'workspace',
-        ownerId: newWorkspace.ownerId || newWorkspace.createdBy || user.id,
+        ownerId: user.id,
         members: [],
         folders: [],
         userRole: 'OWNER'
@@ -187,45 +245,119 @@ const TeamWorkspace = () => {
     }
   };
 
-  const handleGlobalCreate = ({ videoName, workspaceId, folderId, newFolderName }) => {
-    // This part remains fully local as requested for the UI behavior shape
-    setWorkspaces(workspaces.map(ws => {
-      if (ws.id === workspaceId) {
-        let updatedFolders = [...ws.folders];
-
-        if (newFolderName) {
-          const newFolder = {
-            id: `f-${Date.now()}`,
-            name: newFolderName,
-            createdBy: 'You',
-            videos: [{
-              id: `v-${Date.now()}`,
-              name: videoName,
-              lastEditedBy: 'You',
-              lastEditedAt: new Date().toISOString().split('T')[0]
-            }]
-          };
-          updatedFolders.push(newFolder);
-        } else if (folderId) {
-          updatedFolders = updatedFolders.map(f => {
-            if (f.id === folderId) {
-              return {
-                ...f,
-                videos: [...f.videos, {
-                  id: `v-${Date.now()}`,
-                  name: videoName,
-                  lastEditedBy: 'You',
-                  lastEditedAt: new Date().toISOString().split('T')[0]
-                }]
-              };
-            }
-            return f;
-          });
-        }
-        return { ...ws, folders: updatedFolders };
+  const handleCreateFolder = async (folderName) => {
+    // Validation: Check for duplicate folder name in current workspace
+    if (selectedWorkspaceForFolder) {
+      const existingWS = workspaces.find(w => w.id === selectedWorkspaceForFolder.id);
+      const isDuplicate = existingWS?.folders?.some(f => f.name.toLowerCase() === folderName.toLowerCase());
+      
+      if (isDuplicate) {
+        throw new Error(`A folder named "${folderName}" already exists in this workspace.`);
       }
-      return ws;
-    }));
+
+      const newFolder = {
+        id: `f-local-${Date.now()}`,
+        name: folderName,
+        createdBy: 'You',
+        videos: []
+      };
+
+      setLocalAdditions(prev => ({
+        ...prev,
+        folders: {
+          ...prev.folders,
+          [selectedWorkspaceForFolder.id]: [...(prev.folders[selectedWorkspaceForFolder.id] || []), newFolder]
+        }
+      }));
+      
+      // Update UI immediately
+      setTimeout(() => loadWorkspaces(), 100);
+    }
+  };
+
+  const handleGlobalCreate = async ({ videoName, workspaceId, folderId, newFolderName, newWorkspaceName }) => {
+    let targetWorkspaceId = workspaceId;
+    let targetFolderId = folderId;
+
+    // 1. Handle New Workspace Validation
+    if (newWorkspaceName) {
+      const isDuplicateWS = workspaces.some(w => w.name.toLowerCase() === newWorkspaceName.toLowerCase());
+      if (isDuplicateWS) {
+        throw new Error(`A workspace named "${newWorkspaceName}" already exists.`);
+      }
+
+      const newWS = {
+        id: `ws-local-${Date.now()}`,
+        name: newWorkspaceName,
+        type: 'workspace',
+        ownerId: user.id,
+        members: [],
+        folders: []
+      };
+      setLocalAdditions(prev => ({ ...prev, workspaces: [...prev.workspaces, newWS] }));
+      targetWorkspaceId = newWS.id;
+    }
+
+    // 2. Handle New Folder Validation
+    if (newFolderName) {
+      const wsContext = workspaces.find(w => w.id === targetWorkspaceId) || 
+                        localAdditions.workspaces.find(w => w.id === targetWorkspaceId);
+      
+      const isDuplicateFolder = wsContext?.folders?.some(f => f.name.toLowerCase() === newFolderName.toLowerCase()) ||
+                                localAdditions.folders[targetWorkspaceId]?.some(f => f.name.toLowerCase() === newFolderName.toLowerCase());
+
+      if (isDuplicateFolder) {
+        throw new Error(`A folder named "${newFolderName}" already exists in this workspace.`);
+      }
+
+      const newFolder = {
+        id: `f-local-${Date.now()}`,
+        name: newFolderName,
+        createdBy: 'You',
+        videos: []
+      };
+      setLocalAdditions(prev => ({
+        ...prev,
+        folders: {
+          ...prev.folders,
+          [targetWorkspaceId]: [...(prev.folders[targetWorkspaceId] || []), newFolder]
+        }
+      }));
+      targetFolderId = newFolder.id;
+    }
+
+    // 3. Handle Video Validation
+    if (videoName) {
+      const allFolders = workspaces.flatMap(w => w.folders || []);
+      const folderContext = allFolders.find(f => f.id === targetFolderId) || 
+                           Object.values(localAdditions.folders).flat().find(f => f.id === targetFolderId);
+      
+      const isDuplicateVideo = folderContext?.videos?.some(v => v.name.toLowerCase() === videoName.toLowerCase()) ||
+                               localAdditions.videos[targetFolderId]?.some(v => v.name.toLowerCase() === videoName.toLowerCase());
+
+      if (isDuplicateVideo) {
+        throw new Error(`A video named "${videoName}" already exists in this folder.`);
+      }
+
+      const newVideo = {
+        id: `v-local-${Date.now()}`,
+        name: videoName,
+        lastEditedBy: 'You',
+        lastEditedAt: new Date().toISOString().split('T')[0]
+      };
+
+      setLocalAdditions(prev => ({
+        ...prev,
+        videos: {
+          ...prev.videos,
+          [targetFolderId]: [...(prev.videos[targetFolderId] || []), newVideo]
+        }
+      }));
+    }
+
+    // Trigger UI reload or immediate local update
+    setTimeout(() => loadWorkspaces(), 200);
+    setIsGlobalCreateOpen(false);
   };
 
   const handleAcceptInvitation = async (invitationId) => {
@@ -254,25 +386,56 @@ const TeamWorkspace = () => {
   const deleteItem = async (type, id) => {
     if (type === 'workspace') {
       try {
-        await workspaceService.deleteWorkspace(id);
+        if (!id.startsWith('ws-local-')) {
+          await workspaceService.deleteWorkspace(id);
+        }
         setWorkspaces(workspaces.filter(w => w.id !== id));
+        // Remove from local if exists
+        setLocalAdditions(prev => ({
+          ...prev,
+          workspaces: prev.workspaces.filter(w => w.id !== id)
+        }));
         if (currentLevel.id === id) setCurrentLevel({ type: 'root', id: null });
       } catch (err) {
-        alert(err.message || 'Error deleting workspace');
+        console.error('API Delete Failed:', err);
+        // If it fails with 404, maybe it's just not in the DB, so we still remove locally
+        setWorkspaces(workspaces.filter(w => w.id !== id));
+        if (currentLevel.id === id) setCurrentLevel({ type: 'root', id: null });
       }
     } else if (type === 'folder') {
-      const parentWsId = currentLevel.ws?.id;
-      setWorkspaces(workspaces.map(w => {
+      const parentWsId = currentLevel.ws?.id || workspaces.find(w => w.folders.some(f => f.id === id))?.id;
+      
+      setLocalAdditions(prev => {
+        const newFolders = { ...prev.folders };
+        if (parentWsId && newFolders[parentWsId]) {
+          newFolders[parentWsId] = newFolders[parentWsId].filter(f => f.id !== id);
+        }
+        return { ...prev, folders: newFolders };
+      });
+
+      setWorkspaces(prev => prev.map(w => {
         if (w.id === parentWsId) {
           return { ...w, folders: w.folders.filter(f => f.id !== id) };
         }
         return w;
       }));
-      if (currentLevel.id === id) setCurrentLevel({ type: 'workspace', id: parentWsId, ws: currentLevel.ws });
+
+      if (currentLevel.id === id) {
+        setCurrentLevel({ type: 'workspace', id: parentWsId, ws: currentLevel.ws });
+      }
     } else if (type === 'video') {
+      const parentFolderId = currentLevel.folder?.id || workspaces.flatMap(w => w.folders).find(f => f.videos.some(v => v.id === id))?.id;
       const parentWsId = currentLevel.ws?.id;
-      const parentFolderId = currentLevel.folder?.id;
-      setWorkspaces(workspaces.map(w => {
+
+      setLocalAdditions(prev => {
+        const newVideos = { ...prev.videos };
+        if (parentFolderId && newVideos[parentFolderId]) {
+          newVideos[parentFolderId] = newVideos[parentFolderId].filter(v => v.id !== id);
+        }
+        return { ...prev, videos: newVideos };
+      });
+
+      setWorkspaces(prev => prev.map(w => {
         if (w.id === parentWsId) {
           return {
             ...w,
@@ -301,8 +464,6 @@ const TeamWorkspace = () => {
           contextProps={{
             onRename: () => renameItem('workspace', ws.id),
             onAddMembers: ws.type === 'workspace' && ws.userRole === 'OWNER' ? () => alert('Add Members Modal') : null,
-            onSort: () => handleSortChange('name_desc'),
-            onView: () => handleViewChange(viewMode === 'tile' ? 'list' : 'tile'),
             onDelete: ws.type !== 'personal' && ws.userRole === 'OWNER' ? () => deleteItem('workspace', ws.id) : null
           }}
         />
@@ -316,8 +477,6 @@ const TeamWorkspace = () => {
         contextProps={{
           onRename: () => renameItem('workspace', ws.id),
           onAddMembers: ws.type === 'workspace' && ws.userRole === 'OWNER' ? () => alert('Add Members Modal') : null,
-          onSort: () => handleSortChange('name_desc'),
-          onView: () => handleViewChange(viewMode === 'tile' ? 'list' : 'tile'),
           onDelete: ws.type !== 'personal' && ws.userRole === 'OWNER' ? () => deleteItem('workspace', ws.id) : null
         }}
       />
@@ -334,8 +493,6 @@ const TeamWorkspace = () => {
           onClick={() => setCurrentLevel({ type: 'folder', id: f.id, folder: f, ws: currentLevel.ws })}
           contextProps={{
             onRename: () => renameItem('folder', f.id),
-            onSort: () => handleSortChange('name_desc'),
-            onView: () => handleViewChange(viewMode === 'tile' ? 'list' : 'tile'),
             onDelete: () => deleteItem('folder', f.id)
           }}
         />
@@ -348,8 +505,6 @@ const TeamWorkspace = () => {
         onClick={() => setCurrentLevel({ type: 'folder', id: f.id, folder: f, ws: currentLevel.ws })}
         contextProps={{
           onRename: () => renameItem('folder', f.id),
-          onSort: () => handleSortChange('name_desc'),
-          onView: () => handleViewChange(viewMode === 'tile' ? 'list' : 'tile'),
           onDelete: () => deleteItem('folder', f.id)
         }}
       />
@@ -433,12 +588,29 @@ const TeamWorkspace = () => {
           title="Folders"
           count={ws.folders.length}
           viewMode={viewMode}
-          emptyMessage="This workspace is empty. Create a folder to get started."
-          emptyActionLabel="Create Video & Folder"
-          onEmptyAction={() => setIsGlobalCreateOpen(true)}
+          emptyMessage="No folder exist"
+          emptyIcon={MdFolderOpen}
+          emptyActionLabel="Create Folder"
+          onEmptyAction={() => {
+            setSelectedWorkspaceForFolder(ws);
+            setIsCreateFolderOpen(true);
+          }}
+          showCreateButton={true}
+          createButtonLabel="Create Folder"
+          onCreateClick={() => {
+            setSelectedWorkspaceForFolder(ws);
+            setIsCreateFolderOpen(true);
+          }}
         >
           {renderFolderItems(ws.folders)}
         </WorkspaceSection>
+        
+        <CreateFolderModal 
+          isOpen={isCreateFolderOpen}
+          onClose={() => setIsCreateFolderOpen(false)}
+          onCreate={handleCreateFolder}
+          existingFolders={selectedWorkspaceForFolder?.folders || []}
+        />
       </motion.div>
     );
   };
@@ -461,9 +633,12 @@ const TeamWorkspace = () => {
           title="Videos"
           count={folder.videos.length}
           viewMode={viewMode}
-          emptyMessage="This folder is empty. Create a video to get started."
+          emptyMessage="No video exist"
+          emptyIcon={MdVideoLibrary}
           emptyActionLabel="Create Video"
           onEmptyAction={() => setIsGlobalCreateOpen(true)}
+          showCreateButton={true}
+          onCreateClick={() => setIsGlobalCreateOpen(true)}
         >
           {renderVideoItems(folder.videos)}
         </WorkspaceSection>
@@ -504,8 +679,7 @@ const TeamWorkspace = () => {
         isOpen={isCreateWorkspaceOpen}
         onClose={() => setIsCreateWorkspaceOpen(false)}
         onCreate={handleCreateWorkspace}
-        userPlan={userPlan}
-        currentWorkspaceCount={myWorkspaces.length}
+        workspaces={workspaces}
       />
 
       <GlobalCreateModal
@@ -513,6 +687,8 @@ const TeamWorkspace = () => {
         onClose={() => setIsGlobalCreateOpen(false)}
         onCreateVideo={handleGlobalCreate}
         workspaces={workspaces}
+        initialWorkspaceId={currentLevel.ws?.id || ''}
+        initialFolderId={currentLevel.folder?.id || ''}
       />
 
       {/* Notifications Panel Restored */}

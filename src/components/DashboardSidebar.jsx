@@ -1,6 +1,9 @@
 import { MdHelpOutline } from 'react-icons/md'
 import { dashboardSidebarGroups } from '../constants/dashboardNav'
 
+const STORAGE_USED_GB = 0.82
+const STORAGE_LIMIT_GB = 2.0
+
 function isNavActive(section, itemId) {
   if (itemId === '__translate__' || itemId === '__ai__') return false
   if (itemId === 'templates' && section === 'template-details') return true
@@ -29,6 +32,8 @@ function DashboardSidebar({
     onCloseMobile?.()
   }
 
+  const storagePct = Math.round((STORAGE_USED_GB / STORAGE_LIMIT_GB) * 100)
+
   return (
     <aside className="dashboard-sidebar-nav" aria-label="Dashboard navigation">
       <div className="dashboard-sidebar-nav-scroll">
@@ -47,7 +52,7 @@ function DashboardSidebar({
                   className={`dashboard-nav-item ${active ? 'dashboard-nav-item--active' : ''}`}
                   onClick={() => handleItem(item)}
                 >
-                  <Icon className="dashboard-nav-item-icon" size={18} strokeWidth={1.75} aria-hidden />
+                  <Icon className="dashboard-nav-item-icon" size={16} strokeWidth={1.75} aria-hidden />
                   <span className="dashboard-nav-item-label">{item.label}</span>
                   {item.badge && (
                     <span className="dashboard-nav-item-badge">{item.badge}</span>
@@ -60,6 +65,32 @@ function DashboardSidebar({
       </div>
 
       <div className="dashboard-sidebar-footer">
+        <div className="dashboard-sidebar-storage" aria-label="Storage usage">
+          <div className="dashboard-storage-label">
+            <span>Storage used</span>
+            <span>{storagePct}%</span>
+          </div>
+          <div className="dashboard-storage-bar">
+            <div
+              className="dashboard-storage-progress"
+              style={{ width: `${storagePct}%` }}
+            />
+          </div>
+          <div className="dashboard-storage-text">
+            {STORAGE_USED_GB} GB of {STORAGE_LIMIT_GB} GB used
+          </div>
+          <button
+            type="button"
+            className="dashboard-storage-upgrade-btn"
+            onClick={() => {
+              onNavigate('credits')
+              onCloseMobile?.()
+            }}
+          >
+            Get more storage
+          </button>
+        </div>
+
         <button
           type="button"
           className="dashboard-nav-item dashboard-sidebar-help"
@@ -69,7 +100,7 @@ function DashboardSidebar({
           }}
           aria-label="Help"
         >
-          <MdHelpOutline className="dashboard-nav-item-icon dashboard-sidebar-help-icon" size={20} aria-hidden />
+          <MdHelpOutline className="dashboard-nav-item-icon dashboard-sidebar-help-icon" size={18} aria-hidden />
           <span className="dashboard-nav-item-label">Help</span>
         </button>
       </div>

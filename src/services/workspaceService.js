@@ -1,49 +1,8 @@
-// Workspace API Service
-// This service handles all workspace-related API calls
-
-// Check for environment variable in multiple locations
-const getApiBaseUrl = () => {
-  // Check window environment first (for Vite)
-  if (window && window.ATHENAVI_API_URL) {
-    return window.ATHENAVI_API_URL;
-  }
-
-  // Check import.meta (for Vite)
-  if (typeof import.meta !== 'undefined' && import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
-  }
-
-  // Check process.env (for Create React App)
-  if (typeof process !== 'undefined' && process.env.REACT_APP_API_URL) {
-    return process.env.REACT_APP_API_URL;
-  }
-
-  // Fallback to localhost:9000 (matches backend default port)
-  return 'http://localhost:9000/api';
-};
-
-const API_BASE_URL = getApiBaseUrl();
+import { buildUrl, getAuthHeaders } from '../config/api.js';
 
 class WorkspaceService {
   constructor() {
-    this.baseURL = API_BASE_URL;
-  }
-
-  // Get authentication token from localStorage or context
-  getAuthHeaders() {
-    const token = localStorage.getItem('accessToken') ||
-      sessionStorage.getItem('accessToken');
-
-    const headers = {
-      'Content-Type': 'application/json'
-    };
-
-    // Only add Authorization header if token exists
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    return headers;
+    this.baseURL = ''; // Not used anymore as we use buildUrl
   }
 
   // List all workspaces for the current user
@@ -51,9 +10,9 @@ class WorkspaceService {
     try {
       console.log('Fetching workspaces...');
 
-      const response = await fetch(`${this.baseURL}/workspaces`, {
+      const response = await fetch(buildUrl('/api/workspaces'), {
         method: 'GET',
-        headers: this.getAuthHeaders()
+        headers: getAuthHeaders()
       });
 
       console.log('Workspace list response status:', response.status);
@@ -79,9 +38,9 @@ class WorkspaceService {
   // Get specific workspace details
   async getWorkspace(workspaceId) {
     try {
-      const response = await fetch(`${this.baseURL}/workspaces/${workspaceId}`, {
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}`), {
         method: 'GET',
-        headers: this.getAuthHeaders()
+        headers: getAuthHeaders()
       });
 
       if (!response.ok) {
@@ -101,9 +60,9 @@ class WorkspaceService {
     try {
       console.log('Creating workspace with name:', name);
 
-      const response = await fetch(`${this.baseURL}/workspaces`, {
+      const response = await fetch(buildUrl('/api/workspaces'), {
         method: 'POST',
-        headers: this.getAuthHeaders(),
+        headers: getAuthHeaders(),
         body: JSON.stringify(typeof name === 'object' ? name : { name })
       });
 
@@ -132,12 +91,34 @@ class WorkspaceService {
     }
   }
 
+  // Create new folder in workspace
+  async createFolder(workspaceId, name) {
+    try {
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/folders`), {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ name })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to create folder: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.data?.folder || data.folder;
+    } catch (error) {
+      console.error('Error in createFolder:', error);
+      throw error;
+    }
+  }
+
   // Update workspace
   async updateWorkspace(workspaceId, formData) {
     try {
-      const response = await fetch(`${this.baseURL}/workspaces/${workspaceId}`, {
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}`), {
         method: 'PATCH',
-        headers: this.getAuthHeaders(),
+        headers: getAuthHeaders(),
         body: JSON.stringify(formData)
       });
 
@@ -156,9 +137,9 @@ class WorkspaceService {
   // Delete workspace (TEAM only)
   async deleteWorkspace(workspaceId) {
     try {
-      const response = await fetch(`${this.baseURL}/workspaces/${workspaceId}`, {
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}`), {
         method: 'DELETE',
-        headers: this.getAuthHeaders()
+        headers: getAuthHeaders()
       });
 
       if (!response.ok) {
@@ -175,9 +156,9 @@ class WorkspaceService {
   // Get workspace members
   async listWorkspaceMembers(workspaceId) {
     try {
-      const response = await fetch(`${this.baseURL}/workspaces/${workspaceId}/members`, {
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/members`), {
         method: 'GET',
-        headers: this.getAuthHeaders()
+        headers: getAuthHeaders()
       });
 
       if (!response.ok) {
@@ -205,8 +186,8 @@ class WorkspaceService {
       // Ensure role is uppercase according to API docs
       const role = inviteData.role ? inviteData.role.toUpperCase() : 'MEMBER';
 
-      const headers = this.getAuthHeaders();
-      const response = await fetch(`${this.baseURL}/workspaces/${workspaceId}/invite`, {
+      const headers = getAuthHeaders();
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/invite`), {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -241,9 +222,9 @@ class WorkspaceService {
   // Accept workspace invitation
   async acceptInvitation(token) {
     try {
-      const response = await fetch(`${this.baseURL}/workspace/invitations/accept`, {
+      const response = await fetch(buildUrl('/api/workspaces/invitations/accept'), {
         method: 'POST',
-        headers: this.getAuthHeaders(),
+        headers: getAuthHeaders(),
         body: JSON.stringify({ token })
       });
 
@@ -265,8 +246,8 @@ class WorkspaceService {
   // Change member role (OWNER only)
   async changeMemberRole(workspaceId, memberId, newRole) {
     try {
-      const headers = this.getAuthHeaders();
-      const response = await fetch(`${this.baseURL}/workspaces/${workspaceId}/members/${memberId}/role`, {
+      const headers = getAuthHeaders();
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/members/${memberId}/role`), {
         method: 'PATCH',
         headers,
         body: JSON.stringify({ role: newRole })
@@ -297,8 +278,8 @@ class WorkspaceService {
   // Remove member from workspace (OWNER/ADMIN or self)
   async removeMember(workspaceId, memberId) {
     try {
-      const headers = this.getAuthHeaders();
-      const response = await fetch(`${this.baseURL}/workspaces/${workspaceId}/members/${memberId}`, {
+      const headers = getAuthHeaders();
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/members/${memberId}`), {
         method: 'DELETE',
         headers
       });
@@ -328,8 +309,8 @@ class WorkspaceService {
   // Leave workspace (remove self)
   async leaveWorkspace(workspaceId) {
     try {
-      const headers = this.getAuthHeaders();
-      const response = await fetch(`${this.baseURL}/workspaces/${workspaceId}/leave`, {
+      const headers = getAuthHeaders();
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/leave`), {
         method: 'POST',
         headers
       });
@@ -348,8 +329,8 @@ class WorkspaceService {
   // Cancel/remove invitation
   async removeInvitation(workspaceId, invitationId) {
     try {
-      const headers = this.getAuthHeaders();
-      const response = await fetch(`${this.baseURL}/workspaces/${workspaceId}/invitations/${invitationId}`, {
+      const headers = getAuthHeaders();
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/invitations/${invitationId}`), {
         method: 'DELETE',
         headers
       });
