@@ -798,8 +798,9 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
     { title: 'Video Translate', desc: 'Multilingual video', icon: <FiGlobe /> },
     { title: 'Video Campaigns', desc: 'Marketing videos', icon: <FiTrendingUp /> },
     { title: 'Personal Avatars', desc: 'Digital instructors', icon: <FiUserCheck /> },
+    { title: 'AI Avatars & Videos', desc: 'AI avatars and video demos', icon: <FiPlayCircle /> },
     { title: 'Technology', desc: 'Technology overview', icon: <FiCpu /> }
-  ]
+  ];
 
   const solutionsItems = [
     { title: 'Marketing Suite', desc: 'Campaign automation', icon: <FiBriefcase /> },
