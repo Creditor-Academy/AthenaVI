@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MdArrowOutward, MdPayments } from 'react-icons/md'
 import { HiTrendingUp } from 'react-icons/hi'
-import avatar1 from '../assets/avatar1.png'
-import avatar2 from '../assets/avatar2.png'
-import avatar3 from '../assets/avatar3.png'
-import avatar4 from '../assets/avatar4.png'
-import avatar5 from '../assets/avatar5.png'
+import avatar1 from '../assets/Avatarr1.png'
+import avatar2 from '../assets/Avatarr2.png'
+import avatar3 from '../assets/Avatarr3.png'
+import avatar4 from '../assets/Avatarr4.png'
+import avatar5 from '../assets/Avatarr5.png'
 import LeftCard from './LeftCard'
 import RightCardCarousel from './RightCardCarousel'
 
@@ -26,7 +26,7 @@ const styles = `
 .hero-top {
   position: relative;
   width: 100%;
-  padding: 40px 40px 40px;
+  padding: 40px 40px 0px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -65,7 +65,7 @@ const styles = `
 .hero-avatars {
   position: relative;
   width: 100%;
-  min-height: 400px;
+  min-height: 420px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -83,12 +83,13 @@ const styles = `
   max-width: 1800px;
   position: relative;
   padding: 0 60px;
+  margin-top: -20px;
 }
 
 .center-avatar-wrapper {
   position: relative;
-  width: 400px;
-  height: 400px;
+  width: 450px;
+  height: 450px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -318,11 +319,11 @@ function Hero() {
   const [activeIndex, setActiveIndex] = useState(0)
 
   const avatars = [
-    { src: avatar2, name: "Sophia", role: "an AI Video Assistant" },
-    { src: avatar1, name: "Liam", role: "a Virtual Instructor" },
-    { src: avatar5, name: "Emma", role: "a Digital Host" },
-    { src: avatar3, name: "Noah", role: "a Technical Expert" },
-    { src: avatar4, name: "Olivia", role: "a Language Coach" }
+    { src: avatar1, name: "Sophia", role: "an AI Video Assistant" },
+    { src: avatar4, name: "Liam", role: "a Virtual Instructor" },
+    { src: avatar2, name: "Emma", role: "a Digital Host" },
+    { src: avatar5, name: "Noah", role: "a Technical Expert" },
+    { src: avatar3, name: "Olivia", role: "a Language Coach" }
   ]
 
   useEffect(() => {
@@ -383,8 +384,8 @@ function Hero() {
                     className="hero-avatar-item"
                     style={{
                       transform: `translate(calc(-50% + ${x}px), -50%)`,
-                      width: isActive ? 'clamp(280px, 22vw, 350px)' : 'clamp(200px, 15vw, 250px)',
-                      height: isActive ? 'clamp(280px, 22vw, 350px)' : 'clamp(200px, 15vw, 250px)',
+                      width: isActive ? 'clamp(380px, 30vw, 480px)' : 'clamp(250px, 20vw, 320px)',
+                      height: isActive ? 'clamp(380px, 30vw, 480px)' : 'clamp(250px, 20vw, 320px)',
                       opacity: isActive ? 1 : 0.3,
                       filter: isActive ? 'blur(0px)' : 'blur(4px)',
                       zIndex: isActive ? 20 : 10,
