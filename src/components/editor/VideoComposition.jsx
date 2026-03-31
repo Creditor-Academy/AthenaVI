@@ -4,6 +4,7 @@ import {
     MdPerson,
     MdCheckCircle,
     MdCompareArrows,
+    MdAutoAwesome,
 } from 'react-icons/md'
 
 const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
@@ -13,8 +14,31 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
 
     if (scenesList.length === 0) {
         return (
-            <div style={{ flex: 1, backgroundColor: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
-                No scenes provided
+            <div style={{ 
+                flex: 1, 
+                backgroundColor: '#f8f9fa', 
+                display: 'flex', 
+                flexDirection: 'column',
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                color: '#9ba1a6',
+                fontFamily: 'Inter, sans-serif'
+            }}>
+                <div style={{ 
+                    width: '120px', 
+                    height: '120px', 
+                    backgroundColor: '#ffffff', 
+                    borderRadius: '24px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '20px',
+                    boxShadow: '0 8px 16px rgba(0,0,0,0.03)'
+                }}>
+                    <MdAutoAwesome size={48} style={{ color: '#dadce0' }} />
+                </div>
+                <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#3c4043', margin: '0 0 8px 0' }}>Empty Canvas</h2>
+                <p style={{ fontSize: '14px', margin: 0, opacity: 0.8 }}>Add a template or asset to start creating</p>
             </div>
         )
     }
@@ -40,24 +64,74 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
     }
 
     const sceneDurationFrames = (currentScene.duration || 8) * 30
+    const transitionType = currentScene.transition || 'fade'
+    const transitionFrames = 15
 
-    // Transition logic
-    let opacity = 1
-    const transitionFrames = 10
-    if (frameInScene < transitionFrames) {
-        opacity = Math.max(0.1, frameInScene / transitionFrames)
-    } else if (frameInScene > sceneDurationFrames - transitionFrames) {
-        opacity = Math.max(0, (sceneDurationFrames - frameInScene) / transitionFrames)
+    // Determine scene index for transition logic
+    let sceneIndex = 0
+    let _frameCtr = 0
+    for (let si = 0; si < scenesList.length; si++) {
+        const sf = Math.max((scenesList[si].duration || 8) * 30, 1)
+        if (frame < _frameCtr + sf) { sceneIndex = si; break }
+        _frameCtr += sf
     }
 
-    if (frameInScene < 1) opacity = 1
+    // Scene container is ALWAYS fully visible — no screen-level opacity fade
+    // This ensures content is visible at time 0 and when scrubbing
+    let containerOpacity = 1
+    let xOffset = 0
+    let containerScale = 1
+    let blur = 0
 
-    // Animation values
-    const entrance = spring({
+    // Only apply scene-level entrance transitions for scenes AFTER the first one (during playback)
+    if (sceneIndex > 0 && frameInScene < transitionFrames) {
+        const progress = frameInScene / transitionFrames
+        if (transitionType === 'fade') {
+            containerOpacity = Math.max(0.3, progress)
+        } else if (transitionType === 'slide') {
+            xOffset = (1 - progress) * 60
+        } else if (transitionType === 'zoom') {
+            containerScale = 0.9 + progress * 0.1
+        } else if (transitionType === 'blur') {
+            blur = (1 - progress) * 6
+        }
+    }
+    // Exit transition — subtle for scene-to-scene crossfade
+    if (sceneIndex < scenesList.length - 1 && frameInScene > sceneDurationFrames - transitionFrames) {
+        const progress = (sceneDurationFrames - frameInScene) / transitionFrames
+        if (transitionType === 'fade') {
+            containerOpacity = Math.max(0.3, progress)
+        } else if (transitionType === 'slide') {
+            xOffset = (progress - 1) * 60
+        } else if (transitionType === 'zoom') {
+            containerScale = 1 + (1 - progress) * 0.1
+        } else if (transitionType === 'blur') {
+            blur = (1 - progress) * 6
+        }
+    }
+
+    // Element-level spring animations (staggered entrance per element)
+    // Remapped so content is ALWAYS visible (starts at 0.9+) with subtle polish animation
+    const rawEntrance = spring({
         frame: frameInScene,
+        fps,
+        config: { damping: 14, stiffness: 100 }
+    })
+    const entrance = interpolate(rawEntrance, [0, 1], [0.92, 1])
+
+    const rawTitleEntrance = spring({
+        frame: Math.max(0, frameInScene - 3),
         fps,
         config: { damping: 12 }
     })
+    const titleEntrance = interpolate(rawTitleEntrance, [0, 1], [0.88, 1])
+
+    const rawSubtitleEntrance = spring({
+        frame: Math.max(0, frameInScene - 6),
+        fps,
+        config: { damping: 12 }
+    })
+    const subtitleEntrance = interpolate(rawSubtitleEntrance, [0, 1], [0.85, 1])
 
     const zoomFactor = interpolate(
         frameInScene,
@@ -92,8 +166,10 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
             height: '100%',
             position: 'relative',
             overflow: 'hidden',
-            opacity: opacity,
-            backgroundColor: currentScene.backgroundColor || '#ffffff'
+            opacity: containerOpacity,
+            backgroundColor: currentScene.backgroundColor || '#ffffff',
+            transform: `translateX(${xOffset}px) scale(${containerScale})`,
+            filter: blur > 0 ? `blur(${blur}px)` : 'none'
         }}>
             {/* AUDIO: Background Music */}
             {bgMusic && (
@@ -135,8 +211,8 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
                 return (
                     <div key={layer.id} style={{
                         position: 'absolute',
-                        left: `${layer.x || 0}px`,
-                        top: `${layer.y || 0}px`,
+                        left: `${layer.x !== undefined ? layer.x : 0}%`,
+                        top: `${layer.y !== undefined ? layer.y : 0}%`,
                         width: `${layer.width || '100%'}`,
                         height: `${layer.height || '100%'}`,
                         transform: `scale(${zoomFactor * (layer.scale || 1)})`,
@@ -194,8 +270,9 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
                             lineHeight: '1.2',
                             color: titleStyle.color || '#000000',
                             fontFamily: titleStyle.fontFamily || 'inherit',
-                            transform: `translateX(${(1 - entrance) * (currentScene.layout === 'split-left' ? 40 : -40)}px)`,
-                            textShadow: '0 2px 10px rgba(0,0,0,0.3)',
+                            transform: `translateY(${(1 - titleEntrance) * 20}px)`,
+                            opacity: titleEntrance,
+                            textShadow: '0 2px 10px rgba(0,0,0,0.1)',
                             fontStyle: currentScene.layout === 'quote' ? 'italic' : 'normal'
                         }}>
                             {currentScene?.titleText || 'Insert your video title here'}
@@ -209,8 +286,9 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
                             lineHeight: '1.4',
                             color: subtitleStyle.color || '#333333',
                             fontFamily: subtitleStyle.fontFamily || 'inherit',
-                            transform: `translateX(${(1 - entrance) * (currentScene.layout === 'split-left' ? 20 : -20)}px)`,
-                            textShadow: '0 1px 5px rgba(0,0,0,0.2)'
+                            transform: `translateY(${(1 - subtitleEntrance) * 15}px)`,
+                            opacity: subtitleEntrance,
+                            textShadow: '0 1px 5px rgba(0,0,0,0.05)'
                         }}>
                             {currentScene.layout === 'quote' && '— '}{currentScene?.subtitleText || 'Add sub-headline here'}
                         </h2>

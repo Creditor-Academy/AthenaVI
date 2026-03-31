@@ -72,6 +72,7 @@ const styles = `
   margin-bottom: 32px;
   line-height: 1.2;
   letter-spacing: -1.5px;
+  color: #ffffff;
 }
 
 /* Description */
@@ -81,6 +82,7 @@ const styles = `
   line-height: 1.8;
   max-width: 680px;
   margin: 0 auto 48px;
+  color: #ffffff;
 }
 
 /* CTA Button */
