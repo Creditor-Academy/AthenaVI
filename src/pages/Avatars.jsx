@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, Filter, Play, Video, ChevronRight, X, Info, Layers } from 'lucide-react'
+import { Search, Filter, Play, Video, ChevronRight, ChevronLeft, X, Info, Layers, ArrowLeft } from 'lucide-react'
 import './Avatars.css'
 
 // Importing avatar assets
@@ -7,9 +7,9 @@ import pro1 from '../assets/pro_avatar_1.png'
 import pro2 from '../assets/pro_avatar_2.png'
 import pro3 from '../assets/pro_avatar_3.png'
 import pro4 from '../assets/pro_avatar_4.png'
-import av1 from '../assets/avatar1.png'
-import av2 from '../assets/avatar2.png'
-import av3 from '../assets/avatar3.png'
+import jamesPro from '../assets/james_pro.png'
+import elenaPro from '../assets/elena_pro.png'
+import sophiePro from '../assets/sophie_pro.png'
 import sampleVideo from '../assets/Personal Avatar.mp4'
 
 const AVATARS_DATA = [
@@ -66,7 +66,7 @@ const AVATARS_DATA = [
     name: 'James',
     role: 'Product Expert',
     description: 'A versatile speaker with a focus on product features and detailed explainer videos.',
-    image: av1,
+    image: jamesPro,
     preview: sampleVideo,
     category: 'Professional',
     gender: 'Male',
@@ -78,7 +78,7 @@ const AVATARS_DATA = [
     name: 'Elena',
     role: 'AI Researcher',
     description: 'Highly intelligent and articulate, Elena is the perfect fit for technical and scientific content.',
-    image: av2,
+    image: elenaPro,
     preview: sampleVideo,
     category: 'Academic',
     gender: 'Female',
@@ -90,7 +90,7 @@ const AVATARS_DATA = [
     name: 'Sophie',
     role: 'Lifestyle Coach',
     description: 'Warm and inviting, Sophie is great for wellness, health, and personal development content.',
-    image: av3,
+    image: sophiePro,
     preview: sampleVideo,
     category: 'Lifestyle',
     gender: 'Female',
@@ -114,6 +114,13 @@ function Avatars({ onCreate }) {
     return matchesSearch && matchesCategory
   })
 
+  const currentIndex = AVATARS_DATA.findIndex(a => a.id === selectedAvatar?.id)
+
+  const handleSelectPersona = (avatar) => {
+    setSelectedAvatar(avatar)
+    setIsPreviewing(false)
+  }
+
   const openAvatarDetails = (avatar) => {
     setSelectedAvatar(avatar)
     setIsPreviewing(false)
@@ -134,28 +141,7 @@ function Avatars({ onCreate }) {
 
   return (
     <div className={`avatars-workspace ${selectedAvatar ? 'details-active' : ''}`}>
-      {/* Left Sidebar: Mini-Gallery (visible only when an avatar is selected) */}
-      <div className="workspace-sidebar">
-        <header className="sidebar-header">
-          <button className="back-to-grid" onClick={closeDetails}>
-            <X size={18} /> <span>Close Explorer</span>
-          </button>
-        </header>
-        <div className="mini-grid">
-          {AVATARS_DATA.map(avatar => (
-            <div 
-              key={avatar.id} 
-              className={`mini-card ${selectedAvatar?.id === avatar.id ? 'active' : ''}`}
-              onClick={() => setSelectedAvatar(avatar)}
-            >
-              <img src={avatar.image} alt={avatar.name} />
-              <div className="mini-info">
-                <span>{avatar.name}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Removed workspace-sidebar as requested by user - it felt 'weird' */}
 
       {/* Main Content Area */}
       <main className="workspace-main">
@@ -163,26 +149,27 @@ function Avatars({ onCreate }) {
           <div className="grid-container">
             <header className="avatars-header">
               <div className="header-info">
-                <h1>Neural Identity Explorer</h1>
-                <p>Select a digital representative to start your project. Powered by AthenaVI.</p>
+                <h1>Avatars</h1>
+                <p>Choose an avatar for your next video project.</p>
               </div>
-              
               <div className="header-actions">
-                <div className="search-bar">
-                  <Search size={18} />
-                  <input 
-                    type="text" 
-                    placeholder="Search neural units..." 
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
+                <div className="search-section">
+                  <div className="search-bar">
+                    <Search size={18} />
+                    <input 
+                      type="text" 
+                      placeholder="Search neural units..." 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
                 </div>
                 
-                <div className="filter-chips">
+                <div className="filter-tabs">
                   {categories.map(cat => (
                     <button 
                       key={cat}
-                      className={`filter-chip ${filterCategory === cat ? 'active' : ''}`}
+                      className={`filter-tab ${filterCategory === cat ? 'active' : ''}`}
                       onClick={() => setFilterCategory(cat)}
                     >
                       {cat}
@@ -200,7 +187,7 @@ function Avatars({ onCreate }) {
                     <div className="avatar-overlay">
                       <div className="workspace-action-badge">
                         <ChevronRight size={20} />
-                        <span>Enter Workspace</span>
+                        <span>View Persona</span>
                       </div>
                     </div>
                   </div>
@@ -215,6 +202,19 @@ function Avatars({ onCreate }) {
         ) : (
           <div className="hero-showcase">
             <div className="hero-visual">
+              {/* Glass Mini-Switcher: User hated the sidebar and arrows, this is the modern alternative */}
+              <div className="persona-filmstrip">
+                {AVATARS_DATA.map(avatar => (
+                  <div 
+                    key={avatar.id} 
+                    className={`filmstrip-item ${selectedAvatar?.id === avatar.id ? 'active' : ''}`}
+                    onClick={() => handleSelectPersona(avatar)}
+                  >
+                    <img src={avatar.image} alt={avatar.name} />
+                  </div>
+                ))}
+              </div>
+
               {!isPreviewing ? (
                 <div className="hero-still" onClick={() => setIsPreviewing(true)}>
                   <img src={selectedAvatar.image} alt={selectedAvatar.name} />
@@ -239,6 +239,9 @@ function Avatars({ onCreate }) {
             </div>
 
             <div className="hero-details">
+              <button className="back-to-library-btn" onClick={closeDetails}>
+                <ArrowLeft size={16} /> Close Persona
+              </button>
               <div className="hero-glass-pan">
                 <div className="hero-top-meta">Unit {selectedAvatar.id} // v4.2</div>
                 <h1 className="hero-title">{selectedAvatar.name}</h1>
