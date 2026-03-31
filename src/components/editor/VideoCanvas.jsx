@@ -265,7 +265,7 @@ const VideoCanvas = forwardRef(({
               }}
             >
               {/* Layer selection handles */}
-              {layers.filter(l => l.type === 'image' || l.type === 'video').map(layer => {
+              {layers.map(layer => {
                 const isSelected = selectedLayerId === layer.id
                 const x = typeof layer.x === 'number' ? layer.x : 0
                 const y = typeof layer.y === 'number' ? layer.y : 0

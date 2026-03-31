@@ -202,25 +202,38 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3 }) => {
                 </div>
             )}
 
-            {/* LAYER 1: Additional B-roll/Overlay Layers from Media Library */}
-            {(currentScene.layers || []).filter(l => l.type === 'image' || l.type === 'video').map(layer => {
+            {/* LAYER 1: Additional B-roll/Overlay/Text Layers from Media Library */}
+            {(currentScene.layers || []).map(layer => {
                 const layerStart = (layer.start || 0) * 30
                 const layerDuration = (layer.duration || currentScene.duration) * 30
-                if (frameInScene < layerStart || frameInScene > layerStart + layerDuration) return null
+                if (frameInScene < layerStart || frameInScene >= layerStart + layerDuration) return null
 
                 return (
                     <div key={layer.id} style={{
                         position: 'absolute',
                         left: `${layer.x !== undefined ? layer.x : 0}%`,
                         top: `${layer.y !== undefined ? layer.y : 0}%`,
-                        width: `${layer.width || '100%'}`,
-                        height: `${layer.height || '100%'}`,
+                        width: `${layer.width || (layer.type === 'text' ? 'auto' : '100%')}`,
+                        height: `${layer.height || (layer.type === 'text' ? 'auto' : '100%')}`,
                         transform: `scale(${zoomFactor * (layer.scale || 1)})`,
                         zIndex: 5,
-                        pointerEvents: 'none'
+                        pointerEvents: 'none',
+                        opacity: layer.opacity !== undefined ? layer.opacity : 1,
+                        filter: `blur(${layer.blur || 0}px) brightness(${layer.brightness !== undefined ? layer.brightness : 1}) contrast(${layer.contrast !== undefined ? layer.contrast : 1}) saturate(${layer.saturation !== undefined ? layer.saturation : 1})`
                     }}>
                         {layer.type === 'image' && <img src={layer.content} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                         {layer.type === 'video' && <video src={layer.content} style={{ width: '100%', height: '100%', objectFit: 'cover' }} autoPlay muted loop />}
+                        {layer.type === 'text' && (
+                            <div style={{
+                                fontSize: '48px',
+                                fontWeight: '700',
+                                color: layer.color || '#ffffff',
+                                fontFamily: layer.fontFamily || 'Inter',
+                                textShadow: '0 2px 10px rgba(0,0,0,0.5)'
+                            }}>
+                                {layer.content}
+                            </div>
+                        )}
                     </div>
                 )
             })}

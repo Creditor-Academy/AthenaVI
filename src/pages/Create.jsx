@@ -569,7 +569,15 @@ function Create({ onBack }) {
               currentTime={currentTime}
               isPlaying={isPlaying}
               onSeek={handleSeek}
-              onSelectScene={setActiveSceneId}
+              onSelectScene={(sceneId) => {
+                setActiveSceneId(sceneId);
+                setSelectedLayerId(null);
+                if (!isRightSidebarOpen) setIsRightSidebarOpen(true);
+              }}
+              onSelectLayer={(layerId) => {
+                setSelectedLayerId(layerId);
+                if (!isRightSidebarOpen) setIsRightSidebarOpen(true);
+              }}
               onUpdateScene={updateScene}
               onAddScene={addScene}
               onDeleteScene={deleteScene}
@@ -650,6 +658,7 @@ function Create({ onBack }) {
                 setBgMusic={setBgMusic}
                 bgMusicVolume={bgMusicVolume}
                 setBgMusicVolume={setBgMusicVolume}
+                selectedLayerId={selectedLayerId}
               />
             </div>
           </div>
