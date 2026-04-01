@@ -177,8 +177,22 @@ const styles = `
 @media (max-width: 1024px) {
   .right-card-container {
     width: 100%;
-    max-width: 380px;
+    max-width: 450px;
     height: 380px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .right-card-container {
+    height: 340px;
+  }
+  .right-card-wrapper {
+    padding: 20px;
+    height: 240px;
+  }
+  .right-card-title {
+    font-size: 20px;
   }
 }
 `;

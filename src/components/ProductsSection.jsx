@@ -66,6 +66,7 @@ const styles = `
   display: flex;
   gap: 16px;
   align-items: stretch;
+  justify-content: center;
 }
 
 /* ── Base card ── */

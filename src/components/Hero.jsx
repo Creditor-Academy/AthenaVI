@@ -13,12 +13,13 @@ import RightCardCarousel from './RightCardCarousel'
 const styles = `
 .hero-container {
   width: 100%;
-  min-height: 100vh;
+  min-height: 85vh;
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   font-family: 'Inter', sans-serif;
   color: #ffffff;
 }
@@ -65,12 +66,12 @@ const styles = `
 .hero-avatars {
   position: relative;
   width: 100%;
-  min-height: 420px;
+  min-height: 550px;
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 10;
-  overflow: hidden;
+  overflow: visible;
   padding: 40px 20px;
 }
 
@@ -89,7 +90,7 @@ const styles = `
 .center-avatar-wrapper {
   position: relative;
   width: 450px;
-  height: 450px;
+  height: 500px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -113,19 +114,23 @@ const styles = `
 .avatar-label-container {
   position: absolute;
   bottom: -40px;
-  left: 0;
-  text-align: left;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
   width: max-content;
   pointer-events: none;
   z-index: 40;
 }
 
 .avatar-message {
-  font-size: 18px;
+  font-size: clamp(10px, 3.8vw, 18px);
   font-weight: 600;
   color: #ffffff;
   margin: 0;
   text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  line-height: 1.5;
+  padding-bottom: 8px;
+  white-space: nowrap;
 }
 
 .avatar-message span {
@@ -133,7 +138,7 @@ const styles = `
 }
 
 .hero-bottom {
-  padding: 40px 40px 80px;
+  padding: 20px 40px 40px;
   max-width: 1400px;
   margin: 0 auto;
   text-align: center;
@@ -197,8 +202,8 @@ const styles = `
 
 .btn-primary:hover {
   transform: translateY(-2px) scale(1.03);
-  box-shadow: 0 10px 28px rgba(251, 191, 36, 0.55);
-  background: linear-gradient(135deg, #f3c42aff 0%, #fbbf24 100%);
+  box-shadow: 0 10px 28px rgba(251, 191, 36, 0.55) !important;
+  background: linear-gradient(135deg, #f3c42aff 0%, #fbbf24 100%) !important;
 }
 
 .hero-cta .btn-primary {
@@ -241,28 +246,39 @@ const styles = `
 
 @media (max-width: 1200px) {
   .hero-avatar-container {
-    gap: 20px;
+    gap: 40px;
+    padding: 0 30px;
+  }
+  .center-avatar-wrapper {
+    width: 350px;
+    height: 400px;
   }
 }
 
 @media (max-width: 1024px) {
   .hero-avatar-container {
     flex-direction: column;
-    gap: 40px;
+    gap: 60px;
+    padding: 10px 20px;
   }
   
   .center-avatar-wrapper {
-    width: 300px;
-    height: 300px;
+    width: 100%;
+    max-width: 450px;
+    height: 450px;
     order: 1;
   }
   
   .left-card-wrapper {
     order: 2;
+    width: 100%;
+    max-width: 450px;
   }
   
   .right-card-container {
     order: 3;
+    width: 100%;
+    max-width: 450px;
   }
 }
 
@@ -340,6 +356,7 @@ function Hero() {
   }
 
   const getHorizontalPosition = (position) => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) return 0;
     const totalPositions = avatars.length
     const containerWidth = Math.min(1200, window.innerWidth * 0.9)
     const spacing = containerWidth / (totalPositions + 1)
@@ -403,9 +420,9 @@ function Hero() {
                       <AnimatePresence mode="wait">
                         <motion.div
                           key={currentAvatar.name}
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.9 }}
+                          initial={{ opacity: 0, scale: 0.9, x: '-50%' }}
+                          animate={{ opacity: 1, scale: 1, x: '-50%' }}
+                          exit={{ opacity: 0, scale: 0.9, x: '-50%' }}
                           transition={{ duration: 0.5 }}
                           className="avatar-label-container"
                         >

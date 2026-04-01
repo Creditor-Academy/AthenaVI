@@ -36,7 +36,7 @@ const styles = `
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 4px;
+  margin-bottom: 10px;
 }
 
 .left-card-icon {
@@ -148,8 +148,21 @@ const styles = `
 @media (max-width: 1024px) {
   .left-card-wrapper {
     width: 100%;
-    max-width: 380px;
-    padding: 20px;
+    max-width: 450px;
+    padding: 24px;
+    margin: 0 auto;
+  }
+  .left-card-title {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .left-card-wrapper {
+    padding: 20px 16px;
+  }
+  .left-card-title {
+    font-size: 18px;
   }
 }
 `;
