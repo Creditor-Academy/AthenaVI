@@ -15,7 +15,7 @@ import {
   ShieldAlert,
   Calendar
 } from 'lucide-react'
-import './Trash.css' // We'll create this file
+import '../Trash.css'
 
 const thumbnailUrl = 'https://media.istockphoto.com/id/1480023591/video/creating-a-female-video-game-character.jpg?s=640x640&k=20&c=S1LW6oZZDQYgsqp4GRL0bj9wE1oRIaBfQSV-UQXv2II='
 
@@ -138,13 +138,13 @@ function Trash() {
             </div>
             <div className="view-toggle">
               <button 
-                className={`toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
                 onClick={() => setViewMode('grid')}
               >
                 <Grid size={18} />
               </button>
               <button 
-                className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+                className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
                 onClick={() => setViewMode('list')}
               >
                 <List size={18} />

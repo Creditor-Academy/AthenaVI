@@ -12,6 +12,8 @@ import {
   MdSettings,
   MdDeleteOutline,
   MdColorLens,
+  MdGridView,
+  MdViewList,
 } from 'react-icons/md'
 
 const styles = `
@@ -121,6 +123,49 @@ const styles = `
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.brandkits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.view-toggle {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 999px;
+  padding: 3px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.view-toggle-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #64748b);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  font-size: 18px;
+}
+
+.view-toggle-btn:hover {
+  background: var(--bg-surface, #f8fafc);
+  color: var(--text-main, #0f172a);
+}
+
+.view-toggle-btn.active {
+  background: var(--primary, #3b82f6);
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
 }
 
 .brandkit-card {
@@ -609,6 +654,7 @@ const initialBrandKits = [
 
 function BrandKits() {
   const [brandKits, setBrandKits] = useState(initialBrandKits)
+  const [viewMode, setViewMode] = useState('list')
   const [showEditor, setShowEditor] = useState(false)
   const [editingKit, setEditingKit] = useState(null)
   const [menuOpen, setMenuOpen] = useState(null)
@@ -798,10 +844,28 @@ function BrandKits() {
       <div className="brandkits-container">
         <div className="brandkits-header">
           <h1 className="brandkits-title">Brand Kits</h1>
-          <button className="create-btn" onClick={handleCreate}>
-            <MdAdd size={18} />
-            Create Brand Kit
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="view-toggle">
+              <button
+                className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+                onClick={() => setViewMode('list')}
+                title="List view"
+              >
+                <MdViewList size={18} />
+              </button>
+              <button
+                className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                onClick={() => setViewMode('grid')}
+                title="Grid view"
+              >
+                <MdGridView size={18} />
+              </button>
+            </div>
+            <button className="create-btn" onClick={handleCreate}>
+              <MdAdd size={18} />
+              Create Brand Kit
+            </button>
+          </div>
         </div>
 
         {brandKits.length === 0 ? (
@@ -820,7 +884,7 @@ function BrandKits() {
         ) : (
           <>
             <p className="section-label">Workspace Brand Kits</p>
-            <div className="brandkits-list">
+            <div className={viewMode === 'grid' ? 'brandkits-grid' : 'brandkits-list'}>
               {brandKits.map((kit) => (
                 <div key={kit.id} className="brandkit-card" ref={el => menuRefs.current[kit.id] = el}>
                   <div className="brandkit-info">

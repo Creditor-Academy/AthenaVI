@@ -128,10 +128,10 @@ function Library() {
                   <button type="button" className="btn-upload-primary" onClick={() => setShowUploadModal(true)}>
                     <MdCloudUpload /> Upload
                   </button>
-                  <div className="view-toggles">
+                  <div className="view-toggle">
                     <button
                       type="button"
-                      className={`toggle-btn ${activeView === 'grid' ? 'active' : ''}`}
+                      className={`view-toggle-btn ${activeView === 'grid' ? 'active' : ''}`}
                       onClick={() => setActiveView('grid')}
                       aria-label="Grid view"
                     >
@@ -139,7 +139,7 @@ function Library() {
                     </button>
                     <button
                       type="button"
-                      className={`toggle-btn ${activeView === 'list' ? 'active' : ''}`}
+                      className={`view-toggle-btn ${activeView === 'list' ? 'active' : ''}`}
                       onClick={() => setActiveView('list')}
                       aria-label="List view"
                     >
