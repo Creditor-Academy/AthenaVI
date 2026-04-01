@@ -39,6 +39,7 @@ const TeamWorkspace = () => {
   // UI State
   const [viewMode, setViewMode] = useState('tile');
   const [sortBy, setSortBy] = useState('name_asc');
+  const [activeRootTab, setActiveRootTab] = useState('my-workspaces');
 
   // Modals Data
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
@@ -549,27 +550,48 @@ const TeamWorkspace = () => {
         {personalWorkspace && renderWorkspaceItems([personalWorkspace])}
       </WorkspaceSection>
 
-      <WorkspaceSection
-        title="My Workspaces"
-        count={myWorkspaces.length}
-        viewMode={viewMode}
-        emptyMessage="You don't have any custom workspaces yet."
-        emptyActionLabel="Create Workspace"
-        onEmptyAction={() => setIsCreateWorkspaceOpen(true)}
-        showCreateButton={true}
-        onCreateClick={() => setIsCreateWorkspaceOpen(true)}
-      >
-        {renderWorkspaceItems(myWorkspaces)}
-      </WorkspaceSection>
+      <div className="workspace-root-tabs-wrapper">
+        <div className="workspace-root-tabs">
+          <button
+            className={`workspace-root-tab ${activeRootTab === 'my-workspaces' ? 'active' : ''}`}
+            onClick={() => setActiveRootTab('my-workspaces')}
+          >
+            <MdFolderOpen size={18} /> My Workspaces
+          </button>
+          <button
+            className={`workspace-root-tab ${activeRootTab === 'shared-with-me' ? 'active' : ''}`}
+            onClick={() => setActiveRootTab('shared-with-me')}
+          >
+            <MdMail size={18} /> Shared with Me
+          </button>
+        </div>
+      </div>
 
-      <WorkspaceSection
-        title="Shared with Me"
-        count={sharedWithMe.length}
-        viewMode={viewMode}
-        emptyMessage="No workspaces have been shared with you yet."
-      >
-        {renderWorkspaceItems(sharedWithMe)}
-      </WorkspaceSection>
+      {activeRootTab === 'my-workspaces' && (
+        <WorkspaceSection
+          title="My Workspaces"
+          count={myWorkspaces.length}
+          viewMode={viewMode}
+          emptyMessage="You don't have any custom workspaces yet."
+          emptyActionLabel="Create Workspace"
+          onEmptyAction={() => setIsCreateWorkspaceOpen(true)}
+          showCreateButton={true}
+          onCreateClick={() => setIsCreateWorkspaceOpen(true)}
+        >
+          {renderWorkspaceItems(myWorkspaces)}
+        </WorkspaceSection>
+      )}
+
+      {activeRootTab === 'shared-with-me' && (
+        <WorkspaceSection
+          title="Shared with Me"
+          count={sharedWithMe.length}
+          viewMode={viewMode}
+          emptyMessage="No workspaces have been shared with you yet."
+        >
+          {renderWorkspaceItems(sharedWithMe)}
+        </WorkspaceSection>
+      )}
     </motion.div>
   );
 

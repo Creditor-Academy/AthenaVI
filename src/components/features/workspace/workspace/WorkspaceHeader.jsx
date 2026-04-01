@@ -30,18 +30,21 @@ const WorkspaceHeader = ({ viewMode, onViewChange, sortBy, onSortChange, onCreat
                 <h2>Workspaces</h2>
             </div>
             <div className="workspace-header-actions">
-                <div
-                    className="view-toggle-switch"
-                    onClick={() => onViewChange(viewMode === 'tile' ? 'list' : 'tile')}
-                    title={viewMode === 'tile' ? 'Switch to List View' : 'Switch to Tile View'}
-                >
-                    <div className={`switch-knob ${viewMode}`}></div>
-                    <div className={`switch-icon ${viewMode === 'tile' ? 'active' : ''}`}>
-                        <MdViewModule size={16} />
-                    </div>
-                    <div className={`switch-icon ${viewMode === 'list' ? 'active' : ''}`}>
-                        <MdViewList size={16} />
-                    </div>
+                <div className="view-toggle">
+                    <button
+                        className={`view-toggle-btn ${viewMode === 'tile' ? 'active' : ''}`}
+                        onClick={() => onViewChange('tile')}
+                        title="Grid View"
+                    >
+                        <MdViewModule size={18} />
+                    </button>
+                    <button
+                        className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+                        onClick={() => onViewChange('list')}
+                        title="List View"
+                    >
+                        <MdViewList size={18} />
+                    </button>
                 </div>
 
                 <div className="custom-sort-dropdown" ref={sortRef}>

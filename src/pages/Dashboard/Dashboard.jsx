@@ -7,7 +7,6 @@ import Voices from '../Voices/Voices.jsx'
 import Library from '../Library/Library.jsx'
 import Templates from '../Templates/Templates.jsx'
 import TemplateDetails from '../TemplateDetails/TemplateDetails.jsx'
-import SharedWithMe from '../SharedWithMe/SharedWithMe.jsx'
 import Workspace from '../Workspace/Workspace.jsx'
 import Profile from '../Profile/Profile.jsx'
 import Settings from '../Settings/Settings.jsx'
@@ -203,7 +202,6 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
               }}
             />
           )}
-          {section === 'shared' && <SharedWithMe />}
           {section === 'workspace' && <Workspace onCreate={onCreate} />}
           {section === 'team-workspace' && <TeamWorkspace onCreate={onCreate} />}
           {section === 'admin-portal' && <AdminPortal />}

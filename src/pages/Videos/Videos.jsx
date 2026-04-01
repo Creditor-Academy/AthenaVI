@@ -85,17 +85,17 @@ const styles = `
 .view-toggle {
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: 2px;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 999px;
   padding: 3px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .view-toggle-btn {
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   border: none;
   background: transparent;
   color: var(--text-muted);
@@ -103,7 +103,7 @@ const styles = `
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
+  border-radius: 50%;
   transition: all 0.2s ease;
   font-size: 18px;
 }
