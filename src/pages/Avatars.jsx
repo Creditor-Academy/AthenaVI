@@ -201,6 +201,9 @@ function Avatars({ onCreate }) {
           </div>
         ) : (
           <div className="hero-showcase">
+            <button className="back-to-library-btn" onClick={closeDetails}>
+              <X size={18} /> Close Persona
+            </button>
             <div className="hero-visual">
               {/* Glass Mini-Switcher: User hated the sidebar and arrows, this is the modern alternative */}
               <div className="persona-filmstrip">
@@ -239,9 +242,6 @@ function Avatars({ onCreate }) {
             </div>
 
             <div className="hero-details">
-              <button className="back-to-library-btn" onClick={closeDetails}>
-                <ArrowLeft size={16} /> Close Persona
-              </button>
               <div className="hero-glass-pan">
                 <div className="hero-top-meta">Unit {selectedAvatar.id} // v4.2</div>
                 <h1 className="hero-title">{selectedAvatar.name}</h1>
