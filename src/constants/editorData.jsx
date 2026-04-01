@@ -16,18 +16,20 @@ import {
     MdSchool,
     MdHelp
 } from 'react-icons/md'
-import avatar1 from '../assets/avatar1.png'
-import avatar2 from '../assets/avatar2.png'
-import avatar3 from '../assets/avatar3.png'
-import avatar4 from '../assets/avatar4.png'
-import avatar5 from '../assets/avatar5.png'
+import Avatarr1 from '../assets/Avatarr1.png'
+import Avatarr2 from '../assets/Avatarr2.png'
+import Avatarr3 from '../assets/Avatarr3.png'
+import Avatarr4 from '../assets/Avatarr4.png'
+import Avatarr5 from '../assets/Avatarr5.png'
+import Avatarr6 from '../assets/Avatarr6.png'
 
 export const predefinedAvatars = [
-    { id: 'avatar1', name: 'Avatar 1', image: avatar1 },
-    { id: 'avatar2', name: 'Avatar 2', image: avatar2 },
-    { id: 'avatar3', name: 'Avatar 3', image: avatar3 },
-    { id: 'avatar4', name: 'Avatar 4', image: avatar4 },
-    { id: 'avatar5', name: 'Avatar 5', image: avatar5 },
+    { id: 'avatar1', name: 'Professional Male 1', image: Avatarr1 },
+    { id: 'avatar2', name: 'Professional Male 2', image: Avatarr2 },
+    { id: 'avatar3', name: 'Professional Male 3', image: Avatarr3 },
+    { id: 'avatar4', name: 'Professional Male 4', image: Avatarr4 },
+    { id: 'avatar5', name: 'Professional Male 5', image: Avatarr5 },
+    { id: 'avatar6', name: 'Professional Male 6', image: Avatarr6 },
 ]
 
 export const predefinedMedia = [

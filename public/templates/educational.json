@@ -1,0 +1,41 @@
+{
+  "category": "Educational",
+  "scenes": [
+    {
+      "id": "edu_lesson_title",
+      "title": "Lesson Title",
+      "layoutType": "Centered",
+      "description": "Bold title for starting a new educational module.",
+      "flow": "Module → Title",
+      "duration": 5.0,
+      "tags": ["course", "learning"],
+      "clips": [
+        {
+          "type": "text",
+          "position": { "x": 960, "y": 480 },
+          "content": "MODULE 01",
+          "style": { "fontSize": 32, "fontWeight": "600", "color": "#3b82f6" }
+        },
+        {
+          "type": "text",
+          "position": { "x": 960, "y": 600 },
+          "content": "INTRODUCTION TO AI",
+          "style": { "fontSize": 72, "fontWeight": "800" }
+        }
+      ]
+    },
+    {
+      "id": "edu_comparison",
+      "title": "Topic Comparison",
+      "layoutType": "Split",
+      "description": "Compare two concepts side by side with text and icons.",
+      "flow": "Concept A vs Concept B",
+      "duration": 8.0,
+      "tags": ["analysis", "compare"],
+      "clips": [
+        { "type": "text", "position": { "x": 480, "y": 450 }, "content": "CONCEPT A", "style": { "fontSize": 48 } },
+        { "type": "text", "position": { "x": 1440, "y": 450 }, "content": "CONCEPT B", "style": { "fontSize": 48 } }
+      ]
+    }
+  ]
+}

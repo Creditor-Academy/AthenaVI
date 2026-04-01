@@ -1,26 +1,28 @@
 import { useEffect, useState } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
-import Landing from './pages/Landing.jsx'
-import Auth from './pages/Auth.jsx'
-import Dashboard from './pages/Dashboard.jsx'
-import Create from './pages/Create.jsx'
-import Products from './pages/Products.jsx'
-import AboutUsBlog from './pages/AboutUsBlog.jsx'
-import News from './pages/News.jsx'
-import Resources from './pages/Resources.jsx'
-import HelpCenter from './pages/HelpCenter.jsx'
-import PrivacyPolicy from './pages/PrivacyPolicy.jsx'
-import MarketingSuite from './pages/MarketingSuite.jsx'
-import SalesSuite from './pages/SalesSuite.jsx'
-import Ethics from './pages/Ethics.jsx'
-import Technology from './pages/Technology.jsx'
-import CustomerExperience from './pages/CustomerExperience.jsx'
-import LearningDevelopment from './pages/LearningDevelopment.jsx'
-import ResetPassword from './components/authentication/ResetPassword.jsx'
-import Settings from './pages/Settings.jsx'
-import UseCases from './pages/UseCases.jsx'
-import InviteAcceptance from './pages/InviteAcceptance.jsx'
+import Landing from './pages/Landing/Landing.jsx'
+import Auth from './pages/Auth/Auth.jsx'
+import Dashboard from './pages/Dashboard/Dashboard.jsx'
+import Create from './pages/Editor/Editor.jsx'
+import Products from './pages/Products/Products.jsx'
+import AboutUsBlog from './pages/AboutUs/AboutUs.jsx'
+import News from './pages/News/News.jsx'
+import Resources from './pages/Resources/Resources.jsx'
+import HelpCenter from './pages/HelpCenter/HelpCenter.jsx'
+import PrivacyPolicy from './pages/PrivacyPolicy/PrivacyPolicy.jsx'
+import MarketingSuite from './pages/MarketingSuite/MarketingSuite.jsx'
+import SalesSuite from './pages/SalesSuite/SalesSuite.jsx'
+import Ethics from './pages/Ethics/Ethics.jsx'
+import Technology from './pages/Technology/Technology.jsx'
+import CustomerExperience from './pages/CustomerExperience/CustomerExperience.jsx'
+import LearningDevelopment from './pages/LearningDevelopment/LearningDevelopment.jsx'
+import ResetPassword from './components/features/auth/authentication/ResetPassword.jsx'
+import Settings from './pages/Settings/Settings.jsx'
+import UseCases from './pages/UseCases/UseCases.jsx'
+import InviteAcceptance from './pages/InviteAcceptance/InviteAcceptance.jsx'
+import AIAvatarsVideos from './pages/AIAvatarsVideos/AIAvatarsVideos.jsx'
+import AIVideos from './pages/AIVideos/AIVideos.jsx'
 
 // Protected Route Component
 const ProtectedRoute = ({ children, view, setView }) => {
@@ -221,7 +223,9 @@ function App() {
       '/use-cases': 'use-cases',
       '/customer-experience': 'customer-experience',
       '/learning-development': 'learning-development',
-      '/settings': 'settings'
+      '/settings': 'settings',
+      '/ai-videos': 'ai-videos',
+      '/ai-avatars-videos': 'ai-avatars-videos'
     }
     
     // Get current path (handle both hash and regular routing)
@@ -267,7 +271,9 @@ function App() {
       'use-cases': '/use-cases',
       'customer-experience': '/customer-experience',
       'learning-development': '/learning-development',
-      'settings': '/settings'
+      'settings': '/settings',
+      'ai-videos': '/ai-videos',
+      'ai-avatars-videos': '/ai-avatars-videos'
     }
     
     const newUrl = urlMap[view] || '/'
@@ -317,7 +323,9 @@ function App() {
         '/use-cases': 'use-cases',
         '/customer-experience': 'customer-experience',
         '/learning-development': 'learning-development',
-        '/settings': 'settings'
+        '/settings': 'settings',
+        '/ai-videos': 'ai-videos',
+        '/ai-avatars-videos': 'ai-avatars-videos'
       }
       
       const currentPath = window.location.pathname
@@ -354,6 +362,30 @@ function App() {
     const page = companyPageMap[item]
     if (page) {
       setView(page)
+    }
+  }
+
+  const handleNavigateToProduct = (section) => {
+    if (section === 'AI Avatars & Videos') {
+      setView('ai-avatars-videos')
+    } else {
+      setProductSection(section)
+      setView('products')
+    }
+  }
+
+  const handleNavigateToSolution = (solution) => {
+    const solutionMap = {
+      'Marketing Suite': 'marketing-suite',
+      'Sales Solutions': 'sales-suite',
+      'Customer Experience': 'customer-experience',
+      'Learning & Development': 'learning-development',
+      'AI Videos': 'ai-videos',
+      'AI Avatars & Videos': 'ai-avatars-videos'
+    }
+    const targetView = solutionMap[solution]
+    if (targetView) {
+      setView(targetView)
     }
   }
 
@@ -468,6 +500,47 @@ function App() {
           )}
         </ProtectedRoute>
       )}
+      {view === 'ai-videos' && (
+        <>
+          <AIVideos 
+            onLoginClick={handleLoginClick}
+            onLogoClick={() => setView('landing')}
+            onNavigateToCompany={handleNavigateToCompany}
+            onNavigateToProduct={handleNavigateToProduct}
+            onNavigateToSolution={handleNavigateToSolution}
+            onNavigateToEthics={() => setView('ethics')}
+            onNavigateToTechnology={() => setView('technology')}
+            onNavigateToUseCases={() => setView('use-cases')}
+          />
+          {showAuthModal && (
+            <Auth 
+              onAuthComplete={handleAuthComplete}
+              onClose={() => setShowAuthModal(false)}
+            />
+          )}
+        </>
+      )}
+
+      {view === 'ai-avatars-videos' && (
+        <>
+          <AIAvatarsVideos 
+            onLoginClick={handleLoginClick}
+            onLogoClick={() => setView('landing')}
+            onNavigateToCompany={handleNavigateToCompany}
+            onNavigateToProduct={handleNavigateToProduct}
+            onNavigateToSolution={handleNavigateToSolution}
+            onNavigateToEthics={() => setView('ethics')}
+            onNavigateToTechnology={() => setView('technology')}
+            onNavigateToUseCases={() => setView('use-cases')}
+          />
+          {showAuthModal && (
+            <Auth 
+              onAuthComplete={handleAuthComplete}
+              onClose={() => setShowAuthModal(false)}
+            />
+          )}
+        </>
+      )}
 
       {view === 'settings' && (
         <ProtectedRoute view={view} setView={setView}>
@@ -495,6 +568,8 @@ function App() {
                 setView('customer-experience')
               } else if (solution === 'Learning & Development') {
                 setView('learning-development')
+              } else if (solution === 'AI Videos') {
+                setView('ai-videos')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -557,6 +632,8 @@ function App() {
                 setView('customer-experience')
               } else if (solution === 'Learning & Development') {
                 setView('learning-development')
+              } else if (solution === 'AI Videos') {
+                setView('ai-videos')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -591,6 +668,8 @@ function App() {
                 setView('customer-experience')
               } else if (solution === 'Learning & Development') {
                 setView('learning-development')
+              } else if (solution === 'AI Videos') {
+                setView('ai-videos')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -625,6 +704,8 @@ function App() {
                 setView('customer-experience')
               } else if (solution === 'Learning & Development') {
                 setView('learning-development')
+              } else if (solution === 'AI Videos') {
+                setView('ai-videos')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -646,21 +727,8 @@ function App() {
             onLoginClick={handleLoginClick}
             onLogoClick={() => setView('landing')}
             onNavigateToCompany={handleNavigateToCompany}
-            onNavigateToProduct={(section) => {
-              setProductSection(section)
-              setView('products')
-            }}
-            onNavigateToSolution={(solution) => {
-              if (solution === 'Marketing Suite') {
-                setView('marketing-suite')
-              } else if (solution === 'Sales Solutions') {
-                setView('sales-suite')
-              } else if (solution === 'Customer Experience') {
-                setView('customer-experience')
-              } else if (solution === 'Learning & Development') {
-                setView('learning-development')
-              }
-            }}
+            onNavigateToProduct={handleNavigateToProduct}
+            onNavigateToSolution={handleNavigateToSolution}
             onNavigateToEthics={() => setView('ethics')}
             onNavigateToTechnology={() => setView('technology')}
             onNavigateToUseCases={() => setView('use-cases')}
@@ -693,6 +761,8 @@ function App() {
                 setView('customer-experience')
               } else if (solution === 'Learning & Development') {
                 setView('learning-development')
+              } else if (solution === 'AI Videos') {
+                setView('ai-videos')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -714,21 +784,8 @@ function App() {
             onLoginClick={handleLoginClick}
             onLogoClick={() => setView('landing')}
             onNavigateToCompany={handleNavigateToCompany}
-            onNavigateToProduct={(section) => {
-              setProductSection(section)
-              setView('products')
-            }}
-            onNavigateToSolution={(solution) => {
-              if (solution === 'Marketing Suite') {
-                setView('marketing-suite')
-              } else if (solution === 'Sales Solutions') {
-                setView('sales-suite')
-              } else if (solution === 'Customer Experience') {
-                setView('customer-experience')
-              } else if (solution === 'Learning & Development') {
-                setView('learning-development')
-              }
-            }}
+            onNavigateToProduct={handleNavigateToProduct}
+            onNavigateToSolution={handleNavigateToSolution}
             onNavigateToEthics={() => setView('ethics')}
             onNavigateToTechnology={() => setView('technology')}
             onNavigateToUseCases={() => setView('use-cases')}
@@ -748,21 +805,8 @@ function App() {
             onLoginClick={handleLoginClick}
             onLogoClick={() => setView('landing')}
             onNavigateToCompany={handleNavigateToCompany}
-            onNavigateToProduct={(section) => {
-              setProductSection(section)
-              setView('products')
-            }}
-            onNavigateToSolution={(solution) => {
-              if (solution === 'Marketing Suite') {
-                setView('marketing-suite')
-              } else if (solution === 'Sales Solutions') {
-                setView('sales-suite')
-              } else if (solution === 'Customer Experience') {
-                setView('customer-experience')
-              } else if (solution === 'Learning & Development') {
-                setView('learning-development')
-              }
-            }}
+            onNavigateToProduct={handleNavigateToProduct}
+            onNavigateToSolution={handleNavigateToSolution}
             onNavigateToTechnology={() => setView('technology')}
             onNavigateToUseCases={() => setView('use-cases')}
           />
@@ -794,6 +838,8 @@ function App() {
                 setView('customer-experience')
               } else if (solution === 'Learning & Development') {
                 setView('learning-development')
+              } else if (solution === 'AI Videos') {
+                setView('ai-videos')
               }
             }}
             onNavigateToEthics={() => setView('ethics')}
@@ -815,21 +861,8 @@ function App() {
             onLoginClick={handleLoginClick}
             onLogoClick={() => setView('landing')}
             onNavigateToCompany={handleNavigateToCompany}
-            onNavigateToProduct={(section) => {
-              setProductSection(section)
-              setView('products')
-            }}
-            onNavigateToSolution={(solution) => {
-              if (solution === 'Marketing Suite') {
-                setView('marketing-suite')
-              } else if (solution === 'Sales Solutions') {
-                setView('sales-suite')
-              } else if (solution === 'Customer Experience') {
-                setView('customer-experience')
-              } else if (solution === 'Learning & Development') {
-                setView('learning-development')
-              }
-            }}
+            onNavigateToProduct={handleNavigateToProduct}
+            onNavigateToSolution={handleNavigateToSolution}
             onNavigateToEthics={() => setView('ethics')}
             onNavigateToTechnology={() => setView('technology')}
             onNavigateToUseCases={() => setView('use-cases')}
@@ -849,21 +882,8 @@ function App() {
             onLoginClick={handleLoginClick}
             onLogoClick={() => setView('landing')}
             onNavigateToCompany={handleNavigateToCompany}
-            onNavigateToProduct={(section) => {
-              setProductSection(section)
-              setView('products')
-            }}
-            onNavigateToSolution={(solution) => {
-              if (solution === 'Marketing Suite') {
-                setView('marketing-suite')
-              } else if (solution === 'Sales Solutions') {
-                setView('sales-suite')
-              } else if (solution === 'Customer Experience') {
-                setView('customer-experience')
-              } else if (solution === 'Learning & Development') {
-                setView('learning-development')
-              }
-            }}
+            onNavigateToProduct={handleNavigateToProduct}
+            onNavigateToSolution={handleNavigateToSolution}
             onNavigateToEthics={() => setView('ethics')}
             onNavigateToTechnology={() => setView('technology')}
             onNavigateToUseCases={() => setView('use-cases')}
@@ -883,21 +903,8 @@ function App() {
             onLoginClick={handleLoginClick}
             onLogoClick={() => setView('landing')}
             onNavigateToCompany={handleNavigateToCompany}
-            onNavigateToProduct={(section) => {
-              setProductSection(section)
-              setView('products')
-            }}
-            onNavigateToSolution={(solution) => {
-              if (solution === 'Marketing Suite') {
-                setView('marketing-suite')
-              } else if (solution === 'Sales Solutions') {
-                setView('sales-suite')
-              } else if (solution === 'Customer Experience') {
-                setView('customer-experience')
-              } else if (solution === 'Learning & Development') {
-                setView('learning-development')
-              }
-            }}
+            onNavigateToProduct={handleNavigateToProduct}
+            onNavigateToSolution={handleNavigateToSolution}
             onNavigateToEthics={() => setView('ethics')}
             onNavigateToTechnology={() => setView('technology')}
             onNavigateToUseCases={() => setView('use-cases')}
@@ -917,21 +924,8 @@ function App() {
             onLoginClick={handleLoginClick}
             onLogoClick={() => setView('landing')}
             onNavigateToCompany={handleNavigateToCompany}
-            onNavigateToProduct={(section) => {
-              setProductSection(section)
-              setView('products')
-            }}
-            onNavigateToSolution={(solution) => {
-              if (solution === 'Marketing Suite') {
-                setView('marketing-suite')
-              } else if (solution === 'Sales Solutions') {
-                setView('sales-suite')
-              } else if (solution === 'Customer Experience') {
-                setView('customer-experience')
-              } else if (solution === 'Learning & Development') {
-                setView('learning-development')
-              }
-            }}
+            onNavigateToProduct={handleNavigateToProduct}
+            onNavigateToSolution={handleNavigateToSolution}
             onNavigateToEthics={() => setView('ethics')}
             onNavigateToTechnology={() => setView('technology')}
             onNavigateToUseCases={() => setView('use-cases')}
@@ -945,25 +939,12 @@ function App() {
         </>
       )}
 
-      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development'].includes(view) && (
+      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings'].includes(view) && (
         <>
           <Landing 
             onLoginClick={handleLoginClick}
-            onNavigateToProduct={(section) => {
-              setProductSection(section)
-              setView('products')
-            }}
-            onNavigateToSolution={(solution) => {
-              if (solution === 'Marketing Suite') {
-                setView('marketing-suite')
-              } else if (solution === 'Sales Solutions') {
-                setView('sales-suite')
-              } else if (solution === 'Customer Experience') {
-                setView('customer-experience')
-              } else if (solution === 'Learning & Development') {
-                setView('learning-development')
-              }
-            }}
+            onNavigateToProduct={handleNavigateToProduct}
+            onNavigateToSolution={handleNavigateToSolution}
             onNavigateToEthics={() => setView('ethics')}
             onNavigateToTechnology={() => setView('technology')}
             onNavigateToUseCases={() => setView('use-cases')}

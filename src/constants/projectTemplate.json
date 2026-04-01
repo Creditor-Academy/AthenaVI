@@ -1,0 +1,129 @@
+{
+  "project": {
+    "title": "Athena Professional Layouts",
+    "resolution": { "width": 1920, "height": 1080 },
+    "scenes": [
+      {
+        "id": "lt_001",
+        "title": "Hero Scene",
+        "category": "Marketing",
+        "duration": 8.0,
+        "clips": [
+          {
+            "id": "lt_001_title",
+            "type": "text",
+            "position": { "x": 640, "y": 540 },
+            "content": "INSERT MAIN TITLE HERE",
+            "style": { "fontSize": 64, "fontWeight": "800", "color": "#000000", "textAlign": "left", "width": "800px" }
+          },
+          {
+            "id": "lt_001_avatar",
+            "type": "image",
+            "label": "Avatar Slot",
+            "position": { "x": 1400, "y": 540 },
+            "size": { "width": 600, "height": 800 },
+            "src": null
+          }
+        ]
+      },
+      {
+        "id": "lt_002",
+        "title": "Feature Split",
+        "category": "Corporate",
+        "duration": 8.0,
+        "clips": [
+          {
+            "id": "lt_002_media",
+            "type": "image",
+            "label": "Media Showcase",
+            "position": { "x": 500, "y": 540 },
+            "size": { "width": 800, "height": 600 },
+            "src": null
+          },
+          {
+            "id": "lt_002_text",
+            "type": "text",
+            "position": { "x": 1300, "y": 540 },
+            "content": "FEATURE HEADLINE\n\n- Benefit One\n- Benefit Two\n- Benefit Three",
+            "style": { "fontSize": 42, "fontWeight": "700", "color": "#000000", "textAlign": "left", "width": "600px", "lineHeight": "1.6" }
+          }
+        ]
+      },
+      {
+        "id": "lt_003",
+        "title": "Centered Focus",
+        "category": "Social",
+        "duration": 8.0,
+        "clips": [
+          {
+            "id": "lt_003_title",
+            "type": "text",
+            "position": { "x": 960, "y": 300 },
+            "content": "BIG ANNOUNCEMENT",
+            "style": { "fontSize": 72, "fontWeight": "900", "color": "#000000", "textAlign": "center" }
+          },
+          {
+            "id": "lt_003_media",
+            "type": "image",
+            "label": "Center Image/Video",
+            "position": { "x": 960, "y": 640 },
+            "size": { "width": 1000, "height": 500 },
+            "src": null
+          }
+        ]
+      },
+      {
+        "id": "lt_004",
+        "title": "Three Column",
+        "category": "Corporate",
+        "duration": 10.0,
+        "clips": [
+          {
+            "id": "lt_004_c1",
+            "type": "text",
+            "position": { "x": 480, "y": 540 },
+            "content": "01\nSTEP ONE",
+            "style": { "fontSize": 32, "color": "#000000", "textAlign": "center", "border": "2px dashed #ccc", "padding": "40px", "borderRadius": "20px" }
+          },
+          {
+            "id": "lt_004_c2",
+            "type": "text",
+            "position": { "x": 960, "y": 540 },
+            "content": "02\nSTEP TWO",
+            "style": { "fontSize": 32, "color": "#000000", "textAlign": "center", "border": "2px dashed #ccc", "padding": "40px", "borderRadius": "20px" }
+          },
+          {
+            "id": "lt_004_c3",
+            "type": "text",
+            "position": { "x": 1440, "y": 540 },
+            "content": "03\nSTEP THREE",
+            "style": { "fontSize": 32, "color": "#000000", "textAlign": "center", "border": "2px dashed #ccc", "padding": "40px", "borderRadius": "20px" }
+          }
+        ]
+      },
+      {
+        "id": "lt_005",
+        "title": "Clean Outro",
+        "category": "Marketing",
+        "duration": 6.0,
+        "clips": [
+          {
+            "id": "lt_005_logo",
+            "type": "image",
+            "label": "Final Logo",
+            "position": { "x": 960, "y": 450 },
+            "size": { "width": 400, "height": 400 },
+            "src": null
+          },
+          {
+            "id": "lt_005_text",
+            "type": "text",
+            "position": { "x": 960, "y": 750 },
+            "content": "THANK YOU\nFOR WATCHING",
+            "style": { "fontSize": 56, "fontWeight": "800", "color": "#000000", "textAlign": "center" }
+          }
+        ]
+      }
+    ]
+  }
+}

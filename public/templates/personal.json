@@ -1,0 +1,32 @@
+{
+  "category": "Personal",
+  "scenes": [
+    {
+      "id": "pers_intro",
+      "title": "Personal Introduction",
+      "layoutType": "Split",
+      "description": "Perfect for introduce yourself or your personal brand.",
+      "flow": "Avatar → Intro",
+      "duration": 5.0,
+      "tags": ["personal", "identity"],
+      "clips": [
+        { "type": "image", "label": "Self Portrait", "position": { "x": 480, "y": 540 }, "size": { "width": 600, "height": 800 } },
+        { "type": "text", "position": { "x": 1200, "y": 540 }, "content": "HI, I AM MONCY\nAI CREATOR", "style": { "fontSize": 64, "fontWeight": "800" } }
+      ]
+    },
+    {
+      "id": "pers_story_timeline",
+      "title": "Story Timeline",
+      "layoutType": "Grid",
+      "description": "Showcase your journey with 3 major milestones.",
+      "flow": "2020 → 2022 → 2024",
+      "duration": 12.0,
+      "tags": ["journey", "about"],
+      "clips": [
+        { "type": "text", "position": { "x": 480, "y": 540 }, "content": "2020: THE START" },
+        { "type": "text", "position": { "x": 960, "y": 540 }, "content": "2022: GROWTH" },
+        { "type": "text", "position": { "x": 1440, "y": 540 }, "content": "2024: SUCCESS" }
+      ]
+    }
+  ]
+}
