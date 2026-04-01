@@ -1,0 +1,61 @@
+{
+  "category": "Marketing",
+  "scenes": [
+    {
+      "id": "mkt_hero_left",
+      "title": "Marketing Hero – Left Content",
+      "layoutType": "Hero",
+      "description": "Perfect for product promotions with strong headline and avatar.",
+      "flow": "Hero → CTA",
+      "duration": 8.0,
+      "tags": ["ads", "promo", "conversion"],
+      "clips": [
+        {
+          "type": "text",
+          "position": { "x": 640, "y": 540 },
+          "content": "INSERT MAIN TITLE HERE",
+          "style": {
+            "fontSize": 64,
+            "fontWeight": "800",
+            "color": "#000000",
+            "textAlign": "left",
+            "width": "800px"
+          }
+        },
+        {
+          "type": "image",
+          "label": "Avatar Slot",
+          "position": { "x": 1400, "y": 540 },
+          "size": { "width": 600, "height": 800 },
+          "src": null
+        }
+      ]
+    },
+    {
+      "id": "mkt_outro",
+      "title": "Clean Outro",
+      "layoutType": "Centered",
+      "description": "End your video with branding and closing message.",
+      "flow": "Logo → Message",
+      "duration": 6.0,
+      "tags": ["branding", "end"],
+      "clips": [
+        {
+          "type": "image",
+          "label": "Logo",
+          "position": { "x": 960, "y": 450 },
+          "size": { "width": 400, "height": 400 }
+        },
+        {
+          "type": "text",
+          "position": { "x": 960, "y": 750 },
+          "content": "THANK YOU FOR WATCHING",
+          "style": {
+            "fontSize": 56,
+            "textAlign": "center"
+          }
+        }
+      ]
+    }
+  ]
+}

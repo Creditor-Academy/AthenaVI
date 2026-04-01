@@ -1,0 +1,35 @@
+{
+  "category": "Social",
+  "scenes": [
+    {
+      "id": "soc_reel_center",
+      "title": "Social Reel Center",
+      "layoutType": "Centered",
+      "description": "High-impact center text for reels or TikTok style content.",
+      "flow": "Engagement → Title",
+      "duration": 5.0,
+      "tags": ["reels", "tiktok", "shorts"],
+      "clips": [
+        {
+          "type": "text",
+          "position": { "x": 540, "y": 960 },
+          "content": "SOCIAL HOOK",
+          "style": { "fontSize": 80, "fontWeight": "900", "textAlign": "center" }
+        }
+      ]
+    },
+    {
+      "id": "soc_quote_card",
+      "title": "Minimal Quote Card",
+      "layoutType": "Centered",
+      "description": "Clean and elegant quote format for personal branding.",
+      "flow": "Message → Author",
+      "duration": 10.0,
+      "tags": ["quote", "minimal"],
+      "clips": [
+        { "type": "text", "position": { "x": 640, "y": 480 }, "content": "\"IF YOU CAN DREAM IT,\nYOU CAN DO IT.\"", "style": { "fontSize": 48, "fontStyle": "italic" } },
+        { "type": "text", "position": { "x": 640, "y": 600 }, "content": "- WALT DISNEY", "style": { "fontSize": 24, "fontWeight": "600" } }
+      ]
+    }
+  ]
+}

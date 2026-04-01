@@ -2,7 +2,7 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { MdPlayArrow, MdArrowForward } from 'react-icons/md'
 import bgHero from '../assets/AvtarHero.png'
-import groupAvtar from '../assets/GroupAvtar.png'
+import groupAvtar from '../assets/GroupAvatar.png'
 
 const styles = `
 .avatar-hero-section {
@@ -33,35 +33,6 @@ const styles = `
   transform: scale(1.1);
 }
 
-.hero-bg-mesh {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-  pointer-events: none;
-}
-
-.mesh-1 {
-  position: absolute;
-  top: -10%;
-  right: -5%;
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
-  filter: blur(80px);
-}
-
-.mesh-2 {
-  position: absolute;
-  bottom: -10%;
-  left: -5%;
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%);
-  filter: blur(80px);
-}
 
 .hero-grid {
   position: relative;
@@ -176,15 +147,13 @@ const styles = `
   width: 100%;
   max-width: 800px;
   z-index: 10;
-  filter: drop-shadow(0 30px 60px rgba(0,0,0,0.5));
   margin-top: -60px;
 }
 
 .group-image-visual img {
   width: 100%;
   height: auto;
-  border-radius: 40px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+
 }
 
 @media (max-width: 1200px) {
