@@ -1,0 +1,41 @@
+{
+  "category": "Corporate",
+  "scenes": [
+    {
+      "id": "corp_feature_split",
+      "title": "Feature Split",
+      "layoutType": "Split",
+      "description": "Showcase product features with text and visuals.",
+      "flow": "Visual → Features",
+      "duration": 8.0,
+      "tags": ["business", "demo"],
+      "clips": [
+        {
+          "type": "image",
+          "position": { "x": 500, "y": 540 },
+          "size": { "width": 800, "height": 600 }
+        },
+        {
+          "type": "text",
+          "position": { "x": 1300, "y": 540 },
+          "content": "FEATURE HEADLINE\n- Benefit One\n- Benefit Two",
+          "style": { "fontSize": 42, "width": "600px" }
+        }
+      ]
+    },
+    {
+      "id": "corp_three_column",
+      "title": "Three Step Process",
+      "layoutType": "Grid",
+      "description": "Explain steps or workflow clearly.",
+      "flow": "Step 1 → Step 2 → Step 3",
+      "duration": 10.0,
+      "tags": ["process", "workflow"],
+      "clips": [
+        { "type": "text", "position": { "x": 480, "y": 540 }, "content": "01 STEP ONE" },
+        { "type": "text", "position": { "x": 960, "y": 540 }, "content": "02 STEP TWO" },
+        { "type": "text", "position": { "x": 1440, "y": 540 }, "content": "03 STEP THREE" }
+      ]
+    }
+  ]
+}
