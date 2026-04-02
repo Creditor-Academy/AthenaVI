@@ -5,6 +5,8 @@ import {
   MdLayers, MdTimer, MdLabel, MdPlayCircleOutline
 } from 'react-icons/md'
 import StaticPreview from './StaticPreview'
+import TemplateGrid from '../../../TemplateGrid'
+import useTemplates from '../../../../hooks/useTemplates'
 import { predefinedAvatars } from '../../../../constants/editorData'
 
 const placeholderAvatar = predefinedAvatars[0].image;
@@ -50,38 +52,8 @@ const TemplateModal = ({ showTemplateModal, setShowTemplateModal, handleAddTempl
   const [searchQuery, setSearchQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState('All')
   const [activeLayout, setActiveLayout] = useState('All Layouts')
-  const [templates, setTemplates] = useState([])
-  const [loading, setLoading] = useState(false)
-
-  // Dynamic Fetching
-  useEffect(() => {
-    if (!showTemplateModal) return;
-
-    const fetchTemplates = async () => {
-      setLoading(true);
-      try {
-        if (activeCategory === 'All') {
-          const files = ['marketing', 'educational', 'corporate', 'social', 'personal'];
-          const responses = await Promise.all(
-            files.map(file => fetch(`/templates/${file}.json`).then(res => res.json()))
-          );
-          const allScenes = responses.flatMap(data => data.scenes);
-          setTemplates(allScenes);
-        } else {
-          const response = await fetch(`/templates/${activeCategory}.json`);
-          const data = await response.json();
-          setTemplates(data.scenes || []);
-        }
-      } catch (error) {
-        console.error("Error loading templates:", error);
-        setTemplates([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTemplates();
-  }, [activeCategory, showTemplateModal]);
+  
+  const templates = useTemplates(activeCategory)
 
   // Combined Filtering Logic
   const filteredTemplates = useMemo(() => {
@@ -161,63 +133,10 @@ const TemplateModal = ({ showTemplateModal, setShowTemplateModal, handleAddTempl
 
           {/* Templates Grid Area */}
           <div className="templates-grid-area premium-scrollbar">
-            {loading ? (
-              <div className="loading-state">
-                <div className="spinner"></div>
-                <span>Loading templates...</span>
-              </div>
-            ) : filteredTemplates.length > 0 ? (
-              <div className="templates-grid">
-                {filteredTemplates.map((template, index) => (
-                  <div
-                    key={template.id}
-                    className="template-card-modern"
-                    onClick={() => handleAddTemplateScene(template)}
-                  >
-                    <div className="preview-wrap">
-                      <StaticPreview scene={{
-                        layout: template.layoutType?.toLowerCase() || 'split',
-                        titleText: template.title,
-                        avatar: placeholderAvatar,
-                        clips: template.clips,
-                        background: template.background || '#f8fafc'
-                      }} />
-                      <div className="hover-overlay">
-                        <button className="use-btn">
-                          <MdPlayCircleOutline /> Use Template
-                        </button>
-                      </div>
-                      <div className="duration-tag">
-                        <MdTimer /> {template.duration}s
-                      </div>
-                    </div>
-
-                    <div className="card-info">
-                      <div className="title-row">
-                        <h4>{template.title}</h4>
-                        <span className="layout-badge">{template.layoutType}</span>
-                      </div>
-                      <p className="description">{template.description}</p>
-                      <div className="flow-info">
-                        <MdLayers className="flow-icon" />
-                        <span>{template.flow}</span>
-                      </div>
-                      <div className="tags-row">
-                        {template.tags?.map(tag => (
-                          <span key={tag} className="tag">#{tag}</span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="empty-state">
-                <MdSearch size={64} />
-                <h3>No matching templates</h3>
-                <p>Try adjusting your search or filters.</p>
-              </div>
-            )}
+            <TemplateGrid 
+              templates={filteredTemplates} 
+              onSelect={handleAddTemplateScene} 
+            />
           </div>
         </main>
       </div>
@@ -425,37 +344,33 @@ const TemplateModal = ({ showTemplateModal, setShowTemplateModal, handleAddTempl
 
         .template-card-modern {
           background: #ffffff;
-          border-radius: 16px;
+          border-radius: 12px;
           overflow: hidden;
-          border: 1px solid #eceff1;
+          border: 1px solid #e2e8f0;
           cursor: pointer;
-          transition: transform 0.2s, box-shadow 0.2s;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .template-card-modern:hover {
           transform: translateY(-4px);
-          box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+          box-shadow: 0 12px 24px -8px rgba(0,0,0,0.1);
+          border-color: #cbd5e1;
         }
 
         .preview-wrap {
           position: relative;
           aspect-ratio: 16/9;
-          background: #f1f5f9;
+          background: #f8fafc;
         }
 
         .hover-overlay {
           position: absolute;
           inset: 0;
-          background: rgba(15, 23, 42, 0.6);
-          backdrop-filter: blur(4px);
           display: flex;
-          flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 10px;
           opacity: 0;
-          transition: opacity 0.3s ease;
-          border-radius: 16px;
+          transition: opacity 0.2s ease;
           z-index: 10;
         }
 
@@ -464,69 +379,64 @@ const TemplateModal = ({ showTemplateModal, setShowTemplateModal, handleAddTempl
         .use-btn {
           background: #3b82f6;
           color: white;
-          padding: 12px 24px;
-          border-radius: 100px;
-          border: 1.5px solid rgba(255, 255, 255, 0.4);
-          font-weight: 700;
-          font-size: 15px;
-          display: flex;
-          align-items: center;
-          gap: 10px;
+          padding: 8px 16px;
+          border-radius: 8px;
+          border: none;
+          font-weight: 600;
+          font-size: 13px;
           cursor: pointer;
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-          backdrop-filter: blur(4px);
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+          transform: translateY(4px);
+          transition: all 0.2s ease;
         }
-        .use-btn .MdPlayCircleOutline {
-          font-size: 20px;
+
+        .preview-wrap:hover .use-btn {
+          transform: translateY(0);
         }
 
         .duration-tag {
           position: absolute;
-          bottom: 12px;
-          right: 12px;
-          background: rgba(0,0,0,0.6);
-          color: white;
-          padding: 2px 8px;
-          border-radius: 4px;
-          font-size: 11px;
-          display: flex;
-          align-items: center;
-          gap: 4px;
-        }
-
-        .card-info { padding: 16px; }
-
-        .title-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
-        .title-row h4 { margin: 0; font-size: 15px; color: #1e293b; line-height: 1.4; }
-        
-        .layout-badge {
-          background: #eff6ff;
-          color: #3b82f6;
-          padding: 2px 8px;
-          border-radius: 4px;
+          top: 8px;
+          right: 8px;
+          background: rgba(255, 255, 255, 0.9);
+          color: #64748b;
+          padding: 2px 6px;
+          border-radius: 6px;
           font-size: 10px;
           font-weight: 700;
+          backdrop-filter: blur(4px);
+          border: 1px solid #e2e8f0;
+        }
+
+        .card-info { padding: 12px; }
+
+        .title-row { 
+          display: flex; 
+          justify-content: space-between; 
+          align-items: center; 
+          gap: 8px; 
+        }
+        
+        .title-row h4 { 
+          margin: 0; 
+          font-size: 14px; 
+          color: #0f172a; 
+          font-weight: 500;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          flex: 1;
+        }
+        
+        .layout-badge {
+          background: #f1f5f9;
+          color: #64748b;
+          padding: 2px 6px;
+          border-radius: 6px;
+          font-size: 10px;
+          font-weight: 600;
           text-transform: uppercase;
         }
-
-        .description { font-size: 13px; color: #64748b; margin: 0 0 12px; line-height: 1.5; height: 3.0em; overflow: hidden; }
-
-        .flow-info {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          font-size: 12px;
-          color: #1e40af;
-          background: #ebf0fe;
-          padding: 6px 10px;
-          border-radius: 6px;
-          margin-bottom: 12px;
-          font-weight: 500;
-        }
-
-        .tags-row { display: flex; flex-wrap: wrap; gap: 6px; }
-        .tag { font-size: 11px; color: #94a3b8; font-weight: 500; }
 
         .loading-state, .empty-state {
           height: 100%;
