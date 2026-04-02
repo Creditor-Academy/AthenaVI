@@ -14,16 +14,39 @@ import PreviewModal from '../../components/features/editor/editor/PreviewModal'
 import avatar1 from '../../assets/Avatarr1.png'
 import projectTemplate from '../../constants/projectTemplate.json'
 
-function Create({ onBack }) {
+function Create({ onBack, initialConfig = null }) {
   // Debug: Log when component mounts
   useEffect(() => {
     console.log('Create component mounted')
   }, [])
 
-  const [project, setProject] = useState({
-    ...projectTemplate.project,
-    scenes: [],
-    updatedAt: new Date().toISOString()
+  const [project, setProject] = useState(() => {
+    const pageSizeToResolution = {
+      landscape: { width: 1920, height: 1080 },
+      portrait: { width: 1080, height: 1920 },
+      square: { width: 1080, height: 1080 }
+    }
+
+    const resolvedResolution = pageSizeToResolution[initialConfig?.pageSize] || projectTemplate.project.resolution
+    const resolvedTitle = initialConfig?.name?.trim() || projectTemplate.project.title
+
+    return {
+      ...projectTemplate.project,
+      title: resolvedTitle,
+      resolution: resolvedResolution,
+      scenes: [],
+      updatedAt: new Date().toISOString(),
+      createConfig: initialConfig
+        ? {
+            template: initialConfig.template || null,
+            pageSize: initialConfig.pageSize || 'landscape',
+            workspace: initialConfig.workspace || '',
+            folder: initialConfig.folder || '',
+            tags: initialConfig.tags || [],
+            name: initialConfig.name || resolvedTitle
+          }
+        : null
+    }
   })
   const [activeSceneId, setActiveSceneId] = useState(null)
   const [selectedTool, setSelectedTool] = useState(null)

@@ -87,20 +87,16 @@ function Home({ onCreate, onShowAIAssistant }) {
                 </div>
             </div>
 
-            <div className="stats-container-sleek">
+            <div className="home-billing-stats">
                 {stats.map((stat, i) => (
-                    <div key={i} className="stat-card-sleek">
-                        <div className="stat-card-sleek-header">
-                            <span className="stat-sleek-label">{stat.label}</span>
-                            <span className="stat-sleek-icon">{stat.icon}</span>
+                    <div key={i} className="home-billing-stat-card">
+                        <div className="home-billing-stat-top">
+                            <span className="home-billing-stat-label">{stat.label}</span>
+                            <span className="home-billing-stat-icon">{stat.icon}</span>
                         </div>
-                        <div className="stat-sleek-body">
-                            <span className="stat-sleek-value">{stat.value}</span>
-                        </div>
-                        <div className="stat-sleek-footer">
-                            <span className={`stat-sleek-trend ${stat.trendDir}`}>
+                        <div className="home-billing-stat-value">{stat.value}</div>
+                        <div className={`home-billing-stat-trend ${stat.trendDir}`}>
                                 {stat.trendIcon} {stat.trend}
-                            </span>
                         </div>
                     </div>
                 ))}

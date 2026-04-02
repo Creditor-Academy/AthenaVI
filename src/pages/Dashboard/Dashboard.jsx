@@ -7,7 +7,6 @@ import Voices from '../Voices/Voices.jsx'
 import Library from '../Library/Library.jsx'
 import Templates from '../Templates/Templates.jsx'
 import TemplateDetails from '../TemplateDetails/TemplateDetails.jsx'
-import SharedWithMe from '../SharedWithMe/SharedWithMe.jsx'
 import Workspace from '../Workspace/Workspace.jsx'
 import Profile from '../Profile/Profile.jsx'
 import Settings from '../Settings/Settings.jsx'
@@ -21,6 +20,7 @@ import VoiceCreatePanel from '../../components/ui/VoiceCreatePanel/VoiceCreatePa
 import AIVideoAssistant from '../../components/ui/AIVideoAssistant/AIVideoAssistant.jsx'
 import ImportPowerPointModal from '../../components/ui/ImportPowerPointModal/ImportPowerPointModal.jsx'
 import TranslateVideoModal from '../../components/ui/TranslateVideoModal/TranslateVideoModal.jsx'
+import CreateVideoModal from '../../components/ui/CreateVideoModal/CreateVideoModal.jsx'
 import { X } from 'lucide-react'
 import userService from '../../services/userService.js'
 import { useAuth } from '../../contexts/AuthContext'
@@ -45,6 +45,7 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
   const [showVoicePanel, setShowVoicePanel] = useState(false)
   const [selectedVoice, setSelectedVoice] = useState(null)
   const [showAIAssistant, setShowAIAssistant] = useState(false)
+  const [showCreateVideoModal, setShowCreateVideoModal] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
   const [showTranslateModal, setShowTranslateModal] = useState(false)
   const [showProcessingModal, setShowProcessingModal] = useState(false)
@@ -75,6 +76,17 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
       setPendingSection(null)
     }, 1200)
   }
+
+  const handleOpenCreateVideoModal = useCallback(() => {
+    setShowCreateVideoModal(true)
+  }, [])
+
+  const handleCreateVideo = useCallback((config) => {
+    setShowCreateVideoModal(false)
+    if (onCreate) {
+      onCreate(config)
+    }
+  }, [onCreate])
 
   // Update URL when section changes
   useEffect(() => {
@@ -158,7 +170,7 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
           setSidebarMobileOpen={setSidebarMobileOpen}
           topbarMobileOpen={topbarMobileOpen}
           setTopbarMobileOpen={setTopbarMobileOpen}
-          onCreate={onCreate}
+          onCreate={handleOpenCreateVideoModal}
           notificationCount={notificationCount}
           cartCount={cartCount}
           goToSection={handleNavigationWithModal}
@@ -171,12 +183,12 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
         >
           {section === 'home' && (
             <Home 
-              onCreate={onCreate}
+              onCreate={handleOpenCreateVideoModal}
               onShowAIAssistant={() => setShowAIAssistant(true)}
             />
           )}
-          {section === 'videos' && <Videos onCreate={onCreate} />}
-          {section === 'avatars' && <Avatars onCreate={onCreate} goToSection={goToSection} />}
+          {section === 'videos' && <Videos onCreate={handleOpenCreateVideoModal} />}
+          {section === 'avatars' && <Avatars onCreate={handleOpenCreateVideoModal} goToSection={goToSection} />}
           {section === 'trash' && <Trash />}
           {section === 'voices' && (
             <Voices
@@ -198,14 +210,12 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
               template={selectedTemplateForDetails} 
               onBack={() => goToSection('templates')}
               onUse={() => {
-                // Future implementation for using template
-                onCreate()
+                handleOpenCreateVideoModal()
               }}
             />
           )}
-          {section === 'shared' && <SharedWithMe />}
-          {section === 'workspace' && <Workspace onCreate={onCreate} />}
-          {section === 'team-workspace' && <TeamWorkspace onCreate={onCreate} />}
+          {section === 'workspace' && <Workspace onCreate={handleOpenCreateVideoModal} />}
+          {section === 'team-workspace' && <TeamWorkspace onCreate={handleOpenCreateVideoModal} />}
           {section === 'admin-portal' && <AdminPortal />}
           {section === 'brandkits' && <BrandKits />}
           {section === 'credits' && <Settings onBack={() => goToSection('home')} initialTab="billing" />}
@@ -226,8 +236,19 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
           onClose={() => setShowAIAssistant(false)}
           onCreate={() => {
             setShowAIAssistant(false);
-            if (onCreate) onCreate();
+            handleOpenCreateVideoModal();
           }}
+        />
+      )}
+      {showCreateVideoModal && (
+        <CreateVideoModal
+          isOpen={showCreateVideoModal}
+          onClose={() => setShowCreateVideoModal(false)}
+          onImportPowerPoint={() => {
+            setShowCreateVideoModal(false)
+            setShowImportModal(true)
+          }}
+          onCreateVideo={handleCreateVideo}
         />
       )}
       {showImportModal && <ImportPowerPointModal onClose={() => setShowImportModal(false)} />}

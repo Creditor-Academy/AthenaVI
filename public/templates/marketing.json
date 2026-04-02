@@ -2,59 +2,141 @@
   "category": "Marketing",
   "scenes": [
     {
-      "id": "mkt_hero_left",
-      "title": "Marketing Hero – Left Content",
+      "id": "mkt_hero_1",
+      "title": "Main Hero - Left Text",
       "layoutType": "Hero",
-      "description": "Perfect for product promotions with strong headline and avatar.",
-      "flow": "Hero → CTA",
-      "duration": 8.0,
-      "tags": ["ads", "promo", "conversion"],
+      "description": "Clean left-aligned headline with a prominent 3D avatar on the right.",
+      "flow": "Intro → Hook",
+      "duration": 8,
+      "tags": ["hero", "intro", "3d"],
       "clips": [
-        {
-          "type": "text",
-          "position": { "x": 640, "y": 540 },
-          "content": "INSERT MAIN TITLE HERE",
-          "style": {
-            "fontSize": 64,
-            "fontWeight": "800",
-            "color": "#000000",
-            "textAlign": "left",
-            "width": "800px"
-          }
-        },
-        {
-          "type": "image",
-          "label": "Avatar Slot",
-          "position": { "x": 1400, "y": 540 },
-          "size": { "width": 600, "height": 800 },
-          "src": null
-        }
+        { "id": "t1", "type": "text", "position": { "x": 600, "y": 500 }, "content": "YOUR NEXT BIG IDEA STARTS HERE", "style": { "fontSize": 80, "fontWeight": "900", "textAlign": "left", "width": "900px" } },
+        { "id": "t2", "type": "text", "position": { "x": 600, "y": 680 }, "content": "The ultimate platform for AI video generation.", "style": { "fontSize": 32, "fontWeight": "500", "textAlign": "left", "width": "800px", "color": "#64748b" } },
+        { "id": "a1", "type": "avatar", "label": "Avatar", "position": { "x": 1450, "y": 540 }, "size": { "width": 700, "height": 900 } }
       ]
     },
     {
-      "id": "mkt_outro",
-      "title": "Clean Outro",
-      "layoutType": "Centered",
-      "description": "End your video with branding and closing message.",
-      "flow": "Logo → Message",
-      "duration": 6.0,
-      "tags": ["branding", "end"],
+      "id": "mkt_hero_2",
+      "title": "Marketing Hero - Right Text",
+      "layoutType": "Hero",
+      "description": "Sophisticated layout with avatar on the left and bold sales copy on the right.",
+      "flow": "Intro → Body",
+      "duration": 8,
+      "tags": ["sales", "focus"],
       "clips": [
-        {
-          "type": "image",
-          "label": "Logo",
-          "position": { "x": 960, "y": 450 },
-          "size": { "width": 400, "height": 400 }
-        },
-        {
-          "type": "text",
-          "position": { "x": 960, "y": 750 },
-          "content": "THANK YOU FOR WATCHING",
-          "style": {
-            "fontSize": 56,
-            "textAlign": "center"
-          }
-        }
+        { "id": "t1", "type": "text", "position": { "x": 1300, "y": 500 }, "content": "TRANSFORM YOUR WORKFLOW", "style": { "fontSize": 80, "fontWeight": "900", "textAlign": "left", "width": "900px" } },
+        { "id": "a1", "type": "avatar", "label": "Avatar", "position": { "x": 500, "y": 540 }, "size": { "width": 700, "height": 900 } }
+      ]
+    },
+    {
+      "id": "mkt_hero_3",
+      "title": "Centered Impact Hero",
+      "layoutType": "Hero",
+      "description": "High-impact centered headline with background visuals.",
+      "flow": "Hook → Action",
+      "duration": 6,
+      "tags": ["bold", "center"],
+      "clips": [
+        { "id": "t1", "type": "text", "position": { "x": 960, "y": 540 }, "content": "REDEFINING CREATIVITY", "style": { "fontSize": 120, "fontWeight": "900", "textAlign": "center", "width": "1600px" } }
+      ]
+    },
+    {
+      "id": "mkt_hero_4",
+      "title": "Avatar Group Hero",
+      "layoutType": "Hero",
+      "description": "Layout featuring multiple avatar placeholders for team or testimonial intros.",
+      "flow": "Team → Intro",
+      "duration": 7,
+      "tags": ["team", "community"],
+      "clips": [
+        { "id": "a1", "type": "avatar", "position": { "x": 700, "y": 540 }, "size": { "width": 300, "height": 300 } },
+        { "id": "a2", "type": "avatar", "position": { "x": 960, "y": 540 }, "size": { "width": 400, "height": 400 } },
+        { "id": "a3", "type": "avatar", "position": { "x": 1220, "y": 540 }, "size": { "width": 300, "height": 300 } },
+        { "id": "t1", "type": "text", "position": { "x": 960, "y": 800 }, "content": "MEET THE FUTURE", "style": { "fontSize": 48 } }
+      ]
+    },
+    {
+      "id": "mkt_split_1",
+      "title": "Feature Split - Visual Left",
+      "layoutType": "Split",
+      "description": "Showcase a feature image on the left with detailed bullet points on the right.",
+      "flow": "Features → Details",
+      "duration": 7,
+      "tags": ["features", "split"],
+      "clips": [
+        { "id": "i1", "type": "image", "label": "Feature UI", "position": { "x": 500, "y": 540 }, "size": { "width": 800, "height": 600 } },
+        { "id": "t1", "type": "text", "position": { "x": 1300, "y": 400 }, "content": "KEY BENEFITS", "style": { "fontSize": 64, "fontWeight": "800", "textAlign": "left" } },
+        { "id": "t2", "type": "text", "position": { "x": 1300, "y": 550 }, "content": "• Instant AI Rendering\n• Professional Layouts\n• 1-Click Export", "style": { "fontSize": 32, "fontWeight": "500", "textAlign": "left", "lineHeight": 1.8 } }
+      ]
+    },
+    {
+      "id": "mkt_split_2",
+      "title": "Feature Split - Text Left",
+      "layoutType": "Split",
+      "description": "Bold text description on the left with a supporting image or video on the right.",
+      "flow": "Detail → Visual",
+      "duration": 7,
+      "tags": ["details", "ui"],
+      "clips": [
+        { "id": "t1", "type": "text", "position": { "x": 600, "y": 500 }, "content": "POWERFUL ANALYTICS", "style": { "fontSize": 64, "fontWeight": "800", "textAlign": "left" } },
+        { "id": "i1", "type": "image", "position": { "x": 1400, "y": 540 }, "size": { "width": 800, "height": 600 } }
+      ]
+    },
+    {
+       "id": "mkt_quiz_1",
+       "title": "Interactive Quiz Slide",
+       "layoutType": "Split",
+       "description": "Ideal for marketing engagement or simple educational quizzes.",
+       "flow": "Question → Options",
+       "duration": 10,
+       "tags": ["quiz", "interactive"],
+       "clips": [
+         { "id": "t1", "type": "text", "position": { "x": 960, "y": 300 }, "content": "WHAT'S YOUR GOAL?", "style": { "fontSize": 72, "fontWeight": "900" } },
+         { "id": "t2", "type": "text", "position": { "x": 600, "y": 550 }, "content": "A: GROWTH", "style": { "fontSize": 40 } },
+         { "id": "t3", "type": "text", "position": { "x": 1320, "y": 550 }, "content": "B: EFFICIENCY", "style": { "fontSize": 40 } }
+       ]
+    },
+    {
+      "id": "mkt_grid_1",
+      "title": "3-Column Services",
+      "layoutType": "Grid",
+      "description": "Professional 3-column layout to highlight core service offerings.",
+      "flow": "Services → Value",
+      "duration": 9,
+      "tags": ["grid", "services"],
+      "clips": [
+        { "id": "s1", "type": "shape", "position": { "x": 480, "y": 540 }, "size": { "width": 500, "height": 700 } },
+        { "id": "s2", "type": "shape", "position": { "x": 960, "y": 540 }, "size": { "width": 500, "height": 700 } },
+        { "id": "s3", "type": "shape", "position": { "x": 1440, "y": 540 }, "size": { "width": 500, "height": 700 } },
+        { "id": "t1", "type": "text", "position": { "x": 480, "y": 750 }, "content": "DESIGN", "style": { "fontSize": 40, "fontWeight": "700" } },
+        { "id": "t2", "type": "text", "position": { "x": 960, "y": 750 }, "content": "STRATEGY", "style": { "fontSize": 40, "fontWeight": "700" } },
+        { "id": "t3", "type": "text", "position": { "x": 1440, "y": 750 }, "content": "GROWTH", "style": { "fontSize": 40, "fontWeight": "700" } }
+      ]
+    },
+    {
+      "id": "mkt_outro_1",
+      "title": "Logo + Call to Action",
+      "layoutType": "Centered",
+      "description": "Minimalist outro with logo and final conversion link.",
+      "flow": "Logo → CTA",
+      "duration": 5,
+      "tags": ["outro", "cta"],
+      "clips": [
+        { "id": "i1", "type": "image", "label": "Logo", "position": { "x": 960, "y": 400 }, "size": { "width": 300, "height": 300 } },
+        { "id": "t1", "type": "text", "position": { "x": 960, "y": 650 }, "content": "START YOUR FREE TRIAL", "style": { "fontSize": 48, "fontWeight": "800" } },
+        { "id": "t2", "type": "text", "position": { "x": 960, "y": 750 }, "content": "www.yourwebsite.com", "style": { "fontSize": 24, "color": "#3b82f6" } }
+      ]
+    },
+    {
+      "id": "mkt_outro_2",
+      "title": "CTA Outro - Modern",
+      "layoutType": "Centered",
+      "description": "Modern call to action with social proof background.",
+      "flow": "Message → CTA",
+      "duration": 6,
+      "tags": ["outro", "social"],
+      "clips": [
+        { "id": "t1", "type": "text", "position": { "x": 960, "y": 500 }, "content": "JOIN 10,000+ CREATORS", "style": { "fontSize": 64, "fontWeight": "900" } }
       ]
     }
   ]

@@ -1,7 +1,6 @@
 import {
   Home,
   Building2,
-  Share2,
   Video,
   Trash2,
   Library,
@@ -24,7 +23,6 @@ export const dashboardSidebarGroups = [
     label: 'Videos',
     items: [
       { id: 'team-workspace', label: 'Workspace', Icon: Building2 },
-      { id: 'shared', label: 'Shared with me', Icon: Share2 },
       { id: 'videos', label: 'My videos', Icon: Video },
       { id: 'trash', label: 'Trash', Icon: Trash2 }
     ]

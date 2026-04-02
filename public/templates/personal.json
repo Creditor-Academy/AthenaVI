@@ -2,30 +2,29 @@
   "category": "Personal",
   "scenes": [
     {
-      "id": "pers_intro",
-      "title": "Personal Introduction",
-      "layoutType": "Split",
-      "description": "Perfect for introduce yourself or your personal brand.",
-      "flow": "Avatar → Intro",
-      "duration": 5.0,
-      "tags": ["personal", "identity"],
+      "id": "pers_story_1",
+      "title": "Minimal Memory Journal",
+      "layoutType": "Story",
+      "description": "A soft, elegant layout designed for personal reflection and daily updates.",
+      "flow": "Journal → Update",
+      "duration": 10,
+      "tags": ["personal", "journal", "warm"],
       "clips": [
-        { "type": "image", "label": "Self Portrait", "position": { "x": 480, "y": 540 }, "size": { "width": 600, "height": 800 } },
-        { "type": "text", "position": { "x": 1200, "y": 540 }, "content": "HI, I AM MONCY\nAI CREATOR", "style": { "fontSize": 64, "fontWeight": "800" } }
+        { "id": "t1", "type": "text", "position": { "x": 600, "y": 450 }, "content": "TODAY'S MOMENTS", "style": { "fontSize": 48, "fontWeight": "600", "color": "#7c3aed" } },
+        { "id": "t2", "type": "text", "position": { "x": 600, "y": 600 }, "content": "Grateful for the small things in life.", "style": { "fontSize": 24, "fontWeight": "400", "color": "#94a3b8" } },
+        { "id": "a1", "type": "avatar", "label": "Self", "position": { "x": 1300, "y": 540 }, "size": { "width": 500, "height": 700 } }
       ]
     },
     {
-      "id": "pers_story_timeline",
-      "title": "Story Timeline",
-      "layoutType": "Grid",
-      "description": "Showcase your journey with 3 major milestones.",
-      "flow": "2020 → 2022 → 2024",
-      "duration": 12.0,
-      "tags": ["journey", "about"],
+      "id": "pers_outro_1",
+      "title": "Sincere Outro",
+      "layoutType": "Centered",
+      "description": "End personal videos with a heartfelt closing message and emotional warmth.",
+      "flow": "Closing → Heart",
+      "duration": 5,
+      "tags": ["personal", "outro"],
       "clips": [
-        { "type": "text", "position": { "x": 480, "y": 540 }, "content": "2020: THE START" },
-        { "type": "text", "position": { "x": 960, "y": 540 }, "content": "2022: GROWTH" },
-        { "type": "text", "position": { "x": 1440, "y": 540 }, "content": "2024: SUCCESS" }
+        { "id": "t1", "type": "text", "position": { "x": 960, "y": 540 }, "content": "THANKS FOR BEING PART OF MY JOURNEY.", "style": { "fontSize": 40, "fontWeight": "700" } }
       ]
     }
   ]

@@ -2,34 +2,42 @@
   "category": "Social",
   "scenes": [
     {
-      "id": "soc_reel_center",
-      "title": "Social Reel Center",
-      "layoutType": "Centered",
-      "description": "High-impact center text for reels or TikTok style content.",
-      "flow": "Engagement → Title",
-      "duration": 5.0,
-      "tags": ["reels", "tiktok", "shorts"],
+      "id": "soc_bold_1",
+      "title": "Hype Header - Social",
+      "layoutType": "Story",
+      "description": "Explosive typography with high-speed transitions, perfect for TikTok and Reels.",
+      "flow": "Hype → Content",
+      "duration": 6,
+      "tags": ["social", "hype", "tiktok"],
       "clips": [
-        {
-          "type": "text",
-          "position": { "x": 540, "y": 960 },
-          "content": "SOCIAL HOOK",
-          "style": { "fontSize": 80, "fontWeight": "900", "textAlign": "center" }
-        }
+        { "id": "t1", "type": "text", "position": { "x": 960, "y": 450 }, "content": "MUST WATCH!", "style": { "fontSize": 140, "fontWeight": "900", "fontStyle": "italic" } },
+        { "id": "t2", "type": "text", "position": { "x": 1300, "y": 800 }, "content": "@YOURCHANNEL", "style": { "fontSize": 32, "fontWeight": "700", "color": "#ff0000" } }
       ]
     },
     {
-      "id": "soc_quote_card",
-      "title": "Minimal Quote Card",
-      "layoutType": "Centered",
-      "description": "Clean and elegant quote format for personal branding.",
-      "flow": "Message → Author",
-      "duration": 10.0,
-      "tags": ["quote", "minimal"],
+      "id": "soc_cta_1",
+      "title": "Interactive Story CTA",
+      "layoutType": "Story",
+      "description": "Engaging call-to-action layout with a focus on swipe-up and social interactions.",
+      "flow": "Join → Follow",
+      "duration": 7,
+      "tags": ["cta", "story"],
       "clips": [
-        { "type": "text", "position": { "x": 640, "y": 480 }, "content": "\"IF YOU CAN DREAM IT,\nYOU CAN DO IT.\"", "style": { "fontSize": 48, "fontStyle": "italic" } },
-        { "type": "text", "position": { "x": 640, "y": 600 }, "content": "- WALT DISNEY", "style": { "fontSize": 24, "fontWeight": "600" } }
+        { "id": "t1", "type": "text", "position": { "x": 960, "y": 400 }, "content": "JOIN THE MOVEMENT", "style": { "fontSize": 64, "fontWeight": "800" } },
+        { "id": "i1", "type": "image", "label": "Graphic", "position": { "x": 960, "y": 700 }, "size": { "width": 500, "height": 500 } }
       ]
+    },
+    {
+       "id": "soc_outro_1",
+       "title": "Social Support Outro",
+       "layoutType": "Centered",
+       "description": "End with a strong follow request and social media handles.",
+       "flow": "Follow → Engagement",
+       "duration": 6,
+       "tags": ["social", "outro"],
+       "clips": [
+         { "id": "t1", "type": "text", "position": { "x": 960, "y": 500 }, "content": "LIKE & SUBSCRIBE", "style": { "fontSize": 72, "fontWeight": "900" } }
+       ]
     }
   ]
 }

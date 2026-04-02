@@ -141,11 +141,12 @@ const styles = `
 .view-toggle {
   display: flex;
   align-items: center;
-  gap: 0;
-  background: var(--bg-surface);
-  border-radius: 8px;
-  padding: 2px;
+  gap: 2px;
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
+  border-radius: 999px;
+  padding: 3px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .view-toggle-btn {
@@ -158,15 +159,20 @@ const styles = `
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
+  border-radius: 50%;
   transition: all 0.2s ease;
   font-size: 18px;
 }
 
+.view-toggle-btn:hover {
+  background: var(--bg-surface);
+  color: var(--text-main);
+}
+
 .view-toggle-btn.active {
-  background: var(--bg-card);
-  color: var(--primary);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(var(--primary-rgb), 0.3);
 }
 
 .folders-section {
