@@ -248,6 +248,7 @@ function App() {
   })
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [productSection, setProductSection] = useState(null)
+  const [createVideoConfig, setCreateVideoConfig] = useState(null)
 
   // Save view to localStorage whenever it changes
   useEffect(() => {
@@ -465,7 +466,7 @@ function App() {
       {/* Protected Routes */}
       {view === 'create' && (
         <ProtectedRoute view={view} setView={setView}>
-          <Create onBack={() => setView('dashboard')} />
+          <Create onBack={() => setView('dashboard')} initialConfig={createVideoConfig} />
           {showAuthModal && (
             <Auth 
               onAuthComplete={handleAuthComplete}
@@ -482,7 +483,10 @@ function App() {
               // AuthContext will handle logout
               setView('landing')
             }}
-            onCreate={() => setView('create')}
+            onCreate={(config) => {
+              setCreateVideoConfig(config || null)
+              setView('create')
+            }}
             initialSection={(() => {
               // Pass the initial section from URL to Dashboard
               const currentPath = window.location.pathname
