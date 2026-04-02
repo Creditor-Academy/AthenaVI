@@ -27,6 +27,7 @@ const VideoCanvas = forwardRef(({
   const playerRef = useRef(null)
   const overlayRef = useRef(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [hoveredClipId, setHoveredClipId] = useState(null)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [dropIndicator, setDropIndicator] = useState(null)
 
@@ -287,12 +288,17 @@ const VideoCanvas = forwardRef(({
                       transform: `scale(${clip.scale || 1})`,
                       transformOrigin: 'top left',
                       cursor: isDragging ? 'grabbing' : 'pointer',
-                      border: isSelected ? '2px solid #1a73e8' : '2px solid transparent',
+                      border: isSelected 
+                        ? '2px solid #1a73e8' 
+                        : (clip.editable ? '1.5px dashed rgba(26, 115, 232, 0.4)' : '2px solid transparent'),
                       borderRadius: '4px',
                       boxSizing: 'border-box',
-                      transition: isDragging ? 'none' : 'border-color 0.15s ease',
-                      zIndex: isSelected ? 20 : 10
+                      transition: isDragging ? 'none' : 'all 0.15s ease',
+                      zIndex: isSelected ? 20 : 10,
+                      backgroundColor: !isSelected && clip.editable && hoveredClipId === clip.id ? 'rgba(26, 115, 232, 0.05)' : 'transparent'
                     }}
+                    onMouseEnter={() => !isSelected && clip.editable && setHoveredClipId(clip.id)}
+                    onMouseLeave={() => setHoveredClipId(null)}
                   >
                     {/* Selection handles on corners */}
                     {isSelected && (
@@ -317,26 +323,29 @@ const VideoCanvas = forwardRef(({
                           />
                         ))}
                         {/* Position badge */}
-                        <div style={{
-                          position: 'absolute',
-                          top: '-28px',
-                          left: '50%',
-                          transform: 'translateX(-50%)',
-                          background: '#1a73e8',
-                          color: '#fff',
-                          fontSize: '10px',
-                          fontFamily: 'Inter, sans-serif',
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          whiteSpace: 'nowrap',
-                          fontWeight: '600',
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-                          zIndex: 30,
-                          pointerEvents: 'none'
-                        }}>
-                          <MdOpenWith size={10} style={{ marginRight: 3, verticalAlign: 'middle' }} />
-                          {Math.round(x)}%, {Math.round(y)}%
-                        </div>
+                          <div style={{
+                            position: 'absolute',
+                            top: '-28px',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            background: '#1a73e8',
+                            color: '#fff',
+                            fontSize: '10px',
+                            fontFamily: 'Inter, sans-serif',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            whiteSpace: 'nowrap',
+                            fontWeight: '600',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+                            zIndex: 30,
+                            pointerEvents: 'none',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            <MdOpenWith size={10} />
+                            <span>{clip.role ? clip.role.replace('-', ' ').toUpperCase() : 'LAYER'} — {Math.round(x)}%, {Math.round(y)}%</span>
+                          </div>
                       </>
                     )}
                   </div>

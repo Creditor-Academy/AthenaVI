@@ -90,6 +90,39 @@ const TemplateCard = ({ template, onSelect }) => {
     width: 'fit-content'
   };
 
+  const overlayStyle = {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    opacity: isHovered ? 1 : 0,
+    transition: 'opacity 0.2s ease',
+    zIndex: 2,
+    backdropFilter: 'blur(2px)'
+  };
+
+  const useTemplateBtnStyle = {
+    backgroundColor: '#3b82f6',
+    color: '#ffffff',
+    border: 'none',
+    padding: '10px 20px',
+    borderRadius: '8px',
+    fontWeight: '700',
+    fontSize: '0.85rem',
+    cursor: 'pointer',
+    transform: isHovered ? 'scale(1)' : 'scale(0.9)',
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px'
+  };
+
   return (
     <div 
       className="template-card"
@@ -100,8 +133,21 @@ const TemplateCard = ({ template, onSelect }) => {
     >
       {/* Preview Section */}
       <div style={previewWrapStyle}>
-        {duration && <div style={badgeStyle}>{duration}</div>}
-        <TemplatePreview 
+        {duration && (
+          <div style={badgeStyle}>
+            {typeof duration === 'number' ? `${duration}s` : duration}
+          </div>
+        )}
+        
+        {/* Hover Overlay Button */}
+        <div style={overlayStyle}>
+          <button style={useTemplateBtnStyle}>
+            Use Template
+          </button>
+        </div>
+
+              <TemplatePreview 
+          template={template}
           layoutType={layoutType} 
           variant={variant} 
         />

@@ -5,26 +5,35 @@
       "id": "pers_story_1",
       "title": "Minimal Memory Journal",
       "layoutType": "Story",
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "text": { "x": 100, "y": 450, "width": 1080, "height": 300 },
+        "avatar": { "x": 1050, "y": 550, "width": 120, "height": 120 }
+      },
       "description": "A soft, elegant layout designed for personal reflection and daily updates.",
       "flow": "Journal → Update",
       "duration": 10,
       "tags": ["personal", "journal", "warm"],
       "clips": [
-        { "id": "t1", "type": "text", "position": { "x": 600, "y": 450 }, "content": "TODAY'S MOMENTS", "style": { "fontSize": 48, "fontWeight": "600", "color": "#7c3aed" } },
-        { "id": "t2", "type": "text", "position": { "x": 600, "y": 600 }, "content": "Grateful for the small things in life.", "style": { "fontSize": 24, "fontWeight": "400", "color": "#94a3b8" } },
-        { "id": "a1", "type": "avatar", "label": "Self", "position": { "x": 1300, "y": 540 }, "size": { "width": 500, "height": 700 } }
+        { "id": "t1", "type": "text", "role": "main-text", "editable": true, "position": { "x": 31, "y": 42 }, "content": "TODAY'S MOMENTS", "style": { "fontSize": 48, "fontWeight": "600", "color": "#7c3aed" } },
+        { "id": "t2", "type": "text", "role": "secondary-text", "editable": true, "position": { "x": 31, "y": 56 }, "content": "Grateful for the small things in life.", "style": { "fontSize": 24, "fontWeight": "400", "color": "#94a3b8" } },
+        { "id": "a1", "type": "avatar", "role": "avatar", "editable": true, "position": { "x": 82, "y": 76 }, "size": { "width": 120, "height": 120 } }
       ]
     },
     {
       "id": "pers_outro_1",
       "title": "Sincere Outro",
       "layoutType": "Centered",
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "text": { "x": 340, "y": 500, "width": 600, "height": 100 }
+      },
       "description": "End personal videos with a heartfelt closing message and emotional warmth.",
       "flow": "Closing → Heart",
       "duration": 5,
       "tags": ["personal", "outro"],
       "clips": [
-        { "id": "t1", "type": "text", "position": { "x": 960, "y": 540 }, "content": "THANKS FOR BEING PART OF MY JOURNEY.", "style": { "fontSize": 40, "fontWeight": "700" } }
+        { "id": "t1", "type": "text", "role": "main-text", "editable": true, "position": { "x": 50, "y": 50 }, "content": "THANKS FOR BEING PART OF MY JOURNEY.", "style": { "fontSize": 40, "fontWeight": "700" } }
       ]
     }
   ]

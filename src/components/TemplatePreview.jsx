@@ -5,10 +5,13 @@ import React from 'react';
  * Provides a minimal, Canva-style visual preview of different scene layouts.
  * 
  * @param {Object} props
- * @param {string} props.layoutType - Type of layout (Hero, Split, Centered, Grid, Story)
- * @param {string} props.variant - Sub-variant for the layout (primarily for Hero)
+ * @param {Object} props.template - The full template object including zones
+ * @param {string} props.layoutType - Fallback type of layout
+ * @param {string} props.variant - Fallback sub-variant
  */
-const TemplatePreview = ({ layoutType = 'Hero', variant = 'centered' }) => {
+const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }) => {
+  const zones = template?.zones;
+
   // Base Styles
   const containerStyle = {
     width: '100%',
@@ -127,73 +130,51 @@ const TemplatePreview = ({ layoutType = 'Hero', variant = 'centered' }) => {
     }
   };
 
-  const renderContent = () => {
-    const type = layoutType.toLowerCase();
+  const renderZones = () => {
+    if (!zones) return renderContent();
 
-    switch (type) {
-      case 'hero':
-        return renderHero();
+    const canvasWidth = 1280;
+    const canvasHeight = 720;
 
-      case 'split':
-        return (
-          <div style={{ display: 'flex', width: '100%', height: '100%', gap: '12px' }}>
-            <div style={{ flex: 1, ...imageBoxStyle }} />
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <div style={{ ...textLineStyle, width: '90%', height: '8px' }} />
-              <div style={{ ...textLineStyle, width: '70%' }} />
-              <div style={{ ...textLineStyle, width: '80%' }} />
-            </div>
+    const getPctStyle = (zone) => ({
+      position: 'absolute',
+      left: `${(zone.x / canvasWidth) * 100}%`,
+      top: `${(zone.y / canvasHeight) * 100}%`,
+      width: `${(zone.width / canvasWidth) * 100}%`,
+      height: `${(zone.height / canvasHeight) * 100}%`,
+    });
+
+    return (
+      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+        {zones.image && (
+          <div style={{ ...getPctStyle(zones.image), ...imageBoxStyle }} />
+        )}
+        {zones.text && (
+          <div style={{ ...getPctStyle(zones.text), display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <div style={{ ...textLineStyle, width: '90%', height: '8px' }} />
+            <div style={{ ...textLineStyle, width: '70%' }} />
+            <div style={{ ...textLineStyle, width: '80%' }} />
           </div>
-        );
-
-      case 'centered':
-        return (
-          <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-            <div style={{ ...imageBoxStyle, width: '40px', height: '40px', borderRadius: '50%' }} />
-            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ ...textLineStyle, width: '70%', height: '8px' }} />
-              <div style={{ ...textLineStyle, width: '50%' }} />
-            </div>
-          </div>
-        );
-
-      case 'grid':
-        return (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', width: '100%', height: '100%' }}>
-            {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <div style={{ ...imageBoxStyle, height: '30px' }} />
-                <div>
-                   <div style={{ ...textLineStyle, width: '100%', height: '4px', margin: '2px 0' }} />
-                   <div style={{ ...textLineStyle, width: '60%', height: '4px', margin: '2px 0' }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        );
-
-      case 'story':
-        return (
-          <div style={{ display: 'flex', gap: '8px', width: '100%', height: '100%', overflow: 'hidden' }}>
-            <div style={{ width: '45%', ...imageBoxStyle, borderRadius: '8px', position: 'relative', flexShrink: 0 }}>
-               <div style={{ position: 'absolute', bottom: '10px', left: '10px', right: '10px' }}>
-                 <div style={{ ...textLineStyle, width: '80%', height: '6px', backgroundColor: 'rgba(255,255,255,0.7)' }} />
-                 <div style={{ ...textLineStyle, width: '50%', height: '4px', backgroundColor: 'rgba(255,255,255,0.5)' }} />
-               </div>
-            </div>
-            <div style={{ width: '45%', ...imageBoxStyle, borderRadius: '8px', opacity: 0.4, flexShrink: 0 }} />
-            <div style={{ width: '45%', ...imageBoxStyle, borderRadius: '8px', opacity: 0.15, flexShrink: 0 }} />
-          </div>
-        );
-
-      default:
-        return renderHero();
-    }
+        )}
+        {zones.avatar && (
+          <div style={{ 
+            ...getPctStyle(zones.avatar), 
+            ...avatarStyle, 
+            width: '18px', 
+            height: '18px', 
+            borderRadius: '50%',
+            // Center the small avatar circle in the larger zone if needed
+            margin: 'auto',
+            top: 0, left: 0, bottom: 0, right: 0
+          }} />
+        )}
+      </div>
+    );
   };
 
   return (
     <div className="template-preview-container" style={containerStyle}>
-      {renderContent()}
+      {renderZones()}
     </div>
   );
 };

@@ -53,7 +53,7 @@ const TemplateModal = ({ showTemplateModal, setShowTemplateModal, handleAddTempl
   const [activeCategory, setActiveCategory] = useState('All')
   const [activeLayout, setActiveLayout] = useState('All Layouts')
   
-  const templates = useTemplates(activeCategory)
+  const { templates, loading } = useTemplates(activeCategory)
 
   // Combined Filtering Logic
   const filteredTemplates = useMemo(() => {
@@ -135,7 +135,11 @@ const TemplateModal = ({ showTemplateModal, setShowTemplateModal, handleAddTempl
           <div className="templates-grid-area premium-scrollbar">
             <TemplateGrid 
               templates={filteredTemplates} 
-              onSelect={handleAddTemplateScene} 
+              loading={loading}
+              onSelect={(template) => {
+                handleAddTemplateScene(template);
+                setShowTemplateModal(false);
+              }} 
             />
           </div>
         </main>
