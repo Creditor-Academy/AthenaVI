@@ -2,39 +2,127 @@
   "category": "Educational",
   "scenes": [
     {
-      "id": "edu_lesson_title",
-      "title": "Lesson Title",
-      "layoutType": "Centered",
-      "description": "Bold title for starting a new educational module.",
-      "flow": "Module → Title",
-      "duration": 5.0,
-      "tags": ["course", "learning"],
+      "id": "edu_explainer_1",
+      "title": "Lesson Overview - Left Avatar",
+      "layoutType": "Split",
+      "description": "Clear lesson title with a professional instructor avatar explaining the core concepts.",
+      "flow": "Lesson → Intro",
+      "duration": 10,
+      "tags": ["lesson", "training", "structured"],
       "clips": [
-        {
-          "type": "text",
-          "position": { "x": 960, "y": 480 },
-          "content": "MODULE 01",
-          "style": { "fontSize": 32, "fontWeight": "600", "color": "#3b82f6" }
-        },
-        {
-          "type": "text",
-          "position": { "x": 960, "y": 600 },
-          "content": "INTRODUCTION TO AI",
-          "style": { "fontSize": 72, "fontWeight": "800" }
-        }
+        { "id": "t1", "type": "text", "position": { "x": 1200, "y": 450 }, "content": "MODULE 01: INTRODUCTION", "style": { "fontSize": 72, "fontWeight": "800", "textAlign": "left", "width": "1000px" } },
+        { "id": "t2", "type": "text", "position": { "x": 1200, "y": 620 }, "content": "Understanding the fundamentals of AI video processing.", "style": { "fontSize": 36, "fontWeight": "400", "textAlign": "left", "color": "#64748b" } },
+        { "id": "a1", "type": "avatar", "label": "Instructor", "position": { "x": 500, "y": 540 }, "size": { "width": 600, "height": 800 } }
       ]
     },
     {
-      "id": "edu_comparison",
-      "title": "Topic Comparison",
+      "id": "edu_explainer_2",
+      "title": "Step Learning Mode",
       "layoutType": "Split",
-      "description": "Compare two concepts side by side with text and icons.",
-      "flow": "Concept A vs Concept B",
-      "duration": 8.0,
-      "tags": ["analysis", "compare"],
+      "description": "Detailed step-by-step learning mode with visual aids on the right.",
+      "flow": "Step → Visual",
+      "duration": 10,
+      "tags": ["learning", "steps"],
       "clips": [
-        { "type": "text", "position": { "x": 480, "y": 450 }, "content": "CONCEPT A", "style": { "fontSize": 48 } },
-        { "type": "text", "position": { "x": 1440, "y": 450 }, "content": "CONCEPT B", "style": { "fontSize": 48 } }
+         { "id": "t1", "type": "text", "position": { "x": 600, "y": 400 }, "content": "STEP 1: CONFIGURATION", "style": { "fontSize": 56, "fontWeight": "800" } },
+         { "id": "i1", "type": "image", "position": { "x": 1400, "y": 540 }, "size": { "width": 700, "height": 500 } }
+      ]
+    },
+    {
+      "id": "edu_steps_horizontal",
+      "title": "Horizontal 3-Step Process",
+      "layoutType": "Grid",
+      "description": "Clean horizontal transition through three key phases of a concept.",
+      "flow": "Phase 1 → Phase 2 → Phase 3",
+      "duration": 12,
+      "tags": ["process", "horizontal", "flow"],
+      "clips": [
+        { "id": "s1", "type": "shape", "position": { "x": 480, "y": 540 }, "size": { "width": 400, "height": 400 } },
+        { "id": "s2", "type": "shape", "position": { "x": 960, "y": 540 }, "size": { "width": 400, "height": 400 } },
+        { "id": "s3", "type": "shape", "position": { "x": 1440, "y": 540 }, "size": { "width": 400, "height": 400 } },
+        { "id": "t1", "type": "text", "position": { "x": 480, "y": 540 }, "content": "01", "style": { "fontSize": 80, "fontWeight": "900" } },
+        { "id": "t2", "type": "text", "position": { "x": 960, "y": 540 }, "content": "02", "style": { "fontSize": 80, "fontWeight": "900" } },
+        { "id": "t3", "type": "text", "position": { "x": 1440, "y": 540 }, "content": "03", "style": { "fontSize": 80, "fontWeight": "900" } }
+      ]
+    },
+    {
+      "id": "edu_steps_vertical",
+      "title": "Vertical Process Steps",
+      "layoutType": "Stack",
+      "description": "Top-to-bottom vertical progression for procedural learning.",
+      "flow": "Top → Middle → Bottom",
+      "duration": 10,
+      "tags": ["vertical", "procedure"],
+      "clips": [
+        { "id": "t1", "type": "text", "position": { "x": 960, "y": 300 }, "content": "1. PREPARATION", "style": { "fontSize": 48 } },
+        { "id": "t2", "type": "text", "position": { "x": 960, "y": 540 }, "content": "2. EXECUTION", "style": { "fontSize": 48 } },
+        { "id": "t3", "type": "text", "position": { "x": 960, "y": 780 }, "content": "3. REVIEW", "style": { "fontSize": 48 } }
+      ]
+    },
+     {
+      "id": "edu_steps_cards",
+      "title": "Card-Based Steps",
+      "layoutType": "Grid",
+      "description": "Modern card-style workflow visualization with soft drop shadows.",
+      "flow": "Card 1 → Card 2 → Card 3",
+      "duration": 15,
+      "tags": ["cards", "ui", "workflow"],
+      "clips": [
+        { "id": "s1", "type": "shape", "position": { "x": 480, "y": 500 }, "size": { "width": 420, "height": 550 } },
+        { "id": "s2", "type": "shape", "position": { "x": 960, "y": 500 }, "size": { "width": 420, "height": 550 } },
+        { "id": "s3", "type": "shape", "position": { "x": 1440, "y": 500 }, "size": { "width": 420, "height": 550 } }
+      ]
+    },
+    {
+      "id": "edu_steps_icon",
+      "title": "Icon Highlight Steps",
+      "layoutType": "Grid",
+      "description": "Visual-first process overview using icons to represent different modules.",
+      "flow": "Icon 1 → Icon 2 → Icon 3",
+      "duration": 10,
+      "tags": ["icons", "visual"],
+      "clips": [
+        { "id": "i1", "type": "image", "label": "Icon 1", "position": { "x": 480, "y": 500 }, "size": { "width": 200, "height": 200 } },
+        { "id": "t1", "type": "text", "position": { "x": 480, "y": 700 }, "content": "SET UP", "style": { "fontSize": 32 } }
+      ]
+    },
+    {
+      "id": "edu_steps_number",
+      "title": "Number Highlight Process",
+      "layoutType": "Centered",
+      "description": "Bold numbering sequence for high-priority educational lists.",
+      "flow": "Focus 1 → Focus 2",
+      "duration": 8,
+      "tags": ["bold", "numbers"],
+      "clips": [
+        { "id": "t1", "type": "text", "position": { "x": 500, "y": 540 }, "content": "STEP 01", "style": { "fontSize": 120, "fontWeight": "900", "color": "#3b82f6" } },
+        { "id": "t2", "type": "text", "position": { "x": 1200, "y": 540 }, "content": "CONFIGURE THE ENGINE", "style": { "fontSize": 56, "fontWeight": "700" } }
+      ]
+    },
+    {
+      "id": "edu_explainer_3",
+      "title": "Topic Deep Dive",
+      "layoutType": "Centered",
+      "description": "Focused center-aligned layout for explaining a single complex term or idea.",
+      "flow": "Term → Definition",
+      "duration": 8,
+      "tags": ["definition", "focus"],
+      "clips": [
+        { "id": "t1", "type": "text", "position": { "x": 960, "y": 420 }, "content": "NEURAL NETWORKS", "style": { "fontSize": 80, "fontWeight": "900" } },
+        { "id": "t2", "type": "text", "position": { "x": 960, "y": 650 }, "content": "A computational model inspired by the human brain's network of neurons.", "style": { "fontSize": 32, "textAlign": "center", "width": "1200px" } }
+      ]
+    },
+    {
+      "id": "edu_outro_1",
+      "title": "Quiz / Follow-up Outro",
+      "layoutType": "Split",
+      "description": "Engage students with a final question or resource links.",
+      "flow": "Next Steps → Resources",
+      "duration": 7,
+      "tags": ["quiz", "links"],
+      "clips": [
+        { "id": "t1", "type": "text", "position": { "x": 640, "y": 540 }, "content": "READY FOR THE QUIZ?", "style": { "fontSize": 64, "fontWeight": "800" } },
+        { "id": "t2", "type": "text", "position": { "x": 1300, "y": 540 }, "content": "Link: athenavi.com/learn", "style": { "fontSize": 32, "color": "#3b82f6" } }
       ]
     }
   ]
