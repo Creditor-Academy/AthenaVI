@@ -24,7 +24,29 @@ const TemplateCard = ({ template, onSelect }) => {
     title.includes('Main Hero') || 
     title.includes('Marketing Hero') || 
     title.includes('Centered Impact Hero') || 
-    title.includes('Avatar Group Hero')
+    title.includes('Lesson Overview') ||
+    title.includes('Feature Split') || 
+    title.includes('Text Skeleton') || 
+    title.includes('Avatar Group Hero') ||
+    title.includes('Minimal Memory Journal') ||
+    title.includes('Social Support Outro') ||
+    title.includes('Hype Header') ||
+    title.includes('Step Learning Mode') ||
+    title.includes('Horizontal 3-Step Process') ||
+    title.includes('Vertical Process Steps') ||
+    title.includes('Icon Highlight Steps') ||
+    title.includes('Number Highlight Process') ||
+    title.includes('Topic Deep Dive') ||
+    title.includes('Quiz / Follow-up Outro') ||
+    title.includes('3-Stats Business Row') ||
+    title.includes('Icon Stats Bar') ||
+    title.includes('Single Number Highlight') ||
+    title.includes('Professional Testimonial – Centered') ||
+    title.includes('Executive Outro') ||
+    title.includes('Interactive Story CTA') ||
+    title.includes('Logo + Call to Action') ||
+    title.includes('Sincere Outro') ||
+    title.includes('Client Grid Overview')
   );
 
   // Inline Styles
