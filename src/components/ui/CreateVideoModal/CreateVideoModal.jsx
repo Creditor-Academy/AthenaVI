@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   MdCheck,
   MdCropLandscape,
@@ -6,7 +6,8 @@ import {
   MdCropSquare,
   MdSearch,
   MdAdd,
-  MdClose
+  MdClose,
+  MdKeyboardArrowDown
 } from 'react-icons/md'
 import workspaceService from '../../../services/workspaceService.js'
 import './CreateVideoModal.css'
@@ -161,6 +162,8 @@ const CreateVideoModal = ({
   const [tagInput, setTagInput] = useState('')
   const [videoName, setVideoName] = useState('')
   const [loadingWorkspaces, setLoadingWorkspaces] = useState(false)
+  const [openDropdown, setOpenDropdown] = useState(null)
+  const dropdownAreaRef = useRef(null)
 
   const availableFolders = useMemo(() => {
     return folderMap[workspaceId] || []
@@ -182,6 +185,10 @@ const CreateVideoModal = ({
 
   const canGoNext = step === 1 || (step === 2 && selectedTemplateId !== null)
   const canCreate = step === 3 && videoName.trim() && workspaceId && folder
+
+  const selectedWorkspaceName = useMemo(() => {
+    return workspaceOptions.find((item) => item.id === workspaceId)?.name || 'Select workspace'
+  }, [workspaceId, workspaceOptions])
 
   useEffect(() => {
     let isMounted = true
@@ -238,6 +245,17 @@ const CreateVideoModal = ({
   }, [])
 
   useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownAreaRef.current && !dropdownAreaRef.current.contains(event.target)) {
+        setOpenDropdown(null)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  useEffect(() => {
     if (!workspaceId) {
       setFolder('')
       return
@@ -284,8 +302,7 @@ const CreateVideoModal = ({
     }
   }
 
-  const handleWorkspaceChange = (e) => {
-    const nextWorkspaceId = e.target.value
+  const handleWorkspaceChange = (nextWorkspaceId) => {
 
     if (nextWorkspaceId === '__create_workspace__') {
       const workspaceName = window.prompt('Enter new workspace name')
@@ -302,6 +319,7 @@ const CreateVideoModal = ({
           setFolderMap((prev) => ({ ...prev, [normalizedWorkspace.id]: [] }))
           setWorkspaceId(normalizedWorkspace.id)
           setFolder('')
+          setOpenDropdown(null)
         })
         .catch((error) => {
           window.alert(error?.message || 'Failed to create workspace')
@@ -312,10 +330,10 @@ const CreateVideoModal = ({
     setWorkspaceId(nextWorkspaceId)
     const nextFolders = folderMap[nextWorkspaceId] || []
     setFolder(nextFolders[0] || '')
+    setOpenDropdown(null)
   }
 
-  const handleFolderChange = (e) => {
-    const nextValue = e.target.value
+  const handleFolderChange = (nextValue) => {
     if (nextValue === '__create_new__') {
       const folderName = window.prompt('Enter new folder name')
       if (folderName && folderName.trim()) {
@@ -331,6 +349,7 @@ const CreateVideoModal = ({
               }
             })
             setFolder(trimmedFolder)
+            setOpenDropdown(null)
           })
           .catch((error) => {
             window.alert(error?.message || 'Failed to create folder')
@@ -339,6 +358,7 @@ const CreateVideoModal = ({
       return
     }
     setFolder(nextValue)
+    setOpenDropdown(null)
   }
 
   const handleNext = () => {
@@ -497,7 +517,7 @@ const CreateVideoModal = ({
             )}
 
             {step === 3 && (
-              <div className="create-video-form-stack">
+              <div className="create-video-form-stack" ref={dropdownAreaRef}>
                 <label className="create-video-field">
                   <span>Video Name *</span>
                   <input
@@ -533,30 +553,99 @@ const CreateVideoModal = ({
                   </div>
                 </div>
 
-                <label className="create-video-field">
+                <div className="create-video-field">
                   <span>Workspace *</span>
-                  <select value={workspaceId} onChange={handleWorkspaceChange} disabled={loadingWorkspaces}>
-                    {!workspaceOptions.length && <option value="">No workspace found</option>}
-                    {workspaceOptions.map((workspace) => (
-                      <option key={workspace.id} value={workspace.id}>
-                        {workspace.name}
-                      </option>
-                    ))}
-                    <option value="__create_workspace__">+ Create new workspace</option>
-                  </select>
-                </label>
+                  <div className={`create-video-dropdown ${openDropdown === 'workspace' ? 'open' : ''}`}>
+                    <button
+                      type="button"
+                      className="create-video-dropdown-trigger"
+                      onClick={() => setOpenDropdown((prev) => prev === 'workspace' ? null : 'workspace')}
+                      disabled={loadingWorkspaces}
+                    >
+                      <span className={`create-video-dropdown-value ${!workspaceId ? 'placeholder' : ''}`}>
+                        {loadingWorkspaces ? 'Loading workspaces...' : selectedWorkspaceName}
+                      </span>
+                      <MdKeyboardArrowDown size={18} className="create-video-dropdown-chevron" />
+                    </button>
 
-                <label className="create-video-field">
+                    {openDropdown === 'workspace' && (
+                      <div className="create-video-dropdown-menu" role="listbox" aria-label="Workspace options">
+                        {!workspaceOptions.length && (
+                          <button type="button" className="create-video-dropdown-item empty" disabled>
+                            No workspace found
+                          </button>
+                        )}
+
+                        {workspaceOptions.map((workspace) => (
+                          <button
+                            key={workspace.id}
+                            type="button"
+                            className={`create-video-dropdown-item ${workspace.id === workspaceId ? 'selected' : ''}`}
+                            onClick={() => handleWorkspaceChange(workspace.id)}
+                          >
+                            <span>{workspace.name}</span>
+                            {workspace.id === workspaceId && <MdCheck size={16} />}
+                          </button>
+                        ))}
+
+                        <button
+                          type="button"
+                          className="create-video-dropdown-item create-action"
+                          onClick={() => handleWorkspaceChange('__create_workspace__')}
+                        >
+                          <span>+ Create new workspace</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="create-video-field">
                   <span>Folder *</span>
-                  <select value={folder} onChange={handleFolderChange}>
-                    {availableFolders.map((folderName) => (
-                      <option key={folderName} value={folderName}>
-                        {folderName}
-                      </option>
-                    ))}
-                    <option value="__create_new__">+ Create new folder</option>
-                  </select>
-                </label>
+                  <div className={`create-video-dropdown ${openDropdown === 'folder' ? 'open' : ''}`}>
+                    <button
+                      type="button"
+                      className="create-video-dropdown-trigger"
+                      onClick={() => setOpenDropdown((prev) => prev === 'folder' ? null : 'folder')}
+                      disabled={!workspaceId}
+                    >
+                      <span className={`create-video-dropdown-value ${!folder ? 'placeholder' : ''}`}>
+                        {folder || 'Select folder'}
+                      </span>
+                      <MdKeyboardArrowDown size={18} className="create-video-dropdown-chevron" />
+                    </button>
+
+                    {openDropdown === 'folder' && (
+                      <div className="create-video-dropdown-menu" role="listbox" aria-label="Folder options">
+                        {!availableFolders.length && (
+                          <button type="button" className="create-video-dropdown-item empty" disabled>
+                            No folder found
+                          </button>
+                        )}
+
+                        {availableFolders.map((folderName) => (
+                          <button
+                            key={folderName}
+                            type="button"
+                            className={`create-video-dropdown-item ${folderName === folder ? 'selected' : ''}`}
+                            onClick={() => handleFolderChange(folderName)}
+                          >
+                            <span>{folderName}</span>
+                            {folderName === folder && <MdCheck size={16} />}
+                          </button>
+                        ))}
+
+                        <button
+                          type="button"
+                          className="create-video-dropdown-item create-action"
+                          onClick={() => handleFolderChange('__create_new__')}
+                        >
+                          <span>+ Create new folder</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </div>
