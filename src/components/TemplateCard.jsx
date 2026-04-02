@@ -19,6 +19,13 @@ const TemplateCard = ({ template, onSelect }) => {
   if (!template) return null;
 
   const { title, layoutType, variant, duration } = template;
+  
+  const isMockup = title && (
+    title.includes('Main Hero') || 
+    title.includes('Marketing Hero') || 
+    title.includes('Centered Impact Hero') || 
+    title.includes('Avatar Group Hero')
+  );
 
   // Inline Styles
   const cardStyle = {
@@ -28,53 +35,56 @@ const TemplateCard = ({ template, onSelect }) => {
     border: '1px solid #e2e8f0',
     overflow: 'hidden',
     cursor: 'pointer',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    transform: isHovered ? 'translateY(-4px)' : 'translateY(0)',
+    transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+    transform: isHovered ? 'translateY(-6px)' : 'translateY(0)',
     boxShadow: isHovered 
-      ? '0 12px 20px -8px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' 
-      : '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+      ? (isMockup ? '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' : '0 12px 20px -8px rgba(0, 0, 0, 0.15)')
+      : (isMockup ? '0 4px 6px -1px rgba(0, 0, 0, 0.05)' : '0 1px 3px 0 rgba(0, 0, 0, 0.1)'),
     width: '100%',
     display: 'flex',
-    flexDirection: 'column'
+    flexDirection: 'column',
+    padding: isMockup ? '8px' : '0'
   };
 
   const previewWrapStyle = {
     position: 'relative',
     width: '100%',
-    backgroundColor: '#f1f5f9'
+    backgroundColor: isMockup ? 'transparent' : '#f1f5f9'
   };
 
   const badgeStyle = {
     position: 'absolute',
-    top: '10px',
-    right: '10px',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    top: isMockup ? '12px' : '10px',
+    right: isMockup ? '12px' : '10px',
+    backgroundColor: isMockup ? 'rgba(51, 65, 85, 0.8)' : 'rgba(0, 0, 0, 0.6)',
     backdropFilter: 'blur(4px)',
     color: '#ffffff',
-    padding: '4px 10px',
-    borderRadius: '20px',
-    fontSize: '0.75rem',
-    fontWeight: '600',
-    zIndex: 1,
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+    padding: isMockup ? '4px 8px' : '4px 10px',
+    borderRadius: isMockup ? '10px' : '20px',
+    fontSize: isMockup ? '0.65rem' : '0.75rem',
+    fontWeight: '700',
+    zIndex: 5,
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: isMockup ? '24px' : 'auto'
   };
 
   const footerStyle = {
-    padding: '12px 14px',
+    padding: '16px',
     display: 'flex',
     flexDirection: 'column',
-    gap: '6px',
+    gap: '8px',
     backgroundColor: '#ffffff'
   };
 
   const titleStyle = {
-    fontSize: '0.9rem',
+    fontSize: '0.95rem',
     fontWeight: '600',
     color: '#1e293b',
     margin: 0,
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis'
+    letterSpacing: '-0.01em'
   };
 
   const layoutBadgeStyle = {
@@ -83,9 +93,9 @@ const TemplateCard = ({ template, onSelect }) => {
     fontSize: '0.7rem',
     color: '#64748b',
     backgroundColor: '#f1f5f9',
-    padding: '2px 8px',
-    borderRadius: '4px',
-    fontWeight: '500',
+    padding: '4px 10px',
+    borderRadius: '6px',
+    fontWeight: '600',
     textTransform: 'capitalize',
     width: 'fit-content'
   };
@@ -134,7 +144,7 @@ const TemplateCard = ({ template, onSelect }) => {
       {/* Preview Section */}
       <div style={previewWrapStyle}>
         {duration && (
-          <div style={badgeStyle}>
+          <div style={{ ...badgeStyle, top: '16px', right: '16px' }}>
             {typeof duration === 'number' ? `${duration}s` : duration}
           </div>
         )}
@@ -150,15 +160,16 @@ const TemplateCard = ({ template, onSelect }) => {
           template={template}
           layoutType={layoutType} 
           variant={variant} 
+          style={{ borderRadius: '8px' }}
         />
       </div>
 
       {/* Footer Section */}
       <div style={footerStyle}>
         <h3 style={titleStyle}>{title || 'Untitled Template'}</h3>
-        <span style={layoutBadgeStyle}>
-          {layoutType} {variant && variant !== 'centered' ? `• ${variant.replace(/-/g, ' ')}` : ''}
-        </span>
+        <div style={layoutBadgeStyle}>
+          {layoutType}
+        </div>
       </div>
     </div>
   );
