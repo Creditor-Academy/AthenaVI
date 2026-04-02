@@ -125,14 +125,14 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) 
                 if (frameInScene < clipStart || frameInScene >= clipStart + clipDuration) return null
 
                 // MAPPING COORDINATES
-                const mapValX = (val) => (typeof val === 'number' && val > 100) ? (val / 1920) * 100 : (val || 0);
-                const mapValY = (val) => (typeof val === 'number' && val > 100) ? (val / 1080) * 100 : (val || 0);
+                const mapValX = (val) => (typeof val === 'number' && val > 100) ? (val / 1280) * 100 : (val || 0);
+                const mapValY = (val) => (typeof val === 'number' && val > 100) ? (val / 720) * 100 : (val || 0);
                 
                 const posX = mapValX(clip.position?.x);
                 const posY = mapValY(clip.position?.y);
                 
-                const getW = (w) => (typeof w === 'number' && w > 100) ? `${(w / 19.2)}%` : (typeof w === 'number' ? `${w}%` : (w || 'auto'));
-                const getH = (h) => (typeof h === 'number' && h > 100) ? `${(h / 10.8)}%` : (typeof h === 'number' ? `${h}%` : (h || 'auto'));
+                const getW = (w) => (typeof w === 'number' && w > 100) ? `${(w / 12.8)}%` : (typeof w === 'number' ? `${w}%` : (w || 'auto'));
+                const getH = (h) => (typeof h === 'number' && h > 100) ? `${(h / 7.2)}%` : (typeof h === 'number' ? `${h}%` : (h || 'auto'));
 
                 const animProgress = spring({
                     frame: frameInScene - clipStart,
@@ -148,7 +148,7 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) 
                     top: `${posY}%`,
                     width: getW(clip.size?.width),
                     height: getH(clip.size?.height),
-                    transform: `translate(-50%, -50%) scale(${scale * zoomFactor * (clip.scale || 1)})`,
+                    transform: `scale(${scale * zoomFactor * (clip.scale || 1)})`,
                     zIndex: 10 + (clip.layer || index),
                     opacity: opacity * (clip.opacity ?? 1),
                     display: 'flex',
@@ -180,21 +180,28 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) 
                     )
                 }
 
-                if (clip.type === 'image') {
+                if (clip.type === 'image' || clip.type === 'avatar') {
                     return (
                         <div key={clip.id} style={{
                             ...style,
                             border: '2px dashed #adb5bd',
                             borderRadius: '16px',
-                            background: '#f8f9fa'
+                            background: '#f8f9fa',
+                            overflow: 'hidden'
                         }}>
                             {clip.src ? (
-                                <img src={clip.src} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '16px' }} alt="" />
+                                <img src={clip.src} style={{ width: '100%', height: '100%', objectFit: clip.type === 'avatar' ? 'contain' : 'cover' }} alt="" />
                             ) : (
-                                <>
-                                    <MdPhotoSizeSelectActual size={48} color="#adb5bd" style={{ opacity: 0.5 }} />
-                                    <span style={{ fontSize: '11px', color: '#adb5bd', marginTop: '12px', fontWeight: '800', letterSpacing: '0.1em' }}>MEDIA PLACEHOLDER</span>
-                                </>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                                    {clip.type === 'avatar' ? (
+                                        <MdPerson size={48} color="#adb5bd" style={{ opacity: 0.5 }} />
+                                    ) : (
+                                        <MdPhotoSizeSelectActual size={48} color="#adb5bd" style={{ opacity: 0.5 }} />
+                                    )}
+                                    <span style={{ fontSize: '11px', color: '#adb5bd', marginTop: '12px', fontWeight: '800', letterSpacing: '0.1em' }}>
+                                        {clip.type.toUpperCase()} PLACEHOLDER
+                                    </span>
+                                </div>
                             )}
                         </div>
                     )

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { MdAdd, MdMic, MdSearch, MdStar, MdAutoAwesome, MdCloudUpload } from 'react-icons/md';
 import { predefinedAvatars } from '../../../../constants/editorData';
 
-const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateScene, updateScene, setShowTemplateModal }) => {
+const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateScene, updateScene, setShowTemplateModal, addLayer }) => {
   const [activeTab, setActiveTab] = useState('studio');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -156,10 +156,35 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
                             }
                             return;
                         }
-                        updateScene(activeSceneId, {
-                            avatar: avatar.image,
-                            avatarType: avatar.id
-                        });
+
+                        // NEW LOGIC: Look for an existing avatar clip to fill
+                        const activeClips = activeScene?.clips || [];
+                        const avatarClipIndex = activeClips.findIndex(c => c.role === 'avatar' || c.type === 'avatar');
+
+                        if (avatarClipIndex !== -1) {
+                            // Update the specific clip in the array
+                            const updatedClips = [...activeClips];
+                            updatedClips[avatarClipIndex] = {
+                                ...updatedClips[avatarClipIndex],
+                                src: avatar.image
+                            };
+                            
+                            updateScene(activeSceneId, {
+                                avatar: avatar.image,
+                                avatarType: avatar.id,
+                                clips: updatedClips
+                            });
+                        } else {
+                            // Fallback: Add as a new layer if no box exists
+                            if (addLayer) {
+                              addLayer('avatar', avatar.image);
+                            }
+                            
+                            updateScene(activeSceneId, {
+                                avatar: avatar.image,
+                                avatarType: avatar.id
+                            });
+                        }
                     }}
                     style={{
                       position: 'relative',
