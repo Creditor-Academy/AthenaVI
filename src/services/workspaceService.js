@@ -113,6 +113,66 @@ class WorkspaceService {
     }
   }
 
+  // List all folders in a workspace
+  async listFolders(workspaceId) {
+    try {
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/folders`), {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch folders: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.data?.folders || data.folders || [];
+    } catch (error) {
+      console.error('Error in listFolders:', error);
+      throw error;
+    }
+  }
+
+  // Rename a folder
+  async renameFolder(workspaceId, folderId, name) {
+    try {
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/folders/${folderId}`), {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ name })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to rename folder: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.data?.folder || data.folder;
+    } catch (error) {
+      console.error('Error in renameFolder:', error);
+      throw error;
+    }
+  }
+
+  // Delete a folder
+  async deleteFolder(workspaceId, folderId) {
+    try {
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/folders/${folderId}`), {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete folder: ${response.status}`);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in deleteFolder:', error);
+      throw error;
+    }
+  }
+
   // Update workspace
   async updateWorkspace(workspaceId, formData) {
     try {
@@ -342,6 +402,84 @@ class WorkspaceService {
       return true;
     } catch (error) {
       console.error('Error in removeInvitation:', error);
+      throw error;
+    }
+  }
+
+  // --- Video Management ---
+
+  // Aggregate all videos across all workspaces
+  async listAllVideosAcrossWorkspaces() {
+    try {
+      const workspaces = await this.listWorkspaces();
+      const allVideos = [];
+
+      for (const workspace of workspaces) {
+        // Fetch full workspace details to get folders and videos
+        const details = await this.getWorkspace(workspace.id);
+        
+        // Handle flattened videos if they exist at workspace level
+        const wsVideos = details.videos || [];
+        wsVideos.forEach(v => allVideos.push({ ...v, workspaceName: details.name, workspaceId: details.id }));
+
+        // Handle videos nested in folders
+        const wsFolders = details.folders || [];
+        wsFolders.forEach(folder => {
+          const folderVideos = folder.videos || [];
+          folderVideos.forEach(v => allVideos.push({ 
+            ...v, 
+            workspaceName: details.name, 
+            workspaceId: details.id,
+            folderName: folder.name,
+            folderId: folder.id
+          }));
+        });
+      }
+
+      return allVideos;
+    } catch (error) {
+      console.error('Error in listAllVideosAcrossWorkspaces:', error);
+      throw error;
+    }
+  }
+
+  // Rename a video
+  async renameVideo(workspaceId, videoId, newTitle) {
+    try {
+      // Assuming a standard endpoint structure. Adjust if backend differs.
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/videos/${videoId}`), {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ title: newTitle })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to rename video: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.data?.video || data.video;
+    } catch (error) {
+      console.error('Error in renameVideo:', error);
+      throw error;
+    }
+  }
+
+  // Delete a video
+  async deleteVideo(workspaceId, videoId) {
+    try {
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/videos/${videoId}`), {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete video: ${response.status}`);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in deleteVideo:', error);
       throw error;
     }
   }

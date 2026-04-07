@@ -14,6 +14,7 @@ import {
   MdPlayArrow,
   MdPlayCircleFilled,
 } from 'react-icons/md'
+import workspaceService from '../../services/workspaceService'
 
 const styles = `
 .workspace-container {
@@ -714,87 +715,6 @@ const styles = `
 
 const thumbnailUrl = 'https://media.istockphoto.com/id/1475888355/video/timelapse-of-the-creation-of-an-online-avatar-start-to-finish.jpg?s=640x640&k=20&c=pFzBOkU7LjC1DF0DeNCAUhS8MCiNwSDwkqI9v9C7IgQ='
 
-const initialFolders = [
-  {
-    id: 'f1',
-    name: 'roadmap series',
-    updated: '2 days ago',
-    subfolders: [
-      {
-        id: 'sf1',
-        name: 'Marketing',
-        videos: [
-          {
-            id: 'v1',
-            title: 'Sustainable Work',
-            status: 'draft',
-            updated: '23h ago',
-            duration: '01:50',
-            pinned: false,
-          },
-          {
-            id: 'v4',
-            title: 'Client Update',
-            status: 'draft',
-            updated: '5d ago',
-            duration: null,
-            pinned: false,
-          },
-        ],
-      },
-      {
-        id: 'sf2',
-        name: 'Internal',
-        videos: [
-          {
-            id: 'v2',
-            title: 'Untitled',
-            status: 'draft',
-            updated: 'yesterday',
-            duration: null,
-            pinned: true,
-          },
-          {
-            id: 'v6',
-            title: 'Welcome Series',
-            status: 'draft',
-            updated: '1d ago',
-            duration: '02:04',
-            pinned: false,
-          },
-        ],
-      },
-      {
-        id: 'sf3',
-        name: 'Sales',
-        videos: [
-          {
-            id: 'v3',
-            title: 'Holiday Greeting',
-            status: 'draft',
-            updated: '5d ago',
-            duration: '01:50',
-            pinned: false,
-          },
-        ],
-      },
-      {
-        id: 'sf4',
-        name: 'Product',
-        videos: [
-          {
-            id: 'v5',
-            title: 'Product Walkthrough',
-            status: 'published',
-            updated: '2d ago',
-            duration: '03:12',
-            pinned: true,
-          },
-        ],
-      },
-    ],
-  },
-]
 
 const lastUpdatedOptions = [
   { value: 'all', label: 'All time' },
@@ -810,9 +730,18 @@ const filterOptions = [
 ]
 
 function Workspace({ onCreate }) {
-  const [folders, setFolders] = useState(initialFolders)
-  const [selectedFolder, setSelectedFolder] = useState(null)
-  const [selectedSubfolder, setSelectedSubfolder] = useState(null)
+  const [workspaceId, setWorkspaceId] = useState(null)
+  const [folders, setFolders] = useState([])
+  const [selectedFolder, setSelectedFolder] = useState(() => {
+    // Try to restore from localStorage on mount
+    const saved = window.localStorage.getItem('workspace:selectedFolder')
+    return saved || null
+  })
+  const [selectedSubfolder, setSelectedSubfolder] = useState(() => {
+    // Try to restore from localStorage on mount
+    const saved = window.localStorage.getItem('workspace:selectedSubfolder')
+    return saved || null
+  })
   const [viewMode, setViewMode] = useState('grid')
   const [cardMenu, setCardMenu] = useState(null)
   const [renameDialog, setRenameDialog] = useState(null)
@@ -822,9 +751,50 @@ function Workspace({ onCreate }) {
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [selectedLastUpdated, setSelectedLastUpdated] = useState(lastUpdatedOptions[0])
   const [selectedFilter, setSelectedFilter] = useState(filterOptions[0])
+  const [loading, setLoading] = useState(true)
   const menuRefs = useRef({})
   const lastUpdatedRef = useRef(null)
   const filtersRef = useRef(null)
+
+  // Persist selectedFolder to localStorage whenever it changes
+  useEffect(() => {
+    if (selectedFolder) {
+      window.localStorage.setItem('workspace:selectedFolder', selectedFolder)
+    } else {
+      window.localStorage.removeItem('workspace:selectedFolder')
+    }
+  }, [selectedFolder])
+
+  // Persist selectedSubfolder to localStorage whenever it changes
+  useEffect(() => {
+    if (selectedSubfolder) {
+      window.localStorage.setItem('workspace:selectedSubfolder', selectedSubfolder)
+    } else {
+      window.localStorage.removeItem('workspace:selectedSubfolder')
+    }
+  }, [selectedSubfolder])
+
+  useEffect(() => {
+    fetchInitialData()
+  }, [])
+
+  const fetchInitialData = async () => {
+    try {
+      setLoading(true)
+      const workspaces = await workspaceService.listWorkspaces()
+      // Use personal workspace or the first one available
+      const personalWs = workspaces.find(ws => ws.isPersonal) || workspaces[0]
+      if (personalWs) {
+        setWorkspaceId(personalWs.id)
+        const fetchedFolders = await workspaceService.listFolders(personalWs.id)
+        setFolders(fetchedFolders || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch initial workspace data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -844,151 +814,134 @@ function Workspace({ onCreate }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const createNewFolder = () => {
-    const newFolder = {
-      id: `f${Date.now()}`,
-      name: 'New Folder',
-      updated: 'Just now',
-      subfolders: [],
+  const createNewFolder = async () => {
+    if (!workspaceId) return
+    try {
+      const name = 'New Folder'
+      await workspaceService.createFolder(workspaceId, name)
+      // Refresh folders without reloading page
+      await fetchInitialData()
+    } catch (error) {
+      console.error('Failed to create folder:', error)
+      alert('Failed to create folder')
     }
-    setFolders([...folders, newFolder])
-    setRenameDialog(newFolder.id)
-    setRenameType('folder')
-    setNewName('New Folder')
   }
 
-  const createNewSubfolder = (folderId) => {
-    const newSubfolder = {
-      id: `sf${Date.now()}`,
-      name: 'New Subfolder',
-      videos: [],
+  const createNewSubfolder = async (folderId) => {
+    if (!workspaceId) return
+    try {
+      const name = 'New Subfolder'
+      // Using the same folder API for now. Adjust if a subfolder-specific endpoint exists.
+      await workspaceService.createFolder(workspaceId, name)
+      // Refresh folders without reloading page
+      await fetchInitialData()
+    } catch (error) {
+      console.error('Failed to create subfolder:', error)
+      alert('Failed to create subfolder')
     }
-    setFolders((prev) =>
-      prev.map((folder) =>
-        folder.id === folderId
-          ? {
-              ...folder,
-              subfolders: [...(folder.subfolders || []), newSubfolder],
-            }
-          : folder
-      )
-    )
-    setRenameDialog({ folderId, subfolderId: newSubfolder.id })
-    setRenameType('subfolder')
-    setNewName('New Subfolder')
   }
 
-  const renameFolder = (folderId, newName) => {
-    setFolders((prev) =>
-      prev.map((folder) =>
-        folder.id === folderId ? { ...folder, name: newName } : folder
-      )
-    )
-    setRenameDialog(null)
-    setRenameType(null)
-    setNewName('')
-    setCardMenu(null)
+  const renameFolder = async (folderId, newName) => {
+    if (!workspaceId) return
+    try {
+      await workspaceService.renameFolder(workspaceId, folderId, newName)
+      // Refresh folders without reloading page
+      await fetchInitialData()
+      setRenameDialog(null)
+      setRenameType(null)
+      setNewName('')
+    } catch (error) {
+      console.error('Failed to rename folder:', error)
+      alert('Failed to rename folder')
+    }
   }
 
-  const renameSubfolder = (folderId, subfolderId, newName) => {
-    setFolders((prev) =>
-      prev.map((folder) =>
-        folder.id === folderId
-          ? {
-              ...folder,
-              subfolders: folder.subfolders.map((sf) =>
-                sf.id === subfolderId ? { ...sf, name: newName } : sf
-              )
-            }
-          : folder
-      )
-    )
-    setRenameDialog(null)
-    setRenameType(null)
-    setNewName('')
-    setCardMenu(null)
+  const renameSubfolder = async (folderId, subfolderId, newName) => {
+    if (!workspaceId) return
+    try {
+      // Assuming subfolders use the same folder API
+      await workspaceService.renameFolder(workspaceId, subfolderId, newName)
+      // Refresh folders without reloading page
+      await fetchInitialData()
+      setRenameDialog(null)
+      setRenameType(null)
+      setNewName('')
+    } catch (error) {
+      console.error('Failed to rename subfolder:', error)
+      alert('Failed to rename subfolder')
+    }
   }
 
-  const renameVideo = (folderId, subfolderId, videoId, newTitle) => {
-    setFolders((prev) =>
-      prev.map((folder) =>
-        folder.id === folderId
-          ? {
-              ...folder,
-              subfolders: folder.subfolders.map((sf) =>
-                sf.id === subfolderId
-                  ? {
-                      ...sf,
-                      videos: sf.videos.map((v) =>
-                        v.id === videoId ? { ...v, title: newTitle } : v
-                      )
-                    }
-                  : sf
-              )
-            }
-          : folder
-      )
-    )
-    setRenameDialog(null)
-    setRenameType(null)
-    setNewName('')
-    setCardMenu(null)
+  const renameVideo = async (folderId, subfolderId, videoId, newTitle) => {
+    if (!workspaceId) return
+    try {
+      await workspaceService.renameVideo(workspaceId, videoId, newTitle)
+      // Refresh folders without reloading page
+      await fetchInitialData()
+      setRenameDialog(null)
+      setRenameType(null)
+      setNewName('')
+    } catch (error) {
+      alert('Failed to rename video')
+    }
   }
 
-  const deleteFolder = (folderId) => {
+  const deleteFolder = async (folderId) => {
+    if (!workspaceId) return
     if (window.confirm('Are you sure you want to delete this folder?')) {
-      setFolders((prev) => prev.filter((f) => f.id !== folderId))
-      setCardMenu(null)
-      if (selectedFolder === folderId) {
-        setSelectedFolder(null)
+      try {
+        await workspaceService.deleteFolder(workspaceId, folderId)
+        // Refresh folders without reloading page
+        await fetchInitialData()
+      } catch (error) {
+        console.error('Failed to delete folder:', error)
+        alert('Failed to delete folder')
       }
     }
   }
 
-  const deleteSubfolder = (folderId, subfolderId) => {
+  const deleteSubfolder = async (folderId, subfolderId) => {
+    if (!workspaceId) return
     if (window.confirm('Are you sure you want to delete this subfolder?')) {
-      setFolders((prev) =>
-        prev.map((folder) =>
-          folder.id === folderId
-            ? {
-                ...folder,
-                subfolders: folder.subfolders.filter((sf) => sf.id !== subfolderId)
-              }
-            : folder
-        )
-      )
-      setCardMenu(null)
-      if (selectedSubfolder === subfolderId) {
-        setSelectedSubfolder(null)
+      try {
+        await workspaceService.deleteFolder(workspaceId, subfolderId)
+        // Refresh folders without reloading page
+        await fetchInitialData()
+      } catch (error) {
+        console.error('Failed to delete subfolder:', error)
+        alert('Failed to delete subfolder')
       }
     }
   }
 
-  const deleteVideo = (folderId, subfolderId, videoId) => {
+  const deleteVideo = async (folderId, subfolderId, videoId) => {
+    if (!workspaceId) return
     if (window.confirm('Are you sure you want to delete this video?')) {
-      setFolders((prev) =>
-        prev.map((folder) =>
-          folder.id === folderId
-            ? {
-                ...folder,
-                subfolders: folder.subfolders.map((sf) =>
-                  sf.id === subfolderId
-                    ? {
-                        ...sf,
-                        videos: sf.videos.filter((v) => v.id !== videoId)
-                      }
-                    : sf
-                )
-              }
-            : folder
-        )
-      )
-      setCardMenu(null)
+      try {
+        await workspaceService.deleteVideo(workspaceId, videoId)
+        // Refresh folders without reloading page
+        await fetchInitialData()
+      } catch (error) {
+        alert('Failed to delete video')
+      }
     }
   }
 
   const currentFolder = folders.find(f => f.id === selectedFolder)
   const currentSubfolder = currentFolder?.subfolders?.find(sf => sf.id === selectedSubfolder)
+
+  if (loading) {
+    return (
+      <div className="workspace-container" style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        height: '100%' 
+      }}>
+        <div className="loading-spinner">Loading Workspace...</div>
+      </div>
+    )
+  }
 
   // Render videos view (inside subfolder)
   if (selectedFolder && selectedSubfolder && currentSubfolder) {
@@ -1204,6 +1157,10 @@ function Workspace({ onCreate }) {
                 <MdAdd size={18} />
                 New folder
               </button>
+              <button className="new-folder-btn" style={{ background: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }} onClick={onCreate}>
+                <MdAdd size={18} />
+                New Video
+              </button>
             </div>
           </div>
 
@@ -1290,6 +1247,10 @@ function Workspace({ onCreate }) {
             <button className="new-folder-btn" onClick={createNewFolder}>
               <MdFolder size={18} />
               New folder
+            </button>
+            <button className="new-folder-btn" style={{ background: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }} onClick={onCreate}>
+              <MdAdd size={18} />
+              New Video
             </button>
           </div>
           <div className="workspace-controls">
