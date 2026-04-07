@@ -8,7 +8,6 @@ import { WorkspaceCard, FolderCard, VideoCard } from '../../components/features/
 import { WorkspaceRow, FolderRow, VideoRow } from '../../components/features/workspace/workspace/ViewRows.jsx';
 import CreateWorkspaceModal from '../../components/features/workspace/workspace/CreateWorkspaceModal.jsx';
 import CreateFolderModal from '../../components/features/workspace/workspace/CreateFolderModal.jsx';
-import GlobalCreateModal from '../../components/features/workspace/workspace/GlobalCreateModal.jsx';
 import workspaceService from '../../services/workspaceService.js';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
 
@@ -23,7 +22,7 @@ const MOCK_FOLDERS = [
   }
 ];
 
-const TeamWorkspace = () => {
+const TeamWorkspace = ({ onCreate }) => {
   const auth = useAuth() || {};
   // Use a more distinct fallback ID to make debugging easier if auth fails
   const user = auth.user || { id: 'no-auth-id', name: 'Guest', email: '', plan: 'free' };
@@ -45,7 +44,6 @@ const TeamWorkspace = () => {
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
   const [selectedWorkspaceForFolder, setSelectedWorkspaceForFolder] = useState(null);
   const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = useState(false);
-  const [isGlobalCreateOpen, setIsGlobalCreateOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
 
   // Local Session Persistence (to keep items across navigation)
@@ -274,91 +272,6 @@ const TeamWorkspace = () => {
       // Update UI immediately
       setTimeout(() => loadWorkspaces(), 100);
     }
-  };
-
-  const handleGlobalCreate = async ({ videoName, workspaceId, folderId, newFolderName, newWorkspaceName }) => {
-    let targetWorkspaceId = workspaceId;
-    let targetFolderId = folderId;
-
-    // 1. Handle New Workspace Validation
-    if (newWorkspaceName) {
-      const isDuplicateWS = workspaces.some(w => w.name.toLowerCase() === newWorkspaceName.toLowerCase());
-      if (isDuplicateWS) {
-        throw new Error(`A workspace named "${newWorkspaceName}" already exists.`);
-      }
-
-      const newWS = {
-        id: `ws-local-${Date.now()}`,
-        name: newWorkspaceName,
-        type: 'workspace',
-        ownerId: user.id,
-        members: [],
-        folders: []
-      };
-      setLocalAdditions(prev => ({ ...prev, workspaces: [...prev.workspaces, newWS] }));
-      targetWorkspaceId = newWS.id;
-    }
-
-    // 2. Handle New Folder Validation
-    if (newFolderName) {
-      const wsContext = workspaces.find(w => w.id === targetWorkspaceId) || 
-                        localAdditions.workspaces.find(w => w.id === targetWorkspaceId);
-      
-      const isDuplicateFolder = wsContext?.folders?.some(f => f.name.toLowerCase() === newFolderName.toLowerCase()) ||
-                                localAdditions.folders[targetWorkspaceId]?.some(f => f.name.toLowerCase() === newFolderName.toLowerCase());
-
-      if (isDuplicateFolder) {
-        throw new Error(`A folder named "${newFolderName}" already exists in this workspace.`);
-      }
-
-      const newFolder = {
-        id: `f-local-${Date.now()}`,
-        name: newFolderName,
-        createdBy: 'You',
-        videos: []
-      };
-      setLocalAdditions(prev => ({
-        ...prev,
-        folders: {
-          ...prev.folders,
-          [targetWorkspaceId]: [...(prev.folders[targetWorkspaceId] || []), newFolder]
-        }
-      }));
-      targetFolderId = newFolder.id;
-    }
-
-    // 3. Handle Video Validation
-    if (videoName) {
-      const allFolders = workspaces.flatMap(w => w.folders || []);
-      const folderContext = allFolders.find(f => f.id === targetFolderId) || 
-                           Object.values(localAdditions.folders).flat().find(f => f.id === targetFolderId);
-      
-      const isDuplicateVideo = folderContext?.videos?.some(v => v.name.toLowerCase() === videoName.toLowerCase()) ||
-                               localAdditions.videos[targetFolderId]?.some(v => v.name.toLowerCase() === videoName.toLowerCase());
-
-      if (isDuplicateVideo) {
-        throw new Error(`A video named "${videoName}" already exists in this folder.`);
-      }
-
-      const newVideo = {
-        id: `v-local-${Date.now()}`,
-        name: videoName,
-        lastEditedBy: 'You',
-        lastEditedAt: new Date().toISOString().split('T')[0]
-      };
-
-      setLocalAdditions(prev => ({
-        ...prev,
-        videos: {
-          ...prev.videos,
-          [targetFolderId]: [...(prev.videos[targetFolderId] || []), newVideo]
-        }
-      }));
-    }
-
-    // Trigger UI reload or immediate local update
-    setTimeout(() => loadWorkspaces(), 200);
-    setIsGlobalCreateOpen(false);
   };
 
   const handleAcceptInvitation = async (invitationId) => {
@@ -658,9 +571,9 @@ const TeamWorkspace = () => {
           emptyMessage="No video exist"
           emptyIcon={MdVideoLibrary}
           emptyActionLabel="Create Video"
-          onEmptyAction={() => setIsGlobalCreateOpen(true)}
+          onEmptyAction={() => onCreate && onCreate()}
           showCreateButton={true}
-          onCreateClick={() => setIsGlobalCreateOpen(true)}
+          onCreateClick={() => onCreate && onCreate()}
         >
           {renderVideoItems(folder.videos)}
         </WorkspaceSection>
@@ -680,7 +593,7 @@ const TeamWorkspace = () => {
         onViewChange={handleViewChange}
         sortBy={sortBy}
         onSortChange={handleSortChange}
-        onCreateClick={() => setIsGlobalCreateOpen(true)}
+        onCreateClick={() => onCreate && onCreate()}
         invitationCount={invitations.length}
         onInviteClick={() => setShowNotifications(true)}
       />
@@ -702,15 +615,6 @@ const TeamWorkspace = () => {
         onClose={() => setIsCreateWorkspaceOpen(false)}
         onCreate={handleCreateWorkspace}
         workspaces={workspaces}
-      />
-
-      <GlobalCreateModal
-        isOpen={isGlobalCreateOpen}
-        onClose={() => setIsGlobalCreateOpen(false)}
-        onCreateVideo={handleGlobalCreate}
-        workspaces={workspaces}
-        initialWorkspaceId={currentLevel.ws?.id || ''}
-        initialFolderId={currentLevel.folder?.id || ''}
       />
 
       {/* Notifications Panel Restored */}
