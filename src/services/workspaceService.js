@@ -12,7 +12,8 @@ class WorkspaceService {
 
       const response = await fetch(buildUrl('/api/workspaces'), {
         method: 'GET',
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
+        cache: 'no-store'
       });
 
       console.log('Workspace list response status:', response.status);
@@ -25,10 +26,22 @@ class WorkspaceService {
       console.log('Workspace list response data:', data);
 
       // Extract workspaces from nested structure
-      const workspaces = data.data?.workspaces || data.workspaces || [];
-      console.log('Extracted workspaces:', workspaces);
+      const workspaces = data.data?.workspaces || data.workspaces || (Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []));
+      // Normalize _id to id for consistency
+      const normalized = workspaces.map(ws => ({ ...ws, id: ws.id || ws._id }));
+      console.log('Extracted workspaces:', normalized);
 
-      return workspaces;
+      // DEBUG: Log raw field names from first workspace to identify API shape
+      if (workspaces.length > 0) {
+        const sample = workspaces[0];
+        console.log('=== WORKSPACE API DEBUG ===');
+        console.log('All keys on workspace[0]:', Object.keys(sample));
+        console.log('Full workspace[0] raw:', JSON.stringify(sample, null, 2));
+        console.log('Stored user from localStorage:', localStorage.getItem('user'));
+        console.log('=== END DEBUG ===');
+      }
+
+      return normalized;
     } catch (error) {
       console.error('Error in listWorkspaces:', error);
       throw error;
@@ -40,7 +53,8 @@ class WorkspaceService {
     try {
       const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}`), {
         method: 'GET',
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
+        cache: 'no-store'
       });
 
       if (!response.ok) {
@@ -106,7 +120,8 @@ class WorkspaceService {
       }
 
       const data = await response.json();
-      return data.data?.folder || data.folder;
+      const folder = data.data?.folder || data.folder || data.data || data;
+      return { ...folder, id: folder.id || folder._id };
     } catch (error) {
       console.error('Error in createFolder:', error);
       throw error;
@@ -116,17 +131,25 @@ class WorkspaceService {
   // List all folders in a workspace
   async listFolders(workspaceId) {
     try {
+      console.log('listFolders: calling', buildUrl(`/api/workspaces/${workspaceId}/folders`));
       const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/folders`), {
         method: 'GET',
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
+        cache: 'no-store'
       });
 
+      console.log('listFolders: response status', response.status);
+
       if (!response.ok) {
-        throw new Error(`Failed to fetch folders: ${response.status}`);
+        const errorText = await response.text().catch(() => '');
+        throw new Error(`Failed to fetch folders: ${response.status} ${errorText}`);
       }
 
       const data = await response.json();
-      return data.data?.folders || data.folders || [];
+      console.log('listFolders: raw response data', JSON.stringify(data));
+      const folders = data.data?.folders || data.folders || (Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []));
+      // Normalize _id to id for consistency
+      return folders.map(f => ({ ...f, id: f.id || f._id }));
     } catch (error) {
       console.error('Error in listFolders:', error);
       throw error;
@@ -143,11 +166,13 @@ class WorkspaceService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to rename folder: ${response.status}`);
+        const errorText = await response.text().catch(() => '');
+        throw new Error(`Failed to rename folder: ${response.status} ${errorText}`);
       }
 
       const data = await response.json();
-      return data.data?.folder || data.folder;
+      const folder = data.data?.folder || data.folder || data.data || data;
+      return { ...folder, id: folder.id || folder._id };
     } catch (error) {
       console.error('Error in renameFolder:', error);
       throw error;
@@ -218,7 +243,8 @@ class WorkspaceService {
     try {
       const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/members`), {
         method: 'GET',
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
+        cache: 'no-store'
       });
 
       if (!response.ok) {
