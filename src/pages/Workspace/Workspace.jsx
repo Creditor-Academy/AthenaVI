@@ -782,17 +782,40 @@ function Workspace({ onCreate }) {
     try {
       setLoading(true)
       const workspaces = await workspaceService.listWorkspaces()
+      console.log('Workspace.jsx — all workspaces:', workspaces)
       // Use personal workspace or the first one available
-      const personalWs = workspaces.find(ws => ws.isPersonal) || workspaces[0]
+      const personalWs = workspaces.find(ws => ws.isPersonal || ws.type === 'PRIVATE') || workspaces[0]
+      console.log('Workspace.jsx — selected workspace:', personalWs)
       if (personalWs) {
-        setWorkspaceId(personalWs.id)
-        const fetchedFolders = await workspaceService.listFolders(personalWs.id)
+        const wsId = personalWs.id || personalWs._id
+        console.log('Workspace.jsx — using workspace ID:', wsId)
+        setWorkspaceId(wsId)
+        const fetchedFolders = await workspaceService.listFolders(wsId)
+        console.log('Workspace.jsx — fetched folders:', fetchedFolders)
         setFolders(fetchedFolders || [])
+      } else {
+        console.warn('Workspace.jsx — no workspace found')
       }
     } catch (error) {
       console.error('Failed to fetch initial workspace data:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Lightweight refresh — only re-fetches folders, no loading spinner
+  const refreshFolders = async () => {
+    if (!workspaceId) {
+      console.warn('refreshFolders: no workspaceId, skipping')
+      return
+    }
+    try {
+      console.log('refreshFolders: fetching folders for workspace', workspaceId)
+      const fetchedFolders = await workspaceService.listFolders(workspaceId)
+      console.log('refreshFolders: got folders', fetchedFolders)
+      setFolders(fetchedFolders || [])
+    } catch (error) {
+      console.error('Failed to refresh folders:', error)
     }
   }
 
@@ -819,8 +842,7 @@ function Workspace({ onCreate }) {
     try {
       const name = 'New Folder'
       await workspaceService.createFolder(workspaceId, name)
-      // Refresh folders without reloading page
-      await fetchInitialData()
+      await refreshFolders()
     } catch (error) {
       console.error('Failed to create folder:', error)
       alert('Failed to create folder')
@@ -833,8 +855,7 @@ function Workspace({ onCreate }) {
       const name = 'New Subfolder'
       // Using the same folder API for now. Adjust if a subfolder-specific endpoint exists.
       await workspaceService.createFolder(workspaceId, name)
-      // Refresh folders without reloading page
-      await fetchInitialData()
+      await refreshFolders()
     } catch (error) {
       console.error('Failed to create subfolder:', error)
       alert('Failed to create subfolder')
@@ -845,8 +866,7 @@ function Workspace({ onCreate }) {
     if (!workspaceId) return
     try {
       await workspaceService.renameFolder(workspaceId, folderId, newName)
-      // Refresh folders without reloading page
-      await fetchInitialData()
+      await refreshFolders()
       setRenameDialog(null)
       setRenameType(null)
       setNewName('')
@@ -861,8 +881,7 @@ function Workspace({ onCreate }) {
     try {
       // Assuming subfolders use the same folder API
       await workspaceService.renameFolder(workspaceId, subfolderId, newName)
-      // Refresh folders without reloading page
-      await fetchInitialData()
+      await refreshFolders()
       setRenameDialog(null)
       setRenameType(null)
       setNewName('')
@@ -876,8 +895,7 @@ function Workspace({ onCreate }) {
     if (!workspaceId) return
     try {
       await workspaceService.renameVideo(workspaceId, videoId, newTitle)
-      // Refresh folders without reloading page
-      await fetchInitialData()
+      await refreshFolders()
       setRenameDialog(null)
       setRenameType(null)
       setNewName('')
@@ -891,8 +909,12 @@ function Workspace({ onCreate }) {
     if (window.confirm('Are you sure you want to delete this folder?')) {
       try {
         await workspaceService.deleteFolder(workspaceId, folderId)
-        // Refresh folders without reloading page
-        await fetchInitialData()
+        // Clear selection if the deleted folder was active
+        if (selectedFolder === folderId) {
+          setSelectedFolder(null)
+          setSelectedSubfolder(null)
+        }
+        await refreshFolders()
       } catch (error) {
         console.error('Failed to delete folder:', error)
         alert('Failed to delete folder')
@@ -905,8 +927,10 @@ function Workspace({ onCreate }) {
     if (window.confirm('Are you sure you want to delete this subfolder?')) {
       try {
         await workspaceService.deleteFolder(workspaceId, subfolderId)
-        // Refresh folders without reloading page
-        await fetchInitialData()
+        if (selectedSubfolder === subfolderId) {
+          setSelectedSubfolder(null)
+        }
+        await refreshFolders()
       } catch (error) {
         console.error('Failed to delete subfolder:', error)
         alert('Failed to delete subfolder')
@@ -919,8 +943,7 @@ function Workspace({ onCreate }) {
     if (window.confirm('Are you sure you want to delete this video?')) {
       try {
         await workspaceService.deleteVideo(workspaceId, videoId)
-        // Refresh folders without reloading page
-        await fetchInitialData()
+        await refreshFolders()
       } catch (error) {
         alert('Failed to delete video')
       }

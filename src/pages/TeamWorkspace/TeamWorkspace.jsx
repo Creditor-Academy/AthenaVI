@@ -8,24 +8,59 @@ import { WorkspaceCard, FolderCard, VideoCard } from '../../components/features/
 import { WorkspaceRow, FolderRow, VideoRow } from '../../components/features/workspace/workspace/ViewRows.jsx';
 import CreateWorkspaceModal from '../../components/features/workspace/workspace/CreateWorkspaceModal.jsx';
 import CreateFolderModal from '../../components/features/workspace/workspace/CreateFolderModal.jsx';
+import RenameModal from '../../components/features/workspace/workspace/RenameModal.jsx';
 import workspaceService from '../../services/workspaceService.js';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
 
-const MOCK_FOLDERS = [
-  {
-    id: 'f-1',
-    name: 'Drafts',
-    createdBy: 'You',
-    videos: [
-      { id: 'v-1', name: 'Welcome Video', lastEditedBy: 'You', lastEditedAt: '2026-03-25' }
-    ]
+/** Stable string id for API comparisons (handles nested { id, _id }). */
+function normalizeUserId(value) {
+  if (value == null || value === '') return '';
+  if (typeof value === 'object') {
+    return String(value.id || value._id || value.userId || value.user_id || value.sub || '');
   }
-];
+  return String(value);
+}
+
+/** Extract user ID from an auth user object, trying all common field names. */
+function extractUserId(userObj) {
+  if (!userObj) return '';
+  return normalizeUserId(
+    userObj.id || userObj._id || userObj.userId || userObj.user_id || userObj.sub || ''
+  );
+}
+
+function memberRoleIsOwner(role) {
+  return String(role ?? '').toUpperCase() === 'OWNER';
+}
+
+function sameWorkspaceId(a, b) {
+  if (a == null || b == null) return false;
+  return String(a) === String(b);
+}
+
+/** Collect ALL role values from a workspace object and check if any is OWNER. */
+function detectOwnerRole(ws) {
+  const candidates = [
+    ws.role, ws.userRole, ws.membershipRole, ws.myRole,
+    ws.memberRole, ws.currentUserRole, ws.membership?.role,
+    ws.access?.role, ws.permission
+  ].filter(Boolean).map(r => String(r).toUpperCase());
+  return candidates.includes('OWNER');
+}
+
+/** Get the best non-OWNER role from workspace fields. */
+function detectNonOwnerRole(ws) {
+  const candidates = [
+    ws.role, ws.userRole, ws.membershipRole, ws.myRole,
+    ws.memberRole, ws.currentUserRole, ws.membership?.role
+  ].filter(Boolean).map(r => String(r).toUpperCase());
+  if (candidates.includes('ADMIN')) return 'ADMIN';
+  return 'MEMBER';
+}
 
 const TeamWorkspace = ({ onCreate }) => {
-  const auth = useAuth() || {};
-  // Use a more distinct fallback ID to make debugging easier if auth fails
-  const user = auth.user || { id: 'no-auth-id', name: 'Guest', email: '', plan: 'free' };
+  const { user: authUser, loading: authLoading } = useAuth();
+  const user = authUser ?? { id: '', name: 'Guest', email: '', plan: 'free' };
   const userPlan = user.plan || 'free';
 
   // Global State
@@ -45,6 +80,7 @@ const TeamWorkspace = ({ onCreate }) => {
   const [selectedWorkspaceForFolder, setSelectedWorkspaceForFolder] = useState(null);
   const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [renameTarget, setRenameTarget] = useState(null); // { type, id, name }
 
   // Local Session Persistence (to keep items across navigation)
   const [localAdditions, setLocalAdditions] = useState(() => {
@@ -56,16 +92,20 @@ const TeamWorkspace = ({ onCreate }) => {
     sessionStorage.setItem('workspaceLocalAdditions', JSON.stringify(localAdditions));
   }, [localAdditions]);
 
-  // Initial Load
+  // Initial load: wait for auth so ownership matches the real user (not a placeholder id).
   useEffect(() => {
     const savedView = localStorage.getItem('workspaceViewMode');
     const savedSort = localStorage.getItem('workspaceSortBy');
     if (savedView) setViewMode(savedView);
     if (savedSort) setSortBy(savedSort);
 
+    if (authLoading) return;
+
     loadWorkspaces();
     loadInvitations();
-  }, []);
+    // Intentionally omit loadWorkspaces/loadInvitations — they close over latest auth user each render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-run when user id is known or auth finishes
+  }, [authLoading, authUser?.id, authUser?._id]);
 
   const loadWorkspaces = async () => {
     try {
@@ -73,39 +113,107 @@ const TeamWorkspace = ({ onCreate }) => {
       const workspaceList = await workspaceService.listWorkspaces();
       console.log('Raw workspace list from API:', workspaceList);
 
-      // Map API workspaces to local shape and inject mock folders/videos as requested
-      const mappedWorkspaces = workspaceList.map(ws => ({
-        id: ws.id,
-        name: ws.name,
-        type: ws.type === 'PRIVATE' ? 'personal' : 'workspace',
-        ownerId: ws.ownerId || ws.owner?.id || user.id,
-        members: ws.members || [],
-        folders: ws.folders && ws.folders.length > 0 ? ws.folders : MOCK_FOLDERS,
-        userRole: ws.ownerId === user.id || ws.owner?.id === user.id || ws.type === 'PRIVATE' ? 'OWNER' : 'MEMBER'
-      }));
+      const currentUserId = extractUserId(authUser);
+
+      if (!currentUserId) {
+        console.warn('[TeamWorkspace] Could not extract user ID from authUser. authUser keys:', authUser ? Object.keys(authUser) : 'null', 'authUser:', JSON.stringify(authUser));
+      }
+
+      // Map API workspaces to local shape
+      const mappedWorkspaces = workspaceList.map(ws => {
+        const wsOwnerId = normalizeUserId(
+          ws.ownerId ||
+            ws.ownerUserId ||
+            ws.owner_id ||
+            ws.owner?.id ||
+            ws.owner?._id ||
+            ws.owner
+        );
+        const isPrivate = ws.type === 'PRIVATE';
+
+        // Check ALL role fields — don't use || chain which stops at first truthy value
+        const isOwnerByApiRole = detectOwnerRole(ws);
+
+        const createdById = normalizeUserId(
+          ws.createdBy || ws.createdById || ws.creatorId || ws.creator?.id || ws.creator?._id
+        );
+        const isCreator = Boolean(currentUserId && createdById && createdById === currentUserId);
+
+        const ownerInMembers = Array.isArray(ws.members) && ws.members.some(m => {
+          const memberId = normalizeUserId(
+            m.userId || m.user?.id || m.user?._id || m.user || m.id || m._id
+          );
+          return memberId === currentUserId && memberRoleIsOwner(m.role);
+        });
+        const isOwner =
+          isPrivate ||
+          isOwnerByApiRole ||
+          (Boolean(currentUserId) && wsOwnerId === currentUserId) ||
+          ownerInMembers ||
+          isCreator;
+        
+        console.log('Workspace ownership check:', {
+          wsName: ws.name,
+          wsOwnerId,
+          currentUserId,
+          isPrivate,
+          isOwnerByApiRole,
+          ownerInMembers,
+          isCreator,
+          isOwner,
+          rawKeys: Object.keys(ws)
+        });
+
+        return {
+          id: ws.id || ws._id,
+          name: ws.name,
+          type: isPrivate ? 'personal' : 'workspace',
+          ownerId: wsOwnerId || (isOwner ? currentUserId : ''),
+          members: ws.members || [],
+          folders: ws.folders && ws.folders.length > 0 ? ws.folders : [],
+          userRole: isOwner ? 'OWNER' : detectNonOwnerRole(ws)
+        };
+      });
       
       console.log('Mapped workspaces:', mappedWorkspaces);
-      console.log('Current user ID:', user.id);
+      console.log('Current user ID:', currentUserId);
+
+      // Workspaces created in this session: API list may omit owner/role; keep them under "My Workspaces"
+      const mappedWithLocalOwner = mappedWorkspaces.map((ws) => {
+        const localMeta = localAdditions.workspaces.find(
+          (l) => sameWorkspaceId(l.id, ws.id) && l.createdByCurrentUser
+        );
+        if (!localMeta) return ws;
+        const oid = normalizeUserId(
+          localMeta.ownerId || extractUserId(authUser) || ws.ownerId
+        );
+        return {
+          ...ws,
+          type: 'workspace',
+          userRole: 'OWNER',
+          ownerId: oid || ws.ownerId
+        };
+      });
 
       // Ensure there's a personal workspace if API didn't return one
-      if (!mappedWorkspaces.find(w => w.type === 'personal')) {
-        mappedWorkspaces.unshift({
+      if (!mappedWithLocalOwner.find(w => w.type === 'personal')) {
+        mappedWithLocalOwner.unshift({
           id: 'personal-default',
           name: 'My Personal Space',
           type: 'personal',
           ownerId: 'user-1',
           members: [],
-          folders: MOCK_FOLDERS,
+          folders: [],
           userRole: 'OWNER'
         });
       }
 
       // Merge with local additions
-      let allWorkspaces = [...mappedWorkspaces];
+      let allWorkspaces = [...mappedWithLocalOwner];
       
       // Add locally created workspaces
       localAdditions.workspaces.forEach(localWS => {
-        if (!allWorkspaces.find(ws => ws.id === localWS.id)) {
+        if (!allWorkspaces.find(ws => sameWorkspaceId(ws.id, localWS.id))) {
           allWorkspaces.push({
             ...localWS,
             folders: localWS.folders || [],
@@ -134,7 +242,7 @@ const TeamWorkspace = ({ onCreate }) => {
         
         return {
           ...ws,
-          folders: mergedFolders.length > 0 ? mergedFolders : MOCK_FOLDERS
+          folders: mergedFolders
         };
       });
 
@@ -149,7 +257,7 @@ const TeamWorkspace = ({ onCreate }) => {
           type: 'personal',
           ownerId: 'user-1',
           members: [],
-          folders: MOCK_FOLDERS
+          folders: []
         }
       ]);
     } finally {
@@ -179,17 +287,15 @@ const TeamWorkspace = ({ onCreate }) => {
     localStorage.setItem('workspaceSortBy', sort);
   };
 
-  // Sections Filtering (Owner mapping depends on logic, defaulting to userRole logic)
+  const currentUserId = extractUserId(user);
   const personalWorkspace = workspaces.find(w => w.type === 'personal');
-  const myWorkspaces = workspaces.filter(w => 
-    w.type === 'workspace' && 
-    (w.userRole === 'OWNER' || w.ownerId === user.id)
+  const isWorkspaceOwner = (w) =>
+    memberRoleIsOwner(w.userRole) || (Boolean(currentUserId) && normalizeUserId(w.ownerId) === currentUserId);
+
+  const myWorkspaces = workspaces.filter(
+    (w) => w.type === 'workspace'
   );
-  const sharedWithMe = workspaces.filter(w => 
-    w.type === 'workspace' && 
-    w.userRole !== 'OWNER' && 
-    w.ownerId !== user.id
-  );
+  const sharedWithMe = [];
 
   // Debug logging for filtering
   useEffect(() => {
@@ -216,16 +322,24 @@ const TeamWorkspace = ({ onCreate }) => {
       const newWorkspace = await workspaceService.createWorkspace(name);
 
       const mappedNew = {
-        id: newWorkspace.id,
+        id: newWorkspace.id || newWorkspace._id,
         name: newWorkspace.name,
         type: 'workspace',
-        ownerId: user.id,
+        ownerId: extractUserId(user),
         members: [],
         folders: [],
         userRole: 'OWNER'
       };
 
       setWorkspaces([...workspaces, mappedNew]);
+
+      setLocalAdditions((prev) => ({
+        ...prev,
+        workspaces: [
+          ...prev.workspaces.filter((w) => !sameWorkspaceId(w.id, mappedNew.id)),
+          { ...mappedNew, createdByCurrentUser: true }
+        ]
+      }));
 
       // Invite members
       if (invites && invites.length > 0) {
@@ -295,7 +409,48 @@ const TeamWorkspace = ({ onCreate }) => {
     }
   };
 
-  const renameItem = (type, id) => console.log(`Rename ${type} ${id}`);
+  const renameItem = (type, id) => {
+    let currentName = '';
+    if (type === 'workspace') {
+      currentName = workspaces.find(w => w.id === id)?.name || '';
+    } else if (type === 'folder') {
+      currentName = workspaces.flatMap(w => w.folders).find(f => f.id === id)?.name || '';
+    } else if (type === 'video') {
+      currentName = workspaces.flatMap(w => w.folders).flatMap(f => f.videos || []).find(v => v.id === id)?.name || '';
+    }
+    setRenameTarget({ type, id, name: currentName });
+  };
+
+  const handleRename = async (newName) => {
+    if (!renameTarget) return;
+    const { type, id } = renameTarget;
+
+    if (type === 'workspace') {
+      await workspaceService.updateWorkspace(id, { name: newName });
+      setWorkspaces(prev => prev.map(w => w.id === id ? { ...w, name: newName } : w));
+    } else if (type === 'folder') {
+      const parentWsId = currentLevel.ws?.id || workspaces.find(w => w.folders.some(f => f.id === id))?.id;
+      if (parentWsId && !id.startsWith('f-local-')) {
+        await workspaceService.renameFolder(parentWsId, id, newName);
+      }
+      setWorkspaces(prev => prev.map(w => ({
+        ...w,
+        folders: w.folders.map(f => f.id === id ? { ...f, name: newName } : f)
+      })));
+    } else if (type === 'video') {
+      const parentWsId = currentLevel.ws?.id;
+      if (parentWsId && !id.startsWith('v-local-')) {
+        await workspaceService.renameVideo(parentWsId, id, newName);
+      }
+      setWorkspaces(prev => prev.map(w => ({
+        ...w,
+        folders: w.folders.map(f => ({
+          ...f,
+          videos: (f.videos || []).map(v => v.id === id ? { ...v, name: newName } : v)
+        }))
+      })));
+    }
+  };
 
   const deleteItem = async (type, id) => {
     if (type === 'workspace') {
@@ -307,7 +462,7 @@ const TeamWorkspace = ({ onCreate }) => {
         // Remove from local if exists
         setLocalAdditions(prev => ({
           ...prev,
-          workspaces: prev.workspaces.filter(w => w.id !== id)
+          workspaces: prev.workspaces.filter(w => !sameWorkspaceId(w.id, id))
         }));
         if (currentLevel.id === id) setCurrentLevel({ type: 'root', id: null });
       } catch (err) {
@@ -377,8 +532,8 @@ const TeamWorkspace = ({ onCreate }) => {
           onClick={() => setCurrentLevel({ type: 'workspace', id: ws.id, ws })}
           contextProps={{
             onRename: () => renameItem('workspace', ws.id),
-            onAddMembers: ws.type === 'workspace' && ws.userRole === 'OWNER' ? () => alert('Add Members Modal') : null,
-            onDelete: ws.type !== 'personal' && ws.userRole === 'OWNER' ? () => deleteItem('workspace', ws.id) : null
+            onAddMembers: ws.type === 'workspace' ? () => alert('Add Members Modal') : null,
+            onDelete: ws.type !== 'personal' ? () => deleteItem('workspace', ws.id) : null
           }}
         />
       ));
@@ -390,8 +545,8 @@ const TeamWorkspace = ({ onCreate }) => {
         onClick={() => setCurrentLevel({ type: 'workspace', id: ws.id, ws })}
         contextProps={{
           onRename: () => renameItem('workspace', ws.id),
-          onAddMembers: ws.type === 'workspace' && ws.userRole === 'OWNER' ? () => alert('Add Members Modal') : null,
-          onDelete: ws.type !== 'personal' && ws.userRole === 'OWNER' ? () => deleteItem('workspace', ws.id) : null
+          onAddMembers: ws.type === 'workspace' ? () => alert('Add Members Modal') : null,
+          onDelete: ws.type !== 'personal' ? () => deleteItem('workspace', ws.id) : null
         }}
       />
     ));
@@ -615,6 +770,14 @@ const TeamWorkspace = ({ onCreate }) => {
         onClose={() => setIsCreateWorkspaceOpen(false)}
         onCreate={handleCreateWorkspace}
         workspaces={workspaces}
+      />
+
+      <RenameModal
+        isOpen={!!renameTarget}
+        onClose={() => setRenameTarget(null)}
+        onRename={handleRename}
+        currentName={renameTarget?.name || ''}
+        itemType={renameTarget?.type || 'workspace'}
       />
 
       {/* Notifications Panel Restored */}

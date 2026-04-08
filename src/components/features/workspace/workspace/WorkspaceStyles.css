@@ -493,13 +493,13 @@
 
 .modal-content {
   background: var(--bg-card);
-  border-radius: 16px;
+  border-radius: 20px;
   width: 100%;
   position: relative;
-  max-width: 580px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  border: 1px solid var(--border-color);
+  max-width: 620px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2), 0 0 0 1px var(--border-color);
+  overflow: visible;
+  border: none;
 }
 
 .modal-header {
