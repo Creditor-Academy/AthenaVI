@@ -16,12 +16,14 @@ import {
   Calendar,
   Clock,
   Filter,
-  ArrowUpRight
+  ArrowUpRight,
+  Play,
+  Film
 } from 'lucide-react'
 import './Trash.css'
 
-const thumbnailUrl = 'https://images.unsplash.com/photo-1626544823126-bb96239bc569?q=80&w=2600&auto=format&fit=crop'
-const folderThumbUrl = 'https://images.unsplash.com/photo-1544383333-5452d3d94bb4?q=80&w=2600&auto=format&fit=crop'
+const thumbnailUrl = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=600'
+const folderThumbUrl = 'https://images.unsplash.com/photo-1626544823126-bb96239bc569?auto=format&fit=crop&q=80&w=600'
 
 function Trash() {
   const [activeTab, setActiveTab] = useState('all')
@@ -57,10 +59,10 @@ function Trash() {
   ], [])
 
   const trashVideos = useMemo(() => [
-    { id: 'v1', title: 'Feature Pitch Draft', deletedDate: '3 days ago', daysRemaining: 27, duration: '05:12', thumbnail: thumbnailUrl, size: '156 MB' },
-    { id: 'v2', title: 'Quick Loom Record', deletedDate: '5 days ago', daysRemaining: 25, duration: '01:45', thumbnail: thumbnailUrl, size: '12 MB' },
-    { id: 'v3', title: 'Asset_Final_V4', deletedDate: '1 week ago', daysRemaining: 23, duration: '02:30', thumbnail: thumbnailUrl, size: '89 MB' },
-    { id: 'v4', title: 'Test Export', deletedDate: '2 weeks ago', daysRemaining: 15, duration: '00:15', thumbnail: thumbnailUrl, size: '4 MB' },
+    { id: 'v1', title: 'Feature Pitch Draft', deletedDate: '3 days ago', daysRemaining: 27, duration: '05:12', thumbnail: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&q=80&w=600', size: '156 MB' },
+    { id: 'v2', title: 'Quick Loom Record', deletedDate: '5 days ago', daysRemaining: 25, duration: '01:45', thumbnail: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=600', size: '12 MB' },
+    { id: 'v3', title: 'Asset_Final_V4', deletedDate: '1 week ago', daysRemaining: 23, duration: '02:30', thumbnail: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=600', size: '89 MB' },
+    { id: 'v4', title: 'Test Export', deletedDate: '2 weeks ago', daysRemaining: 15, duration: '00:15', thumbnail: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=600', size: '4 MB' },
   ], [])
 
   const filteredAssets = trashVideos.filter(v => 
@@ -72,7 +74,7 @@ function Trash() {
   }
 
   const closeRestoreDrawer = () => {
-    setRestoreDrawer({ isOpen: false, data: null })
+    setRestoreDrawer(prev => ({ ...prev, isOpen: false }))
   }
 
   const handleRestore = () => {
@@ -100,64 +102,60 @@ function Trash() {
       <div className="trash-glow-2"></div>
       
       <div className="trash-page-layout">
-        <header className="page-header">
-          <div className="header-top">
-            <div className="title-group">
-              <div className="breadcrumb">
-                <span>Dashboard</span>
-                <ChevronRight size={14} />
-                <span className="current">Trash</span>
+        <header className="trash-header-new">
+          <div className="header-main-row">
+            <div className="header-left">
+
+              <div className="title-with-badge">
+                <h1>Recovery Center</h1>
+                <div className="count-badge">{trashVideos.length + trashFolders.length} items</div>
               </div>
-              <h1>Recovery Center</h1>
-              <p className="subtitle">
-                Manage your deleted assets. Items are kept for <span className="highlight">30 days</span> before permanent removal.
+              <p className="subtitle-compact">
+                Items are kept for <span className="highlight">30 days</span> before permanent removal.
               </p>
             </div>
             
-            <div className="header-actions">
-              <div className="stat-pills">
-                <div className="stat-pill">
-                  <span className="label">Total Items</span>
-                  <span className="value">{trashVideos.length + trashFolders.length}</span>
-                </div>
-                <div className="stat-pill">
-                  <span className="label">Storage</span>
-                  <span className="value">420 MB</span>
+            <div className="header-right">
+              <div className="storage-mini-card">
+                <div className="mini-icon"><ShieldAlert size={16} /></div>
+                <div className="mini-content">
+                  <span className="mini-label">Storage Used</span>
+                  <span className="mini-value">420 MB</span>
                 </div>
               </div>
-              <button className="btn-empty-all" onClick={emptyTrash}>
+              <button className="btn-empty-trash" onClick={emptyTrash}>
                 <Trash2 size={16} />
                 <span>Empty Trash</span>
               </button>
             </div>
           </div>
 
-          <div className="header-controls">
-            <div className="control-left">
-              <div className="search-wrapper">
-                <Search className="search-icon" size={18} />
+          <div className="toolbar-integrated">
+            <div className="toolbar-left">
+              <div className="search-compact">
+                <Search size={16} />
                 <input 
                   type="text" 
-                  placeholder="Search by name, type, or date..." 
+                  placeholder="Find in trash..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <div className="tabs-wrapper">
+              <div className="tab-switcher">
                 <button 
-                  className={`tab-pill ${activeTab === 'all' ? 'active' : ''}`}
+                  className={`tab-item ${activeTab === 'all' ? 'active' : ''}`}
                   onClick={() => setActiveTab('all')}
                 >
-                  All Assets
+                  All
                 </button>
                 <button 
-                  className={`tab-pill ${activeTab === 'folders' ? 'active' : ''}`}
+                  className={`tab-item ${activeTab === 'folders' ? 'active' : ''}`}
                   onClick={() => setActiveTab('folders')}
                 >
                   Folders
                 </button>
                 <button 
-                  className={`tab-pill ${activeTab === 'videos' ? 'active' : ''}`}
+                  className={`tab-item ${activeTab === 'videos' ? 'active' : ''}`}
                   onClick={() => setActiveTab('videos')}
                 >
                   Videos
@@ -165,23 +163,25 @@ function Trash() {
               </div>
             </div>
 
-            <div className="control-right">
-              <button className="btn-filter">
+            <div className="toolbar-right">
+              <button className="toolbar-btn">
                 <Filter size={16} />
-                <span>Filter</span>
+                <span>Filters</span>
               </button>
-              <div className="view-switcher">
+              <div className="view-toggle">
                 <button 
-                  className={`switch-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                  className={`toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
                   onClick={() => setViewMode('grid')}
+                  title="Grid View"
                 >
-                  <Grid size={18} />
+                  <Grid size={16} />
                 </button>
                 <button 
-                  className={`switch-btn ${viewMode === 'list' ? 'active' : ''}`}
+                  className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
                   onClick={() => setViewMode('list')}
+                  title="List View"
                 >
-                  <List size={18} />
+                  <List size={16} />
                 </button>
               </div>
             </div>
@@ -237,12 +237,13 @@ function Trash() {
                       <div key={folder.id} className="premium-folder-card" onClick={() => setSelectedFolder(folder.id)}>
                         <div className="folder-card-inner">
                           <div className="folder-preview">
-                            <Folder size={32} />
-                            <div className="item-count">{folder.assetsCount}</div>
+                            <Folder size={24} />
                           </div>
                           <div className="folder-card-info">
                             <h4>{folder.name}</h4>
                             <div className="folder-card-meta">
+                              <span className="count-pill">{folder.assetsCount} items</span>
+                              <span className="dot-sep"></span>
                               <Clock size={12} />
                               <span>{folder.daysRemaining} days left</span>
                             </div>
@@ -294,80 +295,99 @@ function Trash() {
         </main>
       </div>
 
-      {/* Side Drawer Component */}
-      <div className={`recovery-drawer-overlay ${restoreDrawer.isOpen ? 'active' : ''}`} onClick={closeRestoreDrawer}>
-        <aside className={`recovery-drawer ${restoreDrawer.isOpen ? 'active' : ''}`} onClick={e => e.stopPropagation()}>
-          <div className="drawer-header-compact">
-            <button className="btn-close-drawer" onClick={closeRestoreDrawer}>
-              <X size={20} />
-            </button>
-            <span className="drawer-title-label">Asset Intelligence</span>
-          </div>
-
+      {/* Modern Centered Recovery Modal */}
+      <div className={`recovery-modal-overlay ${restoreDrawer.isOpen ? 'active' : ''}`} onClick={closeRestoreDrawer}>
+        <div className={`recovery-modal ${restoreDrawer.isOpen ? 'active' : ''}`} onClick={(e) => e.stopPropagation()}>
+          <button className="btn-close-modal" onClick={closeRestoreDrawer}>
+            <X size={20} />
+          </button>
+          
           {restoreDrawer.data && (
-            <div className="drawer-body">
-              <div className="asset-preview-hero">
-                <img src={restoreDrawer.data.thumbnail} alt="" />
-                <div className="hero-overlay-blur"></div>
-                {restoreDrawer.data.type === 'video' && <div className="play-icon-static"><Video size={24} /></div>}
-              </div>
-
-              <div className="asset-details-section">
-                <div className="asset-header-info">
-                  <div className="type-badge">
-                    {restoreDrawer.data.type === 'video' ? <Video size={12} /> : <Folder size={12} />}
-                    {restoreDrawer.data.type.toUpperCase()}
+            <div className="modal-content-split">
+              {/* Left Side: Media Preview */}
+              <div className="modal-preview-panel">
+                <div className="preview-media-container">
+                  <img src={restoreDrawer.data.thumbnail || folderThumbUrl} alt="Preview" />
+                  <div className="play-overlay-glass">
+                    <Play size={28} fill="currentColor" />
                   </div>
-                  <h2>{restoreDrawer.data.title || restoreDrawer.data.name}</h2>
-                </div>
-
-                <div className="info-grid-premium">
-                  <div className="info-box-item">
-                    <span className="info-label">Status</span>
-                    <div className="status-indicator">
-                      <div className="pulse-dot"></div>
-                      <span className="status-text">Pending Recovery</span>
+                  <div className="preview-header-overlay">
+                    <div className="glass-badge">
+                      <span className="live-dot"></span>
+                      <span>PREVIEW MODE</span>
                     </div>
                   </div>
-                  <div className="info-box-item">
-                    <span className="info-label">Size</span>
-                    <span className="info-value">{restoreDrawer.data.size || 'N/A'}</span>
-                  </div>
-                  <div className="info-box-item">
-                    <span className="info-label">Auto-delete</span>
-                    <span className="info-value text-warning">{restoreDrawer.data.daysRemaining} days</span>
-                  </div>
-                  <div className="info-box-item">
-                    <span className="info-label">Deleted</span>
-                    <span className="info-value">{restoreDrawer.data.deletedDate}</span>
-                  </div>
                 </div>
-
-                <div className="asset-insight-card">
-                  <div className="insight-header">
-                    <Info size={14} />
-                    <span>Recovery Insight</span>
-                  </div>
-                  <p>
-                    Restoring this {restoreDrawer.data.type} will return it to its original workspace. 
-                    Links, analytics, and collaborations associated with this item will be re-activated instantly.
-                  </p>
+                <div className="preview-footer-info">
+                   <div className="info-bits">
+                     <Clock size={12} />
+                     <span>{restoreDrawer.data.duration || '00:00'}</span>
+                     <span className="dot"></span>
+                     <span>4K Resolution</span>
+                   </div>
                 </div>
               </div>
 
-              <div className="drawer-footer-actions">
-                <button className="btn-primary-restore" onClick={handleRestore}>
-                  <RotateCcw size={18} />
-                  <span>Restore Asset Now</span>
-                </button>
-                <button className="btn-secondary-delete" onClick={() => handleDeletePermanent(restoreDrawer.data.type, restoreDrawer.data)}>
-                  <Trash2 size={16} />
-                  <span>Delete Permanently</span>
-                </button>
+              {/* Right Side: Details & Actions */}
+              <div className="modal-details-panel">
+                <div className="panel-header-new">
+                  <h2 className="asset-title-truncate" title={restoreDrawer.data.title || restoreDrawer.data.name}>
+                    {restoreDrawer.data.title || restoreDrawer.data.name}
+                  </h2>
+                  <div className="header-meta-tags">
+                     <div className="meta-pill">
+                       {restoreDrawer.data.type === 'folder' ? <Folder size={12} /> : <Film size={12} />}
+                       <span>{restoreDrawer.data.type.toUpperCase()}</span>
+                     </div>
+                     <span className="meta-sep"></span>
+                     <span className="deleted-date-text">Deleted {restoreDrawer.data.deletedDate}</span>
+                  </div>
+                </div>
+
+                <div className="panel-stats-compact">
+                  <div className="stat-item-premium">
+                    <label>Current Status</label>
+                    <div className="status-with-pulse">
+                      <span className="pulse-dot warning"></span>
+                      <span className="status-val warning">Pending Recovery</span>
+                    </div>
+                  </div>
+                  
+                  <div className="stat-grid-row">
+                    <div className="mini-stat-box">
+                      <label>Total Size</label>
+                      <span className="val">{restoreDrawer.data.size || '14 items'}</span>
+                    </div>
+                    <div className="mini-stat-box highlight">
+                      <label>Auto-Cleanup In</label>
+                      <span className="val">{restoreDrawer.data.daysRemaining} Days</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="modal-action-footer">
+                  <button className="btn-restore-primary" onClick={handleRestore}>
+                    <RotateCcw size={18} />
+                    <span>Restore Asset to Library</span>
+                  </button>
+                  
+                  <div className="danger-zone-compact">
+                    <button className="btn-delete-ghost" onClick={() => {
+                      handleDeletePermanent(restoreDrawer.data.type, restoreDrawer.data.id);
+                      closeRestoreDrawer();
+                    }}>
+                      <Trash2 size={16} />
+                      <span>Delete Permanently</span>
+                    </button>
+                    <p className="deletion-warning">
+                      This action cannot be undone. System links will be severed.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
-        </aside>
+        </div>
       </div>
     </div>
   )
