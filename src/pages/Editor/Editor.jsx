@@ -30,11 +30,13 @@ function Create({ onBack, initialConfig = null }) {
     const resolvedResolution = pageSizeToResolution[initialConfig?.pageSize] || projectTemplate.project.resolution
     const resolvedTitle = initialConfig?.name?.trim() || projectTemplate.project.title
 
+    const initialScenes = initialConfig?.template?.scenes || initialConfig?.template ? [initialConfig.template] : []
+    
     return {
       ...projectTemplate.project,
       title: resolvedTitle,
       resolution: resolvedResolution,
-      scenes: [],
+      scenes: initialScenes.length > 0 ? initialScenes : [],
       updatedAt: new Date().toISOString(),
       createConfig: initialConfig
         ? {
@@ -214,6 +216,18 @@ function Create({ onBack, initialConfig = null }) {
       ...prev,
       scenes: prev.scenes.map(s => 
         s.id === sceneId ? { ...s, clips: s.clips.filter(c => c.id !== layerId) } : s
+      )
+    }))
+  }
+
+  // Update clip text content (from inline editing via LiveCanvasRenderer)
+  const updateClipContent = (sceneId, clipId, newText) => {
+    setProject(prev => ({
+      ...prev,
+      scenes: prev.scenes.map(s =>
+        s.id === sceneId
+          ? { ...s, clips: s.clips.map(c => c.id === clipId ? { ...c, content: newText } : c) }
+          : s
       )
     }))
   }
@@ -556,6 +570,7 @@ function Create({ onBack, initialConfig = null }) {
                 setSelectedLayerId={setSelectedLayerId}
                 onUpdateLayerPosition={updateLayerPosition}
                 onUpdateLayerSize={updateLayerSize}
+                updateClipContent={updateClipContent}
               />
             </div>
           </div>

@@ -153,7 +153,7 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) 
                     opacity: opacity * (clip.opacity ?? 1),
                     display: 'flex',
                     flexDirection: 'column',
-                    alignItems: 'center',
+                    alignItems: clip.style?.textAlign === 'left' ? 'flex-start' : (clip.style?.textAlign === 'right' ? 'flex-end' : 'center'),
                     justifyContent: 'center',
                     pointerEvents: 'none'
                 }
@@ -164,15 +164,26 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) 
                             <div style={{
                                 fontSize: `${clip.style?.fontSize || 48}px`,
                                 fontWeight: clip.style?.fontWeight || '700',
-                                color: (clip.style?.color && clip.style.color !== '#ffffff') ? clip.style.color : '#1a1b1c',
+                                color: clip.style?.color || '#1a1b1c',
                                 textAlign: clip.style?.textAlign || 'center',
-                                width: clip.style?.width || 'auto',
-                                border: '1px dashed #ced4da',
-                                background: 'rgba(255,255,255,0.8)',
-                                padding: '10px 20px',
-                                borderRadius: '8px',
+                                width: '100%',
+                                maxWidth: '100%',
+                                border: 'none',
+                                background: clip.style?.backgroundColor || 'transparent',
+                                padding: clip.style?.padding ? clip.style.padding : '0px',
+                                borderRadius: clip.style?.borderRadius ? clip.style.borderRadius : '0px',
+                                boxShadow: clip.style?.boxShadow || 'none',
                                 whiteSpace: 'pre-wrap',
-                                lineHeight: '1.2'
+                                wordBreak: 'break-word',
+                                lineHeight: clip.style?.lineHeight || '1.2',
+                                letterSpacing: clip.style?.letterSpacing || 'normal',
+                                textTransform: clip.style?.textTransform || 'none',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: clip.style?.textAlign === 'left' ? 'flex-start' : (clip.style?.textAlign === 'right' ? 'flex-end' : 'center'),
+                                outline: 'none',
+                                fontFamily: clip.style?.fontFamily || 'Inter, system-ui, sans-serif',
+                                margin: 0,
                             }}>
                                 {clip.content}
                             </div>
@@ -184,23 +195,20 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) 
                     return (
                         <div key={clip.id} style={{
                             ...style,
-                            border: '2px dashed #adb5bd',
-                            borderRadius: '16px',
-                            background: '#f8f9fa',
+                            border: 'none',
+                            borderRadius: clip.type === 'avatar' ? '50%' : '16px',
+                            background: clip.src ? 'transparent' : 'rgba(0,0,0,0.03)',
                             overflow: 'hidden'
                         }}>
                             {clip.src ? (
-                                <img src={clip.src} style={{ width: '100%', height: '100%', objectFit: clip.type === 'avatar' ? 'contain' : 'cover' }} alt="" />
+                                <img src={clip.src} style={{ width: '100%', height: '100%', objectFit: clip.role === 'avatar' ? 'contain' : 'cover' }} alt="" />
                             ) : (
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
                                     {clip.type === 'avatar' ? (
-                                        <MdPerson size={48} color="#adb5bd" style={{ opacity: 0.5 }} />
+                                        <MdPerson size={Math.min(64, (clip.size?.width || 128) / 2)} color="rgba(0,0,0,0.1)" />
                                     ) : (
-                                        <MdPhotoSizeSelectActual size={48} color="#adb5bd" style={{ opacity: 0.5 }} />
+                                        <MdPhotoSizeSelectActual size={Math.min(64, (clip.size?.width || 128) / 2)} color="rgba(0,0,0,0.1)" />
                                     )}
-                                    <span style={{ fontSize: '11px', color: '#adb5bd', marginTop: '12px', fontWeight: '800', letterSpacing: '0.1em' }}>
-                                        {clip.type.toUpperCase()} PLACEHOLDER
-                                    </span>
                                 </div>
                             )}
                         </div>

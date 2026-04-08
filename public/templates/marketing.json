@@ -15,9 +15,85 @@
       "duration": 8,
       "tags": ["hero", "intro", "3d"],
       "clips": [
-        { "id": "t1", "type": "text", "role": "main-text", "editable": true, "position": { "x": 8, "y": 18 }, "content": "YOUR NEXT BIG IDEA STARTS HERE", "style": { "fontSize": 80, "fontWeight": "900", "textAlign": "left", "width": "900px" } },
-        { "id": "t2", "type": "text", "role": "secondary-text", "editable": true, "position": { "x": 8, "y": 63 }, "content": "The ultimate platform for AI video generation.", "style": { "fontSize": 32, "fontWeight": "500", "textAlign": "left", "width": "800px", "color": "#64748b" } },
-        { "id": "a1", "type": "avatar", "role": "avatar", "editable": true, "position": { "x": 66, "y": 35 }, "size": { "width": 250, "height": 330 } }
+        { 
+          "id": "t1", 
+          "type": "text", 
+          "role": "main-text", 
+          "editable": true, 
+          "position": { "x": 6, "y": 20 }, 
+          "size": { "width": 800, "height": 220 },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "YOUR NEXT BIG\nIDEA STARTS HERE", 
+          "style": { 
+            "fontSize": 72, 
+            "fontWeight": "900", 
+            "textAlign": "left", 
+            "color": "#0f172a",
+            "textTransform": "uppercase",
+            "lineHeight": 1.1,
+            "letterSpacing": "-0.03em"
+          } 
+        },
+        { 
+          "id": "t2", 
+          "type": "text", 
+          "role": "secondary-text", 
+          "editable": true, 
+          "position": { "x": 6, "y": 62 }, 
+          "size": { "width": 600, "height": 80 },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "The ultimate platform for AI video generation and professional layouts.", 
+          "style": { 
+            "fontSize": 28, 
+            "fontWeight": "500", 
+            "textAlign": "left", 
+            "color": "#64748b",
+            "lineHeight": 1.4
+          } 
+        },
+        { 
+          "id": "t3", 
+          "type": "text", 
+          "role": "cta-text", 
+          "editable": true, 
+          "position": { "x": 6, "y": 78 }, 
+          "size": { "width": 260, "height": 64 },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "GET STARTED NOW", 
+          "style": { 
+            "fontSize": 22, 
+            "fontWeight": "800", 
+            "textAlign": "center", 
+            "color": "#ffffff", 
+            "backgroundColor": "#3b82f6", 
+            "padding": "12px 24px", 
+            "borderRadius": "40px",
+            "boxShadow": "0 4px 12px rgba(59, 130, 246, 0.4)"
+          } 
+        },
+        { 
+          "id": "i1", 
+          "type": "image", 
+          "role": "media-showcase", 
+          "editable": true, 
+          "position": { "x": 60, "y": 15 }, 
+          "size": { "width": 450, "height": 580 },
+          "startTime": 0,
+          "endTime": 8
+        },
+        { 
+          "id": "a1", 
+          "type": "avatar", 
+          "role": "avatar", 
+          "editable": true, 
+          "position": { "x": 82, "y": 74 }, 
+          "size": { "width": 140, "height": 140 },
+          "startTime": 0,
+          "endTime": 8
+        }
       ]
     },
     {
@@ -34,8 +110,81 @@
       "duration": 8,
       "tags": ["sales", "focus"],
       "clips": [
-        { "id": "t1", "type": "text", "role": "main-text", "editable": true, "position": { "x": 68, "y": 46 }, "content": "TRANSFORM YOUR WORKFLOW", "style": { "fontSize": 80, "fontWeight": "900", "textAlign": "left", "width": "900px" } },
-        { "id": "a1", "type": "avatar", "role": "avatar", "editable": true, "position": { "x": 12, "y": 35 }, "size": { "width": 250, "height": 330 } }
+        { 
+          "id": "t1", 
+          "type": "text", 
+          "role": "main-text", 
+          "editable": true, 
+          "position": { "x": 45, "y": 24 }, 
+          "size": { "width": 650, "height": 200 },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "SCALE YOUR BRAND\nWITH AI VIDEO", 
+          "style": { 
+            "fontSize": 64, 
+            "fontWeight": "900", 
+            "textAlign": "left", 
+            "color": "#1e293b",
+            "textTransform": "uppercase",
+            "lineHeight": 1.1 
+          } 
+        },
+        { 
+          "id": "t2", 
+          "type": "text", 
+          "role": "secondary-text", 
+          "editable": true, 
+          "position": { "x": 45, "y": 60 }, 
+          "size": { "width": 550, "height": 80 },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Generate professional marketing content in seconds.", 
+          "style": { 
+            "fontSize": 24, 
+            "fontWeight": "500", 
+            "color": "#64748b" 
+          } 
+        },
+        { 
+          "id": "t3", 
+          "type": "text", 
+          "role": "cta-text", 
+          "editable": true, 
+          "position": { "x": 45, "y": 76 }, 
+          "size": { "width": 240, "height": 60 },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "VIEW PRICING", 
+          "style": { 
+            "fontSize": 20, 
+            "fontWeight": "800", 
+            "textAlign": "center", 
+            "color": "#ffffff", 
+            "backgroundColor": "#10b981", 
+            "padding": "12px 24px", 
+            "borderRadius": "40px" 
+          } 
+        },
+        { 
+          "id": "i1", 
+          "type": "image", 
+          "role": "media-showcase", 
+          "editable": true, 
+          "position": { "x": 5, "y": 15 }, 
+          "size": { "width": 450, "height": 580 },
+          "startTime": 0,
+          "endTime": 8
+        },
+        { 
+          "id": "a1", 
+          "type": "avatar", 
+          "role": "avatar", 
+          "editable": true, 
+          "position": { "x": 5, "y": 74 }, 
+          "size": { "width": 140, "height": 140 },
+          "startTime": 0,
+          "endTime": 8
+        }
       ]
     },
     {
@@ -51,7 +200,46 @@
       "duration": 6,
       "tags": ["bold", "center"],
       "clips": [
-        { "id": "t1", "type": "text", "role": "main-text", "editable": true, "position": { "x": 50, "y": 50 }, "content": "REDEFINING CREATIVITY", "style": { "fontSize": 120, "fontWeight": "900", "textAlign": "center", "width": "1600px" } }
+        { 
+          "id": "t1", 
+          "type": "text", 
+          "role": "main-text", 
+          "editable": true, 
+          "position": { "x": 10, "y": 30 }, 
+          "size": { "width": 1000, "height": 200 },
+          "startTime": 0,
+          "endTime": 6,
+          "content": "REDEFINING THE\nCREATIVE FRONTIER", 
+          "style": { 
+            "fontSize": 96, 
+            "fontWeight": "900", 
+            "textAlign": "center", 
+            "color": "#0f172a",
+            "textTransform": "uppercase",
+            "lineHeight": 1.0,
+            "letterSpacing": "-0.04em"
+          } 
+        },
+        { 
+          "id": "t2", 
+          "type": "text", 
+          "role": "cta-text", 
+          "editable": true, 
+          "position": { "x": 38, "y": 65 }, 
+          "size": { "width": 300, "height": 70 },
+          "startTime": 0,
+          "endTime": 6,
+          "content": "LEARN MORE", 
+          "style": { 
+            "fontSize": 24, 
+            "fontWeight": "800", 
+            "textAlign": "center", 
+            "color": "#ffffff", 
+            "backgroundColor": "#6366f1", 
+            "padding": "15px 30px", 
+            "borderRadius": "50px" 
+          } 
+        }
       ]
     },
     {
@@ -68,10 +256,28 @@
       "duration": 7,
       "tags": ["team", "community"],
       "clips": [
-        { "id": "a1", "type": "avatar", "role": "avatar", "editable": true, "position": { "x": 36, "y": 50 }, "size": { "width": 100, "height": 100 } },
-        { "id": "a2", "type": "avatar", "role": "avatar", "editable": true, "position": { "x": 50, "y": 50 }, "size": { "width": 150, "height": 150 } },
-        { "id": "a3", "type": "avatar", "role": "avatar", "editable": true, "position": { "x": 64, "y": 50 }, "size": { "width": 100, "height": 100 } },
-        { "id": "t1", "type": "text", "role": "main-text", "editable": true, "position": { "x": 50, "y": 66 }, "content": "MEET THE FUTURE", "style": { "fontSize": 48 } }
+        { 
+          "id": "t1", 
+          "type": "text", 
+          "role": "main-text", 
+          "editable": true, 
+          "position": { "x": 10, "y": 64 }, 
+          "size": { "width": 1000, "height": 100 },
+          "startTime": 0,
+          "endTime": 7,
+          "content": "TRUSTED BY 10,000+ CREATORS", 
+          "style": { 
+            "fontSize": 48, 
+            "fontWeight": "900", 
+            "textAlign": "center", 
+            "color": "#1e293b",
+            "letterSpacing": "0.1em",
+            "textTransform": "uppercase"
+          } 
+        },
+        { "id": "a1", "type": "avatar", "role": "avatar", "editable": true, "position": { "x": 30, "y": 30 }, "size": { "width": 120, "height": 120 } },
+        { "id": "a2", "type": "avatar", "role": "avatar", "editable": true, "position": { "x": 45, "y": 24 }, "size": { "width": 160, "height": 160 } },
+        { "id": "a3", "type": "avatar", "role": "avatar", "editable": true, "position": { "x": 60, "y": 30 }, "size": { "width": 120, "height": 120 } }
       ]
     },
     {
@@ -88,9 +294,70 @@
       "duration": 7,
       "tags": ["features", "split"],
       "clips": [
-        { "id": "i1", "type": "image", "role": "media", "editable": true, "position": { "x": 25, "y": 50 }, "size": { "width": 800, "height": 600 } },
-        { "id": "t1", "type": "text", "role": "main-text", "editable": true, "position": { "x": 68, "y": 37 }, "content": "KEY BENEFITS", "style": { "fontSize": 64, "fontWeight": "800", "textAlign": "left" } },
-        { "id": "t2", "type": "text", "role": "secondary-text", "editable": true, "position": { "x": 68, "y": 51 }, "content": "• Instant AI Rendering\n• Professional Layouts\n• 1-Click Export", "style": { "fontSize": 32, "fontWeight": "500", "textAlign": "left", "lineHeight": 1.8 } }
+        { 
+          "id": "i1", 
+          "type": "image", 
+          "role": "media", 
+          "editable": true, 
+          "position": { "x": 0, "y": 0 }, 
+          "size": { "width": 640, "height": 720 },
+          "startTime": 0,
+          "endTime": 7
+        },
+        { 
+          "id": "t1", 
+          "type": "text", 
+          "role": "main-text", 
+          "editable": true, 
+          "position": { "x": 55, "y": 20 }, 
+          "size": { "width": 550, "height": 150 },
+          "startTime": 0,
+          "endTime": 7,
+          "content": "KEY BENEFITS", 
+          "style": { 
+            "fontSize": 56, 
+            "fontWeight": "900", 
+            "textAlign": "left", 
+            "color": "#0f172a" 
+          } 
+        },
+        { 
+          "id": "t2", 
+          "type": "text", 
+          "role": "secondary-text", 
+          "editable": true, 
+          "position": { "x": 55, "y": 45 }, 
+          "size": { "width": 500, "height": 200 },
+          "startTime": 0,
+          "endTime": 7,
+          "content": "• Instant AI Rendering\n• Professional Layouts\n• 1-Click Export", 
+          "style": { 
+            "fontSize": 28, 
+            "fontWeight": "500", 
+            "textAlign": "left", 
+            "lineHeight": 1.7, 
+            "color": "#64748b" 
+          } 
+        },
+        { 
+          "id": "t3", 
+          "type": "text", 
+          "role": "cta-text", 
+          "editable": true, 
+          "position": { "x": 55, "y": 75 }, 
+          "size": { "width": 220, "height": 55 },
+          "startTime": 0,
+          "endTime": 7,
+          "content": "GET STARTED", 
+          "style": { 
+            "fontSize": 18, 
+            "fontWeight": "800", 
+            "textAlign": "center", 
+            "color": "#ffffff", 
+            "backgroundColor": "#3b82f6", 
+            "borderRadius": "40px" 
+          } 
+        }
       ]
     },
     {
@@ -107,8 +374,50 @@
       "duration": 7,
       "tags": ["details", "ui"],
       "clips": [
-        { "id": "t1", "type": "text", "role": "main-text", "editable": true, "position": { "x": 31, "y": 46 }, "content": "POWERFUL ANALYTICS", "style": { "fontSize": 64, "fontWeight": "800", "textAlign": "left" } },
-        { "id": "i1", "type": "image", "role": "media", "editable": true, "position": { "x": 73, "y": 50 }, "size": { "width": 800, "height": 600 } }
+        { 
+          "id": "t1", 
+          "type": "text", 
+          "role": "main-text", 
+          "editable": true, 
+          "position": { "x": 5, "y": 20 }, 
+          "size": { "width": 550, "height": 150 },
+          "startTime": 0,
+          "endTime": 7,
+          "content": "POWERFUL\nANALYTICS", 
+          "style": { 
+            "fontSize": 64, 
+            "fontWeight": "900", 
+            "textAlign": "left", 
+            "color": "#0f172a",
+            "lineHeight": 1.1 
+          } 
+        },
+        { 
+          "id": "t2", 
+          "type": "text", 
+          "role": "secondary-text", 
+          "editable": true, 
+          "position": { "x": 5, "y": 55 }, 
+          "size": { "width": 500, "height": 100 },
+          "startTime": 0,
+          "endTime": 7,
+          "content": "Track your performance with real-time data insights.", 
+          "style": { 
+            "fontSize": 26, 
+            "fontWeight": "500", 
+            "color": "#64748b" 
+          } 
+        },
+        { 
+          "id": "i1", 
+          "type": "image", 
+          "role": "media-showcase", 
+          "editable": true, 
+          "position": { "x": 55, "y": 10 }, 
+          "size": { "width": 550, "height": 600 },
+          "startTime": 0,
+          "endTime": 7
+        }
       ]
     },
     {
@@ -124,9 +433,61 @@
        "duration": 10,
        "tags": ["quiz", "interactive"],
        "clips": [
-         { "id": "t1", "type": "text", "role": "main-text", "editable": true, "position": { "x": 50, "y": 28 }, "content": "WHAT'S YOUR GOAL?", "style": { "fontSize": 72, "fontWeight": "900" } },
-         { "id": "t2", "type": "text", "role": "secondary-text", "editable": true, "position": { "x": 31, "y": 51 }, "content": "A: GROWTH", "style": { "fontSize": 40 } },
-         { "id": "t3", "type": "text", "role": "secondary-text", "editable": true, "position": { "x": 68, "y": 51 }, "content": "B: EFFICIENCY", "style": { "fontSize": 40 } }
+        { 
+          "id": "t1", 
+          "type": "text", 
+          "role": "main-text", 
+          "editable": true, 
+          "position": { "x": 10, "y": 24 }, 
+          "size": { "width": 1000, "height": 100 },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "WHAT IS YOUR NEXT BIG GOAL?", 
+          "style": { 
+            "fontSize": 64, 
+            "fontWeight": "900", 
+            "textAlign": "center", 
+            "color": "#0f172a" 
+          } 
+        },
+        { 
+          "id": "t2", 
+          "type": "text", 
+          "role": "choice", 
+          "editable": true, 
+          "position": { "x": 15, "y": 55 }, 
+          "size": { "width": 300, "height": 80 },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "OPTION A: GROWTH", 
+          "style": { 
+            "fontSize": 28, 
+            "fontWeight": "700", 
+            "padding": "12px", 
+            "backgroundColor": "#f1f5f9", 
+            "borderRadius": "12px", 
+            "textAlign": "center" 
+          } 
+        },
+        { 
+          "id": "t3", 
+          "type": "text", 
+          "role": "choice", 
+          "editable": true, 
+          "position": { "x": 55, "y": 55 }, 
+          "size": { "width": 300, "height": 80 },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "OPTION B: SCALE", 
+          "style": { 
+            "fontSize": 28, 
+            "fontWeight": "700", 
+            "padding": "12px", 
+            "backgroundColor": "#f1f5f9", 
+            "borderRadius": "12px", 
+            "textAlign": "center" 
+          } 
+        }
        ]
     },
     {
@@ -143,9 +504,42 @@
       "duration": 9,
       "tags": ["grid", "services"],
       "clips": [
-        { "id": "t1", "type": "text", "role": "main-text", "editable": true, "position": { "x": 25, "y": 69 }, "content": "DESIGN", "style": { "fontSize": 40, "fontWeight": "700" } },
-        { "id": "t2", "type": "text", "role": "main-text", "editable": true, "position": { "x": 50, "y": 69 }, "content": "STRATEGY", "style": { "fontSize": 40, "fontWeight": "700" } },
-        { "id": "t3", "type": "text", "role": "main-text", "editable": true, "position": { "x": 75, "y": 69 }, "content": "GROWTH", "style": { "fontSize": 40, "fontWeight": "700" } }
+        { 
+          "id": "t1", 
+          "type": "text", 
+          "role": "service-title", 
+          "editable": true, 
+          "position": { "x": 10, "y": 69 }, 
+          "size": { "width": 350, "height": 60 },
+          "startTime": 0,
+          "endTime": 9,
+          "content": "BRAND DESIGN", 
+          "style": { "fontSize": 32, "fontWeight": "900", "textAlign": "center", "color": "#1e293b" } 
+        },
+        { 
+          "id": "t2", 
+          "type": "text", 
+          "role": "service-title", 
+          "editable": true, 
+          "position": { "x": 38, "y": 69 }, 
+          "size": { "width": 350, "height": 60 },
+          "startTime": 0,
+          "endTime": 9,
+          "content": "AI STRATEGY", 
+          "style": { "fontSize": 32, "fontWeight": "900", "textAlign": "center", "color": "#1e293b" } 
+        },
+        { 
+          "id": "t3", 
+          "type": "text", 
+          "role": "service-title", 
+          "editable": true, 
+          "position": { "x": 66, "y": 69 }, 
+          "size": { "width": 350, "height": 60 },
+          "startTime": 0,
+          "endTime": 9,
+          "content": "SOCIAL GROWTH", 
+          "style": { "fontSize": 32, "fontWeight": "900", "textAlign": "center", "color": "#1e293b" } 
+        }
       ]
     },
     {
@@ -162,9 +556,51 @@
       "duration": 5,
       "tags": ["outro", "cta"],
       "clips": [
-        { "id": "i1", "type": "image", "role": "media", "editable": true, "position": { "x": 50, "y": 37 }, "size": { "width": 300, "height": 300 } },
-        { "id": "t1", "type": "text", "role": "main-text", "editable": true, "position": { "x": 50, "y": 60 }, "content": "START YOUR FREE TRIAL", "style": { "fontSize": 48, "fontWeight": "800" } },
-        { "id": "t2", "type": "text", "role": "secondary-text", "editable": true, "position": { "x": 50, "y": 69 }, "content": "www.yourwebsite.com", "style": { "fontSize": 24, "color": "#3b82f6" } }
+        { 
+          "id": "i1", 
+          "type": "image", 
+          "role": "media", 
+          "editable": true, 
+          "position": { "x": 38, "y": 15 }, 
+          "size": { "width": 300, "height": 300 },
+          "startTime": 0,
+          "endTime": 5
+        },
+        { 
+          "id": "t1", 
+          "type": "text", 
+          "role": "main-text", 
+          "editable": true, 
+          "position": { "x": 10, "y": 62 }, 
+          "size": { "width": 1000, "height": 80 },
+          "startTime": 0,
+          "endTime": 5,
+          "content": "START YOUR FREE TRIAL TODAY", 
+          "style": { 
+            "fontSize": 54, 
+            "fontWeight": "900", 
+            "textAlign": "center", 
+            "color": "#0f172a" 
+          } 
+        },
+        { 
+          "id": "t2", 
+          "type": "text", 
+          "role": "secondary-text", 
+          "editable": true, 
+          "position": { "x": 10, "y": 76 }, 
+          "size": { "width": 1000, "height": 40 },
+          "startTime": 0,
+          "endTime": 5,
+          "content": "WWW.ATHENAVI.COM", 
+          "style": { 
+            "fontSize": 24, 
+            "fontWeight": "700", 
+            "textAlign": "center", 
+            "color": "#3b82f6", 
+            "letterSpacing": "0.2em" 
+          } 
+        }
       ]
     },
     {
@@ -180,7 +616,38 @@
       "duration": 6,
       "tags": ["outro", "social"],
       "clips": [
-        { "id": "t1", "type": "text", "role": "main-text", "editable": true, "position": { "x": 50, "y": 46 }, "content": "JOIN 10,000+ CREATORS", "style": { "fontSize": 64, "fontWeight": "900" } }
+        { 
+          "id": "t1", 
+          "type": "text", 
+          "role": "main-text", 
+          "editable": true, 
+          "position": { "x": 10, "y": 42 }, 
+          "size": { "width": 1000, "height": 100 },
+          "startTime": 0,
+          "endTime": 6,
+          "content": "JOIN 10,000+ TOP CREATORS", 
+          "style": { "fontSize": 64, "fontWeight": "900", "textAlign": "center", "color": "#0f172a", "textTransform": "uppercase" } 
+        },
+        { 
+          "id": "t2", 
+          "type": "text", 
+          "role": "cta-text", 
+          "editable": true, 
+          "position": { "x": 38, "y": 62 }, 
+          "size": { "width": 300, "height": 60 },
+          "startTime": 0,
+          "endTime": 6,
+          "content": "GET STARTED FREE", 
+          "style": { 
+            "fontSize": 22, 
+            "fontWeight": "800", 
+            "textAlign": "center", 
+            "color": "#ffffff", 
+            "backgroundColor": "#6366f1", 
+            "borderRadius": "40px",
+            "boxShadow": "0 4px 12px rgba(99, 102, 241, 0.4)" 
+          } 
+        }
       ]
     }
   ]

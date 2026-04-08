@@ -1,7 +1,7 @@
-import { useRef, useState, useCallback, forwardRef, useImperativeHandle, useEffect, useMemo } from 'react'
+import { useRef, useState, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react'
 import { Player } from '@remotion/player'
-import { MdOpenWith, MdClose, MdZoomOutMap } from 'react-icons/md'
 import VideoComposition from './VideoComposition'
+import LiveCanvasRenderer from './LiveCanvasRenderer'
 
 const VideoCanvas = forwardRef(({
   scenes,
@@ -23,7 +23,8 @@ const VideoCanvas = forwardRef(({
   setSelectedLayerId,
   onUpdateLayerPosition,
   onUpdateLayerSize,
-  onAddScene
+  onAddScene,
+  updateClipContent,
 }, ref) => {
   const playerRef = useRef(null)
   const overlayRef = useRef(null)
@@ -279,6 +280,25 @@ const VideoCanvas = forwardRef(({
           className="preview-wrapper"
           style={{ width: `${zoomLevel}%`, position: 'relative' }}
         >
+          {/* === EDITING VIEW: LiveCanvasRenderer shows real template UI === */}
+          {!isPlaying && (
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 15,
+              // Maintain 16:9 aspect ratio
+            }}>
+              <LiveCanvasRenderer
+                scene={activeScene}
+                selectedId={selectedLayerId}
+                onSelectClip={(id) => setSelectedLayerId && setSelectedLayerId(id)}
+                onContentChange={(clipId, newText) => updateClipContent && updateClipContent(activeSceneId, clipId, newText)}
+                onDeselect={() => setSelectedLayerId && setSelectedLayerId(null)}
+              />
+            </div>
+          )}
+
+          {/* === REMOTION PLAYER: used for preview/export, hidden during editing === */}
           <Player
             ref={playerRef}
             component={VideoComposition}
@@ -289,7 +309,8 @@ const VideoCanvas = forwardRef(({
             style={{
               width: '100%',
               height: '100%',
-              backgroundColor: 'white'
+              backgroundColor: 'white',
+              visibility: isPlaying ? 'visible' : 'hidden',
             }}
             inputProps={{
               scenes: scenes,
@@ -312,104 +333,6 @@ const VideoCanvas = forwardRef(({
               }
             }}
           />
-
-          {/* Interactive Overlay — sits on top of the Remotion Player when NOT playing */}
-          {!isPlaying && clips.length > 0 && (
-            <div
-              ref={overlayRef}
-              className="canvas-interactive-overlay"
-              onClick={handleOverlayClick}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              style={{
-                position: 'absolute',
-                inset: 0,
-                zIndex: 10,
-                cursor: 'default',
-                pointerEvents: 'all'
-              }}
-            >
-              {/* Clip selection handles */}
-              {clips.map(clip => {
-                const isSelected = selectedLayerId === clip.id
-                const x = clip.position?.x ?? 0
-                const y = clip.position?.y ?? 0
-                const w = clip.size?.width || 'auto'
-                const h = clip.size?.height || 'auto'
-
-                 return (
-                  <div
-                    key={clip.id}
-                    onMouseDown={(e) => handleLayerMouseDown(e, clip)}
-                    style={{
-                      position: 'absolute',
-                      left: `${x}%`,
-                      top: `${y}%`,
-                      width: `${(w / 12.8)}%`,
-                      height: `${(h / 7.2)}%`,
-                      transform: `scale(${clip.scale || 1})`,
-                      transformOrigin: 'top left',
-                      cursor: isDragging ? 'grabbing' : 'pointer',
-                      border: isSelected 
-                        ? '2px solid #1a73e8' 
-                        : (clip.editable ? '1.5px dashed rgba(26, 115, 232, 0.4)' : '2px solid transparent'),
-                      borderRadius: '4px',
-                      boxSizing: 'border-box',
-                      transition: isDragging ? 'none' : 'all 0.15s ease',
-                      zIndex: isSelected ? 20 : 10,
-                      backgroundColor: !isSelected && clip.editable && hoveredClipId === clip.id ? 'rgba(26, 115, 232, 0.05)' : 'transparent'
-                    }}
-                    onMouseEnter={() => !isSelected && clip.editable && setHoveredClipId(clip.id)}
-                    onMouseLeave={() => setHoveredClipId(null)}
-                  >
-                    {/* Selection handles on corners */}
-                    {isSelected && (
-                      <>
-                          {/* Corner handles */}
-                          {['top-left', 'top-right', 'bottom-left', 'bottom-right'].map(pos => (
-                            <div
-                              key={pos}
-                              onMouseDown={(e) => handleResizeMouseDown(e, clip, pos)}
-                              style={{
-                                position: 'absolute',
-                                width: '10px',
-                                height: '10px',
-                                backgroundColor: '#1a73e8',
-                                border: '2px solid #fff',
-                                borderRadius: '2px',
-                                ...(pos.includes('top') ? { top: '-5px' } : { bottom: '-5px' }),
-                                ...(pos.includes('left') ? { left: '-5px' } : { right: '-5px' }),
-                                cursor: pos === 'top-left' || pos === 'bottom-right' ? 'nwse-resize' : 'nesw-resize',
-                                zIndex: 30,
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
-                              }}
-                            />
-                          ))}
-                      </>
-                    )}
-                  </div>
-                )
-              })}
-
-              {/* Drop indicator */}
-              {dropIndicator && (
-                <div style={{
-                  position: 'absolute',
-                  left: `${dropIndicator.x}%`,
-                  top: `${dropIndicator.y}%`,
-                  width: '120px',
-                  height: '80px',
-                  border: '2px dashed #1a73e8',
-                  borderRadius: '8px',
-                  background: 'rgba(26, 115, 232, 0.08)',
-                  transform: 'translate(-50%, -50%)',
-                  pointerEvents: 'none',
-                  zIndex: 50
-                }} />
-              )}
-            </div>
-          )}
         </div>
       </div>
     </div>

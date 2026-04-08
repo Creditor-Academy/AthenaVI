@@ -13,18 +13,18 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
   const zones = template?.zones;
 
   const isMockup = template?.title && (
-    template.title.includes('Main Hero') || 
-    template.title.includes('Marketing Hero') || 
-    template.title.includes('Centered Impact Hero') || 
-    template.title.includes('Avatar Group Hero') ||
+    template.title === 'Main Hero - Left Text' || 
+    template.title === 'Marketing Hero - Right Text' || 
+    template.title === 'Centered Impact Hero' || 
+    template.title === 'Avatar Group Hero' ||
     template.title.includes('Feature Split') ||
     template.title.includes('Text Skeleton') ||
     template.title.includes('Interactive Quiz') ||
     template.title.includes('3-Column Services') ||
-    template.title.includes('Lesson Overview') ||
+    template.title === 'Lesson Overview - Left Avatar' ||
     template.title.includes('Minimal Memory Journal') ||
     template.title.includes('Social Support Outro') ||
-    template.title.includes('Hype Header') ||
+    template.title === 'Hype Header - Social' ||
     template.title.includes('Step Learning Mode') ||
     template.title.includes('Horizontal 3-Step Process') ||
     template.title.includes('Vertical Process Steps') ||
@@ -32,10 +32,10 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
     template.title.includes('Number Highlight Process') ||
     template.title.includes('Topic Deep Dive') ||
     template.title.includes('Quiz / Follow-up Outro') ||
-    template.title.includes('3-Stats Business Row') ||
+    template.title === '3-Stats Business Row' ||
     template.title.includes('Icon Stats Bar') ||
-    template.title.includes('Single Number Highlight') ||
-    template.title.includes('Professional Testimonial – Centered') ||
+    template.title === 'Single Number Highlight' ||
+    template.title === 'Professional Testimonial - Centered' ||
     template.title.includes('Executive Outro') ||
     template.title.includes('Interactive Story CTA') ||
     template.title.includes('Logo + Call to Action') ||
@@ -78,7 +78,7 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
   const avatarPlaceholderStyle = {
     width: '36px',
     height: '36px',
-    borderRadius: '0px', // Sharp square as requested
+    borderRadius: '0px', 
     backgroundColor: '#ffffff',
     display: 'flex',
     alignItems: 'center',
@@ -196,30 +196,136 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
       </>
     );
 
-    // Specific Mockup Renderers
-    if (template.title?.includes('Interactive Quiz')) {
+    // 1. Marketing Hero - Left Text
+    if (template.title === 'Main Hero - Left Text') {
       return (
-        <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '10px 20px', gap: '8px' }}>
-          {[...Array(4)].map((_, i) => (
-            <div key={i} style={{ 
-              width: '100%', 
-              height: '24px', 
-              backgroundColor: '#ffffff', 
-              border: '1px solid #cbd5e1', 
-              borderRadius: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              padding: '0 8px',
-              gap: '8px'
-            }}>
-               <div style={{ width: '12px', height: '12px', borderRadius: '50%', border: '1.5px solid #64748b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {i === 1 && <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#64748b' }} />}
-               </div>
-               <div style={{ ...textLineStyle, width: '70%', height: '6px', margin: 0 }} />
-               {i === 1 && <svg width="12" height="12" viewBox="0 0 24 24" fill="#64748b" style={{ marginLeft: 'auto' }}><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>}
+        <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', padding: '0 24px', gap: '16px' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', justifyContent: 'center' }}>
+            <div style={{ fontSize: '18px', fontWeight: '900', color: '#0f172a', lineHeight: '1.1', letterSpacing: '-0.03em', textTransform: 'uppercase' }}>
+              Your Next Big<br/>Idea Starts Here
             </div>
+            <div style={{ fontSize: '8px', fontWeight: '500', color: '#64748b', maxWidth: '90%', lineHeight: '1.4' }}>
+              The ultimate platform for AI video generation and professional layouts.
+            </div>
+            <div style={{ width: '80px', height: '22px', backgroundColor: '#3b82f6', borderRadius: '12px', marginTop: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+               <div style={{ width: '40px', height: '4px', backgroundColor: '#ffffff', borderRadius: '2px' }} />
+            </div>
+          </div>
+          <div style={{ width: '38%', height: '85%', background: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)', borderRadius: '16px', border: '1.5px solid #ffffff', boxShadow: '0 8px 20px -4px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+             <svg width="40" height="40" viewBox="0 0 24 24" fill="#6366f1" style={{ opacity: 0.8 }}><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+          </div>
+          {renderMockupExtras()}
+        </div>
+      );
+    }
+
+    // 2. Marketing Hero - Right Text
+    if (template.title === 'Marketing Hero - Right Text') {
+      return (
+        <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', padding: '0 24px', gap: '16px', flexDirection: 'row-reverse' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', justifyContent: 'center' }}>
+            <div style={{ fontSize: '18px', fontWeight: '900', color: '#0f172a', lineHeight: '1.1', textTransform: 'uppercase' }}>
+              Scale Your Brand<br/>With AI Video
+            </div>
+            <div style={{ fontSize: '8px', fontWeight: '500', color: '#64748b', maxWidth: '90%', lineHeight: '1.4' }}>
+              Generate professional marketing content in seconds.
+            </div>
+            <div style={{ width: '80px', height: '22px', backgroundColor: '#10b981', borderRadius: '12px', marginTop: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+               <div style={{ width: '40px', height: '4px', backgroundColor: '#ffffff', borderRadius: '2px' }} />
+            </div>
+          </div>
+          <div style={{ width: '38%', height: '85%', background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)', borderRadius: '16px', border: '1.5px solid #ffffff', boxShadow: '0 8px 20px -4px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+             <svg width="40" height="40" viewBox="0 0 24 24" fill="#10b981" style={{ opacity: 0.8 }}><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+          </div>
+          {renderMockupExtras()}
+        </div>
+      );
+    }
+
+    // 3. Centered Impact Hero
+    if (template.title === 'Centered Impact Hero') {
+      return (
+        <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px', gap: '10px' }}>
+          <div style={{ fontSize: '24px', fontWeight: '900', color: '#0f172a', textAlign: 'center', lineHeight: '1.0', letterSpacing: '-0.04em', textTransform: 'uppercase' }}>
+            REDEFINING<br/>CREATIVITY
+          </div>
+          <div style={{ width: '100px', height: '28px', backgroundColor: '#6366f1', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)' }}>
+             <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          {renderMockupExtras()}
+        </div>
+      );
+    }
+
+    // 4. Hype Header - Social
+    if (template.title === 'Hype Header - Social') {
+      return (
+        <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: '10%', left: '10%', width: '40px', height: '40px', background: 'radial-gradient(circle, rgba(239,68,68,0.3) 0%, transparent 70%)' }} />
+          <div style={{ fontSize: '32px', fontWeight: '900', color: '#ffffff', fontStyle: 'italic', textAlign: 'center', lineHeight: '0.9', textTransform: 'uppercase', transform: 'rotate(-2deg)', textShadow: '0 0 20px rgba(239,68,68,0.6)' }}>
+            MUST<br/>WATCH!
+          </div>
+          <div style={{ fontSize: '9px', fontWeight: '800', color: '#ef4444', marginTop: '12px', letterSpacing: '0.1em' }}>
+            @YOURCHANNEL
+          </div>
+        </div>
+      );
+    }
+
+    // 5. 3-Stats Business Row
+    if (template.title === '3-Stats Business Row') {
+      const stats = [
+        { val: '10M+', lab: 'Users', col: '#3b82f6' },
+        { val: '98%', lab: 'Success', col: '#10b981' },
+        { val: '150k', lab: 'Projects', col: '#6366f1' }
+      ];
+      return (
+        <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 20px', gap: '8px' }}>
+          {stats.map((s, i) => (
+            <React.Fragment key={i}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                <div style={{ fontSize: '18px', fontWeight: '900', color: s.col, lineHeight: '1' }}>{s.val}</div>
+                <div style={{ fontSize: '8px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{s.lab}</div>
+              </div>
+              {i < 2 && <div style={{ width: '1.5px', height: '30px', backgroundColor: '#e2e8f0' }} />}
+            </React.Fragment>
           ))}
           {renderMockupExtras()}
+        </div>
+      );
+    }
+
+    // 6. Professional Testimonial - Centered
+    if (template.title === 'Professional Testimonial - Centered') {
+      return (
+        <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 30px', gap: '10px' }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#e2e8f0', border: '1.5px solid #ffffff', boxShadow: '0 4px 10px rgba(0,0,0,0.05)', position: 'relative' }}>
+             <div style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '14px', height: '14px', borderRadius: '50%', backgroundColor: '#3b82f6', border: '1.5px solid #ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="6" height="6" viewBox="0 0 24 24" fill="white"><path d="M6 17h3l2-4V7H5v6h3zM14 17h3l2-4V7h-6v6h3z"/></svg>
+             </div>
+          </div>
+          <div style={{ fontSize: '10px', fontWeight: '800', fontStyle: 'italic', color: '#1e293b', textAlign: 'center', lineHeight: '1.3' }}>
+            "Athena revolutionized our entire<br/>video workflow strategy."
+          </div>
+          <div style={{ fontSize: '7px', fontWeight: '700', color: '#3b82f6', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Jane Smith • Founder, TechRise
+          </div>
+          {renderMockupExtras()}
+        </div>
+      );
+    }
+
+    // 7. Minimal Memory Journal
+    if (template.title === 'Minimal Memory Journal') {
+      return (
+        <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px', background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)' }}>
+          <div style={{ fontSize: '14px', fontWeight: '800', color: '#7c3aed', letterSpacing: '0.05em' }}>TODAY'S MOMENTS</div>
+          <div style={{ fontSize: '8px', fontWeight: '500', color: '#64748b', fontStyle: 'italic', marginTop: '6px' }}>
+            Grateful for the small things in life.
+          </div>
+          <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '2px solid #ffffff', backgroundColor: '#ddd6fe', marginTop: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+             <svg width="16" height="16" viewBox="0 0 24 24" fill="#7c3aed"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          </div>
         </div>
       );
     }
@@ -237,12 +343,15 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
               display: 'flex',
               flexDirection: 'column',
               padding: '12px',
-              gap: '8px',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+              gap: '4px',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              justifyContent: 'center'
             }}>
-               <div style={{ width: '20px', height: '20px', borderRadius: '4px', backgroundColor: '#ffffff', opacity: 0.6 }} />
-               <div style={{ ...textLineStyle, width: '80%', height: '8px', backgroundColor: '#ffffff', opacity: 0.4 }} />
-               <div style={{ ...textLineStyle, width: '50%', height: '6px', backgroundColor: '#ffffff', opacity: 0.3 }} />
+               <div style={{ width: '20px', height: '20px', borderRadius: '4px', backgroundColor: '#ffffff', opacity: 0.8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#6366f1"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
+               </div>
+               <div style={{ fontSize: '10px', fontWeight: '900', color: '#ffffff', textTransform: 'uppercase', marginTop: '4px' }}>Service {String.fromCharCode(65 + i)}</div>
+               <div style={{ fontSize: '5px', fontWeight: '500', color: '#ffffff', opacity: 0.8 }}>Professional solutions for your business.</div>
             </div>
           ))}
           {renderMockupExtras()}
@@ -254,9 +363,8 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
       return (
         <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', gap: '20px' }}>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <div style={{ ...textLineStyle, width: '90%', height: '10px' }} />
-            <div style={{ ...textLineStyle, width: '90%', height: '10px' }} />
-            <div style={{ ...textLineStyle, width: '60%', height: '10px' }} />
+            <div style={{ fontSize: '15px', fontWeight: '900', color: '#0f172a', lineHeight: '1.1', textTransform: 'uppercase' }}>JOIN OUR GLOBAL<br/>COMMUNITY</div>
+            <div style={{ fontSize: '7px', fontWeight: '600', color: '#3b82f6', letterSpacing: '0.05em' }}>10k+ ACTIVE CREATORS</div>
           </div>
           <div style={{ width: '50%', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
              {[...Array(9)].map((_, i) => (
@@ -287,9 +395,9 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
       return (
         <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', gap: '6px', padding: '10px' }}>
           
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-             <div style={{ width: '75%', height: '6px', backgroundColor: '#cbd5e1', borderRadius: '3px' }} />
-             <div style={{ width: '15%', height: '6px', backgroundColor: '#cbd5e1', borderRadius: '3px' }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px', alignItems: 'center' }}>
+             <div style={{ fontSize: '10px', fontWeight: '900', color: '#1e293b', textTransform: 'uppercase' }}>MODULE 01: INTRODUCTION</div>
+             <div style={{ fontSize: '7px', fontWeight: '800', color: '#6366f1' }}>01 / 12</div>
           </div>
 
           {[...Array(4)].map((_, i) => (
@@ -299,14 +407,10 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
                       <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
                    </svg>
                 </div>
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '3px', marginTop: '3px' }}>
-                   <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                      <div style={{ width: '65%', height: '5px', backgroundColor: '#cbd5e1', borderRadius: '2px' }} />
-                      <div style={{ width: '10%', height: '5px', backgroundColor: '#e2e8f0', borderRadius: '2px' }} />
-                   </div>
-                   <div style={{ width: '45%', height: '4px', backgroundColor: '#e2e8f0', borderRadius: '2px' }} />
-                   <div style={{ width: '35%', height: '4px', backgroundColor: '#e2e8f0', borderRadius: '2px' }} />
-                </div>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1px', marginTop: '3px' }}>
+                    <div style={{ fontSize: '8px', fontWeight: '800', color: '#1e293b', lineHeight: '1' }}>The Fundamentals of AI</div>
+                    <div style={{ fontSize: '6px', fontWeight: '500', color: '#64748b' }}>Master the core architecture concepts.</div>
+                 </div>
              </div>
           ))}
 
@@ -344,10 +448,9 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
                    </div>
 
                    {/* Content */}
-                   <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                      <div style={{ width: '70%', height: '6px', backgroundColor: '#cbd5e1', borderRadius: '3px' }} />
-                      <div style={{ width: '90%', height: '5px', backgroundColor: '#e2e8f0', borderRadius: '3px' }} />
-                      <div style={{ width: '60%', height: '5px', backgroundColor: '#e2e8f0', borderRadius: '3px' }} />
+                   <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', marginTop: '2px' }}>
+                      <div style={{ fontSize: '7px', fontWeight: '900', color: '#1e293b', textTransform: 'uppercase' }}>Phase {i+1}</div>
+                      <div style={{ fontSize: '5px', fontWeight: '500', color: '#64748b' }}>Discovery Stage</div>
                    </div>
 
                    <div style={{ width: '80%', height: '36px', borderRadius: '6px', background: stepGradients[i], marginTop: '4px', opacity: 0.9 }} />
@@ -383,10 +486,10 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
                 </div>
 
                 {/* Content */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                   <div style={{ width: '65%', height: '6px', backgroundColor: '#cbd5e1', borderRadius: '3px' }} />
-                   <div style={{ width: '85%', height: '5px', backgroundColor: '#e2e8f0', borderRadius: '3px' }} />
-                   <div style={{ width: '55%', height: '5px', backgroundColor: '#e2e8f0', borderRadius: '3px' }} />
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                   <div style={{ fontSize: '9px', fontWeight: '900', color: '#1e293b', textTransform: 'uppercase' }}>Process Phase {i+1}</div>
+                   <div style={{ fontSize: '6px', fontWeight: '600', color: '#64748b' }}>Technical Review Specification</div>
+                   <div style={{ fontSize: '5px', fontWeight: '500', color: '#94a3b8' }}>Complete systems architecture alignment.</div>
                    
                    <div style={{ width: '70px', height: '30px', borderRadius: '6px', background: stepGradients[i], marginTop: '2px', opacity: 0.8 }} />
                 </div>
@@ -415,11 +518,11 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
                    </div>
                 </div>
 
-                {/* Content Skeletons */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                   <div style={{ width: '65%', height: '6px', backgroundColor: '#cbd5e1', borderRadius: '3px' }} />
-                   <div style={{ width: '85%', height: '5px', backgroundColor: '#e2e8f0', borderRadius: '3px' }} />
-                   <div style={{ width: '55%', height: '5px', backgroundColor: '#e2e8f0', borderRadius: '3px' }} />
+                {/* Content Text */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                   <div style={{ fontSize: '11px', fontWeight: '900', color: '#0f172a', textTransform: 'uppercase' }}>CONFIGURE {i+1}</div>
+                   <div style={{ fontSize: '7px', fontWeight: '700', color: '#3b82f6' }}>SYSTEM INITIALIZATION</div>
+                   <div style={{ fontSize: '6px', fontWeight: '500', color: '#64748b' }}>Setting up secure communication keys.</div>
                 </div>
              </div>
           ))}
@@ -440,16 +543,15 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
 
           {/* Prompt Section */}
           <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-            <div style={{ width: '65%', height: '8px', backgroundColor: '#94a3b8', borderRadius: '4px' }} />
-            <div style={{ width: '45%', height: '6px', backgroundColor: '#cbd5e1', borderRadius: '3px' }} />
+            <div style={{ fontSize: '10px', fontWeight: '900', color: '#0f172a', textAlign: 'center', textTransform: 'uppercase' }}>READY FOR THE NEXT MODULE?</div>
           </div>
 
           {/* Quiz Options */}
           <div style={{ width: '95%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: '4px' }}>
-            {[...Array(4)].map((_, i) => (
-              <div key={i} style={{ backgroundColor: '#f8fafc', borderRadius: '8px', padding: '6px 8px', display: 'flex', alignItems: 'center', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-                 <div style={{ width: '8px', height: '8px', borderRadius: '50%', border: '1px solid #cbd5e1', marginRight: '6px', flexShrink: 0 }} />
-                 <div style={{ width: '70%', height: '4px', backgroundColor: '#cbd5e1', borderRadius: '2px' }} />
+            {['AI STRATEGY', 'NEURAL NETS', 'ML MODELS', 'DATA SCI'].map((opt, i) => (
+              <div key={i} style={{ backgroundColor: '#f8fafc', borderRadius: '8px', padding: '4px 8px', display: 'flex', alignItems: 'center', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                 <div style={{ width: '8px', height: '8px', borderRadius: '50%', border: '1.5px solid #cbd5e1', marginRight: '6px', flexShrink: 0 }} />
+                 <div style={{ fontSize: '6px', fontWeight: '800', color: '#64748b' }}>{opt}</div>
               </div>
             ))}
           </div>
@@ -524,11 +626,11 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
                       </div>
 
                       {/* Text Column */}
-                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                         {/* Value (Thick Skeleton) */}
-                         <div style={{ width: '60%', height: '8px', backgroundColor: '#94a3b8', borderRadius: '4px' }} />
-                         {/* Label (Thin Skeleton) */}
-                         <div style={{ width: '80%', height: '5px', backgroundColor: '#cbd5e1', borderRadius: '3px' }} />
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          {/* Value (High Fidelity) */}
+                          <div style={{ fontSize: '10px', fontWeight: '900', color: '#1e293b', lineHeight: '1' }}>99.9% UPTIME</div>
+                          {/* Label (High Fidelity) */}
+                          <div style={{ fontSize: '6px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>Reliability</div>
                       </div>
 
                    </div>
@@ -558,11 +660,11 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
             <div style={{ width: '40%', height: '40%', backgroundColor: 'rgba(255,255,255,0.8)', borderRadius: '2px' }} />
           </div>
 
-          {/* Big Number Skeleton */}
-          <div style={{ width: '50%', height: '20px', background: 'linear-gradient(90deg, #94a3b8 0%, #cbd5e1 100%)', borderRadius: '4px', zIndex: 1, boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }} />
+          {/* Big Number Text */}
+          <div style={{ fontSize: '42px', fontWeight: '900', color: '#10b981', lineHeight: '1', zIndex: 1 }}>100%</div>
 
-          {/* Label Skeleton */}
-          <div style={{ width: '60%', height: '6px', backgroundColor: '#e2e8f0', borderRadius: '3px', zIndex: 1 }} />
+          {/* Label Text */}
+          <div style={{ fontSize: '8px', fontWeight: '800', color: '#64748b', zIndex: 1, textTransform: 'uppercase', letterSpacing: '0.1em' }}>CUSTOMER SATISFACTION</div>
 
           {renderMockupExtras()}
         </div>
@@ -608,13 +710,10 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
              <div style={{ width: '50%', height: '50%', backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '2px' }} />
           </div>
 
-          {/* Text Lines */}
-          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-            {/* Main */}
-            <div style={{ width: '65%', height: '8px', backgroundColor: '#94a3b8', borderRadius: '4px' }} />
-            {/* Supporting */}
-            <div style={{ width: '55%', height: '6px', backgroundColor: '#cbd5e1', borderRadius: '3px' }} />
-            <div style={{ width: '45%', height: '6px', backgroundColor: '#cbd5e1', borderRadius: '3px' }} />
+          {/* Text Section */}
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+            <div style={{ fontSize: '14px', fontWeight: '900', color: '#0f172a', textAlign: 'center', textTransform: 'uppercase' }}>THANK YOU FOR YOUR TIME.</div>
+            <div style={{ fontSize: '7px', fontWeight: '700', color: '#3b82f6', textAlign: 'center' }}>sales@athenavi.com • www.athenavi.com</div>
           </div>
 
           {/* Contact Methods (Option B) */}
@@ -636,7 +735,7 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
         <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px 20px', gap: '12px', overflow: 'hidden' }}>
           
           {/* Section Title */}
-          <div style={{ width: '50%', height: '6px', backgroundColor: '#94a3b8', borderRadius: '3px', marginBottom: '2px' }} />
+          <div style={{ fontSize: '9px', fontWeight: '900', color: '#1e293b', marginBottom: '2px', textTransform: 'uppercase' }}>TRUSTED BY INDUSTRY LEADERS</div>
 
           {/* Grid Layout 3x2 */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', width: '100%' }}>
@@ -667,13 +766,12 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
           </div>
 
           {/* Main Sincere Text */}
-          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-            <div style={{ width: '65%', height: '8px', backgroundColor: '#94a3b8', borderRadius: '4px' }} />
-            <div style={{ width: '55%', height: '8px', backgroundColor: '#94a3b8', borderRadius: '4px' }} />
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+            <div style={{ fontSize: '12px', fontWeight: '900', color: '#0f172a', textAlign: 'center', lineHeight: '1.2' }}>THANKS FOR BEING PART<br/>OF MY JOURNEY.</div>
           </div>
 
           {/* Supporting Text */}
-          <div style={{ width: '45%', height: '6px', backgroundColor: '#cbd5e1', borderRadius: '3px', opacity: 0.8, marginTop: '2px' }} />
+          <div style={{ fontSize: '7px', fontWeight: '600', color: '#64748b', textAlign: 'center', marginTop: '2px', fontStyle: 'italic' }}>Grateful to have you with me.</div>
 
           {/* Subtle CTA */}
           <div style={{ width: '30%', height: '14px', backgroundColor: '#f1f5f9', borderRadius: '4px', marginTop: '6px', border: '1px solid #e2e8f0' }} />
@@ -693,15 +791,15 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
           </div>
 
           {/* Text Section */}
-          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-            {/* Main */}
-            <div style={{ width: '65%', height: '8px', backgroundColor: '#94a3b8', borderRadius: '4px' }} />
-            {/* Supporting */}
-            <div style={{ width: '45%', height: '6px', backgroundColor: '#cbd5e1', borderRadius: '3px' }} />
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+            <div style={{ fontSize: '14px', fontWeight: '900', color: '#0f172a', textAlign: 'center', textTransform: 'uppercase' }}>START YOUR JOURNEY TODAY</div>
+            <div style={{ fontSize: '7px', fontWeight: '500', color: '#64748b', textAlign: 'center' }}>Begin your 14-day free trial.</div>
           </div>
 
           {/* CTA Box */}
-          <div style={{ width: '70%', height: '24px', background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', borderRadius: '12px', marginTop: '4px', zIndex: 1, boxShadow: '0 4px 6px rgba(59,130,246,0.3)' }} />
+          <div style={{ width: '70%', height: '24px', background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', borderRadius: '12px', marginTop: '4px', zIndex: 1, boxShadow: '0 4px 6px rgba(59,130,246,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+             <div style={{ fontSize: '7px', fontWeight: '800', color: '#ffffff', textTransform: 'uppercase' }}>GET STARTED</div>
+          </div>
 
           {renderMockupExtras()}
         </div>
@@ -722,9 +820,9 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
           <div style={{ position: 'absolute', bottom: '24px', right: '16px', width: '16px', height: '16px', borderRadius: '50%', background: 'linear-gradient(135deg, #fcd34d 0%, #f59e0b 100%)', zIndex: 0, opacity: 0.8 }} />
 
           {/* Text Section */}
-          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', zIndex: 1 }}>
-            <div style={{ width: '65%', height: '8px', backgroundColor: '#94a3b8', borderRadius: '4px' }} />
-            <div style={{ width: '45%', height: '6px', backgroundColor: '#cbd5e1', borderRadius: '3px' }} />
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', zIndex: 1 }}>
+            <div style={{ fontSize: '15px', fontWeight: '900', color: '#1e293b', textAlign: 'center', textTransform: 'uppercase' }}>JOIN THE MOVEMENT</div>
+            <div style={{ fontSize: '8px', fontWeight: '700', color: '#64748b', textAlign: 'center' }}>Swipe up to learn more</div>
           </div>
 
           {/* CTA Box */}
@@ -740,17 +838,14 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
         <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px 20px', gap: '10px', overflow: 'hidden' }}>
           
           {/* Header */}
-          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-            <div style={{ width: '65%', height: '8px', backgroundColor: '#94a3b8', borderRadius: '4px' }} />
-            <div style={{ width: '45%', height: '6px', backgroundColor: '#cbd5e1', borderRadius: '3px' }} />
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+            <div style={{ fontSize: '14px', fontWeight: '900', color: '#1e293b', textAlign: 'center', textTransform: 'uppercase' }}>NEURAL NETWORKS</div>
+            <div style={{ fontSize: '7px', fontWeight: '700', color: '#6366f1', textAlign: 'center' }}>TOPIC DEEP DIVE</div>
           </div>
 
           {/* Deep Content */}
-          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', marginTop: '2px' }}>
-            <div style={{ width: '85%', height: '5px', backgroundColor: '#e2e8f0', borderRadius: '3px' }} />
-            <div style={{ width: '75%', height: '5px', backgroundColor: '#e2e8f0', borderRadius: '3px' }} />
-            <div style={{ width: '65%', height: '5px', backgroundColor: '#e2e8f0', borderRadius: '3px' }} />
-            <div style={{ width: '90%', height: '5px', backgroundColor: '#e2e8f0', borderRadius: '3px' }} />
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '2px' }}>
+            <div style={{ fontSize: '7px', fontWeight: '500', color: '#64748b', textAlign: 'center', maxWidth: '85%' }}>A computational model inspired by the human brain's network of neurons.</div>
           </div>
 
           {/* Highlight Box */}
@@ -790,10 +885,10 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
                 </div>
 
                 {/* Content */}
-                <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                   <div style={{ width: '65%', height: '6px', backgroundColor: '#cbd5e1', borderRadius: '3px' }} />
-                   <div style={{ width: '85%', height: '5px', backgroundColor: '#e2e8f0', borderRadius: '3px' }} />
-                </div>
+                 <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                    <div style={{ fontSize: '9px', fontWeight: '900', color: '#1e293b', textTransform: 'uppercase' }}>{['SET UP', 'DEPLOY', 'SCALE'][i]}</div>
+                    <div style={{ fontSize: '6px', fontWeight: '500', color: '#64748b' }}>Module {i+1}</div>
+                 </div>
              </div>
           ))}
 
@@ -825,10 +920,10 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
                 </div>
 
                 {/* Content */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                   <div style={{ width: '65%', height: '6px', backgroundColor: '#cbd5e1', borderRadius: '3px' }} />
-                   <div style={{ width: '85%', height: '5px', backgroundColor: '#e2e8f0', borderRadius: '3px' }} />
-                   <div style={{ width: '55%', height: '5px', backgroundColor: '#e2e8f0', borderRadius: '3px' }} />
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                   <div style={{ fontSize: '9px', fontWeight: '900', color: '#1e293b', textTransform: 'uppercase' }}>Step {i+1}: Module</div>
+                   <div style={{ fontSize: '6px', fontWeight: '600', color: '#3b82f6' }}>Strategic Planning</div>
+                   <div style={{ fontSize: '5px', fontWeight: '500', color: '#64748b' }}>Master the core architecture concepts.</div>
                    
                    <div style={{ width: '70px', height: '30px', borderRadius: '6px', background: stepGradients[i], marginTop: '2px', opacity: 0.8 }} />
                 </div>
@@ -843,12 +938,10 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
     if (template.title?.includes('CTA Outro - Modern')) {
       return (
         <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', gap: '16px' }}>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'flex-start', justifyContent: 'center' }}>
-             <div style={{ width: '65%', height: '30px', backgroundColor: '#cbd5e1', borderRadius: '4px', opacity: 1 }} />
-             <div style={{ width: '75%', height: '8px', backgroundColor: '#cbd5e1', borderRadius: '4px', opacity: 0.9 }} />
-             <div style={{ width: '65%', height: '8px', backgroundColor: '#cbd5e1', borderRadius: '4px', opacity: 0.7 }} />
-             <div style={{ width: '55%', height: '8px', backgroundColor: '#cbd5e1', borderRadius: '4px', opacity: 0.7 }} />
-             <div style={{ width: '20%', height: '20px', backgroundColor: '#cbd5e1', borderRadius: '4px', opacity: 0.5 }} />
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start', justifyContent: 'center' }}>
+             <div style={{ fontSize: '14px', fontWeight: '900', color: '#0f172a', textTransform: 'uppercase' }}>STAY CONNECTED</div>
+             <div style={{ fontSize: '7px', fontWeight: '600', color: '#6366f1' }}>FOLLOW OUR JOURNEY</div>
+             <div style={{ fontSize: '6px', fontWeight: '500', color: '#64748b', marginTop: '4px' }}>Join 50k+ followers for daily updates.</div>
           </div>
           <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }} />
           {renderMockupExtras()}
@@ -942,11 +1035,17 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
           <div style={{ ...getPctStyle(zones.image), ...imageBoxStyle }} />
         )}
         {zones.text && (
-          <div style={{ ...getPctStyle(zones.text), display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div style={{ ...textLineStyle, width: '90%', height: '10px' }} />
-            <div style={{ ...textLineStyle, width: '90%', height: '10px' }} />
-            <div style={{ ...textLineStyle, width: '70%', height: '10px' }} />
-            <div style={{ ...textLineStyle, width: '85%', height: '10px' }} />
+          <div style={{ ...getPctStyle(zones.text), display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '4px' }}>
+            <div style={{ fontSize: '14px', fontWeight: '900', color: '#0f172a', textTransform: 'uppercase', lineHeight: '1.2' }}>
+              {template.title?.includes('Feature') ? 'Advanced System Features' : 
+               template.title?.includes('Quiz') ? 'WHICH STRATEGY FITS?' : 
+               'Universal Content Layout'}
+            </div>
+            <div style={{ fontSize: '7px', fontWeight: '500', color: '#64748b' }}>
+              {template.title?.includes('Feature') ? 'Maximize your brand potential with AI.' : 
+               template.title?.includes('Quiz') ? 'Choose the best path for growth.' : 
+               'Professional styled text components for your brand.'}
+            </div>
           </div>
         )}
         {zones.avatar && (

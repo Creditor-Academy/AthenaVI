@@ -11,38 +11,43 @@ import { predefinedAvatars } from '../../../../constants/editorData'
 
 const placeholderAvatar = predefinedAvatars[0].image;
 
+import AllTemplateImg from '../../../../assets/Template Image/AllTemplate.png'
+import MarketingImg from '../../../../assets/Template Image/Marketing.png'
+import EducationImg from '../../../../assets/Template Image/Educational.png'
+import BusinessImg from '../../../../assets/Template Image/Coporate.png'
+import SocialImg from '../../../../assets/Template Image/Social.png'
+import PersonalImg from '../../../../assets/Template Image/Personal.png'
+
 const categories = [
   {
     id: 'All',
     label: 'All Templates',
-    previews: [
-      predefinedAvatars[1].image
-    ]
+    previews: [AllTemplateImg]
   },
   {
     id: 'marketing',
     label: 'Marketing',
-    previews: [predefinedAvatars[0].image]
+    previews: [MarketingImg]
   },
   {
     id: 'educational',
     label: 'Educational',
-    previews: [predefinedAvatars[1].image]
+    previews: [EducationImg]
   },
   {
     id: 'corporate',
     label: 'Corporate',
-    previews: [predefinedAvatars[2].image]
+    previews: [BusinessImg]
   },
   {
     id: 'social',
     label: 'Social',
-    previews: [predefinedAvatars[3].image]
+    previews: [SocialImg]
   },
   {
     id: 'personal',
     label: 'Personal',
-    previews: [predefinedAvatars[4].image]
+    previews: [PersonalImg]
   }
 ];
 
