@@ -139,9 +139,13 @@ const CreateVideoModal = ({
   isOpen,
   onClose,
   onCreateVideo,
+  initialTemplate = null,
   workspaces = DEFAULT_WORKSPACES
 }) => {
-  const [step, setStep] = useState(1)
+  const [selectedTemplateData, setSelectedTemplateData] = useState(initialTemplate)
+
+  // Jump straight to step 3 if an initial template is already provided
+  const [step, setStep] = useState(() => initialTemplate ? 3 : 1)
   const [selectedFilter, setSelectedFilter] = useState('All')
   const [searchQuery, setSearchQuery] = useState('')
   const [pageSize, setPageSize] = useState('landscape')
@@ -249,15 +253,13 @@ const CreateVideoModal = ({
 
   const handleSelectTemplate = (templateId) => {
     setSelectedTemplateId(templateId)
-    if (!videoName) {
-      if (templateId === 'blank') {
-        setVideoName('Untitled Video')
-      } else {
-        const matchedTemplate = TEMPLATE_ITEMS.find((item) => item.id === templateId)
-        if (matchedTemplate?.name) {
-          setVideoName(matchedTemplate.name)
-        }
-      }
+    if (templateId !== 'blank') {
+      const matched = TEMPLATE_ITEMS.find(item => item.id === templateId)
+      setSelectedTemplateData(matched || null)
+      if (!videoName && matched?.name) setVideoName(matched.name)
+    } else {
+      setSelectedTemplateData(null)
+      if (!videoName) setVideoName('Untitled Video')
     }
   }
 
@@ -353,7 +355,7 @@ const CreateVideoModal = ({
   const handleCreateVideo = () => {
     const selectedWorkspace = workspaceOptions.find((item) => item.id === workspaceId)
     const payload = {
-      template: selectedTemplate,
+      template: selectedTemplateData || selectedTemplate,
       pageSize,
       workspace: selectedWorkspace?.name || '',
       folder,

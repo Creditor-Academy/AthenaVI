@@ -1,7 +1,7 @@
-import { useRef, useState, useCallback, forwardRef, useImperativeHandle, useEffect, useMemo } from 'react'
+import { useRef, useState, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react'
 import { Player } from '@remotion/player'
-import { MdOpenWith, MdClose, MdZoomOutMap } from 'react-icons/md'
 import VideoComposition from './VideoComposition'
+import LiveCanvasRenderer from './LiveCanvasRenderer'
 
 const VideoCanvas = forwardRef(({
   scenes,
@@ -22,11 +22,14 @@ const VideoCanvas = forwardRef(({
   selectedLayerId,
   setSelectedLayerId,
   onUpdateLayerPosition,
-  onAddScene
+  onUpdateLayerSize,
+  onAddScene,
+  updateClipContent,
 }, ref) => {
   const playerRef = useRef(null)
   const overlayRef = useRef(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [hoveredClipId, setHoveredClipId] = useState(null)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [dropIndicator, setDropIndicator] = useState(null)
 
@@ -96,24 +99,86 @@ const VideoCanvas = forwardRef(({
 
   // Convert percentage/pixel layer position to overlay coordinates
   const getLayerStyle = (layer) => {
-    const x = typeof layer.x === 'number' ? layer.x : 0
-    const y = typeof layer.y === 'number' ? layer.y : 0
-    const w = layer.width || '100%'
-    const h = layer.height || '100%'
+    const x = layer.position?.x ?? 0
+    const y = layer.position?.y ?? 0
+    const w = layer.size?.width || 300
+    const h = layer.size?.height || 400
     const s = layer.scale || 1
 
     return {
       position: 'absolute',
-      left: typeof w === 'string' && w.includes('%') ? `${x}%` : `${(x / 1280) * 100}%`,
-      top: typeof h === 'string' && h.includes('%') ? `${y}%` : `${(y / 720) * 100}%`,
-      width: w,
-      height: h,
+      left: `${x}%`,
+      top: `${y}%`,
+      width: `${(w / 12.8)}%`,
+      height: `${(h / 7.2)}%`,
       transform: `scale(${s})`,
       transformOrigin: 'top left',
       cursor: isDragging ? 'grabbing' : 'grab',
-      zIndex: selectedLayerId === clip.id ? 20 : 10,
+      zIndex: selectedLayerId === layer.id ? 20 : 10,
     }
   }
+
+  // Handle clip corner resizing
+  const handleResizeMouseDown = useCallback((e, clip, corner) => {
+    e.stopPropagation()
+    e.preventDefault()
+    setIsDragging(true)
+    
+    const overlay = overlayRef.current
+    if (!overlay) return
+    const rect = overlay.getBoundingClientRect()
+    
+    const startX = e.clientX
+    const startY = e.clientY
+    const startW = typeof clip.size?.width === 'number' ? clip.size.width : 300
+    const startH = typeof clip.size?.height === 'number' ? clip.size.height : 400
+    const startPosX = clip.position?.x ?? 0
+    const startPosY = clip.position?.y ?? 0
+
+    const handleMouseMove = (moveEvent) => {
+      const deltaX = ((moveEvent.clientX - startX) / rect.width) * 1280
+      const deltaY = ((moveEvent.clientY - startY) / rect.height) * 720
+      
+      let newW = startW
+      let newH = startH
+      let newX = startPosX
+      let newY = startPosY
+
+      if (corner.includes('right')) newW = Math.max(50, startW + deltaX)
+      if (corner.includes('bottom')) newH = Math.max(50, startH + deltaY)
+      
+      if (corner.includes('left')) {
+        const potentialW = startW - deltaX
+        if (potentialW > 50) {
+          newW = potentialW
+          newX = startPosX + (deltaX / 1280) * 100
+        }
+      }
+      if (corner.includes('top')) {
+        const potentialH = startH - deltaY
+        if (potentialH > 50) {
+          newH = potentialH
+          newY = startPosY + (deltaY / 720) * 100
+        }
+      }
+
+      if (onUpdateLayerSize) {
+        onUpdateLayerSize(clip.id, newW, newH)
+      }
+      if (onUpdateLayerPosition && (corner.includes('left') || corner.includes('top'))) {
+        onUpdateLayerPosition(clip.id, newX, newY)
+      }
+    }
+
+    const handleMouseUp = () => {
+      setIsDragging(false)
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+  }, [onUpdateLayerSize, onUpdateLayerPosition])
 
   // Handle clip drag start
   const handleLayerMouseDown = useCallback((e, clip) => {
@@ -215,6 +280,25 @@ const VideoCanvas = forwardRef(({
           className="preview-wrapper"
           style={{ width: `${zoomLevel}%`, position: 'relative' }}
         >
+          {/* === EDITING VIEW: LiveCanvasRenderer shows real template UI === */}
+          {!isPlaying && (
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 15,
+              // Maintain 16:9 aspect ratio
+            }}>
+              <LiveCanvasRenderer
+                scene={activeScene}
+                selectedId={selectedLayerId}
+                onSelectClip={(id) => setSelectedLayerId && setSelectedLayerId(id)}
+                onContentChange={(clipId, newText) => updateClipContent && updateClipContent(activeSceneId, clipId, newText)}
+                onDeselect={() => setSelectedLayerId && setSelectedLayerId(null)}
+              />
+            </div>
+          )}
+
+          {/* === REMOTION PLAYER: used for preview/export, hidden during editing === */}
           <Player
             ref={playerRef}
             component={VideoComposition}
@@ -225,7 +309,8 @@ const VideoCanvas = forwardRef(({
             style={{
               width: '100%',
               height: '100%',
-              backgroundColor: 'white'
+              backgroundColor: 'white',
+              visibility: isPlaying ? 'visible' : 'hidden',
             }}
             inputProps={{
               scenes: scenes,
@@ -248,119 +333,6 @@ const VideoCanvas = forwardRef(({
               }
             }}
           />
-
-          {/* Interactive Overlay — sits on top of the Remotion Player when NOT playing */}
-          {!isPlaying && clips.length > 0 && (
-            <div
-              ref={overlayRef}
-              className="canvas-interactive-overlay"
-              onClick={handleOverlayClick}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              style={{
-                position: 'absolute',
-                inset: 0,
-                zIndex: 10,
-                cursor: 'default',
-                pointerEvents: 'all'
-              }}
-            >
-              {/* Clip selection handles */}
-              {clips.map(clip => {
-                const isSelected = selectedLayerId === clip.id
-                const x = clip.position?.x ?? 0
-                const y = clip.position?.y ?? 0
-                const w = clip.size?.width || 'auto'
-                const h = clip.size?.height || 'auto'
-
-                return (
-                  <div
-                    key={clip.id}
-                    onMouseDown={(e) => handleLayerMouseDown(e, clip)}
-                    style={{
-                      position: 'absolute',
-                      left: `${x}%`,
-                      top: `${y}%`,
-                      width: w,
-                      height: h,
-                      transform: `scale(${clip.scale || 1})`,
-                      transformOrigin: 'top left',
-                      cursor: isDragging ? 'grabbing' : 'pointer',
-                      border: isSelected ? '2px solid #1a73e8' : '2px solid transparent',
-                      borderRadius: '4px',
-                      boxSizing: 'border-box',
-                      transition: isDragging ? 'none' : 'border-color 0.15s ease',
-                      zIndex: isSelected ? 20 : 10
-                    }}
-                  >
-                    {/* Selection handles on corners */}
-                    {isSelected && (
-                      <>
-                        {/* Corner handles */}
-                        {['top-left', 'top-right', 'bottom-left', 'bottom-right'].map(pos => (
-                          <div
-                            key={pos}
-                            style={{
-                              position: 'absolute',
-                              width: '10px',
-                              height: '10px',
-                              backgroundColor: '#1a73e8',
-                              border: '2px solid #fff',
-                              borderRadius: '2px',
-                              ...(pos.includes('top') ? { top: '-5px' } : { bottom: '-5px' }),
-                              ...(pos.includes('left') ? { left: '-5px' } : { right: '-5px' }),
-                              cursor: pos === 'top-left' || pos === 'bottom-right' ? 'nwse-resize' : 'nesw-resize',
-                              zIndex: 30,
-                              boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
-                            }}
-                          />
-                        ))}
-                        {/* Position badge */}
-                        <div style={{
-                          position: 'absolute',
-                          top: '-28px',
-                          left: '50%',
-                          transform: 'translateX(-50%)',
-                          background: '#1a73e8',
-                          color: '#fff',
-                          fontSize: '10px',
-                          fontFamily: 'Inter, sans-serif',
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          whiteSpace: 'nowrap',
-                          fontWeight: '600',
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-                          zIndex: 30,
-                          pointerEvents: 'none'
-                        }}>
-                          <MdOpenWith size={10} style={{ marginRight: 3, verticalAlign: 'middle' }} />
-                          {Math.round(x)}%, {Math.round(y)}%
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )
-              })}
-
-              {/* Drop indicator */}
-              {dropIndicator && (
-                <div style={{
-                  position: 'absolute',
-                  left: `${dropIndicator.x}%`,
-                  top: `${dropIndicator.y}%`,
-                  width: '120px',
-                  height: '80px',
-                  border: '2px dashed #1a73e8',
-                  borderRadius: '8px',
-                  background: 'rgba(26, 115, 232, 0.08)',
-                  transform: 'translate(-50%, -50%)',
-                  pointerEvents: 'none',
-                  zIndex: 50
-                }} />
-              )}
-            </div>
-          )}
         </div>
       </div>
     </div>

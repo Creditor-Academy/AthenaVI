@@ -51,7 +51,15 @@ const EditorSidebar = ({
 
     switch (selectedTool) {
       case 'avatar':
-        return <EditorSidebarAvatar activeScene={activeScene} activeSceneId={activeSceneId} scenes={scenes} autoCreateScene={autoCreateScene} updateScene={updateScene} setShowTemplateModal={setShowTemplateModal} />;
+        return <EditorSidebarAvatar 
+          activeScene={activeScene} 
+          activeSceneId={activeSceneId} 
+          scenes={scenes} 
+          autoCreateScene={autoCreateScene} 
+          updateScene={updateScene} 
+          setShowTemplateModal={setShowTemplateModal} 
+          addLayer={addLayer}
+        />;
       case 'image':
         return <EditorSidebarImage addLayer={addLayer} />;
       case 'uploads':
