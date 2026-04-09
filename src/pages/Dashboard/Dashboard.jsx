@@ -86,6 +86,8 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
     if (onCreate) {
       onCreate(config)
     }
+    // Auto refresh the page as requested
+    window.location.reload()
   }, [onCreate])
 
   // Update URL when section changes

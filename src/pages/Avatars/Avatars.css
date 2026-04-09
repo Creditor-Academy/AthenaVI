@@ -26,6 +26,14 @@
   position: relative;
   animation: fadeIn 0.8s ease-out;
   overflow-y: auto; /* Allow scrolling when content is long, especially on mobile */
+  
+  /* Hide scrollbar */
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.workspace-main::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }
 
 @keyframes fadeIn {
@@ -39,6 +47,14 @@
   margin: 0 auto;
   height: 100%;
   overflow-y: auto; /* Allow the grid itself to scroll when no avatar is selected */
+  
+  /* Hide scrollbar */
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.grid-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }
 
 .avatars-header {

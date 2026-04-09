@@ -12,7 +12,8 @@ class WorkspaceService {
 
       const response = await fetch(buildUrl('/api/workspaces'), {
         method: 'GET',
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
+        cache: 'no-store'
       });
 
       console.log('Workspace list response status:', response.status);
@@ -25,10 +26,22 @@ class WorkspaceService {
       console.log('Workspace list response data:', data);
 
       // Extract workspaces from nested structure
-      const workspaces = data.data?.workspaces || data.workspaces || [];
-      console.log('Extracted workspaces:', workspaces);
+      const workspaces = data.data?.workspaces || data.workspaces || (Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []));
+      // Normalize _id to id for consistency
+      const normalized = workspaces.map(ws => ({ ...ws, id: ws.id || ws._id }));
+      console.log('Extracted workspaces:', normalized);
 
-      return workspaces;
+      // DEBUG: Log raw field names from first workspace to identify API shape
+      if (workspaces.length > 0) {
+        const sample = workspaces[0];
+        console.log('=== WORKSPACE API DEBUG ===');
+        console.log('All keys on workspace[0]:', Object.keys(sample));
+        console.log('Full workspace[0] raw:', JSON.stringify(sample, null, 2));
+        console.log('Stored user from localStorage:', localStorage.getItem('user'));
+        console.log('=== END DEBUG ===');
+      }
+
+      return normalized;
     } catch (error) {
       console.error('Error in listWorkspaces:', error);
       throw error;
@@ -40,7 +53,8 @@ class WorkspaceService {
     try {
       const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}`), {
         method: 'GET',
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
+        cache: 'no-store'
       });
 
       if (!response.ok) {
@@ -106,9 +120,80 @@ class WorkspaceService {
       }
 
       const data = await response.json();
-      return data.data?.folder || data.folder;
+      const folder = data.data?.folder || data.folder || data.data || data;
+      return { ...folder, id: folder.id || folder._id };
     } catch (error) {
       console.error('Error in createFolder:', error);
+      throw error;
+    }
+  }
+
+  // List all folders in a workspace
+  async listFolders(workspaceId) {
+    try {
+      console.log('listFolders: calling', buildUrl(`/api/workspaces/${workspaceId}/folders`));
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/folders`), {
+        method: 'GET',
+        headers: getAuthHeaders(),
+        cache: 'no-store'
+      });
+
+      console.log('listFolders: response status', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        throw new Error(`Failed to fetch folders: ${response.status} ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('listFolders: raw response data', JSON.stringify(data));
+      const folders = data.data?.folders || data.folders || (Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []));
+      // Normalize _id to id for consistency
+      return folders.map(f => ({ ...f, id: f.id || f._id }));
+    } catch (error) {
+      console.error('Error in listFolders:', error);
+      throw error;
+    }
+  }
+
+  // Rename a folder
+  async renameFolder(workspaceId, folderId, name) {
+    try {
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/folders/${folderId}`), {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ name })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        throw new Error(`Failed to rename folder: ${response.status} ${errorText}`);
+      }
+
+      const data = await response.json();
+      const folder = data.data?.folder || data.folder || data.data || data;
+      return { ...folder, id: folder.id || folder._id };
+    } catch (error) {
+      console.error('Error in renameFolder:', error);
+      throw error;
+    }
+  }
+
+  // Delete a folder
+  async deleteFolder(workspaceId, folderId) {
+    try {
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/folders/${folderId}`), {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete folder: ${response.status}`);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in deleteFolder:', error);
       throw error;
     }
   }
@@ -158,7 +243,8 @@ class WorkspaceService {
     try {
       const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/members`), {
         method: 'GET',
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
+        cache: 'no-store'
       });
 
       if (!response.ok) {
@@ -342,6 +428,84 @@ class WorkspaceService {
       return true;
     } catch (error) {
       console.error('Error in removeInvitation:', error);
+      throw error;
+    }
+  }
+
+  // --- Video Management ---
+
+  // Aggregate all videos across all workspaces
+  async listAllVideosAcrossWorkspaces() {
+    try {
+      const workspaces = await this.listWorkspaces();
+      const allVideos = [];
+
+      for (const workspace of workspaces) {
+        // Fetch full workspace details to get folders and videos
+        const details = await this.getWorkspace(workspace.id);
+        
+        // Handle flattened videos if they exist at workspace level
+        const wsVideos = details.videos || [];
+        wsVideos.forEach(v => allVideos.push({ ...v, workspaceName: details.name, workspaceId: details.id }));
+
+        // Handle videos nested in folders
+        const wsFolders = details.folders || [];
+        wsFolders.forEach(folder => {
+          const folderVideos = folder.videos || [];
+          folderVideos.forEach(v => allVideos.push({ 
+            ...v, 
+            workspaceName: details.name, 
+            workspaceId: details.id,
+            folderName: folder.name,
+            folderId: folder.id
+          }));
+        });
+      }
+
+      return allVideos;
+    } catch (error) {
+      console.error('Error in listAllVideosAcrossWorkspaces:', error);
+      throw error;
+    }
+  }
+
+  // Rename a video
+  async renameVideo(workspaceId, videoId, newTitle) {
+    try {
+      // Assuming a standard endpoint structure. Adjust if backend differs.
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/videos/${videoId}`), {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ title: newTitle })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to rename video: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.data?.video || data.video;
+    } catch (error) {
+      console.error('Error in renameVideo:', error);
+      throw error;
+    }
+  }
+
+  // Delete a video
+  async deleteVideo(workspaceId, videoId) {
+    try {
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/videos/${videoId}`), {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete video: ${response.status}`);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in deleteVideo:', error);
       throw error;
     }
   }

@@ -3,1019 +3,171 @@ import {
   MdMoreVert,
   MdEdit,
   MdDelete,
-  MdPlayCircleFilled,
   MdAdd,
-  MdArrowBack,
-  MdClose,
-  MdFolder,
-  MdFolderOpen,
-  MdPlayArrow,
-  MdAccessTime,
-  MdCheckCircle,
   MdGridView,
   MdViewList,
+  MdPlayArrow,
+  MdFolder,
+  MdClose,
+  MdSearch,
+  MdVideoLibrary
 } from 'react-icons/md'
-
-const styles = `
-.videos-container {
-  padding: 32px;
-  height: 100%;
-  overflow-y: auto;
-  background: var(--bg-main);
-}
-
-.videos-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 32px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.videos-title-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.videos-title {
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--text-main);
-  margin: 0;
-  letter-spacing: -0.02em;
-}
-
-.videos-subtitle {
-  font-size: 15px;
-  color: var(--text-muted);
-  margin: 0;
-  font-weight: 400;
-}
-
-.videos-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.new-folder-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--primary);
-  border: none;
-  color: #ffffff;
-  font-weight: 600;
-  font-size: 14px;
-  padding: 11px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(var(--primary-rgb), 0.3);
-}
-
-.new-folder-btn:hover {
-  background: var(--primary-hover);
-  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.4);
-  transform: translateY(-1px);
-}
-
-.view-toggle {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 999px;
-  padding: 3px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.view-toggle-btn {
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-  font-size: 18px;
-}
-
-.view-toggle-btn:hover {
-  background: var(--bg-surface);
-  color: var(--text-main);
-}
-
-.view-toggle-btn.active {
-  background: var(--primary);
-  color: #ffffff;
-  box-shadow: 0 2px 4px rgba(var(--primary-rgb), 0.3);
-}
-
-.folders-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 24px;
-}
-
-.folder-card {
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  padding: 24px;
-  background: var(--bg-card);
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  box-shadow: 0 4px 6px -2px rgba(0, 0, 0, 0.03);
-}
-
-.folder-card:hover {
-  border-color: var(--primary);
-  box-shadow: 
-    0 20px 25px -5px rgba(0, 0, 0, 0.08),
-    0 8px 10px -6px rgba(0, 0, 0, 0.01);
-  transform: translateY(-4px);
-}
-
-.folder-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
-.folder-icon-wrapper {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  background: var(--bg-surface);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary);
-  font-size: 28px;
-  flex-shrink: 0;
-  transition: all 0.3s ease;
-  border: 1px solid var(--border-color);
-}
-
-.folder-card:hover .folder-icon-wrapper {
-  background: var(--primary);
-  color: #ffffff;
-  transform: scale(1.1) rotate(-3deg);
-  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
-}
-
-.folder-menu-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  font-size: 18px;
-}
-
-.folder-menu-btn:hover {
-  background: var(--bg-surface);
-  color: var(--text-main);
-}
-
-.folder-info {
-  flex: 1;
-}
-
-.folder-name {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-main);
-  margin: 0 0 6px;
-  line-height: 1.3;
-}
-
-.folder-meta {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin: 0 0 16px;
-  font-weight: 500;
-}
-
-.folder-preview {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-.preview-thumb {
-  width: 40px;
-  height: 40px;
-  border-radius: 6px;
-  background: var(--bg-surface);
-  background-size: cover;
-  background-position: center;
-  border: 2px solid var(--bg-card);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  flex-shrink: 0;
-}
-
-.more-count {
-  width: 40px;
-  height: 40px;
-  border-radius: 6px;
-  background: var(--bg-surface);
-  border: 2px solid var(--bg-card);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-muted);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.folder-menu {
-  position: absolute;
-  top: 50px;
-  right: 12px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-  min-width: 180px;
-  overflow: hidden;
-  z-index: 100;
-  animation: slideDown 0.2s ease;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.folder-menu-item {
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-  transition: background 0.15s ease;
-  border: none;
-  background: transparent;
-  width: 100%;
-  text-align: left;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-main);
-}
-
-.folder-menu-item:hover {
-  background: var(--bg-surface);
-}
-
-.folder-menu-item.delete {
-  color: #ef4444;
-}
-
-.folder-menu-item.delete:hover {
-  background: rgba(239, 68, 68, 0.1);
-}
-
-.folder-menu-icon {
-  font-size: 18px;
-  color: var(--text-muted);
-  flex-shrink: 0;
-}
-
-.folder-menu-item.delete .folder-menu-icon {
-  color: #ef4444;
-}
-
-.back-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-card);
-  color: var(--text-main);
-  font-weight: 600;
-  font-size: 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-bottom: 24px;
-  width: fit-content;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.back-button:hover {
-  background: var(--bg-surface);
-  border-color: var(--text-muted);
-  transform: translateX(-2px);
-}
-
-.folder-view-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 28px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.folder-view-title {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--text-main);
-  margin: 0 0 6px;
-  letter-spacing: -0.02em;
-}
-
-.folder-view-meta {
-  font-size: 14px;
-  color: var(--text-muted);
-  margin: 0;
-}
-
-.videos-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 20px;
-}
-
-.videos-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.video-card.list-view {
-  display: flex;
-  align-items: center;
-  padding: 16px;
-  gap: 20px;
-  border-radius: 12px;
-}
-
-.video-card.list-view .video-thumb {
-  width: 180px;
-  height: 100px;
-  flex-shrink: 0;
-  border-radius: 8px;
-}
-
-.video-card.list-view .video-info {
-  padding: 0;
-  flex: 1;
-}
-
-.video-card.list-view .video-title {
-  font-size: 15px;
-  margin-bottom: 6px;
-  -webkit-line-clamp: 1;
-}
-
-.video-card.list-view .video-meta {
-  font-size: 13px;
-}
-
-.folders-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.folder-card.list-view {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 20px;
-  padding: 20px;
-}
-
-.folder-card.list-view .folder-header {
-  flex-direction: row;
-  align-items: center;
-  gap: 16px;
-}
-
-.folder-card.list-view .folder-icon-wrapper {
-  width: 48px;
-  height: 48px;
-}
-
-.folder-card.list-view .folder-info {
-  flex: 1;
-}
-
-.folder-card.list-view .folder-preview {
-  margin-top: 0;
-  margin-left: auto;
-}
-
-.video-card {
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  background: var(--bg-card);
-  overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-  position: relative;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.video-card:hover {
-  border-color: var(--primary);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px);
-}
-
-.video-thumb {
-  width: 100%;
-  height: 140px;
-  background: var(--bg-surface);
-  position: relative;
-  overflow: hidden;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.video-thumb-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.video-thumb-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, transparent 50%);
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: 10px;
-}
-
-.video-badge {
-  background: var(--bg-card);
-  backdrop-filter: blur(10px);
-  border-radius: 6px;
-  padding: 4px 10px;
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-main);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  border: 1px solid var(--border-color);
-}
-
-.video-badge.draft {
-  background: rgba(var(--primary-rgb), 0.1);
-  color: var(--primary);
-  border: 1px solid rgba(var(--primary-rgb), 0.2);
-}
-
-.video-badge.published {
-  background: rgba(22, 163, 74, 0.1);
-  color: #16a34a;
-  border: 1px solid rgba(22, 163, 74, 0.2);
-}
-
-.video-menu-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-card);
-  backdrop-filter: blur(10px);
-  color: var(--text-muted);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  font-size: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.video-menu-btn:hover {
-  background: var(--bg-surface);
-  color: var(--text-main);
-  transform: scale(1.05);
-}
-
-.video-duration {
-  position: absolute;
-  bottom: 8px;
-  left: 8px;
-  background: rgba(0, 0, 0, 0.8);
-  color: #ffffff;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  font-family: 'Courier New', monospace;
-  backdrop-filter: blur(10px);
-}
-
-.video-info {
-  padding: 16px;
-}
-
-.video-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-main);
-  margin: 0 0 6px;
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.video-meta {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin: 0;
-  font-weight: 400;
-}
-
-.video-menu {
-  position: absolute;
-  top: 50px;
-  right: 10px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-  min-width: 160px;
-  overflow: hidden;
-  z-index: 100;
-  animation: slideDown 0.2s ease;
-}
-
-.video-menu-item {
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-  transition: background 0.15s ease;
-  border: none;
-  background: transparent;
-  width: 100%;
-  text-align: left;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-main);
-}
-
-.video-menu-item:hover {
-  background: var(--bg-surface);
-}
-
-.video-menu-item.delete {
-  color: #ef4444;
-}
-
-.video-menu-item.delete:hover {
-  background: rgba(239, 68, 68, 0.1);
-}
-
-.video-menu-icon {
-  font-size: 18px;
-  color: var(--text-muted);
-  flex-shrink: 0;
-}
-
-.video-menu-item.delete .video-menu-icon {
-  color: #ef4444;
-}
-
-.rename-dialog-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: fadeIn 0.2s ease;
-  backdrop-filter: blur(4px);
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.rename-dialog {
-  background: var(--bg-card);
-  border-radius: 16px;
-  padding: 28px;
-  width: 90%;
-  max-width: 420px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-  animation: slideUp 0.2s ease;
-  border: 1px solid var(--border-color);
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.rename-dialog-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-.rename-dialog-title {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text-main);
-  letter-spacing: -0.01em;
-}
-
-.rename-dialog-close {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 6px;
-  color: var(--text-muted);
-  transition: all 0.15s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.rename-dialog-close:hover {
-  background: var(--bg-surface);
-  color: var(--text-main);
-}
-
-.rename-input {
-  width: 100%;
-  padding: 12px 16px;
-  border: 2px solid var(--border-color);
-  background: var(--bg-surface);
-  color: var(--text-main);
-  border-radius: 8px;
-  font-size: 15px;
-  margin-bottom: 24px;
-  outline: none;
-  box-sizing: border-box;
-  transition: all 0.2s ease;
-  font-weight: 500;
-}
-
-.rename-input:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
-}
-
-.rename-dialog-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-}
-
-.btn-secondary {
-  padding: 10px 20px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-card);
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-main);
-  transition: all 0.2s ease;
-}
-
-.btn-secondary:hover {
-  background: var(--bg-surface);
-  border-color: var(--text-muted);
-}
-
-.btn-primary {
-  padding: 10px 20px;
-  border: none;
-  background: var(--primary);
-  color: #ffffff;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(var(--primary-rgb), 0.3);
-}
-
-.btn-primary:hover {
-  background: var(--primary-hover);
-  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.4);
-}
-
-.empty-folder {
-  text-align: center;
-  padding: 80px 20px;
-  color: var(--text-muted);
-  background: var(--bg-card);
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
-}
-
-.empty-folder-icon {
-  font-size: 64px;
-  color: var(--border-color);
-  margin-bottom: 20px;
-}
-
-.empty-folder-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--text-main);
-  margin: 0 0 10px;
-}
-
-.empty-folder-text {
-  font-size: 15px;
-  margin: 0;
-  color: var(--text-muted);
-}
-`;
+import workspaceService from '../../services/workspaceService'
+import './Videos.css'
 
 const thumbnailUrl = 'https://media.istockphoto.com/id/1475888355/video/timelapse-of-the-creation-of-an-online-avatar-start-to-finish.jpg?s=640x640&k=20&c=pFzBOkU7LjC1DF0DeNCAUhS8MCiNwSDwkqI9v9C7IgQ='
 
-const initialFolders = [
-  {
-    id: 'f1',
-    name: 'Marketing',
-    videos: [
-      {
-        id: 'v1',
-        title: 'Sustainable Work',
-        status: 'draft',
-        updated: '23h ago',
-        duration: '01:50',
-        pinned: false,
-      },
-      {
-        id: 'v4',
-        title: 'Client Update',
-        status: 'draft',
-        updated: '5d ago',
-        duration: null,
-        pinned: false,
-      },
-    ],
-  },
-  {
-    id: 'f2',
-    name: 'Internal',
-    videos: [
-      {
-        id: 'v2',
-        title: 'Untitled',
-        status: 'draft',
-        updated: 'yesterday',
-        duration: null,
-        pinned: true,
-      },
-      {
-        id: 'v6',
-        title: 'Welcome Series',
-        status: 'draft',
-        updated: '1d ago',
-        duration: '02:04',
-        pinned: false,
-      },
-    ],
-  },
-  {
-    id: 'f3',
-    name: 'Sales',
-    videos: [
-      {
-        id: 'v3',
-        title: 'Holiday Greeting',
-        status: 'draft',
-        updated: '5d ago',
-        duration: '01:50',
-        pinned: false,
-      },
-    ],
-  },
-  {
-    id: 'f4',
-    name: 'Product',
-    videos: [
-      {
-        id: 'v5',
-        title: 'Product Walkthrough',
-        status: 'published',
-        updated: '2d ago',
-        duration: '03:12',
-        pinned: true,
-      },
-    ],
-  },
-]
-
 function Videos({ onCreate }) {
-  const [selectedFolder, setSelectedFolder] = useState(null)
-  const [cardMenu, setCardMenu] = useState(null)
-  const [renameDialog, setRenameDialog] = useState(null) // folderId or { folderId, videoId }
-  const [renameType, setRenameType] = useState(null) // 'folder' or 'video'
-  const [newName, setNewName] = useState('')
-  const [folders, setFolders] = useState(initialFolders)
+  const [videos, setVideos] = useState([])
+  const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState('grid')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [cardMenu, setCardMenu] = useState(null)
+  const [renameDialog, setRenameDialog] = useState(null) // { videoId, workspaceId, title }
+  const [newName, setNewName] = useState('')
   const menuRefs = useRef({})
 
   useEffect(() => {
+    fetchVideos()
+  }, [])
+
+  const fetchVideos = async () => {
+    try {
+      setLoading(true)
+      const data = await workspaceService.listAllVideosAcrossWorkspaces()
+      setVideos(data)
+    } catch (error) {
+      console.error('Failed to fetch videos:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
     const handleClickOutside = (event) => {
-      Object.keys(menuRefs.current).forEach((itemId) => {
-        if (menuRefs.current[itemId] && !menuRefs.current[itemId].contains(event.target)) {
+      if (cardMenu) {
+        const ref = menuRefs.current[cardMenu]
+        if (ref && !ref.contains(event.target)) {
           setCardMenu(null)
         }
-      })
+      }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+  }, [cardMenu])
 
-  const renameFolder = (folderId, newName) => {
-    setFolders((prev) =>
-      prev.map((folder) =>
-        folder.id === folderId ? { ...folder, name: newName } : folder
-      )
-    )
-    setRenameDialog(null)
-    setRenameType(null)
-    setNewName('')
-    setCardMenu(null)
-  }
-
-  const renameVideo = (folderId, videoId, newTitle) => {
-    setFolders((prev) =>
-      prev.map((folder) =>
-        folder.id === folderId
-          ? {
-            ...folder,
-            videos: folder.videos.map((v) =>
-              v.id === videoId ? { ...v, title: newTitle } : v
-            )
-          }
-          : folder
-      )
-    )
-    setRenameDialog(null)
-    setRenameType(null)
-    setNewName('')
-    setCardMenu(null)
-  }
-
-  const deleteFolder = (folderId) => {
-    if (window.confirm('Are you sure you want to delete this folder?')) {
-      setFolders((prev) => prev.filter((f) => f.id !== folderId))
-      setCardMenu(null)
-      if (selectedFolder === folderId) {
-        setSelectedFolder(null)
-      }
+  const handleRename = async () => {
+    if (!newName.trim() || !renameDialog) return
+    try {
+      await workspaceService.renameVideo(renameDialog.workspaceId, renameDialog.videoId, newName.trim())
+      window.location.reload()
+    } catch (error) {
+      alert('Failed to rename video')
     }
   }
 
-  const deleteVideo = (folderId, videoId) => {
-    if (window.confirm('Are you sure you want to delete this video?')) {
-      setFolders((prev) =>
-        prev.map((folder) =>
-          folder.id === folderId
-            ? { ...folder, videos: folder.videos.filter((v) => v.id !== videoId) }
-            : folder
-        )
-      )
-      setCardMenu(null)
+  const handleDelete = async (workspaceId, videoId) => {
+    if (!window.confirm('Are you sure you want to delete this video?')) return
+    try {
+      await workspaceService.deleteVideo(workspaceId, videoId)
+      window.location.reload()
+    } catch (error) {
+      alert('Failed to delete video')
     }
   }
 
-  const createNewFolder = () => {
-    const newFolder = {
-      id: `f${Date.now()}`,
-      name: 'New Folder',
-      videos: [],
-    };
-    setFolders([...folders, newFolder]);
-    setRenameDialog(newFolder.id);
-    setRenameType('folder');
-    setNewName('New Folder');
-  };
+  const filteredVideos = videos.filter(v => 
+    v.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    v.workspaceName.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
-  const currentFolder = folders.find(f => f.id === selectedFolder)
-
-  if (selectedFolder && currentFolder) {
-    return (
-      <>
-        <style>{styles}</style>
-        <div className="videos-container">
-          <button className="back-button" onClick={() => setSelectedFolder(null)}>
-            <MdArrowBack size={18} />
-            Back to folders
-          </button>
-
-          <div className="folder-view-header">
-            <div>
-              <h2 className="folder-view-title">{currentFolder.name}</h2>
-              <p className="folder-view-meta">
-                {currentFolder.videos.length} {currentFolder.videos.length === 1 ? 'video' : 'videos'}
-              </p>
-            </div>
-            <div className="videos-actions">
-              <div className="view-toggle">
-                <button
-                  className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
-                  onClick={() => setViewMode('grid')}
-                >
-                  <MdGridView />
-                </button>
-                <button
-                  className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
-                  onClick={() => setViewMode('list')}
-                >
-                  <MdViewList />
-                </button>
-              </div>
-              <button className="new-folder-btn" onClick={onCreate}>
-                <MdAdd size={18} />
-                New video
+  return (
+    <div className="videos-page">
+      <div className="videos-shell">
+        <header className="videos-page-header">
+          <div className="videos-title-section">
+            <h1 className="videos-page-title">My Videos</h1>
+            <p className="videos-page-subtitle">Manage all your videos across different workspaces</p>
+          </div>
+          <div className="videos-actions">
+            <div className="view-toggle">
+              <button
+                className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                onClick={() => setViewMode('grid')}
+                title="Grid view"
+              >
+                <MdGridView />
+              </button>
+              <button
+                className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+                onClick={() => setViewMode('list')}
+                title="List view"
+              >
+                <MdViewList />
               </button>
             </div>
+            <button className="new-folder-btn" onClick={onCreate}>
+              <MdAdd size={18} />
+              New Video
+            </button>
           </div>
+        </header>
 
-          {currentFolder.videos.length === 0 ? (
-            <div className="empty-folder">
-              <MdFolderOpen className="empty-folder-icon" />
-              <h3 className="empty-folder-title">No videos in this folder</h3>
-              <p className="empty-folder-text">Create your first video to get started</p>
+        <div className="videos-search-bar" style={{
+          display: 'flex',
+          alignItems: 'center',
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
+          borderRadius: '12px',
+          padding: '8px 16px',
+          marginBottom: '24px',
+          gap: '12px'
+        }}>
+          <MdSearch size={22} color="var(--text-muted)" />
+          <input 
+            type="text" 
+            placeholder="Search videos or workspaces..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text-main)',
+              fontSize: '15px',
+              width: '100%',
+              outline: 'none'
+            }}
+          />
+        </div>
+
+        <main className="videos-main">
+          {loading ? (
+            <div className="empty-videos">
+              <p>Loading your videos...</p>
+            </div>
+          ) : filteredVideos.length === 0 ? (
+            <div className="empty-videos">
+              <MdVideoLibrary className="empty-videos-icon" />
+              <h3 style={{ color: 'var(--text-main)', marginBottom: '8px' }}>No videos found</h3>
+              <p>Try Adjusting your search or create a new video</p>
             </div>
           ) : (
             <div className={viewMode === 'grid' ? 'videos-grid' : 'videos-list'}>
-              {currentFolder.videos.map((video) => (
-                <div className={`video-card ${viewMode === 'list' ? 'list-view' : ''}`} key={video.id} ref={el => menuRefs.current[`video-${video.id}`] = el}>
+              {filteredVideos.map((video) => (
+                <div 
+                  className={`video-card ${viewMode === 'list' ? 'list-view' : ''}`} 
+                  key={video.id}
+                  ref={el => menuRefs.current[`video-${video.id}`] = el}
+                >
                   <div className="video-thumb">
                     <img
-                      src={thumbnailUrl}
+                      src={video.thumbnail || thumbnailUrl}
                       alt={video.title}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        display: 'block'
-                      }}
+                      className="video-thumb-image"
                     />
                     <div className="video-thumb-overlay">
-                      <div className={`video-badge ${video.status}`}>
-                        {video.status === 'draft' ? 'DRAFT' : 'PUBLISHED'}
+                      <div className={`video-badge ${video.status || 'draft'}`}>
+                        {video.status?.toUpperCase() || 'DRAFT'}
                       </div>
                       <button
                         className="video-menu-btn"
@@ -1030,10 +182,12 @@ function Videos({ onCreate }) {
                         <div className="video-menu" onClick={(e) => e.stopPropagation()}>
                           <button
                             className="video-menu-item"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setRenameDialog({ folderId: currentFolder.id, videoId: video.id })
-                              setRenameType('video')
+                            onClick={() => {
+                              setRenameDialog({ 
+                                videoId: video.id, 
+                                workspaceId: video.workspaceId, 
+                                title: video.title 
+                              })
                               setNewName(video.title)
                               setCardMenu(null)
                             }}
@@ -1043,10 +197,7 @@ function Videos({ onCreate }) {
                           </button>
                           <button
                             className="video-menu-item delete"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              deleteVideo(currentFolder.id, video.id)
-                            }}
+                            onClick={() => handleDelete(video.workspaceId, video.id)}
                           >
                             <MdDelete className="video-menu-icon" />
                             Delete
@@ -1062,15 +213,14 @@ function Videos({ onCreate }) {
                       width: '48px',
                       height: '48px',
                       borderRadius: '50%',
-                      background: 'rgba(255, 255, 255, 0.95)',
+                      background: 'rgba(255, 255, 255, 0.9)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: '#334155',
+                      color: '#1e293b',
                       fontSize: '24px',
                       cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      zIndex: 10
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                     }}>
                       <MdPlayArrow />
                     </div>
@@ -1081,147 +231,30 @@ function Videos({ onCreate }) {
                     )}
                   </div>
                   <div className="video-info">
-                    <h4 className="video-title">{video.title}</h4>
-                    <p className="video-meta">Updated {video.updated}</p>
+                    <h4 className="video-title" title={video.title}>{video.title}</h4>
+                    <p className="video-meta">Updated {video.updatedAt || video.updated || 'recently'}</p>
+                    <div className="workspace-badge" title={`In workspace: ${video.workspaceName}`}>
+                      <MdFolder size={12} style={{ marginRight: '4px' }} />
+                      {video.workspaceName}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </div>
-      </>
-    )
-  }
-
-  return (
-    <>
-      <style>{styles}</style>
-      <div className="videos-container">
-        <div className="videos-header">
-          <div className="videos-title-section">
-            <h1 className="videos-title">Videos</h1>
-            <p className="videos-subtitle">Organize your videos in folders</p>
-          </div>
-          <div className="videos-actions">
-            <div className="view-toggle">
-              <button
-                className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
-                onClick={() => setViewMode('grid')}
-              >
-                <MdGridView />
-              </button>
-              <button
-                className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
-                onClick={() => setViewMode('list')}
-              >
-                <MdViewList />
-              </button>
-            </div>
-            <button className="new-folder-btn" onClick={createNewFolder}>
-              <MdAdd size={18} />
-              New folder
-            </button>
-          </div>
-        </div>
-
-        <div className={viewMode === 'grid' ? 'folders-grid' : 'folders-list'}>
-          {folders.map((folder) => (
-            <div
-              key={folder.id}
-              className={`folder-card ${viewMode === 'list' ? 'list-view' : ''}`}
-              onClick={() => setSelectedFolder(folder.id)}
-              ref={el => menuRefs.current[`folder-${folder.id}`] = el}
-            >
-              <div className="folder-header">
-                <div className="folder-icon-wrapper">
-                  <MdFolder size={28} />
-                </div>
-                <button
-                  className="folder-menu-btn"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setCardMenu(cardMenu === `folder-${folder.id}` ? null : `folder-${folder.id}`)
-                  }}
-                >
-                  <MdMoreVert />
-                </button>
-                {cardMenu === `folder-${folder.id}` && (
-                  <div className="folder-menu" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      className="folder-menu-item"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setRenameDialog(folder.id)
-                        setRenameType('folder')
-                        setNewName(folder.name)
-                        setCardMenu(null)
-                      }}
-                    >
-                      <MdEdit className="folder-menu-icon" />
-                      Rename
-                    </button>
-                    <button
-                      className="folder-menu-item delete"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        deleteFolder(folder.id)
-                      }}
-                    >
-                      <MdDelete className="folder-menu-icon" />
-                      Delete
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div className="folder-info">
-                <h3 className="folder-name">{folder.name}</h3>
-                <p className="folder-meta">{folder.videos.length} {folder.videos.length === 1 ? 'video' : 'videos'}</p>
-                {folder.videos.length > 0 && (
-                  <div className="folder-preview">
-                    {folder.videos.slice(0, 3).map((video, index) => (
-                      <div
-                        key={video.id}
-                        className="preview-thumb"
-                        style={{
-                          backgroundImage: `url('${thumbnailUrl}')`,
-                          marginLeft: index > 0 ? '-12px' : '0',
-                          zIndex: 3 - index
-                        }}
-                      />
-                    ))}
-                    {folder.videos.length > 3 && (
-                      <div className="more-count" style={{ marginLeft: '-12px' }}>
-                        +{folder.videos.length - 3}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+        </main>
       </div>
 
       {renameDialog && (
-        <div className="rename-dialog-overlay" onClick={() => {
-          setRenameDialog(null)
-          setRenameType(null)
-          setNewName('')
-        }}>
+        <div className="rename-dialog-overlay" onClick={() => setRenameDialog(null)}>
           <div className="rename-dialog" onClick={(e) => e.stopPropagation()}>
-            <div className="rename-dialog-header">
-              <h3 className="rename-dialog-title">
-                {renameType === 'folder' ? 'Rename Folder' : 'Rename Video'}
-              </h3>
-              <button
-                className="rename-dialog-close"
-                onClick={() => {
-                  setRenameDialog(null)
-                  setRenameType(null)
-                  setNewName('')
-                }}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: '20px' }}>Rename Video</h3>
+              <button 
+                onClick={() => setRenameDialog(null)}
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
               >
-                <MdClose size={20} />
+                <MdClose size={24} />
               </button>
             </div>
             <input
@@ -1230,51 +263,19 @@ function Videos({ onCreate }) {
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && newName.trim()) {
-                  if (renameType === 'folder') {
-                    renameFolder(renameDialog, newName.trim())
-                  } else if (renameType === 'video') {
-                    renameVideo(renameDialog.folderId, renameDialog.videoId, newName.trim())
-                  }
-                } else if (e.key === 'Escape') {
-                  setRenameDialog(null)
-                  setRenameType(null)
-                  setNewName('')
-                }
+                if (e.key === 'Enter') handleRename()
+                if (e.key === 'Escape') setRenameDialog(null)
               }}
-              placeholder={renameType === 'folder' ? 'Enter folder name' : 'Enter video title'}
               autoFocus
             />
             <div className="rename-dialog-actions">
-              <button
-                className="btn-secondary"
-                onClick={() => {
-                  setRenameDialog(null)
-                  setRenameType(null)
-                  setNewName('')
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn-primary"
-                onClick={() => {
-                  if (newName.trim()) {
-                    if (renameType === 'folder') {
-                      renameFolder(renameDialog, newName.trim())
-                    } else if (renameType === 'video') {
-                      renameVideo(renameDialog.folderId, renameDialog.videoId, newName.trim())
-                    }
-                  }
-                }}
-              >
-                Rename
-              </button>
+              <button className="btn-secondary" onClick={() => setRenameDialog(null)}>Cancel</button>
+              <button className="btn-primary" onClick={handleRename}>Rename</button>
             </div>
           </div>
         </div>
       )}
-    </>
+    </div>
   )
 }
 
