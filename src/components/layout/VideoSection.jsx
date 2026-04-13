@@ -280,7 +280,6 @@ function VideoSection() {
                   alt={card.alt}
                   className="video-card-image"
                 />
-
                 {/* Always-visible title strip at bottom */}
                 <div className="video-card-title-strip">
                   <h3 className="video-card-title">{card.title}</h3>

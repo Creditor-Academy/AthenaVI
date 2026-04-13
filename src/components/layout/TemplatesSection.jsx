@@ -86,7 +86,7 @@ const FEATURES = [
 /* ── Styles ── */
 const css = `
   .ts-section {
-    padding: 110px 40px 120px;
+    padding: 60px 40px 100px;
     background: #f8fafc;
     font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
     position: relative;

@@ -1,35 +1,42 @@
 import React, { useRef, useState, useEffect } from "react";
 import { motion, useScroll, useTransform, useSpring, useMotionValueEvent } from "framer-motion";
 
+import CourseCreatorImg from "../../assets/Course Creator.jpg";
+import UniversityImg from "../../assets/University.jpg";
+import CorporateTrainingImg from "../../assets/Cooporate training teams.jpg";
+import MarketingTeamsImg from "../../assets/Marketing Teams.jpg";
+import EdTechPlatformImg from "../../assets/EdTech platform.jpg";
+import ContentCreatorImg from "../../assets/Content Creator.jpg";
+
 const CARDS = [
   {
     title: "Course Creators",
-    image: "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=600&auto=format&fit=crop",
+    image: CourseCreatorImg,
     x: -620, y: 240, rotate: -12
   },
   {
     title: "Universities & Educational Institutions",
-    image: "https://images.unsplash.com/photo-1541339907198-e08756dee402?q=80&w=600&auto=format&fit=crop",
+    image: UniversityImg,
     x: -385, y: 140, rotate: -10
   },
   { 
     title: "Corporate Training Teams",
-    image: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=600&auto=format&fit=crop",
+    image: CorporateTrainingImg,
     x: -135, y: 70, rotate: -5
   },
   {
     title: "Marketing Teams",
-    image: "https://images.unsplash.com/photo-1533750349088-cd871a92f312?q=80&w=600&auto=format&fit=crop",
+    image: MarketingTeamsImg,
     x: 135, y: 70, rotate: 5
   },
   {
     title: "EdTech Platforms",
-    image: "https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?q=80&w=600&auto=format&fit=crop",
+    image: EdTechPlatformImg,
     x: 385, y: 140, rotate: 10
   },
   {
-    title: "Content Creators",
-    image: "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=600&auto=format&fit=crop",
+    title: "Content Creator",
+    image: ContentCreatorImg,
     x: 620, y: 240, rotate: 12
   }
 ];

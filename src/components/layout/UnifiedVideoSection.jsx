@@ -1,5 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FiFolderPlus, FiFileText, FiUser, FiPlay } from 'react-icons/fi';
+import { FiFolderPlus, FiFileText, FiUser, FiPlay, FiArrowUpRight, FiCheckCircle, FiArrowRight } from 'react-icons/fi';
+import CustomizeAi from '../../assets/CustomizeAi.jpg';
+import AIvideo from '../../assets/AIvideo.jpg';
+import Voice from '../../assets/Voice.jpg';
 
 /* ── Step data from HowItWorks ── */
 const steps = [
@@ -25,25 +28,31 @@ const steps = [
   },
 ];
 
-/* ── Feature cards from VideoSection ── */
+/* ── Feature cards ── */
 const featureCards = [
   {
-    image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=600&fit=crop&q=80',
+    image: CustomizeAi,
     alt: 'AI-Powered Creation',
-    title: 'AI-Powered Creation',
-    description: 'Generate professional videos in minutes with our advanced AI technology. Simply provide your content and let the AI handle the rest.'
+    title: 'AI-Powered Creation with NextGen Tools',
+    description: 'Generate professional videos in minutes with our advanced AI technology.',
+    category: 'AI Engine',
+    features: ['Real-time Gen', 'HD 4K Support']
   },
   {
-    image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=600&fit=crop&q=80',
+    image: AIvideo,
     alt: 'Easy Customization',
-    title: 'Easy Customization',
-    description: 'Personalize every aspect of your videos with intuitive editing tools. Adjust styles, fonts, colors, and transitions to match your brand.'
+    title: 'Customize Every Frame with Ease',
+    description: 'Personalize every aspect of your videos with intuitive editing tools.',
+    category: 'Toolkit',
+    features: ['Infinite Edit', 'Layer Control']
   },
   {
-    image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=600&fit=crop&q=80',
-    alt: 'Multi-Language Support',
-    title: 'Multi-Language Support',
-    description: 'Create videos in any language with automatic translation features. Reach a global audience with AI-powered voice synthesis.'
+    image: Voice,
+    alt: 'Voice-Based Interaction',
+    title: 'Voice-Based Interaction',
+    description: 'Enable users to ask questions using voice and receive intelligent spoken responses.',
+    category: 'Vocal AI',
+    features: ['Smart NLP', 'Instant Voice']
   },
 ];
 
@@ -66,12 +75,12 @@ function useReveal(threshold = 0.15) {
 
 const styles = `
 .unified-section {
-  padding: 100px 40px;
+  padding: 80px 40px;
   background: #ffffff;
   color: #1e40af;
   position: relative;
   overflow: hidden;
-  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 .unified-section::before {
@@ -79,9 +88,23 @@ const styles = `
   position: absolute;
   inset: 0;
   background-image: radial-gradient(circle, rgba(17, 34, 87, 0.06) 1px, transparent 1px);
-  background-size: 28px 28px;
+  background-size: 32px 32px;
   pointer-events: none;
 }
+
+/* Decorative Blobs */
+.section-blob {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  filter: blur(80px);
+  border-radius: 50%;
+  opacity: 0.15;
+  z-index: 0;
+  pointer-events: none;
+}
+.blob-1 { top: -100px; left: -100px; background: #3b82fb; }
+.blob-2 { bottom: 200px; right: -100px; background: #8b5cf6; width: 400px; height: 400px; }
 
 .unified-content {
   max-width: 1400px;
@@ -93,117 +116,269 @@ const styles = `
 /* ── Video Section Styles ── */
 .vs-header {
   text-align: center;
-  margin-bottom: 60px;
+  margin-bottom: 80px;
 }
 .vs-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  background: linear-gradient(135deg, rgba(30,64,175,0.1) 0%, rgba(59,130,246,0.1) 100%);
-  border: 1px solid rgba(30,64,175,0.18);
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   color: #1e40af;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 1.5px;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
-  padding: 7px 18px;
-  border-radius: 999px;
-  margin-bottom: 24px;
+  padding: 8px 20px;
+  border-radius: 100px;
+  margin-bottom: 28px;
 }
 .vs-badge-dot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: #3b82f6;
   display: inline-block;
   animation: pulse-dot 2s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
 }
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.7); }
+  50% { opacity: 0.4; transform: scale(0.6); }
 }
 .vs-title {
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 55px;
+  font-size: clamp(40px, 5vw, 64px);
   font-weight: 400;
-  line-height: 1.2;
-  margin: 0 0 20px;
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
+  line-height: 1.1;
+  margin: 0 0 24px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e40af 50%, #3b82f6 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  letter-spacing: -1.5px;
+  letter-spacing: -2px;
 }
 .vs-subtitle {
   font-family: 'Inter', sans-serif;
-  font-size: clamp(15px, 2vw, 18px);
+  font-size: clamp(16px, 1.2vw, 20px);
   font-weight: 400;
-  color: #64748b;
-  margin: 0 auto 20px;
-  max-width: 600px;
-  line-height: 1.7;
+  color: #475569;
+  margin: 0 auto;
+  max-width: 640px;
+  line-height: 1.6;
 }
 
 .video-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
   gap: 32px;
   margin-bottom: 120px;
 }
-.video-card {
+
+.video-card-ref {
+  background: #ffffff;
+  border-radius: 30px;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
   position: relative;
+  height: 580px;
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  box-shadow: 
+    0 0 0 1px rgba(15, 23, 42, 0.02),
+    0 2px 4px rgba(15, 23, 42, 0.02),
+    0 10px 20px rgba(15, 23, 42, 0.04),
+    0 20px 40px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.card-number {
+  position: absolute;
+  top: 20px;
+  right: 32px;
+  font-size: 80px;
+  font-weight: 900;
+  color: rgba(15, 23, 42, 0.03);
+  line-height: 1;
+  pointer-events: none;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.5s ease;
+}
+.video-card-ref:hover .card-number {
+  color: rgba(59, 130, 246, 0.06);
+  transform: translateY(-10px);
+}
+
+.card-category {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #3b82f6;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-category::before {
+  content: '';
+  width: 12px;
+  height: 2px;
+  background: currentColor;
+  display: block;
+}
+
+/* Shimmer Sweep Animation */
+.video-card-ref::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -150%;
+  width: 100%; height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transform: skewX(-20deg);
+  transition: 0.8s;
+  pointer-events: none;
+}
+.video-card-ref:hover::after {
+  left: 150%;
+}
+
+.video-card-ref.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.video-card-ref:hover {
+  transform: translateY(-16px);
+  box-shadow: 
+    0 0 0 1px rgba(59, 130, 246, 0.1),
+    0 20px 40px -10px rgba(15, 23, 42, 0.1),
+    0 40px 80px -20px rgba(15, 23, 42, 0.15);
+}
+
+.ref-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 30px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.25;
+  margin: 0 0 16px;
+  letter-spacing: -1.2px;
+  transition: color 0.3s ease;
+}
+
+.ref-description {
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #475569;
+  margin-bottom: 20px;
+  letter-spacing: -0.2px;
+}
+
+.card-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.feature-tag {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  background: #f8fafc;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ref-img-wrap {
+  width: 100%;
+  height: 220px;
   border-radius: 24px;
   overflow: hidden;
-  height: 340px;
-  cursor: pointer;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
-  transition: all 0.4s ease;
+  position: relative;
+  background: #f1f5f9;
 }
-.video-card:hover {
-  box-shadow: 0 20px 48px rgba(30, 64, 175, 0.1);
-  transform: translateY(-8px);
+
+/* Aurora Glow Effect behind image */
+.ref-img-wrap::before {
+  content: '';
+  position: absolute;
+  inset: -20px;
+  background: radial-gradient(circle at center, rgba(59, 130, 246, 0.12), transparent 70%);
+  filter: blur(20px);
+  z-index: -1;
+  opacity: 0;
+  transition: 0.5s;
 }
-.video-card-image {
+.video-card-ref:hover .ref-img-wrap::before {
+  opacity: 1;
+}
+
+.ref-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.6s ease;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.video-card:hover .video-card-image {
-  transform: scale(1.1);
+
+.video-card-ref:hover .ref-img {
+  transform: scale(1.08);
 }
-.video-card-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(10, 20, 60, 0.95) 0%, rgba(10, 20, 60, 0.4) 100%);
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 32px;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-}
-.video-card:hover .video-card-overlay {
-  opacity: 1;
-}
-.video-card-title {
-  font-size: 24px;
-  font-weight: 800;
+
+/* Middle Card Variant (Index 1) */
+.video-card-ref.variant-middle {
+  background: linear-gradient(145deg, #1e40af 0%, #1d4ed8 40%, #3b82f6 100%);
   color: #ffffff;
-  margin: 0;
-  text-transform: uppercase;
+  border: none;
+  box-shadow: 
+    0 10px 30px rgba(30, 64, 175, 0.2),
+    0 20px 60px rgba(30, 64, 175, 0.15);
 }
-.video-card-description {
-  font-size: 16px;
+.video-card-ref.variant-middle::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at top left, rgba(255,255,255,0.15) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.variant-middle .card-category { color: rgba(255,255,255,0.8); }
+.variant-middle .card-number { color: rgba(255,255,255,0.05); }
+.variant-middle .feature-tag { background: rgba(255,255,255,0.1); border: none; color: #fff; }
+
+.variant-middle .ref-title {
+  color: #ffffff;
+  margin-top: 24px;
+}
+
+.variant-middle .ref-description {
   color: rgba(255, 255, 255, 0.8);
-  line-height: 1.6;
-  margin-top: 12px;
-  transform: translateY(20px);
-  transition: transform 0.4s ease;
+  margin-bottom: 16px;
 }
-.video-card:hover .video-card-description {
-  transform: translateY(0);
+
+.variant-middle .ref-img-wrap {
+  margin-top: 0;
+  height: 240px;
+  border-radius: 0;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
 }
+
 
 /* ── How It Works Styles ── */
 .hiw-header {
@@ -243,22 +418,22 @@ const styles = `
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 0;
-    max-width: 1100px;
-    margin: 60px auto 0;
+    max-width: 1200px;
+    margin: 80px auto 0;
     position: relative;
 }
 .hiw-timeline::before {
     content: '';
     position: absolute;
     top: 38px;
-    left: calc(12.5% + 20px);
-    right: calc(12.5% + 20px);
+    left: calc(12.5% + 40px);
+    right: calc(12.5% + 40px);
     height: 2px;
-    background: linear-gradient(90deg, #3b82f6, #6366f1, #8b5cf6, #3b82f6);
+    background: linear-gradient(90deg, transparent, #3b82f6, #8b5cf6, #3b82f6, transparent);
     z-index: 0;
     transform: scaleX(0);
     transform-origin: left;
-    transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform 1.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .hiw-timeline.visible::before { transform: scaleX(1); }
 
@@ -267,68 +442,69 @@ const styles = `
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding: 0 12px;
+    padding: 0 20px;
     position: relative;
     z-index: 1;
     opacity: 0;
     transform: translateY(30px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
+    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .hiw-timeline.visible .hiw-step { opacity: 1; transform: translateY(0); }
-.hiw-timeline.visible .hiw-step:nth-child(1) { transition-delay: 0.15s; }
-.hiw-timeline.visible .hiw-step:nth-child(2) { transition-delay: 0.3s; }
-.hiw-timeline.visible .hiw-step:nth-child(3) { transition-delay: 0.45s; }
-.hiw-timeline.visible .hiw-step:nth-child(4) { transition-delay: 0.6s; }
 
 .hiw-icon-wrap {
-    width: 76px;
-    height: 76px;
-    border-radius: 50%;
-    background: #fff;
-    border: 1px solid rgba(59,130,246,0.15);
+    width: 80px;
+    height: 80px;
+    border-radius: 24px;
+    background: #ffffff;
+    border: 1px solid rgba(15, 23, 42, 0.08);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 24px;
-    box-shadow: 0 12px 24px rgba(59,130,246,0.06);
-    transition: all 0.4s ease;
+    margin-bottom: 28px;
+    box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.05);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     z-index: 2;
-    color: #3b82f6;
+    color: #1e40af;
+    position: relative;
 }
 .hiw-step:hover .hiw-icon-wrap {
-    transform: scale(1.1) rotate(5deg);
-    background: linear-gradient(135deg, #3b82f6, #6366f1);
-    color: #fff;
-    box-shadow: 0 16px 32px rgba(59,130,246,0.2);
+    transform: translateY(-5px) rotate(8deg);
+    background: #1e40af;
+    color: #ffffff;
+    box-shadow: 0 20px 40px -10px rgba(30, 64, 175, 0.3);
+    border-color: transparent;
 }
-.hiw-icon-wrap svg { width: 30px; height: 30px; stroke-width: 2; }
+.hiw-icon-wrap svg { width: 32px; height: 32px; stroke-width: 1.5; }
 
 .hiw-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 20px;
-    padding: 28px 24px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    border-radius: 24px;
+    padding: 32px 24px;
     width: 100%;
-    max-width: 260px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    max-width: 280px;
     transition: all 0.4s ease;
 }
 .hiw-step:hover .hiw-card {
     transform: translateY(-8px);
-    box-shadow: 0 20px 48px rgba(59,130,246,0.1);
+    background: #ffffff;
+    box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.08);
+    border-color: rgba(59, 130, 246, 0.15);
 }
 .hiw-card h3 { 
   font-family: 'Inter', sans-serif;
-  font-size: 18px; 
-  font-weight: 600; 
+  font-size: 19px; 
+  font-weight: 700; 
   color: #0f172a; 
-  margin: 0 0 12px; 
+  margin: 0 0 14px; 
+  letter-spacing: -0.5px;
 }
 .hiw-card p { 
   font-family: 'Inter', sans-serif;
   font-size: 15px; 
   line-height: 1.6; 
-  color: #64748b; 
+  color: #475569; 
   margin: 0; 
   font-weight: 400;
 }
@@ -365,14 +541,19 @@ const styles = `
 const UnifiedVideoSection = () => {
   const [tlRef, tlVisible] = useReveal(0.1);
   const [demoRef, demoVisible] = useReveal(0.1);
+  const [gridRef, gridVisible] = useReveal(0.05);
 
   return (
     <>
       <style>{styles}</style>
       <section className="unified-section">
+        {/* Decor Blobs */}
+        <div className="section-blob blob-1"></div>
+        <div className="section-blob blob-2"></div>
+
         <div className="unified-content">
           
-          {/* Part 1: Video Features (from VideoSection) */}
+          {/* Part 1: Video Features */}
           <div className="vs-header">
             <div className="vs-badge">
               <span className="vs-badge-dot"></span>
@@ -384,14 +565,48 @@ const UnifiedVideoSection = () => {
             </p>
           </div>
 
-          <div className="video-grid">
+          <div ref={gridRef} className="video-grid">
             {featureCards.map((card, i) => (
-              <div className="video-card" key={i}>
-                <img src={card.image} alt={card.alt} className="video-card-image" />
-                <div className="video-card-overlay">
-                  <h3 className="video-card-title">{card.title}</h3>
-                  <p className="video-card-description">{card.description}</p>
-                </div>
+              <div 
+                className={`video-card-ref${i === 1 ? ' variant-middle' : ''}${gridVisible ? ' visible' : ''}`} 
+                key={i}
+                style={{ transitionDelay: `${i * 150}ms` }}
+              >
+                {i === 1 ? (
+                  <>
+                    <div className="card-number">0{i + 1}</div>
+                    <div className="card-category">{card.category}</div>
+                    <div className="ref-img-wrap">
+                      <img src={card.image} alt={card.alt} className="ref-img" />
+                    </div>
+                    <h3 className="ref-title">{card.title}</h3>
+                    <p className="ref-description">{card.description}</p>
+                    <div className="card-features">
+                      {card.features.map(f => (
+                        <span key={f} className="feature-tag">
+                          <FiCheckCircle size={12} /> {f}
+                        </span>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="card-number">0{i + 1}</div>
+                    <div className="card-category">{card.category}</div>
+                    <h3 className="ref-title">{card.title}</h3>
+                    <p className="ref-description">{card.description}</p>
+                    <div className="card-features">
+                      {card.features.map(f => (
+                        <span key={f} className="feature-tag">
+                          <FiCheckCircle size={12} /> {f}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="ref-img-wrap">
+                      <img src={card.image} alt={card.alt} className="ref-img" />
+                    </div>
+                  </>
+                )}
               </div>
             ))}
           </div>
