@@ -19,17 +19,29 @@ export const AuthProvider = ({ children }) => {
           
           // If id is missing (due to previous bug), fetch profile to get it
           if (userData && !userData.id) {
-            console.log('User ID missing from stored data, fetching profile...')
-            try {
-              // Import userService dynamically to avoid circular dependencies if any
-              const { default: userService } = await import('../services/userService.js')
-              const profile = await userService.getUserProfile()
-              if (profile && profile.id) {
-                userData = { ...userData, ...profile }
-                localStorage.setItem('user', JSON.stringify(userData))
+            // Try to recover id from _id first
+            if (userData._id) {
+              userData = { ...userData, id: userData._id }
+              localStorage.setItem('user', JSON.stringify(userData))
+              console.log('Recovered user id from _id:', userData.id)
+            } else if (userData.userId) {
+              userData = { ...userData, id: userData.userId }
+              localStorage.setItem('user', JSON.stringify(userData))
+              console.log('Recovered user id from userId:', userData.id)
+            } else {
+              console.log('User ID missing from stored data, fetching profile...')
+              try {
+                // Import userService dynamically to avoid circular dependencies if any
+                const { default: userService } = await import('../services/userService.js')
+                const profile = await userService.getUserProfile()
+                const profileId = profile?.id || profile?._id || profile?.userId
+                if (profile && profileId) {
+                  userData = { ...userData, ...profile, id: profileId }
+                  localStorage.setItem('user', JSON.stringify(userData))
+                }
+              } catch (profileError) {
+                console.error('Failed to fetch profile for ID recovery:', profileError)
               }
-            } catch (profileError) {
-              console.error('Failed to fetch profile for ID recovery:', profileError)
             }
           }
           
