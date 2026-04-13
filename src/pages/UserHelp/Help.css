@@ -1,0 +1,27 @@
+.help-coming-soon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 60vh;
+  gap: 16px;
+  color: #64748b;
+  font-family: 'Inter', sans-serif;
+}
+
+.help-coming-soon-icon {
+  font-size: 3rem;
+}
+
+.help-coming-soon h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.help-coming-soon p {
+  font-size: 1rem;
+  margin: 0;
+}

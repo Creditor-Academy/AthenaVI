@@ -95,7 +95,7 @@ function DashboardSidebar({
           type="button"
           className="dashboard-nav-item dashboard-sidebar-help"
           onClick={() => {
-            window.open('https://help.example.com', '_blank', 'noopener,noreferrer')
+            onNavigate('help')
             onCloseMobile?.()
           }}
           aria-label="Help"
