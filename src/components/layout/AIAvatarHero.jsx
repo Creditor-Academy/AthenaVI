@@ -153,7 +153,10 @@ const styles = `
 .group-image-visual img {
   width: 100%;
   height: auto;
-
+  background: transparent;
+  filter: drop-shadow(0 0 0 rgba(0,0,0,0));
+  mix-blend-mode: lighten;
+  filter: brightness(1.05) contrast(1.05);
 }
 
 @media (max-width: 1200px) {

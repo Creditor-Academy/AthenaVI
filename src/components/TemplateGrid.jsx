@@ -1,25 +1,26 @@
 import React from 'react';
 import TemplateCard from './TemplateCard';
+import SkeletonCard from './SkeletonCard';
 
 /**
  * TemplateGrid Component
- * Renders a responsive grid of TemplateCard components.
+ * Renders a responsive grid of TemplateCard components or skeletons.
  * 
  * @param {Object} props
  * @param {Array} props.templates - List of template objects to display
+ * @param {boolean} props.loading - Loading state
  * @param {function} props.onSelect - Callback function for when a template is selected
  */
-const TemplateGrid = ({ templates = [], onSelect }) => {
+const TemplateGrid = ({ templates = [], loading = false, onSelect }) => {
   // Inline Styles
   const gridStyle = {
-    display: 'grid',
-    // Default to 1 column for mobile, 2 for tablet, 3 for desktop
-    // Using a simpler 3-column repeat for this specific request
-    gridTemplateColumns: 'repeat(3, 1fr)',
+    // Changed to 2 columns as requested
+    gridTemplateColumns: 'repeat(2, 1fr)',
     gap: '24px',
     width: '100%',
     padding: '16px 0',
-    boxSizing: 'border-box'
+    boxSizing: 'border-box',
+    display: 'grid'
   };
 
   const emptyStateStyle = {
@@ -35,6 +36,16 @@ const TemplateGrid = ({ templates = [], onSelect }) => {
     border: '2px dashed #e2e8f0',
     textAlign: 'center'
   };
+
+  if (loading) {
+    return (
+      <div style={gridStyle}>
+        {[...Array(6)].map((_, i) => (
+          <SkeletonCard key={i} />
+        ))}
+      </div>
+    );
+  }
 
   if (!templates || templates.length === 0) {
     return (

@@ -30,11 +30,13 @@ function Create({ onBack, initialConfig = null }) {
     const resolvedResolution = pageSizeToResolution[initialConfig?.pageSize] || projectTemplate.project.resolution
     const resolvedTitle = initialConfig?.name?.trim() || projectTemplate.project.title
 
+    const initialScenes = initialConfig?.template?.scenes || initialConfig?.template ? [initialConfig.template] : []
+    
     return {
       ...projectTemplate.project,
       title: resolvedTitle,
       resolution: resolvedResolution,
-      scenes: [],
+      scenes: initialScenes.length > 0 ? initialScenes : [],
       updatedAt: new Date().toISOString(),
       createConfig: initialConfig
         ? {
@@ -134,14 +136,14 @@ function Create({ onBack, initialConfig = null }) {
 
     const newClip = {
       id: `clip_${Date.now()}`,
-      type: type === 'image' ? 'image' : type === 'video' ? 'video' : 'text',
+      type: type === 'image' ? 'image' : type === 'video' ? 'video' : type === 'avatar' ? 'avatar' : 'text',
       src: type !== 'text' ? content : null,
       content: type === 'text' ? content : null,
       layer: targetScene.clips.length,
       startTime: 0.0,
       endTime: targetScene.duration || 8.0,
       position: { x: 50, y: 50 },
-      size: { width: 400, height: 400 },
+      size: type === 'avatar' ? { width: 250, height: 330 } : { width: 400, height: 400 },
       opacity: 1.0,
       effects: {
         brightness: 1,
@@ -161,6 +163,21 @@ function Create({ onBack, initialConfig = null }) {
       )
     }))
     return newClip.id
+  }
+
+  // Update a specific layer's size within the active scene
+  const updateLayerSize = (layerId, width, height) => {
+    if (!activeSceneId) return
+    setProject(prev => ({
+      ...prev,
+      scenes: prev.scenes.map(s => {
+        if (s.id !== activeSceneId) return s
+        return {
+          ...s,
+          clips: s.clips.map(c => c.id === layerId ? { ...c, size: { width, height } } : c)
+        }
+      })
+    }))
   }
 
   // Update a specific layer's position within the active scene
@@ -199,6 +216,18 @@ function Create({ onBack, initialConfig = null }) {
       ...prev,
       scenes: prev.scenes.map(s => 
         s.id === sceneId ? { ...s, clips: s.clips.filter(c => c.id !== layerId) } : s
+      )
+    }))
+  }
+
+  // Update clip text content (from inline editing via LiveCanvasRenderer)
+  const updateClipContent = (sceneId, clipId, newText) => {
+    setProject(prev => ({
+      ...prev,
+      scenes: prev.scenes.map(s =>
+        s.id === sceneId
+          ? { ...s, clips: s.clips.map(c => c.id === clipId ? { ...c, content: newText } : c) }
+          : s
       )
     }))
   }
@@ -540,6 +569,8 @@ function Create({ onBack, initialConfig = null }) {
                 selectedLayerId={selectedLayerId}
                 setSelectedLayerId={setSelectedLayerId}
                 onUpdateLayerPosition={updateLayerPosition}
+                onUpdateLayerSize={updateLayerSize}
+                updateClipContent={updateClipContent}
               />
             </div>
           </div>

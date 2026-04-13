@@ -5,138 +5,649 @@
       "id": "mkt_hero_1",
       "title": "Main Hero - Left Text",
       "layoutType": "Hero",
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "text": { "x": 100, "y": 200, "width": 600, "height": 400 },
+        "avatar": { "x": 850, "y": 250, "width": 250, "height": 330 }
+      },
       "description": "Clean left-aligned headline with a prominent 3D avatar on the right.",
       "flow": "Intro → Hook",
       "duration": 8,
       "tags": ["hero", "intro", "3d"],
       "clips": [
-        { "id": "t1", "type": "text", "position": { "x": 600, "y": 500 }, "content": "YOUR NEXT BIG IDEA STARTS HERE", "style": { "fontSize": 80, "fontWeight": "900", "textAlign": "left", "width": "900px" } },
-        { "id": "t2", "type": "text", "position": { "x": 600, "y": 680 }, "content": "The ultimate platform for AI video generation.", "style": { "fontSize": 32, "fontWeight": "500", "textAlign": "left", "width": "800px", "color": "#64748b" } },
-        { "id": "a1", "type": "avatar", "label": "Avatar", "position": { "x": 1450, "y": 540 }, "size": { "width": 700, "height": 900 } }
+        { 
+          "id": "t1", 
+          "type": "text", 
+          "role": "main-text", 
+          "editable": true, 
+          "position": { "x": 6, "y": 20 }, 
+          "size": { "width": 800, "height": 220 },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "YOUR NEXT BIG\nIDEA STARTS HERE", 
+          "style": { 
+            "fontSize": 72, 
+            "fontWeight": "900", 
+            "textAlign": "left", 
+            "color": "#0f172a",
+            "textTransform": "uppercase",
+            "lineHeight": 1.1,
+            "letterSpacing": "-0.03em"
+          } 
+        },
+        { 
+          "id": "t2", 
+          "type": "text", 
+          "role": "secondary-text", 
+          "editable": true, 
+          "position": { "x": 6, "y": 62 }, 
+          "size": { "width": 600, "height": 80 },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "The ultimate platform for AI video generation and professional layouts.", 
+          "style": { 
+            "fontSize": 28, 
+            "fontWeight": "500", 
+            "textAlign": "left", 
+            "color": "#64748b",
+            "lineHeight": 1.4
+          } 
+        },
+        { 
+          "id": "t3", 
+          "type": "text", 
+          "role": "cta-text", 
+          "editable": true, 
+          "position": { "x": 6, "y": 78 }, 
+          "size": { "width": 260, "height": 64 },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "GET STARTED NOW", 
+          "style": { 
+            "fontSize": 22, 
+            "fontWeight": "800", 
+            "textAlign": "center", 
+            "color": "#ffffff", 
+            "backgroundColor": "#3b82f6", 
+            "padding": "12px 24px", 
+            "borderRadius": "40px",
+            "boxShadow": "0 4px 12px rgba(59, 130, 246, 0.4)"
+          } 
+        },
+        { 
+          "id": "i1", 
+          "type": "image", 
+          "role": "media-showcase", 
+          "editable": true, 
+          "position": { "x": 60, "y": 15 }, 
+          "size": { "width": 450, "height": 580 },
+          "startTime": 0,
+          "endTime": 8
+        },
+        { 
+          "id": "a1", 
+          "type": "avatar", 
+          "role": "avatar", 
+          "editable": true, 
+          "position": { "x": 82, "y": 74 }, 
+          "size": { "width": 140, "height": 140 },
+          "startTime": 0,
+          "endTime": 8
+        }
       ]
     },
     {
       "id": "mkt_hero_2",
       "title": "Marketing Hero - Right Text",
       "layoutType": "Hero",
+      "avatarPosition": "bottom-left",
+      "zones": {
+        "text": { "x": 600, "y": 200, "width": 600, "height": 400 },
+        "avatar": { "x": 150, "y": 250, "width": 250, "height": 330 }
+      },
       "description": "Sophisticated layout with avatar on the left and bold sales copy on the right.",
       "flow": "Intro → Body",
       "duration": 8,
       "tags": ["sales", "focus"],
       "clips": [
-        { "id": "t1", "type": "text", "position": { "x": 1300, "y": 500 }, "content": "TRANSFORM YOUR WORKFLOW", "style": { "fontSize": 80, "fontWeight": "900", "textAlign": "left", "width": "900px" } },
-        { "id": "a1", "type": "avatar", "label": "Avatar", "position": { "x": 500, "y": 540 }, "size": { "width": 700, "height": 900 } }
+        { 
+          "id": "t1", 
+          "type": "text", 
+          "role": "main-text", 
+          "editable": true, 
+          "position": { "x": 45, "y": 24 }, 
+          "size": { "width": 650, "height": 200 },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "SCALE YOUR BRAND\nWITH AI VIDEO", 
+          "style": { 
+            "fontSize": 64, 
+            "fontWeight": "900", 
+            "textAlign": "left", 
+            "color": "#1e293b",
+            "textTransform": "uppercase",
+            "lineHeight": 1.1 
+          } 
+        },
+        { 
+          "id": "t2", 
+          "type": "text", 
+          "role": "secondary-text", 
+          "editable": true, 
+          "position": { "x": 45, "y": 60 }, 
+          "size": { "width": 550, "height": 80 },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Generate professional marketing content in seconds.", 
+          "style": { 
+            "fontSize": 24, 
+            "fontWeight": "500", 
+            "color": "#64748b" 
+          } 
+        },
+        { 
+          "id": "t3", 
+          "type": "text", 
+          "role": "cta-text", 
+          "editable": true, 
+          "position": { "x": 45, "y": 76 }, 
+          "size": { "width": 240, "height": 60 },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "VIEW PRICING", 
+          "style": { 
+            "fontSize": 20, 
+            "fontWeight": "800", 
+            "textAlign": "center", 
+            "color": "#ffffff", 
+            "backgroundColor": "#10b981", 
+            "padding": "12px 24px", 
+            "borderRadius": "40px" 
+          } 
+        },
+        { 
+          "id": "i1", 
+          "type": "image", 
+          "role": "media-showcase", 
+          "editable": true, 
+          "position": { "x": 5, "y": 15 }, 
+          "size": { "width": 450, "height": 580 },
+          "startTime": 0,
+          "endTime": 8
+        },
+        { 
+          "id": "a1", 
+          "type": "avatar", 
+          "role": "avatar", 
+          "editable": true, 
+          "position": { "x": 5, "y": 74 }, 
+          "size": { "width": 140, "height": 140 },
+          "startTime": 0,
+          "endTime": 8
+        }
       ]
     },
     {
       "id": "mkt_hero_3",
       "title": "Centered Impact Hero",
       "layoutType": "Hero",
+      "avatarPosition": "center",
+      "zones": {
+        "text": { "x": 340, "y": 300, "width": 600, "height": 300 }
+      },
       "description": "High-impact centered headline with background visuals.",
       "flow": "Hook → Action",
       "duration": 6,
       "tags": ["bold", "center"],
       "clips": [
-        { "id": "t1", "type": "text", "position": { "x": 960, "y": 540 }, "content": "REDEFINING CREATIVITY", "style": { "fontSize": 120, "fontWeight": "900", "textAlign": "center", "width": "1600px" } }
+        { 
+          "id": "t1", 
+          "type": "text", 
+          "role": "main-text", 
+          "editable": true, 
+          "position": { "x": 10, "y": 30 }, 
+          "size": { "width": 1000, "height": 200 },
+          "startTime": 0,
+          "endTime": 6,
+          "content": "REDEFINING THE\nCREATIVE FRONTIER", 
+          "style": { 
+            "fontSize": 96, 
+            "fontWeight": "900", 
+            "textAlign": "center", 
+            "color": "#0f172a",
+            "textTransform": "uppercase",
+            "lineHeight": 1.0,
+            "letterSpacing": "-0.04em"
+          } 
+        },
+        { 
+          "id": "t2", 
+          "type": "text", 
+          "role": "cta-text", 
+          "editable": true, 
+          "position": { "x": 38, "y": 65 }, 
+          "size": { "width": 300, "height": 70 },
+          "startTime": 0,
+          "endTime": 6,
+          "content": "LEARN MORE", 
+          "style": { 
+            "fontSize": 24, 
+            "fontWeight": "800", 
+            "textAlign": "center", 
+            "color": "#ffffff", 
+            "backgroundColor": "#6366f1", 
+            "padding": "15px 30px", 
+            "borderRadius": "50px" 
+          } 
+        }
       ]
     },
     {
       "id": "mkt_hero_4",
       "title": "Avatar Group Hero",
       "layoutType": "Hero",
+      "avatarPosition": "center",
+      "zones": {
+        "avatar": { "x": 340, "y": 400, "width": 600, "height": 150 },
+        "text": { "x": 340, "y": 600, "width": 600, "height": 100 }
+      },
       "description": "Layout featuring multiple avatar placeholders for team or testimonial intros.",
       "flow": "Team → Intro",
       "duration": 7,
       "tags": ["team", "community"],
       "clips": [
-        { "id": "a1", "type": "avatar", "position": { "x": 700, "y": 540 }, "size": { "width": 300, "height": 300 } },
-        { "id": "a2", "type": "avatar", "position": { "x": 960, "y": 540 }, "size": { "width": 400, "height": 400 } },
-        { "id": "a3", "type": "avatar", "position": { "x": 1220, "y": 540 }, "size": { "width": 300, "height": 300 } },
-        { "id": "t1", "type": "text", "position": { "x": 960, "y": 800 }, "content": "MEET THE FUTURE", "style": { "fontSize": 48 } }
+        { 
+          "id": "t1", 
+          "type": "text", 
+          "role": "main-text", 
+          "editable": true, 
+          "position": { "x": 10, "y": 64 }, 
+          "size": { "width": 1000, "height": 100 },
+          "startTime": 0,
+          "endTime": 7,
+          "content": "TRUSTED BY 10,000+ CREATORS", 
+          "style": { 
+            "fontSize": 48, 
+            "fontWeight": "900", 
+            "textAlign": "center", 
+            "color": "#1e293b",
+            "letterSpacing": "0.1em",
+            "textTransform": "uppercase"
+          } 
+        },
+        { "id": "a1", "type": "avatar", "role": "avatar", "editable": true, "position": { "x": 30, "y": 30 }, "size": { "width": 120, "height": 120 } },
+        { "id": "a2", "type": "avatar", "role": "avatar", "editable": true, "position": { "x": 45, "y": 24 }, "size": { "width": 160, "height": 160 } },
+        { "id": "a3", "type": "avatar", "role": "avatar", "editable": true, "position": { "x": 60, "y": 30 }, "size": { "width": 120, "height": 120 } }
       ]
     },
     {
       "id": "mkt_split_1",
       "title": "Feature Split - Visual Left",
       "layoutType": "Split",
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "image": { "x": 0, "y": 0, "width": 640, "height": 720 },
+        "text": { "x": 700, "y": 200, "width": 500, "height": 400 }
+      },
       "description": "Showcase a feature image on the left with detailed bullet points on the right.",
       "flow": "Features → Details",
       "duration": 7,
       "tags": ["features", "split"],
       "clips": [
-        { "id": "i1", "type": "image", "label": "Feature UI", "position": { "x": 500, "y": 540 }, "size": { "width": 800, "height": 600 } },
-        { "id": "t1", "type": "text", "position": { "x": 1300, "y": 400 }, "content": "KEY BENEFITS", "style": { "fontSize": 64, "fontWeight": "800", "textAlign": "left" } },
-        { "id": "t2", "type": "text", "position": { "x": 1300, "y": 550 }, "content": "• Instant AI Rendering\n• Professional Layouts\n• 1-Click Export", "style": { "fontSize": 32, "fontWeight": "500", "textAlign": "left", "lineHeight": 1.8 } }
+        { 
+          "id": "i1", 
+          "type": "image", 
+          "role": "media", 
+          "editable": true, 
+          "position": { "x": 0, "y": 0 }, 
+          "size": { "width": 640, "height": 720 },
+          "startTime": 0,
+          "endTime": 7
+        },
+        { 
+          "id": "t1", 
+          "type": "text", 
+          "role": "main-text", 
+          "editable": true, 
+          "position": { "x": 55, "y": 20 }, 
+          "size": { "width": 550, "height": 150 },
+          "startTime": 0,
+          "endTime": 7,
+          "content": "KEY BENEFITS", 
+          "style": { 
+            "fontSize": 56, 
+            "fontWeight": "900", 
+            "textAlign": "left", 
+            "color": "#0f172a" 
+          } 
+        },
+        { 
+          "id": "t2", 
+          "type": "text", 
+          "role": "secondary-text", 
+          "editable": true, 
+          "position": { "x": 55, "y": 45 }, 
+          "size": { "width": 500, "height": 200 },
+          "startTime": 0,
+          "endTime": 7,
+          "content": "• Instant AI Rendering\n• Professional Layouts\n• 1-Click Export", 
+          "style": { 
+            "fontSize": 28, 
+            "fontWeight": "500", 
+            "textAlign": "left", 
+            "lineHeight": 1.7, 
+            "color": "#64748b" 
+          } 
+        },
+        { 
+          "id": "t3", 
+          "type": "text", 
+          "role": "cta-text", 
+          "editable": true, 
+          "position": { "x": 55, "y": 75 }, 
+          "size": { "width": 220, "height": 55 },
+          "startTime": 0,
+          "endTime": 7,
+          "content": "GET STARTED", 
+          "style": { 
+            "fontSize": 18, 
+            "fontWeight": "800", 
+            "textAlign": "center", 
+            "color": "#ffffff", 
+            "backgroundColor": "#3b82f6", 
+            "borderRadius": "40px" 
+          } 
+        }
       ]
     },
     {
       "id": "mkt_split_2",
       "title": "Feature Split - Text Left",
       "layoutType": "Split",
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "text": { "x": 100, "y": 200, "width": 500, "height": 400 },
+        "image": { "x": 640, "y": 0, "width": 640, "height": 720 }
+      },
       "description": "Bold text description on the left with a supporting image or video on the right.",
       "flow": "Detail → Visual",
       "duration": 7,
       "tags": ["details", "ui"],
       "clips": [
-        { "id": "t1", "type": "text", "position": { "x": 600, "y": 500 }, "content": "POWERFUL ANALYTICS", "style": { "fontSize": 64, "fontWeight": "800", "textAlign": "left" } },
-        { "id": "i1", "type": "image", "position": { "x": 1400, "y": 540 }, "size": { "width": 800, "height": 600 } }
+        { 
+          "id": "t1", 
+          "type": "text", 
+          "role": "main-text", 
+          "editable": true, 
+          "position": { "x": 5, "y": 20 }, 
+          "size": { "width": 550, "height": 150 },
+          "startTime": 0,
+          "endTime": 7,
+          "content": "POWERFUL\nANALYTICS", 
+          "style": { 
+            "fontSize": 64, 
+            "fontWeight": "900", 
+            "textAlign": "left", 
+            "color": "#0f172a",
+            "lineHeight": 1.1 
+          } 
+        },
+        { 
+          "id": "t2", 
+          "type": "text", 
+          "role": "secondary-text", 
+          "editable": true, 
+          "position": { "x": 5, "y": 55 }, 
+          "size": { "width": 500, "height": 100 },
+          "startTime": 0,
+          "endTime": 7,
+          "content": "Track your performance with real-time data insights.", 
+          "style": { 
+            "fontSize": 26, 
+            "fontWeight": "500", 
+            "color": "#64748b" 
+          } 
+        },
+        { 
+          "id": "i1", 
+          "type": "image", 
+          "role": "media-showcase", 
+          "editable": true, 
+          "position": { "x": 55, "y": 10 }, 
+          "size": { "width": 550, "height": 600 },
+          "startTime": 0,
+          "endTime": 7
+        }
       ]
     },
     {
        "id": "mkt_quiz_1",
        "title": "Interactive Quiz Slide",
        "layoutType": "Split",
+       "avatarPosition": "bottom-right",
+       "zones": {
+         "text": { "x": 100, "y": 100, "width": 1080, "height": 500 }
+       },
        "description": "Ideal for marketing engagement or simple educational quizzes.",
        "flow": "Question → Options",
        "duration": 10,
        "tags": ["quiz", "interactive"],
        "clips": [
-         { "id": "t1", "type": "text", "position": { "x": 960, "y": 300 }, "content": "WHAT'S YOUR GOAL?", "style": { "fontSize": 72, "fontWeight": "900" } },
-         { "id": "t2", "type": "text", "position": { "x": 600, "y": 550 }, "content": "A: GROWTH", "style": { "fontSize": 40 } },
-         { "id": "t3", "type": "text", "position": { "x": 1320, "y": 550 }, "content": "B: EFFICIENCY", "style": { "fontSize": 40 } }
+        { 
+          "id": "t1", 
+          "type": "text", 
+          "role": "main-text", 
+          "editable": true, 
+          "position": { "x": 10, "y": 24 }, 
+          "size": { "width": 1000, "height": 100 },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "WHAT IS YOUR NEXT BIG GOAL?", 
+          "style": { 
+            "fontSize": 64, 
+            "fontWeight": "900", 
+            "textAlign": "center", 
+            "color": "#0f172a" 
+          } 
+        },
+        { 
+          "id": "t2", 
+          "type": "text", 
+          "role": "choice", 
+          "editable": true, 
+          "position": { "x": 15, "y": 55 }, 
+          "size": { "width": 300, "height": 80 },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "OPTION A: GROWTH", 
+          "style": { 
+            "fontSize": 28, 
+            "fontWeight": "700", 
+            "padding": "12px", 
+            "backgroundColor": "#f1f5f9", 
+            "borderRadius": "12px", 
+            "textAlign": "center" 
+          } 
+        },
+        { 
+          "id": "t3", 
+          "type": "text", 
+          "role": "choice", 
+          "editable": true, 
+          "position": { "x": 55, "y": 55 }, 
+          "size": { "width": 300, "height": 80 },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "OPTION B: SCALE", 
+          "style": { 
+            "fontSize": 28, 
+            "fontWeight": "700", 
+            "padding": "12px", 
+            "backgroundColor": "#f1f5f9", 
+            "borderRadius": "12px", 
+            "textAlign": "center" 
+          } 
+        }
        ]
     },
     {
       "id": "mkt_grid_1",
       "title": "3-Column Services",
       "layoutType": "Grid",
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "text": { "x": 100, "y": 600, "width": 1080, "height": 100 },
+        "image": { "x": 100, "y": 100, "width": 1080, "height": 400 }
+      },
       "description": "Professional 3-column layout to highlight core service offerings.",
       "flow": "Services → Value",
       "duration": 9,
       "tags": ["grid", "services"],
       "clips": [
-        { "id": "s1", "type": "shape", "position": { "x": 480, "y": 540 }, "size": { "width": 500, "height": 700 } },
-        { "id": "s2", "type": "shape", "position": { "x": 960, "y": 540 }, "size": { "width": 500, "height": 700 } },
-        { "id": "s3", "type": "shape", "position": { "x": 1440, "y": 540 }, "size": { "width": 500, "height": 700 } },
-        { "id": "t1", "type": "text", "position": { "x": 480, "y": 750 }, "content": "DESIGN", "style": { "fontSize": 40, "fontWeight": "700" } },
-        { "id": "t2", "type": "text", "position": { "x": 960, "y": 750 }, "content": "STRATEGY", "style": { "fontSize": 40, "fontWeight": "700" } },
-        { "id": "t3", "type": "text", "position": { "x": 1440, "y": 750 }, "content": "GROWTH", "style": { "fontSize": 40, "fontWeight": "700" } }
+        { 
+          "id": "t1", 
+          "type": "text", 
+          "role": "service-title", 
+          "editable": true, 
+          "position": { "x": 10, "y": 69 }, 
+          "size": { "width": 350, "height": 60 },
+          "startTime": 0,
+          "endTime": 9,
+          "content": "BRAND DESIGN", 
+          "style": { "fontSize": 32, "fontWeight": "900", "textAlign": "center", "color": "#1e293b" } 
+        },
+        { 
+          "id": "t2", 
+          "type": "text", 
+          "role": "service-title", 
+          "editable": true, 
+          "position": { "x": 38, "y": 69 }, 
+          "size": { "width": 350, "height": 60 },
+          "startTime": 0,
+          "endTime": 9,
+          "content": "AI STRATEGY", 
+          "style": { "fontSize": 32, "fontWeight": "900", "textAlign": "center", "color": "#1e293b" } 
+        },
+        { 
+          "id": "t3", 
+          "type": "text", 
+          "role": "service-title", 
+          "editable": true, 
+          "position": { "x": 66, "y": 69 }, 
+          "size": { "width": 350, "height": 60 },
+          "startTime": 0,
+          "endTime": 9,
+          "content": "SOCIAL GROWTH", 
+          "style": { "fontSize": 32, "fontWeight": "900", "textAlign": "center", "color": "#1e293b" } 
+        }
       ]
     },
     {
       "id": "mkt_outro_1",
       "title": "Logo + Call to Action",
       "layoutType": "Centered",
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "image": { "x": 540, "y": 300, "width": 200, "height": 200 },
+        "text": { "x": 340, "y": 550, "width": 600, "height": 200 }
+      },
       "description": "Minimalist outro with logo and final conversion link.",
       "flow": "Logo → CTA",
       "duration": 5,
       "tags": ["outro", "cta"],
       "clips": [
-        { "id": "i1", "type": "image", "label": "Logo", "position": { "x": 960, "y": 400 }, "size": { "width": 300, "height": 300 } },
-        { "id": "t1", "type": "text", "position": { "x": 960, "y": 650 }, "content": "START YOUR FREE TRIAL", "style": { "fontSize": 48, "fontWeight": "800" } },
-        { "id": "t2", "type": "text", "position": { "x": 960, "y": 750 }, "content": "www.yourwebsite.com", "style": { "fontSize": 24, "color": "#3b82f6" } }
+        { 
+          "id": "i1", 
+          "type": "image", 
+          "role": "media", 
+          "editable": true, 
+          "position": { "x": 38, "y": 15 }, 
+          "size": { "width": 300, "height": 300 },
+          "startTime": 0,
+          "endTime": 5
+        },
+        { 
+          "id": "t1", 
+          "type": "text", 
+          "role": "main-text", 
+          "editable": true, 
+          "position": { "x": 10, "y": 62 }, 
+          "size": { "width": 1000, "height": 80 },
+          "startTime": 0,
+          "endTime": 5,
+          "content": "START YOUR FREE TRIAL TODAY", 
+          "style": { 
+            "fontSize": 54, 
+            "fontWeight": "900", 
+            "textAlign": "center", 
+            "color": "#0f172a" 
+          } 
+        },
+        { 
+          "id": "t2", 
+          "type": "text", 
+          "role": "secondary-text", 
+          "editable": true, 
+          "position": { "x": 10, "y": 76 }, 
+          "size": { "width": 1000, "height": 40 },
+          "startTime": 0,
+          "endTime": 5,
+          "content": "WWW.ATHENAVI.COM", 
+          "style": { 
+            "fontSize": 24, 
+            "fontWeight": "700", 
+            "textAlign": "center", 
+            "color": "#3b82f6", 
+            "letterSpacing": "0.2em" 
+          } 
+        }
       ]
     },
     {
       "id": "mkt_outro_2",
       "title": "CTA Outro - Modern",
       "layoutType": "Centered",
+      "avatarPosition": "center",
+      "zones": {
+        "text": { "x": 340, "y": 450, "width": 600, "height": 100 }
+      },
       "description": "Modern call to action with social proof background.",
       "flow": "Message → CTA",
       "duration": 6,
       "tags": ["outro", "social"],
       "clips": [
-        { "id": "t1", "type": "text", "position": { "x": 960, "y": 500 }, "content": "JOIN 10,000+ CREATORS", "style": { "fontSize": 64, "fontWeight": "900" } }
+        { 
+          "id": "t1", 
+          "type": "text", 
+          "role": "main-text", 
+          "editable": true, 
+          "position": { "x": 10, "y": 42 }, 
+          "size": { "width": 1000, "height": 100 },
+          "startTime": 0,
+          "endTime": 6,
+          "content": "JOIN 10,000+ TOP CREATORS", 
+          "style": { "fontSize": 64, "fontWeight": "900", "textAlign": "center", "color": "#0f172a", "textTransform": "uppercase" } 
+        },
+        { 
+          "id": "t2", 
+          "type": "text", 
+          "role": "cta-text", 
+          "editable": true, 
+          "position": { "x": 38, "y": 62 }, 
+          "size": { "width": 300, "height": 60 },
+          "startTime": 0,
+          "endTime": 6,
+          "content": "GET STARTED FREE", 
+          "style": { 
+            "fontSize": 22, 
+            "fontWeight": "800", 
+            "textAlign": "center", 
+            "color": "#ffffff", 
+            "backgroundColor": "#6366f1", 
+            "borderRadius": "40px",
+            "boxShadow": "0 4px 12px rgba(99, 102, 241, 0.4)" 
+          } 
+        }
       ]
     }
   ]
