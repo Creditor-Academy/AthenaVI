@@ -14,7 +14,6 @@ import BrandKits from '../BrandKits/BrandKits.jsx'
 import Credits from '../Credits/Credits.jsx'
 import TeamWorkspace from '../TeamWorkspace/TeamWorkspace.jsx'
 import AdminPortal from '../AdminPortal/AdminPortal.jsx'
-import Help from '../UserHelp/Help.jsx'
 import DashboardTopbar from '../../components/layout/DashboardTopbar/DashboardTopbar.jsx'
 import DashboardSidebar from '../../components/layout/DashboardSidebar/DashboardSidebar.jsx'
 import VoiceCreatePanel from '../../components/ui/VoiceCreatePanel/VoiceCreatePanel.jsx'
@@ -224,7 +223,6 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
           {section === 'credits' && <Settings onBack={() => goToSection('home')} initialTab="billing" />}
           {section === 'profile' && <Profile onBack={() => goToSection('home')} />}
           {section === 'settings' && <Settings onBack={() => goToSection('home')} />}
-          {section === 'help' && <Help />}
         </main>
       </div>
 

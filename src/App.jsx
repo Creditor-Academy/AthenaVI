@@ -23,6 +23,7 @@ import UseCases from './pages/UseCases/UseCases.jsx'
 import InviteAcceptance from './pages/InviteAcceptance/InviteAcceptance.jsx'
 import AIAvatarsVideos from './pages/AIAvatarsVideos/AIAvatarsVideos.jsx'
 import AIVideos from './pages/AIVideos/AIVideos.jsx'
+import Help from './pages/UserHelp/Help.jsx'
 
 // Protected Route Component
 const ProtectedRoute = ({ children, view, setView }) => {
@@ -225,7 +226,8 @@ function App() {
       '/learning-development': 'learning-development',
       '/settings': 'settings',
       '/ai-videos': 'ai-videos',
-      '/ai-avatars-videos': 'ai-avatars-videos'
+      '/ai-avatars-videos': 'ai-avatars-videos',
+      '/support': 'help'
     }
     
     // Get current path (handle both hash and regular routing)
@@ -274,7 +276,8 @@ function App() {
       'learning-development': '/learning-development',
       'settings': '/settings',
       'ai-videos': '/ai-videos',
-      'ai-avatars-videos': '/ai-avatars-videos'
+      'ai-avatars-videos': '/ai-avatars-videos',
+      'help': '/support'
     }
     
     const newUrl = urlMap[view] || '/'
@@ -326,7 +329,8 @@ function App() {
         '/learning-development': 'learning-development',
         '/settings': 'settings',
         '/ai-videos': 'ai-videos',
-        '/ai-avatars-videos': 'ai-avatars-videos'
+        '/ai-avatars-videos': 'ai-avatars-videos',
+        '/support': 'help'
       }
       
       const currentPath = window.location.pathname
@@ -922,6 +926,10 @@ function App() {
         </>
       )}
 
+      {view === 'help' && (
+        <Help />
+      )}
+
       {view === 'learning-development' && (
         <>
           <LearningDevelopment 
@@ -943,7 +951,7 @@ function App() {
         </>
       )}
 
-      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings'].includes(view) && (
+      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings', 'help'].includes(view) && (
         <>
           <Landing 
             onLoginClick={handleLoginClick}

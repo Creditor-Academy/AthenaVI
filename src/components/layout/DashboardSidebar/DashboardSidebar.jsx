@@ -91,18 +91,19 @@ function DashboardSidebar({
           </button>
         </div>
 
-        <button
-          type="button"
+        <a
+          href="/support"
+          target="_blank"
+          rel="noopener noreferrer"
           className="dashboard-nav-item dashboard-sidebar-help"
           onClick={() => {
-            onNavigate('help')
             onCloseMobile?.()
           }}
           aria-label="Help"
         >
           <MdHelpOutline className="dashboard-nav-item-icon dashboard-sidebar-help-icon" size={18} aria-hidden />
           <span className="dashboard-nav-item-label">Help</span>
-        </button>
+        </a>
       </div>
     </aside>
   )
