@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, Play, Video, ChevronRight, ChevronLeft, X, ArrowLeft, Pause } from 'lucide-react'
+import { Search, Filter, Play, Video, ChevronRight, ChevronLeft, X, Info, Layers, ArrowLeft } from 'lucide-react'
 import './Avatars.css'
 
 // Importing avatar assets
@@ -108,11 +108,13 @@ function Avatars({ onCreate }) {
   const categories = ['All', 'Professional', 'Tech', 'Creative', 'Service', 'Academic', 'Lifestyle']
 
   const filteredAvatars = AVATARS_DATA.filter(avatar => {
-    const matchesSearch = avatar.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          avatar.role.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesSearch = avatar.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      avatar.role.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesCategory = filterCategory === 'All' || avatar.category === filterCategory
     return matchesSearch && matchesCategory
   })
+
+  const currentIndex = AVATARS_DATA.findIndex(a => a.id === selectedAvatar?.id)
 
   const handleSelectPersona = (avatar) => {
     setSelectedAvatar(avatar)
@@ -137,17 +139,11 @@ function Avatars({ onCreate }) {
     closeDetails()
   }
 
-  const navigateAvatar = (dir) => {
-    const idx = AVATARS_DATA.findIndex(a => a.id === selectedAvatar?.id)
-    const next = idx + dir
-    if (next >= 0 && next < AVATARS_DATA.length) {
-      setSelectedAvatar(AVATARS_DATA[next])
-      setIsPreviewing(false)
-    }
-  }
-
   return (
-    <div className="avatars-workspace">
+    <div className={`avatars-workspace ${selectedAvatar ? 'details-active' : ''}`}>
+      {/* Removed workspace-sidebar as requested by user - it felt 'weird' */}
+
+      {/* Main Content Area */}
       <main className="workspace-main">
         {!selectedAvatar ? (
           <div className="grid-container">
@@ -160,18 +156,18 @@ function Avatars({ onCreate }) {
                 <div className="search-section">
                   <div className="search-bar">
                     <Search size={18} />
-                    <input 
-                      type="text" 
-                      placeholder="Search avatars..." 
+                    <input
+                      type="text"
+                      placeholder="Search neural units..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
                   </div>
                 </div>
-                
+
                 <div className="filter-tabs">
                   {categories.map(cat => (
-                    <button 
+                    <button
                       key={cat}
                       className={`filter-tab ${filterCategory === cat ? 'active' : ''}`}
                       onClick={() => setFilterCategory(cat)}
@@ -204,67 +200,76 @@ function Avatars({ onCreate }) {
             </div>
           </div>
         ) : (
-          <div className="persona-view">
-            {/* Main area */}
-            <div className="pv-stage">
-              {/* Centered media container - not stretched */}
-              <div className="pv-media-wrap">
-                <div className="pv-media" onClick={() => setIsPreviewing(!isPreviewing)}>
-                  {!isPreviewing ? (
-                    <img src={selectedAvatar.image} alt={selectedAvatar.name} />
-                  ) : (
-                    <video src={selectedAvatar.preview} autoPlay loop />
-                  )}
-                  <div className="pv-play-hover">
-                    <div className="pv-play-btn">
-                      {!isPreviewing ? <Play size={26} fill="currentColor" /> : <Pause size={22} />}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Nav arrows on the media */}
-                {AVATARS_DATA.findIndex(a => a.id === selectedAvatar?.id) > 0 && (
-                  <button className="pv-arrow pv-arrow-left" onClick={() => navigateAvatar(-1)}>
-                    <ChevronLeft size={20} />
-                  </button>
-                )}
-                {AVATARS_DATA.findIndex(a => a.id === selectedAvatar?.id) < AVATARS_DATA.length - 1 && (
-                  <button className="pv-arrow pv-arrow-right" onClick={() => navigateAvatar(1)}>
-                    <ChevronRight size={20} />
-                  </button>
-                )}
-              </div>
-
-              {/* Text panel to the right */}
-              <div className="pv-text">
-                <span className="pv-category">{selectedAvatar.category}</span>
-                <h1 className="pv-name">{selectedAvatar.name}</h1>
-                <p className="pv-role">{selectedAvatar.role}</p>
-                <p className="pv-desc">{selectedAvatar.description}</p>
-                <button className="pv-cta" onClick={() => handleCreateVideo(selectedAvatar)}>
-                  <Video size={17} />
-                  Create Video
-                </button>
-              </div>
-            </div>
-
-            {/* Bottom bar: back + avatar switcher */}
-            <div className="pv-bottombar">
-              <button className="pv-back" onClick={closeDetails}>
-                <ArrowLeft size={15} />
-                <span>Back</span>
-              </button>
-
-              <div className="pv-thumbs">
+          <div className="hero-showcase">
+            <button className="back-to-library-btn" onClick={closeDetails}>
+              <X size={18} /> Close Persona
+            </button>
+            <div className="hero-visual">
+              {/* Glass Mini-Switcher: User hated the sidebar and arrows, this is the modern alternative */}
+              <div className="persona-filmstrip">
                 {AVATARS_DATA.map(avatar => (
-                  <button 
-                    key={avatar.id} 
-                    className={`pv-thumb ${selectedAvatar?.id === avatar.id ? 'active' : ''}`}
+                  <div
+                    key={avatar.id}
+                    className={`filmstrip-item ${selectedAvatar?.id === avatar.id ? 'active' : ''}`}
                     onClick={() => handleSelectPersona(avatar)}
                   >
                     <img src={avatar.image} alt={avatar.name} />
-                  </button>
+                  </div>
                 ))}
+              </div>
+
+              {!isPreviewing ? (
+                <div className="hero-still" onClick={() => setIsPreviewing(true)}>
+                  <img src={selectedAvatar.image} alt={selectedAvatar.name} />
+                  <div className="hero-play-indicator">
+                    <Play size={40} fill="currentColor" />
+                  </div>
+                  <div className="hero-instruction">Tap to preview sync</div>
+                </div>
+              ) : (
+                <div className="hero-motion">
+                  <video
+                    src={selectedAvatar.preview}
+                    autoPlay
+                    loop
+                    className="hero-video"
+                  />
+                  <button className="exit-preview-corner" onClick={() => setIsPreviewing(false)}>
+                    <X size={20} />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="hero-details">
+              <div className="hero-glass-pan">
+                <div className="hero-top-meta">Unit {selectedAvatar.id} // v4.2</div>
+                <h1 className="hero-title">{selectedAvatar.name}</h1>
+                <div className="hero-badge">{selectedAvatar.category} Model</div>
+
+                <p className="hero-bio">{selectedAvatar.description}</p>
+
+                <div className="hero-specs">
+                  <div className="spec-tile">
+                    <label>Oral Expression</label>
+                    <span>{selectedAvatar.style}</span>
+                  </div>
+                  <div className="spec-tile">
+                    <label>Quality Score</label>
+                    <span>{selectedAvatar.rating} Index</span>
+                  </div>
+                  <div className="spec-tile">
+                    <label>Integration</label>
+                    <span>Athena Ready</span>
+                  </div>
+                </div>
+
+                <div className="hero-actions">
+                  <button className="btn-action-primary" onClick={() => handleCreateVideo(selectedAvatar)}>
+                    <Video size={22} />
+                    <span>Start Video with this Avatar</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
