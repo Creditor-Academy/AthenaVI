@@ -77,7 +77,10 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
     }, 1200)
   }
 
-  const handleOpenCreateVideoModal = useCallback(() => {
+  const [initialTemplate, setInitialTemplate] = useState(null)
+
+  const handleOpenCreateVideoModal = useCallback((template = null) => {
+    setInitialTemplate(template)
     setShowCreateVideoModal(true)
   }, [])
 
@@ -212,7 +215,7 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
               template={selectedTemplateForDetails} 
               onBack={() => goToSection('templates')}
               onUse={() => {
-                handleOpenCreateVideoModal()
+                handleOpenCreateVideoModal(selectedTemplateForDetails)
               }}
             />
           )}
@@ -245,7 +248,8 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
       {showCreateVideoModal && (
         <CreateVideoModal
           isOpen={showCreateVideoModal}
-          onClose={() => setShowCreateVideoModal(false)}
+          initialTemplate={initialTemplate}
+          onClose={() => { setShowCreateVideoModal(false); setInitialTemplate(null); }}
           onImportPowerPoint={() => {
             setShowCreateVideoModal(false)
             setShowImportModal(true)

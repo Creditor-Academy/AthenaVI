@@ -5,39 +5,197 @@
       "id": "soc_bold_1",
       "title": "Hype Header - Social",
       "layoutType": "Story",
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "text": {
+          "x": 100,
+          "y": 300,
+          "width": 1080,
+          "height": 300
+        },
+        "avatar": {
+          "x": 1100,
+          "y": 580,
+          "width": 120,
+          "height": 120
+        }
+      },
       "description": "Explosive typography with high-speed transitions, perfect for TikTok and Reels.",
       "flow": "Hype → Content",
       "duration": 6,
-      "tags": ["social", "hype", "tiktok"],
+      "tags": [
+        "social",
+        "hype",
+        "tiktok"
+      ],
       "clips": [
-        { "id": "t1", "type": "text", "position": { "x": 960, "y": 450 }, "content": "MUST WATCH!", "style": { "fontSize": 140, "fontWeight": "900", "fontStyle": "italic" } },
-        { "id": "t2", "type": "text", "position": { "x": 1300, "y": 800 }, "content": "@YOURCHANNEL", "style": { "fontSize": 32, "fontWeight": "700", "color": "#ff0000" } }
+        {
+          "id": "t1",
+          "type": "text",
+          "role": "hype-text",
+          "editable": true,
+          "position": {
+            "x": 5,
+            "y": 25
+          },
+          "size": {
+            "width": 1150,
+            "height": 300
+          },
+          "startTime": 0,
+          "endTime": 6,
+          "content": "MUST WATCH!",
+          "style": {
+            "fontSize": 150,
+            "fontWeight": "900",
+            "fontStyle": "italic",
+            "textAlign": "center",
+            "color": "#ffffff",
+            "textShadow": "0 0 20px rgba(255,0,0,0.8)",
+            "textTransform": "uppercase"
+          }
+        },
+        {
+          "id": "t2",
+          "type": "text",
+          "role": "handle",
+          "editable": true,
+          "position": {
+            "x": 10,
+            "y": 74
+          },
+          "size": {
+            "width": 1000,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 6,
+          "content": "@YOURCHANNEL",
+          "style": {
+            "fontSize": 32,
+            "fontWeight": "800",
+            "textAlign": "center",
+            "color": "#ff0000",
+            "letterSpacing": "0.1em"
+          }
+        }
       ]
     },
     {
       "id": "soc_cta_1",
       "title": "Interactive Story CTA",
       "layoutType": "Story",
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "text": {
+          "x": 100,
+          "y": 200,
+          "width": 1080,
+          "height": 300
+        },
+        "image": {
+          "x": 390,
+          "y": 600,
+          "width": 500,
+          "height": 500
+        }
+      },
       "description": "Engaging call-to-action layout with a focus on swipe-up and social interactions.",
       "flow": "Join → Follow",
       "duration": 7,
-      "tags": ["cta", "story"],
+      "tags": [
+        "cta",
+        "story"
+      ],
       "clips": [
-        { "id": "t1", "type": "text", "position": { "x": 960, "y": 400 }, "content": "JOIN THE MOVEMENT", "style": { "fontSize": 64, "fontWeight": "800" } },
-        { "id": "i1", "type": "image", "label": "Graphic", "position": { "x": 960, "y": 700 }, "size": { "width": 500, "height": 500 } }
+        {
+          "id": "t1",
+          "type": "text",
+          "role": "main-text",
+          "editable": true,
+          "position": {
+            "x": 10,
+            "y": 28
+          },
+          "size": {
+            "width": 1080,
+            "height": 120
+          },
+          "startTime": 0,
+          "endTime": 7,
+          "content": "JOIN THE MOVEMENT",
+          "style": {
+            "fontSize": 72,
+            "fontWeight": "900",
+            "textAlign": "center",
+            "color": "#0f172a",
+            "textTransform": "uppercase"
+          }
+        },
+        {
+          "id": "i1",
+          "type": "image",
+          "role": "media",
+          "editable": true,
+          "position": {
+            "x": 30,
+            "y": 45
+          },
+          "size": {
+            "width": 500,
+            "height": 500
+          },
+          "startTime": 0,
+          "endTime": 7
+        }
       ]
     },
     {
-       "id": "soc_outro_1",
-       "title": "Social Support Outro",
-       "layoutType": "Centered",
-       "description": "End with a strong follow request and social media handles.",
-       "flow": "Follow → Engagement",
-       "duration": 6,
-       "tags": ["social", "outro"],
-       "clips": [
-         { "id": "t1", "type": "text", "position": { "x": 960, "y": 500 }, "content": "LIKE & SUBSCRIBE", "style": { "fontSize": 72, "fontWeight": "900" } }
-       ]
+      "id": "soc_outro_1",
+      "title": "Social Support Outro",
+      "layoutType": "Centered",
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "text": {
+          "x": 100,
+          "y": 400,
+          "width": 1080,
+          "height": 200
+        }
+      },
+      "description": "End with a strong follow request and social media handles.",
+      "flow": "Follow → Engagement",
+      "duration": 6,
+      "tags": [
+        "social",
+        "outro"
+      ],
+      "clips": [
+        {
+          "id": "t1",
+          "type": "text",
+          "role": "main-text",
+          "editable": true,
+          "position": {
+            "x": 10,
+            "y": 42
+          },
+          "size": {
+            "width": 1000,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 6,
+          "content": "LIKE & SUBSCRIBE",
+          "style": {
+            "fontSize": 80,
+            "fontWeight": "900",
+            "textAlign": "center",
+            "color": "#ff0000",
+            "letterSpacing": "0.05em"
+          }
+        }
+      ]
     }
   ]
 }

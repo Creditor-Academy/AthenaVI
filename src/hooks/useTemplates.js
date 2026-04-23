@@ -9,41 +9,59 @@ import { useState, useEffect } from 'react';
  */
 const useTemplates = (category) => {
   const [templates, setTemplates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     // Prevent fetching if no category is provided
     if (!category) {
       setTemplates([]);
+      setLoading(false);
       return;
     }
 
     const fetchTemplates = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        const response = await fetch(`/templates/${category.toLowerCase()}.json`);
+        const cat = category.toLowerCase();
         
-        if (!response.ok) {
-          throw new Error(`Failed to fetch templates for category: ${category}`);
-        }
-
-        const data = await response.json();
-        
-        // Data structure requirement: { scenes: [] }
-        if (data && Array.isArray(data.scenes)) {
-          setTemplates(data.scenes);
+        if (cat === 'all') {
+          const files = ['marketing', 'educational', 'corporate', 'social', 'personal'];
+          const responses = await Promise.all(
+            files.map(file => 
+              fetch(`/templates/${file}.json`)
+                .then(res => res.ok ? res.json() : { scenes: [] })
+                .catch(() => ({ scenes: [] }))
+            )
+          );
+          
+          // Merge all scenes into a single flattened array
+          const allScenes = responses.flatMap(data => data.scenes || []);
+          setTemplates(allScenes);
         } else {
-          setTemplates([]);
+          const response = await fetch(`/templates/${cat}.json`);
+          
+          if (!response.ok) {
+            throw new Error(`Failed to fetch templates for category: ${category}`);
+          }
+
+          const data = await response.json();
+          setTemplates(data.scenes || []);
         }
-      } catch (error) {
-        console.error('Error fetching templates:', error);
-        // Requirement: Handle errors gracefully, return empty array
+      } catch (err) {
+        console.error('Error fetching templates:', err);
+        setError(err.message);
         setTemplates([]);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchTemplates();
   }, [category]);
 
-  return templates;
+  return { templates, loading, error };
 };
 
 export default useTemplates;
