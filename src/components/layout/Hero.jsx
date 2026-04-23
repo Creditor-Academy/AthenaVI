@@ -94,26 +94,164 @@ const styles = `
   display: flex;
   justify-content: center;
   align-items: center;
+  perspective: 1500px;
 }
 
-.hero-avatar-item {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transition: all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  pointer-events: none;
+.hero-cube-container {
+  width: 320px;
+  height: 400px;
+  position: relative;
+  transform-style: preserve-3d;
 }
 
-.hero-avatar-item img {
+.hero-cube {
   width: 100%;
   height: 100%;
+  position: absolute;
+  transform-style: preserve-3d;
+  animation: rotateCube 20s linear infinite;
+}
+
+.cube-face {
+  position: absolute;
+  width: 320px;
+  height: 400px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.2) 100%);
+  backdrop-filter: blur(25px);
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
+  border-radius: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 35px;
+  backface-visibility: visible;
+  transition: all 0.5s ease;
+  overflow: hidden;
+}
+
+.cube-face-content {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* Floating Neon Ring under avatar */
+.cube-face-content::after {
+  content: '';
+  position: absolute;
+  bottom: 85px;
+  width: 160px;
+  height: 60px;
+  border: 2px solid rgba(251, 191, 36, 0.4);
+  border-radius: 50%;
+  transform: rotateX(75deg);
+  box-shadow: 
+    0 0 25px rgba(251, 191, 36, 0.2),
+    inset 0 0 15px rgba(251, 191, 36, 0.2);
+  z-index: 0;
+  animation: floatRing 4s ease-in-out infinite;
+}
+
+@keyframes floatRing {
+  0%, 100% { transform: rotateX(75deg) translateY(0) scale(1); opacity: 0.4; }
+  50% { transform: rotateX(75deg) translateY(-15px) scale(1.1); opacity: 0.7; }
+}
+
+.cube-face img {
+  width: 90%;
+  height: 280px;
   object-fit: contain;
-  transition: all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  filter: drop-shadow(0 15px 30px rgba(0,0,0,0.3));
+  position: absolute;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  /* Fade out the bottom to hide sharp cuts */
+  -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+}
+
+.cube-face-label {
+  text-align: center;
+  z-index: 10;
+  padding: 0px 20px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.face-name {
+  display: block;
+  font-family: 'Georgia', serif;
+  font-size: 26px;
+  font-weight: 650;
+  background: linear-gradient(to bottom, #1e3a8a 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.face-role {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  color: #d97706; /* Darker amber for contrast on white */
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  opacity: 0.9;
+}
+
+.face-0 { 
+  transform: rotateY(0deg) translateZ(220px); 
+  border-color: rgba(59, 130, 246, 0.7);
+  box-shadow: 0 15px 45px rgba(59, 130, 246, 0.25), inset 0 0 50px rgba(59, 130, 246, 0.5);
+}
+.face-1 { 
+  transform: rotateY(72deg) translateZ(220px); 
+  border-color: rgba(168, 85, 247, 0.7);
+  box-shadow: 0 15px 45px rgba(168, 85, 247, 0.25), inset 0 0 50px rgba(168, 85, 247, 0.5);
+}
+.face-2 { 
+  transform: rotateY(144deg) translateZ(220px); 
+  border-color: rgba(236, 72, 153, 0.7);
+  box-shadow: 0 15px 45px rgba(236, 72, 153, 0.25), inset 0 0 50px rgba(236, 72, 153, 0.5);
+}
+.face-3 { 
+  transform: rotateY(216deg) translateZ(220px); 
+  border-color: rgba(20, 184, 166, 0.7);
+  box-shadow: 0 15px 45px rgba(20, 184, 166, 0.25), inset 0 0 50px rgba(20, 184, 166, 0.5);
+}
+.face-4 { 
+  transform: rotateY(288deg) translateZ(220px); 
+  border-color: rgba(245, 158, 11, 0.7);
+  box-shadow: 0 15px 45px rgba(245, 158, 11, 0.25), inset 0 0 50px rgba(245, 158, 11, 0.5);
+}
+
+@keyframes rotateCube {
+  from { transform: rotateX(-5deg) rotateY(0deg); }
+  to { transform: rotateX(-5deg) rotateY(360deg); }
+}
+
+.hero-bottom {
+  padding: 20px 40px 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+  text-align: center;
+  position: relative;
+  z-index: 50;
 }
 
 .avatar-label-container {
   position: absolute;
-  bottom: -40px;
+  bottom: -50px;
   left: 50%;
   transform: translateX(-50%);
   text-align: center;
@@ -332,37 +470,13 @@ const styles = `
 `
 
 function Hero() {
-  const [activeIndex, setActiveIndex] = useState(0)
-
   const avatars = [
-    { src: avatar1, name: "Sophia", role: "an AI Video Assistant" },
+    { src: avatar1, name: "Ethan", role: "an AI Video Assistant" },
     { src: avatar4, name: "Liam", role: "a Virtual Instructor" },
-    { src: avatar2, name: "Emma", role: "a Digital Host" },
+    { src: avatar2, name: "Oliver", role: "a Digital Host" },
     { src: avatar5, name: "Noah", role: "a Technical Expert" },
     { src: avatar3, name: "Olivia", role: "a Language Coach" }
   ]
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % avatars.length)
-    }, 3000)
-
-    return () => clearInterval(interval)
-  }, [avatars.length])
-
-  const getAvatarAtPosition = (position) => {
-    const offset = (activeIndex + position - 2 + avatars.length) % avatars.length
-    return offset
-  }
-
-  const getHorizontalPosition = (position) => {
-    if (typeof window !== 'undefined' && window.innerWidth < 1024) return 0;
-    const totalPositions = avatars.length
-    const containerWidth = Math.min(1200, window.innerWidth * 0.9)
-    const spacing = containerWidth / (totalPositions + 1)
-    const x = (position + 1) * spacing - (containerWidth / 2)
-    return x
-  }
 
   return (
     <>
@@ -387,54 +501,23 @@ function Hero() {
             {/* LEFT SIDE: Static Card */}
             <LeftCard />
 
-            {/* CENTER: AI Avatars */}
+            {/* CENTER: 3D Rotating Pentagonal Prism (for 5 avatars) */}
             <div className="center-avatar-wrapper">
-              {[1, 2, 3].map((position) => {
-                const avatarIndex = getAvatarAtPosition(position)
-                const x = getHorizontalPosition(position)
-                const isActive = position === 2
-                const currentAvatar = avatars[avatarIndex]
-
-                return (
-                  <div
-                    key={position}
-                    className="hero-avatar-item"
-                    style={{
-                      transform: `translate(calc(-50% + ${x}px), -50%)`,
-                      width: isActive ? 'clamp(380px, 30vw, 480px)' : 'clamp(250px, 20vw, 320px)',
-                      height: isActive ? 'clamp(380px, 30vw, 480px)' : 'clamp(250px, 20vw, 320px)',
-                      opacity: isActive ? 1 : 0.3,
-                      filter: isActive ? 'blur(0px)' : 'blur(4px)',
-                      zIndex: isActive ? 20 : 10,
-                      left: '50%',
-                      top: '50%',
-                    }}
-                  >
-                    <img
-                      src={currentAvatar.src}
-                      alt={currentAvatar.name}
-                    />
-
-                    {/* AVATAR LABEL (Only for Active) */}
-                    {isActive && (
-                      <AnimatePresence mode="wait">
-                        <motion.div
-                          key={currentAvatar.name}
-                          initial={{ opacity: 0, scale: 0.9, x: '-50%' }}
-                          animate={{ opacity: 1, scale: 1, x: '-50%' }}
-                          exit={{ opacity: 0, scale: 0.9, x: '-50%' }}
-                          transition={{ duration: 0.5 }}
-                          className="avatar-label-container"
-                        >
-                          <p className="avatar-message">
-                            Hello, I am <span>{currentAvatar.name}</span> and I am {currentAvatar.role}
-                          </p>
-                        </motion.div>
-                      </AnimatePresence>
-                    )}
-                  </div>
-                )
-              })}
+              <div className="hero-cube-container">
+                <div className="hero-cube">
+                  {avatars.map((avatar, i) => (
+                    <div key={i} className={`cube-face face-${i}`}>
+                      <div className="cube-face-content">
+                        <img src={avatar.src} alt={avatar.name} />
+                        <div className="cube-face-label">
+                          <span className="face-name">{avatar.name}</span>
+                          <span className="face-role">{avatar.role}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* RIGHT SIDE: Auto-Rotating Cards */}

@@ -1,5 +1,9 @@
 import { useState } from 'react'
 import { MdArrowForward, MdArrowOutward, MdArrowBackIos, MdArrowForwardIos } from 'react-icons/md'
+import VisualAIAgentImg from '../../assets/Visual AI Agent.png'
+import VideoStudioImg from '../../assets/Video Studio.png'
+import VideoCampaignsImg from '../../assets/Video Campaigns.png'
+import ScalableInteractionImg from '../../assets/Scalable Intrection System.png'
 
 const styles = `
 /* ── Section ── */
@@ -118,9 +122,11 @@ const styles = `
 }
 
 .ps-collapsed-title {
-  font: 900 26px/1.2 Arial,sans-serif;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
   color: #fff;
-  margin: 0;
+  margin: 0 0 4px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   text-shadow: 0 2px 10px rgba(0,0,0,0.7);
@@ -140,7 +146,7 @@ const styles = `
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 20%;
+  object-position: center;
   opacity: 0.88;
   transition: opacity 0.35s ease, transform 0.35s ease;
   display: block;
@@ -173,8 +179,10 @@ const styles = `
 }
 
 .ps-collapsed-label {
-  font: 600 15px/1 Arial,sans-serif;
-  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
   text-shadow: 0 1px 4px rgba(0,0,0,0.4);
 }
 
@@ -306,7 +314,7 @@ const styles = `
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center top;
+  object-position: center;
   display: block;
   animation: ps-slide-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -382,7 +390,7 @@ const styles = `
 
 const CARDS = [
   {
-    img: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=700&fit=crop&q=80',
+    img: VisualAIAgentImg,
     eyebrow: 'Visual AI Agent',
     title: 'Visual AI Agents',
     description: 'Redefining digital connections. Craft a lifelike conversational AI Agent that knows everything about you, your products, and services, all while reflecting your brand\'s look, voice, and tone.',
@@ -391,7 +399,7 @@ const CARDS = [
     cardBg: '#fee2e2',
   },
   {
-    img: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=600&h=700&fit=crop&q=80',
+    img: VideoStudioImg,
     eyebrow: 'Video Studio',
     title: 'Video Studio',
     description: 'Create professional videos with our advanced video editing tools and AI-powered features. Produce stunning content at scale without a production team.',
@@ -400,16 +408,16 @@ const CARDS = [
     cardBg: '#dbeafe',
   },
   {
-    img: 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=600&h=700&fit=crop&q=80',
-    eyebrow: 'Video Translate',
-    title: 'Video Translate',
-    description: 'Automatically translate your videos into multiple languages with perfect lip-sync and natural voice. Reach a global audience without re-shooting a single frame.',
-    btn: 'TRY TRANSLATE',
+    img: ScalableInteractionImg,
+    eyebrow: 'Scalable Interaction',
+    title: 'Scalable Interaction System',
+    description: 'Handle multiple users and sessions efficiently without performance loss. Optimized for real-time data processing.',
+    btn: 'EXPLORE SYSTEM',
     bg: '#15803d',
     cardBg: '#dcfce7',
   },
   {
-    img: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=700&fit=crop&q=80',
+    img: VideoCampaignsImg,
     eyebrow: 'Video Campaigns',
     title: 'Video Campaigns',
     description: 'Launch and manage video marketing campaigns with analytics and optimization tools. Drive engagement with personalised video content at scale.',
@@ -496,9 +504,11 @@ function ProductsSection() {
                       </div>
                       {/* Layer 1: text overlay on top */}
                       <div className="ps-card-collapsed-inner">
-                        <h3 className="ps-collapsed-title">{card.title}</h3>
                         <div className="ps-collapsed-footer">
-                          <span className="ps-collapsed-label">Read More</span>
+                          <div>
+                            <h3 className="ps-collapsed-title">{card.title}</h3>
+                            <span className="ps-collapsed-label">Read More</span>
+                          </div>
                           <span className="ps-collapsed-arrow"><MdArrowOutward /></span>
                         </div>
                       </div>
