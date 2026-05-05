@@ -26,7 +26,7 @@ import AIVideos from './pages/AIVideos/AIVideos.jsx'
 import Help from './pages/UserHelp/Help.jsx'
 
 // Protected Route Component
-const ProtectedRoute = ({ children, view, setView }) => {
+const ProtectedRoute = ({ children, setView }) => {
   const { isAuthenticated, loading } = useAuth()
 
   useEffect(() => {
@@ -197,6 +197,10 @@ const authStyles = `
 
 // App Component with Auth Protection
 function App() {
+  const isInviteAcceptancePath =
+    window.location.pathname.includes('/invite/accept') ||
+    window.location.pathname.includes('/invitations/accept')
+
   // Initialize view from localStorage on mount to persist page on refresh
   const [view, setView] = useState(() => {
     // Check if current URL matches a known route
@@ -283,13 +287,16 @@ function App() {
     const newUrl = urlMap[view] || '/'
     
     // Try to use pushState first (clean URLs)
+    // Don't override the URL on invite acceptance paths — the token lives in the path
+    const currentPath = window.location.pathname
+    const onInvitePath = currentPath.includes('/invitations/accept') || currentPath.includes('/invite/accept')
     try {
-      if (window.location.pathname !== newUrl) {
+      if (!onInvitePath && currentPath !== newUrl) {
         window.history.pushState({ view }, '', newUrl)
       }
-    } catch (error) {
+    } catch {
       // Fallback to hash routing if pushState fails
-      if (window.location.hash !== `#${newUrl}`) {
+      if (!onInvitePath && window.location.hash !== `#${newUrl}`) {
         window.location.hash = newUrl
       }
     }
@@ -302,7 +309,7 @@ function App() {
 
   // Handle browser back/forward buttons
   useEffect(() => {
-    const handlePopState = (event) => {
+    const handlePopState = () => {
       const pathToViewMap = {
         '/': 'landing',
         '/dashboard': 'dashboard',
@@ -397,15 +404,15 @@ function App() {
   // Handle URL-based routing for reset password and invite acceptance
   useEffect(() => {
     const currentPath = window.location.pathname
-    if (currentPath.includes('/reset-password') || currentPath.includes('/invite/accept')) {
+    if (currentPath.includes('/reset-password') || isInviteAcceptancePath) {
       // Don't show auth modal, let reset password or invite acceptance component handle it
       return
     }
-  }, [])
+  }, [isInviteAcceptancePath])
 
   // Inject auth styles into document head
   useEffect(() => {
-    if (window.location.pathname.includes('/reset-password') || window.location.pathname.includes('/invite/accept')) {
+    if (window.location.pathname.includes('/reset-password') || isInviteAcceptancePath) {
       const styleElement = document.createElement('style')
       styleElement.textContent = authStyles
       document.head.appendChild(styleElement)
@@ -413,7 +420,7 @@ function App() {
         document.head.removeChild(styleElement)
       }
     }
-  }, [])
+  }, [isInviteAcceptancePath])
 
   return (
     <ThemeProvider>
@@ -449,7 +456,7 @@ function App() {
       )}
 
       {/* Invite Acceptance Page - Standalone */}
-      {window.location.pathname.includes('/invite/accept') && (
+      {isInviteAcceptancePath && (
         <div style={{
           position: 'fixed',
           top: 0,

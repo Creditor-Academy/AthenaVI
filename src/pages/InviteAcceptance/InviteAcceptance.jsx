@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { MdCheck, MdClose, MdGroup, MdEmail, MdError, MdBusiness } from 'react-icons/md'
+import { MdCheck, MdGroup, MdEmail, MdError } from 'react-icons/md'
 import workspaceService from '../../services/workspaceService.js'
 
 const styles = `
@@ -235,9 +234,13 @@ const InviteAcceptance = () => {
   const [accepting, setAccepting] = useState(false)
 
   useEffect(() => {
-    // Extract token from URL
+    // Accept both /invitations/accept/<token> and ?token=<token>
+    const pathParts = window.location.pathname.split('/').filter(Boolean)
+    const acceptIndex = pathParts.findIndex((part) => part === 'accept')
+    const tokenFromPath = acceptIndex >= 0 ? pathParts[acceptIndex + 1] : ''
+
     const urlParams = new URLSearchParams(window.location.search)
-    const inviteToken = urlParams.get('token')
+    const inviteToken = tokenFromPath || urlParams.get('token')
     
     if (!inviteToken) {
       setError('No invitation token found')
@@ -247,24 +250,19 @@ const InviteAcceptance = () => {
     }
     
     setToken(inviteToken)
-    validateToken(inviteToken)
+    validateToken()
   }, [])
 
-  const validateToken = async (token) => {
+  const validateToken = async () => {
     try {
-      // For now, we'll skip validation and assume the token is valid
-      // In a real implementation, you might want to create a validation endpoint
-      // or handle validation on the backend during acceptance
-      
-      // Mock validation - assume valid for demo purposes
+      // There is no dedicated token-validation endpoint in the API.
+      // We proceed with accept flow and let the accept endpoint validate token/email.
       setInviteData({
         valid: true,
         workspace: {
-          id: 'ws-123',
-          name: 'Team Marketing Workspace',
-          type: 'TEAM'
+          name: 'this workspace'
         },
-        invitedEmail: 'john.doe@example.com'
+        invitedEmail: ''
       })
       setError('')
     } catch (err) {
@@ -285,7 +283,7 @@ const InviteAcceptance = () => {
       const workspace = await workspaceService.acceptInvitation(token)
       
       // Redirect to workspace after successful acceptance
-      window.location.href = `/dashboard?workspace=${workspace.id}`
+      window.location.href = workspace?.id ? `/dashboard?workspace=${workspace.id}` : '/dashboard'
     } catch (err) {
       setError(err.message || 'Failed to accept invitation')
     } finally {
@@ -355,12 +353,14 @@ const InviteAcceptance = () => {
           <h1 className="invite-title">You're Invited!</h1>
           <div className="invite-info">
             <p>
-              You've been invited to join <strong>{inviteData.workspace.name}</strong>
+              You've been invited to join <strong>{inviteData.workspace?.name || 'this workspace'}</strong>
             </p>
-            <p className="invite-email">
-              <MdEmail />
-              {inviteData.invitedEmail}
-            </p>
+            {inviteData.invitedEmail && (
+              <p className="invite-email">
+                <MdEmail />
+                {inviteData.invitedEmail}
+              </p>
+            )}
           </div>
           <div className="invite-actions">
             <button 
@@ -399,18 +399,11 @@ const InviteAcceptance = () => {
     <>
       <style>{styles}</style>
       <div className="invite-acceptance-container">
-        <AnimatePresence>
-          {loading && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="invite-acceptance-card"
-            >
-              {renderContent()}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {!loading && (
+          <div className="invite-acceptance-card">
+            {renderContent()}
+          </div>
+        )}
       </div>
     </>
   )

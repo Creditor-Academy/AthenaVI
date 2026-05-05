@@ -146,7 +146,7 @@ function normalizeFolder(folder) {
 
 function workspaceCanEdit(workspace) {
   const role = String(workspace?.userRole || '').toUpperCase();
-  return workspace?.type === 'personal' || role === 'OWNER' || role === 'ADMIN' || role === 'EDITOR' || role === 'MEMBER';
+  return workspace?.type === 'personal' || role === 'OWNER' || role === 'ADMIN' || role === 'MEMBER';
 }
 
 function workspaceCanManageContributors(workspace) {
@@ -183,7 +183,7 @@ const TeamWorkspace = ({ onCreate }) => {
   const [invitees, setInvitees] = useState([]);
   const [membersLoading, setMembersLoading] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState('EDITOR');
+  const [inviteRole, setInviteRole] = useState('MEMBER');
 
   useEffect(() => {
     sessionStorage.setItem('workspaceLocalAdditions', JSON.stringify(localAdditions));
@@ -494,7 +494,7 @@ const TeamWorkspace = ({ onCreate }) => {
 
       if (invites && invites.length > 0) {
         for (const email of invites) {
-          await workspaceService.inviteMember(mappedWorkspace.id, { email, role: 'EDITOR' }).catch(() => null);
+          await workspaceService.inviteMember(mappedWorkspace.id, { email, role: 'MEMBER' }).catch(() => null);
         }
       }
 
@@ -551,7 +551,8 @@ const TeamWorkspace = ({ onCreate }) => {
   const handleAcceptInvitation = async (invitationToken) => {
     try {
       await workspaceService.acceptInvitation(invitationToken);
-      setInvitations((prev) => prev.filter((invitation) => invitation.id !== invitationToken));
+      // invitationToken may be invitation.token or invitation.id; remove whichever matches
+      setInvitations((prev) => prev.filter((inv) => (inv.token || inv.id) !== invitationToken));
       await loadWorkspaces();
     } catch (error) {
       console.error(error);
@@ -672,7 +673,7 @@ const TeamWorkspace = ({ onCreate }) => {
       if (String(workspace.userRole || '').toUpperCase() !== 'OWNER') {
         const shouldLeave = window.confirm('You are not the owner of this workspace. Do you want to leave it?');
         if (!shouldLeave) return;
-        await workspaceService.leaveWorkspace(workspace.id);
+        await workspaceService.leaveWorkspace(workspace);
       } else {
         const confirmed = window.confirm(
           'This will permanently delete all folders and videos inside. This cannot be undone.'
@@ -821,7 +822,7 @@ const TeamWorkspace = ({ onCreate }) => {
     if (!confirmed) return;
 
     try {
-      await workspaceService.leaveWorkspace(workspace.id);
+      await workspaceService.leaveWorkspace(workspace);
       setWorkspaces((prev) => prev.filter((item) => String(item.id) !== String(workspace.id)));
       if (String(currentLevel.id) === String(workspace.id)) {
         setCurrentLevel({ type: 'root', id: null });
@@ -1336,8 +1337,8 @@ const TeamWorkspace = ({ onCreate }) => {
                     onChange={(e) => setInviteRole(e.target.value)}
                     style={{ width: 100, height: 36, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-main)' }}
                   >
-                    <option value="EDITOR">Editor</option>
-                    <option value="VIEWER">Viewer</option>
+                    <option value="MEMBER">Member</option>
+                    <option value="ADMIN">Admin</option>
                   </select>
                   <button className="btn-primary" type="button" onClick={handleInviteContributor}>
                     <MdAdd size={16} />
@@ -1355,7 +1356,8 @@ const TeamWorkspace = ({ onCreate }) => {
                   members.map((member) => {
                     const memberId = member.id || member.userId || member.user?.id || member.user?._id;
                     const label = member.user?.name || member.user?.email || member.name || member.email || 'Member';
-                    const role = String(member.role || 'MEMBER').toUpperCase();
+                    const rawRole = String(member.role || 'MEMBER').toUpperCase();
+                    const role = rawRole === 'EDITOR' || rawRole === 'VIEWER' ? 'MEMBER' : rawRole;
 
                     return (
                       <div key={memberId} style={{ border: '1px solid var(--border-color)', borderRadius: 10, padding: 10, marginBottom: 8 }}>
@@ -1374,8 +1376,6 @@ const TeamWorkspace = ({ onCreate }) => {
                               disabled={role === 'OWNER'}
                               style={{ height: 32, borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-main)' }}
                             >
-                              <option value="EDITOR">Editor</option>
-                              <option value="VIEWER">Viewer</option>
                               <option value="ADMIN">Admin</option>
                               <option value="MEMBER">Member</option>
                               <option value="OWNER">Owner</option>
