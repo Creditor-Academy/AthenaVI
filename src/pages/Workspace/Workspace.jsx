@@ -840,7 +840,7 @@ function Workspace({ onCreate }) {
   const createNewFolder = async () => {
     if (!workspaceId) return
     try {
-      const name = 'New Folder'
+      const name = 'Default'
       await workspaceService.createFolder(workspaceId, name)
       await refreshFolders()
     } catch (error) {
@@ -852,7 +852,7 @@ function Workspace({ onCreate }) {
   const createNewSubfolder = async (folderId) => {
     if (!workspaceId) return
     try {
-      const name = 'New Subfolder'
+      const name = 'Default'
       // Using the same folder API for now. Adjust if a subfolder-specific endpoint exists.
       await workspaceService.createFolder(workspaceId, name)
       await refreshFolders()
