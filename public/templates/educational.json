@@ -5,124 +5,589 @@
       "id": "edu_explainer_1",
       "title": "Lesson Overview - Left Avatar",
       "layoutType": "Split",
+      "avatarPosition": "bottom-left",
+      "zones": {
+        "text": {
+          "x": 640,
+          "y": 200,
+          "width": 640,
+          "height": 400
+        },
+        "avatar": {
+          "x": 100,
+          "y": 300,
+          "width": 250,
+          "height": 330
+        }
+      },
       "description": "Clear lesson title with a professional instructor avatar explaining the core concepts.",
       "flow": "Lesson → Intro",
       "duration": 10,
-      "tags": ["lesson", "training", "structured"],
+      "tags": [
+        "lesson",
+        "training",
+        "structured"
+      ],
       "clips": [
-        { "id": "t1", "type": "text", "position": { "x": 1200, "y": 450 }, "content": "MODULE 01: INTRODUCTION", "style": { "fontSize": 72, "fontWeight": "800", "textAlign": "left", "width": "1000px" } },
-        { "id": "t2", "type": "text", "position": { "x": 1200, "y": 620 }, "content": "Understanding the fundamentals of AI video processing.", "style": { "fontSize": 36, "fontWeight": "400", "textAlign": "left", "color": "#64748b" } },
-        { "id": "a1", "type": "avatar", "label": "Instructor", "position": { "x": 500, "y": 540 }, "size": { "width": 600, "height": 800 } }
+        {
+          "id": "t1",
+          "type": "text",
+          "role": "main-text",
+          "editable": true,
+          "position": {
+            "x": 35,
+            "y": 28
+          },
+          "size": {
+            "width": 800,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "MODULE 01: THE\nFUNDAMENTALS",
+          "style": {
+            "fontSize": 72,
+            "fontWeight": "900",
+            "textAlign": "left",
+            "color": "#1e293b",
+            "lineHeight": 1.1
+          }
+        },
+        {
+          "id": "t2",
+          "type": "text",
+          "role": "secondary-text",
+          "editable": true,
+          "position": {
+            "x": 35,
+            "y": 62
+          },
+          "size": {
+            "width": 700,
+            "height": 80
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Master the core concepts of advanced neural architectures.",
+          "style": {
+            "fontSize": 28,
+            "fontWeight": "500",
+            "color": "#64748b"
+          }
+        },
+        {
+          "id": "a1",
+          "type": "avatar",
+          "role": "instructor",
+          "editable": true,
+          "position": {
+            "x": 5,
+            "y": 25
+          },
+          "size": {
+            "width": 320,
+            "height": 450
+          },
+          "startTime": 0,
+          "endTime": 10
+        }
       ]
     },
     {
       "id": "edu_explainer_2",
       "title": "Step Learning Mode",
       "layoutType": "Split",
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "text": {
+          "x": 100,
+          "y": 200,
+          "width": 500,
+          "height": 400
+        },
+        "image": {
+          "x": 640,
+          "y": 100,
+          "width": 600,
+          "height": 500
+        }
+      },
       "description": "Detailed step-by-step learning mode with visual aids on the right.",
       "flow": "Step → Visual",
       "duration": 10,
-      "tags": ["learning", "steps"],
+      "tags": [
+        "learning",
+        "steps"
+      ],
       "clips": [
-         { "id": "t1", "type": "text", "position": { "x": 600, "y": 400 }, "content": "STEP 1: CONFIGURATION", "style": { "fontSize": 56, "fontWeight": "800" } },
-         { "id": "i1", "type": "image", "position": { "x": 1400, "y": 540 }, "size": { "width": 700, "height": 500 } }
+        {
+          "id": "t1",
+          "type": "text",
+          "role": "main-text",
+          "editable": true,
+          "position": {
+            "x": 5,
+            "y": 28
+          },
+          "size": {
+            "width": 800,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "STEP 1: SYSTEM SETUP",
+          "style": {
+            "fontSize": 64,
+            "fontWeight": "900",
+            "textAlign": "left",
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "t2",
+          "type": "text",
+          "role": "secondary-text",
+          "editable": true,
+          "position": {
+            "x": 5,
+            "y": 44
+          },
+          "size": {
+            "width": 700,
+            "height": 80
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Initialize your environment and configure the core API keys.",
+          "style": {
+            "fontSize": 28,
+            "fontWeight": "500",
+            "color": "#64748b"
+          }
+        },
+        {
+          "id": "i1",
+          "type": "image",
+          "role": "media-visual",
+          "editable": true,
+          "position": {
+            "x": 55,
+            "y": 15
+          },
+          "size": {
+            "width": 550,
+            "height": 580
+          },
+          "startTime": 0,
+          "endTime": 10
+        }
       ]
     },
     {
       "id": "edu_steps_horizontal",
       "title": "Horizontal 3-Step Process",
       "layoutType": "Grid",
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "image": {
+          "x": 100,
+          "y": 100,
+          "width": 1080,
+          "height": 400
+        },
+        "text": {
+          "x": 100,
+          "y": 540,
+          "width": 1080,
+          "height": 100
+        }
+      },
       "description": "Clean horizontal transition through three key phases of a concept.",
       "flow": "Phase 1 → Phase 2 → Phase 3",
       "duration": 12,
-      "tags": ["process", "horizontal", "flow"],
+      "tags": [
+        "process",
+        "horizontal",
+        "flow"
+      ],
       "clips": [
-        { "id": "s1", "type": "shape", "position": { "x": 480, "y": 540 }, "size": { "width": 400, "height": 400 } },
-        { "id": "s2", "type": "shape", "position": { "x": 960, "y": 540 }, "size": { "width": 400, "height": 400 } },
-        { "id": "s3", "type": "shape", "position": { "x": 1440, "y": 540 }, "size": { "width": 400, "height": 400 } },
-        { "id": "t1", "type": "text", "position": { "x": 480, "y": 540 }, "content": "01", "style": { "fontSize": 80, "fontWeight": "900" } },
-        { "id": "t2", "type": "text", "position": { "x": 960, "y": 540 }, "content": "02", "style": { "fontSize": 80, "fontWeight": "900" } },
-        { "id": "t3", "type": "text", "position": { "x": 1440, "y": 540 }, "content": "03", "style": { "fontSize": 80, "fontWeight": "900" } }
+        {
+          "id": "t1",
+          "type": "text",
+          "role": "phase-label",
+          "editable": true,
+          "position": {
+            "x": 10,
+            "y": 66
+          },
+          "size": {
+            "width": 350,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 12,
+          "content": "01: DISCOVERY",
+          "style": {
+            "fontSize": 32,
+            "fontWeight": "900",
+            "textAlign": "center",
+            "color": "#1e293b"
+          }
+        },
+        {
+          "id": "t2",
+          "type": "text",
+          "role": "phase-label",
+          "editable": true,
+          "position": {
+            "x": 38,
+            "y": 66
+          },
+          "size": {
+            "width": 350,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 12,
+          "content": "02: STRATEGY",
+          "style": {
+            "fontSize": 32,
+            "fontWeight": "900",
+            "textAlign": "center",
+            "color": "#1e293b"
+          }
+        },
+        {
+          "id": "t3",
+          "type": "text",
+          "role": "phase-label",
+          "editable": true,
+          "position": {
+            "x": 66,
+            "y": 66
+          },
+          "size": {
+            "width": 350,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 12,
+          "content": "03: EXECUTION",
+          "style": {
+            "fontSize": 32,
+            "fontWeight": "900",
+            "textAlign": "center",
+            "color": "#1e293b"
+          }
+        }
       ]
     },
     {
       "id": "edu_steps_vertical",
       "title": "Vertical Process Steps",
-      "layoutType": "Stack",
+      "layoutType": "Grid",
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "text": {
+          "x": 340,
+          "y": 100,
+          "width": 600,
+          "height": 600
+        }
+      },
       "description": "Top-to-bottom vertical progression for procedural learning.",
       "flow": "Top → Middle → Bottom",
       "duration": 10,
-      "tags": ["vertical", "procedure"],
+      "tags": [
+        "vertical",
+        "procedure"
+      ],
       "clips": [
-        { "id": "t1", "type": "text", "position": { "x": 960, "y": 300 }, "content": "1. PREPARATION", "style": { "fontSize": 48 } },
-        { "id": "t2", "type": "text", "position": { "x": 960, "y": 540 }, "content": "2. EXECUTION", "style": { "fontSize": 48 } },
-        { "id": "t3", "type": "text", "position": { "x": 960, "y": 780 }, "content": "3. REVIEW", "style": { "fontSize": 48 } }
-      ]
-    },
-     {
-      "id": "edu_steps_cards",
-      "title": "Card-Based Steps",
-      "layoutType": "Grid",
-      "description": "Modern card-style workflow visualization with soft drop shadows.",
-      "flow": "Card 1 → Card 2 → Card 3",
-      "duration": 15,
-      "tags": ["cards", "ui", "workflow"],
-      "clips": [
-        { "id": "s1", "type": "shape", "position": { "x": 480, "y": 500 }, "size": { "width": 420, "height": 550 } },
-        { "id": "s2", "type": "shape", "position": { "x": 960, "y": 500 }, "size": { "width": 420, "height": 550 } },
-        { "id": "s3", "type": "shape", "position": { "x": 1440, "y": 500 }, "size": { "width": 420, "height": 550 } }
+        {
+          "id": "t1",
+          "type": "text",
+          "role": "main-text",
+          "editable": true,
+          "position": {
+            "x": 50,
+            "y": 28
+          },
+          "content": "1. PREPARATION",
+          "style": {
+            "fontSize": 48
+          }
+        },
+        {
+          "id": "t2",
+          "type": "text",
+          "role": "main-text",
+          "editable": true,
+          "position": {
+            "x": 50,
+            "y": 50
+          },
+          "content": "2. EXECUTION",
+          "style": {
+            "fontSize": 48
+          }
+        },
+        {
+          "id": "t3",
+          "type": "text",
+          "role": "main-text",
+          "editable": true,
+          "position": {
+            "x": 50,
+            "y": 72
+          },
+          "content": "3. REVIEW",
+          "style": {
+            "fontSize": 48
+          }
+        }
       ]
     },
     {
       "id": "edu_steps_icon",
       "title": "Icon Highlight Steps",
       "layoutType": "Grid",
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "image": {
+          "x": 440,
+          "y": 450,
+          "width": 200,
+          "height": 200
+        },
+        "text": {
+          "x": 440,
+          "y": 650,
+          "width": 400,
+          "height": 100
+        }
+      },
       "description": "Visual-first process overview using icons to represent different modules.",
       "flow": "Icon 1 → Icon 2 → Icon 3",
       "duration": 10,
-      "tags": ["icons", "visual"],
+      "tags": [
+        "icons",
+        "visual"
+      ],
       "clips": [
-        { "id": "i1", "type": "image", "label": "Icon 1", "position": { "x": 480, "y": 500 }, "size": { "width": 200, "height": 200 } },
-        { "id": "t1", "type": "text", "position": { "x": 480, "y": 700 }, "content": "SET UP", "style": { "fontSize": 32 } }
+        {
+          "id": "i1",
+          "type": "image",
+          "role": "media",
+          "editable": true,
+          "position": {
+            "x": 25,
+            "y": 46
+          },
+          "size": {
+            "width": 200,
+            "height": 200
+          }
+        },
+        {
+          "id": "t1",
+          "type": "text",
+          "role": "main-text",
+          "editable": true,
+          "position": {
+            "x": 25,
+            "y": 65
+          },
+          "content": "SET UP",
+          "style": {
+            "fontSize": 32
+          }
+        }
       ]
     },
     {
       "id": "edu_steps_number",
       "title": "Number Highlight Process",
       "layoutType": "Centered",
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "text": {
+          "x": 100,
+          "y": 400,
+          "width": 1080,
+          "height": 300
+        }
+      },
       "description": "Bold numbering sequence for high-priority educational lists.",
       "flow": "Focus 1 → Focus 2",
       "duration": 8,
-      "tags": ["bold", "numbers"],
+      "tags": [
+        "bold",
+        "numbers"
+      ],
       "clips": [
-        { "id": "t1", "type": "text", "position": { "x": 500, "y": 540 }, "content": "STEP 01", "style": { "fontSize": 120, "fontWeight": "900", "color": "#3b82f6" } },
-        { "id": "t2", "type": "text", "position": { "x": 1200, "y": 540 }, "content": "CONFIGURE THE ENGINE", "style": { "fontSize": 56, "fontWeight": "700" } }
+        {
+          "id": "t1",
+          "type": "text",
+          "role": "main-text",
+          "editable": true,
+          "position": {
+            "x": 10,
+            "y": 35
+          },
+          "size": {
+            "width": 300,
+            "height": 150
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "01",
+          "style": {
+            "fontSize": 140,
+            "fontWeight": "900",
+            "color": "#3b82f6",
+            "opacity": 0.2
+          }
+        },
+        {
+          "id": "t2",
+          "type": "text",
+          "role": "main-text",
+          "editable": true,
+          "position": {
+            "x": 20,
+            "y": 45
+          },
+          "size": {
+            "width": 800,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "CONFIGURE SYSTEM SETTINGS",
+          "style": {
+            "fontSize": 56,
+            "fontWeight": "900",
+            "textAlign": "left",
+            "color": "#0f172a"
+          }
+        }
       ]
     },
     {
       "id": "edu_explainer_3",
       "title": "Topic Deep Dive",
       "layoutType": "Centered",
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "text": {
+          "x": 100,
+          "y": 300,
+          "width": 1080,
+          "height": 400
+        }
+      },
       "description": "Focused center-aligned layout for explaining a single complex term or idea.",
       "flow": "Term → Definition",
       "duration": 8,
-      "tags": ["definition", "focus"],
+      "tags": [
+        "definition",
+        "focus"
+      ],
       "clips": [
-        { "id": "t1", "type": "text", "position": { "x": 960, "y": 420 }, "content": "NEURAL NETWORKS", "style": { "fontSize": 80, "fontWeight": "900" } },
-        { "id": "t2", "type": "text", "position": { "x": 960, "y": 650 }, "content": "A computational model inspired by the human brain's network of neurons.", "style": { "fontSize": 32, "textAlign": "center", "width": "1200px" } }
+        {
+          "id": "t1",
+          "type": "text",
+          "role": "main-text",
+          "editable": true,
+          "position": {
+            "x": 5,
+            "y": 30
+          },
+          "size": {
+            "width": 1150,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "NEURAL NETWORKS",
+          "style": {
+            "fontSize": 80,
+            "fontWeight": "900",
+            "textAlign": "center",
+            "letterSpacing": "0.05em",
+            "color": "#1e293b"
+          }
+        },
+        {
+          "id": "t2",
+          "type": "text",
+          "role": "secondary-text",
+          "editable": true,
+          "position": {
+            "x": 10,
+            "y": 50
+          },
+          "size": {
+            "width": 1000,
+            "height": 150
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "A computational model inspired by the human brain's network of neurons, capable of learning patterns from data.",
+          "style": {
+            "fontSize": 32,
+            "fontWeight": "500",
+            "textAlign": "center",
+            "lineHeight": 1.5,
+            "color": "#64748b"
+          }
+        }
       ]
     },
     {
       "id": "edu_outro_1",
       "title": "Quiz / Follow-up Outro",
       "layoutType": "Split",
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "text": {
+          "x": 100,
+          "y": 400,
+          "width": 1080,
+          "height": 300
+        }
+      },
       "description": "Engage students with a final question or resource links.",
       "flow": "Next Steps → Resources",
       "duration": 7,
-      "tags": ["quiz", "links"],
+      "tags": [
+        "quiz",
+        "links"
+      ],
       "clips": [
-        { "id": "t1", "type": "text", "position": { "x": 640, "y": 540 }, "content": "READY FOR THE QUIZ?", "style": { "fontSize": 64, "fontWeight": "800" } },
-        { "id": "t2", "type": "text", "position": { "x": 1300, "y": 540 }, "content": "Link: athenavi.com/learn", "style": { "fontSize": 32, "color": "#3b82f6" } }
+        {
+          "id": "t1",
+          "type": "text",
+          "role": "main-text",
+          "editable": true,
+          "position": {
+            "x": 10,
+            "y": 42
+          },
+          "size": {
+            "width": 1000,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 7,
+          "content": "READY FOR THE NEXT MODULE?",
+          "style": {
+            "fontSize": 64,
+            "fontWeight": "900",
+            "textAlign": "center",
+            "color": "#0f172a"
+          }
+        }
       ]
     }
   ]

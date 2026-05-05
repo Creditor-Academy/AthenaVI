@@ -48,9 +48,46 @@ const SceneConfigurationPanel = ({
 
         <div className="property-section accent-cyan">
           <div className="section-label">
-            <span>Opacity</span>
+            <span>Clip Role: <span style={{ color: 'var(--accent-color)', fontWeight: '700' }}>{activeLayer.role?.replace('-', ' ').toUpperCase() || 'GENERAL'}</span></span>
           </div>
+          
+          {/* CONTENT EDITING BASED ON ROLE */}
+          {activeLayer.role === 'main-text' || activeLayer.type === 'text' ? (
+            <div className="premium-row column" style={{ marginTop: '16px' }}>
+              <div className="row-label">Text Content</div>
+              <textarea 
+                className="premium-textarea" 
+                value={activeLayer.content || ''} 
+                onChange={(e) => updateLayer({ content: e.target.value })}
+                rows={3}
+              />
+            </div>
+          ) : (activeLayer.role === 'avatar' || activeLayer.role === 'media') && (
+            <div className="premium-row column" style={{ marginTop: '16px' }}>
+              <div className="row-label">Asset URL</div>
+              <input 
+                type="text" 
+                className="premium-input" 
+                value={activeLayer.src || ''} 
+                onChange={(e) => updateLayer({ src: e.target.value })}
+                placeholder="https://..."
+              />
+              <button 
+                className="premium-button-outline" 
+                style={{ marginTop: '8px', width: '100%' }}
+                onClick={() => alert('Asset library coming soon!')}
+              >
+                Change {activeLayer.role}
+              </button>
+            </div>
+          )}
+
+          <div className="section-label" style={{ marginTop: '20px' }}>
+            <span>Visual Properties</span>
+          </div>
+
           <div className="slider-group">
+            <div className="row-label">Opacity</div>
             <input 
               type="range" 
               min="0" max="1" step="0.05" 
@@ -61,10 +98,27 @@ const SceneConfigurationPanel = ({
             <span className="slider-value">{Math.round((activeLayer.opacity ?? 1) * 100)}%</span>
           </div>
 
+          {activeLayer.type === 'text' && (
+             <div className="premium-row column" style={{ marginTop: '16px' }}>
+                <div className="row-label">Font Size</div>
+                <div className="slider-group">
+                    <input 
+                      type="range" 
+                      min="12" max="120" step="1" 
+                      value={activeLayer.style?.fontSize || 32} 
+                      onChange={(e) => updateLayer({ style: { ...activeLayer.style, fontSize: Number(e.target.value) } })} 
+                      className="premium-slider slider-cyan" 
+                    />
+                    <span className="slider-value">{activeLayer.style?.fontSize || 32}px</span>
+                </div>
+             </div>
+          )}
+
           <div className="section-label" style={{marginTop: '16px'}}>
-            <span>Brightness</span>
+            <span>Effects</span>
           </div>
           <div className="slider-group">
+            <div className="row-label">Brightness</div>
             <input 
               type="range" 
               min="0" max="2" step="0.05" 
@@ -75,46 +129,13 @@ const SceneConfigurationPanel = ({
             <span className="slider-value">{Math.round((activeLayer.effects?.brightness ?? 1) * 100)}%</span>
           </div>
 
-          <div className="section-label" style={{marginTop: '16px'}}>
-            <span>Contrast</span>
-          </div>
-          <div className="slider-group">
-            <input 
-              type="range" 
-              min="0" max="2" step="0.05" 
-              value={activeLayer.effects?.contrast ?? 1} 
-              onChange={(e) => updateLayer({ effects: { ...activeLayer.effects, contrast: Number(e.target.value) } })} 
-              className="premium-slider slider-cyan" 
-            />
-            <span className="slider-value">{Math.round((activeLayer.effects?.contrast ?? 1) * 100)}%</span>
-          </div>
-
-          <div className="section-label" style={{marginTop: '16px'}}>
-            <span>Saturation</span>
-          </div>
-          <div className="slider-group">
-            <input 
-              type="range" 
-              min="0" max="2" step="0.05" 
-              value={activeLayer.effects?.saturation ?? 1} 
-              onChange={(e) => updateLayer({ effects: { ...activeLayer.effects, saturation: Number(e.target.value) } })} 
-              className="premium-slider slider-cyan" 
-            />
-            <span className="slider-value">{Math.round((activeLayer.effects?.saturation ?? 1) * 100)}%</span>
-          </div>
-
-          <div className="section-label" style={{marginTop: '16px'}}>
-            <span>Blur</span>
-          </div>
-          <div className="slider-group">
-            <input 
-              type="range" 
-              min="0" max="20" step="1" 
-              value={activeLayer.effects?.blur ?? 0} 
-              onChange={(e) => updateLayer({ effects: { ...activeLayer.effects, blur: Number(e.target.value) } })} 
-              className="premium-slider slider-cyan" 
-            />
-            <span className="slider-value">{activeLayer.effects?.blur ?? 0}px</span>
+          <div className="premium-row" style={{ marginTop: '16px', justifyContent: 'space-between' }}>
+             <div className="row-label">Visibility</div>
+             <input 
+               type="checkbox" 
+               checked={activeLayer.visible !== false} 
+               onChange={(e) => updateLayer({ visible: e.target.checked })}
+             />
           </div>
         </div>
       </div>

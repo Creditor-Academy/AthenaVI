@@ -108,8 +108,8 @@ function Avatars({ onCreate }) {
   const categories = ['All', 'Professional', 'Tech', 'Creative', 'Service', 'Academic', 'Lifestyle']
 
   const filteredAvatars = AVATARS_DATA.filter(avatar => {
-    const matchesSearch = avatar.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          avatar.role.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesSearch = avatar.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      avatar.role.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesCategory = filterCategory === 'All' || avatar.category === filterCategory
     return matchesSearch && matchesCategory
   })
@@ -156,18 +156,18 @@ function Avatars({ onCreate }) {
                 <div className="search-section">
                   <div className="search-bar">
                     <Search size={18} />
-                    <input 
-                      type="text" 
-                      placeholder="Search neural units..." 
+                    <input
+                      type="text"
+                      placeholder="Search neural units..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
                   </div>
                 </div>
-                
+
                 <div className="filter-tabs">
                   {categories.map(cat => (
-                    <button 
+                    <button
                       key={cat}
                       className={`filter-tab ${filterCategory === cat ? 'active' : ''}`}
                       onClick={() => setFilterCategory(cat)}
@@ -208,8 +208,8 @@ function Avatars({ onCreate }) {
               {/* Glass Mini-Switcher: User hated the sidebar and arrows, this is the modern alternative */}
               <div className="persona-filmstrip">
                 {AVATARS_DATA.map(avatar => (
-                  <div 
-                    key={avatar.id} 
+                  <div
+                    key={avatar.id}
                     className={`filmstrip-item ${selectedAvatar?.id === avatar.id ? 'active' : ''}`}
                     onClick={() => handleSelectPersona(avatar)}
                   >
@@ -228,10 +228,10 @@ function Avatars({ onCreate }) {
                 </div>
               ) : (
                 <div className="hero-motion">
-                  <video 
-                    src={selectedAvatar.preview} 
-                    autoPlay 
-                    loop 
+                  <video
+                    src={selectedAvatar.preview}
+                    autoPlay
+                    loop
                     className="hero-video"
                   />
                   <button className="exit-preview-corner" onClick={() => setIsPreviewing(false)}>
@@ -246,9 +246,9 @@ function Avatars({ onCreate }) {
                 <div className="hero-top-meta">Unit {selectedAvatar.id} // v4.2</div>
                 <h1 className="hero-title">{selectedAvatar.name}</h1>
                 <div className="hero-badge">{selectedAvatar.category} Model</div>
-                
+
                 <p className="hero-bio">{selectedAvatar.description}</p>
-                
+
                 <div className="hero-specs">
                   <div className="spec-tile">
                     <label>Oral Expression</label>

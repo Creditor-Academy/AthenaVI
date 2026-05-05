@@ -119,8 +119,8 @@ const TeamWorkspace = ({ onCreate }) => {
         console.warn('[TeamWorkspace] Could not extract user ID from authUser. authUser keys:', authUser ? Object.keys(authUser) : 'null', 'authUser:', JSON.stringify(authUser));
       }
 
-      // Map API workspaces to local shape
-      const mappedWorkspaces = workspaceList.map(ws => {
+      // Map API workspaces to local shape and fetch folders for each
+      const mappedWorkspaces = await Promise.all(workspaceList.map(async (ws) => {
         const wsOwnerId = normalizeUserId(
           ws.ownerId ||
             ws.ownerUserId ||
@@ -152,6 +152,15 @@ const TeamWorkspace = ({ onCreate }) => {
           ownerInMembers ||
           isCreator;
         
+        // Fetch folders for this workspace
+        let folders = [];
+        try {
+          folders = await workspaceService.listFolders(ws.id || ws._id);
+        } catch (error) {
+          console.error(`Failed to fetch folders for workspace ${ws.name}:`, error);
+          folders = [];
+        }
+        
         console.log('Workspace ownership check:', {
           wsName: ws.name,
           wsOwnerId,
@@ -161,6 +170,7 @@ const TeamWorkspace = ({ onCreate }) => {
           ownerInMembers,
           isCreator,
           isOwner,
+          foldersCount: folders.length,
           rawKeys: Object.keys(ws)
         });
 
@@ -170,10 +180,10 @@ const TeamWorkspace = ({ onCreate }) => {
           type: isPrivate ? 'personal' : 'workspace',
           ownerId: wsOwnerId || (isOwner ? currentUserId : ''),
           members: ws.members || [],
-          folders: ws.folders && ws.folders.length > 0 ? ws.folders : [],
+          folders: folders || [],
           userRole: isOwner ? 'OWNER' : detectNonOwnerRole(ws)
         };
-      });
+      }));
       
       console.log('Mapped workspaces:', mappedWorkspaces);
       console.log('Current user ID:', currentUserId);
@@ -359,32 +369,27 @@ const TeamWorkspace = ({ onCreate }) => {
   };
 
   const handleCreateFolder = async (folderName) => {
+    if (!selectedWorkspaceForFolder) {
+      throw new Error('No workspace selected for folder creation');
+    }
+
     // Validation: Check for duplicate folder name in current workspace
-    if (selectedWorkspaceForFolder) {
-      const existingWS = workspaces.find(w => w.id === selectedWorkspaceForFolder.id);
-      const isDuplicate = existingWS?.folders?.some(f => f.name.toLowerCase() === folderName.toLowerCase());
-      
-      if (isDuplicate) {
-        throw new Error(`A folder named "${folderName}" already exists in this workspace.`);
-      }
+    const existingWS = workspaces.find(w => w.id === selectedWorkspaceForFolder.id);
+    const isDuplicate = existingWS?.folders?.some(f => f.name.toLowerCase() === folderName.toLowerCase());
+    
+    if (isDuplicate) {
+      throw new Error(`A folder named "${folderName}" already exists in this workspace.`);
+    }
 
-      const newFolder = {
-        id: `f-local-${Date.now()}`,
-        name: folderName,
-        createdBy: 'You',
-        videos: []
-      };
-
-      setLocalAdditions(prev => ({
-        ...prev,
-        folders: {
-          ...prev.folders,
-          [selectedWorkspaceForFolder.id]: [...(prev.folders[selectedWorkspaceForFolder.id] || []), newFolder]
-        }
-      }));
+    try {
+      // Call the backend API to create folder
+      await workspaceService.createFolder(selectedWorkspaceForFolder.id, folderName);
       
-      // Update UI immediately
-      setTimeout(() => loadWorkspaces(), 100);
+      // Refresh workspaces to get updated folder list
+      await loadWorkspaces();
+    } catch (error) {
+      console.error('Failed to create folder:', error);
+      throw error;
     }
   };
 
@@ -473,6 +478,16 @@ const TeamWorkspace = ({ onCreate }) => {
       }
     } else if (type === 'folder') {
       const parentWsId = currentLevel.ws?.id || workspaces.find(w => w.folders.some(f => f.id === id))?.id;
+      
+      try {
+        // Call backend API to delete folder if it's not a local folder
+        if (parentWsId && !id.startsWith('f-local-')) {
+          await workspaceService.deleteFolder(parentWsId, id);
+        }
+      } catch (error) {
+        console.error('Failed to delete folder:', error);
+        // Continue with local state update even if API fails
+      }
       
       setLocalAdditions(prev => {
         const newFolders = { ...prev.folders };
