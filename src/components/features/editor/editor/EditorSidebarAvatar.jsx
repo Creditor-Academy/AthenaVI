@@ -1,12 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MdAdd, MdMic, MdSearch, MdStar, MdAutoAwesome, MdCloudUpload } from 'react-icons/md';
-import { predefinedAvatars } from '../../../../constants/editorData';
+import heygenService from '../../../../services/heygenService';
 
 const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateScene, updateScene, setShowTemplateModal, addLayer }) => {
   const [activeTab, setActiveTab] = useState('studio');
   const [searchQuery, setSearchQuery] = useState('');
+  const [avatars, setAvatars] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredAvatars = predefinedAvatars.filter(av => 
+  useEffect(() => {
+    const fetchAvatars = async () => {
+      setLoading(true);
+      try {
+        const ownership = activeTab === 'mine' ? 'private' : 'public';
+        const responseData = await heygenService.getAvatarGroups({ ownership });
+        
+        // Find the array in the payload
+        let avatarList = []
+        if (Array.isArray(responseData)) {
+          avatarList = responseData
+        } else if (responseData?.avatar_groups) {
+          avatarList = responseData.avatar_groups
+        } else if (responseData?.avatars) {
+          avatarList = responseData.avatars
+        } else if (responseData?.data?.avatar_groups) {
+          avatarList = responseData.data.avatar_groups
+        } else if (responseData?.data?.avatars) {
+          avatarList = responseData.data.avatars
+        } else if (responseData?.data && Array.isArray(responseData.data)) {
+          avatarList = responseData.data
+        }
+        
+        const mappedAvatars = avatarList.map(av => ({
+          id: av.avatar_group_id || av.id,
+          name: av.name || av.group_name || 'AI Presenter',
+          image: av.preview_image_url || av.thumbnail_url || av.normal_image_url || av.image_url || 'https://via.placeholder.com/300x400?text=Avatar',
+          gender: av.gender || 'unknown',
+        }));
+        
+        setAvatars(mappedAvatars);
+      } catch (err) {
+        console.error('Failed to load avatars:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAvatars();
+  }, [activeTab]);
+
+  const filteredAvatars = avatars.filter(av => 
     av.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -90,53 +132,61 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
       </div>
 
       <div style={{ padding: '20px', flex: 1, overflowY: 'auto' }} className="premium-scrollbar">
-        {activeTab === 'mine' ? (
-           <div style={{
-             display: 'flex',
-             flexDirection: 'column',
-             alignItems: 'center',
-             justifyContent: 'center',
-             padding: '40px 20px',
-             textAlign: 'center',
-             background: 'var(--bg-card)',
-             borderRadius: '12px',
-             border: '1px dashed var(--border-color)'
-           }}>
-             <div style={{
-               width: '48px',
-               height: '48px',
-               borderRadius: '50%',
-               background: 'rgba(26, 115, 232, 0.1)',
-               display: 'flex',
-               alignItems: 'center',
-               justifyContent: 'center',
-               marginBottom: '16px'
-             }}>
-                <MdCloudUpload size={24} style={{ color: 'var(--primary)' }} />
-             </div>
-             <h4 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)', margin: '0 0 8px 0' }}>Create Custom Avatar</h4>
-             <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '0 0 16px 0', lineHeight: '1.5' }}>
-               Upload a 2-minute video of yourself to create a custom AI presenter.
-             </p>
-             <button className="btn-primary" style={{ fontSize: '12px', padding: '8px 16px' }}>
-               Get Started
-             </button>
-           </div>
-        ) : (
-          <>
+        {activeTab === 'mine' && (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px 20px',
+            textAlign: 'center',
+            background: 'var(--bg-card)',
+            borderRadius: '12px',
+            border: '1px dashed var(--border-color)',
+            marginBottom: '20px'
+          }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              background: 'rgba(26, 115, 232, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '12px'
+            }}>
+               <MdCloudUpload size={20} style={{ color: 'var(--primary)' }} />
+            </div>
+            <h4 style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', margin: '0 0 4px 0' }}>Create Custom Avatar</h4>
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '0 0 12px 0', lineHeight: '1.5' }}>
+              Upload a 2-minute video of yourself to create a custom AI presenter.
+            </p>
+            <button className="btn-primary" style={{ fontSize: '12px', padding: '6px 14px' }}>
+              Upload Video
+            </button>
+          </div>
+        )}
+
+        <>
+          {activeTab !== 'mine' && (
             <div className="elements-chips-scroll" style={{ marginBottom: '20px', paddingBottom: '4px' }}>
               <button className="elements-chip" style={{ background: 'var(--primary)', color: 'white', borderColor: 'var(--primary)' }}>All</button>
               <button className="elements-chip">Business</button>
               <button className="elements-chip">Casual</button>
               <button className="elements-chip">News</button>
             </div>
+          )}
 
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(2, 1fr)',
               gap: '12px'
             }}>
-              {filteredAvatars.map((avatar) => {
+              {loading ? (
+                <div style={{ gridColumn: '1 / -1', padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  Loading avatars...
+                </div>
+              ) : filteredAvatars.map((avatar) => {
                 const isActive = activeScene?.avatarType === avatar.id;
                 
                 return (
@@ -282,13 +332,12 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
               })}
             </div>
             
-            {filteredAvatars.length === 0 && (
+            {filteredAvatars.length === 0 && !loading && (
               <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                <p>No avatars found matching "{searchQuery}"</p>
+                <p>{activeTab === 'mine' ? "You haven't created any custom avatars yet." : `No avatars found matching "${searchQuery}"`}</p>
               </div>
             )}
-          </>
-        )}
+        </>
       </div>
     </div>
   );
