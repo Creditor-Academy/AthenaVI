@@ -27,8 +27,8 @@ import { useAuth } from '../../contexts/AuthContext'
 import './Dashboard.css'
 
 
-function Dashboard({ onLogout, onCreate, initialSection }) {
-  const { user, updateUser } = useAuth()
+function Dashboard({ onCreate, initialSection }) {
+  const { updateUser } = useAuth()
   const [section, setSection] = useState(() => {
     // Use initialSection from props if provided, otherwise get from URL
     if (initialSection) {
@@ -51,6 +51,7 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
   const [showProcessingModal, setShowProcessingModal] = useState(false)
   const [showNotificationsModal, setShowNotificationsModal] = useState(false)
   const [showCreditsModal, setShowCreditsModal] = useState(false)
+  const [createVideoModalContext, setCreateVideoModalContext] = useState(null)
   const [pendingSection, setPendingSection] = useState(null)
   const [selectedTemplateForDetails, setSelectedTemplateForDetails] = useState(null)
   const [topbarMobileOpen, setTopbarMobileOpen] = useState(false)
@@ -77,20 +78,17 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
     }, 1200)
   }
 
-  const [initialTemplate, setInitialTemplate] = useState(null)
-
-  const handleOpenCreateVideoModal = useCallback((template = null) => {
-    setInitialTemplate(template)
+  const handleOpenCreateVideoModal = useCallback((context = null) => {
+    setCreateVideoModalContext(context)
     setShowCreateVideoModal(true)
   }, [])
 
   const handleCreateVideo = useCallback((config) => {
     setShowCreateVideoModal(false)
+    setCreateVideoModalContext(null)
     if (onCreate) {
       onCreate(config)
     }
-    // Auto refresh the page as requested
-    window.location.reload()
   }, [onCreate])
 
   // Update URL when section changes
@@ -130,7 +128,7 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
       }
     }
     syncProfile()
-  }, [])
+  }, [updateUser])
 
   return (
     <div
@@ -248,12 +246,17 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
       {showCreateVideoModal && (
         <CreateVideoModal
           isOpen={showCreateVideoModal}
-          initialTemplate={initialTemplate}
-          onClose={() => { setShowCreateVideoModal(false); setInitialTemplate(null); }}
+          onClose={() => {
+            setShowCreateVideoModal(false)
+            setCreateVideoModalContext(null)
+          }}
           onImportPowerPoint={() => {
             setShowCreateVideoModal(false)
+            setCreateVideoModalContext(null)
             setShowImportModal(true)
           }}
+          initialWorkspaceId={createVideoModalContext?.initialWorkspaceId || ''}
+          initialFolderId={createVideoModalContext?.initialFolderId || ''}
           onCreateVideo={handleCreateVideo}
         />
       )}

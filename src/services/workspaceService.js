@@ -5,6 +5,11 @@ class WorkspaceService {
     this.baseURL = ''; // Not used anymore as we use buildUrl
   }
 
+  normalizeId(item) {
+    if (!item || typeof item !== 'object') return item;
+    return { ...item, id: item.id || item._id };
+  }
+
   // List all workspaces for the current user
   async listWorkspaces() {
     try {
@@ -28,7 +33,7 @@ class WorkspaceService {
       // Extract workspaces from nested structure
       const workspaces = data.data?.workspaces || data.workspaces || (Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []));
       // Normalize _id to id for consistency
-      const normalized = workspaces.map(ws => ({ ...ws, id: ws.id || ws._id }));
+      const normalized = workspaces.map((ws) => this.normalizeId(ws));
       console.log('Extracted workspaces:', normalized);
 
       // DEBUG: Log raw field names from first workspace to identify API shape
@@ -62,7 +67,8 @@ class WorkspaceService {
       }
 
       const data = await response.json();
-      return data.data?.workspace || data.workspace;
+      const workspace = data.data?.workspace || data.workspace;
+      return this.normalizeId(workspace);
     } catch (error) {
       console.error('Error in getWorkspace:', error);
       throw error;
@@ -98,7 +104,7 @@ class WorkspaceService {
         throw new Error('Workspace not found in response');
       }
 
-      return workspace;
+      return this.normalizeId(workspace);
     } catch (error) {
       console.error('Error in createWorkspace:', error);
       throw error;
@@ -121,7 +127,7 @@ class WorkspaceService {
 
       const data = await response.json();
       const folder = data.data?.folder || data.folder || data.data || data;
-      return { ...folder, id: folder.id || folder._id };
+      return this.normalizeId(folder);
     } catch (error) {
       console.error('Error in createFolder:', error);
       throw error;
@@ -149,7 +155,7 @@ class WorkspaceService {
       console.log('listFolders: raw response data', JSON.stringify(data));
       const folders = data.data?.folders || data.folders || (Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []));
       // Normalize _id to id for consistency
-      return folders.map(f => ({ ...f, id: f.id || f._id }));
+      return folders.map((f) => this.normalizeId(f));
     } catch (error) {
       console.error('Error in listFolders:', error);
       throw error;
@@ -172,7 +178,7 @@ class WorkspaceService {
 
       const data = await response.json();
       const folder = data.data?.folder || data.folder || data.data || data;
-      return { ...folder, id: folder.id || folder._id };
+      return this.normalizeId(folder);
     } catch (error) {
       console.error('Error in renameFolder:', error);
       throw error;
@@ -212,7 +218,7 @@ class WorkspaceService {
       }
 
       const data = await response.json();
-      return data.data?.workspace || data.workspace;
+      return this.normalizeId(data.data?.workspace || data.workspace);
     } catch (error) {
       console.error('Error in updateWorkspace:', error);
       throw error;
@@ -255,7 +261,8 @@ class WorkspaceService {
       }
 
       const data = await response.json();
-      return data.members || [];
+      const members = data.data?.members || data.members || [];
+      return members.map((m) => this.normalizeId(m));
     } catch (error) {
       console.error('Error fetching workspace members:', error);
       throw error;
@@ -323,7 +330,7 @@ class WorkspaceService {
       }
 
       const data = await response.json();
-      return data.data?.workspace || data.workspace;
+      return this.normalizeId(data.data?.workspace || data.workspace);
     } catch (error) {
       console.error('Error accepting invitation:', error);
       throw error;
@@ -354,7 +361,7 @@ class WorkspaceService {
       }
 
       const data = await response.json();
-      return data.member;
+      return this.normalizeId(data.data?.member || data.member);
     } catch (error) {
       console.error('Error changing member role:', error);
       throw error;
@@ -484,7 +491,7 @@ class WorkspaceService {
       }
 
       const data = await response.json();
-      return data.data?.video || data.video;
+      return this.normalizeId(data.data?.video || data.video);
     } catch (error) {
       console.error('Error in renameVideo:', error);
       throw error;
@@ -507,6 +514,94 @@ class WorkspaceService {
     } catch (error) {
       console.error('Error in deleteVideo:', error);
       throw error;
+    }
+  }
+
+  async createVideo(workspaceId, payload) {
+    try {
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/videos`), {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to create video: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const video = data.data?.video || data.video || data.data || data;
+      return this.normalizeId(video);
+    } catch (error) {
+      console.error('Error in createVideo:', error);
+      throw error;
+    }
+  }
+
+  async getInvitations() {
+    try {
+      const response = await fetch(buildUrl('/api/workspaces/invitations'), {
+        method: 'GET',
+        headers: getAuthHeaders(),
+        cache: 'no-store'
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) return [];
+        throw new Error(`Failed to fetch invitations: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const invitations = data.data?.invitations || data.invitations || (Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []));
+      return invitations.map((inv) => this.normalizeId(inv));
+    } catch (error) {
+      console.error('Error in getInvitations:', error);
+      return [];
+    }
+  }
+
+  async listWorkspaceInvitations(workspaceId) {
+    try {
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/invitations`), {
+        method: 'GET',
+        headers: getAuthHeaders(),
+        cache: 'no-store'
+      });
+
+      if (!response.ok) {
+        if (response.status === 404 || response.status === 403) return [];
+        throw new Error(`Failed to fetch workspace invitations: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const invitations = data.data?.invitations || data.invitations || (Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []));
+      return invitations.map((inv) => this.normalizeId(inv));
+    } catch (error) {
+      console.error('Error in listWorkspaceInvitations:', error);
+      return [];
+    }
+  }
+
+  async listTemplatesByAspectRatio(aspectRatio) {
+    try {
+      const response = await fetch(buildUrl(`/api/templates?aspectRatio=${encodeURIComponent(aspectRatio)}`), {
+        method: 'GET',
+        headers: getAuthHeaders(),
+        cache: 'no-store'
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) return [];
+        throw new Error(`Failed to fetch templates: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const templates = data.data?.templates || data.templates || (Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []));
+      return templates.map((tpl) => this.normalizeId(tpl));
+    } catch (error) {
+      console.error('Error in listTemplatesByAspectRatio:', error);
+      return [];
     }
   }
 }

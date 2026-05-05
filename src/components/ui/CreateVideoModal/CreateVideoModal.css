@@ -213,6 +213,16 @@
   height: 76px;
 }
 
+.create-video-size-visual.four-five {
+  width: 68px;
+  height: 84px;
+}
+
+.create-video-size-visual.custom {
+  width: 72px;
+  height: 72px;
+}
+
 .create-video-size-name {
   font-size: 13px;
   font-weight: 700;
@@ -300,6 +310,23 @@
   padding-right: 2px;
   scrollbar-width: none;
   -ms-overflow-style: none;
+}
+
+.create-video-template-skeleton {
+  border-radius: 12px;
+  height: 170px;
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.16) 25%, rgba(148, 163, 184, 0.26) 37%, rgba(148, 163, 184, 0.16) 63%);
+  background-size: 400% 100%;
+  animation: create-video-skeleton-shimmer 1.35s ease infinite;
+}
+
+@keyframes create-video-skeleton-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
 }
 
 .create-video-template-grid::-webkit-scrollbar {
@@ -426,6 +453,57 @@
   font-size: 13px;
   font-family: var(--font-family);
   outline: none;
+}
+
+.create-video-tag-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.create-video-tag-pill {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-main);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.create-video-tag-pill.active {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 9%, var(--bg-surface));
+}
+
+.create-video-inline-row {
+  display: flex;
+  gap: 8px;
+}
+
+.create-video-inline-input {
+  height: 36px;
+  flex: 1;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-surface);
+  color: var(--text-main);
+  padding: 0 10px;
+  font-size: 13px;
+  font-family: var(--font-family);
+}
+
+.create-video-warning {
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.1);
+  color: #a16207;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 10px 12px;
 }
 
 .create-video-dropdown {
