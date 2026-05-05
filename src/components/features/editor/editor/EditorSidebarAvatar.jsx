@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MdAdd, MdMic, MdSearch, MdStar, MdAutoAwesome, MdCloudUpload } from 'react-icons/md';
+import { Loader2 } from 'lucide-react';
 import heygenService from '../../../../services/heygenService';
 
 const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateScene, updateScene, setShowTemplateModal, addLayer }) => {
   const [activeTab, setActiveTab] = useState('studio');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState('');
+  const fileInputRef = useRef(null);
   const [avatars, setAvatars] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -47,6 +51,70 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
     };
     fetchAvatars();
   }, [activeTab]);
+
+
+  const convertFileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setUploadStatus('Reading file...');
+
+    try {
+      const base64Data = await convertFileToBase64(file);
+      
+      setUploadStatus('Creating digital twin...');
+      const payload = {
+        type: 'digital_twin',
+        name: file.name.split('.')[0] || 'Custom Twin',
+        file: {
+          type: 'base64',
+          content: base64Data.split(',')[1]
+        }
+      };
+
+      const response = await heygenService.createAvatar(payload);
+      
+      if (response && response.avatar_group_id) {
+        setUploadStatus('Securing consent...');
+        try {
+          const consentRes = await heygenService.getAvatarConsent(response.avatar_group_id, window.location.href);
+          if (consentRes && consentRes.consent_url) {
+            window.open(consentRes.consent_url, '_blank');
+          }
+        } catch (consentErr) {
+          console.warn('Could not auto-fetch consent URL', consentErr);
+        }
+      }
+
+      setUploadStatus('Avatar creation initiated successfully!');
+      setTimeout(() => {
+        setIsUploading(false);
+        setUploadStatus('');
+      }, 3000);
+      
+    } catch (error) {
+      console.error('Avatar creation failed:', error);
+      setUploadStatus('Failed to create avatar.');
+      setTimeout(() => {
+        setIsUploading(false);
+        setUploadStatus('');
+      }, 3000);
+    }
+  };
 
   const filteredAvatars = avatars.filter(av => 
     av.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -145,25 +213,45 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
             border: '1px dashed var(--border-color)',
             marginBottom: '20px'
           }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              background: 'rgba(26, 115, 232, 0.1)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: '12px'
-            }}>
-               <MdCloudUpload size={20} style={{ color: 'var(--primary)' }} />
-            </div>
-            <h4 style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', margin: '0 0 4px 0' }}>Create Custom Avatar</h4>
-            <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '0 0 12px 0', lineHeight: '1.5' }}>
-              Upload a 2-minute video of yourself to create a custom AI presenter.
-            </p>
-            <button className="btn-primary" style={{ fontSize: '12px', padding: '6px 14px' }}>
-              Upload Video
-            </button>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              style={{ display: 'none' }} 
+              accept="video/*,image/*" 
+              onChange={handleFileChange} 
+            />
+            
+            {isUploading ? (
+              <div style={{ textAlign: 'center', padding: '10px' }}>
+                <Loader2 size={32} color="var(--primary)" style={{ margin: '0 auto 12px', animation: 'spin 2s linear infinite' }} />
+                <p style={{ color: 'var(--text-main)', fontSize: '13px', fontWeight: '500' }}>{uploadStatus}</p>
+                <style>
+                  {`@keyframes spin { 100% { transform: rotate(360deg); } }`}
+                </style>
+              </div>
+            ) : (
+              <>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  background: 'rgba(26, 115, 232, 0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '12px'
+                }}>
+                   <MdCloudUpload size={20} style={{ color: 'var(--primary)' }} />
+                </div>
+                <h4 style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', margin: '0 0 4px 0' }}>Create Custom Avatar</h4>
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '0 0 12px 0', lineHeight: '1.5' }}>
+                  Upload a 2-minute video of yourself to create a custom AI presenter.
+                </p>
+                <button className="btn-primary" style={{ fontSize: '12px', padding: '6px 14px' }} onClick={handleUploadClick}>
+                  Upload Video
+                </button>
+              </>
+            )}
           </div>
         )}
 

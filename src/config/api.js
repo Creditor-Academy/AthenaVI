@@ -41,6 +41,13 @@ const API_CONFIG = {
         GROUPS: '/api/heygen/avatars/groups',
         LOOKS: '/api/heygen/avatars/looks',
         CREATE: '/api/heygen/avatars'
+      },
+      VOICES: {
+        LIST: '/api/heygen/voices',
+        DESIGN: '/api/heygen/voices',
+        CLONE: '/api/heygen/voices/clone',
+        PREVIEW: '/api/heygen/voices/preview-speech',
+        STATUS: '/api/heygen/voices' // Path will be /api/heygen/voices/:voiceId
       }
     }
   },

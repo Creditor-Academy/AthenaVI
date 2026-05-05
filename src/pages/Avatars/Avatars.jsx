@@ -1,18 +1,19 @@
-import { useState, useEffect } from 'react'
-import { Search, Filter, Play, Video, ChevronRight, ChevronLeft, X, Info, Layers, ArrowLeft } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Search, Filter, Play, Video, ChevronRight, ChevronLeft, X, Info, Layers, ArrowLeft, Upload, Loader2, Plus, Image, Terminal } from 'lucide-react'
 import heygenService from '../../services/heygenService'
 import AvatarPersona from './AvatarPersona'
 import './Avatars.css'
 
 // All avatars are fetched dynamically via HeyGen API
 
-function Avatars({ onCreate }) {
+function Avatars({ onCreate, onCreateAvatar }) {
   const [avatars, setAvatars] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedAvatar, setSelectedAvatar] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterCategory, setFilterCategory] = useState('All')
   const [ownership, setOwnership] = useState('public')
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
     const fetchAvatars = async () => {
@@ -154,6 +155,15 @@ function Avatars({ onCreate }) {
                 </div>
               </div>
             </header>
+
+            {ownership === 'private' && (
+              <div className="creation-banner">
+                <button className="open-creation-btn" onClick={() => onCreateAvatar && onCreateAvatar()}>
+                  <Plus size={20} />
+                  <span>Create New Custom Avatar</span>
+                </button>
+              </div>
+            )}
 
             <div className="avatars-grid">
               {loading ? (
