@@ -33,6 +33,15 @@ const API_CONFIG = {
     USER: {
       GET_ALL: '/api/user/getall'
       // Note: No individual user profile endpoint mentioned in docs
+    },
+    
+    // HeyGen API
+    HEYGEN: {
+      AVATARS: {
+        GROUPS: '/api/heygen/avatars/groups',
+        LOOKS: '/api/heygen/avatars/looks',
+        CREATE: '/api/heygen/avatars'
+      }
     }
   },
   

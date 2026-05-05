@@ -1,134 +1,95 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Search, Filter, Play, Video, ChevronRight, ChevronLeft, X, Info, Layers, ArrowLeft } from 'lucide-react'
+import heygenService from '../../services/heygenService'
+import AvatarPersona from './AvatarPersona'
 import './Avatars.css'
 
-// Importing avatar assets
-import pro1 from '../../assets/pro_avatar_1.png'
-import pro2 from '../../assets/pro_avatar_2.png'
-import pro3 from '../../assets/pro_avatar_3.png'
-import pro4 from '../../assets/pro_avatar_4.png'
-import jamesPro from '../../assets/james_pro.png'
-import elenaPro from '../../assets/elena_pro.png'
-import sophiePro from '../../assets/sophie_pro.png'
-import sampleVideo from '../../assets/Personal Avatar.mp4'
-
-const AVATARS_DATA = [
-  {
-    id: 'marcus-01',
-    name: 'Marcus',
-    role: 'Executive Presenter',
-    description: 'A professional and authoritative persona, ideal for corporate presentations and formal reports.',
-    image: pro1,
-    preview: sampleVideo,
-    category: 'Professional',
-    gender: 'Male',
-    style: 'Modern Suite',
-    rating: 4.9
-  },
-  {
-    id: 'sarah-02',
-    name: 'Sarah',
-    role: 'Tech Lead',
-    description: 'Enthusiastic and clear-spoken, Sarah is perfect for software tutorials and engineering updates.',
-    image: pro2,
-    preview: sampleVideo,
-    category: 'Tech',
-    gender: 'Female',
-    style: 'Casual Business',
-    rating: 4.8
-  },
-  {
-    id: 'alex-03',
-    name: 'Alex',
-    role: 'Creative Director',
-    description: 'Vibrant and energetic, Alex brings a creative flair to your marketing videos and social content.',
-    image: pro3,
-    preview: sampleVideo,
-    category: 'Creative',
-    gender: 'Male',
-    style: 'Creative Studio',
-    rating: 4.7
-  },
-  {
-    id: 'lisa-04',
-    name: 'Lisa',
-    role: 'Support Specialist',
-    description: 'Calm and reassuring, Lisa excels in customer-facing help videos and onboarding guides.',
-    image: pro4,
-    preview: sampleVideo,
-    category: 'Service',
-    gender: 'Female',
-    style: 'Casual',
-    rating: 4.9
-  },
-  {
-    id: 'james-05',
-    name: 'James',
-    role: 'Product Expert',
-    description: 'A versatile speaker with a focus on product features and detailed explainer videos.',
-    image: jamesPro,
-    preview: sampleVideo,
-    category: 'Professional',
-    gender: 'Male',
-    style: 'Formal',
-    rating: 4.6
-  },
-  {
-    id: 'elena-06',
-    name: 'Elena',
-    role: 'AI Researcher',
-    description: 'Highly intelligent and articulate, Elena is the perfect fit for technical and scientific content.',
-    image: elenaPro,
-    preview: sampleVideo,
-    category: 'Academic',
-    gender: 'Female',
-    style: 'Academic',
-    rating: 4.8
-  },
-  {
-    id: 'sophie-07',
-    name: 'Sophie',
-    role: 'Lifestyle Coach',
-    description: 'Warm and inviting, Sophie is great for wellness, health, and personal development content.',
-    image: sophiePro,
-    preview: sampleVideo,
-    category: 'Lifestyle',
-    gender: 'Female',
-    style: 'Relaxed',
-    rating: 4.7
-  }
-]
+// All avatars are fetched dynamically via HeyGen API
 
 function Avatars({ onCreate }) {
+  const [avatars, setAvatars] = useState([])
+  const [loading, setLoading] = useState(true)
   const [selectedAvatar, setSelectedAvatar] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterCategory, setFilterCategory] = useState('All')
-  const [isPreviewing, setIsPreviewing] = useState(false)
+  const [ownership, setOwnership] = useState('public')
+
+  useEffect(() => {
+    const fetchAvatars = async () => {
+      try {
+        setLoading(true)
+        const responseData = await heygenService.getAvatarGroups({ ownership })
+
+        // Find the array in the payload (HeyGen v3 uses avatar_looks, older uses avatars)
+        let avatarList = []
+        if (Array.isArray(responseData)) {
+          avatarList = responseData
+        } else if (responseData?.avatar_looks) {
+          avatarList = responseData.avatar_looks
+        } else if (responseData?.avatars) {
+          avatarList = responseData.avatars
+        } else if (responseData?.data?.avatar_groups) {
+          avatarList = responseData.data.avatar_groups
+        } else if (responseData?.data && Array.isArray(responseData.data)) {
+          avatarList = responseData.data
+        }
+        const mappedAvatars = avatarList.map((av, idx) => ({
+          id: av.avatar_group_id || av.id || `group-${idx}`,
+          name: av.name || av.group_name || 'AI Presenter',
+          role: 'Virtual Presenter',
+          description: 'High-fidelity Athena VI avatar. Perfect for professional video generation.',
+          image: av.preview_image_url || av.thumbnail_url || av.normal_image_url || av.image_url || 'https://via.placeholder.com/300x400?text=Avatar',
+          preview: av.preview_video_url || null,
+          category: 'Professional',
+          gender: 'Unknown',
+          style: 'Modern Suite',
+          rating: 4.9,
+          rawLooks: av.avatar_looks || []
+        }))
+
+        if (mappedAvatars.length === 0) {
+          console.warn('API returned empty avatars');
+          setAvatars([]);
+        } else {
+          setAvatars(mappedAvatars);
+        }
+      } catch (error) {
+        console.error('Failed to fetch avatars:', error)
+        setAvatars([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchAvatars()
+  }, [ownership])
 
   const categories = ['All', 'Professional', 'Tech', 'Creative', 'Service', 'Academic', 'Lifestyle']
 
-  const filteredAvatars = AVATARS_DATA.filter(avatar => {
-    const matchesSearch = avatar.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      avatar.role.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCategory = filterCategory === 'All' || avatar.category === filterCategory
-    return matchesSearch && matchesCategory
+  const filteredAvatars = (avatars || []).filter(avatar => {
+    if (!avatar) return false;
+    const nameStr = avatar.name || '';
+    const roleStr = avatar.role || '';
+    const searchStr = (searchQuery || '').toLowerCase();
+
+    const matchesSearch = nameStr.toLowerCase().includes(searchStr) ||
+      roleStr.toLowerCase().includes(searchStr);
+    const matchesCategory = filterCategory === 'All' || avatar.category === filterCategory;
+
+    return matchesSearch && matchesCategory;
   })
 
-  const currentIndex = AVATARS_DATA.findIndex(a => a.id === selectedAvatar?.id)
+  const currentIndex = avatars.findIndex(a => a.id === selectedAvatar?.id)
 
   const handleSelectPersona = (avatar) => {
     setSelectedAvatar(avatar)
-    setIsPreviewing(false)
   }
 
   const openAvatarDetails = (avatar) => {
     setSelectedAvatar(avatar)
-    setIsPreviewing(false)
   }
 
   const closeDetails = () => {
     setSelectedAvatar(null)
-    setIsPreviewing(false)
   }
 
   const handleCreateVideo = (avatar) => {
@@ -153,6 +114,21 @@ function Avatars({ onCreate }) {
                 <p>Choose an avatar for your next video project.</p>
               </div>
               <div className="header-actions">
+                <div className="ownership-segmented-control">
+                  <button
+                    className={`segmented-btn ${ownership === 'public' ? 'active' : ''}`}
+                    onClick={() => setOwnership('public')}
+                  >
+                    Public Library
+                  </button>
+                  <button
+                    className={`segmented-btn ${ownership === 'private' ? 'active' : ''}`}
+                    onClick={() => setOwnership('private')}
+                  >
+                    My Custom Avatars
+                  </button>
+                </div>
+
                 <div className="search-section">
                   <div className="search-bar">
                     <Search size={18} />
@@ -180,7 +156,11 @@ function Avatars({ onCreate }) {
             </header>
 
             <div className="avatars-grid">
-              {filteredAvatars.map(avatar => (
+              {loading ? (
+                <div style={{ padding: '40px', textAlign: 'center', width: '100%', color: 'var(--text-muted)' }}>
+                  Loading Athena VI Avatars...
+                </div>
+              ) : filteredAvatars.map(avatar => (
                 <div key={avatar.id} className="avatar-card" onClick={() => openAvatarDetails(avatar)}>
                   <div className="avatar-image-container">
                     <img src={avatar.image} alt={avatar.name} />
@@ -200,79 +180,11 @@ function Avatars({ onCreate }) {
             </div>
           </div>
         ) : (
-          <div className="hero-showcase">
-            <button className="back-to-library-btn" onClick={closeDetails}>
-              <X size={18} /> Close Persona
-            </button>
-            <div className="hero-visual">
-              {/* Glass Mini-Switcher: User hated the sidebar and arrows, this is the modern alternative */}
-              <div className="persona-filmstrip">
-                {AVATARS_DATA.map(avatar => (
-                  <div
-                    key={avatar.id}
-                    className={`filmstrip-item ${selectedAvatar?.id === avatar.id ? 'active' : ''}`}
-                    onClick={() => handleSelectPersona(avatar)}
-                  >
-                    <img src={avatar.image} alt={avatar.name} />
-                  </div>
-                ))}
-              </div>
-
-              {!isPreviewing ? (
-                <div className="hero-still" onClick={() => setIsPreviewing(true)}>
-                  <img src={selectedAvatar.image} alt={selectedAvatar.name} />
-                  <div className="hero-play-indicator">
-                    <Play size={40} fill="currentColor" />
-                  </div>
-                  <div className="hero-instruction">Tap to preview sync</div>
-                </div>
-              ) : (
-                <div className="hero-motion">
-                  <video
-                    src={selectedAvatar.preview}
-                    autoPlay
-                    loop
-                    className="hero-video"
-                  />
-                  <button className="exit-preview-corner" onClick={() => setIsPreviewing(false)}>
-                    <X size={20} />
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="hero-details">
-              <div className="hero-glass-pan">
-                <div className="hero-top-meta">Unit {selectedAvatar.id} // v4.2</div>
-                <h1 className="hero-title">{selectedAvatar.name}</h1>
-                <div className="hero-badge">{selectedAvatar.category} Model</div>
-
-                <p className="hero-bio">{selectedAvatar.description}</p>
-
-                <div className="hero-specs">
-                  <div className="spec-tile">
-                    <label>Oral Expression</label>
-                    <span>{selectedAvatar.style}</span>
-                  </div>
-                  <div className="spec-tile">
-                    <label>Quality Score</label>
-                    <span>{selectedAvatar.rating} Index</span>
-                  </div>
-                  <div className="spec-tile">
-                    <label>Integration</label>
-                    <span>Athena Ready</span>
-                  </div>
-                </div>
-
-                <div className="hero-actions">
-                  <button className="btn-action-primary" onClick={() => handleCreateVideo(selectedAvatar)}>
-                    <Video size={22} />
-                    <span>Start Video with this Avatar</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <AvatarPersona
+            selectedAvatar={selectedAvatar}
+            closeDetails={closeDetails}
+            onCreate={() => handleCreateVideo(selectedAvatar)}
+          />
         )}
       </main>
     </div>
