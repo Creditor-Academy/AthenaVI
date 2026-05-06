@@ -3,6 +3,7 @@ import Home from '../Home/Home.jsx'
 import Videos from '../Videos/Videos.jsx'
 import Trash from '../Trash/Trash.jsx'
 import Avatars from '../Avatars/Avatars.jsx'
+import CreateAvatar from '../Avatars/CreateAvatar.jsx'
 import Voices from '../Voices/Voices.jsx'
 import Library from '../Library/Library.jsx'
 import Templates from '../Templates/Templates.jsx'
@@ -16,7 +17,7 @@ import TeamWorkspace from '../TeamWorkspace/TeamWorkspace.jsx'
 import AdminPortal from '../AdminPortal/AdminPortal.jsx'
 import DashboardTopbar from '../../components/layout/DashboardTopbar/DashboardTopbar.jsx'
 import DashboardSidebar from '../../components/layout/DashboardSidebar/DashboardSidebar.jsx'
-import VoiceCreatePanel from '../../components/ui/VoiceCreatePanel/VoiceCreatePanel.jsx'
+
 import AIVideoAssistant from '../../components/ui/AIVideoAssistant/AIVideoAssistant.jsx'
 import ImportPowerPointModal from '../../components/ui/ImportPowerPointModal/ImportPowerPointModal.jsx'
 import TranslateVideoModal from '../../components/ui/TranslateVideoModal/TranslateVideoModal.jsx'
@@ -42,7 +43,6 @@ function Dashboard({ onCreate, initialSection }) {
     }
     return 'home'
   })
-  const [showVoicePanel, setShowVoicePanel] = useState(false)
   const [selectedVoice, setSelectedVoice] = useState(null)
   const [showAIAssistant, setShowAIAssistant] = useState(false)
   const [showCreateVideoModal, setShowCreateVideoModal] = useState(false)
@@ -182,7 +182,7 @@ function Dashboard({ onCreate, initialSection }) {
         />
 
         <main
-          className={`content ${!['avatars', 'templates', 'template-details', 'team-workspace', 'admin-portal', 'settings'].includes(section) ? 'with-padding' : ''}`}
+          className={`content ${!['avatars', 'create-avatar', 'templates', 'template-details', 'team-workspace', 'admin-portal', 'settings'].includes(section) ? 'with-padding' : ''}`}
         >
           {section === 'home' && (
             <Home 
@@ -191,7 +191,20 @@ function Dashboard({ onCreate, initialSection }) {
             />
           )}
           {section === 'videos' && <Videos onCreate={handleOpenCreateVideoModal} />}
-          {section === 'avatars' && <Avatars onCreate={handleOpenCreateVideoModal} goToSection={goToSection} />}
+          {section === 'avatars' && (
+            <Avatars 
+              onCreate={handleOpenCreateVideoModal} 
+              goToSection={goToSection} 
+              onCreateAvatar={() => goToSection('create-avatar')} 
+            />
+          )}
+          {section === 'create-avatar' && (
+            <CreateAvatar 
+              onBack={(success) => {
+                goToSection('avatars');
+              }} 
+            />
+          )}
           {section === 'trash' && <Trash />}
           {section === 'voices' && (
             <Voices
@@ -227,13 +240,7 @@ function Dashboard({ onCreate, initialSection }) {
         </main>
       </div>
 
-      {showVoicePanel && (
-        <VoiceCreatePanel
-          voice={selectedVoice}
-          onClose={() => { setShowVoicePanel(false); setSelectedVoice(null); }}
-          onNext={() => { setShowVoicePanel(false); setSelectedVoice(null); }}
-        />
-      )}
+
       {showAIAssistant && (
         <AIVideoAssistant
           onClose={() => setShowAIAssistant(false)}

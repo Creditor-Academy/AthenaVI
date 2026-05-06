@@ -15,6 +15,8 @@ import {
   MdPlayCircleFilled,
 } from 'react-icons/md'
 import workspaceService from '../../services/workspaceService'
+import heygenService from '../../services/heygenService'
+import { getAuthHeaders } from '../../config/api.js'
 
 const styles = `
 .workspace-container {
@@ -148,6 +150,23 @@ const styles = `
   border-radius: 999px;
   padding: 3px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.video-card.processing {
+  cursor: wait;
 }
 
 .view-toggle-btn {
@@ -752,6 +771,8 @@ function Workspace({ onCreate }) {
   const [selectedLastUpdated, setSelectedLastUpdated] = useState(lastUpdatedOptions[0])
   const [selectedFilter, setSelectedFilter] = useState(filterOptions[0])
   const [loading, setLoading] = useState(true)
+  const [heygenVideos, setHeygenVideos] = useState([])
+  const [isPolling, setIsPolling] = useState(false)
   const menuRefs = useRef({})
   const lastUpdatedRef = useRef(null)
   const filtersRef = useRef(null)
@@ -777,6 +798,47 @@ function Workspace({ onCreate }) {
   useEffect(() => {
     fetchInitialData()
   }, [])
+
+  // Fetch HeyGen videos when a subfolder (project) is selected
+  useEffect(() => {
+    if (workspaceId && selectedSubfolder) {
+      fetchHeygenVideos()
+    } else {
+      setHeygenVideos([])
+    }
+  }, [workspaceId, selectedSubfolder])
+
+  // Polling logic for videos in progress
+  useEffect(() => {
+    let pollInterval;
+    const processingVideos = heygenVideos.filter(v => v.status === 'processing');
+    
+    if (processingVideos.length > 0 && !isPolling) {
+      setIsPolling(true);
+      pollInterval = setInterval(() => {
+        fetchHeygenVideos(true); // silent refresh
+      }, 5000); // Poll every 5 seconds
+    } else if (processingVideos.length === 0 && isPolling) {
+      setIsPolling(false);
+    }
+
+    return () => {
+      if (pollInterval) clearInterval(pollInterval);
+    };
+  }, [heygenVideos, isPolling, workspaceId, selectedSubfolder])
+
+  const fetchHeygenVideos = async (silent = false) => {
+    if (!workspaceId || !selectedSubfolder) return
+    try {
+      if (!silent) setLoading(true)
+      const videos = await heygenService.listVideos(workspaceId, selectedSubfolder)
+      setHeygenVideos(videos || [])
+    } catch (error) {
+      console.error('Failed to fetch HeyGen videos:', error)
+    } finally {
+      if (!silent) setLoading(false)
+    }
+  }
 
   const fetchInitialData = async () => {
     try {
@@ -1030,96 +1092,154 @@ function Workspace({ onCreate }) {
             </div>
           ) : (
             <div className={viewMode === 'grid' ? 'videos-grid' : 'videos-list'}>
-              {currentSubfolder.videos.map((video) => (
-                <div
-                  key={video.id}
-                  className={`video-card ${viewMode === 'list' ? 'list-view' : ''}`}
-                  ref={el => menuRefs.current[`video-${video.id}`] = el}
-                >
-                  <div className="video-thumb">
-                    <img
-                      src={thumbnailUrl}
-                      alt={video.title}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        display: 'block'
-                      }}
-                    />
-                    <div className="video-thumb-overlay">
-                      <div className={`video-badge ${video.status}`}>
-                        {video.status === 'draft' ? 'DRAFT' : 'PUBLISHED'}
-                      </div>
-                      <button
-                        className="video-menu-btn"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setCardMenu(cardMenu === `video-${video.id}` ? null : `video-${video.id}`)
+              {/* Merge HeyGen videos with existing videos if any */}
+              {[...heygenVideos, ...(currentSubfolder.videos || [])].map((video) => {
+                const isHeygen = !!video.heygenVideoId || !!video.video_id;
+                const status = video.status?.toLowerCase();
+                const isProcessing = status === 'processing' || status === 'waiting';
+                const videoId = video.id || video.heygenVideoId || video.video_id;
+                
+                // For HeyGen videos, use the streaming URL
+                const playUrl = isHeygen && status === 'completed' 
+                  ? heygenService.getStreamUrl(workspaceId, selectedSubfolder, videoId)
+                  : video.videoUrl || video.url;
+
+                return (
+                  <div
+                    key={videoId}
+                    className={`video-card ${viewMode === 'list' ? 'list-view' : ''} ${isProcessing ? 'processing' : ''}`}
+                    ref={el => menuRefs.current[`video-${videoId}`] = el}
+                  >
+                    <div className="video-thumb">
+                      <img
+                        src={video.thumbnail_url || video.image_url || thumbnailUrl}
+                        alt={video.title || video.name}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          display: 'block',
+                          opacity: isProcessing ? 0.5 : 1
                         }}
-                      >
-                        <MdMoreVert />
-                      </button>
-                      {cardMenu === `video-${video.id}` && (
-                        <div className="video-menu" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            className="video-menu-item"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setRenameDialog({ folderId: selectedFolder, subfolderId: selectedSubfolder, videoId: video.id })
-                              setRenameType('video')
-                              setNewName(video.title)
-                              setCardMenu(null)
-                            }}
-                          >
-                            <MdEdit className="video-menu-icon" />
-                            Rename
-                          </button>
-                          <button
-                            className="video-menu-item delete"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              deleteVideo(selectedFolder, selectedSubfolder, video.id)
-                            }}
-                          >
-                            <MdDelete className="video-menu-icon" />
-                            Delete
-                          </button>
+                      />
+                      <div className="video-thumb-overlay">
+                        <div className={`video-badge ${status}`}>
+                          {status?.toUpperCase() || 'DRAFT'}
+                        </div>
+                        <button
+                          className="video-menu-btn"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setCardMenu(cardMenu === `video-${videoId}` ? null : `video-${videoId}`)
+                          }}
+                        >
+                          <MdMoreVert />
+                        </button>
+                        {cardMenu === `video-${videoId}` && (
+                          <div className="video-menu" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              className="video-menu-item"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setRenameDialog({ folderId: selectedFolder, subfolderId: selectedSubfolder, videoId })
+                                setRenameType('video')
+                                setNewName(video.title || video.name)
+                                setCardMenu(null)
+                              }}
+                            >
+                              <MdEdit className="video-menu-icon" />
+                              Rename
+                            </button>
+                            
+                            {isHeygen && status === 'completed' && (
+                              <button
+                                className="video-menu-item"
+                                onClick={async (e) => {
+                                  e.stopPropagation()
+                                  try {
+                                    const { presignedUrl } = await heygenService.downloadVideo(workspaceId, selectedSubfolder, videoId);
+                                    window.open(presignedUrl, '_blank');
+                                  } catch (err) {
+                                    alert('Download failed. Please try again.');
+                                  }
+                                  setCardMenu(null)
+                                }}
+                              >
+                                <MdPlayCircleFilled className="video-menu-icon" style={{ transform: 'rotate(90deg)' }} />
+                                Download
+                              </button>
+                            )}
+
+                            <button
+                              className="video-menu-item delete"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                deleteVideo(selectedFolder, selectedSubfolder, videoId)
+                              }}
+                            >
+                              <MdDelete className="video-menu-icon" />
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {!isProcessing ? (
+                        <div 
+                          style={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            width: '48px',
+                            height: '48px',
+                            borderRadius: '50%',
+                            background: 'rgba(255, 255, 255, 0.95)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'var(--text-muted)',
+                            fontSize: '24px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            zIndex: 10
+                          }}
+                          onClick={() => {
+                            if (playUrl) window.open(playUrl, '_blank');
+                          }}
+                        >
+                          <MdPlayArrow />
+                        </div>
+                      ) : (
+                        <div style={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          textAlign: 'center',
+                          color: '#fff',
+                          zIndex: 10
+                        }}>
+                          <div className="spinner" style={{ margin: '0 auto 8px' }}></div>
+                          <div style={{ fontSize: '10px', fontWeight: '700' }}>RENDERING</div>
+                        </div>
+                      )}
+
+                      {video.duration && (
+                        <div className="video-duration">
+                          {video.duration}
                         </div>
                       )}
                     </div>
-                    <div style={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '50%',
-                      background: 'rgba(255, 255, 255, 0.95)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--text-muted)',
-                      fontSize: '24px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      zIndex: 10
-                    }}>
-                      <MdPlayArrow />
+                    <div className="video-info">
+                      <h4 className="video-title">{video.title || video.name || 'Untitled Video'}</h4>
+                      <p className="video-meta">
+                        {isProcessing ? 'Status: Processing...' : `Updated ${video.updated_at || video.updated || 'recently'}`}
+                      </p>
                     </div>
-                    {video.duration && (
-                      <div className="video-duration">
-                        {video.duration}
-                      </div>
-                    )}
                   </div>
-                  <div className="video-info">
-                    <h4 className="video-title">{video.title}</h4>
-                    <p className="video-meta">Updated {video.updated}</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

@@ -1,18 +1,19 @@
-import { useState, useEffect } from 'react'
-import { Search, Filter, Play, Video, ChevronRight, ChevronLeft, X, Info, Layers, ArrowLeft } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Search, Filter, Play, Video, ChevronRight, ChevronLeft, X, Info, Layers, ArrowLeft, Upload, Loader2, Plus, Image, Terminal } from 'lucide-react'
 import heygenService from '../../services/heygenService'
 import AvatarPersona from './AvatarPersona'
 import './Avatars.css'
 
 // All avatars are fetched dynamically via HeyGen API
 
-function Avatars({ onCreate }) {
+function Avatars({ onCreate, onCreateAvatar }) {
   const [avatars, setAvatars] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedAvatar, setSelectedAvatar] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterCategory, setFilterCategory] = useState('All')
   const [ownership, setOwnership] = useState('public')
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
     const fetchAvatars = async () => {
@@ -20,29 +21,36 @@ function Avatars({ onCreate }) {
         setLoading(true)
         const responseData = await heygenService.getAvatarGroups({ ownership })
 
-        // Find the array in the payload (HeyGen v3 uses avatar_looks, older uses avatars)
-        let avatarList = []
-        if (Array.isArray(responseData)) {
-          avatarList = responseData
+        // Comprehensive mapping to handle different API versions and response shapes
+        let avatarList = [];
+        const data = responseData?.data || responseData;
+        
+        if (Array.isArray(data)) {
+          avatarList = data;
+        } else if (data?.avatar_groups) {
+          avatarList = data.avatar_groups;
+        } else if (data?.avatar_looks) {
+          avatarList = data.avatar_looks;
+        } else if (data?.avatars) {
+          avatarList = data.avatars;
         } else if (responseData?.avatar_looks) {
-          avatarList = responseData.avatar_looks
-        } else if (responseData?.avatars) {
-          avatarList = responseData.avatars
-        } else if (responseData?.data?.avatar_groups) {
-          avatarList = responseData.data.avatar_groups
-        } else if (responseData?.data && Array.isArray(responseData.data)) {
-          avatarList = responseData.data
+          avatarList = responseData.avatar_looks;
+        } else if (responseData?.avatar_groups) {
+          avatarList = responseData.avatar_groups;
         }
+        
+        console.log(`Athena VI: Mapping ${avatarList.length} avatars for ownership: ${ownership}`, { raw: responseData });
+
         const mappedAvatars = avatarList.map((av, idx) => ({
           id: av.avatar_group_id || av.id || `group-${idx}`,
           name: av.name || av.group_name || 'AI Presenter',
-          role: 'Virtual Presenter',
-          description: 'High-fidelity Athena VI avatar. Perfect for professional video generation.',
+          role: av.role || 'Virtual Presenter',
+          description: av.description || 'High-fidelity Athena VI avatar.',
           image: av.preview_image_url || av.thumbnail_url || av.normal_image_url || av.image_url || 'https://via.placeholder.com/300x400?text=Avatar',
           preview: av.preview_video_url || null,
-          category: 'Professional',
-          gender: 'Unknown',
-          style: 'Modern Suite',
+          category: av.category || (ownership === 'public' ? 'Professional' : 'All'),
+          gender: av.gender || 'Unknown',
+          style: av.style || 'Modern',
           rating: 4.9,
           rawLooks: av.avatar_looks || []
         }))
@@ -117,15 +125,30 @@ function Avatars({ onCreate }) {
                 <div className="ownership-segmented-control">
                   <button
                     className={`segmented-btn ${ownership === 'public' ? 'active' : ''}`}
-                    onClick={() => setOwnership('public')}
+                    onClick={() => {
+                      setOwnership('public');
+                      setFilterCategory('All');
+                    }}
                   >
                     Public Library
                   </button>
                   <button
                     className={`segmented-btn ${ownership === 'private' ? 'active' : ''}`}
-                    onClick={() => setOwnership('private')}
+                    onClick={() => {
+                      setOwnership('private');
+                      setFilterCategory('All');
+                    }}
                   >
-                    My Custom Avatars
+                    My Avatars
+                  </button>
+                  <button
+                    className={`segmented-btn ${ownership === 'workspace' ? 'active' : ''}`}
+                    onClick={() => {
+                      setOwnership('workspace');
+                      setFilterCategory('All');
+                    }}
+                  >
+                    Team Shared
                   </button>
                 </div>
 
@@ -154,6 +177,24 @@ function Avatars({ onCreate }) {
                 </div>
               </div>
             </header>
+
+            {ownership === 'public' && (
+              <div className="elements-chips-scroll" style={{ marginBottom: '20px', paddingBottom: '4px' }}>
+                <button className="elements-chip" style={{ background: 'var(--primary)', color: 'white', borderColor: 'var(--primary)' }}>All</button>
+                <button className="elements-chip">Business</button>
+                <button className="elements-chip">Casual</button>
+                <button className="elements-chip">News</button>
+              </div>
+            )}
+
+            {ownership === 'private' && (
+              <div className="creation-banner">
+                <button className="open-creation-btn" onClick={() => onCreateAvatar && onCreateAvatar()}>
+                  <Plus size={20} />
+                  <span>Create New Custom Avatar</span>
+                </button>
+              </div>
+            )}
 
             <div className="avatars-grid">
               {loading ? (
