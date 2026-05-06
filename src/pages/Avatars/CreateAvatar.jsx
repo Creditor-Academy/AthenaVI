@@ -49,64 +49,77 @@ function CreateAvatar({ onBack }) {
       return;
     }
 
+    if (creationType !== 'prompt' && !selectedFile) {
+      alert('Please select a file (image or video) for your avatar.');
+      return;
+    }
+
     setIsCreating(true);
-    setCreationStatus('Initiating creation...');
+    setCreationStatus('Preparing asset upload...');
 
     try {
-      let payload = {
-        type: creationType,
-        name: creationName
-      };
+      let payload;
 
       if (creationType === 'prompt') {
-        payload.prompt = creationPrompt;
-      } else {
-        if (!selectedFile) {
-          alert('Please select a file.');
-          setIsCreating(false);
-          return;
-        }
-
-        setCreationStatus('Processing file pattern...');
-        const base64Data = await convertFileToBase64(selectedFile);
-        const base64Content = base64Data.split(',')[1];
-        
-        payload.file = {
-          type: 'base64',
-          data: base64Content,
-          media_type: selectedFile.type
+        // Option A: JSON for prompts
+        payload = {
+          type: 'prompt',
+          name: creationName,
+          prompt: creationPrompt
         };
+      } else {
+        // Option B: Multipart for files
+        payload = new FormData();
+        payload.append('type', creationType);
+        payload.append('name', creationName);
+        payload.append('file', selectedFile);
+        
+        // Optional: reference_images can be added here as JSON string if needed
+        // payload.append('reference_images', JSON.stringify([]));
       }
 
-      setCreationStatus('Uploading to Athena VI...');
-      console.log('Athena VI: Creating avatar with payload:', payload);
+      setCreationStatus(`Creating ${creationType.replace('_', ' ')}...`);
+      console.log('Athena VI: Initiating avatar creation...', creationType);
+      
       const response = await heygenService.createAvatar(payload);
       
-      if (response && response.avatar_group_id && creationType === 'digital_twin') {
-        setCreationStatus('Requesting verification...');
+      // On success, if it's a digital_twin, we might need consent
+      const groupId = response?.avatar_group_id || response?.data?.avatar_group_id || response?.id;
+      
+      if (groupId && (creationType === 'digital_twin' || creationType === 'photo')) {
+        setCreationStatus('Verifying ownership...');
         try {
-          const consentRes = await heygenService.getAvatarConsent(response.avatar_group_id, window.location.href);
-          if (consentRes && consentRes.consent_url) {
-            window.open(consentRes.consent_url, '_blank');
+          const consentRes = await heygenService.getAvatarConsent(groupId, window.location.href);
+          if (consentRes && (consentRes.consent_url || consentRes.url)) {
+            const url = consentRes.consent_url || consentRes.url;
+            setCreationStatus('Redirecting to consent portal...');
+            // Give user a moment to read the status
+            setTimeout(() => {
+              window.open(url, '_blank');
+              setIsCreating(false);
+              onBack(true);
+            }, 1500);
+            return;
           }
         } catch (consentErr) {
-          console.warn('Consent fetch failed', consentErr);
+          console.warn('Consent fetch failed or not required', consentErr);
+          // If consent fails but creation succeeded, we still proceed
         }
       }
 
-      setCreationStatus('Success!');
+      setCreationStatus('Persona created successfully!');
       setTimeout(() => {
         setIsCreating(false);
-        onBack(true); // Signal success to parent to refresh
+        onBack(true);
       }, 2000);
 
     } catch (err) {
       console.error('Avatar creation failed:', err);
-      setCreationStatus('Error occurred.');
+      setCreationStatus(`Error: ${err.message || 'Creation failed'}`);
       setTimeout(() => {
         setIsCreating(false);
         setCreationStatus('');
-      }, 3000);
+      }, 4000);
     }
   };
 

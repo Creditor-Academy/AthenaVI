@@ -16,25 +16,32 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
     const fetchAvatars = async () => {
       setLoading(true);
       try {
-        const ownership = activeTab === 'mine' ? 'private' : 'public';
+        let ownership = 'public';
+        if (activeTab === 'mine') ownership = 'private';
+        if (activeTab === 'team') ownership = 'workspace';
+        
         const responseData = await heygenService.getAvatarGroups({ ownership });
         
-        // Find the array in the payload
-        let avatarList = []
-        if (Array.isArray(responseData)) {
-          avatarList = responseData
+        // Comprehensive mapping to handle different API versions and response shapes
+        let avatarList = [];
+        const data = responseData?.data || responseData;
+        
+        if (Array.isArray(data)) {
+          avatarList = data;
+        } else if (data?.avatar_groups) {
+          avatarList = data.avatar_groups;
+        } else if (data?.avatar_looks) {
+          avatarList = data.avatar_looks;
+        } else if (data?.avatars) {
+          avatarList = data.avatars;
+        } else if (responseData?.avatar_looks) {
+          avatarList = responseData.avatar_looks;
         } else if (responseData?.avatar_groups) {
-          avatarList = responseData.avatar_groups
-        } else if (responseData?.avatars) {
-          avatarList = responseData.avatars
-        } else if (responseData?.data?.avatar_groups) {
-          avatarList = responseData.data.avatar_groups
-        } else if (responseData?.data?.avatars) {
-          avatarList = responseData.data.avatars
-        } else if (responseData?.data && Array.isArray(responseData.data)) {
-          avatarList = responseData.data
+          avatarList = responseData.avatar_groups;
         }
         
+        console.log(`Athena VI (Editor): Mapping ${avatarList.length} avatars for ownership: ${ownership}`, { raw: responseData });
+
         const mappedAvatars = avatarList.map(av => ({
           id: av.avatar_group_id || av.id,
           name: av.name || av.group_name || 'AI Presenter',
@@ -71,36 +78,43 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
     if (!file) return;
 
     setIsUploading(true);
-    setUploadStatus('Reading file...');
+    setUploadStatus('Preparing asset upload...');
 
     try {
-      const base64Data = await convertFileToBase64(file);
+      const type = file.type.startsWith('video/') ? 'digital_twin' : 'photo';
       
-      setUploadStatus('Creating digital twin...');
-      const payload = {
-        type: 'digital_twin',
-        name: file.name.split('.')[0] || 'Custom Twin',
-        file: {
-          type: 'base64',
-          content: base64Data.split(',')[1]
-        }
-      };
+      setUploadStatus(`Creating ${type.replace('_', ' ')}...`);
+      
+      const payload = new FormData();
+      payload.append('type', type);
+      payload.append('name', file.name.split('.')[0] || 'Custom Persona');
+      payload.append('file', file);
 
       const response = await heygenService.createAvatar(payload);
       
-      if (response && response.avatar_group_id) {
-        setUploadStatus('Securing consent...');
+      const groupId = response?.avatar_group_id || response?.data?.avatar_group_id || response?.id;
+      
+      if (groupId) {
+        setUploadStatus('Verifying ownership...');
         try {
-          const consentRes = await heygenService.getAvatarConsent(response.avatar_group_id, window.location.href);
-          if (consentRes && consentRes.consent_url) {
-            window.open(consentRes.consent_url, '_blank');
+          const consentRes = await heygenService.getAvatarConsent(groupId, window.location.href);
+          if (consentRes && (consentRes.consent_url || consentRes.url)) {
+            const url = consentRes.consent_url || consentRes.url;
+            setUploadStatus('Redirecting to consent portal...');
+            setTimeout(() => {
+              window.open(url, '_blank');
+              setIsUploading(false);
+              setUploadStatus('');
+              // Optionally refresh list
+            }, 1500);
+            return;
           }
         } catch (consentErr) {
-          console.warn('Could not auto-fetch consent URL', consentErr);
+          console.warn('Consent fetch failed or not required', consentErr);
         }
       }
 
-      setUploadStatus('Avatar creation initiated successfully!');
+      setUploadStatus('Persona created successfully!');
       setTimeout(() => {
         setIsUploading(false);
         setUploadStatus('');
@@ -108,11 +122,11 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
       
     } catch (error) {
       console.error('Avatar creation failed:', error);
-      setUploadStatus('Failed to create avatar.');
+      setUploadStatus(`Error: ${error.message || 'Creation failed'}`);
       setTimeout(() => {
         setIsUploading(false);
         setUploadStatus('');
-      }, 3000);
+      }, 4000);
     }
   };
 
@@ -174,13 +188,16 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
         display: 'flex',
         padding: '0 20px',
         borderBottom: '1px solid var(--border-color)',
-        gap: '24px',
+        gap: '20px',
         flexShrink: 0
       }}>
-        {['studio', 'photo', 'mine'].map((tab) => (
+        {['studio', 'team', 'mine'].map((tab) => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => {
+              setActiveTab(tab);
+              setSearchQuery('');
+            }}
             style={{
               background: 'transparent',
               border: 'none',
@@ -194,7 +211,7 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
               transition: 'all 0.2s ease'
             }}
           >
-            {tab === 'mine' ? 'My Avatars' : `${tab} Avatars`}
+            {tab === 'mine' ? 'My Avatars' : tab === 'team' ? 'Team Shared' : 'Studio'}
           </button>
         ))}
       </div>
@@ -256,7 +273,7 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
         )}
 
         <>
-          {activeTab !== 'mine' && (
+          {activeTab === 'studio' && (
             <div className="elements-chips-scroll" style={{ marginBottom: '20px', paddingBottom: '4px' }}>
               <button className="elements-chip" style={{ background: 'var(--primary)', color: 'white', borderColor: 'var(--primary)' }}>All</button>
               <button className="elements-chip">Business</button>

@@ -49,10 +49,18 @@ class HeygenService {
   async createAvatar(payload) {
     try {
       const endpoint = API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.CREATE;
+      const isFormData = payload instanceof FormData;
+      
+      const headers = getAuthHeaders();
+      if (isFormData) {
+        // Remove Content-Type so browser sets it with boundary
+        delete headers['Content-Type'];
+      }
+
       const response = await fetch(buildUrl(endpoint), {
         method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(payload)
+        headers: headers,
+        body: isFormData ? payload : JSON.stringify(payload)
       });
       
       if (!response.ok) {
@@ -79,7 +87,8 @@ class HeygenService {
       });
       
       if (!response.ok) {
-        throw new Error(`Failed to get avatar consent: ${response.status}`);
+        const errText = await response.text();
+        throw new Error(`Failed to get avatar consent: ${response.status} - ${errText}`);
       }
       
       const data = await response.json();
@@ -194,6 +203,93 @@ class HeygenService {
       return data.data || data;
     } catch (error) {
       console.error('Error in heygenService.previewSpeech:', error);
+      throw error;
+    }
+  }
+
+  // --- HeyGen Video Management (Project-specific) ---
+
+  async listVideos(workspaceId, projectId) {
+    try {
+      const endpoint = `/api/workspaces/${workspaceId}/projects/${projectId}/heygen/videos`;
+      const response = await fetch(buildUrl(endpoint), {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to list HeyGen videos: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.data?.heygenVideos || data.heygenVideos || [];
+    } catch (error) {
+      console.error('Error in heygenService.listVideos:', error);
+      throw error;
+    }
+  }
+
+  async getVideo(workspaceId, projectId, heygenVideoId) {
+    try {
+      const endpoint = `/api/workspaces/${workspaceId}/projects/${projectId}/heygen/videos/${heygenVideoId}`;
+      const response = await fetch(buildUrl(endpoint), {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch HeyGen video: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.data?.heygenVideo || data.heygenVideo;
+    } catch (error) {
+      console.error('Error in heygenService.getVideo:', error);
+      throw error;
+    }
+  }
+
+  async downloadVideo(workspaceId, projectId, heygenVideoId, expiresIn = 300) {
+    try {
+      const endpoint = `/api/workspaces/${workspaceId}/projects/${projectId}/heygen/videos/${heygenVideoId}/download?expiresIn=${expiresIn}`;
+      const response = await fetch(buildUrl(endpoint), {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to get download URL: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.data || data; // Contains presignedUrl
+    } catch (error) {
+      console.error('Error in heygenService.downloadVideo:', error);
+      throw error;
+    }
+  }
+
+  getStreamUrl(workspaceId, projectId, heygenVideoId) {
+    const endpoint = `/api/workspaces/${workspaceId}/projects/${projectId}/heygen/videos/${heygenVideoId}/stream`;
+    return buildUrl(endpoint);
+  }
+
+  async getS3Location(workspaceId, projectId, heygenVideoId) {
+    try {
+      const endpoint = `/api/workspaces/${workspaceId}/projects/${projectId}/heygen/videos/${heygenVideoId}/s3-location`;
+      const response = await fetch(buildUrl(endpoint), {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to get S3 location: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.data || data;
+    } catch (error) {
+      console.error('Error in heygenService.getS3Location:', error);
       throw error;
     }
   }
