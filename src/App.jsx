@@ -286,17 +286,18 @@ function App() {
     
     const newUrl = urlMap[view] || '/'
     
-    // Try to use pushState first (clean URLs)
-    // Don't override the URL on invite acceptance paths — the token lives in the path
+    // Don't override the URL on invite acceptance or reset-password paths — the token lives in the path/hash
     const currentPath = window.location.pathname
-    const onInvitePath = currentPath.includes('/invitations/accept') || currentPath.includes('/invite/accept')
+    const onProtectedPath = currentPath.includes('/invitations/accept') ||
+      currentPath.includes('/invite/accept') ||
+      currentPath.includes('/reset-password')
     try {
-      if (!onInvitePath && currentPath !== newUrl) {
+      if (!onProtectedPath && currentPath !== newUrl) {
         window.history.pushState({ view }, '', newUrl)
       }
     } catch {
       // Fallback to hash routing if pushState fails
-      if (!onInvitePath && window.location.hash !== `#${newUrl}`) {
+      if (!onProtectedPath && window.location.hash !== `#${newUrl}`) {
         window.location.hash = newUrl
       }
     }
