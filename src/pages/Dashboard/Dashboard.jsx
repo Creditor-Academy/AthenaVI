@@ -60,6 +60,21 @@ function Dashboard({ onCreate, initialSection }) {
   const cartCount = 2
   const notificationCount = 9
 
+  const noPaddingSections = ['templates', 'template-details']
+  const workspaceConsistentSections = [
+    'home',
+    'videos',
+    'workspace',
+    'team-workspace',
+    'trash',
+    'library',
+    'brandkits',
+    'avatars',
+    'voices',
+    'admin-portal',
+    'settings',
+  ]
+
   const goToSection = useCallback((id) => {
     setTopbarMobileOpen(false)
     setSidebarMobileOpen(false)
@@ -182,7 +197,7 @@ function Dashboard({ onCreate, initialSection }) {
         />
 
         <main
-          className={`content ${!['avatars', 'create-avatar', 'templates', 'template-details', 'team-workspace', 'admin-portal', 'settings'].includes(section) ? 'with-padding' : ''}`}
+          className={`content ${!noPaddingSections.includes(section) ? 'with-padding' : ''} ${section === 'home' ? 'content--home' : ''} ${workspaceConsistentSections.includes(section) ? 'content--workspace-consistent' : ''}`}
         >
           {section === 'home' && (
             <Home 

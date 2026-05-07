@@ -21,9 +21,33 @@ function Home({ onCreate, onShowAIAssistant }) {
     const [activeTab, setActiveTab] = useState('templates');
 
     const stats = [
-        { label: 'Total Videos', value: '24', trend: '+2 this week', icon: <MdVideoLibrary />, trendDir: 'up', trendIcon: <MdTrendingUp className="stat-trend-icon" /> },
-        { label: 'Draft Projects', value: '12', trend: '3 action needed', icon: <MdCollectionsBookmark />, trendDir: 'neutral', trendIcon: <MdAccessTime className="stat-trend-icon" /> },
-        { label: 'Published', value: '12', trend: '+12% engagement', icon: <MdCheckCircle />, trendDir: 'up', trendIcon: <MdTrendingUp className="stat-trend-icon" /> }
+        {
+            label: 'Total Videos',
+            value: '24',
+            trend: '+2 this week',
+            icon: <MdVideoLibrary />,
+            trendDir: 'up',
+            trendIcon: <MdTrendingUp className="stat-trend-icon" />,
+            progress: 78
+        },
+        {
+            label: 'Draft Projects',
+            value: '12',
+            trend: '3 action needed',
+            icon: <MdCollectionsBookmark />,
+            trendDir: 'neutral',
+            trendIcon: <MdAccessTime className="stat-trend-icon" />,
+            progress: 54
+        },
+        {
+            label: 'Published',
+            value: '12',
+            trend: '+12% engagement',
+            icon: <MdCheckCircle />,
+            trendDir: 'up',
+            trendIcon: <MdTrendingUp className="stat-trend-icon" />,
+            progress: 86
+        }
     ]
 
     const recentProjects = [
@@ -54,6 +78,14 @@ function Home({ onCreate, onShowAIAssistant }) {
                     <div className="welcome-text">
                         <h1>Welcome back, {firstName}!</h1>
                         <p>Ready to create your next masterpiece?</p>
+                        <div className="home-welcome-chips" aria-label="Dashboard quick highlights">
+                            <span className="home-welcome-chip">
+                                <MdLanguage size={14} /> Multi-language ready
+                            </span>
+                            <span className="home-welcome-chip">
+                                <MdAutoAwesome size={14} /> AI tools available
+                            </span>
+                        </div>
                     </div>
                     <div className="header-actions">
                         <button className="btn-secondary" onClick={onShowAIAssistant}>
@@ -76,6 +108,9 @@ function Home({ onCreate, onShowAIAssistant }) {
                         <div className="home-billing-stat-value">{stat.value}</div>
                         <div className={`home-billing-stat-trend ${stat.trendDir}`}>
                                 {stat.trendIcon} {stat.trend}
+                        </div>
+                        <div className="home-billing-stat-meter" aria-hidden>
+                            <span style={{ width: `${stat.progress}%` }} />
                         </div>
                     </div>
                 ))}

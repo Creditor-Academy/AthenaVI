@@ -880,7 +880,144 @@
 }
 
 .content.with-padding {
-  padding: 40px 60px;
+  padding: 24px 32px;
+}
+
+.content.content--workspace-consistent {
+  font-family: var(--font-family);
+  background: var(--bg-main);
+}
+
+.content.content--workspace-consistent :where(h1, h2, h3, h4, h5, h6, p, button, input, select, textarea, label, a, span, li) {
+  font-family: var(--font-family);
+}
+
+/* Normalize page-level outer spacing so sections share Workspace baseline spacing */
+.content.content--workspace-consistent .settings-page,
+.content.content--workspace-consistent .team-workspace-container,
+.content.content--workspace-consistent .athena-trash-view,
+.content.content--workspace-consistent .grid-container,
+.content.content--workspace-consistent .admin-main-wrapper,
+.content.content--workspace-consistent .assets-scroller {
+  padding: 0;
+}
+
+.content.content--workspace-consistent :is(
+  .videos-page,
+  .videos-shell,
+  .library-page,
+  .library-shell,
+  .settings-page,
+  .settings-shell,
+  .voices-container,
+  .brandkits-container,
+  .athena-trash-view,
+  .trash-page-layout,
+  .team-workspace-container,
+  .admin-main-wrapper,
+  .avatars-page,
+  .grid-container
+) {
+  background: transparent;
+  max-width: none;
+  margin: 0;
+}
+
+.content.content--workspace-consistent .team-workspace-container {
+  max-width: none;
+  margin: 0;
+  min-height: 100%;
+}
+
+.content.content--workspace-consistent .athena-trash-view,
+.content.content--workspace-consistent .admin-portal-container,
+.content.content--workspace-consistent .avatars-page,
+.content.content--workspace-consistent .grid-container {
+  min-height: 100%;
+}
+
+.content.content--workspace-consistent .admin-portal-container {
+  height: 100%;
+}
+
+.content.content--workspace-consistent :is(
+  .videos-page-title,
+  .library-page-title,
+  .settings-page-title,
+  .admin-page-title,
+  .voices-title,
+  .brandkits-title,
+  .workspace-title,
+  .admin-top-header h1,
+  .title-with-badge h1,
+  .header-info h1,
+  .workspace-identity h1
+) {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.content.content--workspace-consistent :is(
+  .videos-page-header,
+  .library-page-header,
+  .settings-page-header,
+  .admin-page-header,
+  .voices-header,
+  .brandkits-header,
+  .workspace-header,
+  .admin-top-header,
+  .trash-header-new,
+  .avatars-header
+) {
+  margin-bottom: 24px;
+}
+
+.content.content--workspace-consistent :is(
+  .videos-page-subtitle,
+  .admin-page-subtitle,
+  .subtitle-compact,
+  .header-info p,
+  .workspace-identity p
+) {
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* Trash page hard alignment with common dashboard spacing */
+.content.content--workspace-consistent .athena-trash-view {
+  min-height: 100%;
+  overflow: visible;
+}
+
+.content.content--workspace-consistent .trash-page-layout {
+  max-width: none;
+  margin: 0;
+}
+
+.content.content--workspace-consistent .trash-glow-1,
+.content.content--workspace-consistent .trash-glow-2 {
+  display: none;
+}
+
+.content.content--workspace-consistent .trash-content-area {
+  padding: 0;
+}
+
+@media (max-width: 1200px) {
+  .content.with-padding {
+    padding: 20px 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .content.with-padding {
+    padding: 16px;
+  }
 }
 
 .home-container {
