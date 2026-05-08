@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import {
   MdMail,
@@ -9,7 +9,10 @@ import {
   MdVideoLibrary,
   MdInfo,
   MdExitToApp,
-  MdPerson
+  MdPerson,
+  MdCheckCircle,
+  MdCancel,
+  MdWarning
 } from 'react-icons/md';
 import { useAuth } from '../../contexts/AuthContext';
 import WorkspaceHeader from '../../components/features/workspace/workspace/WorkspaceHeader.jsx';
@@ -184,6 +187,27 @@ const TeamWorkspace = ({ onCreate }) => {
   const [membersLoading, setMembersLoading] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('MEMBER');
+
+  // Toast & confirm dialog system
+  const [toast, setToast] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(null);
+  const toastTimeoutRef = useRef(null);
+
+  const showToast = useCallback((message, type = 'success') => {
+    setToast({ message, type });
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = setTimeout(() => setToast(null), 2800);
+  }, []);
+
+  const openConfirmDialog = useCallback((message, onConfirm) => {
+    setConfirmDialog({ message, onConfirm });
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     sessionStorage.setItem('workspaceLocalAdditions', JSON.stringify(localAdditions));
@@ -499,8 +523,9 @@ const TeamWorkspace = ({ onCreate }) => {
       }
 
       setActiveRootTab('my-workspaces');
+      showToast('Workspace created successfully', 'success');
     } catch (error) {
-      alert(error.message || 'Failed to create workspace');
+      showToast(error.message || 'Failed to create workspace', 'error');
       throw error;
     }
   };
@@ -542,6 +567,7 @@ const TeamWorkspace = ({ onCreate }) => {
           ]
         }
       }));
+      showToast('Folder created successfully', 'success');
     } catch (error) {
       console.error('Failed to create folder:', error);
       throw error;
@@ -603,6 +629,7 @@ const TeamWorkspace = ({ onCreate }) => {
 
       await workspaceService.updateWorkspace(id, { name: newName });
       setWorkspaces((prev) => prev.map((workspace) => (String(workspace.id) === String(id) ? { ...workspace, name: newName } : workspace)));
+      showToast('Workspace renamed successfully', 'success');
     }
 
     if (type === 'folder') {
@@ -630,6 +657,7 @@ const TeamWorkspace = ({ onCreate }) => {
           )
         }))
       );
+      showToast('Folder renamed successfully', 'success');
     }
 
     if (type === 'video') {
@@ -657,39 +685,54 @@ const TeamWorkspace = ({ onCreate }) => {
           }))
         }))
       );
+      showToast('Video renamed successfully', 'success');
     }
   };
 
-  const deleteItem = async (type, id, workspaceContext = null) => {
+  const deleteItem = (type, id, workspaceContext = null) => {
     if (type === 'workspace') {
       const workspace = workspaces.find((item) => String(item.id) === String(id));
       if (!workspace) return;
 
       if (workspace.type === 'personal') {
-        alert('Personal Workspace cannot be deleted.');
+        showToast('Personal Workspace cannot be deleted.', 'error');
         return;
       }
 
       if (String(workspace.userRole || '').toUpperCase() !== 'OWNER') {
-        const shouldLeave = window.confirm('You are not the owner of this workspace. Do you want to leave it?');
-        if (!shouldLeave) return;
-        await workspaceService.leaveWorkspace(workspace);
+        openConfirmDialog('You are not the owner of this workspace. Do you want to leave it?', async () => {
+          try {
+            await workspaceService.leaveWorkspace(workspace);
+            setWorkspaces((prev) => prev.filter((item) => String(item.id) !== String(workspace.id)));
+            setLocalAdditions((prev) => ({
+              ...prev,
+              workspaces: prev.workspaces.filter((item) => String(item.id) !== String(workspace.id))
+            }));
+            if (String(currentLevel.id) === String(workspace.id)) {
+              setCurrentLevel({ type: 'root', id: null });
+            }
+            showToast('Left workspace successfully', 'success');
+          } catch (error) {
+            showToast(error.message || 'Failed to leave workspace', 'error');
+          }
+        });
       } else {
-        const confirmed = window.confirm(
-          'This will permanently delete all folders and videos inside. This cannot be undone.'
-        );
-        if (!confirmed) return;
-        await workspaceService.deleteWorkspace(workspace.id);
-      }
-
-      setWorkspaces((prev) => prev.filter((item) => String(item.id) !== String(workspace.id)));
-      setLocalAdditions((prev) => ({
-        ...prev,
-        workspaces: prev.workspaces.filter((item) => String(item.id) !== String(workspace.id))
-      }));
-
-      if (String(currentLevel.id) === String(workspace.id)) {
-        setCurrentLevel({ type: 'root', id: null });
+        openConfirmDialog('This will permanently delete all folders and videos inside. This cannot be undone.', async () => {
+          try {
+            await workspaceService.deleteWorkspace(workspace.id);
+            setWorkspaces((prev) => prev.filter((item) => String(item.id) !== String(workspace.id)));
+            setLocalAdditions((prev) => ({
+              ...prev,
+              workspaces: prev.workspaces.filter((item) => String(item.id) !== String(workspace.id))
+            }));
+            if (String(currentLevel.id) === String(workspace.id)) {
+              setCurrentLevel({ type: 'root', id: null });
+            }
+            showToast('Workspace deleted successfully', 'success');
+          } catch (error) {
+            showToast(error.message || 'Failed to delete workspace', 'error');
+          }
+        });
       }
       return;
     }
@@ -701,36 +744,37 @@ const TeamWorkspace = ({ onCreate }) => {
         workspaces.find((workspace) => workspace.folders.some((folder) => String(folder.id) === String(id)));
 
       if (!workspaceCanEdit(parentWorkspace)) {
-        alert('You do not have permission to delete this folder.');
+        showToast('You do not have permission to delete this folder.', 'error');
         return;
       }
 
-      const confirmed = window.confirm('Delete this folder and all videos inside it?');
-      if (!confirmed) return;
-
-      await workspaceService.deleteFolder(parentWorkspace.id, id);
-
-      setWorkspaces((prev) =>
-        prev.map((workspace) =>
-          String(workspace.id) === String(parentWorkspace.id)
-            ? { ...workspace, folders: workspace.folders.filter((folder) => String(folder.id) !== String(id)) }
-            : workspace
-        )
-      );
-
-      setLocalAdditions((prev) => ({
-        ...prev,
-        folders: {
-          ...prev.folders,
-          [parentWorkspace.id]: (prev.folders[parentWorkspace.id] || []).filter(
-            (folder) => String(folder.id) !== String(id)
-          )
+      openConfirmDialog('Delete this folder and all videos inside it?', async () => {
+        try {
+          await workspaceService.deleteFolder(parentWorkspace.id, id);
+          setWorkspaces((prev) =>
+            prev.map((workspace) =>
+              String(workspace.id) === String(parentWorkspace.id)
+                ? { ...workspace, folders: workspace.folders.filter((folder) => String(folder.id) !== String(id)) }
+                : workspace
+            )
+          );
+          setLocalAdditions((prev) => ({
+            ...prev,
+            folders: {
+              ...prev.folders,
+              [parentWorkspace.id]: (prev.folders[parentWorkspace.id] || []).filter(
+                (folder) => String(folder.id) !== String(id)
+              )
+            }
+          }));
+          if (String(currentLevel.id) === String(id)) {
+            setCurrentLevel({ type: 'workspace', id: parentWorkspace.id, ws: parentWorkspace });
+          }
+          showToast('Folder deleted successfully', 'success');
+        } catch (error) {
+          showToast(error.message || 'Failed to delete folder', 'error');
         }
-      }));
-
-      if (String(currentLevel.id) === String(id)) {
-        setCurrentLevel({ type: 'workspace', id: parentWorkspace.id, ws: parentWorkspace });
-      }
+      });
       return;
     }
 
@@ -738,40 +782,42 @@ const TeamWorkspace = ({ onCreate }) => {
       const parentWorkspace = currentLevel.ws;
       const parentFolder = currentLevel.folder;
       if (!workspaceCanEdit(parentWorkspace)) {
-        alert('You do not have permission to delete this video.');
+        showToast('You do not have permission to delete this video.', 'error');
         return;
       }
 
-      const confirmed = window.confirm('Delete this video?');
-      if (!confirmed) return;
-
-      await workspaceService.deleteVideo(parentWorkspace.id, id);
-
-      setWorkspaces((prev) =>
-        prev.map((workspace) =>
-          String(workspace.id) === String(parentWorkspace.id)
-            ? {
-                ...workspace,
-                folders: workspace.folders.map((folder) =>
-                  String(folder.id) === String(parentFolder.id)
-                    ? {
-                        ...folder,
-                        videos: (folder.videos || []).filter((video) => String(video.id) !== String(id))
-                      }
-                    : folder
-                )
-              }
-            : workspace
-        )
-      );
-
-      setLocalAdditions((prev) => ({
-        ...prev,
-        videos: {
-          ...prev.videos,
-          [parentFolder.id]: (prev.videos[parentFolder.id] || []).filter((video) => String(video.id) !== String(id))
+      openConfirmDialog('Delete this video?', async () => {
+        try {
+          await workspaceService.deleteVideo(parentWorkspace.id, id);
+          setWorkspaces((prev) =>
+            prev.map((workspace) =>
+              String(workspace.id) === String(parentWorkspace.id)
+                ? {
+                    ...workspace,
+                    folders: workspace.folders.map((folder) =>
+                      String(folder.id) === String(parentFolder.id)
+                        ? {
+                            ...folder,
+                            videos: (folder.videos || []).filter((video) => String(video.id) !== String(id))
+                          }
+                        : folder
+                    )
+                  }
+                : workspace
+            )
+          );
+          setLocalAdditions((prev) => ({
+            ...prev,
+            videos: {
+              ...prev.videos,
+              [parentFolder.id]: (prev.videos[parentFolder.id] || []).filter((video) => String(video.id) !== String(id))
+            }
+          }));
+          showToast('Video deleted successfully', 'success');
+        } catch (error) {
+          showToast(error.message || 'Failed to delete video', 'error');
         }
-      }));
+      });
     }
   };
 
@@ -789,8 +835,9 @@ const TeamWorkspace = ({ onCreate }) => {
       });
       setInviteEmail('');
       await loadContributorsForWorkspace(contributorsPanel.workspace);
+      showToast('Member invited successfully', 'success');
     } catch (error) {
-      alert(error.message || 'Failed to invite member');
+      showToast(error.message || 'Failed to invite member', 'error');
     }
   };
 
@@ -799,37 +846,38 @@ const TeamWorkspace = ({ onCreate }) => {
     try {
       await workspaceService.changeMemberRole(contributorsPanel.workspace.id, memberId, role);
       await loadContributorsForWorkspace(contributorsPanel.workspace);
+      showToast('Member role updated', 'success');
     } catch (error) {
-      alert(error.message || 'Failed to change role');
+      showToast(error.message || 'Failed to change role', 'error');
     }
   };
 
   const handleRemoveMember = async (memberId) => {
     if (!contributorsPanel.workspace) return;
-    const confirmed = window.confirm('Remove this member from workspace?');
-    if (!confirmed) return;
-
-    try {
-      await workspaceService.removeMember(contributorsPanel.workspace.id, memberId);
-      await loadContributorsForWorkspace(contributorsPanel.workspace);
-    } catch (error) {
-      alert(error.message || 'Failed to remove member');
-    }
+    openConfirmDialog('Remove this member from workspace?', async () => {
+      try {
+        await workspaceService.removeMember(contributorsPanel.workspace.id, memberId);
+        await loadContributorsForWorkspace(contributorsPanel.workspace);
+        showToast('Member removed successfully', 'success');
+      } catch (error) {
+        showToast(error.message || 'Failed to remove member', 'error');
+      }
+    });
   };
 
   const handleLeaveSharedWorkspace = async (workspace) => {
-    const confirmed = window.confirm(`Leave workspace "${workspace.name}"?`);
-    if (!confirmed) return;
-
-    try {
-      await workspaceService.leaveWorkspace(workspace);
-      setWorkspaces((prev) => prev.filter((item) => String(item.id) !== String(workspace.id)));
-      if (String(currentLevel.id) === String(workspace.id)) {
-        setCurrentLevel({ type: 'root', id: null });
+    openConfirmDialog(`Leave workspace "${workspace.name}"?`, async () => {
+      try {
+        await workspaceService.leaveWorkspace(workspace);
+        setWorkspaces((prev) => prev.filter((item) => String(item.id) !== String(workspace.id)));
+        if (String(currentLevel.id) === String(workspace.id)) {
+          setCurrentLevel({ type: 'root', id: null });
+        }
+        showToast('Left workspace successfully', 'success');
+      } catch (error) {
+        showToast(error.message || 'Failed to leave workspace', 'error');
       }
-    } catch (error) {
-      alert(error.message || 'Failed to leave workspace');
-    }
+    });
   };
 
   const renderWorkspaceItems = (items) => {
@@ -1420,6 +1468,92 @@ const TeamWorkspace = ({ onCreate }) => {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Confirm dialog */}
+      {confirmDialog && (
+        <div
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(15,23,42,0.45)', display: 'flex',
+            alignItems: 'center', justifyContent: 'center',
+            zIndex: 10100,
+            backdropFilter: 'blur(4px)', animation: 'twFadeIn 0.18s ease'
+          }}
+          onClick={() => setConfirmDialog(null)}
+        >
+          <div
+            style={{
+              width: 'min(420px, 92vw)', background: 'var(--bg-card)',
+              border: '1px solid var(--border-color)', borderRadius: '14px',
+              boxShadow: '0 18px 45px rgba(15,23,42,0.22)', padding: '22px',
+              textAlign: 'center', animation: 'twSlideUp 0.2s ease'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{
+              width: 48, height: 48, borderRadius: '50%', margin: '0 auto 12px',
+              background: 'rgba(var(--primary-rgb),0.12)', display: 'grid', placeItems: 'center'
+            }}>
+              <MdWarning style={{ fontSize: 24, color: 'var(--primary)' }} />
+            </div>
+            <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: 'var(--text-main)' }}>
+              Please confirm
+            </h3>
+            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.45 }}>
+              {confirmDialog.message}
+            </p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 18 }}>
+              <button
+                className="btn-secondary"
+                onClick={() => setConfirmDialog(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn-primary"
+                onClick={async () => {
+                  const onConfirm = confirmDialog.onConfirm;
+                  setConfirmDialog(null);
+                  if (onConfirm) await onConfirm();
+                }}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast notification */}
+      {toast && (
+        <div style={{
+          position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 10200, display: 'inline-flex', alignItems: 'center', gap: 10,
+          padding: '12px 20px', borderRadius: 10, color: '#fff', fontSize: 14,
+          fontWeight: 600, boxShadow: '0 12px 30px rgba(15,23,42,0.28)',
+          background: toast.type === 'success' ? '#16a34a' : '#dc2626',
+          maxWidth: 'min(480px, calc(100vw - 32px))', whiteSpace: 'nowrap',
+          animation: 'twSlideDown 0.25s ease'
+        }}>
+          {toast.type === 'success'
+            ? <MdCheckCircle style={{ fontSize: 20, flexShrink: 0 }} />
+            : <MdCancel style={{ fontSize: 20, flexShrink: 0 }} />
+          }
+          <span>{toast.message}</span>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes twFadeIn { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes twSlideDown {
+          from { opacity: 0; transform: translateX(-50%) translateY(-16px); }
+          to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        @keyframes twSlideUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 };
