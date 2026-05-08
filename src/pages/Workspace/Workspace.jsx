@@ -13,6 +13,9 @@ import {
   MdArrowBack,
   MdPlayArrow,
   MdPlayCircleFilled,
+  MdCheckCircle,
+  MdCancel,
+  MdWarning,
 } from 'react-icons/md'
 import workspaceService from '../../services/workspaceService'
 import heygenService from '../../services/heygenService'
@@ -60,9 +63,43 @@ function Workspace({ onCreate }) {
   const [loading, setLoading] = useState(true)
   const [heygenVideos, setHeygenVideos] = useState([])
   const [isPolling, setIsPolling] = useState(false)
+  const [toast, setToast] = useState(null)
+  const [confirmDialog, setConfirmDialog] = useState(null)
   const menuRefs = useRef({})
   const lastUpdatedRef = useRef(null)
   const filtersRef = useRef(null)
+  const toastTimeoutRef = useRef(null)
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type })
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current)
+    }
+    toastTimeoutRef.current = setTimeout(() => {
+      setToast(null)
+    }, 2800)
+  }
+
+  const openConfirmDialog = (message, onConfirm) => {
+    setConfirmDialog({ message, onConfirm })
+  }
+
+  const closeRenameDialog = (showDiscardToast = false) => {
+    if (showDiscardToast) {
+      showToast('Changes discarded', 'error')
+    }
+    setRenameDialog(null)
+    setRenameType(null)
+    setNewName('')
+  }
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current)
+      }
+    }
+  }, [])
 
   // Persist selectedFolder to localStorage whenever it changes
   useEffect(() => {
@@ -192,9 +229,10 @@ function Workspace({ onCreate }) {
       const name = 'Default'
       await workspaceService.createFolder(workspaceId, name)
       await refreshFolders()
+      showToast('Folder created successfully', 'success')
     } catch (error) {
       console.error('Failed to create folder:', error)
-      alert('Failed to create folder')
+      showToast('Failed to create folder. Please try again.', 'error')
     }
   }
 
@@ -205,9 +243,10 @@ function Workspace({ onCreate }) {
       // Using the same folder API for now. Adjust if a subfolder-specific endpoint exists.
       await workspaceService.createFolder(workspaceId, name)
       await refreshFolders()
+      showToast('Subfolder created successfully', 'success')
     } catch (error) {
       console.error('Failed to create subfolder:', error)
-      alert('Failed to create subfolder')
+      showToast('Failed to create subfolder. Please try again.', 'error')
     }
   }
 
@@ -216,12 +255,11 @@ function Workspace({ onCreate }) {
     try {
       await workspaceService.renameFolder(workspaceId, folderId, newName)
       await refreshFolders()
-      setRenameDialog(null)
-      setRenameType(null)
-      setNewName('')
+      closeRenameDialog(false)
+      showToast('Folder renamed successfully', 'success')
     } catch (error) {
       console.error('Failed to rename folder:', error)
-      alert('Failed to rename folder')
+      showToast('Failed to rename folder. Please try again.', 'error')
     }
   }
 
@@ -231,12 +269,11 @@ function Workspace({ onCreate }) {
       // Assuming subfolders use the same folder API
       await workspaceService.renameFolder(workspaceId, subfolderId, newName)
       await refreshFolders()
-      setRenameDialog(null)
-      setRenameType(null)
-      setNewName('')
+      closeRenameDialog(false)
+      showToast('Subfolder renamed successfully', 'success')
     } catch (error) {
       console.error('Failed to rename subfolder:', error)
-      alert('Failed to rename subfolder')
+      showToast('Failed to rename subfolder. Please try again.', 'error')
     }
   }
 
@@ -245,17 +282,17 @@ function Workspace({ onCreate }) {
     try {
       await workspaceService.renameVideo(workspaceId, videoId, newTitle)
       await refreshFolders()
-      setRenameDialog(null)
-      setRenameType(null)
-      setNewName('')
+      closeRenameDialog(false)
+      showToast('Video renamed successfully', 'success')
     } catch (error) {
-      alert('Failed to rename video')
+      console.error('Failed to rename video:', error)
+      showToast('Failed to rename video. Please try again.', 'error')
     }
   }
 
-  const deleteFolder = async (folderId) => {
+  const deleteFolder = (folderId) => {
     if (!workspaceId) return
-    if (window.confirm('Are you sure you want to delete this folder?')) {
+    openConfirmDialog('Are you sure you want to delete this folder?', async () => {
       try {
         await workspaceService.deleteFolder(workspaceId, folderId)
         // Clear selection if the deleted folder was active
@@ -264,39 +301,43 @@ function Workspace({ onCreate }) {
           setSelectedSubfolder(null)
         }
         await refreshFolders()
+        showToast('Folder deleted successfully', 'success')
       } catch (error) {
         console.error('Failed to delete folder:', error)
-        alert('Failed to delete folder')
+        showToast('Failed to delete folder. Please try again.', 'error')
       }
-    }
+    })
   }
 
-  const deleteSubfolder = async (folderId, subfolderId) => {
+  const deleteSubfolder = (folderId, subfolderId) => {
     if (!workspaceId) return
-    if (window.confirm('Are you sure you want to delete this subfolder?')) {
+    openConfirmDialog('Are you sure you want to delete this subfolder?', async () => {
       try {
         await workspaceService.deleteFolder(workspaceId, subfolderId)
         if (selectedSubfolder === subfolderId) {
           setSelectedSubfolder(null)
         }
         await refreshFolders()
+        showToast('Subfolder deleted successfully', 'success')
       } catch (error) {
         console.error('Failed to delete subfolder:', error)
-        alert('Failed to delete subfolder')
+        showToast('Failed to delete subfolder. Please try again.', 'error')
       }
-    }
+    })
   }
 
-  const deleteVideo = async (folderId, subfolderId, videoId) => {
+  const deleteVideo = (folderId, subfolderId, videoId) => {
     if (!workspaceId) return
-    if (window.confirm('Are you sure you want to delete this video?')) {
+    openConfirmDialog('Are you sure you want to delete this video?', async () => {
       try {
         await workspaceService.deleteVideo(workspaceId, videoId)
         await refreshFolders()
+        showToast('Video deleted successfully', 'success')
       } catch (error) {
-        alert('Failed to delete video')
+        console.error('Failed to delete video:', error)
+        showToast('Failed to delete video. Please try again.', 'error')
       }
-    }
+    })
   }
 
   const currentFolder = folders.find(f => f.id === selectedFolder)
@@ -445,8 +486,9 @@ function Workspace({ onCreate }) {
                                   try {
                                     const { presignedUrl } = await heygenService.downloadVideo(workspaceId, selectedSubfolder, videoId);
                                     window.open(presignedUrl, '_blank');
+                                    showToast('Download started successfully', 'success')
                                   } catch (err) {
-                                    alert('Download failed. Please try again.');
+                                    showToast('Download failed. Please try again.', 'error')
                                   }
                                   setCardMenu(null)
                                 }}
@@ -834,9 +876,7 @@ function Workspace({ onCreate }) {
               <button
                 className="rename-dialog-close"
                 onClick={() => {
-                  setRenameDialog(null)
-                  setRenameType(null)
-                  setNewName('')
+                  closeRenameDialog(Boolean(newName.trim()))
                 }}
               >
                 <MdClose size={20} />
@@ -857,9 +897,7 @@ function Workspace({ onCreate }) {
                     renameVideo(renameDialog.folderId, renameDialog.subfolderId, renameDialog.videoId, newName.trim())
                   }
                 } else if (e.key === 'Escape') {
-                  setRenameDialog(null)
-                  setRenameType(null)
-                  setNewName('')
+                  closeRenameDialog(Boolean(newName.trim()))
                 }
               }}
               placeholder={renameType === 'video' ? 'Enter video title' : 'Enter folder name'}
@@ -869,9 +907,7 @@ function Workspace({ onCreate }) {
               <button
                 className="btn-secondary"
                 onClick={() => {
-                  setRenameDialog(null)
-                  setRenameType(null)
-                  setNewName('')
+                  closeRenameDialog(Boolean(newName.trim()))
                 }}
               >
                 Cancel
@@ -894,6 +930,46 @@ function Workspace({ onCreate }) {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {confirmDialog && (
+        <div className="confirm-dialog-overlay" onClick={() => setConfirmDialog(null)}>
+          <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="confirm-dialog-icon-wrap">
+              <MdWarning className="confirm-dialog-icon" />
+            </div>
+            <h3 className="confirm-dialog-title">Please confirm</h3>
+            <p className="confirm-dialog-message">{confirmDialog.message}</p>
+            <div className="confirm-dialog-actions">
+              <button className="btn-secondary" onClick={() => setConfirmDialog(null)}>
+                Cancel
+              </button>
+              <button
+                className="btn-primary"
+                onClick={async () => {
+                  const onConfirm = confirmDialog.onConfirm
+                  setConfirmDialog(null)
+                  if (onConfirm) {
+                    await onConfirm()
+                  }
+                }}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toast && (
+        <div className={`workspace-toast workspace-toast--${toast.type}`}>
+          {toast.type === 'success' ? (
+            <MdCheckCircle className="workspace-toast-icon" />
+          ) : (
+            <MdCancel className="workspace-toast-icon" />
+          )}
+          <span>{toast.message}</span>
         </div>
       )}
     </>

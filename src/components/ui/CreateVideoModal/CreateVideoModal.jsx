@@ -1,9 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   MdCheck,
   MdSearch,
   MdAdd,
-  MdClose
+  MdClose,
+  MdCheckCircle,
+  MdCancel,
+  MdWarning
 } from 'react-icons/md';
 import workspaceService from '../../../services/workspaceService.js';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -198,6 +201,19 @@ const CreateVideoModal = ({
   const [videoTitle, setVideoTitle] = useState('');
   const [videoTags, setVideoTags] = useState([]);
   const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const toastTimeoutRef = useRef(null);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    toastTimeoutRef.current = setTimeout(() => {
+      setToast(null);
+    }, 2800);
+  };
 
   const selectedWorkspace = useMemo(
     () => workspaceOptions.find((workspace) => String(workspace.id) === String(workspaceId)) || null,
@@ -377,12 +393,20 @@ const CreateVideoModal = ({
     };
   }, [isOpen, workspaceId, currentUserId]);
 
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+    };
+  }, []);
+
   if (!isOpen) return null;
 
   const closeWithGuard = () => {
     if (hasDirtyData) {
-      const confirmed = window.confirm('Discard this video setup? Your progress will be lost.');
-      if (!confirmed) return;
+      setShowDiscardConfirm(true);
+      return;
     }
     onClose();
   };
@@ -488,10 +512,11 @@ const CreateVideoModal = ({
       setFolderId('');
       setShowInlineWorkspaceCreate(false);
       setNewWorkspaceName('');
+      showToast('Workspace created successfully', 'success');
 
       window.dispatchEvent(new CustomEvent('workspace:created', { detail: { workspace: normalized } }));
     } catch (error) {
-      window.alert(error?.message || 'Failed to create workspace');
+      showToast(error?.message || 'Failed to create workspace. Please try again.', 'error');
     } finally {
       setCreatingWorkspace(false);
     }
@@ -517,6 +542,7 @@ const CreateVideoModal = ({
       setFolderId(normalizedFolder.id);
       setShowInlineFolderCreate(false);
       setNewFolderName('');
+      showToast('Folder created successfully', 'success');
 
       window.dispatchEvent(
         new CustomEvent('workspace:folder-created', {
@@ -524,7 +550,7 @@ const CreateVideoModal = ({
         })
       );
     } catch (error) {
-      window.alert(error?.message || 'Failed to create folder');
+      showToast(error?.message || 'Failed to create folder. Please try again.', 'error');
     } finally {
       setCreatingFolder(false);
     }
@@ -563,6 +589,7 @@ const CreateVideoModal = ({
       );
 
       if (onCreateVideo) {
+        showToast('Video created successfully', 'success');
         onCreateVideo({
           template: selectedTemplate,
           pageSize: canvasSize,
@@ -577,7 +604,7 @@ const CreateVideoModal = ({
         });
       }
     } catch (error) {
-      window.alert(error?.message || 'Failed to create video');
+      showToast(error?.message || 'Failed to create video. Please try again.', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -906,6 +933,49 @@ const CreateVideoModal = ({
             </div>
           </footer>
         </section>
+
+        {showDiscardConfirm && (
+          <div className="create-video-confirm-overlay" onClick={() => setShowDiscardConfirm(false)}>
+            <div className="create-video-confirm-dialog" onClick={(event) => event.stopPropagation()}>
+              <div className="create-video-confirm-icon-wrap">
+                <MdWarning className="create-video-confirm-icon" />
+              </div>
+              <h3 className="create-video-confirm-title">Discard changes?</h3>
+              <p className="create-video-confirm-text">Discard this video setup? Your progress will be lost.</p>
+              <div className="create-video-confirm-actions">
+                <button
+                  type="button"
+                  className="create-video-btn create-video-btn-ghost"
+                  onClick={() => setShowDiscardConfirm(false)}
+                >
+                  Keep Editing
+                </button>
+                <button
+                  type="button"
+                  className="create-video-btn create-video-btn-primary"
+                  onClick={() => {
+                    setShowDiscardConfirm(false);
+                    showToast('Changes discarded', 'error');
+                    onClose();
+                  }}
+                >
+                  Discard
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {toast && (
+          <div className={`create-video-toast create-video-toast--${toast.type}`}>
+            {toast.type === 'success' ? (
+              <MdCheckCircle className="create-video-toast-icon" />
+            ) : (
+              <MdCancel className="create-video-toast-icon" />
+            )}
+            <span>{toast.message}</span>
+          </div>
+        )}
       </div>
     </div>
   );
