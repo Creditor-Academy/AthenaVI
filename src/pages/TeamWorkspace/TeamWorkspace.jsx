@@ -22,6 +22,7 @@ import { WorkspaceRow, FolderRow, VideoRow } from '../../components/features/wor
 import CreateWorkspaceModal from '../../components/features/workspace/workspace/CreateWorkspaceModal.jsx';
 import CreateFolderModal from '../../components/features/workspace/workspace/CreateFolderModal.jsx';
 import RenameModal from '../../components/features/workspace/workspace/RenameModal.jsx';
+import TeamWorkspaceSkeleton from '../page-skeleton/TeamWorkspaceSkeleton';
 import workspaceService from '../../services/workspaceService.js';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
 
@@ -1204,7 +1205,7 @@ const TeamWorkspace = ({ onCreate }) => {
 
       <div className="workspace-content-area" style={{ flex: 1 }}>
         {loading && workspaces.length === 0 ? (
-          <p style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Loading workspaces...</p>
+          <TeamWorkspaceSkeleton />
         ) : (
           <>
             {currentLevel.type === 'root' && renderRoot()}

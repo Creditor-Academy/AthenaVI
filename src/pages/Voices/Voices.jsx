@@ -3,6 +3,7 @@ import { MdMoreVert, MdPlayArrow, MdClose, MdCheckCircle, MdShare, MdContentCopy
 import { Loader2, AlertCircle } from 'lucide-react'
 import heygenService from '../../services/heygenService'
 import CreateVoiceModal from './CreateVoiceModal'
+import VoicesSkeleton from '../page-skeleton/VoicesSkeleton'
 
 
 const styles = `
@@ -572,10 +573,7 @@ function Voices({ onCreateVoice, onVoiceClick }) {
         </div>
 
         {loading ? (
-          <div className="creation-loading" style={{ height: '400px' }}>
-            <Loader2 size={40} className="spin-animation" />
-            <p>Syncing neural voice patterns...</p>
-          </div>
+          <VoicesSkeleton />
         ) : error ? (
           <div className="empty-state">
             <AlertCircle size={40} style={{ color: '#ef4444', marginBottom: '16px' }} />
