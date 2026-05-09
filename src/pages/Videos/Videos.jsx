@@ -16,6 +16,7 @@ import {
   MdWarning
 } from 'react-icons/md'
 import workspaceService from '../../services/workspaceService'
+import VideosSkeleton from '../page-skeleton/VideosSkeleton'
 import './Videos.css'
 
 const thumbnailUrl = 'https://media.istockphoto.com/id/1475888355/video/timelapse-of-the-creation-of-an-online-avatar-start-to-finish.jpg?s=640x640&k=20&c=pFzBOkU7LjC1DF0DeNCAUhS8MCiNwSDwkqI9v9C7IgQ='
@@ -177,9 +178,7 @@ function Videos({ onCreate }) {
 
         <main className="videos-main">
           {loading ? (
-            <div className="empty-videos">
-              <p>Loading your videos...</p>
-            </div>
+            <VideosSkeleton />
           ) : filteredVideos.length === 0 ? (
             <div className="empty-videos">
               <MdVideoLibrary className="empty-videos-icon" />

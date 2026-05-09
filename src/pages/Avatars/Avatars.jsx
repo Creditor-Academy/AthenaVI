@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Search, Filter, Play, Video, ChevronRight, ChevronLeft, X, Info, Layers, ArrowLeft, Upload, Loader2, Plus, Image, Terminal } from 'lucide-react'
 import heygenService from '../../services/heygenService'
 import AvatarPersona from './AvatarPersona'
+import AvatarsSkeleton from '../page-skeleton/AvatarsSkeleton'
 import './Avatars.css'
 
 // All avatars are fetched dynamically via HeyGen API
@@ -115,6 +116,9 @@ function Avatars({ onCreate, onCreateAvatar }) {
       {/* Main Content Area */}
       <main className="workspace-main">
         {!selectedAvatar ? (
+          loading ? (
+            <AvatarsSkeleton />
+          ) : (
           <div className="grid-container">
             <header className="avatars-header">
               <div className="header-info">
@@ -197,11 +201,7 @@ function Avatars({ onCreate, onCreateAvatar }) {
             )}
 
             <div className="avatars-grid">
-              {loading ? (
-                <div style={{ padding: '40px', textAlign: 'center', width: '100%', color: 'var(--text-muted)' }}>
-                  Loading Athena VI Avatars...
-                </div>
-              ) : filteredAvatars.map(avatar => (
+              {filteredAvatars.map(avatar => (
                 <div key={avatar.id} className="avatar-card" onClick={() => openAvatarDetails(avatar)}>
                   <div className="avatar-image-container">
                     <img src={avatar.image} alt={avatar.name} />
@@ -220,6 +220,7 @@ function Avatars({ onCreate, onCreateAvatar }) {
               ))}
             </div>
           </div>
+          )
         ) : (
           <AvatarPersona
             selectedAvatar={selectedAvatar}

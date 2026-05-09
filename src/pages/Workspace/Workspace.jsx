@@ -20,6 +20,7 @@ import {
 import workspaceService from '../../services/workspaceService'
 import heygenService from '../../services/heygenService'
 import { getAuthHeaders } from '../../config/api.js'
+import WorkspaceSkeleton from '../page-skeleton/WorkspaceSkeleton'
 import './Workspace.css'
 
 const thumbnailUrl = 'https://media.istockphoto.com/id/1475888355/video/timelapse-of-the-creation-of-an-online-avatar-start-to-finish.jpg?s=640x640&k=20&c=pFzBOkU7LjC1DF0DeNCAUhS8MCiNwSDwkqI9v9C7IgQ='
@@ -344,16 +345,7 @@ function Workspace({ onCreate }) {
   const currentSubfolder = currentFolder?.subfolders?.find(sf => sf.id === selectedSubfolder)
 
   if (loading) {
-    return (
-      <div className="workspace-container" style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        height: '100%' 
-      }}>
-        <div className="loading-spinner">Loading Workspace...</div>
-      </div>
-    )
+    return <WorkspaceSkeleton />
   }
 
   // Render videos view (inside subfolder)
