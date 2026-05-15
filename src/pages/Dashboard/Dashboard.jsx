@@ -5,6 +5,7 @@ import Trash from '../Trash/Trash.jsx'
 import Avatars from '../Avatars/Avatars.jsx'
 import CreateAvatar from '../Avatars/CreateAvatar.jsx'
 import Voices from '../Voices/Voices.jsx'
+import CreateVoice from '../Voices/CreateVoice.jsx'
 import Library from '../Library/Library.jsx'
 import Templates from '../Templates/Templates.jsx'
 import TemplateDetails from '../TemplateDetails/TemplateDetails.jsx'
@@ -56,6 +57,7 @@ function Dashboard({ onCreate, initialSection }) {
   const [selectedTemplateForDetails, setSelectedTemplateForDetails] = useState(null)
   const [topbarMobileOpen, setTopbarMobileOpen] = useState(false)
   const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false)
+  const [lastVoiceCreated, setLastVoiceCreated] = useState(false)
 
   const cartCount = 2
   const notificationCount = 9
@@ -222,9 +224,18 @@ function Dashboard({ onCreate, initialSection }) {
           )}
           {section === 'trash' && <Trash />}
           {section === 'voices' && (
-            <Voices
-              onCreateVoice={() => { setSelectedVoice(null); setShowVoicePanel(true); }}
-              onVoiceClick={(voice) => { setSelectedVoice(voice); setShowVoicePanel(true); }}
+            <Voices 
+              onCreateVoice={() => goToSection('create-voice')} 
+              onVoiceClick={(voice) => { setSelectedVoice(voice); }}
+              initialFilter={lastVoiceCreated ? 'private' : 'public'} 
+            />
+          )}
+          {section === 'create-voice' && (
+            <CreateVoice 
+              onBack={(success) => {
+                setLastVoiceCreated(success);
+                goToSection('voices');
+              }} 
             />
           )}
           {section === 'library' && <Library />}

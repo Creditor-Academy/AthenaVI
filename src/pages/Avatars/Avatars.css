@@ -76,8 +76,9 @@
 }
 
 .header-info h1 {
+  font-family: var(--font-family);
   font-size: 28px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-main);
   letter-spacing: -0.01em;
   margin: 0;
@@ -1281,7 +1282,6 @@
 
 .type-card:hover {
   background: var(--bg-card);
-  transform: translateY(-4px);
   border-color: var(--text-muted);
 }
 

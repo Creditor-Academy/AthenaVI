@@ -46,6 +46,7 @@ const API_CONFIG = {
         LIST: '/api/heygen/voices',
         DESIGN: '/api/heygen/voices',
         CLONE: '/api/heygen/voices/clone',
+        SELECT: '/api/heygen/voices/select',
         PREVIEW: '/api/heygen/voices/preview-speech',
         STATUS: '/api/heygen/voices' // Path will be /api/heygen/voices/:voiceId
       },
