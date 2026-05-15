@@ -48,6 +48,9 @@ const API_CONFIG = {
         CLONE: '/api/heygen/voices/clone',
         PREVIEW: '/api/heygen/voices/preview-speech',
         STATUS: '/api/heygen/voices' // Path will be /api/heygen/voices/:voiceId
+      },
+      VIDEOS: {
+        CREATE: (workspaceId, projectId) => `/api/workspaces/${workspaceId}/projects/${projectId}/heygen/videos`
       }
     }
   },

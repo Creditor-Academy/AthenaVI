@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { ArrowLeft, Video, Image, Terminal, Upload, Loader2, X } from 'lucide-react'
+import { ArrowLeft, Video, Image, Terminal, Upload, Loader2, X, Users } from 'lucide-react'
 import heygenService from '../../services/heygenService'
 import './Avatars.css'
 
@@ -11,6 +11,7 @@ function CreateAvatar({ onBack }) {
   const [creationStatus, setCreationStatus] = useState('')
   const [previewUrl, setPreviewUrl] = useState(null)
   const [selectedFile, setSelectedFile] = useState(null)
+  const [showHelpModal, setShowHelpModal] = useState(false)
   const fileInputRef = useRef(null)
 
   const handleFileChange = (e) => {
@@ -124,15 +125,17 @@ function CreateAvatar({ onBack }) {
   };
 
   return (
-    <div className="create-avatar-page">
+    <div className="workspace-main">
       <div className="grid-container">
-        <header className="create-avatar-header">
-          <button className="back-btn-sleek" onClick={() => onBack(false)}>
-            <ArrowLeft size={18} />
-            <span>Back to Avatars</span>
-          </button>
-          <h1>Create Your AI Persona</h1>
-          <p>Choose your path and bring your virtual identity to life.</p>
+        <header className="avatars-header">
+          <div className="header-info">
+            <button className="back-btn-sleek" onClick={() => onBack(false)}>
+              <ArrowLeft size={18} />
+              <span>Back to Avatars</span>
+            </button>
+            <h1>Create Your AI Persona</h1>
+            <p>Choose your path and bring your virtual identity to life.</p>
+          </div>
         </header>
 
         <div className="creation-content-wrapper">
@@ -145,53 +148,68 @@ function CreateAvatar({ onBack }) {
               </div>
             ) : (
               <div className="form-body">
-                <div className="type-selector">
-                  <button 
-                    className={`type-btn ${creationType === 'digital_twin' ? 'active' : ''}`}
-                    onClick={() => setCreationType('digital_twin')}
-                  >
-                    <Video size={18} />
-                    <div className="type-label">
+                <div className="input-group">
+                  <label className="section-label">Avatar Type</label>
+                  <div className="type-selector-cards">
+                    <button 
+                      className={`type-card ${creationType === 'digital_twin' ? 'active' : ''}`}
+                      onClick={() => setCreationType('digital_twin')}
+                    >
+                      <div className="type-card-icon"><Video size={20} /></div>
+                      <div className="type-card-info">
                         <strong>Digital Twin</strong>
-                        <span>From Video</span>
-                    </div>
-                  </button>
-                  <button 
-                    className={`type-btn ${creationType === 'photo' ? 'active' : ''}`}
-                    onClick={() => setCreationType('photo')}
-                  >
-                    <Image size={18} />
-                    <div className="type-label">
+                        <p>Clones your real appearance from video</p>
+                        <span className="type-badge">From Video</span>
+                      </div>
+                      <div className="type-card-radio"></div>
+                    </button>
+
+                    <button 
+                      className={`type-card ${creationType === 'photo' ? 'active' : ''}`}
+                      onClick={() => setCreationType('photo')}
+                    >
+                      <div className="type-card-icon"><Image size={20} /></div>
+                      <div className="type-card-info">
                         <strong>Photo Avatar</strong>
-                        <span>From Image</span>
-                    </div>
-                  </button>
-                  <button 
-                    className={`type-btn ${creationType === 'prompt' ? 'active' : ''}`}
-                    onClick={() => setCreationType('prompt')}
-                  >
-                    <Terminal size={18} />
-                    <div className="type-label">
+                        <p>Animates a still image into a persona</p>
+                        <span className="type-badge">From Image</span>
+                      </div>
+                      <div className="type-card-radio"></div>
+                    </button>
+
+                    <button 
+                      className={`type-card ${creationType === 'prompt' ? 'active' : ''}`}
+                      onClick={() => setCreationType('prompt')}
+                    >
+                      <div className="type-card-icon"><Terminal size={20} /></div>
+                      <div className="type-card-info">
                         <strong>Prompt Based</strong>
-                        <span>AI Generated</span>
-                    </div>
-                  </button>
+                        <p>Generate a face entirely from text</p>
+                        <span className="type-badge">AI Generated</span>
+                      </div>
+                      <div className="type-card-radio"></div>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="form-main-inputs">
                     <div className="input-group">
-                      <label>Avatar Identity Name</label>
-                      <input 
-                        type="text" 
-                        placeholder="e.g. Athena Executive Marcus" 
-                        value={creationName}
-                        onChange={(e) => setCreationName(e.target.value)}
-                      />
+                      <label className="section-label">Avatar Identity Name</label>
+                      <div className="input-with-counter">
+                        <input 
+                          type="text" 
+                          placeholder="e.g. Athena Executive Marcus" 
+                          value={creationName}
+                          maxLength={50}
+                          onChange={(e) => setCreationName(e.target.value)}
+                        />
+                        <span className="char-counter">{creationName.length}/50</span>
+                      </div>
                     </div>
 
                     {creationType === 'prompt' ? (
                       <div className="input-group">
-                        <label>AI Personality / Description</label>
+                        <label className="section-label">AI Personality / Description</label>
                         <textarea 
                           placeholder="Describe the appearance, ethnicity, age, and professional style of the avatar you want to generate..." 
                           value={creationPrompt}
@@ -200,7 +218,15 @@ function CreateAvatar({ onBack }) {
                       </div>
                     ) : (
                       <div className="input-group">
-                        <label>{creationType === 'digital_twin' ? 'High Fidelity Video Input' : 'Portrait Image Input'}</label>
+                        <div className="label-with-help">
+                          <label className="section-label">
+                            {creationType === 'digital_twin' ? 'High Fidelity Video Input' : 'Portrait Image Input'}
+                          </label>
+                          <button type="button" className="context-help-link" onClick={() => setShowHelpModal(true)}>
+                            {creationType === 'digital_twin' ? 'What makes a good video?' : 'What makes a good photo?'}
+                          </button>
+                        </div>
+                        
                         <div className={`file-drop-zone-premium ${previewUrl ? 'has-preview' : ''}`} onClick={() => fileInputRef.current?.click()}>
                           {previewUrl ? (
                             <div className="preview-container">
@@ -219,10 +245,17 @@ function CreateAvatar({ onBack }) {
                             </div>
                           ) : (
                             <>
-                              <Upload size={32} />
+                              <div className="upload-icon-circle">
+                                <Upload size={28} />
+                              </div>
                               <div className="drop-zone-text">
                                 <strong>Click or drag to upload</strong>
-                                <span>{creationType === 'digital_twin' ? 'Supports .mp4, .mov (2-5 mins recommended)' : 'Supports .png, .jpg, .webp'}</span>
+                                <p>2-5 minutes recommended</p>
+                                <div className="format-pills">
+                                  <span>.mp4</span>
+                                  <span>.mov</span>
+                                  <span>Max 2 GB</span>
+                                </div>
                               </div>
                             </>
                           )}
@@ -238,38 +271,77 @@ function CreateAvatar({ onBack }) {
                     )}
                 </div>
 
-                <button className="submit-creation-btn-premium" onClick={handleCreateAvatar}>
-                  Build My AI Avatar
-                </button>
+                <div className="creation-footer">
+                  <button className="submit-creation-btn-premium" onClick={handleCreateAvatar}>
+                    <Terminal size={18} />
+                    <span>Build My AI Avatar</span>
+                  </button>
+                  <p className="cta-note">Processing typically takes 5–10 minutes.</p>
+                </div>
               </div>
             )}
           </div>
           
-          <div className="creation-guide">
-            <h3>Pro Creation Tips</h3>
-            <div className="guide-item">
-              <div className="guide-number">01</div>
-              <div className="guide-text">
-                <strong>Lighting is Key</strong>
-                <p>Ensure your face is well-lit and avoid shadows for the best realism.</p>
+        </div>
+
+        {showHelpModal && (
+          <div className="creation-modal-overlay" onClick={() => setShowHelpModal(false)}>
+            <div className="creation-modal-content" onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>Guide to the Perfect Persona</h3>
+                <button className="modal-close-btn" onClick={() => setShowHelpModal(false)}>
+                  <X size={20} />
+                </button>
               </div>
-            </div>
-            <div className="guide-item">
-              <div className="guide-number Snapshot">02</div>
-              <div className="guide-text">
-                <strong>Neutral Background</strong>
-                <p>A clean, solid background helps our AI isolate your movements perfectly.</p>
+              <div className="modal-body">
+                {creationType === 'digital_twin' ? (
+                  <>
+                    <div className="help-section">
+                      <h4><Video size={18} /> Video Requirements</h4>
+                      <ul>
+                        <li><strong>Length:</strong> 2-5 minutes of continuous footage.</li>
+                        <li><strong>Resolution:</strong> 1080p or 4K recommended.</li>
+                        <li><strong>Format:</strong> .mp4 or .mov (Max 2GB).</li>
+                      </ul>
+                    </div>
+                    <div className="help-section">
+                      <h4><Users size={18} /> Best Practices</h4>
+                      <ul>
+                        <li>Speak naturally about any topic to capture mouth movements.</li>
+                        <li>Keep your head relatively still but use natural hand gestures.</li>
+                        <li>Maintain a steady gaze towards the camera lens.</li>
+                        <li>Ensure there are no other people or distracting objects in frame.</li>
+                      </ul>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="help-section">
+                      <h4><Image size={18} /> Image Requirements</h4>
+                      <ul>
+                        <li><strong>Resolution:</strong> 1080x1080 minimum recommended.</li>
+                        <li><strong>Format:</strong> .png, .jpg, or .webp.</li>
+                        <li><strong>Size:</strong> Max 10MB.</li>
+                      </ul>
+                    </div>
+                    <div className="help-section">
+                      <h4><Users size={18} /> Best Practices</h4>
+                      <ul>
+                        <li>Ensure good, even lighting across the face (no harsh shadows).</li>
+                        <li>Look directly at the camera lens.</li>
+                        <li>Maintain a neutral expression with a closed mouth.</li>
+                        <li>Use a solid or very clean background.</li>
+                      </ul>
+                    </div>
+                  </>
+                )}
               </div>
-            </div>
-            <div className="guide-item">
-              <div className="guide-number">03</div>
-              <div className="guide-text">
-                <strong>Natural Speech</strong>
-                <p>Speak clearly and maintain eye contact with the camera if creating a Digital Twin.</p>
-              </div>
+              <button className="modal-action-btn" onClick={() => setShowHelpModal(false)}>
+                Got it, let's build!
+              </button>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )

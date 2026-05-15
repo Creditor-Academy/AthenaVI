@@ -209,6 +209,28 @@ class HeygenService {
 
   // --- HeyGen Video Management (Project-specific) ---
 
+  async generateVideo(workspaceId, projectId, payload) {
+    try {
+      const endpoint = API_CONFIG.ENDPOINTS.HEYGEN.VIDEOS.CREATE(workspaceId, projectId);
+      const response = await fetch(buildUrl(endpoint), {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Failed to generate video: ${response.status} - ${errText}`);
+      }
+
+      const data = await response.json();
+      return data.data?.heygenVideo || data.heygenVideo || data;
+    } catch (error) {
+      console.error('Error in heygenService.generateVideo:', error);
+      throw error;
+    }
+  }
+
   async listVideos(workspaceId, projectId) {
     try {
       const endpoint = `/api/workspaces/${workspaceId}/projects/${projectId}/heygen/videos`;

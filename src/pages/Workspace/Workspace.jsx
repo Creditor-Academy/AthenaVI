@@ -619,7 +619,7 @@ function Workspace({ onCreate }) {
                 <MdAdd size={18} />
                 New folder
               </button>
-              <button className="new-folder-btn" style={{ background: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }} onClick={onCreate}>
+              <button className="new-folder-btn" style={{ background: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }} onClick={() => onCreate({ initialWorkspaceId: workspaceId, initialFolderId: selectedFolder })}>
                 <MdAdd size={18} />
                 New Video
               </button>
@@ -709,7 +709,7 @@ function Workspace({ onCreate }) {
               <MdFolder size={18} />
               New folder
             </button>
-            <button className="new-folder-btn" style={{ background: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }} onClick={onCreate}>
+            <button className="new-folder-btn" style={{ background: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }} onClick={() => onCreate({ initialWorkspaceId: workspaceId, initialFolderId: 'root' })}>
               <MdAdd size={18} />
               New Video
             </button>
