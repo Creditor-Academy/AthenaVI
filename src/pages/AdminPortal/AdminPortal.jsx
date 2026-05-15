@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  MdDashboard, 
   MdPeople, 
   MdAdminPanelSettings, 
   MdSecurity, 
@@ -16,7 +15,6 @@ import {
   MdVpnKey,
   MdCheckCircle,
   MdCancel,
-  MdWarning,
   MdWindow
 } from 'react-icons/md';
 import TemplateManager from '../../components/features/admin/admin/TemplateManager';
@@ -54,60 +52,62 @@ const AdminPortal = () => {
     { type: 'info', msg: 'Beta rendering engine updated', time: '1 hour ago' }
   ];
 
+  const adminTabs = [
+    { id: 'dashboard', label: 'Dashboard', icon: <MdAdminPanelSettings /> },
+    { id: 'templates', label: 'Template Management', icon: <MdWindow /> },
+    { id: 'users', label: 'User Management', icon: <MdPeople /> },
+    { id: 'moderation', label: 'Content Moderation', icon: <MdSecurity /> },
+    { id: 'logs', label: 'System Logs', icon: <MdSettings /> },
+  ];
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="admin-portal-container"
+      className="admin-page"
     >
-      {/* Internal Dark Sidebar */}
-      <aside className="admin-sidebar-internal">
-        <div className="admin-brand">
-          <h2>Admin Hub</h2>
-        </div>
-        <nav>
-          <div className={`admin-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
-            <MdDashboard /> Dashboard
-          </div>
-          <div className="admin-nav-item">
-            <MdPeople /> User Management
-          </div>
-          <div className="admin-nav-item">
-            <MdSecurity /> Content Moderation
-          </div>
-          <div className="admin-nav-item">
-            <MdAdminPanelSettings /> System Logs
-          </div>
-          <div className={`admin-nav-item ${activeTab === 'templates' ? 'active' : ''}`} onClick={() => setActiveTab('templates')}>
-            <MdWindow /> Template Management
-          </div>
-          <div className="admin-nav-item">
-            <MdSettings /> Platform Settings
-          </div>
-        </nav>
-      </aside>
-
-      {/* Main Content */}
-      <main className="admin-main-wrapper">
-        <header className="admin-top-header">
+      <div className="admin-shell">
+        <header className="admin-page-header">
           <div>
-            <h1>{activeTab === 'templates' ? 'Video Template Design' : 'Platform Overview'}</h1>
-            <p style={{ color: '#64748b' }}>
-              {activeTab === 'templates' 
-                ? 'Create and manage global video generation templates.' 
+            <h1 className="admin-page-title">Admin Portal</h1>
+            <p className="admin-page-subtitle">
+              {activeTab === 'templates'
+                ? 'Create and manage global video generation templates.'
                 : 'Technical health and operational metrics.'}
             </p>
           </div>
-          <div className="admin-actions">
-            <button className="btn-admin-action btn-export">
-              <MdFileDownload /> Export Report
-            </button>
-            <button className="btn-admin-action btn-alert">
-              <MdNotificationImportant /> Global Alert
-            </button>
-          </div>
+          {activeTab === 'dashboard' && (
+            <div className="admin-toolbar-actions">
+              <button className="btn-admin-action btn-export">
+                <MdFileDownload /> Export Report
+              </button>
+              <button className="btn-admin-action btn-alert">
+                <MdNotificationImportant /> Global Alert
+              </button>
+            </div>
+          )}
         </header>
 
+        <div className="admin-tab-switch" role="tablist" aria-label="Admin sections">
+          {adminTabs.map((tab) => {
+            const isActive = activeTab === tab.id
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                className={`admin-tab-btn ${isActive ? 'active' : ''}`}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                <span className="admin-tab-icon" aria-hidden>{tab.icon}</span>
+                <span>{tab.label}</span>
+              </button>
+            )
+          })}
+        </div>
+
+        <main className="admin-main">
         {activeTab === 'dashboard' ? (
           <>
             {/* High-Level Metrics */}
@@ -247,8 +247,14 @@ const AdminPortal = () => {
           </>
         ) : activeTab === 'templates' ? (
           <TemplateManager />
-        ) : null}
-      </main>
+        ) : (
+          <section className="admin-card-section">
+            <h2>{adminTabs.find((tab) => tab.id === activeTab)?.label}</h2>
+            <p className="admin-placeholder-text">This section will be available in a future update.</p>
+          </section>
+        )}
+        </main>
+      </div>
     </motion.div>
   );
 };

@@ -10,9 +10,13 @@ import {
   MdFolder,
   MdClose,
   MdSearch,
-  MdVideoLibrary
+  MdVideoLibrary,
+  MdCheckCircle,
+  MdCancel,
+  MdWarning
 } from 'react-icons/md'
 import workspaceService from '../../services/workspaceService'
+import VideosSkeleton from '../page-skeleton/VideosSkeleton'
 import './Videos.css'
 
 const thumbnailUrl = 'https://media.istockphoto.com/id/1475888355/video/timelapse-of-the-creation-of-an-online-avatar-start-to-finish.jpg?s=640x640&k=20&c=pFzBOkU7LjC1DF0DeNCAUhS8MCiNwSDwkqI9v9C7IgQ='
@@ -25,10 +29,35 @@ function Videos({ onCreate }) {
   const [cardMenu, setCardMenu] = useState(null)
   const [renameDialog, setRenameDialog] = useState(null) // { videoId, workspaceId, title }
   const [newName, setNewName] = useState('')
+  const [toast, setToast] = useState(null)
+  const [confirmDialog, setConfirmDialog] = useState(null)
   const menuRefs = useRef({})
+  const toastTimeoutRef = useRef(null)
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type })
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current)
+    }
+    toastTimeoutRef.current = setTimeout(() => {
+      setToast(null)
+    }, 2800)
+  }
+
+  const openConfirmDialog = (message, onConfirm) => {
+    setConfirmDialog({ message, onConfirm })
+  }
 
   useEffect(() => {
     fetchVideos()
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current)
+      }
+    }
   }, [])
 
   const fetchVideos = async () => {
@@ -60,20 +89,27 @@ function Videos({ onCreate }) {
     if (!newName.trim() || !renameDialog) return
     try {
       await workspaceService.renameVideo(renameDialog.workspaceId, renameDialog.videoId, newName.trim())
-      window.location.reload()
+      setRenameDialog(null)
+      setNewName('')
+      await fetchVideos()
+      showToast('Video renamed successfully', 'success')
     } catch (error) {
-      alert('Failed to rename video')
+      console.error('Failed to rename video:', error)
+      showToast('Failed to rename video. Please try again.', 'error')
     }
   }
 
-  const handleDelete = async (workspaceId, videoId) => {
-    if (!window.confirm('Are you sure you want to delete this video?')) return
-    try {
-      await workspaceService.deleteVideo(workspaceId, videoId)
-      window.location.reload()
-    } catch (error) {
-      alert('Failed to delete video')
-    }
+  const handleDelete = (workspaceId, videoId) => {
+    openConfirmDialog('Are you sure you want to delete this video?', async () => {
+      try {
+        await workspaceService.deleteVideo(workspaceId, videoId)
+        await fetchVideos()
+        showToast('Video deleted successfully', 'success')
+      } catch (error) {
+        console.error('Failed to delete video:', error)
+        showToast('Failed to delete video. Please try again.', 'error')
+      }
+    })
   }
 
   const filteredVideos = videos.filter(v => 
@@ -142,9 +178,7 @@ function Videos({ onCreate }) {
 
         <main className="videos-main">
           {loading ? (
-            <div className="empty-videos">
-              <p>Loading your videos...</p>
-            </div>
+            <VideosSkeleton />
           ) : filteredVideos.length === 0 ? (
             <div className="empty-videos">
               <MdVideoLibrary className="empty-videos-icon" />
@@ -273,6 +307,46 @@ function Videos({ onCreate }) {
               <button className="btn-primary" onClick={handleRename}>Rename</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {confirmDialog && (
+        <div className="confirm-dialog-overlay" onClick={() => setConfirmDialog(null)}>
+          <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="confirm-dialog-icon-wrap">
+              <MdWarning className="confirm-dialog-icon" />
+            </div>
+            <h3 className="confirm-dialog-title">Please confirm</h3>
+            <p className="confirm-dialog-message">{confirmDialog.message}</p>
+            <div className="confirm-dialog-actions">
+              <button className="btn-secondary" onClick={() => setConfirmDialog(null)}>
+                Cancel
+              </button>
+              <button
+                className="btn-primary"
+                onClick={async () => {
+                  const onConfirm = confirmDialog.onConfirm
+                  setConfirmDialog(null)
+                  if (onConfirm) {
+                    await onConfirm()
+                  }
+                }}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toast && (
+        <div className={`videos-toast videos-toast--${toast.type}`}>
+          {toast.type === 'success' ? (
+            <MdCheckCircle className="videos-toast-icon" />
+          ) : (
+            <MdCancel className="videos-toast-icon" />
+          )}
+          <span>{toast.message}</span>
         </div>
       )}
     </div>

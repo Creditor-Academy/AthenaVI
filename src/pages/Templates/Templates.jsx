@@ -24,6 +24,7 @@ const CATEGORY_ICONS = {
   'Personal': PersonalImg,
 }
 import TemplatePreview from '../../components/TemplatePreview.jsx'
+import TemplatesSkeleton from '../page-skeleton/TemplatesSkeleton'
 import './Templates.css'
 
 const CATEGORY_FILTERS = ['All Templates', 'Marketing', 'Education', 'Business', 'Social Media', 'Personal']
@@ -136,10 +137,7 @@ function Templates({ onSelect }) {
           </header>
 
           {loading ? (
-            <div className="loading-state">
-              <div className="spinner" />
-              <p>Finding the perfect templates...</p>
-            </div>
+            <TemplatesSkeleton />
           ) : (
             <div className="template-grid-main">
               {filteredTemplates.map(template => (

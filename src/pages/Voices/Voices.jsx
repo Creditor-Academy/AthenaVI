@@ -1,5 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
-import { MdMoreVert, MdPlayArrow, MdClose, MdCheckCircle, MdShare, MdContentCopy, MdEdit, MdDelete } from 'react-icons/md'
+import { MdMoreVert, MdPlayArrow, MdClose, MdCheckCircle, MdShare, MdContentCopy, MdEdit, MdDelete, MdSearch, MdFilterList, MdGraphicEq } from 'react-icons/md'
+import { Loader2, AlertCircle } from 'lucide-react'
+import heygenService from '../../services/heygenService'
+import CreateVoiceModal from './CreateVoiceModal'
+import VoicesSkeleton from '../page-skeleton/VoicesSkeleton'
+
 
 const styles = `
 .voices-container {
@@ -342,21 +347,59 @@ const styles = `
 `
 
 function Voices({ onCreateVoice, onVoiceClick }) {
-  const [voices, setVoices] = useState([
-    {
-      id: 1,
-      name: 'Michael Johnson',
-      language: 'EN',
-      updated: '10 June',
-      hasMultiLanguage: true
-    }
-  ])
+  const [voices, setVoices] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [filterType, setFilterType] = useState('public')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [selectedVoiceForSpeech, setSelectedVoiceForSpeech] = useState(null)
+  const [speechText, setSpeechText] = useState('')
+  const [isSynthesizing, setIsSynthesizing] = useState(false)
+  
   const [openMenuId, setOpenMenuId] = useState(null)
   const [editingVoiceId, setEditingVoiceId] = useState(null)
   const [editingName, setEditingName] = useState('')
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(null)
+  
   const menuRefs = useRef({})
   const languageLinkRefs = useRef({})
+
+  const fetchVoices = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await heygenService.getVoices({ type: filterType });
+      console.log('Athena VI: Voices Fetch Result:', result);
+      
+      let voiceList = [];
+      // Extract array from various possible backend response formats
+      if (Array.isArray(result)) {
+        voiceList = result;
+      } else if (result && Array.isArray(result.voices)) {
+        voiceList = result.voices;
+      } else if (result && result.data && Array.isArray(result.data.voices)) {
+        voiceList = result.data.voices;
+      } else if (result && result.data && Array.isArray(result.data)) {
+        voiceList = result.data;
+      } else if (result && Array.isArray(result.list)) {
+        voiceList = result.list;
+      }
+      
+      setVoices(voiceList);
+    } catch (err) {
+      console.error('Failed to fetch voices:', err);
+      setError('Failed to sync with neural voice database.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchVoices();
+  }, [filterType]);
+
+
 
   const languages = [
     'Afrikaans', 'Albanian', 'Amharic', 'Arabic', 'Armenian', 'Assamese', 'Azerbaijani',
@@ -391,8 +434,26 @@ function Voices({ onCreateVoice, onVoiceClick }) {
   }, [])
 
   const handleCreateVoice = () => {
-    if (onCreateVoice) {
-      onCreateVoice()
+    setShowCreateModal(true);
+  }
+
+  const handleSpeechSynthesis = async () => {
+    if (!speechText || !selectedVoiceForSpeech) return;
+    setIsSynthesizing(true);
+    try {
+      const res = await heygenService.previewSpeech({
+        text: speechText,
+        voice_id: selectedVoiceForSpeech.voice_id || selectedVoiceForSpeech.id,
+        voice_engine: selectedVoiceForSpeech.voice_engine || selectedVoiceForSpeech.engine
+      });
+      if (res.preview_audio_url) {
+        new Audio(res.preview_audio_url).play();
+      }
+    } catch (err) {
+      console.error('Synthesis failed:', err);
+      alert('Failed to generate speech preview.');
+    } finally {
+      setIsSynthesizing(false);
     }
   }
 
@@ -477,15 +538,52 @@ function Voices({ onCreateVoice, onVoiceClick }) {
       <style>{styles}</style>
       <div className="voices-container">
         <div className="voices-header">
-          <h1 className="voices-title">Voices</h1>
-          <button className="new-voice-btn" onClick={handleCreateVoice}>
-            + New voice
-          </button>
+          <h1 className="voices-title">Neural Voices</h1>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <div className="ownership-segmented-control" style={{ marginBottom: 0 }}>
+              <button
+                className={`segmented-btn ${filterType === 'public' ? 'active' : ''}`}
+                onClick={() => setFilterType('public')}
+              >
+                Public Library
+              </button>
+              <button
+                className={`segmented-btn ${filterType === 'private' ? 'active' : ''}`}
+                onClick={() => setFilterType('private')}
+              >
+                My Custom Voices
+              </button>
+            </div>
+            <button className="new-voice-btn" onClick={handleCreateVoice}>
+              + New voice
+            </button>
+          </div>
         </div>
 
-        <h2 className="voices-section-title">My voices</h2>
+        <div className="search-section" style={{ marginTop: '20px' }}>
+          <div className="search-bar">
+            <MdSearch size={18} />
+            <input
+              type="text"
+              placeholder="Search by voice name or language..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
 
-        {voices.length === 0 ? (
+        {loading ? (
+          <VoicesSkeleton />
+        ) : error ? (
+          <div className="empty-state">
+            <AlertCircle size={40} style={{ color: '#ef4444', marginBottom: '16px' }} />
+            <p className="empty-state-title">Connection Error</p>
+            <p className="empty-state-text">{error}</p>
+            <button className="new-voice-btn" onClick={() => setFilterType(filterType)}>
+              Retry Connection
+            </button>
+          </div>
+        ) : voices.length === 0 ? (
           <div className="empty-state">
             <p className="empty-state-title">No voices yet</p>
             <p className="empty-state-text">Create your first voice to get started</p>
@@ -495,22 +593,30 @@ function Voices({ onCreateVoice, onVoiceClick }) {
           </div>
         ) : (
           <div className="voices-grid">
-            {voices.map((voice) => (
+            {voices
+              .filter(v => 
+                v.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                v.language?.toLowerCase().includes(searchQuery.toLowerCase())
+              )
+              .map((voice) => (
               <div
-                key={voice.id}
+                key={voice.voice_id || voice.id}
                 className="voice-card"
                 onClick={() => handleVoiceClick(voice)}
               >
                 <div className="voice-card-header">
-                  <span className="voice-language-badge">{voice.language}</span>
-                  <div style={{ position: 'relative' }} ref={el => menuRefs.current[voice.id] = el}>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <span className="voice-language-badge">{voice.language || 'Global'}</span>
+                    {voice.gender && <span className="voice-language-badge" style={{ background: 'rgba(var(--primary-rgb), 0.1)', color: 'var(--primary)' }}>{voice.gender}</span>}
+                  </div>
+                  <div style={{ position: 'relative' }} ref={el => menuRefs.current[voice.voice_id || voice.id] = el}>
                     <button
                       className="voice-menu-btn"
-                      onClick={(e) => toggleMenu(e, voice.id)}
+                      onClick={(e) => toggleMenu(e, voice.voice_id || voice.id)}
                     >
                       <MdMoreVert />
                     </button>
-                    {openMenuId === voice.id && (
+                    {openMenuId === (voice.voice_id || voice.id) && (
                       <div className="voice-menu">
                         <button
                           className="voice-menu-item"
@@ -544,8 +650,8 @@ function Voices({ onCreateVoice, onVoiceClick }) {
                     )}
                   </div>
                 </div>
-                <div>
-                  {editingVoiceId === voice.id ? (
+                  <div>
+                  {editingVoiceId === (voice.voice_id || voice.id) ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <input
                         type="text"
@@ -553,7 +659,7 @@ function Voices({ onCreateVoice, onVoiceClick }) {
                         onChange={(e) => setEditingName(e.target.value)}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
-                            handleNameSave(voice.id)
+                            handleNameSave(voice.voice_id || voice.id)
                           } else if (e.key === 'Escape') {
                             handleNameCancel()
                           }
@@ -574,7 +680,7 @@ function Voices({ onCreateVoice, onVoiceClick }) {
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          handleNameSave(voice.id)
+                          handleNameSave(voice.voice_id || voice.id)
                         }}
                         style={{
                           padding: '4px 12px',
@@ -611,7 +717,7 @@ function Voices({ onCreateVoice, onVoiceClick }) {
                   ) : (
                     <h3 className="voice-name">{voice.name}</h3>
                   )}
-                  <p className="voice-updated">Updated on {voice.updated}</p>
+                  {voice.engine && <p className="voice-updated" style={{ textTransform: 'capitalize', fontSize: '12px' }}>Engine: {voice.engine}</p>}
                 </div>
                 {voice.hasMultiLanguage && (
                   <div className="voice-info-box" ref={el => languageLinkRefs.current[voice.id] = el}>
@@ -655,17 +761,73 @@ function Voices({ onCreateVoice, onVoiceClick }) {
                   className="voice-preview-btn"
                   onClick={(e) => {
                     e.stopPropagation()
-                    // Preview functionality
+                    if (voice.preview_audio_url) {
+                      const audio = new Audio(voice.preview_audio_url);
+                      audio.play();
+                    }
                   }}
                 >
                   <MdPlayArrow />
-                  Preview
+                  {voice.preview_audio_url ? 'Sample' : 'No Sample'}
+                </button>
+                <button
+                  className="voice-preview-btn"
+                  style={{ background: 'rgba(var(--primary-rgb), 0.05)', color: 'var(--primary)', borderColor: 'rgba(var(--primary-rgb), 0.1)' }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedVoiceForSpeech(voice);
+                  }}
+                >
+                  <MdGraphicEq />
+                  Test Voice
                 </button>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      <CreateVoiceModal 
+        isOpen={showCreateModal} 
+        onClose={() => setShowCreateModal(false)}
+        onVoiceCreated={() => {
+          fetchVoices();
+          setShowCreateModal(false);
+        }}
+      />
+
+      {selectedVoiceForSpeech && (
+        <div className="quick-access-modal-overlay" onClick={() => setSelectedVoiceForSpeech(null)}>
+          <div className="quick-access-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <div className="modal-header-sleek">
+              <div>
+                <h4 style={{ margin: 0, fontSize: '18px' }}>Voice Synthesis</h4>
+                <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--text-muted)' }}>Testing: {selectedVoiceForSpeech.name}</p>
+              </div>
+              <button className="close-mini-btn" onClick={() => setSelectedVoiceForSpeech(null)}><MdClose size={20} /></button>
+            </div>
+            <div style={{ padding: '24px' }}>
+              <div className="input-group">
+                <label style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px', display: 'block' }}>Insert Text</label>
+                <textarea 
+                  placeholder="Type something to hear it in this voice..."
+                  value={speechText}
+                  onChange={(e) => setSpeechText(e.target.value)}
+                  style={{ width: '100%', minHeight: '120px', padding: '16px', borderRadius: '12px', background: 'var(--bg-surface)', border: '1px solid var(--border-color)', color: 'var(--text-main)', resize: 'none', outline: 'none' }}
+                />
+              </div>
+              <button 
+                className="submit-creation-btn-premium" 
+                style={{ marginTop: '20px' }}
+                onClick={handleSpeechSynthesis}
+                disabled={isSynthesizing || !speechText}
+              >
+                {isSynthesizing ? <Loader2 className="spin-animation" size={18} /> : <><MdGraphicEq size={18} /> Synthesize & Play</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

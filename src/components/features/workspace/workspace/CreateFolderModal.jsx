@@ -4,7 +4,7 @@ import { MdClose, MdFolderOpen } from 'react-icons/md';
 import './PremiumModal.css';
 
 const CreateFolderModal = ({ isOpen, onClose, onCreate, existingFolders = [] }) => {
-    const [folderName, setFolderName] = useState('');
+    const [folderName, setFolderName] = useState('Default');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
 
@@ -18,7 +18,7 @@ const CreateFolderModal = ({ isOpen, onClose, onCreate, existingFolders = [] }) 
         setError('');
         try {
             await onCreate(folderName.trim());
-            setFolderName('');
+            setFolderName('Default');
             onClose();
         } catch (err) {
             console.error('Failed to create folder:', err);

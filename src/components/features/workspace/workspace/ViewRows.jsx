@@ -29,7 +29,7 @@ export const FolderRow = ({ folder, onClick, contextProps }) => {
             </div>
             <div className="row-details">
                 <h4>{folder.name}</h4>
-                <span className="row-meta">Created by {folder.createdBy}</span>
+                <span className="row-meta">Created by {folder.createdBy} • Last modified by {folder.lastModifiedBy} {folder.lastModifiedAt ? `• ${folder.lastModifiedAt}` : ''}</span>
             </div>
             <div className="row-actions">
                 <ContextMenu type="folder" {...contextProps} />

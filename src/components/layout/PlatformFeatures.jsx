@@ -357,7 +357,7 @@ const EditorPreview = ({ activeKey }) => {
 /* ── Styles ── */
 const css = `
   .pf-section {
-    padding: 120px 20px 180px;
+    padding: 80px 20px 100px;
     background: #1e40af;
     background-image: 
       radial-gradient(circle at 0% 0%, rgba(139, 92, 246, 0.3) 0%, transparent 40%),

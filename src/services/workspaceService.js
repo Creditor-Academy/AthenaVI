@@ -5,41 +5,51 @@ class WorkspaceService {
     this.baseURL = ''; // Not used anymore as we use buildUrl
   }
 
+  normalizeId(item) {
+    if (!item || typeof item !== 'object') return item;
+    return { ...item, id: item.id || item._id };
+  }
+
+  normalizeWorkspaceRole(role) {
+    const value = String(role || 'MEMBER').toUpperCase();
+    if (value === 'EDITOR' || value === 'VIEWER') return 'MEMBER';
+    if (value === 'OWNER' || value === 'ADMIN' || value === 'MEMBER') return value;
+    return 'MEMBER';
+  }
+
+  getCurrentUserId() {
+    try {
+      const raw = localStorage.getItem('user');
+      if (!raw) return '';
+      const parsed = JSON.parse(raw);
+      return String(parsed?.id || parsed?._id || parsed?.userId || parsed?.user_id || parsed?.sub || '');
+    } catch {
+      return '';
+    }
+  }
+
+  async readErrorMessage(response, fallbackMessage) {
+    const errorData = await response.json().catch(() => ({}));
+    return errorData.message || fallbackMessage;
+  }
+
   // List all workspaces for the current user
   async listWorkspaces() {
     try {
-      console.log('Fetching workspaces...');
-
       const response = await fetch(buildUrl('/api/workspaces'), {
         method: 'GET',
         headers: getAuthHeaders(),
         cache: 'no-store'
       });
 
-      console.log('Workspace list response status:', response.status);
-
       if (!response.ok) {
-        throw new Error(`Failed to fetch workspaces: ${response.status}`);
+        throw new Error(await this.readErrorMessage(response, `Failed to fetch workspaces: ${response.status}`));
       }
 
       const data = await response.json();
-      console.log('Workspace list response data:', data);
 
-      // Extract workspaces from nested structure
       const workspaces = data.data?.workspaces || data.workspaces || (Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []));
-      // Normalize _id to id for consistency
-      const normalized = workspaces.map(ws => ({ ...ws, id: ws.id || ws._id }));
-      console.log('Extracted workspaces:', normalized);
-
-      // DEBUG: Log raw field names from first workspace to identify API shape
-      if (workspaces.length > 0) {
-        const sample = workspaces[0];
-        console.log('=== WORKSPACE API DEBUG ===');
-        console.log('All keys on workspace[0]:', Object.keys(sample));
-        console.log('Full workspace[0] raw:', JSON.stringify(sample, null, 2));
-        console.log('Stored user from localStorage:', localStorage.getItem('user'));
-        console.log('=== END DEBUG ===');
-      }
+      const normalized = workspaces.map((ws) => this.normalizeId(ws));
 
       return normalized;
     } catch (error) {
@@ -62,7 +72,8 @@ class WorkspaceService {
       }
 
       const data = await response.json();
-      return data.data?.workspace || data.workspace;
+      const workspace = data.data?.workspace || data.workspace;
+      return this.normalizeId(workspace);
     } catch (error) {
       console.error('Error in getWorkspace:', error);
       throw error;
@@ -72,33 +83,23 @@ class WorkspaceService {
   // Create new team workspace
   async createWorkspace(name) {
     try {
-      console.log('Creating workspace with name:', name);
-
       const response = await fetch(buildUrl('/api/workspaces'), {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(typeof name === 'object' ? name : { name })
       });
 
-      console.log('Create workspace response status:', response.status);
-      console.log('Response headers:', response.headers);
-
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Create workspace error response:', errorData);
-        throw new Error(errorData.message || `Failed to create workspace: ${response.status}`);
+        throw new Error(await this.readErrorMessage(response, `Failed to create workspace: ${response.status}`));
       }
 
       const data = await response.json();
-      console.log('Create workspace success response:', data);
-
-      // Extract workspace from nested structure
       const workspace = data.data?.workspace || data.workspace;
       if (!workspace) {
         throw new Error('Workspace not found in response');
       }
 
-      return workspace;
+      return this.normalizeId(workspace);
     } catch (error) {
       console.error('Error in createWorkspace:', error);
       throw error;
@@ -121,7 +122,7 @@ class WorkspaceService {
 
       const data = await response.json();
       const folder = data.data?.folder || data.folder || data.data || data;
-      return { ...folder, id: folder.id || folder._id };
+      return this.normalizeId(folder);
     } catch (error) {
       console.error('Error in createFolder:', error);
       throw error;
@@ -131,25 +132,19 @@ class WorkspaceService {
   // List all folders in a workspace
   async listFolders(workspaceId) {
     try {
-      console.log('listFolders: calling', buildUrl(`/api/workspaces/${workspaceId}/folders`));
       const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/folders`), {
         method: 'GET',
         headers: getAuthHeaders(),
         cache: 'no-store'
       });
 
-      console.log('listFolders: response status', response.status);
-
       if (!response.ok) {
-        const errorText = await response.text().catch(() => '');
-        throw new Error(`Failed to fetch folders: ${response.status} ${errorText}`);
+        throw new Error(await this.readErrorMessage(response, `Failed to fetch folders: ${response.status}`));
       }
 
       const data = await response.json();
-      console.log('listFolders: raw response data', JSON.stringify(data));
       const folders = data.data?.folders || data.folders || (Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []));
-      // Normalize _id to id for consistency
-      return folders.map(f => ({ ...f, id: f.id || f._id }));
+      return folders.map((f) => this.normalizeId(f));
     } catch (error) {
       console.error('Error in listFolders:', error);
       throw error;
@@ -172,7 +167,7 @@ class WorkspaceService {
 
       const data = await response.json();
       const folder = data.data?.folder || data.folder || data.data || data;
-      return { ...folder, id: folder.id || folder._id };
+      return this.normalizeId(folder);
     } catch (error) {
       console.error('Error in renameFolder:', error);
       throw error;
@@ -212,7 +207,7 @@ class WorkspaceService {
       }
 
       const data = await response.json();
-      return data.data?.workspace || data.workspace;
+      return this.normalizeId(data.data?.workspace || data.workspace);
     } catch (error) {
       console.error('Error in updateWorkspace:', error);
       throw error;
@@ -255,7 +250,8 @@ class WorkspaceService {
       }
 
       const data = await response.json();
-      return data.members || [];
+      const members = data.data?.members || data.members || [];
+      return members.map((m) => this.normalizeId(m));
     } catch (error) {
       console.error('Error fetching workspace members:', error);
       throw error;
@@ -265,12 +261,10 @@ class WorkspaceService {
   // Invite member to workspace (OWNER or ADMIN only)
   async inviteMember(workspaceId, inviteData) {
     try {
-      console.log('📧 Sending invitation to:', inviteData.email);
-      console.log('🏢 For workspace:', workspaceId);
-      console.log('👤 Role:', inviteData.role);
-
-      // Ensure role is uppercase according to API docs
-      const role = inviteData.role ? inviteData.role.toUpperCase() : 'MEMBER';
+      const role = this.normalizeWorkspaceRole(inviteData.role);
+      if (role === 'OWNER') {
+        throw new Error('Invitation role must be ADMIN or MEMBER.');
+      }
 
       const headers = getAuthHeaders();
       const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/invite`), {
@@ -278,29 +272,23 @@ class WorkspaceService {
         headers,
         body: JSON.stringify({
           email: inviteData.email,
-          role: role // ADMIN or MEMBER (not OWNER)
+          role
         })
       });
 
-      console.log('📡 Invite API response status:', response.status);
-
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.log('❌ Invite failed:', errorData);
-
+        const errMsg = await this.readErrorMessage(response, `Failed to send invitation: ${response.status}`);
         if (response.status === 409) {
-          throw new Error('User is already a member of this workspace');
+          throw new Error(errMsg || 'User is already a member or has a pending invitation');
         }
-        throw new Error(errorData.message || `Failed to send invitation: ${response.status}`);
+        throw new Error(errMsg);
       }
 
-      const data = await response.json();
-      console.log('✅ Invitation sent successfully:', data);
+      await response.json().catch(() => ({}));
 
-      // According to your API docs, this returns empty object {}
       return { success: true, message: 'Invitation sent successfully' };
     } catch (error) {
-      console.error('🚨 Error sending invitation:', error);
+      console.error('Error sending invitation:', error);
       throw error;
     }
   }
@@ -323,7 +311,7 @@ class WorkspaceService {
       }
 
       const data = await response.json();
-      return data.data?.workspace || data.workspace;
+      return this.normalizeId(data.data?.workspace || data.workspace);
     } catch (error) {
       console.error('Error accepting invitation:', error);
       throw error;
@@ -332,11 +320,12 @@ class WorkspaceService {
   // Change member role (OWNER only)
   async changeMemberRole(workspaceId, memberId, newRole) {
     try {
+      const role = this.normalizeWorkspaceRole(newRole);
       const headers = getAuthHeaders();
       const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/members/${memberId}/role`), {
         method: 'PATCH',
         headers,
-        body: JSON.stringify({ role: newRole })
+        body: JSON.stringify({ role })
       });
 
       if (!response.ok) {
@@ -354,7 +343,7 @@ class WorkspaceService {
       }
 
       const data = await response.json();
-      return data.member;
+      return this.normalizeId(data.data?.member || data.member);
     } catch (error) {
       console.error('Error changing member role:', error);
       throw error;
@@ -392,17 +381,43 @@ class WorkspaceService {
     }
   }
 
-  // Leave workspace (remove self)
-  async leaveWorkspace(workspaceId) {
+  // Leave workspace (remove self). Uses documented self-removal route when possible.
+  async leaveWorkspace(workspaceOrId) {
     try {
+      const workspace = typeof workspaceOrId === 'object' && workspaceOrId !== null ? workspaceOrId : null;
+      const workspaceId = workspace?.id || workspace?._id || workspaceOrId;
+      const currentUserId = this.getCurrentUserId();
+
+      let memberId = '';
+      if (workspace && Array.isArray(workspace.members) && currentUserId) {
+        const ownMember = workspace.members.find((member) => {
+          const memberUserId = String(member.userId || member.user?.id || member.user?._id || '');
+          return memberUserId && memberUserId === currentUserId;
+        });
+        memberId = String(ownMember?.id || ownMember?._id || ownMember?.memberId || '');
+      }
+
       const headers = getAuthHeaders();
-      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/leave`), {
+
+      if (workspaceId && memberId) {
+        const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/members/${memberId}`), {
+          method: 'DELETE',
+          headers
+        });
+
+        if (response.ok) {
+          return true;
+        }
+      }
+
+      // Compatibility fallback for older backend implementations.
+      const fallbackResponse = await fetch(buildUrl(`/api/workspaces/${workspaceId}/leave`), {
         method: 'POST',
         headers
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to leave workspace: ${response.status}`);
+      if (!fallbackResponse.ok) {
+        throw new Error(await this.readErrorMessage(fallbackResponse, `Failed to leave workspace: ${fallbackResponse.status}`));
       }
 
       return true;
@@ -422,7 +437,7 @@ class WorkspaceService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to remove invitation: ${response.status}`);
+        throw new Error(await this.readErrorMessage(response, `Failed to remove invitation: ${response.status}`));
       }
 
       return true;
@@ -484,7 +499,7 @@ class WorkspaceService {
       }
 
       const data = await response.json();
-      return data.data?.video || data.video;
+      return this.normalizeId(data.data?.video || data.video);
     } catch (error) {
       console.error('Error in renameVideo:', error);
       throw error;
@@ -507,6 +522,79 @@ class WorkspaceService {
     } catch (error) {
       console.error('Error in deleteVideo:', error);
       throw error;
+    }
+  }
+
+  async createVideo(workspaceId, payload) {
+    try {
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/videos`), {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to create video: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const video = data.data?.video || data.video || data.data || data;
+      return this.normalizeId(video);
+    } catch (error) {
+      console.error('Error in createVideo:', error);
+      throw error;
+    }
+  }
+
+  async getInvitations() {
+    // NOTE: The API has no "list my received invitations" endpoint.
+    // Invitations are only accepted via the email link (POST /api/workspaces/invitations/accept).
+    // This method intentionally returns an empty array.
+    return [];
+  }
+
+  async listWorkspaceInvitations(workspaceId) {
+    try {
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/invitations`), {
+        method: 'GET',
+        headers: getAuthHeaders(),
+        cache: 'no-store'
+      });
+
+      if (!response.ok) {
+        if (response.status === 404 || response.status === 403) return [];
+        throw new Error(`Failed to fetch workspace invitations: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const invitations = data.data?.invitations || data.invitations || (Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []));
+      return invitations.map((inv) => this.normalizeId(inv));
+    } catch (error) {
+      console.error('Error in listWorkspaceInvitations:', error);
+      return [];
+    }
+  }
+
+  async listTemplatesByAspectRatio(aspectRatio) {
+    try {
+      const response = await fetch(buildUrl(`/api/templates?aspectRatio=${encodeURIComponent(aspectRatio)}`), {
+        method: 'GET',
+        headers: getAuthHeaders(),
+        cache: 'no-store'
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) return [];
+        throw new Error(`Failed to fetch templates: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const templates = data.data?.templates || data.templates || (Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []));
+      return templates.map((tpl) => this.normalizeId(tpl));
+    } catch (error) {
+      console.error('Error in listTemplatesByAspectRatio:', error);
+      return [];
     }
   }
 }

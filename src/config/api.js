@@ -33,6 +33,25 @@ const API_CONFIG = {
     USER: {
       GET_ALL: '/api/user/getall'
       // Note: No individual user profile endpoint mentioned in docs
+    },
+    
+    // HeyGen API
+    HEYGEN: {
+      AVATARS: {
+        GROUPS: '/api/heygen/avatars/groups',
+        LOOKS: '/api/heygen/avatars/looks',
+        CREATE: '/api/heygen/avatars'
+      },
+      VOICES: {
+        LIST: '/api/heygen/voices',
+        DESIGN: '/api/heygen/voices',
+        CLONE: '/api/heygen/voices/clone',
+        PREVIEW: '/api/heygen/voices/preview-speech',
+        STATUS: '/api/heygen/voices' // Path will be /api/heygen/voices/:voiceId
+      },
+      VIDEOS: {
+        CREATE: (workspaceId, projectId) => `/api/workspaces/${workspaceId}/projects/${projectId}/heygen/videos`
+      }
     }
   },
   

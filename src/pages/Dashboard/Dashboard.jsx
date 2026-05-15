@@ -3,6 +3,7 @@ import Home from '../Home/Home.jsx'
 import Videos from '../Videos/Videos.jsx'
 import Trash from '../Trash/Trash.jsx'
 import Avatars from '../Avatars/Avatars.jsx'
+import CreateAvatar from '../Avatars/CreateAvatar.jsx'
 import Voices from '../Voices/Voices.jsx'
 import Library from '../Library/Library.jsx'
 import Templates from '../Templates/Templates.jsx'
@@ -16,7 +17,7 @@ import TeamWorkspace from '../TeamWorkspace/TeamWorkspace.jsx'
 import AdminPortal from '../AdminPortal/AdminPortal.jsx'
 import DashboardTopbar from '../../components/layout/DashboardTopbar/DashboardTopbar.jsx'
 import DashboardSidebar from '../../components/layout/DashboardSidebar/DashboardSidebar.jsx'
-import VoiceCreatePanel from '../../components/ui/VoiceCreatePanel/VoiceCreatePanel.jsx'
+
 import AIVideoAssistant from '../../components/ui/AIVideoAssistant/AIVideoAssistant.jsx'
 import ImportPowerPointModal from '../../components/ui/ImportPowerPointModal/ImportPowerPointModal.jsx'
 import TranslateVideoModal from '../../components/ui/TranslateVideoModal/TranslateVideoModal.jsx'
@@ -27,8 +28,8 @@ import { useAuth } from '../../contexts/AuthContext'
 import './Dashboard.css'
 
 
-function Dashboard({ onLogout, onCreate, initialSection }) {
-  const { user, updateUser } = useAuth()
+function Dashboard({ onCreate, initialSection }) {
+  const { updateUser } = useAuth()
   const [section, setSection] = useState(() => {
     // Use initialSection from props if provided, otherwise get from URL
     if (initialSection) {
@@ -42,7 +43,6 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
     }
     return 'home'
   })
-  const [showVoicePanel, setShowVoicePanel] = useState(false)
   const [selectedVoice, setSelectedVoice] = useState(null)
   const [showAIAssistant, setShowAIAssistant] = useState(false)
   const [showCreateVideoModal, setShowCreateVideoModal] = useState(false)
@@ -51,6 +51,7 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
   const [showProcessingModal, setShowProcessingModal] = useState(false)
   const [showNotificationsModal, setShowNotificationsModal] = useState(false)
   const [showCreditsModal, setShowCreditsModal] = useState(false)
+  const [createVideoModalContext, setCreateVideoModalContext] = useState(null)
   const [pendingSection, setPendingSection] = useState(null)
   const [selectedTemplateForDetails, setSelectedTemplateForDetails] = useState(null)
   const [topbarMobileOpen, setTopbarMobileOpen] = useState(false)
@@ -58,6 +59,21 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
 
   const cartCount = 2
   const notificationCount = 9
+
+  const noPaddingSections = ['templates', 'template-details']
+  const workspaceConsistentSections = [
+    'home',
+    'videos',
+    'workspace',
+    'team-workspace',
+    'trash',
+    'library',
+    'brandkits',
+    'avatars',
+    'voices',
+    'admin-portal',
+    'settings',
+  ]
 
   const goToSection = useCallback((id) => {
     setTopbarMobileOpen(false)
@@ -77,20 +93,17 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
     }, 1200)
   }
 
-  const [initialTemplate, setInitialTemplate] = useState(null)
-
-  const handleOpenCreateVideoModal = useCallback((template = null) => {
-    setInitialTemplate(template)
+  const handleOpenCreateVideoModal = useCallback((context = null) => {
+    setCreateVideoModalContext(context)
     setShowCreateVideoModal(true)
   }, [])
 
   const handleCreateVideo = useCallback((config) => {
     setShowCreateVideoModal(false)
+    setCreateVideoModalContext(null)
     if (onCreate) {
       onCreate(config)
     }
-    // Auto refresh the page as requested
-    window.location.reload()
   }, [onCreate])
 
   // Update URL when section changes
@@ -130,7 +143,7 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
       }
     }
     syncProfile()
-  }, [])
+  }, [updateUser])
 
   return (
     <div
@@ -184,7 +197,7 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
         />
 
         <main
-          className={`content ${!['avatars', 'templates', 'template-details', 'team-workspace', 'admin-portal', 'settings'].includes(section) ? 'with-padding' : ''}`}
+          className={`content ${!noPaddingSections.includes(section) ? 'with-padding' : ''} ${section === 'home' ? 'content--home' : ''} ${workspaceConsistentSections.includes(section) ? 'content--workspace-consistent' : ''}`}
         >
           {section === 'home' && (
             <Home 
@@ -193,7 +206,20 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
             />
           )}
           {section === 'videos' && <Videos onCreate={handleOpenCreateVideoModal} />}
-          {section === 'avatars' && <Avatars onCreate={handleOpenCreateVideoModal} goToSection={goToSection} />}
+          {section === 'avatars' && (
+            <Avatars 
+              onCreate={handleOpenCreateVideoModal} 
+              goToSection={goToSection} 
+              onCreateAvatar={() => goToSection('create-avatar')} 
+            />
+          )}
+          {section === 'create-avatar' && (
+            <CreateAvatar 
+              onBack={(success) => {
+                goToSection('avatars');
+              }} 
+            />
+          )}
           {section === 'trash' && <Trash />}
           {section === 'voices' && (
             <Voices
@@ -229,13 +255,7 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
         </main>
       </div>
 
-      {showVoicePanel && (
-        <VoiceCreatePanel
-          voice={selectedVoice}
-          onClose={() => { setShowVoicePanel(false); setSelectedVoice(null); }}
-          onNext={() => { setShowVoicePanel(false); setSelectedVoice(null); }}
-        />
-      )}
+
       {showAIAssistant && (
         <AIVideoAssistant
           onClose={() => setShowAIAssistant(false)}
@@ -248,12 +268,17 @@ function Dashboard({ onLogout, onCreate, initialSection }) {
       {showCreateVideoModal && (
         <CreateVideoModal
           isOpen={showCreateVideoModal}
-          initialTemplate={initialTemplate}
-          onClose={() => { setShowCreateVideoModal(false); setInitialTemplate(null); }}
+          onClose={() => {
+            setShowCreateVideoModal(false)
+            setCreateVideoModalContext(null)
+          }}
           onImportPowerPoint={() => {
             setShowCreateVideoModal(false)
+            setCreateVideoModalContext(null)
             setShowImportModal(true)
           }}
+          initialWorkspaceId={createVideoModalContext?.initialWorkspaceId || ''}
+          initialFolderId={createVideoModalContext?.initialFolderId || ''}
           onCreateVideo={handleCreateVideo}
         />
       )}
