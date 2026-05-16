@@ -21,7 +21,7 @@ import './Videos.css'
 
 const thumbnailUrl = 'https://media.istockphoto.com/id/1475888355/video/timelapse-of-the-creation-of-an-online-avatar-start-to-finish.jpg?s=640x640&k=20&c=pFzBOkU7LjC1DF0DeNCAUhS8MCiNwSDwkqI9v9C7IgQ='
 
-function Videos({ onCreate }) {
+function Videos({ onCreate, onEdit }) {
   const [videos, setVideos] = useState([])
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState('grid')
@@ -88,26 +88,26 @@ function Videos({ onCreate }) {
   const handleRename = async () => {
     if (!newName.trim() || !renameDialog) return
     try {
-      await workspaceService.renameVideo(renameDialog.workspaceId, renameDialog.videoId, newName.trim())
+      await workspaceService.updateProject(renameDialog.workspaceId, renameDialog.videoId, { name: newName.trim() })
       setRenameDialog(null)
       setNewName('')
       await fetchVideos()
-      showToast('Video renamed successfully', 'success')
+      showToast('Project renamed successfully', 'success')
     } catch (error) {
-      console.error('Failed to rename video:', error)
-      showToast('Failed to rename video. Please try again.', 'error')
+      console.error('Failed to rename project:', error)
+      showToast('Failed to rename project. Please try again.', 'error')
     }
   }
 
   const handleDelete = (workspaceId, videoId) => {
-    openConfirmDialog('Are you sure you want to delete this video?', async () => {
+    openConfirmDialog('Are you sure you want to delete this project?', async () => {
       try {
-        await workspaceService.deleteVideo(workspaceId, videoId)
+        await workspaceService.deleteProject(workspaceId, videoId)
         await fetchVideos()
-        showToast('Video deleted successfully', 'success')
+        showToast('Project deleted successfully', 'success')
       } catch (error) {
-        console.error('Failed to delete video:', error)
-        showToast('Failed to delete video. Please try again.', 'error')
+        console.error('Failed to delete project:', error)
+        showToast('Failed to delete project. Please try again.', 'error')
       }
     })
   }
@@ -192,6 +192,7 @@ function Videos({ onCreate }) {
                   className={`video-card ${viewMode === 'list' ? 'list-view' : ''}`} 
                   key={video.id}
                   ref={el => menuRefs.current[`video-${video.id}`] = el}
+                  onClick={() => onEdit && onEdit(video)}
                 >
                   <div className="video-thumb">
                     <img
@@ -256,7 +257,7 @@ function Videos({ onCreate }) {
                       cursor: 'pointer',
                       boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                     }}>
-                      <MdPlayArrow />
+                      <MdEdit />
                     </div>
                     {video.duration && (
                       <div className="video-duration">

@@ -39,7 +39,7 @@ const filterOptions = [
   { value: 'name', label: 'Name (A-Z)' },
 ]
 
-function Workspace({ onCreate }) {
+function Workspace({ onCreate, onEdit }) {
   const [workspaceId, setWorkspaceId] = useState(null)
   const [folders, setFolders] = useState([])
   const [selectedFolder, setSelectedFolder] = useState(() => {
@@ -62,8 +62,7 @@ function Workspace({ onCreate }) {
   const [selectedLastUpdated, setSelectedLastUpdated] = useState(lastUpdatedOptions[0])
   const [selectedFilter, setSelectedFilter] = useState(filterOptions[0])
   const [loading, setLoading] = useState(true)
-  const [heygenVideos, setHeygenVideos] = useState([])
-  const [isPolling, setIsPolling] = useState(false)
+  const [projects, setProjects] = useState([])
   const [toast, setToast] = useState(null)
   const [confirmDialog, setConfirmDialog] = useState(null)
   const menuRefs = useRef({})
@@ -124,42 +123,23 @@ function Workspace({ onCreate }) {
     fetchInitialData()
   }, [])
 
-  // Fetch HeyGen videos when a subfolder (project) is selected
+  // Fetch projects when a subfolder is selected
   useEffect(() => {
     if (workspaceId && selectedSubfolder) {
-      fetchHeygenVideos()
+      fetchProjects()
     } else {
-      setHeygenVideos([])
+      setProjects([])
     }
   }, [workspaceId, selectedSubfolder])
 
-  // Polling logic for videos in progress
-  useEffect(() => {
-    let pollInterval;
-    const processingVideos = heygenVideos.filter(v => v.status === 'processing');
-    
-    if (processingVideos.length > 0 && !isPolling) {
-      setIsPolling(true);
-      pollInterval = setInterval(() => {
-        fetchHeygenVideos(true); // silent refresh
-      }, 5000); // Poll every 5 seconds
-    } else if (processingVideos.length === 0 && isPolling) {
-      setIsPolling(false);
-    }
-
-    return () => {
-      if (pollInterval) clearInterval(pollInterval);
-    };
-  }, [heygenVideos, isPolling, workspaceId, selectedSubfolder])
-
-  const fetchHeygenVideos = async (silent = false) => {
+  const fetchProjects = async (silent = false) => {
     if (!workspaceId || !selectedSubfolder) return
     try {
       if (!silent) setLoading(true)
-      const videos = await heygenService.listVideos(workspaceId, selectedSubfolder)
-      setHeygenVideos(videos || [])
+      const fetchedProjects = await workspaceService.listProjects(workspaceId, selectedSubfolder)
+      setProjects(fetchedProjects || [])
     } catch (error) {
-      console.error('Failed to fetch HeyGen videos:', error)
+      console.error('Failed to fetch projects:', error)
     } finally {
       if (!silent) setLoading(false)
     }
@@ -281,13 +261,13 @@ function Workspace({ onCreate }) {
   const renameVideo = async (folderId, subfolderId, videoId, newTitle) => {
     if (!workspaceId) return
     try {
-      await workspaceService.renameVideo(workspaceId, videoId, newTitle)
+      await workspaceService.updateProject(workspaceId, videoId, { name: newTitle })
       await refreshFolders()
       closeRenameDialog(false)
-      showToast('Video renamed successfully', 'success')
+      showToast('Project renamed successfully', 'success')
     } catch (error) {
-      console.error('Failed to rename video:', error)
-      showToast('Failed to rename video. Please try again.', 'error')
+      console.error('Failed to rename project:', error)
+      showToast('Failed to rename project. Please try again.', 'error')
     }
   }
 
@@ -329,14 +309,14 @@ function Workspace({ onCreate }) {
 
   const deleteVideo = (folderId, subfolderId, videoId) => {
     if (!workspaceId) return
-    openConfirmDialog('Are you sure you want to delete this video?', async () => {
+    openConfirmDialog('Are you sure you want to delete this project?', async () => {
       try {
-        await workspaceService.deleteVideo(workspaceId, videoId)
+        await workspaceService.deleteProject(workspaceId, videoId)
         await refreshFolders()
-        showToast('Video deleted successfully', 'success')
+        showToast('Project deleted successfully', 'success')
       } catch (error) {
-        console.error('Failed to delete video:', error)
-        showToast('Failed to delete video. Please try again.', 'error')
+        console.error('Failed to delete project:', error)
+        showToast('Failed to delete project. Please try again.', 'error')
       }
     })
   }
@@ -396,39 +376,36 @@ function Workspace({ onCreate }) {
                   <MdViewList />
                 </button>
               </div>
-              <button className="new-folder-btn" onClick={onCreate}>
+              <button 
+                className="new-folder-btn" 
+                onClick={() => onCreate({ initialWorkspaceId: workspaceId, initialFolderId: selectedSubfolder || selectedFolder })}
+              >
                 <MdAdd size={18} />
                 New video
               </button>
             </div>
           </div>
 
-          {currentSubfolder.videos.length === 0 ? (
+          {projects.length === 0 ? (
             <div className="empty-state">
               <MdPlayArrow className="empty-state-icon" />
-              <h3 className="empty-state-title">No videos in this folder</h3>
-              <p className="empty-state-text">Create your first video to get started</p>
+              <h3 className="empty-state-title">No projects in this folder</h3>
+              <p className="empty-state-text">Create your first project to get started</p>
             </div>
           ) : (
             <div className={viewMode === 'grid' ? 'videos-grid' : 'videos-list'}>
-              {/* Merge HeyGen videos with existing videos if any */}
-              {[...heygenVideos, ...(currentSubfolder.videos || [])].map((video) => {
-                const isHeygen = !!video.heygenVideoId || !!video.video_id;
+              {projects.map((video) => {
                 const status = video.status?.toLowerCase();
                 const isProcessing = status === 'processing' || status === 'waiting';
-                const videoId = video.id || video.heygenVideoId || video.video_id;
+                const videoId = video.id || video._id;
                 
-                // For HeyGen videos, use the streaming URL
-                const playUrl = isHeygen && status === 'completed' 
-                  ? heygenService.getStreamUrl(workspaceId, selectedSubfolder, videoId)
-                  : video.videoUrl || video.url;
-
                 return (
-                  <div
-                    key={videoId}
-                    className={`video-card ${viewMode === 'list' ? 'list-view' : ''} ${isProcessing ? 'processing' : ''}`}
-                    ref={el => menuRefs.current[`video-${videoId}`] = el}
-                  >
+                    <div
+                      key={videoId}
+                      className={`video-card ${viewMode === 'list' ? 'list-view' : ''} ${isProcessing ? 'processing' : ''}`}
+                      ref={el => menuRefs.current[`video-${videoId}`] = el}
+                      onClick={() => !isProcessing && onEdit && onEdit({ ...video, workspaceId })}
+                    >
                     <div className="video-thumb">
                       <img
                         src={video.thumbnail_url || video.image_url || thumbnailUrl}
@@ -504,8 +481,9 @@ function Workspace({ onCreate }) {
                         )}
                       </div>
 
-                      {!isProcessing ? (
+                      {!isProcessing && (
                         <div 
+                          className="video-play-overlay"
                           style={{
                             position: 'absolute',
                             top: '50%',
@@ -524,13 +502,11 @@ function Workspace({ onCreate }) {
                             transition: 'all 0.2s ease',
                             zIndex: 10
                           }}
-                          onClick={() => {
-                            if (playUrl) window.open(playUrl, '_blank');
-                          }}
                         >
-                          <MdPlayArrow />
+                          <MdEdit />
                         </div>
-                      ) : (
+                      )}
+                      {isProcessing && (
                         <div style={{
                           position: 'absolute',
                           top: '50%',
@@ -619,7 +595,11 @@ function Workspace({ onCreate }) {
                 <MdAdd size={18} />
                 New folder
               </button>
-              <button className="new-folder-btn" style={{ background: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }} onClick={() => onCreate({ initialWorkspaceId: workspaceId, initialFolderId: selectedFolder })}>
+              <button 
+                className="new-folder-btn" 
+                style={{ background: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }} 
+                onClick={() => onCreate({ initialWorkspaceId: workspaceId, initialFolderId: selectedFolder })}
+              >
                 <MdAdd size={18} />
                 New Video
               </button>
@@ -709,7 +689,11 @@ function Workspace({ onCreate }) {
               <MdFolder size={18} />
               New folder
             </button>
-            <button className="new-folder-btn" style={{ background: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }} onClick={() => onCreate({ initialWorkspaceId: workspaceId, initialFolderId: 'root' })}>
+            <button 
+              className="new-folder-btn" 
+              style={{ background: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }} 
+              onClick={() => onCreate({ initialWorkspaceId: workspaceId })}
+            >
               <MdAdd size={18} />
               New Video
             </button>

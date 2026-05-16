@@ -236,10 +236,10 @@ export const AuthProvider = ({ children }) => {
   }
 
   // Update user data
-  const updateUser = (newUserData) => {
+  const updateUser = React.useCallback((newUserData) => {
     setUser(newUserData)
     localStorage.setItem('user', JSON.stringify(newUserData))
-  }
+  }, [])
 
   const value = {
     user,

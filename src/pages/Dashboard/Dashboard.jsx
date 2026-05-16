@@ -108,6 +108,18 @@ function Dashboard({ onCreate, initialSection }) {
     }
   }, [onCreate])
 
+  const handleEditVideo = useCallback((video) => {
+    if (onCreate) {
+      // Reuse the onCreate navigation logic
+      onCreate({
+        videoId: video.id || video._id,
+        workspaceId: video.workspaceId,
+        name: video.title || video.name,
+        videoData: video
+      })
+    }
+  }, [onCreate])
+
   // Update URL when section changes
   useEffect(() => {
     const newPath = section === 'home' ? '/dashboard' : `/dashboard/${section}`
@@ -204,14 +216,15 @@ function Dashboard({ onCreate, initialSection }) {
           {section === 'home' && (
             <Home 
               onCreate={handleOpenCreateVideoModal}
+              onEdit={handleEditVideo}
               onShowAIAssistant={() => setShowAIAssistant(true)}
             />
           )}
-          {section === 'videos' && <Videos onCreate={handleOpenCreateVideoModal} />}
+          {section === 'videos' && <Videos onCreate={handleOpenCreateVideoModal} onEdit={handleEditVideo} />}
           {section === 'avatars' && (
             <Avatars 
               onCreate={handleOpenCreateVideoModal} 
-              goToSection={goToSection} 
+              onEdit={handleEditVideo}              goToSection={goToSection} 
               onCreateAvatar={() => goToSection('create-avatar')} 
             />
           )}
@@ -256,8 +269,8 @@ function Dashboard({ onCreate, initialSection }) {
               }}
             />
           )}
-          {section === 'workspace' && <Workspace onCreate={handleOpenCreateVideoModal} />}
-          {section === 'team-workspace' && <TeamWorkspace onCreate={handleOpenCreateVideoModal} />}
+          {section === 'workspace' && <Workspace onCreate={handleOpenCreateVideoModal} onEdit={handleEditVideo} />}
+          {section === 'team-workspace' && <TeamWorkspace onCreate={handleOpenCreateVideoModal} onEdit={handleEditVideo} />}
           {section === 'admin-portal' && <AdminPortal />}
           {section === 'brandkits' && <BrandKits />}
           {section === 'credits' && <Settings onBack={() => goToSection('home')} initialTab="billing" />}

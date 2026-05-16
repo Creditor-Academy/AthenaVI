@@ -455,7 +455,7 @@ const CreateVideoModal = ({
     setSelectedTemplateId(templateId);
     if (!videoTitle.trim()) {
       if (templateId === 'blank') {
-        setVideoTitle('Untitled Project');
+        setVideoTitle('Untitled Video');
       } else {
         const picked = templateItems.find((item) => String(item.id) === String(templateId));
         if (picked?.name) setVideoTitle(picked.name);
@@ -559,19 +559,47 @@ const CreateVideoModal = ({
   const handleCreate = async () => {
     if (!canCreateVideo) return;
 
+    let width = 1920;
+    let height = 1080;
+    
+    if (canvasSize === 'custom' && customCanvas.width && customCanvas.height) {
+      width = parseInt(customCanvas.width, 10) || 1920;
+      height = parseInt(customCanvas.height, 10) || 1080;
+    } else if (aspectRatio === '9:16') {
+      width = 1080;
+      height = 1920;
+    } else if (aspectRatio === '1:1') {
+      width = 1080;
+      height = 1080;
+    } else if (aspectRatio === '4:5') {
+      width = 1080;
+      height = 1350;
+    }
+
     const payload = {
-      title: videoTitle.trim(),
-      tags: videoTags,
-      aspectRatio: canvasSize === 'custom' ? 'custom' : aspectRatio,
+      name: videoTitle.trim(),
+      status: 'draft',
+      thumbnail: selectedTemplate?.thumbnail || 'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=1200&q=80',
+      data: {
+        videoSettings: {
+          width,
+          height,
+          fps: 30,
+          backgroundColor: '#000000'
+        },
+        scenes: [
+          {
+            sceneId: crypto.randomUUID(),
+            durationInFrames: 150,
+            background: '#ffffff',
+            elements: []
+          }
+        ]
+      }
     };
 
     if (folderId) {
       payload.folderId = folderId;
-    }
-
-    if (canvasSize === 'custom' && customCanvas.width && customCanvas.height) {
-      payload.customWidth = parseInt(customCanvas.width, 10) || 1920;
-      payload.customHeight = parseInt(customCanvas.height, 10) || 1080;
     }
 
     setSubmitting(true);
@@ -581,7 +609,7 @@ const CreateVideoModal = ({
       const eventVideo = {
         ...createdProject,
         id: createdProject.id || createdProject._id,
-        name: createdProject.name || createdProject.title || payload.title
+        name: createdProject.name || createdProject.title || payload.name
       };
 
       window.dispatchEvent(
@@ -605,7 +633,7 @@ const CreateVideoModal = ({
           folder: folderOptions.find((folder) => String(folder.id) === String(folderId))?.name || '',
           folderId,
           tags: videoTags,
-          name: payload.title,
+          name: payload.name,
           videoId: eventVideo.id
         });
       }
@@ -624,14 +652,14 @@ const CreateVideoModal = ({
 
   return (
     <div className="create-video-modal-overlay" role="presentation" onClick={closeWithGuard}>
-      <div className="create-video-modal" role="dialog" aria-modal="true" aria-label="Create a project" onClick={(event) => event.stopPropagation()}>
+      <div className="create-video-modal" role="dialog" aria-modal="true" aria-label="Create a video" onClick={(event) => event.stopPropagation()}>
         <aside className="create-video-wizard-sidebar">
           <div className="create-video-logo-block">
             <div className="create-video-logo-mark">VI</div>
             <div className="create-video-logo-text">Athena VI</div>
           </div>
 
-          <ol className="create-video-step-list" aria-label="Create project steps">
+          <ol className="create-video-step-list" aria-label="Create video steps">
             {WIZARD_STEPS.map((stepItem) => {
               const isActive = step === stepItem.id;
               const isCompleted = step > stepItem.id;
@@ -663,7 +691,7 @@ const CreateVideoModal = ({
             )}
             {step === 3 && (
               <>
-                <h2>Name your project</h2>
+                <h2>Name your video</h2>
                 <p>Choose title, tags, workspace, and folder</p>
               </>
             )}
@@ -786,12 +814,12 @@ const CreateVideoModal = ({
             {step === 3 && (
               <div className="create-video-form-stack">
                 <label className="create-video-field">
-                  <span>Project Title *</span>
+                  <span>Video Title *</span>
                   <input
                     type="text"
                     value={videoTitle}
                     onChange={(event) => setVideoTitle(event.target.value)}
-                    placeholder="Enter project title..."
+                    placeholder="Enter video title..."
                   />
                 </label>
 
@@ -895,7 +923,7 @@ const CreateVideoModal = ({
 
                 {selectedWorkspace && !canCreateInWorkspace(selectedWorkspace) && (
                   <div className="create-video-warning">
-                    You are a Viewer in this shared workspace. Project creation is disabled here.
+                    You are a Viewer in this shared workspace. Video creation is disabled here.
                   </div>
                 )}
               </div>
@@ -929,11 +957,11 @@ const CreateVideoModal = ({
                   disabled={!canCreateVideo || submitting}
                   title={
                     selectedWorkspace && !canCreateInWorkspace(selectedWorkspace)
-                      ? 'You need Editor access to create a project in this workspace'
+                      ? 'You need Editor access to create a video in this workspace'
                       : ''
                   }
                 >
-                  {submitting ? 'Creating...' : 'Create Project'}
+                  {submitting ? 'Creating...' : 'Create Video'}
                 </button>
               )}
             </div>
@@ -947,7 +975,7 @@ const CreateVideoModal = ({
                 <MdWarning className="create-video-confirm-icon" />
               </div>
               <h3 className="create-video-confirm-title">Discard changes?</h3>
-              <p className="create-video-confirm-text">Discard this project setup? Your progress will be lost.</p>
+              <p className="create-video-confirm-text">Discard this video setup? Your progress will be lost.</p>
               <div className="create-video-confirm-actions">
                 <button
                   type="button"
