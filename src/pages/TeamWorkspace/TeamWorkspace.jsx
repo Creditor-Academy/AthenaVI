@@ -158,7 +158,7 @@ function workspaceCanManageContributors(workspace) {
   return workspace?.type === 'workspace' && (role === 'OWNER' || role === 'ADMIN');
 }
 
-const TeamWorkspace = ({ onCreate }) => {
+const TeamWorkspace = ({ onCreate, onEdit }) => {
   const { user: authUser, loading: authLoading } = useAuth();
   const currentUserId = extractUserId(authUser);
 
@@ -329,12 +329,32 @@ const TeamWorkspace = ({ onCreate }) => {
       const withFolders = await Promise.all(
         mapped.map(async (workspace) => {
           try {
-            const folders = await workspaceService.listFolders(workspace.id);
+            const [folders, projects] = await Promise.all([
+              workspaceService.listFolders(workspace.id),
+              workspaceService.listProjects(workspace.id)
+            ]);
+            
+            const normalizedFolders = (folders || []).map(normalizeFolder);
+            
+            // Distribute projects to folders
+            normalizedFolders.forEach(folder => {
+              folder.videos = projects.filter(p => {
+                const pFolderId = p.folderId || (p.folder && (p.folder.id || p.folder._id));
+                return String(pFolderId) === String(folder.id);
+              }).map(p => ({ ...p, workspaceId: workspace.id }));
+            });
+
             return {
               ...workspace,
-              folders: (folders || []).map(normalizeFolder)
+              folders: normalizedFolders,
+              // Keep projects that are not in any folder in the workspace root
+              videos: projects.filter(p => {
+                const pFolderId = p.folderId || (p.folder && (p.folder.id || p.folder._id));
+                return !pFolderId;
+              }).map(p => ({ ...p, workspaceId: workspace.id }))
             };
-          } catch {
+          } catch (err) {
+            console.error(`Failed to load folders/projects for workspace ${workspace.id}:`, err);
             return workspace;
           }
         })
@@ -667,7 +687,7 @@ const TeamWorkspace = ({ onCreate }) => {
         throw new Error('You do not have permission to rename this video.');
       }
 
-      await workspaceService.renameVideo(parentWorkspace.id, id, newName);
+      await workspaceService.updateProject(parentWorkspace.id, id, { name: newName });
       setWorkspaces((prev) =>
         prev.map((workspace) => ({
           ...workspace,
@@ -783,13 +803,13 @@ const TeamWorkspace = ({ onCreate }) => {
       const parentWorkspace = currentLevel.ws;
       const parentFolder = currentLevel.folder;
       if (!workspaceCanEdit(parentWorkspace)) {
-        showToast('You do not have permission to delete this video.', 'error');
+        showToast('You do not have permission to delete this project.', 'error');
         return;
       }
 
-      openConfirmDialog('Delete this video?', async () => {
+      openConfirmDialog('Delete this project?', async () => {
         try {
-          await workspaceService.deleteVideo(parentWorkspace.id, id);
+          await workspaceService.deleteProject(parentWorkspace.id, id);
           setWorkspaces((prev) =>
             prev.map((workspace) =>
               String(workspace.id) === String(parentWorkspace.id)
@@ -979,7 +999,7 @@ const TeamWorkspace = ({ onCreate }) => {
         <VideoCard
           key={video.id}
           video={video}
-          onClick={() => openCreateVideoModal({ videoId: video.id })}
+          onClick={() => onEdit && onEdit({ ...video, workspaceId: workspace.id })}
           contextProps={{
             onRename: workspaceCanEdit(workspace) ? () => renameItem('video', video.id, workspace) : null,
             onDelete: workspaceCanEdit(workspace) ? () => deleteItem('video', video.id, workspace) : null
@@ -992,7 +1012,7 @@ const TeamWorkspace = ({ onCreate }) => {
       <VideoRow
         key={video.id}
         video={video}
-        onClick={() => openCreateVideoModal({ videoId: video.id })}
+        onClick={() => onEdit && onEdit({ ...video, workspaceId: workspace.id })}
         contextProps={{
           onRename: workspaceCanEdit(workspace) ? () => renameItem('video', video.id, workspace) : null,
           onDelete: workspaceCanEdit(workspace) ? () => deleteItem('video', video.id, workspace) : null

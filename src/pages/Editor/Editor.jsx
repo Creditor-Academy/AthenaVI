@@ -13,6 +13,7 @@ import TemplateModal from '../../components/features/editor/editor/TemplateModal
 import PreviewModal from '../../components/features/editor/editor/PreviewModal'
 import avatar1 from '../../assets/Avatarr1.png'
 import projectTemplate from '../../constants/projectTemplate.json'
+import workspaceService from '../../services/workspaceService'
 
 function Create({ onBack, initialConfig = null }) {
   // Debug: Log when component mounts
@@ -21,6 +22,21 @@ function Create({ onBack, initialConfig = null }) {
   }, [])
 
   const [project, setProject] = useState(() => {
+    // If we have full video data already (e.g. from dashboard click)
+    if (initialConfig?.videoData?.data) {
+      const data = initialConfig.videoData.data;
+      return {
+        ...projectTemplate.project,
+        title: initialConfig.videoData.name || initialConfig.videoData.title || projectTemplate.project.title,
+        resolution: data.videoSettings || projectTemplate.project.resolution,
+        scenes: data.scenes || [],
+        updatedAt: initialConfig.videoData.updatedAt || new Date().toISOString(),
+        id: initialConfig.videoData.id || initialConfig.videoData._id,
+        workspaceId: initialConfig.videoData.workspaceId,
+        folderId: initialConfig.videoData.folderId
+      };
+    }
+
     const pageSizeToResolution = {
       landscape: { width: 1920, height: 1080 },
       portrait: { width: 1080, height: 1920 },
@@ -30,7 +46,7 @@ function Create({ onBack, initialConfig = null }) {
     const resolvedResolution = pageSizeToResolution[initialConfig?.pageSize] || projectTemplate.project.resolution
     const resolvedTitle = initialConfig?.name?.trim() || projectTemplate.project.title
 
-    const initialScenes = initialConfig?.template?.scenes || initialConfig?.template ? [initialConfig.template] : []
+    const initialScenes = initialConfig?.template?.scenes || (initialConfig?.template ? [initialConfig.template] : [])
     
     return {
       ...projectTemplate.project,
@@ -38,16 +54,10 @@ function Create({ onBack, initialConfig = null }) {
       resolution: resolvedResolution,
       scenes: initialScenes.length > 0 ? initialScenes : [],
       updatedAt: new Date().toISOString(),
+      id: initialConfig?.videoId,
+      workspaceId: initialConfig?.workspaceId,
+      folderId: initialConfig?.folderId,
       createConfig: initialConfig
-        ? {
-            template: initialConfig.template || null,
-            pageSize: initialConfig.pageSize || 'landscape',
-            workspace: initialConfig.workspace || '',
-            folder: initialConfig.folder || '',
-            tags: initialConfig.tags || [],
-            name: initialConfig.name || resolvedTitle
-          }
-        : null
     }
   })
   const [activeSceneId, setActiveSceneId] = useState(null)
@@ -61,6 +71,79 @@ function Create({ onBack, initialConfig = null }) {
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false)
   const [selectedLayerId, setSelectedLayerId] = useState(null)
   const [musicDuration, setMusicDuration] = useState(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [lastSaved, setLastSaved] = useState(null)
+
+  // Auto-save logic
+  const saveProject = async (manual = false) => {
+    if (!project.id || !project.workspaceId) {
+      console.warn('Cannot save project: missing ID or workspaceId', project);
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      
+      // Map project state to backend schema
+      const payload = {
+        data: {
+          videoSettings: {
+            width: project.resolution.width,
+            height: project.resolution.height,
+            fps: 30,
+            backgroundColor: '#000000'
+          },
+          scenes: project.scenes.map((scene, idx) => ({
+            sceneId: scene.id || `scene_${idx}`,
+            name: scene.title || `Scene ${idx + 1}`,
+            durationInFrames: (scene.duration || 8) * 30,
+            background: scene.background || { type: 'color', value: '#ffffff' },
+            elements: (scene.clips || []).map((clip, cIdx) => ({
+              id: clip.id || `clip_${cIdx}`,
+              type: clip.type || 'text',
+              layer: clip.layer || 0,
+              startFrame: (clip.startTime || 0) * 30,
+              durationInFrames: ((clip.endTime || 8) - (clip.startTime || 0)) * 30,
+              placement: {
+                x: clip.position?.x || 0,
+                y: clip.position?.y || 0,
+                width: clip.size?.width || 100,
+                height: clip.size?.height || 100,
+                rotation: 0,
+                scale: 1,
+                opacity: clip.opacity || 1
+              },
+              content: clip.content || clip.src || {}
+            }))
+          }))
+        }
+      };
+
+      await workspaceService.saveProjectState(project.workspaceId, project.id, payload);
+      
+      // Also update name if it changed
+      if (manual) {
+        await workspaceService.updateProject(project.workspaceId, project.id, { name: project.title });
+      }
+
+      setLastSaved(new Date());
+    } catch (error) {
+      console.error('Failed to save project:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Debounced auto-save
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (project.id && project.workspaceId) {
+        saveProject();
+      }
+    }, 3000); // Save after 3 seconds of inactivity
+
+    return () => clearTimeout(timer);
+  }, [project.scenes, project.title, project.resolution])
 
   // Memoized access for convenience
   const scenes = project.scenes;
@@ -523,6 +606,11 @@ function Create({ onBack, initialConfig = null }) {
         exportVideo={exportVideo}
         zoomLevel={zoomLevel}
         setZoomLevel={setZoomLevel}
+        projectTitle={project.title}
+        onProjectTitleChange={(newTitle) => setProject(prev => ({ ...prev, title: newTitle }))}
+        onSave={() => saveProject(true)}
+        isSaving={isSaving}
+        lastSaved={lastSaved}
       />
 
       <div className="editor-container">
