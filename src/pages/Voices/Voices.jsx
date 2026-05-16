@@ -1,379 +1,32 @@
 import { useState, useRef, useEffect } from 'react'
-import { MdMoreVert, MdPlayArrow, MdClose, MdCheckCircle, MdShare, MdContentCopy, MdEdit, MdDelete, MdSearch, MdFilterList, MdGraphicEq } from 'react-icons/md'
+import { MdMoreVert, MdPlayArrow, MdCheckCircle, MdSearch, MdGraphicEq, MdEdit, MdDelete, MdShare, MdContentCopy, MdClose } from 'react-icons/md'
 import { Loader2, AlertCircle } from 'lucide-react'
 import heygenService from '../../services/heygenService'
-import CreateVoiceModal from './CreateVoiceModal'
 import VoicesSkeleton from '../page-skeleton/VoicesSkeleton'
+import './Voices.css'
 
-
-const styles = `
-.voices-container {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  height: 100%;
-}
-
-.voices-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.voices-title {
-  font-size: 28px;
-  font-weight: 800;
-  color: var(--text-main);
-  margin: 0;
-}
-
-.new-voice-btn {
-  border: none;
-  background: var(--primary);
-  color: #ffffff;
-  font-weight: 600;
-  font-size: 15px;
-  padding: 12px 24px;
-  border-radius: 12px;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.25);
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.new-voice-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.35);
-  background: var(--primary-hover);
-}
-
-.voices-section-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-main);
-  margin: 32px 0 16px 0;
-}
-
-.voices-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 20px;
-}
-
-.voice-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-  transition: all 0.2s ease;
-  cursor: pointer;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.voice-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
-  border-color: var(--primary);
-}
-
-.voice-card-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
-.voice-language-badge {
-  background: var(--bg-surface);
-  color: var(--text-muted);
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  border: 1px solid var(--border-color);
-}
-
-.voice-menu-btn {
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  transition: all 0.15s ease;
-}
-
-.voice-menu-btn:hover {
-  background: var(--bg-surface);
-  color: var(--text-main);
-}
-
-.voice-name {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text-main);
-  margin: 0;
-}
-
-.voice-updated {
-  font-size: 14px;
-  color: var(--text-muted);
-  margin: 0;
-}
-
-.voice-info-box {
-  background: var(--bg-surface);
-  border-radius: 8px;
-  padding: 12px;
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  border: 1px solid var(--border-color);
-}
-
-.voice-info-icon {
-  color: var(--primary);
-  font-size: 20px;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.voice-info-text {
-  font-size: 14px;
-  color: var(--text-main);
-  line-height: 1.5;
-  margin: 0;
-}
-
-.voice-info-link {
-  color: var(--primary);
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.voice-preview-btn {
-  border: 1px solid var(--border-color);
-  background: var(--bg-card);
-  color: var(--text-main);
-  font-weight: 600;
-  font-size: 14px;
-  padding: 10px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.15s ease;
-  width: 100%;
-  justify-content: center;
-}
-
-.voice-preview-btn:hover {
-  background: var(--bg-surface);
-  border-color: var(--text-muted);
-}
-
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text-muted);
-}
-
-.empty-state-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text-main);
-  margin-bottom: 8px;
-}
-
-.empty-state-text {
-  font-size: 15px;
-  margin-bottom: 24px;
-}
-
-.voice-menu {
-  position: absolute;
-  top: 40px;
-  right: 10px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
-  min-width: 180px;
-  overflow: hidden;
-  z-index: 100;
-  animation: slideDown 0.2s ease;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.voice-menu-item {
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-  transition: background 0.15s ease;
-  border: none;
-  background: transparent;
-  width: 100%;
-  text-align: left;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-main);
-}
-
-.voice-menu-item:hover {
-  background: var(--bg-surface);
-}
-
-.voice-menu-item.delete {
-  color: #ef4444;
-}
-
-.voice-menu-item.delete:hover {
-  background: rgba(239, 68, 68, 0.1);
-}
-
-.voice-menu-item-icon {
-  font-size: 20px;
-  color: var(--text-muted);
-  flex-shrink: 0;
-}
-
-.voice-menu-item.delete .voice-menu-item-icon {
-  color: #ef4444;
-}
-
-.language-dropdown-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1000;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(2px);
-}
-
-.language-dropdown {
-  position: fixed;
-  background: var(--bg-card);
-  border-radius: 8px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  width: 360px;
-  max-height: 500px;
-  overflow-y: auto;
-  z-index: 1001;
-  animation: fadeInUp 0.2s ease;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  border: 1px solid var(--border-color);
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.language-dropdown::-webkit-scrollbar {
-  width: 8px;
-}
-
-.language-dropdown::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 4px;
-}
-
-.language-dropdown::-webkit-scrollbar-track {
-  background: var(--bg-surface);
-}
-
-.language-list {
-  padding: 8px 0;
-}
-
-.language-item {
-  padding: 10px 16px;
-  color: var(--text-main);
-  font-size: 14px;
-  font-weight: 400;
-  cursor: pointer;
-  transition: background 0.15s ease;
-  border: none;
-  background: transparent;
-  width: 100%;
-  text-align: left;
-}
-
-.language-item:hover {
-  background: var(--bg-surface);
-}
-
-.language-item.selected {
-  background: var(--primary);
-  color: #ffffff;
-}
-
-.language-link-wrapper {
-  position: relative;
-  display: inline;
-}
-`
-
-function Voices({ onCreateVoice, onVoiceClick }) {
+function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
   const [voices, setVoices] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [filterType, setFilterType] = useState('public')
+  const [filterType, setFilterType] = useState(initialFilter)
   const [searchQuery, setSearchQuery] = useState('')
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [selectedVoiceForSpeech, setSelectedVoiceForSpeech] = useState(null)
+  const [openMenuId, setOpenMenuId] = useState(null)
+  
+  // Test Voice State
+  const [selectedVoiceForTest, setSelectedVoiceForTest] = useState(null)
   const [speechText, setSpeechText] = useState('')
   const [isSynthesizing, setIsSynthesizing] = useState(false)
   
-  const [openMenuId, setOpenMenuId] = useState(null)
-  const [editingVoiceId, setEditingVoiceId] = useState(null)
-  const [editingName, setEditingName] = useState('')
-  const [showLanguageDropdown, setShowLanguageDropdown] = useState(null)
-  
   const menuRefs = useRef({})
-  const languageLinkRefs = useRef({})
 
   const fetchVoices = async () => {
     setLoading(true);
     setError(null);
     try {
       const result = await heygenService.getVoices({ type: filterType });
-      console.log('Athena VI: Voices Fetch Result:', result);
       
       let voiceList = [];
-      // Extract array from various possible backend response formats
       if (Array.isArray(result)) {
         voiceList = result;
       } else if (result && Array.isArray(result.voices)) {
@@ -399,55 +52,65 @@ function Voices({ onCreateVoice, onVoiceClick }) {
     fetchVoices();
   }, [filterType]);
 
-
-
-  const languages = [
-    'Afrikaans', 'Albanian', 'Amharic', 'Arabic', 'Armenian', 'Assamese', 'Azerbaijani',
-    'Basque', 'Bengali', 'Bosnian', 'Bulgarian', 'Burmese', 'Catalan', 'Chinese',
-    'Croatian', 'Czech', 'Danish', 'Dutch', 'English', 'Estonian', 'Filipino',
-    'Finnish', 'French', 'Galician', 'Georgian', 'German', 'Greek', 'Gujarati',
-    'Hebrew', 'Hindi', 'Hungarian', 'Icelandic', 'Indonesian', 'Irish', 'Italian',
-    'Japanese', 'Javanese', 'Kannada', 'Kazakh', 'Khmer', 'Korean', 'Lao',
-    'Latvian', 'Lithuanian', 'Macedonian', 'Malay', 'Malayalam', 'Maltese',
-    'Marathi', 'Mongolian', 'Nepali', 'Norwegian', 'Odia', 'Pashto', 'Persian',
-    'Polish', 'Portuguese', 'Punjabi', 'Romanian', 'Russian', 'Serbian', 'Sinhala',
-    'Slovak', 'Slovenian', 'Somali', 'Spanish', 'Sundanese', 'Swahili', 'Swedish',
-    'Tamil', 'Telugu', 'Thai', 'Turkish', 'Ukrainian', 'Urdu', 'Uzbek',
-    'Vietnamese', 'Welsh', 'Zulu'
-  ]
-
   useEffect(() => {
     const handleClickOutside = (event) => {
-      Object.keys(menuRefs.current).forEach((voiceId) => {
-        if (menuRefs.current[voiceId] && !menuRefs.current[voiceId].contains(event.target)) {
-          setOpenMenuId(null)
-        }
-      })
-      Object.keys(languageLinkRefs.current).forEach((voiceId) => {
-        if (languageLinkRefs.current[voiceId] && !languageLinkRefs.current[voiceId].contains(event.target)) {
-          setShowLanguageDropdown(false)
-        }
-      })
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+      if (openMenuId && menuRefs.current[openMenuId] && !menuRefs.current[openMenuId].contains(event.target)) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [openMenuId]);
+
+  // Polling logic for processing voices
+  useEffect(() => {
+    const processingVoices = voices.filter(v => v.status === 'processing');
+    if (processingVoices.length === 0) return;
+
+    const intervalId = setInterval(async () => {
+      const results = await Promise.all(
+        processingVoices.map(async (v) => {
+          try {
+            const id = v.voice_id || v.id;
+            const updated = await heygenService.getVoiceStatus(id);
+            return { id: v.id, status: updated.status };
+          } catch (e) {
+            return null;
+          }
+        })
+      );
+
+      const changes = results.filter(r => r && r.status !== 'processing');
+      if (changes.length > 0) {
+        setVoices(current => 
+          current.map(v => {
+            const change = changes.find(c => c.id === v.id);
+            return change ? { ...v, status: change.status } : v;
+          })
+        );
+      }
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, [voices]);
 
   const handleCreateVoice = () => {
-    setShowCreateModal(true);
+    if (onCreateVoice) onCreateVoice();
   }
 
   const handleSpeechSynthesis = async () => {
-    if (!speechText || !selectedVoiceForSpeech) return;
+    if (!speechText || !selectedVoiceForTest) return;
     setIsSynthesizing(true);
     try {
       const res = await heygenService.previewSpeech({
         text: speechText,
-        voice_id: selectedVoiceForSpeech.voice_id || selectedVoiceForSpeech.id,
-        voice_engine: selectedVoiceForSpeech.voice_engine || selectedVoiceForSpeech.engine
+        voice_id: selectedVoiceForTest.voice_id || selectedVoiceForTest.id
       });
-      if (res.preview_audio_url) {
-        new Audio(res.preview_audio_url).play();
+      if (res && res.preview_audio_url) {
+        const audio = new Audio(res.preview_audio_url);
+        audio.play();
+      } else {
+        alert('Synthesis complete, but no audio URL was returned.');
       }
     } catch (err) {
       console.error('Synthesis failed:', err);
@@ -457,380 +120,239 @@ function Voices({ onCreateVoice, onVoiceClick }) {
     }
   }
 
-  const handleVoiceClick = (voice) => {
-    if (onVoiceClick && !openMenuId) {
-      onVoiceClick(voice)
-    }
-  }
-
-  const toggleMenu = (e, voiceId) => {
-    e.stopPropagation()
-    setOpenMenuId(openMenuId === voiceId ? null : voiceId)
-  }
-
-  const handleShare = (e, voice) => {
-    e.stopPropagation()
-    setOpenMenuId(null)
-    // Share functionality
-    if (navigator.share) {
-      navigator.share({
-        title: `Voice: ${voice.name}`,
-        text: `Check out this voice: ${voice.name}`,
-      }).catch(() => {})
-    } else {
-      // Fallback: copy to clipboard
-      const shareText = `Voice: ${voice.name} (ID: ${voice.id})`
-      navigator.clipboard.writeText(shareText).then(() => {
-        alert('Voice information copied to clipboard!')
-      })
-    }
-  }
-
-  const handleCopyID = (e, voice) => {
-    e.stopPropagation()
-    setOpenMenuId(null)
-    navigator.clipboard.writeText(voice.id.toString()).then(() => {
-      alert('Voice ID copied to clipboard!')
-    })
-  }
-
-  const handleRename = (e, voice) => {
-    e.stopPropagation()
-    setOpenMenuId(null)
-    setEditingVoiceId(voice.id)
-    setEditingName(voice.name)
-  }
-
-  const handleDelete = (e, voice) => {
-    e.stopPropagation()
-    setOpenMenuId(null)
-    if (window.confirm(`Are you sure you want to delete "${voice.name}"?`)) {
-      setVoices(voices.filter(v => v.id !== voice.id))
-    }
-  }
-
-  const handleNameSave = (voiceId) => {
-    setVoices(voices.map(v => 
-      v.id === voiceId ? { ...v, name: editingName } : v
-    ))
-    setEditingVoiceId(null)
-    setEditingName('')
-  }
-
-  const handleNameCancel = () => {
-    setEditingVoiceId(null)
-    setEditingName('')
-  }
-
-  const handleLanguageLinkClick = (e, voiceId) => {
-    e.stopPropagation()
-    setShowLanguageDropdown(showLanguageDropdown === voiceId ? null : voiceId)
-  }
-
-  const handleLanguageSelect = (language) => {
-    setShowLanguageDropdown(false)
-    // Handle language selection
-    console.log('Selected language:', language)
-  }
+  const filteredVoices = voices.filter(v => 
+    v.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    v.language?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <>
-      <style>{styles}</style>
-      <div className="voices-container">
-        <div className="voices-header">
-          <h1 className="voices-title">Neural Voices</h1>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <div className="ownership-segmented-control" style={{ marginBottom: 0 }}>
-              <button
-                className={`segmented-btn ${filterType === 'public' ? 'active' : ''}`}
-                onClick={() => setFilterType('public')}
-              >
-                Public Library
-              </button>
-              <button
-                className={`segmented-btn ${filterType === 'private' ? 'active' : ''}`}
-                onClick={() => setFilterType('private')}
-              >
-                My Custom Voices
-              </button>
+    <div className="voices-container">
+      <header className="voices-header">
+        <div className="voices-title-section">
+          <h1 className="voices-title">Neural Voice Laboratory</h1>
+          <button className="new-voice-btn" onClick={handleCreateVoice}>
+            <MdPlayArrow size={20} />
+            Initialize New Identity
+          </button>
+        </div>
+
+        <div className="voices-controls">
+          <div className="ownership-segmented-control">
+            <button
+              className={`segmented-btn ${filterType === 'public' ? 'active' : ''}`}
+              onClick={() => setFilterType('public')}
+            >
+              Public Library
+            </button>
+            <button
+              className={`segmented-btn ${filterType === 'private' ? 'active' : ''}`}
+              onClick={() => setFilterType('private')}
+            >
+              My Custom Voices
+            </button>
+          </div>
+
+          <div className="search-section">
+            <div className="search-bar">
+              <MdSearch size={20} />
+              <input
+                type="text"
+                placeholder="Search neural patterns..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-            <button className="new-voice-btn" onClick={handleCreateVoice}>
-              + New voice
-            </button>
           </div>
         </div>
+      </header>
 
-        <div className="search-section" style={{ marginTop: '20px' }}>
-          <div className="search-bar">
-            <MdSearch size={18} />
-            <input
-              type="text"
-              placeholder="Search by voice name or language..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+      {loading ? (
+        <VoicesSkeleton />
+      ) : error ? (
+        <div className="empty-state">
+          <AlertCircle size={48} color="#ef4444" />
+          <h3 className="empty-state-title">System Link Interrupted</h3>
+          <p className="empty-state-text">{error}</p>
+          <button className="new-voice-btn" onClick={fetchVoices}>Reconnect Database</button>
         </div>
-
-        {loading ? (
-          <VoicesSkeleton />
-        ) : error ? (
-          <div className="empty-state">
-            <AlertCircle size={40} style={{ color: '#ef4444', marginBottom: '16px' }} />
-            <p className="empty-state-title">Connection Error</p>
-            <p className="empty-state-text">{error}</p>
-            <button className="new-voice-btn" onClick={() => setFilterType(filterType)}>
-              Retry Connection
-            </button>
+      ) : filteredVoices.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-state-icon">
+            <MdGraphicEq size={64} style={{ opacity: 0.15, marginBottom: '20px' }} />
           </div>
-        ) : voices.length === 0 ? (
-          <div className="empty-state">
-            <p className="empty-state-title">No voices yet</p>
-            <p className="empty-state-text">Create your first voice to get started</p>
-            <button className="new-voice-btn" onClick={handleCreateVoice}>
-              + New voice
-            </button>
-          </div>
-        ) : (
-          <div className="voices-grid">
-            {voices
-              .filter(v => 
-                v.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                v.language?.toLowerCase().includes(searchQuery.toLowerCase())
-              )
-              .map((voice) => (
-              <div
-                key={voice.voice_id || voice.id}
+          <h3 className="empty-state-title">No Neural Identities Found</h3>
+          <p className="empty-state-text">
+            {searchQuery 
+              ? `Search for "${searchQuery}" yielded no matches.` 
+              : filterType === 'private' 
+                ? "Your custom neural vault is currently empty." 
+                : "The global neural library is unreachable."}
+          </p>
+          {filterType === 'private' && !searchQuery && (
+            <button className="new-voice-btn" onClick={handleCreateVoice}>Initialize First Clone</button>
+          )}
+        </div>
+      ) : (
+        <div className="voices-grid">
+          {filteredVoices.map((voice) => {
+            const vId = voice.voice_id || voice.id;
+            return (
+              <div 
+                key={vId} 
                 className="voice-card"
-                onClick={() => handleVoiceClick(voice)}
+                onClick={() => onVoiceClick && onVoiceClick(voice)}
               >
                 <div className="voice-card-header">
                   <div style={{ display: 'flex', gap: '8px' }}>
-                    <span className="voice-language-badge">{voice.language || 'Global'}</span>
-                    {voice.gender && <span className="voice-language-badge" style={{ background: 'rgba(var(--primary-rgb), 0.1)', color: 'var(--primary)' }}>{voice.gender}</span>}
+                    <span className="voice-language-badge">
+                      {voice.language || 'English'}
+                    </span>
+                    {voice.gender && (
+                      <span className="voice-language-badge" style={{ background: 'rgba(var(--primary-rgb), 0.1)', color: 'var(--primary)' }}>
+                        {voice.gender}
+                      </span>
+                    )}
                   </div>
-                  <div style={{ position: 'relative' }} ref={el => menuRefs.current[voice.voice_id || voice.id] = el}>
-                    <button
-                      className="voice-menu-btn"
-                      onClick={(e) => toggleMenu(e, voice.voice_id || voice.id)}
-                    >
-                      <MdMoreVert />
-                    </button>
-                    {openMenuId === (voice.voice_id || voice.id) && (
-                      <div className="voice-menu">
-                        <button
-                          className="voice-menu-item"
-                          onClick={(e) => handleShare(e, voice)}
-                        >
-                          <MdShare className="voice-menu-item-icon" />
-                          Share
-                        </button>
-                        <button
-                          className="voice-menu-item"
-                          onClick={(e) => handleCopyID(e, voice)}
-                        >
-                          <MdContentCopy className="voice-menu-item-icon" />
-                          Copy ID
-                        </button>
-                        <button
-                          className="voice-menu-item"
-                          onClick={(e) => handleRename(e, voice)}
-                        >
-                          <MdEdit className="voice-menu-item-icon" />
-                          Rename
-                        </button>
-                        <button
-                          className="voice-menu-item delete"
-                          onClick={(e) => handleDelete(e, voice)}
-                        >
-                          <MdDelete className="voice-menu-item-icon" />
-                          Delete
-                        </button>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    {voice.status && (
+                      <div className={`voice-status-badge ${voice.status}`}>
+                        {voice.status === 'processing' && <Loader2 size={10} className="spin-animation" style={{ marginRight: '6px' }} />}
+                        {voice.status}
                       </div>
                     )}
-                  </div>
-                </div>
-                  <div>
-                  {editingVoiceId === (voice.voice_id || voice.id) ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <input
-                        type="text"
-                        value={editingName}
-                        onChange={(e) => setEditingName(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            handleNameSave(voice.voice_id || voice.id)
-                          } else if (e.key === 'Escape') {
-                            handleNameCancel()
-                          }
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                        style={{
-                          fontSize: '20px',
-                          fontWeight: 700,
-                          color: 'var(--text-main)',
-                          border: '2px solid var(--primary)',
-                          borderRadius: '6px',
-                          padding: '4px 8px',
-                          outline: 'none',
-                          flex: 1
-                        }}
-                        autoFocus
-                      />
-                      <button
+                    
+                    <div style={{ position: 'relative' }} ref={el => menuRefs.current[vId] = el}>
+                      <button 
+                        className="voice-menu-btn"
                         onClick={(e) => {
-                          e.stopPropagation()
-                          handleNameSave(voice.voice_id || voice.id)
-                        }}
-                        style={{
-                          padding: '4px 12px',
-                          background: '#3b82f6',
-                          color: '#ffffff',
-                          border: 'none',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          fontSize: '14px',
-                          fontWeight: 600
+                          e.stopPropagation();
+                          setOpenMenuId(openMenuId === vId ? null : vId);
                         }}
                       >
-                        Save
+                        <MdMoreVert size={20} />
                       </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleNameCancel()
-                        }}
-                        style={{
-                          padding: '4px 12px',
-                          background: '#e5e7eb',
-                          color: '#334155',
-                          border: 'none',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          fontSize: '14px',
-                          fontWeight: 600
-                        }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <h3 className="voice-name">{voice.name}</h3>
-                  )}
-                  {voice.engine && <p className="voice-updated" style={{ textTransform: 'capitalize', fontSize: '12px' }}>Engine: {voice.engine}</p>}
-                </div>
-                {voice.hasMultiLanguage && (
-                  <div className="voice-info-box" ref={el => languageLinkRefs.current[voice.id] = el}>
-                    <MdCheckCircle className="voice-info-icon" />
-                    <p className="voice-info-text">
-                      You'll be able to use your voice with{' '}
-                      <span 
-                        className="voice-info-link"
-                        onClick={(e) => handleLanguageLinkClick(e, voice.id)}
-                      >
-                        multiple languages
-                      </span>.
-                    </p>
-                    {showLanguageDropdown === voice.id && (
-                      <>
-                        <div 
-                          className="language-dropdown-overlay"
-                          onClick={() => setShowLanguageDropdown(false)}
-                        />
-                        <div 
-                          className="language-dropdown"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="language-list">
-                            {languages.map((language, index) => (
-                              <button
-                                key={index}
-                                className="language-item"
-                                onClick={() => handleLanguageSelect(language)}
-                              >
-                                {language}
-                              </button>
-                            ))}
-                          </div>
+                      
+                      {openMenuId === vId && (
+                        <div className="voice-menu">
+                          <button className="voice-menu-item" onClick={(e) => { e.stopPropagation(); setOpenMenuId(null); }}>
+                            <MdShare className="voice-menu-item-icon" />
+                            Share Pattern
+                          </button>
+                          <button className="voice-menu-item" onClick={(e) => { e.stopPropagation(); setOpenMenuId(null); }}>
+                            <MdContentCopy className="voice-menu-item-icon" />
+                            Copy Neural ID
+                          </button>
+                          <button className="voice-menu-item" onClick={(e) => { e.stopPropagation(); setOpenMenuId(null); }}>
+                            <MdEdit className="voice-menu-item-icon" />
+                            Rename
+                          </button>
+                          <button className="voice-menu-item delete" onClick={(e) => { e.stopPropagation(); setOpenMenuId(null); }}>
+                            <MdDelete className="voice-menu-item-icon" />
+                            Delete
+                          </button>
                         </div>
-                      </>
-                    )}
+                      )}
+                    </div>
                   </div>
-                )}
-                <button
-                  className="voice-preview-btn"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    if (voice.preview_audio_url) {
-                      const audio = new Audio(voice.preview_audio_url);
-                      audio.play();
-                    }
-                  }}
-                >
-                  <MdPlayArrow />
-                  {voice.preview_audio_url ? 'Sample' : 'No Sample'}
-                </button>
-                <button
-                  className="voice-preview-btn"
-                  style={{ background: 'rgba(var(--primary-rgb), 0.05)', color: 'var(--primary)', borderColor: 'rgba(var(--primary-rgb), 0.1)' }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedVoiceForSpeech(voice);
-                  }}
-                >
-                  <MdGraphicEq />
-                  Test Voice
-                </button>
+                </div>
+
+                <div className="voice-card-body">
+                  <h3 className="voice-name">{voice.name}</h3>
+                  <p className="voice-updated">
+                    Neural optimization: <strong>Active</strong>
+                  </p>
+                </div>
+
+                <div className="voice-info-box">
+                  <div className="voice-info-icon">
+                    <MdGraphicEq size={18} />
+                  </div>
+                  <p className="voice-info-text">
+                    Optimized for <strong>Natural Flow</strong> and <strong>Semantic Depth</strong> in {voice.language || 'English'}.
+                  </p>
+                </div>
+
+                <div className="voice-card-actions">
+                  <button 
+                    className="voice-action-btn voice-sample-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (voice.preview_audio_url) {
+                        const audio = new Audio(voice.preview_audio_url);
+                        audio.play();
+                      }
+                    }}
+                  >
+                    <MdPlayArrow size={18} />
+                    Preview
+                  </button>
+                  <button 
+                    className="voice-action-btn voice-test-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedVoiceForTest(voice);
+                    }}
+                  >
+                    <MdGraphicEq size={18} />
+                    Test Voice
+                  </button>
+                </div>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
-      <CreateVoiceModal 
-        isOpen={showCreateModal} 
-        onClose={() => setShowCreateModal(false)}
-        onVoiceCreated={() => {
-          fetchVoices();
-          setShowCreateModal(false);
-        }}
-      />
-
-      {selectedVoiceForSpeech && (
-        <div className="quick-access-modal-overlay" onClick={() => setSelectedVoiceForSpeech(null)}>
-          <div className="quick-access-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
-            <div className="modal-header-sleek">
+      {/* Synthesis Modal (Test Voice) */}
+      {selectedVoiceForTest && (
+        <div className="voice-modal-overlay" onClick={() => setSelectedVoiceForTest(null)}>
+          <div className="voice-modal-card" onClick={e => e.stopPropagation()}>
+            <header className="voice-modal-header">
               <div>
-                <h4 style={{ margin: 0, fontSize: '18px' }}>Voice Synthesis</h4>
-                <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--text-muted)' }}>Testing: {selectedVoiceForSpeech.name}</p>
+                <h3>Test Neural Voice</h3>
+                <p>Generating preview for: <strong>{selectedVoiceForTest.name}</strong></p>
               </div>
-              <button className="close-mini-btn" onClick={() => setSelectedVoiceForSpeech(null)}><MdClose size={20} /></button>
-            </div>
-            <div style={{ padding: '24px' }}>
+              <button className="voice-modal-close" onClick={() => setSelectedVoiceForTest(null)}>
+                <MdClose size={24} />
+              </button>
+            </header>
+            
+            <div className="voice-modal-body">
               <div className="input-group">
-                <label style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px', display: 'block' }}>Insert Text</label>
+                <label>Input Speech Text</label>
                 <textarea 
-                  placeholder="Type something to hear it in this voice..."
+                  placeholder="Type a sentence to hear how this voice sounds..."
                   value={speechText}
                   onChange={(e) => setSpeechText(e.target.value)}
-                  style={{ width: '100%', minHeight: '120px', padding: '16px', borderRadius: '12px', background: 'var(--bg-surface)', border: '1px solid var(--border-color)', color: 'var(--text-main)', resize: 'none', outline: 'none' }}
+                  maxLength={500}
                 />
+                <span className="char-counter">{speechText.length}/500</span>
               </div>
+              
               <button 
-                className="submit-creation-btn-premium" 
-                style={{ marginTop: '20px' }}
+                className={`voice-modal-submit ${isSynthesizing ? 'loading' : ''}`}
                 onClick={handleSpeechSynthesis}
-                disabled={isSynthesizing || !speechText}
+                disabled={isSynthesizing || !speechText.trim()}
               >
-                {isSynthesizing ? <Loader2 className="spin-animation" size={18} /> : <><MdGraphicEq size={18} /> Synthesize & Play</>}
+                {isSynthesizing ? (
+                  <>
+                    <Loader2 size={20} className="spin-animation" />
+                    Synthesizing Neural Flow...
+                  </>
+                ) : (
+                  <>
+                    <MdGraphicEq size={20} />
+                    Generate & Play Preview
+                  </>
+                )}
               </button>
             </div>
           </div>
         </div>
       )}
-    </>
+    </div>
   )
 }
 
 export default Voices
-

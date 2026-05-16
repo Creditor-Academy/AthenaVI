@@ -11,6 +11,7 @@ import SceneConfigurationPanel from '../../components/features/editor/editor/Sce
 import ExportModal from '../../components/features/editor/editor/ExportModal'
 import TemplateModal from '../../components/features/editor/editor/TemplateModal'
 import PreviewModal from '../../components/features/editor/editor/PreviewModal'
+import heygenService from '../../services/heygenService'
 import avatar1 from '../../assets/Avatarr1.png'
 import projectTemplate from '../../constants/projectTemplate.json'
 import workspaceService from '../../services/workspaceService'
@@ -58,6 +59,17 @@ function Create({ onBack, initialConfig = null }) {
       workspaceId: initialConfig?.workspaceId,
       folderId: initialConfig?.folderId,
       createConfig: initialConfig
+        ? {
+            template: initialConfig.template || null,
+            pageSize: initialConfig.pageSize || 'landscape',
+            workspace: initialConfig.workspace || '',
+            workspaceId: initialConfig.workspaceId || '',
+            folder: initialConfig.folder || '',
+            folderId: initialConfig.folderId || '',
+            tags: initialConfig.tags || [],
+            name: initialConfig.name || resolvedTitle
+          }
+        : null
     }
   })
   const [activeSceneId, setActiveSceneId] = useState(null)
@@ -588,6 +600,90 @@ function Create({ onBack, initialConfig = null }) {
     }
   }
 
+  const generateSceneVideo = async (sceneId) => {
+    const scene = project.scenes.find(s => s.id === sceneId);
+    if (!scene) return;
+
+    const { avatarType, voiceId, script } = scene;
+    const workspaceId = project.createConfig?.workspaceId;
+    const projectId = project.createConfig?.folderId;
+
+    if (!avatarType || !voiceId || !script) {
+      alert('Please select an avatar, a voice, and enter a script first.');
+      return;
+    }
+
+    if (!workspaceId || !projectId) {
+      alert('Missing workspace or project ID. Please ensure this project is saved in a folder.');
+      return;
+    }
+
+    try {
+      // Mark scene as processing
+      updateScene(sceneId, { heygenStatus: 'processing' });
+
+      const payload = {
+        sceneId: sceneId,
+        avatarId: avatarType,
+        title: `${project.title} - ${scene.title}`,
+        resolution: '1080p',
+        aspectRatio: project.resolution.width > project.resolution.height ? '16:9' : '9:16',
+        backgroundColor: '#ffffff',
+        voiceId: voiceId,
+        script: script,
+        expressiveness: 'high'
+      };
+
+      const result = await heygenService.generateVideo(workspaceId, projectId, payload);
+      const heygenVideoId = result.id || result.heygenVideoId || result.video_id;
+
+      // Update scene with video ID and poll status
+      updateScene(sceneId, { 
+        heygenVideoId,
+        heygenStatus: 'processing'
+      });
+
+      // Start polling for this specific scene
+      const pollStatus = async () => {
+        try {
+          const videoData = await heygenService.getVideo(workspaceId, projectId, heygenVideoId);
+          if (videoData.status === 'completed' || videoData.status === 'success') {
+            // Get streaming URL
+            const videoUrl = heygenService.getStreamUrl(workspaceId, projectId, heygenVideoId);
+            
+            // Update the avatar clip with the generated video
+            const updatedClips = scene.clips.map(clip => 
+              (clip.role === 'avatar' || clip.type === 'avatar') 
+                ? { ...clip, src: videoUrl, type: 'video' } 
+                : clip
+            );
+
+            updateScene(sceneId, { 
+              heygenStatus: 'completed',
+              avatar: videoData.thumbnail_url || scene.avatar,
+              clips: updatedClips
+            });
+          } else if (videoData.status === 'failed' || videoData.status === 'error') {
+            updateScene(sceneId, { heygenStatus: 'failed' });
+          } else {
+            // Continue polling
+            setTimeout(pollStatus, 5000);
+          }
+        } catch (err) {
+          console.error('Polling failed:', err);
+          updateScene(sceneId, { heygenStatus: 'failed' });
+        }
+      };
+
+      pollStatus();
+
+    } catch (error) {
+      console.error('Failed to start video generation:', error);
+      updateScene(sceneId, { heygenStatus: 'failed' });
+      alert('Failed to start video generation: ' + error.message);
+    }
+  }
+
   const handleSeek = (time) => {
     setCurrentTime(time)
     // Use player methods if available
@@ -762,6 +858,7 @@ function Create({ onBack, initialConfig = null }) {
                 bgMusicVolume={bgMusicVolume}
                 setBgMusicVolume={setBgMusicVolume}
                 selectedLayerId={selectedLayerId}
+                generateSceneVideo={generateSceneVideo}
               />
             </div>
           </div>
