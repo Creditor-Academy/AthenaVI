@@ -73,29 +73,30 @@ function Home({ onCreate, onShowAIAssistant }) {
 
     return (
         <div className="home-container">
-            <div className="welcome-banner">
-                <div className="welcome-banner-content">
-                    <div className="welcome-text">
+            <div className="welcome-banner hero-redesign">
+                <div className="hero-content">
+                    <div className="hero-text">
                         <h1>Welcome back, {firstName}!</h1>
-                        <p>Ready to create your next masterpiece?</p>
-                        <div className="home-welcome-chips" aria-label="Dashboard quick highlights">
-                            <span className="home-welcome-chip">
-                                <MdLanguage size={14} /> Multi-language ready
+                        <p>Ready to create your next masterpiece? Jump right in and bring your ideas to life.</p>
+                        <div className="hero-chips">
+                            <span className="hero-chip">
+                                <MdLanguage size={16} /> Multi-language ready
                             </span>
-                            <span className="home-welcome-chip">
-                                <MdAutoAwesome size={14} /> AI tools available
+                            <span className="hero-chip">
+                                <MdAutoAwesome size={16} /> AI tools available
                             </span>
                         </div>
                     </div>
-                    <div className="header-actions">
-                        <button className="btn-secondary" onClick={onShowAIAssistant}>
-                            <MdAutoAwesome /> AI Assistant
-                        </button>
-                        <button className="btn-primary" onClick={onCreate}>
-                            <MdAdd /> Create New Video
+                    <div className="hero-action">
+                        <button className="btn-create-hero" onClick={onCreate}>
+                            <MdAdd className="btn-create-hero-icon" /> Create New Video
                         </button>
                     </div>
                 </div>
+                {/* Decorative Elements */}
+                <div className="hero-decoration hero-circle-1"></div>
+                <div className="hero-decoration hero-circle-2"></div>
+                <div className="hero-decoration hero-circle-3"></div>
             </div>
 
             <div className="home-billing-stats">
