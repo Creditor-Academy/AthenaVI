@@ -64,7 +64,8 @@ function Videos({ onCreate, onEdit }) {
     try {
       setLoading(true)
       const data = await workspaceService.listAllVideosAcrossWorkspaces()
-      setVideos(data)
+      // Ensure we always set an array to prevent runtime errors
+      setVideos(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Failed to fetch videos:', error)
     } finally {
@@ -112,10 +113,12 @@ function Videos({ onCreate, onEdit }) {
     })
   }
 
-  const filteredVideos = videos.filter(v => 
-    v.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    v.workspaceName.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredVideos = (Array.isArray(videos) ? videos : []).filter(v => {
+    const q = (searchQuery || '').toLowerCase()
+    const title = (v?.title || '').toLowerCase()
+    const workspace = (v?.workspaceName || '').toLowerCase()
+    return title.includes(q) || workspace.includes(q)
+  })
 
   return (
     <div className="videos-page">
