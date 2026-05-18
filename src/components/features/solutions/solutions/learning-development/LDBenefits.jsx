@@ -67,6 +67,7 @@ const styles = `
   letter-spacing: -2px;
   background: linear-gradient(180deg, #0f172a 0%, #324a6aff 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   line-height: 1.2;
 }
