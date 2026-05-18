@@ -23,9 +23,10 @@ import UseCases from './pages/UseCases/UseCases.jsx'
 import InviteAcceptance from './pages/InviteAcceptance/InviteAcceptance.jsx'
 import AIAvatarsVideos from './pages/AIAvatarsVideos/AIAvatarsVideos.jsx'
 import AIVideos from './pages/AIVideos/AIVideos.jsx'
+import Help from './pages/UserHelp/Help.jsx'
 
 // Protected Route Component
-const ProtectedRoute = ({ children, view, setView }) => {
+const ProtectedRoute = ({ children, setView }) => {
   const { isAuthenticated, loading } = useAuth()
 
   useEffect(() => {
@@ -196,6 +197,10 @@ const authStyles = `
 
 // App Component with Auth Protection
 function App() {
+  const isInviteAcceptancePath =
+    window.location.pathname.includes('/invite/accept') ||
+    window.location.pathname.includes('/invitations/accept')
+
   // Initialize view from localStorage on mount to persist page on refresh
   const [view, setView] = useState(() => {
     // Check if current URL matches a known route
@@ -225,7 +230,8 @@ function App() {
       '/learning-development': 'learning-development',
       '/settings': 'settings',
       '/ai-videos': 'ai-videos',
-      '/ai-avatars-videos': 'ai-avatars-videos'
+      '/ai-avatars-videos': 'ai-avatars-videos',
+      '/support': 'help'
     }
     
     // Get current path (handle both hash and regular routing)
@@ -274,19 +280,24 @@ function App() {
       'learning-development': '/learning-development',
       'settings': '/settings',
       'ai-videos': '/ai-videos',
-      'ai-avatars-videos': '/ai-avatars-videos'
+      'ai-avatars-videos': '/ai-avatars-videos',
+      'help': '/support'
     }
     
     const newUrl = urlMap[view] || '/'
     
-    // Try to use pushState first (clean URLs)
+    // Don't override the URL on invite acceptance or reset-password paths — the token lives in the path/hash
+    const currentPath = window.location.pathname
+    const onProtectedPath = currentPath.includes('/invitations/accept') ||
+      currentPath.includes('/invite/accept') ||
+      currentPath.includes('/reset-password')
     try {
-      if (window.location.pathname !== newUrl) {
+      if (!onProtectedPath && currentPath !== newUrl) {
         window.history.pushState({ view }, '', newUrl)
       }
-    } catch (error) {
+    } catch {
       // Fallback to hash routing if pushState fails
-      if (window.location.hash !== `#${newUrl}`) {
+      if (!onProtectedPath && window.location.hash !== `#${newUrl}`) {
         window.location.hash = newUrl
       }
     }
@@ -299,7 +310,7 @@ function App() {
 
   // Handle browser back/forward buttons
   useEffect(() => {
-    const handlePopState = (event) => {
+    const handlePopState = () => {
       const pathToViewMap = {
         '/': 'landing',
         '/dashboard': 'dashboard',
@@ -326,7 +337,8 @@ function App() {
         '/learning-development': 'learning-development',
         '/settings': 'settings',
         '/ai-videos': 'ai-videos',
-        '/ai-avatars-videos': 'ai-avatars-videos'
+        '/ai-avatars-videos': 'ai-avatars-videos',
+        '/support': 'help'
       }
       
       const currentPath = window.location.pathname
@@ -393,15 +405,15 @@ function App() {
   // Handle URL-based routing for reset password and invite acceptance
   useEffect(() => {
     const currentPath = window.location.pathname
-    if (currentPath.includes('/reset-password') || currentPath.includes('/invite/accept')) {
+    if (currentPath.includes('/reset-password') || isInviteAcceptancePath) {
       // Don't show auth modal, let reset password or invite acceptance component handle it
       return
     }
-  }, [])
+  }, [isInviteAcceptancePath])
 
   // Inject auth styles into document head
   useEffect(() => {
-    if (window.location.pathname.includes('/reset-password') || window.location.pathname.includes('/invite/accept')) {
+    if (window.location.pathname.includes('/reset-password') || isInviteAcceptancePath) {
       const styleElement = document.createElement('style')
       styleElement.textContent = authStyles
       document.head.appendChild(styleElement)
@@ -409,7 +421,7 @@ function App() {
         document.head.removeChild(styleElement)
       }
     }
-  }, [])
+  }, [isInviteAcceptancePath])
 
   return (
     <ThemeProvider>
@@ -445,7 +457,7 @@ function App() {
       )}
 
       {/* Invite Acceptance Page - Standalone */}
-      {window.location.pathname.includes('/invite/accept') && (
+      {isInviteAcceptancePath && (
         <div style={{
           position: 'fixed',
           top: 0,
@@ -922,6 +934,10 @@ function App() {
         </>
       )}
 
+      {view === 'help' && (
+        <Help />
+      )}
+
       {view === 'learning-development' && (
         <>
           <LearningDevelopment 
@@ -943,7 +959,7 @@ function App() {
         </>
       )}
 
-      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings'].includes(view) && (
+      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings', 'help'].includes(view) && (
         <>
           <Landing 
             onLoginClick={handleLoginClick}

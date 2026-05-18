@@ -10,8 +10,6 @@ import {
     MdExplore,
     MdAutoAwesome,
     MdPlayArrow,
-    MdClose,
-    MdRocketLaunch,
     MdLanguage
 } from 'react-icons/md'
 import './Home.css'
@@ -21,30 +19,35 @@ function Home({ onCreate, onShowAIAssistant }) {
     const firstName = user?.name ? user.name.split(' ')[0] : (user?.email ? user.email.split('@')[0] : 'User');
 
     const [activeTab, setActiveTab] = useState('templates');
-    const [showCreateInfoModal, setShowCreateInfoModal] = useState(false);
-    const [videoInfo, setVideoInfo] = useState({
-        title: '',
-        objective: 'Educational',
-        language: 'English'
-    });
-
-    const handleCreateClick = (e) => {
-        if (e) e.stopPropagation();
-        setShowCreateInfoModal(true);
-    };
-
-    const handleModalSubmit = (e) => {
-        e.preventDefault();
-        setShowCreateInfoModal(false);
-        // In a real app, we'd pass videoInfo to onCreate or store it in context
-        // For now, we'll just trigger the transition to Create page
-        onCreate();
-    };
 
     const stats = [
-        { label: 'Total Videos', value: '24', trend: '+2 this week', icon: <MdVideoLibrary />, trendDir: 'up', trendIcon: <MdTrendingUp className="stat-trend-icon" /> },
-        { label: 'Draft Projects', value: '12', trend: '3 action needed', icon: <MdCollectionsBookmark />, trendDir: 'neutral', trendIcon: <MdAccessTime className="stat-trend-icon" /> },
-        { label: 'Published', value: '12', trend: '+12% engagement', icon: <MdCheckCircle />, trendDir: 'up', trendIcon: <MdTrendingUp className="stat-trend-icon" /> }
+        {
+            label: 'Total Videos',
+            value: '24',
+            trend: '+2 this week',
+            icon: <MdVideoLibrary />,
+            trendDir: 'up',
+            trendIcon: <MdTrendingUp className="stat-trend-icon" />,
+            progress: 78
+        },
+        {
+            label: 'Draft Projects',
+            value: '12',
+            trend: '3 action needed',
+            icon: <MdCollectionsBookmark />,
+            trendDir: 'neutral',
+            trendIcon: <MdAccessTime className="stat-trend-icon" />,
+            progress: 54
+        },
+        {
+            label: 'Published',
+            value: '12',
+            trend: '+12% engagement',
+            icon: <MdCheckCircle />,
+            trendDir: 'up',
+            trendIcon: <MdTrendingUp className="stat-trend-icon" />,
+            progress: 86
+        }
     ]
 
     const recentProjects = [
@@ -75,12 +78,20 @@ function Home({ onCreate, onShowAIAssistant }) {
                     <div className="welcome-text">
                         <h1>Welcome back, {firstName}!</h1>
                         <p>Ready to create your next masterpiece?</p>
+                        <div className="home-welcome-chips" aria-label="Dashboard quick highlights">
+                            <span className="home-welcome-chip">
+                                <MdLanguage size={14} /> Multi-language ready
+                            </span>
+                            <span className="home-welcome-chip">
+                                <MdAutoAwesome size={14} /> AI tools available
+                            </span>
+                        </div>
                     </div>
                     <div className="header-actions">
                         <button className="btn-secondary" onClick={onShowAIAssistant}>
                             <MdAutoAwesome /> AI Assistant
                         </button>
-                        <button className="btn-primary" onClick={handleCreateClick}>
+                        <button className="btn-primary" onClick={onCreate}>
                             <MdAdd /> Create New Video
                         </button>
                     </div>
@@ -97,6 +108,9 @@ function Home({ onCreate, onShowAIAssistant }) {
                         <div className="home-billing-stat-value">{stat.value}</div>
                         <div className={`home-billing-stat-trend ${stat.trendDir}`}>
                                 {stat.trendIcon} {stat.trend}
+                        </div>
+                        <div className="home-billing-stat-meter" aria-hidden>
+                            <span style={{ width: `${stat.progress}%` }} />
                         </div>
                     </div>
                 ))}
@@ -138,7 +152,7 @@ function Home({ onCreate, onShowAIAssistant }) {
                                     <div className="project-thumb-container">
                                         <img src={template.thumb} alt={template.title} className="project-thumb" />
                                         <div className="project-overlay">
-                                            <button className="btn-edit-premium" onClick={handleCreateClick}>
+                                            <button className="btn-edit-premium" onClick={onCreate}>
                                                 <MdAutoAwesome size={18} /> Use Template
                                             </button>
                                         </div>
@@ -169,7 +183,7 @@ function Home({ onCreate, onShowAIAssistant }) {
                                     <div className="project-thumb-container">
                                         <img src={project.thumb} alt={project.title} className="project-thumb" />
                                         <div className="project-overlay">
-                                            <button className="btn-edit-premium" onClick={handleCreateClick}>
+                                            <button className="btn-edit-premium" onClick={onCreate}>
                                                 <MdPlayArrow size={18} /> Resume Editor
                                             </button>
                                         </div>
@@ -223,65 +237,7 @@ function Home({ onCreate, onShowAIAssistant }) {
                 )}
             </div>
 
-            {showCreateInfoModal && (
-                <div className="create-modal-overlay">
-                    <div className="create-modal-content">
-                        <div className="create-modal-header">
-                            <h2>Project Initialization</h2>
-                            <button className="btn-close-modal" onClick={() => setShowCreateInfoModal(false)}>
-                                <MdClose size={20} />
-                            </button>
-                        </div>
-                        <form onSubmit={handleModalSubmit}>
-                            <div className="create-modal-body">
-                                <div className="create-form-group">
-                                    <label>Video Title</label>
-                                    <input 
-                                        type="text" 
-                                        placeholder="Enter a name for your video..." 
-                                        value={videoInfo.title}
-                                        onChange={(e) => setVideoInfo({...videoInfo, title: e.target.value})}
-                                        required
-                                        autoFocus
-                                    />
-                                </div>
-                                <div className="create-form-group">
-                                    <label>What's your creative objective?</label>
-                                    <select 
-                                        value={videoInfo.objective}
-                                        onChange={(e) => setVideoInfo({...videoInfo, objective: e.target.value})}
-                                    >
-                                        <option value="Educational">Educational Presentation</option>
-                                        <option value="Marketing">Marketing & Promo</option>
-                                        <option value="Corporate">Corporate Training</option>
-                                        <option value="Entertainment">Creative Storytelling</option>
-                                        <option value="Personal">Personal Message</option>
-                                    </select>
-                                </div>
-                                <div className="create-form-group">
-                                    <label>Primary Language</label>
-                                    <select 
-                                        value={videoInfo.language}
-                                        onChange={(e) => setVideoInfo({...videoInfo, language: e.target.value})}
-                                    >
-                                        <option value="English">English (US/UK)</option>
-                                        <option value="Spanish">Spanish</option>
-                                        <option value="French">French</option>
-                                        <option value="German">German</option>
-                                        <option value="Hindi">Hindi</option>
-                                        <option value="Mandarin">Mandarin</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div className="create-modal-footer">
-                                <button type="submit" className="btn-start-create">
-                                    <MdRocketLaunch size={18} /> Start Creating
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+
         </div>
     )
 }

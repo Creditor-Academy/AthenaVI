@@ -1,0 +1,165 @@
+import { useState, useEffect } from 'react'
+import { Play, Video, X } from 'lucide-react'
+import heygenService from '../../services/heygenService'
+
+function AvatarPersona({ selectedAvatar, closeDetails, onCreate }) {
+  const [activeLooks, setActiveLooks] = useState([])
+  const [selectedLook, setSelectedLook] = useState(null)
+  const [loadingLooks, setLoadingLooks] = useState(false)
+  const [debugLooksInfo, setDebugLooksInfo] = useState('')
+  const [isPreviewing, setIsPreviewing] = useState(false)
+
+  // Fetch looks when a group is selected
+  useEffect(() => {
+    if (selectedAvatar) {
+      if (selectedAvatar.rawLooks && selectedAvatar.rawLooks.length > 0) {
+        const mapped = selectedAvatar.rawLooks.map(look => ({
+          id: look.avatar_id || look.id,
+          name: look.avatar_name || look.name || selectedAvatar.name,
+          image: look.preview_image_url || look.thumbnail_url || look.image_url || selectedAvatar.image,
+          preview: look.preview_video_url || selectedAvatar.preview
+        }));
+        setActiveLooks(mapped);
+        setSelectedLook(mapped[0]);
+      } else {
+        // Fetch if not embedded
+        const fetchLooks = async () => {
+          setLoadingLooks(true);
+          try {
+            const res = await heygenService.getAvatarLooks({ group_id: selectedAvatar.id });
+            let lookList = [];
+            if (Array.isArray(res)) lookList = res;
+            else if (res?.avatar_looks) lookList = res.avatar_looks;
+            else if (res?.data?.avatar_looks) lookList = res.data.avatar_looks;
+            else if (res?.avatars) lookList = res.avatars;
+            else if (res?.data?.avatars) lookList = res.data.avatars;
+            else if (res?.data && Array.isArray(res.data)) lookList = res.data;
+            
+            if (!lookList || lookList.length === 0) {
+               setDebugLooksInfo(`No looks found. Raw response: ${JSON.stringify(res).substring(0, 150)}`);
+            } else {
+               setDebugLooksInfo('');
+            }
+            
+            const mapped = lookList.map(look => ({
+              id: look.avatar_id || look.id,
+              name: look.avatar_name || look.name || selectedAvatar.name,
+              image: look.preview_image_url || look.thumbnail_url || look.image_url || selectedAvatar.image,
+              preview: look.preview_video_url || selectedAvatar.preview
+            }));
+            setActiveLooks(mapped);
+            if (mapped.length > 0) setSelectedLook(mapped[0]);
+          } catch (e) {
+            console.error(e);
+            setDebugLooksInfo(`API Error: ${e.message}`);
+            setActiveLooks([]);
+          } finally {
+            setLoadingLooks(false);
+          }
+        };
+        fetchLooks();
+      }
+    }
+  }, [selectedAvatar]);
+
+  const handleCreateVideo = () => {
+    console.log('Creating video from', selectedLook?.name || selectedAvatar.name)
+    if (onCreate) {
+      onCreate()
+    }
+    closeDetails()
+  }
+
+  if (!selectedAvatar) return null;
+
+  return (
+    <div className="hero-showcase-wrapper">
+      <div className="hero-top-nav">
+        <button className="back-to-library-btn" onClick={closeDetails}>
+          <X size={18} /> Close Persona
+        </button>
+      </div>
+      
+      <div className="hero-showcase-card">
+        <div className="hero-visual">
+          <div className="persona-filmstrip">
+            {loadingLooks ? (
+             <div style={{ color: 'white', fontSize: '12px', padding: '10px' }}>Loading looks...</div>
+          ) : activeLooks.length > 0 ? (
+            <div style={{ display: 'flex', gap: '12px' }}>
+              {activeLooks.map(look => (
+                <div
+                  key={look.id}
+                  className={`filmstrip-item ${selectedLook?.id === look.id ? 'active' : ''}`}
+                  onClick={() => {
+                    setSelectedLook(look);
+                    setIsPreviewing(false);
+                  }}
+                >
+                  <img src={look.image} alt={look.name} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ color: '#ff8a8a', fontSize: '11px', padding: '4px', maxWidth: '300px', textAlign: 'center' }}>
+              {debugLooksInfo || 'No sub-looks available'}
+            </div>
+          )}
+        </div>
+
+        {!isPreviewing ? (
+          <div className="hero-still" onClick={() => setIsPreviewing(true)}>
+            <img src={selectedLook?.image || selectedAvatar.image} alt={selectedLook?.name || selectedAvatar.name} />
+          </div>
+        ) : (
+          <div className="hero-motion">
+            <video
+              src={selectedLook?.preview || selectedAvatar.preview}
+              autoPlay
+              loop
+              className="hero-video"
+            />
+            <button className="exit-preview-corner" onClick={(e) => { e.stopPropagation(); setIsPreviewing(false); }}>
+              <X size={20} />
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="hero-details">
+        <div className="hero-glass-pan">
+          <div className="hero-top-meta">Unit {selectedLook?.id || selectedAvatar.id} // v4.2</div>
+          <h1 className="hero-title">{selectedLook?.name || selectedAvatar.name}</h1>
+          <div className="hero-badge">{selectedAvatar.category} Model</div>
+
+          <p className="hero-bio">{selectedAvatar.description}</p>
+
+          <div className="hero-specs">
+            <div className="spec-tile">
+              <label>Oral Expression</label>
+              <span>{selectedAvatar.style}</span>
+            </div>
+            <div className="spec-tile">
+              <label>Quality Score</label>
+              <span>{selectedAvatar.rating} Index</span>
+            </div>
+            <div className="spec-tile">
+              <label>Integration</label>
+              <span>Athena Ready</span>
+            </div>
+          </div>
+
+          <div className="hero-actions">
+            <button className="btn-action-primary" onClick={handleCreateVideo}>
+              <Video size={22} />
+              <span>Start Video with this Avatar</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+  )
+}
+
+export default AvatarPersona

@@ -26,7 +26,8 @@ const SceneConfigurationPanel = ({
   setBgMusic, 
   bgMusicVolume, 
   setBgMusicVolume,
-  selectedLayerId
+  selectedLayerId,
+  generateSceneVideo
 }) => {
   if (!activeScene) return null;
 
@@ -293,6 +294,31 @@ const SceneConfigurationPanel = ({
         <div className="section-label">
             <MdMic style={{ color: '#9333ea' }} /> <span>AI Voiceover & Script</span>
         </div>
+
+        {/* Selected Avatar & Voice Status */}
+        <div style={{ 
+            background: 'rgba(147, 51, 234, 0.05)', 
+            borderRadius: '12px', 
+            padding: '12px', 
+            marginBottom: '16px',
+            border: '1px solid rgba(147, 51, 234, 0.1)'
+        }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: activeScene.avatarType ? '#10b981' : '#ef4444' }}></div>
+                    <span style={{ fontSize: '12px', fontWeight: '500', color: 'var(--text-main)' }}>
+                        Avatar: {activeScene.avatarName || activeScene.avatarType || <span style={{ color: '#ef4444' }}>None selected</span>}
+                    </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: activeScene.voiceId ? '#10b981' : '#ef4444' }}></div>
+                    <span style={{ fontSize: '12px', fontWeight: '500', color: 'var(--text-main)' }}>
+                        Voice: {activeScene.voiceName || activeScene.voiceId || <span style={{ color: '#ef4444' }}>None selected</span>}
+                    </span>
+                </div>
+            </div>
+        </div>
+
         <textarea
           className="premium-textarea"
           placeholder="Speak your words here..."
@@ -309,6 +335,61 @@ const SceneConfigurationPanel = ({
             </div>
         </div>
         <div className="text-hint">Total: {(activeScene.script || '').length} characters</div>
+        
+        {/* HeyGen Generation Button */}
+        <div style={{ marginTop: '20px' }}>
+            <button 
+                className="premium-button-primary"
+                style={{ 
+                    width: '100%', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    gap: '10px',
+                    padding: '12px',
+                    background: activeScene.heygenStatus === 'processing' ? 'var(--bg-surface)' : 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)',
+                    cursor: activeScene.heygenStatus === 'processing' ? 'wait' : 'pointer',
+                    opacity: (!activeScene.avatarType || !activeScene.voiceId || !activeScene.script) && activeScene.heygenStatus !== 'processing' ? 0.5 : 1
+                }}
+                onClick={() => generateSceneVideo(activeSceneId)}
+                disabled={activeScene.heygenStatus === 'processing' || (!activeScene.avatarType || !activeScene.voiceId || !activeScene.script)}
+            >
+                {activeScene.heygenStatus === 'processing' ? (
+                    <>
+                        <div className="spinner-small" style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                        <span>Generating Video...</span>
+                    </>
+                ) : activeScene.heygenStatus === 'completed' ? (
+                    <>
+                        <MdPlayCircleFilled size={20} />
+                        <span>Regenerate Scene</span>
+                    </>
+                ) : (
+                    <>
+                        <MdAutoAwesome size={20} />
+                        <span>Generate Scene Video</span>
+                    </>
+                )}
+            </button>
+            
+            {activeScene.heygenStatus === 'processing' && (
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', textAlign: 'center', marginTop: '8px' }}>
+                    HeyGen is crafting your video. This may take a minute.
+                </p>
+            )}
+            
+            {activeScene.heygenStatus === 'completed' && (
+                <p style={{ fontSize: '11px', color: '#10b981', textAlign: 'center', marginTop: '8px', fontWeight: '500' }}>
+                    ✓ Video generated successfully
+                </p>
+            )}
+
+            {activeScene.heygenStatus === 'failed' && (
+                <p style={{ fontSize: '11px', color: 'var(--delete-red)', textAlign: 'center', marginTop: '8px' }}>
+                    ⚠ Generation failed. Please try again.
+                </p>
+            )}
+        </div>
       </div>
 
       {/* ANIMATION & TRANSITIONS */}

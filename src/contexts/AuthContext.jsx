@@ -14,22 +14,78 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        // Handle Google OAuth redirect: backend sends #access_token=<token> in the URL hash
+        const hash = window.location.hash
+        if (hash && hash.includes('access_token=')) {
+          const params = new URLSearchParams(hash.substring(1))
+          const accessToken = params.get('access_token')
+          if (accessToken) {
+            localStorage.setItem('accessToken', accessToken)
+            // Remove the token from the URL to keep it clean
+            window.history.replaceState(null, '', window.location.pathname + window.location.search)
+            // Fetch user profile to populate user data
+            try {
+              const { default: userService } = await import('../services/userService.js')
+              const profile = await userService.getUserProfile()
+              const profileId = profile?.id || profile?._id || profile?.userId
+              const userData = { ...profile, id: profileId }
+              localStorage.setItem('user', JSON.stringify(userData))
+              setUser(userData)
+              setIsAuthenticated(true)
+              // Navigate to dashboard
+              window.history.pushState({ view: 'dashboard' }, '', '/dashboard')
+              window.location.reload()
+            } catch (profileError) {
+              console.error('Failed to fetch profile after Google OAuth:', profileError)
+              // Token is stored; proceed — profile can be fetched later
+              setIsAuthenticated(true)
+              window.history.pushState({ view: 'dashboard' }, '', '/dashboard')
+              window.location.reload()
+            }
+            return
+          }
+        }
+
+        // Handle Google OAuth error redirect: backend sends ?error=...
+        const urlParams = new URLSearchParams(window.location.search)
+        const oauthError = urlParams.get('error')
+        if (oauthError) {
+          console.error('Google OAuth error:', oauthError)
+          // Remove the error param from URL
+          window.history.replaceState(null, '', window.location.pathname)
+          // Fall through to normal unauthenticated state
+          setLoading(false)
+          return
+        }
+
         if (authService.isAuthenticated()) {
           let userData = authService.getStoredUser()
           
           // If id is missing (due to previous bug), fetch profile to get it
           if (userData && !userData.id) {
-            console.log('User ID missing from stored data, fetching profile...')
-            try {
-              // Import userService dynamically to avoid circular dependencies if any
-              const { default: userService } = await import('../services/userService.js')
-              const profile = await userService.getUserProfile()
-              if (profile && profile.id) {
-                userData = { ...userData, ...profile }
-                localStorage.setItem('user', JSON.stringify(userData))
+            // Try to recover id from _id first
+            if (userData._id) {
+              userData = { ...userData, id: userData._id }
+              localStorage.setItem('user', JSON.stringify(userData))
+              console.log('Recovered user id from _id:', userData.id)
+            } else if (userData.userId) {
+              userData = { ...userData, id: userData.userId }
+              localStorage.setItem('user', JSON.stringify(userData))
+              console.log('Recovered user id from userId:', userData.id)
+            } else {
+              console.log('User ID missing from stored data, fetching profile...')
+              try {
+                // Import userService dynamically to avoid circular dependencies if any
+                const { default: userService } = await import('../services/userService.js')
+                const profile = await userService.getUserProfile()
+                const profileId = profile?.id || profile?._id || profile?.userId
+                if (profile && profileId) {
+                  userData = { ...userData, ...profile, id: profileId }
+                  localStorage.setItem('user', JSON.stringify(userData))
+                }
+              } catch (profileError) {
+                console.error('Failed to fetch profile for ID recovery:', profileError)
               }
-            } catch (profileError) {
-              console.error('Failed to fetch profile for ID recovery:', profileError)
             }
           }
           
@@ -131,18 +187,34 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  // Google login function
-  const googleLogin = async (googleToken) => {
-    setLoading(true)
+  // Google login function — redirects browser to backend OAuth endpoint
+  const googleLogin = () => {
+    authService.googleLogin()
+  }
+
+  // Handle Google OAuth callback — reads #access_token from hash
+  // (used by GoogleCallback component if rendered directly)
+  const handleGoogleCallback = async () => {
     try {
-      const { user: userData } = await authService.googleLogin(googleToken)
+      const hash = window.location.hash
+      const params = new URLSearchParams(hash.substring(1))
+      const accessToken = params.get('access_token')
+      if (!accessToken) {
+        return { success: false, error: 'No access token found in URL' }
+      }
+      localStorage.setItem('accessToken', accessToken)
+      window.history.replaceState(null, '', window.location.pathname + window.location.search)
+      const { default: userService } = await import('../services/userService.js')
+      const profile = await userService.getUserProfile()
+      const profileId = profile?.id || profile?._id || profile?.userId
+      const userData = { ...profile, id: profileId }
+      localStorage.setItem('user', JSON.stringify(userData))
       setUser(userData)
       setIsAuthenticated(true)
       return { success: true }
     } catch (error) {
+      console.error('handleGoogleCallback error:', error)
       return { success: false, error: error.message }
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -164,10 +236,10 @@ export const AuthProvider = ({ children }) => {
   }
 
   // Update user data
-  const updateUser = (newUserData) => {
+  const updateUser = React.useCallback((newUserData) => {
     setUser(newUserData)
     localStorage.setItem('user', JSON.stringify(newUserData))
-  }
+  }, [])
 
   const value = {
     user,
@@ -180,6 +252,7 @@ export const AuthProvider = ({ children }) => {
     forgotPassword,
     resetPassword,
     googleLogin,
+    handleGoogleCallback,
     logout,
     updateUser
   }

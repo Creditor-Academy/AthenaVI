@@ -39,6 +39,7 @@ export const FolderCard = ({ folder, onClick, contextProps }) => {
                 <div className="meta-left">
                     <h4>{folder.name}</h4>
                     <span className="subtitle">By {folder.createdBy}</span>
+                    <span className="subtitle">Last modified by {folder.lastModifiedBy} {folder.lastModifiedAt ? `• ${folder.lastModifiedAt}` : ''}</span>
                 </div>
                 <ContextMenu type="folder" {...contextProps} />
             </div>

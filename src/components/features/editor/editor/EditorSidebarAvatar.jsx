@@ -1,12 +1,136 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MdAdd, MdMic, MdSearch, MdStar, MdAutoAwesome, MdCloudUpload } from 'react-icons/md';
-import { predefinedAvatars } from '../../../../constants/editorData';
+import { Loader2 } from 'lucide-react';
+import heygenService from '../../../../services/heygenService';
 
 const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateScene, updateScene, setShowTemplateModal, addLayer }) => {
   const [activeTab, setActiveTab] = useState('studio');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState('');
+  const fileInputRef = useRef(null);
+  const [avatars, setAvatars] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredAvatars = predefinedAvatars.filter(av => 
+  useEffect(() => {
+    const fetchAvatars = async () => {
+      setLoading(true);
+      try {
+        let ownership = 'public';
+        if (activeTab === 'mine') ownership = 'private';
+        if (activeTab === 'team') ownership = 'workspace';
+        
+        const responseData = await heygenService.getAvatarGroups({ ownership });
+        
+        // Comprehensive mapping to handle different API versions and response shapes
+        let avatarList = [];
+        const data = responseData?.data || responseData;
+        
+        if (Array.isArray(data)) {
+          avatarList = data;
+        } else if (data?.avatar_groups) {
+          avatarList = data.avatar_groups;
+        } else if (data?.avatar_looks) {
+          avatarList = data.avatar_looks;
+        } else if (data?.avatars) {
+          avatarList = data.avatars;
+        } else if (responseData?.avatar_looks) {
+          avatarList = responseData.avatar_looks;
+        } else if (responseData?.avatar_groups) {
+          avatarList = responseData.avatar_groups;
+        }
+        
+        console.log(`Athena VI (Editor): Mapping ${avatarList.length} avatars for ownership: ${ownership}`, { raw: responseData });
+
+        const mappedAvatars = avatarList.map(av => ({
+          id: av.avatar_group_id || av.id,
+          name: av.name || av.group_name || 'AI Presenter',
+          image: av.preview_image_url || av.thumbnail_url || av.normal_image_url || av.image_url || 'https://via.placeholder.com/300x400?text=Avatar',
+          gender: av.gender || 'unknown',
+        }));
+        
+        setAvatars(mappedAvatars);
+      } catch (err) {
+        console.error('Failed to load avatars:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAvatars();
+  }, [activeTab]);
+
+
+  const convertFileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setUploadStatus('Preparing asset upload...');
+
+    try {
+      const type = file.type.startsWith('video/') ? 'digital_twin' : 'photo';
+      
+      setUploadStatus(`Creating ${type.replace('_', ' ')}...`);
+      
+      const payload = new FormData();
+      payload.append('type', type);
+      payload.append('name', file.name.split('.')[0] || 'Custom Persona');
+      payload.append('file', file);
+
+      const response = await heygenService.createAvatar(payload);
+      
+      const groupId = response?.avatar_group_id || response?.data?.avatar_group_id || response?.id;
+      
+      if (groupId) {
+        setUploadStatus('Verifying ownership...');
+        try {
+          const consentRes = await heygenService.getAvatarConsent(groupId, window.location.href);
+          if (consentRes && (consentRes.consent_url || consentRes.url)) {
+            const url = consentRes.consent_url || consentRes.url;
+            setUploadStatus('Redirecting to consent portal...');
+            setTimeout(() => {
+              window.open(url, '_blank');
+              setIsUploading(false);
+              setUploadStatus('');
+              // Optionally refresh list
+            }, 1500);
+            return;
+          }
+        } catch (consentErr) {
+          console.warn('Consent fetch failed or not required', consentErr);
+        }
+      }
+
+      setUploadStatus('Persona created successfully!');
+      setTimeout(() => {
+        setIsUploading(false);
+        setUploadStatus('');
+      }, 3000);
+      
+    } catch (error) {
+      console.error('Avatar creation failed:', error);
+      setUploadStatus(`Error: ${error.message || 'Creation failed'}`);
+      setTimeout(() => {
+        setIsUploading(false);
+        setUploadStatus('');
+      }, 4000);
+    }
+  };
+
+  const filteredAvatars = avatars.filter(av => 
     av.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -64,13 +188,16 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
         display: 'flex',
         padding: '0 20px',
         borderBottom: '1px solid var(--border-color)',
-        gap: '24px',
+        gap: '20px',
         flexShrink: 0
       }}>
-        {['studio', 'photo', 'mine'].map((tab) => (
+        {['studio', 'team', 'mine'].map((tab) => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => {
+              setActiveTab(tab);
+              setSearchQuery('');
+            }}
             style={{
               background: 'transparent',
               border: 'none',
@@ -84,59 +211,87 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
               transition: 'all 0.2s ease'
             }}
           >
-            {tab === 'mine' ? 'My Avatars' : `${tab} Avatars`}
+            {tab === 'mine' ? 'My Avatars' : tab === 'team' ? 'Team Shared' : 'Studio'}
           </button>
         ))}
       </div>
 
       <div style={{ padding: '20px', flex: 1, overflowY: 'auto' }} className="premium-scrollbar">
-        {activeTab === 'mine' ? (
-           <div style={{
-             display: 'flex',
-             flexDirection: 'column',
-             alignItems: 'center',
-             justifyContent: 'center',
-             padding: '40px 20px',
-             textAlign: 'center',
-             background: 'var(--bg-card)',
-             borderRadius: '12px',
-             border: '1px dashed var(--border-color)'
-           }}>
-             <div style={{
-               width: '48px',
-               height: '48px',
-               borderRadius: '50%',
-               background: 'rgba(26, 115, 232, 0.1)',
-               display: 'flex',
-               alignItems: 'center',
-               justifyContent: 'center',
-               marginBottom: '16px'
-             }}>
-                <MdCloudUpload size={24} style={{ color: 'var(--primary)' }} />
-             </div>
-             <h4 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)', margin: '0 0 8px 0' }}>Create Custom Avatar</h4>
-             <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '0 0 16px 0', lineHeight: '1.5' }}>
-               Upload a 2-minute video of yourself to create a custom AI presenter.
-             </p>
-             <button className="btn-primary" style={{ fontSize: '12px', padding: '8px 16px' }}>
-               Get Started
-             </button>
-           </div>
-        ) : (
-          <>
+        {activeTab === 'mine' && (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px 20px',
+            textAlign: 'center',
+            background: 'var(--bg-card)',
+            borderRadius: '12px',
+            border: '1px dashed var(--border-color)',
+            marginBottom: '20px'
+          }}>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              style={{ display: 'none' }} 
+              accept="video/*,image/*" 
+              onChange={handleFileChange} 
+            />
+            
+            {isUploading ? (
+              <div style={{ textAlign: 'center', padding: '10px' }}>
+                <Loader2 size={32} color="var(--primary)" style={{ margin: '0 auto 12px', animation: 'spin 2s linear infinite' }} />
+                <p style={{ color: 'var(--text-main)', fontSize: '13px', fontWeight: '500' }}>{uploadStatus}</p>
+                <style>
+                  {`@keyframes spin { 100% { transform: rotate(360deg); } }`}
+                </style>
+              </div>
+            ) : (
+              <>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  background: 'rgba(26, 115, 232, 0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '12px'
+                }}>
+                   <MdCloudUpload size={20} style={{ color: 'var(--primary)' }} />
+                </div>
+                <h4 style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', margin: '0 0 4px 0' }}>Create Custom Avatar</h4>
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '0 0 12px 0', lineHeight: '1.5' }}>
+                  Upload a 2-minute video of yourself to create a custom AI presenter.
+                </p>
+                <button className="btn-primary" style={{ fontSize: '12px', padding: '6px 14px' }} onClick={handleUploadClick}>
+                  Upload Video
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        <>
+          {activeTab === 'studio' && (
             <div className="elements-chips-scroll" style={{ marginBottom: '20px', paddingBottom: '4px' }}>
               <button className="elements-chip" style={{ background: 'var(--primary)', color: 'white', borderColor: 'var(--primary)' }}>All</button>
               <button className="elements-chip">Business</button>
               <button className="elements-chip">Casual</button>
               <button className="elements-chip">News</button>
             </div>
+          )}
 
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(2, 1fr)',
               gap: '12px'
             }}>
-              {filteredAvatars.map((avatar) => {
+              {loading ? (
+                <div style={{ gridColumn: '1 / -1', padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  Loading avatars...
+                </div>
+              ) : filteredAvatars.map((avatar) => {
                 const isActive = activeScene?.avatarType === avatar.id;
                 
                 return (
@@ -172,6 +327,7 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
                             updateScene(activeSceneId, {
                                 avatar: avatar.image,
                                 avatarType: avatar.id,
+                                avatarName: avatar.name,
                                 clips: updatedClips
                             });
                         } else {
@@ -182,7 +338,8 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
                             
                             updateScene(activeSceneId, {
                                 avatar: avatar.image,
-                                avatarType: avatar.id
+                                avatarType: avatar.id,
+                                avatarName: avatar.name
                             });
                         }
                     }}
@@ -282,13 +439,12 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
               })}
             </div>
             
-            {filteredAvatars.length === 0 && (
+            {filteredAvatars.length === 0 && !loading && (
               <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                <p>No avatars found matching "{searchQuery}"</p>
+                <p>{activeTab === 'mine' ? "You haven't created any custom avatars yet." : `No avatars found matching "${searchQuery}"`}</p>
               </div>
             )}
-          </>
-        )}
+        </>
       </div>
     </div>
   );

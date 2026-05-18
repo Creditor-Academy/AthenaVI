@@ -1,406 +1,640 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   MdCheck,
-  MdCropLandscape,
-  MdCropPortrait,
-  MdCropSquare,
   MdSearch,
   MdAdd,
   MdClose,
-  MdKeyboardArrowDown
-} from 'react-icons/md'
-import workspaceService from '../../../services/workspaceService.js'
-import './CreateVideoModal.css'
+  MdCheckCircle,
+  MdCancel,
+  MdWarning
+} from 'react-icons/md';
+import workspaceService from '../../../services/workspaceService.js';
+import { useAuth } from '../../../contexts/AuthContext';
+import './CreateVideoModal.css';
 
 const WIZARD_STEPS = [
-  { id: 1, label: 'Page Size' },
-  { id: 2, label: 'Choose Template' },
+  { id: 1, label: 'Canvas Size' },
+  { id: 2, label: 'Template' },
   { id: 3, label: 'Details' }
-]
+];
 
-const PAGE_SIZES = [
-  { id: 'portrait', label: 'Portrait', ratio: '9:16', Icon: MdCropPortrait },
-  { id: 'landscape', label: 'Landscape', ratio: '16:9', Icon: MdCropLandscape },
-  { id: 'square', label: 'Square', ratio: '1:1', Icon: MdCropSquare }
-]
+const CANVAS_OPTIONS = [
+  { id: 'landscape', label: '16:9 Landscape', ratio: '16:9' },
+  { id: 'portrait', label: '9:16 Portrait', ratio: '9:16' },
+  { id: 'square', label: '1:1 Square', ratio: '1:1' },
+  { id: 'four-five', label: '4:5 Vertical', ratio: '4:5' },
+  { id: 'custom', label: 'Custom', ratio: 'Custom' }
+];
 
-const TEMPLATE_FILTERS = [
-  'All',
-  'Interactive',
-  'Corporate',
-  'Training',
-  'Quiz',
-  'Onboarding',
-  'Sales',
-  'Minimalistic'
-]
+const PREBUILT_TAGS = ['Professional', 'Presentation', 'Marketing', 'Social Media', 'Education', 'Personal'];
 
-const TEMPLATE_ITEMS = [
+const TEMPLATE_FILTERS = ['All', 'Corporate', 'Training', 'Marketing', 'Social', 'Minimal'];
+
+const FALLBACK_TEMPLATES = [
   {
-    id: 'tpl-pop-smart-quiz',
-    name: 'Pop Smart Quiz',
+    id: 'tpl-corp-kickoff',
+    name: 'Corporate Kickoff',
     badge: 'NEW',
     badgeType: 'new',
-    pageSizes: ['landscape', 'square'],
-    tags: ['Interactive', 'Training', 'Quiz'],
-    preview: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=1200&q=80'
+    tags: ['Corporate', 'Training'],
+    ratios: ['16:9', '1:1'],
+    thumbnail: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80'
   },
   {
-    id: 'tpl-playful-company-culture',
-    name: 'Playful Company Culture Template',
-    badge: 'INTERACTIVE',
+    id: 'tpl-edu-lesson',
+    name: 'Lesson Overview',
+    badge: 'HOT',
     badgeType: 'interactive',
-    pageSizes: ['landscape', 'portrait'],
-    tags: ['Corporate', 'Onboarding'],
-    preview: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=80'
+    tags: ['Training', 'Education'],
+    ratios: ['16:9', '9:16', '4:5'],
+    thumbnail: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1200&q=80'
   },
   {
-    id: 'tpl-corporate-interactive-quiz',
-    name: 'Corporate Interactive Quiz',
-    badge: 'INTERACTIVE',
+    id: 'tpl-social-promo',
+    name: 'Social Promo',
+    badge: 'TRENDING',
     badgeType: 'interactive',
-    pageSizes: ['landscape', 'square'],
-    tags: ['Corporate', 'Interactive', 'Quiz', 'Sales'],
-    preview: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80'
-  },
-  {
-    id: 'tpl-interactive-training',
-    name: 'Interactive Training Template',
-    badge: 'NEW',
-    badgeType: 'new',
-    pageSizes: ['landscape', 'portrait'],
-    tags: ['Training', 'Interactive'],
-    preview: 'https://images.unsplash.com/photo-1513258496099-48168024aec0?auto=format&fit=crop&w=1200&q=80'
-  },
-  {
-    id: 'tpl-bright-circuit',
-    name: 'Bright Circuit Template',
-    badge: 'NEW',
-    badgeType: 'new',
-    pageSizes: ['square', 'portrait'],
-    tags: ['Minimalistic'],
-    preview: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80'
-  },
-  {
-    id: 'tpl-corporate-facilities-tour',
-    name: 'Corporate Facilities Tour Template',
-    badge: 'INTERACTIVE',
-    badgeType: 'interactive',
-    pageSizes: ['landscape'],
-    tags: ['Corporate', 'Onboarding'],
-    preview: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80'
-  },
-  {
-    id: 'tpl-interactive-corporate-quiz',
-    name: 'Interactive Corporate Quiz',
-    badge: 'INTERACTIVE',
-    badgeType: 'interactive',
-    pageSizes: ['landscape', 'square'],
-    tags: ['Corporate', 'Interactive', 'Quiz'],
-    preview: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1200&q=80'
-  },
-  {
-    id: 'tpl-compliance-basics',
-    name: 'Compliance Basics Quiz',
-    badge: 'NEW',
-    badgeType: 'new',
-    pageSizes: ['landscape', 'portrait'],
-    tags: ['Training', 'Corporate', 'Quiz'],
-    preview: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1200&q=80'
-  },
-  {
-    id: 'tpl-interactive-corporate-training',
-    name: 'Interactive Corporate Training',
-    badge: 'INTERACTIVE',
-    badgeType: 'interactive',
-    pageSizes: ['landscape', 'portrait', 'square'],
-    tags: ['Interactive', 'Training', 'Corporate'],
-    preview: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80'
+    tags: ['Marketing', 'Social'],
+    ratios: ['9:16', '4:5', '1:1'],
+    thumbnail: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80'
   }
-]
+];
 
-const DEFAULT_WORKSPACES = []
+function normalizeId(value) {
+  if (value == null || value === '') return '';
+  if (typeof value === 'object') {
+    return String(value.id || value._id || value.userId || value.user_id || value.sub || '');
+  }
+  return String(value);
+}
 
-const mapFolderNames = (workspace) => {
-  if (!workspace) return []
+function extractUserId(userObj) {
+  if (!userObj) return '';
+  return normalizeId(
+    userObj.id || userObj._id || userObj.userId || userObj.user_id || userObj.sub || ''
+  );
+}
 
-  const directFolders = Array.isArray(workspace.folders) ? workspace.folders : []
-  const nestedFolders = Array.isArray(workspace.workspaceFolders) ? workspace.workspaceFolders : []
-  const combined = [...directFolders, ...nestedFolders]
+function readRole(workspace) {
+  const role =
+    workspace.role ||
+    workspace.userRole ||
+    workspace.membershipRole ||
+    workspace.myRole ||
+    workspace.memberRole ||
+    workspace.currentUserRole ||
+    workspace.membership?.role ||
+    workspace.access?.role ||
+    workspace.permission ||
+    'MEMBER';
+  return String(role).toUpperCase();
+}
 
-  return combined
-    .map((folder) => {
-      if (typeof folder === 'string') return folder
-      return folder?.name || ''
-    })
-    .filter(Boolean)
+function normalizeWorkspace(workspace, currentUserId) {
+  const id = workspace.id || workspace._id;
+  const typeRaw = String(workspace.type || '').toUpperCase();
+  const isPersonal = Boolean(workspace.isPersonal) || typeRaw === 'PRIVATE' || typeRaw === 'PERSONAL';
+
+  const ownerId = normalizeId(
+    workspace.ownerId ||
+      workspace.ownerUserId ||
+      workspace.owner_id ||
+      workspace.owner?.id ||
+      workspace.owner?._id ||
+      workspace.owner
+  );
+
+  const creatorId = normalizeId(
+    workspace.createdBy ||
+      workspace.createdById ||
+      workspace.creatorId ||
+      workspace.creator?.id ||
+      workspace.creator?._id
+  );
+
+  const role = readRole(workspace);
+
+  const ownerInMembers = Array.isArray(workspace.members)
+    ? workspace.members.some((member) => {
+        const memberId = normalizeId(
+          member.userId || member.user?.id || member.user?._id || member.user || member.id || member._id
+        );
+        return memberId === currentUserId && String(member.role || '').toUpperCase() === 'OWNER';
+      })
+    : false;
+
+  const isOwner =
+    isPersonal ||
+    role === 'OWNER' ||
+    (Boolean(currentUserId) && ownerId === currentUserId) ||
+    ownerInMembers ||
+    (Boolean(currentUserId) && creatorId === currentUserId);
+
+  const effectiveRole = isPersonal ? 'OWNER' : (isOwner ? 'OWNER' : role || 'MEMBER');
+
+  return {
+    ...workspace,
+    id,
+    name: workspace.name || workspace.title || 'Untitled Workspace',
+    section: isPersonal ? 'personal' : (isOwner ? 'my' : 'shared'),
+    type: isPersonal ? 'personal' : 'workspace',
+    userRole: effectiveRole
+  };
+}
+
+function canvasToAspectRatio(canvasSize, customSize) {
+  if (canvasSize === 'landscape') return '16:9';
+  if (canvasSize === 'portrait') return '9:16';
+  if (canvasSize === 'square') return '1:1';
+  if (canvasSize === 'four-five') return '4:5';
+  if (canvasSize === 'custom') {
+    if (!customSize.width || !customSize.height) return '';
+    return `${customSize.width}:${customSize.height}`;
+  }
+  return '';
+}
+
+function canCreateInWorkspace(workspace) {
+  if (!workspace) return false;
+  const role = String(workspace.userRole || '').toUpperCase();
+  if (workspace.type === 'personal') return true;
+  return role !== 'VIEWER';
 }
 
 const CreateVideoModal = ({
   isOpen,
   onClose,
   onCreateVideo,
-  initialTemplate = null,
-  workspaces = DEFAULT_WORKSPACES
+  initialWorkspaceId = '',
+  initialFolderId = ''
 }) => {
-  const [selectedTemplateData, setSelectedTemplateData] = useState(initialTemplate)
+  const { user: authUser } = useAuth();
+  const currentUserId = extractUserId(authUser);
 
-  // Jump straight to step 3 if an initial template is already provided
-  const [step, setStep] = useState(() => initialTemplate ? 3 : 1)
-  const [selectedFilter, setSelectedFilter] = useState('All')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [pageSize, setPageSize] = useState('landscape')
-  const [selectedTemplateId, setSelectedTemplateId] = useState(null)
+  const [step, setStep] = useState(1);
 
-  const [workspaceOptions, setWorkspaceOptions] = useState(workspaces)
-  const [workspaceId, setWorkspaceId] = useState(workspaces[0]?.id || '')
-  const [folderMap, setFolderMap] = useState(() => {
-    const initialMap = {}
-    workspaces.forEach((ws) => {
-      initialMap[ws.id] = mapFolderNames(ws)
-    })
-    return initialMap
-  })
-  const [folder, setFolder] = useState('')
-  const [videoTags, setVideoTags] = useState([])
-  const [tagInput, setTagInput] = useState('')
-  const [videoName, setVideoName] = useState('')
-  const [loadingWorkspaces, setLoadingWorkspaces] = useState(false)
-  const [openDropdown, setOpenDropdown] = useState(null)
-  const dropdownAreaRef = useRef(null)
+  const [canvasSize, setCanvasSize] = useState('landscape');
+  const [customCanvas, setCustomCanvas] = useState({ width: '', height: '' });
 
-  const availableFolders = useMemo(() => {
-    return folderMap[workspaceId] || []
-  }, [folderMap, workspaceId])
+  const [selectedFilter, setSelectedFilter] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTemplateId, setSelectedTemplateId] = useState(null);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
+  const [templateItems, setTemplateItems] = useState([]);
+
+  const [workspaceOptions, setWorkspaceOptions] = useState([]);
+  const [workspaceLoading, setWorkspaceLoading] = useState(false);
+  const [workspaceId, setWorkspaceId] = useState(initialWorkspaceId || '');
+
+  const [folderOptions, setFolderOptions] = useState([]);
+  const [folderLoading, setFolderLoading] = useState(false);
+  const [folderId, setFolderId] = useState(initialFolderId || '');
+
+  const [showInlineWorkspaceCreate, setShowInlineWorkspaceCreate] = useState(false);
+  const [newWorkspaceName, setNewWorkspaceName] = useState('');
+  const [creatingWorkspace, setCreatingWorkspace] = useState(false);
+
+  const [showInlineFolderCreate, setShowInlineFolderCreate] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [creatingFolder, setCreatingFolder] = useState(false);
+
+  const [videoTitle, setVideoTitle] = useState('');
+  const [videoTags, setVideoTags] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const toastTimeoutRef = useRef(null);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    toastTimeoutRef.current = setTimeout(() => {
+      setToast(null);
+    }, 2800);
+  };
+
+  const selectedWorkspace = useMemo(
+    () => workspaceOptions.find((workspace) => String(workspace.id) === String(workspaceId)) || null,
+    [workspaceId, workspaceOptions]
+  );
 
   const selectedTemplate = useMemo(() => {
-    if (selectedTemplateId === 'blank') return null
-    return TEMPLATE_ITEMS.find((item) => item.id === selectedTemplateId) || null
-  }, [selectedTemplateId])
+    if (selectedTemplateId === 'blank') return null;
+    return templateItems.find((item) => String(item.id) === String(selectedTemplateId)) || null;
+  }, [selectedTemplateId, templateItems]);
+
+  const aspectRatio = useMemo(
+    () => canvasToAspectRatio(canvasSize, customCanvas),
+    [canvasSize, customCanvas]
+  );
 
   const filteredTemplates = useMemo(() => {
-    return TEMPLATE_ITEMS.filter((item) => {
-      const matchesPageSize = item.pageSizes.includes(pageSize)
-      const matchesSearch = item.name.toLowerCase().includes(searchQuery.trim().toLowerCase())
-      const matchesFilter = selectedFilter === 'All' || item.tags.includes(selectedFilter)
-      return matchesPageSize && matchesSearch && matchesFilter
-    })
-  }, [pageSize, searchQuery, selectedFilter])
+    return templateItems.filter((item) => {
+      const matchesSearch = item.name.toLowerCase().includes(searchQuery.trim().toLowerCase());
+      const matchesFilter = selectedFilter === 'All' || (item.tags || []).includes(selectedFilter);
+      return matchesSearch && matchesFilter;
+    });
+  }, [templateItems, searchQuery, selectedFilter]);
 
-  const canGoNext = step === 1 || (step === 2 && selectedTemplateId !== null)
-  const canCreate = step === 3 && videoName.trim() && workspaceId && folder
+  const hasDirtyData = useMemo(() => {
+    return Boolean(
+      videoTitle.trim() ||
+        selectedTemplateId ||
+        videoTags.length ||
+        workspaceId ||
+        folderId ||
+        showInlineWorkspaceCreate ||
+        showInlineFolderCreate ||
+        newWorkspaceName.trim() ||
+        newFolderName.trim() ||
+        (canvasSize === 'custom' && (customCanvas.width || customCanvas.height)) ||
+        canvasSize !== 'landscape'
+    );
+  }, [
+    videoTitle,
+    selectedTemplateId,
+    videoTags,
+    workspaceId,
+    folderId,
+    showInlineWorkspaceCreate,
+    showInlineFolderCreate,
+    newWorkspaceName,
+    newFolderName,
+    canvasSize,
+    customCanvas.width,
+    customCanvas.height
+  ]);
 
-  const selectedWorkspaceName = useMemo(() => {
-    return workspaceOptions.find((item) => item.id === workspaceId)?.name || 'Select workspace'
-  }, [workspaceId, workspaceOptions])
+  const canProceedStep1 = Boolean(aspectRatio);
+  const canProceedStep2 = selectedTemplateId !== null;
+  const canCreateVideo =
+    Boolean(videoTitle.trim()) &&
+    Boolean(aspectRatio) &&
+    Boolean(workspaceId) &&
+    Boolean(folderId) &&
+    Boolean(canCreateInWorkspace(selectedWorkspace));
 
-  useEffect(() => {
-    let isMounted = true
+  async function loadWorkspaces() {
+    setWorkspaceLoading(true);
+    try {
+      const fetched = await workspaceService.listWorkspaces();
+      const normalized = (fetched || []).map((ws) => normalizeWorkspace(ws, currentUserId));
+      setWorkspaceOptions(normalized);
 
-    const loadWorkspaces = async () => {
-      setLoadingWorkspaces(true)
+      const defaultWorkspace =
+        normalized.find((workspace) => String(workspace.id) === String(initialWorkspaceId)) ||
+        normalized.find((workspace) => workspace.section === 'personal') ||
+        normalized[0] ||
+        null;
 
-      try {
-        const fetched = await workspaceService.listWorkspaces()
-        if (!isMounted) return
-
-        const normalized = (fetched || []).map((ws) => ({
-          id: ws.id,
-          name: ws.name || ws.title || 'Untitled Workspace',
-          ...ws
-        }))
-
-        setWorkspaceOptions(normalized)
-
-        const folderEntries = await Promise.all(
-          normalized.map(async (ws) => {
-            let names = mapFolderNames(ws)
-            if (!names.length) {
-              try {
-                const details = await workspaceService.getWorkspace(ws.id)
-                names = mapFolderNames(details)
-              } catch {
-                names = []
-              }
-            }
-            return [ws.id, names]
-          })
-        )
-
-        if (!isMounted) return
-        const nextFolderMap = Object.fromEntries(folderEntries)
-        setFolderMap(nextFolderMap)
-
-        if (normalized.length && !workspaceId) {
-          setWorkspaceId(normalized[0].id)
-        }
-      } catch {
-        if (!isMounted) return
-        setWorkspaceOptions(workspaces)
-      } finally {
-        if (isMounted) setLoadingWorkspaces(false)
+      if (defaultWorkspace) {
+        setWorkspaceId((prev) => prev || defaultWorkspace.id);
       }
+    } catch {
+      setWorkspaceOptions([]);
+    } finally {
+      setWorkspaceLoading(false);
     }
+  }
 
-    loadWorkspaces()
-    return () => {
-      isMounted = false
-    }
-  }, [])
+  async function loadFolders(nextWorkspaceId) {
+    setFolderLoading(true);
+    try {
+      const folders = await workspaceService.listFolders(nextWorkspaceId);
+      const normalized = (folders || []).map((folder) => ({ ...folder, id: folder.id || folder._id }));
+      setFolderOptions(normalized);
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownAreaRef.current && !dropdownAreaRef.current.contains(event.target)) {
-        setOpenDropdown(null)
+      if (String(nextWorkspaceId) !== String(workspaceId)) {
+        setFolderId('');
+        return;
       }
-    }
 
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+      const preferred =
+        normalized.find((folder) => String(folder.id) === String(initialFolderId)) ||
+        normalized[0] ||
+        null;
+
+      setFolderId((prev) => {
+        if (!prev && preferred) return preferred.id;
+        if (prev && normalized.some((folder) => String(folder.id) === String(prev))) return prev;
+        return preferred?.id || '';
+      });
+    } catch {
+      setFolderOptions([]);
+      setFolderId('');
+    } finally {
+      setFolderLoading(false);
+    }
+  }
 
   useEffect(() => {
+    if (!isOpen) return;
+    loadWorkspaces();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!aspectRatio) {
+      setTemplateItems([]);
+      return;
+    }
+    loadTemplates(aspectRatio);
+  }, [isOpen, aspectRatio]);
+
+  useEffect(() => {
+    if (!isOpen) return;
     if (!workspaceId) {
-      setFolder('')
-      return
+      setFolderOptions([]);
+      setFolderId('');
+      return;
     }
-    const firstFolder = (folderMap[workspaceId] || [])[0] || ''
-    setFolder((prev) => prev || firstFolder)
-  }, [workspaceId, folderMap])
+    loadFolders(workspaceId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, workspaceId]);
 
-  if (!isOpen) return null
+  useEffect(() => {
+    if (!isOpen) return;
 
-  const handleSelectTemplate = (templateId) => {
-    setSelectedTemplateId(templateId)
-    if (templateId !== 'blank') {
-      const matched = TEMPLATE_ITEMS.find(item => item.id === templateId)
-      setSelectedTemplateData(matched || null)
-      if (!videoName && matched?.name) setVideoName(matched.name)
-    } else {
-      setSelectedTemplateData(null)
-      if (!videoName) setVideoName('Untitled Video')
-    }
-  }
+    const onWorkspaceCreated = (event) => {
+      const created = event.detail?.workspace;
+      if (!created) return;
+      const normalized = normalizeWorkspace(created, currentUserId);
+      setWorkspaceOptions((prev) => {
+        if (prev.some((workspace) => String(workspace.id) === String(normalized.id))) return prev;
+        return [...prev, normalized];
+      });
+      setWorkspaceId(normalized.id);
+    };
 
-  const handleAddTag = () => {
-    const normalized = tagInput.trim()
-    if (!normalized) return
-    if (videoTags.includes(normalized)) {
-      setTagInput('')
-      return
-    }
-    setVideoTags((prev) => [...prev, normalized])
-    setTagInput('')
-  }
+    const onFolderCreated = (event) => {
+      const createdFolder = event.detail?.folder;
+      const createdWorkspaceId = event.detail?.workspaceId;
+      if (!createdFolder || !createdWorkspaceId) return;
 
-  const handleTagInputKeyDown = (e) => {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault()
-      if (e.key === ',') {
-        const withoutComma = tagInput.replace(/,$/, '')
-        setTagInput(withoutComma)
-      }
-      handleAddTag()
-    }
-  }
-
-  const handleWorkspaceChange = (nextWorkspaceId) => {
-
-    if (nextWorkspaceId === '__create_workspace__') {
-      const workspaceName = window.prompt('Enter new workspace name')
-      if (!workspaceName || !workspaceName.trim()) return
-
-      workspaceService.createWorkspace(workspaceName.trim())
-        .then((createdWorkspace) => {
-          const normalizedWorkspace = {
-            id: createdWorkspace.id,
-            name: createdWorkspace.name || createdWorkspace.title || workspaceName.trim(),
-            ...createdWorkspace
+      if (String(createdWorkspaceId) === String(workspaceId)) {
+        setFolderOptions((prev) => {
+          if (prev.some((folder) => String(folder.id) === String(createdFolder.id || createdFolder._id))) {
+            return prev;
           }
-          setWorkspaceOptions((prev) => [...prev, normalizedWorkspace])
-          setFolderMap((prev) => ({ ...prev, [normalizedWorkspace.id]: [] }))
-          setWorkspaceId(normalizedWorkspace.id)
-          setFolder('')
-          setOpenDropdown(null)
-        })
-        .catch((error) => {
-          window.alert(error?.message || 'Failed to create workspace')
-        })
-      return
-    }
-
-    setWorkspaceId(nextWorkspaceId)
-    const nextFolders = folderMap[nextWorkspaceId] || []
-    setFolder(nextFolders[0] || '')
-    setOpenDropdown(null)
-  }
-
-  const handleFolderChange = (nextValue) => {
-    if (nextValue === '__create_new__') {
-      const folderName = window.prompt('Enter new folder name')
-      if (folderName && folderName.trim()) {
-        const trimmedFolder = folderName.trim()
-        workspaceService.createFolder(workspaceId, trimmedFolder)
-          .then(() => {
-            setFolderMap((prev) => {
-              const existing = prev[workspaceId] || []
-              if (existing.includes(trimmedFolder)) return prev
-              return {
-                ...prev,
-                [workspaceId]: [...existing, trimmedFolder]
-              }
-            })
-            setFolder(trimmedFolder)
-            setOpenDropdown(null)
-          })
-          .catch((error) => {
-            window.alert(error?.message || 'Failed to create folder')
-          })
+          return [...prev, { ...createdFolder, id: createdFolder.id || createdFolder._id }];
+        });
       }
-      return
+    };
+
+    window.addEventListener('workspace:created', onWorkspaceCreated);
+    window.addEventListener('workspace:folder-created', onFolderCreated);
+
+    return () => {
+      window.removeEventListener('workspace:created', onWorkspaceCreated);
+      window.removeEventListener('workspace:folder-created', onFolderCreated);
+    };
+  }, [isOpen, workspaceId, currentUserId]);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  if (!isOpen) return null;
+
+  const closeWithGuard = () => {
+    if (hasDirtyData) {
+      setShowDiscardConfirm(true);
+      return;
     }
-    setFolder(nextValue)
-    setOpenDropdown(null)
+    onClose();
+  };
+
+  async function loadTemplates(nextAspectRatio) {
+    setTemplatesLoading(true);
+    try {
+      const apiTemplates = await workspaceService.listTemplatesByAspectRatio(nextAspectRatio);
+      if (apiTemplates.length > 0) {
+        const normalized = apiTemplates.map((template) => ({
+          id: template.id || template._id,
+          name: template.name || template.title || 'Untitled Template',
+          tags: Array.isArray(template.tags) ? template.tags : ['Corporate'],
+          badge: template.badge || 'TEMPLATE',
+          badgeType: template.badgeType || 'interactive',
+          thumbnail:
+            template.thumbnail ||
+            template.preview ||
+            template.image ||
+            'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=1200&q=80'
+        }));
+        setTemplateItems(normalized);
+      } else {
+        const fallback = FALLBACK_TEMPLATES.filter((template) => (template.ratios || []).includes(nextAspectRatio));
+        setTemplateItems(fallback);
+      }
+    } catch {
+      const fallback = FALLBACK_TEMPLATES.filter((template) => (template.ratios || []).includes(nextAspectRatio));
+      setTemplateItems(fallback);
+    } finally {
+      setTemplatesLoading(false);
+    }
   }
 
   const handleNext = () => {
-    if (!canGoNext) return
-    setStep((prev) => Math.min(3, prev + 1))
-  }
+    if (step === 1 && !canProceedStep1) return;
+    if (step === 2 && !canProceedStep2) return;
+    setStep((prev) => Math.min(3, prev + 1));
+  };
 
   const handleBack = () => {
-    if (step === 1) return
-    setStep((prev) => Math.max(1, prev - 1))
-  }
+    setStep((prev) => Math.max(1, prev - 1));
+  };
 
-  const handleCreateVideo = () => {
-    const selectedWorkspace = workspaceOptions.find((item) => item.id === workspaceId)
+  const handleSelectTemplate = (templateId) => {
+    setSelectedTemplateId(templateId);
+    if (!videoTitle.trim()) {
+      if (templateId === 'blank') {
+        setVideoTitle('Untitled Project');
+      } else {
+        const picked = templateItems.find((item) => String(item.id) === String(templateId));
+        if (picked?.name) setVideoTitle(picked.name);
+      }
+    }
+  };
+
+  const handleToggleTag = (tag) => {
+    setVideoTags((prev) => {
+      if (prev.includes(tag)) return prev.filter((item) => item !== tag);
+      return [...prev, tag];
+    });
+  };
+
+  const handleWorkspaceSelect = (event) => {
+    const value = event.target.value;
+    if (value === '__create_workspace__') {
+      setShowInlineWorkspaceCreate(true);
+      return;
+    }
+
+    setWorkspaceId(value);
+    setFolderId('');
+    setShowInlineWorkspaceCreate(false);
+    setShowInlineFolderCreate(false);
+  };
+
+  const handleFolderSelect = (event) => {
+    const value = event.target.value;
+    if (value === '__create_folder__') {
+      setShowInlineFolderCreate(true);
+      return;
+    }
+
+    setFolderId(value);
+    setShowInlineFolderCreate(false);
+  };
+
+  const handleCreateWorkspaceInline = async () => {
+    const trimmedName = newWorkspaceName.trim();
+    if (!trimmedName) return;
+
+    setCreatingWorkspace(true);
+    try {
+      const created = await workspaceService.createWorkspace(trimmedName);
+      const normalized = normalizeWorkspace({ ...created, userRole: 'OWNER' }, currentUserId);
+
+      setWorkspaceOptions((prev) => {
+        if (prev.some((workspace) => String(workspace.id) === String(normalized.id))) return prev;
+        return [...prev, normalized];
+      });
+      setWorkspaceId(normalized.id);
+      setFolderOptions([]);
+      setFolderId('');
+      setShowInlineWorkspaceCreate(false);
+      setNewWorkspaceName('');
+      showToast('Workspace created successfully', 'success');
+
+      window.dispatchEvent(new CustomEvent('workspace:created', { detail: { workspace: normalized } }));
+    } catch (error) {
+      showToast(error?.message || 'Failed to create workspace. Please try again.', 'error');
+    } finally {
+      setCreatingWorkspace(false);
+    }
+  };
+
+  const handleCreateFolderInline = async () => {
+    const trimmedName = newFolderName.trim();
+    if (!trimmedName || !workspaceId) return;
+
+    setCreatingFolder(true);
+    try {
+      const created = await workspaceService.createFolder(workspaceId, trimmedName);
+      const normalizedFolder = {
+        ...created,
+        id: created.id || created._id,
+        name: created.name || trimmedName
+      };
+
+      setFolderOptions((prev) => {
+        if (prev.some((folder) => String(folder.id) === String(normalizedFolder.id))) return prev;
+        return [...prev, normalizedFolder];
+      });
+      setFolderId(normalizedFolder.id);
+      setShowInlineFolderCreate(false);
+      setNewFolderName('');
+      showToast('Folder created successfully', 'success');
+
+      window.dispatchEvent(
+        new CustomEvent('workspace:folder-created', {
+          detail: { workspaceId, folder: normalizedFolder }
+        })
+      );
+    } catch (error) {
+      showToast(error?.message || 'Failed to create folder. Please try again.', 'error');
+    } finally {
+      setCreatingFolder(false);
+    }
+  };
+
+  const handleCreate = async () => {
+    if (!canCreateVideo) return;
+
     const payload = {
-      template: selectedTemplateData || selectedTemplate,
-      pageSize,
-      workspace: selectedWorkspace?.name || '',
-      folder,
+      title: videoTitle.trim(),
       tags: videoTags,
-      name: (videoName || '').trim()
+      aspectRatio: canvasSize === 'custom' ? 'custom' : aspectRatio,
+    };
+
+    if (folderId) {
+      payload.folderId = folderId;
     }
 
-    if (onCreateVideo) {
-      onCreateVideo(payload)
+    if (canvasSize === 'custom' && customCanvas.width && customCanvas.height) {
+      payload.customWidth = parseInt(customCanvas.width, 10) || 1920;
+      payload.customHeight = parseInt(customCanvas.height, 10) || 1080;
     }
-  }
+
+    setSubmitting(true);
+    try {
+      const createdProject = await workspaceService.createProject(workspaceId, payload);
+
+      const eventVideo = {
+        ...createdProject,
+        id: createdProject.id || createdProject._id,
+        name: createdProject.name || createdProject.title || payload.title
+      };
+
+      window.dispatchEvent(
+        new CustomEvent('workspace:video-created', {
+          detail: {
+            workspaceId,
+            folderId,
+            video: eventVideo
+          }
+        })
+      );
+
+      if (onCreateVideo) {
+        showToast('Project created successfully', 'success');
+        onCreateVideo({
+          template: selectedTemplate,
+          pageSize: canvasSize,
+          canvasSize: aspectRatio,
+          workspace: selectedWorkspace?.name || '',
+          workspaceId,
+          folder: folderOptions.find((folder) => String(folder.id) === String(folderId))?.name || '',
+          folderId,
+          tags: videoTags,
+          name: payload.title,
+          videoId: eventVideo.id
+        });
+      }
+    } catch (error) {
+      showToast(error?.message || 'Failed to create project. Please try again.', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const groupedWorkspaces = {
+    personal: workspaceOptions.filter((workspace) => workspace.section === 'personal'),
+    my: workspaceOptions.filter((workspace) => workspace.section === 'my'),
+    shared: workspaceOptions.filter((workspace) => workspace.section === 'shared')
+  };
 
   return (
-    <div className="create-video-modal-overlay" role="presentation">
-      <div className="create-video-modal" role="dialog" aria-modal="true" aria-label="Create a video">
+    <div className="create-video-modal-overlay" role="presentation" onClick={closeWithGuard}>
+      <div className="create-video-modal" role="dialog" aria-modal="true" aria-label="Create a project" onClick={(event) => event.stopPropagation()}>
         <aside className="create-video-wizard-sidebar">
           <div className="create-video-logo-block">
             <div className="create-video-logo-mark">VI</div>
             <div className="create-video-logo-text">Athena VI</div>
           </div>
-          <ol className="create-video-step-list" aria-label="Create video steps">
+
+          <ol className="create-video-step-list" aria-label="Create project steps">
             {WIZARD_STEPS.map((stepItem) => {
-              const isActive = step === stepItem.id
-              const isCompleted = step > stepItem.id
+              const isActive = step === stepItem.id;
+              const isCompleted = step > stepItem.id;
               return (
                 <li key={stepItem.id} className={`create-video-step-item ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}>
                   <span className="create-video-step-dot" aria-hidden>
@@ -408,7 +642,7 @@ const CreateVideoModal = ({
                   </span>
                   <span className="create-video-step-label">{stepItem.label}</span>
                 </li>
-              )
+              );
             })}
           </ol>
         </aside>
@@ -418,42 +652,65 @@ const CreateVideoModal = ({
             {step === 1 && (
               <>
                 <h2>Choose your canvas size</h2>
-                <p>Select the orientation for your video</p>
+                <p>Select an aspect ratio before continuing</p>
               </>
             )}
             {step === 2 && (
               <>
                 <h2>Start with a template</h2>
-                <p>Pick a starting point for your video</p>
+                <p>Templates are filtered by selected canvas size</p>
               </>
             )}
             {step === 3 && (
               <>
-                <h2>Name your video</h2>
-                <p>Add details and choose where to save it</p>
+                <h2>Name your project</h2>
+                <p>Choose title, tags, workspace, and folder</p>
               </>
             )}
           </header>
 
           <div className="create-video-wizard-body">
             {step === 1 && (
-              <div className="create-video-page-size-grid" role="radiogroup" aria-label="Choose page size">
-                {PAGE_SIZES.map(({ id, label, ratio, Icon }) => (
-                  <button
-                    key={id}
-                    type="button"
-                    role="radio"
-                    aria-checked={pageSize === id}
-                    className={`create-video-size-card ${pageSize === id ? 'selected' : ''}`}
-                    onClick={() => setPageSize(id)}
-                  >
-                    <span className={`create-video-size-visual ${id}`}>
-                      <Icon size={36} />
-                    </span>
-                    <span className="create-video-size-name">{label}</span>
-                    <span className="create-video-size-ratio">{ratio}</span>
-                  </button>
-                ))}
+              <div>
+                <div className="create-video-page-size-grid" role="radiogroup" aria-label="Choose canvas size">
+                  {CANVAS_OPTIONS.map(({ id, label, ratio }) => (
+                    <button
+                      key={id}
+                      type="button"
+                      role="radio"
+                      aria-checked={canvasSize === id}
+                      className={`create-video-size-card ${canvasSize === id ? 'selected' : ''}`}
+                      onClick={() => setCanvasSize(id)}
+                    >
+                      <span className={`create-video-size-visual ${id}`}>
+                        {ratio}
+                      </span>
+                      <span className="create-video-size-name">{label}</span>
+                      <span className="create-video-size-ratio">{ratio}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {canvasSize === 'custom' && (
+                  <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="Width"
+                      value={customCanvas.width}
+                      onChange={(event) => setCustomCanvas((prev) => ({ ...prev, width: event.target.value }))}
+                      className="create-video-inline-input"
+                    />
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="Height"
+                      value={customCanvas.height}
+                      onChange={(event) => setCustomCanvas((prev) => ({ ...prev, height: event.target.value }))}
+                      className="create-video-inline-input"
+                    />
+                  </div>
+                )}
               </div>
             )}
 
@@ -464,9 +721,9 @@ const CreateVideoModal = ({
                   <input
                     id="create-video-search-input"
                     type="search"
-                    placeholder="Search"
+                    placeholder="Search templates"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(event) => setSearchQuery(event.target.value)}
                   />
                 </label>
 
@@ -485,175 +742,168 @@ const CreateVideoModal = ({
                   ))}
                 </div>
 
-                <div className="create-video-template-grid" role="listbox" aria-label="Template options">
-                  <button
-                    type="button"
-                    className={`create-video-template-card blank ${selectedTemplateId === 'blank' ? 'selected' : ''}`}
-                    onClick={() => handleSelectTemplate('blank')}
-                  >
-                    <div className="create-video-thumb-wrap blank">
-                      <span className="create-video-blank-plus"><MdAdd size={40} /></span>
-                    </div>
-                    <span className="create-video-template-name">Start from Blank</span>
-                  </button>
-
-                  {filteredTemplates.map((template) => (
+                {templatesLoading ? (
+                  <div className="create-video-template-grid">
+                    {Array.from({ length: 6 }).map((_, index) => (
+                      <div key={index} className="create-video-template-skeleton" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="create-video-template-grid" role="listbox" aria-label="Template options">
                     <button
-                      key={template.id}
                       type="button"
-                      className={`create-video-template-card ${selectedTemplateId === template.id ? 'selected' : ''}`}
-                      onClick={() => handleSelectTemplate(template.id)}
+                      className={`create-video-template-card blank ${selectedTemplateId === 'blank' ? 'selected' : ''}`}
+                      onClick={() => handleSelectTemplate('blank')}
                     >
-                      <div className="create-video-thumb-wrap">
-                        <img src={template.preview} alt={template.name} />
-                        <span className={`create-video-template-badge ${template.badgeType}`}>
-                          {template.badge}
+                      <div className="create-video-thumb-wrap blank">
+                        <span className="create-video-blank-plus">
+                          <MdAdd size={40} />
                         </span>
-                        <span className="create-video-template-overlay" />
                       </div>
-                      <span className="create-video-template-name">{template.name}</span>
+                      <span className="create-video-template-name">Start from Blank</span>
                     </button>
-                  ))}
-                </div>
+
+                    {filteredTemplates.map((template) => (
+                      <button
+                        key={template.id}
+                        type="button"
+                        className={`create-video-template-card ${selectedTemplateId === template.id ? 'selected' : ''}`}
+                        onClick={() => handleSelectTemplate(template.id)}
+                      >
+                        <div className="create-video-thumb-wrap">
+                          <img src={template.thumbnail} alt={template.name} />
+                          <span className={`create-video-template-badge ${template.badgeType}`}>{template.badge}</span>
+                          <span className="create-video-template-overlay" />
+                        </div>
+                        <span className="create-video-template-name">{template.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </>
             )}
 
             {step === 3 && (
-              <div className="create-video-form-stack" ref={dropdownAreaRef}>
+              <div className="create-video-form-stack">
                 <label className="create-video-field">
-                  <span>Video Name *</span>
+                  <span>Project Title *</span>
                   <input
                     type="text"
-                    value={videoName}
-                    onChange={(e) => setVideoName(e.target.value)}
-                    placeholder="Untitled Video"
+                    value={videoTitle}
+                    onChange={(event) => setVideoTitle(event.target.value)}
+                    placeholder="Enter project title..."
                   />
                 </label>
 
                 <div className="create-video-field">
                   <span>Tags</span>
-                  <div className="create-video-tag-input-shell" onClick={() => document.getElementById('create-video-tag-input')?.focus()}>
-                    {videoTags.map((tag) => (
+                  <div className="create-video-tag-pills">
+                    {PREBUILT_TAGS.map((tag) => (
                       <button
                         key={tag}
                         type="button"
-                        className="create-video-custom-tag"
-                        onClick={() => setVideoTags((prev) => prev.filter((item) => item !== tag))}
+                        className={`create-video-tag-pill ${videoTags.includes(tag) ? 'active' : ''}`}
+                        onClick={() => handleToggleTag(tag)}
                       >
                         {tag}
-                        <MdClose size={12} />
                       </button>
                     ))}
-                    <input
-                      id="create-video-tag-input"
-                      type="text"
-                      value={tagInput}
-                      placeholder="Add tags..."
-                      onChange={(e) => setTagInput(e.target.value)}
-                      onKeyDown={handleTagInputKeyDown}
-                    />
                   </div>
                 </div>
 
-                <div className="create-video-field">
+                <label className="create-video-field">
                   <span>Workspace *</span>
-                  <div className={`create-video-dropdown ${openDropdown === 'workspace' ? 'open' : ''}`}>
-                    <button
-                      type="button"
-                      className="create-video-dropdown-trigger"
-                      onClick={() => setOpenDropdown((prev) => prev === 'workspace' ? null : 'workspace')}
-                      disabled={loadingWorkspaces}
-                    >
-                      <span className={`create-video-dropdown-value ${!workspaceId ? 'placeholder' : ''}`}>
-                        {loadingWorkspaces ? 'Loading workspaces...' : selectedWorkspaceName}
-                      </span>
-                      <MdKeyboardArrowDown size={18} className="create-video-dropdown-chevron" />
-                    </button>
+                  <select value={workspaceId} onChange={handleWorkspaceSelect} disabled={workspaceLoading}>
+                    {!workspaceOptions.length && <option value="">No workspaces available</option>}
 
-                    {openDropdown === 'workspace' && (
-                      <div className="create-video-dropdown-menu" role="listbox" aria-label="Workspace options">
-                        {!workspaceOptions.length && (
-                          <button type="button" className="create-video-dropdown-item empty" disabled>
-                            No workspace found
-                          </button>
-                        )}
-
-                        {workspaceOptions.map((workspace) => (
-                          <button
-                            key={workspace.id}
-                            type="button"
-                            className={`create-video-dropdown-item ${workspace.id === workspaceId ? 'selected' : ''}`}
-                            onClick={() => handleWorkspaceChange(workspace.id)}
-                          >
-                            <span>{workspace.name}</span>
-                            {workspace.id === workspaceId && <MdCheck size={16} />}
-                          </button>
+                    {groupedWorkspaces.personal.length > 0 && (
+                      <optgroup label="Personal Workspace">
+                        {groupedWorkspaces.personal.map((workspace) => (
+                          <option key={workspace.id} value={workspace.id}>
+                            {workspace.name}
+                          </option>
                         ))}
-
-                        <button
-                          type="button"
-                          className="create-video-dropdown-item create-action"
-                          onClick={() => handleWorkspaceChange('__create_workspace__')}
-                        >
-                          <span>+ Create new workspace</span>
-                        </button>
-                      </div>
+                      </optgroup>
                     )}
-                  </div>
-                </div>
 
-                <div className="create-video-field">
-                  <span>Folder *</span>
-                  <div className={`create-video-dropdown ${openDropdown === 'folder' ? 'open' : ''}`}>
-                    <button
-                      type="button"
-                      className="create-video-dropdown-trigger"
-                      onClick={() => setOpenDropdown((prev) => prev === 'folder' ? null : 'folder')}
-                      disabled={!workspaceId}
-                    >
-                      <span className={`create-video-dropdown-value ${!folder ? 'placeholder' : ''}`}>
-                        {folder || 'Select folder'}
-                      </span>
-                      <MdKeyboardArrowDown size={18} className="create-video-dropdown-chevron" />
-                    </button>
-
-                    {openDropdown === 'folder' && (
-                      <div className="create-video-dropdown-menu" role="listbox" aria-label="Folder options">
-                        {!availableFolders.length && (
-                          <button type="button" className="create-video-dropdown-item empty" disabled>
-                            No folder found
-                          </button>
-                        )}
-
-                        {availableFolders.map((folderName) => (
-                          <button
-                            key={folderName}
-                            type="button"
-                            className={`create-video-dropdown-item ${folderName === folder ? 'selected' : ''}`}
-                            onClick={() => handleFolderChange(folderName)}
-                          >
-                            <span>{folderName}</span>
-                            {folderName === folder && <MdCheck size={16} />}
-                          </button>
+                    {groupedWorkspaces.my.length > 0 && (
+                      <optgroup label="My Workspaces">
+                        {groupedWorkspaces.my.map((workspace) => (
+                          <option key={workspace.id} value={workspace.id}>
+                            {workspace.name}
+                          </option>
                         ))}
-
-                        <button
-                          type="button"
-                          className="create-video-dropdown-item create-action"
-                          onClick={() => handleFolderChange('__create_new__')}
-                        >
-                          <span>+ Create new folder</span>
-                        </button>
-                      </div>
+                      </optgroup>
                     )}
+
+                    {groupedWorkspaces.shared.length > 0 && (
+                      <optgroup label="Shared With Me">
+                        {groupedWorkspaces.shared.map((workspace) => (
+                          <option key={workspace.id} value={workspace.id}>
+                            {workspace.name} ({workspace.userRole})
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+
+                    <option value="__create_workspace__">+ Create New Workspace</option>
+                  </select>
+                </label>
+
+                {showInlineWorkspaceCreate && (
+                  <div className="create-video-inline-row">
+                    <input
+                      className="create-video-inline-input"
+                      type="text"
+                      placeholder="New workspace name"
+                      value={newWorkspaceName}
+                      onChange={(event) => setNewWorkspaceName(event.target.value)}
+                    />
+                    <button type="button" className="create-video-btn create-video-btn-primary" onClick={handleCreateWorkspaceInline} disabled={creatingWorkspace}>
+                      {creatingWorkspace ? 'Creating...' : 'Create'}
+                    </button>
                   </div>
-                </div>
+                )}
+
+                <label className="create-video-field">
+                  <span>Choose Folder *</span>
+                  <select value={folderId} onChange={handleFolderSelect} disabled={folderLoading || !workspaceId}>
+                    {!folderOptions.length && <option value="">No folders available</option>}
+                    {folderOptions.map((folder) => (
+                      <option key={folder.id} value={folder.id}>
+                        {folder.name}
+                      </option>
+                    ))}
+                    <option value="__create_folder__">+ Create New Folder</option>
+                  </select>
+                </label>
+
+                {showInlineFolderCreate && (
+                  <div className="create-video-inline-row">
+                    <input
+                      className="create-video-inline-input"
+                      type="text"
+                      placeholder="New folder name"
+                      value={newFolderName}
+                      onChange={(event) => setNewFolderName(event.target.value)}
+                    />
+                    <button type="button" className="create-video-btn create-video-btn-primary" onClick={handleCreateFolderInline} disabled={creatingFolder || !workspaceId}>
+                      {creatingFolder ? 'Creating...' : 'Create'}
+                    </button>
+                  </div>
+                )}
+
+                {selectedWorkspace && !canCreateInWorkspace(selectedWorkspace) && (
+                  <div className="create-video-warning">
+                    You are a Viewer in this shared workspace. Project creation is disabled here.
+                  </div>
+                )}
               </div>
             )}
           </div>
 
           <footer className="create-video-footer">
-            <button type="button" className="create-video-btn create-video-btn-ghost" onClick={onClose}>
+            <button type="button" className="create-video-btn create-video-btn-ghost" onClick={closeWithGuard}>
               Cancel
             </button>
 
@@ -667,7 +917,7 @@ const CreateVideoModal = ({
                   type="button"
                   className="create-video-btn create-video-btn-primary"
                   onClick={handleNext}
-                  disabled={!canGoNext}
+                  disabled={(step === 1 && !canProceedStep1) || (step === 2 && !canProceedStep2)}
                 >
                   Next
                 </button>
@@ -675,18 +925,66 @@ const CreateVideoModal = ({
                 <button
                   type="button"
                   className="create-video-btn create-video-btn-primary"
-                  onClick={handleCreateVideo}
-                  disabled={!canCreate}
+                  onClick={handleCreate}
+                  disabled={!canCreateVideo || submitting}
+                  title={
+                    selectedWorkspace && !canCreateInWorkspace(selectedWorkspace)
+                      ? 'You need Editor access to create a project in this workspace'
+                      : ''
+                  }
                 >
-                  Create
+                  {submitting ? 'Creating...' : 'Create Project'}
                 </button>
               )}
             </div>
           </footer>
         </section>
+
+        {showDiscardConfirm && (
+          <div className="create-video-confirm-overlay" onClick={() => setShowDiscardConfirm(false)}>
+            <div className="create-video-confirm-dialog" onClick={(event) => event.stopPropagation()}>
+              <div className="create-video-confirm-icon-wrap">
+                <MdWarning className="create-video-confirm-icon" />
+              </div>
+              <h3 className="create-video-confirm-title">Discard changes?</h3>
+              <p className="create-video-confirm-text">Discard this project setup? Your progress will be lost.</p>
+              <div className="create-video-confirm-actions">
+                <button
+                  type="button"
+                  className="create-video-btn create-video-btn-ghost"
+                  onClick={() => setShowDiscardConfirm(false)}
+                >
+                  Keep Editing
+                </button>
+                <button
+                  type="button"
+                  className="create-video-btn create-video-btn-primary"
+                  onClick={() => {
+                    setShowDiscardConfirm(false);
+                    showToast('Changes discarded', 'error');
+                    onClose();
+                  }}
+                >
+                  Discard
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {toast && (
+          <div className={`create-video-toast create-video-toast--${toast.type}`}>
+            {toast.type === 'success' ? (
+              <MdCheckCircle className="create-video-toast-icon" />
+            ) : (
+              <MdCancel className="create-video-toast-icon" />
+            )}
+            <span>{toast.message}</span>
+          </div>
+        )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default CreateVideoModal
+export default CreateVideoModal;

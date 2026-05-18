@@ -16,11 +16,12 @@
 
 .professional-modal {
   width: 100%;
-  max-width: 540px;
+  max-width: 620px;
   background: var(--bg-card);
   border-radius: 20px;
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2), 0 0 0 1px var(--border-color);
   overflow: visible;
+  position: relative;
   z-index: 2600;
   font-family: 'Outfit', var(--font-family);
 }
