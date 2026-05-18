@@ -6,20 +6,21 @@ import {
   FiInfo, FiFileText, FiRss, FiLayers, FiShield, FiHelpCircle
 } from 'react-icons/fi'
 import ProductVideo from '../../../assets/ProductVideo.mp4'
+import LogoImg from '../../../assets/logo.png'
 
 const styles = `
 .navbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 40px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(30, 64, 175, 0.1);
+  padding: 12px 28px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(249,250,251,0.98));
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(30, 64, 175, 0.06);
   position: sticky;
   top: 0;
-  z-index: 200;
-  box-shadow: 0 2px 20px rgba(30, 64, 175, 0.05);
+  z-index: 300;
+  box-shadow: 0 6px 18px rgba(11, 15, 40, 0.06);
   width: 100%;
   max-width: 100%;
   overflow: visible;
@@ -65,6 +66,14 @@ const styles = `
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
+}
+
+.logo-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  display: block;
+  border-radius: 8px;
 }
 
 .logo-icon::before {
@@ -166,19 +175,21 @@ const styles = `
 /* Mega Dropdown Styles */
 .dropdown {
   position: absolute;
-  top: calc(100% + 15px);
+  top: calc(100% + 8px);
   left: 50%;
-  transform: translateX(-50%) translateY(10px);
+  transform: translateX(-50%) translateY(6px);
   background: #F8FAFC;
-  border-radius: 16px;
-  box-shadow: 2px 30px 60px -12px rgba(0, 0, 0, 0.20), 0 18px 36px -18px rgba(0, 0, 0, 0.20), 0 0 0 1px rgba(0, 0, 0, 0.20);
+  border-radius: 14px;
+  box-shadow: 0 18px 40px -12px rgba(2,6,23,0.18), 0 8px 24px -12px rgba(2,6,23,0.12);
   border: none;
-  width: min(650px, 80vw);
-  padding: 24px;
+  width: min(720px, 92vw);
+  padding: 18px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.26s cubic-bezier(0.4, 0, 0.2, 1);
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
@@ -186,7 +197,7 @@ const styles = `
 }
 
 .dropdown.products-mega {
-  width: min(980px, 95vw);
+  width: min(980px, 96vw);
   display: grid;
   grid-template-columns: 1.6fr 1.2fr;
   padding: 0;
@@ -505,15 +516,17 @@ const styles = `
   top: 0;
   right: 0;
   bottom: 0;
+  height: 100vh;
   width: 100%;
   max-width: 400px;
   background: #ffffff;
   z-index: 1099;
   padding: 24px;
+  padding-bottom: env(safe-area-inset-bottom, 24px);
   overflow-y: auto;
   transform: translateX(100%);
   transition: transform 0.3s ease;
-  box-shadow: -2px 0 20px rgba(0, 0, 0, 0.1);
+  box-shadow: -2px 0 20px rgba(0, 0, 0, 0.08);
 }
 
 .mobile-menu.active {
@@ -958,8 +971,8 @@ function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCo
               }
             }}
           >
-            <div className="logo-icon"></div>
-            Athena VI
+            <img src={LogoImg} alt="Athena VI" className="logo-img" />
+            <span style={{display: 'inline-block'}} aria-hidden="true">Athena VI</span>
           </a>
         </div>
 

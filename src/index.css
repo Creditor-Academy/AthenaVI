@@ -153,3 +153,17 @@ p {
   line-height: 1.7;
   color: var(--text-muted);
 }
+
+/* Prevent page overscroll bounce on mobile and remove horizontal overflow */
+html, body, #root {
+  height: 100%;
+}
+
+html, body {
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  overflow-x: hidden;
+}

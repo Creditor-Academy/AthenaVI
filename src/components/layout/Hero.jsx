@@ -39,11 +39,11 @@ const styles = `
 .hero-title-top {
   font-family: 'Georgia', 'Times New Roman', serif;
   font-size: clamp(40px, 5vw, 64px);
-  font-weight: 550;
+  font-weight: 400;
   color: #ffffff;
   margin: 0 0 24px;
   line-height: 1.1;
-  letter-spacing: -2px;
+  letter-spacing: -1.5px;
   text-align: center;
   width: 100%;
   max-width: 1200px;
@@ -457,8 +457,10 @@ const styles = `
 
 @media (max-width: 480px) {
   .hero-title-top {
-    font-size: 36px;
+    font-size: 40px;
     margin: 0 0 20px;
+    letter-spacing: -1px;
+    line-height: 1.15;
   }
 
   .hero-subtitle-top {

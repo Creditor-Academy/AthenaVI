@@ -137,10 +137,11 @@ const css = `
     box-shadow: 0 4px 12px rgba(99, 102, 241, 0.05);
   }
   .ts-title {
-    font-size: 48px;
-    font-weight: 800;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: clamp(40px, 5vw, 64px);
+    font-weight: 400;
     color: #111827;
-    line-height: 1.1;
+    line-height: 1.12;
     margin-bottom: 24px;
     letter-spacing: -1.5px;
   }
@@ -151,11 +152,13 @@ const css = `
     -webkit-text-fill-color: transparent;
   }
   .ts-subtitle {
-    font-size: 18px;
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(15px, 2vw, 18px);
     color: #6B7280;
     max-width: 600px;
     margin: 0 auto;
-    line-height: 1.6;
+    font-weight: 400;
+    line-height: 1.65;
   }
 
   .ts-layout {
@@ -291,11 +294,13 @@ const css = `
     top: 120px;
   }
   .ts-panel-title {
-    font-size: 32px;
-    font-weight: 800;
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(24px, 3.5vw, 40px);
+    font-weight: 600;
     color: #111827;
     margin: 0 0 16px;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.75px;
+    line-height: 1.25;
   }
   .ts-panel-sub {
     font-size: 16px;
@@ -340,8 +345,9 @@ const css = `
     transform: scale(1.1) rotate(5deg);
   }
   .ts-feature-title {
+    font-family: 'Inter', sans-serif;
     font-size: 16px;
-    font-weight: 700;
+    font-weight: 600;
     color: #111827;
     margin: 0 0 4px;
   }
@@ -969,7 +975,7 @@ function TemplatesSection({ onNavigateToSolution }) {
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.15 }}
           >
-            <h3 className="ts-panel-title">Why Use Our Templates?</h3>
+            <h3 className="ts-panel-title">Transform Your Learning Experience</h3>
             <p className="ts-panel-sub">
               Save hours of work. Start with proven structures and make them uniquely yours.
             </p>
