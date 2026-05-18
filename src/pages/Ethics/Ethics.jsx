@@ -178,6 +178,7 @@ const styles = `
 .hero-accent {
   background: linear-gradient(to right, #1e40af, #3b82f6);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -242,6 +243,7 @@ const styles = `
 .split-heading span {
   background: linear-gradient(135deg, #1e40af, #3b82f6);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
