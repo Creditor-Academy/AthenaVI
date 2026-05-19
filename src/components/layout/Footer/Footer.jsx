@@ -1,4 +1,5 @@
 import { MdArrowOutward, MdLanguage } from 'react-icons/md'
+import LogoImg from '../../../assets/logo.png'
 
 const styles = `
 .footer {
@@ -75,6 +76,14 @@ const styles = `
   top: -8px;
   left: 50%;
   transform: translateX(-50%);
+}
+
+.footer-logo-img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  display: block;
+  border-radius: 8px;
 }
 
 .footer-description {
@@ -384,8 +393,8 @@ function Footer({
         <div className="footer-content">
           <div className="footer-brand">
             <a href="#" className="footer-logo" onClick={handleLogoClick}>
-              <div className="footer-logo-icon"></div>
-              Athena VI
+              <img src={LogoImg} alt="Athena VI" className="footer-logo-img" />
+              <span style={{display: 'inline-block'}} aria-hidden="true">Athena VI</span>
             </a>
             <p className="footer-description">
               Create AI-powered videos with lifelike avatars. Transform your content into engaging visual experiences with Athena VI.

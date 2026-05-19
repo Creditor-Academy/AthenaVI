@@ -47,11 +47,17 @@ const EditorTopbar = ({
     canRedo,
     projectTitle,
     onProjectTitleChange,
+    onSave,
+    isSaving,
+    lastSaved
 }) => {
     const [saved, setSaved] = useState(false)
     const [showShortcuts, setShowShortcuts] = useState(false)
 
     const handleSave = () => {
+        if (onSave) {
+            onSave()
+        }
         setSaved(true)
         setTimeout(() => setSaved(false), 2000)
     }
@@ -110,11 +116,17 @@ const EditorTopbar = ({
 
                     {/* Save Button */}
                     <button
-                        className={`topbar-save-btn ${saved ? 'saved' : ''}`}
+                        className={`topbar-save-btn ${saved || isSaving ? 'saved' : ''}`}
                         onClick={handleSave}
                         title="Save project  (Ctrl+S)"
+                        disabled={isSaving}
                     >
-                        {saved ? (
+                        {isSaving ? (
+                            <>
+                                <div className="save-spinner" />
+                                <span>Saving...</span>
+                            </>
+                        ) : saved ? (
                             <>
                                 <MdCheckCircle size={15} />
                                 <span>Saved</span>
@@ -126,6 +138,11 @@ const EditorTopbar = ({
                             </>
                         )}
                     </button>
+                    {lastSaved && (
+                        <div className="last-saved-time">
+                            Last saved at {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                    )}
                 </div>
 
                 {/* === CENTER SECTION — Zoom === */}

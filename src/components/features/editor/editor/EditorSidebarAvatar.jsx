@@ -327,6 +327,7 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
                             updateScene(activeSceneId, {
                                 avatar: avatar.image,
                                 avatarType: avatar.id,
+                                avatarName: avatar.name,
                                 clips: updatedClips
                             });
                         } else {
@@ -337,7 +338,8 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
                             
                             updateScene(activeSceneId, {
                                 avatar: avatar.image,
-                                avatarType: avatar.id
+                                avatarType: avatar.id,
+                                avatarName: avatar.name
                             });
                         }
                     }}

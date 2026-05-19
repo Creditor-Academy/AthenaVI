@@ -73,7 +73,7 @@ const EditorSidebar = ({
       case 'video':
         return <EditorSidebarVideo addLayer={addLayer} />;
       case 'mic':
-        return <EditorSidebarVoice />;
+        return <EditorSidebarVoice activeScene={activeScene} activeSceneId={activeSceneId} updateScene={updateScene} />;
       case 'stock':
         return <EditorSidebarStock addLayer={addLayer} />;
       case 'shapes':

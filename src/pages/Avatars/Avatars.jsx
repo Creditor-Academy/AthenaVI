@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Search, Filter, Play, Video, ChevronRight, ChevronLeft, X, Info, Layers, ArrowLeft, Upload, Loader2, Plus, Image, Terminal } from 'lucide-react'
+import { Search, ChevronRight, Plus, Users } from 'lucide-react'
 import heygenService from '../../services/heygenService'
 import AvatarPersona from './AvatarPersona'
 import AvatarsSkeleton from '../page-skeleton/AvatarsSkeleton'
@@ -12,7 +12,6 @@ function Avatars({ onCreate, onCreateAvatar }) {
   const [loading, setLoading] = useState(true)
   const [selectedAvatar, setSelectedAvatar] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [filterCategory, setFilterCategory] = useState('All')
   const [ownership, setOwnership] = useState('public')
   const fileInputRef = useRef(null)
 
@@ -72,8 +71,6 @@ function Avatars({ onCreate, onCreateAvatar }) {
     fetchAvatars()
   }, [ownership])
 
-  const categories = ['All', 'Professional', 'Tech', 'Creative', 'Service', 'Academic', 'Lifestyle']
-
   const filteredAvatars = (avatars || []).filter(avatar => {
     if (!avatar) return false;
     const nameStr = avatar.name || '';
@@ -82,9 +79,8 @@ function Avatars({ onCreate, onCreateAvatar }) {
 
     const matchesSearch = nameStr.toLowerCase().includes(searchStr) ||
       roleStr.toLowerCase().includes(searchStr);
-    const matchesCategory = filterCategory === 'All' || avatar.category === filterCategory;
 
-    return matchesSearch && matchesCategory;
+    return matchesSearch;
   })
 
   const currentIndex = avatars.findIndex(a => a.id === selectedAvatar?.id)
@@ -129,28 +125,19 @@ function Avatars({ onCreate, onCreateAvatar }) {
                 <div className="ownership-segmented-control">
                   <button
                     className={`segmented-btn ${ownership === 'public' ? 'active' : ''}`}
-                    onClick={() => {
-                      setOwnership('public');
-                      setFilterCategory('All');
-                    }}
+                    onClick={() => setOwnership('public')}
                   >
                     Public Library
                   </button>
                   <button
                     className={`segmented-btn ${ownership === 'private' ? 'active' : ''}`}
-                    onClick={() => {
-                      setOwnership('private');
-                      setFilterCategory('All');
-                    }}
+                    onClick={() => setOwnership('private')}
                   >
                     My Avatars
                   </button>
                   <button
                     className={`segmented-btn ${ownership === 'workspace' ? 'active' : ''}`}
-                    onClick={() => {
-                      setOwnership('workspace');
-                      setFilterCategory('All');
-                    }}
+                    onClick={() => setOwnership('workspace')}
                   >
                     Team Shared
                   </button>
@@ -167,58 +154,51 @@ function Avatars({ onCreate, onCreateAvatar }) {
                     />
                   </div>
                 </div>
-
-                <div className="filter-tabs">
-                  {categories.map(cat => (
-                    <button
-                      key={cat}
-                      className={`filter-tab ${filterCategory === cat ? 'active' : ''}`}
-                      onClick={() => setFilterCategory(cat)}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
               </div>
             </header>
 
-            {ownership === 'public' && (
-              <div className="elements-chips-scroll" style={{ marginBottom: '20px', paddingBottom: '4px' }}>
-                <button className="elements-chip" style={{ background: 'var(--primary)', color: 'white', borderColor: 'var(--primary)' }}>All</button>
-                <button className="elements-chip">Business</button>
-                <button className="elements-chip">Casual</button>
-                <button className="elements-chip">News</button>
-              </div>
-            )}
-
-            {ownership === 'private' && (
-              <div className="creation-banner">
-                <button className="open-creation-btn" onClick={() => onCreateAvatar && onCreateAvatar()}>
-                  <Plus size={20} />
-                  <span>Create New Custom Avatar</span>
-                </button>
-              </div>
-            )}
-
             <div className="avatars-grid">
+              {ownership === 'private' && (
+                <div className="avatar-card creation-card" onClick={() => onCreateAvatar && onCreateAvatar()}>
+                  <div className="open-creation-btn">
+                    <div className="creation-icon-wrapper">
+                      <Plus size={32} />
+                    </div>
+                    <span>Create New Custom Avatar</span>
+                  </div>
+                </div>
+              )}
+              
               {filteredAvatars.map(avatar => (
                 <div key={avatar.id} className="avatar-card" onClick={() => openAvatarDetails(avatar)}>
                   <div className="avatar-image-container">
                     <img src={avatar.image} alt={avatar.name} />
                     <div className="avatar-overlay">
-                      <div className="workspace-action-badge">
-                        <ChevronRight size={20} />
-                        <span>View Persona</span>
-                      </div>
+                      {/* Overlay now only for hover effect */}
                     </div>
                   </div>
                   <div className="avatar-info">
-                    <h3>{avatar.name}</h3>
-                    <p>{avatar.role}</p>
+                    <div className="avatar-info-content">
+                      <h3>{avatar.name}</h3>
+                      <p>{avatar.role}</p>
+                    </div>
+                    <div className="workspace-action-badge">
+                      <span>View Persona</span>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
+
+            {filteredAvatars.length === 0 && !loading && ownership === 'workspace' && (
+              <div className="empty-state-container">
+                <div className="empty-state-visual">
+                  <Users size={64} />
+                </div>
+                <h2>Your Team Library is Empty</h2>
+                <p>Start collaborating by creating and sharing avatars with your workspace members.</p>
+              </div>
+            )}
           </div>
           )
         ) : (

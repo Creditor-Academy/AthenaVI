@@ -103,8 +103,10 @@ class HeygenService {
     try {
       const queryParams = new URLSearchParams(params).toString();
       const endpoint = `${API_CONFIG.ENDPOINTS.HEYGEN.VOICES.LIST}${queryParams ? `?${queryParams}` : ''}`;
+      const fullUrl = buildUrl(endpoint);
+      console.log('Athena VI: Fetching voices from...', fullUrl);
 
-      const response = await fetch(buildUrl(endpoint), {
+      const response = await fetch(fullUrl, {
         method: 'GET',
         headers: getAuthHeaders()
       });
@@ -146,6 +148,45 @@ class HeygenService {
   async cloneVoice(payload) {
     try {
       const endpoint = API_CONFIG.ENDPOINTS.HEYGEN.VOICES.CLONE;
+      console.log('Athena VI: Calling cloneVoice API...', endpoint, payload);
+      const response = await fetch(buildUrl(endpoint), {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          errorData = { message: await response.text() };
+        }
+        console.error('Athena VI: Clone Voice API Error:', errorData);
+        throw new Error(errorData.message || errorData.error || `Failed to clone voice: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.data || data;
+    } catch (error) {
+      console.error('Error in heygenService.cloneVoice:', error);
+      throw error;
+    }
+  }
+
+  async selectVoice(voiceData) {
+    try {
+      const endpoint = API_CONFIG.ENDPOINTS.HEYGEN.VOICES.SELECT;
+      // Handle both raw ID string and voice object
+      const vId = typeof voiceData === 'string' ? voiceData : (voiceData.voice_id || voiceData.id);
+      const name = typeof voiceData === 'object' ? voiceData.name : '';
+      
+      const payload = { 
+        voiceId: vId, 
+        voice_id: vId
+      };
+      
+      console.log('Athena VI: Calling selectVoice API...', endpoint, payload);
       const response = await fetch(buildUrl(endpoint), {
         method: 'POST',
         headers: getAuthHeaders(),
@@ -154,13 +195,13 @@ class HeygenService {
 
       if (!response.ok) {
         const errText = await response.text();
-        throw new Error(`Failed to clone voice: ${response.status} - ${errText}`);
+        throw new Error(`Failed to select voice: ${response.status} - ${errText}`);
       }
 
       const data = await response.json();
       return data.data || data;
     } catch (error) {
-      console.error('Error in heygenService.cloneVoice:', error);
+      console.error('Error in heygenService.selectVoice:', error);
       throw error;
     }
   }
@@ -208,6 +249,28 @@ class HeygenService {
   }
 
   // --- HeyGen Video Management (Project-specific) ---
+
+  async generateVideo(workspaceId, projectId, payload) {
+    try {
+      const endpoint = API_CONFIG.ENDPOINTS.HEYGEN.VIDEOS.CREATE(workspaceId, projectId);
+      const response = await fetch(buildUrl(endpoint), {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Failed to generate video: ${response.status} - ${errText}`);
+      }
+
+      const data = await response.json();
+      return data.data?.heygenVideo || data.heygenVideo || data;
+    } catch (error) {
+      console.error('Error in heygenService.generateVideo:', error);
+      throw error;
+    }
+  }
 
   async listVideos(workspaceId, projectId) {
     try {

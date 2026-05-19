@@ -331,7 +331,7 @@
   justify-content: center;
   font-size: 36px;
   margin-bottom: 20px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .page-title {
@@ -536,17 +536,17 @@
   .mobile-menu-btn {
     display: block;
   }
-  
+
   .header-search {
     display: none;
   }
-  
+
   .help-layout {
     flex-direction: column;
     height: auto;
     overflow: visible;
   }
-  
+
   .help-sidebar {
     width: 100%;
     min-width: 0;
@@ -557,26 +557,26 @@
     padding: 16px;
     display: none;
   }
-  
+
   .help-sidebar.open {
     display: block;
   }
-  
+
   .help-main {
     padding: 0;
     height: auto;
     overflow-y: visible;
   }
-  
+
   .help-main-content {
     padding: 20px;
     max-width: 100%;
   }
-  
+
   .page-title {
     font-size: 24px;
   }
-  
+
   .article-card {
     padding: 14px 16px;
   }
@@ -584,8 +584,15 @@
 
 /* ========== ANIMATIONS ========== */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .content-hero,
@@ -608,8 +615,13 @@
 }
 
 @keyframes modalFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .modal-container {
@@ -626,8 +638,15 @@
 }
 
 @keyframes modalScaleUp {
-  from { transform: scale(0.95) translateY(10px); opacity: 0; }
-  to { transform: scale(1) translateY(0); opacity: 1; }
+  from {
+    transform: scale(0.95) translateY(10px);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
 }
 
 .video-modal-container {
@@ -799,7 +818,7 @@
 .tutorial-play-icon {
   font-size: 40px;
   color: #ffffff;
-  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
 }
 
 .tutorial-duration {
@@ -851,7 +870,7 @@
   background: #000000;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .embedded-video {
@@ -1143,8 +1162,15 @@
 }
 
 @keyframes msgFadeIn {
-  from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .msg-user {

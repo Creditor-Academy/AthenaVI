@@ -456,25 +456,19 @@ class WorkspaceService {
       const allVideos = [];
 
       for (const workspace of workspaces) {
-        // Fetch full workspace details to get folders and videos
-        const details = await this.getWorkspace(workspace.id);
-        
-        // Handle flattened videos if they exist at workspace level
-        const wsVideos = details.videos || [];
-        wsVideos.forEach(v => allVideos.push({ ...v, workspaceName: details.name, workspaceId: details.id }));
-
-        // Handle videos nested in folders
-        const wsFolders = details.folders || [];
-        wsFolders.forEach(folder => {
-          const folderVideos = folder.videos || [];
-          folderVideos.forEach(v => allVideos.push({ 
-            ...v, 
-            workspaceName: details.name, 
-            workspaceId: details.id,
-            folderName: folder.name,
-            folderId: folder.id
+        try {
+          // Use the new projects endpoint
+          const projects = await this.listProjects(workspace.id);
+          projects.forEach(p => allVideos.push({
+            ...p,
+            workspaceName: workspace.name,
+            workspaceId: workspace.id,
+            folderId: p.folderId || (p.folder && (p.folder.id || p.folder._id)),
+            folderName: p.folder?.name
           }));
-        });
+        } catch (err) {
+          console.warn(`Failed to fetch projects for workspace ${workspace.id}`, err);
+        }
       }
 
       return allVideos;
@@ -543,6 +537,242 @@ class WorkspaceService {
       return this.normalizeId(video);
     } catch (error) {
       console.error('Error in createVideo:', error);
+      throw error;
+    }
+  }
+
+  // --- Project Management ---
+
+  async createProject(workspaceId, payload) {
+    try {
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/projects`), {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to create project: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const project = data.data?.project || data.project || data.data || data;
+      return this.normalizeId(project);
+    } catch (error) {
+      console.error('Error in createProject:', error);
+      throw error;
+    }
+  }
+
+  async listProjects(workspaceId, folderId = null) {
+    try {
+      let endpoint = `/api/workspaces/${workspaceId}/projects`;
+      if (folderId) {
+        endpoint += `?folderId=${encodeURIComponent(folderId)}`;
+      }
+      const response = await fetch(buildUrl(endpoint), {
+        method: 'GET',
+        headers: getAuthHeaders(),
+        cache: 'no-store'
+      });
+
+      if (!response.ok) {
+        throw new Error(await this.readErrorMessage(response, `Failed to fetch projects: ${response.status}`));
+      }
+
+      const data = await response.json();
+      const projects = data.data?.projects || data.projects || (Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []));
+      return projects.map((p) => this.normalizeId(p));
+    } catch (error) {
+      console.error('Error in listProjects:', error);
+      throw error;
+    }
+  }
+
+  async getProject(workspaceId, projectId) {
+    try {
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/projects/${projectId}`), {
+        method: 'GET',
+        headers: getAuthHeaders(),
+        cache: 'no-store'
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to get project: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const project = data.data?.project || data.project;
+      return this.normalizeId(project);
+    } catch (error) {
+      console.error('Error in getProject:', error);
+      throw error;
+    }
+  }
+
+  async updateProject(workspaceId, projectId, updateData) {
+    try {
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/projects/${projectId}`), {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(updateData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update project: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return this.normalizeId(data.data?.project || data.project);
+    } catch (error) {
+      console.error('Error in updateProject:', error);
+      throw error;
+    }
+  }
+
+  async saveProjectState(workspaceId, projectId, stateData) {
+    try {
+      // Allow passing just the data object, or an object with { data: ... }
+      const payload = stateData.data ? stateData : { data: stateData };
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/projects/${projectId}/data`), {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to save project state: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return this.normalizeId(data.data?.project || data.project);
+    } catch (error) {
+      console.error('Error in saveProjectState:', error);
+      throw error;
+    }
+  }
+
+  async moveProjectFolder(workspaceId, projectId, newFolderId) {
+    try {
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/projects/${projectId}/move-folder`), {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ folderId: newFolderId })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to move project: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return this.normalizeId(data.data?.project || data.project);
+    } catch (error) {
+      console.error('Error in moveProjectFolder:', error);
+      throw error;
+    }
+  }
+
+  async deleteProject(workspaceId, projectId) {
+    try {
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/projects/${projectId}`), {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete project: ${response.status}`);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in deleteProject:', error);
+      throw error;
+    }
+  }
+
+  // --- Render Management ---
+
+  async createRender(workspaceId, projectId, options = { forceRebuild: false }) {
+    try {
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/projects/${projectId}/renders`), {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ forceRebuild: options.forceRebuild })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to create render: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const render = data.data?.render || data.render || data.data || data;
+      return this.normalizeId(render);
+    } catch (error) {
+      console.error('Error in createRender:', error);
+      throw error;
+    }
+  }
+
+  async listRenders(workspaceId, projectId) {
+    try {
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/projects/${projectId}/renders`), {
+        method: 'GET',
+        headers: getAuthHeaders(),
+        cache: 'no-store'
+      });
+
+      if (!response.ok) {
+        throw new Error(await this.readErrorMessage(response, `Failed to fetch renders: ${response.status}`));
+      }
+
+      const data = await response.json();
+      const renders = data.data?.renders || data.renders || (Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []));
+      return renders.map((r) => this.normalizeId(r));
+    } catch (error) {
+      console.error('Error in listRenders:', error);
+      throw error;
+    }
+  }
+
+  async getRender(workspaceId, projectId, renderId) {
+    try {
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/projects/${projectId}/renders/${renderId}`), {
+        method: 'GET',
+        headers: getAuthHeaders(),
+        cache: 'no-store'
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to get render: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const render = data.data?.render || data.render;
+      return this.normalizeId(render);
+    } catch (error) {
+      console.error('Error in getRender:', error);
+      throw error;
+    }
+  }
+
+  async downloadRender(workspaceId, projectId, renderId) {
+    try {
+      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/projects/${projectId}/renders/${renderId}/download`), {
+        method: 'GET',
+        headers: getAuthHeaders(),
+        cache: 'no-store'
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to get render download url: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.data || data; // Contains { presignedUrl, expiresInSeconds, render }
+    } catch (error) {
+      console.error('Error in downloadRender:', error);
       throw error;
     }
   }
