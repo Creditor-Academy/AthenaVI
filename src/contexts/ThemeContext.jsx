@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import userService from '../services/userService.js'
 
 const ThemeContext = createContext();
 
@@ -63,6 +64,40 @@ export const ThemeProvider = ({ children }) => {
     return { theme: st, mode: sm, customPrimary: sp };
   });
 
+  // On mount: try to load server-saved appearance settings for authenticated users
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return; // no authenticated user
+
+    let mounted = true;
+    (async () => {
+      try {
+        const appearance = await userService.getAppearanceSettings();
+        if (!mounted || !appearance) return;
+
+        // API returns field names: interfaceMode, themePalette, customAccentColor
+        const serverTheme = appearance.themePalette || appearance.theme || null;
+        const serverMode = appearance.interfaceMode || null;
+        const serverCustom = appearance.customAccentColor || appearance.customPrimary || null;
+
+        if (serverTheme) setTheme(serverTheme);
+        if (serverMode) setMode(serverMode);
+        if (serverCustom) setCustomPrimary(serverCustom);
+
+        // Update saved settings snapshot
+        setSavedSettings({
+          theme: serverTheme || savedSettings.theme,
+          mode: serverMode || savedSettings.mode,
+          customPrimary: serverCustom || savedSettings.customPrimary
+        });
+      } catch (err) {
+        console.warn('Could not load server appearance settings, falling back to local:', err.message || err);
+      }
+    })();
+
+    return () => { mounted = false };
+  }, []);
+
   // These are for the "applied but not yet saved" or preview state
   // Actually, to make it "visible once we click", we'll just update these
   // and have the useEffect react to them.
@@ -93,10 +128,38 @@ export const ThemeProvider = ({ children }) => {
   }, [theme, mode, customPrimary]);
 
   const saveSettings = () => {
+    // Save locally first
     localStorage.setItem('athenavi-theme', theme);
     localStorage.setItem('athenavi-mode', mode);
     localStorage.setItem('athenavi-custom-primary', customPrimary);
     setSavedSettings({ theme, mode, customPrimary });
+
+    // If user is authenticated, persist to server as well (best-effort)
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    (async () => {
+      try {
+        const patch = {
+          interfaceMode: mode,
+          themePalette: theme,
+          customAccentColor: customPrimary
+        };
+        const updated = await userService.updateAppearanceSettings(patch);
+        // Update local snapshot to reflect server-merged result
+        if (updated) {
+          const mergedTheme = updated.themePalette || updated.theme || theme;
+          const mergedMode = updated.interfaceMode || updated.mode || mode;
+          const mergedCustom = updated.customAccentColor || updated.customPrimary || customPrimary;
+          localStorage.setItem('athenavi-theme', mergedTheme);
+          localStorage.setItem('athenavi-mode', mergedMode);
+          localStorage.setItem('athenavi-custom-primary', mergedCustom);
+          setSavedSettings({ theme: mergedTheme, mode: mergedMode, customPrimary: mergedCustom });
+        }
+      } catch (err) {
+        console.warn('Failed to persist appearance settings to server:', err.message || err);
+      }
+    })();
   };
 
   const rollbackSettings = () => {
