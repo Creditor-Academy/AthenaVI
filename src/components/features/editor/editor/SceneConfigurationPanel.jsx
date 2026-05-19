@@ -330,8 +330,21 @@ const SceneConfigurationPanel = ({
         <div className="premium-row">
             <div className="row-label">Voice Speed</div>
             <div className="slider-group">
-                <input type="range" min="0.5" max="2" step="0.1" defaultValue="1" className="premium-slider slider-purple" />
-                <span className="slider-value">1.1x</span>
+                <input 
+                    type="range" 
+                    min="0.5" 
+                    max="2" 
+                    step="0.1" 
+                    value={activeScene.voiceSettings?.speed || 1} 
+                    onChange={(e) => updateScene(activeSceneId, { 
+                        voiceSettings: { 
+                            ...(activeScene.voiceSettings || { pitch: 0, locale: 'en-US' }), 
+                            speed: Number(e.target.value) 
+                        } 
+                    })}
+                    className="premium-slider slider-purple" 
+                />
+                <span className="slider-value">{activeScene.voiceSettings?.speed || 1}x</span>
             </div>
         </div>
         <div className="text-hint">Total: {(activeScene.script || '').length} characters</div>
@@ -379,9 +392,25 @@ const SceneConfigurationPanel = ({
             )}
             
             {activeScene.heygenStatus === 'completed' && (
-                <p style={{ fontSize: '11px', color: '#10b981', textAlign: 'center', marginTop: '8px', fontWeight: '500' }}>
-                    ✓ Video generated successfully
-                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+                    <p style={{ fontSize: '11px', color: '#10b981', textAlign: 'center', margin: '0', fontWeight: '500' }}>
+                        ✓ Video generated successfully
+                    </p>
+                    <button 
+                        className="premium-button-outline"
+                        style={{ width: '100%', padding: '8px', fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                        onClick={() => {
+                            const url = activeScene.generatedVideoUrl || activeScene.clips?.find(c => c.role === 'avatar' || c.type === 'video')?.src;
+                            if (url) {
+                                window.dispatchEvent(new CustomEvent('open-generated-video', { detail: { url } }));
+                            } else {
+                                alert('Video URL not found. It might still be processing.');
+                            }
+                        }}
+                    >
+                        <MdMonitor size={16} /> View Generated Video
+                    </button>
+                </div>
             )}
 
             {activeScene.heygenStatus === 'failed' && (

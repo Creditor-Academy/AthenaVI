@@ -250,8 +250,42 @@ class HeygenService {
 
   // --- HeyGen Video Management (Project-specific) ---
 
-  async generateVideo(workspaceId, projectId, payload) {
+  async generateVideo(workspaceId, projectId, input) {
     try {
+      const {
+        sceneId,
+        avatarId,
+        title,
+        resolution = '1080p',
+        aspectRatio = '16:9',
+        backgroundColor = '#008000',
+        voiceId,
+        script,
+        expressiveness = 'medium',
+        voiceSettings = {
+          speed: 1,
+          pitch: 0,
+          locale: 'en-US'
+        },
+        removeBackground = false,
+        outputFormat = 'mp4'
+      } = input;
+
+      const payload = {
+        sceneId,
+        avatarId,
+        title,
+        resolution,
+        aspectRatio,
+        backgroundColor,
+        voiceId,
+        script,
+        expressiveness,
+        voiceSettings,
+        removeBackground,
+        outputFormat
+      };
+
       const endpoint = API_CONFIG.ENDPOINTS.HEYGEN.VIDEOS.CREATE(workspaceId, projectId);
       const response = await fetch(buildUrl(endpoint), {
         method: 'POST',
@@ -335,6 +369,26 @@ class HeygenService {
   getStreamUrl(workspaceId, projectId, heygenVideoId) {
     const endpoint = `/api/workspaces/${workspaceId}/projects/${projectId}/heygen/videos/${heygenVideoId}/stream`;
     return buildUrl(endpoint);
+  }
+
+  async getVideoBlobUrl(workspaceId, projectId, heygenVideoId) {
+    try {
+      const endpoint = `/api/workspaces/${workspaceId}/projects/${projectId}/heygen/videos/${heygenVideoId}/stream`;
+      const response = await fetch(buildUrl(endpoint), {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch video stream: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      return URL.createObjectURL(blob);
+    } catch (error) {
+      console.error('Error in heygenService.getVideoBlobUrl:', error);
+      throw error;
+    }
   }
 
   async getS3Location(workspaceId, projectId, heygenVideoId) {

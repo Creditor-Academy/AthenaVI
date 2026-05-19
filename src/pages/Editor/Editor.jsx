@@ -11,6 +11,7 @@ import SceneConfigurationPanel from '../../components/features/editor/editor/Sce
 import ExportModal from '../../components/features/editor/editor/ExportModal'
 import TemplateModal from '../../components/features/editor/editor/TemplateModal'
 import PreviewModal from '../../components/features/editor/editor/PreviewModal'
+import GeneratedVideoModal from '../../components/features/editor/editor/GeneratedVideoModal'
 import heygenService from '../../services/heygenService'
 import avatar1 from '../../assets/Avatarr1.png'
 import projectTemplate from '../../constants/projectTemplate.json'
@@ -85,6 +86,17 @@ function Create({ onBack, initialConfig = null }) {
   const [musicDuration, setMusicDuration] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState(null)
+  const [showGeneratedVideoModal, setShowGeneratedVideoModal] = useState(false)
+  const [generatedVideoUrl, setGeneratedVideoUrl] = useState(null)
+
+  useEffect(() => {
+    const handleOpenGeneratedVideo = (e) => {
+      setGeneratedVideoUrl(e.detail.url)
+      setShowGeneratedVideoModal(true)
+    }
+    window.addEventListener('open-generated-video', handleOpenGeneratedVideo)
+    return () => window.removeEventListener('open-generated-video', handleOpenGeneratedVideo)
+  }, [])
 
   // Auto-save logic
   const saveProject = async (manual = false) => {
@@ -605,8 +617,17 @@ function Create({ onBack, initialConfig = null }) {
     if (!scene) return;
 
     const { avatarType, voiceId, script } = scene;
-    const workspaceId = project.createConfig?.workspaceId;
-    const projectId = project.createConfig?.folderId;
+    const workspaceId = project.workspaceId || project.createConfig?.workspaceId;
+    const projectId = project.id || project.createConfig?.videoId;
+
+    console.log('[HeyGen] Generating video for scene:', {
+      sceneId,
+      avatarType,
+      voiceId,
+      scriptLength: script?.length,
+      workspaceId,
+      projectId
+    });
 
     if (!avatarType || !voiceId || !script) {
       alert('Please select an avatar, a voice, and enter a script first.');
@@ -614,6 +635,7 @@ function Create({ onBack, initialConfig = null }) {
     }
 
     if (!workspaceId || !projectId) {
+      console.error('[HeyGen] Missing identifiers:', { workspaceId, projectId, project });
       alert('Missing workspace or project ID. Please ensure this project is saved in a folder.');
       return;
     }
@@ -622,16 +644,25 @@ function Create({ onBack, initialConfig = null }) {
       // Mark scene as processing
       updateScene(sceneId, { heygenStatus: 'processing' });
 
+      const aspectRatioStr = project.resolution?.width > project.resolution?.height ? '16:9' : '9:16';
+      
       const payload = {
         sceneId: sceneId,
         avatarId: avatarType,
         title: `${project.title} - ${scene.title}`,
-        resolution: '1080p',
-        aspectRatio: project.resolution.width > project.resolution.height ? '16:9' : '9:16',
-        backgroundColor: '#ffffff',
+        resolution: project.resolution?.height >= 1080 ? '1080p' : '720p',
+        aspectRatio: aspectRatioStr,
+        backgroundColor: scene.background?.value || scene.backgroundColor || '#008000',
         voiceId: voiceId,
         script: script,
-        expressiveness: 'high'
+        expressiveness: scene.expressiveness || 'medium',
+        voiceSettings: scene.voiceSettings || {
+          speed: 1,
+          pitch: 0,
+          locale: 'en-US'
+        },
+        removeBackground: scene.removeBackground || false,
+        outputFormat: scene.outputFormat || 'mp4'
       };
 
       const result = await heygenService.generateVideo(workspaceId, projectId, payload);
@@ -648,8 +679,8 @@ function Create({ onBack, initialConfig = null }) {
         try {
           const videoData = await heygenService.getVideo(workspaceId, projectId, heygenVideoId);
           if (videoData.status === 'completed' || videoData.status === 'success') {
-            // Get streaming URL
-            const videoUrl = heygenService.getStreamUrl(workspaceId, projectId, heygenVideoId);
+            // Fetch the stream as a Blob to successfully attach the Bearer token headers
+            const videoUrl = await heygenService.getVideoBlobUrl(workspaceId, projectId, heygenVideoId);
             
             // Update the avatar clip with the generated video
             const updatedClips = scene.clips.map(clip => 
@@ -661,8 +692,12 @@ function Create({ onBack, initialConfig = null }) {
             updateScene(sceneId, { 
               heygenStatus: 'completed',
               avatar: videoData.thumbnail_url || scene.avatar,
+              generatedVideoUrl: videoUrl,
               clips: updatedClips
             });
+            
+            // Auto open the modal
+            window.dispatchEvent(new CustomEvent('open-generated-video', { detail: { url: videoUrl } }));
           } else if (videoData.status === 'failed' || videoData.status === 'error') {
             updateScene(sceneId, { heygenStatus: 'failed' });
           } else {
@@ -694,6 +729,11 @@ function Create({ onBack, initialConfig = null }) {
 
   return (
     <div className="video-editor-shell">
+      <GeneratedVideoModal 
+        isOpen={showGeneratedVideoModal} 
+        onClose={() => setShowGeneratedVideoModal(false)} 
+        videoUrl={generatedVideoUrl} 
+      />
       <EditorTopbar
         onBack={onBack}
         selectedTool={selectedTool}
