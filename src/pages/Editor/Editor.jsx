@@ -12,6 +12,7 @@ import ExportModal from '../../components/features/editor/editor/ExportModal'
 import TemplateModal from '../../components/features/editor/editor/TemplateModal'
 import PreviewModal from '../../components/features/editor/editor/PreviewModal'
 import GeneratedVideoModal from '../../components/features/editor/editor/GeneratedVideoModal'
+import QuickCreateModal from '../../components/features/editor/editor/QuickCreateModal'
 import heygenService from '../../services/heygenService'
 import avatar1 from '../../assets/Avatarr1.png'
 import projectTemplate from '../../constants/projectTemplate.json'
@@ -88,6 +89,12 @@ function Create({ onBack, initialConfig = null }) {
   const [lastSaved, setLastSaved] = useState(null)
   const [showGeneratedVideoModal, setShowGeneratedVideoModal] = useState(false)
   const [generatedVideoUrl, setGeneratedVideoUrl] = useState(null)
+  const [showQuickCreateModal, setShowQuickCreateModal] = useState(() => {
+    if (!initialConfig?.videoData?.data && !initialConfig?.template) return true;
+    if (!project.scenes || project.scenes.length === 0) return true;
+    if (!project.scenes[0].clips || project.scenes[0].clips.length === 0) return true;
+    return false;
+  })
 
   useEffect(() => {
     const handleOpenGeneratedVideo = (e) => {
@@ -612,11 +619,13 @@ function Create({ onBack, initialConfig = null }) {
     }
   }
 
-  const generateSceneVideo = async (sceneId) => {
+  const generateSceneVideo = async (sceneId, overrides = null) => {
     const scene = project.scenes.find(s => s.id === sceneId);
-    if (!scene) return;
+    if (!scene && !overrides) return;
 
-    const { avatarType, voiceId, script } = scene;
+    const avatarType = overrides?.avatarType || scene?.avatarType;
+    const voiceId = overrides?.voiceId || scene?.voiceId;
+    const script = overrides?.script || scene?.script;
     const workspaceId = project.workspaceId || project.createConfig?.workspaceId;
     const projectId = project.id || project.createConfig?.videoId;
 
@@ -649,20 +658,20 @@ function Create({ onBack, initialConfig = null }) {
       const payload = {
         sceneId: sceneId,
         avatarId: avatarType,
-        title: `${project.title} - ${scene.title}`,
+        title: `${project.title} - ${scene?.title || 'Scene'}`,
         resolution: project.resolution?.height >= 1080 ? '1080p' : '720p',
-        aspectRatio: aspectRatioStr,
-        backgroundColor: scene.background?.value || scene.backgroundColor || '#008000',
+        aspectRatio: overrides?.aspectRatio || aspectRatioStr,
+        backgroundColor: overrides?.backgroundColor || scene?.background?.value || scene?.backgroundColor || '#008000',
         voiceId: voiceId,
         script: script,
-        expressiveness: scene.expressiveness || 'medium',
-        voiceSettings: scene.voiceSettings || {
+        expressiveness: overrides?.expressiveness || scene?.expressiveness || 'medium',
+        voiceSettings: scene?.voiceSettings || {
           speed: 1,
           pitch: 0,
           locale: 'en-US'
         },
-        removeBackground: scene.removeBackground || false,
-        outputFormat: scene.outputFormat || 'mp4'
+        removeBackground: overrides?.removeBackground ?? (scene?.removeBackground || false),
+        outputFormat: scene?.outputFormat || 'mp4'
       };
 
       const result = await heygenService.generateVideo(workspaceId, projectId, payload);
@@ -700,6 +709,7 @@ function Create({ onBack, initialConfig = null }) {
             window.dispatchEvent(new CustomEvent('open-generated-video', { detail: { url: videoUrl } }));
           } else if (videoData.status === 'failed' || videoData.status === 'error') {
             updateScene(sceneId, { heygenStatus: 'failed' });
+            window.dispatchEvent(new CustomEvent('generation-failed'));
           } else {
             // Continue polling
             setTimeout(pollStatus, 5000);
@@ -707,6 +717,7 @@ function Create({ onBack, initialConfig = null }) {
         } catch (err) {
           console.error('Polling failed:', err);
           updateScene(sceneId, { heygenStatus: 'failed' });
+          window.dispatchEvent(new CustomEvent('generation-failed'));
         }
       };
 
@@ -716,6 +727,7 @@ function Create({ onBack, initialConfig = null }) {
       console.error('Failed to start video generation:', error);
       updateScene(sceneId, { heygenStatus: 'failed' });
       alert('Failed to start video generation: ' + error.message);
+      window.dispatchEvent(new CustomEvent('generation-failed'));
     }
   }
 
@@ -727,8 +739,84 @@ function Create({ onBack, initialConfig = null }) {
     }
   }
 
+  const handleQuickCreateGenerate = (payload) => {
+    let targetSceneId = activeSceneId;
+    let currentScenes = project.scenes;
+
+    if (!targetSceneId || currentScenes.length === 0) {
+      const { newScene, updatedScenes } = autoCreateScene();
+      targetSceneId = newScene.id;
+      currentScenes = updatedScenes;
+    }
+
+    const activeClips = currentScenes.find(s => s.id === targetSceneId)?.clips || [];
+    const avatarClipIndex = activeClips.findIndex(c => c.role === 'avatar' || c.type === 'avatar');
+    
+    let updatedClips = [...activeClips];
+    if (avatarClipIndex !== -1) {
+      updatedClips[avatarClipIndex] = {
+        ...updatedClips[avatarClipIndex],
+        src: payload.avatarImage
+      };
+    } else {
+      updatedClips.push({
+        id: `clip_${Date.now()}`,
+        type: 'avatar',
+        src: payload.avatarImage,
+        layer: updatedClips.length,
+        startTime: 0.0,
+        endTime: 8.0,
+        position: { x: 50, y: 50 },
+        size: { width: 250, height: 330 },
+        opacity: 1.0,
+        effects: {
+          brightness: 1,
+          contrast: 1,
+          saturation: 1,
+          blur: 0
+        }
+      });
+    }
+
+    // Update project state synchronously if possible, or trigger and wait
+    setProject(prev => {
+      const newProject = {
+        ...prev,
+        scenes: prev.scenes.map(s => s.id === targetSceneId ? {
+          ...s,
+          avatar: payload.avatarImage,
+          avatarType: payload.avatarType,
+          voiceId: payload.voiceId,
+          script: payload.script,
+          clips: updatedClips
+        } : s)
+      };
+
+      // We call generateSceneVideo after state settles
+      setTimeout(() => {
+        // We need to bypass the state closure issue by either passing the scene data directly or waiting
+        // We will just let the component re-render, then the user can click generate or we trigger it
+        // Wait, if we trigger it here, it might use stale state. We will trigger it in a way that fetches the latest.
+        // For now, we update state, then call generateSceneVideo.
+      }, 0);
+      return newProject;
+    });
+
+    // To ensure generation uses latest data, we should modify generateSceneVideo or pass overrides,
+    // but the simplest is just let it update the scene and tell user to click generate, OR
+    // we can use a ref. But let's just trigger it with a small delay.
+    setTimeout(() => {
+      generateSceneVideo(targetSceneId, payload);
+    }, 500);
+  };
+
   return (
     <div className="video-editor-shell">
+      <QuickCreateModal
+        isOpen={showQuickCreateModal}
+        onClose={() => setShowQuickCreateModal(false)}
+        onGenerate={handleQuickCreateGenerate}
+      />
       <GeneratedVideoModal 
         isOpen={showGeneratedVideoModal} 
         onClose={() => setShowGeneratedVideoModal(false)} 
