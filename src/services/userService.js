@@ -215,6 +215,70 @@ class UserService {
     }
   }
 
+  // Get current user's appearance settings
+  async getAppearanceSettings() {
+    try {
+      console.log('Fetching appearance settings...');
+      const response = await fetch(buildUrl('/api/user/settings/appearance'), {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+
+      console.log('Appearance response status:', response.status);
+
+      if (!response.ok) {
+        if (response.status === 401) throw new Error('Authentication required');
+        if (response.status === 404) return null; // not found -> user hasn't saved settings
+        throw new Error(`Failed to fetch appearance settings: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Appearance data:', data);
+      // Expecting { data: { appearance: { ... } } } or { appearance: { ... } }
+      return data.data?.appearance || data.appearance || null;
+    } catch (error) {
+      console.error('Error fetching appearance settings:', error);
+      throw error;
+    }
+  }
+
+  // Update (partial) appearance settings for current user
+  async updateAppearanceSettings(patch) {
+    try {
+      if (!patch || Object.keys(patch).length === 0) {
+        const err = new Error('Request body must contain at least one field');
+        err.status = 400;
+        throw err;
+      }
+
+      console.log('Patching appearance settings with:', patch);
+
+      const response = await fetch(buildUrl('/api/user/settings/appearance'), {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(patch)
+      });
+
+      console.log('Update appearance status:', response.status);
+
+      if (!response.ok) {
+        if (response.status === 401) throw new Error('Authentication required');
+        if (response.status === 400) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.message || 'Invalid appearance settings');
+        }
+        throw new Error(`Failed to update appearance settings: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Updated appearance response:', data);
+      return data.data?.appearance || data.appearance || null;
+    } catch (error) {
+      console.error('Error updating appearance settings:', error);
+      throw error;
+    }
+  }
+
   // Test API connection
   async testConnection() {
     try {
