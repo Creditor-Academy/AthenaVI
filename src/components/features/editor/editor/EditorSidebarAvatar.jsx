@@ -20,7 +20,8 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
         if (activeTab === 'mine') ownership = 'private';
         if (activeTab === 'team') ownership = 'workspace';
         
-        const responseData = await heygenService.getAvatarGroups({ ownership });
+        // Use getAvatarLooks to get specific avatar_ids needed for video generation
+        const responseData = await heygenService.getAvatarLooks({ ownership });
         
         // Comprehensive mapping to handle different API versions and response shapes
         let avatarList = [];
@@ -28,26 +29,28 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
         
         if (Array.isArray(data)) {
           avatarList = data;
-        } else if (data?.avatar_groups) {
-          avatarList = data.avatar_groups;
         } else if (data?.avatar_looks) {
           avatarList = data.avatar_looks;
         } else if (data?.avatars) {
           avatarList = data.avatars;
         } else if (responseData?.avatar_looks) {
           avatarList = responseData.avatar_looks;
-        } else if (responseData?.avatar_groups) {
-          avatarList = responseData.avatar_groups;
         }
         
         console.log(`Athena VI (Editor): Mapping ${avatarList.length} avatars for ownership: ${ownership}`, { raw: responseData });
 
-        const mappedAvatars = avatarList.map(av => ({
-          id: av.avatar_group_id || av.id,
-          name: av.name || av.group_name || 'AI Presenter',
-          image: av.preview_image_url || av.thumbnail_url || av.normal_image_url || av.image_url || 'https://via.placeholder.com/300x400?text=Avatar',
-          gender: av.gender || 'unknown',
-        }));
+        const mappedAvatars = avatarList.map(av => {
+          // If we called getAvatarLooks, 'av' might be the look itself
+          const avatarId = av.avatar_id || av.id;
+
+          return {
+            id: avatarId,
+            groupId: av.avatar_group_id || av.group_id || avatarId,
+            name: av.avatar_name || av.name || 'AI Presenter',
+            image: av.preview_image_url || av.thumbnail_url || av.normal_image_url || av.image_url || 'https://via.placeholder.com/300x400?text=Avatar',
+            gender: av.gender || 'unknown',
+          };
+        });
         
         setAvatars(mappedAvatars);
       } catch (err) {
