@@ -12,6 +12,57 @@ import {
 } from 'react-icons/md'
 import './Library.css'
 
+/* ── Assets API Docs Component ── */
+function AssetsApiDocs() {
+  const box = {
+    background: '#FFFFFF', padding: '16px', borderRadius: '12px', boxShadow: '0 6px 18px rgba(16,24,40,0.04)',
+    border: '1px solid #F1F5F9', marginTop: '20px', fontSize: '13px', color: '#111827'
+  }
+
+  return (
+    <div style={box}>
+      <h3 style={{ margin: 0, marginBottom: 8 }}>Assets API</h3>
+      <div style={{ color: '#6B7280', marginBottom: 12 }}>Base path: <strong>/api/assets</strong></div>
+
+      <section style={{ marginBottom: 12 }}>
+        <div style={{ fontWeight: 700 }}>Upload asset</div>
+        <div style={{ color: '#6B7280', marginBottom: 6 }}><strong>POST</strong> /api/assets/:workspaceId/upload</div>
+        <div>multipart/form-data with a single file field <code>file</code>. Allowed MIME: image/jpeg, image/png, image/webp, video/mp4, audio/mp3. Max size 50 MB.</div>
+        <div style={{ color: '#6B7280', marginTop: 6 }}>Responses: <strong>201</strong> (created) with asset metadata, <strong>400</strong> for invalid type or limit exceeded.</div>
+      </section>
+
+      <section style={{ marginBottom: 12 }}>
+        <div style={{ fontWeight: 700 }}>List assets</div>
+        <div style={{ color: '#6B7280', marginBottom: 6 }}><strong>GET</strong> /api/assets/:workspaceId</div>
+        <div>Optional query: <code>take</code> (1–100, default 20), <code>skip</code> (offset, default 0). PRIVATE workspaces return only current user's uploads; TEAM returns all workspace assets.</div>
+        <div style={{ color: '#6B7280', marginTop: 6 }}>Response: <strong>200</strong> with <code>{'{ "assets": [...] }'}</code>.</div>
+      </section>
+
+      <section style={{ marginBottom: 12 }}>
+        <div style={{ fontWeight: 700 }}>Rename asset</div>
+        <div style={{ color: '#6B7280', marginBottom: 6 }}><strong>PATCH</strong> /api/assets/:workspaceId/:assetId/rename</div>
+        <div>Body JSON: <code>{'{ "name": "new-name.webp" }'}</code>. Name length 1–255 characters (trimmed).</div>
+        <div style={{ color: '#6B7280', marginTop: 6 }}>Response: <strong>200</strong> with updated asset metadata.</div>
+      </section>
+
+      <section>
+        <div style={{ fontWeight: 700 }}>Delete asset</div>
+        <div style={{ color: '#6B7280', marginBottom: 6 }}><strong>DELETE</strong> /api/assets/:workspaceId/:assetId</div>
+        <div>Removes object from storage and decrements the owner&apos;s storageUsed. Response: <strong>200</strong> with deleted asset metadata.</div>
+      </section>
+
+      <div style={{ marginTop: 12, color: '#6B7280', fontSize: 12 }}>
+        All routes require <code>Authorization: Bearer &lt;access_token&gt;</code> and <code>checkWorkspaceAccess</code>. PRIVATE workspaces: owner only. TEAM workspaces: any member.
+      </div>
+
+      {/* Assets API docs (dashboard) */}
+      <div style={{ maxWidth: 1300, margin: '22px auto', padding: '0 16px' }}>
+        <AssetsApiDocs />
+      </div>
+    </div>
+  )
+}
+
 const CATEGORY_CARDS = [
   { id: 'media', label: 'Media', Icon: Image },
   { id: 'music', label: 'Music', Icon: Music2 },
