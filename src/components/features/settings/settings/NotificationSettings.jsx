@@ -1,15 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import userService from '../../../../services/userService';
 
 const NotificationSettings = () => {
     const [toggles, setToggles] = useState({
-      notifications: true,
-      emailMarketing: false,
-      comments: true,
-      digest: false
+      pushNotifications: true,
+      commentsAndMentions: true,
+      weeklyDigestEmail: false,
+      productEmails: false
     });
-  
-    const handleToggle = (key) => {
-      setToggles(prev => ({ ...prev, [key]: !prev[key] }));
+    const [loading, setLoading] = useState(true);
+
+    // Fetch notification settings on mount
+    useEffect(() => {
+      const fetchSettings = async () => {
+        try {
+          const settings = await userService.getNotificationSettings();
+          if (settings) {
+            setToggles(settings);
+          }
+        } catch (error) {
+          console.error('Failed to fetch notification settings:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchSettings();
+    }, []);
+
+    const handleToggle = async (key) => {
+      const newValue = !toggles[key];
+      setToggles(prev => ({ ...prev, [key]: newValue }));
+
+      try {
+        await userService.updateNotificationSettings({ [key]: newValue });
+      } catch (error) {
+        console.error('Failed to update notification settings:', error);
+        // Revert on error
+        setToggles(prev => ({ ...prev, [key]: !newValue }));
+      }
     };
 
     return (
@@ -27,10 +55,11 @@ const NotificationSettings = () => {
             </div>
             <button
               type="button"
-              className={`toggle-switch ${toggles.notifications ? 'active' : ''}`}
+              className={`toggle-switch ${toggles.pushNotifications ? 'active' : ''}`}
               role="switch"
-              aria-checked={toggles.notifications}
-              onClick={() => handleToggle('notifications')}
+              aria-checked={toggles.pushNotifications}
+              onClick={() => handleToggle('pushNotifications')}
+              disabled={loading}
             >
               <div className="toggle-knob" />
             </button>
@@ -43,10 +72,11 @@ const NotificationSettings = () => {
             </div>
             <button
               type="button"
-              className={`toggle-switch ${toggles.comments ? 'active' : ''}`}
+              className={`toggle-switch ${toggles.commentsAndMentions ? 'active' : ''}`}
               role="switch"
-              aria-checked={toggles.comments}
-              onClick={() => handleToggle('comments')}
+              aria-checked={toggles.commentsAndMentions}
+              onClick={() => handleToggle('commentsAndMentions')}
+              disabled={loading}
             >
               <div className="toggle-knob" />
             </button>
@@ -59,10 +89,11 @@ const NotificationSettings = () => {
             </div>
             <button
               type="button"
-              className={`toggle-switch ${toggles.digest ? 'active' : ''}`}
+              className={`toggle-switch ${toggles.weeklyDigestEmail ? 'active' : ''}`}
               role="switch"
-              aria-checked={toggles.digest}
-              onClick={() => handleToggle('digest')}
+              aria-checked={toggles.weeklyDigestEmail}
+              onClick={() => handleToggle('weeklyDigestEmail')}
+              disabled={loading}
             >
               <div className="toggle-knob" />
             </button>
@@ -75,10 +106,11 @@ const NotificationSettings = () => {
             </div>
             <button
               type="button"
-              className={`toggle-switch ${toggles.emailMarketing ? 'active' : ''}`}
+              className={`toggle-switch ${toggles.productEmails ? 'active' : ''}`}
               role="switch"
-              aria-checked={toggles.emailMarketing}
-              onClick={() => handleToggle('emailMarketing')}
+              aria-checked={toggles.productEmails}
+              onClick={() => handleToggle('productEmails')}
+              disabled={loading}
             >
               <div className="toggle-knob" />
             </button>

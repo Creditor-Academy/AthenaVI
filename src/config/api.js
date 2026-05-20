@@ -31,13 +31,12 @@ const API_CONFIG = {
     
     // User Management
     USER: {
-      GET_ALL: '/api/user/getall'
-      // Note: No individual user profile endpoint mentioned in docs
-    },
-
-    // User settings (persisted per authenticated user)
-    USER_SETTINGS: {
-      APPEARANCE: '/api/user/settings/appearance'
+      GET_ALL: '/api/user/getall',
+      // user settings endpoints are under /api/user/settings
+      USER_SETTINGS: {
+        APPEARANCE: '/api/user/settings/appearance',
+        NOTIFICATIONS: '/api/user/settings/notifications'
+      }
     },
     
     // HeyGen API
