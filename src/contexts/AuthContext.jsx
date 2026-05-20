@@ -235,6 +235,23 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  // Logout from all devices function
+  const logoutAll = async () => {
+    setLoading(true)
+    try {
+      await authService.logoutAll()
+      setUser(null)
+      setIsAuthenticated(false)
+    } catch (error) {
+      console.error('Logout all error:', error)
+      // Still logout locally even if backend call fails
+      setUser(null)
+      setIsAuthenticated(false)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Update user data
   const updateUser = React.useCallback((newUserData) => {
     setUser(newUserData)
@@ -254,6 +271,7 @@ export const AuthProvider = ({ children }) => {
     googleLogin,
     handleGoogleCallback,
     logout,
+    logoutAll,
     updateUser
   }
 
