@@ -279,6 +279,70 @@ class UserService {
     }
   }
 
+  // Get current user's notification settings
+  async getNotificationSettings() {
+    try {
+      console.log('Fetching notification settings...');
+      const response = await fetch(buildUrl('/api/user/settings/notifications'), {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+
+      console.log('Notification settings response status:', response.status);
+
+      if (!response.ok) {
+        if (response.status === 401) throw new Error('Authentication required');
+        if (response.status === 404) return null; // not found -> user hasn't saved settings
+        throw new Error(`Failed to fetch notification settings: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Notification settings data:', data);
+      // Expecting { data: { notifications: { ... } } } or { notifications: { ... } }
+      return data.data?.notifications || data.notifications || null;
+    } catch (error) {
+      console.error('Error fetching notification settings:', error);
+      throw error;
+    }
+  }
+
+  // Update (partial) notification settings for current user
+  async updateNotificationSettings(patch) {
+    try {
+      if (!patch || Object.keys(patch).length === 0) {
+        const err = new Error('Request body must contain at least one field');
+        err.status = 400;
+        throw err;
+      }
+
+      console.log('Patching notification settings with:', patch);
+
+      const response = await fetch(buildUrl('/api/user/settings/notifications'), {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(patch)
+      });
+
+      console.log('Update notification settings status:', response.status);
+
+      if (!response.ok) {
+        if (response.status === 401) throw new Error('Authentication required');
+        if (response.status === 400) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.message || 'Invalid notification settings');
+        }
+        throw new Error(`Failed to update notification settings: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Updated notification settings response:', data);
+      return data.data?.notifications || data.notifications || null;
+    } catch (error) {
+      console.error('Error updating notification settings:', error);
+      throw error;
+    }
+  }
+
   // Test API connection
   async testConnection() {
     try {

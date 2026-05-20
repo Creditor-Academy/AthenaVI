@@ -34,7 +34,8 @@ const API_CONFIG = {
       GET_ALL: '/api/user/getall',
       // user settings endpoints are under /api/user/settings
       USER_SETTINGS: {
-        APPEARANCE: '/api/user/settings/appearance'
+        APPEARANCE: '/api/user/settings/appearance',
+        NOTIFICATIONS: '/api/user/settings/notifications'
       }
     },
     
