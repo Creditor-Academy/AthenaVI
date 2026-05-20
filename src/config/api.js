@@ -1,7 +1,7 @@
 // API Configuration - Central place for all backend URLs
 const API_CONFIG = {
   // Backend base URL - Change this when deploying to different environments
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:9000',
+  BASE_URL: import.meta.env.VITE_API_BASE_URL || '',
   
   // API Endpoints (matching your backend documentation)
   ENDPOINTS: {
