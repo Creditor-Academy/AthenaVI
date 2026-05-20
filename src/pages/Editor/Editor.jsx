@@ -178,7 +178,7 @@ function Create({ onBack, initialConfig = null }) {
 
   // Memoized access for convenience
   const scenes = project.scenes;
-  const bgMusic = scenes.find(s => s.clips.some(c => c.type === 'audio'))?.clips.find(c => c.type === 'audio')?.src || null;
+  const bgMusic = scenes.find(s => s.clips?.some(c => c.type === 'audio'))?.clips?.find(c => c.type === 'audio')?.src || null;
   const [bgMusicVolume, setBgMusicVolume] = useState(0.6);
 
   const setBgMusic = (url) => {
