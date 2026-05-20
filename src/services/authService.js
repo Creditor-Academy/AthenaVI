@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { buildUrl, getAuthHeaders } from '../config/api.js'
+import { buildUrl } from '../config/api.js'
 
 // Create axios instance with base configuration
 const api = axios.create({
@@ -8,6 +8,9 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json'
   }
+  ,
+  // Include cookies (refreshToken) on requests to the API
+  withCredentials: true
 })
 
 // Request interceptor to add auth token
@@ -31,7 +34,8 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       // Token expired, try to refresh
       try {
-        const response = await axios.post(buildUrl('/api/auth/refresh'), {})
+        // Use the same axios instance (which has withCredentials) so refresh cookie is sent
+        const response = await api.post('/api/auth/refresh', {})
         const { accessToken } = response.data.data
         localStorage.setItem('accessToken', accessToken)
         
