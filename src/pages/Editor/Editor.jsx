@@ -119,32 +119,32 @@ function Create({ onBack, initialConfig = null }) {
       const payload = {
         data: {
           videoSettings: {
-            width: project.resolution.width,
-            height: project.resolution.height,
+            width: project.resolution?.width || 1920,
+            height: project.resolution?.height || 1080,
             fps: 30,
             backgroundColor: '#000000'
           },
-          scenes: project.scenes.map((scene, idx) => ({
+          scenes: (project.scenes || []).map((scene, idx) => ({
             sceneId: scene.id || `scene_${idx}`,
             name: scene.title || `Scene ${idx + 1}`,
-            durationInFrames: (scene.duration || 8) * 30,
+            durationInFrames: Math.max(1, Math.round((scene.duration || 8) * 30)),
             background: scene.background || { type: 'color', value: '#ffffff' },
             elements: (scene.clips || []).map((clip, cIdx) => ({
-              id: clip.id || `clip_${cIdx}`,
-              type: clip.type || 'text',
+              id: String(clip.id || `clip_${cIdx}`),
+              type: ['avatar', 'text', 'image', 'video', 'audio', 'shape', 'subtitle'].includes(clip.type) ? clip.type : 'text',
               layer: clip.layer || 0,
-              startFrame: (clip.startTime || 0) * 30,
-              durationInFrames: ((clip.endTime || 8) - (clip.startTime || 0)) * 30,
+              startFrame: Math.max(0, Math.round((clip.startTime || 0) * 30)),
+              durationInFrames: Math.max(1, Math.round(((clip.endTime || ((clip.startTime || 0) + (clip.duration || 5))) - (clip.startTime || 0)) * 30)),
               placement: {
-                x: clip.position?.x || 0,
-                y: clip.position?.y || 0,
-                width: clip.size?.width || 100,
-                height: clip.size?.height || 100,
+                x: Number(clip.position?.x || 0),
+                y: Number(clip.position?.y || 0),
+                width: Math.max(1, Number(clip.size?.width || 100)),
+                height: Math.max(1, Number(clip.size?.height || 100)),
                 rotation: 0,
                 scale: 1,
-                opacity: clip.opacity || 1
+                opacity: clip.opacity !== undefined ? Number(clip.opacity) : 1
               },
-              content: clip.content || clip.src || {}
+              content: typeof clip.content === 'object' && clip.content !== null ? clip.content : { src: clip.src || clip.content }
             }))
           }))
         }
@@ -177,7 +177,7 @@ function Create({ onBack, initialConfig = null }) {
   }, [project.scenes, project.title, project.resolution])
 
   // Memoized access for convenience
-  const scenes = project.scenes;
+  const scenes = project.scenes || [];
   const bgMusic = scenes.find(s => s.clips?.some(c => c.type === 'audio'))?.clips?.find(c => c.type === 'audio')?.src || null;
   const [bgMusicVolume, setBgMusicVolume] = useState(0.6);
 
