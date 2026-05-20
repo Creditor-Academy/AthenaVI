@@ -6,7 +6,7 @@ import { buildUrl, getAuthHeaders } from '../config/api.js'
 
 class UserService {
   constructor() {
-    this.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9000';
+    this.baseURL = import.meta.env.VITE_API_BASE_URL || '';
   }
 
   // Get user profile (only essential fields)
