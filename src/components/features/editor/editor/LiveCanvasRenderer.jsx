@@ -1,5 +1,5 @@
 import React, { useCallback, useRef } from 'react'
-import { MdPerson, MdPhotoSizeSelectActual } from 'react-icons/md'
+import { MdPerson, MdPhotoSizeSelectActual, MdVideoLibrary } from 'react-icons/md'
 
 /**
  * COORDINATE SYSTEM
@@ -189,6 +189,64 @@ const AvatarClip = ({ clip, isSelected, onSelect }) => (
   </div>
 )
 
+/** Renders a single video clip (e.g. Generated Presenter or Stock video) */
+const VideoClip = ({ clip, isSelected, onSelect }) => (
+  <div
+    onClick={(e) => { e.stopPropagation(); onSelect(clip.id) }}
+    style={{
+      position: 'absolute',
+      left: `${mapX(clip.position?.x)}%`,
+      top: `${mapY(clip.position?.y)}%`,
+      width: mapW(clip.size?.width),
+      height: mapH(clip.size?.height),
+      overflow: 'hidden',
+      borderRadius: clip.role === 'avatar' ? '50%' : (clip.style?.borderRadius || '16px'),
+      outline: isSelected ? '2px solid #1a73e8' : 'none',
+      zIndex: isSelected ? 20 : 9,
+      cursor: 'pointer',
+      background: clip.src ? 'transparent' : 'rgba(0,0,0,0.04)',
+    }}
+  >
+    {isSelected && (
+      <>
+        {['top-left','top-right','bottom-left','bottom-right'].map(pos => (
+          <div key={pos} style={{
+            position: 'absolute',
+            width: 10, height: 10,
+            background: '#1a73e8',
+            border: '2px solid white',
+            borderRadius: 2,
+            zIndex: 30,
+            ...(pos.includes('top') ? { top: -5 } : { bottom: -5 }),
+            ...(pos.includes('left') ? { left: -5 } : { right: -5 }),
+          }} />
+        ))}
+      </>
+    )}
+    {clip.src ? (
+      <video
+        src={clip.src}
+        style={{ width: '100%', height: '100%', objectFit: clip.role === 'avatar' ? 'contain' : 'cover', display: 'block' }}
+        muted
+        playsInline
+      />
+    ) : (
+      <div style={{
+        width: '100%', height: '100%',
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        gap: 8,
+        background: 'linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(168,85,247,0.08) 100%)',
+      }}>
+        <MdVideoLibrary size={32} style={{ color: 'rgba(99,102,241,0.4)' }} />
+        <span style={{ fontSize: 11, color: 'rgba(99,102,241,0.5)', fontWeight: 700, letterSpacing: '0.05em' }}>
+          ADD VIDEO
+        </span>
+      </div>
+    )}
+  </div>
+)
+
 /** Renders a shape / background rect */
 const ShapeClip = ({ clip, isSelected, onSelect }) => (
   <div
@@ -288,6 +346,17 @@ const LiveCanvasRenderer = ({
           if (clip.type === 'avatar') {
             return (
               <AvatarClip
+                key={clip.id}
+                clip={clip}
+                isSelected={isSelected}
+                onSelect={onSelectClip}
+              />
+            )
+          }
+
+          if (clip.type === 'video') {
+            return (
+              <VideoClip
                 key={clip.id}
                 clip={clip}
                 isSelected={isSelected}

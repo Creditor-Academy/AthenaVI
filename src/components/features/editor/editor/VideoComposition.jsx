@@ -1,11 +1,12 @@
 import React from 'react'
-import { useCurrentFrame, spring, interpolate, useVideoConfig, Audio } from 'remotion'
+import { useCurrentFrame, spring, interpolate, useVideoConfig, Audio, Video } from 'remotion'
 import {
     MdPerson,
     MdAutoAwesome,
     MdPlayCircleFilled,
     MdAddCircleOutline,
-    MdPhotoSizeSelectActual
+    MdPhotoSizeSelectActual,
+    MdVideoLibrary
 } from 'react-icons/md'
 
 const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) => {
@@ -191,21 +192,30 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) 
                     )
                 }
 
-                if (clip.type === 'image' || clip.type === 'avatar') {
+                if (clip.type === 'image' || clip.type === 'avatar' || clip.type === 'video') {
                     return (
                         <div key={clip.id} style={{
                             ...style,
                             border: 'none',
-                            borderRadius: clip.type === 'avatar' ? '50%' : '16px',
+                            borderRadius: (clip.type === 'avatar' || clip.role === 'avatar') ? '50%' : '16px',
                             background: clip.src ? 'transparent' : 'rgba(0,0,0,0.03)',
                             overflow: 'hidden'
                         }}>
                             {clip.src ? (
-                                <img src={clip.src} style={{ width: '100%', height: '100%', objectFit: clip.role === 'avatar' ? 'contain' : 'cover' }} alt="" />
+                                clip.type === 'video' ? (
+                                    <Video 
+                                        src={clip.src} 
+                                        style={{ width: '100%', height: '100%', objectFit: clip.role === 'avatar' ? 'contain' : 'cover' }} 
+                                    />
+                                ) : (
+                                    <img src={clip.src} style={{ width: '100%', height: '100%', objectFit: clip.role === 'avatar' ? 'contain' : 'cover' }} alt="" />
+                                )
                             ) : (
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
                                     {clip.type === 'avatar' ? (
                                         <MdPerson size={Math.min(64, (clip.size?.width || 128) / 2)} color="rgba(0,0,0,0.1)" />
+                                    ) : clip.type === 'video' ? (
+                                        <MdVideoLibrary size={Math.min(64, (clip.size?.width || 128) / 2)} color="rgba(0,0,0,0.1)" />
                                     ) : (
                                         <MdPhotoSizeSelectActual size={Math.min(64, (clip.size?.width || 128) / 2)} color="rgba(0,0,0,0.1)" />
                                     )}

@@ -89,6 +89,7 @@ function Create({ onBack, initialConfig = null }) {
   const [lastSaved, setLastSaved] = useState(null)
   const [showGeneratedVideoModal, setShowGeneratedVideoModal] = useState(false)
   const [generatedVideoUrl, setGeneratedVideoUrl] = useState(null)
+  const [generatingSceneId, setGeneratingSceneId] = useState(null)
   const [showQuickCreateModal, setShowQuickCreateModal] = useState(() => {
     if (!initialConfig?.videoData?.data && !initialConfig?.template) return true;
     if (!project.scenes || project.scenes.length === 0) return true;
@@ -98,8 +99,11 @@ function Create({ onBack, initialConfig = null }) {
 
   useEffect(() => {
     const handleOpenGeneratedVideo = (e) => {
-      setGeneratedVideoUrl(e.detail.url)
-      setShowGeneratedVideoModal(true)
+      if (e.detail?.url) {
+        setGeneratedVideoUrl(e.detail.url)
+        setGeneratingSceneId(e.detail.sceneId || null)
+        setShowGeneratedVideoModal(true)
+      }
     }
     window.addEventListener('open-generated-video', handleOpenGeneratedVideo)
     return () => window.removeEventListener('open-generated-video', handleOpenGeneratedVideo)
@@ -590,6 +594,35 @@ function Create({ onBack, initialConfig = null }) {
     setActiveSceneId(newScene.id)
   }
 
+  const handleGenerateStoryboard = (storyboardScenes, mode = 'replace') => {
+    setProject(prev => {
+      let finalScenes;
+      if (mode === 'replace') {
+        finalScenes = storyboardScenes.map((s, idx) => ({
+          ...s,
+          order: idx
+        }));
+      } else {
+        const baseOrder = prev.scenes.length;
+        const orderedNewScenes = storyboardScenes.map((s, idx) => ({
+          ...s,
+          order: baseOrder + idx
+        }));
+        finalScenes = [...prev.scenes, ...orderedNewScenes];
+      }
+      
+      return {
+        ...prev,
+        updatedAt: new Date().toISOString(),
+        scenes: finalScenes
+      };
+    });
+
+    if (storyboardScenes.length > 0) {
+      setActiveSceneId(storyboardScenes[0].id);
+    }
+  };
+
   const deleteScene = (id) => {
     if (project.scenes.length === 1) return
     const newScenes = project.scenes.filter(s => s.id !== id)
@@ -691,22 +724,14 @@ function Create({ onBack, initialConfig = null }) {
             // Fetch the stream as a Blob to successfully attach the Bearer token headers
             const videoUrl = await heygenService.getVideoBlobUrl(workspaceId, projectId, heygenVideoId);
             
-            // Update the avatar clip with the generated video
-            const updatedClips = scene.clips.map(clip => 
-              (clip.role === 'avatar' || clip.type === 'avatar') 
-                ? { ...clip, src: videoUrl, type: 'video' } 
-                : clip
-            );
-
             updateScene(sceneId, { 
               heygenStatus: 'completed',
               avatar: videoData.thumbnail_url || scene.avatar,
-              generatedVideoUrl: videoUrl,
-              clips: updatedClips
+              generatedVideoUrl: videoUrl
             });
             
-            // Auto open the modal
-            window.dispatchEvent(new CustomEvent('open-generated-video', { detail: { url: videoUrl } }));
+            // Auto open the modal with sceneId
+            window.dispatchEvent(new CustomEvent('open-generated-video', { detail: { url: videoUrl, sceneId } }));
           } else if (videoData.status === 'failed' || videoData.status === 'error') {
             updateScene(sceneId, { heygenStatus: 'failed' });
             window.dispatchEvent(new CustomEvent('generation-failed'));
@@ -740,6 +765,146 @@ function Create({ onBack, initialConfig = null }) {
   }
 
   const handleQuickCreateGenerate = (payload) => {
+    if (payload.isStoryboard) {
+      // Split script into paragraphs by double newlines or single newlines with spacing
+      const paragraphs = (payload.script || '')
+        .split(/\n\s*\n+/)
+        .map(p => p.trim())
+        .filter(p => p.length > 0);
+
+      if (paragraphs.length === 0) return;
+
+      const storyboardScenes = paragraphs.map((paraText, pIdx) => {
+        // Calculate scene duration (approx 2.3 words/sec, min 6s)
+        const words = paraText.split(/\s+/).filter(w => w.length > 0);
+        const duration = Math.max(6.0, Math.ceil((words.length / 2.3) * 10) / 10);
+
+        // Extract a concise highlight phrase or first sentence
+        const sentences = paraText.split(/[.!?]\s+/);
+        let headline = sentences[0]?.trim() || '';
+        if (headline) {
+          const punctuationChar = paraText.charAt(headline.length);
+          if (['.', '!', '?'].includes(punctuationChar)) {
+            headline += punctuationChar;
+          }
+        }
+        
+        if (headline.length > 85) {
+          headline = headline.substring(0, 82) + '...';
+        }
+
+        // Layout cycles alternating left/right
+        const isLeft = pIdx % 2 === 0;
+        const isLightTheme = payload.backgroundColor === '#ffffff' || payload.backgroundColor === '#e2e8f0' || payload.backgroundColor === '#f8fafc';
+        const textColor = isLightTheme ? '#0f172a' : '#ffffff';
+        const clips = [];
+
+        if (isLeft) {
+          clips.push({
+            id: `clip_avatar_${Date.now()}_${pIdx}_1`,
+            type: 'avatar',
+            role: 'avatar',
+            src: payload.avatarImage,
+            startTime: 0,
+            endTime: duration,
+            position: { x: 100, y: 100 },
+            size: { width: 350, height: 500 },
+            opacity: 1.0,
+            layer: 1
+          });
+          clips.push({
+            id: `clip_text_${Date.now()}_${pIdx}_2`,
+            type: 'text',
+            role: 'main-text',
+            content: headline,
+            startTime: 0.5,
+            endTime: duration,
+            position: { x: 500, y: 180 },
+            size: { width: 680, height: 400 },
+            style: {
+              fontSize: 38,
+              fontWeight: '700',
+              color: textColor,
+              textAlign: 'left',
+              width: '680px',
+              fontFamily: 'Inter, system-ui, sans-serif'
+            },
+            opacity: 1.0,
+            layer: 2
+          });
+        } else {
+          clips.push({
+            id: `clip_avatar_${Date.now()}_${pIdx}_1`,
+            type: 'avatar',
+            role: 'avatar',
+            src: payload.avatarImage,
+            startTime: 0,
+            endTime: duration,
+            position: { x: 830, y: 100 },
+            size: { width: 350, height: 500 },
+            opacity: 1.0,
+            layer: 1
+          });
+          clips.push({
+            id: `clip_text_${Date.now()}_${pIdx}_2`,
+            type: 'text',
+            role: 'main-text',
+            content: headline,
+            startTime: 0.5,
+            endTime: duration,
+            position: { x: 100, y: 180 },
+            size: { width: 680, height: 400 },
+            style: {
+              fontSize: 38,
+              fontWeight: '700',
+              color: textColor,
+              textAlign: 'left',
+              width: '680px',
+              fontFamily: 'Inter, system-ui, sans-serif'
+            },
+            opacity: 1.0,
+            layer: 2
+          });
+        }
+
+        return {
+          id: `scene_${Date.now()}_${pIdx}`,
+          sceneId: `scene_${Date.now()}_${pIdx}`,
+          name: `Scene ${pIdx + 1}`,
+          title: `Scene ${pIdx + 1}`,
+          duration: duration,
+          background: { type: 'color', value: payload.backgroundColor || '#101828' },
+          avatar: payload.avatarImage,
+          avatarType: payload.avatarType,
+          avatarName: payload.avatarName || 'AI Presenter',
+          voiceId: payload.voiceId,
+          script: paraText,
+          clips: clips
+        };
+      });
+
+      setProject(prev => {
+        const updated = {
+          ...prev,
+          scenes: storyboardScenes
+        };
+        setTimeout(() => {
+          saveProject(false);
+        }, 100);
+        return updated;
+      });
+
+      if (storyboardScenes.length > 0) {
+        setActiveSceneId(storyboardScenes[0].id);
+      }
+
+      setShowQuickCreateModal(false);
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('open-generated-video'));
+      }, 300);
+      return;
+    }
+
     let targetSceneId = activeSceneId;
     let currentScenes = project.scenes;
 
@@ -810,6 +975,51 @@ function Create({ onBack, initialConfig = null }) {
     }, 500);
   };
 
+  const handleUseGeneratedVideo = () => {
+    if (!generatingSceneId || !generatedVideoUrl) return;
+
+    // Find the scene
+    const scene = project.scenes.find(s => s.id === generatingSceneId);
+    if (!scene) return;
+
+    // Update the avatar clip with the generated video URL and type 'video'
+    const updatedClips = (scene.clips || []).map(clip => 
+      (clip.role === 'avatar' || clip.type === 'avatar') 
+        ? { ...clip, src: generatedVideoUrl, type: 'video' } 
+        : clip
+    );
+
+    setProject(prev => {
+      const newProj = {
+        ...prev,
+        scenes: prev.scenes.map(s => s.id === generatingSceneId ? {
+          ...s,
+          clips: updatedClips,
+          generatedVideoUrl: generatedVideoUrl
+        } : s)
+      };
+      
+      // Auto-save the project
+      setTimeout(() => {
+        saveProject(false);
+      }, 100);
+      
+      return newProj;
+    });
+
+    setShowGeneratedVideoModal(false);
+  };
+
+  const handleRemakeVideo = () => {
+    if (!generatingSceneId) return;
+    
+    // Close the modal
+    setShowGeneratedVideoModal(false);
+    
+    // Trigger generation again
+    generateSceneVideo(generatingSceneId);
+  };
+
   return (
     <div className="video-editor-shell">
       <QuickCreateModal
@@ -821,6 +1031,8 @@ function Create({ onBack, initialConfig = null }) {
         isOpen={showGeneratedVideoModal} 
         onClose={() => setShowGeneratedVideoModal(false)} 
         videoUrl={generatedVideoUrl} 
+        onUseInEditor={handleUseGeneratedVideo}
+        onRemake={handleRemakeVideo}
       />
       <EditorTopbar
         onBack={onBack}
@@ -854,6 +1066,7 @@ function Create({ onBack, initialConfig = null }) {
             setBgMusic={setBgMusic}
             scenes={scenes}
             autoCreateScene={autoCreateScene}
+            onGenerateStoryboard={handleGenerateStoryboard}
           />
         </div>
 

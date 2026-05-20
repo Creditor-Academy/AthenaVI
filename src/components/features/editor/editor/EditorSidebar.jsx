@@ -7,7 +7,8 @@ import {
   MdCloudUpload,
   MdTextFields,
   MdShapeLine,
-  MdLayers
+  MdLayers,
+  MdAutoAwesome
 } from 'react-icons/md';
 
 import EditorSidebarAvatar from './EditorSidebarAvatar';
@@ -33,10 +34,12 @@ const EditorSidebar = ({
   setShowTemplateModal,
   showPanelOnly = false,
   scenes = [],
-  autoCreateScene
+  autoCreateScene,
+  onGenerateStoryboard
 }) => {
   const tools = [
     { id: 'avatar', icon: MdPerson, label: 'Avatar' },
+    { id: 'magic', icon: MdAutoAwesome, label: 'AI Studio' },
     { id: 'mic', icon: MdMic, label: 'Voice' },
     { id: 'image', icon: MdPhotoLibrary, label: 'Images' },
     { id: 'video', icon: MdVideoLibrary, label: 'Videos' },
@@ -79,7 +82,7 @@ const EditorSidebar = ({
       case 'shapes':
         return <EditorSidebarShapes addLayer={addLayer} />;
       case 'magic':
-        return <EditorSidebarMagic />;
+        return <EditorSidebarMagic onGenerateStoryboard={onGenerateStoryboard} />;
       default:
         return (
           <div className="tool-panel-content">

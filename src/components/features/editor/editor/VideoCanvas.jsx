@@ -28,6 +28,26 @@ const VideoCanvas = forwardRef(({
 }, ref) => {
   const playerRef = useRef(null)
   const overlayRef = useRef(null)
+
+  const setPlayerRef = useCallback((node) => {
+    playerRef.current = node
+    if (node && onPlayerReady) {
+      onPlayerReady({
+        seekTo: (time) => {
+          node.seekTo(time * 30)
+        },
+        getCurrentFrame: () => {
+          return node.getCurrentFrame()
+        },
+        play: () => {
+          node.play()
+        },
+        pause: () => {
+          node.pause()
+        }
+      })
+    }
+  }, [onPlayerReady])
   const [isDragging, setIsDragging] = useState(false)
   const [hoveredClipId, setHoveredClipId] = useState(null)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
@@ -76,26 +96,7 @@ const VideoCanvas = forwardRef(({
     }
   }))
 
-  useEffect(() => {
-    if (playerRef.current && onPlayerReady) {
-      onPlayerReady({
-        seekTo: (time) => {
-          if (playerRef.current) {
-            playerRef.current.seekTo(time * 30)
-          }
-        },
-        getCurrentFrame: () => {
-          return playerRef.current ? playerRef.current.getCurrentFrame() : 0
-        },
-        play: () => {
-          if (playerRef.current) playerRef.current.play()
-        },
-        pause: () => {
-          if (playerRef.current) playerRef.current.pause()
-        }
-      })
-    }
-  }, [])
+  // Callback ref replaces manual mount effect to avoid race condition
 
   // Convert percentage/pixel layer position to overlay coordinates
   const getLayerStyle = (layer) => {
@@ -300,7 +301,7 @@ const VideoCanvas = forwardRef(({
 
           {/* === REMOTION PLAYER: used for preview/export, hidden during editing === */}
           <Player
-            ref={playerRef}
+            ref={setPlayerRef}
             component={VideoComposition}
             durationInFrames={Math.max(totalDurationInFrames, 1)}
             compositionWidth={1280}

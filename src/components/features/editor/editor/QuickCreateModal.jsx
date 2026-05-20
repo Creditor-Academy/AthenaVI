@@ -163,6 +163,26 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     }
   };
 
+  const handleSmartStoryboard = () => {
+    if (selectedAvatar && selectedVoice && script) {
+      setStep(5);
+      onGenerate({
+        avatarType: selectedAvatar.id,
+        avatarImage: selectedAvatar.image,
+        avatarName: selectedAvatar.name,
+        voiceId: selectedVoice.id,
+        script: script,
+        removeBackground,
+        backgroundColor,
+        aspectRatio,
+        expressiveness,
+        isStoryboard: true
+      });
+    } else {
+      alert("Please select an avatar, voice, and enter a script first.");
+    }
+  };
+
   const renderHeader = () => {
     const titles = [
       { title: "Select your presenter", subtitle: "Choose an AI avatar that best represents your video's message and tone." },
@@ -348,6 +368,19 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
                   <button className="qc-action-btn"><MdAutoAwesome /> AI Polish</button>
                   <button className="qc-action-btn"><MdTranslate /> Translate</button>
                   <button className="qc-action-btn"><MdHistory /> Last Draft</button>
+                  <button 
+                    className="qc-action-btn"
+                    onClick={handleSmartStoryboard}
+                    style={{
+                      marginLeft: 'auto',
+                      background: 'linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)',
+                      color: 'white',
+                      border: 'none',
+                      boxShadow: '0 2px 8px rgba(168, 85, 247, 0.25)'
+                    }}
+                  >
+                    <MdAutoAwesome /> Smart Storyboard
+                  </button>
                 </div>
               </div>
 
