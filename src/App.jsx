@@ -254,7 +254,27 @@ function App() {
   })
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [productSection, setProductSection] = useState(null)
-  const [createVideoConfig, setCreateVideoConfig] = useState(null)
+  const [createVideoConfig, setCreateVideoConfig] = useState(() => {
+    try {
+      const saved = window.localStorage.getItem('athenavi:createVideoConfig')
+      return saved ? JSON.parse(saved) : null
+    } catch {
+      return null
+    }
+  })
+
+  // Sync createVideoConfig to localStorage
+  useEffect(() => {
+    try {
+      if (createVideoConfig) {
+        window.localStorage.setItem('athenavi:createVideoConfig', JSON.stringify(createVideoConfig))
+      } else {
+        window.localStorage.removeItem('athenavi:createVideoConfig')
+      }
+    } catch (e) {
+      console.error('Failed to sync createVideoConfig to localStorage', e)
+    }
+  }, [createVideoConfig])
 
   // Save view to localStorage whenever it changes
   useEffect(() => {
@@ -478,7 +498,7 @@ function App() {
       {/* Protected Routes */}
       {view === 'create' && (
         <ProtectedRoute view={view} setView={setView}>
-          <Create onBack={() => setView('dashboard')} initialConfig={createVideoConfig} />
+          <Create onBack={() => { setCreateVideoConfig(null); setView('dashboard'); }} initialConfig={createVideoConfig} />
           {showAuthModal && (
             <Auth 
               onAuthComplete={handleAuthComplete}

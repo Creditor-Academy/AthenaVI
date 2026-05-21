@@ -364,30 +364,38 @@ const TimelineEditor = ({
 
           .canva-clip {
             position: absolute;
-            height: 46px;
-            background: #2b3648;
-            border-radius: 4px;
-            border: 1px solid #3b465a;
+            height: 48px;
+            background: linear-gradient(180deg, #2b3648 0%, #1f2937 100%);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             cursor: grab;
             display: flex;
             align-items: center;
             overflow: hidden;
-            transition: all 0.1s;
-            margin-top: 2px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 1px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+          }
+
+          .canva-clip:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.2);
           }
 
           .canva-clip.active {
-            border: 2px solid #facc15;
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.3), 0 4px 16px rgba(0,0,0,0.4);
             z-index: 10;
           }
 
           .canva-clip.drag-over {
-            border: 2px dashed #facc15;
+            border: 2px dashed var(--primary);
             opacity: 0.8;
           }
 
           .clip-thumb {
-            width: 40px;
+            width: 44px;
             height: 100%;
             background: #1f2937;
             background-size: cover;
@@ -396,44 +404,46 @@ const TimelineEditor = ({
           }
 
           .clip-info {
-            padding: 0 10px;
+            padding: 0 12px;
             color: #f3f4f6;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             white-space: nowrap;
           }
 
           .clip-name {
-            font-size: 12px;
-            font-weight: 500;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
           }
 
           .clip-trim-handle {
             position: absolute;
             top: 0;
             bottom: 0;
-            width: 12px;
+            width: 14px;
             cursor: ew-resize;
             display: none;
             align-items: center;
             justify-content: center;
-            background: #facc15;
+            background: var(--primary);
             z-index: 15;
+            transition: opacity 0.2s;
           }
           
           .canva-clip.active .clip-trim-handle {
              display: flex;
           }
 
-          .clip-trim-handle.left { left: 0; border-radius: 4px 0 0 4px; }
-          .clip-trim-handle.right { right: 0; border-radius: 0 4px 4px 0; }
+          .clip-trim-handle.left { left: 0; border-radius: 6px 0 0 6px; }
+          .clip-trim-handle.right { right: 0; border-radius: 0 6px 6px 0; }
           
           .clip-trim-handle::after {
             content: "";
             width: 2px;
-            height: 12px;
-            background: rgba(0,0,0,0.5);
+            height: 14px;
+            background: rgba(255,255,255,0.6);
             border-radius: 2px;
           }
 
@@ -441,35 +451,41 @@ const TimelineEditor = ({
             position: absolute;
             top: 0;
             bottom: 0;
-            width: 1px;
-            background: #e5e7eb;
+            width: 2px;
+            background: var(--primary);
             z-index: 100;
             pointer-events: none;
-            box-shadow: 0 0 4px rgba(255,255,255,0.2);
+            box-shadow: 0 0 8px var(--primary);
           }
 
           .playhead-head {
             position: absolute;
             top: 0px;
-            left: -6px;
-            width: 13px;
-            height: 16px;
-            background: #d1d5db;
-            border-radius: 2px;
-            border-bottom-left-radius: 6px;
-            border-bottom-right-radius: 6px;
+            left: -7px;
+            width: 16px;
+            height: 20px;
+            background: var(--primary);
+            border-radius: 4px;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
             pointer-events: auto;
             cursor: grab;
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.5);
+            transition: transform 0.1s;
+          }
+          
+          .playhead-head:hover {
+            transform: scale(1.1);
           }
 
           .playhead-head::after {
              content: "";
-             width: 5px;
+             width: 6px;
              height: 2px;
-             background: #4b5563;
+             background: #ffffff;
              border-radius: 1px;
           }
 
