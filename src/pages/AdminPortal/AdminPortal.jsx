@@ -1,67 +1,102 @@
-
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion as Motion } from 'framer-motion';
 import { 
   MdPeople, 
   MdAdminPanelSettings, 
   MdSecurity, 
   MdSettings, 
-  MdVideoLibrary, 
-  MdAttachMoney, 
-  MdTrendingUp,
-  MdFileDownload,
-  MdNotificationImportant,
-  MdSync,
-  MdVpnKey,
-  MdCheckCircle,
-  MdCancel,
-  MdWindow
+  MdOutlineFolderShared,
+  MdAutoAwesome
 } from 'react-icons/md';
-import TemplateManager from '../../components/features/admin/admin/TemplateManager';
+import AdminPortalSkeleton from '../page-skeleton/AdminPortalSkeleton';
+import DashboardOverview from '../../components/features/admin/DashboardOverview';
+import UsersList from '../../components/features/admin/UsersList';
 import './AdminPortal.css';
 
 const AdminPortal = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [maintenanceMode, setMaintenanceMode] = useState(false);
-  const [betaEngine, setBetaEngine] = useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const stats = [
-    { label: 'Total Users', value: '124,592', trend: '+12.5%', icon: <MdPeople />, colorClass: 'blue-bg' },
-    { label: 'Active Subs', value: '42,105', trend: '+8.2%', icon: <MdVpnKey />, colorClass: 'purple-bg' },
-    { label: 'Videos Rendered', value: '1.2M', trend: '+24.1%', icon: <MdVideoLibrary />, colorClass: 'orange-bg' },
-    { label: 'Total Revenue', value: '$2.4M', trend: '+32.4%', icon: <MdAttachMoney />, colorClass: 'green-bg' }
-  ];
+  // Simulate network request for data fetching
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1500); // 1.5 seconds loading state
 
-  const users = [
-    { id: 1, name: 'Alex Johnson', email: 'alex@example.com', plan: 'Enterprise', status: 'Active', joined: '2025-01-12' },
-    { id: 2, name: 'Sarah Chen', email: 'sarah.c@tech.com', plan: 'Pro', status: 'Active', joined: '2025-02-01' },
-    { id: 3, name: 'Michael Smith', email: 'mike.s@gmail.com', plan: 'Free', status: 'Suspended', joined: '2025-02-15' },
-    { id: 4, name: 'Elena Gilbert', email: 'elena@mystic.com', plan: 'Pro', status: 'Active', joined: '2025-03-01' },
-    { id: 5, name: 'Harvey Specter', email: 'harvey@pearson.com', plan: 'Enterprise', status: 'Active', joined: '2025-03-05' }
-  ];
-
-  const moderationQueue = [
-    { user: 'John Doe', title: 'Marketing Video Final', time: '5m ago' },
-    { user: 'Jane Smith', title: 'Tutorial Part 1', time: '12m ago' },
-    { user: 'Robert Paulson', title: 'Untitled Project', time: '20m ago' }
-  ];
-
-  const systemLogs = [
-    { type: 'success', msg: 'System backup completed successfully', time: '2 mins ago' },
-    { type: 'error', msg: 'API Timeout in US-EAST-1 Region', time: '15 mins ago' },
-    { type: 'info', msg: 'Beta rendering engine updated', time: '1 hour ago' }
-  ];
+    return () => clearTimeout(timer);
+  }, [activeTab]); // Trigger loading state whenever tab changes
 
   const adminTabs = [
     { id: 'dashboard', label: 'Dashboard', icon: <MdAdminPanelSettings /> },
-    { id: 'templates', label: 'Template Management', icon: <MdWindow /> },
     { id: 'users', label: 'User Management', icon: <MdPeople /> },
-    { id: 'moderation', label: 'Content Moderation', icon: <MdSecurity /> },
-    { id: 'logs', label: 'System Logs', icon: <MdSettings /> },
+    { id: 'workspaces', label: 'Workspaces', icon: <MdOutlineFolderShared /> },
+    { id: 'ai-assets', label: 'AI Assets', icon: <MdAutoAwesome /> },
+    { id: 'billing', label: 'Billing & Rev', icon: <MdSettings /> },
   ];
 
+  const handleTabChange = (tabId) => {
+    setLoading(true);
+    setActiveTab(tabId);
+  };
+
+  const billingMetrics = [
+    { label: 'Monthly Recurring Revenue', value: '$185.2K', note: '+8.4% MoM' },
+    { label: 'Total Invoiced This Quarter', value: '$1.24M', note: 'Stable growth +12%' },
+    { label: 'Avg. Revenue per Account', value: '$14.8K', note: '+6.1% YoY' },
+    { label: 'Payment Success Rate', value: '98.3%', note: '7-day rolling average' },
+  ];
+
+  const revenueBreakdown = [
+    { label: 'Enterprise revenue', amount: '$965K', detail: '42% of total ARR' },
+    { label: 'SMB revenue', amount: '$482K', detail: '31% of total ARR' },
+    { label: 'Recurring bookings', amount: '$113K', detail: '90% retention-ready' },
+  ];
+
+  const recentInvoices = [
+    { id: 'INV-1023', customer: 'Nimbus Media', amount: '$12,400', status: 'Paid', due: 'May 10' },
+    { id: 'INV-1027', customer: 'Vertex Labs', amount: '$24,800', status: 'Pending', due: 'May 20' },
+    { id: 'INV-1031', customer: 'Aurora Labs', amount: '$8,650', status: 'Overdue', due: 'May 02' },
+    { id: 'INV-1035', customer: 'Echo Commerce', amount: '$18,100', status: 'Paid', due: 'May 14' },
+  ];
+
+  const topAccounts = [
+    { name: 'Astra Ventures', arr: '$95.8K', status: 'Stable' },
+    { name: 'Helix Finance', arr: '$78.4K', status: 'Growing' },
+    { name: 'Nova Health', arr: '$65.2K', status: 'Renewal due' },
+  ];
+
+  const workspaceMetrics = [
+    { label: 'Active Workspaces', value: '48', note: '41 active this week' },
+    { label: 'Pending Invites', value: '92', note: '35 awaiting approval' },
+    { label: 'Storage Utilization', value: '73%', note: '2.4TB of 3.3TB used' },
+    { label: 'Sync Health', value: '99.1%', note: 'Last 24-hour uptime' },
+  ];
+
+  const workspaceProducts = [
+    { label: 'Collaboration sessions', value: '1,832', detail: 'Live across 31 workspaces' },
+    { label: 'Shared assets', value: '68.4K', detail: 'Includes templates and media' },
+    { label: 'Workspace owners', value: '26', detail: 'Executive-level admin access' },
+  ];
+
+  const workspaceList = [
+    { id: 'WS-301', name: 'Forge Studio', owner: 'Mina Patel', seats: '72', status: 'Active' },
+    { id: 'WS-315', name: 'Hydra Labs', owner: 'Owen Reed', seats: '48', status: 'Review' },
+    { id: 'WS-328', name: 'Beacon Media', owner: 'Sofia Kim', seats: '103', status: 'Active' },
+    { id: 'WS-339', name: 'Pulse CRM', owner: 'Liam Grant', seats: '34', status: 'At risk' },
+  ];
+
+  const workspaceTeams = [
+    { name: 'Growth Ops', activity: 'High', owners: '3' },
+    { name: 'Customer Success', activity: 'Medium', owners: '2' },
+    { name: 'Product Design', activity: 'High', owners: '4' },
+  ];
+
+  if (loading) {
+    return <AdminPortalSkeleton />;
+  }
+
   return (
-    <motion.div 
+    <Motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="admin-page"
@@ -71,21 +106,13 @@ const AdminPortal = () => {
           <div>
             <h1 className="admin-page-title">Admin Portal</h1>
             <p className="admin-page-subtitle">
-              {activeTab === 'templates'
-                ? 'Create and manage global video generation templates.'
-                : 'Technical health and operational metrics.'}
+              {activeTab === 'dashboard' && 'Technical health and operational metrics.'}
+              {activeTab === 'users' && 'Manage users, grant credits, and oversee accounts.'}
+              {activeTab === 'workspaces' && 'Oversee team workspaces and collaboration tools.'}
+              {activeTab === 'ai-assets' && 'Manage global Avatars and Voice models.'}
+              {activeTab === 'billing' && 'Revenue analytics and transaction history.'}
             </p>
           </div>
-          {activeTab === 'dashboard' && (
-            <div className="admin-toolbar-actions">
-              <button className="btn-admin-action btn-export">
-                <MdFileDownload /> Export Report
-              </button>
-              <button className="btn-admin-action btn-alert">
-                <MdNotificationImportant /> Global Alert
-              </button>
-            </div>
-          )}
         </header>
 
         <div className="admin-tab-switch" role="tablist" aria-label="Admin sections">
@@ -98,7 +125,7 @@ const AdminPortal = () => {
                 role="tab"
                 aria-selected={isActive}
                 className={`admin-tab-btn ${isActive ? 'active' : ''}`}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
               >
                 <span className="admin-tab-icon" aria-hidden>{tab.icon}</span>
                 <span>{tab.label}</span>
@@ -108,154 +135,197 @@ const AdminPortal = () => {
         </div>
 
         <main className="admin-main">
-        {activeTab === 'dashboard' ? (
-          <>
-            {/* High-Level Metrics */}
-            <div className="admin-stats-grid">
-              {stats.map((stat, i) => (
-                <motion.div 
-                  key={i}
-                  whileHover={{ y: -4 }}
-                  className="admin-stat-card"
-                >
-                  <div className="admin-stat-top">
-                    <div className={`admin-stat-icon ${stat.colorClass}`}>
-                      {stat.icon}
-                    </div>
-                    <span className="admin-stat-trend trend-pos">{stat.trend}</span>
-                  </div>
-                  <div className="admin-stat-info">
-                    <h3>{stat.value}</h3>
-                    <p>{stat.label}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+          {activeTab === 'dashboard' ? (
+            <DashboardOverview />
+          ) : activeTab === 'users' ? (
+            <UsersList />
+          ) : activeTab === 'billing' ? (
+            <section className="admin-card-section billing-page" style={{ marginTop: '24px' }}>
+              <div className="billing-hero">
+                <div>
+                  <h2>Billing & Revenue Insights</h2>
+                  <p className="admin-placeholder-text">Live mock metrics for revenue performance, invoice health, and customer ARR trends.</p>
+                </div>
+              </div>
 
-            {/* Dashboard Grid */}
-            <div className="admin-dashboard-grid">
-              <div className="admin-grid-left">
-                {/* User Management Table */}
-                <section className="admin-card-section">
-                  <h2><MdPeople /> User Management</h2>
-                  <div className="admin-table-container">
-                    <table className="admin-table">
-                      <thead>
-                        <tr>
-                          <th>User</th>
-                          <th>Plan</th>
-                          <th>Status</th>
-                          <th>Joined</th>
-                          <th>Action</th>
+              <div className="billing-summary-grid">
+                {billingMetrics.map((metric) => (
+                  <div key={metric.label} className="billing-summary-card">
+                    <span className="billing-metric-label">{metric.label}</span>
+                    <strong className="billing-metric-value">{metric.value}</strong>
+                    <p className="billing-metric-note">{metric.note}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="billing-panel-grid">
+                <div className="billing-panel">
+                  <div className="billing-panel-header">
+                    <h3>Revenue breakdown</h3>
+                    <span className="billing-tag">Growth focus</span>
+                  </div>
+                  <div className="billing-panel-list">
+                    {revenueBreakdown.map((item) => (
+                      <div key={item.label} className="billing-detail-row">
+                        <div>
+                          <p className="billing-detail-label">{item.label}</p>
+                          <p className="billing-detail-note">{item.detail}</p>
+                        </div>
+                        <strong>{item.amount}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="billing-side-panel">
+                  <div className="billing-card">
+                    <h3>Top accounts</h3>
+                    <div className="billing-account-list">
+                      {topAccounts.map((account) => (
+                        <div key={account.name} className="billing-account-row">
+                          <div>
+                            <p className="billing-detail-label">{account.name}</p>
+                            <p className="billing-detail-note">{account.status}</p>
+                          </div>
+                          <strong>{account.arr}</strong>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="billing-card billing-overdue-card">
+                    <h3>Priority alerts</h3>
+                    <p className="billing-alert-text">3 overdue invoices need follow-up, including an enterprise renewal at risk.</p>
+                    <div className="billing-alert-tag">Accounts receivable: $42.7K</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="billing-table-panel">
+                <h3>Recent invoice activity</h3>
+                <div className="admin-table-container">
+                  <table className="admin-table billing-table">
+                    <thead>
+                      <tr>
+                        <th>Invoice</th>
+                        <th>Customer</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Due date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentInvoices.map((invoice) => (
+                        <tr key={invoice.id}>
+                          <td>{invoice.id}</td>
+                          <td>{invoice.customer}</td>
+                          <td>{invoice.amount}</td>
+                          <td><span className={`status-badge billing-status-${invoice.status.toLowerCase()}`}>{invoice.status}</span></td>
+                          <td>{invoice.due}</td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {users.map(user => (
-                          <tr key={user.id}>
-                            <td>
-                              <div style={{ fontWeight: 600 }}>{user.name}</div>
-                              <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{user.email}</div>
-                            </td>
-                            <td><span className="plan-tag">{user.plan}</span></td>
-                            <td>
-                              <span className={`status-badge ${user.status === 'Active' ? 'status-active' : 'status-suspended'}`}>
-                                {user.status}
-                              </span>
-                            </td>
-                            <td>{user.joined}</td>
-                            <td><MdSync style={{ color: '#64748b', cursor: 'pointer' }} /></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </section>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+          ) : activeTab === 'workspaces' ? (
+            <section className="admin-card-section workspace-page" style={{ marginTop: '24px' }}>
+              <div className="billing-hero">
+                <div>
+                  <h2>Workspaces & Collaboration</h2>
+                  <p className="admin-placeholder-text">Track workspace health, team activity, storage usage, and workspace risk in one place.</p>
+                </div>
               </div>
 
-              <div className="admin-grid-right">
-                {/* Platform Controls */}
-                <section className="admin-card-section" style={{ marginBottom: '24px' }}>
-                  <h2><MdSettings /> Platform Controls</h2>
-                  <div className="controls-list">
-                    <div className="control-item">
-                      <div className="control-label">
-                        <span className="control-title">Maintenance Mode</span>
-                        <span className="control-desc">Redirect all traffic to static page.</span>
-                      </div>
-                      <div 
-                        className={`toggle-switch ${maintenanceMode ? 'on' : ''}`}
-                        onClick={() => setMaintenanceMode(!maintenanceMode)}
-                      >
-                        <div className="toggle-knob"></div>
-                      </div>
-                    </div>
-                    <div className="control-item">
-                      <div className="control-label">
-                        <span className="control-title">Beta Rendering Engine</span>
-                        <span className="control-desc">Use experimental v2.5 engine.</span>
-                      </div>
-                      <div 
-                        className={`toggle-switch ${betaEngine ? 'on' : ''}`}
-                        onClick={() => setBetaEngine(!betaEngine)}
-                      >
-                        <div className="toggle-knob"></div>
-                      </div>
-                    </div>
-                    <button className="btn-admin-action btn-export" style={{ justifyContent: 'center', width: '100%', marginTop: '12px' }}>
-                      Flush System Caches
-                    </button>
+              <div className="workspace-summary-grid">
+                {workspaceMetrics.map((metric) => (
+                  <div key={metric.label} className="billing-summary-card">
+                    <span className="billing-metric-label">{metric.label}</span>
+                    <strong className="billing-metric-value">{metric.value}</strong>
+                    <p className="billing-metric-note">{metric.note}</p>
                   </div>
-                </section>
+                ))}
+              </div>
 
-                {/* Moderation Queue */}
-                <section className="admin-card-section" style={{ marginBottom: '24px' }}>
-                  <h2><MdSecurity /> Moderation Queue</h2>
-                  <div className="mod-queue">
-                    {moderationQueue.map((item, i) => (
-                      <div key={i} className="mod-queue-item">
-                        <div className="mod-thumb"></div>
-                        <div className="mod-info">
-                          <div className="mod-user">{item.user}</div>
-                          <div className="mod-time">{item.time}</div>
+              <div className="billing-panel-grid">
+                <div className="billing-panel">
+                  <div className="billing-panel-header">
+                    <h3>Workspace health</h3>
+                    <span className="billing-tag">Operational pulse</span>
+                  </div>
+                  <div className="billing-panel-list">
+                    {workspaceProducts.map((item) => (
+                      <div key={item.label} className="billing-detail-row">
+                        <div>
+                          <p className="billing-detail-label">{item.label}</p>
+                          <p className="billing-detail-note">{item.detail}</p>
                         </div>
-                        <div className="mod-actions">
-                          <button className="btn-mod-icon" style={{ backgroundColor: '#dcfce7', color: '#15803d' }}><MdCheckCircle /></button>
-                          <button className="btn-mod-icon" style={{ backgroundColor: '#fee2e2', color: '#b91c1c' }}><MdCancel /></button>
-                        </div>
+                        <strong>{item.value}</strong>
                       </div>
                     ))}
                   </div>
-                </section>
+                </div>
 
-                {/* System Logs */}
-                <section className="admin-card-section">
-                  <h2><MdAdminPanelSettings /> System Logs</h2>
-                  <div className="logs-feed">
-                    {systemLogs.map((log, i) => (
-                      <div key={i} className="log-item">
-                        <div className={`log-type ${log.type}`}></div>
-                        <div className="log-content">
-                          <div className="log-msg">{log.msg}</div>
-                          <div className="log-time">{log.time}</div>
+                <div className="billing-side-panel">
+                  <div className="billing-card">
+                    <h3>Active teams</h3>
+                    <div className="billing-account-list">
+                      {workspaceTeams.map((team) => (
+                        <div key={team.name} className="billing-account-row">
+                          <div>
+                            <p className="billing-detail-label">{team.name}</p>
+                            <p className="billing-detail-note">Activity: {team.activity}</p>
+                          </div>
+                          <strong>{team.owners} owners</strong>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </section>
+
+                  <div className="billing-card billing-overdue-card">
+                    <h3>Workspace risk alerts</h3>
+                    <p className="billing-alert-text">2 workspaces require admin review due to low engagement and pending security checks.</p>
+                    <div className="billing-alert-tag">Review queue: 2 workspaces</div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </>
-        ) : activeTab === 'templates' ? (
-          <TemplateManager />
-        ) : (
-          <section className="admin-card-section">
-            <h2>{adminTabs.find((tab) => tab.id === activeTab)?.label}</h2>
-            <p className="admin-placeholder-text">This section will be available in a future update.</p>
-          </section>
-        )}
+
+              <div className="billing-table-panel">
+                <h3>Workspaces in production</h3>
+                <div className="admin-table-container">
+                  <table className="admin-table workspace-table">
+                    <thead>
+                      <tr>
+                        <th>Workspace</th>
+                        <th>Owner</th>
+                        <th>Seats</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {workspaceList.map((workspace) => (
+                        <tr key={workspace.id}>
+                          <td>{workspace.name}</td>
+                          <td>{workspace.owner}</td>
+                          <td>{workspace.seats}</td>
+                          <td><span className={`status-badge billing-status-${workspace.status.toLowerCase().replace(/ /g, '-')}`}>{workspace.status}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+          ) : (
+            <section className="admin-card-section" style={{ marginTop: '24px' }}>
+              <h2>{adminTabs.find((tab) => tab.id === activeTab)?.label}</h2>
+              <p className="admin-placeholder-text">This section will be available in a future update. We are currently using mock data for UI design.</p>
+            </section>
+          )}
         </main>
       </div>
-    </motion.div>
+    </Motion.div>
   );
 };
 

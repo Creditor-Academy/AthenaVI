@@ -195,6 +195,244 @@
   gap: 24px;
 }
 
+.billing-page .billing-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.billing-page .billing-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.billing-summary-card {
+  padding: 22px;
+  border-radius: 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.05);
+}
+
+.billing-metric-label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.billing-metric-value {
+  display: block;
+  font-size: 1.75rem;
+  margin-bottom: 8px;
+  color: var(--text-main);
+}
+
+.billing-metric-note {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.billing-panel-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.billing-panel,
+.billing-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.04);
+}
+
+.billing-panel-header,
+.billing-card h3 {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.billing-panel-header h3,
+.billing-card h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.billing-tag {
+  display: inline-flex;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.billing-panel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.billing-detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
+
+.billing-detail-label {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.billing-detail-note {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.billing-side-panel {
+  display: grid;
+  gap: 20px;
+}
+
+.billing-account-list,
+.billing-panel-list {
+  display: grid;
+  gap: 14px;
+}
+
+.billing-account-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.billing-overdue-card {
+  background: rgba(248, 113, 113, 0.1);
+  border-color: rgba(248, 113, 113, 0.25);
+}
+
+.billing-overdue-card .billing-alert-text {
+  margin: 0 0 16px;
+  color: var(--text-main);
+}
+
+.billing-alert-tag {
+  display: inline-flex;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(248, 113, 113, 0.16);
+  color: #b91c1c;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.billing-table-panel {
+  margin-top: 10px;
+}
+
+.billing-table-panel h3 {
+  margin-bottom: 18px;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.billing-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 12px;
+}
+
+.billing-table thead th {
+  text-align: left;
+  padding: 10px 16px;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.billing-table tbody tr {
+  background: var(--bg-surface);
+}
+
+.billing-table td {
+  padding: 18px 16px;
+  font-size: 0.95rem;
+  color: var(--text-main);
+  border-bottom: none;
+}
+
+.billing-status-paid {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.18);
+}
+
+.billing-status-pending {
+  background: rgba(239, 68, 68, 0.08);
+  color: #f97316;
+  border: 1px solid rgba(245, 158, 11, 0.18);
+}
+
+.billing-status-overdue {
+  background: rgba(239, 68, 68, 0.16);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.28);
+}
+
+.billing-status-paid,
+.billing-status-pending,
+.billing-status-overdue,
+.billing-status-active,
+.billing-status-review,
+.billing-status-at-risk {
+  display: inline-flex;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.billing-status-active {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.18);
+}
+
+.billing-status-review {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.18);
+}
+
+.billing-status-at-risk {
+  background: rgba(239, 68, 68, 0.16);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.28);
+}
+
 /* User Management Table */
 .admin-card-section {
   background: var(--bg-card);
