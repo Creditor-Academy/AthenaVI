@@ -93,6 +93,12 @@ const VideoCanvas = forwardRef(({
     },
     getCurrentFrame: () => {
       return playerRef.current ? playerRef.current.getCurrentFrame() : 0
+    },
+    play: () => {
+      if (playerRef.current) playerRef.current.play()
+    },
+    pause: () => {
+      if (playerRef.current) playerRef.current.pause()
     }
   }))
 
@@ -195,21 +201,21 @@ const VideoCanvas = forwardRef(({
     const clipX = clip.position?.x ?? 0
     const clipY = clip.position?.y ?? 0
     
-    // Calculate offset of mouse from clip origin in percentage of canvas
-    const mouseXPct = ((e.clientX - rect.left) / rect.width) * 100
-    const mouseYPct = ((e.clientY - rect.top) / rect.height) * 100
+    // Calculate offset of mouse from clip origin in virtual pixels
+    const mouseX = ((e.clientX - rect.left) / rect.width) * 1920
+    const mouseY = ((e.clientY - rect.top) / rect.height) * 1080
     
     setDragOffset({
-      x: mouseXPct - clipX,
-      y: mouseYPct - clipY
+      x: mouseX - clipX,
+      y: mouseY - clipY
     })
 
     const handleMouseMove = (moveEvent) => {
-      const newMouseXPct = ((moveEvent.clientX - rect.left) / rect.width) * 100
-      const newMouseYPct = ((moveEvent.clientY - rect.top) / rect.height) * 100
+      const newMouseX = ((moveEvent.clientX - rect.left) / rect.width) * 1920
+      const newMouseY = ((moveEvent.clientY - rect.top) / rect.height) * 1080
       
-      const newX = Math.max(-100, Math.min(100, newMouseXPct - (mouseXPct - clipX)))
-      const newY = Math.max(-100, Math.min(100, newMouseYPct - (mouseYPct - clipY)))
+      const newX = newMouseX - (mouseX - clipX)
+      const newY = newMouseY - (mouseY - clipY)
 
       if (onUpdateLayerPosition) {
         onUpdateLayerPosition(clip.id, newX, newY)
@@ -241,8 +247,8 @@ const VideoCanvas = forwardRef(({
     if (!overlay) return
     const rect = overlay.getBoundingClientRect()
     setDropIndicator({
-      x: ((e.clientX - rect.left) / rect.width) * 100,
-      y: ((e.clientY - rect.top) / rect.height) * 100
+      x: ((e.clientX - rect.left) / rect.width) * 1920,
+      y: ((e.clientY - rect.top) / rect.height) * 1080
     })
   }
 
@@ -256,8 +262,8 @@ const VideoCanvas = forwardRef(({
     const overlay = overlayRef.current
     if (!overlay) return
     const rect = overlay.getBoundingClientRect()
-    const dropX = ((e.clientX - rect.left) / rect.width) * 100
-    const dropY = ((e.clientY - rect.top) / rect.height) * 100
+    const dropX = ((e.clientX - rect.left) / rect.width) * 1920
+    const dropY = ((e.clientY - rect.top) / rect.height) * 1080
 
     // Get dropped data
     const layerData = e.dataTransfer.getData('application/json')
@@ -301,7 +307,7 @@ const VideoCanvas = forwardRef(({
 
           {/* === REMOTION PLAYER: used for preview/export, hidden during editing === */}
           <Player
-            ref={setPlayerRef}
+            ref={playerRef}
             component={VideoComposition}
             durationInFrames={Math.max(totalDurationInFrames, 1)}
             compositionWidth={1280}

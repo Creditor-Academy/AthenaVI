@@ -16,7 +16,8 @@ import {
   MdDesignServices,
   MdPlayCircleFilled,
   MdTune
-} from 'react-icons/md'
+} from 'react-icons/md';
+import projectTemplate from '../../../../constants/projectTemplate.json';
 
 const SceneConfigurationPanel = ({ 
   activeScene, 
@@ -27,12 +28,17 @@ const SceneConfigurationPanel = ({
   bgMusicVolume, 
   setBgMusicVolume,
   selectedLayerId,
-  generateSceneVideo
+  generateSceneVideo,
+  setActiveTab,
+  applyGlobalSetting
 }) => {
   if (!activeScene) return null;
 
   const clips = activeScene.clips || [];
   const activeLayer = clips.find(l => l.id === selectedLayerId);
+  const textClip = clips.find(c => c.type === 'text' || c.role === 'main-text');
+  const headlineText = textClip ? textClip.content : (activeScene.titleText || '');
+  const headlineFontSize = textClip?.style?.fontSize || activeScene.titleStyle?.fontSize || 48;
   
   const updateLayer = (updates) => {
       const newClips = clips.map(l => l.id === selectedLayerId ? { ...l, ...updates } : l);
@@ -161,13 +167,45 @@ const SceneConfigurationPanel = ({
           <select 
             className="premium-select" 
             value={activeScene.layout || 'split-right'}
-            onChange={(e) => updateScene(activeSceneId, { layout: e.target.value })}
+            onChange={(e) => {
+                const newLayout = e.target.value;
+                const template = projectTemplate.project.scenes.find(t => t.id === newLayout);
+                let newClips = clips;
+                
+                if (template) {
+                    let templateClips = JSON.parse(JSON.stringify(template.clips));
+                    
+                    // Retain avatar
+                    let existingAvatar = clips.find(c => c.role === 'avatar' || c.type === 'video');
+                    if (existingAvatar) {
+                        let avatarIndex = templateClips.findIndex(c => 
+                            c.label?.toLowerCase().includes('avatar') || 
+                            c.label?.toLowerCase().includes('media') || 
+                            c.label?.toLowerCase().includes('center image') ||
+                            (c.type === 'image' && !c.label?.toLowerCase().includes('logo'))
+                        );
+                        if (avatarIndex !== -1) {
+                            templateClips[avatarIndex] = { ...templateClips[avatarIndex], src: existingAvatar.src, type: existingAvatar.type, role: 'avatar' };
+                        }
+                    }
+                    
+                    // Retain text
+                    let existingText = clips.find(c => c.type === 'text' || c.role === 'main-text');
+                    if (existingText) {
+                        let textIndex = templateClips.findIndex(c => c.type === 'text');
+                        if (textIndex !== -1) {
+                            templateClips[textIndex].content = existingText.content;
+                        }
+                    }
+                    newClips = templateClips;
+                }
+                
+                updateScene(activeSceneId, { layout: newLayout, clips: newClips });
+            }}
           >
-            <option value="split-right">Split Right (Avatar Right)</option>
-            <option value="split-left">Split Left (Avatar Left)</option>
-            <option value="centered">Centered Overlay</option>
-            <option value="full-avatar">Focus Avatar</option>
-            <option value="full-content">Focus Content</option>
+            {projectTemplate.project.scenes.map(s => (
+                <option key={s.id} value={s.id}>{s.title}</option>
+            ))}
           </select>
         </div>
 
@@ -230,8 +268,16 @@ const SceneConfigurationPanel = ({
           <input
             type="text"
             className="premium-input"
-            value={activeScene.titleText || ''}
-            onChange={(e) => updateScene(activeSceneId, { titleText: e.target.value })}
+            value={headlineText}
+            onChange={(e) => {
+                const val = e.target.value;
+                if (textClip) {
+                    const newClips = clips.map(c => c.id === textClip.id ? { ...c, content: val } : c);
+                    updateScene(activeSceneId, { titleText: val, clips: newClips });
+                } else {
+                    updateScene(activeSceneId, { titleText: val });
+                }
+            }}
             placeholder="Main title..."
           />
         </div>
@@ -245,10 +291,16 @@ const SceneConfigurationPanel = ({
                         type="range"
                         min="20"
                         max="120"
-                        value={activeScene.titleStyle?.fontSize || 48}
-                        onChange={(e) => updateScene(activeSceneId, { 
-                            titleStyle: { ...activeScene.titleStyle, fontSize: Number(e.target.value) } 
-                        })}
+                        value={headlineFontSize}
+                        onChange={(e) => {
+                            const newSize = Number(e.target.value);
+                            if (textClip) {
+                                const newClips = clips.map(c => c.id === textClip.id ? { ...c, style: { ...c.style, fontSize: newSize } } : c);
+                                updateScene(activeSceneId, { clips: newClips, titleStyle: { ...activeScene.titleStyle, fontSize: newSize } });
+                            } else {
+                                updateScene(activeSceneId, { titleStyle: { ...activeScene.titleStyle, fontSize: newSize } });
+                            }
+                        }}
                         className="premium-slider slider-indigo"
                     />
                     <span className="slider-value">{activeScene.titleStyle?.fontSize || 48}px</span>
@@ -297,24 +349,86 @@ const SceneConfigurationPanel = ({
 
         {/* Selected Avatar & Voice Status */}
         <div style={{ 
-            background: 'rgba(147, 51, 234, 0.05)', 
-            borderRadius: '12px', 
-            padding: '12px', 
-            marginBottom: '16px',
-            border: '1px solid rgba(147, 51, 234, 0.1)'
+            background: 'linear-gradient(135deg, #f8f5ff 0%, #f3ebff 100%)', 
+            borderRadius: '16px', 
+            padding: '16px', 
+            marginBottom: '20px',
+            border: '1px solid rgba(147, 51, 234, 0.2)',
+            boxShadow: '0 4px 12px rgba(147, 51, 234, 0.05), inset 0 2px 4px rgba(255,255,255,0.8)'
         }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: activeScene.avatarType ? '#10b981' : '#ef4444' }}></div>
-                    <span style={{ fontSize: '12px', fontWeight: '500', color: 'var(--text-main)' }}>
-                        Avatar: {activeScene.avatarName || activeScene.avatarType || <span style={{ color: '#ef4444' }}>None selected</span>}
-                    </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px dashed rgba(147, 51, 234, 0.2)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ 
+                            width: '10px', height: '10px', borderRadius: '50%', 
+                            background: activeScene.avatarType ? '#10b981' : '#ef4444',
+                            boxShadow: activeScene.avatarType ? '0 0 8px #10b981' : '0 0 8px #ef4444'
+                        }}></div>
+                        <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', letterSpacing: '-0.3px' }}>
+                            Avatar <span style={{ color: 'var(--text-muted)', fontWeight: '400', marginLeft: '4px' }}>{activeScene.avatarName || activeScene.avatarType || <span style={{ color: '#ef4444' }}>None</span>}</span>
+                        </span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                        <button 
+                            style={{ 
+                                padding: '4px 10px', fontSize: '11px', fontWeight: '600', borderRadius: '6px',
+                                background: 'white', color: '#9333ea', border: '1px solid #d8b4fe', cursor: 'pointer',
+                                transition: 'all 0.2s ease', boxShadow: '0 2px 4px rgba(147,51,234,0.1)'
+                            }} 
+                            onMouseEnter={(e) => { e.currentTarget.style.background = '#faf5ff'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = 'white'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                            onClick={() => setActiveTab && setActiveTab('avatar')}
+                        >Change</button>
+                        {activeScene.avatarType && (
+                            <button 
+                                style={{ 
+                                    padding: '4px 10px', fontSize: '11px', fontWeight: '600', borderRadius: '6px',
+                                    background: 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)', color: 'white', border: 'none', cursor: 'pointer',
+                                    transition: 'all 0.2s ease', boxShadow: '0 2px 6px rgba(147,51,234,0.3)'
+                                }}
+                                onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 4px 10px rgba(147,51,234,0.4)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 2px 6px rgba(147,51,234,0.3)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                                onClick={() => applyGlobalSetting && applyGlobalSetting('avatar')} title="Use this avatar in all scenes"
+                            >Apply All</button>
+                        )}
+                    </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: activeScene.voiceId ? '#10b981' : '#ef4444' }}></div>
-                    <span style={{ fontSize: '12px', fontWeight: '500', color: 'var(--text-main)' }}>
-                        Voice: {activeScene.voiceName || activeScene.voiceId || <span style={{ color: '#ef4444' }}>None selected</span>}
-                    </span>
+                
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ 
+                            width: '10px', height: '10px', borderRadius: '50%', 
+                            background: activeScene.voiceId ? '#10b981' : '#ef4444',
+                            boxShadow: activeScene.voiceId ? '0 0 8px #10b981' : '0 0 8px #ef4444'
+                        }}></div>
+                        <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', letterSpacing: '-0.3px' }}>
+                            Voice <span style={{ color: 'var(--text-muted)', fontWeight: '400', marginLeft: '4px' }}>{activeScene.voiceName || activeScene.voiceId || <span style={{ color: '#ef4444' }}>None</span>}</span>
+                        </span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                        <button 
+                            style={{ 
+                                padding: '4px 10px', fontSize: '11px', fontWeight: '600', borderRadius: '6px',
+                                background: 'white', color: '#9333ea', border: '1px solid #d8b4fe', cursor: 'pointer',
+                                transition: 'all 0.2s ease', boxShadow: '0 2px 4px rgba(147,51,234,0.1)'
+                            }} 
+                            onMouseEnter={(e) => { e.currentTarget.style.background = '#faf5ff'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = 'white'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                            onClick={() => setActiveTab && setActiveTab('mic')}
+                        >Change</button>
+                        {activeScene.voiceId && (
+                            <button 
+                                style={{ 
+                                    padding: '4px 10px', fontSize: '11px', fontWeight: '600', borderRadius: '6px',
+                                    background: 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)', color: 'white', border: 'none', cursor: 'pointer',
+                                    transition: 'all 0.2s ease', boxShadow: '0 2px 6px rgba(147,51,234,0.3)'
+                                }}
+                                onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 4px 10px rgba(147,51,234,0.4)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 2px 6px rgba(147,51,234,0.3)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                                onClick={() => applyGlobalSetting && applyGlobalSetting('voice')} title="Use this voice in all scenes"
+                            >Apply All</button>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

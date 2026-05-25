@@ -1029,6 +1029,42 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
     }
 
     // Default Zone Renderer
+    if (template?.clips && template.clips.length > 0) {
+      const canvasWidth = template.resolution?.width || 1920;
+      const canvasHeight = template.resolution?.height || 1080;
+      
+      return (
+        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+          {template.clips.map((clip, i) => {
+             if (!clip.position) return null;
+             
+             let w = typeof clip.size?.width === 'number' ? clip.size.width : (clip.type === 'text' ? (clip.style?.width ? parseInt(clip.style.width) : 600) : 400);
+             let h = typeof clip.size?.height === 'number' ? clip.size.height : (clip.type === 'text' ? 100 : 300);
+             
+             const pctLeft = `${(clip.position.x / canvasWidth) * 100}%`;
+             const pctTop = `${(clip.position.y / canvasHeight) * 100}%`;
+             const pctWidth = `${(w / canvasWidth) * 100}%`;
+             const pctHeight = `${(h / canvasHeight) * 100}%`;
+
+             const isMedia = clip.type === 'image' || clip.type === 'video' || clip.role === 'avatar' || clip.label?.toLowerCase().includes('avatar');
+             
+             return (
+               <div key={i} style={{
+                 position: 'absolute',
+                 left: pctLeft,
+                 top: pctTop,
+                 transform: 'translate(-50%, -50%)',
+                 width: pctWidth,
+                 height: pctHeight,
+                 backgroundColor: isMedia ? '#6366f1' : '#cbd5e1',
+                 borderRadius: isMedia ? '6px' : '3px',
+                 opacity: 0.8
+               }} />
+             );
+          })}
+        </div>
+      );
+    }
     return (
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
         {zones.image && (

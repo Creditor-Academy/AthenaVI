@@ -3,14 +3,14 @@ import { MdPerson, MdPhotoSizeSelectActual, MdVideoLibrary } from 'react-icons/m
 
 /**
  * COORDINATE SYSTEM
- * Clips use a 1280×720 virtual canvas.
+ * Clips use a 1920×1080 virtual canvas.
  *   position.x / position.y in range 0–100 → treated as % of canvas
- *   size.width / size.height > 100 → pixels in 1280×720 space → convert to %
+ *   size.width / size.height > 100 → pixels in 1920×1080 space → convert to %
  */
-const mapX = (val) => (typeof val === 'number' && val > 100 ? (val / 1280) * 100 : val ?? 0)
-const mapY = (val) => (typeof val === 'number' && val > 100 ? (val / 720) * 100 : val ?? 0)
-const mapW = (val) => typeof val === 'number' ? (val > 100 ? `${(val / 1280) * 100}%` : `${val}%`) : (val || 'auto')
-const mapH = (val) => typeof val === 'number' ? (val > 100 ? `${(val / 720) * 100}%` : `${val}%`) : (val || 'auto')
+const mapX = (val) => (typeof val === 'number' ? (val / 1920) * 100 : 0)
+const mapY = (val) => (typeof val === 'number' ? (val / 1080) * 100 : 0)
+const mapW = (val) => typeof val === 'number' ? `${(val / 1920) * 100}%` : (val || 'auto')
+const mapH = (val) => typeof val === 'number' ? `${(val / 1080) * 100}%` : (val || 'auto')
 
 /** Renders a single text clip */
 const TextClip = ({ clip, isSelected, onSelect, onContentChange }) => {
@@ -68,7 +68,7 @@ const TextClip = ({ clip, isSelected, onSelect, onContentChange }) => {
         suppressContentEditableWarning
         onBlur={handleBlur}
         style={{
-          fontSize: `${(s.fontSize || 24) / 12.8}cqw`,
+          fontSize: `${(s.fontSize || 24) / 19.2}cqw`,
           fontWeight: s.fontWeight || '700',
           color: s.color || '#1a1b1c',
           textAlign: s.textAlign || 'left',
@@ -89,7 +89,7 @@ const TextClip = ({ clip, isSelected, onSelect, onContentChange }) => {
           margin: 0,
         }}
       >
-        {clip.content}
+        {typeof clip.content === 'object' ? (clip.content.name || JSON.stringify(clip.content)) : clip.content}
       </div>
     </div>
   )
@@ -107,10 +107,12 @@ const ImageClip = ({ clip, isSelected, onSelect }) => (
       height: mapH(clip.size?.height),
       overflow: 'hidden',
       borderRadius: clip.style?.borderRadius || '12px',
+      border: clip.style?.border || 'none',
+      boxShadow: clip.style?.boxShadow || 'none',
       outline: isSelected ? '2px solid #1a73e8' : 'none',
       zIndex: isSelected ? 20 : 8,
       cursor: 'pointer',
-      background: clip.src ? 'transparent' : 'rgba(0,0,0,0.04)',
+      background: clip.src ? 'transparent' : (clip.style?.backgroundColor || clip.style?.background || 'rgba(0,0,0,0.04)'),
     }}
   >
     {isSelected && (
@@ -153,99 +155,146 @@ const ImageClip = ({ clip, isSelected, onSelect }) => (
 )
 
 /** Renders a single avatar clip */
-const AvatarClip = ({ clip, isSelected, onSelect }) => (
-  <div
-    onClick={(e) => { e.stopPropagation(); onSelect(clip.id) }}
-    style={{
-      position: 'absolute',
-      left: `${mapX(clip.position?.x)}%`,
-      top: `${mapY(clip.position?.y)}%`,
-      width: mapW(clip.size?.width),
-      height: mapH(clip.size?.height),
-      borderRadius: '50%',
-      overflow: 'hidden',
-      outline: isSelected ? '2px solid #1a73e8' : 'none',
-      zIndex: isSelected ? 20 : 9,
-      cursor: 'pointer',
-      background: clip.src
-        ? 'transparent'
-        : 'linear-gradient(135deg, #818cf8 0%, #a78bfa 100%)',
-    }}
-  >
-    {clip.src ? (
-      <img
-        src={clip.src}
-        alt="Avatar"
-        style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
-      />
-    ) : (
-      <div style={{
-        width: '100%', height: '100%',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
-        <MdPerson size={Math.min(48, (clip.size?.width || 120) / 2.5)} style={{ color: 'rgba(255,255,255,0.8)' }} />
-      </div>
-    )}
-  </div>
-)
+const AvatarClip = ({ clip, isSelected, onSelect, scene }) => {
+  const isGeneratedAvatar = (clip.type === 'avatar' || clip.role === 'avatar') && scene?.generatedVideoUrl;
+  const src = isGeneratedAvatar ? scene.generatedVideoUrl : clip.src;
+  const isVideo = clip.type === 'video' || isGeneratedAvatar;
+
+  return (
+    <div
+      onClick={(e) => { e.stopPropagation(); onSelect(clip.id) }}
+      style={{
+        position: 'absolute',
+        left: `${mapX(clip.position?.x)}%`,
+        top: `${mapY(clip.position?.y)}%`,
+        width: mapW(clip.size?.width),
+        height: mapH(clip.size?.height),
+        borderRadius: clip.style?.borderRadius || '50%',
+        border: clip.style?.border || 'none',
+        boxShadow: clip.style?.boxShadow || 'none',
+        overflow: 'hidden',
+        outline: isSelected ? '2px solid #1a73e8' : 'none',
+        zIndex: isSelected ? 20 : 10,
+        cursor: 'pointer',
+        background: src ? 'transparent' : (clip.style?.backgroundColor || clip.style?.background || 'linear-gradient(135deg, #818cf8 0%, #a78bfa 100%)'),
+      }}
+    >
+      {isSelected && (
+        <>
+          {['top-left','top-right','bottom-left','bottom-right'].map(pos => (
+            <div key={pos} style={{
+              position: 'absolute',
+              width: 10, height: 10,
+              background: '#1a73e8',
+              border: '2px solid white',
+              borderRadius: 2,
+              zIndex: 30,
+              ...(pos.includes('top') ? { top: -5 } : { bottom: -5 }),
+              ...(pos.includes('left') ? { left: -5 } : { right: -5 }),
+            }} />
+          ))}
+        </>
+      )}
+      {src ? (
+        isVideo ? (
+          <video
+            src={src}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', pointerEvents: 'none' }}
+            muted
+            autoPlay
+            loop
+            playsInline
+          />
+        ) : (
+          <img
+            src={src}
+            alt="Avatar"
+            style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+          />
+        )
+      ) : (
+        <div style={{
+          width: '100%', height: '100%',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <MdPerson size={Math.min(48, (clip.size?.width || 120) / 2.5)} style={{ color: 'rgba(255,255,255,0.8)' }} />
+        </div>
+      )}
+    </div>
+  )
+}
 
 /** Renders a single video clip (e.g. Generated Presenter or Stock video) */
-const VideoClip = ({ clip, isSelected, onSelect }) => (
-  <div
-    onClick={(e) => { e.stopPropagation(); onSelect(clip.id) }}
-    style={{
-      position: 'absolute',
-      left: `${mapX(clip.position?.x)}%`,
-      top: `${mapY(clip.position?.y)}%`,
-      width: mapW(clip.size?.width),
-      height: mapH(clip.size?.height),
-      overflow: 'hidden',
-      borderRadius: clip.role === 'avatar' ? '50%' : (clip.style?.borderRadius || '16px'),
-      outline: isSelected ? '2px solid #1a73e8' : 'none',
-      zIndex: isSelected ? 20 : 9,
-      cursor: 'pointer',
-      background: clip.src ? 'transparent' : 'rgba(0,0,0,0.04)',
-    }}
-  >
-    {isSelected && (
-      <>
-        {['top-left','top-right','bottom-left','bottom-right'].map(pos => (
-          <div key={pos} style={{
-            position: 'absolute',
-            width: 10, height: 10,
-            background: '#1a73e8',
-            border: '2px solid white',
-            borderRadius: 2,
-            zIndex: 30,
-            ...(pos.includes('top') ? { top: -5 } : { bottom: -5 }),
-            ...(pos.includes('left') ? { left: -5 } : { right: -5 }),
-          }} />
-        ))}
-      </>
-    )}
-    {clip.src ? (
-      <video
-        src={clip.src}
-        style={{ width: '100%', height: '100%', objectFit: clip.role === 'avatar' ? 'contain' : 'cover', display: 'block' }}
-        muted
-        playsInline
-      />
-    ) : (
-      <div style={{
-        width: '100%', height: '100%',
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        gap: 8,
-        background: 'linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(168,85,247,0.08) 100%)',
-      }}>
-        <MdVideoLibrary size={32} style={{ color: 'rgba(99,102,241,0.4)' }} />
-        <span style={{ fontSize: 11, color: 'rgba(99,102,241,0.5)', fontWeight: 700, letterSpacing: '0.05em' }}>
-          ADD VIDEO
-        </span>
-      </div>
-    )}
-  </div>
-)
+const VideoClip = ({ clip, isSelected, onSelect, scene }) => {
+  const isGeneratedAvatar = (clip.type === 'avatar' || clip.role === 'avatar') && scene?.generatedVideoUrl;
+  const src = isGeneratedAvatar ? scene.generatedVideoUrl : clip.src;
+  const isVideo = clip.type === 'video' || isGeneratedAvatar;
+
+  return (
+    <div
+      onClick={(e) => { e.stopPropagation(); onSelect(clip.id) }}
+      style={{
+        position: 'absolute',
+        left: `${mapX(clip.position?.x)}%`,
+        top: `${mapY(clip.position?.y)}%`,
+        width: mapW(clip.size?.width),
+        height: mapH(clip.size?.height),
+        overflow: 'hidden',
+        borderRadius: clip.role === 'avatar' ? '50%' : (clip.style?.borderRadius || '16px'),
+        border: clip.style?.border || 'none',
+        boxShadow: clip.style?.boxShadow || 'none',
+        outline: isSelected ? '2px solid #1a73e8' : 'none',
+        zIndex: isSelected ? 20 : 9,
+        cursor: 'pointer',
+        background: src ? 'transparent' : (clip.style?.backgroundColor || clip.style?.background || 'rgba(0,0,0,0.04)'),
+      }}
+    >
+      {isSelected && (
+        <>
+          {['top-left','top-right','bottom-left','bottom-right'].map(pos => (
+            <div key={pos} style={{
+              position: 'absolute',
+              width: 10, height: 10,
+              background: '#1a73e8',
+              border: '2px solid white',
+              borderRadius: 2,
+              zIndex: 30,
+              ...(pos.includes('top') ? { top: -5 } : { bottom: -5 }),
+              ...(pos.includes('left') ? { left: -5 } : { right: -5 }),
+            }} />
+          ))}
+        </>
+      )}
+      {src ? (
+        isVideo ? (
+          <video
+            src={src}
+            style={{ width: '100%', height: '100%', objectFit: clip.role === 'avatar' ? 'contain' : 'cover', display: 'block' }}
+            muted
+            autoPlay
+            loop
+            playsInline
+          />
+        ) : (
+          <img src={src} style={{ width: '100%', height: '100%', objectFit: clip.role === 'avatar' ? 'contain' : 'cover', display: 'block' }} alt="" />
+        )
+      ) : (
+        <div style={{
+          width: '100%', height: '100%',
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          gap: 8,
+          background: 'linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(168,85,247,0.08) 100%)',
+        }}>
+          <MdVideoLibrary size={32} style={{ color: 'rgba(99,102,241,0.4)' }} />
+          <span style={{ fontSize: 11, color: 'rgba(99,102,241,0.5)', fontWeight: 700, letterSpacing: '0.05em' }}>
+            ADD VIDEO
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
 
 /** Renders a shape / background rect */
 const ShapeClip = ({ clip, isSelected, onSelect }) => (
@@ -259,7 +308,9 @@ const ShapeClip = ({ clip, isSelected, onSelect }) => (
       height: mapH(clip.size?.height),
       background: clip.style?.backgroundColor || clip.style?.background || 'rgba(0,0,0,0.06)',
       borderRadius: clip.style?.borderRadius || '0',
-      border: isSelected ? '2px solid #1a73e8' : 'none',
+      border: clip.style?.border || 'none',
+      boxShadow: clip.style?.boxShadow || 'none',
+      outline: isSelected ? '2px solid #1a73e8' : 'none',
       zIndex: isSelected ? 20 : 5,
       cursor: 'pointer',
     }}
@@ -350,6 +401,7 @@ const LiveCanvasRenderer = ({
                 clip={clip}
                 isSelected={isSelected}
                 onSelect={onSelectClip}
+                scene={scene}
               />
             )
           }
@@ -361,6 +413,7 @@ const LiveCanvasRenderer = ({
                 clip={clip}
                 isSelected={isSelected}
                 onSelect={onSelectClip}
+                scene={scene}
               />
             )
           }

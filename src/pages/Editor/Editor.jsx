@@ -28,11 +28,35 @@ function Create({ onBack, initialConfig = null }) {
     // If we have full video data already (e.g. from dashboard click)
     if (initialConfig?.videoData?.data) {
       const data = initialConfig.videoData.data;
+      
+      const mapBackendToFrontend = (backendScenes) => {
+        if (!backendScenes) return [];
+        return backendScenes.map(scene => ({
+          ...scene,
+          id: scene.sceneId || scene.id,
+          title: scene.name || scene.title || 'Scene',
+          duration: scene.durationInFrames ? scene.durationInFrames / 30 : (scene.duration || 8),
+          clips: (scene.elements || scene.clips || []).map(element => ({
+            ...element,
+            id: element.id,
+            type: element.type,
+            layer: element.layer || 0,
+            startTime: element.startFrame ? element.startFrame / 30 : (element.startTime || 0),
+            duration: element.durationInFrames ? element.durationInFrames / 30 : (element.duration || 5),
+            position: element.placement ? { x: element.placement.x, y: element.placement.y } : element.position,
+            size: element.placement ? { width: element.placement.width, height: element.placement.height } : element.size,
+            opacity: element.placement?.opacity !== undefined ? element.placement.opacity : (element.opacity !== undefined ? element.opacity : 1),
+            content: element.content?.src ? element.content.src : element.content,
+            src: element.content?.src ? element.content.src : (element.src || element.content)
+          }))
+        }));
+      };
+
       return {
         ...projectTemplate.project,
         title: initialConfig.videoData.name || initialConfig.videoData.title || projectTemplate.project.title,
         resolution: data.videoSettings || projectTemplate.project.resolution,
-        scenes: data.scenes || [],
+        scenes: mapBackendToFrontend(data.scenes),
         updatedAt: initialConfig.videoData.updatedAt || new Date().toISOString(),
         id: initialConfig.videoData.id || initialConfig.videoData._id,
         workspaceId: initialConfig.videoData.workspaceId,
@@ -110,25 +134,31 @@ function Create({ onBack, initialConfig = null }) {
   }, [])
 
   // Auto-save logic
-  const saveProject = async (manual = false) => {
-    if (!project.id || !project.workspaceId) {
-      console.warn('Cannot save project: missing ID or workspaceId', project);
+  const saveProject = async (manual = false, projectState = project) => {
+    try {
+      localStorage.setItem('athenavi_project', JSON.stringify(projectState));
+    } catch (e) {
+      console.warn('Failed to save to localStorage', e);
+    }
+
+    if (!projectState.id || !projectState.workspaceId) {
+      if (manual) console.warn('Cannot save project to backend: missing ID or workspaceId', projectState);
       return;
     }
 
     try {
-      setIsSaving(true);
+      if (manual) setIsSaving(true);
       
       // Map project state to backend schema
       const payload = {
         data: {
           videoSettings: {
-            width: project.resolution?.width || 1920,
-            height: project.resolution?.height || 1080,
+            width: projectState.resolution?.width || 1920,
+            height: projectState.resolution?.height || 1080,
             fps: 30,
             backgroundColor: '#000000'
           },
-          scenes: (project.scenes || []).map((scene, idx) => ({
+          scenes: (projectState.scenes || []).map((scene, idx) => ({
             sceneId: scene.id || `scene_${idx}`,
             name: scene.title || `Scene ${idx + 1}`,
             durationInFrames: Math.max(1, Math.round((scene.duration || 8) * 30)),
@@ -154,27 +184,66 @@ function Create({ onBack, initialConfig = null }) {
         }
       };
 
-      await workspaceService.saveProjectState(project.workspaceId, project.id, payload);
+      await workspaceService.saveProjectState(projectState.workspaceId, projectState.id, payload);
       
       // Also update name if it changed
       if (manual) {
-        await workspaceService.updateProject(project.workspaceId, project.id, { name: project.title });
+        await workspaceService.updateProject(projectState.workspaceId, projectState.id, { name: projectState.title });
       }
 
       setLastSaved(new Date());
     } catch (error) {
       console.error('Failed to save project:', error);
+      toast.error('Failed to save project')
     } finally {
-      setIsSaving(false);
+      if (manual) setIsSaving(false);
     }
+  };
+
+  const applyGlobalSetting = (type) => {
+    const activeScene = project.scenes.find(s => s.id === activeSceneId);
+    if (!activeScene) return;
+
+    setProject(prev => {
+      const updatedScenes = prev.scenes.map(s => {
+        if (s.id === activeSceneId) return s;
+
+        let newClips = s.clips || [];
+        
+        if (type === 'avatar' && activeScene.avatarType) {
+          const avatarIndex = newClips.findIndex(c => c.role === 'avatar' || c.type === 'avatar');
+          if (avatarIndex !== -1) {
+            newClips = [...newClips];
+            newClips[avatarIndex] = { ...newClips[avatarIndex], src: activeScene.avatar };
+          }
+          return {
+            ...s,
+            avatar: activeScene.avatar,
+            avatarType: activeScene.avatarType,
+            avatarName: activeScene.avatarName,
+            clips: newClips
+          };
+        } else if (type === 'voice' && activeScene.voiceId) {
+          return {
+            ...s,
+            voiceId: activeScene.voiceId,
+            voiceName: activeScene.voiceName,
+            voiceSettings: activeScene.voiceSettings
+          };
+        }
+        return s;
+      });
+
+      const newState = { ...prev, scenes: updatedScenes };
+      setTimeout(() => saveProject(false, newState), 100);
+      return newState;
+    });
   };
 
   // Debounced auto-save
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (project.id && project.workspaceId) {
-        saveProject();
-      }
+      saveProject();
     }, 3000); // Save after 3 seconds of inactivity
 
     return () => clearTimeout(timer);
@@ -254,15 +323,16 @@ function Create({ onBack, initialConfig = null }) {
 
     const newClip = {
       id: `clip_${Date.now()}`,
-      type: type === 'image' ? 'image' : type === 'video' ? 'video' : type === 'avatar' ? 'avatar' : 'text',
-      src: type !== 'text' ? content : null,
+      type: type === 'image' ? 'image' : type === 'video' ? 'video' : type === 'avatar' ? 'avatar' : type === 'shape' ? 'shape' : 'text',
+      src: (type === 'image' || type === 'video' || type === 'avatar') ? content : null,
       content: type === 'text' ? content : null,
       layer: targetScene.clips.length,
       startTime: 0.0,
       endTime: targetScene.duration || 8.0,
       position: { x: 50, y: 50 },
-      size: type === 'avatar' ? { width: 250, height: 330 } : { width: 400, height: 400 },
+      size: type === 'avatar' ? { width: 250, height: 330 } : type === 'shape' ? { width: parseInt(content?.style?.width) || 200, height: parseInt(content?.style?.height) || 200 } : { width: 400, height: 400 },
       opacity: 1.0,
+      style: type === 'shape' ? content?.style : undefined,
       effects: {
         brightness: 1,
         contrast: 1,
@@ -374,7 +444,7 @@ function Create({ onBack, initialConfig = null }) {
   const speechSynthesisRef = useRef(null)
 
   // Store player methods for seeking
-  const [playerMethods, setPlayerMethods] = useState(null)
+  // We use playerRef.current now
 
   // Credit calculation function
   const calculateCredits = () => {
@@ -506,11 +576,11 @@ function Create({ onBack, initialConfig = null }) {
       // Space: Play/Pause
       if (e.code === 'Space') {
         e.preventDefault()
-        if (playerMethods) {
+        if (playerRef.current) {
           if (isPlaying) {
-            playerMethods.pause()
+            playerRef.current.pause()
           } else {
-            playerMethods.play()
+            playerRef.current.play()
           }
         }
       }
@@ -564,7 +634,7 @@ function Create({ onBack, initialConfig = null }) {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isPlaying, playerMethods, activeSceneId, scenes.length, currentTime, totalDurationInFrames])
+  }, [isPlaying, activeSceneId, scenes.length, currentTime, totalDurationInFrames])
 
   const addScene = () => {
     setShowTemplateModal(true)
@@ -573,10 +643,12 @@ function Create({ onBack, initialConfig = null }) {
   const handleAddTemplateScene = (template) => {
     // Deep copy the scene template to avoid shared references
     const newScene = JSON.parse(JSON.stringify(template));
-    
-    // Assign unique IDs to scene and all its clips
-    newScene.id = `scene_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-    newScene.order = project.scenes.length;
+    // Check if we should replace the single default scene
+    // A scene is considered default if it's the only scene and its title is "Intro" or "Hero Scene"
+    const isDefaultSingleScene = project.scenes.length === 1 && (project.scenes[0].title === 'Intro' || project.scenes[0].title === 'Hero Scene' || project.scenes[0].id === 'lt_001');
+
+    newScene.id = isDefaultSingleScene ? project.scenes[0].id : `scene_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+    newScene.order = isDefaultSingleScene ? 0 : project.scenes.length;
     
     if (newScene.clips) {
         newScene.clips = newScene.clips.map(clip => ({
@@ -585,11 +657,14 @@ function Create({ onBack, initialConfig = null }) {
         }));
     }
 
-    setProject(prev => ({
-      ...prev,
-      updatedAt: new Date().toISOString(),
-      scenes: [...prev.scenes, newScene]
-    }))
+    setProject(prev => {
+      const newScenes = isDefaultSingleScene ? [newScene] : [...prev.scenes, newScene];
+      return {
+        ...prev,
+        updatedAt: new Date().toISOString(),
+        scenes: newScenes
+      };
+    });
     
     setActiveSceneId(newScene.id)
   }
@@ -759,8 +834,8 @@ function Create({ onBack, initialConfig = null }) {
   const handleSeek = (time) => {
     setCurrentTime(time)
     // Use player methods if available
-    if (playerMethods && playerMethods.seekTo) {
-      playerMethods.seekTo(time)
+    if (playerRef.current && playerRef.current.seekTo) {
+      playerRef.current.seekTo(time)
     }
   }
 
@@ -800,70 +875,68 @@ function Create({ onBack, initialConfig = null }) {
         const clips = [];
 
         if (isLeft) {
+          // Layout: Image Left, Text Right
           clips.push({
-            id: `clip_avatar_${Date.now()}_${pIdx}_1`,
-            type: 'avatar',
-            role: 'avatar',
-            src: payload.avatarImage,
-            startTime: 0,
-            endTime: duration,
-            position: { x: 100, y: 100 },
-            size: { width: 350, height: 500 },
-            opacity: 1.0,
-            layer: 1
+            id: `clip_image_${Date.now()}_${pIdx}_1`, type: 'image', role: 'background-image', src: '',
+            startTime: 0, endTime: duration, position: { x: 120, y: 200 }, size: { width: 600, height: 600 },
+            style: { backgroundColor: '#f0fdf4', borderRadius: '32px', border: '4px solid #ffffff', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }, layer: 1
           });
           clips.push({
-            id: `clip_text_${Date.now()}_${pIdx}_2`,
-            type: 'text',
-            role: 'main-text',
-            content: headline,
-            startTime: 0.5,
-            endTime: duration,
-            position: { x: 500, y: 180 },
-            size: { width: 680, height: 400 },
-            style: {
-              fontSize: 38,
-              fontWeight: '700',
-              color: textColor,
-              textAlign: 'left',
-              width: '680px',
-              fontFamily: 'Inter, system-ui, sans-serif'
-            },
-            opacity: 1.0,
-            layer: 2
+            id: `clip_avatar_${Date.now()}_${pIdx}_2`, type: 'avatar', role: 'avatar', src: payload.avatarImage,
+            startTime: 0, endTime: duration, position: { x: 570, y: 650 }, size: { width: 200, height: 200 },
+            style: { borderRadius: '50%', border: '8px solid #ffffff', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }, layer: 2
+          });
+          clips.push({
+            id: `clip_title_${Date.now()}_${pIdx}_3`, type: 'text', role: 'main-text', content: headline || 'SCALE YOUR BRAND WITH AI VIDEO',
+            startTime: 0, endTime: duration, position: { x: 950, y: 250 }, size: { width: 700, height: 200 },
+            style: { fontSize: 72, fontWeight: '900', color: textColor, textAlign: 'left', lineHeight: 1.1, textTransform: 'uppercase' }, layer: 3
+          });
+          clips.push({
+            id: `clip_subtitle_${Date.now()}_${pIdx}_4`, type: 'text', role: 'subtitle-text', content: paraText || 'Generate professional marketing content in seconds.',
+            startTime: 0.5, endTime: duration, position: { x: 950, y: 460 }, size: { width: 700, height: 100 },
+            style: { fontSize: 32, fontWeight: '500', color: '#64748b', textAlign: 'left', lineHeight: 1.4 }, layer: 4
+          });
+          clips.push({
+            id: `clip_btn_bg_${Date.now()}_${pIdx}_5`, type: 'shape', role: 'decoration',
+            startTime: 0, endTime: duration, position: { x: 950, y: 580 }, size: { width: 280, height: 80 },
+            style: { backgroundColor: '#10b981', borderRadius: '40px' }, layer: 5
+          });
+          clips.push({
+            id: `clip_btn_line_${Date.now()}_${pIdx}_6`, type: 'shape', role: 'decoration',
+            startTime: 0, endTime: duration, position: { x: 1025, y: 615 }, size: { width: 130, height: 10 },
+            style: { backgroundColor: '#ffffff', borderRadius: '5px' }, layer: 6
           });
         } else {
+          // Layout: Text Left, Image Right
           clips.push({
-            id: `clip_avatar_${Date.now()}_${pIdx}_1`,
-            type: 'avatar',
-            role: 'avatar',
-            src: payload.avatarImage,
-            startTime: 0,
-            endTime: duration,
-            position: { x: 830, y: 100 },
-            size: { width: 350, height: 500 },
-            opacity: 1.0,
-            layer: 1
+            id: `clip_title_${Date.now()}_${pIdx}_1`, type: 'text', role: 'main-text', content: headline || 'YOUR NEXT BIG IDEA STARTS HERE',
+            startTime: 0, endTime: duration, position: { x: 120, y: 250 }, size: { width: 700, height: 200 },
+            style: { fontSize: 72, fontWeight: '900', color: textColor, textAlign: 'left', lineHeight: 1.1, textTransform: 'uppercase' }, layer: 1
           });
           clips.push({
-            id: `clip_text_${Date.now()}_${pIdx}_2`,
-            type: 'text',
-            role: 'main-text',
-            content: headline,
-            startTime: 0.5,
-            endTime: duration,
-            position: { x: 100, y: 180 },
-            size: { width: 680, height: 400 },
-            style: {
-              fontSize: 38,
-              fontWeight: '700',
-              color: textColor,
-              textAlign: 'left',
-              width: '680px',
-              fontFamily: 'Inter, system-ui, sans-serif'
-            },
-            opacity: 1.0,
-            layer: 2
+            id: `clip_subtitle_${Date.now()}_${pIdx}_2`, type: 'text', role: 'subtitle-text', content: paraText || 'The ultimate platform for AI video generation and professional layouts.',
+            startTime: 0.5, endTime: duration, position: { x: 120, y: 460 }, size: { width: 700, height: 100 },
+            style: { fontSize: 32, fontWeight: '500', color: '#64748b', textAlign: 'left', lineHeight: 1.4 }, layer: 2
+          });
+          clips.push({
+            id: `clip_btn_bg_${Date.now()}_${pIdx}_3`, type: 'shape', role: 'decoration',
+            startTime: 0, endTime: duration, position: { x: 120, y: 580 }, size: { width: 280, height: 80 },
+            style: { backgroundColor: '#3b82f6', borderRadius: '40px' }, layer: 3
+          });
+          clips.push({
+            id: `clip_btn_line_${Date.now()}_${pIdx}_4`, type: 'shape', role: 'decoration',
+            startTime: 0, endTime: duration, position: { x: 195, y: 615 }, size: { width: 130, height: 10 },
+            style: { backgroundColor: '#ffffff', borderRadius: '5px' }, layer: 4
+          });
+          clips.push({
+            id: `clip_image_${Date.now()}_${pIdx}_5`, type: 'image', role: 'background-image', src: '',
+            startTime: 0, endTime: duration, position: { x: 950, y: 200 }, size: { width: 600, height: 600 },
+            style: { backgroundColor: '#eef2ff', borderRadius: '32px', border: '4px solid #ffffff', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }, layer: 5
+          });
+          clips.push({
+            id: `clip_avatar_${Date.now()}_${pIdx}_6`, type: 'avatar', role: 'avatar', src: payload.avatarImage,
+            startTime: 0, endTime: duration, position: { x: 1400, y: 650 }, size: { width: 200, height: 200 },
+            style: { borderRadius: '50%', border: '8px solid #ffffff', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }, layer: 6
           });
         }
 
@@ -889,7 +962,7 @@ function Create({ onBack, initialConfig = null }) {
           scenes: storyboardScenes
         };
         setTimeout(() => {
-          saveProject(false);
+          saveProject(false, newProj);
         }, 100);
         return updated;
       });
@@ -908,7 +981,10 @@ function Create({ onBack, initialConfig = null }) {
     let targetSceneId = activeSceneId;
     let currentScenes = project.scenes;
 
-    if (!targetSceneId || currentScenes.length === 0) {
+    if (!targetSceneId && currentScenes.length > 0) {
+      targetSceneId = currentScenes[0].id;
+      setActiveSceneId(targetSceneId);
+    } else if (!targetSceneId || currentScenes.length === 0) {
       const { newScene, updatedScenes } = autoCreateScene();
       targetSceneId = newScene.id;
       currentScenes = updatedScenes;
@@ -1001,7 +1077,7 @@ function Create({ onBack, initialConfig = null }) {
       
       // Auto-save the project
       setTimeout(() => {
-        saveProject(false);
+        saveProject(false, newProj);
       }, 100);
       
       return newProj;
@@ -1010,6 +1086,153 @@ function Create({ onBack, initialConfig = null }) {
     setShowGeneratedVideoModal(false);
   };
 
+  const handleSelectLayout = (layoutId) => {
+    if (!generatingSceneId || !generatedVideoUrl) return;
+
+    setProject(prev => {
+      const newProj = {
+        ...prev,
+        scenes: prev.scenes.map(s => {
+          if (s.id !== generatingSceneId) return s;
+
+          const template = projectTemplate.project.scenes.find(t => t.id === layoutId);
+
+          if (template) {
+            let templateClips = JSON.parse(JSON.stringify(template.clips));
+            
+            // Find avatar placeholder (either labelled or first large image)
+            let avatarIndex = templateClips.findIndex(c => 
+              c.label?.toLowerCase().includes('avatar') || 
+              c.label?.toLowerCase().includes('media') || 
+              c.label?.toLowerCase().includes('center image') ||
+              (c.type === 'image' && !c.label?.toLowerCase().includes('logo'))
+            );
+
+            if (avatarIndex === -1) {
+              templateClips.push({
+                id: `clip_video_${Date.now()}`,
+                type: 'video',
+                role: 'avatar',
+                src: generatedVideoUrl,
+                layer: templateClips.length,
+                startTime: 0,
+                endTime: s.duration || 8,
+                opacity: 1,
+                position: { x: 100, y: 100 },
+                size: { width: 350, height: 500 }
+              });
+            } else {
+              templateClips[avatarIndex] = {
+                ...templateClips[avatarIndex],
+                src: generatedVideoUrl,
+                type: 'video',
+                role: 'avatar'
+              };
+            }
+
+            // Retain user's existing text content if possible
+            const oldTextClip = s.clips?.find(c => c.type === 'text' || c.role === 'main-text');
+            const newTextIndex = templateClips.findIndex(c => c.type === 'text');
+            
+            if (oldTextClip && newTextIndex !== -1) {
+              templateClips[newTextIndex].content = oldTextClip.content;
+            }
+
+            return { ...s, clips: templateClips, layout: layoutId, generatedVideoUrl, title: template.title };
+          }
+
+          let updatedClips = [...(s.clips || [])];
+
+          // Ensure the avatar is updated to the video
+          let avatarClipIndex = updatedClips.findIndex(c => c.role === 'avatar' || c.type === 'avatar' || c.type === 'video');
+          if (avatarClipIndex === -1) {
+            updatedClips.push({
+              id: `clip_video_${Date.now()}`,
+              type: 'video',
+              role: 'avatar',
+              src: generatedVideoUrl,
+              layer: 1,
+              startTime: 0,
+              endTime: s.duration || 8,
+              opacity: 1
+            });
+            avatarClipIndex = updatedClips.length - 1;
+          } else {
+            updatedClips[avatarClipIndex] = { ...updatedClips[avatarClipIndex], src: generatedVideoUrl, type: 'video' };
+          }
+
+          let textClipIndex = updatedClips.findIndex(c => c.role === 'main-text' || c.type === 'text');
+
+          const applyLayout = (avatarPos, avatarSize, textPos, textSize, textAlignment) => {
+            updatedClips[avatarClipIndex] = {
+              ...updatedClips[avatarClipIndex],
+              position: avatarPos,
+              size: avatarSize
+            };
+            if (textClipIndex !== -1) {
+              updatedClips[textClipIndex] = {
+                ...updatedClips[textClipIndex],
+                position: textPos,
+                size: textSize,
+                style: { 
+                  ...updatedClips[textClipIndex].style, 
+                  width: textSize.width + 'px',
+                  textAlign: textAlignment 
+                }
+              };
+            }
+          };
+
+          // Default canvas dimensions
+          const canvasWidth = prev.resolution?.width || 1920;
+          const canvasHeight = prev.resolution?.height || 1080;
+
+          if (layoutId === 'split-left') {
+             applyLayout(
+               { x: canvasWidth * 0.1, y: canvasHeight * 0.1 }, 
+               { width: canvasWidth * 0.35, height: canvasHeight * 0.8 },
+               { x: canvasWidth * 0.5, y: canvasHeight * 0.2 }, 
+               { width: canvasWidth * 0.4, height: canvasHeight * 0.6 },
+               'left'
+             );
+          } else if (layoutId === 'split-right') {
+             applyLayout(
+               { x: canvasWidth * 0.55, y: canvasHeight * 0.1 }, 
+               { width: canvasWidth * 0.35, height: canvasHeight * 0.8 },
+               { x: canvasWidth * 0.05, y: canvasHeight * 0.2 }, 
+               { width: canvasWidth * 0.4, height: canvasHeight * 0.6 },
+               'left'
+             );
+          } else if (layoutId === 'centered') {
+             applyLayout(
+               { x: canvasWidth * 0.3, y: canvasHeight * 0.1 }, 
+               { width: canvasWidth * 0.4, height: canvasHeight * 0.8 },
+               { x: canvasWidth * 0.1, y: canvasHeight * 0.85 }, 
+               { width: canvasWidth * 0.8, height: canvasHeight * 0.1 },
+               'center'
+             );
+          } else if (layoutId === 'full-avatar' || layoutId === 'pip') {
+             applyLayout(
+               { x: canvasWidth * 0.7, y: canvasHeight * 0.6 }, 
+               { width: canvasWidth * 0.25, height: canvasHeight * 0.35 },
+               { x: canvasWidth * 0.1, y: canvasHeight * 0.1 }, 
+               { width: canvasWidth * 0.8, height: canvasHeight * 0.8 },
+               'left'
+             );
+          }
+
+          return { ...s, clips: updatedClips, generatedVideoUrl, layout: layoutId };
+        })
+      };
+      
+      // Auto-save the project
+      setTimeout(() => {
+        saveProject(false, newProj);
+      }, 100);
+
+      return newProj;
+    });
+  };
   const handleRemakeVideo = () => {
     if (!generatingSceneId) return;
     
@@ -1033,6 +1256,7 @@ function Create({ onBack, initialConfig = null }) {
         videoUrl={generatedVideoUrl} 
         onUseInEditor={handleUseGeneratedVideo}
         onRemake={handleRemakeVideo}
+        onSelectLayout={handleSelectLayout}
       />
       <EditorTopbar
         onBack={onBack}
@@ -1090,7 +1314,6 @@ function Create({ onBack, initialConfig = null }) {
                 totalDurationInFrames={totalDurationInFrames}
                 getSceneForFrame={getSceneForFrame}
                 speakText={speakText}
-                onPlayerReady={setPlayerMethods}
                 selectedLayerId={selectedLayerId}
                 setSelectedLayerId={setSelectedLayerId}
                 onUpdateLayerPosition={updateLayerPosition}
@@ -1127,18 +1350,18 @@ function Create({ onBack, initialConfig = null }) {
               musicDuration={musicDuration || (totalDurationInFrames / 30)}
               onMusicDurationChange={handleMusicDurationChange}
               onPlayPause={() => {
-                if (playerMethods) {
+                if (playerRef.current) {
                   if (isPlaying) {
-                    playerMethods.pause()
+                    playerRef.current.pause()
                   } else {
-                    playerMethods.play()
+                    playerRef.current.play()
                   }
                 }
               }}
               onStop={() => {
-                if (playerMethods) {
-                  playerMethods.pause()
-                  playerMethods.seekTo(0)
+                if (playerRef.current) {
+                  playerRef.current.pause()
+                  playerRef.current.seekTo(0)
                 }
                 setIsPlaying(false)
                 setCurrentTime(0)
@@ -1200,6 +1423,8 @@ function Create({ onBack, initialConfig = null }) {
                 setBgMusicVolume={setBgMusicVolume}
                 selectedLayerId={selectedLayerId}
                 generateSceneVideo={generateSceneVideo}
+                setActiveTab={setSelectedTool}
+                applyGlobalSetting={applyGlobalSetting}
               />
             </div>
           </div>

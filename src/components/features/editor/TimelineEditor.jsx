@@ -17,7 +17,10 @@ import {
     MdFastRewind,
     MdKeyboardArrowUp,
     MdKeyboardArrowDown,
-    MdContentCopy
+    MdContentCopy,
+    MdImage,
+    MdTextFields,
+    MdSmartDisplay
 } from 'react-icons/md'
 
 const TimelineEditor = ({
@@ -62,9 +65,39 @@ const TimelineEditor = ({
         return { activeScene: scenes[idx], activeSceneStart }
     }, [scenes, activeSceneId])
 
-    const stateRef = useRef({ zoom, activeSceneStart, activeScene, totalDuration })
+    // Calculate global tracks
+    const globalTracks = useMemo(() => {
+        const allClips = scenes.reduce((acc, scene, sIdx) => {
+            const prevDuration = scenes.slice(0, sIdx).reduce((sum, s) => sum + (s.duration || 8), 0);
+            const sceneClips = (scene.clips || []).map((clip, clipIndex) => {
+                const clipStart = clip.startTime || 0;
+                const clipDuration = (clip.endTime || (clip.startTime + 5)) - clipStart;
+                return {
+                    ...clip,
+                    sceneId: scene.id,
+                    absoluteStart: prevDuration + clipStart,
+                    absoluteEnd: prevDuration + clipStart + clipDuration,
+                    clipDuration,
+                    layerIndex: clipIndex
+                };
+            });
+            return [...acc, ...sceneClips];
+        }, []);
+
+        const tracks = [];
+        allClips.forEach(clip => {
+            const index = clip.layerIndex;
+            if (!tracks[index]) tracks[index] = [];
+            tracks[index].push(clip);
+        });
+
+        // Filter out any undefined slots if some layers were deleted leaving gaps
+        return tracks.filter(Boolean);
+    }, [scenes]);
+
+    const stateRef = useRef({ zoom, activeSceneStart, activeScene, totalDuration, scenes, globalTracks })
     useEffect(() => {
-        stateRef.current = { zoom, activeSceneStart, activeScene, totalDuration }
+        stateRef.current = { zoom, activeSceneStart, activeScene, totalDuration, scenes, globalTracks }
     })
 
     // Auto-scroll during playback
@@ -114,7 +147,7 @@ const TimelineEditor = ({
 
     const handleMouseMove = (e) => {
         if (!scrollContainerRef.current) return
-        const { zoom, activeSceneStart, activeScene, totalDuration } = stateRef.current
+        const { zoom, totalDuration, scenes } = stateRef.current
         const rect = scrollContainerRef.current.getBoundingClientRect()
         const x = e.clientX - rect.left + scrollContainerRef.current.scrollLeft
         
@@ -125,29 +158,33 @@ const TimelineEditor = ({
             const newDuration = Math.max(1, Math.min(x / zoom, totalDuration))
             if (onMusicDurationChange) onMusicDurationChange(newDuration)
         } else if (resizingLayerRef.current) {
-            const timeAtCursor = Math.max(0, (x / zoom) - activeSceneStart)
-            const layer = resizingLayerRef.current.layer
+            const { clip, sceneId, sceneStart } = resizingLayerRef.current
+            const timeAtCursor = Math.max(0, (x / zoom) - sceneStart)
+            const scene = scenes.find(s => s.id === sceneId)
+            
             if (resizeSideRef.current === 'right') {
-                const newDuration = Math.max(0.5, timeAtCursor - layer.start)
-                updateLayerWithState(layer.id, { duration: newDuration }, activeScene)
+                const newDuration = Math.max(0.5, timeAtCursor - (clip.startTime || 0))
+                updateLayerWithState(clip.id, { duration: newDuration, endTime: (clip.startTime || 0) + newDuration }, scene)
             } else if (resizeSideRef.current === 'left') {
-                const end = layer.start + (layer.duration || activeScene?.duration || 8)
+                const end = (clip.startTime || 0) + (clip.duration || scene?.duration || 8)
                 const newStart = Math.min(timeAtCursor, end - 0.5)
                 const newDuration = end - newStart
-                updateLayerWithState(layer.id, { start: newStart, duration: newDuration }, activeScene)
+                updateLayerWithState(clip.id, { startTime: newStart, duration: newDuration, endTime: end }, scene)
             }
         } else if (draggingLayerRef.current) {
-            const timeAtCursor = Math.max(0, (x / zoom) - activeSceneStart - draggingLayerRef.current.offsetX)
-            updateLayerWithState(draggingLayerRef.current.layer.id, { start: timeAtCursor }, activeScene)
+            const { clip, sceneId, sceneStart, offsetX } = draggingLayerRef.current
+            const timeAtCursor = Math.max(0, (x / zoom) - sceneStart - offsetX)
+            const scene = scenes.find(s => s.id === sceneId)
+            updateLayerWithState(clip.id, { startTime: timeAtCursor, endTime: timeAtCursor + (clip.duration || 5) }, scene)
         }
     }
 
-    const updateLayerWithState = (layerId, updates, currentActiveScene) => {
-        if (!currentActiveScene) return
-        const newLayers = currentActiveScene.layers.map(l => 
+    const updateLayerWithState = (layerId, updates, targetScene) => {
+        if (!targetScene) return
+        const newClips = targetScene.clips.map(l => 
             l.id === layerId ? { ...l, ...updates } : l
         )
-        onUpdateScene(currentActiveScene.id, { layers: newLayers })
+        onUpdateScene(targetScene.id, { clips: newClips })
     }
 
     const handleMouseUp = () => {
@@ -172,19 +209,28 @@ const TimelineEditor = ({
         }
     }
 
-    const startLayerDrag = (e, clip) => {
+    const startLayerDrag = (e, clip, sceneId) => {
         e.stopPropagation()
+        const { zoom, scenes } = stateRef.current
         const rect = scrollContainerRef.current.getBoundingClientRect()
         const x = e.clientX - rect.left + scrollContainerRef.current.scrollLeft
-        const timeAtCursor = (x / zoom) - activeSceneStart
-        draggingLayerRef.current = { clip, offsetX: timeAtCursor - (clip.startTime || 0) }
+        
+        const sceneIndex = scenes.findIndex(s => s.id === sceneId)
+        const sceneStart = scenes.slice(0, sceneIndex).reduce((sum, s) => sum + (s.duration || 8), 0)
+        
+        const timeAtCursor = (x / zoom) - sceneStart
+        draggingLayerRef.current = { clip, sceneId, sceneStart, offsetX: timeAtCursor - (clip.startTime || 0) }
         window.addEventListener('mousemove', handleMouseMove)
         window.addEventListener('mouseup', handleMouseUp)
     }
 
-    const startLayerResize = (e, clip, side) => {
+    const startLayerResize = (e, clip, side, sceneId) => {
         e.stopPropagation()
-        resizingLayerRef.current = { clip }
+        const { scenes } = stateRef.current
+        const sceneIndex = scenes.findIndex(s => s.id === sceneId)
+        const sceneStart = scenes.slice(0, sceneIndex).reduce((sum, s) => sum + (s.duration || 8), 0)
+
+        resizingLayerRef.current = { clip, side, sceneId, sceneStart }
         resizeSideRef.current = side
         window.addEventListener('mousemove', handleMouseMove)
         window.addEventListener('mouseup', handleMouseUp)
@@ -289,7 +335,6 @@ const TimelineEditor = ({
             border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
-            padding-top: 24px;
             overflow-y: scroll;
             scrollbar-width: none;
           }
@@ -451,29 +496,26 @@ const TimelineEditor = ({
             position: absolute;
             top: 0;
             bottom: 0;
-            width: 2px;
-            background: var(--primary);
+            width: 1px;
+            background: #ffffff;
             z-index: 100;
             pointer-events: none;
-            box-shadow: 0 0 8px var(--primary);
+            box-shadow: 0 0 4px rgba(255,255,255,0.5);
           }
 
           .playhead-head {
             position: absolute;
             top: 0px;
-            left: -7px;
-            width: 16px;
-            height: 20px;
-            background: var(--primary);
-            border-radius: 4px;
-            border-bottom-left-radius: 8px;
-            border-bottom-right-radius: 8px;
+            left: -5.5px;
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 10px solid #ffffff;
+            background: transparent;
             pointer-events: auto;
             cursor: grab;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.5);
+            box-shadow: none;
             transition: transform 0.1s;
           }
           
@@ -482,11 +524,7 @@ const TimelineEditor = ({
           }
 
           .playhead-head::after {
-             content: "";
-             width: 6px;
-             height: 2px;
-             background: #ffffff;
-             border-radius: 1px;
+             display: none;
           }
 
           .toolbar-btn {
@@ -555,50 +593,74 @@ const TimelineEditor = ({
         .layer-clip {
             position: absolute;
             height: 28px;
-            background: #581c87;
-            border: 1px solid #7e22ce;
-            border-radius: 6px;
+            background: rgba(88, 28, 135, 0.8);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 10px;
+            padding: 0 8px;
             color: #fff;
-            font-size: 12px;
+            font-size: 11px;
             overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
             font-weight: 500;
+            transition: all 0.2s ease;
         }
 
         .layer-clip:hover {
-            border-color: #a855f7;
+            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(107, 33, 168, 0.9);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
         }
 
         .layer-clip-icon {
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 20px;
-            height: 20px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 4px;
-            margin-right: 8px;
+            width: 22px;
+            height: 22px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 6px;
+            margin-right: 6px;
             flex-shrink: 0;
+            color: #f3f4f6;
         }
 
-        .music-trim-handle {
-          position: absolute;
-          right: 0;
-          top: 0;
-          bottom: 0;
-          width: 8px;
-          background: #34d399;
-          cursor: ew-resize;
-          border-radius: 0 8px 8px 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.2s;
+        .layer-clip-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            margin-right: 6px;
+            background-size: cover;
+            background-position: center;
+            flex-shrink: 0;
+            border: 1px solid rgba(255,255,255,0.2);
         }
+
+          .music-trim-handle {
+              position: absolute;
+              right: 0;
+              top: 0;
+              bottom: 0;
+              width: 10px;
+              cursor: ew-resize;
+              background: rgba(255,255,255,0.2);
+              border-radius: 0 6px 6px 0;
+          }
+
+          .music-clip-empty {
+              background: rgba(156, 163, 175, 0.05);
+              border: 1px dashed rgba(156, 163, 175, 0.3);
+              border-radius: 6px;
+              height: 36px;
+              margin-top: 6px;
+              display: flex;
+              align-items: center;
+              padding: 0 10px;
+              position: absolute;
+          }
 
         .timeline-empty-state {
             position: absolute;
@@ -659,49 +721,55 @@ const TimelineEditor = ({
         }
       `}</style>
 
-            <div className="timeline-toolbar">
+            <div className="timeline-toolbar" style={{ position: 'relative' }}>
                 <div className="toolbar-section">
                     <button className="toolbar-btn" title="Undo"><MdUndo /></button>
                     <button className="toolbar-btn" title="Redo"><MdRedo /></button>
                 </div>
 
-                <div className="toolbar-section">
-                    <button className="toolbar-btn" title="Rewind"><MdFastRewind /></button>
-                    <button className="toolbar-btn" title="Previous"><MdSkipPrevious /></button>
-                    <button className="toolbar-btn primary" onClick={onPlayPause}>
-                        {isPlaying ? <MdPause size={24} /> : <MdPlayArrow size={24} />}
+                <div className="toolbar-section" style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+                    <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginRight: '12px' }}>
+                        {Math.floor(currentTime / 60)}:{(Math.floor(currentTime % 60)).toString().padStart(2, '0')}
+                    </span>
+                    <button className="toolbar-btn primary" onClick={onPlayPause} style={{ borderRadius: '50%', width: '40px', height: '40px', background: 'var(--bg-card)' }}>
+                        {isPlaying ? <MdPause size={24} color="var(--text-main)" /> : <MdPlayArrow size={24} color="var(--text-main)" />}
                     </button>
-                    <button className="toolbar-btn" title="Next"><MdSkipNext /></button>
-                    <button className="toolbar-btn" title="Fast Forward"><MdFastForward /></button>
-                    <button className="toolbar-btn" title="Zoom Out" onClick={() => setZoom(z => Math.max(10, z - 10))}><MdZoomOut /></button>
-                    <button className="toolbar-btn" title="Zoom In" onClick={() => setZoom(z => Math.min(200, z + 10))}><MdZoomIn /></button>
+                    <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-muted)', marginLeft: '12px' }}>
+                        {Math.floor(totalDuration / 60)}:{(Math.floor(totalDuration % 60)).toString().padStart(2, '0')}
+                    </span>
                 </div>
 
                 <div className="toolbar-section">
-                   <button className="toolbar-btn" onClick={onAddScene} title="Add Scene"><MdAdd size={20} /></button>
-                   <button className="toolbar-btn" title="Delete" onClick={() => onDeleteScene(activeSceneId)}><MdDelete size={18} /></button>
+                    <button className="toolbar-btn" title="Zoom Out" onClick={() => setZoom(z => Math.max(10, z - 10))}><MdZoomOut /></button>
+                    <button className="toolbar-btn" title="Zoom In" onClick={() => setZoom(z => Math.min(200, z + 10))}><MdZoomIn /></button>
+                    <div style={{ width: '1px', height: '20px', background: 'var(--border-color)', margin: '0 8px' }}></div>
+                    <button className="toolbar-btn" onClick={onAddScene} title="Add Scene"><MdAdd size={20} /></button>
+                    <button className="toolbar-btn" title="Delete" onClick={() => onDeleteScene(activeSceneId)}><MdDelete size={18} /></button>
                 </div>
             </div>
 
             <div className="timeline-container">
                 <div className="timeline-labels" ref={labelsRef} onScroll={handleLabelsScroll}>
-                    {(() => {
-                        const currentActiveScene = scenes.find(s => s.id === activeSceneId);
-                        return (currentActiveScene?.clips || []).map((clip, idx) => (
-                            <div key={`clip-label-${clip.id}`} className="track-label" style={{ height: '38px', justifyContent: 'space-between', paddingRight: '10px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', maxWidth: '80%' }}>
-                                    <div className="track-label-icon" style={{width: 16, height: 16, fontSize: 10}}><MdContentCopy size={12}/></div>
-                                    <div style={{overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
-                                        Ef : {clip.type}
+                    <div style={{ height: '24px', minHeight: '24px', position: 'sticky', top: 0, background: 'var(--bg-card)', borderBottom: '1px solid var(--border-color)', zIndex: 10 }}></div>
+                        {globalTracks.map((track, idx) => {
+                            // Find the most prominent type in this track
+                            const types = track.map(c => c.type);
+                            const dominantType = types.sort((a,b) => types.filter(v => v===a).length - types.filter(v => v===b).length).pop() || 'layer';
+                            return (
+                                <div key={`track-label-${idx}`} className="track-label" style={{ height: '49px', justifyContent: 'space-between', paddingRight: '10px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', maxWidth: '80%' }}>
+                                        <div className="track-label-icon" style={{width: 16, height: 16, fontSize: 10}}><MdContentCopy size={12}/></div>
+                                        <div style={{overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+                                            Track {idx + 1} ({dominantType})
+                                        </div>
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
+                                        <button onClick={(e) => {}} style={{background: 'transparent', border: 'none', color: '#6b7280', cursor: 'not-allowed', padding: 0}} title="Move Layer Up"><MdKeyboardArrowUp size={14}/></button>
+                                        <button onClick={(e) => {}} style={{background: 'transparent', border: 'none', color: '#6b7280', cursor: 'not-allowed', padding: 0}} title="Move Layer Down"><MdKeyboardArrowDown size={14}/></button>
                                     </div>
                                 </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
-                                    <button onClick={(e) => moveLayerUp(e, idx)} style={{background: 'transparent', border: 'none', color: '#6b7280', cursor: 'pointer', padding: 0}} title="Move Layer Up"><MdKeyboardArrowUp size={14}/></button>
-                                    <button onClick={(e) => moveLayerDown(e, idx)} style={{background: 'transparent', border: 'none', color: '#6b7280', cursor: 'pointer', padding: 0}} title="Move Layer Down"><MdKeyboardArrowDown size={14}/></button>
-                                </div>
-                            </div>
-                        ));
-                    })()}
+                            );
+                        })}
                     
                     <div className="track-label" style={{ height: '50px' }}>
                         <div className="track-label-icon"><MdVideoLibrary size={16} /></div>
@@ -748,47 +816,63 @@ const TimelineEditor = ({
                             </div>
                         ) : (
                             <>
-                                {(() => {
-                                   const activeScene = scenes.find(s => s.id === activeSceneId);
-                                   const activeSceneStartLocal = (scenes || []).slice(0, (scenes || []).findIndex(s => s.id === activeSceneId)).reduce((sum, s) => sum + (s.duration || 8), 0)
-                                   return (activeScene?.clips || []).map((clip, index) => {
-                                       const clipStart = clip.startTime || 0
-                                       const clipDuration = (clip.endTime || (clip.startTime + 5)) - clipStart
-                                       const clipAbsoluteStart = activeSceneStartLocal + clipStart
-                                       return (
-                                           <div key={clip.id} className="layer-track">
-                                               <div 
-                                                   className="layer-clip" 
-                                                   onMouseDown={(e) => startLayerDrag(e, clip)}
-                                                   onClick={(e) => {
-                                                       e.stopPropagation();
-                                                       if (onSelectLayer) onSelectLayer(clip.id);
-                                                   }}
-                                                   style={{
-                                                       left: clipAbsoluteStart * zoom,
-                                                       width: clipDuration * zoom,
-                                                       cursor: 'grab'
-                                                   }}
-                                               >
-                                                   <div className="layer-clip-icon">
-                                                       <MdContentCopy size={12} />
-                                                   </div>
-                                                   <span>{clip.type.toUpperCase()}</span>
-                                                   <button className="delete-clip-btn" onClick={(e) => { e.stopPropagation(); onDeleteLayer(activeScene.id, clip.id) }}>×</button>
-                                                   
-                                                   <div 
-                                                       style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '4px', cursor: 'ew-resize'}} 
-                                                       onMouseDown={(e) => startLayerResize(e, clip, 'left')} 
-                                                   />
-                                                   <div 
-                                                       style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '4px', cursor: 'ew-resize'}} 
-                                                       onMouseDown={(e) => startLayerResize(e, clip, 'right')} 
-                                                   />
-                                               </div>
-                                           </div>
-                                       )
-                                   });
-                                })()}
+                                {globalTracks.map((track, trackIdx) => (
+                                    <div key={`track-${trackIdx}`} className="layer-track" style={{ position: 'relative', height: '49px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                        {track.map(clip => (
+                                            <div 
+                                                key={clip.id}
+                                                className={`layer-clip ${clip.sceneId === activeSceneId ? 'active-scene-clip' : ''}`}
+                                                onMouseDown={(e) => startLayerDrag(e, clip, clip.sceneId)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (activeSceneId !== clip.sceneId) onSelectScene(clip.sceneId);
+                                                    if (onSelectLayer) onSelectLayer(clip.id);
+                                                }}
+                                                style={{
+                                                    position: 'absolute',
+                                                    left: clip.absoluteStart * zoom,
+                                                    width: clip.clipDuration * zoom,
+                                                    height: '40px',
+                                                    top: '4px',
+                                                    cursor: 'grab',
+                                                    opacity: clip.sceneId === activeSceneId ? 1 : 0.6
+                                                }}
+                                            >
+                                                <div style={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
+                                                    {(clip.type === 'image' || clip.type === 'video') && clip.src ? (
+                                                        <div className="layer-clip-thumb" style={{ backgroundImage: `url(${clip.src})` }} />
+                                                    ) : (
+                                                        <div className="layer-clip-icon">
+                                                            {clip.type === 'text' ? <MdTextFields size={12} /> :
+                                                             clip.type === 'video' ? <MdSmartDisplay size={12} /> :
+                                                             clip.type === 'image' ? <MdImage size={12} /> :
+                                                             <MdContentCopy size={12} />}
+                                                        </div>
+                                                    )}
+                                                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '80px', paddingRight: '4px' }}>
+                                                        {typeof clip.content === 'string' ? clip.content : clip.type.toUpperCase()}
+                                                    </span>
+                                                </div>
+                                                {clip.sceneId === activeSceneId && (
+                                                    <button className="delete-clip-btn" onClick={(e) => { e.stopPropagation(); onDeleteLayer(clip.sceneId, clip.id) }}>×</button>
+                                                )}
+                                                
+                                                {clip.sceneId === activeSceneId && (
+                                                    <>
+                                                        <div 
+                                                            style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '4px', cursor: 'ew-resize'}} 
+                                                            onMouseDown={(e) => startLayerResize(e, clip, 'left', clip.sceneId)} 
+                                                        />
+                                                        <div 
+                                                            style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '4px', cursor: 'ew-resize'}} 
+                                                            onMouseDown={(e) => startLayerResize(e, clip, 'right', clip.sceneId)} 
+                                                        />
+                                                    </>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ))}
 
                                 {/* Main Track (MIDDLE) */}
                                 <div className="clip-track">
@@ -820,11 +904,36 @@ const TimelineEditor = ({
                                             </div>
                                         )
                                     })}
+                                    <div 
+                                        onClick={onAddScene}
+                                        style={{
+                                            position: 'absolute',
+                                            left: scenes.reduce((sum, s) => sum + (s.duration || 8), 0) * zoom + 16,
+                                            height: '48px',
+                                            width: '48px',
+                                            background: 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)',
+                                            borderRadius: '12px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            cursor: 'pointer',
+                                            color: '#ffffff',
+                                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                            boxShadow: '0 4px 15px rgba(124, 58, 237, 0.4), inset 0 2px 4px rgba(255,255,255,0.3)',
+                                            marginTop: '1px'
+                                        }}
+                                        className="add-scene-timeline-btn"
+                                        title="Add New Scene"
+                                        onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05) translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 25px rgba(124, 58, 237, 0.6), inset 0 2px 4px rgba(255,255,255,0.3)'; }}
+                                        onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1) translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 15px rgba(124, 58, 237, 0.4), inset 0 2px 4px rgba(255,255,255,0.3)'; }}
+                                    >
+                                        <MdAdd size={28} />
+                                    </div>
                                 </div>
 
                                 {/* Music Track (BOTTOM) */}
                                 <div className="music-track">
-                                    {bgMusic && (
+                                    {bgMusic ? (
                                         <div className="music-clip" style={{ left: 0, width: musicDuration * zoom }}>
                                             <MdMusicNote size={14} style={{ marginRight: 6 }} /> <span>{bgMusic.split('/').pop().slice(0, 15)}...</span>
                                             <div className="music-waveform" />
@@ -832,6 +941,11 @@ const TimelineEditor = ({
                                                 e.stopPropagation();
                                                 isDraggingMusicTrim.current = true;
                                             }} />
+                                        </div>
+                                    ) : (
+                                        <div className="music-clip-empty" style={{ left: 0, width: totalDuration * zoom }}>
+                                            <MdMusicNote size={14} style={{ marginRight: 6 }} /> <span style={{ fontSize: '11px' }}>Audio Track</span>
+                                            <div className="music-waveform" style={{ opacity: 0.1, filter: 'grayscale(100%)' }} />
                                         </div>
                                     )}
                                 </div>
@@ -843,10 +957,7 @@ const TimelineEditor = ({
                                         transition: isPlaying ? 'left 0.1s linear' : 'left 0.1s ease-out'
                                     }}
                                 >
-                                    <div className="playhead-tooltip">
-                                        {Math.floor(currentTime / 60).toString().padStart(2, '0')}:
-                                        {Math.floor(currentTime % 60).toString().padStart(2, '0')}
-                                    </div>
+
                                     <div className="playhead-head" onMouseDown={handleMouseDown} />
                                 </div>
                             </>
