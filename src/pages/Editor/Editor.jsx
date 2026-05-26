@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef } from 'react'
+import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import { MdChevronRight, MdChevronLeft } from 'react-icons/md'
 import { useCurrentFrame, spring, interpolate, useVideoConfig } from 'remotion'
 import TimelineEditor from '../../components/features/editor/TimelineEditor'
@@ -100,9 +100,10 @@ function Create({ onBack, initialConfig = null }) {
   })
   const [activeSceneId, setActiveSceneId] = useState(null)
   const [selectedTool, setSelectedTool] = useState(null)
+  const [timelineScope, setTimelineScope] = useState('all')
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
-  const [zoomLevel, setZoomLevel] = useState(70)
+  const [zoomLevel, setZoomLevel] = useState(100)
   const [showExportModal, setShowExportModal] = useState(false)
   const [showPreviewModal, setShowPreviewModal] = useState(false)
   const [showTemplateModal, setShowTemplateModal] = useState(false)
@@ -133,8 +134,10 @@ function Create({ onBack, initialConfig = null }) {
     return () => window.removeEventListener('open-generated-video', handleOpenGeneratedVideo)
   }, [])
 
-  // Auto-save logic
-  const saveProject = async (manual = false, projectState = project) => {
+  const projectRef = useRef(project)
+  projectRef.current = project
+
+  const saveProject = useCallback(async (manual = false, projectState = projectRef.current) => {
     try {
       localStorage.setItem('athenavi_project', JSON.stringify(projectState));
     } catch (e) {
@@ -147,7 +150,7 @@ function Create({ onBack, initialConfig = null }) {
     }
 
     try {
-      if (manual) setIsSaving(true);
+      setIsSaving(true);
       
       // Map project state to backend schema
       const payload = {
@@ -194,11 +197,10 @@ function Create({ onBack, initialConfig = null }) {
       setLastSaved(new Date());
     } catch (error) {
       console.error('Failed to save project:', error);
-      toast.error('Failed to save project')
     } finally {
-      if (manual) setIsSaving(false);
+      setIsSaving(false);
     }
-  };
+  }, []);
 
   const applyGlobalSetting = (type) => {
     const activeScene = project.scenes.find(s => s.id === activeSceneId);
@@ -240,14 +242,21 @@ function Create({ onBack, initialConfig = null }) {
     });
   };
 
-  // Debounced auto-save
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      saveProject();
-    }, 3000); // Save after 3 seconds of inactivity
+  const autoSaveReadyRef = useRef(false)
 
-    return () => clearTimeout(timer);
-  }, [project.scenes, project.title, project.resolution])
+  // Debounced auto-save (3s after edits)
+  useEffect(() => {
+    if (!autoSaveReadyRef.current) {
+      autoSaveReadyRef.current = true
+      return undefined
+    }
+
+    const timer = setTimeout(() => {
+      saveProject(false)
+    }, 3000)
+
+    return () => clearTimeout(timer)
+  }, [project.scenes, project.title, project.resolution, saveProject])
 
   // Memoized access for convenience
   const scenes = project.scenes || [];
@@ -604,7 +613,7 @@ function Create({ onBack, initialConfig = null }) {
         switch (e.key.toLowerCase()) {
           case 's':
             e.preventDefault()
-            alert('Project saved automatically!')
+            saveProject(true)
             break
           case 'e':
             e.preventDefault()
@@ -634,7 +643,7 @@ function Create({ onBack, initialConfig = null }) {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isPlaying, activeSceneId, scenes.length, currentTime, totalDurationInFrames])
+  }, [isPlaying, activeSceneId, scenes.length, currentTime, totalDurationInFrames, saveProject])
 
   const addScene = () => {
     setShowTemplateModal(true)
@@ -1271,6 +1280,15 @@ function Create({ onBack, initialConfig = null }) {
         onSave={() => saveProject(true)}
         isSaving={isSaving}
         lastSaved={lastSaved}
+        activeSceneId={activeSceneId}
+        addLayer={addLayer}
+        updateScene={updateScene}
+        activeScene={activeScene}
+        handleAddTemplateScene={handleAddTemplateScene}
+        setShowTemplateModal={setShowTemplateModal}
+        scenes={scenes}
+        autoCreateScene={autoCreateScene}
+        onGenerateStoryboard={handleGenerateStoryboard}
       />
 
       <div className="editor-container">
@@ -1278,19 +1296,16 @@ function Create({ onBack, initialConfig = null }) {
         <div className="left-section">
           {/* Sidebar Section handles both Nav and Panel internally */}
           <EditorSidebar
-            selectedTool={selectedTool}
-            setSelectedTool={setSelectedTool}
             activeSceneId={activeSceneId}
-            addLayer={addLayer}
-            updateScene={updateScene}
-            activeScene={activeScene}
-            handleAddTemplateScene={handleAddTemplateScene}
             setShowTemplateModal={setShowTemplateModal}
-            bgMusic={bgMusic}
-            setBgMusic={setBgMusic}
             scenes={scenes}
-            autoCreateScene={autoCreateScene}
-            onGenerateStoryboard={handleGenerateStoryboard}
+            timelineScope={timelineScope}
+            setTimelineScope={setTimelineScope}
+            onSelectScene={(sceneId) => {
+              setActiveSceneId(sceneId);
+              setSelectedLayerId(null);
+            }}
+            onDeleteScene={deleteScene}
           />
         </div>
 
@@ -1368,6 +1383,7 @@ function Create({ onBack, initialConfig = null }) {
                 window.speechSynthesis.cancel()
               }}
               totalDuration={(totalDurationInFrames || 0) / 30}
+              timelineScope={timelineScope}
             />
           </div>
         </div>
@@ -1412,7 +1428,7 @@ function Create({ onBack, initialConfig = null }) {
             background: 'var(--bg-panel)',
             zIndex: 40
           }}>
-            <div style={{ width: '320px', height: '100%', overflowY: 'auto' }}>
+            <div className="scene-config-panel-scroll premium-scrollbar" style={{ width: '320px', height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
               <SceneConfigurationPanel
                 activeScene={activeScene}
                 activeSceneId={activeSceneId}
@@ -1425,6 +1441,7 @@ function Create({ onBack, initialConfig = null }) {
                 generateSceneVideo={generateSceneVideo}
                 setActiveTab={setSelectedTool}
                 applyGlobalSetting={applyGlobalSetting}
+                onOpenQuickCreate={() => setShowQuickCreateModal(true)}
               />
             </div>
           </div>

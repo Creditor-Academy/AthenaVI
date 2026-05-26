@@ -42,7 +42,8 @@ const TimelineEditor = ({
     onDeleteMusic,
     musicDuration,
     onMusicDurationChange,
-    onSelectLayer
+    onSelectLayer,
+    timelineScope = 'all'
 }) => {
     const [zoom, setZoom] = useState(60)
     const [draggedSceneId, setDraggedSceneId] = useState(null)
@@ -65,10 +66,27 @@ const TimelineEditor = ({
         return { activeScene: scenes[idx], activeSceneStart }
     }, [scenes, activeSceneId])
 
+    const scopedScenes = useMemo(() => {
+        if (timelineScope === 'single' && activeScene) {
+            return [activeScene];
+        }
+        return scenes;
+    }, [scenes, timelineScope, activeScene]);
+
+    const effectiveTotalDuration = useMemo(() => {
+        return timelineScope === 'single' ? (activeScene?.duration || 8.0) : totalDuration;
+    }, [timelineScope, activeScene, totalDuration]);
+
+    const effectiveCurrentTime = useMemo(() => {
+        return timelineScope === 'single' 
+            ? Math.max(0, Math.min(activeScene?.duration || 8.0, currentTime - activeSceneStart)) 
+            : currentTime;
+    }, [timelineScope, activeScene, currentTime, activeSceneStart]);
+
     // Calculate global tracks
     const globalTracks = useMemo(() => {
-        const allClips = scenes.reduce((acc, scene, sIdx) => {
-            const prevDuration = scenes.slice(0, sIdx).reduce((sum, s) => sum + (s.duration || 8), 0);
+        const allClips = scopedScenes.reduce((acc, scene, sIdx) => {
+            const prevDuration = timelineScope === 'single' ? 0 : scenes.slice(0, scenes.findIndex(s => s.id === scene.id)).reduce((sum, s) => sum + (s.duration || 8), 0);
             const sceneClips = (scene.clips || []).map((clip, clipIndex) => {
                 const clipStart = clip.startTime || 0;
                 const clipDuration = (clip.endTime || (clip.startTime + 5)) - clipStart;
@@ -93,18 +111,18 @@ const TimelineEditor = ({
 
         // Filter out any undefined slots if some layers were deleted leaving gaps
         return tracks.filter(Boolean);
-    }, [scenes]);
+    }, [scopedScenes, scenes, timelineScope]);
 
-    const stateRef = useRef({ zoom, activeSceneStart, activeScene, totalDuration, scenes, globalTracks })
+    const stateRef = useRef({ zoom, activeSceneStart, activeScene, totalDuration: effectiveTotalDuration, scenes, globalTracks })
     useEffect(() => {
-        stateRef.current = { zoom, activeSceneStart, activeScene, totalDuration, scenes, globalTracks }
+        stateRef.current = { zoom, activeSceneStart, activeScene, totalDuration: effectiveTotalDuration, scenes, globalTracks }
     })
 
     // Auto-scroll during playback
     useEffect(() => {
         if (isPlaying && scrollContainerRef.current) {
             const container = scrollContainerRef.current
-            const playheadPosition = currentTime * zoom
+            const playheadPosition = effectiveCurrentTime * zoom
             const containerWidth = container.clientWidth
             const scrollLeft = container.scrollLeft
 
@@ -121,15 +139,19 @@ const TimelineEditor = ({
                 })
             }
         }
-    }, [currentTime, isPlaying, zoom])
+    }, [effectiveCurrentTime, isPlaying, zoom])
 
     // Scrubbing logic
     const handleTimelineAction = (clientX) => {
         if (!scrollContainerRef.current) return
         const rect = scrollContainerRef.current.getBoundingClientRect()
         const x = clientX - rect.left + scrollContainerRef.current.scrollLeft
-        const time = Math.max(0, Math.min(x / zoom, totalDuration))
-        onSeek(time)
+        const time = Math.max(0, Math.min(x / zoom, effectiveTotalDuration))
+        if (timelineScope === 'single') {
+            onSeek(activeSceneStart + time)
+        } else {
+            onSeek(time)
+        }
     }
 
     const handleMouseDown = (e) => {
@@ -153,7 +175,11 @@ const TimelineEditor = ({
         
         if (isDraggingPlayhead.current) {
             const time = Math.max(0, Math.min(x / zoom, totalDuration))
-            onSeek(time)
+            if (timelineScope === 'single') {
+                onSeek(activeSceneStart + time)
+            } else {
+                onSeek(time)
+            }
         } else if (isDraggingMusicTrim.current) {
             const newDuration = Math.max(1, Math.min(x / zoom, totalDuration))
             if (onMusicDurationChange) onMusicDurationChange(newDuration)
@@ -729,13 +755,13 @@ const TimelineEditor = ({
 
                 <div className="toolbar-section" style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
                     <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginRight: '12px' }}>
-                        {Math.floor(currentTime / 60)}:{(Math.floor(currentTime % 60)).toString().padStart(2, '0')}
+                        {Math.floor(effectiveCurrentTime / 60)}:{(Math.floor(effectiveCurrentTime % 60)).toString().padStart(2, '0')}
                     </span>
                     <button className="toolbar-btn primary" onClick={onPlayPause} style={{ borderRadius: '50%', width: '40px', height: '40px', background: 'var(--bg-card)' }}>
                         {isPlaying ? <MdPause size={24} color="var(--text-main)" /> : <MdPlayArrow size={24} color="var(--text-main)" />}
                     </button>
                     <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-muted)', marginLeft: '12px' }}>
-                        {Math.floor(totalDuration / 60)}:{(Math.floor(totalDuration % 60)).toString().padStart(2, '0')}
+                        {Math.floor(effectiveTotalDuration / 60)}:{(Math.floor(effectiveTotalDuration % 60)).toString().padStart(2, '0')}
                     </span>
                 </div>
 
@@ -787,8 +813,8 @@ const TimelineEditor = ({
                     onMouseDown={handleMouseDown}
                     onScroll={handleViewportScroll}
                 >
-                    <div className="timeline-ruler" style={{ width: `${totalDuration * zoom + 500}px` }}>
-                        {Array.from({ length: Math.ceil(totalDuration) * 2 + 10 }).map((_, i) => {
+                    <div className="timeline-ruler" style={{ width: `${effectiveTotalDuration * zoom + 500}px` }}>
+                        {Array.from({ length: Math.ceil(effectiveTotalDuration) * 2 + 10 }).map((_, i) => {
                             const time = i * 0.5;
                             const isMajor = i % 2 === 0;
                             return (
@@ -803,8 +829,8 @@ const TimelineEditor = ({
                         })}
                     </div>
 
-                    <div className="timeline-tracks" style={{ width: `${Math.max(totalDuration, 60) * zoom + 500}px` }}>
-                        {scenes.length === 0 ? (
+                    <div className="timeline-tracks" style={{ width: `${Math.max(effectiveTotalDuration, 60) * zoom + 500}px` }}>
+                        {scopedScenes.length === 0 ? (
                             <div className="timeline-empty-state">
                                 <div className="empty-state-card" onClick={onAddScene}>
                                     <div className="empty-add-btn">
@@ -876,13 +902,13 @@ const TimelineEditor = ({
 
                                 {/* Main Track (MIDDLE) */}
                                 <div className="clip-track">
-                                    {scenes.map((scene, index) => {
-                                        const prevDuration = scenes.slice(0, index).reduce((sum, s) => sum + (s.duration || 8), 0)
+                                    {scopedScenes.map((scene, index) => {
+                                        const prevDuration = timelineScope === 'single' ? 0 : scenes.slice(0, scenes.findIndex(s => s.id === scene.id)).reduce((sum, s) => sum + (s.duration || 8), 0)
                                         return (
                                             <div
                                                 key={scene.id}
                                                 className={`canva-clip ${activeSceneId === scene.id ? 'active' : ''} ${dragOverSceneId === scene.id ? 'drag-over' : ''}`}
-                                                draggable
+                                                draggable={timelineScope !== 'single'}
                                                 onDragStart={(e) => onDragStart(e, scene.id)}
                                                 onDragOver={onDragOver}
                                                 onDrop={(e) => onDrop(e, scene.id)}
@@ -904,37 +930,39 @@ const TimelineEditor = ({
                                             </div>
                                         )
                                     })}
-                                    <div 
-                                        onClick={onAddScene}
-                                        style={{
-                                            position: 'absolute',
-                                            left: scenes.reduce((sum, s) => sum + (s.duration || 8), 0) * zoom + 16,
-                                            height: '48px',
-                                            width: '48px',
-                                            background: 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)',
-                                            borderRadius: '12px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            cursor: 'pointer',
-                                            color: '#ffffff',
-                                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                            boxShadow: '0 4px 15px rgba(124, 58, 237, 0.4), inset 0 2px 4px rgba(255,255,255,0.3)',
-                                            marginTop: '1px'
-                                        }}
-                                        className="add-scene-timeline-btn"
-                                        title="Add New Scene"
-                                        onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05) translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 25px rgba(124, 58, 237, 0.6), inset 0 2px 4px rgba(255,255,255,0.3)'; }}
-                                        onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1) translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 15px rgba(124, 58, 237, 0.4), inset 0 2px 4px rgba(255,255,255,0.3)'; }}
-                                    >
-                                        <MdAdd size={28} />
-                                    </div>
+                                    {timelineScope !== 'single' && (
+                                        <div 
+                                            onClick={onAddScene}
+                                            style={{
+                                                position: 'absolute',
+                                                left: scenes.reduce((sum, s) => sum + (s.duration || 8), 0) * zoom + 16,
+                                                height: '48px',
+                                                width: '48px',
+                                                background: 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)',
+                                                borderRadius: '12px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                cursor: 'pointer',
+                                                color: '#ffffff',
+                                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                                boxShadow: '0 4px 15px rgba(124, 58, 237, 0.4), inset 0 2px 4px rgba(255,255,255,0.3)',
+                                                marginTop: '1px'
+                                            }}
+                                            className="add-scene-timeline-btn"
+                                            title="Add New Scene"
+                                            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05) translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 25px rgba(124, 58, 237, 0.6), inset 0 2px 4px rgba(255,255,255,0.3)'; }}
+                                            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1) translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 15px rgba(124, 58, 237, 0.4), inset 0 2px 4px rgba(255,255,255,0.3)'; }}
+                                        >
+                                            <MdAdd size={28} />
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Music Track (BOTTOM) */}
                                 <div className="music-track">
                                     {bgMusic ? (
-                                        <div className="music-clip" style={{ left: 0, width: musicDuration * zoom }}>
+                                        <div className="music-clip" style={{ left: timelineScope === 'single' ? -activeSceneStart * zoom : 0, width: musicDuration * zoom }}>
                                             <MdMusicNote size={14} style={{ marginRight: 6 }} /> <span>{bgMusic.split('/').pop().slice(0, 15)}...</span>
                                             <div className="music-waveform" />
                                             <div className="music-trim-handle" onMouseDown={(e) => {
