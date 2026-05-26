@@ -6,15 +6,23 @@ import {
   MdSecurity, 
   MdSettings, 
   MdOutlineFolderShared,
-  MdAutoAwesome
+  MdSync,
+  MdAnalytics,
+  MdAttachMoney
 } from 'react-icons/md';
 import AdminPortalSkeleton from '../page-skeleton/AdminPortalSkeleton';
 import DashboardOverview from '../../components/features/admin/DashboardOverview';
 import UsersList from '../../components/features/admin/UsersList';
+import RenderPipelineMonitor from '../../components/features/admin/RenderPipelineMonitor';
+import CreditLedgerAudit from '../../components/features/admin/CreditLedgerAudit';
+import PlatformConfig from '../../components/features/admin/PlatformConfig';
+import SecurityAudit from '../../components/features/admin/SecurityAudit';
 import './AdminPortal.css';
 
 const AdminPortal = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('adminPortalTab') || 'dashboard';
+  });
   const [loading, setLoading] = useState(true);
 
   // Simulate network request for data fetching
@@ -30,13 +38,17 @@ const AdminPortal = () => {
     { id: 'dashboard', label: 'Dashboard', icon: <MdAdminPanelSettings /> },
     { id: 'users', label: 'User Management', icon: <MdPeople /> },
     { id: 'workspaces', label: 'Workspaces', icon: <MdOutlineFolderShared /> },
-    { id: 'ai-assets', label: 'AI Assets', icon: <MdAutoAwesome /> },
-    { id: 'billing', label: 'Billing & Rev', icon: <MdSettings /> },
+    { id: 'pipeline', label: 'Render Pipeline', icon: <MdSync /> },
+    { id: 'credits', label: 'Credit Ledger', icon: <MdAttachMoney /> },
+    { id: 'config', label: 'Platform Config', icon: <MdSettings /> },
+    { id: 'analytics', label: 'Analytics', icon: <MdAnalytics /> },
+    { id: 'security', label: 'Security & Audit', icon: <MdSecurity /> },
   ];
 
   const handleTabChange = (tabId) => {
     setLoading(true);
     setActiveTab(tabId);
+    localStorage.setItem('adminPortalTab', tabId);
   };
 
   const billingMetrics = [
@@ -109,8 +121,11 @@ const AdminPortal = () => {
               {activeTab === 'dashboard' && 'Technical health and operational metrics.'}
               {activeTab === 'users' && 'Manage users, grant credits, and oversee accounts.'}
               {activeTab === 'workspaces' && 'Oversee team workspaces and collaboration tools.'}
-              {activeTab === 'ai-assets' && 'Manage global Avatars and Voice models.'}
-              {activeTab === 'billing' && 'Revenue analytics and transaction history.'}
+              {activeTab === 'pipeline' && 'Monitor render jobs, worker pools, and failed pipelines.'}
+              {activeTab === 'credits' && 'Audit the credit ledger and review user credit history.'}
+              {activeTab === 'config' && 'Configure plans, priority queues, and platform integrations.'}
+              {activeTab === 'analytics' && 'View platform usage, render trends, and export reports.'}
+              {activeTab === 'security' && 'Track audit logs, login history, and GDPR requests.'}
             </p>
           </div>
         </header>
@@ -139,12 +154,18 @@ const AdminPortal = () => {
             <DashboardOverview />
           ) : activeTab === 'users' ? (
             <UsersList />
-          ) : activeTab === 'billing' ? (
+          ) : activeTab === 'pipeline' ? (
+            <RenderPipelineMonitor />
+          ) : activeTab === 'credits' ? (
+            <CreditLedgerAudit />
+          ) : activeTab === 'config' ? (
+            <PlatformConfig />
+          ) : activeTab === 'analytics' ? (
             <section className="admin-card-section billing-page" style={{ marginTop: '24px' }}>
               <div className="billing-hero">
                 <div>
-                  <h2>Billing & Revenue Insights</h2>
-                  <p className="admin-placeholder-text">Live mock metrics for revenue performance, invoice health, and customer ARR trends.</p>
+                  <h2>Analytics & Reporting</h2>
+                  <p className="admin-placeholder-text">Live mock metrics for platform usage, render trends, and export-ready reports.</p>
                 </div>
               </div>
 
@@ -238,7 +259,7 @@ const AdminPortal = () => {
                 </div>
               </div>
 
-              <div className="workspace-summary-grid">
+              <div className="billing-summary-grid">
                 {workspaceMetrics.map((metric) => (
                   <div key={metric.label} className="billing-summary-card">
                     <span className="billing-metric-label">{metric.label}</span>
@@ -317,6 +338,8 @@ const AdminPortal = () => {
                 </div>
               </div>
             </section>
+          ) : activeTab === 'security' ? (
+            <SecurityAudit />
           ) : (
             <section className="admin-card-section" style={{ marginTop: '24px' }}>
               <h2>{adminTabs.find((tab) => tab.id === activeTab)?.label}</h2>

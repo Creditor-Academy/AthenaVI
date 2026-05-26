@@ -1,64 +1,200 @@
-import React, { useState } from 'react';
-import { MdSync, MdSearch, MdFilterList } from 'react-icons/md';
+import React, { useEffect, useState } from 'react';
+import { MdSync, MdSearch, MdFilterList, MdAdd, MdEdit, MdPersonSearch, MdPowerSettingsNew, MdDeleteForever, MdRestore } from 'react-icons/md';
 import UserProfileModal from './UserProfileModal';
+
+const roleOptions = ['Owner', 'Admin', 'Editor', 'Viewer', 'Super Admin', 'Workspace Admin', 'Member'];
+const workspaceOptions = ['Global', 'Forge Studio', 'Pulse CRM', 'Beacon Media', 'Astra Ventures'];
+const planOptions = ['Free', 'Pro', 'Enterprise'];
+const userStatusOptions = ['Active', 'Suspended', 'Deactivated'];
+
+const AddUserModal = ({ isOpen, onClose, onCreate }) => {
+  const [formValues, setFormValues] = useState({
+    name: '', email: '', role: 'Viewer', workspace: 'Global', plan: 'Pro', status: 'Active', credits: 0,
+  });
+
+  useEffect(() => {
+    if (isOpen) {
+      setFormValues({
+        name: '',
+        email: '',
+        role: 'Viewer',
+        workspace: 'Global',
+        plan: 'Pro',
+        status: 'Active',
+        credits: 0,
+      });
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const handleChange = (field) => (event) => {
+    setFormValues({ ...formValues, [field]: field === 'credits' ? Number(event.target.value) : event.target.value });
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    if (!formValues.name || !formValues.email) {
+      alert('Please add a user name and email.');
+      return;
+    }
+    onCreate(formValues);
+    onClose();
+  };
+
+  return (
+    <div className="user-profile-modal modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}><MdDeleteForever /></button>
+        <div className="modal-header">
+          <div className="modal-header-top">
+            <div className="user-avatar-large">+</div>
+            <div className="user-info">
+              <h2 style={{ margin: 0 }}>Add New User</h2>
+              <p className="modal-subtitle">Create a new account and assign workspace access.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="modal-body">
+          <form className="modal-section" onSubmit={handleSubmit}>
+            <div className="info-grid">
+              <div className="info-item">
+                <label>Name</label>
+                <input className="modal-input" type="text" value={formValues.name} onChange={handleChange('name')} placeholder="Full name" />
+              </div>
+              <div className="info-item">
+                <label>Email</label>
+                <input className="modal-input" type="email" value={formValues.email} onChange={handleChange('email')} placeholder="Email address" />
+              </div>
+              <div className="info-item">
+                <label>Role</label>
+                <select className="modal-input" value={formValues.role} onChange={handleChange('role')}>
+                  {roleOptions.map((role) => <option key={role} value={role}>{role}</option>)}
+                </select>
+              </div>
+              <div className="info-item">
+                <label>Workspace</label>
+                <select className="modal-input" value={formValues.workspace} onChange={handleChange('workspace')}>
+                  {workspaceOptions.map((workspace) => <option key={workspace} value={workspace}>{workspace}</option>)}
+                </select>
+              </div>
+              <div className="info-item">
+                <label>Plan</label>
+                <select className="modal-input" value={formValues.plan} onChange={handleChange('plan')}>
+                  {planOptions.map((plan) => <option key={plan} value={plan}>{plan}</option>)}
+                </select>
+              </div>
+              <div className="info-item">
+                <label>Status</label>
+                <select className="modal-input" value={formValues.status} onChange={handleChange('status')}>
+                  {userStatusOptions.map((status) => <option key={status} value={status}>{status}</option>)}
+                </select>
+              </div>
+              <div className="info-item">
+                <label>Starting Credits</label>
+                <input className="modal-input" type="number" value={formValues.credits} onChange={handleChange('credits')} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '22px' }}>
+              <button className="btn-primary" type="submit">Create User</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const UsersList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const [users, setUsers] = useState([
-    { id: 1, name: 'Alex Johnson', email: 'alex@example.com', plan: 'Enterprise', status: 'Active', joined: '2025-01-12', credits: 15000 },
-    { id: 2, name: 'Sarah Chen', email: 'sarah.c@tech.com', plan: 'Pro', status: 'Active', joined: '2025-02-01', credits: 2500 },
-    { id: 3, name: 'Michael Smith', email: 'mike.s@gmail.com', plan: 'Free', status: 'Suspended', joined: '2025-02-15', credits: 0 },
-    { id: 4, name: 'Elena Gilbert', email: 'elena@mystic.com', plan: 'Pro', status: 'Active', joined: '2025-03-01', credits: 1200 },
-    { id: 5, name: 'Harvey Specter', email: 'harvey@pearson.com', plan: 'Enterprise', status: 'Active', joined: '2025-03-05', credits: 50000 }
+    { id: 1, name: 'Alex Johnson', email: 'alex@example.com', plan: 'Enterprise', role: 'Super Admin', workspace: 'Global', status: 'Active', joined: '2025-01-12', credits: 15000 },
+    { id: 2, name: 'Sarah Chen', email: 'sarah.c@tech.com', plan: 'Pro', role: 'Workspace Admin', workspace: 'Forge Studio', status: 'Active', joined: '2025-02-01', credits: 2500 },
+    { id: 3, name: 'Michael Smith', email: 'mike.s@gmail.com', plan: 'Free', role: 'Member', workspace: 'Pulse CRM', status: 'Suspended', joined: '2025-02-15', credits: 0 },
+    { id: 4, name: 'Elena Gilbert', email: 'elena@mystic.com', plan: 'Pro', role: 'Editor', workspace: 'Beacon Media', status: 'Active', joined: '2025-03-01', credits: 1200 },
+    { id: 5, name: 'Harvey Specter', email: 'harvey@pearson.com', plan: 'Enterprise', role: 'Workspace Admin', workspace: 'Astra Ventures', status: 'Active', joined: '2025-03-05', credits: 50000 }
   ]);
 
-  const filteredUsers = users.filter(user => 
+  const filteredUsers = users.filter((user) => 
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    user.email.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    user.role.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    user.workspace.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleCreateUser = (userData) => {
+    const id = Math.max(0, ...users.map((user) => user.id)) + 1;
+    setUsers([{ ...userData, id, joined: new Date().toISOString().slice(0, 10) }, ...users]);
+  };
+
+  const handleUpdateUser = (updatedUser) => {
+    setUsers(users.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
+  };
+
+  const handleDeleteUser = (userId) => {
+    setUsers(users.filter((u) => u.id !== userId));
+  };
+
+  const handleToggleStatus = (user, event) => {
+    event.stopPropagation();
+    const status = user.status === 'Active' ? 'Suspended' : 'Active';
+    handleUpdateUser({ ...user, status });
+  };
 
   return (
     <section className="admin-card-section" style={{ marginTop: '24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+      <div className="user-management-header">
         <h2>User Management</h2>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <div className="search-bar" style={{ display: 'flex', alignItems: 'center', background: '#f1f5f9', padding: '6px 12px', borderRadius: '6px' }}>
-            <MdSearch style={{ color: '#64748b', marginRight: '8px' }} />
-            <input 
-              type="text" 
-              placeholder="Search users..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ border: 'none', background: 'transparent', outline: 'none' }}
-            />
-          </div>
-          <button className="btn-admin-action" style={{ background: '#f1f5f9', color: '#334155' }}>
+        <p className="admin-placeholder-text">Manage users, assign workspace roles, and support account troubleshooting.</p>
+      </div>
+
+      <div className="user-toolbar">
+        <div className="search-bar">
+          <MdSearch />
+          <input
+            type="text"
+            placeholder="Search users, roles, workspace..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="user-action-buttons">
+          <button className="btn-secondary" onClick={() => setShowAddModal(true)}>
+            <MdAdd /> Add user
+          </button>
+          <button className="btn-secondary">
             <MdFilterList /> Filter
           </button>
         </div>
       </div>
-      
+
       <div className="admin-table-container">
         <table className="admin-table">
           <thead>
             <tr>
               <th>User</th>
+              <th>Role</th>
+              <th>Workspace</th>
               <th>Plan</th>
               <th>Status</th>
               <th>Joined</th>
               <th>Credits</th>
-              <th>Action</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filteredUsers.map(user => (
-              <tr key={user.id} onClick={() => setSelectedUser(user)} style={{ cursor: 'pointer' }}>
+            {filteredUsers.map((user) => (
+              <tr key={user.id} onClick={() => setSelectedUser(user)}>
                 <td>
                   <div style={{ fontWeight: 600 }}>{user.name}</div>
-                  <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{user.email}</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{user.email}</div>
                 </td>
+                <td>{user.role}</td>
+                <td>{user.workspace}</td>
                 <td><span className="plan-tag">{user.plan}</span></td>
                 <td>
                   <span className={`status-badge ${user.status === 'Active' ? 'status-active' : 'status-suspended'}`}>
@@ -67,7 +203,19 @@ const UsersList = () => {
                 </td>
                 <td>{user.joined}</td>
                 <td>{user.credits.toLocaleString()}</td>
-                <td><MdSync style={{ color: '#64748b', cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); setSelectedUser(user); }} /></td>
+                <td>
+                  <div className="table-action-group">
+                    <button className="user-action-btn icon-only" title="Edit User" onClick={(e) => { e.stopPropagation(); setSelectedUser(user); }}>
+                      <MdEdit size={18} />
+                    </button>
+                    <button className="user-action-btn icon-only" title="Impersonate User" onClick={(e) => { e.stopPropagation(); alert(`Impersonating ${user.name} in view-only mode.`); }}>
+                      <MdPersonSearch size={18} />
+                    </button>
+                    <button className="user-action-btn icon-only" title={user.status === 'Active' ? 'Suspend User' : 'Reactivate User'} onClick={(e) => handleToggleStatus(user, e)}>
+                      {user.status === 'Active' ? <MdPowerSettingsNew size={18} /> : <MdRestore size={18} />}
+                    </button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -75,19 +223,25 @@ const UsersList = () => {
       </div>
 
       {selectedUser && (
-        <UserProfileModal 
-          user={selectedUser} 
-          onClose={() => setSelectedUser(null)} 
+        <UserProfileModal
+          user={selectedUser}
+          onClose={() => setSelectedUser(null)}
           onUpdateUser={(updatedUser) => {
-            setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u));
+            handleUpdateUser(updatedUser);
             setSelectedUser(updatedUser);
           }}
           onDeleteUser={(userId) => {
-            setUsers(users.filter(u => u.id !== userId));
+            handleDeleteUser(userId);
             setSelectedUser(null);
           }}
         />
       )}
+
+      <AddUserModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onCreate={handleCreateUser}
+      />
     </section>
   );
 };

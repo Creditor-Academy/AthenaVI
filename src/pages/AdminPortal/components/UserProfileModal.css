@@ -24,7 +24,7 @@
   position: relative;
   border: 1px solid rgba(255, 255, 255, 0.08);
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto auto 1fr;
 }
 
 .user-profile-modal .modal-close {
@@ -96,9 +96,9 @@
 
 .user-profile-modal .modal-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 22px;
   padding: 14px 32px 12px;
-  overflow-x: auto;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);

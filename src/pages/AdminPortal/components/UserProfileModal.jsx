@@ -6,14 +6,16 @@ import './UserProfileModal.css';
 const UserProfileModal = ({ user, onClose, onUpdateUser, onDeleteUser }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [creditsToAdd, setCreditsToAdd] = useState(0);
+  const [successMessage, setSuccessMessage] = useState('');
 
   if (!user) return null;
 
   const handleAddCredits = () => {
     if (creditsToAdd !== 0) {
       onUpdateUser({ ...user, credits: user.credits + parseInt(creditsToAdd) });
+      setSuccessMessage(`Successfully updated credits by ${creditsToAdd}.`);
       setCreditsToAdd(0);
-      alert(`Successfully added ${creditsToAdd} credits.`);
+      setTimeout(() => setSuccessMessage(''), 3000);
     }
   };
 
@@ -24,7 +26,8 @@ const UserProfileModal = ({ user, onClose, onUpdateUser, onDeleteUser }) => {
   };
 
   const handleChangePassword = () => {
-    alert(`Password reset link sent to ${user.email}`);
+    setSuccessMessage(`Password reset link sent to ${user.email}`);
+    setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   return (
@@ -100,6 +103,7 @@ const UserProfileModal = ({ user, onClose, onUpdateUser, onDeleteUser }) => {
                     <button className="btn-primary" onClick={handleAddCredits}>Apply</button>
                   </div>
                   <p className="hint-text">Use negative numbers to revoke credits.</p>
+                  {successMessage && <div className="success-message" style={{ marginTop: '12px', color: '#10b981', fontSize: '14px', fontWeight: '500' }}>{successMessage}</div>}
                 </div>
               </div>
             )}
@@ -107,6 +111,7 @@ const UserProfileModal = ({ user, onClose, onUpdateUser, onDeleteUser }) => {
             {activeTab === 'security' && (
               <div className="modal-section">
                 <h3>Account Actions</h3>
+                {successMessage && <div className="success-message" style={{ marginBottom: '16px', color: '#10b981', fontSize: '14px', fontWeight: '500', padding: '12px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '8px' }}>{successMessage}</div>}
                 <div className="action-list">
                   <button className="btn-action-outline" onClick={handleChangePassword}>
                     <MdOutlineVpnKey /> Send Password Reset Email
