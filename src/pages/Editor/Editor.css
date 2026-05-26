@@ -3085,6 +3085,263 @@ kbd.shortcut-key {
     max-width: 100%;
 }
 
+/* Scene config — minimal professional UI */
+.scp-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 0 10px;
+}
+
+.scp-panel-header__icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.scp-panel-header__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+    letter-spacing: -0.2px;
+}
+
+.scp-panel-header__subtitle {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.scp-section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 0 6px;
+}
+
+.scp-section-header__icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.scp-section-header__label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-main);
+    letter-spacing: -0.15px;
+}
+
+.scp-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-main);
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.scp-btn:hover:not(:disabled) {
+    background: var(--bg-surface);
+    border-color: var(--text-muted);
+}
+
+.scp-btn--primary {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+.scp-btn--primary:hover:not(:disabled) {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+}
+
+.scp-btn--ghost {
+    background: transparent;
+    border-color: transparent;
+    color: var(--text-muted);
+}
+
+.scp-btn--ghost:hover:not(:disabled) {
+    background: var(--bg-surface);
+    border-color: var(--border-color);
+    color: var(--text-main);
+}
+
+.scp-btn--block {
+    width: 100%;
+    padding: 9px 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+}
+
+.scp-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.scp-btn--primary:disabled {
+    background: var(--bg-surface);
+    border-color: var(--border-color);
+    color: var(--text-muted);
+    opacity: 1;
+}
+
+.scp-status-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.scp-status-dot--on {
+    background: #16a34a;
+}
+
+.scp-status-dot--off {
+    background: #cbd5e1;
+}
+
+.scp-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.scp-value-badge {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    background: var(--bg-surface);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.scp-align-group {
+    display: flex;
+    gap: 0;
+    width: 100%;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--bg-surface);
+}
+
+.scp-align-btn {
+    flex: 1;
+    padding: 6px 0;
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.scp-align-btn.active {
+    background: var(--primary);
+    color: #fff;
+}
+
+.scp-banner {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-surface);
+    color: var(--text-main);
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.scp-banner:hover:not(:disabled) {
+    background: var(--bg-card);
+    border-color: var(--text-muted);
+}
+
+.scp-banner:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.scp-banner--active {
+    border-color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.06);
+    color: var(--primary);
+}
+
+.scp-voiceover-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.scp-voiceover-row__meta {
+    min-width: 0;
+    flex: 1;
+}
+
+.scp-voiceover-row__label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.scp-voiceover-row__value {
+    font-size: 10px;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.scene-config-panel input[type='range'] {
+    accent-color: var(--primary);
+}
+
 /* =====================================================
    ELEMENTS SIDEBAR & GALLERY (LIGHT THEME SYNC)
    ===================================================== */
@@ -3355,6 +3612,110 @@ kbd.shortcut-key {
 .property-section[class*="accent-"] .premium-select:focus {
     border-color: var(--primary);
     box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1);
+}
+
+/* Scene list: gap between scenes (add scene + transition) */
+.scene-between-gap {
+    position: relative;
+    height: 28px;
+    margin: 4px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.scene-between-line {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    top: 50%;
+    height: 1px;
+    background: var(--border-color);
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.scene-between-actions {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0;
+    transform: translateY(2px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.scene-between-gap:hover .scene-between-actions,
+.scene-between-gap:focus-within .scene-between-actions {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.scene-between-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.15s ease;
+}
+
+.scene-between-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.08);
+}
+
+.scene-between-btn--transition:hover {
+    border-color: #db2777;
+    color: #db2777;
+    background: rgba(219, 39, 119, 0.08);
+}
+
+.scene-between-transition-wrap {
+    position: relative;
+}
+
+.scene-transition-picker {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 120px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    padding: 4px;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.scene-transition-option {
+    border: none;
+    background: transparent;
+    text-align: left;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-main);
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.scene-transition-option:hover,
+.scene-transition-option.active {
+    background: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary);
 }
 
 .property-section[class*="accent-"] .premium-textarea::placeholder,

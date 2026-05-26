@@ -135,6 +135,7 @@ function Create({ onBack, initialConfig = null }) {
   }, [])
 
   const projectRef = useRef(project)
+  const insertAfterIndexRef = useRef(null)
   projectRef.current = project
 
   const saveProject = useCallback(async (manual = false, projectState = projectRef.current) => {
@@ -646,6 +647,12 @@ function Create({ onBack, initialConfig = null }) {
   }, [isPlaying, activeSceneId, scenes.length, currentTime, totalDurationInFrames, saveProject])
 
   const addScene = () => {
+    insertAfterIndexRef.current = null
+    setShowTemplateModal(true)
+  }
+
+  const addSceneAfter = (afterIndex) => {
+    insertAfterIndexRef.current = afterIndex
     setShowTemplateModal(true)
   }
 
@@ -666,15 +673,29 @@ function Create({ onBack, initialConfig = null }) {
         }));
     }
 
+    const insertAfter = insertAfterIndexRef.current
+    insertAfterIndexRef.current = null
+
     setProject(prev => {
-      const newScenes = isDefaultSingleScene ? [newScene] : [...prev.scenes, newScene];
+      let newScenes;
+      if (isDefaultSingleScene) {
+        newScenes = [newScene];
+      } else if (insertAfter != null && insertAfter >= 0 && insertAfter < prev.scenes.length) {
+        newScenes = [
+          ...prev.scenes.slice(0, insertAfter + 1),
+          newScene,
+          ...prev.scenes.slice(insertAfter + 1),
+        ];
+      } else {
+        newScenes = [...prev.scenes, newScene];
+      }
       return {
         ...prev,
         updatedAt: new Date().toISOString(),
-        scenes: newScenes
+        scenes: newScenes,
       };
     });
-    
+
     setActiveSceneId(newScene.id)
   }
 
@@ -1306,6 +1327,8 @@ function Create({ onBack, initialConfig = null }) {
               setSelectedLayerId(null);
             }}
             onDeleteScene={deleteScene}
+            onAddSceneAfter={addSceneAfter}
+            updateScene={updateScene}
           />
         </div>
 
@@ -1433,10 +1456,6 @@ function Create({ onBack, initialConfig = null }) {
                 activeScene={activeScene}
                 activeSceneId={activeSceneId}
                 updateScene={updateScene}
-                bgMusic={bgMusic}
-                setBgMusic={setBgMusic}
-                bgMusicVolume={bgMusicVolume}
-                setBgMusicVolume={setBgMusicVolume}
                 selectedLayerId={selectedLayerId}
                 generateSceneVideo={generateSceneVideo}
                 setActiveTab={setSelectedTool}

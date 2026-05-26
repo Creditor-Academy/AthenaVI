@@ -1,22 +1,13 @@
 import { useState } from 'react';
 import {
-  MdMic,
-  MdTimer,
-  MdAutoAwesome,
   MdFormatAlignLeft,
   MdFormatAlignCenter,
   MdFormatAlignRight,
   MdTextFields,
-  MdGraphicEq,
   MdColorLens,
-  MdAnimation,
   MdMonitor,
-  MdPlayCircleFilled,
   MdTune,
-  MdSpeed,
-  MdBlurOn,
   MdGridView,
-  MdLayers,
   MdVisibility,
   MdVisibilityOff,
   MdCheckCircle,
@@ -30,14 +21,19 @@ import {
   MdContrast,
   MdFilterVintage,
   MdInvertColors,
-  MdOpacity,
-  MdBlurCircular,
   MdPalette,
   MdLink,
   MdBorderStyle,
   MdOpenInFull,
   MdFitScreen,
   MdCenterFocusStrong,
+  MdSettings,
+  MdPerson,
+  MdRecordVoiceOver,
+  MdPersonAdd,
+  MdSmartDisplay,
+  MdSchedule,
+  MdSpeed,
 } from 'react-icons/md';
 import projectTemplate from '../../../../constants/projectTemplate.json';
 
@@ -47,23 +43,20 @@ const Divider = () => (
   <div style={{ height: 1, background: 'var(--border-subtle, rgba(0,0,0,0.07))', margin: '4px 0' }} />
 );
 
-const SectionHeader = ({ icon, label, accent = '#6366f1' }) => (
-  <div style={{
-    display: 'flex', alignItems: 'center', gap: 8,
-    padding: '10px 0 6px',
-  }}>
-    <div style={{
-      width: 28, height: 28,
-      borderRadius: 8,
-      background: `${accent}18`,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      flexShrink: 0,
-    }}>
-      {icon}
+const PanelHeader = ({ icon, title, subtitle }) => (
+  <div className="scp-panel-header">
+    <div className="scp-panel-header__icon">{icon}</div>
+    <div>
+      <div className="scp-panel-header__title">{title}</div>
+      {subtitle ? <div className="scp-panel-header__subtitle">{subtitle}</div> : null}
     </div>
-    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-main, #1a1b1c)', letterSpacing: '-0.2px' }}>
-      {label}
-    </span>
+  </div>
+);
+
+const SectionHeader = ({ icon, label }) => (
+  <div className="scp-section-header">
+    <div className="scp-section-header__icon">{icon}</div>
+    <span className="scp-section-header__label">{label}</span>
   </div>
 );
 
@@ -94,7 +87,7 @@ const Row = ({ label, children, column = true }) => (
   </div>
 );
 
-const SliderRow = ({ label, value, min, max, step = 1, unit = '', accentColor = '#6366f1', onChange }) => (
+const SliderRow = ({ label, value, min, max, step = 1, unit = '', onChange }) => (
   <div className="scp-slider-row" style={{ padding: '6px 0', width: '100%', minWidth: 0 }}>
     <div style={{
       display: 'flex',
@@ -103,18 +96,10 @@ const SliderRow = ({ label, value, min, max, step = 1, unit = '', accentColor = 
       gap: 8,
       marginBottom: 6,
     }}>
-      <span style={{ fontSize: 11, color: 'var(--text-muted, #64748b)', fontWeight: 600 }}>
+      <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>
         {label}
       </span>
-      <span style={{
-        fontSize: 11,
-        fontWeight: 700,
-        color: accentColor,
-        flexShrink: 0,
-        background: `${accentColor}12`,
-        padding: '2px 8px',
-        borderRadius: 5,
-      }}>
+      <span className="scp-value-badge">
         {typeof value === 'number' && !Number.isInteger(value) ? value.toFixed(1) : value}{unit}
       </span>
     </div>
@@ -125,7 +110,7 @@ const SliderRow = ({ label, value, min, max, step = 1, unit = '', accentColor = 
       step={step}
       value={value}
       onChange={(e) => onChange(Number(e.target.value))}
-      style={{ width: '100%', accentColor, height: 4, cursor: 'pointer', display: 'block' }}
+      style={{ width: '100%', height: 4, cursor: 'pointer', display: 'block' }}
     />
   </div>
 );
@@ -165,18 +150,13 @@ const AlignButtons = ({ value, onChange }) => {
   ];
   const active = value || 'center';
   return (
-    <div style={{ display: 'flex', gap: 3, width: '100%', border: '1px solid var(--border-subtle, rgba(0,0,0,0.1))', borderRadius: 8, overflow: 'hidden', background: 'var(--bg-surface, #f8fafc)' }}>
+    <div className="scp-align-group">
       {btns.map(({ icon, val }) => (
         <button
           key={val}
+          type="button"
+          className={`scp-align-btn ${active === val ? 'active' : ''}`}
           onClick={() => onChange(val)}
-          style={{
-            flex: 1, padding: '6px 0', border: 'none', cursor: 'pointer',
-            background: active === val ? '#6366f1' : 'transparent',
-            color: active === val ? '#fff' : 'var(--text-muted, #64748b)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'all 0.15s ease',
-          }}
         >
           {icon}
         </button>
@@ -185,49 +165,29 @@ const AlignButtons = ({ value, onChange }) => {
   );
 };
 
-const Card = ({ children, style = {} }) => (
-  <div className="scp-card" style={{
-    background: 'var(--bg-surface, #f8fafc)',
-    border: '1px solid var(--border-subtle, rgba(0,0,0,0.08))',
-    borderRadius: 12,
-    padding: '12px 14px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 4,
-    width: '100%',
-    minWidth: 0,
-    boxSizing: 'border-box',
-    overflow: 'hidden',
-    ...style,
-  }}>
+const Card = ({ children, className = '', style = {} }) => (
+  <div className={`scp-card ${className}`.trim()} style={style}>
     {children}
   </div>
 );
 
-const PillButton = ({ children, onClick, variant = 'outline', style = {} }) => {
-  const base = {
-    padding: '5px 12px', fontSize: 11, fontWeight: 700, borderRadius: 7,
-    cursor: 'pointer', border: 'none', transition: 'all 0.15s ease', ...style,
-  };
-  const styles = {
-    outline: { background: 'white', color: '#7c3aed', border: '1px solid #c4b5fd', boxShadow: '0 1px 3px rgba(124,58,237,0.1)' },
-    solid:   { background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)', color: 'white', boxShadow: '0 2px 8px rgba(124,58,237,0.35)' },
-    danger:  { background: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5' },
-  };
-  return <button style={{ ...base, ...styles[variant] }} onClick={onClick}>{children}</button>;
-};
+const PillButton = ({ children, onClick, variant = 'outline', className = '', ...props }) => (
+  <button
+    type="button"
+    className={`scp-btn ${variant === 'primary' ? 'scp-btn--primary' : ''} ${className}`.trim()}
+    onClick={onClick}
+    {...props}
+  >
+    {children}
+  </button>
+);
 
 const StatusDot = ({ active }) => (
-  <span style={{
-    display: 'inline-block', width: 7, height: 7, borderRadius: '50%',
-    background: active ? '#10b981' : '#ef4444',
-    boxShadow: `0 0 6px ${active ? '#10b981' : '#ef4444'}88`,
-    flexShrink: 0,
-  }} />
+  <span className={`scp-status-dot ${active ? 'scp-status-dot--on' : 'scp-status-dot--off'}`} />
 );
 
 /* ── Toggle switch helper ─────────────────────────────────────────────────── */
-const ToggleSwitch = ({ checked, onChange, accent = '#1a73e8' }) => (
+const ToggleSwitch = ({ checked, onChange, accent = 'var(--primary)' }) => (
   <label style={{ position: 'relative', display: 'inline-block', width: 36, height: 20, flexShrink: 0 }}>
     <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)}
       style={{ opacity: 0, width: 0, height: 0 }} />
@@ -256,9 +216,9 @@ const FitButtons = ({ value, onChange }) => {
       {opts.map(({ val, icon, label }) => (
         <button key={val} onClick={() => onChange(val)} style={{
           flex: 1, padding: '5px 4px', borderRadius: 7, border: 'none', cursor: 'pointer',
-          background: active === val ? '#1a73e8' : 'white',
-          color: active === val ? 'white' : 'var(--text-muted, #64748b)',
-          border: active === val ? 'none' : '1px solid var(--border-subtle, rgba(0,0,0,0.1))',
+          background: active === val ? 'var(--primary)' : 'white',
+          color: active === val ? '#fff' : 'var(--text-muted)',
+          border: active === val ? '1px solid var(--primary)' : '1px solid var(--border-color)',
           fontSize: 10, fontWeight: 700, display: 'flex', flexDirection: 'column',
           alignItems: 'center', gap: 2, transition: 'all 0.15s',
         }}>
@@ -287,10 +247,13 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
   // Broad image detection — covers type='image' regardless of role/label
   const isImage  = activeLayer.type === 'image';
   const isText   = activeLayer.type === 'text'  || activeLayer.role === 'main-text';
+  const isHeading = isText && (activeLayer.role === 'main-text' || activeLayer.label?.toLowerCase().includes('head'));
   const isMedia  = !isImage && (activeLayer.type === 'video' || activeLayer.role === 'avatar' || activeLayer.role === 'media');
   const isShape  = activeLayer.type === 'shape';
 
-  const roleLabel = activeLayer.role?.split('-').map(w => w[0].toUpperCase() + w.slice(1)).join(' ')
+  const roleLabel = isHeading
+    ? 'Heading'
+    : activeLayer.role?.split('-').map(w => w[0].toUpperCase() + w.slice(1)).join(' ')
     || activeLayer.type?.[0].toUpperCase() + activeLayer.type?.slice(1) || 'General';
 
   const isBackground = !!activeLayer.isBackground;
@@ -323,39 +286,16 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
     });
   };
 
-  const acBlue   = '#1a73e8';
-  const acGreen  = '#059669';
-  const acPurple = '#7c3aed';
-  const acOrange = '#ea580c';
-  const acPink   = '#db2777';
-  const acCyan   = '#0891b2';
-
   // CSS filter helpers
   const cf = activeLayer.cssFilters || {};
 
   return (
     <div className="scene-config-panel" style={{ padding: '0 14px 20px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {/* Header */}
-      <div style={{ padding: '14px 0 8px', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div style={{
-          width: 32, height: 32, borderRadius: 9,
-          background: isImage ? 'linear-gradient(135deg, #0891b2 0%, #0e7490 100%)'
-            : isText  ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)'
-            : isMedia ? 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)'
-            : 'linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          {isImage ? <MdImage size={18} color="white" /> : <MdTune size={18} color="white" />}
-        </div>
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-main, #1a1b1c)', letterSpacing: '-0.3px' }}>
-            {isImage ? 'Image Properties' : 'Layer Properties'}
-          </div>
-          <div style={{ fontSize: 10, color: isImage ? acCyan : acBlue, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-            {roleLabel}
-          </div>
-        </div>
-      </div>
+      <PanelHeader
+        icon={isImage ? <MdImage size={17} /> : isText ? <MdTextFields size={17} /> : <MdTune size={17} />}
+        title={isImage ? 'Image Properties' : isHeading ? 'Heading Settings' : 'Layer Properties'}
+        subtitle={roleLabel}
+      />
 
       <Divider />
 
@@ -363,47 +303,22 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
         <>
           {/* Background toggle hero button */}
           {isBackground ? (
-            <div style={{
-              background: 'linear-gradient(135deg, #0891b2 0%, #0e7490 100%)',
-              borderRadius: 10, padding: '10px 14px', marginBottom: 4,
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              boxShadow: '0 4px 12px rgba(8,145,178,0.3)',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                <MdWallpaper size={16} color="white" />
-                <span style={{ fontSize: 12, fontWeight: 700, color: 'white' }}>Scene Background</span>
-              </div>
-              <button
-                onClick={unsetAsBackground}
-                style={{
-                  padding: '4px 10px', borderRadius: 6, border: 'none',
-                  background: 'rgba(255,255,255,0.2)', color: 'white',
-                  fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                  backdropFilter: 'blur(8px)',
-                  transition: 'background 0.15s',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.35)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
-              >
+            <div className="scp-banner scp-banner--active" style={{ marginBottom: 4, justifyContent: 'space-between' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                <MdWallpaper size={16} />
+                Scene Background
+              </span>
+              <button type="button" className="scp-btn scp-btn--ghost" onClick={unsetAsBackground}>
                 Unset
               </button>
             </div>
           ) : (
             <button
+              type="button"
+              className="scp-banner"
               onClick={setAsBackground}
               disabled={!activeLayer.src}
-              style={{
-                width: '100%', padding: '10px 14px', borderRadius: 10, border: 'none',
-                background: activeLayer.src
-                  ? 'linear-gradient(135deg, #0891b2 0%, #0e7490 100%)'
-                  : 'var(--bg-surface, #e2e8f0)',
-                color: activeLayer.src ? 'white' : 'var(--text-muted, #94a3b8)',
-                cursor: activeLayer.src ? 'pointer' : 'not-allowed',
-                fontSize: 12, fontWeight: 700,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-                boxShadow: activeLayer.src ? '0 4px 12px rgba(8,145,178,0.35)' : 'none',
-                transition: 'all 0.2s ease', marginBottom: 4,
-              }}
+              style={{ marginBottom: 4 }}
             >
               <MdWallpaper size={16} />
               {activeLayer.src ? 'Set as Scene Background' : 'Add image URL first'}
@@ -411,7 +326,7 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
           )}
 
           {/* Image source URL */}
-          <SectionHeader icon={<MdLink size={14} color={acCyan} />} label="Image Source" accent={acCyan} />
+          <SectionHeader icon={<MdLink size={14} />} label="Image Source" />
           <Card>
             <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted, #64748b)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>URL</span>
             <input
@@ -439,7 +354,7 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
           </Card>
 
           {/* Fit & Flip */}
-          <SectionHeader icon={<MdCropFree size={14} color={acBlue} />} label="Fit & Flip" accent={acBlue} />
+          <SectionHeader icon={<MdCropFree size={14} />} label="Fit & Flip" />
           <Card>
             <Row label="Object Fit" column>
               <FitButtons
@@ -452,8 +367,8 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
                 onClick={() => updateStyle({ scaleX: activeLayer.style?.scaleX === -1 ? 1 : -1 })}
                 style={{
                   flex: 1, padding: '6px', borderRadius: 7, border: '1px solid var(--border-subtle, rgba(0,0,0,0.1))',
-                  background: activeLayer.style?.scaleX === -1 ? '#dbeafe' : 'white',
-                  color: activeLayer.style?.scaleX === -1 ? acBlue : 'var(--text-muted, #64748b)',
+                  background: activeLayer.style?.scaleX === -1 ? 'rgba(var(--primary-rgb), 0.1)' : 'white',
+                  color: activeLayer.style?.scaleX === -1 ? 'var(--primary)' : 'var(--text-muted)',
                   cursor: 'pointer', fontSize: 10, fontWeight: 700,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
                 }}
@@ -464,8 +379,8 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
                 onClick={() => updateStyle({ scaleY: activeLayer.style?.scaleY === -1 ? 1 : -1 })}
                 style={{
                   flex: 1, padding: '6px', borderRadius: 7, border: '1px solid var(--border-subtle, rgba(0,0,0,0.1))',
-                  background: activeLayer.style?.scaleY === -1 ? '#dbeafe' : 'white',
-                  color: activeLayer.style?.scaleY === -1 ? acBlue : 'var(--text-muted, #64748b)',
+                  background: activeLayer.style?.scaleY === -1 ? 'rgba(var(--primary-rgb), 0.1)' : 'white',
+                  color: activeLayer.style?.scaleY === -1 ? 'var(--primary)' : 'var(--text-muted)',
                   cursor: 'pointer', fontSize: 10, fontWeight: 700,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
                   transform: 'rotate(90deg)',
@@ -477,42 +392,38 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
           </Card>
 
           {/* Adjustments */}
-          <SectionHeader icon={<MdContrast size={14} color={acPurple} />} label="Adjustments" accent={acPurple} />
+          <SectionHeader icon={<MdContrast size={14} />} label="Adjustments" />
           <Card>
-            <SliderRow label="Opacity"    value={Math.round((activeLayer.opacity ?? 1) * 100)} min={0}   max={100} unit="%" accentColor={acPurple} onChange={(v) => updateLayer({ opacity: v / 100 })} />
-            <SliderRow label="Brightness" value={Math.round((cf.brightness ?? 1) * 100)} min={0}   max={200} unit="%" accentColor={acPurple} onChange={(v) => updateFilter('brightness', v / 100)} />
-            <SliderRow label="Contrast"   value={Math.round((cf.contrast   ?? 1) * 100)} min={0}   max={200} unit="%" accentColor={acPurple} onChange={(v) => updateFilter('contrast',   v / 100)} />
-            <SliderRow label="Saturation" value={Math.round((cf.saturate   ?? 1) * 100)} min={0}   max={200} unit="%" accentColor={acPurple} onChange={(v) => updateFilter('saturate',   v / 100)} />
-            <SliderRow label="Blur"       value={cf.blur ?? 0}                             min={0}   max={20}  unit="px" accentColor={acPurple} onChange={(v) => updateFilter('blur',       v)} />
-            <SliderRow label="Hue Shift"  value={cf.hueRotate ?? 0}                        min={0}   max={360} unit="°"  accentColor={acPurple} onChange={(v) => updateFilter('hueRotate',  v)} />
+            <SliderRow label="Opacity"    value={Math.round((activeLayer.opacity ?? 1) * 100)} min={0}   max={100} unit="%" onChange={(v) => updateLayer({ opacity: v / 100 })} />
+            <SliderRow label="Brightness" value={Math.round((cf.brightness ?? 1) * 100)} min={0}   max={200} unit="%" onChange={(v) => updateFilter('brightness', v / 100)} />
+            <SliderRow label="Contrast"   value={Math.round((cf.contrast   ?? 1) * 100)} min={0}   max={200} unit="%" onChange={(v) => updateFilter('contrast',   v / 100)} />
+            <SliderRow label="Saturation" value={Math.round((cf.saturate   ?? 1) * 100)} min={0}   max={200} unit="%" onChange={(v) => updateFilter('saturate',   v / 100)} />
+            <SliderRow label="Blur"       value={cf.blur ?? 0}                             min={0}   max={20}  unit="px" onChange={(v) => updateFilter('blur',       v)} />
+            <SliderRow label="Hue Shift"  value={cf.hueRotate ?? 0}                        min={0}   max={360} unit="°"  onChange={(v) => updateFilter('hueRotate',  v)} />
           </Card>
 
           {/* Effects */}
-          <SectionHeader icon={<MdFilterVintage size={14} color={acPink} />} label="Effects" accent={acPink} />
+          <SectionHeader icon={<MdFilterVintage size={14} />} label="Effects" />
           <Card>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
                   <MdInvertColors size={13} /> Invert Colors
                 </span>
-                <ToggleSwitch checked={cf.invert > 0} accent={acPink}
-                  onChange={(v) => updateFilter('invert', v ? 1 : 0)} />
+                <ToggleSwitch checked={cf.invert > 0}                  onChange={(v) => updateFilter('invert', v ? 1 : 0)} />
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>Grayscale</span>
-                <ToggleSwitch checked={cf.grayscale > 0} accent={acPink}
-                  onChange={(v) => updateFilter('grayscale', v ? 1 : 0)} />
+                <ToggleSwitch checked={cf.grayscale > 0}                  onChange={(v) => updateFilter('grayscale', v ? 1 : 0)} />
               </div>
-              <SliderRow label="Sepia" value={Math.round((cf.sepia ?? 0) * 100)} min={0} max={100} unit="%" accentColor={acPink}
-                onChange={(v) => updateFilter('sepia', v / 100)} />
+              <SliderRow label="Sepia" value={Math.round((cf.sepia ?? 0) * 100)} min={0} max={100} unit="%"                onChange={(v) => updateFilter('sepia', v / 100)} />
             </div>
           </Card>
 
           {/* Border & Frame */}
-          <SectionHeader icon={<MdBorderStyle size={14} color={acOrange} />} label="Border & Frame" accent={acOrange} />
+          <SectionHeader icon={<MdBorderStyle size={14} />} label="Border & Frame" />
           <Card>
-            <SliderRow label="Radius" value={parseInt(activeLayer.style?.borderRadius || 0)} min={0} max={200} unit="px" accentColor={acOrange}
-              onChange={(v) => updateStyle({ borderRadius: `${v}px` })} />
+            <SliderRow label="Radius" value={parseInt(activeLayer.style?.borderRadius || 0)} min={0} max={200} unit="px"              onChange={(v) => updateStyle({ borderRadius: `${v}px` })} />
             <Row label="Border" column>
               <div style={{ display: 'flex', gap: 6, width: '100%', alignItems: 'center', flexWrap: 'wrap' }}>
                 <input
@@ -537,7 +448,6 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
             <Row label="Shadow">
               <ToggleSwitch
                 checked={!!(activeLayer.style?.boxShadow && activeLayer.style.boxShadow !== 'none')}
-                accent={acOrange}
                 onChange={(v) => updateStyle({ boxShadow: v ? '0 8px 32px rgba(0,0,0,0.25)' : 'none' })}
               />
             </Row>
@@ -548,30 +458,53 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
       {/* ── TEXT ───────────────────────────────────────────────────────── */}
       {isText && (
         <>
-          <SectionHeader icon={<MdTextFields size={14} color={acBlue} />} label="Content" accent={acBlue} />
+          <SectionHeader icon={<MdTextFields size={14} />} label={isHeading ? 'Headline Text' : 'Content'} />
           <Card>
-            <textarea
-              value={activeLayer.content || ''}
-              onChange={(e) => updateLayer({ content: e.target.value })}
-              rows={3}
-              style={{
-                width: '100%', resize: 'vertical', boxSizing: 'border-box',
-                background: 'white', border: '1px solid var(--border-subtle, rgba(0,0,0,0.1))',
-                borderRadius: 8, padding: '8px 10px', fontSize: 12,
-                color: 'var(--text-main, #1a1b1c)', outline: 'none', fontFamily: 'inherit',
-              }}
-            />
+            {isHeading ? (
+              <input
+                type="text"
+                value={activeLayer.content || ''}
+                onChange={(e) => updateLayer({ content: e.target.value })}
+                placeholder="Main title..."
+                style={{
+                  width: '100%', boxSizing: 'border-box',
+                  background: 'white', border: '1px solid var(--border-subtle, rgba(0,0,0,0.1))',
+                  borderRadius: 8, padding: '7px 10px', fontSize: 12,
+                  color: 'var(--text-main, #1a1b1c)', outline: 'none',
+                }}
+              />
+            ) : (
+              <textarea
+                value={activeLayer.content || ''}
+                onChange={(e) => updateLayer({ content: e.target.value })}
+                rows={3}
+                style={{
+                  width: '100%', resize: 'vertical', boxSizing: 'border-box',
+                  background: 'white', border: '1px solid var(--border-subtle, rgba(0,0,0,0.1))',
+                  borderRadius: 8, padding: '8px 10px', fontSize: 12,
+                  color: 'var(--text-main, #1a1b1c)', outline: 'none', fontFamily: 'inherit',
+                }}
+              />
+            )}
           </Card>
-          <SectionHeader icon={<MdColorLens size={14} color={acBlue} />} label="Style" accent={acBlue} />
+          <SectionHeader icon={<MdColorLens size={14} />} label="Typography & Style" />
           <Card>
-            <SliderRow label="Opacity"   value={Math.round((activeLayer.opacity ?? 1) * 100)} min={0}   max={100} unit="%" accentColor={acBlue} onChange={(v) => updateLayer({ opacity: v / 100 })} />
-            <SliderRow label="Font size" value={activeLayer.style?.fontSize || 32}             min={12}  max={200} unit="px" accentColor={acBlue} onChange={(v) => updateStyle({ fontSize: v })} />
+            <SliderRow label="Font size" value={activeLayer.style?.fontSize || (isHeading ? 48 : 32)} min={12} max={200} unit="px" onChange={(v) => updateStyle({ fontSize: v })} />
             <Row label="Text Color" column>
               <input type="color" value={activeLayer.style?.color || '#000000'}
                 onChange={(e) => updateStyle({ color: e.target.value })}
                 style={{ width: 36, height: 28, border: 'none', borderRadius: 6, cursor: 'pointer', padding: 2, background: 'none' }} />
             </Row>
-            <SliderRow label="Brightness" value={Math.round((activeLayer.effects?.brightness ?? 1) * 100)} min={0} max={200} unit="%" accentColor={acBlue} onChange={(v) => updateEffect({ brightness: v / 100 })} />
+            <Row label="Alignment" column>
+              <AlignButtons
+                value={activeLayer.style?.textAlign}
+                onChange={(v) => updateStyle({ textAlign: v })}
+              />
+            </Row>
+            <SliderRow label="Opacity" value={Math.round((activeLayer.opacity ?? 1) * 100)} min={0} max={100} unit="%" onChange={(v) => updateLayer({ opacity: v / 100 })} />
+            {!isHeading && (
+              <SliderRow label="Brightness" value={Math.round((activeLayer.effects?.brightness ?? 1) * 100)} min={0} max={200} unit="%" onChange={(v) => updateEffect({ brightness: v / 100 })} />
+            )}
           </Card>
         </>
       )}
@@ -581,8 +514,6 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
         const isAvatar = activeLayer.type === 'avatar' || activeLayer.role === 'avatar';
         const src = activeLayer.src;
         const isVideoSrc = src && (src.includes('blob:') || src.match(/\.(mp4|webm|mov|avi)(\?|$)/i));
-        const acA = '#7c3aed'; // avatar accent
-
         const shapePresets = [
           { label: 'Circle',    value: '50%'    },
           { label: 'Rounded',  value: '24px'   },
@@ -606,7 +537,7 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
         return (
           <>
             {/* ─ Live preview ─ */}
-            <SectionHeader icon={<MdImage size={14} color={acA} />} label={isAvatar ? 'Avatar Preview' : 'Media Preview'} accent={acA} />
+            <SectionHeader icon={<MdImage size={14} />} label={isAvatar ? 'Avatar Preview' : 'Media Preview'} />
             <Card style={{ alignItems: 'center', padding: '12px' }}>
               {src ? (
                 <div style={{
@@ -614,9 +545,9 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
                   borderRadius: currentRadius,
                   overflow: 'hidden',
                   border: activeLayer.style?.borderWidth
-                    ? `${activeLayer.style.borderWidth} solid ${activeLayer.style.borderColor || '#7c3aed'}`
-                    : '3px solid rgba(124,58,237,0.2)',
-                  boxShadow: activeLayer.style?.boxShadow || '0 4px 16px rgba(124,58,237,0.15)',
+                    ? `${activeLayer.style.borderWidth} solid ${activeLayer.style.borderColor || 'var(--border-color)'}`
+                    : '1px solid var(--border-color)',
+                  boxShadow: activeLayer.style?.boxShadow || 'none',
                   background: '#f1f5f9',
                   flexShrink: 0,
                   filter: previewFilter,
@@ -637,11 +568,11 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
               ) : (
                 <div style={{
                   width: 110, height: 110, borderRadius: currentRadius,
-                  background: 'linear-gradient(135deg, #818cf8, #a78bfa)',
+                  background: 'var(--bg-surface)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  border: '3px dashed rgba(124,58,237,0.3)',
+                  border: '1px dashed var(--border-color)',
                 }}>
-                  <MdPerson size={48} color="rgba(255,255,255,0.7)" />
+                  <MdPerson size={40} color="var(--text-muted)" />
                 </div>
               )}
               <span style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 8, fontWeight: 600 }}>
@@ -650,7 +581,7 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
             </Card>
 
             {/* ─ Source URL ─ */}
-            <SectionHeader icon={<MdLink size={14} color={acA} />} label="Source" accent={acA} />
+            <SectionHeader icon={<MdLink size={14} />} label="Source" />
             <Card>
               <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>URL / Blob</span>
               <input
@@ -669,27 +600,26 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
             </Card>
 
             {/* ─ Shape ─ */}
-            <SectionHeader icon={<MdRoundedCorner size={14} color={acA} />} label="Shape" accent={acA} />
+            <SectionHeader icon={<MdRoundedCorner size={14} />} label="Shape" />
             <Card>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 5 }}>
                 {shapePresets.map(({ label, value }) => (
                   <button key={value} onClick={() => updateStyle({ borderRadius: value })} style={{
                     padding: '7px 6px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                    background: currentRadius === value ? acA : 'white',
-                    color: currentRadius === value ? 'white' : 'var(--text-muted)',
-                    border: currentRadius === value ? 'none' : '1px solid var(--border-subtle, rgba(0,0,0,0.1))',
+                    background: currentRadius === value ? 'var(--primary)' : 'white',
+                    color: currentRadius === value ? '#fff' : 'var(--text-muted)',
+                    border: currentRadius === value ? '1px solid var(--primary)' : '1px solid var(--border-color)',
                     fontSize: 11, fontWeight: 700, transition: 'all 0.15s',
                   }}>
                     {label}
                   </button>
                 ))}
               </div>
-              <SliderRow label="Custom" value={parseInt(currentRadius) || 0} min={0} max={500} unit="px" accentColor={acA}
-                onChange={(v) => updateStyle({ borderRadius: `${v}px` })} />
+              <SliderRow label="Custom" value={parseInt(currentRadius) || 0} min={0} max={500} unit="px"                onChange={(v) => updateStyle({ borderRadius: `${v}px` })} />
             </Card>
 
             {/* ─ Fit & Flip ─ */}
-            <SectionHeader icon={<MdCropFree size={14} color={acA} />} label="Fit & Flip" accent={acA} />
+            <SectionHeader icon={<MdCropFree size={14} />} label="Fit & Flip" />
             <Card>
               <Row label="Object Fit" column>
                 <FitButtons
@@ -702,9 +632,9 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
                   onClick={() => updateStyle({ scaleX: activeLayer.style?.scaleX === -1 ? 1 : -1 })}
                   style={{
                     flex: 1, padding: '7px', borderRadius: 7,
-                    background: activeLayer.style?.scaleX === -1 ? '#ede9fe' : 'white',
-                    color: activeLayer.style?.scaleX === -1 ? acA : 'var(--text-muted)',
-                    border: `1px solid ${activeLayer.style?.scaleX === -1 ? '#c4b5fd' : 'var(--border-subtle, rgba(0,0,0,0.1))'}`,
+                    background: activeLayer.style?.scaleX === -1 ? 'rgba(var(--primary-rgb), 0.1)' : 'white',
+                    color: activeLayer.style?.scaleX === -1 ? 'var(--primary)' : 'var(--text-muted)',
+                    border: `1px solid ${activeLayer.style?.scaleX === -1 ? 'var(--primary)' : 'var(--border-color)'}`,
                     cursor: 'pointer', fontSize: 11, fontWeight: 700,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
                   }}
@@ -715,9 +645,9 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
                   onClick={() => updateStyle({ scaleY: activeLayer.style?.scaleY === -1 ? 1 : -1 })}
                   style={{
                     flex: 1, padding: '7px', borderRadius: 7,
-                    background: activeLayer.style?.scaleY === -1 ? '#ede9fe' : 'white',
-                    color: activeLayer.style?.scaleY === -1 ? acA : 'var(--text-muted)',
-                    border: `1px solid ${activeLayer.style?.scaleY === -1 ? '#c4b5fd' : 'var(--border-subtle, rgba(0,0,0,0.1))'}`,
+                    background: activeLayer.style?.scaleY === -1 ? 'rgba(var(--primary-rgb), 0.1)' : 'white',
+                    color: activeLayer.style?.scaleY === -1 ? 'var(--primary)' : 'var(--text-muted)',
+                    border: `1px solid ${activeLayer.style?.scaleY === -1 ? 'var(--primary)' : 'var(--border-color)'}`,
                     cursor: 'pointer', fontSize: 11, fontWeight: 700,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
                     transform: 'rotate(90deg)',
@@ -729,22 +659,21 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
             </Card>
 
             {/* ─ Adjustments ─ */}
-            <SectionHeader icon={<MdContrast size={14} color={acA} />} label="Adjustments" accent={acA} />
+            <SectionHeader icon={<MdContrast size={14} />} label="Adjustments" />
             <Card>
-              <SliderRow label="Opacity"    value={Math.round((activeLayer.opacity ?? 1) * 100)} min={0} max={100} unit="%" accentColor={acA} onChange={(v) => updateLayer({ opacity: v / 100 })} />
-              <SliderRow label="Brightness" value={Math.round((avCf.brightness ?? 1) * 100)} min={0} max={200} unit="%" accentColor={acA} onChange={(v) => updateFilter('brightness', v / 100)} />
-              <SliderRow label="Contrast"   value={Math.round((avCf.contrast   ?? 1) * 100)} min={0} max={200} unit="%" accentColor={acA} onChange={(v) => updateFilter('contrast',   v / 100)} />
-              <SliderRow label="Saturation" value={Math.round((avCf.saturate   ?? 1) * 100)} min={0} max={200} unit="%" accentColor={acA} onChange={(v) => updateFilter('saturate',   v / 100)} />
-              <SliderRow label="Blur"       value={avCf.blur ?? 0}                             min={0} max={20}  unit="px" accentColor={acA} onChange={(v) => updateFilter('blur',       v)} />
+              <SliderRow label="Opacity"    value={Math.round((activeLayer.opacity ?? 1) * 100)} min={0} max={100} unit="%" onChange={(v) => updateLayer({ opacity: v / 100 })} />
+              <SliderRow label="Brightness" value={Math.round((avCf.brightness ?? 1) * 100)} min={0} max={200} unit="%" onChange={(v) => updateFilter('brightness', v / 100)} />
+              <SliderRow label="Contrast"   value={Math.round((avCf.contrast   ?? 1) * 100)} min={0} max={200} unit="%" onChange={(v) => updateFilter('contrast',   v / 100)} />
+              <SliderRow label="Saturation" value={Math.round((avCf.saturate   ?? 1) * 100)} min={0} max={200} unit="%" onChange={(v) => updateFilter('saturate',   v / 100)} />
+              <SliderRow label="Blur"       value={avCf.blur ?? 0}                             min={0} max={20}  unit="px" onChange={(v) => updateFilter('blur',       v)} />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' }}>
                 <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>Grayscale</span>
-                <ToggleSwitch checked={avCf.grayscale > 0} accent={acA}
-                  onChange={(v) => updateFilter('grayscale', v ? 1 : 0)} />
+                <ToggleSwitch checked={avCf.grayscale > 0}                  onChange={(v) => updateFilter('grayscale', v ? 1 : 0)} />
               </div>
             </Card>
 
             {/* ─ Border & Shadow ─ */}
-            <SectionHeader icon={<MdBorderStyle size={14} color={acA} />} label="Border & Shadow" accent={acA} />
+            <SectionHeader icon={<MdBorderStyle size={14} />} label="Border & Shadow" />
             <Card>
               <Row label="Border">
                 <div style={{ display: 'flex', gap: 6, flex: 1, alignItems: 'center' }}>
@@ -762,7 +691,7 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
                   <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>px</span>
                   <input
                     type="color"
-                    value={activeLayer.style?.borderColor || '#7c3aed'}
+                    value={activeLayer.style?.borderColor || '#94a3b8'}
                     onChange={(e) => updateStyle({ borderColor: e.target.value, borderStyle: 'solid' })}
                     style={{ width: 30, height: 28, border: 'none', borderRadius: 6, cursor: 'pointer', padding: 2, background: 'none', flex: 1 }}
                   />
@@ -771,7 +700,6 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
               <Row label="Shadow">
                 <ToggleSwitch
                   checked={!!(activeLayer.style?.boxShadow && activeLayer.style.boxShadow !== 'none')}
-                  accent={acA}
                   onChange={(v) => updateStyle({ boxShadow: v ? '0 8px 32px rgba(0,0,0,0.3)' : 'none' })}
                 />
               </Row>
@@ -797,7 +725,7 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
       {/* ── SHAPE ──────────────────────────────────────────────────────── */}
       {isShape && (
         <>
-          <SectionHeader icon={<MdPalette size={14} color={acGreen} />} label="Fill & Style" accent={acGreen} />
+          <SectionHeader icon={<MdPalette size={14} />} label="Fill & Style" />
           <Card>
             <Row label="Fill Color" column>
               <input type="color"
@@ -805,9 +733,8 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
                 onChange={(e) => updateStyle({ backgroundColor: e.target.value })}
                 style={{ width: 36, height: 28, border: 'none', borderRadius: 6, cursor: 'pointer', padding: 2, background: 'none' }} />
             </Row>
-            <SliderRow label="Opacity"    value={Math.round((activeLayer.opacity ?? 1) * 100)} min={0} max={100} unit="%" accentColor={acGreen} onChange={(v) => updateLayer({ opacity: v / 100 })} />
-            <SliderRow label="Radius" value={parseInt(activeLayer.style?.borderRadius || 0)} min={0} max={500} unit="px" accentColor={acGreen}
-              onChange={(v) => updateStyle({ borderRadius: `${v}px` })} />
+            <SliderRow label="Opacity"    value={Math.round((activeLayer.opacity ?? 1) * 100)} min={0} max={100} unit="%" onChange={(v) => updateLayer({ opacity: v / 100 })} />
+            <SliderRow label="Radius" value={parseInt(activeLayer.style?.borderRadius || 0)} min={0} max={500} unit="px"              onChange={(v) => updateStyle({ borderRadius: `${v}px` })} />
           </Card>
         </>
       )}
@@ -815,10 +742,10 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
       {/* ── GENERAL (fallback) ─────────────────────────────────────────── */}
       {!isImage && !isText && !isMedia && !isShape && (
         <>
-          <SectionHeader icon={<MdColorLens size={14} color={acBlue} />} label="Visual" accent={acBlue} />
+          <SectionHeader icon={<MdColorLens size={14} />} label="Visual" />
           <Card>
-            <SliderRow label="Opacity"    value={Math.round((activeLayer.opacity ?? 1) * 100)} min={0} max={100} unit="%" accentColor={acBlue} onChange={(v) => updateLayer({ opacity: v / 100 })} />
-            <SliderRow label="Brightness" value={Math.round((activeLayer.effects?.brightness ?? 1) * 100)} min={0} max={200} unit="%" accentColor={acBlue} onChange={(v) => updateEffect({ brightness: v / 100 })} />
+            <SliderRow label="Opacity"    value={Math.round((activeLayer.opacity ?? 1) * 100)} min={0} max={100} unit="%" onChange={(v) => updateLayer({ opacity: v / 100 })} />
+            <SliderRow label="Brightness" value={Math.round((activeLayer.effects?.brightness ?? 1) * 100)} min={0} max={200} unit="%" onChange={(v) => updateEffect({ brightness: v / 100 })} />
           </Card>
         </>
       )}
@@ -842,10 +769,6 @@ const SceneConfigurationPanel = ({
   activeScene,
   activeSceneId,
   updateScene,
-  bgMusic,
-  setBgMusic,
-  bgMusicVolume,
-  setBgMusicVolume,
   selectedLayerId,
   generateSceneVideo,
   setActiveTab,
@@ -856,9 +779,6 @@ const SceneConfigurationPanel = ({
 
   const clips = activeScene.clips || [];
   const activeLayer = clips.find(l => l.id === selectedLayerId);
-  const textClip = clips.find(c => c.type === 'text' || c.role === 'main-text');
-  const headlineText = textClip ? textClip.content : (activeScene.titleText || '');
-  const headlineFontSize = textClip?.style?.fontSize || activeScene.titleStyle?.fontSize || 48;
 
   if (activeLayer) {
     return (
@@ -880,21 +800,153 @@ const SceneConfigurationPanel = ({
 
   return (
     <div className="scene-config-panel" style={{ padding: '0 14px 20px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {/* Panel title */}
-      <div style={{ padding: '14px 0 8px', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <MdAutoAwesome size={18} color="white" />
+      <PanelHeader
+        icon={<MdSettings size={17} />}
+        title="Scene Settings"
+        subtitle="Configuration"
+      />
+
+      <Divider />
+
+      {/* ── AI Voiceover & Script (priority) ─────────────────────────── */}
+      <SectionHeader icon={<MdRecordVoiceOver size={14} />} label="AI Voiceover & Script" />
+
+      <button
+        type="button"
+        className="scp-btn scp-btn--primary scp-btn--block"
+        onClick={onOpenQuickCreate}
+        style={{ marginBottom: 4 }}
+      >
+        <MdPersonAdd size={16} />
+        Add Avatar & Script
+      </button>
+
+      <Card style={{ gap: 8 }}>
+        <div className="scp-voiceover-stack" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className="scp-voiceover-row">
+            <StatusDot active={!!activeScene.avatarType} />
+            <div className="scp-voiceover-row__meta">
+              <div className="scp-voiceover-row__label">Avatar</div>
+              <div className="scp-voiceover-row__value">
+                {activeScene.avatarName || activeScene.avatarType || '—'}
+              </div>
+            </div>
+            <PillButton onClick={() => setActiveTab && setActiveTab('avatar')}>Change</PillButton>
+          </div>
+          <div className="scp-voiceover-row">
+            <StatusDot active={!!activeScene.voiceId} />
+            <div className="scp-voiceover-row__meta">
+              <div className="scp-voiceover-row__label">Voice</div>
+              <div className="scp-voiceover-row__value">
+                {activeScene.voiceName || activeScene.voiceId || '—'}
+              </div>
+            </div>
+            <PillButton onClick={() => setActiveTab && setActiveTab('mic')}>Change</PillButton>
+          </div>
+          {(activeScene.avatarType || activeScene.voiceId) && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {activeScene.avatarType && (
+                <PillButton variant="primary" onClick={() => applyGlobalSetting && applyGlobalSetting('avatar')}>
+                  Apply Avatar to All
+                </PillButton>
+              )}
+              {activeScene.voiceId && (
+                <PillButton variant="primary" onClick={() => applyGlobalSetting && applyGlobalSetting('voice')}>
+                  Apply Voice to All
+                </PillButton>
+              )}
+            </div>
+          )}
         </div>
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-main, #1a1b1c)', letterSpacing: '-0.3px' }}>Scene Settings</div>
-          <div style={{ fontSize: 10, color: '#8b5cf6', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Configuration</div>
+      </Card>
+
+      <Card>
+        <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted, #64748b)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Script</span>
+        <textarea
+          placeholder="Speak your words here..."
+          value={activeScene.script || ''}
+          onChange={(e) => updateScene(activeSceneId, { script: e.target.value })}
+          rows={4}
+          style={{
+            width: '100%', resize: 'vertical', boxSizing: 'border-box',
+            background: 'white', border: '1px solid var(--border-subtle, rgba(0,0,0,0.1))',
+            borderRadius: 8, padding: '8px 10px', fontSize: 12,
+            color: 'var(--text-main, #1a1b1c)', outline: 'none', fontFamily: 'inherit',
+            lineHeight: 1.55,
+          }}
+        />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
+          <span style={{ fontSize: 10, color: 'var(--text-muted, #64748b)' }}>{(activeScene.script || '').length} characters</span>
+          <SliderRow
+            label="Speed"
+            value={activeScene.voiceSettings?.speed || 1}
+            min={0.5}
+            max={2}
+            step={0.1}
+            unit="×"
+            onChange={(v) => updateScene(activeSceneId, { voiceSettings: { ...(activeScene.voiceSettings || {}), speed: v } })}
+          />
         </div>
+      </Card>
+
+      {/* Generate button */}
+      <div style={{ marginTop: 4 }}>
+        <button
+          type="button"
+          className="scp-btn scp-btn--primary scp-btn--block"
+          disabled={isGenerating || (!canGenerate && !isGenerating)}
+          onClick={() => generateSceneVideo(activeSceneId)}
+          style={{ padding: '10px 14px', fontSize: 12 }}
+        >
+          {isGenerating ? (
+            <>
+              <div style={{ width: 14, height: 14, border: '2px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+              Generating…
+            </>
+          ) : isGenerated ? (
+            <><MdRefresh size={16} /> Regenerate Scene</>
+          ) : (
+            <><MdSmartDisplay size={16} /> Generate Scene Video</>
+          )}
+        </button>
+
+        {/* Status messages */}
+        {isGenerating && (
+          <p style={{ fontSize: 11, color: 'var(--text-muted, #64748b)', textAlign: 'center', marginTop: 8 }}>
+            HeyGen is crafting your video. This may take a minute…
+          </p>
+        )}
+        {isGenerated && (
+          <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+              <MdCheckCircle size={14} color="#10b981" />
+              <span style={{ fontSize: 11, color: '#10b981', fontWeight: 600 }}>Video generated successfully</span>
+            </div>
+            <button
+              type="button"
+              className="scp-btn scp-btn--block"
+              onClick={() => {
+                const url = activeScene.generatedVideoUrl || activeScene.clips?.find(c => c.role === 'avatar' || c.type === 'video')?.src;
+                if (url) window.dispatchEvent(new CustomEvent('open-generated-video', { detail: { url } }));
+                else alert('Video URL not found. It might still be processing.');
+              }}
+            >
+              <MdMonitor size={14} /> View Generated Video
+            </button>
+          </div>
+        )}
+        {isFailed && (
+          <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+            <MdWarning size={14} color="#ef4444" />
+            <span style={{ fontSize: 11, color: '#ef4444', fontWeight: 600 }}>Generation failed. Please try again.</span>
+          </div>
+        )}
       </div>
 
       <Divider />
 
       {/* ── Visual Composition ─────────────────────────────────────── */}
-      <SectionHeader icon={<MdGridView size={14} color="#0891b2" />} label="Visual Composition" accent="#0891b2" />
+      <SectionHeader icon={<MdGridView size={14} />} label="Visual Composition" />
       <Card>
         <Row label="Scene Layout" column>
           <select
@@ -935,13 +987,13 @@ const SceneConfigurationPanel = ({
             ))}
           </select>
         </Row>
-        <SliderRow label="Background Blur" value={activeScene.bgBlur || 0} min={0} max={20} unit="px" accentColor="#0891b2" onChange={(v) => updateScene(activeSceneId, { bgBlur: v })} />
+        <SliderRow label="Background Blur" value={activeScene.bgBlur || 0} min={0} max={20} unit="px" onChange={(v) => updateScene(activeSceneId, { bgBlur: v })} />
       </Card>
 
-      {/* ── Timing ─────────────────────────────────────────────────── */}
-      <SectionHeader icon={<MdTimer size={14} color="#2563eb" />} label="Timing & Playback" accent="#2563eb" />
+      {/* ── Timing & Playback ──────────────────────────────────────── */}
+      <SectionHeader icon={<MdSchedule size={14} />} label="Timing & Playback" />
       <Card>
-        <SliderRow label="Duration" value={activeScene.duration || 8} min={1} max={60} step={0.5} unit="s" accentColor="#2563eb" onChange={(v) => updateScene(activeSceneId, { duration: v })} />
+        <SliderRow label="Duration" value={activeScene.duration || 8} min={1} max={60} step={0.5} unit="s" onChange={(v) => updateScene(activeSceneId, { duration: v })} />
         <SelectRow
           label="Entrance Speed"
           value={activeScene.entranceSpeed || 'normal'}
@@ -952,232 +1004,6 @@ const SceneConfigurationPanel = ({
           ]}
           onChange={(v) => updateScene(activeSceneId, { entranceSpeed: v })}
         />
-      </Card>
-
-      {/* ── Typography ─────────────────────────────────────────────── */}
-      <SectionHeader icon={<MdTextFields size={14} color="#4f46e5" />} label="Typography & Style" accent="#4f46e5" />
-      <Card>
-        <Row label="Headline Text" column>
-          <input
-            type="text"
-            value={headlineText}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (textClip) {
-                const newClips = clips.map(c => c.id === textClip.id ? { ...c, content: val } : c);
-                updateScene(activeSceneId, { titleText: val, clips: newClips });
-              } else {
-                updateScene(activeSceneId, { titleText: val });
-              }
-            }}
-            placeholder="Main title..."
-            style={{
-              width: '100%', boxSizing: 'border-box',
-              background: 'white', border: '1px solid var(--border-subtle, rgba(0,0,0,0.1))',
-              borderRadius: 8, padding: '7px 10px', fontSize: 12,
-              color: 'var(--text-main, #1a1b1c)', outline: 'none',
-            }}
-          />
-        </Row>
-        <SliderRow
-          label="Font size"
-          value={headlineFontSize}
-          min={20}
-          max={120}
-          unit="px"
-          accentColor="#4f46e5"
-          onChange={(newSize) => {
-            if (textClip) {
-              const newClips = clips.map(c => c.id === textClip.id ? { ...c, style: { ...c.style, fontSize: newSize } } : c);
-              updateScene(activeSceneId, { clips: newClips, titleStyle: { ...activeScene.titleStyle, fontSize: newSize } });
-            } else {
-              updateScene(activeSceneId, { titleStyle: { ...activeScene.titleStyle, fontSize: newSize } });
-            }
-          }}
-        />
-        <Row label="Text Color" column>
-          <input
-            type="color"
-            value={activeScene.titleStyle?.color || '#000000'}
-            onChange={(e) => updateScene(activeSceneId, { titleStyle: { ...activeScene.titleStyle, color: e.target.value } })}
-            style={{ width: 36, height: 32, border: 'none', borderRadius: 6, cursor: 'pointer', padding: 2, background: 'none' }}
-          />
-        </Row>
-        <Row label="Alignment" column>
-          <AlignButtons
-            value={activeScene.titleStyle?.textAlign}
-            onChange={(v) => updateScene(activeSceneId, { titleStyle: { ...activeScene.titleStyle, textAlign: v } })}
-          />
-        </Row>
-      </Card>
-
-      {/* ── AI Voiceover ────────────────────────────────────────────── */}
-      <SectionHeader icon={<MdMic size={14} color="#9333ea" />} label="AI Voiceover & Script" accent="#9333ea" />
-
-      {/* Avatar + Voice status */}
-      <Card style={{ gap: 0 }}>
-        {/* Avatar row */}
-        <div className="scp-status-block" style={{ padding: '8px 0', borderBottom: '1px solid var(--border-subtle, rgba(0,0,0,0.06))' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
-            <StatusDot active={!!activeScene.avatarType} />
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-main, #1a1b1c)' }}>Avatar</div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted, #64748b)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {activeScene.avatarName || activeScene.avatarType || '—'}
-              </div>
-            </div>
-          </div>
-          <div className="scp-action-row" style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            <PillButton onClick={onOpenQuickCreate} variant="solid" style={{ background: 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)', color: 'white', border: 'none', padding: '5px 10px' }}>Quick Add</PillButton>
-            <PillButton onClick={() => setActiveTab && setActiveTab('avatar')}>Change</PillButton>
-            {activeScene.avatarType && (
-              <PillButton variant="solid" onClick={() => applyGlobalSetting && applyGlobalSetting('avatar')}>Apply All</PillButton>
-            )}
-          </div>
-        </div>
-        {/* Voice row */}
-        <div className="scp-status-block" style={{ padding: '8px 0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
-            <StatusDot active={!!activeScene.voiceId} />
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-main, #1a1b1c)' }}>Voice</div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted, #64748b)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {activeScene.voiceName || activeScene.voiceId || '—'}
-              </div>
-            </div>
-          </div>
-          <div className="scp-action-row" style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            <PillButton onClick={() => setActiveTab && setActiveTab('mic')}>Change</PillButton>
-            {activeScene.voiceId && (
-              <PillButton variant="solid" onClick={() => applyGlobalSetting && applyGlobalSetting('voice')}>Apply All</PillButton>
-            )}
-          </div>
-        </div>
-      </Card>
-
-      {/* Script */}
-      <Card>
-        <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted, #64748b)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Script</span>
-        <textarea
-          placeholder="Speak your words here..."
-          value={activeScene.script || ''}
-          onChange={(e) => updateScene(activeSceneId, { script: e.target.value })}
-          rows={4}
-          style={{
-            width: '100%', resize: 'vertical', boxSizing: 'border-box',
-            background: 'white', border: '1px solid var(--border-subtle, rgba(0,0,0,0.1))',
-            borderRadius: 8, padding: '8px 10px', fontSize: 12,
-            color: 'var(--text-main, #1a1b1c)', outline: 'none', fontFamily: 'inherit',
-            lineHeight: 1.55,
-          }}
-        />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
-          <span style={{ fontSize: 10, color: 'var(--text-muted, #64748b)' }}>{(activeScene.script || '').length} characters</span>
-          <SliderRow
-            label="Speed"
-            value={activeScene.voiceSettings?.speed || 1}
-            min={0.5}
-            max={2}
-            step={0.1}
-            unit="×"
-            accentColor="#9333ea"
-            onChange={(v) => updateScene(activeSceneId, { voiceSettings: { ...(activeScene.voiceSettings || {}), speed: v } })}
-          />
-        </div>
-      </Card>
-
-      {/* Generate button */}
-      <div style={{ marginTop: 4 }}>
-        <button
-          disabled={isGenerating || (!canGenerate && !isGenerating)}
-          onClick={() => generateSceneVideo(activeSceneId)}
-          style={{
-            width: '100%', padding: '11px 16px', borderRadius: 10, border: 'none',
-            fontWeight: 700, fontSize: 13, cursor: isGenerating ? 'wait' : (canGenerate || isGenerated ? 'pointer' : 'not-allowed'),
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            background: isGenerating
-              ? 'var(--bg-surface, #f1f5f9)'
-              : (canGenerate || isGenerated)
-                ? 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)'
-                : 'var(--bg-surface, #e2e8f0)',
-            color: isGenerating ? 'var(--text-muted, #64748b)' : (canGenerate || isGenerated) ? 'white' : 'var(--text-muted, #94a3b8)',
-            boxShadow: (canGenerate || isGenerated) && !isGenerating ? '0 4px 14px rgba(124,58,237,0.4)' : 'none',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          {isGenerating ? (
-            <>
-              <div style={{ width: 14, height: 14, border: '2px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-              Generating…
-            </>
-          ) : isGenerated ? (
-            <><MdRefresh size={16} /> Regenerate Scene</>
-          ) : (
-            <><MdAutoAwesome size={16} /> Generate Scene Video</>
-          )}
-        </button>
-
-        {/* Status messages */}
-        {isGenerating && (
-          <p style={{ fontSize: 11, color: 'var(--text-muted, #64748b)', textAlign: 'center', marginTop: 8 }}>
-            HeyGen is crafting your video. This may take a minute…
-          </p>
-        )}
-        {isGenerated && (
-          <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
-              <MdCheckCircle size={14} color="#10b981" />
-              <span style={{ fontSize: 11, color: '#10b981', fontWeight: 600 }}>Video generated successfully</span>
-            </div>
-            <button
-              style={{
-                width: '100%', padding: '8px', borderRadius: 9, border: '1px solid #d1d5db',
-                background: 'white', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                color: 'var(--text-main, #1a1b1c)',
-              }}
-              onClick={() => {
-                const url = activeScene.generatedVideoUrl || activeScene.clips?.find(c => c.role === 'avatar' || c.type === 'video')?.src;
-                if (url) window.dispatchEvent(new CustomEvent('open-generated-video', { detail: { url } }));
-                else alert('Video URL not found. It might still be processing.');
-              }}
-            >
-              <MdMonitor size={14} /> View Generated Video
-            </button>
-          </div>
-        )}
-        {isFailed && (
-          <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
-            <MdWarning size={14} color="#ef4444" />
-            <span style={{ fontSize: 11, color: '#ef4444', fontWeight: 600 }}>Generation failed. Please try again.</span>
-          </div>
-        )}
-      </div>
-
-      <Divider />
-
-      {/* ── Motion & Transitions ────────────────────────────────────── */}
-      <SectionHeader icon={<MdAnimation size={14} color="#db2777" />} label="Motion & Transitions" accent="#db2777" />
-      <Card>
-        <SelectRow
-          label="Transition"
-          value={activeScene.transition || 'fade'}
-          options={[
-            { value: 'fade',  label: 'Dissolve (Fade)' },
-            { value: 'slide', label: 'Slide Push' },
-            { value: 'zoom',  label: 'Warp Zoom' },
-            { value: 'blur',  label: 'Motion Blur' },
-            { value: 'none',  label: 'No Transition' },
-          ]}
-          onChange={(v) => updateScene(activeSceneId, { transition: v })}
-        />
-        <SliderRow label="Motion Blur" value={activeScene.motionBlur ?? 0} min={0} max={10} step={1} accentColor="#db2777" onChange={(v) => updateScene(activeSceneId, { motionBlur: v })} />
-      </Card>
-
-      {/* ── Audio ───────────────────────────────────────────────────── */}
-      <SectionHeader icon={<MdGraphicEq size={14} color="#ea580c" />} label="Audio Levels" accent="#ea580c" />
-      <Card>
-        <SliderRow label="BG Music" value={Math.round(bgMusicVolume * 100)} min={0} max={100} unit="%" accentColor="#ea580c" onChange={(v) => setBgMusicVolume(v / 100)} />
       </Card>
     </div>
   );
