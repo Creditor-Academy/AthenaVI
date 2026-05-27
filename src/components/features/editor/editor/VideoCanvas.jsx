@@ -93,138 +93,18 @@ const VideoCanvas = forwardRef(({
     },
     getCurrentFrame: () => {
       return playerRef.current ? playerRef.current.getCurrentFrame() : 0
+    },
+    play: () => {
+      if (playerRef.current) playerRef.current.play()
+    },
+    pause: () => {
+      if (playerRef.current) playerRef.current.pause()
     }
   }))
 
   // Callback ref replaces manual mount effect to avoid race condition
 
-  // Convert percentage/pixel layer position to overlay coordinates
-  const getLayerStyle = (layer) => {
-    const x = layer.position?.x ?? 0
-    const y = layer.position?.y ?? 0
-    const w = layer.size?.width || 300
-    const h = layer.size?.height || 400
-    const s = layer.scale || 1
-
-    return {
-      position: 'absolute',
-      left: `${x}%`,
-      top: `${y}%`,
-      width: `${(w / 12.8)}%`,
-      height: `${(h / 7.2)}%`,
-      transform: `scale(${s})`,
-      transformOrigin: 'top left',
-      cursor: isDragging ? 'grabbing' : 'grab',
-      zIndex: selectedLayerId === layer.id ? 20 : 10,
-    }
-  }
-
-  // Handle clip corner resizing
-  const handleResizeMouseDown = useCallback((e, clip, corner) => {
-    e.stopPropagation()
-    e.preventDefault()
-    setIsDragging(true)
-    
-    const overlay = overlayRef.current
-    if (!overlay) return
-    const rect = overlay.getBoundingClientRect()
-    
-    const startX = e.clientX
-    const startY = e.clientY
-    const startW = typeof clip.size?.width === 'number' ? clip.size.width : 300
-    const startH = typeof clip.size?.height === 'number' ? clip.size.height : 400
-    const startPosX = clip.position?.x ?? 0
-    const startPosY = clip.position?.y ?? 0
-
-    const handleMouseMove = (moveEvent) => {
-      const deltaX = ((moveEvent.clientX - startX) / rect.width) * 1280
-      const deltaY = ((moveEvent.clientY - startY) / rect.height) * 720
-      
-      let newW = startW
-      let newH = startH
-      let newX = startPosX
-      let newY = startPosY
-
-      if (corner.includes('right')) newW = Math.max(50, startW + deltaX)
-      if (corner.includes('bottom')) newH = Math.max(50, startH + deltaY)
-      
-      if (corner.includes('left')) {
-        const potentialW = startW - deltaX
-        if (potentialW > 50) {
-          newW = potentialW
-          newX = startPosX + (deltaX / 1280) * 100
-        }
-      }
-      if (corner.includes('top')) {
-        const potentialH = startH - deltaY
-        if (potentialH > 50) {
-          newH = potentialH
-          newY = startPosY + (deltaY / 720) * 100
-        }
-      }
-
-      if (onUpdateLayerSize) {
-        onUpdateLayerSize(clip.id, newW, newH)
-      }
-      if (onUpdateLayerPosition && (corner.includes('left') || corner.includes('top'))) {
-        onUpdateLayerPosition(clip.id, newX, newY)
-      }
-    }
-
-    const handleMouseUp = () => {
-      setIsDragging(false)
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('mouseup', handleMouseUp)
-    }
-
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('mouseup', handleMouseUp)
-  }, [onUpdateLayerSize, onUpdateLayerPosition])
-
-  // Handle clip drag start
-  const handleLayerMouseDown = useCallback((e, clip) => {
-    e.stopPropagation()
-    e.preventDefault()
-    if (setSelectedLayerId) setSelectedLayerId(clip.id)
-    setIsDragging(true)
-
-    const overlay = overlayRef.current
-    if (!overlay) return
-    const rect = overlay.getBoundingClientRect()
-    
-    const clipX = clip.position?.x ?? 0
-    const clipY = clip.position?.y ?? 0
-    
-    // Calculate offset of mouse from clip origin in percentage of canvas
-    const mouseXPct = ((e.clientX - rect.left) / rect.width) * 100
-    const mouseYPct = ((e.clientY - rect.top) / rect.height) * 100
-    
-    setDragOffset({
-      x: mouseXPct - clipX,
-      y: mouseYPct - clipY
-    })
-
-    const handleMouseMove = (moveEvent) => {
-      const newMouseXPct = ((moveEvent.clientX - rect.left) / rect.width) * 100
-      const newMouseYPct = ((moveEvent.clientY - rect.top) / rect.height) * 100
-      
-      const newX = Math.max(-100, Math.min(100, newMouseXPct - (mouseXPct - clipX)))
-      const newY = Math.max(-100, Math.min(100, newMouseYPct - (mouseYPct - clipY)))
-
-      if (onUpdateLayerPosition) {
-        onUpdateLayerPosition(clip.id, newX, newY)
-      }
-    }
-
-    const handleMouseUp = () => {
-      setIsDragging(false)
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('mouseup', handleMouseUp)
-    }
-
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('mouseup', handleMouseUp)
-  }, [selectedLayerId, onUpdateLayerPosition])
+  // Removed dead getLayerStyle, handleResizeMouseDown, handleLayerMouseDown
 
   // Click on canvas background deselects
   const handleOverlayClick = (e) => {
@@ -241,8 +121,8 @@ const VideoCanvas = forwardRef(({
     if (!overlay) return
     const rect = overlay.getBoundingClientRect()
     setDropIndicator({
-      x: ((e.clientX - rect.left) / rect.width) * 100,
-      y: ((e.clientY - rect.top) / rect.height) * 100
+      x: ((e.clientX - rect.left) / rect.width) * 1920,
+      y: ((e.clientY - rect.top) / rect.height) * 1080
     })
   }
 
@@ -256,8 +136,8 @@ const VideoCanvas = forwardRef(({
     const overlay = overlayRef.current
     if (!overlay) return
     const rect = overlay.getBoundingClientRect()
-    const dropX = ((e.clientX - rect.left) / rect.width) * 100
-    const dropY = ((e.clientY - rect.top) / rect.height) * 100
+    const dropX = ((e.clientX - rect.left) / rect.width) * 1920
+    const dropY = ((e.clientY - rect.top) / rect.height) * 1080
 
     // Get dropped data
     const layerData = e.dataTransfer.getData('application/json')
@@ -279,29 +159,40 @@ const VideoCanvas = forwardRef(({
       <div className="preview-container">
         <div
           className="preview-wrapper"
-          style={{ width: `${zoomLevel}%`, position: 'relative' }}
+          style={{
+            position: 'relative',
+            '--canvas-zoom': (zoomLevel || 100) / 100,
+          }}
         >
           {/* === EDITING VIEW: LiveCanvasRenderer shows real template UI === */}
           {!isPlaying && (
-            <div style={{
-              position: 'absolute',
-              inset: 0,
-              zIndex: 15,
-              // Maintain 16:9 aspect ratio
-            }}>
+            <div 
+              ref={overlayRef}
+              onDragOver={handleDragOver}
+              onDragLeave={() => setDropIndicator(null)}
+              onDrop={handleDrop}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                zIndex: 15,
+                // Maintain 16:9 aspect ratio
+              }}
+            >
               <LiveCanvasRenderer
                 scene={activeScene}
                 selectedId={selectedLayerId}
                 onSelectClip={(id) => setSelectedLayerId && setSelectedLayerId(id)}
                 onContentChange={(clipId, newText) => updateClipContent && updateClipContent(activeSceneId, clipId, newText)}
                 onDeselect={() => setSelectedLayerId && setSelectedLayerId(null)}
+                onUpdateLayerPosition={(clipId, x, y) => onUpdateLayerPosition && onUpdateLayerPosition(clipId, x, y)}
+                onUpdateLayerSize={(clipId, w, h) => onUpdateLayerSize && onUpdateLayerSize(clipId, w, h)}
               />
             </div>
           )}
 
           {/* === REMOTION PLAYER: used for preview/export, hidden during editing === */}
           <Player
-            ref={setPlayerRef}
+            ref={playerRef}
             component={VideoComposition}
             durationInFrames={Math.max(totalDurationInFrames, 1)}
             compositionWidth={1280}

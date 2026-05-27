@@ -186,29 +186,33 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) 
                                 fontFamily: clip.style?.fontFamily || 'Inter, system-ui, sans-serif',
                                 margin: 0,
                             }}>
-                                {clip.content}
+                                {typeof clip.content === 'object' ? (clip.content.name || JSON.stringify(clip.content)) : clip.content}
                             </div>
                         </div>
                     )
                 }
 
                 if (clip.type === 'image' || clip.type === 'avatar' || clip.type === 'video') {
+                    const isGeneratedAvatar = (clip.type === 'avatar' || clip.role === 'avatar') && currentScene.generatedVideoUrl;
+                    const src = isGeneratedAvatar ? currentScene.generatedVideoUrl : clip.src;
+                    const isVideo = clip.type === 'video' || isGeneratedAvatar;
+
                     return (
                         <div key={clip.id} style={{
                             ...style,
                             border: 'none',
                             borderRadius: (clip.type === 'avatar' || clip.role === 'avatar') ? '50%' : '16px',
-                            background: clip.src ? 'transparent' : 'rgba(0,0,0,0.03)',
+                            background: src ? 'transparent' : 'rgba(0,0,0,0.03)',
                             overflow: 'hidden'
                         }}>
-                            {clip.src ? (
-                                clip.type === 'video' ? (
+                            {src ? (
+                                isVideo ? (
                                     <Video 
-                                        src={clip.src} 
+                                        src={src} 
                                         style={{ width: '100%', height: '100%', objectFit: clip.role === 'avatar' ? 'contain' : 'cover' }} 
                                     />
                                 ) : (
-                                    <img src={clip.src} style={{ width: '100%', height: '100%', objectFit: clip.role === 'avatar' ? 'contain' : 'cover' }} alt="" />
+                                    <img src={src} style={{ width: '100%', height: '100%', objectFit: clip.role === 'avatar' ? 'contain' : 'cover' }} alt="" />
                                 )
                             ) : (
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
