@@ -144,72 +144,68 @@ const EditorSidebarMagic = ({ onGenerateStoryboard }) => {
       const clips = [];
 
       if (layout === 'split-left') {
-        // Presenter Left, Text Right
+        // Layout: Presenter Left, Text Right
         clips.push({
-          id: `clip_avatar_${Date.now()}_${pIdx}_1`,
-          type: 'avatar',
-          role: 'avatar',
-          src: avatarImage,
-          startTime: 0,
-          endTime: duration,
-          position: { x: 100, y: 100 },
-          size: { width: 350, height: 500 },
-          opacity: 1.0,
-          layer: 1
+          id: `clip_image_${Date.now()}_${pIdx}_1`, type: 'image', role: 'background-image', src: '',
+          startTime: 0, endTime: duration, position: { x: 120, y: 200 }, size: { width: 600, height: 600 },
+          style: { backgroundColor: '#f0fdf4', borderRadius: '32px', border: '4px solid #ffffff', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }, layer: 1
         });
         clips.push({
-          id: `clip_text_${Date.now()}_${pIdx}_2`,
-          type: 'text',
-          role: 'main-text',
-          content: headline,
-          startTime: 0.5,
-          endTime: duration,
-          position: { x: 500, y: 180 },
-          size: { width: 680, height: 400 },
-          style: {
-            fontSize: 38,
-            fontWeight: '700',
-            color: textColor,
-            textAlign: 'left',
-            width: '680px',
-            fontFamily: 'Inter, system-ui, sans-serif'
-          },
-          opacity: 1.0,
-          layer: 2
+          id: `clip_avatar_${Date.now()}_${pIdx}_2`, type: 'avatar', role: 'avatar', src: avatarImage,
+          startTime: 0, endTime: duration, position: { x: 570, y: 650 }, size: { width: 200, height: 200 },
+          style: { borderRadius: '50%', border: '8px solid #ffffff', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }, layer: 2
+        });
+        clips.push({
+          id: `clip_title_${Date.now()}_${pIdx}_3`, type: 'text', role: 'main-text', content: headline || 'SCALE YOUR BRAND WITH AI VIDEO',
+          startTime: 0, endTime: duration, position: { x: 950, y: 250 }, size: { width: 700, height: 200 },
+          style: { fontSize: 72, fontWeight: '900', color: textColor, textAlign: 'left', lineHeight: 1.1, textTransform: 'uppercase' }, layer: 3
+        });
+        clips.push({
+          id: `clip_subtitle_${Date.now()}_${pIdx}_4`, type: 'text', role: 'subtitle-text', content: paraText || 'Generate professional marketing content in seconds.',
+          startTime: 0.5, endTime: duration, position: { x: 950, y: 460 }, size: { width: 700, height: 100 },
+          style: { fontSize: 32, fontWeight: '500', color: '#64748b', textAlign: 'left', lineHeight: 1.4 }, layer: 4
+        });
+        clips.push({
+          id: `clip_btn_bg_${Date.now()}_${pIdx}_5`, type: 'shape', role: 'decoration',
+          startTime: 0, endTime: duration, position: { x: 950, y: 580 }, size: { width: 280, height: 80 },
+          style: { backgroundColor: '#10b981', borderRadius: '40px' }, layer: 5
+        });
+        clips.push({
+          id: `clip_btn_line_${Date.now()}_${pIdx}_6`, type: 'shape', role: 'decoration',
+          startTime: 0, endTime: duration, position: { x: 1025, y: 615 }, size: { width: 130, height: 10 },
+          style: { backgroundColor: '#ffffff', borderRadius: '5px' }, layer: 6
         });
       } else if (layout === 'split-right') {
-        // Presenter Right, Text Left
+        // Layout: Text Left, Presenter Right
         clips.push({
-          id: `clip_avatar_${Date.now()}_${pIdx}_1`,
-          type: 'avatar',
-          role: 'avatar',
-          src: avatarImage,
-          startTime: 0,
-          endTime: duration,
-          position: { x: 830, y: 100 },
-          size: { width: 350, height: 500 },
-          opacity: 1.0,
-          layer: 1
+          id: `clip_title_${Date.now()}_${pIdx}_1`, type: 'text', role: 'main-text', content: headline || 'YOUR NEXT BIG IDEA STARTS HERE',
+          startTime: 0, endTime: duration, position: { x: 120, y: 250 }, size: { width: 700, height: 200 },
+          style: { fontSize: 72, fontWeight: '900', color: textColor, textAlign: 'left', lineHeight: 1.1, textTransform: 'uppercase' }, layer: 1
         });
         clips.push({
-          id: `clip_text_${Date.now()}_${pIdx}_2`,
-          type: 'text',
-          role: 'main-text',
-          content: headline,
-          startTime: 0.5,
-          endTime: duration,
-          position: { x: 100, y: 180 },
-          size: { width: 680, height: 400 },
-          style: {
-            fontSize: 38,
-            fontWeight: '700',
-            color: textColor,
-            textAlign: 'left',
-            width: '680px',
-            fontFamily: 'Inter, system-ui, sans-serif'
-          },
-          opacity: 1.0,
-          layer: 2
+          id: `clip_subtitle_${Date.now()}_${pIdx}_2`, type: 'text', role: 'subtitle-text', content: paraText || 'The ultimate platform for AI video generation and professional layouts.',
+          startTime: 0.5, endTime: duration, position: { x: 120, y: 460 }, size: { width: 700, height: 100 },
+          style: { fontSize: 32, fontWeight: '500', color: '#64748b', textAlign: 'left', lineHeight: 1.4 }, layer: 2
+        });
+        clips.push({
+          id: `clip_btn_bg_${Date.now()}_${pIdx}_3`, type: 'shape', role: 'decoration',
+          startTime: 0, endTime: duration, position: { x: 120, y: 580 }, size: { width: 280, height: 80 },
+          style: { backgroundColor: '#3b82f6', borderRadius: '40px' }, layer: 3
+        });
+        clips.push({
+          id: `clip_btn_line_${Date.now()}_${pIdx}_4`, type: 'shape', role: 'decoration',
+          startTime: 0, endTime: duration, position: { x: 195, y: 615 }, size: { width: 130, height: 10 },
+          style: { backgroundColor: '#ffffff', borderRadius: '5px' }, layer: 4
+        });
+        clips.push({
+          id: `clip_image_${Date.now()}_${pIdx}_5`, type: 'image', role: 'background-image', src: '',
+          startTime: 0, endTime: duration, position: { x: 950, y: 200 }, size: { width: 600, height: 600 },
+          style: { backgroundColor: '#eef2ff', borderRadius: '32px', border: '4px solid #ffffff', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }, layer: 5
+        });
+        clips.push({
+          id: `clip_avatar_${Date.now()}_${pIdx}_6`, type: 'avatar', role: 'avatar', src: avatarImage,
+          startTime: 0, endTime: duration, position: { x: 1400, y: 650 }, size: { width: 200, height: 200 },
+          style: { borderRadius: '50%', border: '8px solid #ffffff', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }, layer: 6
         });
       } else {
         // Centered
