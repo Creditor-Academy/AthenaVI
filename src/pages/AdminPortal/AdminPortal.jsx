@@ -3,22 +3,20 @@ import { motion as Motion } from 'framer-motion';
 import { 
   MdPeople, 
   MdAdminPanelSettings, 
-  MdSecurity, 
   MdSettings, 
-  MdOutlineFolderShared,
   MdSync,
   MdAnalytics,
-  MdAttachMoney,
+  MdVideoLibrary,
+  MdCloud,
   MdEdit,
   MdDeleteForever
 } from 'react-icons/md';
 import AdminPortalSkeleton from '../page-skeleton/AdminPortalSkeleton';
 import DashboardOverview from '../../components/features/admin/DashboardOverview';
-import UsersList from '../../components/features/admin/UsersList';
-import RenderPipelineMonitor from '../../components/features/admin/RenderPipelineMonitor';
-import CreditLedgerAudit from '../../components/features/admin/CreditLedgerAudit';
-import PlatformConfig from '../../components/features/admin/PlatformConfig';
-import SecurityAudit from '../../components/features/admin/SecurityAudit';
+import UsersModule from './components/UsersModule';
+import RenderingModule from './components/RenderingModule';
+import ContentModule from './components/ContentModule';
+import PlatformModule from './components/PlatformModule';
 import './AdminPortal.css';
 
 const AdminPortal = () => {
@@ -38,13 +36,11 @@ const AdminPortal = () => {
 
   const adminTabs = [
     { id: 'dashboard', label: 'Dashboard', icon: <MdAdminPanelSettings /> },
-    { id: 'users', label: 'User Management', icon: <MdPeople /> },
-    { id: 'workspaces', label: 'Workspaces', icon: <MdOutlineFolderShared /> },
-    { id: 'pipeline', label: 'Render Pipeline', icon: <MdSync /> },
-    { id: 'credits', label: 'Credit Ledger', icon: <MdAttachMoney /> },
-    { id: 'config', label: 'Platform Config', icon: <MdSettings /> },
+    { id: 'users', label: 'Users', icon: <MdPeople /> },
+    { id: 'rendering', label: 'Rendering', icon: <MdSync /> },
+    { id: 'content', label: 'Content', icon: <MdVideoLibrary /> },
+    { id: 'platform', label: 'Platform', icon: <MdCloud /> },
     { id: 'analytics', label: 'Analytics', icon: <MdAnalytics /> },
-    { id: 'security', label: 'Security & Audit', icon: <MdSecurity /> },
   ];
 
   const handleTabChange = (tabId) => {
@@ -79,21 +75,6 @@ const AdminPortal = () => {
     { name: 'Nova Health', arr: '$65.2K', status: 'Renewal due' },
   ];
 
-  const workspaceMetrics = [
-    { label: 'Total Workspaces', value: '48', note: 'Across all organizations' },
-    { label: 'Active Users', value: '342', note: 'Using workspaces this week' },
-    { label: 'Storage Used', value: '2.4TB', note: 'Of 5TB total capacity' },
-    { label: 'Total Projects', value: '1,832', note: 'Across all workspaces' },
-  ];
-
-  const workspaceList = [
-    { id: 'WS-301', name: 'Forge Studio', type: 'Team', owner: 'Mina Patel', members: 72, projects: 156, storage: '450GB', status: 'Active', created: '2025-01-15' },
-    { id: 'WS-315', name: 'Hydra Labs', type: 'Team', owner: 'Owen Reed', members: 48, projects: 89, storage: '320GB', status: 'Active', created: '2025-02-01' },
-    { id: 'WS-328', name: 'Beacon Media', type: 'Private', owner: 'Sofia Kim', members: 1, projects: 45, storage: '180GB', status: 'Active', created: '2025-02-20' },
-    { id: 'WS-339', name: 'Pulse CRM', type: 'Team', owner: 'Liam Grant', members: 34, projects: 67, storage: '290GB', status: 'Review', created: '2025-03-05' },
-    { id: 'WS-350', name: 'Alpha Design', type: 'Team', owner: 'Emma Wilson', members: 25, projects: 112, storage: '410GB', status: 'Active', created: '2025-03-10' },
-  ];
-
   if (loading) {
     return <AdminPortalSkeleton />;
   }
@@ -110,13 +91,11 @@ const AdminPortal = () => {
             <h1 className="admin-page-title">Admin Portal</h1>
             <p className="admin-page-subtitle">
               {activeTab === 'dashboard' && 'Technical health and operational metrics.'}
-              {activeTab === 'users' && 'Manage users, grant credits, and oversee accounts.'}
-              {activeTab === 'workspaces' && 'Oversee team workspaces and collaboration tools.'}
-              {activeTab === 'pipeline' && 'Monitor render jobs, worker pools, and failed pipelines.'}
-              {activeTab === 'credits' && 'Audit the credit ledger and review user credit history.'}
-              {activeTab === 'config' && 'Configure plans, priority queues, and platform integrations.'}
+              {activeTab === 'users' && 'Manage users, workspaces, credits, and access logs.'}
+              {activeTab === 'rendering' && 'Monitor render jobs, workers, and queue health.'}
+              {activeTab === 'content' && 'Moderate videos, review reports, and manage avatars.'}
+              {activeTab === 'platform' && 'Configure plans, integrations, infrastructure, and permissions.'}
               {activeTab === 'analytics' && 'View platform usage, render trends, and export reports.'}
-              {activeTab === 'security' && 'Track audit logs, login history, and GDPR requests.'}
             </p>
           </div>
         </header>
@@ -144,13 +123,13 @@ const AdminPortal = () => {
           {activeTab === 'dashboard' ? (
             <DashboardOverview />
           ) : activeTab === 'users' ? (
-            <UsersList />
-          ) : activeTab === 'pipeline' ? (
-            <RenderPipelineMonitor />
-          ) : activeTab === 'credits' ? (
-            <CreditLedgerAudit />
-          ) : activeTab === 'config' ? (
-            <PlatformConfig />
+            <UsersModule />
+          ) : activeTab === 'rendering' ? (
+            <RenderingModule />
+          ) : activeTab === 'content' ? (
+            <ContentModule />
+          ) : activeTab === 'platform' ? (
+            <PlatformModule />
           ) : activeTab === 'analytics' ? (
             <section className="admin-card-section billing-page" style={{ marginTop: '24px' }}>
               <div className="billing-hero">
@@ -241,104 +220,7 @@ const AdminPortal = () => {
                 </div>
               </div>
             </section>
-          ) : activeTab === 'workspaces' ? (
-            <section className="admin-card-section workspace-page" style={{ marginTop: '24px' }}>
-              <div className="billing-hero">
-                <div>
-                  <h2>Workspace Management</h2>
-                  <p className="admin-placeholder-text">Manage workspaces, monitor storage usage, and oversee team collaboration.</p>
-                </div>
-              </div>
-
-              <div className="workspace-metrics-grid">
-                {workspaceMetrics.map((metric) => (
-                  <div key={metric.label} className="workspace-metric-card">
-                    <div className="metric-icon">
-                      {metric.label === 'Total Workspaces' && <MdOutlineFolderShared size={24} />}
-                      {metric.label === 'Active Users' && <MdPeople size={24} />}
-                      {metric.label === 'Storage Used' && <MdSettings size={24} />}
-                      {metric.label === 'Total Projects' && <MdAdminPanelSettings size={24} />}
-                    </div>
-                    <div className="metric-content">
-                      <span className="metric-label">{metric.label}</span>
-                      <strong className="metric-value">{metric.value}</strong>
-                      <p className="metric-note">{metric.note}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="workspace-grid-section">
-                <div className="billing-panel-header">
-                  <h3>All Workspaces</h3>
-                  <span className="billing-tag">{workspaceList.length} workspaces</span>
-                </div>
-                <div className="workspace-cards-grid">
-                  {workspaceList.map((workspace) => (
-                    <div key={workspace.id} className="workspace-card">
-                      <div className="workspace-card-header">
-                        <div className="workspace-card-icon">
-                          {workspace.type === 'Team' ? <MdOutlineFolderShared size={28} /> : <MdSettings size={28} />}
-                        </div>
-                        <div className="workspace-card-type">
-                          <span className={`plan-tag ${workspace.type === 'Private' ? 'plan-private' : 'plan-team'}`}>
-                            {workspace.type}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="workspace-card-body">
-                        <h4 className="workspace-card-name">{workspace.name}</h4>
-                        <p className="workspace-card-id">{workspace.id}</p>
-                        <div className="workspace-card-meta">
-                          <div className="workspace-meta-item">
-                            <span className="meta-label">Owner</span>
-                            <span className="meta-value">{workspace.owner}</span>
-                          </div>
-                          <div className="workspace-meta-item">
-                            <span className="meta-label">Members</span>
-                            <span className="meta-value">{workspace.members}</span>
-                          </div>
-                          <div className="workspace-meta-item">
-                            <span className="meta-label">Projects</span>
-                            <span className="meta-value">{workspace.projects}</span>
-                          </div>
-                          <div className="workspace-meta-item">
-                            <span className="meta-label">Storage</span>
-                            <span className="meta-value">{workspace.storage}</span>
-                          </div>
-                        </div>
-                        <div className="workspace-card-footer">
-                          <div className="workspace-status">
-                            <span className={`status-badge billing-status-${workspace.status.toLowerCase().replace(/ /g, '-')}`}>
-                              {workspace.status}
-                            </span>
-                          </div>
-                          <div className="workspace-actions">
-                            <button className="workspace-action-btn" title="Edit" onClick={() => alert(`Edit workspace: ${workspace.name}`)}>
-                              <MdEdit size={16} />
-                            </button>
-                            <button className="workspace-action-btn" title="View Details" onClick={() => alert(`View details: ${workspace.name}`)}>
-                              <MdAdminPanelSettings size={16} />
-                            </button>
-                            <button className="workspace-action-btn delete" title="Delete" onClick={() => alert(`Delete workspace: ${workspace.name}`)}>
-                              <MdDeleteForever size={16} />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-          ) : activeTab === 'security' ? (
-            <SecurityAudit />
-          ) : (
-            <section className="admin-card-section" style={{ marginTop: '24px' }}>
-              <h2>{adminTabs.find((tab) => tab.id === activeTab)?.label}</h2>
-              <p className="admin-placeholder-text">This section will be available in a future update. We are currently using mock data for UI design.</p>
-            </section>
-          )}
+          ) : null}
         </main>
       </div>
     </Motion.div>
