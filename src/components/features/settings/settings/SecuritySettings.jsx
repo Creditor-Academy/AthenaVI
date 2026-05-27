@@ -1,8 +1,23 @@
 import React, { useState } from 'react';
+import { useAuth } from '../../../../contexts/AuthContext';
 
 const SecuritySettings = () => {
+  const { logoutAll } = useAuth();
   const [twoFactor, setTwoFactor] = useState(false);
   const [loginAlerts, setLoginAlerts] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogoutAll = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await logoutAll();
+      window.location.hash = '#/';
+    } catch (error) {
+      console.error('Logout all error:', error);
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <div className="settings-section">
@@ -63,6 +78,21 @@ const SecuritySettings = () => {
             onClick={() => setLoginAlerts(!loginAlerts)}
           >
             <div className="toggle-knob" />
+          </button>
+        </div>
+
+        <div className="settings-toggle-row">
+          <div className="toggle-info">
+            <h4>Logout from All Devices</h4>
+            <p>Log out of all active sessions across all devices, including this one.</p>
+          </div>
+          <button
+            type="button"
+            className="btn-premium btn-premium-ghost"
+            onClick={handleLogoutAll}
+            disabled={isLoggingOut}
+          >
+            {isLoggingOut ? 'Logging out...' : 'Logout All'}
           </button>
         </div>
 
