@@ -139,6 +139,64 @@ function Create({ onBack, initialConfig = null }) {
   const insertAfterIndexRef = useRef(null)
   projectRef.current = project
 
+  // Fetch the latest project state from the backend on mount
+  useEffect(() => {
+    const workspaceId = initialConfig?.workspaceId || initialConfig?.videoData?.workspaceId
+    const projectId = initialConfig?.videoId || initialConfig?.videoData?.id || initialConfig?.videoData?._id
+
+    if (!workspaceId || !projectId) return
+
+    const fetchProject = async () => {
+      try {
+        const fetchedProject = await workspaceService.getProject(workspaceId, projectId)
+        if (!fetchedProject) return
+
+        const backendScenes = fetchedProject.data?.scenes || []
+
+        // If backend has no scenes but editor already has scenes (e.g. template), do an initial save
+        if (backendScenes.length === 0 && projectRef.current.scenes.length > 0) {
+          console.log('[Editor] Fresh project – saving initial template scenes to backend')
+          setTimeout(() => saveProject(false, projectRef.current), 500)
+          return
+        }
+
+        if (backendScenes.length > 0) {
+          const mapBackendToFrontend = (scenes) =>
+            scenes.map(scene => ({
+              ...scene,
+              id: scene.sceneId || scene.id,
+              title: scene.name || scene.title || 'Scene',
+              duration: scene.durationInFrames ? scene.durationInFrames / 30 : (scene.duration || 8),
+              clips: (scene.elements || scene.clips || []).map(element => ({
+                ...element,
+                id: element.id,
+                type: element.type,
+                layer: element.layer || 0,
+                startTime: element.startFrame ? element.startFrame / 30 : (element.startTime || 0),
+                duration: element.durationInFrames ? element.durationInFrames / 30 : (element.duration || 5),
+                position: element.placement ? { x: element.placement.x, y: element.placement.y } : element.position,
+                size: element.placement ? { width: element.placement.width, height: element.placement.height } : element.size,
+                opacity: element.placement?.opacity !== undefined ? element.placement.opacity : (element.opacity !== undefined ? element.opacity : 1),
+                content: element.content?.src ? element.content.src : element.content,
+                src: element.content?.src ? element.content.src : (element.src || element.content)
+              }))
+            }))
+
+          setProject(prev => ({
+            ...prev,
+            scenes: mapBackendToFrontend(backendScenes),
+            updatedAt: fetchedProject.updatedAt || new Date().toISOString()
+          }))
+        }
+      } catch (err) {
+        console.warn('[Editor] Failed to fetch project from backend:', err)
+      }
+    }
+
+    fetchProject()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const saveProject = useCallback(async (manual = false, projectState = projectRef.current) => {
     try {
       localStorage.setItem('athenavi_project', JSON.stringify(projectState));
@@ -252,7 +310,7 @@ function Create({ onBack, initialConfig = null }) {
         return s;
       });
 
-      const newState = { ...prev, scenes: updatedScenes };
+      const newState = { ...prev, updatedAt: new Date().toISOString(), scenes: updatedScenes };
       setTimeout(() => saveProject(false, newState), 100);
       return newState;
     });
@@ -298,7 +356,7 @@ function Create({ onBack, initialConfig = null }) {
           });
         }
       }
-      return { ...prev, scenes: newScenes };
+      return { ...prev, updatedAt: new Date().toISOString(), scenes: newScenes };
     });
   }
 
@@ -385,6 +443,7 @@ function Create({ onBack, initialConfig = null }) {
     if (!activeSceneId) return
     setProject(prev => ({
       ...prev,
+      updatedAt: new Date().toISOString(),
       scenes: prev.scenes.map(s => {
         if (s.id !== activeSceneId) return s
         return {
@@ -400,6 +459,7 @@ function Create({ onBack, initialConfig = null }) {
     if (!activeSceneId) return
     setProject(prev => ({
       ...prev,
+      updatedAt: new Date().toISOString(),
       scenes: prev.scenes.map(s => {
         if (s.id !== activeSceneId) return s
         return {
@@ -429,6 +489,7 @@ function Create({ onBack, initialConfig = null }) {
   const deleteLayer = (sceneId, layerId) => {
     setProject(prev => ({
       ...prev,
+      updatedAt: new Date().toISOString(),
       scenes: prev.scenes.map(s => 
         s.id === sceneId ? { ...s, clips: s.clips.filter(c => c.id !== layerId) } : s
       )
@@ -439,6 +500,7 @@ function Create({ onBack, initialConfig = null }) {
   const updateClipContent = (sceneId, clipId, newText) => {
     setProject(prev => ({
       ...prev,
+      updatedAt: new Date().toISOString(),
       scenes: prev.scenes.map(s =>
         s.id === sceneId
           ? { ...s, clips: s.clips.map(c => c.id === clipId ? { ...c, content: newText } : c) }
@@ -450,6 +512,7 @@ function Create({ onBack, initialConfig = null }) {
   const deleteMusic = () => {
     setProject(prev => ({
       ...prev,
+      updatedAt: new Date().toISOString(),
       scenes: prev.scenes.map(s => ({
         ...s,
         clips: s.clips.filter(c => c.type !== 'audio')
@@ -496,7 +559,7 @@ function Create({ onBack, initialConfig = null }) {
   }, [project.scenes])
 
   const handleReorderScenes = (newScenes) => {
-    setProject(prev => ({ ...prev, scenes: newScenes }))
+    setProject(prev => ({ ...prev, updatedAt: new Date().toISOString(), scenes: newScenes }))
   }
 
   // Text-to-speech function
@@ -748,13 +811,14 @@ function Create({ onBack, initialConfig = null }) {
   const deleteScene = (id) => {
     if (project.scenes.length === 1) return
     const newScenes = project.scenes.filter(s => s.id !== id)
-    setProject(prev => ({ ...prev, scenes: newScenes }))
+    setProject(prev => ({ ...prev, updatedAt: new Date().toISOString(), scenes: newScenes }))
     if (activeSceneId === id) setActiveSceneId(newScenes[0]?.id || null)
   }
 
   const updateScene = (id, updates) => {
     setProject(prev => ({
       ...prev,
+      updatedAt: new Date().toISOString(),
       scenes: prev.scenes.map(s => s.id === id ? { ...s, ...updates } : s)
     }))
   }
