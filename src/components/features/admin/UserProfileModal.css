@@ -50,9 +50,9 @@
 }
 
 .user-profile-modal .modal-header {
-  padding: 24px 28px 18px;
+  padding: 16px 20px 12px;
   display: grid;
-  gap: 14px;
+  gap: 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.995) 0%, rgba(15, 23, 42, 0.9) 100%);
 }
@@ -112,7 +112,7 @@
 .user-profile-modal .modal-tabs {
   display: flex;
   gap: 22px;
-  padding: 14px 32px 12px;
+  padding: 10px 20px 8px;
   overflow-x: auto;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.04);
@@ -129,7 +129,7 @@
   padding: 14px 0;
   font-size: 15px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.5);
   cursor: pointer;
   position: relative;
   white-space: nowrap;
@@ -137,12 +137,12 @@
 }
 
 .user-profile-modal .modal-tabs button:hover {
-  color: #ffffff;
+  color: rgba(255, 255, 255, 0.85);
   transform: translateY(-1px);
 }
 
 .user-profile-modal .modal-tabs button.active {
-  color: var(--text-inverse);
+  color: var(--text-main);
 }
 
 .user-profile-modal .modal-tabs button.active::after {
@@ -168,10 +168,10 @@
 }
 
 .user-profile-modal .modal-body {
-  padding: 28px;
+  padding: 12px;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 28px;
+  gap: 14px;
   flex: 1 1 auto;
   min-height: 0;
   box-sizing: border-box;
@@ -231,9 +231,9 @@
 }
 
 .user-profile-modal .credit-actions-container {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .user-profile-modal .credit-action-card {
@@ -450,8 +450,8 @@
   .user-profile-modal .modal-header,
   .user-profile-modal .modal-tabs,
   .user-profile-modal .modal-body {
-    padding-left: 20px;
-    padding-right: 20px;
+    padding-left: 16px;
+    padding-right: 16px;
   }
 }
 
@@ -471,13 +471,13 @@
   }
 
   .user-profile-modal .modal-header {
-    padding: 24px 24px 18px;
+    padding: 16px 16px 12px;
   }
 
   .user-profile-modal .modal-tabs,
   .user-profile-modal .modal-body {
-    padding-left: 20px;
-    padding-right: 20px;
+    padding-left: 16px;
+    padding-right: 16px;
   }
 
   .user-profile-modal .modal-tabs {

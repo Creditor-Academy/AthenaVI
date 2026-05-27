@@ -17,7 +17,6 @@ const UserProfileModal = ({ user, onClose, onUpdateUser, onDeleteUser }) => {
 
   useEffect(() => {
     setEditableUser(user);
-    setActiveTab('overview');
     setCreditAmount('');
     setCreditOperation('add');
     setSuccessMessage('');

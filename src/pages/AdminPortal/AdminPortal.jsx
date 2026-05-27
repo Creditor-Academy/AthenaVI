@@ -8,7 +8,9 @@ import {
   MdOutlineFolderShared,
   MdSync,
   MdAnalytics,
-  MdAttachMoney
+  MdAttachMoney,
+  MdEdit,
+  MdDeleteForever
 } from 'react-icons/md';
 import AdminPortalSkeleton from '../page-skeleton/AdminPortalSkeleton';
 import DashboardOverview from '../../components/features/admin/DashboardOverview';
@@ -78,29 +80,18 @@ const AdminPortal = () => {
   ];
 
   const workspaceMetrics = [
-    { label: 'Active Workspaces', value: '48', note: '41 active this week' },
-    { label: 'Pending Invites', value: '92', note: '35 awaiting approval' },
-    { label: 'Storage Utilization', value: '73%', note: '2.4TB of 3.3TB used' },
-    { label: 'Sync Health', value: '99.1%', note: 'Last 24-hour uptime' },
-  ];
-
-  const workspaceProducts = [
-    { label: 'Collaboration sessions', value: '1,832', detail: 'Live across 31 workspaces' },
-    { label: 'Shared assets', value: '68.4K', detail: 'Includes templates and media' },
-    { label: 'Workspace owners', value: '26', detail: 'Executive-level admin access' },
+    { label: 'Total Workspaces', value: '48', note: 'Across all organizations' },
+    { label: 'Active Users', value: '342', note: 'Using workspaces this week' },
+    { label: 'Storage Used', value: '2.4TB', note: 'Of 5TB total capacity' },
+    { label: 'Total Projects', value: '1,832', note: 'Across all workspaces' },
   ];
 
   const workspaceList = [
-    { id: 'WS-301', name: 'Forge Studio', owner: 'Mina Patel', seats: '72', status: 'Active' },
-    { id: 'WS-315', name: 'Hydra Labs', owner: 'Owen Reed', seats: '48', status: 'Review' },
-    { id: 'WS-328', name: 'Beacon Media', owner: 'Sofia Kim', seats: '103', status: 'Active' },
-    { id: 'WS-339', name: 'Pulse CRM', owner: 'Liam Grant', seats: '34', status: 'At risk' },
-  ];
-
-  const workspaceTeams = [
-    { name: 'Growth Ops', activity: 'High', owners: '3' },
-    { name: 'Customer Success', activity: 'Medium', owners: '2' },
-    { name: 'Product Design', activity: 'High', owners: '4' },
+    { id: 'WS-301', name: 'Forge Studio', type: 'Team', owner: 'Mina Patel', members: 72, projects: 156, storage: '450GB', status: 'Active', created: '2025-01-15' },
+    { id: 'WS-315', name: 'Hydra Labs', type: 'Team', owner: 'Owen Reed', members: 48, projects: 89, storage: '320GB', status: 'Active', created: '2025-02-01' },
+    { id: 'WS-328', name: 'Beacon Media', type: 'Private', owner: 'Sofia Kim', members: 1, projects: 45, storage: '180GB', status: 'Active', created: '2025-02-20' },
+    { id: 'WS-339', name: 'Pulse CRM', type: 'Team', owner: 'Liam Grant', members: 34, projects: 67, storage: '290GB', status: 'Review', created: '2025-03-05' },
+    { id: 'WS-350', name: 'Alpha Design', type: 'Team', owner: 'Emma Wilson', members: 25, projects: 112, storage: '410GB', status: 'Active', created: '2025-03-10' },
   ];
 
   if (loading) {
@@ -254,87 +245,89 @@ const AdminPortal = () => {
             <section className="admin-card-section workspace-page" style={{ marginTop: '24px' }}>
               <div className="billing-hero">
                 <div>
-                  <h2>Workspaces & Collaboration</h2>
-                  <p className="admin-placeholder-text">Track workspace health, team activity, storage usage, and workspace risk in one place.</p>
+                  <h2>Workspace Management</h2>
+                  <p className="admin-placeholder-text">Manage workspaces, monitor storage usage, and oversee team collaboration.</p>
                 </div>
               </div>
 
-              <div className="billing-summary-grid">
+              <div className="workspace-metrics-grid">
                 {workspaceMetrics.map((metric) => (
-                  <div key={metric.label} className="billing-summary-card">
-                    <span className="billing-metric-label">{metric.label}</span>
-                    <strong className="billing-metric-value">{metric.value}</strong>
-                    <p className="billing-metric-note">{metric.note}</p>
+                  <div key={metric.label} className="workspace-metric-card">
+                    <div className="metric-icon">
+                      {metric.label === 'Total Workspaces' && <MdOutlineFolderShared size={24} />}
+                      {metric.label === 'Active Users' && <MdPeople size={24} />}
+                      {metric.label === 'Storage Used' && <MdSettings size={24} />}
+                      {metric.label === 'Total Projects' && <MdAdminPanelSettings size={24} />}
+                    </div>
+                    <div className="metric-content">
+                      <span className="metric-label">{metric.label}</span>
+                      <strong className="metric-value">{metric.value}</strong>
+                      <p className="metric-note">{metric.note}</p>
+                    </div>
                   </div>
                 ))}
               </div>
 
-              <div className="billing-panel-grid">
-                <div className="billing-panel">
-                  <div className="billing-panel-header">
-                    <h3>Workspace health</h3>
-                    <span className="billing-tag">Operational pulse</span>
-                  </div>
-                  <div className="billing-panel-list">
-                    {workspaceProducts.map((item) => (
-                      <div key={item.label} className="billing-detail-row">
-                        <div>
-                          <p className="billing-detail-label">{item.label}</p>
-                          <p className="billing-detail-note">{item.detail}</p>
+              <div className="workspace-grid-section">
+                <div className="billing-panel-header">
+                  <h3>All Workspaces</h3>
+                  <span className="billing-tag">{workspaceList.length} workspaces</span>
+                </div>
+                <div className="workspace-cards-grid">
+                  {workspaceList.map((workspace) => (
+                    <div key={workspace.id} className="workspace-card">
+                      <div className="workspace-card-header">
+                        <div className="workspace-card-icon">
+                          {workspace.type === 'Team' ? <MdOutlineFolderShared size={28} /> : <MdSettings size={28} />}
                         </div>
-                        <strong>{item.value}</strong>
+                        <div className="workspace-card-type">
+                          <span className={`plan-tag ${workspace.type === 'Private' ? 'plan-private' : 'plan-team'}`}>
+                            {workspace.type}
+                          </span>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="billing-side-panel">
-                  <div className="billing-card">
-                    <h3>Active teams</h3>
-                    <div className="billing-account-list">
-                      {workspaceTeams.map((team) => (
-                        <div key={team.name} className="billing-account-row">
-                          <div>
-                            <p className="billing-detail-label">{team.name}</p>
-                            <p className="billing-detail-note">Activity: {team.activity}</p>
+                      <div className="workspace-card-body">
+                        <h4 className="workspace-card-name">{workspace.name}</h4>
+                        <p className="workspace-card-id">{workspace.id}</p>
+                        <div className="workspace-card-meta">
+                          <div className="workspace-meta-item">
+                            <span className="meta-label">Owner</span>
+                            <span className="meta-value">{workspace.owner}</span>
                           </div>
-                          <strong>{team.owners} owners</strong>
+                          <div className="workspace-meta-item">
+                            <span className="meta-label">Members</span>
+                            <span className="meta-value">{workspace.members}</span>
+                          </div>
+                          <div className="workspace-meta-item">
+                            <span className="meta-label">Projects</span>
+                            <span className="meta-value">{workspace.projects}</span>
+                          </div>
+                          <div className="workspace-meta-item">
+                            <span className="meta-label">Storage</span>
+                            <span className="meta-value">{workspace.storage}</span>
+                          </div>
                         </div>
-                      ))}
+                        <div className="workspace-card-footer">
+                          <div className="workspace-status">
+                            <span className={`status-badge billing-status-${workspace.status.toLowerCase().replace(/ /g, '-')}`}>
+                              {workspace.status}
+                            </span>
+                          </div>
+                          <div className="workspace-actions">
+                            <button className="workspace-action-btn" title="Edit" onClick={() => alert(`Edit workspace: ${workspace.name}`)}>
+                              <MdEdit size={16} />
+                            </button>
+                            <button className="workspace-action-btn" title="View Details" onClick={() => alert(`View details: ${workspace.name}`)}>
+                              <MdAdminPanelSettings size={16} />
+                            </button>
+                            <button className="workspace-action-btn delete" title="Delete" onClick={() => alert(`Delete workspace: ${workspace.name}`)}>
+                              <MdDeleteForever size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="billing-card billing-overdue-card">
-                    <h3>Workspace risk alerts</h3>
-                    <p className="billing-alert-text">2 workspaces require admin review due to low engagement and pending security checks.</p>
-                    <div className="billing-alert-tag">Review queue: 2 workspaces</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="billing-table-panel">
-                <h3>Workspaces in production</h3>
-                <div className="admin-table-container">
-                  <table className="admin-table workspace-table">
-                    <thead>
-                      <tr>
-                        <th>Workspace</th>
-                        <th>Owner</th>
-                        <th>Seats</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {workspaceList.map((workspace) => (
-                        <tr key={workspace.id}>
-                          <td>{workspace.name}</td>
-                          <td>{workspace.owner}</td>
-                          <td>{workspace.seats}</td>
-                          <td><span className={`status-badge billing-status-${workspace.status.toLowerCase().replace(/ /g, '-')}`}>{workspace.status}</span></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  ))}
                 </div>
               </div>
             </section>

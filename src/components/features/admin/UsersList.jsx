@@ -58,42 +58,50 @@ const AddUserModal = ({ isOpen, onClose, onCreate }) => {
 
         <div className="modal-body">
           <form className="modal-section" onSubmit={handleSubmit}>
-            <div className="info-grid">
-              <div className="info-item">
-                <label>Name</label>
-                <input className="modal-input" type="text" value={formValues.name} onChange={handleChange('name')} placeholder="Full name" />
+            <div className="profile-fields">
+              <div className="field-row">
+                <div className="field-group">
+                  <label>Name</label>
+                  <input className="modal-input" type="text" value={formValues.name} onChange={handleChange('name')} placeholder="Full name" />
+                </div>
+                <div className="field-group">
+                  <label>Email</label>
+                  <input className="modal-input" type="email" value={formValues.email} onChange={handleChange('email')} placeholder="Email address" />
+                </div>
               </div>
-              <div className="info-item">
-                <label>Email</label>
-                <input className="modal-input" type="email" value={formValues.email} onChange={handleChange('email')} placeholder="Email address" />
+              <div className="field-row">
+                <div className="field-group">
+                  <label>Role</label>
+                  <select className="modal-input" value={formValues.role} onChange={handleChange('role')}>
+                    {roleOptions.map((role) => <option key={role} value={role}>{role}</option>)}
+                  </select>
+                </div>
+                <div className="field-group">
+                  <label>Workspace</label>
+                  <select className="modal-input" value={formValues.workspace} onChange={handleChange('workspace')}>
+                    {workspaceOptions.map((workspace) => <option key={workspace} value={workspace}>{workspace}</option>)}
+                  </select>
+                </div>
               </div>
-              <div className="info-item">
-                <label>Role</label>
-                <select className="modal-input" value={formValues.role} onChange={handleChange('role')}>
-                  {roleOptions.map((role) => <option key={role} value={role}>{role}</option>)}
-                </select>
+              <div className="field-row">
+                <div className="field-group">
+                  <label>Plan</label>
+                  <select className="modal-input" value={formValues.plan} onChange={handleChange('plan')}>
+                    {planOptions.map((plan) => <option key={plan} value={plan}>{plan}</option>)}
+                  </select>
+                </div>
+                <div className="field-group">
+                  <label>Status</label>
+                  <select className="modal-input" value={formValues.status} onChange={handleChange('status')}>
+                    {userStatusOptions.map((status) => <option key={status} value={status}>{status}</option>)}
+                  </select>
+                </div>
               </div>
-              <div className="info-item">
-                <label>Workspace</label>
-                <select className="modal-input" value={formValues.workspace} onChange={handleChange('workspace')}>
-                  {workspaceOptions.map((workspace) => <option key={workspace} value={workspace}>{workspace}</option>)}
-                </select>
-              </div>
-              <div className="info-item">
-                <label>Plan</label>
-                <select className="modal-input" value={formValues.plan} onChange={handleChange('plan')}>
-                  {planOptions.map((plan) => <option key={plan} value={plan}>{plan}</option>)}
-                </select>
-              </div>
-              <div className="info-item">
-                <label>Status</label>
-                <select className="modal-input" value={formValues.status} onChange={handleChange('status')}>
-                  {userStatusOptions.map((status) => <option key={status} value={status}>{status}</option>)}
-                </select>
-              </div>
-              <div className="info-item">
-                <label>Starting Credits</label>
-                <input className="modal-input" type="number" value={formValues.credits} onChange={handleChange('credits')} />
+              <div className="field-row">
+                <div className="field-group">
+                  <label>Starting Credits</label>
+                  <input className="modal-input" type="number" value={formValues.credits} onChange={handleChange('credits')} />
+                </div>
               </div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '22px' }}>
