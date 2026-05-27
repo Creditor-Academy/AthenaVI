@@ -30,10 +30,11 @@ import {
   MdSettings,
   MdPerson,
   MdRecordVoiceOver,
-  MdPersonAdd,
   MdSmartDisplay,
   MdSchedule,
   MdSpeed,
+  MdEdit,
+  MdPersonAdd,
 } from 'react-icons/md';
 import projectTemplate from '../../../../constants/projectTemplate.json';
 
@@ -171,20 +172,14 @@ const Card = ({ children, className = '', style = {} }) => (
   </div>
 );
 
-const PillButton = ({ children, onClick, variant = 'outline', className = '', ...props }) => (
-  <button
-    type="button"
-    className={`scp-btn ${variant === 'primary' ? 'scp-btn--primary' : ''} ${className}`.trim()}
-    onClick={onClick}
-    {...props}
-  >
-    {children}
-  </button>
-);
-
 const StatusDot = ({ active }) => (
   <span className={`scp-status-dot ${active ? 'scp-status-dot--on' : 'scp-status-dot--off'}`} />
 );
+
+const displayName = (name, emptyLabel = 'Not selected') => {
+  const trimmed = (name || '').trim();
+  return trimmed || emptyLabel;
+};
 
 /* ── Toggle switch helper ─────────────────────────────────────────────────── */
 const ToggleSwitch = ({ checked, onChange, accent = 'var(--primary)' }) => (
@@ -797,6 +792,11 @@ const SceneConfigurationPanel = ({
   const isGenerated  = activeScene.heygenStatus === 'completed';
   const isFailed     = activeScene.heygenStatus === 'failed';
   const canGenerate  = activeScene.avatarType && activeScene.voiceId && activeScene.script;
+  const hasVoiceover = !!(
+    activeScene.avatarType ||
+    activeScene.voiceId ||
+    (activeScene.script || '').trim()
+  );
 
   return (
     <div className="scene-config-panel" style={{ padding: '0 14px 20px', display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -806,88 +806,95 @@ const SceneConfigurationPanel = ({
         subtitle="Configuration"
       />
 
-      <Divider />
-
-      {/* ── AI Voiceover & Script (priority) ─────────────────────────── */}
-      <SectionHeader icon={<MdRecordVoiceOver size={14} />} label="AI Voiceover & Script" />
-
-      <button
-        type="button"
-        className="scp-btn scp-btn--primary scp-btn--block"
-        onClick={onOpenQuickCreate}
-        style={{ marginBottom: 4 }}
-      >
-        <MdPersonAdd size={16} />
-        Add Avatar & Script
-      </button>
-
-      <Card style={{ gap: 8 }}>
-        <div className="scp-voiceover-stack" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div className="scp-voiceover-row">
-            <StatusDot active={!!activeScene.avatarType} />
-            <div className="scp-voiceover-row__meta">
-              <div className="scp-voiceover-row__label">Avatar</div>
-              <div className="scp-voiceover-row__value">
-                {activeScene.avatarName || activeScene.avatarType || '—'}
-              </div>
-            </div>
-            <PillButton onClick={() => setActiveTab && setActiveTab('avatar')}>Change</PillButton>
-          </div>
-          <div className="scp-voiceover-row">
-            <StatusDot active={!!activeScene.voiceId} />
-            <div className="scp-voiceover-row__meta">
-              <div className="scp-voiceover-row__label">Voice</div>
-              <div className="scp-voiceover-row__value">
-                {activeScene.voiceName || activeScene.voiceId || '—'}
-              </div>
-            </div>
-            <PillButton onClick={() => setActiveTab && setActiveTab('mic')}>Change</PillButton>
-          </div>
-          {(activeScene.avatarType || activeScene.voiceId) && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {activeScene.avatarType && (
-                <PillButton variant="primary" onClick={() => applyGlobalSetting && applyGlobalSetting('avatar')}>
-                  Apply Avatar to All
-                </PillButton>
-              )}
-              {activeScene.voiceId && (
-                <PillButton variant="primary" onClick={() => applyGlobalSetting && applyGlobalSetting('voice')}>
-                  Apply Voice to All
-                </PillButton>
-              )}
-            </div>
+      {/* ── Presenter & script summary (top) ─────────────────────────── */}
+      <div className="scp-voiceover-summary">
+        <div className="scp-voiceover-summary__head">
+          <SectionHeader icon={<MdRecordVoiceOver size={14} />} label="AI Voiceover & Script" />
+          {hasVoiceover && (
+            <button
+              type="button"
+              className="scp-btn scp-btn--ghost scp-voiceover-summary__edit"
+              onClick={onOpenQuickCreate}
+            >
+              <MdEdit size={14} />
+              Edit
+            </button>
           )}
         </div>
-      </Card>
 
-      <Card>
-        <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted, #64748b)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Script</span>
-        <textarea
-          placeholder="Speak your words here..."
-          value={activeScene.script || ''}
-          onChange={(e) => updateScene(activeSceneId, { script: e.target.value })}
-          rows={4}
-          style={{
-            width: '100%', resize: 'vertical', boxSizing: 'border-box',
-            background: 'white', border: '1px solid var(--border-subtle, rgba(0,0,0,0.1))',
-            borderRadius: 8, padding: '8px 10px', fontSize: 12,
-            color: 'var(--text-main, #1a1b1c)', outline: 'none', fontFamily: 'inherit',
-            lineHeight: 1.55,
-          }}
-        />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
-          <span style={{ fontSize: 10, color: 'var(--text-muted, #64748b)' }}>{(activeScene.script || '').length} characters</span>
-          <SliderRow
-            label="Speed"
-            value={activeScene.voiceSettings?.speed || 1}
-            min={0.5}
-            max={2}
-            step={0.1}
-            unit="×"
-            onChange={(v) => updateScene(activeSceneId, { voiceSettings: { ...(activeScene.voiceSettings || {}), speed: v } })}
-          />
-        </div>
-      </Card>
+        {hasVoiceover ? (
+          <>
+            <div className="scp-summary-field scp-summary-field--row">
+              <div className="scp-summary-field__main">
+                <div className="scp-summary-field__label">
+                  <StatusDot active={!!activeScene.avatarType} />
+                  <span>Avatar</span>
+                </div>
+                <div className="scp-summary-field__value">
+                  {displayName(activeScene.avatarName)}
+                </div>
+              </div>
+              {activeScene.avatarType && (
+                <button
+                  type="button"
+                  className="scp-btn scp-btn--ghost scp-summary-field__action"
+                  onClick={() => applyGlobalSetting && applyGlobalSetting('avatar')}
+                >
+                  Apply all
+                </button>
+              )}
+            </div>
+
+            <div className="scp-summary-field scp-summary-field--row">
+              <div className="scp-summary-field__main">
+                <div className="scp-summary-field__label">
+                  <StatusDot active={!!activeScene.voiceId} />
+                  <span>Voice</span>
+                </div>
+                <div className="scp-summary-field__value">
+                  {displayName(activeScene.voiceName)}
+                </div>
+              </div>
+              {activeScene.voiceId && (
+                <button
+                  type="button"
+                  className="scp-btn scp-btn--ghost scp-summary-field__action"
+                  onClick={() => applyGlobalSetting && applyGlobalSetting('voice')}
+                >
+                  Apply all
+                </button>
+              )}
+            </div>
+
+            <div className="scp-summary-field scp-summary-field--script">
+              <div className="scp-summary-field__label">
+                <StatusDot active={!!(activeScene.script || '').trim()} />
+                <span>Script</span>
+              </div>
+              <p className="scp-summary-field__script scp-summary-field__script--full">
+                {(activeScene.script || '').trim()}
+              </p>
+              <span className="scp-summary-field__meta">
+                {(activeScene.script || '').length} characters
+              </span>
+            </div>
+          </>
+        ) : (
+          <div className="scp-voiceover-empty">
+            <p>No presenter or script on this scene yet.</p>
+            <button
+              type="button"
+              className="scp-btn scp-btn--primary scp-btn--block"
+              onClick={onOpenQuickCreate}
+            >
+              <MdPersonAdd size={16} />
+              Set up presenter & script
+            </button>
+          </div>
+        )}
+      </div>
+
+      <Divider />
 
       {/* Generate button */}
       <div style={{ marginTop: 4 }}>
@@ -1003,6 +1010,15 @@ const SceneConfigurationPanel = ({
             { value: 'fast', label: 'Fast (1.5×)' },
           ]}
           onChange={(v) => updateScene(activeSceneId, { entranceSpeed: v })}
+        />
+        <SliderRow
+          label="Voice speed"
+          value={activeScene.voiceSettings?.speed || 1}
+          min={0.5}
+          max={2}
+          step={0.1}
+          unit="×"
+          onChange={(v) => updateScene(activeSceneId, { voiceSettings: { ...(activeScene.voiceSettings || {}), speed: v } })}
         />
       </Card>
     </div>

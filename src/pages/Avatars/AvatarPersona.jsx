@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react'
 import { Play, Video, X } from 'lucide-react'
 import heygenService from '../../services/heygenService'
+import {
+  extractHeygenList,
+  filterAvatarIvLooks,
+  formatAvatarTypeLabel,
+  getLookId,
+} from '../../utils/heygenAvatars'
 
 function AvatarPersona({ selectedAvatar, closeDetails, onCreate }) {
   const [activeLooks, setActiveLooks] = useState([])
@@ -13,40 +19,41 @@ function AvatarPersona({ selectedAvatar, closeDetails, onCreate }) {
   useEffect(() => {
     if (selectedAvatar) {
       if (selectedAvatar.rawLooks && selectedAvatar.rawLooks.length > 0) {
-        const mapped = selectedAvatar.rawLooks.map(look => ({
-          id: look.avatar_id || look.id,
+        const compatible = filterAvatarIvLooks(selectedAvatar.rawLooks);
+        const mapped = compatible.map(look => ({
+          id: getLookId(look),
           name: look.avatar_name || look.name || selectedAvatar.name,
           image: look.preview_image_url || look.thumbnail_url || look.image_url || selectedAvatar.image,
-          preview: look.preview_video_url || selectedAvatar.preview
-        }));
+          preview: look.preview_video_url || selectedAvatar.preview,
+          avatarType: look.avatar_type || look.avatarType,
+        })).filter(look => look.id);
         setActiveLooks(mapped);
-        setSelectedLook(mapped[0]);
+        setSelectedLook(mapped[0] || null);
+        if (mapped.length === 0) {
+          setDebugLooksInfo('No Avatar IV–compatible looks for this character.');
+        }
       } else {
         // Fetch if not embedded
         const fetchLooks = async () => {
           setLoadingLooks(true);
           try {
-            const res = await heygenService.getAvatarLooks({ group_id: selectedAvatar.id });
-            let lookList = [];
-            if (Array.isArray(res)) lookList = res;
-            else if (res?.avatar_looks) lookList = res.avatar_looks;
-            else if (res?.data?.avatar_looks) lookList = res.data.avatar_looks;
-            else if (res?.avatars) lookList = res.avatars;
-            else if (res?.data?.avatars) lookList = res.data.avatars;
-            else if (res?.data && Array.isArray(res.data)) lookList = res.data;
+            const res = await heygenService.getAvatarLooks({ group_id: selectedAvatar.id, limit: 20 });
+            const lookList = extractHeygenList(res, ['avatar_looks', 'looks', 'avatars']);
+            const compatible = filterAvatarIvLooks(lookList);
             
-            if (!lookList || lookList.length === 0) {
-               setDebugLooksInfo(`No looks found. Raw response: ${JSON.stringify(res).substring(0, 150)}`);
+            if (!compatible.length) {
+               setDebugLooksInfo('No Avatar IV–compatible looks for this character.');
             } else {
                setDebugLooksInfo('');
             }
             
-            const mapped = lookList.map(look => ({
-              id: look.avatar_id || look.id,
+            const mapped = compatible.map(look => ({
+              id: getLookId(look),
               name: look.avatar_name || look.name || selectedAvatar.name,
               image: look.preview_image_url || look.thumbnail_url || look.image_url || selectedAvatar.image,
-              preview: look.preview_video_url || selectedAvatar.preview
-            }));
+              preview: look.preview_video_url || selectedAvatar.preview,
+              avatarType: look.avatar_type || look.avatarType,
+            })).filter(look => look.id);
             setActiveLooks(mapped);
             if (mapped.length > 0) setSelectedLook(mapped[0]);
           } catch (e) {
@@ -97,6 +104,11 @@ function AvatarPersona({ selectedAvatar, closeDetails, onCreate }) {
                   }}
                 >
                   <img src={look.image} alt={look.name} />
+                  {look.avatarType && (
+                    <span className="filmstrip-type-badge">
+                      {formatAvatarTypeLabel(look.avatarType)}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>

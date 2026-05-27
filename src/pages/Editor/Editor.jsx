@@ -17,6 +17,7 @@ import heygenService from '../../services/heygenService'
 import avatar1 from '../../assets/Avatarr1.png'
 import projectTemplate from '../../constants/projectTemplate.json'
 import workspaceService from '../../services/workspaceService'
+import { buildHeygenAvatarContent } from '../../utils/heygenAvatars'
 
 function Create({ onBack, initialConfig = null }) {
   // Debug: Log when component mounts
@@ -163,11 +164,24 @@ function Create({ onBack, initialConfig = null }) {
             backgroundColor: '#000000'
           },
           scenes: (projectState.scenes || []).map((scene, idx) => ({
-            sceneId: scene.id || `scene_${idx}`,
+            sceneId: scene.sceneId || scene.id || `scene_${idx}`,
             name: scene.title || `Scene ${idx + 1}`,
             durationInFrames: Math.max(1, Math.round((scene.duration || 8) * 30)),
             background: scene.background || { type: 'color', value: '#ffffff' },
-            elements: (scene.clips || []).map((clip, cIdx) => ({
+            elements: (scene.clips || []).map((clip, cIdx) => {
+              const isAvatarClip = clip.type === 'avatar' || clip.role === 'avatar';
+              let content;
+              if (isAvatarClip && scene.avatarType) {
+                content = buildHeygenAvatarContent(
+                  { ...scene, sceneId: scene.sceneId || scene.id },
+                  clip
+                );
+              } else if (typeof clip.content === 'object' && clip.content !== null) {
+                content = clip.content;
+              } else {
+                content = { src: clip.src || clip.content };
+              }
+              return {
               id: String(clip.id || `clip_${cIdx}`),
               type: ['avatar', 'text', 'image', 'video', 'audio', 'shape', 'subtitle'].includes(clip.type) ? clip.type : 'text',
               layer: clip.layer || 0,
@@ -182,8 +196,9 @@ function Create({ onBack, initialConfig = null }) {
                 scale: 1,
                 opacity: clip.opacity !== undefined ? Number(clip.opacity) : 1
               },
-              content: typeof clip.content === 'object' && clip.content !== null ? clip.content : { src: clip.src || clip.content }
-            }))
+              content
+            };
+            })
           }))
         }
       };
@@ -289,8 +304,10 @@ function Create({ onBack, initialConfig = null }) {
 
   // Auto-create a default blank scene and return the new scene + updated scenes array
   const autoCreateScene = () => {
+    const sceneKey = `scene_${Date.now()}`;
     const newScene = {
-      id: `scene_${Date.now()}`,
+      id: sceneKey,
+      sceneId: sceneKey,
       title: 'Intro',
       order: project.scenes.length,
       locked: false,
@@ -764,11 +781,12 @@ function Create({ onBack, initialConfig = null }) {
     const avatarType = overrides?.avatarType || scene?.avatarType;
     const voiceId = overrides?.voiceId || scene?.voiceId;
     const script = overrides?.script || scene?.script;
+    const stableSceneId = scene?.sceneId || sceneId;
     const workspaceId = project.workspaceId || project.createConfig?.workspaceId;
     const projectId = project.id || project.createConfig?.videoId;
 
     console.log('[HeyGen] Generating video for scene:', {
-      sceneId,
+      sceneId: stableSceneId,
       avatarType,
       voiceId,
       scriptLength: script?.length,
@@ -777,7 +795,12 @@ function Create({ onBack, initialConfig = null }) {
     });
 
     if (!avatarType || !voiceId || !script) {
-      alert('Please select an avatar, a voice, and enter a script first.');
+      alert('Please select an avatar look, a voice, and enter a script first.');
+      return;
+    }
+
+    if (String(avatarType).startsWith('ag_')) {
+      alert('Please pick a look (not a character group) before generating video.');
       return;
     }
 
@@ -794,7 +817,7 @@ function Create({ onBack, initialConfig = null }) {
       const aspectRatioStr = project.resolution?.width > project.resolution?.height ? '16:9' : '9:16';
       
       const payload = {
-        sceneId: sceneId,
+        sceneId: stableSceneId,
         avatarId: avatarType,
         title: `${project.title} - ${scene?.title || 'Scene'}`,
         resolution: project.resolution?.height >= 1080 ? '1080p' : '720p',
@@ -815,39 +838,79 @@ function Create({ onBack, initialConfig = null }) {
       const result = await heygenService.generateVideo(workspaceId, projectId, payload);
       const heygenVideoId = result.id || result.heygenVideoId || result.video_id;
 
-      // Update scene with video ID and poll status
-      updateScene(sceneId, { 
+      const sceneForContent = {
+        ...(scene || {}),
+        sceneId: stableSceneId,
+        avatarType,
+        voiceId,
+        script,
         heygenVideoId,
-        heygenStatus: 'processing'
+      };
+      const currentClips = scene?.clips || [];
+      const avatarIdx = currentClips.findIndex((c) => c.role === 'avatar' || c.type === 'avatar');
+      let clipsWithHeygen = currentClips;
+      if (avatarIdx !== -1) {
+        clipsWithHeygen = [...currentClips];
+        clipsWithHeygen[avatarIdx] = {
+          ...clipsWithHeygen[avatarIdx],
+          content: buildHeygenAvatarContent(sceneForContent, clipsWithHeygen[avatarIdx]),
+        };
+      }
+
+      updateScene(sceneId, {
+        sceneId: stableSceneId,
+        heygenVideoId,
+        heygenStatus: 'processing',
+        ...(clipsWithHeygen !== currentClips ? { clips: clipsWithHeygen } : {}),
       });
 
-      // Start polling for this specific scene
+      setTimeout(() => saveProject(false), 200);
+
+      let pollAttempts = 0;
+      const maxPollAttempts = 24;
+
       const pollStatus = async () => {
         try {
+          pollAttempts += 1;
           const videoData = await heygenService.getVideo(workspaceId, projectId, heygenVideoId);
-          if (videoData.status === 'completed' || videoData.status === 'success') {
-            // Fetch the stream as a Blob to successfully attach the Bearer token headers
-            const videoUrl = await heygenService.getVideoBlobUrl(workspaceId, projectId, heygenVideoId);
-            
-            updateScene(sceneId, { 
+          const s3Ready = !!(videoData.s3Key || videoData.s3_key);
+          const isDone =
+            (videoData.status === 'completed' || videoData.status === 'success') && s3Ready;
+
+          if (isDone) {
+            const videoUrl = await heygenService.getVideoBlobUrl(
+              workspaceId,
+              projectId,
+              heygenVideoId
+            );
+
+            updateScene(sceneId, {
               heygenStatus: 'completed',
-              avatar: videoData.thumbnail_url || scene.avatar,
-              generatedVideoUrl: videoUrl
+              heygenVideoId,
+              avatar: videoData.thumbnail_url || scene?.avatar,
+              generatedVideoUrl: videoUrl,
             });
-            
-            // Auto open the modal with sceneId
-            window.dispatchEvent(new CustomEvent('open-generated-video', { detail: { url: videoUrl, sceneId } }));
+
+            window.dispatchEvent(
+              new CustomEvent('open-generated-video', { detail: { url: videoUrl, sceneId } })
+            );
           } else if (videoData.status === 'failed' || videoData.status === 'error') {
             updateScene(sceneId, { heygenStatus: 'failed' });
             window.dispatchEvent(new CustomEvent('generation-failed'));
-          } else {
-            // Continue polling
+          } else if (pollAttempts < maxPollAttempts) {
             setTimeout(pollStatus, 5000);
+          } else {
+            updateScene(sceneId, { heygenStatus: 'failed' });
+            window.dispatchEvent(new CustomEvent('generation-failed'));
           }
         } catch (err) {
           console.error('Polling failed:', err);
-          updateScene(sceneId, { heygenStatus: 'failed' });
-          window.dispatchEvent(new CustomEvent('generation-failed'));
+          if (pollAttempts < maxPollAttempts) {
+            setTimeout(pollStatus, 5000);
+          } else {
+            updateScene(sceneId, { heygenStatus: 'failed' });
+            window.dispatchEvent(new CustomEvent('generation-failed'));
+          }
         }
       };
 
@@ -981,6 +1044,7 @@ function Create({ onBack, initialConfig = null }) {
           avatarType: payload.avatarType,
           avatarName: payload.avatarName || 'AI Presenter',
           voiceId: payload.voiceId,
+          voiceName: payload.voiceName,
           script: paraText,
           clips: clips
         };
@@ -1023,16 +1087,34 @@ function Create({ onBack, initialConfig = null }) {
     const activeClips = currentScenes.find(s => s.id === targetSceneId)?.clips || [];
     const avatarClipIndex = activeClips.findIndex(c => c.role === 'avatar' || c.type === 'avatar');
     
+    const targetScene = currentScenes.find((s) => s.id === targetSceneId);
+    const stableSceneId = targetScene?.sceneId || targetSceneId;
+
     let updatedClips = [...activeClips];
+    const sceneDraft = {
+      ...(targetScene || {}),
+      sceneId: stableSceneId,
+      avatarType: payload.avatarType,
+      voiceId: payload.voiceId,
+      script: payload.script,
+    };
+
     if (avatarClipIndex !== -1) {
       updatedClips[avatarClipIndex] = {
         ...updatedClips[avatarClipIndex],
-        src: payload.avatarImage
+        role: 'avatar',
+        type: 'avatar',
+        src: payload.avatarImage,
+        content: buildHeygenAvatarContent(sceneDraft, {
+          ...updatedClips[avatarClipIndex],
+          src: payload.avatarImage,
+        }),
       };
     } else {
-      updatedClips.push({
+      const newClip = {
         id: `clip_${Date.now()}`,
         type: 'avatar',
+        role: 'avatar',
         src: payload.avatarImage,
         layer: updatedClips.length,
         startTime: 0.0,
@@ -1044,21 +1126,29 @@ function Create({ onBack, initialConfig = null }) {
           brightness: 1,
           contrast: 1,
           saturation: 1,
-          blur: 0
-        }
-      });
+          blur: 0,
+        },
+      };
+      newClip.content = buildHeygenAvatarContent(sceneDraft, newClip);
+      updatedClips.push(newClip);
     }
 
-    // Update project state synchronously if possible, or trigger and wait
     setProject(prev => {
       const newProject = {
         ...prev,
         scenes: prev.scenes.map(s => s.id === targetSceneId ? {
           ...s,
+          sceneId: stableSceneId,
           avatar: payload.avatarImage,
           avatarType: payload.avatarType,
+          avatarName: payload.avatarName,
+          avatarGroupId: payload.avatarGroupId,
           voiceId: payload.voiceId,
+          voiceName: payload.voiceName,
           script: payload.script,
+          expressiveness: payload.expressiveness,
+          backgroundColor: payload.backgroundColor,
+          removeBackground: payload.removeBackground,
           clips: updatedClips
         } : s)
       };
