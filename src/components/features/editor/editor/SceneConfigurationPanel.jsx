@@ -210,7 +210,7 @@ const FitButtons = ({ value, onChange }) => {
     <div style={{ display: 'flex', gap: 4, flex: 1 }}>
       {opts.map(({ val, icon, label }) => (
         <button key={val} onClick={() => onChange(val)} style={{
-          flex: 1, padding: '5px 4px', borderRadius: 7, border: 'none', cursor: 'pointer',
+          flex: 1, padding: '5px 4px', borderRadius: 7, cursor: 'pointer',
           background: active === val ? 'var(--primary)' : 'white',
           color: active === val ? '#fff' : 'var(--text-muted)',
           border: active === val ? '1px solid var(--primary)' : '1px solid var(--border-color)',
@@ -600,7 +600,7 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 5 }}>
                 {shapePresets.map(({ label, value }) => (
                   <button key={value} onClick={() => updateStyle({ borderRadius: value })} style={{
-                    padding: '7px 6px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                    padding: '7px 6px', borderRadius: 8, cursor: 'pointer',
                     background: currentRadius === value ? 'var(--primary)' : 'white',
                     color: currentRadius === value ? '#fff' : 'var(--text-muted)',
                     border: currentRadius === value ? '1px solid var(--primary)' : '1px solid var(--border-color)',
