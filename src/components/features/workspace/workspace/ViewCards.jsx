@@ -1,6 +1,7 @@
 import React from 'react';
 import { MdFolder, MdVideoLibrary, MdPerson, MdPeople } from 'react-icons/md';
 import ContextMenu from './ContextMenu.jsx';
+import UserIdentity from './UserIdentity.jsx';
 
 export const WorkspaceCard = ({ workspace, onClick, contextProps }) => {
     return (
@@ -16,16 +17,7 @@ export const WorkspaceCard = ({ workspace, onClick, contextProps }) => {
             <div className="workspace-item-meta">
                 <div className="meta-left">
                     <h4>{workspace.name}</h4>
-                    <span className="subtitle">
-                        {workspace.type === 'personal'
-                            ? 'Private'
-                            : (() => {
-                                  const hasOwner = (workspace.members || []).some(m => String(m.role || '').toUpperCase() === 'OWNER');
-                                  const count = (workspace.members || []).length;
-                                  const finalCount = hasOwner ? count : count + 1;
-                                  return `${finalCount} ${finalCount === 1 ? 'Member' : 'Members'}`;
-                              })()}
-                    </span>
+                    <UserIdentity name={workspace.ownerName} compact />
                 </div>
                 <ContextMenu type="workspace" {...contextProps} />
             </div>
@@ -45,12 +37,7 @@ export const FolderCard = ({ folder, onClick, contextProps }) => {
             <div className="workspace-item-meta">
                 <div className="meta-left">
                     <h4>{folder.name}</h4>
-                    <span className="subtitle">Owner: {folder.createdBy}</span>
-                    <div className="meta-row-small">
-                        <span className="meta-small">{folder.lastModifiedBy || '-'}</span>
-                        <span className="meta-small">{folder.lastModifiedAt || '-'}</span>
-                        <span className="meta-small">{Array.isArray(folder.videos) ? `${folder.videos.length} items` : '-'}</span>
-                    </div>
+                    <UserIdentity name={folder.createdBy} compact />
                 </div>
                 <ContextMenu type="folder" {...contextProps} />
             </div>
@@ -70,11 +57,7 @@ export const VideoCard = ({ video, onClick, contextProps }) => {
             <div className="workspace-item-meta">
                 <div className="meta-left">
                     <h4>{video.name}</h4>
-                    <div className="meta-row-small">
-                        <span className="meta-small">{video.lastEditedBy || '-'}</span>
-                        <span className="meta-small">{video.lastEditedAt || '-'}</span>
-                        <span className="meta-small">{video.size || '-'}</span>
-                    </div>
+                    <UserIdentity name={video.createdBy} compact />
                 </div>
                 <ContextMenu type="video" {...contextProps} />
             </div>

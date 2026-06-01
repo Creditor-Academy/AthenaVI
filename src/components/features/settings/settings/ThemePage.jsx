@@ -1,6 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { MdPalette, MdLightMode, MdDarkMode, MdCheckCircle } from 'react-icons/md';
 import { useTheme } from '../../../../contexts/ThemeContext';
+import {
+  getAccentDisabledReason,
+  isAccentAllowedForMode
+} from '../../../../utils/accentColorUtils.js';
+
+const QUICK_SWATCHES = ['#2563eb', '#7c3aed', '#0ea5e9', '#22c55e', '#f59e0b', '#ef4444', '#ec4899', '#111827'];
+const FALLBACK_ACCENT = '#2563eb';
 
 const ThemePage = () => {
   const {
@@ -24,12 +31,26 @@ const ThemePage = () => {
     { id: 'custom', name: 'Custom', color: customPrimary, secondary: customPrimary, desc: 'Your Accent' }
   ];
 
-  const quickSwatches = ['#2563eb', '#7c3aed', '#0ea5e9', '#22c55e', '#f59e0b', '#ef4444', '#ec4899', '#111827'];
-
   const modes = [
     { id: 'light', name: 'Light', icon: <MdLightMode />, desc: 'Classic bright look' },
     { id: 'dark', name: 'Dark', icon: <MdDarkMode />, desc: 'Easy on the eyes' }
   ];
+
+  const firstAllowedSwatch =
+    QUICK_SWATCHES.find((swatch) => isAccentAllowedForMode(swatch, mode)) || FALLBACK_ACCENT;
+
+  const customAccentBlocked = theme === 'custom' && !isAccentAllowedForMode(customPrimary, mode);
+
+  useEffect(() => {
+    if (theme !== 'custom' || isAccentAllowedForMode(customPrimary, mode)) return;
+    setCustomPrimary(firstAllowedSwatch);
+  }, [mode, theme, customPrimary, firstAllowedSwatch, setCustomPrimary]);
+
+  const handleCustomAccentChange = (hex) => {
+    if (!isAccentAllowedForMode(hex, mode)) return;
+    setCustomPrimary(hex);
+    setTheme('custom');
+  };
 
   return (
     <div className="settings-section">
@@ -109,37 +130,49 @@ const ThemePage = () => {
             <div className="custom-color-header">
               <h5>Custom Accent</h5>
               <p>Pick an exact brand color for buttons, highlights, and links.</p>
+              <p className="custom-color-mode-hint">
+                {mode === 'light'
+                  ? 'Light accent colors are disabled in Light mode so buttons and links stay readable.'
+                  : 'Dark accent colors are disabled in Dark mode so buttons and links stay readable.'}
+              </p>
             </div>
 
             <div className="custom-color-controls">
-              <label className="custom-color-picker" htmlFor="settings-custom-accent">
+              <label
+                className={`custom-color-picker ${customAccentBlocked ? 'custom-color-picker--blocked' : ''}`}
+                htmlFor="settings-custom-accent"
+              >
                 <input
                   id="settings-custom-accent"
                   type="color"
-                  value={customPrimary}
-                  onChange={(event) => {
-                    setCustomPrimary(event.target.value)
-                    setTheme('custom')
-                  }}
+                  value={customAccentBlocked ? firstAllowedSwatch : customPrimary}
+                  onChange={(event) => handleCustomAccentChange(event.target.value)}
                 />
-                <span className="custom-color-preview" style={{ backgroundColor: customPrimary }} />
-                <span>{customPrimary.toUpperCase()}</span>
+                <span
+                  className="custom-color-preview"
+                  style={{ backgroundColor: customAccentBlocked ? firstAllowedSwatch : customPrimary }}
+                />
+                <span>{(customAccentBlocked ? firstAllowedSwatch : customPrimary).toUpperCase()}</span>
               </label>
 
               <div className="custom-color-swatches">
-                {quickSwatches.map((swatch) => (
-                  <button
-                    key={swatch}
-                    type="button"
-                    className={`custom-swatch ${customPrimary.toLowerCase() === swatch.toLowerCase() ? 'active' : ''}`}
-                    style={{ backgroundColor: swatch }}
-                    onClick={() => {
-                      setCustomPrimary(swatch)
-                      setTheme('custom')
-                    }}
-                    aria-label={`Use accent ${swatch}`}
-                  />
-                ))}
+                {QUICK_SWATCHES.map((swatch) => {
+                  const disabled = !isAccentAllowedForMode(swatch, mode);
+                  const disabledReason = getAccentDisabledReason(swatch, mode);
+
+                  return (
+                    <button
+                      key={swatch}
+                      type="button"
+                      disabled={disabled}
+                      className={`custom-swatch ${customPrimary.toLowerCase() === swatch.toLowerCase() ? 'active' : ''} ${disabled ? 'disabled' : ''}`}
+                      style={{ backgroundColor: swatch }}
+                      onClick={() => handleCustomAccentChange(swatch)}
+                      aria-label={disabled ? disabledReason : `Use accent ${swatch}`}
+                      title={disabled ? disabledReason : `Use accent ${swatch}`}
+                    />
+                  );
+                })}
               </div>
             </div>
           </div>

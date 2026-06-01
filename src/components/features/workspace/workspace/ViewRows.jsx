@@ -1,6 +1,8 @@
 import React from 'react';
 import { MdFolder, MdVideoLibrary, MdPerson, MdPeople } from 'react-icons/md';
 import ContextMenu from './ContextMenu.jsx';
+import UserIdentity from './UserIdentity.jsx';
+import { formatFolderSize, formatProjectSize } from '../../../../utils/formatSize.js';
 
 const formatSize = (item) => {
     if (!item) return '-';
@@ -60,7 +62,7 @@ export const WorkspaceRow = ({ workspace, onClick, contextProps }) => {
 
 export const FolderRow = ({ folder, onClick, contextProps }) => {
     return (
-        <div className="workspace-item-row" onClick={onClick}>
+        <div className="workspace-item-row folder-item-row" onClick={onClick}>
             <div className="row-icon-container">
                 <MdFolder size={24} />
             </div>
@@ -69,11 +71,19 @@ export const FolderRow = ({ folder, onClick, contextProps }) => {
                 <h4>{folder.name}</h4>
             </div>
 
-            <div className="col col-owner">{folder.createdBy || '-'}</div>
+            <div className="col col-owner">
+                <UserIdentity name={folder.createdBy} compact />
+            </div>
+
+            <div className="col col-created">{formatOnlyDate(folder.createdAt)}</div>
+
+            <div className="col col-modified-by">
+                <UserIdentity name={folder.lastModifiedBy} compact />
+            </div>
 
             <div className="col col-modified">{formatOnlyDate(folder.lastModifiedAt)}</div>
 
-            <div className="col col-size">{Array.isArray(folder.videos) ? `${folder.videos.length} items` : '-'}</div>
+            <div className="col col-size">{folder.displaySize || formatFolderSize(folder)}</div>
 
             <div className="row-actions">
                 <ContextMenu type="folder" {...contextProps} />
@@ -83,8 +93,11 @@ export const FolderRow = ({ folder, onClick, contextProps }) => {
 };
 
 export const VideoRow = ({ video, onClick, contextProps }) => {
+    const modifiedBy = video.lastModifiedBy || video.lastEditedBy || '-';
+    const modifiedAt = video.lastModifiedAt || video.lastEditedAt;
+
     return (
-        <div className="workspace-item-row" onClick={onClick}>
+        <div className="workspace-item-row project-item-row" onClick={onClick}>
             <div className="row-icon-container">
                 <MdVideoLibrary size={24} />
             </div>
@@ -93,11 +106,19 @@ export const VideoRow = ({ video, onClick, contextProps }) => {
                 <h4>{video.name}</h4>
             </div>
 
-            <div className="col col-owner">{video.createdBy || '-'}</div>
+            <div className="col col-owner">
+                <UserIdentity name={video.createdBy} compact />
+            </div>
 
-            <div className="col col-modified">{formatOnlyDate(video.lastEditedAt)}</div>
+            <div className="col col-created">{formatOnlyDate(video.createdAt)}</div>
 
-            <div className="col col-size">{video.size || '-'}</div>
+            <div className="col col-modified-by">
+                <UserIdentity name={modifiedBy} compact />
+            </div>
+
+            <div className="col col-modified">{formatOnlyDate(modifiedAt)}</div>
+
+            <div className="col col-size">{formatProjectSize(video)}</div>
 
             <div className="row-actions">
                 <ContextMenu type="video" {...contextProps} />

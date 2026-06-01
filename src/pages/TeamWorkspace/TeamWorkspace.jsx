@@ -22,9 +22,17 @@ import { WorkspaceRow, FolderRow, VideoRow, formatOnlyDate } from '../../compone
 import CreateWorkspaceModal from '../../components/features/workspace/workspace/CreateWorkspaceModal.jsx';
 import CreateFolderModal from '../../components/features/workspace/workspace/CreateFolderModal.jsx';
 import RenameModal from '../../components/features/workspace/workspace/RenameModal.jsx';
+import ItemDetailsModal from '../../components/features/workspace/workspace/ItemDetailsModal.jsx';
 import MoveProjectModal from '../../components/features/workspace/workspace/MoveProjectModal.jsx';
 import TeamWorkspaceSkeleton from '../page-skeleton/TeamWorkspaceSkeleton';
 import workspaceService from '../../services/workspaceService.js';
+import { formatFolderSize, getProjectBytes } from '../../utils/formatSize.js';
+import {
+  buildWorkspaceUserLookup,
+  getAuthDisplayName,
+  pickUserRef,
+  resolveUserDisplayName
+} from '../../utils/workspaceUsers.js';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
 
 function normalizeId(value) {
@@ -100,7 +108,7 @@ function normalizeWorkspace(rawWorkspace, currentUserId, authUser) {
   const effectiveRole = isPersonal ? 'OWNER' : (isOwner ? 'OWNER' : role || 'MEMBER');
 
   const ownerName = isPersonal || (Boolean(currentUserId) && ownerId === currentUserId)
-    ? (authUser?.name || 'You')
+    ? (getAuthDisplayName(authUser) || 'You')
     : (rawWorkspace.owner?.name || rawWorkspace.owner?.username || rawWorkspace.owner?.email || rawWorkspace.ownerName || 'Unknown');
 
   return {
@@ -116,67 +124,91 @@ function normalizeWorkspace(rawWorkspace, currentUserId, authUser) {
   };
 }
 
-function normalizeVideo(video, currentUserId, authUser) {
-  const creator = video.creator || video.createdByUser || video.createdBy || video.user || {};
-  const creatorId = normalizeId(
-    typeof creator === 'object'
-      ? creator.id || creator._id || creator.userId || creator.user_id || creator.sub
-      : creator
+async function enrichWorkspaceMembers(workspace) {
+  if (!workspace || workspace.type === 'personal') return workspace;
+
+  const membersHaveNames = (workspace.members || []).some(
+    (member) => member.user?.name || member.user?.email || member.name || member.email
+  );
+  if (membersHaveNames) return workspace;
+
+  try {
+    const members = await workspaceService.listWorkspaceMembers(workspace.id);
+    return { ...workspace, members: members || workspace.members };
+  } catch {
+    return workspace;
+  }
+}
+
+function normalizeVideo(video, currentUserId, authUser, userLookup) {
+  const lookup = userLookup || new Map();
+  const createdBy = resolveUserDisplayName(
+    pickUserRef(video, 'creator'),
+    lookup,
+    currentUserId,
+    authUser
+  );
+  const lastModifiedBy = resolveUserDisplayName(
+    pickUserRef(video, 'updater'),
+    lookup,
+    currentUserId,
+    authUser
   );
 
-  let creatorName = 'Unknown';
-  if (creatorId && currentUserId && creatorId === currentUserId) {
-    creatorName = authUser?.name || 'You';
-  } else {
-    creatorName = (typeof creator === 'object' ? creator.name || creator.username || creator.email : creator) || 'Unknown';
-  }
-
-  const lastUpdater = video.updatedByUser || video.lastModifiedByUser || video.updatedBy || creator || {};
-  const lastModifiedBy =
-    (typeof lastUpdater === 'object' ? lastUpdater.name || lastUpdater.username || lastUpdater.email : lastUpdater) || 'Unknown';
+  const createdAt =
+    video.createdAt || video.created_at || video.dateCreated || video.created || null;
+  const updatedAt =
+    video.updatedAt || video.lastModifiedAt || video.modifiedAt || video.updated_at || createdAt || null;
+  const sizeBytes = getProjectBytes(video);
 
   return {
     ...video,
     id: video.id || video._id,
     name: video.name || video.title || 'Untitled Video',
-    createdBy: creatorName,
+    createdBy,
+    createdAt,
+    lastModifiedBy,
+    lastModifiedAt: updatedAt,
     lastEditedBy: lastModifiedBy,
-    lastEditedAt: video.updatedAt || video.createdAt || new Date().toISOString()
+    lastEditedAt: updatedAt,
+    sizeBytes: sizeBytes ?? video.sizeBytes ?? null
   };
 }
 
-function normalizeFolder(folder, currentUserId, authUser) {
-  const creator = folder.creator || folder.createdByUser || folder.createdBy || folder.user || {};
-  const creatorId = normalizeId(
-    typeof creator === 'object'
-      ? creator.id || creator._id || creator.userId || creator.user_id || creator.sub
-      : creator
+function normalizeFolder(folder, currentUserId, authUser, userLookup) {
+  const lookup = userLookup || new Map();
+  const createdBy = resolveUserDisplayName(
+    pickUserRef(folder, 'creator'),
+    lookup,
+    currentUserId,
+    authUser
+  );
+  const lastModifiedBy = resolveUserDisplayName(
+    pickUserRef(folder, 'updater'),
+    lookup,
+    currentUserId,
+    authUser
   );
 
-  let creatorName = 'Unknown';
-  if (creatorId && currentUserId && creatorId === currentUserId) {
-    creatorName = authUser?.name || 'You';
-  } else {
-    creatorName = (typeof creator === 'object' ? creator.name || creator.username || creator.email : creator) || 'Unknown';
-  }
-
-  const lastUpdater = folder.updatedByUser || folder.lastModifiedByUser || folder.updatedBy || creator || {};
-  const lastModifiedBy =
-    (typeof lastUpdater === 'object' ? lastUpdater.name || lastUpdater.username || lastUpdater.email : lastUpdater) || 'Unknown';
-
+  const createdAt =
+    folder.createdAt || folder.created_at || folder.dateCreated || folder.created || null;
   const updatedAt =
-    folder.updatedAt || folder.lastModifiedAt || folder.modifiedAt || folder.createdAt || new Date().toISOString();
+    folder.updatedAt || folder.lastModifiedAt || folder.modifiedAt || folder.updated_at || createdAt || null;
+
+  const videos = Array.isArray(folder.videos)
+    ? folder.videos.map((video) => normalizeVideo(video, currentUserId, authUser, lookup))
+    : [];
 
   return {
     ...folder,
     id: folder.id || folder._id,
     name: folder.name || folder.title || 'Untitled Folder',
-    createdBy: creatorName,
+    createdBy,
+    createdAt,
     lastModifiedBy,
     lastModifiedAt: updatedAt,
-    videos: Array.isArray(folder.videos)
-      ? folder.videos.map((video) => normalizeVideo(video, currentUserId, authUser))
-      : []
+    videos,
+    displaySize: formatFolderSize({ ...folder, videos })
   };
 }
 
@@ -209,6 +241,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
   const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [renameTarget, setRenameTarget] = useState(null);
+  const [detailsTarget, setDetailsTarget] = useState(null);
 
   const [localAdditions, setLocalAdditions] = useState(() => {
     const saved = sessionStorage.getItem('workspaceLocalAdditions');
@@ -289,24 +322,30 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
       const createdFolder = event.detail?.folder;
       const workspaceId = event.detail?.workspaceId;
       if (!createdFolder || !workspaceId) return;
-      const normalizedFolder = normalizeFolder(createdFolder, currentUserId, authUser);
-      setWorkspaces((prev) =>
-        prev.map((ws) => {
-          if (String(ws.id) !== String(workspaceId)) return ws;
-          if (ws.folders.some((folder) => String(folder.id) === String(normalizedFolder.id))) return ws;
-          return { ...ws, folders: [...ws.folders, normalizedFolder] };
-        })
-      );
-      setLocalAdditions((prev) => ({
-        ...prev,
-        folders: {
-          ...prev.folders,
-          [workspaceId]: [
-            ...(prev.folders[workspaceId] || []).filter((folder) => String(folder.id) !== String(normalizedFolder.id)),
-            normalizedFolder
-          ]
-        }
-      }));
+      setWorkspaces((prev) => {
+        const ws = prev.find((item) => String(item.id) === String(workspaceId));
+        const lookup = buildWorkspaceUserLookup(ws, currentUserId, authUser);
+        const normalizedFolder = normalizeFolder(createdFolder, currentUserId, authUser, lookup);
+
+        setLocalAdditions((localPrev) => ({
+          ...localPrev,
+          folders: {
+            ...localPrev.folders,
+            [workspaceId]: [
+              ...(localPrev.folders[workspaceId] || []).filter(
+                (folder) => String(folder.id) !== String(normalizedFolder.id)
+              ),
+              normalizedFolder
+            ]
+          }
+        }));
+
+        return prev.map((item) => {
+          if (String(item.id) !== String(workspaceId)) return item;
+          if (item.folders.some((folder) => String(folder.id) === String(normalizedFolder.id))) return item;
+          return { ...item, folders: [...item.folders, normalizedFolder] };
+        });
+      });
     };
 
     const onVideoCreated = (event) => {
@@ -315,28 +354,33 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
       const video = event.detail?.video;
       if (!workspaceId || !folderId || !video) return;
 
-      const normalizedVideo = normalizeVideo({ ...video, workspaceId }, currentUserId, authUser);
+      setWorkspaces((prev) => {
+        const ws = prev.find((item) => String(item.id) === String(workspaceId));
+        const lookup = buildWorkspaceUserLookup(ws, currentUserId, authUser);
+        const normalizedVideo = normalizeVideo({ ...video, workspaceId }, currentUserId, authUser, lookup);
+        const editorName = getAuthDisplayName(authUser) || 'You';
 
-      setWorkspaces((prev) =>
-        prev.map((ws) => {
-          if (String(ws.id) !== String(workspaceId)) return ws;
+        return prev.map((item) => {
+          if (String(item.id) !== String(workspaceId)) return item;
           return {
-            ...ws,
-            folders: ws.folders.map((folder) => {
+            ...item,
+            folders: item.folders.map((folder) => {
               if (String(folder.id) !== String(folderId)) return folder;
-              if ((folder.videos || []).some((item) => String(item.id) === String(normalizedVideo.id))) {
+              if ((folder.videos || []).some((v) => String(v.id) === String(normalizedVideo.id))) {
                 return folder;
               }
+              const videos = [...(folder.videos || []), normalizedVideo];
               return {
                 ...folder,
-                videos: [...(folder.videos || []), normalizedVideo],
-                lastModifiedBy: authUser?.name || authUser?.email || 'You',
-                lastModifiedAt: new Date().toLocaleString()
+                videos,
+                lastModifiedBy: editorName,
+                lastModifiedAt: new Date().toISOString(),
+                displaySize: formatFolderSize({ ...folder, videos })
               };
             })
           };
-        })
-      );
+        });
+      });
     };
 
     window.addEventListener('workspace:created', onWorkspaceCreated);
@@ -359,29 +403,42 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
       const withFolders = await Promise.all(
         mapped.map(async (workspace) => {
           try {
+            const enrichedWorkspace = await enrichWorkspaceMembers(workspace);
+            const userLookup = buildWorkspaceUserLookup(enrichedWorkspace, currentUserId, authUser);
+
             const [folders, projects] = await Promise.all([
-              workspaceService.listFolders(workspace.id),
-              workspaceService.listProjects(workspace.id)
+              workspaceService.listFolders(enrichedWorkspace.id),
+              workspaceService.listProjects(enrichedWorkspace.id)
             ]);
-            
-            const normalizedFolders = (folders || []).map((f) => normalizeFolder(f, currentUserId, authUser));
-            
-            // Distribute projects to folders
-            normalizedFolders.forEach(folder => {
-              folder.videos = projects.filter(p => {
-                const pFolderId = p.folderId || (p.folder && (p.folder.id || p.folder._id));
-                return String(pFolderId) === String(folder.id);
-              }).map(p => normalizeVideo({ ...p, workspaceId: workspace.id }, currentUserId, authUser));
+
+            const normalizedFolders = (folders || []).map((f) =>
+              normalizeFolder(f, currentUserId, authUser, userLookup)
+            );
+
+            normalizedFolders.forEach((folder) => {
+              const folderVideos = (projects || [])
+                .filter((p) => {
+                  const pFolderId = p.folderId || (p.folder && (p.folder.id || p.folder._id));
+                  return String(pFolderId) === String(folder.id);
+                })
+                .map((p) =>
+                  normalizeVideo({ ...p, workspaceId: enrichedWorkspace.id }, currentUserId, authUser, userLookup)
+                );
+              folder.videos = folderVideos;
+              folder.displaySize = formatFolderSize(folder);
             });
 
             return {
-              ...workspace,
+              ...enrichedWorkspace,
               folders: normalizedFolders,
-              // Keep projects that are not in any folder in the workspace root
-              videos: projects.filter(p => {
-                const pFolderId = p.folderId || (p.folder && (p.folder.id || p.folder._id));
-                return !pFolderId;
-              }).map(p => normalizeVideo({ ...p, workspaceId: workspace.id }, currentUserId, authUser))
+              videos: (projects || [])
+                .filter((p) => {
+                  const pFolderId = p.folderId || (p.folder && (p.folder.id || p.folder._id));
+                  return !pFolderId;
+                })
+                .map((p) =>
+                  normalizeVideo({ ...p, workspaceId: enrichedWorkspace.id }, currentUserId, authUser, userLookup)
+                )
             };
           } catch (err) {
             console.error(`Failed to load folders/projects for workspace ${workspace.id}:`, err);
@@ -601,7 +658,8 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
 
     try {
       const createdFolder = await workspaceService.createFolder(workspace.id, folderName);
-      const normalizedFolder = normalizeFolder(createdFolder, currentUserId, authUser);
+      const userLookup = buildWorkspaceUserLookup(workspace, currentUserId, authUser);
+      const normalizedFolder = normalizeFolder(createdFolder, currentUserId, authUser, userLookup);
 
       setWorkspaces((prev) =>
         prev.map((item) =>
@@ -731,8 +789,10 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
                 ? {
                     ...video,
                     name: newName,
+                    lastModifiedBy: authUser?.name || authUser?.email || 'You',
+                    lastModifiedAt: new Date().toISOString(),
                     lastEditedBy: authUser?.name || authUser?.email || 'You',
-                    lastEditedAt: new Date().toLocaleString()
+                    lastEditedAt: new Date().toISOString()
                   }
                 : video
             )
@@ -975,6 +1035,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           workspace={workspace}
           onClick={() => setCurrentLevel({ type: 'workspace', id: workspace.id, ws: workspace })}
           contextProps={{
+            onDetails: () => setDetailsTarget({ type: 'workspace', item: workspace }),
             onManageWorkspace:
               workspace.type === 'workspace' && String(workspace.userRole).toUpperCase() === 'OWNER'
                 ? () => handleManageWorkspace(workspace)
@@ -1000,6 +1061,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
         workspace={workspace}
         onClick={() => setCurrentLevel({ type: 'workspace', id: workspace.id, ws: workspace })}
         contextProps={{
+          onDetails: () => setDetailsTarget({ type: 'workspace', item: workspace }),
           onManageWorkspace:
             workspace.type === 'workspace' && String(workspace.userRole).toUpperCase() === 'OWNER'
               ? () => handleManageWorkspace(workspace)
@@ -1029,6 +1091,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           folder={folder}
           onClick={() => setCurrentLevel({ type: 'folder', id: folder.id, folder, ws: workspace })}
           contextProps={{
+            onDetails: () => setDetailsTarget({ type: 'folder', item: folder }),
             onRename: workspaceCanEdit(workspace) ? () => renameItem('folder', folder.id, workspace) : null,
             onDelete: workspaceCanEdit(workspace) ? () => deleteItem('folder', folder.id, workspace) : null
           }}
@@ -1042,6 +1105,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
         folder={folder}
         onClick={() => setCurrentLevel({ type: 'folder', id: folder.id, folder, ws: workspace })}
         contextProps={{
+          onDetails: () => setDetailsTarget({ type: 'folder', item: folder }),
           onRename: workspaceCanEdit(workspace) ? () => renameItem('folder', folder.id, workspace) : null,
           onDelete: workspaceCanEdit(workspace) ? () => deleteItem('folder', folder.id, workspace) : null
         }}
@@ -1110,6 +1174,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           video={video}
           onClick={() => onEdit && onEdit({ ...video, workspaceId: workspace.id })}
           contextProps={{
+            onDetails: () => setDetailsTarget({ type: 'video', item: video }),
             onRename: workspaceCanEdit(workspace) ? () => renameItem('video', video.id, workspace) : null,
             onMove: workspaceCanEdit(workspace) ? () => { setMoveTargetVideo(video); setMoveTargetWorkspace(workspace); } : null,
             onDelete: workspaceCanEdit(workspace) ? () => deleteItem('video', video.id, workspace) : null
@@ -1124,6 +1189,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
         video={video}
         onClick={() => onEdit && onEdit({ ...video, workspaceId: workspace.id })}
         contextProps={{
+          onDetails: () => setDetailsTarget({ type: 'video', item: video }),
           onRename: workspaceCanEdit(workspace) ? () => renameItem('video', video.id, workspace) : null,
           onMove: workspaceCanEdit(workspace) ? () => { setMoveTargetVideo(video); setMoveTargetWorkspace(workspace); } : null,
           onDelete: workspaceCanEdit(workspace) ? () => deleteItem('video', video.id, workspace) : null
@@ -1231,6 +1297,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           title="Folders"
           count={workspace.folders.length}
           viewMode={viewMode}
+          listClassName="folder-list-view"
           emptyMessage="No folders yet"
           emptyIcon={MdFolderOpen}
           emptyActionLabel="Create Folder"
@@ -1250,11 +1317,13 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           }}
         >
           {viewMode === 'list' && (
-            <div className="list-header">
+            <div className="list-header folder-list-header">
               <div className="col" />
               <div className="col">Name</div>
               <div className="col">Owner</div>
-              <div className="col">Date modified</div>
+              <div className="col">Date created</div>
+              <div className="col">Modified by</div>
+              <div className="col">Modified at</div>
               <div className="col">Size</div>
               <div className="col" />
             </div>
@@ -1308,10 +1377,6 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           <span>{folder.name}</span>
         </div>
 
-        <div style={{ marginBottom: 16, color: 'var(--text-muted)', fontSize: 13 }}>
-          Owner: {folder.createdBy} | Last modified: {formatOnlyDate(folder.lastModifiedAt)}
-        </div>
-
         {!canEdit && (
           <div className="workspace-permission-note" style={{ marginBottom: 16 }}>
             <MdInfo size={18} />
@@ -1323,6 +1388,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           title="Videos"
           count={folder.videos.length}
           viewMode={viewMode}
+          listClassName="project-list-view"
           emptyMessage="No videos yet"
           emptyIcon={MdVideoLibrary}
           emptyActionLabel="Create Video"
@@ -1345,11 +1411,13 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           }
         >
           {viewMode === 'list' && (
-            <div className="list-header">
+            <div className="list-header project-list-header">
               <div className="col" />
               <div className="col">Name</div>
               <div className="col">Owner</div>
-              <div className="col">Date modified</div>
+              <div className="col">Date created</div>
+              <div className="col">Modified by</div>
+              <div className="col">Modified at</div>
               <div className="col">Size</div>
               <div className="col" />
             </div>
@@ -1399,6 +1467,13 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
         onRename={handleRename}
         currentName={renameTarget?.name || ''}
         itemType={renameTarget?.type || 'workspace'}
+      />
+
+      <ItemDetailsModal
+        isOpen={!!detailsTarget}
+        onClose={() => setDetailsTarget(null)}
+        itemType={detailsTarget?.type}
+        item={detailsTarget?.item}
       />
 
       <MoveProjectModal

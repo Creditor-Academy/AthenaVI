@@ -750,6 +750,12 @@
   color: var(--text-muted);
 }
 
+.custom-color-mode-hint {
+  margin-top: 8px !important;
+  font-size: 0.78rem !important;
+  line-height: 1.45;
+}
+
 .custom-color-controls {
   display: flex;
   align-items: center;
@@ -814,6 +820,18 @@
 
 .custom-swatch.active {
   border-color: var(--text-main);
+}
+
+.custom-swatch.disabled,
+.custom-swatch:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  filter: grayscale(0.35);
+  pointer-events: none;
+}
+
+.custom-color-picker--blocked {
+  opacity: 0.85;
 }
 
 .settings-toggle-row {
