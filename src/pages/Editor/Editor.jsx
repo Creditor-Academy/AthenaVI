@@ -17,87 +17,74 @@ import heygenService from '../../services/heygenService'
 import avatar1 from '../../assets/Avatarr1.png'
 import projectTemplate from '../../constants/projectTemplate.json'
 import workspaceService from '../../services/workspaceService'
+import { buildHeygenAvatarContent, getSceneAvatarKind, getSceneAvatarLookId } from '../../utils/heygenAvatars'
+import { buildClipTextContent, isTextLayer } from '../../utils/textClip'
+import {
+  fromBackendProjectData,
+  rehydrateSceneVideos,
+  toBackendProjectData,
+} from '../../utils/projectDataMapper'
+import { useEditorHistory } from '../../hooks/useEditorHistory'
+import { useEditorUx } from '../../hooks/useEditorUx'
+import { saveVersionSnapshot, loadVersionSnapshot, listVersionSnapshots } from '../../utils/editorVersionHistory'
+import EditorToast from '../../components/features/editor/editor/EditorToast'
+import EditorViewControls from '../../components/features/editor/editor/EditorViewControls'
+
+function buildInitialProject(initialConfig) {
+  if (initialConfig?.videoData?.data) {
+    const data = initialConfig.videoData.data;
+    const mapped = fromBackendProjectData(data, {
+      title: initialConfig.videoData.name || initialConfig.videoData.title || projectTemplate.project.title,
+      updatedAt: initialConfig.videoData.updatedAt || new Date().toISOString(),
+      id: initialConfig.videoData.id || initialConfig.videoData._id,
+      workspaceId: initialConfig.videoData.workspaceId,
+      folderId: initialConfig.videoData.folderId,
+    });
+    return { ...projectTemplate.project, ...mapped };
+  }
+
+  const pageSizeToResolution = {
+    landscape: { width: 1920, height: 1080 },
+    portrait: { width: 1080, height: 1920 },
+    square: { width: 1080, height: 1080 },
+  };
+
+  const resolvedResolution = pageSizeToResolution[initialConfig?.pageSize] || projectTemplate.project.resolution;
+  const resolvedTitle = initialConfig?.name?.trim() || projectTemplate.project.title;
+  const initialScenes = initialConfig?.template?.scenes || (initialConfig?.template ? [initialConfig.template] : []);
+
+  return {
+    ...projectTemplate.project,
+    title: resolvedTitle,
+    resolution: resolvedResolution,
+    scenes: initialScenes.length > 0 ? initialScenes : [],
+    updatedAt: new Date().toISOString(),
+    id: initialConfig?.videoId,
+    workspaceId: initialConfig?.workspaceId,
+    folderId: initialConfig?.folderId,
+    createConfig: initialConfig
+      ? {
+          template: initialConfig.template || null,
+          pageSize: initialConfig.pageSize || 'landscape',
+          workspace: initialConfig.workspace || '',
+          workspaceId: initialConfig.workspaceId || '',
+          folder: initialConfig.folder || '',
+          folderId: initialConfig.folderId || '',
+          tags: initialConfig.tags || [],
+          name: initialConfig.name || resolvedTitle,
+        }
+      : null,
+  };
+}
 
 function Create({ onBack, initialConfig = null }) {
-  // Debug: Log when component mounts
   useEffect(() => {
     console.log('Create component mounted')
   }, [])
 
-  const [project, setProject] = useState(() => {
-    // If we have full video data already (e.g. from dashboard click)
-    if (initialConfig?.videoData?.data) {
-      const data = initialConfig.videoData.data;
-      
-      const mapBackendToFrontend = (backendScenes) => {
-        if (!backendScenes) return [];
-        return backendScenes.map(scene => ({
-          ...scene,
-          id: scene.sceneId || scene.id,
-          title: scene.name || scene.title || 'Scene',
-          duration: scene.durationInFrames ? scene.durationInFrames / 30 : (scene.duration || 8),
-          clips: (scene.elements || scene.clips || []).map(element => ({
-            ...element,
-            id: element.id,
-            type: element.type,
-            layer: element.layer || 0,
-            startTime: element.startFrame ? element.startFrame / 30 : (element.startTime || 0),
-            duration: element.durationInFrames ? element.durationInFrames / 30 : (element.duration || 5),
-            position: element.placement ? { x: element.placement.x, y: element.placement.y } : element.position,
-            size: element.placement ? { width: element.placement.width, height: element.placement.height } : element.size,
-            opacity: element.placement?.opacity !== undefined ? element.placement.opacity : (element.opacity !== undefined ? element.opacity : 1),
-            content: element.content?.src ? element.content.src : element.content,
-            src: element.content?.src ? element.content.src : (element.src || element.content)
-          }))
-        }));
-      };
+  const [bootProject] = useState(() => buildInitialProject(initialConfig))
+  const { project, setProject, undo, redo, canUndo, canRedo } = useEditorHistory(bootProject)
 
-      return {
-        ...projectTemplate.project,
-        title: initialConfig.videoData.name || initialConfig.videoData.title || projectTemplate.project.title,
-        resolution: data.videoSettings || projectTemplate.project.resolution,
-        scenes: mapBackendToFrontend(data.scenes),
-        updatedAt: initialConfig.videoData.updatedAt || new Date().toISOString(),
-        id: initialConfig.videoData.id || initialConfig.videoData._id,
-        workspaceId: initialConfig.videoData.workspaceId,
-        folderId: initialConfig.videoData.folderId
-      };
-    }
-
-    const pageSizeToResolution = {
-      landscape: { width: 1920, height: 1080 },
-      portrait: { width: 1080, height: 1920 },
-      square: { width: 1080, height: 1080 }
-    }
-
-    const resolvedResolution = pageSizeToResolution[initialConfig?.pageSize] || projectTemplate.project.resolution
-    const resolvedTitle = initialConfig?.name?.trim() || projectTemplate.project.title
-
-    const initialScenes = initialConfig?.template?.scenes || (initialConfig?.template ? [initialConfig.template] : [])
-    
-    return {
-      ...projectTemplate.project,
-      title: resolvedTitle,
-      resolution: resolvedResolution,
-      scenes: initialScenes.length > 0 ? initialScenes : [],
-      updatedAt: new Date().toISOString(),
-      id: initialConfig?.videoId,
-      workspaceId: initialConfig?.workspaceId,
-      folderId: initialConfig?.folderId,
-      createConfig: initialConfig
-        ? {
-            template: initialConfig.template || null,
-            pageSize: initialConfig.pageSize || 'landscape',
-            workspace: initialConfig.workspace || '',
-            workspaceId: initialConfig.workspaceId || '',
-            folder: initialConfig.folder || '',
-            folderId: initialConfig.folderId || '',
-            tags: initialConfig.tags || [],
-            name: initialConfig.name || resolvedTitle
-          }
-        : null
-    }
-  })
   const [activeSceneId, setActiveSceneId] = useState(null)
   const [selectedTool, setSelectedTool] = useState(null)
   const [timelineScope, setTimelineScope] = useState('all')
@@ -116,11 +103,97 @@ function Create({ onBack, initialConfig = null }) {
   const [generatedVideoUrl, setGeneratedVideoUrl] = useState(null)
   const [generatingSceneId, setGeneratingSceneId] = useState(null)
   const [showQuickCreateModal, setShowQuickCreateModal] = useState(() => {
-    if (!initialConfig?.videoData?.data && !initialConfig?.template) return true;
-    if (!project.scenes || project.scenes.length === 0) return true;
-    if (!project.scenes[0].clips || project.scenes[0].clips.length === 0) return true;
-    return false;
+    const initial = buildInitialProject(initialConfig)
+    if (!initialConfig?.videoData?.data && !initialConfig?.template) return true
+    if (!initial.scenes || initial.scenes.length === 0) return true
+    if (!initial.scenes[0].clips || initial.scenes[0].clips.length === 0) return true
+    return false
   })
+
+  const [selectedLayerIds, setSelectedLayerIds] = useState([])
+  const [editorView, setEditorView] = useState({
+    snapToGrid: true,
+    showGuides: false,
+    showSafeZone: true,
+    gridSize: 20,
+  })
+  const [toast, setToast] = useState(null)
+  const clipboardRef = useRef([])
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator !== 'undefined' ? navigator.onLine : true
+  )
+  const toastTimerRef = useRef(null)
+
+  const showToast = useCallback((message, type = 'info') => {
+    setToast({ message, type })
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    toastTimerRef.current = setTimeout(() => setToast(null), 4000)
+  }, [])
+
+  useEffect(() => {
+    const onOnline = () => {
+      setIsOnline(true)
+      showToast('Back online — saving will resume', 'success')
+    }
+    const onOffline = () => {
+      setIsOnline(false)
+      showToast('You are offline — changes saved locally only', 'warning')
+    }
+    window.addEventListener('online', onOnline)
+    window.addEventListener('offline', onOffline)
+    return () => {
+      window.removeEventListener('online', onOnline)
+      window.removeEventListener('offline', onOffline)
+    }
+  }, [showToast])
+
+  const ux = useEditorUx({
+    project,
+    setProject,
+    activeSceneId,
+    selectedLayerIds,
+    setSelectedLayerIds,
+    setSelectedLayerId,
+    editorView,
+    clipboardRef,
+    showToast,
+  })
+
+  const {
+    updateScene: uxUpdateScene,
+    moveLayerOrder,
+    toggleLayerLock,
+    duplicateSceneById,
+    duplicateSelectedLayers,
+    copySelectedLayers,
+    pasteLayers,
+    deleteSelectedLayers,
+    selectLayer,
+    updateLayerPosition: uxUpdateLayerPosition,
+    commitLayerPositionHistory,
+    addAudioClip,
+  } = ux
+
+  const versionSnapshots = useMemo(
+    () => (project.id ? listVersionSnapshots(project.id) : []),
+    [project.id, project.updatedAt]
+  )
+
+  const handleRestoreVersion = useCallback(() => {
+    if (!project.id || !versionSnapshots.length) return
+    const data = loadVersionSnapshot(project.id, 0)
+    if (!data) return
+    if (!window.confirm('Restore the most recent local version? Unsaved changes will be lost.')) return
+    setProject(
+      (prev) => ({
+        ...prev,
+        ...data,
+        updatedAt: new Date().toISOString(),
+      }),
+      { history: true }
+    )
+    showToast('Version restored', 'success')
+  }, [project.id, versionSnapshots.length, setProject, showToast])
 
   useEffect(() => {
     const handleOpenGeneratedVideo = (e) => {
@@ -138,6 +211,52 @@ function Create({ onBack, initialConfig = null }) {
   const insertAfterIndexRef = useRef(null)
   projectRef.current = project
 
+  // Fetch the latest project state from the backend on mount
+  useEffect(() => {
+    const workspaceId = initialConfig?.workspaceId || initialConfig?.videoData?.workspaceId
+    const projectId = initialConfig?.videoId || initialConfig?.videoData?.id || initialConfig?.videoData?._id
+
+    if (!workspaceId || !projectId) return
+
+    const fetchProject = async () => {
+      try {
+        const fetchedProject = await workspaceService.getProject(workspaceId, projectId)
+        if (!fetchedProject) return
+
+        const backendScenes = fetchedProject.data?.scenes || []
+
+        // If backend has no scenes but editor already has scenes (e.g. template), do an initial save
+        if (backendScenes.length === 0 && projectRef.current.scenes.length > 0) {
+          console.log('[Editor] Fresh project – saving initial template scenes to backend')
+          setTimeout(() => saveProject(false, projectRef.current), 500)
+          return
+        }
+
+        if (backendScenes.length > 0) {
+          const mapped = fromBackendProjectData(fetchedProject.data);
+          const scenesWithVideo = await rehydrateSceneVideos(
+            mapped.scenes,
+            workspaceId,
+            projectId
+          );
+
+          setProject((prev) => ({
+            ...prev,
+            resolution: mapped.resolution || prev.resolution,
+            meta: mapped.meta || prev.meta,
+            scenes: scenesWithVideo,
+            updatedAt: fetchedProject.updatedAt || new Date().toISOString(),
+          }));
+        }
+      } catch (err) {
+        console.warn('[Editor] Failed to fetch project from backend:', err)
+      }
+    }
+
+    fetchProject()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const saveProject = useCallback(async (manual = false, projectState = projectRef.current) => {
     try {
       localStorage.setItem('athenavi_project', JSON.stringify(projectState));
@@ -146,62 +265,38 @@ function Create({ onBack, initialConfig = null }) {
     }
 
     if (!projectState.id || !projectState.workspaceId) {
-      if (manual) console.warn('Cannot save project to backend: missing ID or workspaceId', projectState);
+      if (manual) {
+        showToast('Cannot save — project is missing workspace or ID', 'warning');
+      }
+      return;
+    }
+
+    if (!isOnline) {
+      if (manual) showToast('Offline — changes saved locally only', 'warning');
       return;
     }
 
     try {
       setIsSaving(true);
-      
-      // Map project state to backend schema
-      const payload = {
-        data: {
-          videoSettings: {
-            width: projectState.resolution?.width || 1920,
-            height: projectState.resolution?.height || 1080,
-            fps: 30,
-            backgroundColor: '#000000'
-          },
-          scenes: (projectState.scenes || []).map((scene, idx) => ({
-            sceneId: scene.id || `scene_${idx}`,
-            name: scene.title || `Scene ${idx + 1}`,
-            durationInFrames: Math.max(1, Math.round((scene.duration || 8) * 30)),
-            background: scene.background || { type: 'color', value: '#ffffff' },
-            elements: (scene.clips || []).map((clip, cIdx) => ({
-              id: String(clip.id || `clip_${cIdx}`),
-              type: ['avatar', 'text', 'image', 'video', 'audio', 'shape', 'subtitle'].includes(clip.type) ? clip.type : 'text',
-              layer: clip.layer || 0,
-              startFrame: Math.max(0, Math.round((clip.startTime || 0) * 30)),
-              durationInFrames: Math.max(1, Math.round(((clip.endTime || ((clip.startTime || 0) + (clip.duration || 5))) - (clip.startTime || 0)) * 30)),
-              placement: {
-                x: Number(clip.position?.x || 0),
-                y: Number(clip.position?.y || 0),
-                width: Math.max(1, Number(clip.size?.width || 100)),
-                height: Math.max(1, Number(clip.size?.height || 100)),
-                rotation: 0,
-                scale: 1,
-                opacity: clip.opacity !== undefined ? Number(clip.opacity) : 1
-              },
-              content: typeof clip.content === 'object' && clip.content !== null ? clip.content : { src: clip.src || clip.content }
-            }))
-          }))
-        }
-      };
+
+      const payload = toBackendProjectData(projectState);
 
       await workspaceService.saveProjectState(projectState.workspaceId, projectState.id, payload);
-      
-      // Also update name if it changed
+
       if (manual) {
         await workspaceService.updateProject(projectState.workspaceId, projectState.id, { name: projectState.title });
       }
 
+      saveVersionSnapshot(projectState.id, projectState);
       setLastSaved(new Date());
+      if (manual) showToast('Project saved', 'success');
     } catch (error) {
       console.error('Failed to save project:', error);
+      showToast(error?.message || 'Save failed — your work is kept locally', 'error');
     } finally {
       setIsSaving(false);
     }
-  }, []);
+  }, [isOnline, showToast]);
 
   const applyGlobalSetting = (type) => {
     const activeScene = project.scenes.find(s => s.id === activeSceneId);
@@ -237,7 +332,7 @@ function Create({ onBack, initialConfig = null }) {
         return s;
       });
 
-      const newState = { ...prev, scenes: updatedScenes };
+      const newState = { ...prev, updatedAt: new Date().toISOString(), scenes: updatedScenes };
       setTimeout(() => saveProject(false, newState), 100);
       return newState;
     });
@@ -283,14 +378,16 @@ function Create({ onBack, initialConfig = null }) {
           });
         }
       }
-      return { ...prev, scenes: newScenes };
+      return { ...prev, updatedAt: new Date().toISOString(), scenes: newScenes };
     });
   }
 
   // Auto-create a default blank scene and return the new scene + updated scenes array
   const autoCreateScene = () => {
+    const sceneKey = `scene_${Date.now()}`;
     const newScene = {
-      id: `scene_${Date.now()}`,
+      id: sceneKey,
+      sceneId: sceneKey,
       title: 'Intro',
       order: project.scenes.length,
       locked: false,
@@ -312,13 +409,13 @@ function Create({ onBack, initialConfig = null }) {
       ...prev,
       updatedAt: new Date().toISOString(),
       scenes: [...prev.scenes, newScene]
-    }))
+    }), { history: true })
     
     setActiveSceneId(newScene.id)
     return { newScene, updatedScenes: [...project.scenes, newScene] }
   }
 
-  const addLayer = (type, content) => {
+  const addLayer = (type, content, meta = null) => {
     let targetSceneId = activeSceneId
     let currentScenes = project.scenes
 
@@ -331,18 +428,28 @@ function Create({ onBack, initialConfig = null }) {
     const targetScene = currentScenes.find(s => s.id === targetSceneId)
     if (!targetScene) return
 
+    const isMediaObject = content && typeof content === 'object' && !Array.isArray(content)
+    const mediaSrc = isMediaObject ? (content.url || content.src) : content
+    const assetId = isMediaObject ? content.assetId : meta?.assetId
+
     const newClip = {
       id: `clip_${Date.now()}`,
-      type: type === 'image' ? 'image' : type === 'video' ? 'video' : type === 'avatar' ? 'avatar' : type === 'shape' ? 'shape' : 'text',
-      src: (type === 'image' || type === 'video' || type === 'avatar') ? content : null,
-      content: type === 'text' ? content : null,
+      type: type === 'image' ? 'image' : type === 'video' ? 'video' : type === 'avatar' ? 'avatar' : type === 'shape' ? 'shape' : type === 'audio' ? 'audio' : 'text',
+      src: (type === 'image' || type === 'video' || type === 'avatar' || type === 'audio') ? mediaSrc : null,
+      content: type === 'text'
+        ? { text: typeof content === 'string' ? content : '' }
+        : assetId
+          ? { assetId, mediaType: type, url: mediaSrc }
+          : null,
       layer: targetScene.clips.length,
       startTime: 0.0,
       endTime: targetScene.duration || 8.0,
       position: { x: 50, y: 50 },
       size: type === 'avatar' ? { width: 250, height: 330 } : type === 'shape' ? { width: parseInt(content?.style?.width) || 200, height: parseInt(content?.style?.height) || 200 } : { width: 400, height: 400 },
       opacity: 1.0,
-      style: type === 'shape' ? content?.style : undefined,
+      style: type === 'text'
+        ? { fontSize: 32, fontWeight: '700', color: '#1a1b1c', textAlign: 'left', fontFamily: 'Inter, system-ui, sans-serif' }
+        : type === 'shape' ? content?.style : undefined,
       effects: {
         brightness: 1,
         contrast: 1,
@@ -354,12 +461,12 @@ function Create({ onBack, initialConfig = null }) {
     setProject(prev => ({
       ...prev,
       updatedAt: new Date().toISOString(),
-      scenes: prev.scenes.map(s => 
-        s.id === targetSceneId 
+      scenes: prev.scenes.map(s =>
+        s.id === targetSceneId
           ? { ...s, clips: [...s.clips, newClip] }
           : s
       )
-    }))
+    }), { history: true })
     return newClip.id
   }
 
@@ -368,6 +475,7 @@ function Create({ onBack, initialConfig = null }) {
     if (!activeSceneId) return
     setProject(prev => ({
       ...prev,
+      updatedAt: new Date().toISOString(),
       scenes: prev.scenes.map(s => {
         if (s.id !== activeSceneId) return s
         return {
@@ -378,19 +486,13 @@ function Create({ onBack, initialConfig = null }) {
     }))
   }
 
-  // Update a specific layer's position within the active scene
-  const updateLayerPosition = (layerId, x, y) => {
-    if (!activeSceneId) return
-    setProject(prev => ({
-      ...prev,
-      scenes: prev.scenes.map(s => {
-        if (s.id !== activeSceneId) return s
-        return {
-          ...s,
-          clips: s.clips.map(c => c.id === layerId ? { ...c, position: { x, y } } : c)
-        }
-      })
-    }))
+  // Update a specific layer's position within the active scene (with optional snap)
+  const updateLayerPosition = (layerId, x, y, options) => {
+    uxUpdateLayerPosition(layerId, x, y, options)
+  }
+
+  const handleCommitLayerPosition = () => {
+    commitLayerPositionHistory()
   }
 
   // Listen for canvas-drop events (drag from sidebar to canvas)
@@ -412,19 +514,30 @@ function Create({ onBack, initialConfig = null }) {
   const deleteLayer = (sceneId, layerId) => {
     setProject(prev => ({
       ...prev,
-      scenes: prev.scenes.map(s => 
+      updatedAt: new Date().toISOString(),
+      scenes: prev.scenes.map(s =>
         s.id === sceneId ? { ...s, clips: s.clips.filter(c => c.id !== layerId) } : s
       )
-    }))
+    }), { history: true })
+    setSelectedLayerIds((prev) => prev.filter((id) => id !== layerId))
+    if (selectedLayerId === layerId) setSelectedLayerId(null)
   }
 
   // Update clip text content (from inline editing via LiveCanvasRenderer)
   const updateClipContent = (sceneId, clipId, newText) => {
     setProject(prev => ({
       ...prev,
+      updatedAt: new Date().toISOString(),
       scenes: prev.scenes.map(s =>
         s.id === sceneId
-          ? { ...s, clips: s.clips.map(c => c.id === clipId ? { ...c, content: newText } : c) }
+          ? {
+              ...s,
+              clips: s.clips.map(c =>
+                c.id === clipId
+                  ? { ...c, content: buildClipTextContent(newText, c.content) }
+                  : c
+              ),
+            }
           : s
       )
     }))
@@ -433,6 +546,7 @@ function Create({ onBack, initialConfig = null }) {
   const deleteMusic = () => {
     setProject(prev => ({
       ...prev,
+      updatedAt: new Date().toISOString(),
       scenes: prev.scenes.map(s => ({
         ...s,
         clips: s.clips.filter(c => c.type !== 'audio')
@@ -473,13 +587,21 @@ function Create({ onBack, initialConfig = null }) {
   }
 
   const activeScene = project.scenes.find(s => s.id === activeSceneId)
+  const selectedLayer = activeScene?.clips?.find((c) => c.id === selectedLayerId)
+  const propertiesPanelWidth = selectedLayer && isTextLayer(selectedLayer) ? 360 : 320
 
   const totalDurationInFrames = useMemo(() => {
     return project.scenes.reduce((sum, s) => sum + (s.duration || 8), 0) * 30
   }, [project.scenes])
 
   const handleReorderScenes = (newScenes) => {
-    setProject(prev => ({ ...prev, scenes: newScenes }))
+    setProject(prev => ({ ...prev, updatedAt: new Date().toISOString(), scenes: newScenes }), { history: true })
+  }
+
+  const handleSelectLayer = (layerId, sceneId, event) => {
+    if (sceneId) setActiveSceneId(sceneId)
+    selectLayer(layerId, sceneId, { additive: event?.shiftKey })
+    if (layerId) setIsRightSidebarOpen(true)
   }
 
   // Text-to-speech function
@@ -600,8 +722,13 @@ function Create({ onBack, initialConfig = null }) {
         setSelectedTool(null)
       }
 
-      // Delete: Delete active scene
-      if (e.key === 'Delete') {
+      // Delete: remove selected layers, or active scene if none selected
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedLayerIds.length > 0) {
+          e.preventDefault()
+          deleteSelectedLayers()
+          return
+        }
         if (activeSceneId && scenes.length > 1) {
           if (window.confirm('Delete this scene?')) {
             deleteScene(activeSceneId)
@@ -622,13 +749,27 @@ function Create({ onBack, initialConfig = null }) {
             break
           case 'z':
             e.preventDefault()
-            // Undo logic would go here
-            console.log('Undo triggered')
+            if (e.shiftKey) {
+              if (redo()) showToast('Redo', 'info')
+            } else if (undo()) {
+              showToast('Undo', 'info')
+            }
             break
           case 'y':
             e.preventDefault()
-            // Redo logic would go here
-            console.log('Redo triggered')
+            if (redo()) showToast('Redo', 'info')
+            break
+          case 'c':
+            e.preventDefault()
+            copySelectedLayers()
+            break
+          case 'v':
+            e.preventDefault()
+            pasteLayers()
+            break
+          case 'd':
+            e.preventDefault()
+            duplicateSelectedLayers()
             break
         }
       }
@@ -644,7 +785,7 @@ function Create({ onBack, initialConfig = null }) {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isPlaying, activeSceneId, scenes.length, currentTime, totalDurationInFrames, saveProject])
+  }, [isPlaying, activeSceneId, scenes.length, currentTime, totalDurationInFrames, saveProject, selectedLayerIds, undo, redo, copySelectedLayers, pasteLayers, duplicateSelectedLayers, deleteSelectedLayers, showToast])
 
   const addScene = () => {
     insertAfterIndexRef.current = null
@@ -731,15 +872,16 @@ function Create({ onBack, initialConfig = null }) {
   const deleteScene = (id) => {
     if (project.scenes.length === 1) return
     const newScenes = project.scenes.filter(s => s.id !== id)
-    setProject(prev => ({ ...prev, scenes: newScenes }))
-    if (activeSceneId === id) setActiveSceneId(newScenes[0]?.id || null)
+    setProject(prev => ({ ...prev, updatedAt: new Date().toISOString(), scenes: newScenes }), { history: true })
+    if (activeSceneId === id) {
+      setActiveSceneId(newScenes[0]?.id || null)
+      setSelectedLayerIds([])
+      setSelectedLayerId(null)
+    }
   }
 
   const updateScene = (id, updates) => {
-    setProject(prev => ({
-      ...prev,
-      scenes: prev.scenes.map(s => s.id === id ? { ...s, ...updates } : s)
-    }))
+    uxUpdateScene(id, updates, { history: true })
   }
 
   const exportVideo = () => {
@@ -761,23 +903,33 @@ function Create({ onBack, initialConfig = null }) {
     const scene = project.scenes.find(s => s.id === sceneId);
     if (!scene && !overrides) return;
 
-    const avatarType = overrides?.avatarType || scene?.avatarType;
+    const avatarLookId =
+      overrides?.avatarType || getSceneAvatarLookId(scene);
+    const avatarKind =
+      overrides?.avatarTypeLabel || getSceneAvatarKind(scene);
     const voiceId = overrides?.voiceId || scene?.voiceId;
     const script = overrides?.script || scene?.script;
+    const stableSceneId = scene?.sceneId || sceneId;
     const workspaceId = project.workspaceId || project.createConfig?.workspaceId;
     const projectId = project.id || project.createConfig?.videoId;
 
     console.log('[HeyGen] Generating video for scene:', {
-      sceneId,
-      avatarType,
+      sceneId: stableSceneId,
+      avatarLookId,
+      avatarKind,
       voiceId,
       scriptLength: script?.length,
       workspaceId,
       projectId
     });
 
-    if (!avatarType || !voiceId || !script) {
-      alert('Please select an avatar, a voice, and enter a script first.');
+    if (!avatarLookId || !voiceId || !script) {
+      alert('Please select an avatar look, a voice, and enter a script first.');
+      return;
+    }
+
+    if (String(avatarLookId).startsWith('ag_')) {
+      alert('Please pick a look (not a character group) before generating video.');
       return;
     }
 
@@ -794,15 +946,15 @@ function Create({ onBack, initialConfig = null }) {
       const aspectRatioStr = project.resolution?.width > project.resolution?.height ? '16:9' : '9:16';
       
       const payload = {
-        sceneId: sceneId,
-        avatarId: avatarType,
+        sceneId: stableSceneId,
+        avatarId: avatarLookId,
+        avatarType: avatarKind,
         title: `${project.title} - ${scene?.title || 'Scene'}`,
         resolution: project.resolution?.height >= 1080 ? '1080p' : '720p',
         aspectRatio: overrides?.aspectRatio || aspectRatioStr,
         backgroundColor: overrides?.backgroundColor || scene?.background?.value || scene?.backgroundColor || '#008000',
         voiceId: voiceId,
         script: script,
-        expressiveness: overrides?.expressiveness || scene?.expressiveness || 'medium',
         voiceSettings: scene?.voiceSettings || {
           speed: 1,
           pitch: 0,
@@ -812,42 +964,88 @@ function Create({ onBack, initialConfig = null }) {
         outputFormat: scene?.outputFormat || 'mp4'
       };
 
+      if (avatarKind === 'photo_avatar') {
+        payload.expressiveness = overrides?.expressiveness || scene?.expressiveness || 'medium';
+      }
+
       const result = await heygenService.generateVideo(workspaceId, projectId, payload);
       const heygenVideoId = result.id || result.heygenVideoId || result.video_id;
 
-      // Update scene with video ID and poll status
-      updateScene(sceneId, { 
+      const sceneForContent = {
+        ...(scene || {}),
+        sceneId: stableSceneId,
+        avatarLookId,
+        avatarType: avatarLookId,
+        avatarKind,
+        voiceId,
+        script,
         heygenVideoId,
-        heygenStatus: 'processing'
+      };
+      const currentClips = scene?.clips || [];
+      const avatarIdx = currentClips.findIndex((c) => c.role === 'avatar' || c.type === 'avatar');
+      let clipsWithHeygen = currentClips;
+      if (avatarIdx !== -1) {
+        clipsWithHeygen = [...currentClips];
+        clipsWithHeygen[avatarIdx] = {
+          ...clipsWithHeygen[avatarIdx],
+          content: buildHeygenAvatarContent(sceneForContent, clipsWithHeygen[avatarIdx]),
+        };
+      }
+
+      updateScene(sceneId, {
+        sceneId: stableSceneId,
+        heygenVideoId,
+        heygenStatus: 'processing',
+        ...(clipsWithHeygen !== currentClips ? { clips: clipsWithHeygen } : {}),
       });
 
-      // Start polling for this specific scene
+      setTimeout(() => saveProject(false), 200);
+
+      let pollAttempts = 0;
+      const maxPollAttempts = 24;
+
       const pollStatus = async () => {
         try {
+          pollAttempts += 1;
           const videoData = await heygenService.getVideo(workspaceId, projectId, heygenVideoId);
-          if (videoData.status === 'completed' || videoData.status === 'success') {
-            // Fetch the stream as a Blob to successfully attach the Bearer token headers
-            const videoUrl = await heygenService.getVideoBlobUrl(workspaceId, projectId, heygenVideoId);
-            
-            updateScene(sceneId, { 
+          const s3Ready = !!(videoData.s3Key || videoData.s3_key);
+          const isDone =
+            (videoData.status === 'completed' || videoData.status === 'success') && s3Ready;
+
+          if (isDone) {
+            const videoUrl = await heygenService.getVideoBlobUrl(
+              workspaceId,
+              projectId,
+              heygenVideoId
+            );
+
+            updateScene(sceneId, {
               heygenStatus: 'completed',
-              avatar: videoData.thumbnail_url || scene.avatar,
-              generatedVideoUrl: videoUrl
+              heygenVideoId,
+              avatar: videoData.thumbnail_url || scene?.avatar,
+              generatedVideoUrl: videoUrl,
             });
-            
-            // Auto open the modal with sceneId
-            window.dispatchEvent(new CustomEvent('open-generated-video', { detail: { url: videoUrl, sceneId } }));
+
+            window.dispatchEvent(
+              new CustomEvent('open-generated-video', { detail: { url: videoUrl, sceneId } })
+            );
           } else if (videoData.status === 'failed' || videoData.status === 'error') {
             updateScene(sceneId, { heygenStatus: 'failed' });
             window.dispatchEvent(new CustomEvent('generation-failed'));
-          } else {
-            // Continue polling
+          } else if (pollAttempts < maxPollAttempts) {
             setTimeout(pollStatus, 5000);
+          } else {
+            updateScene(sceneId, { heygenStatus: 'failed' });
+            window.dispatchEvent(new CustomEvent('generation-failed'));
           }
         } catch (err) {
           console.error('Polling failed:', err);
-          updateScene(sceneId, { heygenStatus: 'failed' });
-          window.dispatchEvent(new CustomEvent('generation-failed'));
+          if (pollAttempts < maxPollAttempts) {
+            setTimeout(pollStatus, 5000);
+          } else {
+            updateScene(sceneId, { heygenStatus: 'failed' });
+            window.dispatchEvent(new CustomEvent('generation-failed'));
+          }
         }
       };
 
@@ -979,8 +1177,11 @@ function Create({ onBack, initialConfig = null }) {
           background: { type: 'color', value: payload.backgroundColor || '#101828' },
           avatar: payload.avatarImage,
           avatarType: payload.avatarType,
+          avatarLookId: payload.avatarType,
+          avatarKind: payload.avatarTypeLabel,
           avatarName: payload.avatarName || 'AI Presenter',
           voiceId: payload.voiceId,
+          voiceName: payload.voiceName,
           script: paraText,
           clips: clips
         };
@@ -992,7 +1193,7 @@ function Create({ onBack, initialConfig = null }) {
           scenes: storyboardScenes
         };
         setTimeout(() => {
-          saveProject(false, newProj);
+          saveProject(false, updated);
         }, 100);
         return updated;
       });
@@ -1023,16 +1224,36 @@ function Create({ onBack, initialConfig = null }) {
     const activeClips = currentScenes.find(s => s.id === targetSceneId)?.clips || [];
     const avatarClipIndex = activeClips.findIndex(c => c.role === 'avatar' || c.type === 'avatar');
     
+    const targetScene = currentScenes.find((s) => s.id === targetSceneId);
+    const stableSceneId = targetScene?.sceneId || targetSceneId;
+
     let updatedClips = [...activeClips];
+    const sceneDraft = {
+      ...(targetScene || {}),
+      sceneId: stableSceneId,
+      avatarType: payload.avatarType,
+      avatarLookId: payload.avatarType,
+      avatarKind: payload.avatarTypeLabel,
+      voiceId: payload.voiceId,
+      script: payload.script,
+    };
+
     if (avatarClipIndex !== -1) {
       updatedClips[avatarClipIndex] = {
         ...updatedClips[avatarClipIndex],
-        src: payload.avatarImage
+        role: 'avatar',
+        type: 'avatar',
+        src: payload.avatarImage,
+        content: buildHeygenAvatarContent(sceneDraft, {
+          ...updatedClips[avatarClipIndex],
+          src: payload.avatarImage,
+        }),
       };
     } else {
-      updatedClips.push({
+      const newClip = {
         id: `clip_${Date.now()}`,
         type: 'avatar',
+        role: 'avatar',
         src: payload.avatarImage,
         layer: updatedClips.length,
         startTime: 0.0,
@@ -1044,21 +1265,31 @@ function Create({ onBack, initialConfig = null }) {
           brightness: 1,
           contrast: 1,
           saturation: 1,
-          blur: 0
-        }
-      });
+          blur: 0,
+        },
+      };
+      newClip.content = buildHeygenAvatarContent(sceneDraft, newClip);
+      updatedClips.push(newClip);
     }
 
-    // Update project state synchronously if possible, or trigger and wait
     setProject(prev => {
       const newProject = {
         ...prev,
         scenes: prev.scenes.map(s => s.id === targetSceneId ? {
           ...s,
+          sceneId: stableSceneId,
           avatar: payload.avatarImage,
           avatarType: payload.avatarType,
+          avatarLookId: payload.avatarType,
+          avatarKind: payload.avatarTypeLabel,
+          avatarName: payload.avatarName,
+          avatarGroupId: payload.avatarGroupId,
           voiceId: payload.voiceId,
+          voiceName: payload.voiceName,
           script: payload.script,
+          expressiveness: payload.expressiveness,
+          backgroundColor: payload.backgroundColor,
+          removeBackground: payload.removeBackground,
           clips: updatedClips
         } : s)
       };
@@ -1288,6 +1519,7 @@ function Create({ onBack, initialConfig = null }) {
         onRemake={handleRemakeVideo}
         onSelectLayout={handleSelectLayout}
       />
+      <EditorToast toast={toast} onDismiss={() => setToast(null)} />
       <EditorTopbar
         onBack={onBack}
         selectedTool={selectedTool}
@@ -1296,6 +1528,10 @@ function Create({ onBack, initialConfig = null }) {
         exportVideo={exportVideo}
         zoomLevel={zoomLevel}
         setZoomLevel={setZoomLevel}
+        onUndo={() => { if (undo()) showToast('Undo', 'info') }}
+        onRedo={() => { if (redo()) showToast('Redo', 'info') }}
+        canUndo={canUndo}
+        canRedo={canRedo}
         projectTitle={project.title}
         onProjectTitleChange={(newTitle) => setProject(prev => ({ ...prev, title: newTitle }))}
         onSave={() => saveProject(true)}
@@ -1310,6 +1546,9 @@ function Create({ onBack, initialConfig = null }) {
         scenes={scenes}
         autoCreateScene={autoCreateScene}
         onGenerateStoryboard={handleGenerateStoryboard}
+        workspaceId={project.workspaceId || project.createConfig?.workspaceId}
+        addAudioClip={addAudioClip}
+        onUploadError={(msg) => showToast(msg, 'error')}
       />
 
       <div className="editor-container">
@@ -1329,12 +1568,25 @@ function Create({ onBack, initialConfig = null }) {
             onDeleteScene={deleteScene}
             onAddSceneAfter={addSceneAfter}
             updateScene={updateScene}
+            onDuplicateScene={(sceneId) => {
+              const newId = duplicateSceneById(sceneId)
+              if (newId) {
+                setActiveSceneId(newId)
+                showToast('Scene duplicated', 'success')
+              }
+            }}
           />
         </div>
 
         {/* Main Content Area */}
         <div className="main-content">
           <div className="main-content-row" style={{ position: 'relative' }}>
+            <EditorViewControls
+              editorView={editorView}
+              onChange={(patch) => setEditorView((prev) => ({ ...prev, ...patch }))}
+              onRestoreVersion={handleRestoreVersion}
+              versionCount={versionSnapshots.length}
+            />
             <div className="editor-content">
               <VideoCanvas
                 ref={playerRef}
@@ -1353,10 +1605,23 @@ function Create({ onBack, initialConfig = null }) {
                 getSceneForFrame={getSceneForFrame}
                 speakText={speakText}
                 selectedLayerId={selectedLayerId}
-                setSelectedLayerId={setSelectedLayerId}
+                selectedLayerIds={selectedLayerIds}
+                setSelectedLayerId={(id) => {
+                  if (id) {
+                    setSelectedLayerIds([id])
+                    setSelectedLayerId(id)
+                    setIsRightSidebarOpen(true)
+                  } else {
+                    setSelectedLayerIds([])
+                    setSelectedLayerId(null)
+                  }
+                }}
+                onSelectLayer={handleSelectLayer}
                 onUpdateLayerPosition={updateLayerPosition}
+                onCommitLayerPosition={handleCommitLayerPosition}
                 onUpdateLayerSize={updateLayerSize}
                 updateClipContent={updateClipContent}
+                editorView={editorView}
               />
             </div>
           </div>
@@ -1367,24 +1632,31 @@ function Create({ onBack, initialConfig = null }) {
               scenes={scenes}
               bgMusic={bgMusic}
               activeSceneId={activeSceneId}
+              selectedLayerId={selectedLayerId}
+              selectedLayerIds={selectedLayerIds}
               currentTime={currentTime}
               isPlaying={isPlaying}
               onSeek={handleSeek}
               onSelectScene={(sceneId) => {
                 setActiveSceneId(sceneId);
+                setSelectedLayerIds([]);
                 setSelectedLayerId(null);
                 if (!isRightSidebarOpen) setIsRightSidebarOpen(true);
               }}
-              onSelectLayer={(layerId) => {
-                setSelectedLayerId(layerId);
-                if (!isRightSidebarOpen) setIsRightSidebarOpen(true);
-              }}
+              onSelectLayer={handleSelectLayer}
               onUpdateScene={updateScene}
               onAddScene={addScene}
               onDeleteScene={deleteScene}
               onReorderScenes={handleReorderScenes}
               onDeleteLayer={deleteLayer}
               onDeleteMusic={deleteMusic}
+              onUndo={() => { if (undo()) showToast('Undo', 'info') }}
+              onRedo={() => { if (redo()) showToast('Redo', 'info') }}
+              canUndo={canUndo}
+              canRedo={canRedo}
+              onDuplicateLayer={duplicateSelectedLayers}
+              onCopyLayer={copySelectedLayers}
+              onMoveLayerOrder={moveLayerOrder}
               musicDuration={musicDuration || (totalDurationInFrames / 30)}
               onMusicDurationChange={handleMusicDurationChange}
               onPlayPause={() => {
@@ -1442,7 +1714,7 @@ function Create({ onBack, initialConfig = null }) {
 
           {/* Properties Panel (Script, Duration, Audio, etc.) */}
           <div style={{
-            width: isRightSidebarOpen ? '320px' : '0px',
+            width: isRightSidebarOpen ? `${propertiesPanelWidth}px` : '0px',
             flexShrink: 0,
             height: '100%',
             overflow: 'hidden',
@@ -1451,7 +1723,7 @@ function Create({ onBack, initialConfig = null }) {
             background: 'var(--bg-panel)',
             zIndex: 40
           }}>
-            <div className="scene-config-panel-scroll premium-scrollbar" style={{ width: '320px', height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
+            <div className="scene-config-panel-scroll premium-scrollbar" style={{ width: `${propertiesPanelWidth}px`, height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
               <SceneConfigurationPanel
                 activeScene={activeScene}
                 activeSceneId={activeSceneId}
@@ -1461,6 +1733,15 @@ function Create({ onBack, initialConfig = null }) {
                 setActiveTab={setSelectedTool}
                 applyGlobalSetting={applyGlobalSetting}
                 onOpenQuickCreate={() => setShowQuickCreateModal(true)}
+                onMoveLayerOrder={moveLayerOrder}
+                onToggleLayerLock={toggleLayerLock}
+                onDuplicateScene={() => {
+                  const newId = duplicateSceneById(activeSceneId)
+                  if (newId) {
+                    setActiveSceneId(newId)
+                    showToast('Scene duplicated', 'success')
+                  }
+                }}
               />
             </div>
           </div>

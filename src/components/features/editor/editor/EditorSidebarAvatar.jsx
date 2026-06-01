@@ -1,7 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { MdAdd, MdMic, MdSearch, MdStar, MdAutoAwesome, MdCloudUpload } from 'react-icons/md';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { MdAdd, MdMic, MdSearch, MdStar, MdAutoAwesome, MdCloudUpload, MdChevronLeft } from 'react-icons/md';
 import { Loader2 } from 'lucide-react';
 import heygenService from '../../../../services/heygenService';
+import {
+  extractHeygenList,
+  filterAvatarIvLooks,
+  formatAvatarTypeLabel,
+  mapAvatarGroup,
+  mapAvatarLook,
+} from '../../../../utils/heygenAvatars';
 
 const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateScene, updateScene, setShowTemplateModal, addLayer }) => {
   const [activeTab, setActiveTab] = useState('studio');
@@ -9,58 +16,119 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
   const fileInputRef = useRef(null);
-  const [avatars, setAvatars] = useState([]);
+  const [pickerView, setPickerView] = useState('groups');
+  const [groups, setGroups] = useState([]);
+  const [looks, setLooks] = useState([]);
+  const [selectedGroup, setSelectedGroup] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingLooks, setLoadingLooks] = useState(false);
+  const [looksError, setLooksError] = useState('');
+
+  const ownershipForTab = activeTab === 'mine' ? 'private' : activeTab === 'team' ? 'workspace' : 'public';
 
   useEffect(() => {
-    const fetchAvatars = async () => {
+    setPickerView('groups');
+    setSelectedGroup(null);
+    setLooks([]);
+    setLooksError('');
+
+    const fetchGroups = async () => {
       setLoading(true);
       try {
-        let ownership = 'public';
-        if (activeTab === 'mine') ownership = 'private';
-        if (activeTab === 'team') ownership = 'workspace';
-        
-        // Use getAvatarLooks to get specific avatar_ids needed for video generation
-        const responseData = await heygenService.getAvatarLooks({ ownership });
-        
-        // Comprehensive mapping to handle different API versions and response shapes
-        let avatarList = [];
-        const data = responseData?.data || responseData;
-        
-        if (Array.isArray(data)) {
-          avatarList = data;
-        } else if (data?.avatar_looks) {
-          avatarList = data.avatar_looks;
-        } else if (data?.avatars) {
-          avatarList = data.avatars;
-        } else if (responseData?.avatar_looks) {
-          avatarList = responseData.avatar_looks;
-        }
-        
-        console.log(`Athena VI (Editor): Mapping ${avatarList.length} avatars for ownership: ${ownership}`, { raw: responseData });
-
-        const mappedAvatars = avatarList.map(av => {
-          // If we called getAvatarLooks, 'av' might be the look itself
-          const avatarId = av.avatar_id || av.id;
-
-          return {
-            id: avatarId,
-            groupId: av.avatar_group_id || av.group_id || avatarId,
-            name: av.avatar_name || av.name || 'AI Presenter',
-            image: av.preview_image_url || av.thumbnail_url || av.normal_image_url || av.image_url || 'https://via.placeholder.com/300x400?text=Avatar',
-            gender: av.gender || 'unknown',
-          };
+        const responseData = await heygenService.getAvatarGroups({
+          ownership: ownershipForTab,
+          limit: 20,
         });
-        
-        setAvatars(mappedAvatars);
+        const groupList = extractHeygenList(responseData, ['avatar_groups', 'groups', 'avatars']);
+        setGroups(groupList.map(mapAvatarGroup).filter((g) => g.id));
       } catch (err) {
-        console.error('Failed to load avatars:', err);
+        console.error('Failed to load avatar groups:', err);
+        setGroups([]);
       } finally {
         setLoading(false);
       }
     };
-    fetchAvatars();
-  }, [activeTab]);
+    fetchGroups();
+  }, [activeTab, ownershipForTab]);
+
+  const fetchLooksForGroup = async (group) => {
+    setLoadingLooks(true);
+    setLooksError('');
+    setSelectedGroup(group);
+    setPickerView('looks');
+    try {
+      const responseData = await heygenService.getAvatarLooks({
+        group_id: group.id,
+        limit: 20,
+      });
+      const lookList = extractHeygenList(responseData, ['avatar_looks', 'looks', 'avatars']);
+      const compatible = filterAvatarIvLooks(lookList)
+        .map((look) => mapAvatarLook(look, group.name))
+        .filter((look) => look.id);
+      setLooks(compatible);
+      if (compatible.length === 0) {
+        setLooksError('No Avatar IV looks for this character.');
+      }
+    } catch (err) {
+      console.error('Failed to load looks:', err);
+      setLooks([]);
+      setLooksError('Could not load looks.');
+    } finally {
+      setLoadingLooks(false);
+    }
+  };
+
+  const applyLookToScene = useCallback(
+    (look) => {
+      const assign = (sceneId, clips = []) => {
+        const avatarClipIndex = clips.findIndex((c) => c.role === 'avatar' || c.type === 'avatar');
+        let updatedClips = [...clips];
+        if (avatarClipIndex !== -1) {
+          updatedClips[avatarClipIndex] = {
+            ...updatedClips[avatarClipIndex],
+            src: look.image,
+            role: 'avatar',
+            type: 'avatar',
+          };
+        } else if (addLayer) {
+          addLayer('avatar', look.image);
+        }
+
+        updateScene(sceneId, {
+          avatar: look.image,
+          avatarType: look.id,
+          avatarLookId: look.id,
+          avatarKind: look.avatarType,
+          avatarName: look.name,
+          avatarGroupId: selectedGroup?.id,
+          clips: updatedClips,
+        });
+      };
+
+      if (!activeSceneId || scenes.length === 0) {
+        if (autoCreateScene) {
+          const { newScene } = autoCreateScene();
+          assign(newScene.id, newScene.clips || []);
+        } else {
+          alert('Please add a scene or template first!');
+          if (setShowTemplateModal) setShowTemplateModal(true);
+        }
+        return;
+      }
+
+      assign(activeSceneId, activeScene?.clips || []);
+    },
+    [
+      activeScene,
+      activeSceneId,
+      scenes.length,
+      selectedGroup,
+      autoCreateScene,
+      updateScene,
+      addLayer,
+      setShowTemplateModal,
+    ]
+  );
 
 
   const convertFileToBase64 = (file) => {
@@ -133,8 +201,9 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
     }
   };
 
-  const filteredAvatars = avatars.filter(av => 
-    av.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const displayItems = pickerView === 'groups' ? groups : looks;
+  const filteredItems = displayItems.filter((item) =>
+    item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -276,13 +345,31 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
         )}
 
         <>
-          {activeTab === 'studio' && (
-            <div className="elements-chips-scroll" style={{ marginBottom: '20px', paddingBottom: '4px' }}>
-              <button className="elements-chip" style={{ background: 'var(--primary)', color: 'white', borderColor: 'var(--primary)' }}>All</button>
-              <button className="elements-chip">Business</button>
-              <button className="elements-chip">Casual</button>
-              <button className="elements-chip">News</button>
-            </div>
+          {pickerView === 'looks' && selectedGroup && (
+            <button
+              type="button"
+              onClick={() => {
+                setPickerView('groups');
+                setSelectedGroup(null);
+                setLooks([]);
+                setLooksError('');
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                marginBottom: '12px',
+                padding: 0,
+                border: 'none',
+                background: 'none',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: 'var(--primary)',
+                cursor: 'pointer',
+              }}
+            >
+              <MdChevronLeft size={16} /> {selectedGroup.name}
+            </button>
           )}
 
             <div style={{
@@ -290,61 +377,27 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
               gridTemplateColumns: 'repeat(2, 1fr)',
               gap: '12px'
             }}>
-              {loading ? (
+              {(loading || loadingLooks) ? (
                 <div style={{ gridColumn: '1 / -1', padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                  Loading avatars...
+                  {pickerView === 'groups' ? 'Loading characters...' : 'Loading looks...'}
                 </div>
-              ) : filteredAvatars.map((avatar) => {
-                const isActive = activeScene?.avatarType === avatar.id;
+              ) : looksError && pickerView === 'looks' ? (
+                <div style={{ gridColumn: '1 / -1', padding: '20px', textAlign: 'center', color: '#ef4444', fontSize: '12px' }}>
+                  {looksError}
+                </div>
+              ) : filteredItems.map((item) => {
+                const isActive = pickerView === 'looks' && activeScene?.avatarType === item.id;
+                const typeLabel = pickerView === 'looks' ? formatAvatarTypeLabel(item.avatarType) : '';
                 
                 return (
                   <div
-                    key={avatar.id}
+                    key={item.id}
                     onClick={() => {
-                        if (!activeSceneId || scenes.length === 0) {
-                            if (autoCreateScene) {
-                                const { newScene } = autoCreateScene();
-                                updateScene(newScene.id, {
-                                    avatar: avatar.image,
-                                    avatarType: avatar.id
-                                });
-                            } else {
-                                alert('Please add a scene or template first!');
-                                if (setShowTemplateModal) setShowTemplateModal(true);
-                            }
-                            return;
-                        }
-
-                        // NEW LOGIC: Look for an existing avatar clip to fill
-                        const activeClips = activeScene?.clips || [];
-                        const avatarClipIndex = activeClips.findIndex(c => c.role === 'avatar' || c.type === 'avatar');
-
-                        if (avatarClipIndex !== -1) {
-                            // Update the specific clip in the array
-                            const updatedClips = [...activeClips];
-                            updatedClips[avatarClipIndex] = {
-                                ...updatedClips[avatarClipIndex],
-                                src: avatar.image
-                            };
-                            
-                            updateScene(activeSceneId, {
-                                avatar: avatar.image,
-                                avatarType: avatar.id,
-                                avatarName: avatar.name,
-                                clips: updatedClips
-                            });
-                        } else {
-                            // Fallback: Add as a new layer if no box exists
-                            if (addLayer) {
-                              addLayer('avatar', avatar.image);
-                            }
-                            
-                            updateScene(activeSceneId, {
-                                avatar: avatar.image,
-                                avatarType: avatar.id,
-                                avatarName: avatar.name
-                            });
-                        }
+                      if (pickerView === 'groups') {
+                        fetchLooksForGroup(item);
+                        return;
+                      }
+                      applyLookToScene(item);
                     }}
                     style={{
                       position: 'relative',
@@ -377,9 +430,26 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
                       overflow: 'hidden',
                       background: '#f8f9fa'
                     }}>
+                        {typeLabel && (
+                          <span style={{
+                            position: 'absolute',
+                            top: '8px',
+                            left: '8px',
+                            zIndex: 2,
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontSize: '9px',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            background: 'rgba(0,0,0,0.65)',
+                            color: '#fff',
+                          }}>
+                            {typeLabel}
+                          </span>
+                        )}
                         <img 
-                          src={avatar.image} 
-                          alt={avatar.name} 
+                          src={item.image} 
+                          alt={item.name} 
                           style={{
                             width: '100%',
                             height: '100%',
@@ -405,7 +475,7 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
                             fontSize: '13px', 
                             fontWeight: '600',
                             textShadow: '0 2px 4px rgba(0,0,0,0.5)'
-                          }}>{avatar.name}</span>
+                          }}>{item.name}</span>
                           <span style={{ 
                             color: 'rgba(255,255,255,0.7)', 
                             fontSize: '11px',
@@ -442,9 +512,9 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
               })}
             </div>
             
-            {filteredAvatars.length === 0 && !loading && (
+            {filteredItems.length === 0 && !loading && !loadingLooks && !looksError && (
               <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                <p>{activeTab === 'mine' ? "You haven't created any custom avatars yet." : `No avatars found matching "${searchQuery}"`}</p>
+                <p>{activeTab === 'mine' ? "You haven't created any custom avatars yet." : `No matches for "${searchQuery}"`}</p>
               </div>
             )}
         </>

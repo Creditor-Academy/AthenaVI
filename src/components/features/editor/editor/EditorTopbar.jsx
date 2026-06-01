@@ -83,6 +83,9 @@ const EditorTopbar = ({
     scenes = [],
     autoCreateScene,
     onGenerateStoryboard,
+    workspaceId,
+    addAudioClip,
+    onUploadError,
 }) => {
     const [saved, setSaved] = useState(false)
     const [showShortcuts, setShowShortcuts] = useState(false)
@@ -167,7 +170,13 @@ const EditorTopbar = ({
             case 'image':
                 return <EditorSidebarImage addLayer={addLayer} />
             case 'uploads':
-                return <EditorSidebarUploads addLayer={addLayer} />
+                return (
+                  <EditorSidebarUploads
+                    addLayer={addLayer}
+                    workspaceId={workspaceId}
+                    onUploadError={onUploadError}
+                  />
+                )
             case 'templates':
                 return (
                     <EditorSidebarTemplates
