@@ -122,7 +122,15 @@ function Dashboard({ onCreate, initialSection }) {
 
   // Update URL when section changes
   useEffect(() => {
-    const newPath = section === 'home' ? '/dashboard' : `/dashboard/${section}`
+    let newPath
+    if (section === 'home') {
+      newPath = '/dashboard'
+    } else if (section === 'profile') {
+      newPath = '/profile'
+    } else {
+      newPath = `/dashboard/${section}`
+    }
+    
     if (window.location.pathname !== newPath) {
       window.history.pushState({ section }, '', newPath)
     }
@@ -132,7 +140,9 @@ function Dashboard({ onCreate, initialSection }) {
   useEffect(() => {
     const handlePopState = () => {
       const currentPath = window.location.pathname
-      if (currentPath.startsWith('/dashboard/')) {
+      if (currentPath === '/profile') {
+        setSection('profile')
+      } else if (currentPath.startsWith('/dashboard/')) {
         const newSection = currentPath.replace('/dashboard/', '') || 'home'
         setSection(newSection)
       } else if (currentPath === '/dashboard') {
