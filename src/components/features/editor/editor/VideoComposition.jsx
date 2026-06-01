@@ -8,6 +8,25 @@ import {
     MdPhotoSizeSelectActual,
     MdVideoLibrary
 } from 'react-icons/md'
+import { getClipTextContent, isTextLayer, parseFontSize, toFontSizeCss } from '../../../../utils/textClip'
+
+export const COMPOSITION_W = 1920
+export const COMPOSITION_H = 1080
+
+/** Map editor pixel coords (1920×1080) to % for Remotion composition */
+export function pixelRectToPercent(position = {}, size = {}) {
+  const x = Number(position.x ?? 0)
+  const y = Number(position.y ?? 0)
+  const width = size.width ?? 'auto'
+  const height = size.height ?? 'auto'
+
+  return {
+    left: `${(x / COMPOSITION_W) * 100}%`,
+    top: `${(y / COMPOSITION_H) * 100}%`,
+    width: typeof width === 'number' ? `${(width / COMPOSITION_W) * 100}%` : width,
+    height: typeof height === 'number' ? `${(height / COMPOSITION_H) * 100}%` : height,
+  };
+}
 
 const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) => {
     const frame = useCurrentFrame()
@@ -125,16 +144,9 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) 
                 const clipDuration = ((clip.endTime || 5) - (clip.startTime || 0)) * 30
                 if (frameInScene < clipStart || frameInScene >= clipStart + clipDuration) return null
 
-                // MAPPING COORDINATES
-                const mapValX = (val) => (typeof val === 'number' && val > 100) ? (val / 1280) * 100 : (val || 0);
-                const mapValY = (val) => (typeof val === 'number' && val > 100) ? (val / 720) * 100 : (val || 0);
+                // Map 1920×1080 pixel layout to composition percentages
+                const rect = pixelRectToPercent(clip.position, clip.size);
                 
-                const posX = mapValX(clip.position?.x);
-                const posY = mapValY(clip.position?.y);
-                
-                const getW = (w) => (typeof w === 'number' && w > 100) ? `${(w / 12.8)}%` : (typeof w === 'number' ? `${w}%` : (w || 'auto'));
-                const getH = (h) => (typeof h === 'number' && h > 100) ? `${(h / 7.2)}%` : (typeof h === 'number' ? `${h}%` : (h || 'auto'));
-
                 const animProgress = spring({
                     frame: frameInScene - clipStart,
                     fps,
@@ -145,11 +157,12 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) 
 
                 const style = {
                     position: 'absolute',
-                    left: `${posX}%`,
-                    top: `${posY}%`,
-                    width: getW(clip.size?.width),
-                    height: getH(clip.size?.height),
-                    transform: `scale(${scale * zoomFactor * (clip.scale || 1)})`,
+                    left: rect.left,
+                    top: rect.top,
+                    width: rect.width,
+                    height: rect.height,
+                    transform: `rotate(${clip.rotation ?? 0}deg) scale(${scale * zoomFactor * (clip.scale || 1)})`,
+                    transformOrigin: 'top left',
                     zIndex: 10 + (clip.layer || index),
                     opacity: opacity * (clip.opacity ?? 1),
                     display: 'flex',
@@ -159,11 +172,11 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) 
                     pointerEvents: 'none'
                 }
 
-                if (clip.type === 'text') {
+                if (clip.type === 'text' || isTextLayer(clip)) {
                     return (
                         <div key={clip.id} style={style}>
                             <div style={{
-                                fontSize: `${clip.style?.fontSize || 48}px`,
+                                fontSize: `${parseFontSize(clip.style?.fontSize, 48)}px`,
                                 fontWeight: clip.style?.fontWeight || '700',
                                 color: clip.style?.color || '#1a1b1c',
                                 textAlign: clip.style?.textAlign || 'center',
@@ -179,6 +192,8 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) 
                                 lineHeight: clip.style?.lineHeight || '1.2',
                                 letterSpacing: clip.style?.letterSpacing || 'normal',
                                 textTransform: clip.style?.textTransform || 'none',
+                                fontStyle: clip.style?.fontStyle || 'normal',
+                                textDecoration: clip.style?.textDecoration || 'none',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: clip.style?.textAlign === 'left' ? 'flex-start' : (clip.style?.textAlign === 'right' ? 'flex-end' : 'center'),
@@ -186,7 +201,7 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) 
                                 fontFamily: clip.style?.fontFamily || 'Inter, system-ui, sans-serif',
                                 margin: 0,
                             }}>
-                                {typeof clip.content === 'object' ? (clip.content.name || JSON.stringify(clip.content)) : clip.content}
+                                {getClipTextContent(clip)}
                             </div>
                         </div>
                     )

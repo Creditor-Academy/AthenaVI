@@ -1,5 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react'
 import { MdPerson, MdPhotoSizeSelectActual, MdVideoLibrary, MdDragIndicator, MdOpenWith, MdHeight } from 'react-icons/md'
+import { getClipTextContent, isTextLayer, toFontSizeCss } from '../../../../utils/textClip'
+import CanvasGuidesOverlay from './CanvasGuidesOverlay'
 
 /**
  * COORDINATE SYSTEM
@@ -89,7 +91,7 @@ const ClipHUD = ({ clip, onPositionChange, onSizeChange }) => {
 }
 
 /* ─── Selection overlay (handles + HUD) drawn around every selected clip ─ */
-const SelectionOverlay = ({ clip, displayScale, onUpdatePosition, onUpdateSize }) => {
+const SelectionOverlay = ({ clip, displayScale, onUpdatePosition, onUpdateSize, onCommit }) => {
   const dragRef = useRef(null)
 
   const startDrag = useCallback((e) => {
@@ -107,10 +109,11 @@ const SelectionOverlay = ({ clip, displayScale, onUpdatePosition, onUpdateSize }
     const onUp = () => {
       window.removeEventListener('mousemove', onMove)
       window.removeEventListener('mouseup', onUp)
+      onCommit?.()
     }
     window.addEventListener('mousemove', onMove)
     window.addEventListener('mouseup', onUp)
-  }, [clip, displayScale, onUpdatePosition])
+  }, [clip, displayScale, onUpdatePosition, onCommit])
 
   const startResize = useCallback((corner, e) => {
     e.stopPropagation()
@@ -140,10 +143,11 @@ const SelectionOverlay = ({ clip, displayScale, onUpdatePosition, onUpdateSize }
     const onUp = () => {
       window.removeEventListener('mousemove', onMove)
       window.removeEventListener('mouseup', onUp)
+      onCommit?.()
     }
     window.addEventListener('mousemove', onMove)
     window.addEventListener('mouseup', onUp)
-  }, [clip, displayScale, onUpdatePosition, onUpdateSize])
+  }, [clip, displayScale, onUpdatePosition, onUpdateSize, onCommit])
 
   return (
     <>
@@ -179,14 +183,33 @@ const SelectionOverlay = ({ clip, displayScale, onUpdatePosition, onUpdateSize }
 
 /* ─── Clip wrappers ──────────────────────────────────────────────────── */
 
+/** Paint order / hit-test priority: backgrounds at 0, content stacks by layer. */
+function getClipZIndex(clip, isSelected) {
+  if (clip.isBackground) {
+    return isSelected ? 5 : 0;
+  }
+  const layer = clip.layer ?? 0;
+  return isSelected ? 200 + layer : 10 + layer;
+}
+
+function sortClipsForRender(clips) {
+  return [...clips].sort((a, b) => {
+    const aRank = a.isBackground ? -1 : (a.layer ?? 0);
+    const bRank = b.isBackground ? -1 : (b.layer ?? 0);
+    return aRank - bRank;
+  });
+}
+
 const clipBase = (clip, isSelected) => ({
   position: 'absolute',
   left: clip.position?.x ?? 0,
   top: clip.position?.y ?? 0,
   width: typeof clip.size?.width === 'number' ? clip.size.width : (clip.size?.width || 'auto'),
   height: typeof clip.size?.height === 'number' ? clip.size.height : (clip.size?.height || 'auto'),
-  // Background clips sit behind all content; selected ones still get a faint outline
-  zIndex: clip.isBackground ? (isSelected ? 2 : 0) : (isSelected ? 20 : 5),
+  transform: `rotate(${clip.rotation ?? 0}deg) scale(${clip.scale ?? 1})`,
+  transformOrigin: 'top left',
+  opacity: clip.opacity ?? 1,
+  zIndex: getClipZIndex(clip, isSelected),
   outline: isSelected
     ? (clip.isBackground ? '2px dashed rgba(26,115,232,0.6)' : '2px solid #1a73e8')
     : '2px solid transparent',
@@ -196,7 +219,7 @@ const clipBase = (clip, isSelected) => ({
   transition: 'outline 0.1s',
 })
 
-const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, onUpdatePosition, onUpdateSize }) => {
+const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, onUpdatePosition, onUpdateSize, onCommit }) => {
   const divRef = useRef(null)
   const s = clip.style || {}
 
@@ -206,9 +229,12 @@ const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, o
     }
   }
 
+  const displayText = getClipTextContent(clip)
+
   return (
     <div
-      onClick={(e) => { e.stopPropagation(); onSelect(clip.id) }}
+      onMouseDown={(e) => { e.stopPropagation(); onSelect(clip.id, e) }}
+      onClick={(e) => { e.stopPropagation(); onSelect(clip.id, e) }}
       style={{
         ...clipBase(clip, isSelected),
         display: 'flex',
@@ -226,6 +252,7 @@ const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, o
           displayScale={displayScale}
           onUpdatePosition={(x, y) => onUpdatePosition(clip.id, x, y)}
           onUpdateSize={(w, h) => onUpdateSize(clip.id, w, h)}
+          onCommit={onCommit}
         />
       )}
       <div
@@ -235,13 +262,15 @@ const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, o
         onBlur={handleBlur}
         onClick={(e) => isSelected && e.stopPropagation()}
         style={{
-          fontSize: s.fontSize || 24,
+          fontSize: toFontSizeCss(s.fontSize, 24),
           fontWeight: s.fontWeight || '700',
           color: s.color || '#1a1b1c',
           textAlign: s.textAlign || 'left',
           textTransform: s.textTransform || 'none',
+          fontStyle: s.fontStyle || 'normal',
+          textDecoration: s.textDecoration || 'none',
           lineHeight: s.lineHeight || 1.2,
-          letterSpacing: s.letterSpacing || 'normal',
+          letterSpacing: s.letterSpacing ?? '0px',
           background: s.backgroundColor || 'transparent',
           padding: s.padding || '0px',
           borderRadius: s.borderRadius || '0px',
@@ -251,15 +280,14 @@ const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, o
           outline: 'none',
           cursor: isSelected ? 'text' : 'pointer',
           width: '100%',
+          height: '100%',
           maxWidth: '100%',
-          fontFamily: s.fontFamily || 'Inter, system-ui, sans-serif',
+          fontFamily: s.fontFamily || 'Inter, sans-serif',
           margin: 0,
           position: 'relative',
-          zIndex: 1,
-          pointerEvents: isSelected ? 'auto' : 'none',
         }}
       >
-        {typeof clip.content === 'object' ? (clip.content.name || JSON.stringify(clip.content)) : clip.content}
+        {displayText}
       </div>
     </div>
   )
@@ -279,7 +307,7 @@ const buildCssFilter = (cf = {}) => {
   return parts.length > 0 ? parts.join(' ') : undefined
 }
 
-const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition, onUpdateSize }) => {
+const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition, onUpdateSize, onCommit }) => {
   const s   = clip.style || {}
   const cf  = clip.cssFilters || {}
   const flipX = s.scaleX === -1 ? -1 : 1
@@ -294,7 +322,8 @@ const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition,
 
   return (
     <div
-      onClick={(e) => { e.stopPropagation(); onSelect(clip.id) }}
+      onMouseDown={(e) => { e.stopPropagation(); onSelect(clip.id, e) }}
+      onClick={(e) => { e.stopPropagation(); onSelect(clip.id, e) }}
       style={{
         ...clipBase(clip, isSelected),
         overflow: 'hidden',
@@ -313,6 +342,7 @@ const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition,
           displayScale={displayScale}
           onUpdatePosition={(x, y) => onUpdatePosition(clip.id, x, y)}
           onUpdateSize={(w, h) => onUpdateSize(clip.id, w, h)}
+          onCommit={onCommit}
         />
       )}
       {clip.src ? (
@@ -336,7 +366,7 @@ const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition,
   )
 }
 
-const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePosition, onUpdateSize }) => {
+const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePosition, onUpdateSize, onCommit }) => {
   const isGeneratedAvatar = (clip.type === 'avatar' || clip.role === 'avatar') && scene?.generatedVideoUrl
   const src = isGeneratedAvatar ? scene.generatedVideoUrl : clip.src
   const isVideo = clip.type === 'video' || isGeneratedAvatar
@@ -352,7 +382,7 @@ const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdateP
 
   return (
     <div
-      onClick={(e) => { e.stopPropagation(); onSelect(clip.id) }}
+      onClick={(e) => { e.stopPropagation(); onSelect(clip.id, e) }}
       style={{
         ...clipBase(clip, isSelected),
         borderRadius: s.borderRadius || '50%',
@@ -371,6 +401,7 @@ const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdateP
           displayScale={displayScale}
           onUpdatePosition={(x, y) => onUpdatePosition(clip.id, x, y)}
           onUpdateSize={(w, h) => onUpdateSize(clip.id, w, h)}
+          onCommit={onCommit}
         />
       )}
       {src ? (
@@ -388,7 +419,7 @@ const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdateP
   )
 }
 
-const VideoClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePosition, onUpdateSize }) => {
+const VideoClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePosition, onUpdateSize, onCommit }) => {
   const isGeneratedAvatar = (clip.type === 'avatar' || clip.role === 'avatar') && scene?.generatedVideoUrl
   const src = isGeneratedAvatar ? scene.generatedVideoUrl : clip.src
   const isVideo = clip.type === 'video' || isGeneratedAvatar
@@ -405,7 +436,8 @@ const VideoClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePo
 
   return (
     <div
-      onClick={(e) => { e.stopPropagation(); onSelect(clip.id) }}
+      onMouseDown={(e) => { e.stopPropagation(); onSelect(clip.id, e) }}
+      onClick={(e) => { e.stopPropagation(); onSelect(clip.id, e) }}
       style={{
         ...clipBase(clip, isSelected),
         overflow: 'hidden',
@@ -424,6 +456,7 @@ const VideoClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePo
           displayScale={displayScale}
           onUpdatePosition={(x, y) => onUpdatePosition(clip.id, x, y)}
           onUpdateSize={(w, h) => onUpdateSize(clip.id, w, h)}
+          onCommit={onCommit}
         />
       )}
       {src ? (
@@ -442,9 +475,9 @@ const VideoClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePo
   )
 }
 
-const ShapeClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition, onUpdateSize }) => (
+const ShapeClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition, onUpdateSize, onCommit }) => (
   <div
-    onClick={(e) => { e.stopPropagation(); onSelect(clip.id) }}
+    onClick={(e) => { e.stopPropagation(); onSelect(clip.id, e) }}
     style={{
       ...clipBase(clip, isSelected),
       background: clip.style?.backgroundColor || clip.style?.background || 'rgba(0,0,0,0.06)',
@@ -459,6 +492,7 @@ const ShapeClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition,
         displayScale={displayScale}
         onUpdatePosition={(x, y) => onUpdatePosition(clip.id, x, y)}
         onUpdateSize={(w, h) => onUpdateSize(clip.id, w, h)}
+        onCommit={onCommit}
       />
     )}
   </div>
@@ -468,11 +502,16 @@ const ShapeClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition,
 const LiveCanvasRenderer = ({
   scene,
   selectedId,
+  selectedIds = [],
   onSelectClip,
   onContentChange,
   onDeselect,
   onUpdateLayerPosition,
+  onCommitLayerPosition,
   onUpdateLayerSize,
+  showGuides = false,
+  showSafeZone = true,
+  gridSize = 20,
 }) => {
   const containerRef = useRef(null)
   const [displayScale, setDisplayScale] = useState(1)
@@ -538,21 +577,31 @@ const LiveCanvasRenderer = ({
           transformOrigin: 'top left',
         }}
       >
-        {/* Sort: background clips first so they appear behind content clips */}
-        {[...clips].sort((a, b) => (a.isBackground ? -1 : 0) - (b.isBackground ? -1 : 0)).map(clip => {
-          const isSelected = selectedId === clip.id
+        {(showGuides || showSafeZone) && (
+          <CanvasGuidesOverlay
+            width={1920}
+            height={1080}
+            showGrid={showGuides}
+            showSafeZone={showSafeZone}
+            gridSize={gridSize}
+          />
+        )}
+        {/* Background clips render first; higher layer numbers paint on top for hit-testing */}
+        {sortClipsForRender(clips).map(clip => {
+          const isSelected = selectedIds.includes(clip.id) || selectedId === clip.id
+          const isLocked = !!clip.locked
           const sharedProps = {
             key: clip.id,
             clip,
             isSelected,
-            onSelect: onSelectClip,
+            onSelect: (id, e) => onSelectClip && onSelectClip(id, e),
             displayScale,
-            // Background clips cannot be dragged/resized (they fill the whole canvas)
-            onUpdatePosition: clip.isBackground ? () => {} : handleUpdatePosition,
-            onUpdateSize:     clip.isBackground ? () => {} : handleUpdateSize,
+            onUpdatePosition: clip.isBackground || isLocked ? () => {} : handleUpdatePosition,
+            onUpdateSize: clip.isBackground || isLocked ? () => {} : handleUpdateSize,
+            onCommit: onCommitLayerPosition,
           }
 
-          if (clip.type === 'text')   return <TextClip   {...sharedProps} onContentChange={onContentChange} />
+          if (clip.type === 'text' || isTextLayer(clip)) return <TextClip   {...sharedProps} onContentChange={onContentChange} />
           if (clip.type === 'image')  return <ImageClip  {...sharedProps} />
           if (clip.type === 'avatar') return <AvatarClip {...sharedProps} scene={scene} />
           if (clip.type === 'video')  return <VideoClip  {...sharedProps} scene={scene} />

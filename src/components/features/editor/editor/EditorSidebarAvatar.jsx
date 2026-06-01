@@ -97,6 +97,8 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
         updateScene(sceneId, {
           avatar: look.image,
           avatarType: look.id,
+          avatarLookId: look.id,
+          avatarKind: look.avatarType,
           avatarName: look.name,
           avatarGroupId: selectedGroup?.id,
           clips: updatedClips,

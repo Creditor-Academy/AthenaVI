@@ -1,8 +1,5 @@
 import { useState } from 'react';
 import {
-  MdFormatAlignLeft,
-  MdFormatAlignCenter,
-  MdFormatAlignRight,
   MdTextFields,
   MdColorLens,
   MdMonitor,
@@ -35,8 +32,15 @@ import {
   MdSpeed,
   MdEdit,
   MdPersonAdd,
+  MdLock,
+  MdLockOpen,
+  MdContentCopy,
+  MdLayers,
+  MdSwapHoriz,
 } from 'react-icons/md';
 import projectTemplate from '../../../../constants/projectTemplate.json';
+import { isTextLayer } from '../../../../utils/textClip';
+import TextLayerPropertiesPanel from './TextLayerPropertiesPanel';
 
 /* ── Tiny helpers ─────────────────────────────────────────────────────────── */
 
@@ -143,29 +147,6 @@ const SelectRow = ({ label, value, options, onChange }) => (
   </Row>
 );
 
-const AlignButtons = ({ value, onChange }) => {
-  const btns = [
-    { icon: <MdFormatAlignLeft size={14} />, val: 'left' },
-    { icon: <MdFormatAlignCenter size={14} />, val: 'center' },
-    { icon: <MdFormatAlignRight size={14} />, val: 'right' },
-  ];
-  const active = value || 'center';
-  return (
-    <div className="scp-align-group">
-      {btns.map(({ icon, val }) => (
-        <button
-          key={val}
-          type="button"
-          className={`scp-align-btn ${active === val ? 'active' : ''}`}
-          onClick={() => onChange(val)}
-        >
-          {icon}
-        </button>
-      ))}
-    </div>
-  );
-};
-
 const Card = ({ children, className = '', style = {} }) => (
   <div className={`scp-card ${className}`.trim()} style={style}>
     {children}
@@ -228,7 +209,47 @@ const FitButtons = ({ value, onChange }) => {
 /* ══════════════════════════════════════════════════════════════════════════
    LAYER PROPERTIES PANEL
 ══════════════════════════════════════════════════════════════════════════ */
-const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScene }) => {
+const LayerOrderLockBar = ({ activeLayer, clips, onMoveLayerOrder, onToggleLayerLock }) => {
+  const layerIndex = clips.findIndex((c) => c.id === activeLayer.id);
+  const maxIndex = Math.max(0, clips.length - 1);
+
+  return (
+    <>
+      <SectionHeader icon={<MdLayers size={14} />} label="Layer order" />
+      <Card>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          <button
+            type="button"
+            className="scp-btn scp-btn--ghost"
+            disabled={layerIndex >= maxIndex}
+            onClick={() => onMoveLayerOrder?.(activeLayer.id, 'forward')}
+          >
+            Bring forward
+          </button>
+          <button
+            type="button"
+            className="scp-btn scp-btn--ghost"
+            disabled={layerIndex <= 0}
+            onClick={() => onMoveLayerOrder?.(activeLayer.id, 'backward')}
+          >
+            Send backward
+          </button>
+          <button
+            type="button"
+            className="scp-btn scp-btn--ghost"
+            onClick={() => onToggleLayerLock?.(activeLayer.id, !activeLayer.locked)}
+          >
+            {activeLayer.locked ? <MdLockOpen size={14} /> : <MdLock size={14} />}
+            {activeLayer.locked ? 'Unlock layer' : 'Lock layer'}
+          </button>
+        </div>
+      </Card>
+      <Divider />
+    </>
+  );
+};
+
+const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScene, onMoveLayerOrder, onToggleLayerLock }) => {
   const updateLayer = (updates) => {
     const newClips = clips.map(l => l.id === activeLayer.id ? { ...l, ...updates } : l);
     updateScene(activeSceneId, { clips: newClips });
@@ -239,9 +260,8 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
     cssFilters: { ...(activeLayer.cssFilters || {}), [key]: val },
   });
 
-  // Broad image detection — covers type='image' regardless of role/label
   const isImage  = activeLayer.type === 'image';
-  const isText   = activeLayer.type === 'text'  || activeLayer.role === 'main-text';
+  const isText   = isTextLayer(activeLayer);
   const isHeading = isText && (activeLayer.role === 'main-text' || activeLayer.label?.toLowerCase().includes('head'));
   const isMedia  = !isImage && (activeLayer.type === 'video' || activeLayer.role === 'avatar' || activeLayer.role === 'media');
   const isShape  = activeLayer.type === 'shape';
@@ -249,7 +269,44 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
   const roleLabel = isHeading
     ? 'Heading'
     : activeLayer.role?.split('-').map(w => w[0].toUpperCase() + w.slice(1)).join(' ')
-    || activeLayer.type?.[0].toUpperCase() + activeLayer.type?.slice(1) || 'General';
+    || activeLayer.type?.[0].toUpperCase() + activeLayer.type?.slice(1) || 'Text';
+
+  if (isText) {
+    return (
+      <div
+        className="scene-config-panel text-layer-panel"
+        style={{ padding: '0 14px 20px', display: 'flex', flexDirection: 'column', gap: 2 }}
+      >
+        <PanelHeader
+          icon={<MdTextFields size={17} />}
+          title="Text Properties"
+          subtitle={roleLabel}
+        />
+        <TextLayerPropertiesPanel
+          activeLayer={activeLayer}
+          updateLayer={updateLayer}
+          updateStyle={updateStyle}
+          isHeading={isHeading}
+        />
+        <Divider />
+        <LayerOrderLockBar
+          activeLayer={activeLayer}
+          clips={clips}
+          onMoveLayerOrder={onMoveLayerOrder}
+          onToggleLayerLock={onToggleLayerLock}
+        />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0 2px' }}>
+          <span style={{ fontSize: 11, color: 'var(--text-muted, #64748b)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
+            {activeLayer.visible !== false ? <MdVisibility size={14} /> : <MdVisibilityOff size={14} />}
+            Visible
+          </span>
+          <ToggleSwitch checked={activeLayer.visible !== false} onChange={(v) => updateLayer({ visible: v })} />
+        </div>
+      </div>
+    );
+  }
+
+  // Broad image detection — covers type='image' regardless of role/label
 
   const isBackground = !!activeLayer.isBackground;
 
@@ -446,60 +503,6 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
                 onChange={(v) => updateStyle({ boxShadow: v ? '0 8px 32px rgba(0,0,0,0.25)' : 'none' })}
               />
             </Row>
-          </Card>
-        </>
-      )}
-
-      {/* ── TEXT ───────────────────────────────────────────────────────── */}
-      {isText && (
-        <>
-          <SectionHeader icon={<MdTextFields size={14} />} label={isHeading ? 'Headline Text' : 'Content'} />
-          <Card>
-            {isHeading ? (
-              <input
-                type="text"
-                value={activeLayer.content || ''}
-                onChange={(e) => updateLayer({ content: e.target.value })}
-                placeholder="Main title..."
-                style={{
-                  width: '100%', boxSizing: 'border-box',
-                  background: 'white', border: '1px solid var(--border-subtle, rgba(0,0,0,0.1))',
-                  borderRadius: 8, padding: '7px 10px', fontSize: 12,
-                  color: 'var(--text-main, #1a1b1c)', outline: 'none',
-                }}
-              />
-            ) : (
-              <textarea
-                value={activeLayer.content || ''}
-                onChange={(e) => updateLayer({ content: e.target.value })}
-                rows={3}
-                style={{
-                  width: '100%', resize: 'vertical', boxSizing: 'border-box',
-                  background: 'white', border: '1px solid var(--border-subtle, rgba(0,0,0,0.1))',
-                  borderRadius: 8, padding: '8px 10px', fontSize: 12,
-                  color: 'var(--text-main, #1a1b1c)', outline: 'none', fontFamily: 'inherit',
-                }}
-              />
-            )}
-          </Card>
-          <SectionHeader icon={<MdColorLens size={14} />} label="Typography & Style" />
-          <Card>
-            <SliderRow label="Font size" value={activeLayer.style?.fontSize || (isHeading ? 48 : 32)} min={12} max={200} unit="px" onChange={(v) => updateStyle({ fontSize: v })} />
-            <Row label="Text Color" column>
-              <input type="color" value={activeLayer.style?.color || '#000000'}
-                onChange={(e) => updateStyle({ color: e.target.value })}
-                style={{ width: 36, height: 28, border: 'none', borderRadius: 6, cursor: 'pointer', padding: 2, background: 'none' }} />
-            </Row>
-            <Row label="Alignment" column>
-              <AlignButtons
-                value={activeLayer.style?.textAlign}
-                onChange={(v) => updateStyle({ textAlign: v })}
-              />
-            </Row>
-            <SliderRow label="Opacity" value={Math.round((activeLayer.opacity ?? 1) * 100)} min={0} max={100} unit="%" onChange={(v) => updateLayer({ opacity: v / 100 })} />
-            {!isHeading && (
-              <SliderRow label="Brightness" value={Math.round((activeLayer.effects?.brightness ?? 1) * 100)} min={0} max={200} unit="%" onChange={(v) => updateEffect({ brightness: v / 100 })} />
-            )}
           </Card>
         </>
       )}
@@ -735,7 +738,7 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
       )}
 
       {/* ── GENERAL (fallback) ─────────────────────────────────────────── */}
-      {!isImage && !isText && !isMedia && !isShape && (
+      {!isImage && !isMedia && !isShape && (
         <>
           <SectionHeader icon={<MdColorLens size={14} />} label="Visual" />
           <Card>
@@ -744,6 +747,13 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
           </Card>
         </>
       )}
+
+      <LayerOrderLockBar
+        activeLayer={activeLayer}
+        clips={clips}
+        onMoveLayerOrder={onMoveLayerOrder}
+        onToggleLayerLock={onToggleLayerLock}
+      />
 
       {/* ── Visibility (universal) ─────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0 2px' }}>
@@ -769,6 +779,9 @@ const SceneConfigurationPanel = ({
   setActiveTab,
   applyGlobalSetting,
   onOpenQuickCreate,
+  onMoveLayerOrder,
+  onToggleLayerLock,
+  onDuplicateScene,
 }) => {
   if (!activeScene) return null;
 
@@ -783,6 +796,8 @@ const SceneConfigurationPanel = ({
         activeSceneId={activeSceneId}
         updateScene={updateScene}
         activeScene={activeScene}
+        onMoveLayerOrder={onMoveLayerOrder}
+        onToggleLayerLock={onToggleLayerLock}
       />
     );
   }
@@ -806,7 +821,17 @@ const SceneConfigurationPanel = ({
         subtitle="Configuration"
       />
 
-      {/* ── Presenter & script summary (top) ─────────────────────────── */}
+      <button
+        type="button"
+        className="scp-btn scp-btn--ghost scp-btn--block"
+        style={{ marginBottom: 8 }}
+        onClick={onDuplicateScene}
+      >
+        <MdContentCopy size={14} />
+        Duplicate scene
+      </button>
+
+      <Divider />
       <div className="scp-voiceover-summary">
         <div className="scp-voiceover-summary__head">
           <SectionHeader icon={<MdRecordVoiceOver size={14} />} label="AI Voiceover & Script" />
@@ -1020,6 +1045,54 @@ const SceneConfigurationPanel = ({
           unit="×"
           onChange={(v) => updateScene(activeSceneId, { voiceSettings: { ...(activeScene.voiceSettings || {}), speed: v } })}
         />
+      </Card>
+
+      <SectionHeader icon={<MdSwapHoriz size={14} />} label="Scene transition" />
+      <Card>
+        <SelectRow
+          label="Type"
+          value={activeScene.transition?.type || 'fade'}
+          options={[
+            { value: 'none', label: 'None' },
+            { value: 'fade', label: 'Fade' },
+            { value: 'slide', label: 'Slide' },
+          ]}
+          onChange={(v) =>
+            updateScene(activeSceneId, {
+              transition: { ...(activeScene.transition || {}), type: v },
+            })
+          }
+        />
+        <SliderRow
+          label="Duration"
+          value={activeScene.transition?.duration ?? 0.5}
+          min={0}
+          max={2}
+          step={0.1}
+          unit="s"
+          onChange={(v) =>
+            updateScene(activeSceneId, {
+              transition: { ...(activeScene.transition || { type: 'fade' }), duration: v },
+            })
+          }
+        />
+        {activeScene.transition?.type === 'slide' && (
+          <SelectRow
+            label="Direction"
+            value={activeScene.transition?.direction || 'left'}
+            options={[
+              { value: 'left', label: 'Slide left' },
+              { value: 'right', label: 'Slide right' },
+              { value: 'up', label: 'Slide up' },
+              { value: 'down', label: 'Slide down' },
+            ]}
+            onChange={(v) =>
+              updateScene(activeSceneId, {
+                transition: { ...(activeScene.transition || { type: 'slide' }), direction: v },
+              })
+            }
+          />
+        )}
       </Card>
     </div>
   );

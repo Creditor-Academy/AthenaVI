@@ -2,6 +2,7 @@ import { useRef, useState, useCallback, forwardRef, useImperativeHandle, useEffe
 import { Player } from '@remotion/player'
 import VideoComposition from './VideoComposition'
 import LiveCanvasRenderer from './LiveCanvasRenderer'
+import CanvasGuidesOverlay from './CanvasGuidesOverlay'
 
 const VideoCanvas = forwardRef(({
   scenes,
@@ -20,11 +21,15 @@ const VideoCanvas = forwardRef(({
   speakText,
   onPlayerReady,
   selectedLayerId,
+  selectedLayerIds = [],
   setSelectedLayerId,
+  onSelectLayer,
   onUpdateLayerPosition,
+  onCommitLayerPosition,
   onUpdateLayerSize,
   onAddScene,
   updateClipContent,
+  editorView = {},
 }, ref) => {
   const playerRef = useRef(null)
   const overlayRef = useRef(null)
@@ -181,11 +186,19 @@ const VideoCanvas = forwardRef(({
               <LiveCanvasRenderer
                 scene={activeScene}
                 selectedId={selectedLayerId}
-                onSelectClip={(id) => setSelectedLayerId && setSelectedLayerId(id)}
+                selectedIds={selectedLayerIds}
+                onSelectClip={(id, e) => {
+                  if (onSelectLayer) onSelectLayer(id, activeSceneId, e)
+                  else if (setSelectedLayerId) setSelectedLayerId(id)
+                }}
                 onContentChange={(clipId, newText) => updateClipContent && updateClipContent(activeSceneId, clipId, newText)}
                 onDeselect={() => setSelectedLayerId && setSelectedLayerId(null)}
                 onUpdateLayerPosition={(clipId, x, y) => onUpdateLayerPosition && onUpdateLayerPosition(clipId, x, y)}
+                onCommitLayerPosition={onCommitLayerPosition}
                 onUpdateLayerSize={(clipId, w, h) => onUpdateLayerSize && onUpdateLayerSize(clipId, w, h)}
+                showGuides={editorView.showGuides}
+                showSafeZone={editorView.showSafeZone}
+                gridSize={editorView.gridSize || 20}
               />
             </div>
           )}

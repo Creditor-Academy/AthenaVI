@@ -6,6 +6,7 @@ import {
   MdLayers,
   MdPlayArrow,
   MdAnimation,
+  MdContentCopy,
 } from 'react-icons/md';
 
 const TRANSITION_OPTIONS = [
@@ -85,6 +86,7 @@ const EditorSidebar = ({
   setTimelineScope,
   onSelectScene,
   onDeleteScene,
+  onDuplicateScene,
   setShowTemplateModal,
   onAddSceneAfter,
   updateScene,
@@ -234,29 +236,54 @@ const EditorSidebar = ({
                         {scene.title || `Scene ${index + 1}`}
                       </span>
                     </div>
-                    {scenes.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDeleteScene?.(scene.id);
-                        }}
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          color: 'var(--text-muted)',
-                          cursor: 'pointer',
-                          padding: '2px',
-                          borderRadius: '4px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                        title="Delete Scene"
-                      >
-                        <MdDelete size={14} />
-                      </button>
-                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      {onDuplicateScene && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDuplicateScene(scene.id);
+                          }}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'var(--text-muted)',
+                            cursor: 'pointer',
+                            padding: '2px',
+                            borderRadius: '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                          title="Duplicate Scene"
+                        >
+                          <MdContentCopy size={13} />
+                        </button>
+                      )}
+                      {scenes.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteScene?.(scene.id);
+                          }}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'var(--text-muted)',
+                            cursor: 'pointer',
+                            padding: '2px',
+                            borderRadius: '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                          title="Delete Scene"
+                        >
+                          <MdDelete size={14} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </React.Fragment>

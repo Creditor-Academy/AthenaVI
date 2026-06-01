@@ -1,0 +1,203 @@
+import {
+  bringClipForward,
+  duplicateClip,
+  duplicateScene,
+  pasteClipsAt,
+  sendClipBackward,
+  snapPoint,
+} from '../utils/editorLayerUtils';
+
+export function useEditorUx({
+  project,
+  setProject,
+  activeSceneId,
+  selectedLayerIds,
+  setSelectedLayerIds,
+  setSelectedLayerId,
+  editorView,
+  clipboardRef,
+  showToast,
+}) {
+  const updateScene = (id, updates, { history = true } = {}) => {
+    setProject(
+      (prev) => ({
+        ...prev,
+        updatedAt: new Date().toISOString(),
+        scenes: prev.scenes.map((s) => (s.id === id ? { ...s, ...updates } : s)),
+      }),
+      { history }
+    );
+  };
+
+  const updateActiveSceneClips = (clipUpdater, { history = true } = {}) => {
+    if (!activeSceneId) return;
+    setProject(
+      (prev) => ({
+        ...prev,
+        updatedAt: new Date().toISOString(),
+        scenes: prev.scenes.map((s) => {
+          if (s.id !== activeSceneId) return s;
+          const clips = typeof clipUpdater === 'function' ? clipUpdater(s.clips || []) : clipUpdater;
+          return { ...s, clips };
+        }),
+      }),
+      { history }
+    );
+  };
+
+  const moveLayerOrder = (clipId, direction) => {
+    updateActiveSceneClips((clips) => {
+      if (direction === 'forward') return bringClipForward(clips, clipId);
+      if (direction === 'backward') return sendClipBackward(clips, clipId);
+      return clips;
+    });
+  };
+
+  const toggleLayerLock = (clipId, locked) => {
+    updateActiveSceneClips((clips) =>
+      clips.map((c) => (c.id === clipId ? { ...c, locked } : c))
+    );
+  };
+
+  const duplicateSceneById = (sceneId) => {
+    const index = project.scenes.findIndex((s) => s.id === sceneId);
+    if (index === -1) return null;
+    const copy = duplicateScene(project.scenes[index], index);
+    setProject(
+      (prev) => ({
+        ...prev,
+        updatedAt: new Date().toISOString(),
+        scenes: [
+          ...prev.scenes.slice(0, index + 1),
+          copy,
+          ...prev.scenes.slice(index + 1),
+        ],
+      }),
+      { history: true }
+    );
+    return copy.id;
+  };
+
+  const duplicateSelectedLayers = () => {
+    if (!activeSceneId || !selectedLayerIds.length) return;
+    updateActiveSceneClips((clips) => {
+      const selected = clips.filter((c) => selectedLayerIds.includes(c.id));
+      if (!selected.length) return clips;
+      return pasteClipsAt(clips, selected, { x: 24, y: 24 });
+    });
+    showToast?.('Layer duplicated', 'success');
+  };
+
+  const copySelectedLayers = () => {
+    const scene = project.scenes.find((s) => s.id === activeSceneId);
+    if (!scene || !selectedLayerIds.length) return;
+    const selected = (scene.clips || []).filter((c) => selectedLayerIds.includes(c.id));
+    if (!selected.length) return;
+    clipboardRef.current = JSON.parse(JSON.stringify(selected));
+    showToast?.(`Copied ${selected.length} layer(s)`, 'info');
+  };
+
+  const pasteLayers = () => {
+    if (!activeSceneId || !clipboardRef.current?.length) return;
+    updateActiveSceneClips((clips) => pasteClipsAt(clips, clipboardRef.current));
+    showToast?.('Pasted layer(s)', 'success');
+  };
+
+  const deleteSelectedLayers = () => {
+    if (!activeSceneId || !selectedLayerIds.length) return;
+    updateActiveSceneClips((clips) => clips.filter((c) => !selectedLayerIds.includes(c.id)));
+    setSelectedLayerIds([]);
+    setSelectedLayerId(null);
+    showToast?.('Layer deleted', 'info');
+  };
+
+  const selectLayer = (layerId, sceneId, { additive = false } = {}) => {
+    if (sceneId && sceneId !== activeSceneId) {
+      // scene switch handled by caller
+    }
+    if (additive && layerId) {
+      setSelectedLayerIds((prev) =>
+        prev.includes(layerId) ? prev.filter((id) => id !== layerId) : [...prev, layerId]
+      );
+      setSelectedLayerId(layerId);
+    } else if (layerId) {
+      setSelectedLayerIds([layerId]);
+      setSelectedLayerId(layerId);
+    } else {
+      setSelectedLayerIds([]);
+      setSelectedLayerId(null);
+    }
+  };
+
+  const updateLayerPosition = (layerId, x, y, { history = false } = {}) => {
+    if (!activeSceneId) return;
+    const snapped = snapPoint(
+      { x, y },
+      editorView.gridSize,
+      editorView.snapToGrid
+    );
+    setProject(
+      (prev) => ({
+        ...prev,
+        updatedAt: new Date().toISOString(),
+        scenes: prev.scenes.map((s) => {
+          if (s.id !== activeSceneId) return s;
+          return {
+            ...s,
+            clips: s.clips.map((c) => {
+              if (c.id !== layerId || c.locked) return c;
+              return { ...c, position: snapped };
+            }),
+          };
+        }),
+      }),
+      { history }
+    );
+  };
+
+  const commitLayerPositionHistory = () => {
+    setProject((prev) => prev, { history: true });
+  };
+
+  const addAudioClip = (src, assetId = null) => {
+    if (!activeSceneId) return;
+    updateActiveSceneClips((clips) => {
+      const scene = project.scenes.find((s) => s.id === activeSceneId);
+      const duration = scene?.duration || 8;
+      const content = assetId ? { assetId, mediaType: 'audio' } : { src };
+      return [
+        ...clips.filter((c) => c.type !== 'audio' || c.role !== 'scene-audio'),
+        {
+          id: `clip_audio_${Date.now()}`,
+          type: 'audio',
+          role: 'scene-audio',
+          src: assetId ? undefined : src,
+          content,
+          layer: clips.length,
+          startTime: 0,
+          endTime: duration,
+          duration,
+          volume: 1,
+          visible: true,
+        },
+      ];
+    });
+    showToast?.('Audio clip added to scene', 'success');
+  };
+
+  return {
+    updateScene,
+    updateActiveSceneClips,
+    moveLayerOrder,
+    toggleLayerLock,
+    duplicateSceneById,
+    duplicateSelectedLayers,
+    copySelectedLayers,
+    pasteLayers,
+    deleteSelectedLayers,
+    selectLayer,
+    updateLayerPosition,
+    commitLayerPositionHistory,
+    addAudioClip,
+  };
+}

@@ -82,20 +82,62 @@ export function formatAvatarTypeLabel(type) {
   return labels[type] || type.replace(/_/g, ' ');
 }
 
+const AVATAR_KINDS = new Set(['studio_avatar', 'photo_avatar', 'digital_twin']);
+
+/** HeyGen look id (lk_…) — scene.avatarType historically stored the look id. */
+export function getSceneAvatarLookId(scene) {
+  if (!scene) return null;
+
+  const candidates = [
+    scene.avatarLookId,
+    scene.presenter?.avatarId,
+    scene.avatarType,
+  ];
+
+  for (const raw of candidates) {
+    if (!raw) continue;
+    const id = String(raw);
+    if (id.startsWith('ag_')) continue;
+    if (AVATAR_KINDS.has(id)) continue;
+    return id;
+  }
+
+  return null;
+}
+
+/** studio_avatar | photo_avatar | digital_twin */
+export function getSceneAvatarKind(scene) {
+  if (!scene) return 'studio_avatar';
+
+  return (
+    scene.avatarKind ||
+    scene.avatarTypeLabel ||
+    scene.presenter?.avatarType ||
+    (AVATAR_KINDS.has(scene.avatarType) ? scene.avatarType : null) ||
+    'studio_avatar'
+  );
+}
+
 export function buildHeygenAvatarContent(scene, clip = {}) {
   const existing =
     typeof clip.content === 'object' && clip.content !== null ? clip.content : {};
   const previewSrc =
-    clip.src && !String(clip.src).startsWith('blob:') ? clip.src : existing.src;
+    clip.src && !String(clip.src).startsWith('blob:') ? clip.src : existing.previewSrc || existing.src;
+  const lookId = getSceneAvatarLookId(scene) ?? existing.avatarId;
 
-  return {
+  const content = {
     ...existing,
     provider: 'heygen',
     sceneId: scene.sceneId ?? scene.id,
-    avatarId: scene.avatarType ?? existing.avatarId,
+    avatarId: lookId,
     voiceId: scene.voiceId ?? existing.voiceId,
     script: scene.script ?? existing.script ?? '',
-    heygenVideoId: scene.heygenVideoId ?? existing.heygenVideoId,
-    ...(previewSrc ? { src: previewSrc } : {}),
+    heygenVideoId: scene.heygenVideoId ?? scene.generation?.heygenVideoId ?? existing.heygenVideoId,
   };
+
+  if (previewSrc && !String(previewSrc).startsWith('blob:')) {
+    content.previewSrc = previewSrc;
+  }
+
+  return content;
 }

@@ -255,6 +255,7 @@ class HeygenService {
       const {
         sceneId,
         avatarId,
+        avatarType,
         title,
         resolution = '1080p',
         aspectRatio = '16:9',
@@ -280,11 +281,15 @@ class HeygenService {
         backgroundColor,
         voiceId,
         script,
-        expressiveness,
         voiceSettings,
         removeBackground,
         outputFormat
       };
+
+      if (avatarType) payload.avatarType = avatarType;
+      if (avatarType === 'photo_avatar' && expressiveness) {
+        payload.expressiveness = expressiveness;
+      }
 
       const endpoint = API_CONFIG.ENDPOINTS.HEYGEN.VIDEOS.CREATE(workspaceId, projectId);
       const response = await fetch(buildUrl(endpoint), {

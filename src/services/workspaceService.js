@@ -642,7 +642,15 @@ class WorkspaceService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to save project state: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        const details = errorData.errors
+          ? ` — ${JSON.stringify(errorData.errors)}`
+          : errorData.details
+            ? ` — ${JSON.stringify(errorData.details)}`
+            : '';
+        throw new Error(
+          (errorData.message || `Failed to save project state: ${response.status}`) + details
+        );
       }
 
       const data = await response.json();

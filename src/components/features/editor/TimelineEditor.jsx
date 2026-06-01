@@ -22,6 +22,7 @@ import {
     MdTextFields,
     MdSmartDisplay
 } from 'react-icons/md'
+import { getClipTextContent } from '../../../utils/textClip'
 
 const TimelineEditor = ({
     scenes,
@@ -43,7 +44,16 @@ const TimelineEditor = ({
     musicDuration,
     onMusicDurationChange,
     onSelectLayer,
-    timelineScope = 'all'
+    selectedLayerId = null,
+    selectedLayerIds = [],
+    timelineScope = 'all',
+    onUndo,
+    onRedo,
+    canUndo = false,
+    canRedo = false,
+    onDuplicateLayer,
+    onCopyLayer,
+    onMoveLayerOrder,
 }) => {
     const [zoom, setZoom] = useState(60)
     const [draggedSceneId, setDraggedSceneId] = useState(null)
@@ -641,6 +651,11 @@ const TimelineEditor = ({
             box-shadow: 0 4px 12px rgba(0,0,0,0.25);
         }
 
+        .layer-clip.selected-layer-clip {
+            border: 2px solid var(--primary, #6366f1);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+        }
+
         .layer-clip-icon {
             display: flex;
             align-items: center;
@@ -749,8 +764,43 @@ const TimelineEditor = ({
 
             <div className="timeline-toolbar" style={{ position: 'relative' }}>
                 <div className="toolbar-section">
-                    <button className="toolbar-btn" title="Undo"><MdUndo /></button>
-                    <button className="toolbar-btn" title="Redo"><MdRedo /></button>
+                    <button
+                      className={`toolbar-btn ${!canUndo ? 'disabled' : ''}`}
+                      title="Undo (Ctrl+Z)"
+                      onClick={onUndo}
+                      disabled={!canUndo}
+                    >
+                      <MdUndo />
+                    </button>
+                    <button
+                      className={`toolbar-btn ${!canRedo ? 'disabled' : ''}`}
+                      title="Redo (Ctrl+Y)"
+                      onClick={onRedo}
+                      disabled={!canRedo}
+                    >
+                      <MdRedo />
+                    </button>
+                    {selectedLayerId && (
+                      <>
+                        <div style={{ width: '1px', height: '20px', background: 'var(--border-color)', margin: '0 8px' }} />
+                        <button className="toolbar-btn" title="Copy (Ctrl+C)" onClick={onCopyLayer}><MdContentCopy size={16} /></button>
+                        <button className="toolbar-btn" title="Duplicate (Ctrl+D)" onClick={onDuplicateLayer}><MdContentCopy size={16} style={{ opacity: 0.6 }} /></button>
+                        <button
+                          className="toolbar-btn"
+                          title="Bring forward"
+                          onClick={() => onMoveLayerOrder?.(selectedLayerId, 'forward')}
+                        >
+                          <MdKeyboardArrowUp size={18} />
+                        </button>
+                        <button
+                          className="toolbar-btn"
+                          title="Send backward"
+                          onClick={() => onMoveLayerOrder?.(selectedLayerId, 'backward')}
+                        >
+                          <MdKeyboardArrowDown size={18} />
+                        </button>
+                      </>
+                    )}
                 </div>
 
                 <div className="toolbar-section" style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
@@ -790,8 +840,20 @@ const TimelineEditor = ({
                                         </div>
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
-                                        <button onClick={(e) => {}} style={{background: 'transparent', border: 'none', color: '#6b7280', cursor: 'not-allowed', padding: 0}} title="Move Layer Up"><MdKeyboardArrowUp size={14}/></button>
-                                        <button onClick={(e) => {}} style={{background: 'transparent', border: 'none', color: '#6b7280', cursor: 'not-allowed', padding: 0}} title="Move Layer Down"><MdKeyboardArrowDown size={14}/></button>
+                                        <button
+                                          onClick={(e) => moveLayerUp(e, idx)}
+                                          style={{ background: 'transparent', border: 'none', color: '#6b7280', cursor: 'pointer', padding: 0 }}
+                                          title="Move track up"
+                                        >
+                                          <MdKeyboardArrowUp size={14}/>
+                                        </button>
+                                        <button
+                                          onClick={(e) => moveLayerDown(e, idx)}
+                                          style={{ background: 'transparent', border: 'none', color: '#6b7280', cursor: 'pointer', padding: 0 }}
+                                          title="Move track down"
+                                        >
+                                          <MdKeyboardArrowDown size={14}/>
+                                        </button>
                                     </div>
                                 </div>
                             );
@@ -847,12 +909,11 @@ const TimelineEditor = ({
                                         {track.map(clip => (
                                             <div 
                                                 key={clip.id}
-                                                className={`layer-clip ${clip.sceneId === activeSceneId ? 'active-scene-clip' : ''}`}
+                                                className={`layer-clip ${clip.sceneId === activeSceneId ? 'active-scene-clip' : ''} ${selectedLayerIds.includes(clip.id) || selectedLayerId === clip.id ? 'selected-layer-clip' : ''}`}
                                                 onMouseDown={(e) => startLayerDrag(e, clip, clip.sceneId)}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    if (activeSceneId !== clip.sceneId) onSelectScene(clip.sceneId);
-                                                    if (onSelectLayer) onSelectLayer(clip.id);
+                                                    if (onSelectLayer) onSelectLayer(clip.id, clip.sceneId, e);
                                                 }}
                                                 style={{
                                                     position: 'absolute',
@@ -876,7 +937,7 @@ const TimelineEditor = ({
                                                         </div>
                                                     )}
                                                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '80px', paddingRight: '4px' }}>
-                                                        {typeof clip.content === 'string' ? clip.content : clip.type.toUpperCase()}
+                                                        {getClipTextContent(clip) || clip.type.toUpperCase()}
                                                     </span>
                                                 </div>
                                                 {clip.sceneId === activeSceneId && (
