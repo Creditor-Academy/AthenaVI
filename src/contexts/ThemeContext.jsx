@@ -46,6 +46,7 @@ export const ThemeProvider = ({ children }) => {
   // We keep track of the "saved" state and the "current" active state
   const [theme, setTheme] = useState(() => {
     const savedTheme = localStorage.getItem('athenavi-theme');
+    if (savedTheme === 'default') return 'original';
     return savedTheme || 'sapphire';
   });
   const [mode, setMode] = useState(() => {
@@ -58,7 +59,8 @@ export const ThemeProvider = ({ children }) => {
   });
 
   const [savedSettings, setSavedSettings] = useState(() => {
-    const st = localStorage.getItem('athenavi-theme') || 'sapphire';
+    let st = localStorage.getItem('athenavi-theme') || 'sapphire';
+    if (st === 'default') st = 'original';
     const sm = localStorage.getItem('athenavi-mode') || 'light';
     const sp = localStorage.getItem('athenavi-custom-primary') || '#2563eb';
     return { theme: st, mode: sm, customPrimary: sp };
@@ -76,7 +78,8 @@ export const ThemeProvider = ({ children }) => {
         if (!mounted || !appearance) return;
 
         // API returns field names: interfaceMode, themePalette, customAccentColor
-        const serverTheme = appearance.themePalette || appearance.theme || null;
+        let serverTheme = appearance.themePalette || appearance.theme || null;
+        if (serverTheme === 'default') serverTheme = 'original';
         const serverMode = appearance.interfaceMode || null;
         const serverCustom = appearance.customAccentColor || appearance.customPrimary || null;
 
@@ -148,7 +151,8 @@ export const ThemeProvider = ({ children }) => {
         const updated = await userService.updateAppearanceSettings(patch);
         // Update local snapshot to reflect server-merged result
         if (updated) {
-          const mergedTheme = updated.themePalette || updated.theme || theme;
+          let mergedTheme = updated.themePalette || updated.theme || theme;
+          if (mergedTheme === 'default') mergedTheme = 'original';
           const mergedMode = updated.interfaceMode || updated.mode || mode;
           const mergedCustom = updated.customAccentColor || updated.customPrimary || customPrimary;
           localStorage.setItem('athenavi-theme', mergedTheme);

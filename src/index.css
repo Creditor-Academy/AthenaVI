@@ -13,6 +13,15 @@
   --font-serif: 'Georgia', 'Times New Roman', serif;
 }
 
+/* Theme: Default (Original Indigo-Violet) */
+[data-theme='original'] {
+  --primary-rgb: 99, 102, 241;
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --primary-light: #818cf8;
+  --primary-dark: #3730a3;
+}
+
 /* Theme: Sapphire */
 [data-theme='sapphire'] {
   --primary-rgb: 37, 99, 235;
@@ -50,6 +59,9 @@
 }
 
 /* Theme Accent Tints for Sidebar */
+[data-theme='original'][data-mode='light'] { --bg-sidebar: #eef2ff; }
+[data-theme='original'][data-mode='dark'] { --bg-sidebar: #1e1b4b; }
+
 [data-theme='sapphire'][data-mode='light'] { --bg-sidebar: #eff6ff; }
 [data-theme='sapphire'][data-mode='dark'] { --bg-sidebar: #172554; }
 

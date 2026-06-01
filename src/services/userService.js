@@ -61,13 +61,18 @@ class UserService {
     try {
       console.log('Updating user profile:', profileData);
       
+      const payload = {};
+      if (profileData.name && profileData.name.trim() !== '') {
+        payload.name = profileData.name.trim();
+      }
+      if (profileData.phoneNumber && profileData.phoneNumber.trim() !== '') {
+        payload.phoneNumber = profileData.phoneNumber.trim();
+      }
+
       const response = await fetch(buildUrl('/api/user/profile'), {
         method: 'PATCH',
         headers: getAuthHeaders(),
-        body: JSON.stringify({
-          name: profileData.name,
-          phoneNumber: profileData.phoneNumber
-        })
+        body: JSON.stringify(payload)
       });
 
       console.log('Update response status:', response.status);
