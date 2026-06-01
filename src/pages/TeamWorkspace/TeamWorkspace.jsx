@@ -18,7 +18,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import WorkspaceHeader from '../../components/features/workspace/workspace/WorkspaceHeader.jsx';
 import WorkspaceSection from '../../components/features/workspace/workspace/WorkspaceSection.jsx';
 import { WorkspaceCard, FolderCard, VideoCard } from '../../components/features/workspace/workspace/ViewCards.jsx';
-import { WorkspaceRow, FolderRow, VideoRow } from '../../components/features/workspace/workspace/ViewRows.jsx';
+import { WorkspaceRow, FolderRow, VideoRow, formatOnlyDate } from '../../components/features/workspace/workspace/ViewRows.jsx';
 import CreateWorkspaceModal from '../../components/features/workspace/workspace/CreateWorkspaceModal.jsx';
 import CreateFolderModal from '../../components/features/workspace/workspace/CreateFolderModal.jsx';
 import RenameModal from '../../components/features/workspace/workspace/RenameModal.jsx';
@@ -56,7 +56,7 @@ function readRole(workspace) {
   return String(role).toUpperCase();
 }
 
-function normalizeWorkspace(rawWorkspace, currentUserId) {
+function normalizeWorkspace(rawWorkspace, currentUserId, authUser) {
   const id = rawWorkspace.id || rawWorkspace._id;
   const typeRaw = String(rawWorkspace.type || '').toUpperCase();
   const isPersonal = Boolean(rawWorkspace.isPersonal) || typeRaw === 'PRIVATE' || typeRaw === 'PERSONAL';
@@ -98,6 +98,10 @@ function normalizeWorkspace(rawWorkspace, currentUserId) {
 
   const effectiveRole = isPersonal ? 'OWNER' : (isOwner ? 'OWNER' : role || 'MEMBER');
 
+  const ownerName = isPersonal || (Boolean(currentUserId) && ownerId === currentUserId)
+    ? (authUser?.name || 'You')
+    : (rawWorkspace.owner?.name || rawWorkspace.owner?.username || rawWorkspace.owner?.email || rawWorkspace.ownerName || 'Unknown');
+
   return {
     ...rawWorkspace,
     id,
@@ -105,17 +109,57 @@ function normalizeWorkspace(rawWorkspace, currentUserId) {
     type: isPersonal ? 'personal' : 'workspace',
     userRole: effectiveRole,
     ownerId: ownerId || (isOwner ? currentUserId : ''),
+    ownerName,
     members: Array.isArray(rawWorkspace.members) ? rawWorkspace.members : [],
     folders: []
   };
 }
 
-function normalizeFolder(folder) {
-  const creator = folder.creator || folder.createdByUser || folder.createdBy || folder.user || {};
-  const lastUpdater = folder.updatedByUser || folder.lastModifiedByUser || folder.updatedBy || creator || {};
+function normalizeVideo(video, currentUserId, authUser) {
+  const creator = video.creator || video.createdByUser || video.createdBy || video.user || {};
+  const creatorId = normalizeId(
+    typeof creator === 'object'
+      ? creator.id || creator._id || creator.userId || creator.user_id || creator.sub
+      : creator
+  );
 
-  const creatorName =
-    (typeof creator === 'object' ? creator.name || creator.username || creator.email : creator) || 'Unknown';
+  let creatorName = 'Unknown';
+  if (creatorId && currentUserId && creatorId === currentUserId) {
+    creatorName = authUser?.name || 'You';
+  } else {
+    creatorName = (typeof creator === 'object' ? creator.name || creator.username || creator.email : creator) || 'Unknown';
+  }
+
+  const lastUpdater = video.updatedByUser || video.lastModifiedByUser || video.updatedBy || creator || {};
+  const lastModifiedBy =
+    (typeof lastUpdater === 'object' ? lastUpdater.name || lastUpdater.username || lastUpdater.email : lastUpdater) || 'Unknown';
+
+  return {
+    ...video,
+    id: video.id || video._id,
+    name: video.name || video.title || 'Untitled Video',
+    createdBy: creatorName,
+    lastEditedBy: lastModifiedBy,
+    lastEditedAt: video.updatedAt || video.createdAt || new Date().toISOString()
+  };
+}
+
+function normalizeFolder(folder, currentUserId, authUser) {
+  const creator = folder.creator || folder.createdByUser || folder.createdBy || folder.user || {};
+  const creatorId = normalizeId(
+    typeof creator === 'object'
+      ? creator.id || creator._id || creator.userId || creator.user_id || creator.sub
+      : creator
+  );
+
+  let creatorName = 'Unknown';
+  if (creatorId && currentUserId && creatorId === currentUserId) {
+    creatorName = authUser?.name || 'You';
+  } else {
+    creatorName = (typeof creator === 'object' ? creator.name || creator.username || creator.email : creator) || 'Unknown';
+  }
+
+  const lastUpdater = folder.updatedByUser || folder.lastModifiedByUser || folder.updatedBy || creator || {};
   const lastModifiedBy =
     (typeof lastUpdater === 'object' ? lastUpdater.name || lastUpdater.username || lastUpdater.email : lastUpdater) || 'Unknown';
 
@@ -128,25 +172,13 @@ function normalizeFolder(folder) {
     name: folder.name || folder.title || 'Untitled Folder',
     createdBy: creatorName,
     lastModifiedBy,
-    lastModifiedAt: new Date(updatedAt).toLocaleString(),
+    lastModifiedAt: updatedAt,
     videos: Array.isArray(folder.videos)
-      ? folder.videos.map((video) => ({
-          ...video,
-          id: video.id || video._id,
-          name: video.name || video.title || 'Untitled Video',
-          lastEditedBy:
-            video.lastEditedBy ||
-            video.updatedBy?.name ||
-            video.updatedByUser?.name ||
-            lastModifiedBy ||
-            'Unknown',
-          lastEditedAt: video.updatedAt
-            ? new Date(video.updatedAt).toLocaleString()
-            : new Date().toLocaleString()
-        }))
+      ? folder.videos.map((video) => normalizeVideo(video, currentUserId, authUser))
       : []
   };
 }
+
 
 function workspaceCanEdit(workspace) {
   const role = String(workspace?.userRole || '').toUpperCase();
@@ -253,7 +285,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
       const createdFolder = event.detail?.folder;
       const workspaceId = event.detail?.workspaceId;
       if (!createdFolder || !workspaceId) return;
-      const normalizedFolder = normalizeFolder(createdFolder);
+      const normalizedFolder = normalizeFolder(createdFolder, currentUserId, authUser);
       setWorkspaces((prev) =>
         prev.map((ws) => {
           if (String(ws.id) !== String(workspaceId)) return ws;
@@ -279,13 +311,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
       const video = event.detail?.video;
       if (!workspaceId || !folderId || !video) return;
 
-      const normalizedVideo = {
-        ...video,
-        id: video.id || video._id,
-        name: video.name || video.title || 'Untitled Video',
-        lastEditedBy: authUser?.name || authUser?.email || 'You',
-        lastEditedAt: new Date().toLocaleString()
-      };
+      const normalizedVideo = normalizeVideo({ ...video, workspaceId }, currentUserId, authUser);
 
       setWorkspaces((prev) =>
         prev.map((ws) => {
@@ -324,7 +350,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
     try {
       setLoading(true);
       const rawWorkspaces = await workspaceService.listWorkspaces();
-      const mapped = (rawWorkspaces || []).map((ws) => normalizeWorkspace(ws, currentUserId));
+      const mapped = (rawWorkspaces || []).map((ws) => normalizeWorkspace(ws, currentUserId, authUser));
 
       const withFolders = await Promise.all(
         mapped.map(async (workspace) => {
@@ -334,14 +360,14 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
               workspaceService.listProjects(workspace.id)
             ]);
             
-            const normalizedFolders = (folders || []).map(normalizeFolder);
+            const normalizedFolders = (folders || []).map((f) => normalizeFolder(f, currentUserId, authUser));
             
             // Distribute projects to folders
             normalizedFolders.forEach(folder => {
               folder.videos = projects.filter(p => {
                 const pFolderId = p.folderId || (p.folder && (p.folder.id || p.folder._id));
                 return String(pFolderId) === String(folder.id);
-              }).map(p => ({ ...p, workspaceId: workspace.id }));
+              }).map(p => normalizeVideo({ ...p, workspaceId: workspace.id }, currentUserId, authUser));
             });
 
             return {
@@ -351,7 +377,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
               videos: projects.filter(p => {
                 const pFolderId = p.folderId || (p.folder && (p.folder.id || p.folder._id));
                 return !pFolderId;
-              }).map(p => ({ ...p, workspaceId: workspace.id }))
+              }).map(p => normalizeVideo({ ...p, workspaceId: workspace.id }, currentUserId, authUser))
             };
           } catch (err) {
             console.error(`Failed to load folders/projects for workspace ${workspace.id}:`, err);
@@ -369,7 +395,8 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           ...workspace,
           type: 'workspace',
           userRole: 'OWNER',
-          ownerId: currentUserId || workspace.ownerId
+          ownerId: currentUserId || workspace.ownerId,
+          ownerName: authUser?.name || 'You'
         };
       });
 
@@ -379,6 +406,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           name: 'Personal Workspace',
           type: 'personal',
           ownerId: currentUserId || 'self',
+          ownerName: authUser?.name || 'You',
           members: [],
           folders: [],
           userRole: 'OWNER'
@@ -437,6 +465,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           name: 'Personal Workspace',
           type: 'personal',
           ownerId: currentUserId || 'self',
+          ownerName: authUser?.name || 'You',
           members: [],
           folders: [],
           userRole: 'OWNER'
@@ -568,7 +597,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
 
     try {
       const createdFolder = await workspaceService.createFolder(workspace.id, folderName);
-      const normalizedFolder = normalizeFolder(createdFolder);
+      const normalizedFolder = normalizeFolder(createdFolder, currentUserId, authUser);
 
       setWorkspaces((prev) =>
         prev.map((item) =>
@@ -1055,6 +1084,16 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           showCreateButton={true}
           onCreateClick={() => setIsCreateWorkspaceOpen(true)}
         >
+          {viewMode === 'list' && (
+            <div className="list-header">
+              <div className="col" />
+              <div className="col">Name</div>
+              <div className="col">Owner</div>
+              <div className="col">Date modified</div>
+              <div className="col">Size</div>
+              <div className="col" />
+            </div>
+          )}
           {renderWorkspaceItems(myWorkspaces)}
         </WorkspaceSection>
       )}
@@ -1066,6 +1105,16 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           viewMode={viewMode}
           emptyMessage="No workspaces have been shared with you yet."
         >
+          {viewMode === 'list' && (
+            <div className="list-header">
+              <div className="col" />
+              <div className="col">Name</div>
+              <div className="col">Owner</div>
+              <div className="col">Date modified</div>
+              <div className="col">Size</div>
+              <div className="col" />
+            </div>
+          )}
           {renderWorkspaceItems(sharedWithMe)}
         </WorkspaceSection>
       )}
@@ -1118,6 +1167,16 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
             setIsCreateFolderOpen(true);
           }}
         >
+          {viewMode === 'list' && (
+            <div className="list-header">
+              <div className="col" />
+              <div className="col">Name</div>
+              <div className="col">Owner</div>
+              <div className="col">Date modified</div>
+              <div className="col">Size</div>
+              <div className="col" />
+            </div>
+          )}
           {renderFolderItems(workspace.folders, workspace)}
         </WorkspaceSection>
 
@@ -1168,7 +1227,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
         </div>
 
         <div style={{ marginBottom: 16, color: 'var(--text-muted)', fontSize: 13 }}>
-          Created by {folder.createdBy} | Last modified by {folder.lastModifiedBy} at {folder.lastModifiedAt}
+          Owner: {folder.createdBy} | Last modified: {formatOnlyDate(folder.lastModifiedAt)}
         </div>
 
         {!canEdit && (
@@ -1203,6 +1262,16 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
             })
           }
         >
+          {viewMode === 'list' && (
+            <div className="list-header">
+              <div className="col" />
+              <div className="col">Name</div>
+              <div className="col">Owner</div>
+              <div className="col">Date modified</div>
+              <div className="col">Size</div>
+              <div className="col" />
+            </div>
+          )}
           {renderVideoItems(folder.videos || [], workspace)}
         </WorkspaceSection>
       </div>

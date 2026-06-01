@@ -34,10 +34,77 @@ const lastUpdatedOptions = [
 ]
 
 const filterOptions = [
-  { value: 'all', label: 'All folders' },
+  { value: 'all', label: 'All' },
   { value: 'recent', label: 'Recently updated' },
   { value: 'name', label: 'Name (A-Z)' },
 ]
+
+const formatDate = (iso) => {
+  if (!iso || iso === '-') return '—'
+  try {
+    const d = new Date(iso)
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      })
+    }
+    if (iso.includes(',')) {
+      return iso.split(',')[0].trim()
+    }
+    return iso
+  } catch {
+    return iso
+  }
+}
+
+const getFolderVideosCount = (folder) => {
+  if (!folder.subfolders) return 0
+  return folder.subfolders.reduce((acc, sf) => acc + (sf.videos?.length || 0), 0)
+}
+
+const filterAndSortItems = (items, selectedLastUpdated, selectedFilter, nameField = 'name') => {
+  if (!items) return []
+  let result = [...items]
+
+  // 1. Filter by Last Updated Date
+  if (selectedLastUpdated && selectedLastUpdated.value !== 'all') {
+    const now = Date.now()
+    const todayStart = new Date().setHours(0,0,0,0)
+    const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000
+    const oneMonthAgo = now - 30 * 24 * 60 * 60 * 1000
+
+    result = result.filter(item => {
+      const dateStr = item.updatedAt || item.createdAt || item.updated_at || item.updated
+      if (!dateStr) return false
+      const t = new Date(dateStr).getTime()
+      if (selectedLastUpdated.value === 'today') return t >= todayStart
+      if (selectedLastUpdated.value === 'week') return t >= oneWeekAgo
+      if (selectedLastUpdated.value === 'month') return t >= oneMonthAgo
+      return true
+    })
+  }
+
+  // 2. Sort by Filter
+  if (selectedFilter) {
+    if (selectedFilter.value === 'name') {
+      result.sort((a, b) => {
+        const nameA = String(a[nameField] || a.title || '').toLowerCase()
+        const nameB = String(b[nameField] || b.title || '').toLowerCase()
+        return nameA.localeCompare(nameB)
+      })
+    } else if (selectedFilter.value === 'recent') {
+      result.sort((a, b) => {
+        const tA = new Date(a.updatedAt || a.createdAt || a.updated_at || a.updated || 0).getTime()
+        const tB = new Date(b.updatedAt || b.createdAt || b.updated_at || b.updated || 0).getTime()
+        return tB - tA
+      })
+    }
+  }
+
+  return result
+}
 
 function Workspace({ onCreate, onEdit }) {
   const [workspaceId, setWorkspaceId] = useState(null)
@@ -330,38 +397,74 @@ function Workspace({ onCreate, onEdit }) {
 
   // Render videos view (inside subfolder)
   if (selectedFolder && selectedSubfolder && currentSubfolder) {
+    const displayedProjects = filterAndSortItems(projects, selectedLastUpdated, selectedFilter, 'title');
+
     return (
       <>
         <div className="workspace-container">
-          <button
-            className="back-button"
-            onClick={() => setSelectedSubfolder(null)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '8px 16px',
-              border: '1px solid var(--border-color)',
-              background: 'var(--bg-card)',
-              color: 'var(--text-main)',
-              fontWeight: '500',
-              fontSize: '14px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              marginBottom: '24px',
-              width: 'fit-content',
-            }}
-          >
-            <MdArrowBack size={18} />
-            Back to {currentFolder.name}
-          </button>
-
           <div className="workspace-header">
             <div className="workspace-title-section">
+              <button
+                className="back-button-inline"
+                onClick={() => setSelectedSubfolder(null)}
+                title={`Back to ${currentFolder.name}`}
+              >
+                <MdArrowBack size={20} />
+              </button>
               <h1 className="workspace-title">{currentSubfolder.name}</h1>
             </div>
             <div className="workspace-controls">
+              <div className="filter-dropdown" ref={lastUpdatedRef}>
+                <button
+                  className="dropdown-btn"
+                  onClick={() => setLastUpdatedOpen(!lastUpdatedOpen)}
+                >
+                  {selectedLastUpdated.label}
+                  <MdKeyboardArrowDown size={18} />
+                </button>
+                {lastUpdatedOpen && (
+                  <div className="dropdown-menu">
+                    {lastUpdatedOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        className="dropdown-item"
+                        onClick={() => {
+                          setSelectedLastUpdated(option)
+                          setLastUpdatedOpen(false)
+                        }}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="filter-dropdown" ref={filtersRef}>
+                <button
+                  className="dropdown-btn"
+                  onClick={() => setFiltersOpen(!filtersOpen)}
+                >
+                  <MdFilterList size={18} />
+                  Filters
+                  <MdKeyboardArrowDown size={18} />
+                </button>
+                {filtersOpen && (
+                  <div className="dropdown-menu">
+                    {filterOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        className="dropdown-item"
+                        onClick={() => {
+                          setSelectedFilter(option)
+                          setFiltersOpen(false)
+                        }}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               <div className="view-toggle">
                 <button
                   className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
@@ -379,6 +482,7 @@ function Workspace({ onCreate, onEdit }) {
               <button 
                 className="new-folder-btn" 
                 onClick={() => onCreate({ initialWorkspaceId: workspaceId, initialFolderId: selectedSubfolder || selectedFolder })}
+                style={{ background: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }}
               >
                 <MdAdd size={18} />
                 New video
@@ -386,157 +490,269 @@ function Workspace({ onCreate, onEdit }) {
             </div>
           </div>
 
-          {projects.length === 0 ? (
+          {displayedProjects.length === 0 ? (
             <div className="empty-state">
               <MdPlayArrow className="empty-state-icon" />
               <h3 className="empty-state-title">No projects in this folder</h3>
               <p className="empty-state-text">Create your first project to get started</p>
             </div>
           ) : (
-            <div className={viewMode === 'grid' ? 'videos-grid' : 'videos-list'}>
-              {projects.map((video) => {
-                const status = video.status?.toLowerCase();
-                const isProcessing = status === 'processing' || status === 'waiting';
-                const videoId = video.id || video._id;
-                
-                return (
-                    <div
-                      key={videoId}
-                      className={`video-card ${viewMode === 'list' ? 'list-view' : ''} ${isProcessing ? 'processing' : ''}`}
-                      ref={el => menuRefs.current[`video-${videoId}`] = el}
-                      onClick={() => !isProcessing && onEdit && onEdit({ ...video, workspaceId })}
-                    >
-                    <div className="video-thumb">
-                      <img
-                        src={video.thumbnail_url || video.image_url || thumbnailUrl}
-                        alt={video.title || video.name}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          display: 'block',
-                          opacity: isProcessing ? 0.5 : 1
-                        }}
-                      />
-                      <div className="video-thumb-overlay">
-                        <div className={`video-badge ${status}`}>
-                          {status?.toUpperCase() || 'DRAFT'}
+            <>
+              {viewMode === 'list' && (
+                <div className="list-view-header">
+                  <div className="list-view-header-item">Name</div>
+                  <div className="list-view-header-item">Duration</div>
+                  <div className="list-view-header-item">Status</div>
+                  <div className="list-view-header-item">Last Updated</div>
+                  <div className="list-view-header-item" style={{ justifyContent: 'flex-end' }}>Actions</div>
+                </div>
+              )}
+              <div className={viewMode === 'grid' ? 'videos-grid' : 'videos-list'}>
+                {displayedProjects.map((video) => {
+                  const status = video.status?.toLowerCase();
+                  const isProcessing = status === 'processing' || status === 'waiting';
+                  const videoId = video.id || video._id;
+                  const isHeygen = !!(video.heygenVideoId || video.heygen_video_id || video.video_id || video.id || video._id);
+                  
+                  if (viewMode === 'list') {
+                    return (
+                      <div
+                        key={videoId}
+                        className={`video-card list-view ${isProcessing ? 'processing' : ''}`}
+                        onClick={() => !isProcessing && onEdit && onEdit({ ...video, workspaceId })}
+                        ref={el => menuRefs.current[`video-${videoId}`] = el}
+                      >
+                        <div className="list-name-col">
+                          <div className="video-thumb-small">
+                            <img
+                              src={video.thumbnail_url || video.image_url || thumbnailUrl}
+                              alt={video.title || video.name}
+                            />
+                            {isProcessing && (
+                              <div className="spinner-overlay-small">
+                                <div className="spinner-small"></div>
+                              </div>
+                            )}
+                          </div>
+                          <span className="video-title">{video.title || video.name || 'Untitled Video'}</span>
                         </div>
-                        <button
-                          className="video-menu-btn"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setCardMenu(cardMenu === `video-${videoId}` ? null : `video-${videoId}`)
-                          }}
-                        >
-                          <MdMoreVert />
-                        </button>
-                        {cardMenu === `video-${videoId}` && (
-                          <div className="video-menu" onClick={(e) => e.stopPropagation()}>
-                            <button
-                              className="video-menu-item"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setRenameDialog({ folderId: selectedFolder, subfolderId: selectedSubfolder, videoId })
-                                setRenameType('video')
-                                setNewName(video.title || video.name)
-                                setCardMenu(null)
-                              }}
-                            >
-                              <MdEdit className="video-menu-icon" />
-                              Rename
-                            </button>
-                            
-                            {isHeygen && status === 'completed' && (
+
+                        <div className="video-duration-col">
+                          {video.duration || '—'}
+                        </div>
+
+                        <div className="video-status-col">
+                          <span className={`status-badge ${status}`}>
+                            {status?.toUpperCase() || 'DRAFT'}
+                          </span>
+                        </div>
+
+                        <div className="video-updated-col">
+                          {formatDate(video.updated_at || video.updated || video.updatedAt)}
+                        </div>
+
+                        <div className="video-actions-col" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            className="folder-menu-btn"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setCardMenu(cardMenu === `video-${videoId}` ? null : `video-${videoId}`)
+                            }}
+                          >
+                            <MdMoreVert />
+                          </button>
+                          {cardMenu === `video-${videoId}` && (
+                            <div className="folder-menu dropdown-right">
                               <button
-                                className="video-menu-item"
-                                onClick={async (e) => {
+                                className="folder-menu-item"
+                                onClick={(e) => {
                                   e.stopPropagation()
-                                  try {
-                                    const { presignedUrl } = await heygenService.downloadVideo(workspaceId, selectedSubfolder, videoId);
-                                    window.open(presignedUrl, '_blank');
-                                    showToast('Download started successfully', 'success')
-                                  } catch (err) {
-                                    showToast('Download failed. Please try again.', 'error')
-                                  }
+                                  setRenameDialog({ folderId: selectedFolder, subfolderId: selectedSubfolder, videoId })
+                                  setRenameType('video')
+                                  setNewName(video.title || video.name)
                                   setCardMenu(null)
                                 }}
                               >
-                                <MdPlayCircleFilled className="video-menu-icon" style={{ transform: 'rotate(90deg)' }} />
-                                Download
+                                <MdEdit className="folder-menu-icon" />
+                                Rename
                               </button>
-                            )}
+                              
+                              {status === 'completed' && (
+                                <button
+                                  className="folder-menu-item"
+                                  onClick={async (e) => {
+                                    e.stopPropagation()
+                                    try {
+                                      const { presignedUrl } = await heygenService.downloadVideo(workspaceId, selectedSubfolder, videoId);
+                                      window.open(presignedUrl, '_blank');
+                                      showToast('Download started successfully', 'success')
+                                    } catch (err) {
+                                      showToast('Download failed. Please try again.', 'error')
+                                    }
+                                    setCardMenu(null)
+                                  }}
+                                >
+                                  <MdPlayCircleFilled className="folder-menu-icon" style={{ transform: 'rotate(90deg)' }} />
+                                  Download
+                                </button>
+                              )}
 
-                            <button
-                              className="video-menu-item delete"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                deleteVideo(selectedFolder, selectedSubfolder, videoId)
-                              }}
-                            >
-                              <MdDelete className="video-menu-icon" />
-                              Delete
-                            </button>
+                              <button
+                                className="folder-menu-item delete"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  deleteVideo(selectedFolder, selectedSubfolder, videoId)
+                                }}
+                              >
+                                <MdDelete className="folder-menu-icon" />
+                                Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                      <div
+                        key={videoId}
+                        className={`video-card ${isProcessing ? 'processing' : ''}`}
+                        ref={el => menuRefs.current[`video-${videoId}`] = el}
+                        onClick={() => !isProcessing && onEdit && onEdit({ ...video, workspaceId })}
+                      >
+                      <div className="video-thumb">
+                        <img
+                          src={video.thumbnail_url || video.image_url || thumbnailUrl}
+                          alt={video.title || video.name}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            display: 'block',
+                            opacity: isProcessing ? 0.5 : 1
+                          }}
+                        />
+                        <div className="video-thumb-overlay">
+                          <div className={`video-badge ${status}`}>
+                            {status?.toUpperCase() || 'DRAFT'}
+                          </div>
+                          <button
+                            className="video-menu-btn"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setCardMenu(cardMenu === `video-${videoId}` ? null : `video-${videoId}`)
+                            }}
+                          >
+                            <MdMoreVert />
+                          </button>
+                          {cardMenu === `video-${videoId}` && (
+                            <div className="video-menu" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                className="video-menu-item"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setRenameDialog({ folderId: selectedFolder, subfolderId: selectedSubfolder, videoId })
+                                  setRenameType('video')
+                                  setNewName(video.title || video.name)
+                                  setCardMenu(null)
+                                }}
+                              >
+                                <MdEdit className="video-menu-icon" />
+                                Rename
+                              </button>
+                              
+                              {status === 'completed' && (
+                                <button
+                                  className="video-menu-item"
+                                  onClick={async (e) => {
+                                    e.stopPropagation()
+                                    try {
+                                      const { presignedUrl } = await heygenService.downloadVideo(workspaceId, selectedSubfolder, videoId);
+                                      window.open(presignedUrl, '_blank');
+                                      showToast('Download started successfully', 'success')
+                                    } catch (err) {
+                                      showToast('Download failed. Please try again.', 'error')
+                                    }
+                                    setCardMenu(null)
+                                  }}
+                                >
+                                  <MdPlayCircleFilled className="video-menu-icon" style={{ transform: 'rotate(90deg)' }} />
+                                  Download
+                                </button>
+                              )}
+
+                              <button
+                                className="video-menu-item delete"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  deleteVideo(selectedFolder, selectedSubfolder, videoId)
+                                }}
+                              >
+                                <MdDelete className="video-menu-icon" />
+                                Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {!isProcessing && (
+                          <div 
+                            className="video-play-overlay"
+                            style={{
+                              position: 'absolute',
+                              top: '50%',
+                              left: '50%',
+                              transform: 'translate(-50%, -50%)',
+                              width: '48px',
+                              height: '48px',
+                              borderRadius: '50%',
+                              background: 'rgba(255, 255, 255, 0.95)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'var(--text-muted)',
+                              fontSize: '24px',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              zIndex: 10
+                            }}
+                          >
+                            <MdEdit />
                           </div>
                         )}
-                      </div>
-
-                      {!isProcessing && (
-                        <div 
-                          className="video-play-overlay"
-                          style={{
+                        {isProcessing && (
+                          <div style={{
                             position: 'absolute',
                             top: '50%',
                             left: '50%',
                             transform: 'translate(-50%, -50%)',
-                            width: '48px',
-                            height: '48px',
-                            borderRadius: '50%',
-                            background: 'rgba(255, 255, 255, 0.95)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'var(--text-muted)',
-                            fontSize: '24px',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
+                            textAlign: 'center',
+                            color: '#fff',
                             zIndex: 10
-                          }}
-                        >
-                          <MdEdit />
-                        </div>
-                      )}
-                      {isProcessing && (
-                        <div style={{
-                          position: 'absolute',
-                          top: '50%',
-                          left: '50%',
-                          transform: 'translate(-50%, -50%)',
-                          textAlign: 'center',
-                          color: '#fff',
-                          zIndex: 10
-                        }}>
-                          <div className="spinner" style={{ margin: '0 auto 8px' }}></div>
-                          <div style={{ fontSize: '10px', fontWeight: '700' }}>RENDERING</div>
-                        </div>
-                      )}
+                          }}>
+                            <div className="spinner" style={{ margin: '0 auto 8px' }}></div>
+                            <div style={{ fontSize: '10px', fontWeight: '700' }}>RENDERING</div>
+                          </div>
+                        )}
 
-                      {video.duration && (
-                        <div className="video-duration">
-                          {video.duration}
-                        </div>
-                      )}
+                        {video.duration && (
+                          <div className="video-duration">
+                            {video.duration}
+                          </div>
+                        )}
+                      </div>
+                      <div className="video-info">
+                        <h4 className="video-title">{video.title || video.name || 'Untitled Video'}</h4>
+                        <p className="video-meta">
+                          {isProcessing ? 'Status: Processing...' : `Updated ${formatDate(video.updated_at || video.updated || video.updatedAt)}`}
+                        </p>
+                      </div>
                     </div>
-                    <div className="video-info">
-                      <h4 className="video-title">{video.title || video.name || 'Untitled Video'}</h4>
-                      <p className="video-meta">
-                        {isProcessing ? 'Status: Processing...' : `Updated ${video.updated_at || video.updated || 'recently'}`}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
       </>
@@ -545,38 +761,74 @@ function Workspace({ onCreate, onEdit }) {
 
   // Render subfolders view (inside folder)
   if (selectedFolder && currentFolder) {
+    const displayedSubfolders = filterAndSortItems(currentFolder.subfolders, selectedLastUpdated, selectedFilter, 'name');
+
     return (
       <>
         <div className="workspace-container">
-          <button
-            className="back-button"
-            onClick={() => setSelectedFolder(null)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '8px 16px',
-              border: '1px solid var(--border-color)',
-              background: 'var(--bg-card)',
-              color: 'var(--text-main)',
-              fontWeight: '500',
-              fontSize: '14px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              marginBottom: '24px',
-              width: 'fit-content',
-            }}
-          >
-            <MdArrowBack size={18} />
-            Back to Workspace
-          </button>
-
           <div className="workspace-header">
             <div className="workspace-title-section">
+              <button
+                className="back-button-inline"
+                onClick={() => setSelectedFolder(null)}
+                title="Back to Workspace"
+              >
+                <MdArrowBack size={20} />
+              </button>
               <h1 className="workspace-title">{currentFolder.name}</h1>
             </div>
             <div className="workspace-controls">
+              <div className="filter-dropdown" ref={lastUpdatedRef}>
+                <button
+                  className="dropdown-btn"
+                  onClick={() => setLastUpdatedOpen(!lastUpdatedOpen)}
+                >
+                  {selectedLastUpdated.label}
+                  <MdKeyboardArrowDown size={18} />
+                </button>
+                {lastUpdatedOpen && (
+                  <div className="dropdown-menu">
+                    {lastUpdatedOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        className="dropdown-item"
+                        onClick={() => {
+                          setSelectedLastUpdated(option)
+                          setLastUpdatedOpen(false)
+                        }}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="filter-dropdown" ref={filtersRef}>
+                <button
+                  className="dropdown-btn"
+                  onClick={() => setFiltersOpen(!filtersOpen)}
+                >
+                  <MdFilterList size={18} />
+                  Filters
+                  <MdKeyboardArrowDown size={18} />
+                </button>
+                {filtersOpen && (
+                  <div className="dropdown-menu">
+                    {filterOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        className="dropdown-item"
+                        onClick={() => {
+                          setSelectedFilter(option)
+                          setFiltersOpen(false)
+                        }}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               <div className="view-toggle">
                 <button
                   className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
@@ -615,62 +867,150 @@ function Workspace({ onCreate, onEdit }) {
                 <p className="empty-state-text">This folder is empty</p>
               </div>
             ) : (
-              <div className={viewMode === 'grid' ? 'folders-grid' : 'folders-list'}>
-                {currentFolder.subfolders.map((subfolder) => (
-                  <div
-                    key={subfolder.id}
-                    className={`folder-card ${viewMode === 'list' ? 'list-view' : ''}`}
-                    onClick={() => setSelectedSubfolder(subfolder.id)}
-                    ref={el => menuRefs.current[`subfolder-${subfolder.id}`] = el}
-                  >
-                    <div className="folder-icon-wrapper">
-                      <MdFolder size={24} />
-                    </div>
-                    <div className="folder-info">
-                      <h3 className="folder-name">{subfolder.name}</h3>
-                      <p className="folder-meta" style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0' }}>
-                        {subfolder.videos?.length || 0} {subfolder.videos?.length === 1 ? 'video' : 'videos'}
-                      </p>
-                    </div>
-                    <button
-                      className="folder-menu-btn"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setCardMenu(cardMenu === `subfolder-${subfolder.id}` ? null : `subfolder-${subfolder.id}`)
-                      }}
-                    >
-                      <MdMoreVert />
-                    </button>
-                    {cardMenu === `subfolder-${subfolder.id}` && (
-                      <div className="folder-menu" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          className="folder-menu-item"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setRenameDialog({ folderId: selectedFolder, subfolderId: subfolder.id })
-                            setRenameType('subfolder')
-                            setNewName(subfolder.name)
-                            setCardMenu(null)
-                          }}
-                        >
-                          <MdEdit className="folder-menu-icon" />
-                          Rename
-                        </button>
-                        <button
-                          className="folder-menu-item delete"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            deleteSubfolder(selectedFolder, subfolder.id)
-                          }}
-                        >
-                          <MdDelete className="folder-menu-icon" />
-                          Delete
-                        </button>
-                      </div>
-                    )}
+              <>
+                {viewMode === 'list' && (
+                  <div className="list-view-header">
+                    <div className="list-view-header-item">Name</div>
+                    <div className="list-view-header-item">Subfolders</div>
+                    <div className="list-view-header-item">Videos</div>
+                    <div className="list-view-header-item">Last Updated</div>
+                    <div className="list-view-header-item" style={{ justifyContent: 'flex-end' }}>Actions</div>
                   </div>
-                ))}
-              </div>
+                )}
+                <div className={viewMode === 'grid' ? 'folders-grid' : 'folders-list'}>
+                  {displayedSubfolders.map((subfolder) => {
+                    const videosCount = subfolder.videos?.length || 0;
+                    const updatedDateStr = subfolder.updatedAt || subfolder.createdAt || subfolder.updated_at || subfolder.updated;
+
+                    if (viewMode === 'list') {
+                      return (
+                        <div
+                          key={subfolder.id}
+                          className="folder-card list-view"
+                          onClick={() => setSelectedSubfolder(subfolder.id)}
+                          ref={el => menuRefs.current[`subfolder-${subfolder.id}`] = el}
+                        >
+                          <div className="list-name-col">
+                            <div className="folder-icon-wrapper">
+                              <MdFolder size={24} />
+                            </div>
+                            <span className="folder-name">{subfolder.name}</span>
+                          </div>
+                          
+                          <div className="subfolders-col">
+                            —
+                          </div>
+
+                          <div className="videos-col">
+                            {videosCount} {videosCount === 1 ? 'video' : 'videos'}
+                          </div>
+
+                          <div className="updated-col">
+                            {formatDate(updatedDateStr)}
+                          </div>
+
+                          <div className="actions-col" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              className="folder-menu-btn"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setCardMenu(cardMenu === `subfolder-${subfolder.id}` ? null : `subfolder-${subfolder.id}`)
+                              }}
+                            >
+                              <MdMoreVert />
+                            </button>
+                            {cardMenu === `subfolder-${subfolder.id}` && (
+                              <div className="folder-menu" style={{ right: '20px', top: '35px' }}>
+                                <button
+                                  className="folder-menu-item"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setRenameDialog({ folderId: selectedFolder, subfolderId: subfolder.id })
+                                    setRenameType('subfolder')
+                                    setNewName(subfolder.name)
+                                    setCardMenu(null)
+                                  }}
+                                >
+                                  <MdEdit className="folder-menu-icon" />
+                                  Rename
+                                </button>
+                                <button
+                                  className="folder-menu-item delete"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    deleteSubfolder(selectedFolder, subfolder.id)
+                                  }}
+                                >
+                                  <MdDelete className="folder-menu-icon" />
+                                  Delete
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div
+                        key={subfolder.id}
+                        className="folder-card"
+                        onClick={() => setSelectedSubfolder(subfolder.id)}
+                        ref={el => menuRefs.current[`subfolder-${subfolder.id}`] = el}
+                      >
+                        <div className="folder-icon-wrapper">
+                          <MdFolder size={24} />
+                        </div>
+                        <div className="folder-info">
+                          <h3 className="folder-name">{subfolder.name}</h3>
+                          <p className="folder-meta">
+                            {videosCount} {videosCount === 1 ? 'video' : 'videos'}
+                          </p>
+                          <p className="folder-updated">
+                            Updated {formatDate(updatedDateStr)}
+                          </p>
+                        </div>
+                        <button
+                          className="folder-menu-btn"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setCardMenu(cardMenu === `subfolder-${subfolder.id}` ? null : `subfolder-${subfolder.id}`)
+                          }}
+                        >
+                          <MdMoreVert />
+                        </button>
+                        {cardMenu === `subfolder-${subfolder.id}` && (
+                          <div className="folder-menu" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              className="folder-menu-item"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setRenameDialog({ folderId: selectedFolder, subfolderId: subfolder.id })
+                                setRenameType('subfolder')
+                                setNewName(subfolder.name)
+                                setCardMenu(null)
+                              }}
+                            >
+                              <MdEdit className="folder-menu-icon" />
+                              Rename
+                            </button>
+                            <button
+                              className="folder-menu-item delete"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                deleteSubfolder(selectedFolder, subfolder.id)
+                              }}
+                            >
+                              <MdDelete className="folder-menu-icon" />
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -679,24 +1019,14 @@ function Workspace({ onCreate, onEdit }) {
   }
 
   // Render main folders view
+  const displayedFolders = filterAndSortItems(folders, selectedLastUpdated, selectedFilter, 'name');
+
   return (
     <>
       <div className="workspace-container">
         <div className="workspace-header">
           <div className="workspace-title-section">
             <h1 className="workspace-title">Workspace</h1>
-            <button className="new-folder-btn" onClick={createNewFolder}>
-              <MdFolder size={18} />
-              New folder
-            </button>
-            <button 
-              className="new-folder-btn" 
-              style={{ background: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }} 
-              onClick={() => onCreate({ initialWorkspaceId: workspaceId })}
-            >
-              <MdAdd size={18} />
-              New Video
-            </button>
           </div>
           <div className="workspace-controls">
             <div className="filter-dropdown" ref={lastUpdatedRef}>
@@ -764,6 +1094,18 @@ function Workspace({ onCreate, onEdit }) {
                 <MdViewList />
               </button>
             </div>
+            <button className="new-folder-btn" onClick={createNewFolder}>
+              <MdFolder size={18} />
+              New folder
+            </button>
+            <button 
+              className="new-folder-btn" 
+              style={{ background: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }} 
+              onClick={() => onCreate({ initialWorkspaceId: workspaceId })}
+            >
+              <MdAdd size={18} />
+              New Video
+            </button>
           </div>
         </div>
 
@@ -776,64 +1118,151 @@ function Workspace({ onCreate, onEdit }) {
               <p className="empty-state-text">Create your first folder to get started</p>
             </div>
           ) : (
-            <div className={viewMode === 'grid' ? 'folders-grid' : 'folders-list'}>
-              {folders.map((folder) => (
-                <div
-                  key={folder.id}
-                  className={`folder-card ${viewMode === 'list' ? 'list-view' : ''}`}
-                  onClick={() => setSelectedFolder(folder.id)}
-                  ref={el => menuRefs.current[`folder-${folder.id}`] = el}
-                >
-                  <div className="folder-icon-wrapper">
-                    <MdFolder size={24} />
-                  </div>
-                  <div className="folder-info">
-                    <h3 className="folder-name">{folder.name}</h3>
-                    {folder.subfolders && (
-                      <p className="folder-meta" style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0' }}>
-                        {folder.subfolders.length} {folder.subfolders.length === 1 ? 'subfolder' : 'subfolders'}
-                      </p>
-                    )}
-                  </div>
-                  <button
-                    className="folder-menu-btn"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setCardMenu(cardMenu === `folder-${folder.id}` ? null : `folder-${folder.id}`)
-                    }}
-                  >
-                    <MdMoreVert />
-                  </button>
-                  {cardMenu === `folder-${folder.id}` && (
-                    <div className="folder-menu" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        className="folder-menu-item"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setRenameDialog(folder.id)
-                          setRenameType('folder')
-                          setNewName(folder.name)
-                          setCardMenu(null)
-                        }}
-                      >
-                        <MdEdit className="folder-menu-icon" />
-                        Rename
-                      </button>
-                      <button
-                        className="folder-menu-item delete"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          deleteFolder(folder.id)
-                        }}
-                      >
-                        <MdDelete className="folder-menu-icon" />
-                        Delete
-                      </button>
-                    </div>
-                  )}
+            <>
+              {viewMode === 'list' && (
+                <div className="list-view-header">
+                  <div className="list-view-header-item">Name</div>
+                  <div className="list-view-header-item">Subfolders</div>
+                  <div className="list-view-header-item">Videos</div>
+                  <div className="list-view-header-item">Last Updated</div>
+                  <div className="list-view-header-item" style={{ justifyContent: 'flex-end' }}>Actions</div>
                 </div>
-              ))}
-            </div>
+              )}
+              <div className={viewMode === 'grid' ? 'folders-grid' : 'folders-list'}>
+                {displayedFolders.map((folder) => {
+                  const subfoldersCount = folder.subfolders?.length || 0;
+                  const videosCount = getFolderVideosCount(folder);
+                  const updatedDateStr = folder.updatedAt || folder.createdAt || folder.updated_at || folder.updated;
+
+                  if (viewMode === 'list') {
+                    return (
+                      <div
+                        key={folder.id}
+                        className="folder-card list-view"
+                        onClick={() => setSelectedFolder(folder.id)}
+                        ref={el => menuRefs.current[`folder-${folder.id}`] = el}
+                      >
+                        <div className="list-name-col">
+                          <div className="folder-icon-wrapper">
+                            <MdFolder size={24} />
+                          </div>
+                          <span className="folder-name">{folder.name}</span>
+                        </div>
+                        
+                        <div className="subfolders-col">
+                          {subfoldersCount} {subfoldersCount === 1 ? 'subfolder' : 'subfolders'}
+                        </div>
+
+                        <div className="videos-col">
+                          {videosCount} {videosCount === 1 ? 'video' : 'videos'}
+                        </div>
+
+                        <div className="updated-col">
+                          {formatDate(updatedDateStr)}
+                        </div>
+
+                        <div className="actions-col" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            className="folder-menu-btn"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setCardMenu(cardMenu === `folder-${folder.id}` ? null : `folder-${folder.id}`)
+                            }}
+                          >
+                            <MdMoreVert />
+                          </button>
+                          {cardMenu === `folder-${folder.id}` && (
+                            <div className="folder-menu" style={{ right: '20px', top: '35px' }}>
+                              <button
+                                className="folder-menu-item"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setRenameDialog(folder.id)
+                                  setRenameType('folder')
+                                  setNewName(folder.name)
+                                  setCardMenu(null)
+                                }}
+                              >
+                                <MdEdit className="folder-menu-icon" />
+                                Rename
+                              </button>
+                              <button
+                                className="folder-menu-item delete"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  deleteFolder(folder.id)
+                                }}
+                              >
+                                <MdDelete className="folder-menu-icon" />
+                                Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={folder.id}
+                      className="folder-card"
+                      onClick={() => setSelectedFolder(folder.id)}
+                      ref={el => menuRefs.current[`folder-${folder.id}`] = el}
+                    >
+                      <div className="folder-icon-wrapper">
+                        <MdFolder size={24} />
+                      </div>
+                      <div className="folder-info">
+                        <h3 className="folder-name">{folder.name}</h3>
+                        <p className="folder-meta">
+                          {subfoldersCount} {subfoldersCount === 1 ? 'subfolder' : 'subfolders'} • {videosCount} {videosCount === 1 ? 'video' : 'videos'}
+                        </p>
+                        <p className="folder-updated">
+                          Updated {formatDate(updatedDateStr)}
+                        </p>
+                      </div>
+                      <button
+                        className="folder-menu-btn"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setCardMenu(cardMenu === `folder-${folder.id}` ? null : `folder-${folder.id}`)
+                        }}
+                      >
+                        <MdMoreVert />
+                      </button>
+                      {cardMenu === `folder-${folder.id}` && (
+                        <div className="folder-menu" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            className="folder-menu-item"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setRenameDialog(folder.id)
+                              setRenameType('folder')
+                              setNewName(folder.name)
+                              setCardMenu(null)
+                            }}
+                          >
+                            <MdEdit className="folder-menu-icon" />
+                            Rename
+                          </button>
+                          <button
+                            className="folder-menu-item delete"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              deleteFolder(folder.id)
+                            }}
+                          >
+                            <MdDelete className="folder-menu-icon" />
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
       </div>

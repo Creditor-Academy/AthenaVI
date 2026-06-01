@@ -38,8 +38,12 @@ export const FolderCard = ({ folder, onClick, contextProps }) => {
             <div className="workspace-item-meta">
                 <div className="meta-left">
                     <h4>{folder.name}</h4>
-                    <span className="subtitle">By {folder.createdBy}</span>
-                    <span className="subtitle">Last modified by {folder.lastModifiedBy} {folder.lastModifiedAt ? `• ${folder.lastModifiedAt}` : ''}</span>
+                    <span className="subtitle">Owner: {folder.createdBy}</span>
+                    <div className="meta-row-small">
+                        <span className="meta-small">{folder.lastModifiedBy || '-'}</span>
+                        <span className="meta-small">{folder.lastModifiedAt || '-'}</span>
+                        <span className="meta-small">{Array.isArray(folder.videos) ? `${folder.videos.length} items` : '-'}</span>
+                    </div>
                 </div>
                 <ContextMenu type="folder" {...contextProps} />
             </div>
@@ -59,7 +63,11 @@ export const VideoCard = ({ video, onClick, contextProps }) => {
             <div className="workspace-item-meta">
                 <div className="meta-left">
                     <h4>{video.name}</h4>
-                    <span className="subtitle">Last edited by {video.lastEditedBy}</span>
+                    <div className="meta-row-small">
+                        <span className="meta-small">{video.lastEditedBy || '-'}</span>
+                        <span className="meta-small">{video.lastEditedAt || '-'}</span>
+                        <span className="meta-small">{video.size || '-'}</span>
+                    </div>
                 </div>
                 <ContextMenu type="video" {...contextProps} />
             </div>
