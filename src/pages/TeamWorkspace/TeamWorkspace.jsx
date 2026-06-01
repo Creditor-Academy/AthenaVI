@@ -220,6 +220,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
   const [membersLoading, setMembersLoading] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('MEMBER');
+  const [renameWorkspaceName, setRenameWorkspaceName] = useState('');
 
   // Toast & confirm dialog system
   const [toast, setToast] = useState(null);
@@ -871,9 +872,40 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
     }
   };
 
-  const handleManageContributors = async (workspace) => {
+  const handleManageWorkspace = async (workspace) => {
     setContributorsPanel({ open: true, workspace });
+    setRenameWorkspaceName(workspace.name || '');
     await loadContributorsForWorkspace(workspace);
+  };
+
+  const handleRenameWorkspaceInsidePanel = async () => {
+    const workspace = contributorsPanel.workspace;
+    if (!workspace) return;
+    const newName = renameWorkspaceName.trim();
+    if (!newName) {
+      showToast('Workspace name cannot be empty', 'error');
+      return;
+    }
+    if (newName === workspace.name) {
+      return;
+    }
+
+    try {
+      await workspaceService.updateWorkspace(workspace.id, { name: newName });
+      
+      setWorkspaces((prev) =>
+        prev.map((item) => (String(item.id) === String(workspace.id) ? { ...item, name: newName } : item))
+      );
+
+      setContributorsPanel((prev) => ({
+        ...prev,
+        workspace: prev.workspace ? { ...prev.workspace, name: newName } : null
+      }));
+
+      showToast('Workspace renamed successfully', 'success');
+    } catch (error) {
+      showToast(error.message || 'Failed to rename workspace', 'error');
+    }
   };
 
   const handleInviteContributor = async () => {
@@ -940,13 +972,10 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           workspace={workspace}
           onClick={() => setCurrentLevel({ type: 'workspace', id: workspace.id, ws: workspace })}
           contextProps={{
-            onRename:
+            onManageWorkspace:
               workspace.type === 'workspace' && String(workspace.userRole).toUpperCase() === 'OWNER'
-                ? () => renameItem('workspace', workspace.id)
+                ? () => handleManageWorkspace(workspace)
                 : null,
-            onAddMembers: workspaceCanManageContributors(workspace)
-              ? () => handleManageContributors(workspace)
-              : null,
             onDelete:
               workspace.type === 'personal'
                 ? null
@@ -968,13 +997,10 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
         workspace={workspace}
         onClick={() => setCurrentLevel({ type: 'workspace', id: workspace.id, ws: workspace })}
         contextProps={{
-          onRename:
+          onManageWorkspace:
             workspace.type === 'workspace' && String(workspace.userRole).toUpperCase() === 'OWNER'
-              ? () => renameItem('workspace', workspace.id)
+              ? () => handleManageWorkspace(workspace)
               : null,
-          onAddMembers: workspaceCanManageContributors(workspace)
-            ? () => handleManageContributors(workspace)
-            : null,
           onDelete:
             workspace.type === 'personal'
               ? null
@@ -1447,7 +1473,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
               onClick={(e) => e.stopPropagation()}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2 style={{ margin: 0, fontSize: 20 }}>Manage Contributors</h2>
+                <h2 style={{ margin: 0, fontSize: 20 }}>Manage Workspace</h2>
                 <button
                   onClick={() => setContributorsPanel({ open: false, workspace: null })}
                   style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
@@ -1456,33 +1482,58 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
                 </button>
               </div>
 
-              <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-                Workspace: {contributorsPanel.workspace.name}
-              </div>
-
-              <div style={{ border: '1px solid var(--border-color)', borderRadius: 10, padding: 12 }}>
-                <div style={{ fontWeight: 600, marginBottom: 10 }}>Invite Contributor</div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input
-                    type="email"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    placeholder="Email address"
-                    style={{ flex: 1, height: 36, borderRadius: 8, border: '1px solid var(--border-color)', padding: '0 10px', background: 'var(--bg-card)', color: 'var(--text-main)' }}
-                  />
-                  <select
-                    value={inviteRole}
-                    onChange={(e) => setInviteRole(e.target.value)}
-                    style={{ width: 100, height: 36, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-main)' }}
-                  >
-                    <option value="MEMBER">Member</option>
-                    <option value="ADMIN">Admin</option>
-                  </select>
-                  <button className="btn-primary" type="button" onClick={handleInviteContributor}>
-                    <MdAdd size={16} />
-                  </button>
+              {String(contributorsPanel.workspace.userRole).toUpperCase() === 'OWNER' ? (
+                <div style={{ border: '1px solid var(--border-color)', borderRadius: 10, padding: 12 }}>
+                  <div style={{ fontWeight: 600, marginBottom: 10 }}>Workspace Settings</div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      type="text"
+                      value={renameWorkspaceName}
+                      onChange={(e) => setRenameWorkspaceName(e.target.value)}
+                      placeholder="Workspace name"
+                      style={{ flex: 1, height: 36, borderRadius: 8, border: '1px solid var(--border-color)', padding: '0 10px', background: 'var(--bg-card)', color: 'var(--text-main)' }}
+                    />
+                    <button
+                      className="btn-primary"
+                      type="button"
+                      onClick={handleRenameWorkspaceInsidePanel}
+                      style={{ height: 36, padding: '0 16px', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      Rename
+                    </button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+                  Workspace: {contributorsPanel.workspace.name}
+                </div>
+              )}
+
+              {workspaceCanManageContributors(contributorsPanel.workspace) && (
+                <div style={{ border: '1px solid var(--border-color)', borderRadius: 10, padding: 12 }}>
+                  <div style={{ fontWeight: 600, marginBottom: 10 }}>Invite Contributor</div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      type="email"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      placeholder="Email address"
+                      style={{ flex: 1, height: 36, borderRadius: 8, border: '1px solid var(--border-color)', padding: '0 10px', background: 'var(--bg-card)', color: 'var(--text-main)' }}
+                    />
+                    <select
+                      value={inviteRole}
+                      onChange={(e) => setInviteRole(e.target.value)}
+                      style={{ width: 100, height: 36, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-main)' }}
+                    >
+                      <option value="MEMBER">Member</option>
+                      <option value="ADMIN">Admin</option>
+                    </select>
+                    <button className="btn-primary" type="button" onClick={handleInviteContributor}>
+                      <MdAdd size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div style={{ overflowY: 'auto', flex: 1 }}>
                 <div style={{ fontWeight: 600, marginBottom: 8 }}>Members</div>
@@ -1508,17 +1559,20 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
                             </div>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <select
-                              value={role}
-                              onChange={(e) => handleChangeMemberRole(memberId, e.target.value)}
-                              disabled={role === 'OWNER'}
-                              style={{ height: 32, borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-main)' }}
-                            >
-                              <option value="ADMIN">Admin</option>
-                              <option value="MEMBER">Member</option>
-                              <option value="OWNER">Owner</option>
-                            </select>
-                            {role !== 'OWNER' && (
+                            {role === 'OWNER' ? (
+                              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--primary)', paddingRight: 8 }}>Owner</span>
+                            ) : (
+                              <select
+                                value={role}
+                                onChange={(e) => handleChangeMemberRole(memberId, e.target.value)}
+                                disabled={String(contributorsPanel.workspace?.userRole).toUpperCase() !== 'OWNER'}
+                                style={{ height: 32, borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-main)' }}
+                              >
+                                <option value="ADMIN">Admin</option>
+                                <option value="MEMBER">Member</option>
+                              </select>
+                            )}
+                            {role !== 'OWNER' && workspaceCanManageContributors(contributorsPanel.workspace) && (
                               <button className="btn-secondary add-btn-small" onClick={() => handleRemoveMember(memberId)}>
                                 Remove
                               </button>
@@ -1543,12 +1597,14 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
                             Role: {String(invitee.role || 'MEMBER').toUpperCase()} | Status: {String(invitee.status || 'PENDING').toUpperCase()}
                           </div>
                         </div>
-                        <button
-                          className="btn-secondary add-btn-small"
-                          onClick={() => workspaceService.removeInvitation(contributorsPanel.workspace.id, invitee.id).then(() => loadContributorsForWorkspace(contributorsPanel.workspace))}
-                        >
-                          Remove
-                        </button>
+                        {workspaceCanManageContributors(contributorsPanel.workspace) && (
+                          <button
+                            className="btn-secondary add-btn-small"
+                            onClick={() => workspaceService.removeInvitation(contributorsPanel.workspace.id, invitee.id).then(() => loadContributorsForWorkspace(contributorsPanel.workspace))}
+                          >
+                            Remove
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))

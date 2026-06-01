@@ -17,7 +17,14 @@ export const WorkspaceCard = ({ workspace, onClick, contextProps }) => {
                 <div className="meta-left">
                     <h4>{workspace.name}</h4>
                     <span className="subtitle">
-                        {workspace.type === 'personal' ? 'Private' : `${(workspace.members?.length || 0) + 1} Members`}
+                        {workspace.type === 'personal'
+                            ? 'Private'
+                            : (() => {
+                                  const hasOwner = (workspace.members || []).some(m => String(m.role || '').toUpperCase() === 'OWNER');
+                                  const count = (workspace.members || []).length;
+                                  const finalCount = hasOwner ? count : count + 1;
+                                  return `${finalCount} ${finalCount === 1 ? 'Member' : 'Members'}`;
+                              })()}
                     </span>
                 </div>
                 <ContextMenu type="workspace" {...contextProps} />

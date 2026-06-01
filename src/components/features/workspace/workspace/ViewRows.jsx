@@ -4,11 +4,13 @@ import ContextMenu from './ContextMenu.jsx';
 
 const formatSize = (item) => {
     if (!item) return '-';
-    if (Array.isArray(item.videos)) return `${item.videos.length} items`;
     if (Array.isArray(item.members)) {
-        const count = (item.members.length || 0) + 1;
-        return `${count} ${count === 1 ? 'member' : 'members'}`;
+        const hasOwner = item.members.some(m => String(m.role || '').toUpperCase() === 'OWNER');
+        const count = item.members.length;
+        const finalCount = hasOwner ? count : count + 1;
+        return `${finalCount} ${finalCount === 1 ? 'member' : 'members'}`;
     }
+    if (Array.isArray(item.videos)) return `${item.videos.length} items`;
     return '-';
 };
 

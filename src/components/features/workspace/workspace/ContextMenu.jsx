@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MdMoreVert, MdEdit, MdPersonAdd, MdSort, MdViewModule, MdDelete } from 'react-icons/md';
+import { MdMoreVert, MdEdit, MdPersonAdd, MdSort, MdViewModule, MdDelete, MdSettings } from 'react-icons/md';
 
-const ContextMenu = ({ type, onRename, onAddMembers, onSort, onView, onDelete }) => {
+const ContextMenu = ({ type, onRename, onAddMembers, onSort, onView, onDelete, onManageWorkspace }) => {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef(null);
 
@@ -34,6 +34,11 @@ const ContextMenu = ({ type, onRename, onAddMembers, onSort, onView, onDelete })
 
             {isOpen && (
                 <div className="context-menu-dropdown fade-in-fast">
+                    {type === 'workspace' && onManageWorkspace && (
+                        <button className="menu-item" onClick={(e) => handleAction(e, onManageWorkspace)}>
+                            <MdSettings size={16} /> Manage
+                        </button>
+                    )}
                     {onRename && (
                         <button className="menu-item" onClick={(e) => handleAction(e, onRename)}>
                             <MdEdit size={16} /> Rename
