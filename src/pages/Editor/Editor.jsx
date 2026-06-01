@@ -1766,6 +1766,8 @@ function Create({ onBack, initialConfig = null }) {
         showExportModal={showExportModal}
         setShowExportModal={setShowExportModal}
         calculateCredits={calculateCredits}
+        workspaceId={project.workspaceId || project.createConfig?.workspaceId}
+        projectId={project.id || project.createConfig?.videoId}
       />
 
       <TemplateModal

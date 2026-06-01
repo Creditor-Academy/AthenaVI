@@ -16,7 +16,7 @@ const ThemePage = () => {
   } = useTheme();
 
   const themes = [
-    { id: 'default', name: 'Original', color: '#6366f1', secondary: '#a855f7', desc: 'Indigo-Violet' },
+    { id: 'original', name: 'Original', color: '#6366f1', secondary: '#a855f7', desc: 'Indigo-Violet' },
     { id: 'sapphire', name: 'Sapphire', color: '#2563eb', secondary: '#3b82f6', desc: 'Corporate Blue' },
     { id: 'ocean', name: 'Ocean', color: '#0ea5e9', secondary: '#5eead4', desc: 'Sky & Water' },
     { id: 'forest', name: 'Forest', color: '#22c55e', secondary: '#eab308', desc: 'Nature' },

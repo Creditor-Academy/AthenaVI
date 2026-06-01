@@ -21,6 +21,7 @@ import workspaceService from '../../services/workspaceService'
 import heygenService from '../../services/heygenService'
 import { getAuthHeaders } from '../../config/api.js'
 import WorkspaceSkeleton from '../page-skeleton/WorkspaceSkeleton'
+import MoveProjectModal from '../../components/features/workspace/workspace/MoveProjectModal.jsx'
 import './Workspace.css'
 
 const thumbnailUrl = 'https://media.istockphoto.com/id/1475888355/video/timelapse-of-the-creation-of-an-online-avatar-start-to-finish.jpg?s=640x640&k=20&c=pFzBOkU7LjC1DF0DeNCAUhS8MCiNwSDwkqI9v9C7IgQ='
@@ -131,6 +132,22 @@ function Workspace({ onCreate, onEdit }) {
   const [loading, setLoading] = useState(true)
   const [projects, setProjects] = useState([])
   const [toast, setToast] = useState(null)
+  const [moveTargetVideo, setMoveTargetVideo] = useState(null)
+
+  const handleMoveProject = async (targetFolderId) => {
+    if (!moveTargetVideo || !workspaceId) return;
+    try {
+      await workspaceService.moveProjectFolder(workspaceId, moveTargetVideo.id, targetFolderId);
+      await refreshFolders();
+      if (selectedSubfolder) {
+        await fetchProjects(true);
+      }
+      showToast('Video moved successfully', 'success');
+    } catch (err) {
+      showToast(err.message || 'Failed to move video', 'error');
+      throw err;
+    }
+  };
   const [confirmDialog, setConfirmDialog] = useState(null)
   const menuRefs = useRef({})
   const lastUpdatedRef = useRef(null)
@@ -576,6 +593,18 @@ function Workspace({ onCreate, onEdit }) {
                                 <MdEdit className="folder-menu-icon" />
                                 Rename
                               </button>
+
+                              <button
+                                className="folder-menu-item"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setMoveTargetVideo(video)
+                                  setCardMenu(null)
+                                }}
+                              >
+                                <MdFolder className="folder-menu-icon" />
+                                Move to Folder
+                              </button>
                               
                               {status === 'completed' && (
                                 <button
@@ -660,6 +689,18 @@ function Workspace({ onCreate, onEdit }) {
                               >
                                 <MdEdit className="video-menu-icon" />
                                 Rename
+                              </button>
+
+                              <button
+                                className="video-menu-item"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setMoveTargetVideo(video)
+                                  setCardMenu(null)
+                                }}
+                              >
+                                <MdFolder className="video-menu-icon" />
+                                Move to Folder
                               </button>
                               
                               {status === 'completed' && (
@@ -1377,6 +1418,15 @@ function Workspace({ onCreate, onEdit }) {
           <span>{toast.message}</span>
         </div>
       )}
+
+      <MoveProjectModal
+        isOpen={!!moveTargetVideo}
+        onClose={() => setMoveTargetVideo(null)}
+        onMove={handleMoveProject}
+        folders={folders}
+        currentFolderId={selectedSubfolder || selectedFolder || null}
+        videoTitle={moveTargetVideo?.name || moveTargetVideo?.title || ''}
+      />
     </>
   )
 }

@@ -22,6 +22,7 @@ import { WorkspaceRow, FolderRow, VideoRow, formatOnlyDate } from '../../compone
 import CreateWorkspaceModal from '../../components/features/workspace/workspace/CreateWorkspaceModal.jsx';
 import CreateFolderModal from '../../components/features/workspace/workspace/CreateFolderModal.jsx';
 import RenameModal from '../../components/features/workspace/workspace/RenameModal.jsx';
+import MoveProjectModal from '../../components/features/workspace/workspace/MoveProjectModal.jsx';
 import TeamWorkspaceSkeleton from '../page-skeleton/TeamWorkspaceSkeleton';
 import workspaceService from '../../services/workspaceService.js';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
@@ -221,6 +222,8 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('MEMBER');
   const [renameWorkspaceName, setRenameWorkspaceName] = useState('');
+  const [moveTargetVideo, setMoveTargetVideo] = useState(null);
+  const [moveTargetWorkspace, setMoveTargetWorkspace] = useState(null);
 
   // Toast & confirm dialog system
   const [toast, setToast] = useState(null);
@@ -1046,6 +1049,57 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
     ));
   };
 
+  const handleMoveProject = async (targetFolderId) => {
+    if (!moveTargetVideo || !moveTargetWorkspace) return;
+    try {
+      await workspaceService.moveProjectFolder(moveTargetWorkspace.id, moveTargetVideo.id, targetFolderId);
+      
+      setWorkspaces((prev) =>
+        prev.map((workspace) => {
+          if (String(workspace.id) !== String(moveTargetWorkspace.id)) return workspace;
+
+          // Remove video from old folder
+          const updatedFolders = workspace.folders.map((folder) => {
+            return {
+              ...folder,
+              videos: (folder.videos || []).filter((v) => String(v.id) !== String(moveTargetVideo.id))
+            };
+          });
+
+          // Add video to new folder (if targetFolderId is set)
+          const updatedFoldersWithAdded = updatedFolders.map((folder) => {
+            if (String(folder.id) !== String(targetFolderId)) return folder;
+            const alreadyExists = (folder.videos || []).some((v) => String(v.id) === String(moveTargetVideo.id));
+            const updatedVideo = { ...moveTargetVideo, folderId: targetFolderId };
+            return {
+              ...folder,
+              videos: alreadyExists ? folder.videos : [...(folder.videos || []), updatedVideo]
+            };
+          });
+
+          // Filter out from root videos
+          let updatedRootVideos = (workspace.videos || []).filter((v) => String(v.id) !== String(moveTargetVideo.id));
+          if (!targetFolderId) {
+            const alreadyExists = updatedRootVideos.some((v) => String(v.id) === String(moveTargetVideo.id));
+            const updatedVideo = { ...moveTargetVideo, folderId: null };
+            updatedRootVideos = alreadyExists ? updatedRootVideos : [...updatedRootVideos, updatedVideo];
+          }
+
+          return {
+            ...workspace,
+            folders: updatedFoldersWithAdded,
+            videos: updatedRootVideos
+          };
+        })
+      );
+
+      showToast('Video moved successfully', 'success');
+    } catch (err) {
+      showToast(err.message || 'Failed to move video', 'error');
+      throw err;
+    }
+  };
+
   const renderVideoItems = (videos, workspace) => {
     const sorted = sortItems(videos);
 
@@ -1057,6 +1111,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           onClick={() => onEdit && onEdit({ ...video, workspaceId: workspace.id })}
           contextProps={{
             onRename: workspaceCanEdit(workspace) ? () => renameItem('video', video.id, workspace) : null,
+            onMove: workspaceCanEdit(workspace) ? () => { setMoveTargetVideo(video); setMoveTargetWorkspace(workspace); } : null,
             onDelete: workspaceCanEdit(workspace) ? () => deleteItem('video', video.id, workspace) : null
           }}
         />
@@ -1070,6 +1125,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
         onClick={() => onEdit && onEdit({ ...video, workspaceId: workspace.id })}
         contextProps={{
           onRename: workspaceCanEdit(workspace) ? () => renameItem('video', video.id, workspace) : null,
+          onMove: workspaceCanEdit(workspace) ? () => { setMoveTargetVideo(video); setMoveTargetWorkspace(workspace); } : null,
           onDelete: workspaceCanEdit(workspace) ? () => deleteItem('video', video.id, workspace) : null
         }}
       />
@@ -1343,6 +1399,15 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
         onRename={handleRename}
         currentName={renameTarget?.name || ''}
         itemType={renameTarget?.type || 'workspace'}
+      />
+
+      <MoveProjectModal
+        isOpen={!!moveTargetVideo}
+        onClose={() => { setMoveTargetVideo(null); setMoveTargetWorkspace(null); }}
+        onMove={handleMoveProject}
+        folders={moveTargetWorkspace?.folders || []}
+        currentFolderId={moveTargetVideo?.folderId || (moveTargetVideo?.folder && (moveTargetVideo.folder.id || moveTargetVideo.folder._id)) || null}
+        videoTitle={moveTargetVideo?.name || moveTargetVideo?.title || ''}
       />
 
       <AnimatePresence>
