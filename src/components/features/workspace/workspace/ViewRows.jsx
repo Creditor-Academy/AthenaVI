@@ -5,7 +5,10 @@ import ContextMenu from './ContextMenu.jsx';
 const formatSize = (item) => {
     if (!item) return '-';
     if (Array.isArray(item.videos)) return `${item.videos.length} items`;
-    if (Array.isArray(item.members)) return `${(item.members.length || 0) + 1} members`;
+    if (Array.isArray(item.members)) {
+        const count = (item.members.length || 0) + 1;
+        return `${count} ${count === 1 ? 'member' : 'members'}`;
+    }
     return '-';
 };
 
@@ -38,7 +41,6 @@ export const WorkspaceRow = ({ workspace, onClick, contextProps }) => {
 
             <div className="col col-name">
                 <h4>{workspace.name}</h4>
-                <span className="row-meta">{workspace.type === 'personal' ? 'Private' : `${(workspace.members?.length || 0) + 1} Members`}</span>
             </div>
 
             <div className="col col-owner">{workspace.ownerName || workspace.ownerId || '-'}</div>

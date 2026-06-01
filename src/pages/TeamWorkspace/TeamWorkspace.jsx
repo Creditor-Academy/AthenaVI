@@ -1090,7 +1090,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
               <div className="col">Name</div>
               <div className="col">Owner</div>
               <div className="col">Date modified</div>
-              <div className="col">Size</div>
+              <div className="col">Members</div>
               <div className="col" />
             </div>
           )}
@@ -1111,7 +1111,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
               <div className="col">Name</div>
               <div className="col">Owner</div>
               <div className="col">Date modified</div>
-              <div className="col">Size</div>
+              <div className="col">Members</div>
               <div className="col" />
             </div>
           )}
