@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import ContentModeration from '../../../components/features/admin/ContentModeration';
-import { MdVideoLibrary, MdReport } from 'react-icons/md';
+import { MdVideoLibrary, MdReport, MdPerson } from 'react-icons/md';
 import '../AdminPortal.css';
 
 const ContentModule = () => {
   const [activeSubTab, setActiveSubTab] = useState('videos');
 
   const subTabs = [
-    { id: 'videos', label: 'Videos', icon: null },
+    { id: 'videos', label: 'Videos', icon: <MdVideoLibrary size={16} /> },
+    { id: 'avatars', label: 'Avatars', icon: <MdPerson size={16} /> },
     { id: 'reports', label: 'Reports', icon: <MdReport size={16} /> },
   ];
 
@@ -39,7 +40,8 @@ const ContentModule = () => {
       </div>
 
       <div className="admin-sub-tab-content">
-        {activeSubTab === 'videos' && <ContentModeration />}
+        {activeSubTab === 'videos' && <ContentModeration activeTab="videos" />}
+        {activeSubTab === 'avatars' && <ContentModeration activeTab="avatars" />}
 
         {activeSubTab === 'reports' && (
           <section className="admin-card-section" style={{ marginTop: '24px' }}>

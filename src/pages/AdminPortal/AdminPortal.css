@@ -94,6 +94,11 @@
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 12px;
   margin-bottom: 20px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-main, #090e1a);
+  padding-top: 24px;
 }
 
 .admin-sub-tab-btn {
@@ -148,7 +153,7 @@
 
 .admin-main {
   flex: 1;
-  padding: 24px 0 0;
+  padding: 0;
   overflow-y: auto;
   background: transparent;
   -ms-overflow-style: none;
@@ -175,6 +180,10 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.admin-dashboard-container {
+  padding-top: 24px;
 }
 
 .admin-placeholder-text {
@@ -255,7 +264,7 @@
   gap: 24px;
 }
 
-.billing-page .billing-hero {
+.billing-hero {
   display: flex;
   justify-content: space-between;
   gap: 16px;
@@ -736,10 +745,26 @@ table.admin-table {
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.04);
 }
 
-.workspace-metric-card:hover {
+.workspace-metric-card.clickable {
+  cursor: pointer;
+}
+
+.workspace-metric-card.clickable:hover {
   transform: translateY(-4px);
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.08);
   border-color: var(--primary);
+}
+
+.workspace-metric-card.active {
+  border-color: var(--primary);
+  background: rgba(37, 99, 235, 0.06);
+  transform: translateY(-2px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.06);
+}
+
+.workspace-metric-card.active .metric-icon {
+  background: var(--primary);
+  color: #ffffff;
 }
 
 .metric-icon {
@@ -1315,3 +1340,91 @@ table.admin-table {
     grid-template-columns: 1fr;
   }
 }
+
+/* Logs Filter Chips */
+.log-filter-chip {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface, rgba(255, 255, 255, 0.03));
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+  outline: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+}
+
+.log-filter-chip:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+[data-mode='light'] .log-filter-chip {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+[data-mode='light'] .log-filter-chip:hover {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.log-filter-chip.active {
+  color: var(--active-color, var(--primary));
+  background: var(--active-bg, rgba(var(--primary-rgb), 0.15));
+  border-color: var(--active-color, var(--primary));
+}
+
+/* Sleek custom scrollbars for logs-feed and scrollable panels */
+.logs-feed::-webkit-scrollbar,
+.admin-table-container::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.logs-feed::-webkit-scrollbar-track,
+.admin-table-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.logs-feed::-webkit-scrollbar-thumb,
+.admin-table-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+.logs-feed::-webkit-scrollbar-thumb:hover,
+.admin-table-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+[data-mode='light'] .logs-feed::-webkit-scrollbar-thumb,
+[data-mode='light'] .admin-table-container::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+[data-mode='light'] .logs-feed::-webkit-scrollbar-thumb:hover,
+[data-mode='light'] .admin-table-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.22);
+}
+
+/* Firefox support */
+.logs-feed,
+.admin-table-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+[data-mode='light'] .logs-feed,
+[data-mode='light'] .admin-table-container {
+  scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
+}
+
+

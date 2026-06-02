@@ -121,7 +121,9 @@ const AdminPortal = () => {
 
         <main className="admin-main">
           {activeTab === 'dashboard' ? (
-            <DashboardOverview />
+            <div className="admin-dashboard-container">
+              <DashboardOverview />
+            </div>
           ) : activeTab === 'users' ? (
             <UsersModule />
           ) : activeTab === 'rendering' ? (

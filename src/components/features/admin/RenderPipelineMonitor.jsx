@@ -11,13 +11,6 @@ const RenderPipelineMonitor = () => {
     { id: 'JOB-1105', type: 'Transcode', status: 'DONE', submitted: '45m ago', worker: 'worker-01', error: '', progress: 100 },
   ]);
 
-  const workerPools = [
-    { name: 'worker-01', status: 'Idle', queue: 0 },
-    { name: 'worker-02', status: 'Online', queue: 1 },
-    { name: 'worker-03', status: 'Offline', queue: 0 },
-    { name: 'worker-09', status: 'Busy', queue: 3 },
-    { name: 'worker-10', status: 'Idle', queue: 0 },
-  ];
 
   const handleRequeue = (jobId) => {
     setJobs((prevJobs) => prevJobs.map((job) => job.id === jobId ? { ...job, status: 'QUEUED', worker: '–', error: '', progress: 0 } : job));
@@ -33,15 +26,6 @@ const RenderPipelineMonitor = () => {
     }
   };
 
-  const getWorkerStatusColor = (status) => {
-    switch (status) {
-      case 'Online': return { bg: 'rgba(16, 185, 129, 0.12)', text: '#10b981' };
-      case 'Busy': return { bg: 'rgba(234, 179, 8, 0.12)', text: '#b45309' };
-      case 'Offline': return { bg: 'rgba(239, 68, 68, 0.12)', text: '#ef4444' };
-      case 'Idle': return { bg: 'rgba(107, 114, 128, 0.12)', text: '#6b7280' };
-      default: return { bg: 'rgba(107, 114, 128, 0.12)', text: '#6b7280' };
-    }
-  };
 
   const columns = [
     { id: 'QUEUED', label: 'Queued', icon: MdHourglassTop, color: '#3b82f6' },
@@ -62,31 +46,6 @@ const RenderPipelineMonitor = () => {
         </button>
       </div>
 
-      {/* Worker Pool Status */}
-      <div style={{ marginBottom: '32px' }}>
-        <h3 style={{ marginBottom: '16px', fontSize: '1.05rem', fontWeight: 700 }}>Worker Pool Status</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '16px' }}>
-          {workerPools.map((worker) => {
-            const statusColor = getWorkerStatusColor(worker.status);
-            return (
-              <div key={worker.name} style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: statusColor.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <MdStorage size={24} style={{ color: statusColor.text }} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '0.95rem', fontWeight: 600 }}>{worker.name}</span>
-                    <span style={{ fontSize: '0.8rem', padding: '4px 10px', borderRadius: '12px', background: statusColor.bg, color: statusColor.text, fontWeight: 500 }}>{worker.status}</span>
-                  </div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                    Queue: {worker.queue}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
 
       {/* Job Queue Table */}
       <div style={{ marginBottom: '32px' }}>
