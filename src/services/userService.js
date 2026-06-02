@@ -61,13 +61,18 @@ class UserService {
     try {
       console.log('Updating user profile:', profileData);
       
+      const payload = {};
+      if (profileData.name && profileData.name.trim() !== '') {
+        payload.name = profileData.name.trim();
+      }
+      if (profileData.phoneNumber && profileData.phoneNumber.trim() !== '') {
+        payload.phoneNumber = profileData.phoneNumber.trim();
+      }
+
       const response = await fetch(buildUrl('/api/user/profile'), {
         method: 'PATCH',
         headers: getAuthHeaders(),
-        body: JSON.stringify({
-          name: profileData.name,
-          phoneNumber: profileData.phoneNumber
-        })
+        body: JSON.stringify(payload)
       });
 
       console.log('Update response status:', response.status);
@@ -339,6 +344,83 @@ class UserService {
       return data.data?.notifications || data.notifications || null;
     } catch (error) {
       console.error('Error updating notification settings:', error);
+      throw error;
+    }
+  }
+
+  // Get security settings for current user
+  async getSecuritySettings() {
+    try {
+      console.log('Fetching security settings...');
+      const response = await fetch(buildUrl('/api/user/settings/security'), {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+
+      console.log('Security settings response status:', response.status);
+
+      if (!response.ok) {
+        if (response.status === 401) throw new Error('Authentication required');
+        throw new Error(`Failed to fetch security settings: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Security settings data:', data);
+      return data.data?.security || data.security || null;
+    } catch (error) {
+      console.error('Error fetching security settings:', error);
+      throw error;
+    }
+  }
+
+  // Change password for current user
+  async changePassword(currentPassword, newPassword) {
+    try {
+      console.log('Changing user password...');
+      const response = await fetch(buildUrl('/api/user/settings/security/password'), {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+
+      console.log('Change password response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to change password: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Change password response data:', data);
+      return data.data || data;
+    } catch (error) {
+      console.error('Error changing password:', error);
+      throw error;
+    }
+  }
+
+  // Request account deletion
+  async deleteAccount(confirmation) {
+    try {
+      console.log('Requesting account deletion...');
+      const response = await fetch(buildUrl('/api/user/settings/security/delete-account'), {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ confirmation })
+      });
+
+      console.log('Delete account response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to request account deletion: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Delete account response data:', data);
+      return data.data || data;
+    } catch (error) {
+      console.error('Error deleting account:', error);
       throw error;
     }
   }

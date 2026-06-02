@@ -214,6 +214,7 @@ function App() {
       '/dashboard/team-workspace': 'dashboard',
       '/dashboard/admin-portal': 'dashboard',
       '/dashboard/settings': 'dashboard',
+      '/profile': 'dashboard',
       '/create': 'create',
       '/products': 'products',
       '/about-us': 'about-us-blog',
@@ -311,14 +312,16 @@ function App() {
     const onProtectedPath = currentPath.includes('/invitations/accept') ||
       currentPath.includes('/invite/accept') ||
       currentPath.includes('/reset-password')
+    const isDashboardSubPath = currentPath === '/profile' || currentPath.startsWith('/dashboard')
+    const targetUrl = (view === 'dashboard' && isDashboardSubPath) ? currentPath : newUrl
     try {
-      if (!onProtectedPath && currentPath !== newUrl) {
-        window.history.pushState({ view }, '', newUrl)
+      if (!onProtectedPath && currentPath !== targetUrl) {
+        window.history.pushState({ view }, '', targetUrl)
       }
     } catch {
       // Fallback to hash routing if pushState fails
-      if (!onProtectedPath && window.location.hash !== `#${newUrl}`) {
-        window.location.hash = newUrl
+      if (!onProtectedPath && window.location.hash !== `#${targetUrl}`) {
+        window.location.hash = targetUrl
       }
     }
   }, [view])
@@ -341,6 +344,7 @@ function App() {
         '/dashboard/team-workspace': 'dashboard',
         '/dashboard/admin-portal': 'dashboard',
         '/dashboard/settings': 'dashboard',
+        '/profile': 'dashboard',
         '/create': 'create',
         '/products': 'products',
         '/about-us': 'about-us-blog',
@@ -524,6 +528,9 @@ function App() {
               const currentPath = window.location.pathname
               if (currentPath.startsWith('/dashboard/')) {
                 return currentPath.replace('/dashboard/', '') || 'home'
+              }
+              if (currentPath === '/profile') {
+                return 'profile'
               }
               return 'home'
             })()}

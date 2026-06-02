@@ -1,7 +1,7 @@
 import React from 'react';
 import { MdAdd } from 'react-icons/md';
 
-const WorkspaceSection = ({ title, count, viewMode, emptyMessage, onEmptyAction, emptyActionLabel, children, showCreateButton = false, onCreateClick, emptyIcon: EmptyIcon, createButtonLabel = "Create" }) => {
+const WorkspaceSection = ({ title, count, viewMode, emptyMessage, onEmptyAction, emptyActionLabel, children, showCreateButton = false, onCreateClick, emptyIcon: EmptyIcon, createButtonLabel = "Create", listClassName = '' }) => {
     return (
         <div className="workspace-section">
             <div className="section-header-compact">
@@ -24,7 +24,7 @@ const WorkspaceSection = ({ title, count, viewMode, emptyMessage, onEmptyAction,
                     )}
                 </div>
             ) : (
-                <div className={`items-container ${viewMode === 'tile' ? 'tile-view' : 'list-view'}`}>
+                <div className={`items-container ${viewMode === 'tile' ? 'tile-view' : 'list-view'} ${listClassName}`.trim()}>
                     {children}
                 </div>
             )}

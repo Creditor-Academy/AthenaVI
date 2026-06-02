@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import {
     MdVideoLibrary,
@@ -13,12 +13,33 @@ import {
     MdLanguage
 } from 'react-icons/md'
 import './Home.css'
+import workspaceService from '../../services/workspaceService.js'
 
-function Home({ onCreate, onShowAIAssistant }) {
+function Home({ onCreate, onEdit, onShowAIAssistant }) {
     const { user } = useAuth();
     const firstName = user?.name ? user.name.split(' ')[0] : (user?.email ? user.email.split('@')[0] : 'User');
 
     const [activeTab, setActiveTab] = useState('templates');
+    const [recentProjects, setRecentProjects] = useState([])
+    const [recentLoading, setRecentLoading] = useState(false)
+    const [recentLoaded, setRecentLoaded] = useState(false)
+
+    // Fetch real projects only when the Recent tab is first opened
+    useEffect(() => {
+        if (activeTab !== 'recent' || recentLoaded) return
+        setRecentLoading(true)
+        workspaceService.listAllVideosAcrossWorkspaces()
+            .then(videos => {
+                const sorted = [...videos].sort((a, b) => {
+                    const da = new Date(a.updatedAt || a.createdAt || 0)
+                    const db = new Date(b.updatedAt || b.createdAt || 0)
+                    return db - da
+                })
+                setRecentProjects(sorted.slice(0, 12))
+            })
+            .catch(err => console.warn('[Home] Failed to fetch recent projects:', err))
+            .finally(() => { setRecentLoading(false); setRecentLoaded(true) })
+    }, [activeTab, recentLoaded])
 
     const stats = [
         {
@@ -50,11 +71,19 @@ function Home({ onCreate, onShowAIAssistant }) {
         }
     ]
 
-    const recentProjects = [
-        { id: 1, title: 'Introduction to Digital Marketing', scenes: 8, updated: '2 hours ago', thumb: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=400' },
-        { id: 2, title: 'UI/UX Design Fundamentals', scenes: 5, updated: 'Yesterday', thumb: 'https://images.unsplash.com/photo-1586717791821-3f44a563eb4c?auto=format&fit=crop&q=80&w=400' },
-        { id: 3, title: 'Leadership & Management', scenes: 12, updated: '3 days ago', thumb: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=400' }
-    ]
+    const formatDate = (iso) => {
+        if (!iso) return 'Unknown date'
+        const diff = Date.now() - new Date(iso).getTime()
+        const mins = Math.floor(diff / 60000)
+        if (mins < 1) return 'Just now'
+        if (mins < 60) return `${mins}m ago`
+        const hrs = Math.floor(mins / 60)
+        if (hrs < 24) return `${hrs}h ago`
+        const days = Math.floor(hrs / 24)
+        if (days === 1) return 'Yesterday'
+        if (days < 7) return `${days} days ago`
+        return new Date(iso).toLocaleDateString()
+    }
 
     const templates = [
         { title: 'Educational Lecture', meta: 'Academic style', thumb: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80&w=400' },
@@ -178,28 +207,66 @@ function Home({ onCreate, onShowAIAssistant }) {
                             <h2>Continue Working</h2>
                             <div className="view-all">View all projects</div>
                         </div>
-                        <div className="projects-grid-override">
-                            {recentProjects.map(project => (
-                                <div key={project.id} className="project-card">
-                                    <div className="project-thumb-container">
-                                        <img src={project.thumb} alt={project.title} className="project-thumb" />
-                                        <div className="project-overlay">
-                                            <button className="btn-edit-premium" onClick={onCreate}>
-                                                <MdPlayArrow size={18} /> Resume Editor
-                                            </button>
+
+                        {recentLoading && (
+                            <div className="projects-grid-override">
+                                {[1, 2, 3].map(i => (
+                                    <div key={i} className="project-card project-card--skeleton">
+                                        <div className="project-thumb-container skeleton-thumb" />
+                                        <div className="project-content">
+                                            <div className="skeleton-line skeleton-title" />
+                                            <div className="skeleton-line skeleton-meta" />
                                         </div>
                                     </div>
-                                    <div className="project-content">
-                                        <div className="project-info">
-                                            <h3>{project.title}</h3>
-                                            <div className="project-meta">
-                                                <MdAccessTime size={13} /> {project.updated} • {project.scenes} scenes
+                                ))}
+                            </div>
+                        )}
+
+                        {!recentLoading && recentProjects.length === 0 && (
+                            <div className="empty-recent">
+                                <MdVideoLibrary size={48} className="empty-recent-icon" />
+                                <h3>No projects yet</h3>
+                                <p>Create your first video to see it here.</p>
+                                <button className="btn-create-hero" style={{ marginTop: '1rem' }} onClick={onCreate}>
+                                    <MdAdd size={18} /> Create New Video
+                                </button>
+                            </div>
+                        )}
+
+                        {!recentLoading && recentProjects.length > 0 && (
+                            <div className="projects-grid-override">
+                                {recentProjects.map(project => (
+                                    <div key={project.id || project._id} className="project-card">
+                                        <div className="project-thumb-container">
+                                            {project.thumbnailUrl ? (
+                                                <img src={project.thumbnailUrl} alt={project.title || project.name} className="project-thumb" />
+                                            ) : (
+                                                <div className="project-thumb-placeholder">
+                                                    <MdVideoLibrary size={36} />
+                                                </div>
+                                            )}
+                                            <div className="project-overlay">
+                                                <button
+                                                    className="btn-edit-premium"
+                                                    onClick={() => onEdit && onEdit(project)}
+                                                >
+                                                    <MdPlayArrow size={18} /> Resume Editor
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className="project-content">
+                                            <div className="project-info">
+                                                <h3>{project.title || project.name || 'Untitled Project'}</h3>
+                                                <div className="project-meta">
+                                                    <MdAccessTime size={13} /> {formatDate(project.updatedAt || project.createdAt)}
+                                                    {project.data?.scenes?.length > 0 && ` • ${project.data.scenes.length} scene${project.data.scenes.length !== 1 ? 's' : ''}`}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
 
