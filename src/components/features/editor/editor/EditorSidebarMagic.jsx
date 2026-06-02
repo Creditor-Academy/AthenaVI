@@ -13,6 +13,7 @@ import {
 import { Loader2 } from 'lucide-react';
 import { predefinedAvatars } from '../../../../constants/editorData';
 import heygenService from '../../../../services/heygenService';
+import { estimateHeygenSceneDuration } from '../../../../utils/sceneDuration';
 
 const POPULAR_VOICES = [
   { id: '21a66feb30cc4a799c235cf65db72023', name: 'Adam (US Male)', language: 'English' },
@@ -109,9 +110,7 @@ const EditorSidebarMagic = ({ onGenerateStoryboard }) => {
     }
 
     const storyboardScenes = paragraphs.map((paraText, pIdx) => {
-      // Calculate scene duration (approx 2.3 words/sec, min 6s)
-      const words = paraText.split(/\s+/).filter(w => w.length > 0);
-      const duration = Math.max(6.0, Math.ceil((words.length / 2.3) * 10) / 10);
+      const duration = estimateHeygenSceneDuration(paraText);
 
       // Extract a concise highlight phrase or first sentence
       const sentences = paraText.split(/[.!?]\s+/);
@@ -146,7 +145,7 @@ const EditorSidebarMagic = ({ onGenerateStoryboard }) => {
       if (layout === 'split-left') {
         // Layout: Presenter Left, Text Right
         clips.push({
-          id: `clip_image_${Date.now()}_${pIdx}_1`, type: 'image', role: 'background-image', src: '',
+          id: `clip_image_${Date.now()}_${pIdx}_1`, type: 'image', role: 'media-panel', src: '',
           startTime: 0, endTime: duration, position: { x: 120, y: 200 }, size: { width: 600, height: 600 },
           style: { backgroundColor: '#f0fdf4', borderRadius: '32px', border: '4px solid #ffffff', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }, layer: 1
         });
@@ -198,7 +197,7 @@ const EditorSidebarMagic = ({ onGenerateStoryboard }) => {
           style: { backgroundColor: '#ffffff', borderRadius: '5px' }, layer: 4
         });
         clips.push({
-          id: `clip_image_${Date.now()}_${pIdx}_5`, type: 'image', role: 'background-image', src: '',
+          id: `clip_image_${Date.now()}_${pIdx}_5`, type: 'image', role: 'media-panel', src: '',
           startTime: 0, endTime: duration, position: { x: 950, y: 200 }, size: { width: 600, height: 600 },
           style: { backgroundColor: '#eef2ff', borderRadius: '32px', border: '4px solid #ffffff', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }, layer: 5
         });
@@ -249,6 +248,7 @@ const EditorSidebarMagic = ({ onGenerateStoryboard }) => {
         name: `Scene ${pIdx + 1}`,
         title: `Scene ${pIdx + 1}`,
         duration: duration,
+        durationFromScript: true,
         background: { type: 'color', value: bgValue },
         avatar: avatarImage,
         avatarType: avatarId,

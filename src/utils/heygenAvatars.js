@@ -1,6 +1,19 @@
 /** HeyGen avatar catalog helpers (groups → looks, Avatar IV filter). */
 
 export const AVATAR_IV_ENGINE = 'avatar_iv';
+export const AVATAR_V_ENGINE = 'avatar_v';
+
+export function normalizeAvatarEngine(engine) {
+  if (!engine) return AVATAR_IV_ENGINE;
+  const value = String(engine).toLowerCase();
+  return value === AVATAR_V_ENGINE ? AVATAR_V_ENGINE : AVATAR_IV_ENGINE;
+}
+
+export function supportsAvatarEngine(item, engine) {
+  const normalized = normalizeAvatarEngine(engine);
+  const engines = item?.supported_api_engines ?? item?.supportedApiEngines ?? [];
+  return Array.isArray(engines) && engines.includes(normalized);
+}
 
 const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/300x400?text=Avatar';
 
@@ -16,12 +29,16 @@ export function extractHeygenList(response, keys = []) {
 }
 
 export function supportsAvatarIv(item) {
-  const engines = item?.supported_api_engines ?? item?.supportedApiEngines ?? [];
-  return Array.isArray(engines) && engines.includes(AVATAR_IV_ENGINE);
+  return supportsAvatarEngine(item, AVATAR_IV_ENGINE);
 }
 
 export function filterAvatarIvLooks(looks) {
   return (looks || []).filter(supportsAvatarIv);
+}
+
+export function filterAvatarLooksByEngine(looks, engine) {
+  const normalized = normalizeAvatarEngine(engine);
+  return (looks || []).filter((look) => supportsAvatarEngine(look, normalized));
 }
 
 /** Look row id (lk_…) — never use group id (ag_…) for video create. */

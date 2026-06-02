@@ -1,6 +1,8 @@
-import { useRef } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { Player } from '@remotion/player'
 import VideoComposition from './VideoComposition'
+import heygenService from '../../../../services/heygenService'
+import { resolveScenePlaybackUrls } from '../../../../utils/heygenVideo'
 
 const PreviewModal = ({ 
   showPreviewModal, 
@@ -13,11 +15,47 @@ const PreviewModal = ({
   setIsPlaying, 
   speakText, 
   getSceneForFrame, 
-  setActiveSceneId 
+  setActiveSceneId,
+  workspaceId,
+  projectId,
 }) => {
   const playerRef = useRef(null)
+  const [resolvedScenes, setResolvedScenes] = useState(null)
+  const [isResolving, setIsResolving] = useState(false)
+
+  useEffect(() => {
+    if (!showPreviewModal) {
+      setResolvedScenes(null)
+      return
+    }
+
+    let cancelled = false
+
+    const resolve = async () => {
+      setIsResolving(true)
+      try {
+        const withUrls = await resolveScenePlaybackUrls(
+          scenes,
+          workspaceId,
+          projectId,
+          heygenService
+        )
+        if (!cancelled) setResolvedScenes(withUrls)
+      } catch (err) {
+        console.error('[Preview] Failed to resolve HeyGen playback URLs:', err)
+        if (!cancelled) setResolvedScenes(scenes)
+      } finally {
+        if (!cancelled) setIsResolving(false)
+      }
+    }
+
+    resolve()
+    return () => { cancelled = true }
+  }, [showPreviewModal, scenes, workspaceId, projectId])
 
   if (!showPreviewModal) return null
+
+  const previewScenes = resolvedScenes ?? scenes
 
   return (
     <div className="fullscreen-preview-page">
@@ -67,6 +105,11 @@ const PreviewModal = ({
         .close-preview:hover {
           background: #1557b0;
         }
+        .preview-loading {
+          color: #5f6368;
+          font-size: 15px;
+          font-weight: 500;
+        }
       `}</style>
       <div className="preview-topbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -83,57 +126,61 @@ const PreviewModal = ({
         </button>
       </div>
       <div className="preview-content">
-        <Player
-          ref={playerRef}
-          component={VideoComposition}
-          durationInFrames={Math.max(totalDurationInFrames, 30)}
-          compositionWidth={1920}
-          compositionHeight={1080}
-          fps={30}
-          controls
-          autoPlay
-          style={{
-            width: '100%',
-            height: '100%',
-            maxHeight: '100vh'
-          }}
-          inputProps={{
-            scenes: scenes,
-            bgMusic: bgMusic,
-            bgMusicVolume: bgMusicVolume
-          }}
-          onPlay={() => {
-            setIsPlaying(true)
-            const currentScene = scenes.find(s => s.id === activeSceneId)
-            if (currentScene?.script) {
-              speakText(currentScene.script, activeSceneId)
-            }
-          }}
-          onPause={() => {
-            setIsPlaying(false)
-            window.speechSynthesis.pause()
-          }}
-          onSeek={(frame) => {
-            const { scene } = getSceneForFrame(frame)
-            if (scene) {
-              setActiveSceneId(scene.id)
-              if (scene.script) {
-                window.speechSynthesis.cancel()
-                setTimeout(() => speakText(scene.script, scene.id), 300)
+        {isResolving ? (
+          <p className="preview-loading">Loading HeyGen videos…</p>
+        ) : (
+          <Player
+            ref={playerRef}
+            component={VideoComposition}
+            durationInFrames={Math.max(totalDurationInFrames, 30)}
+            compositionWidth={1920}
+            compositionHeight={1080}
+            fps={30}
+            controls
+            autoPlay
+            style={{
+              width: '100%',
+              height: '100%',
+              maxHeight: '100vh'
+            }}
+            inputProps={{
+              scenes: previewScenes,
+              bgMusic: bgMusic,
+              bgMusicVolume: bgMusicVolume
+            }}
+            onPlay={() => {
+              setIsPlaying(true)
+              const currentScene = previewScenes.find(s => s.id === activeSceneId)
+              if (currentScene?.script) {
+                speakText(currentScene.script, activeSceneId)
               }
-            }
-          }}
-          onFrameUpdate={(frame) => {
-            const { scene } = getSceneForFrame(frame)
-            if (scene && scene.id !== activeSceneId) {
-              setActiveSceneId(scene.id)
-              if (scene.script) {
-                window.speechSynthesis.cancel()
-                setTimeout(() => speakText(scene.script, scene.id), 300)
+            }}
+            onPause={() => {
+              setIsPlaying(false)
+              window.speechSynthesis.pause()
+            }}
+            onSeek={(frame) => {
+              const { scene } = getSceneForFrame(frame)
+              if (scene) {
+                setActiveSceneId(scene.id)
+                if (scene.script) {
+                  window.speechSynthesis.cancel()
+                  setTimeout(() => speakText(scene.script, scene.id), 300)
+                }
               }
-            }
-          }}
-        />
+            }}
+            onFrameUpdate={(frame) => {
+              const { scene } = getSceneForFrame(frame)
+              if (scene && scene.id !== activeSceneId) {
+                setActiveSceneId(scene.id)
+                if (scene.script) {
+                  window.speechSynthesis.cancel()
+                  setTimeout(() => speakText(scene.script, scene.id), 300)
+                }
+              }
+            }}
+          />
+        )}
       </div>
     </div>
   )

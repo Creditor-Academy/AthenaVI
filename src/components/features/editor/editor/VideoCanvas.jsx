@@ -1,8 +1,7 @@
-import { useRef, useState, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react'
+import { useRef, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react'
 import { Player } from '@remotion/player'
 import VideoComposition from './VideoComposition'
 import LiveCanvasRenderer from './LiveCanvasRenderer'
-import CanvasGuidesOverlay from './CanvasGuidesOverlay'
 
 const VideoCanvas = forwardRef(({
   scenes,
@@ -13,10 +12,13 @@ const VideoCanvas = forwardRef(({
   currentTime,
   setCurrentTime,
   zoomLevel,
-  setZoomLevel,
   activeSceneId,
   setActiveSceneId,
   totalDurationInFrames,
+  playbackDurationInFrames,
+  playbackScenes,
+  playbackStartTime = 0,
+  timelineScope = 'all',
   getSceneForFrame,
   speakText,
   onPlayerReady,
@@ -32,126 +34,85 @@ const VideoCanvas = forwardRef(({
   editorView = {},
 }, ref) => {
   const playerRef = useRef(null)
-  const overlayRef = useRef(null)
+
+  const isSingleScene = timelineScope === 'single' && playbackScenes?.length === 1
+  const durationInFrames = Math.max(playbackDurationInFrames ?? totalDurationInFrames, 1)
+  const compositionScenes = playbackScenes?.length ? playbackScenes : scenes
+  const activeScene = (scenes || []).find(s => s.id === activeSceneId)
+  const isEditingLayer = !isPlaying && !!(selectedLayerId || selectedLayerIds.length)
+
+  const toLocalFrame = useCallback((globalTime) => {
+    const localTime = isSingleScene
+      ? Math.max(0, globalTime - playbackStartTime)
+      : globalTime
+    return Math.max(0, Math.min(Math.round(localTime * 30), durationInFrames - 1))
+  }, [isSingleScene, playbackStartTime, durationInFrames])
 
   const setPlayerRef = useCallback((node) => {
     playerRef.current = node
     if (node && onPlayerReady) {
       onPlayerReady({
         seekTo: (time) => {
-          node.seekTo(time * 30)
+          node.seekTo(toLocalFrame(time))
         },
-        getCurrentFrame: () => {
-          return node.getCurrentFrame()
-        },
-        play: () => {
-          node.play()
-        },
-        pause: () => {
-          node.pause()
-        }
+        getCurrentFrame: () => node.getCurrentFrame(),
+        play: () => node.play(),
+        pause: () => node.pause(),
       })
     }
-  }, [onPlayerReady])
-  const [isDragging, setIsDragging] = useState(false)
-  const [hoveredClipId, setHoveredClipId] = useState(null)
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
-  const [dropIndicator, setDropIndicator] = useState(null)
+  }, [onPlayerReady, toLocalFrame])
 
-  const activeScene = (scenes || []).find(s => s.id === activeSceneId)
-  const clips = activeScene?.clips || []
-
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
-  }
-
-  const totalDuration = totalDurationInFrames / 30
-
-  const handlePlayPause = () => {
-    if (playerRef.current) {
-      if (isPlaying) {
-        playerRef.current.pause()
-      } else {
-        playerRef.current.play()
-      }
-    }
-  }
-
-  const handleStop = () => {
-    if (playerRef.current) {
-      playerRef.current.pause()
-      playerRef.current.seekTo(0)
-    }
-    setIsPlaying(false)
-    setCurrentTime(0)
-    window.speechSynthesis.cancel()
-  }
-
-  // Notify parent when player is ready
   useImperativeHandle(ref, () => ({
     seekTo: (time) => {
       if (playerRef.current) {
-        playerRef.current.seekTo(time * 30)
+        playerRef.current.seekTo(toLocalFrame(time))
       }
     },
-    getCurrentFrame: () => {
-      return playerRef.current ? playerRef.current.getCurrentFrame() : 0
-    },
+    getCurrentFrame: () => (playerRef.current ? playerRef.current.getCurrentFrame() : 0),
     play: () => {
-      if (playerRef.current) playerRef.current.play()
+      if (!playerRef.current) return
+      if (isSingleScene) {
+        const sceneEnd = playbackStartTime + durationInFrames / 30
+        if (currentTime < playbackStartTime || currentTime >= sceneEnd - 0.05) {
+          setCurrentTime(playbackStartTime)
+          playerRef.current.seekTo(0)
+        }
+      }
+      playerRef.current.play()
     },
     pause: () => {
       if (playerRef.current) playerRef.current.pause()
-    }
+    },
   }))
 
-  // Callback ref replaces manual mount effect to avoid race condition
+  useEffect(() => {
+    if (isPlaying || !playerRef.current) return
+    playerRef.current.seekTo(toLocalFrame(currentTime))
+  }, [currentTime, isPlaying, toLocalFrame])
 
-  // Removed dead getLayerStyle, handleResizeMouseDown, handleLayerMouseDown
-
-  // Click on canvas background deselects
   const handleOverlayClick = (e) => {
-    if (e.target === overlayRef.current) {
-      if (setSelectedLayerId) setSelectedLayerId(null)
+    if (e.target === e.currentTarget && setSelectedLayerId) {
+      setSelectedLayerId(null)
     }
   }
 
-  // Handle drag-over for elements dropped from sidebar
   const handleDragOver = (e) => {
     e.preventDefault()
     e.dataTransfer.dropEffect = 'copy'
-    const overlay = overlayRef.current
-    if (!overlay) return
-    const rect = overlay.getBoundingClientRect()
-    setDropIndicator({
-      x: ((e.clientX - rect.left) / rect.width) * 1920,
-      y: ((e.clientY - rect.top) / rect.height) * 1080
-    })
-  }
-
-  const handleDragLeave = () => {
-    setDropIndicator(null)
   }
 
   const handleDrop = (e) => {
     e.preventDefault()
-    setDropIndicator(null)
-    const overlay = overlayRef.current
-    if (!overlay) return
-    const rect = overlay.getBoundingClientRect()
+    const rect = e.currentTarget.getBoundingClientRect()
     const dropX = ((e.clientX - rect.left) / rect.width) * 1920
     const dropY = ((e.clientY - rect.top) / rect.height) * 1080
 
-    // Get dropped data
     const layerData = e.dataTransfer.getData('application/json')
     if (layerData) {
       try {
         const data = JSON.parse(layerData)
-        // Dispatch custom event for parent to handle
         window.dispatchEvent(new CustomEvent('canvas-drop', {
-          detail: { ...data, x: dropX, y: dropY }
+          detail: { ...data, x: dropX, y: dropY },
         }))
       } catch (err) {
         console.warn('Invalid drop data:', err)
@@ -169,78 +130,101 @@ const VideoCanvas = forwardRef(({
             '--canvas-zoom': (zoomLevel || 100) / 100,
           }}
         >
-          {/* === EDITING VIEW: LiveCanvasRenderer shows real template UI === */}
+          {/* Player is always mounted so playerRef stays valid for play/pause/seek */}
+          <Player
+            ref={setPlayerRef}
+            component={VideoComposition}
+            durationInFrames={durationInFrames}
+            compositionWidth={1920}
+            compositionHeight={1080}
+            fps={30}
+            style={{
+              width: '100%',
+              height: '100%',
+              backgroundColor: 'transparent',
+              pointerEvents: isPlaying ? 'auto' : 'none',
+              zIndex: 10,
+              // Hide the Remotion player while editing — LiveCanvasRenderer takes over
+              visibility: isPlaying ? 'visible' : 'hidden',
+              position: isPlaying ? 'relative' : 'absolute',
+              inset: 0,
+            }}
+            inputProps={{
+              scenes: compositionScenes,
+              bgMusic: isSingleScene ? null : bgMusic,
+              bgMusicVolume: bgMusicVolume,
+              onAddScene: onAddScene,
+            }}
+            showOutlines={false}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+            onFrameUpdate={(frame) => {
+              if (!isPlaying) return
+
+              if (isSingleScene) {
+                const globalTime = playbackStartTime + frame / 30
+                setCurrentTime(globalTime)
+                if (frame >= durationInFrames - 1) {
+                  playerRef.current?.pause()
+                  setIsPlaying(false)
+                }
+                return
+              }
+
+              const time = frame / 30
+              setCurrentTime(time)
+              const { scene } = getSceneForFrame(frame)
+              if (scene && scene.id !== activeSceneId) {
+                setActiveSceneId(scene.id)
+                if (scene.script) {
+                  speakText(scene.script, scene.id)
+                }
+              }
+            }}
+          />
+
+          {/* Edit overlay — always visible when not playing; fully interactive */}
           {!isPlaying && (
-            <div 
-              ref={overlayRef}
+            <div
               onDragOver={handleDragOver}
-              onDragLeave={() => setDropIndicator(null)}
               onDrop={handleDrop}
+              onClick={handleOverlayClick}
               style={{
                 position: 'absolute',
                 inset: 0,
                 zIndex: 15,
-                // Maintain 16:9 aspect ratio
               }}
             >
               <LiveCanvasRenderer
                 scene={activeScene}
+                overlayMode={false}
                 selectedId={selectedLayerId}
                 selectedIds={selectedLayerIds}
                 onSelectClip={(id, e) => {
                   if (onSelectLayer) onSelectLayer(id, activeSceneId, e)
                   else if (setSelectedLayerId) setSelectedLayerId(id)
                 }}
-                onContentChange={(clipId, newText) => updateClipContent && updateClipContent(activeSceneId, clipId, newText)}
+                onContentChange={(clipId, newText) =>
+                  updateClipContent && updateClipContent(activeSceneId, clipId, newText)
+                }
                 onDeselect={() => setSelectedLayerId && setSelectedLayerId(null)}
-                onUpdateLayerPosition={(clipId, x, y) => onUpdateLayerPosition && onUpdateLayerPosition(clipId, x, y)}
+                onUpdateLayerPosition={(clipId, x, y) =>
+                  onUpdateLayerPosition && onUpdateLayerPosition(clipId, x, y)
+                }
                 onCommitLayerPosition={onCommitLayerPosition}
-                onUpdateLayerSize={(clipId, w, h) => onUpdateLayerSize && onUpdateLayerSize(clipId, w, h)}
+                onUpdateLayerSize={(clipId, w, h) =>
+                  onUpdateLayerSize && onUpdateLayerSize(clipId, w, h)
+                }
                 showGuides={editorView.showGuides}
                 showSafeZone={editorView.showSafeZone}
                 gridSize={editorView.gridSize || 20}
               />
             </div>
           )}
-
-          {/* === REMOTION PLAYER: used for preview/export, hidden during editing === */}
-          <Player
-            ref={playerRef}
-            component={VideoComposition}
-            durationInFrames={Math.max(totalDurationInFrames, 1)}
-            compositionWidth={1280}
-            compositionHeight={720}
-            fps={30}
-            style={{
-              width: '100%',
-              height: '100%',
-              backgroundColor: 'white',
-              visibility: isPlaying ? 'visible' : 'hidden',
-            }}
-            inputProps={{
-              scenes: scenes,
-              bgMusic: bgMusic,
-              bgMusicVolume: bgMusicVolume,
-              onAddScene: onAddScene
-            }}
-            showOutlines={false}
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-            onFrameUpdate={(frame) => {
-              const time = frame / 30
-              setCurrentTime(time)
-              const { scene } = getSceneForFrame(frame)
-              if (scene && scene.id !== activeSceneId) {
-                setActiveSceneId(scene.id)
-                if (isPlaying && scene.script) {
-                  speakText(scene.script, scene.id)
-                }
-              }
-            }}
-          />
         </div>
       </div>
     </div>
   )
 })
-export default VideoCanvas;
+
+export default VideoCanvas

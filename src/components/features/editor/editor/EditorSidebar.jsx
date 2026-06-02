@@ -171,7 +171,9 @@ const EditorSidebar = ({
                 >
                   <div style={{
                     height: '80px',
-                    background: `url(${scene.avatar || 'https://via.placeholder.com/300x150?text=Scene'})`,
+                    background: scene.avatar
+                      ? `url(${scene.avatar})`
+                      : 'linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%)',
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     position: 'relative',

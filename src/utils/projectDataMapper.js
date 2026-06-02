@@ -232,6 +232,7 @@ function buildPresenter(scene) {
     avatarId: avatarId || base.avatarId,
     avatarName: scene.avatarName || base.avatarName,
     avatarType: getSceneAvatarKind(scene),
+    avatarEngine: scene.avatarEngine || base.avatarEngine || 'avatar_iv',
     voiceId: scene.voiceId || base.voiceId,
     voiceName: scene.voiceName || base.voiceName,
     script: scene.script ?? base.script ?? '',
@@ -291,14 +292,25 @@ export function toBackendProjectData(projectState) {
     },
     scenes: (projectState.scenes || []).map((scene, idx) => {
       const sceneId = scene.sceneId || scene.id || `scene_${idx}`;
+      const isRenderableElement = (el) => {
+        if (!el) return false;
+        if (el.type !== 'image' && el.type !== 'video' && el.type !== 'audio') return true;
+        const content = el.content;
+        const src =
+          el.src ||
+          (typeof content === 'object' && content !== null ? (content.src || content.url) : null) ||
+          (typeof content === 'string' ? content : null);
+        const assetId = typeof content === 'object' && content !== null ? content.assetId : null;
+        return !!(assetId || (src && !isEphemeralUrl(src)));
+      };
       const scenePayload = {
         sceneId,
         name: scene.title || scene.name || `Scene ${idx + 1}`,
         durationInFrames: Math.max(1, Math.round((scene.duration || 8) * FPS)),
         background: normalizeBackground(scene.background),
-        elements: (scene.clips || []).map((clip, cIdx) =>
-          clipToElement(clip, { ...scene, sceneId }, cIdx)
-        ),
+        elements: (scene.clips || [])
+          .map((clip, cIdx) => clipToElement(clip, { ...scene, sceneId }, cIdx))
+          .filter(isRenderableElement),
       };
 
       if (scene.transition?.type && scene.transition.type !== 'none') {

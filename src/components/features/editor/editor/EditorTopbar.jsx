@@ -63,6 +63,7 @@ const EditorTopbar = ({
     setSelectedTool,
     handlePreview,
     exportVideo,
+    isExporting = false,
     zoomLevel,
     setZoomLevel,
     onUndo,
@@ -403,8 +404,9 @@ const EditorTopbar = ({
                         type="button"
                         className="topbar-icon-action topbar-export-btn"
                         onClick={exportVideo}
-                        title="Export Video"
-                        aria-label="Export video"
+                        disabled={isExporting}
+                        title={isExporting ? 'Rendering video…' : 'Download Video (Ctrl+E)'}
+                        aria-label={isExporting ? 'Rendering video' : 'Download video'}
                     >
                         <MdFileDownload size={18} />
                     </button>
@@ -471,7 +473,7 @@ const EditorTopbar = ({
                                 { key: 'Ctrl + Z', action: 'Undo' },
                                 { key: 'Ctrl + Y', action: 'Redo' },
                                 { key: 'Ctrl + S', action: 'Save project' },
-                                { key: 'Ctrl + E', action: 'Export video' },
+                                { key: 'Ctrl + E', action: 'Download HeyGen video' },
                                 { key: '← →', action: 'Step frame' },
                             ].map(({ key, action }) => (
                                 <div className="shortcut-row" key={key}>

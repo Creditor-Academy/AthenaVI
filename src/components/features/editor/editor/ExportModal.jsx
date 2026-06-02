@@ -1,154 +1,217 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { MdClose, MdCheckCircle, MdErrorOutline, MdFileDownload } from 'react-icons/md'
 
-const ExportModal = ({ showExportModal, setShowExportModal, calculateCredits }) => {
-  const [exportFormat, setExportFormat] = useState('MP4')
-  const [exportResolution, setExportResolution] = useState('1920x1080')
-  const [exportFrameRate, setExportFrameRate] = useState('30')
-  const [exportQuality, setExportQuality] = useState('High')
+const RESOLUTIONS = [
+  { value: '1920x1080', label: '1080p (1920 × 1080)' },
+  { value: '1280x720', label: '720p (1280 × 720)' },
+  { value: '3840x2160', label: '4K (3840 × 2160)' },
+]
 
-  // Credit calculation function
-  const calculateCreditsLocal = () => {
-    let baseCredits = 100
-    
-    // Format multipliers
-    const formatMultipliers = {
-      'MP4': 1.0,
-      'WebM': 0.8,
-      'GIF': 0.5
+const QUALITIES = [
+  { value: 'high', label: 'High' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'low', label: 'Low' },
+]
+
+function formatDuration(seconds) {
+  const s = Math.max(0, Math.round(seconds || 0))
+  const m = Math.floor(s / 60)
+  const r = s % 60
+  return `${m}:${String(r).padStart(2, '0')}`
+}
+
+const ExportModal = ({
+  isOpen,
+  onClose,
+  projectTitle = 'Untitled video',
+  sceneCount = 0,
+  totalDurationSec = 0,
+  phase = 'configure',
+  statusMessage = '',
+  errorMessage = '',
+  onStartExport,
+}) => {
+  const [filename, setFilename] = useState(projectTitle)
+  const [resolution, setResolution] = useState('1920x1080')
+  const [quality, setQuality] = useState('high')
+
+  useEffect(() => {
+    if (isOpen) {
+      setFilename(projectTitle || 'Untitled video')
+      setResolution('1920x1080')
+      setQuality('high')
     }
-    
-    // Resolution multipliers
-    const resolutionMultipliers = {
-      '1920x1080': 1.0,
-      '1280x720': 0.7,
-      '3840x2160': 2.0
-    }
-    
-    // Frame rate multipliers
-    const frameRateMultipliers = {
-      '30': 1.0,
-      '24': 0.8,
-      '60': 1.5
-    }
-    
-    // Quality multipliers
-    const qualityMultipliers = {
-      'High': 1.2,
-      'Medium': 1.0,
-      'Low': 0.7
-    }
-    
-    const formatMultiplier = formatMultipliers[exportFormat] || 1.0
-    const resolutionMultiplier = resolutionMultipliers[exportResolution] || 1.0
-    const frameRateMultiplier = frameRateMultipliers[exportFrameRate] || 1.0
-    const qualityMultiplier = qualityMultipliers[exportQuality] || 1.0
-    
-    const totalCredits = Math.round(baseCredits * formatMultiplier * resolutionMultiplier * frameRateMultiplier * qualityMultiplier)
-    
-    return totalCredits
+  }, [isOpen, projectTitle])
+
+  if (!isOpen) return null
+
+  const isLoading = phase === 'loading'
+  const isSuccess = phase === 'success'
+  const isError = phase === 'error'
+  const canClose = !isLoading
+
+  const handleOverlayClick = () => {
+    if (canClose) onClose()
   }
 
-  if (!showExportModal) return null
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    onStartExport?.({ filename: filename.trim() || projectTitle, resolution, quality })
+  }
 
   return (
-    <div className="modal-overlay" onClick={() => setShowExportModal(false)}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <h2 className="modal-title">Export Video</h2>
-        <div className="modal-body">
-          <div className="property-group">
-            <div className="property-row">
-              <label className="property-label">Format</label>
-              <select 
-                className="property-input"
-                value={exportFormat}
-                onChange={(e) => setExportFormat(e.target.value)}
-              >
-                <option>MP4</option>
-                <option>WebM</option>
-                <option>GIF</option>
-              </select>
-            </div>
-            <div className="property-row">
-              <label className="property-label">Resolution</label>
-              <select 
-                className="property-input"
-                value={exportResolution}
-                onChange={(e) => setExportResolution(e.target.value)}
-              >
-                <option>1920x1080</option>
-                <option>1280x720</option>
-                <option>3840x2160</option>
-              </select>
-            </div>
-            <div className="property-row">
-              <label className="property-label">Frame Rate</label>
-              <select 
-                className="property-input"
-                value={exportFrameRate}
-                onChange={(e) => setExportFrameRate(e.target.value)}
-              >
-                <option>30</option>
-                <option>24</option>
-                <option>60</option>
-              </select>
-            </div>
-            <div className="property-row">
-              <label className="property-label">Quality</label>
-              <select 
-                className="property-input"
-                value={exportQuality}
-                onChange={(e) => setExportQuality(e.target.value)}
-              >
-                <option>High</option>
-                <option>Medium</option>
-                <option>Low</option>
-              </select>
-            </div>
-          </div>
+    <div className="modal-overlay export-modal-overlay" onClick={handleOverlayClick}>
+      <div
+        className="modal-content export-modal"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-labelledby="export-modal-title"
+        aria-busy={isLoading}
+      >
+        <div className="export-modal-header">
+          <h2 id="export-modal-title" className="modal-title">
+            {isLoading ? 'Preparing your video' : isSuccess ? 'Download ready' : 'Download video'}
+          </h2>
+          {canClose && (
+            <button
+              type="button"
+              className="export-modal-close"
+              onClick={onClose}
+              aria-label="Close"
+            >
+              <MdClose size={20} />
+            </button>
+          )}
+        </div>
 
-          {/* Credit Display */}
-          <div className="credit-display" style={{
-            marginTop: '20px',
-            padding: '15px',
-            backgroundColor: '#f8f9fa',
-            borderRadius: '8px',
-            border: '1px solid #dadce0'
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '8px'
-            }}>
-              <span style={{ color: '#202124', fontSize: '14px', fontWeight: '500' }}>Credit Consumption:</span>
-              <span style={{
-                color: '#34a853',
-                fontSize: '18px',
-                fontWeight: '600'
-              }}>
-                {calculateCreditsLocal()} credits
-              </span>
+        {phase === 'configure' && (
+          <form onSubmit={handleSubmit}>
+            <div className="modal-body">
+              <div className="export-modal-summary">
+                <div className="export-modal-summary-item">
+                  <span>Scenes</span>
+                  <strong>{sceneCount}</strong>
+                </div>
+                <div className="export-modal-summary-item">
+                  <span>Duration</span>
+                  <strong>{formatDuration(totalDurationSec)}</strong>
+                </div>
+                <div className="export-modal-summary-item">
+                  <span>Format</span>
+                  <strong>MP4</strong>
+                </div>
+              </div>
+
+              <div className="property-group">
+                <div className="property-row">
+                  <label className="property-label" htmlFor="export-filename">File name</label>
+                  <input
+                    id="export-filename"
+                    className="property-input"
+                    type="text"
+                    value={filename}
+                    onChange={(e) => setFilename(e.target.value)}
+                    placeholder="My video"
+                    maxLength={120}
+                  />
+                </div>
+                <div className="property-row">
+                  <label className="property-label" htmlFor="export-resolution">Resolution</label>
+                  <select
+                    id="export-resolution"
+                    className="property-input"
+                    value={resolution}
+                    onChange={(e) => setResolution(e.target.value)}
+                  >
+                    {RESOLUTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="property-row">
+                  <label className="property-label" htmlFor="export-quality">Quality</label>
+                  <select
+                    id="export-quality"
+                    className="property-input"
+                    value={quality}
+                    onChange={(e) => setQuality(e.target.value)}
+                  >
+                    {QUALITIES.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <p className="export-modal-hint">
+                Your full project will be rendered — all scenes, text, images, and avatars combined into one video.
+              </p>
             </div>
-            <div style={{
-              color: '#5f6368',
-              fontSize: '12px',
-              textAlign: 'center'
-            }}>
-              Credits vary based on format, resolution, frame rate, and quality
+
+            <div className="modal-actions">
+              <button type="button" className="btn-secondary" onClick={onClose}>
+                Cancel
+              </button>
+              <button type="submit" className="btn-primary export-modal-submit">
+                <MdFileDownload size={18} />
+                Start download
+              </button>
+            </div>
+          </form>
+        )}
+
+        {isLoading && (
+          <div className="export-modal-loading">
+            <div className="export-modal-spinner" aria-hidden="true" />
+            <p className="export-modal-status">{statusMessage || 'Starting…'}</p>
+            <p className="export-modal-loading-hint">
+              This may take a few minutes depending on length and complexity. Keep this tab open.
+            </p>
+            <ul className="export-modal-steps">
+              <li className={statusMessage?.toLowerCase().includes('saving') ? 'active' : statusMessage ? 'done' : ''}>
+                Saving project
+              </li>
+              <li className={statusMessage?.toLowerCase().includes('starting') ? 'active' : statusMessage?.toLowerCase().includes('render') ? 'done' : ''}>
+                Starting render
+              </li>
+              <li className={statusMessage?.toLowerCase().includes('render') && !statusMessage?.toLowerCase().includes('starting') ? 'active' : statusMessage?.toLowerCase().includes('prepar') ? 'done' : ''}>
+                Rendering video
+              </li>
+              <li className={statusMessage?.toLowerCase().includes('prepar') ? 'active' : ''}>
+                Preparing download
+              </li>
+            </ul>
+          </div>
+        )}
+
+        {isSuccess && (
+          <div className="export-modal-result export-modal-result--success">
+            <MdCheckCircle size={48} />
+            <p>Your video has been rendered and the download should begin shortly.</p>
+            <button type="button" className="btn-primary" onClick={onClose}>
+              Done
+            </button>
+          </div>
+        )}
+
+        {isError && (
+          <div className="export-modal-result export-modal-result--error">
+            <MdErrorOutline size={48} />
+            <p>{errorMessage || 'Something went wrong while exporting your video.'}</p>
+            <div className="modal-actions">
+              <button type="button" className="btn-secondary" onClick={onClose}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => onStartExport?.({ filename: filename.trim() || projectTitle, resolution, quality })}
+              >
+                Try again
+              </button>
             </div>
           </div>
-        </div>
-        <div className="modal-actions">
-          <button className="btn-secondary" onClick={() => setShowExportModal(false)}>
-            Cancel
-          </button>
-          <button className="btn-primary" onClick={() => {
-            alert(`Video export started! This will consume ${calculateCreditsLocal()} credits.`)
-            setShowExportModal(false)
-          }}>
-            Start Export
-          </button>
-        </div>
+        )}
       </div>
     </div>
   )

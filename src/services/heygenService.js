@@ -3,7 +3,12 @@ import API_CONFIG, { buildUrl, getAuthHeaders } from '../config/api.js';
 class HeygenService {
   async getAvatarLooks(params = {}) {
     try {
+      // Backend validates pagination cursor as `token` (not `next_token`).
       const mergedParams = { limit: 50, ...params };
+      if (mergedParams.next_token && !mergedParams.token) {
+        mergedParams.token = mergedParams.next_token;
+        delete mergedParams.next_token;
+      }
       const queryParams = new URLSearchParams(mergedParams).toString();
       const endpoint = `${API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.LOOKS}${queryParams ? `?${queryParams}` : ''}`;
 
@@ -26,7 +31,13 @@ class HeygenService {
 
   async getAvatarGroups(params = {}) {
     try {
-      const queryParams = new URLSearchParams(params).toString();
+      // Backend validates pagination cursor as `token` (not `next_token`).
+      const mergedParams = { ...params };
+      if (mergedParams.next_token && !mergedParams.token) {
+        mergedParams.token = mergedParams.next_token;
+        delete mergedParams.next_token;
+      }
+      const queryParams = new URLSearchParams(mergedParams).toString();
       const endpoint = `${API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.GROUPS}${queryParams ? `?${queryParams}` : ''}`;
 
       const response = await fetch(buildUrl(endpoint), {
@@ -255,6 +266,7 @@ class HeygenService {
       const {
         sceneId,
         avatarId,
+        avatarEngine = 'avatar_iv',
         avatarType,
         title,
         resolution = '1080p',
@@ -275,6 +287,7 @@ class HeygenService {
       const payload = {
         sceneId,
         avatarId,
+        avatarEngine,
         title,
         resolution,
         aspectRatio,
@@ -287,7 +300,8 @@ class HeygenService {
       };
 
       if (avatarType) payload.avatarType = avatarType;
-      if (avatarType === 'photo_avatar' && expressiveness) {
+      // Expressiveness is only supported for avatar_iv + photo_avatar.
+      if (avatarEngine === 'avatar_iv' && avatarType === 'photo_avatar' && expressiveness) {
         payload.expressiveness = expressiveness;
       }
 

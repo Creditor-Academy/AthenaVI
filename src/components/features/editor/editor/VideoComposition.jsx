@@ -9,6 +9,8 @@ import {
     MdVideoLibrary
 } from 'react-icons/md'
 import { getClipTextContent, isTextLayer, parseFontSize, toFontSizeCss } from '../../../../utils/textClip'
+import { getClipZIndex, isBackgroundClip, sortClipsForRender } from '../../../../utils/editorLayerUtils'
+import { resolveClipMediaSrc, isVideoMedia, isAvatarClip } from '../../../../utils/heygenVideo'
 
 export const COMPOSITION_W = 1920
 export const COMPOSITION_H = 1080
@@ -121,7 +123,15 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) 
     if (currentScene.backgroundImage) {
         backgroundStyle = { ...backgroundStyle, backgroundImage: `url(${currentScene.backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
     } else if (currentScene.background?.value) {
-        backgroundStyle = { ...backgroundStyle, background: currentScene.background.value, backgroundImage: 'none' }
+        const value = String(currentScene.background.value)
+        const isGradient = value.includes('gradient(')
+        backgroundStyle = {
+            ...backgroundStyle,
+            backgroundColor: isGradient ? '#ffffff' : value,
+            backgroundImage: isGradient ? value : 'none',
+            backgroundSize: isGradient ? 'cover' : backgroundStyle.backgroundSize,
+            backgroundPosition: isGradient ? 'center' : backgroundStyle.backgroundPosition,
+        }
     }
 
     return (
@@ -138,8 +148,8 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) 
             {/* BACKGROUND LAYER */}
             <div style={backgroundStyle} />
 
-            {/* RENDER CLIPS (NO COLOR - Blueprint Logic) */}
-            {(currentScene.clips || []).map((clip, index) => {
+            {/* RENDER CLIPS — backgrounds first, then stacked by layer */}
+            {sortClipsForRender(currentScene.clips || []).map((clip, index) => {
                 const clipStart = (clip.startTime || 0) * 30
                 const clipDuration = ((clip.endTime || 5) - (clip.startTime || 0)) * 30
                 if (frameInScene < clipStart || frameInScene >= clipStart + clipDuration) return null
@@ -163,7 +173,7 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) 
                     height: rect.height,
                     transform: `rotate(${clip.rotation ?? 0}deg) scale(${scale * zoomFactor * (clip.scale || 1)})`,
                     transformOrigin: 'top left',
-                    zIndex: 10 + (clip.layer || index),
+                    zIndex: getClipZIndex(clip, false),
                     opacity: opacity * (clip.opacity ?? 1),
                     display: 'flex',
                     flexDirection: 'column',
@@ -208,15 +218,14 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) 
                 }
 
                 if (clip.type === 'image' || clip.type === 'avatar' || clip.type === 'video') {
-                    const isGeneratedAvatar = (clip.type === 'avatar' || clip.role === 'avatar') && currentScene.generatedVideoUrl;
-                    const src = isGeneratedAvatar ? currentScene.generatedVideoUrl : clip.src;
-                    const isVideo = clip.type === 'video' || isGeneratedAvatar;
+                    const src = resolveClipMediaSrc(clip, currentScene);
+                    const isVideo = isVideoMedia(clip, src);
 
                     return (
                         <div key={clip.id} style={{
                             ...style,
                             border: 'none',
-                            borderRadius: (clip.type === 'avatar' || clip.role === 'avatar') ? '50%' : '16px',
+                            borderRadius: isAvatarClip(clip) ? '50%' : '16px',
                             background: src ? 'transparent' : 'rgba(0,0,0,0.03)',
                             overflow: 'hidden'
                         }}>
@@ -231,7 +240,7 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) 
                                 )
                             ) : (
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                                    {clip.type === 'avatar' ? (
+                                    {isAvatarClip(clip) ? (
                                         <MdPerson size={Math.min(64, (clip.size?.width || 128) / 2)} color="rgba(0,0,0,0.1)" />
                                     ) : clip.type === 'video' ? (
                                         <MdVideoLibrary size={Math.min(64, (clip.size?.width || 128) / 2)} color="rgba(0,0,0,0.1)" />

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { buildSceneDurationPatch, estimateHeygenSceneDuration } from '../../../../utils/sceneDuration';
+import { normalizeClipStack, normalizeClipsToScene } from '../../../../utils/editorLayerUtils';
 import {
   MdTextFields,
   MdColorLens,
@@ -251,7 +252,10 @@ const LayerOrderLockBar = ({ activeLayer, clips, onMoveLayerOrder, onToggleLayer
 
 const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScene, onMoveLayerOrder, onToggleLayerLock }) => {
   const updateLayer = (updates) => {
-    const newClips = clips.map(l => l.id === activeLayer.id ? { ...l, ...updates } : l);
+    let newClips = clips.map(l => l.id === activeLayer.id ? { ...l, ...updates } : l);
+    if ('isBackground' in updates) {
+      newClips = normalizeClipStack(newClips);
+    }
     updateScene(activeSceneId, { clips: newClips });
   };
   const updateStyle  = (updates) => updateLayer({ style:   { ...activeLayer.style,   ...updates } });
@@ -557,7 +561,7 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
                 }}>
                   {isVideoSrc ? (
                     <video src={src} style={{ width: '100%', height: '100%', objectFit: activeLayer.style?.objectFit || 'cover' }}
-                      muted autoPlay loop playsInline />
+                      muted playsInline preload="metadata" />
                   ) : (
                     <img src={src} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: activeLayer.style?.objectFit || 'cover' }}
                       onError={(e) => { e.target.style.display = 'none' }} />
@@ -1004,7 +1008,7 @@ const SceneConfigurationPanel = ({
                   const ti = tc.findIndex(c => c.type === 'text');
                   if (ti !== -1) tc[ti].content = existingText.content;
                 }
-                newClips = tc;
+                newClips = normalizeClipsToScene(tc, activeScene?.duration || 8);
               }
               updateScene(activeSceneId, { layout: newLayout, clips: newClips });
             }}
@@ -1025,7 +1029,22 @@ const SceneConfigurationPanel = ({
       {/* ── Timing & Playback ──────────────────────────────────────── */}
       <SectionHeader icon={<MdSchedule size={14} />} label="Timing & Playback" />
       <Card>
-        <SliderRow label="Duration" value={activeScene.duration || 8} min={1} max={60} step={0.5} unit="s" onChange={(v) => updateScene(activeSceneId, { duration: v })} />
+        <SliderRow
+          label="Duration"
+          value={activeScene.duration || 8}
+          min={1}
+          max={60}
+          step={0.5}
+          unit="s"
+          onChange={(v) => updateScene(activeSceneId, { duration: v, durationFromScript: false })}
+        />
+        {activeScene.durationFromScript !== false && (activeScene.script || '').trim() && (
+          <p style={{ fontSize: 10, color: 'var(--text-muted, #64748b)', margin: '0 0 8px', lineHeight: 1.4 }}>
+            Auto-set from script
+            ({estimateHeygenSceneDuration(activeScene.script, activeScene.voiceSettings)}s at current voice speed).
+            Drag to override.
+          </p>
+        )}
         <SelectRow
           label="Entrance Speed"
           value={activeScene.entranceSpeed || 'normal'}
@@ -1043,7 +1062,21 @@ const SceneConfigurationPanel = ({
           max={2}
           step={0.1}
           unit="×"
-          onChange={(v) => updateScene(activeSceneId, { voiceSettings: { ...(activeScene.voiceSettings || {}), speed: v } })}
+          onChange={(v) => {
+            if (activeScene.durationFromScript === false) {
+              updateScene(activeSceneId, {
+                voiceSettings: { ...(activeScene.voiceSettings || {}), speed: v },
+              });
+              return;
+            }
+            const patch = buildSceneDurationPatch(activeScene, {
+              voiceSettings: { ...(activeScene.voiceSettings || {}), speed: v },
+            });
+            updateScene(activeSceneId, {
+              voiceSettings: { ...(activeScene.voiceSettings || {}), speed: v },
+              ...patch,
+            });
+          }}
         />
       </Card>
 

@@ -8,11 +8,12 @@ import EditorTopbar from '../../components/features/editor/editor/EditorTopbar'
 import EditorSidebar from '../../components/features/editor/editor/EditorSidebar'
 import VideoCanvas from '../../components/features/editor/editor/VideoCanvas'
 import SceneConfigurationPanel from '../../components/features/editor/editor/SceneConfigurationPanel'
-import ExportModal from '../../components/features/editor/editor/ExportModal'
 import TemplateModal from '../../components/features/editor/editor/TemplateModal'
 import PreviewModal from '../../components/features/editor/editor/PreviewModal'
+import ExportModal from '../../components/features/editor/editor/ExportModal'
 import GeneratedVideoModal from '../../components/features/editor/editor/GeneratedVideoModal'
 import QuickCreateModal from '../../components/features/editor/editor/QuickCreateModal'
+import RenderDownloadModal from '../../components/features/editor/editor/RenderDownloadModal'
 import heygenService from '../../services/heygenService'
 import avatar1 from '../../assets/Avatarr1.png'
 import projectTemplate from '../../constants/projectTemplate.json'
@@ -24,8 +25,19 @@ import {
   rehydrateSceneVideos,
   toBackendProjectData,
 } from '../../utils/projectDataMapper'
+import { ensureSceneIdentity, nextHeygenSceneId } from '../../utils/heygenVideo'
+import { exportFullProjectVideo } from '../../utils/projectRender'
+import {
+  applyDurationToSceneClips,
+  buildSceneDurationPatch,
+  durationFromVideoMetadata,
+  estimateHeygenSceneDuration,
+  probeVideoDuration,
+  roundSceneDuration,
+} from '../../utils/sceneDuration'
 import { useEditorHistory } from '../../hooks/useEditorHistory'
 import { useEditorUx } from '../../hooks/useEditorUx'
+import { normalizeClipStack, normalizeClipsToScene } from '../../utils/editorLayerUtils'
 import { saveVersionSnapshot, loadVersionSnapshot, listVersionSnapshots } from '../../utils/editorVersionHistory'
 import EditorToast from '../../components/features/editor/editor/EditorToast'
 import EditorViewControls from '../../components/features/editor/editor/EditorViewControls'
@@ -40,7 +52,14 @@ function buildInitialProject(initialConfig) {
       workspaceId: initialConfig.videoData.workspaceId,
       folderId: initialConfig.videoData.folderId,
     });
-    return { ...projectTemplate.project, ...mapped };
+    return {
+      ...projectTemplate.project,
+      ...mapped,
+      scenes: (mapped.scenes || []).map((scene) => ({
+        ...scene,
+        clips: normalizeClipsToScene(normalizeClipStack(scene.clips || []), scene.duration || 8),
+      })),
+    };
   }
 
   const pageSizeToResolution = {
@@ -57,7 +76,12 @@ function buildInitialProject(initialConfig) {
     ...projectTemplate.project,
     title: resolvedTitle,
     resolution: resolvedResolution,
-    scenes: initialScenes.length > 0 ? initialScenes : [],
+    scenes: initialScenes.length > 0
+      ? initialScenes.map((scene, idx) => ({
+          ...ensureSceneIdentity(scene, idx),
+          clips: normalizeClipsToScene(normalizeClipStack(scene.clips || []), scene.duration || 8),
+        }))
+      : [],
     updatedAt: new Date().toISOString(),
     id: initialConfig?.videoId,
     workspaceId: initialConfig?.workspaceId,
@@ -85,19 +109,30 @@ function Create({ onBack, initialConfig = null }) {
   const [bootProject] = useState(() => buildInitialProject(initialConfig))
   const { project, setProject, undo, redo, canUndo, canRedo } = useEditorHistory(bootProject)
 
+  const [isProjectLoading, setIsProjectLoading] = useState(() => {
+    const workspaceId = initialConfig?.workspaceId || initialConfig?.videoData?.workspaceId
+    const projectId = initialConfig?.videoId || initialConfig?.videoData?.id || initialConfig?.videoData?._id
+    return !!(workspaceId && projectId)
+  })
+
   const [activeSceneId, setActiveSceneId] = useState(null)
   const [selectedTool, setSelectedTool] = useState(null)
   const [timelineScope, setTimelineScope] = useState('all')
   const [isPlaying, setIsPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
+  const [currentTime, setCurrentTime] = useState(1)
   const [zoomLevel, setZoomLevel] = useState(100)
-  const [showExportModal, setShowExportModal] = useState(false)
   const [showPreviewModal, setShowPreviewModal] = useState(false)
+  const [showExportModal, setShowExportModal] = useState(false)
+  const [exportPhase, setExportPhase] = useState('configure')
+  const [exportStatus, setExportStatus] = useState('')
+  const [exportError, setExportError] = useState('')
   const [showTemplateModal, setShowTemplateModal] = useState(false)
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false)
   const [selectedLayerId, setSelectedLayerId] = useState(null)
   const [musicDuration, setMusicDuration] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [showRenderDownload, setShowRenderDownload] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
   const [lastSaved, setLastSaved] = useState(null)
   const [showGeneratedVideoModal, setShowGeneratedVideoModal] = useState(false)
   const [generatedVideoUrl, setGeneratedVideoUrl] = useState(null)
@@ -207,6 +242,12 @@ function Create({ onBack, initialConfig = null }) {
     return () => window.removeEventListener('open-generated-video', handleOpenGeneratedVideo)
   }, [])
 
+  useEffect(() => {
+    const handleReady = () => setShowRenderDownload(true)
+    window.addEventListener('render-download-ready', handleReady)
+    return () => window.removeEventListener('render-download-ready', handleReady)
+  }, [])
+
   const projectRef = useRef(project)
   const insertAfterIndexRef = useRef(null)
   projectRef.current = project
@@ -220,6 +261,7 @@ function Create({ onBack, initialConfig = null }) {
 
     const fetchProject = async () => {
       try {
+        setIsProjectLoading(true)
         const fetchedProject = await workspaceService.getProject(workspaceId, projectId)
         if (!fetchedProject) return
 
@@ -244,12 +286,14 @@ function Create({ onBack, initialConfig = null }) {
             ...prev,
             resolution: mapped.resolution || prev.resolution,
             meta: mapped.meta || prev.meta,
-            scenes: scenesWithVideo,
+            scenes: scenesWithVideo.map((s, idx) => ensureSceneIdentity(s, idx)),
             updatedAt: fetchedProject.updatedAt || new Date().toISOString(),
           }));
         }
       } catch (err) {
         console.warn('[Editor] Failed to fetch project from backend:', err)
+      } finally {
+        setIsProjectLoading(false)
       }
     }
 
@@ -458,12 +502,20 @@ function Create({ onBack, initialConfig = null }) {
       }
     }
 
+    if (meta?.isBackground) {
+      newClip.isBackground = true
+      newClip.role = 'background'
+      newClip.layer = 0
+      newClip.position = meta?.position ?? { x: 960, y: 540 }
+      newClip.size = meta?.size ?? { width: 1920, height: 1080 }
+    }
+
     setProject(prev => ({
       ...prev,
       updatedAt: new Date().toISOString(),
       scenes: prev.scenes.map(s =>
         s.id === targetSceneId
-          ? { ...s, clips: [...s.clips, newClip] }
+          ? { ...s, clips: normalizeClipStack([...s.clips, newClip]) }
           : s
       )
     }), { history: true })
@@ -493,6 +545,8 @@ function Create({ onBack, initialConfig = null }) {
 
   const handleCommitLayerPosition = () => {
     commitLayerPositionHistory()
+    // Autosave after any move/resize commit from canvas interactions.
+    setTimeout(() => saveProject(false), 250)
   }
 
   // Listen for canvas-drop events (drag from sidebar to canvas)
@@ -558,33 +612,8 @@ function Create({ onBack, initialConfig = null }) {
     setMusicDuration(newDuration)
   }
 
-  // Export settings state
-  const [exportFormat, setExportFormat] = useState('MP4')
-  const [exportResolution, setExportResolution] = useState('1920x1080')
-  const [exportFrameRate, setExportFrameRate] = useState('30')
-  const [exportQuality, setExportQuality] = useState('High')
-
   const playerRef = useRef(null)
   const speechSynthesisRef = useRef(null)
-
-  // Store player methods for seeking
-  // We use playerRef.current now
-
-  // Credit calculation function
-  const calculateCredits = () => {
-    let baseCredits = 100
-    const formatMultipliers = { 'MP4': 1.0, 'WebM': 0.8, 'GIF': 0.5 }
-    const resolutionMultipliers = { '1920x1080': 1.0, '1280x720': 0.7, '3840x2160': 2.0 }
-    const frameRateMultipliers = { '30': 1.0, '24': 0.8, '60': 1.5 }
-    const qualityMultipliers = { 'High': 1.2, 'Medium': 1.0, 'Low': 0.7 }
-
-    const formatMultiplier = formatMultipliers[exportFormat] || 1.0
-    const resolutionMultiplier = resolutionMultipliers[exportResolution] || 1.0
-    const frameRateMultiplier = frameRateMultipliers[exportFrameRate] || 1.0
-    const qualityMultiplier = qualityMultipliers[exportQuality] || 1.0
-
-    return Math.round(baseCredits * formatMultiplier * resolutionMultiplier * frameRateMultiplier * qualityMultiplier)
-  }
 
   const activeScene = project.scenes.find(s => s.id === activeSceneId)
   const selectedLayer = activeScene?.clips?.find((c) => c.id === selectedLayerId)
@@ -592,6 +621,32 @@ function Create({ onBack, initialConfig = null }) {
 
   const totalDurationInFrames = useMemo(() => {
     return project.scenes.reduce((sum, s) => sum + (s.duration || 8), 0) * 30
+  }, [project.scenes])
+
+  const activeSceneStart = useMemo(() => {
+    const idx = project.scenes.findIndex((s) => s.id === activeSceneId)
+    if (idx <= 0) return 0
+    return project.scenes.slice(0, idx).reduce((sum, s) => sum + (s.duration || 8), 0)
+  }, [project.scenes, activeSceneId])
+
+  const isSingleScenePlayback = timelineScope === 'single' && !!activeScene
+
+  const playbackScenes = useMemo(
+    () => (isSingleScenePlayback ? [activeScene] : project.scenes),
+    [isSingleScenePlayback, activeScene, project.scenes]
+  )
+
+  const playbackDurationInFrames = useMemo(() => {
+    if (isSingleScenePlayback) {
+      return Math.max(1, Math.round((activeScene.duration || 8) * 30))
+    }
+    return totalDurationInFrames
+  }, [isSingleScenePlayback, activeScene, totalDurationInFrames])
+
+  const getSceneStartTime = useCallback((sceneId) => {
+    const idx = project.scenes.findIndex((s) => s.id === sceneId)
+    if (idx <= 0) return 0
+    return project.scenes.slice(0, idx).reduce((sum, s) => sum + (s.duration || 8), 0)
   }, [project.scenes])
 
   const handleReorderScenes = (newScenes) => {
@@ -670,19 +725,24 @@ function Create({ onBack, initialConfig = null }) {
     return { scene: scenes[scenes.length - 1] || scenes[0], frameInScene: 0 }
   }
 
-  // Handle player frame updates
+  // Handle player frame updates (fallback sync when Remotion onFrameUpdate is sparse)
   useEffect(() => {
     if (playerRef.current && isPlaying) {
       const player = playerRef.current
       const updateTime = () => {
         try {
           const frame = player.getCurrentFrame()
-          setCurrentTime(frame / 30) // Convert frames to seconds
-          const { scene } = getSceneForFrame(frame)
-          if (scene && scene.id !== activeSceneId) {
-            setActiveSceneId(scene.id)
+          const time = timelineScope === 'single'
+            ? activeSceneStart + frame / 30
+            : frame / 30
+          setCurrentTime(time)
+          if (timelineScope !== 'single') {
+            const { scene } = getSceneForFrame(frame)
+            if (scene && scene.id !== activeSceneId) {
+              setActiveSceneId(scene.id)
+            }
           }
-        } catch (e) {
+        } catch {
           // Player might not be ready
         }
       }
@@ -690,7 +750,7 @@ function Create({ onBack, initialConfig = null }) {
       const interval = setInterval(updateTime, 100)
       return () => clearInterval(interval)
     }
-  }, [isPlaying, scenes, activeSceneId])
+  }, [isPlaying, scenes, activeSceneId, timelineScope, activeSceneStart])
 
   // Global Keyboard Shortcuts
   useEffect(() => {
@@ -799,25 +859,43 @@ function Create({ onBack, initialConfig = null }) {
 
   const handleAddTemplateScene = (template) => {
     // Deep copy the scene template to avoid shared references
-    const newScene = JSON.parse(JSON.stringify(template));
-    // Check if we should replace the single default scene
-    // A scene is considered default if it's the only scene and its title is "Intro" or "Hero Scene"
-    const isDefaultSingleScene = project.scenes.length === 1 && (project.scenes[0].title === 'Intro' || project.scenes[0].title === 'Hero Scene' || project.scenes[0].id === 'lt_001');
-
-    newScene.id = isDefaultSingleScene ? project.scenes[0].id : `scene_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-    newScene.order = isDefaultSingleScene ? 0 : project.scenes.length;
-    
-    if (newScene.clips) {
-        newScene.clips = newScene.clips.map(clip => ({
-            ...clip,
-            id: `clip_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`
-        }));
-    }
+    const templateScene = JSON.parse(JSON.stringify(template));
+    // Keep template scene clean (no generation / playback artifacts)
+    delete templateScene.heygenVideoId;
+    delete templateScene.generatedVideoUrl;
+    delete templateScene.playbackUrl;
+    delete templateScene.heygenStatus;
+    delete templateScene.generation;
 
     const insertAfter = insertAfterIndexRef.current
     insertAfterIndexRef.current = null
 
+    let nextActiveSceneId = null
     setProject(prev => {
+      // Replace the "single default scene" only if it's genuinely an empty starter scene.
+      const maybeDefault = prev.scenes?.length === 1 ? prev.scenes[0] : null
+      const isDefaultSingleScene =
+        !!maybeDefault &&
+        (maybeDefault.id === 'lt_001' || maybeDefault.title === 'Intro' || maybeDefault.title === 'Hero Scene') &&
+        ((maybeDefault.clips?.length ?? 0) === 0)
+
+      const newSceneId = isDefaultSingleScene
+        ? maybeDefault.id
+        : `scene_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`
+
+      nextActiveSceneId = newSceneId
+
+      const newScene = {
+        ...templateScene,
+        id: newSceneId,
+        sceneId: newSceneId,
+        order: isDefaultSingleScene ? 0 : prev.scenes.length,
+        clips: (templateScene.clips || []).map(clip => ({
+          ...clip,
+          id: `clip_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+        })),
+      }
+
       let newScenes;
       if (isDefaultSingleScene) {
         newScenes = [newScene];
@@ -837,23 +915,21 @@ function Create({ onBack, initialConfig = null }) {
       };
     });
 
-    setActiveSceneId(newScene.id)
+    if (nextActiveSceneId) setActiveSceneId(nextActiveSceneId)
   }
 
   const handleGenerateStoryboard = (storyboardScenes, mode = 'replace') => {
     setProject(prev => {
       let finalScenes;
       if (mode === 'replace') {
-        finalScenes = storyboardScenes.map((s, idx) => ({
-          ...s,
-          order: idx
-        }));
+        finalScenes = storyboardScenes.map((s, idx) =>
+          ensureSceneIdentity({ ...s, order: idx }, idx)
+        );
       } else {
         const baseOrder = prev.scenes.length;
-        const orderedNewScenes = storyboardScenes.map((s, idx) => ({
-          ...s,
-          order: baseOrder + idx
-        }));
+        const orderedNewScenes = storyboardScenes.map((s, idx) =>
+          ensureSceneIdentity({ ...s, order: baseOrder + idx }, baseOrder + idx)
+        );
         finalScenes = [...prev.scenes, ...orderedNewScenes];
       }
       
@@ -885,7 +961,62 @@ function Create({ onBack, initialConfig = null }) {
   }
 
   const exportVideo = () => {
+    const workspaceId = project.workspaceId || project.createConfig?.workspaceId
+    const projectId = project.id || project.createConfig?.videoId
+
+    if (!workspaceId || !projectId) {
+      showToast('Save this project to a workspace folder before downloading.', 'error')
+      return
+    }
+
+    if (!project.scenes?.length) {
+      showToast('Add at least one scene before downloading.', 'error')
+      return
+    }
+
+    setExportPhase('configure')
+    setExportStatus('')
+    setExportError('')
     setShowExportModal(true)
+  }
+
+  const handleStartExport = async ({ filename }) => {
+    const workspaceId = project.workspaceId || project.createConfig?.workspaceId
+    const projectId = project.id || project.createConfig?.videoId
+
+    if (!workspaceId || !projectId || isExporting) return
+
+    setExportPhase('loading')
+    setExportStatus('Saving project…')
+    setExportError('')
+    setIsExporting(true)
+
+    try {
+      await exportFullProjectVideo({
+        workspaceService,
+        workspaceId,
+        projectId,
+        projectState: projectRef.current,
+        filename,
+        onStatus: setExportStatus,
+      })
+      setExportPhase('success')
+      showToast('Download started', 'success')
+    } catch (err) {
+      console.error('[Export] Full render download failed:', err)
+      setExportError(err?.message || 'Download failed. The video may still be rendering.')
+      setExportPhase('error')
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  const handleCloseExportModal = () => {
+    if (isExporting) return
+    setShowExportModal(false)
+    setExportPhase('configure')
+    setExportStatus('')
+    setExportError('')
   }
 
   // Handle preview with text-to-speech
@@ -909,7 +1040,13 @@ function Create({ onBack, initialConfig = null }) {
       overrides?.avatarTypeLabel || getSceneAvatarKind(scene);
     const voiceId = overrides?.voiceId || scene?.voiceId;
     const script = overrides?.script || scene?.script;
-    const stableSceneId = scene?.sceneId || sceneId;
+    const isRegenerate = !!scene?.heygenVideoId || scene?.heygenStatus === 'completed';
+    let stableSceneId = overrides?.sceneId || scene?.sceneId || scene?.id || sceneId;
+
+    if (isRegenerate && !overrides?.sceneId) {
+      stableSceneId = nextHeygenSceneId(stableSceneId, sceneId);
+    }
+
     const workspaceId = project.workspaceId || project.createConfig?.workspaceId;
     const projectId = project.id || project.createConfig?.videoId;
 
@@ -940,14 +1077,27 @@ function Create({ onBack, initialConfig = null }) {
     }
 
     try {
-      // Mark scene as processing
-      updateScene(sceneId, { heygenStatus: 'processing' });
+      const voiceSettings = overrides?.voiceSettings || scene?.voiceSettings || {
+        speed: 1,
+        pitch: 0,
+        locale: 'en-US',
+      }
+      const durationPatch = buildSceneDurationPatch(scene, { script, voiceSettings })
+
+      updateScene(sceneId, {
+        heygenStatus: 'processing',
+        sceneId: stableSceneId,
+        generatedVideoUrl: undefined,
+        playbackUrl: undefined,
+        ...durationPatch,
+      });
 
       const aspectRatioStr = project.resolution?.width > project.resolution?.height ? '16:9' : '9:16';
       
       const payload = {
         sceneId: stableSceneId,
         avatarId: avatarLookId,
+        avatarEngine: overrides?.avatarEngine || scene?.presenter?.avatarEngine || scene?.avatarEngine || 'avatar_iv',
         avatarType: avatarKind,
         title: `${project.title} - ${scene?.title || 'Scene'}`,
         resolution: project.resolution?.height >= 1080 ? '1080p' : '720p',
@@ -955,16 +1105,12 @@ function Create({ onBack, initialConfig = null }) {
         backgroundColor: overrides?.backgroundColor || scene?.background?.value || scene?.backgroundColor || '#008000',
         voiceId: voiceId,
         script: script,
-        voiceSettings: scene?.voiceSettings || {
-          speed: 1,
-          pitch: 0,
-          locale: 'en-US'
-        },
+        voiceSettings,
         removeBackground: overrides?.removeBackground ?? (scene?.removeBackground || false),
         outputFormat: scene?.outputFormat || 'mp4'
       };
 
-      if (avatarKind === 'photo_avatar') {
+      if (payload.avatarEngine === 'avatar_iv' && avatarKind === 'photo_avatar') {
         payload.expressiveness = overrides?.expressiveness || scene?.expressiveness || 'medium';
       }
 
@@ -981,7 +1127,7 @@ function Create({ onBack, initialConfig = null }) {
         script,
         heygenVideoId,
       };
-      const currentClips = scene?.clips || [];
+      const currentClips = durationPatch.clips || scene?.clips || [];
       const avatarIdx = currentClips.findIndex((c) => c.role === 'avatar' || c.type === 'avatar');
       let clipsWithHeygen = currentClips;
       if (avatarIdx !== -1) {
@@ -992,11 +1138,13 @@ function Create({ onBack, initialConfig = null }) {
         };
       }
 
+      const syncedClips = applyDurationToSceneClips(clipsWithHeygen, durationPatch.duration);
+
       updateScene(sceneId, {
         sceneId: stableSceneId,
         heygenVideoId,
         heygenStatus: 'processing',
-        ...(clipsWithHeygen !== currentClips ? { clips: clipsWithHeygen } : {}),
+        clips: syncedClips,
       });
 
       setTimeout(() => saveProject(false), 200);
@@ -1019,11 +1167,30 @@ function Create({ onBack, initialConfig = null }) {
               heygenVideoId
             );
 
+            let finalDuration =
+              durationFromVideoMetadata(videoData) ??
+              durationPatch.duration
+
+            try {
+              const probed = await probeVideoDuration(videoUrl);
+              if (Number.isFinite(probed) && probed > 0) {
+                finalDuration = roundSceneDuration(probed);
+              }
+            } catch {
+              // keep estimate / API metadata
+            }
+
+            const latestScene = projectRef.current.scenes.find((s) => s.id === sceneId) || scene;
+            const finalClips = applyDurationToSceneClips(latestScene?.clips, finalDuration);
+
             updateScene(sceneId, {
               heygenStatus: 'completed',
               heygenVideoId,
               avatar: videoData.thumbnail_url || scene?.avatar,
               generatedVideoUrl: videoUrl,
+              duration: finalDuration,
+              durationFromScript: true,
+              clips: finalClips,
             });
 
             window.dispatchEvent(
@@ -1061,11 +1228,36 @@ function Create({ onBack, initialConfig = null }) {
 
   const handleSeek = (time) => {
     setCurrentTime(time)
-    // Use player methods if available
-    if (playerRef.current && playerRef.current.seekTo) {
+    if (playerRef.current?.seekTo) {
       playerRef.current.seekTo(time)
     }
+    const frame = Math.max(0, Math.floor(time * 30))
+    const { scene } = getSceneForFrame(frame)
+    if (scene && scene.id !== activeSceneId) {
+      setActiveSceneId(scene.id)
+    }
   }
+
+  const handleSelectScene = useCallback((sceneId, options = {}) => {
+    setActiveSceneId(sceneId)
+    setSelectedLayerIds([])
+    setSelectedLayerId(null)
+
+    if (options.scope === 'single') {
+      setTimelineScope('single')
+    }
+
+    const singleMode = options.scope === 'single' || timelineScope === 'single'
+    if (singleMode) {
+      const start = getSceneStartTime(sceneId)
+      setCurrentTime(start)
+      playerRef.current?.seekTo?.(start)
+    }
+
+    if (options.openSidebar && !isRightSidebarOpen) {
+      setIsRightSidebarOpen(true)
+    }
+  }, [getSceneStartTime, timelineScope, isRightSidebarOpen])
 
   const handleQuickCreateGenerate = (payload) => {
     if (payload.isStoryboard) {
@@ -1078,9 +1270,7 @@ function Create({ onBack, initialConfig = null }) {
       if (paragraphs.length === 0) return;
 
       const storyboardScenes = paragraphs.map((paraText, pIdx) => {
-        // Calculate scene duration (approx 2.3 words/sec, min 6s)
-        const words = paraText.split(/\s+/).filter(w => w.length > 0);
-        const duration = Math.max(6.0, Math.ceil((words.length / 2.3) * 10) / 10);
+        const duration = estimateHeygenSceneDuration(paraText, payload.voiceSettings);
 
         // Extract a concise highlight phrase or first sentence
         const sentences = paraText.split(/[.!?]\s+/);
@@ -1105,7 +1295,7 @@ function Create({ onBack, initialConfig = null }) {
         if (isLeft) {
           // Layout: Image Left, Text Right
           clips.push({
-            id: `clip_image_${Date.now()}_${pIdx}_1`, type: 'image', role: 'background-image', src: '',
+            id: `clip_image_${Date.now()}_${pIdx}_1`, type: 'image', role: 'media-panel', src: '',
             startTime: 0, endTime: duration, position: { x: 120, y: 200 }, size: { width: 600, height: 600 },
             style: { backgroundColor: '#f0fdf4', borderRadius: '32px', border: '4px solid #ffffff', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }, layer: 1
           });
@@ -1157,7 +1347,7 @@ function Create({ onBack, initialConfig = null }) {
             style: { backgroundColor: '#ffffff', borderRadius: '5px' }, layer: 4
           });
           clips.push({
-            id: `clip_image_${Date.now()}_${pIdx}_5`, type: 'image', role: 'background-image', src: '',
+            id: `clip_image_${Date.now()}_${pIdx}_5`, type: 'image', role: 'media-panel', src: '',
             startTime: 0, endTime: duration, position: { x: 950, y: 200 }, size: { width: 600, height: 600 },
             style: { backgroundColor: '#eef2ff', borderRadius: '32px', border: '4px solid #ffffff', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }, layer: 5
           });
@@ -1174,6 +1364,7 @@ function Create({ onBack, initialConfig = null }) {
           name: `Scene ${pIdx + 1}`,
           title: `Scene ${pIdx + 1}`,
           duration: duration,
+          durationFromScript: true,
           background: { type: 'color', value: payload.backgroundColor || '#101828' },
           avatar: payload.avatarImage,
           avatarType: payload.avatarType,
@@ -1228,6 +1419,14 @@ function Create({ onBack, initialConfig = null }) {
     const stableSceneId = targetScene?.sceneId || targetSceneId;
 
     let updatedClips = [...activeClips];
+    const voiceSettings = payload.voiceSettings || { speed: 1, pitch: 0, locale: 'en-US' };
+    const durationPatch = buildSceneDurationPatch(targetScene, {
+      script: payload.script,
+      voiceSettings,
+      clips: updatedClips,
+    });
+    updatedClips = durationPatch.clips;
+
     const sceneDraft = {
       ...(targetScene || {}),
       sceneId: stableSceneId,
@@ -1257,7 +1456,7 @@ function Create({ onBack, initialConfig = null }) {
         src: payload.avatarImage,
         layer: updatedClips.length,
         startTime: 0.0,
-        endTime: 8.0,
+        endTime: durationPatch.duration,
         position: { x: 50, y: 50 },
         size: { width: 250, height: 330 },
         opacity: 1.0,
@@ -1286,10 +1485,13 @@ function Create({ onBack, initialConfig = null }) {
           avatarGroupId: payload.avatarGroupId,
           voiceId: payload.voiceId,
           voiceName: payload.voiceName,
+          voiceSettings,
           script: payload.script,
           expressiveness: payload.expressiveness,
           backgroundColor: payload.backgroundColor,
           removeBackground: payload.removeBackground,
+          duration: durationPatch.duration,
+          durationFromScript: true,
           clips: updatedClips
         } : s)
       };
@@ -1399,6 +1601,7 @@ function Create({ onBack, initialConfig = null }) {
               templateClips[newTextIndex].content = oldTextClip.content;
             }
 
+            templateClips = normalizeClipsToScene(templateClips, s.duration || 8);
             return { ...s, clips: templateClips, layout: layoutId, generatedVideoUrl, title: template.title };
           }
 
@@ -1506,6 +1709,63 @@ function Create({ onBack, initialConfig = null }) {
 
   return (
     <div className="video-editor-shell">
+      <RenderDownloadModal
+        isOpen={showRenderDownload}
+        onClose={() => setShowRenderDownload(false)}
+      />
+      {isProjectLoading && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 2500,
+            background: 'rgba(15, 23, 42, 0.72)',
+            backdropFilter: 'blur(10px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 20,
+          }}
+        >
+          <div
+            style={{
+              width: 'min(520px, 94vw)',
+              borderRadius: 16,
+              border: '1px solid rgba(255,255,255,0.12)',
+              background: 'rgba(2, 6, 23, 0.85)',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.45)',
+              padding: 18,
+              color: '#e5e7eb',
+              fontFamily: 'Inter, system-ui, sans-serif',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 999,
+                  border: '4px solid rgba(148,163,184,0.25)',
+                  borderTop: '4px solid rgba(59,130,246,0.95)',
+                  animation: 'spin 1s linear infinite',
+                }}
+              />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <div style={{ fontWeight: 900, fontSize: 14 }}>Loading your project…</div>
+                <div style={{ fontSize: 12, color: 'rgba(226,232,240,0.8)' }}>
+                  Preparing scenes and media
+                </div>
+              </div>
+            </div>
+            <style>{`
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+            `}</style>
+          </div>
+        </div>
+      )}
       <QuickCreateModal
         isOpen={showQuickCreateModal}
         onClose={() => setShowQuickCreateModal(false)}
@@ -1520,12 +1780,24 @@ function Create({ onBack, initialConfig = null }) {
         onSelectLayout={handleSelectLayout}
       />
       <EditorToast toast={toast} onDismiss={() => setToast(null)} />
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={handleCloseExportModal}
+        projectTitle={project.title}
+        sceneCount={scenes.length}
+        totalDurationSec={totalDurationInFrames / 30}
+        phase={exportPhase}
+        statusMessage={exportStatus}
+        errorMessage={exportError}
+        onStartExport={handleStartExport}
+      />
       <EditorTopbar
         onBack={onBack}
         selectedTool={selectedTool}
         setSelectedTool={setSelectedTool}
         handlePreview={handlePreview}
         exportVideo={exportVideo}
+        isExporting={isExporting}
         zoomLevel={zoomLevel}
         setZoomLevel={setZoomLevel}
         onUndo={() => { if (undo()) showToast('Undo', 'info') }}
@@ -1561,10 +1833,7 @@ function Create({ onBack, initialConfig = null }) {
             scenes={scenes}
             timelineScope={timelineScope}
             setTimelineScope={setTimelineScope}
-            onSelectScene={(sceneId) => {
-              setActiveSceneId(sceneId);
-              setSelectedLayerId(null);
-            }}
+            onSelectScene={(sceneId) => handleSelectScene(sceneId, { scope: 'single' })}
             onDeleteScene={deleteScene}
             onAddSceneAfter={addSceneAfter}
             updateScene={updateScene}
@@ -1598,10 +1867,13 @@ function Create({ onBack, initialConfig = null }) {
                 currentTime={currentTime}
                 setCurrentTime={setCurrentTime}
                 zoomLevel={zoomLevel}
-                setZoomLevel={setZoomLevel}
                 activeSceneId={activeSceneId}
                 setActiveSceneId={setActiveSceneId}
                 totalDurationInFrames={totalDurationInFrames}
+                playbackDurationInFrames={playbackDurationInFrames}
+                playbackScenes={playbackScenes}
+                playbackStartTime={activeSceneStart}
+                timelineScope={timelineScope}
                 getSceneForFrame={getSceneForFrame}
                 speakText={speakText}
                 selectedLayerId={selectedLayerId}
@@ -1637,12 +1909,7 @@ function Create({ onBack, initialConfig = null }) {
               currentTime={currentTime}
               isPlaying={isPlaying}
               onSeek={handleSeek}
-              onSelectScene={(sceneId) => {
-                setActiveSceneId(sceneId);
-                setSelectedLayerIds([]);
-                setSelectedLayerId(null);
-                if (!isRightSidebarOpen) setIsRightSidebarOpen(true);
-              }}
+              onSelectScene={(sceneId) => handleSelectScene(sceneId, { openSidebar: true })}
               onSelectLayer={handleSelectLayer}
               onUpdateScene={updateScene}
               onAddScene={addScene}
@@ -1669,12 +1936,13 @@ function Create({ onBack, initialConfig = null }) {
                 }
               }}
               onStop={() => {
+                const stopTime = timelineScope === 'single' ? activeSceneStart : 0
                 if (playerRef.current) {
                   playerRef.current.pause()
-                  playerRef.current.seekTo(0)
+                  playerRef.current.seekTo(stopTime)
                 }
                 setIsPlaying(false)
-                setCurrentTime(0)
+                setCurrentTime(stopTime)
                 window.speechSynthesis.cancel()
               }}
               totalDuration={(totalDurationInFrames || 0) / 30}
@@ -1760,12 +2028,8 @@ function Create({ onBack, initialConfig = null }) {
         speakText={speakText}
         getSceneForFrame={getSceneForFrame}
         setActiveSceneId={setActiveSceneId}
-      />
-
-      <ExportModal
-        showExportModal={showExportModal}
-        setShowExportModal={setShowExportModal}
-        calculateCredits={calculateCredits}
+        workspaceId={project.workspaceId || project.createConfig?.workspaceId}
+        projectId={project.id || project.createConfig?.videoId}
       />
 
       <TemplateModal

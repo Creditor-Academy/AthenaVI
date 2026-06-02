@@ -4,7 +4,8 @@ import { Loader2 } from 'lucide-react';
 import heygenService from '../../../../services/heygenService';
 import {
   extractHeygenList,
-  filterAvatarIvLooks,
+  filterAvatarLooksByEngine,
+  normalizeAvatarEngine,
   formatAvatarTypeLabel,
   mapAvatarGroup,
   mapAvatarLook,
@@ -13,12 +14,21 @@ import {
 const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateScene, updateScene, setShowTemplateModal, addLayer }) => {
   const [activeTab, setActiveTab] = useState('studio');
   const [searchQuery, setSearchQuery] = useState('');
+  const [avatarEngine, setAvatarEngine] = useState(() =>
+    normalizeAvatarEngine(activeScene?.presenter?.avatarEngine || activeScene?.avatarEngine || 'avatar_iv')
+  );
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
   const fileInputRef = useRef(null);
   const [pickerView, setPickerView] = useState('groups');
   const [groups, setGroups] = useState([]);
+  const [groupsHasMore, setGroupsHasMore] = useState(false);
+  const [groupsNextToken, setGroupsNextToken] = useState(null);
+  const [loadingMoreGroups, setLoadingMoreGroups] = useState(false);
   const [looks, setLooks] = useState([]);
+  const [looksHasMore, setLooksHasMore] = useState(false);
+  const [looksNextToken, setLooksNextToken] = useState(null);
+  const [loadingMoreLooks, setLoadingMoreLooks] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadingLooks, setLoadingLooks] = useState(false);
@@ -27,10 +37,19 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
   const ownershipForTab = activeTab === 'mine' ? 'private' : activeTab === 'team' ? 'workspace' : 'public';
 
   useEffect(() => {
+    setAvatarEngine(
+      normalizeAvatarEngine(activeScene?.presenter?.avatarEngine || activeScene?.avatarEngine || avatarEngine)
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSceneId])
+
+  useEffect(() => {
     setPickerView('groups');
     setSelectedGroup(null);
     setLooks([]);
     setLooksError('');
+    setLooksHasMore(false);
+    setLooksNextToken(null);
 
     const fetchGroups = async () => {
       setLoading(true);
@@ -39,11 +58,16 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
           ownership: ownershipForTab,
           limit: 20,
         });
+        const data = responseData?.data || responseData;
         const groupList = extractHeygenList(responseData, ['avatar_groups', 'groups', 'avatars']);
         setGroups(groupList.map(mapAvatarGroup).filter((g) => g.id));
+        setGroupsHasMore(!!(data?.has_more ?? responseData?.has_more));
+        setGroupsNextToken(data?.token ?? responseData?.token ?? data?.next_token ?? responseData?.next_token ?? null);
       } catch (err) {
         console.error('Failed to load avatar groups:', err);
         setGroups([]);
+        setGroupsHasMore(false);
+        setGroupsNextToken(null);
       } finally {
         setLoading(false);
       }
@@ -51,30 +75,99 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
     fetchGroups();
   }, [activeTab, ownershipForTab]);
 
-  const fetchLooksForGroup = async (group) => {
+  const loadMoreGroups = async () => {
+    if (!groupsHasMore || !groupsNextToken || loadingMoreGroups) return;
+    setLoadingMoreGroups(true);
+    try {
+      const responseData = await heygenService.getAvatarGroups({
+        ownership: ownershipForTab,
+        limit: 20,
+        token: groupsNextToken,
+      });
+      const data = responseData?.data || responseData;
+      const groupList = extractHeygenList(responseData, ['avatar_groups', 'groups', 'avatars']);
+      const mapped = groupList.map(mapAvatarGroup).filter((g) => g.id);
+      setGroups((prev) => {
+        const seen = new Set(prev.map((g) => g.id));
+        const next = [...prev];
+        mapped.forEach((g) => { if (!seen.has(g.id)) next.push(g); });
+        return next;
+      });
+      setGroupsHasMore(!!(data?.has_more ?? responseData?.has_more));
+      setGroupsNextToken(data?.token ?? responseData?.token ?? data?.next_token ?? responseData?.next_token ?? null);
+    } catch (err) {
+      console.error('Failed to load more avatar groups:', err);
+      setGroupsHasMore(false);
+      setGroupsNextToken(null);
+    } finally {
+      setLoadingMoreGroups(false);
+    }
+  };
+
+  const fetchLooksForGroup = async (group, engineOverride = null) => {
     setLoadingLooks(true);
     setLooksError('');
     setSelectedGroup(group);
     setPickerView('looks');
     try {
+      const desiredEngine = normalizeAvatarEngine(engineOverride || avatarEngine);
       const responseData = await heygenService.getAvatarLooks({
         group_id: group.id,
         limit: 20,
       });
+      const data = responseData?.data || responseData;
       const lookList = extractHeygenList(responseData, ['avatar_looks', 'looks', 'avatars']);
-      const compatible = filterAvatarIvLooks(lookList)
+      const compatible = filterAvatarLooksByEngine(lookList, desiredEngine)
         .map((look) => mapAvatarLook(look, group.name))
         .filter((look) => look.id);
       setLooks(compatible);
+      setLooksHasMore(!!(data?.has_more ?? responseData?.has_more));
+      setLooksNextToken(data?.token ?? responseData?.token ?? data?.next_token ?? responseData?.next_token ?? null);
       if (compatible.length === 0) {
-        setLooksError('No Avatar IV looks for this character.');
+        setLooksError(`No ${desiredEngine === 'avatar_v' ? 'Avatar V' : 'Avatar IV'} looks for this character.`);
       }
     } catch (err) {
       console.error('Failed to load looks:', err);
       setLooks([]);
       setLooksError('Could not load looks.');
+      setLooksHasMore(false);
+      setLooksNextToken(null);
     } finally {
       setLoadingLooks(false);
+    }
+  };
+
+  const loadMoreLooks = async (engineOverride = null) => {
+    if (!selectedGroup || !looksHasMore || !looksNextToken || loadingMoreLooks) return;
+    setLoadingMoreLooks(true);
+    try {
+      const desiredEngine = normalizeAvatarEngine(engineOverride || avatarEngine);
+      const responseData = await heygenService.getAvatarLooks({
+        group_id: selectedGroup.id,
+        limit: 20,
+        token: looksNextToken,
+      });
+      const data = responseData?.data || responseData;
+      const lookList = extractHeygenList(responseData, ['avatar_looks', 'looks', 'avatars']);
+      const compatible = filterAvatarLooksByEngine(lookList, desiredEngine)
+        .map((look) => mapAvatarLook(look, selectedGroup.name))
+        .filter((look) => look.id);
+
+      setLooks((prev) => {
+        const seen = new Set(prev.map((l) => l.id));
+        const next = [...prev];
+        compatible.forEach((l) => { if (!seen.has(l.id)) next.push(l); });
+        return next;
+      });
+
+      setLooksHasMore(!!(data?.has_more ?? responseData?.has_more));
+      setLooksNextToken(data?.token ?? responseData?.token ?? data?.next_token ?? responseData?.next_token ?? null);
+    } catch (err) {
+      console.error('Failed to load more looks:', err);
+      setLooksHasMore(false);
+      setLooksNextToken(null);
+    } finally {
+      setLoadingMoreLooks(false);
     }
   };
 
@@ -101,6 +194,11 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
           avatarKind: look.avatarType,
           avatarName: look.name,
           avatarGroupId: selectedGroup?.id,
+          avatarEngine,
+          presenter: {
+            ...(activeScene?.presenter || {}),
+            avatarEngine,
+          },
           clips: updatedClips,
         });
       };
@@ -123,22 +221,13 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
       activeSceneId,
       scenes.length,
       selectedGroup,
+      avatarEngine,
       autoCreateScene,
       updateScene,
       addLayer,
       setShowTemplateModal,
     ]
   );
-
-
-  const convertFileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-    });
-  };
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -252,6 +341,54 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
             }}
           />
           <MdMic size={16} style={{ color: 'var(--text-muted)', cursor: 'pointer' }} />
+        </div>
+
+        {/* Avatar Engine selector */}
+        <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+          <button
+            type="button"
+            onClick={() => {
+              const next = 'avatar_iv'
+              setAvatarEngine(next)
+              if (pickerView === 'looks' && selectedGroup) fetchLooksForGroup(selectedGroup, next)
+            }}
+            style={{
+              flex: 1,
+              padding: '8px 10px',
+              borderRadius: 10,
+              border: '1px solid var(--border-color)',
+              background: avatarEngine === 'avatar_iv' ? 'rgba(26,115,232,0.12)' : 'var(--bg-card)',
+              color: 'var(--text-main)',
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+            title="HeyGen Avatar IV engine"
+          >
+            Avatar IV
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const next = 'avatar_v'
+              setAvatarEngine(next)
+              if (pickerView === 'looks' && selectedGroup) fetchLooksForGroup(selectedGroup, next)
+            }}
+            style={{
+              flex: 1,
+              padding: '8px 10px',
+              borderRadius: 10,
+              border: '1px solid var(--border-color)',
+              background: avatarEngine === 'avatar_v' ? 'rgba(168,85,247,0.14)' : 'var(--bg-card)',
+              color: 'var(--text-main)',
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+            title="HeyGen Avatar V engine"
+          >
+            Avatar V
+          </button>
         </div>
       </div>
 
@@ -385,6 +522,92 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
                 <div style={{ gridColumn: '1 / -1', padding: '20px', textAlign: 'center', color: '#ef4444', fontSize: '12px' }}>
                   {looksError}
                 </div>
+              ) : pickerView === 'groups' && groupsHasMore ? (
+                <>
+                  {filteredItems.map((item) => {
+                    const isActive = pickerView === 'looks' && activeScene?.avatarType === item.id;
+                    const typeLabel = pickerView === 'looks' ? formatAvatarTypeLabel(item.avatarType) : '';
+                    
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={() => {
+                          if (pickerView === 'groups') {
+                            fetchLooksForGroup(item);
+                            return;
+                          }
+                          applyLookToScene(item);
+                        }}
+                        style={{
+                          position: 'relative',
+                          borderRadius: '10px',
+                          overflow: 'hidden',
+                          cursor: 'pointer',
+                          border: isActive ? '2px solid var(--primary)' : '1px solid var(--border-color)',
+                          background: 'var(--bg-card)',
+                          transition: 'all 0.2s ease',
+                          boxShadow: isActive ? '0 4px 12px rgba(26, 115, 232, 0.2)' : 'none',
+                          transform: isActive ? 'translateY(-2px)' : 'none'
+                        }}
+                      >
+                        <div style={{
+                          position: 'relative',
+                          width: '100%',
+                          aspectRatio: '3/4',
+                          overflow: 'hidden',
+                          background: '#f8f9fa'
+                        }}>
+                          {typeLabel && (
+                            <span style={{
+                              position: 'absolute',
+                              top: '8px',
+                              left: '8px',
+                              zIndex: 2,
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              fontSize: '9px',
+                              fontWeight: 700,
+                              textTransform: 'uppercase',
+                              background: 'rgba(0,0,0,0.65)',
+                              color: '#fff',
+                            }}>
+                              {typeLabel}
+                            </span>
+                          )}
+                          <img 
+                            src={item.image} 
+                            alt={item.name} 
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              transition: 'transform 0.3s ease'
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )
+                  })}
+
+                  <div
+                    style={{
+                      gridColumn: '1 / -1',
+                      marginTop: 6,
+                      padding: '10px 12px',
+                      borderRadius: 12,
+                      border: '1px dashed var(--border-color)',
+                      background: 'var(--bg-card)',
+                      color: 'var(--text-main)',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: loadingMoreGroups ? 'not-allowed' : 'pointer',
+                      textAlign: 'center',
+                    }}
+                    onClick={() => { if (!loadingMoreGroups) loadMoreGroups() }}
+                  >
+                    {loadingMoreGroups ? 'Loading…' : 'Load more characters'}
+                  </div>
+                </>
               ) : filteredItems.map((item) => {
                 const isActive = pickerView === 'looks' && activeScene?.avatarType === item.id;
                 const typeLabel = pickerView === 'looks' ? formatAvatarTypeLabel(item.avatarType) : '';
@@ -510,6 +733,27 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
                   </div>
                 );
               })}
+
+              {pickerView === 'looks' && looksHasMore && !loadingLooks && !looksError && (
+                <div
+                  style={{
+                    gridColumn: '1 / -1',
+                    marginTop: 6,
+                    padding: '10px 12px',
+                    borderRadius: 12,
+                    border: '1px dashed var(--border-color)',
+                    background: 'var(--bg-card)',
+                    color: 'var(--text-main)',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: loadingMoreLooks ? 'not-allowed' : 'pointer',
+                    textAlign: 'center',
+                  }}
+                  onClick={() => { if (!loadingMoreLooks) loadMoreLooks() }}
+                >
+                  {loadingMoreLooks ? 'Loading…' : 'Load more looks'}
+                </div>
+              )}
             </div>
             
             {filteredItems.length === 0 && !loading && !loadingLooks && !looksError && (

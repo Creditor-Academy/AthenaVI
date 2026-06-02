@@ -1,6 +1,8 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react'
 import { MdPerson, MdPhotoSizeSelectActual, MdVideoLibrary, MdDragIndicator, MdOpenWith, MdHeight } from 'react-icons/md'
 import { getClipTextContent, isTextLayer, toFontSizeCss } from '../../../../utils/textClip'
+import { getClipZIndex, isBackgroundClip, sortClipsForRender } from '../../../../utils/editorLayerUtils'
+import { resolveClipMediaSrc, isVideoMedia } from '../../../../utils/heygenVideo'
 import CanvasGuidesOverlay from './CanvasGuidesOverlay'
 
 /**
@@ -183,23 +185,6 @@ const SelectionOverlay = ({ clip, displayScale, onUpdatePosition, onUpdateSize, 
 
 /* ─── Clip wrappers ──────────────────────────────────────────────────── */
 
-/** Paint order / hit-test priority: backgrounds at 0, content stacks by layer. */
-function getClipZIndex(clip, isSelected) {
-  if (clip.isBackground) {
-    return isSelected ? 5 : 0;
-  }
-  const layer = clip.layer ?? 0;
-  return isSelected ? 200 + layer : 10 + layer;
-}
-
-function sortClipsForRender(clips) {
-  return [...clips].sort((a, b) => {
-    const aRank = a.isBackground ? -1 : (a.layer ?? 0);
-    const bRank = b.isBackground ? -1 : (b.layer ?? 0);
-    return aRank - bRank;
-  });
-}
-
 const clipBase = (clip, isSelected) => ({
   position: 'absolute',
   left: clip.position?.x ?? 0,
@@ -211,15 +196,15 @@ const clipBase = (clip, isSelected) => ({
   opacity: clip.opacity ?? 1,
   zIndex: getClipZIndex(clip, isSelected),
   outline: isSelected
-    ? (clip.isBackground ? '2px dashed rgba(26,115,232,0.6)' : '2px solid #1a73e8')
+    ? (isBackgroundClip(clip) ? '2px dashed rgba(26,115,232,0.6)' : '2px solid #1a73e8')
     : '2px solid transparent',
-  outlineOffset: isSelected && clip.isBackground ? -2 : 1,
+  outlineOffset: isSelected && isBackgroundClip(clip) ? -2 : 1,
   boxSizing: 'border-box',
-  cursor: isSelected ? (clip.isBackground ? 'default' : 'move') : 'pointer',
+  cursor: isSelected ? (isBackgroundClip(clip) ? 'default' : 'move') : 'pointer',
   transition: 'outline 0.1s',
 })
 
-const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, onUpdatePosition, onUpdateSize, onCommit }) => {
+const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, onUpdatePosition, onUpdateSize, onCommit, overlayMode = false }) => {
   const divRef = useRef(null)
   const s = clip.style || {}
 
@@ -243,10 +228,11 @@ const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, o
         alignItems: s.textAlign === 'left' ? 'flex-start' : (s.textAlign === 'right' ? 'flex-end' : 'center'),
         borderRadius: 4,
         overflow: 'hidden',
-        userSelect: isSelected ? 'text' : 'none',
+        userSelect: isSelected && !overlayMode ? 'text' : 'none',
+        opacity: overlayMode ? 0 : 1,
       }}
     >
-      {isSelected && (
+      {isSelected && !overlayMode && (
         <SelectionOverlay
           clip={clip}
           displayScale={displayScale}
@@ -257,7 +243,7 @@ const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, o
       )}
       <div
         ref={divRef}
-        contentEditable={isSelected && clip.editable !== false}
+        contentEditable={isSelected && !overlayMode && clip.editable !== false}
         suppressContentEditableWarning
         onBlur={handleBlur}
         onClick={(e) => isSelected && e.stopPropagation()}
@@ -307,7 +293,7 @@ const buildCssFilter = (cf = {}) => {
   return parts.length > 0 ? parts.join(' ') : undefined
 }
 
-const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition, onUpdateSize, onCommit }) => {
+const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition, onUpdateSize, onCommit, overlayMode = false }) => {
   const s   = clip.style || {}
   const cf  = clip.cssFilters || {}
   const flipX = s.scaleX === -1 ? -1 : 1
@@ -330,13 +316,13 @@ const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition,
         borderRadius: s.borderRadius || '12px',
         border: borderStyle,
         boxShadow: s.boxShadow || 'none',
-        background: clip.src ? 'transparent' : (s.backgroundColor || s.background || 'rgba(0,0,0,0.04)'),
-        opacity: clip.opacity ?? 1,
+        background: overlayMode ? 'transparent' : (clip.src ? 'transparent' : (s.backgroundColor || s.background || 'rgba(0,0,0,0.04)')),
+        opacity: overlayMode ? 0 : (clip.opacity ?? 1),
         filter: cssFilter,
         transform: flipTransform ? `${flipTransform}` : undefined,
       }}
     >
-      {isSelected && (
+      {isSelected && !overlayMode && (
         <SelectionOverlay
           clip={clip}
           displayScale={displayScale}
@@ -346,6 +332,7 @@ const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition,
         />
       )}
       {clip.src ? (
+        !overlayMode ? (
         <img
           src={clip.src}
           alt=""
@@ -356,20 +343,47 @@ const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition,
             pointerEvents: 'none',
           }}
         />
-      ) : (
+        ) : null
+      ) : !overlayMode ? (
         <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(168,85,247,0.08) 100%)' }}>
           <MdPhotoSizeSelectActual size={32} style={{ color: 'rgba(99,102,241,0.4)', pointerEvents: 'none' }} />
           <span style={{ fontSize: 11, color: 'rgba(99,102,241,0.5)', fontWeight: 700, letterSpacing: '0.05em', pointerEvents: 'none' }}>ADD IMAGE</span>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }
 
-const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePosition, onUpdateSize, onCommit }) => {
-  const isGeneratedAvatar = (clip.type === 'avatar' || clip.role === 'avatar') && scene?.generatedVideoUrl
-  const src = isGeneratedAvatar ? scene.generatedVideoUrl : clip.src
-  const isVideo = clip.type === 'video' || isGeneratedAvatar
+/** Static first-frame preview — does not auto-play while the timeline is paused. */
+const PausedVideoPreview = ({ src, style }) => {
+  const videoRef = useRef(null)
+
+  useEffect(() => {
+    const el = videoRef.current
+    if (!el) return
+    el.pause()
+    try {
+      el.currentTime = 0
+    } catch {
+      // ignore seek errors before metadata loads
+    }
+  }, [src])
+
+  return (
+    <video
+      ref={videoRef}
+      src={src}
+      muted
+      playsInline
+      preload="metadata"
+      style={style}
+    />
+  )
+}
+
+const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePosition, onUpdateSize, onCommit, overlayMode = false }) => {
+  const src = resolveClipMediaSrc(clip, scene)
+  const isVideo = isVideoMedia(clip, src)
   const s  = clip.style || {}
   const cf = clip.cssFilters || {}
   const cssFilter = buildCssFilter(cf)
@@ -389,13 +403,13 @@ const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdateP
         border: borderStyle,
         boxShadow: s.boxShadow || 'none',
         overflow: 'hidden',
-        background: src ? 'transparent' : (s.backgroundColor || s.background || 'linear-gradient(135deg, #818cf8 0%, #a78bfa 100%)'),
-        opacity: clip.opacity ?? 1,
+        background: overlayMode ? 'transparent' : (src ? 'transparent' : (s.backgroundColor || s.background || 'linear-gradient(135deg, #818cf8 0%, #a78bfa 100%)')),
+        opacity: overlayMode ? 0 : (clip.opacity ?? 1),
         filter: cssFilter,
         transform: flipTransform,
       }}
     >
-      {isSelected && (
+      {isSelected && !overlayMode && (
         <SelectionOverlay
           clip={clip}
           displayScale={displayScale}
@@ -405,24 +419,28 @@ const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdateP
         />
       )}
       {src ? (
+        !overlayMode ? (
         isVideo ? (
-          <video src={src} style={{ width: '100%', height: '100%', objectFit: s.objectFit || 'cover', display: 'block', pointerEvents: 'none' }} muted autoPlay loop playsInline />
+          <PausedVideoPreview
+            src={src}
+            style={{ width: '100%', height: '100%', objectFit: s.objectFit || 'cover', display: 'block', pointerEvents: 'none' }}
+          />
         ) : (
           <img src={src} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: s.objectFit || 'contain', display: 'block', pointerEvents: 'none' }} />
         )
-      ) : (
+        ) : null
+      ) : !overlayMode ? (
         <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <MdPerson size={Math.min(48, (clip.size?.width || 120) / 2.5)} style={{ color: 'rgba(255,255,255,0.8)', pointerEvents: 'none' }} />
         </div>
-      )}
+      ) : null}
     </div>
   )
 }
 
-const VideoClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePosition, onUpdateSize, onCommit }) => {
-  const isGeneratedAvatar = (clip.type === 'avatar' || clip.role === 'avatar') && scene?.generatedVideoUrl
-  const src = isGeneratedAvatar ? scene.generatedVideoUrl : clip.src
-  const isVideo = clip.type === 'video' || isGeneratedAvatar
+const VideoClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePosition, onUpdateSize, onCommit, overlayMode = false }) => {
+  const src = resolveClipMediaSrc(clip, scene)
+  const isVideo = isVideoMedia(clip, src)
   const s  = clip.style || {}
   const cf = clip.cssFilters || {}
   const cssFilter = buildCssFilter(cf)
@@ -444,13 +462,13 @@ const VideoClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePo
         borderRadius: s.borderRadius || (clip.role === 'avatar' ? '50%' : '16px'),
         border: borderStyle,
         boxShadow: s.boxShadow || 'none',
-        background: src ? 'transparent' : (s.backgroundColor || s.background || 'rgba(0,0,0,0.04)'),
-        opacity: clip.opacity ?? 1,
+        background: overlayMode ? 'transparent' : (src ? 'transparent' : (s.backgroundColor || s.background || 'rgba(0,0,0,0.04)')),
+        opacity: overlayMode ? 0 : (clip.opacity ?? 1),
         filter: cssFilter,
         transform: flipTransform,
       }}
     >
-      {isSelected && (
+      {isSelected && !overlayMode && (
         <SelectionOverlay
           clip={clip}
           displayScale={displayScale}
@@ -460,33 +478,39 @@ const VideoClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePo
         />
       )}
       {src ? (
+        !overlayMode ? (
         isVideo ? (
-          <video src={src} style={{ width: '100%', height: '100%', objectFit: fitMode, display: 'block', pointerEvents: 'none' }} muted autoPlay loop playsInline />
+          <PausedVideoPreview
+            src={src}
+            style={{ width: '100%', height: '100%', objectFit: fitMode, display: 'block', pointerEvents: 'none' }}
+          />
         ) : (
           <img src={src} style={{ width: '100%', height: '100%', objectFit: fitMode, display: 'block', pointerEvents: 'none' }} alt="" />
         )
-      ) : (
+        ) : null
+      ) : !overlayMode ? (
         <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(168,85,247,0.08) 100%)' }}>
           <MdVideoLibrary size={32} style={{ color: 'rgba(99,102,241,0.4)', pointerEvents: 'none' }} />
           <span style={{ fontSize: 11, color: 'rgba(99,102,241,0.5)', fontWeight: 700, letterSpacing: '0.05em', pointerEvents: 'none' }}>ADD VIDEO</span>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }
 
-const ShapeClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition, onUpdateSize, onCommit }) => (
+const ShapeClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition, onUpdateSize, onCommit, overlayMode = false }) => (
   <div
     onClick={(e) => { e.stopPropagation(); onSelect(clip.id, e) }}
     style={{
       ...clipBase(clip, isSelected),
-      background: clip.style?.backgroundColor || clip.style?.background || 'rgba(0,0,0,0.06)',
+      background: overlayMode ? 'transparent' : (clip.style?.backgroundColor || clip.style?.background || 'rgba(0,0,0,0.06)'),
       borderRadius: clip.style?.borderRadius || '0',
       border: clip.style?.border || 'none',
       boxShadow: clip.style?.boxShadow || 'none',
+      opacity: overlayMode ? 0 : 1,
     }}
   >
-    {isSelected && (
+    {isSelected && !overlayMode && (
       <SelectionOverlay
         clip={clip}
         displayScale={displayScale}
@@ -512,6 +536,7 @@ const LiveCanvasRenderer = ({
   showGuides = false,
   showSafeZone = true,
   gridSize = 20,
+  overlayMode = false,
 }) => {
   const containerRef = useRef(null)
   const [displayScale, setDisplayScale] = useState(1)
@@ -532,16 +557,32 @@ const LiveCanvasRenderer = ({
   const bg = scene?.background?.value
   const bgImage = scene?.backgroundImage
 
-  const backgroundStyle = {
-    background: bg || '#f8fafc',
-    backgroundImage: bg
-      ? 'none'
-      : bgImage
+  const backgroundStyle = (() => {
+    if (overlayMode) {
+      return { backgroundColor: 'transparent', backgroundImage: 'none' }
+    }
+
+    // Avoid mixing `background` shorthand with backgroundImage/Size/Position.
+    if (bg) {
+      const value = String(bg)
+      const isGradient = value.includes('gradient(')
+      return {
+        backgroundColor: isGradient ? '#f8fafc' : value,
+        backgroundImage: isGradient ? value : 'none',
+        backgroundSize: isGradient ? 'cover' : '28px 28px',
+        backgroundPosition: isGradient ? 'center' : 'center',
+      }
+    }
+
+    return {
+      backgroundColor: '#f8fafc',
+      backgroundImage: bgImage
         ? `url(${bgImage})`
         : 'radial-gradient(#e2e8f0 1.5px, transparent 1.5px)',
-    backgroundSize: bgImage ? 'cover' : '28px 28px',
-    backgroundPosition: 'center',
-  }
+      backgroundSize: bgImage ? 'cover' : '28px 28px',
+      backgroundPosition: 'center',
+    }
+  })()
 
   const handleUpdatePosition = useCallback((clipId, x, y) => {
     if (onUpdateLayerPosition) onUpdateLayerPosition(clipId, x, y)
@@ -591,21 +632,23 @@ const LiveCanvasRenderer = ({
           const isSelected = selectedIds.includes(clip.id) || selectedId === clip.id
           const isLocked = !!clip.locked
           const sharedProps = {
-            key: clip.id,
             clip,
             isSelected,
             onSelect: (id, e) => onSelectClip && onSelectClip(id, e),
             displayScale,
-            onUpdatePosition: clip.isBackground || isLocked ? () => {} : handleUpdatePosition,
-            onUpdateSize: clip.isBackground || isLocked ? () => {} : handleUpdateSize,
+            onUpdatePosition: clip.isBackground || isLocked || isBackgroundClip(clip) ? () => {} : handleUpdatePosition,
+            onUpdateSize: clip.isBackground || isLocked || isBackgroundClip(clip) ? () => {} : handleUpdateSize,
             onCommit: onCommitLayerPosition,
+            overlayMode,
           }
 
-          if (clip.type === 'text' || isTextLayer(clip)) return <TextClip   {...sharedProps} onContentChange={onContentChange} />
-          if (clip.type === 'image')  return <ImageClip  {...sharedProps} />
-          if (clip.type === 'avatar') return <AvatarClip {...sharedProps} scene={scene} />
-          if (clip.type === 'video')  return <VideoClip  {...sharedProps} scene={scene} />
-          if (clip.type === 'shape')  return <ShapeClip  {...sharedProps} />
+          if (clip.type === 'text' || isTextLayer(clip)) {
+            return <TextClip key={clip.id} {...sharedProps} onContentChange={onContentChange} />
+          }
+          if (clip.type === 'image') return <ImageClip key={clip.id} {...sharedProps} />
+          if (clip.type === 'avatar') return <AvatarClip key={clip.id} {...sharedProps} scene={scene} />
+          if (clip.type === 'video') return <VideoClip key={clip.id} {...sharedProps} scene={scene} />
+          if (clip.type === 'shape') return <ShapeClip key={clip.id} {...sharedProps} />
           return null
         })}
       </div>
