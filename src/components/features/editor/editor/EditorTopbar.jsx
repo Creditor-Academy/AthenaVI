@@ -103,7 +103,8 @@ const EditorTopbar = ({
         const el = triggerRefs.current[activeTool]
         if (!el) return
         const rect = el.getBoundingClientRect()
-        const panelWidth = 320
+        const panelWidth =
+            activeTool === 'text' ? 352 : activeTool === 'shapes' ? 400 : 320
         const margin = 12
         let left = rect.left + rect.width / 2
         left = Math.max(panelWidth / 2 + margin, Math.min(left, window.innerWidth - panelWidth / 2 - margin))
@@ -123,6 +124,25 @@ const EditorTopbar = ({
     const closeDropdown = useCallback(() => {
         setSelectedTool?.(null)
     }, [setSelectedTool])
+
+    const addLayerWithClose = useCallback(
+        (...args) => {
+            const id = addLayer?.(...args)
+            closeDropdown()
+            return id
+        },
+        [addLayer, closeDropdown]
+    )
+
+    const runToolAction = useCallback(
+        (fn) =>
+            (...args) => {
+                const result = fn?.(...args)
+                closeDropdown()
+                return result
+            },
+        [closeDropdown]
+    )
 
     useLayoutEffect(() => {
         if (!activeTool) return
@@ -166,15 +186,15 @@ const EditorTopbar = ({
                         autoCreateScene={autoCreateScene}
                         updateScene={updateScene}
                         setShowTemplateModal={setShowTemplateModal}
-                        addLayer={addLayer}
+                        addLayer={addLayerWithClose}
                     />
                 )
             case 'image':
-                return <EditorSidebarImage addLayer={addLayer} />
+                return <EditorSidebarImage addLayer={addLayerWithClose} />
             case 'uploads':
                 return (
                   <EditorSidebarUploads
-                    addLayer={addLayer}
+                    addLayer={addLayerWithClose}
                     workspaceId={workspaceId}
                     onUploadError={onUploadError}
                   />
@@ -182,7 +202,7 @@ const EditorTopbar = ({
             case 'templates':
                 return (
                     <EditorSidebarTemplates
-                        handleAddTemplateScene={handleAddTemplateScene}
+                        handleAddTemplateScene={runToolAction(handleAddTemplateScene)}
                         setShowTemplateModal={setShowTemplateModal}
                     />
                 )
@@ -190,10 +210,8 @@ const EditorTopbar = ({
                 return (
                     <EditorSidebarText
                         addLayer={addLayer}
-                        activeSceneId={activeSceneId}
-                        activeScene={activeScene}
-                        updateScene={updateScene}
                         setSelectedLayerId={setSelectedLayerId}
+                        onClose={closeDropdown}
                     />
                 )
             case 'layers':
@@ -205,7 +223,7 @@ const EditorTopbar = ({
                     />
                 )
             case 'video':
-                return <EditorSidebarVideo addLayer={addLayer} />
+                return <EditorSidebarVideo addLayer={addLayerWithClose} />
             case 'mic':
                 return (
                     <EditorSidebarVoice
@@ -215,11 +233,15 @@ const EditorTopbar = ({
                     />
                 )
             case 'stock':
-                return <EditorSidebarStock addLayer={addLayer} />
+                return <EditorSidebarStock addLayer={addLayerWithClose} />
             case 'shapes':
-                return <EditorSidebarShapes addLayer={addLayer} />
+                return <EditorSidebarShapes addLayer={addLayerWithClose} />
             case 'magic':
-                return <EditorSidebarMagic onGenerateStoryboard={onGenerateStoryboard} />
+                return (
+                    <EditorSidebarMagic
+                        onGenerateStoryboard={runToolAction(onGenerateStoryboard)}
+                    />
+                )
             default:
                 return (
                     <div className="topbar-dropdown-empty">
@@ -423,7 +445,13 @@ const EditorTopbar = ({
                 createPortal(
                     <div
                         ref={dropdownRef}
-                        className="topbar-dropdown topbar-dropdown--portal"
+                        className={`topbar-dropdown topbar-dropdown--portal${
+                            activeTool === 'text'
+                                ? ' topbar-dropdown--text'
+                                : activeTool === 'shapes'
+                                  ? ' topbar-dropdown--shapes'
+                                  : ''
+                        }`}
                         role="dialog"
                         aria-label={`${TOOL_LABELS[activeTool] || activeTool} panel`}
                         style={{

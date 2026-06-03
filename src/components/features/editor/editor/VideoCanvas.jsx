@@ -1,7 +1,9 @@
-import { useRef, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react'
+import { useRef, useCallback, forwardRef, useImperativeHandle, useEffect, useState } from 'react'
 import { Player } from '@remotion/player'
 import VideoComposition from './VideoComposition'
 import LiveCanvasRenderer from './LiveCanvasRenderer'
+import heygenService from '../../../../services/heygenService'
+import { resolveScenePlaybackUrls } from '../../../../utils/heygenVideo'
 
 const VideoCanvas = forwardRef(({
   scenes,
@@ -32,12 +34,42 @@ const VideoCanvas = forwardRef(({
   onAddScene,
   updateClipContent,
   editorView = {},
+  workspaceId,
+  projectId,
 }, ref) => {
   const playerRef = useRef(null)
+  const [resolvedPlayScenes, setResolvedPlayScenes] = useState(null)
 
   const isSingleScene = timelineScope === 'single' && playbackScenes?.length === 1
   const durationInFrames = Math.max(playbackDurationInFrames ?? totalDurationInFrames, 1)
-  const compositionScenes = playbackScenes?.length ? playbackScenes : scenes
+  const baseCompositionScenes = playbackScenes?.length ? playbackScenes : scenes
+  const compositionScenes = resolvedPlayScenes ?? baseCompositionScenes
+
+  useEffect(() => {
+    if (!isPlaying || isSingleScene) {
+      setResolvedPlayScenes(null)
+      return undefined
+    }
+    const needsResolve = baseCompositionScenes.some((s) => s.heygenVideoId)
+    if (!needsResolve || !workspaceId || !projectId) {
+      setResolvedPlayScenes(null)
+      return undefined
+    }
+
+    let cancelled = false
+    resolveScenePlaybackUrls(baseCompositionScenes, workspaceId, projectId, heygenService)
+      .then((withUrls) => {
+        if (!cancelled) setResolvedPlayScenes(withUrls)
+      })
+      .catch((err) => {
+        console.warn('[VideoCanvas] HeyGen URL resolve failed:', err)
+        if (!cancelled) setResolvedPlayScenes(null)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [isPlaying, isSingleScene, baseCompositionScenes, workspaceId, projectId])
   const activeScene = (scenes || []).find(s => s.id === activeSceneId)
   const isEditingLayer = !isPlaying && !!(selectedLayerId || selectedLayerIds.length)
 

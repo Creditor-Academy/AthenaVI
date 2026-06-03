@@ -5,6 +5,10 @@ import {
   mapAnimationsForBackend,
   mapAnimationsFromBackend,
 } from './animationPayloadMapper';
+import {
+  mapSceneTransitionForBackend,
+  mapSceneTransitionFromBackend,
+} from './sceneTransitionUtils';
 
 const FPS = 30;
 
@@ -321,15 +325,9 @@ export function toBackendProjectData(projectState) {
           .filter(isRenderableElement),
       };
 
-      if (scene.transition?.type && scene.transition.type !== 'none') {
-        scenePayload.transition = {
-          type: scene.transition.type,
-          durationInFrames: Math.max(
-            0,
-            Math.round((scene.transition.duration ?? 0.5) * FPS)
-          ),
-          ...(scene.transition.direction ? { direction: scene.transition.direction } : {}),
-        };
+      const backendTransition = mapSceneTransitionForBackend(scene.transition, idx);
+      if (backendTransition) {
+        scenePayload.transition = backendTransition;
       }
 
       const presenter = buildPresenter(scene);
@@ -421,6 +419,7 @@ export function sceneFromBackend(scene) {
     sceneId: scene.sceneId || scene.id,
     id: scene.sceneId || scene.id,
     title: scene.name || scene.title || 'Scene',
+    transition: mapSceneTransitionFromBackend(scene.transition),
     duration: scene.durationInFrames ? scene.durationInFrames / FPS : scene.duration || 8,
     avatar: presenter.avatarPreviewSrc || scene.avatar || avatarContent.previewSrc,
     avatarLookId: lookId,

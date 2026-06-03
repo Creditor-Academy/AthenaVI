@@ -448,11 +448,6 @@ function Create({ onBack, initialConfig = null }) {
       locked: false,
       thumbnail: avatar1,
       duration: 8.0,
-      transition: {
-        type: "fade",
-        duration: 0.5,
-        direction: null
-      },
       avatar: avatar1, // Legacy support for now
       titleText: 'New Scene',
       subtitleText: 'Start creating your content',
@@ -503,7 +498,14 @@ function Create({ onBack, initialConfig = null }) {
       size: type === 'avatar' ? { width: 250, height: 330 } : type === 'shape' ? { width: parseInt(content?.style?.width) || 200, height: parseInt(content?.style?.height) || 200 } : { width: 400, height: 400 },
       opacity: 1.0,
       style: type === 'text'
-        ? { fontSize: 32, fontWeight: '700', color: '#1a1b1c', textAlign: 'left', fontFamily: 'Inter, system-ui, sans-serif' }
+        ? {
+            fontSize: 32,
+            fontWeight: '700',
+            color: '#1a1b1c',
+            textAlign: 'left',
+            fontFamily: 'Inter, system-ui, sans-serif',
+            ...(meta?.style || {}),
+          }
         : type === 'shape' ? content?.style : undefined,
       effects: {
         brightness: 1,
@@ -1921,6 +1923,8 @@ function Create({ onBack, initialConfig = null }) {
                 onUpdateLayerSize={updateLayerSize}
                 updateClipContent={updateClipContent}
                 editorView={editorView}
+                workspaceId={project.workspaceId}
+                projectId={project.id}
               />
             </div>
           </div>

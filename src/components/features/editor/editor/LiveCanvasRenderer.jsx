@@ -502,6 +502,7 @@ const ShapeClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition,
     borderRadius: clip.style?.borderRadius || '0',
     border: clip.style?.border || 'none',
     boxShadow: clip.style?.boxShadow || 'none',
+    clipPath: clip.style?.clipPath || undefined,
   })
 
   return (
