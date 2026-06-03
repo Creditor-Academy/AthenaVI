@@ -9,7 +9,6 @@ import CreateVoice from '../Voices/CreateVoice.jsx'
 import Library from '../Library/Library.jsx'
 import Templates from '../Templates/Templates.jsx'
 import TemplateDetails from '../TemplateDetails/TemplateDetails.jsx'
-import Workspace from '../Workspace/Workspace.jsx'
 import Profile from '../Profile/Profile.jsx'
 import Settings from '../Settings/Settings.jsx'
 import BrandKits from '../BrandKits/BrandKits.jsx'
@@ -67,7 +66,6 @@ function Dashboard({ onCreate, initialSection }) {
     'home',
     'videos',
     'workspace',
-    'team-workspace',
     'trash',
     'library',
     'brandkits',
@@ -279,8 +277,7 @@ function Dashboard({ onCreate, initialSection }) {
               }}
             />
           )}
-          {section === 'workspace' && <Workspace onCreate={handleOpenCreateVideoModal} onEdit={handleEditVideo} />}
-          {section === 'team-workspace' && <TeamWorkspace onCreate={handleOpenCreateVideoModal} onEdit={handleEditVideo} />}
+          {section === 'workspace' && <TeamWorkspace onCreate={handleOpenCreateVideoModal} onEdit={handleEditVideo} />}
           {section === 'admin-portal' && <AdminPortal />}
           {section === 'brandkits' && <BrandKits />}
           {section === 'credits' && <Settings onBack={() => goToSection('home')} initialTab="billing" />}

@@ -1,0 +1,349 @@
+/* ============================================================
+   404 NOT FOUND — Owl Edition
+   ============================================================ */
+
+/* === Page fills full viewport === */
+.nf-page {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-main);
+  overflow: hidden;
+  font-family: var(--font-family);
+  transition: background 0.3s ease;
+}
+
+/* === Scrolling dot grid === */
+.nf-dot-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(var(--primary-rgb), 0.12) 1px, transparent 1px);
+  background-size: 30px 30px;
+  pointer-events: none;
+  z-index: 0;
+  animation: grid-drift 28s linear infinite;
+}
+@keyframes grid-drift {
+  0%   { background-position: 0 0; }
+  100% { background-position: 30px 30px; }
+}
+
+/* === Ambient orbs === */
+.nf-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.nf-orb-1 {
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(var(--primary-rgb), 0.18) 0%, transparent 70%);
+  top: -180px; left: -160px;
+  animation: orb-float 12s ease-in-out infinite alternate;
+}
+.nf-orb-2 {
+  width: 480px; height: 480px;
+  background: radial-gradient(circle, rgba(var(--primary-rgb), 0.13) 0%, transparent 70%);
+  bottom: -120px; right: -100px;
+  animation: orb-float 16s ease-in-out infinite alternate-reverse;
+}
+@keyframes orb-float {
+  0%   { transform: translateY(0)     scale(1);    opacity: 0.8; }
+  100% { transform: translateY(-50px) scale(1.12); opacity: 1;   }
+}
+
+/* === Split layout === */
+.nf-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 80px;
+  width: 100%;
+  max-width: 1080px;
+  padding: 0 48px;
+  animation: page-entrance 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes page-entrance {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+/* === Illustration column === */
+.nf-illustration {
+  flex: 0 0 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nf-owl-scene {
+  position: relative;
+  width: 280px;
+  height: 340px;
+}
+
+.nf-owl-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* ── Owl body floats up and down ── */
+.owl-float {
+  animation: owl-bob 3.5s ease-in-out infinite;
+  transform-origin: 140px 230px;
+}
+@keyframes owl-bob {
+  0%, 100% { transform: translateY(0)    rotate(0deg); }
+  25%       { transform: translateY(-8px) rotate(-1.5deg); }
+  75%       { transform: translateY(-4px) rotate(1.5deg); }
+}
+
+/* ── Wings subtle flap ── */
+.wing-left {
+  animation: wing-flap-left 3.5s ease-in-out infinite;
+  transform-origin: 90px 220px;
+}
+.wing-right {
+  animation: wing-flap-right 3.5s ease-in-out infinite;
+  transform-origin: 190px 220px;
+}
+@keyframes wing-flap-left {
+  0%, 100% { transform: rotate(-18deg); }
+  40%       { transform: rotate(-28deg) scaleY(1.05); }
+  60%       { transform: rotate(-14deg); }
+}
+@keyframes wing-flap-right {
+  0%, 100% { transform: rotate(18deg); }
+  40%       { transform: rotate(28deg) scaleY(1.05); }
+  60%       { transform: rotate(14deg); }
+}
+
+/* ── Shadow shrinks when owl rises ── */
+.owl-shadow {
+  animation: shadow-pulse 3.5s ease-in-out infinite;
+}
+@keyframes shadow-pulse {
+  0%, 100% { rx: 58; opacity: 0.12; }
+  50%       { rx: 48; opacity: 0.07; }
+}
+
+/* ── Floating stars ── */
+.star { animation: star-float 4s ease-in-out infinite alternate; }
+.star-1 { animation-duration: 4.2s; animation-delay: 0s; }
+.star-2 { animation-duration: 5.1s; animation-delay: -1s; }
+.star-3 { animation-duration: 3.8s; animation-delay: -2s; }
+.star-4 { animation-duration: 4.7s; animation-delay: -0.5s; }
+.star-5 { animation-duration: 5.5s; animation-delay: -1.5s; }
+.star-6 { animation-duration: 3.5s; animation-delay: -3s; }
+
+@keyframes star-float {
+  0%   { transform: translateY(0)   scale(1);    opacity: 0.35; }
+  100% { transform: translateY(-8px) scale(1.3);  opacity: 0.7;  }
+}
+
+/* ── Floating question marks ── */
+.question { animation: q-float 4s ease-in-out infinite alternate; }
+.q-1 { animation-duration: 4.5s; animation-delay: 0s; }
+.q-2 { animation-duration: 5.2s; animation-delay: -1.2s; }
+.q-3 { animation-duration: 3.9s; animation-delay: -2.5s; }
+
+@keyframes q-float {
+  0%   { transform: translateY(0)    rotate(-5deg); opacity: 0.3; }
+  100% { transform: translateY(-10px) rotate(5deg);  opacity: 0.55; }
+}
+
+/* === Right: Text block === */
+.nf-text {
+  flex: 1;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* ── Glitch 404 ── */
+.nf-error-code {
+  position: relative;
+  font-size: 120px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -6px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 16px;
+  user-select: none;
+  animation: slide-up 0.6s 0.15s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.nf-error-code::before,
+.nf-error-code::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0; left: 0;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  opacity: 0;
+}
+.nf-error-code.glitch::before { animation: glitch-a 0.3s steps(2) both; }
+.nf-error-code.glitch::after  { animation: glitch-b 0.3s steps(2) both; }
+
+@keyframes glitch-a {
+  0%   { opacity: 0.8; clip-path: polygon(0 15%,100% 15%,100% 40%,0 40%); transform: translate(-5px, 2px); }
+  50%  { opacity: 0.6; clip-path: polygon(0 55%,100% 55%,100% 75%,0 75%); transform: translate( 5px,-2px); }
+  100% { opacity: 0;   clip-path: polygon(0 0%,100% 0%,100% 0%,0 0%);     transform: translate(0,0); }
+}
+@keyframes glitch-b {
+  0%   { opacity: 0.7; clip-path: polygon(0 45%,100% 45%,100% 65%,0 65%); transform: translate(4px,-3px); -webkit-text-fill-color:#f43f5e; }
+  50%  { opacity: 0.5; clip-path: polygon(0 5%,100% 5%,100% 25%,0 25%);   transform: translate(-4px,3px); }
+  100% { opacity: 0;   clip-path: polygon(0 0%,100% 0%,100% 0%,0 0%);     transform: translate(0,0); }
+}
+
+/* ── Badge ── */
+.nf-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  background: rgba(var(--primary-rgb), 0.08);
+  border: 1px solid rgba(var(--primary-rgb), 0.25);
+  border-radius: 30px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 16px;
+  animation: slide-up 0.6s 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.nf-badge-dot {
+  width: 7px; height: 7px;
+  background: var(--primary);
+  border-radius: 50%;
+  animation: dot-ping 1.6s ease-in-out infinite;
+}
+@keyframes dot-ping {
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%       { transform: scale(1.65); opacity: 0.4; }
+}
+
+/* ── Heading ── */
+.nf-heading {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0 0 12px;
+  letter-spacing: -0.5px;
+  animation: slide-up 0.6s 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ── Sub-text ── */
+.nf-sub {
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--text-muted);
+  margin: 0 0 32px;
+  animation: slide-up 0.6s 0.52s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ── Buttons ── */
+.nf-actions {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 22px;
+  animation: slide-up 0.6s 0.62s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.nf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 26px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 40px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+.nf-btn::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: white; opacity: 0;
+  transition: opacity 0.2s;
+}
+.nf-btn:hover::after  { opacity: 0.08; }
+.nf-btn:active::after { opacity: 0.15; }
+
+.nf-btn.primary {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(var(--primary-rgb), 0.35);
+  animation: pulse-ring 2.8s 2s ease-out infinite;
+}
+.nf-btn.primary:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(var(--primary-rgb), 0.45);
+}
+@keyframes pulse-ring {
+  0%  { box-shadow: 0 4px 16px rgba(var(--primary-rgb),.35), 0 0 0 0   rgba(var(--primary-rgb),.38); }
+  70% { box-shadow: 0 4px 16px rgba(var(--primary-rgb),.35), 0 0 0 14px rgba(var(--primary-rgb),0);  }
+  100%{ box-shadow: 0 4px 16px rgba(var(--primary-rgb),.35), 0 0 0 0   rgba(var(--primary-rgb),0);   }
+}
+.nf-btn.secondary {
+  background: transparent;
+  color: var(--text-main);
+  border: 1.5px solid var(--border-color);
+}
+.nf-btn.secondary:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-2px);
+  background: rgba(var(--primary-rgb), 0.04);
+}
+
+/* ── Hint ── */
+.nf-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  animation: slide-up 0.6s 0.72s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.nf-link {
+  color: var(--primary);
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: opacity 0.15s;
+}
+.nf-link:hover { opacity: 0.7; }
+
+/* Shared entrance */
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+  .nf-content {
+    flex-direction: column;
+    gap: 32px;
+    padding: 32px 24px;
+    text-align: center;
+  }
+  .nf-illustration { flex: none; width: 100%; height: 260px; }
+  .nf-owl-scene    { height: 100%; width: auto; margin: 0 auto; }
+  .nf-text         { align-items: center; }
+  .nf-error-code   { font-size: 80px; }
+  .nf-heading      { font-size: 26px; }
+  .nf-actions      { flex-direction: column; width: 100%; }
+  .nf-btn          { justify-content: center; }
+}
