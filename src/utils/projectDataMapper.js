@@ -1,6 +1,10 @@
 import heygenService from '../services/heygenService';
 import { buildHeygenAvatarContent, getSceneAvatarKind, getSceneAvatarLookId } from './heygenAvatars';
 import { getClipTextContent, isTextLayer, parseFontSize } from './textClip';
+import {
+  mapAnimationsForBackend,
+  mapAnimationsFromBackend,
+} from './animationPayloadMapper';
 
 const FPS = 30;
 
@@ -50,6 +54,10 @@ export function normalizeTextStyle(style = {}) {
   }
   if (style.borderRadius) normalized.borderRadius = style.borderRadius;
   if (style.boxShadow) normalized.boxShadow = style.boxShadow;
+  if (style.textEffect) normalized.textEffect = style.textEffect;
+  if (style.textShape) normalized.textShape = style.textShape;
+  if (style.effectBackground) normalized.effectBackground = style.effectBackground;
+  if (style.fillColor) normalized.fillColor = style.fillColor;
 
   return normalized;
 }
@@ -181,7 +189,7 @@ function textClipToElement(clip, cIdx) {
     placement: readClipPlacement(clip),
     content: buildTextContent(clip),
     style: normalizeTextStyle(clip.style),
-    animations: clip.animations ?? [],
+    animations: mapAnimationsForBackend(clip.animations),
   };
 
   if (clip.role) element.role = clip.role;
@@ -207,7 +215,7 @@ function clipToElement(clip, scene, cIdx) {
     timing: { startFrame, durationInFrames },
     placement: readClipPlacement(clip),
     content,
-    animations: clip.animations ?? [],
+    animations: mapAnimationsForBackend(clip.animations),
   };
 
   if (clip.role) element.role = clip.role;
@@ -379,7 +387,9 @@ function elementToClip(element) {
   if (element.role) clip.role = element.role;
   if (element.style) clip.style = { ...element.style };
   if (element.filters) clip.filters = element.filters;
-  if (element.animations) clip.animations = element.animations;
+  if (element.animations) {
+    clip.animations = mapAnimationsFromBackend(element.animations);
+  }
   if (element.visible !== undefined) clip.visible = element.visible;
 
   if (isTextLayer(clip)) {

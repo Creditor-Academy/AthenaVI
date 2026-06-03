@@ -1,0 +1,142 @@
+.lm-fit-adj {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.lm-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.lm-preview__frame {
+  width: 100%;
+  max-width: 100%;
+  height: 140px;
+  overflow: hidden;
+  background: linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: filter 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
+}
+
+.lm-preview__frame--circle {
+  width: 120px;
+  height: 120px;
+  max-width: 120px;
+  flex-shrink: 0;
+}
+
+.lm-preview__media {
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+.lm-preview__placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--text-muted, #94a3b8);
+}
+
+.lm-preview__caption {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  text-align: center;
+}
+
+.lm-fit-adj__section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lm-fit-adj__label {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #64748b);
+}
+
+.lm-fit-adj__fit-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.lm-fit-adj__fit-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.1));
+  background: white;
+  color: var(--text-muted, #64748b);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.lm-fit-adj__fit-btn--active {
+  border-color: var(--primary, #1a73e8);
+  background: rgba(26, 115, 232, 0.08);
+  color: var(--primary, #1a73e8);
+}
+
+.lm-fit-adj__flip-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.lm-fit-adj__flip-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.1));
+  background: white;
+  color: var(--text-muted, #64748b);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 40px;
+}
+
+.lm-fit-adj__flip-btn--active {
+  border-color: var(--primary, #1a73e8);
+  background: rgba(26, 115, 232, 0.08);
+  color: var(--primary, #1a73e8);
+}
+
+.lm-fit-adj__flip-icon-v {
+  display: inline-flex;
+  transform: rotate(90deg);
+}
+
+.lm-fit-adj__divider {
+  height: 1px;
+  background: var(--border-subtle, rgba(0, 0, 0, 0.08));
+  margin: 2px 0;
+}
+
+.lm-fit-adj__extras {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 4px;
+}

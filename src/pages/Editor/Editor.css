@@ -129,6 +129,24 @@
     z-index: 1000;
 }
 
+.topbar-dropdown--text {
+    width: 352px;
+    max-height: min(680px, calc(100vh - 72px));
+}
+
+.topbar-dropdown--text .topbar-dropdown-body .tool-panel-content {
+    padding: 0;
+}
+
+.topbar-dropdown--text .topbar-dropdown-header {
+    background: #252536;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.topbar-dropdown--text .topbar-dropdown-header h3 {
+    color: #f1f5f9;
+}
+
 @keyframes topbarDropdownIn {
     from {
         opacity: 0;
@@ -3926,108 +3944,135 @@ kbd.shortcut-key {
     box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1);
 }
 
-/* Scene list: gap between scenes (add scene + transition) */
-.scene-between-gap {
+/* Left sidebar: live scene thumb in list */
+.sidebar-scene-thumb {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: inherit;
+}
+
+.sidebar-scene-thumb--static {
+    background-repeat: no-repeat;
+}
+
+.sidebar-scene-thumb__ring {
+    position: absolute;
+    inset: 0;
+    border: 2px solid var(--primary);
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.scene-list-card {
     position: relative;
-    height: 28px;
-    margin: 4px 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 2px;
+}
+
+.scene-list-card--active {
+    background: var(--bg-surface);
+    border: 2px solid var(--primary);
+    box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.15);
+}
+
+.scene-list-card__thumb {
+    position: relative;
+    height: 76px;
+    background: #e2e8f0;
+}
+
+.scene-list-card__badge {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    z-index: 3;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    backdrop-filter: blur(4px);
+}
+
+.scene-list-card__duration {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    z-index: 3;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    backdrop-filter: blur(4px);
+}
+
+.scene-list-card__active-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: rgba(var(--primary-rgb), 0.12);
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.scene-between-line {
-    position: absolute;
-    left: 12px;
-    right: 12px;
-    top: 50%;
-    height: 1px;
-    background: var(--border-color);
-    transform: translateY(-50%);
     pointer-events: none;
 }
 
-.scene-between-actions {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    opacity: 0;
-    transform: translateY(2px);
-    transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.scene-between-gap:hover .scene-between-actions,
-.scene-between-gap:focus-within .scene-between-actions {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.scene-between-btn {
-    width: 26px;
-    height: 26px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    background: var(--bg-card);
-    color: var(--text-muted);
+.scene-list-card__play {
+    background: var(--primary);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    transition: all 0.15s ease;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-.scene-between-btn:hover {
-    border-color: var(--primary);
-    color: var(--primary);
-    background: rgba(var(--primary-rgb), 0.08);
-}
-
-.scene-between-btn--transition:hover {
-    border-color: #db2777;
-    color: #db2777;
-    background: rgba(219, 39, 119, 0.08);
-}
-
-.scene-between-transition-wrap {
-    position: relative;
-}
-
-.scene-transition-picker {
-    position: absolute;
-    top: calc(100% + 6px);
-    left: 50%;
-    transform: translateX(-50%);
-    min-width: 120px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-    padding: 4px;
-    z-index: 20;
+.scene-list-card__footer {
+    padding: 8px 10px;
     display: flex;
-    flex-direction: column;
-    gap: 2px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
 }
 
-.scene-transition-option {
-    border: none;
-    background: transparent;
-    text-align: left;
-    padding: 6px 10px;
+.scene-list-card__title {
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text-main);
-    border-radius: 6px;
-    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
 }
 
-.scene-transition-option:hover,
-.scene-transition-option.active {
-    background: rgba(var(--primary-rgb), 0.1);
-    color: var(--primary);
+.scene-list-card__actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.scene-list-card__action-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .property-section[class*="accent-"] .premium-textarea::placeholder,

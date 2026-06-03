@@ -42,6 +42,10 @@ import { saveVersionSnapshot, loadVersionSnapshot, listVersionSnapshots } from '
 import EditorToast from '../../components/features/editor/editor/EditorToast'
 import EditorViewControls from '../../components/features/editor/editor/EditorViewControls'
 
+function projectHasPreExistingScenes(scenes) {
+  return Array.isArray(scenes) && scenes.length > 0
+}
+
 function buildInitialProject(initialConfig) {
   if (initialConfig?.videoData?.data) {
     const data = initialConfig.videoData.data;
@@ -247,6 +251,13 @@ function Create({ onBack, initialConfig = null }) {
     window.addEventListener('render-download-ready', handleReady)
     return () => window.removeEventListener('render-download-ready', handleReady)
   }, [])
+
+  useEffect(() => {
+    if (isProjectLoading) return
+    if (projectHasPreExistingScenes(project.scenes)) {
+      setShowQuickCreateModal(false)
+    }
+  }, [isProjectLoading, project.scenes])
 
   const projectRef = useRef(project)
   const insertAfterIndexRef = useRef(null)
@@ -617,7 +628,7 @@ function Create({ onBack, initialConfig = null }) {
 
   const activeScene = project.scenes.find(s => s.id === activeSceneId)
   const selectedLayer = activeScene?.clips?.find((c) => c.id === selectedLayerId)
-  const propertiesPanelWidth = selectedLayer && isTextLayer(selectedLayer) ? 360 : 320
+  const propertiesPanelWidth = selectedLayer && isTextLayer(selectedLayer) ? 380 : 320
 
   const totalDurationInFrames = useMemo(() => {
     return project.scenes.reduce((sum, s) => sum + (s.duration || 8), 0) * 30
@@ -657,6 +668,17 @@ function Create({ onBack, initialConfig = null }) {
     if (sceneId) setActiveSceneId(sceneId)
     selectLayer(layerId, sceneId, { additive: event?.shiftKey })
     if (layerId) setIsRightSidebarOpen(true)
+  }
+
+  const handleSelectLayerId = (layerId) => {
+    if (layerId) {
+      setSelectedLayerIds([layerId])
+      setSelectedLayerId(layerId)
+      setIsRightSidebarOpen(true)
+    } else {
+      setSelectedLayerIds([])
+      setSelectedLayerId(null)
+    }
   }
 
   // Text-to-speech function
@@ -1767,7 +1789,11 @@ function Create({ onBack, initialConfig = null }) {
         </div>
       )}
       <QuickCreateModal
-        isOpen={showQuickCreateModal}
+        isOpen={
+          showQuickCreateModal &&
+          !isProjectLoading &&
+          !projectHasPreExistingScenes(scenes)
+        }
         onClose={() => setShowQuickCreateModal(false)}
         onGenerate={handleQuickCreateGenerate}
       />
@@ -1821,6 +1847,7 @@ function Create({ onBack, initialConfig = null }) {
         workspaceId={project.workspaceId || project.createConfig?.workspaceId}
         addAudioClip={addAudioClip}
         onUploadError={(msg) => showToast(msg, 'error')}
+        setSelectedLayerId={handleSelectLayerId}
       />
 
       <div className="editor-container">

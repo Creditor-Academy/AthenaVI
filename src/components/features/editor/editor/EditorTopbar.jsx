@@ -87,6 +87,7 @@ const EditorTopbar = ({
     workspaceId,
     addAudioClip,
     onUploadError,
+    setSelectedLayerId,
 }) => {
     const [saved, setSaved] = useState(false)
     const [showShortcuts, setShowShortcuts] = useState(false)
@@ -192,6 +193,7 @@ const EditorTopbar = ({
                         activeSceneId={activeSceneId}
                         activeScene={activeScene}
                         updateScene={updateScene}
+                        setSelectedLayerId={setSelectedLayerId}
                     />
                 )
             case 'layers':
