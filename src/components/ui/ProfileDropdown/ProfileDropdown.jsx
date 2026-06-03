@@ -4,7 +4,7 @@ import { MdPerson, MdLogout, MdArrowDropDown } from 'react-icons/md'
 import './ProfileDropdown.css'
 
 const ProfileDropdown = ({ onProfileClick, compact = false }) => {
-  const { user, logout, logoutAll } = useAuth()
+  const { user, logout } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef(null)
 
@@ -50,16 +50,7 @@ const ProfileDropdown = ({ onProfileClick, compact = false }) => {
     setIsOpen(false)
   }
 
-  const handleLogoutAll = async () => {
-    try {
-      await logoutAll()
-      // Navigate to landing page after logout
-      window.location.hash = '#/'
-    } catch (error) {
-      console.error('Logout all error:', error)
-    }
-    setIsOpen(false)
-  }
+
 
   return (
     <div className="profile-dropdown" ref={dropdownRef}>
@@ -103,13 +94,7 @@ const ProfileDropdown = ({ onProfileClick, compact = false }) => {
             <span>Logout</span>
           </button>
 
-          <button 
-            className="dropdown-item logout-item"
-            onClick={handleLogoutAll}
-          >
-            <MdLogout size={18} />
-            <span>Logout from all devices</span>
-          </button>
+
         </div>
       )}
     </div>

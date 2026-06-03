@@ -9,7 +9,6 @@ import CreateVoice from '../Voices/CreateVoice.jsx'
 import Library from '../Library/Library.jsx'
 import Templates from '../Templates/Templates.jsx'
 import TemplateDetails from '../TemplateDetails/TemplateDetails.jsx'
-import Workspace from '../Workspace/Workspace.jsx'
 import Profile from '../Profile/Profile.jsx'
 import Settings from '../Settings/Settings.jsx'
 import BrandKits from '../BrandKits/BrandKits.jsx'
@@ -38,7 +37,13 @@ function Dashboard({ onCreate, initialSection }) {
     }
     
     // Fallback: Initialize section based on current URL path
-    const currentPath = window.location.pathname
+    let currentPath = window.location.pathname
+    if (window.location.hash && window.location.hash !== '#') {
+      currentPath = window.location.hash.replace('#', '') || '/'
+      if (currentPath.endsWith('/') && currentPath.length > 1) {
+        currentPath = currentPath.slice(0, -1)
+      }
+    }
     if (currentPath.startsWith('/dashboard/')) {
       return currentPath.replace('/dashboard/', '') || 'home'
     }
@@ -67,7 +72,6 @@ function Dashboard({ onCreate, initialSection }) {
     'home',
     'videos',
     'workspace',
-    'team-workspace',
     'trash',
     'library',
     'brandkits',
@@ -122,7 +126,15 @@ function Dashboard({ onCreate, initialSection }) {
 
   // Update URL when section changes
   useEffect(() => {
-    const newPath = section === 'home' ? '/dashboard' : `/dashboard/${section}`
+    let newPath
+    if (section === 'home') {
+      newPath = '/dashboard'
+    } else if (section === 'profile') {
+      newPath = '/profile'
+    } else {
+      newPath = `/dashboard/${section}`
+    }
+    
     if (window.location.pathname !== newPath) {
       window.history.pushState({ section }, '', newPath)
     }
@@ -131,8 +143,16 @@ function Dashboard({ onCreate, initialSection }) {
   // Handle browser back/forward for dashboard sections
   useEffect(() => {
     const handlePopState = () => {
-      const currentPath = window.location.pathname
-      if (currentPath.startsWith('/dashboard/')) {
+      let currentPath = window.location.pathname
+      if (window.location.hash && window.location.hash !== '#') {
+        currentPath = window.location.hash.replace('#', '') || '/'
+        if (currentPath.endsWith('/') && currentPath.length > 1) {
+          currentPath = currentPath.slice(0, -1)
+        }
+      }
+      if (currentPath === '/profile') {
+        setSection('profile')
+      } else if (currentPath.startsWith('/dashboard/')) {
         const newSection = currentPath.replace('/dashboard/', '') || 'home'
         setSection(newSection)
       } else if (currentPath === '/dashboard') {
@@ -269,8 +289,7 @@ function Dashboard({ onCreate, initialSection }) {
               }}
             />
           )}
-          {section === 'workspace' && <Workspace onCreate={handleOpenCreateVideoModal} onEdit={handleEditVideo} />}
-          {section === 'team-workspace' && <TeamWorkspace onCreate={handleOpenCreateVideoModal} onEdit={handleEditVideo} />}
+          {section === 'workspace' && <TeamWorkspace onCreate={handleOpenCreateVideoModal} onEdit={handleEditVideo} />}
           {section === 'admin-portal' && <AdminPortal />}
           {section === 'brandkits' && <BrandKits />}
           {section === 'credits' && <Settings onBack={() => goToSection('home')} initialTab="billing" />}

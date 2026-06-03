@@ -18,12 +18,21 @@ import { useAuth } from '../../contexts/AuthContext';
 import WorkspaceHeader from '../../components/features/workspace/workspace/WorkspaceHeader.jsx';
 import WorkspaceSection from '../../components/features/workspace/workspace/WorkspaceSection.jsx';
 import { WorkspaceCard, FolderCard, VideoCard } from '../../components/features/workspace/workspace/ViewCards.jsx';
-import { WorkspaceRow, FolderRow, VideoRow } from '../../components/features/workspace/workspace/ViewRows.jsx';
+import { WorkspaceRow, FolderRow, VideoRow, formatOnlyDate } from '../../components/features/workspace/workspace/ViewRows.jsx';
 import CreateWorkspaceModal from '../../components/features/workspace/workspace/CreateWorkspaceModal.jsx';
 import CreateFolderModal from '../../components/features/workspace/workspace/CreateFolderModal.jsx';
 import RenameModal from '../../components/features/workspace/workspace/RenameModal.jsx';
+import ItemDetailsModal from '../../components/features/workspace/workspace/ItemDetailsModal.jsx';
+import MoveProjectModal from '../../components/features/workspace/workspace/MoveProjectModal.jsx';
 import TeamWorkspaceSkeleton from '../page-skeleton/TeamWorkspaceSkeleton';
 import workspaceService from '../../services/workspaceService.js';
+import { formatFolderSize, getProjectBytes } from '../../utils/formatSize.js';
+import {
+  buildWorkspaceUserLookup,
+  getAuthDisplayName,
+  pickUserRef,
+  resolveUserDisplayName
+} from '../../utils/workspaceUsers.js';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
 
 function normalizeId(value) {
@@ -56,7 +65,7 @@ function readRole(workspace) {
   return String(role).toUpperCase();
 }
 
-function normalizeWorkspace(rawWorkspace, currentUserId) {
+function normalizeWorkspace(rawWorkspace, currentUserId, authUser) {
   const id = rawWorkspace.id || rawWorkspace._id;
   const typeRaw = String(rawWorkspace.type || '').toUpperCase();
   const isPersonal = Boolean(rawWorkspace.isPersonal) || typeRaw === 'PRIVATE' || typeRaw === 'PERSONAL';
@@ -98,6 +107,10 @@ function normalizeWorkspace(rawWorkspace, currentUserId) {
 
   const effectiveRole = isPersonal ? 'OWNER' : (isOwner ? 'OWNER' : role || 'MEMBER');
 
+  const ownerName = isPersonal || (Boolean(currentUserId) && ownerId === currentUserId)
+    ? (getAuthDisplayName(authUser) || 'You')
+    : (rawWorkspace.owner?.name || rawWorkspace.owner?.username || rawWorkspace.owner?.email || rawWorkspace.ownerName || 'Unknown');
+
   return {
     ...rawWorkspace,
     id,
@@ -105,48 +118,100 @@ function normalizeWorkspace(rawWorkspace, currentUserId) {
     type: isPersonal ? 'personal' : 'workspace',
     userRole: effectiveRole,
     ownerId: ownerId || (isOwner ? currentUserId : ''),
+    ownerName,
     members: Array.isArray(rawWorkspace.members) ? rawWorkspace.members : [],
     folders: []
   };
 }
 
-function normalizeFolder(folder) {
-  const creator = folder.creator || folder.createdByUser || folder.createdBy || folder.user || {};
-  const lastUpdater = folder.updatedByUser || folder.lastModifiedByUser || folder.updatedBy || creator || {};
+async function enrichWorkspaceMembers(workspace) {
+  if (!workspace || workspace.type === 'personal') return workspace;
 
-  const creatorName =
-    (typeof creator === 'object' ? creator.name || creator.username || creator.email : creator) || 'Unknown';
-  const lastModifiedBy =
-    (typeof lastUpdater === 'object' ? lastUpdater.name || lastUpdater.username || lastUpdater.email : lastUpdater) || 'Unknown';
+  const membersHaveNames = (workspace.members || []).some(
+    (member) => member.user?.name || member.user?.email || member.name || member.email
+  );
+  if (membersHaveNames) return workspace;
 
+  try {
+    const members = await workspaceService.listWorkspaceMembers(workspace.id);
+    return { ...workspace, members: members || workspace.members };
+  } catch {
+    return workspace;
+  }
+}
+
+function normalizeVideo(video, currentUserId, authUser, userLookup) {
+  const lookup = userLookup || new Map();
+  const createdBy = resolveUserDisplayName(
+    pickUserRef(video, 'creator'),
+    lookup,
+    currentUserId,
+    authUser
+  );
+  const lastModifiedBy = resolveUserDisplayName(
+    pickUserRef(video, 'updater'),
+    lookup,
+    currentUserId,
+    authUser
+  );
+
+  const createdAt =
+    video.createdAt || video.created_at || video.dateCreated || video.created || null;
   const updatedAt =
-    folder.updatedAt || folder.lastModifiedAt || folder.modifiedAt || folder.createdAt || new Date().toISOString();
+    video.updatedAt || video.lastModifiedAt || video.modifiedAt || video.updated_at || createdAt || null;
+  const sizeBytes = getProjectBytes(video);
+
+  return {
+    ...video,
+    id: video.id || video._id,
+    name: video.name || video.title || 'Untitled Video',
+    createdBy,
+    createdAt,
+    lastModifiedBy,
+    lastModifiedAt: updatedAt,
+    lastEditedBy: lastModifiedBy,
+    lastEditedAt: updatedAt,
+    sizeBytes: sizeBytes ?? video.sizeBytes ?? null
+  };
+}
+
+function normalizeFolder(folder, currentUserId, authUser, userLookup) {
+  const lookup = userLookup || new Map();
+  const createdBy = resolveUserDisplayName(
+    pickUserRef(folder, 'creator'),
+    lookup,
+    currentUserId,
+    authUser
+  );
+  const lastModifiedBy = resolveUserDisplayName(
+    pickUserRef(folder, 'updater'),
+    lookup,
+    currentUserId,
+    authUser
+  );
+
+  const createdAt =
+    folder.createdAt || folder.created_at || folder.dateCreated || folder.created || null;
+  const updatedAt =
+    folder.updatedAt || folder.lastModifiedAt || folder.modifiedAt || folder.updated_at || createdAt || null;
+
+  const videos = Array.isArray(folder.videos)
+    ? folder.videos.map((video) => normalizeVideo(video, currentUserId, authUser, lookup))
+    : [];
 
   return {
     ...folder,
     id: folder.id || folder._id,
     name: folder.name || folder.title || 'Untitled Folder',
-    createdBy: creatorName,
+    createdBy,
+    createdAt,
     lastModifiedBy,
-    lastModifiedAt: new Date(updatedAt).toLocaleString(),
-    videos: Array.isArray(folder.videos)
-      ? folder.videos.map((video) => ({
-          ...video,
-          id: video.id || video._id,
-          name: video.name || video.title || 'Untitled Video',
-          lastEditedBy:
-            video.lastEditedBy ||
-            video.updatedBy?.name ||
-            video.updatedByUser?.name ||
-            lastModifiedBy ||
-            'Unknown',
-          lastEditedAt: video.updatedAt
-            ? new Date(video.updatedAt).toLocaleString()
-            : new Date().toLocaleString()
-        }))
-      : []
+    lastModifiedAt: updatedAt,
+    videos,
+    displaySize: formatFolderSize({ ...folder, videos })
   };
 }
+
 
 function workspaceCanEdit(workspace) {
   const role = String(workspace?.userRole || '').toUpperCase();
@@ -165,17 +230,36 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
   const [workspaces, setWorkspaces] = useState([]);
   const [invitations, setInvitations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentLevel, setCurrentLevel] = useState({ type: 'root', id: null });
+  const [currentLevel, setCurrentLevel] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('workspaceCurrentLevel');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          type: parsed.type || 'root',
+          id: parsed.id || null,
+          ws: parsed.ws || null,
+          folder: parsed.folder || null
+        };
+      }
+    } catch (e) {
+      console.error('Failed to parse workspace level from sessionStorage:', e);
+    }
+    return { type: 'root', id: null };
+  });
 
   const [viewMode, setViewMode] = useState('tile');
   const [sortBy, setSortBy] = useState('name_asc');
-  const [activeRootTab, setActiveRootTab] = useState('my-workspaces');
+  const [activeRootTab, setActiveRootTab] = useState(() => {
+    return sessionStorage.getItem('workspaceActiveRootTab') || 'my-workspaces';
+  });
 
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
   const [selectedWorkspaceForFolder, setSelectedWorkspaceForFolder] = useState(null);
   const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [renameTarget, setRenameTarget] = useState(null);
+  const [detailsTarget, setDetailsTarget] = useState(null);
 
   const [localAdditions, setLocalAdditions] = useState(() => {
     const saved = sessionStorage.getItem('workspaceLocalAdditions');
@@ -188,6 +272,9 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
   const [membersLoading, setMembersLoading] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('MEMBER');
+  const [renameWorkspaceName, setRenameWorkspaceName] = useState('');
+  const [moveTargetVideo, setMoveTargetVideo] = useState(null);
+  const [moveTargetWorkspace, setMoveTargetWorkspace] = useState(null);
 
   // Toast & confirm dialog system
   const [toast, setToast] = useState(null);
@@ -203,6 +290,69 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
   const openConfirmDialog = useCallback((message, onConfirm) => {
     setConfirmDialog({ message, onConfirm });
   }, []);
+
+  const activeWorkspace = useMemo(() => {
+    if (currentLevel.type === 'root') return null;
+    const wsId = currentLevel.ws?.id || currentLevel.id;
+    const found = workspaces.find((w) => String(w.id) === String(wsId));
+    return found || currentLevel.ws;
+  }, [workspaces, currentLevel]);
+
+  const activeFolder = useMemo(() => {
+    if (currentLevel.type !== 'folder') return null;
+    const fId = currentLevel.folder?.id || currentLevel.id;
+    const found = activeWorkspace?.folders?.find((f) => String(f.id) === String(fId));
+    return found || currentLevel.folder;
+  }, [activeWorkspace, currentLevel]);
+
+  // Sync full resolved workspace/folder back to currentLevel once loaded
+  useEffect(() => {
+    if (loading || workspaces.length === 0) return;
+
+    const wsId = currentLevel.ws?.id || currentLevel.id;
+    const resolvedWs = workspaces.find((w) => String(w.id) === String(wsId));
+    
+    if (resolvedWs) {
+      const isWsSkeleton = !currentLevel.ws || !currentLevel.ws.folders;
+      let resolvedFolder = null;
+      let isFolderSkeleton = false;
+
+      if (currentLevel.type === 'folder') {
+        const fId = currentLevel.folder?.id || currentLevel.id;
+        resolvedFolder = resolvedWs.folders?.find((f) => String(f.id) === String(fId));
+        isFolderSkeleton = !currentLevel.folder || !currentLevel.folder.videos;
+      }
+
+      if (isWsSkeleton || isFolderSkeleton) {
+        setCurrentLevel((prev) => {
+          if (prev.type === 'root') return prev;
+          return {
+            ...prev,
+            ws: resolvedWs,
+            folder: resolvedFolder || prev.folder
+          };
+        });
+      }
+    }
+  }, [workspaces, loading, currentLevel]);
+
+  useEffect(() => {
+    try {
+      const serialized = {
+        type: currentLevel.type,
+        id: currentLevel.id,
+        ws: currentLevel.ws ? { id: currentLevel.ws.id, name: currentLevel.ws.name, type: currentLevel.ws.type, userRole: currentLevel.ws.userRole } : null,
+        folder: currentLevel.folder ? { id: currentLevel.folder.id, name: currentLevel.folder.name } : null
+      };
+      sessionStorage.setItem('workspaceCurrentLevel', JSON.stringify(serialized));
+    } catch (e) {
+      console.error('Failed to save workspace level to sessionStorage:', e);
+    }
+  }, [currentLevel]);
+
+  useEffect(() => {
+    sessionStorage.setItem('workspaceActiveRootTab', activeRootTab);
+  }, [activeRootTab]);
 
   useEffect(() => {
     return () => {
@@ -253,24 +403,30 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
       const createdFolder = event.detail?.folder;
       const workspaceId = event.detail?.workspaceId;
       if (!createdFolder || !workspaceId) return;
-      const normalizedFolder = normalizeFolder(createdFolder);
-      setWorkspaces((prev) =>
-        prev.map((ws) => {
-          if (String(ws.id) !== String(workspaceId)) return ws;
-          if (ws.folders.some((folder) => String(folder.id) === String(normalizedFolder.id))) return ws;
-          return { ...ws, folders: [...ws.folders, normalizedFolder] };
-        })
-      );
-      setLocalAdditions((prev) => ({
-        ...prev,
-        folders: {
-          ...prev.folders,
-          [workspaceId]: [
-            ...(prev.folders[workspaceId] || []).filter((folder) => String(folder.id) !== String(normalizedFolder.id)),
-            normalizedFolder
-          ]
-        }
-      }));
+      setWorkspaces((prev) => {
+        const ws = prev.find((item) => String(item.id) === String(workspaceId));
+        const lookup = buildWorkspaceUserLookup(ws, currentUserId, authUser);
+        const normalizedFolder = normalizeFolder(createdFolder, currentUserId, authUser, lookup);
+
+        setLocalAdditions((localPrev) => ({
+          ...localPrev,
+          folders: {
+            ...localPrev.folders,
+            [workspaceId]: [
+              ...(localPrev.folders[workspaceId] || []).filter(
+                (folder) => String(folder.id) !== String(normalizedFolder.id)
+              ),
+              normalizedFolder
+            ]
+          }
+        }));
+
+        return prev.map((item) => {
+          if (String(item.id) !== String(workspaceId)) return item;
+          if (item.folders.some((folder) => String(folder.id) === String(normalizedFolder.id))) return item;
+          return { ...item, folders: [...item.folders, normalizedFolder] };
+        });
+      });
     };
 
     const onVideoCreated = (event) => {
@@ -279,34 +435,33 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
       const video = event.detail?.video;
       if (!workspaceId || !folderId || !video) return;
 
-      const normalizedVideo = {
-        ...video,
-        id: video.id || video._id,
-        name: video.name || video.title || 'Untitled Video',
-        lastEditedBy: authUser?.name || authUser?.email || 'You',
-        lastEditedAt: new Date().toLocaleString()
-      };
+      setWorkspaces((prev) => {
+        const ws = prev.find((item) => String(item.id) === String(workspaceId));
+        const lookup = buildWorkspaceUserLookup(ws, currentUserId, authUser);
+        const normalizedVideo = normalizeVideo({ ...video, workspaceId }, currentUserId, authUser, lookup);
+        const editorName = getAuthDisplayName(authUser) || 'You';
 
-      setWorkspaces((prev) =>
-        prev.map((ws) => {
-          if (String(ws.id) !== String(workspaceId)) return ws;
+        return prev.map((item) => {
+          if (String(item.id) !== String(workspaceId)) return item;
           return {
-            ...ws,
-            folders: ws.folders.map((folder) => {
+            ...item,
+            folders: item.folders.map((folder) => {
               if (String(folder.id) !== String(folderId)) return folder;
-              if ((folder.videos || []).some((item) => String(item.id) === String(normalizedVideo.id))) {
+              if ((folder.videos || []).some((v) => String(v.id) === String(normalizedVideo.id))) {
                 return folder;
               }
+              const videos = [...(folder.videos || []), normalizedVideo];
               return {
                 ...folder,
-                videos: [...(folder.videos || []), normalizedVideo],
-                lastModifiedBy: authUser?.name || authUser?.email || 'You',
-                lastModifiedAt: new Date().toLocaleString()
+                videos,
+                lastModifiedBy: editorName,
+                lastModifiedAt: new Date().toISOString(),
+                displaySize: formatFolderSize({ ...folder, videos })
               };
             })
           };
-        })
-      );
+        });
+      });
     };
 
     window.addEventListener('workspace:created', onWorkspaceCreated);
@@ -324,34 +479,47 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
     try {
       setLoading(true);
       const rawWorkspaces = await workspaceService.listWorkspaces();
-      const mapped = (rawWorkspaces || []).map((ws) => normalizeWorkspace(ws, currentUserId));
+      const mapped = (rawWorkspaces || []).map((ws) => normalizeWorkspace(ws, currentUserId, authUser));
 
       const withFolders = await Promise.all(
         mapped.map(async (workspace) => {
           try {
+            const enrichedWorkspace = await enrichWorkspaceMembers(workspace);
+            const userLookup = buildWorkspaceUserLookup(enrichedWorkspace, currentUserId, authUser);
+
             const [folders, projects] = await Promise.all([
-              workspaceService.listFolders(workspace.id),
-              workspaceService.listProjects(workspace.id)
+              workspaceService.listFolders(enrichedWorkspace.id),
+              workspaceService.listProjects(enrichedWorkspace.id)
             ]);
-            
-            const normalizedFolders = (folders || []).map(normalizeFolder);
-            
-            // Distribute projects to folders
-            normalizedFolders.forEach(folder => {
-              folder.videos = projects.filter(p => {
-                const pFolderId = p.folderId || (p.folder && (p.folder.id || p.folder._id));
-                return String(pFolderId) === String(folder.id);
-              }).map(p => ({ ...p, workspaceId: workspace.id }));
+
+            const normalizedFolders = (folders || []).map((f) =>
+              normalizeFolder(f, currentUserId, authUser, userLookup)
+            );
+
+            normalizedFolders.forEach((folder) => {
+              const folderVideos = (projects || [])
+                .filter((p) => {
+                  const pFolderId = p.folderId || (p.folder && (p.folder.id || p.folder._id));
+                  return String(pFolderId) === String(folder.id);
+                })
+                .map((p) =>
+                  normalizeVideo({ ...p, workspaceId: enrichedWorkspace.id }, currentUserId, authUser, userLookup)
+                );
+              folder.videos = folderVideos;
+              folder.displaySize = formatFolderSize(folder);
             });
 
             return {
-              ...workspace,
+              ...enrichedWorkspace,
               folders: normalizedFolders,
-              // Keep projects that are not in any folder in the workspace root
-              videos: projects.filter(p => {
-                const pFolderId = p.folderId || (p.folder && (p.folder.id || p.folder._id));
-                return !pFolderId;
-              }).map(p => ({ ...p, workspaceId: workspace.id }))
+              videos: (projects || [])
+                .filter((p) => {
+                  const pFolderId = p.folderId || (p.folder && (p.folder.id || p.folder._id));
+                  return !pFolderId;
+                })
+                .map((p) =>
+                  normalizeVideo({ ...p, workspaceId: enrichedWorkspace.id }, currentUserId, authUser, userLookup)
+                )
             };
           } catch (err) {
             console.error(`Failed to load folders/projects for workspace ${workspace.id}:`, err);
@@ -369,7 +537,8 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           ...workspace,
           type: 'workspace',
           userRole: 'OWNER',
-          ownerId: currentUserId || workspace.ownerId
+          ownerId: currentUserId || workspace.ownerId,
+          ownerName: authUser?.name || 'You'
         };
       });
 
@@ -379,6 +548,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           name: 'Personal Workspace',
           type: 'personal',
           ownerId: currentUserId || 'self',
+          ownerName: authUser?.name || 'You',
           members: [],
           folders: [],
           userRole: 'OWNER'
@@ -437,6 +607,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           name: 'Personal Workspace',
           type: 'personal',
           ownerId: currentUserId || 'self',
+          ownerName: authUser?.name || 'You',
           members: [],
           folders: [],
           userRole: 'OWNER'
@@ -568,7 +739,8 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
 
     try {
       const createdFolder = await workspaceService.createFolder(workspace.id, folderName);
-      const normalizedFolder = normalizeFolder(createdFolder);
+      const userLookup = buildWorkspaceUserLookup(workspace, currentUserId, authUser);
+      const normalizedFolder = normalizeFolder(createdFolder, currentUserId, authUser, userLookup);
 
       setWorkspaces((prev) =>
         prev.map((item) =>
@@ -655,7 +827,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
 
     if (type === 'folder') {
       const parentWorkspace =
-        currentLevel.ws ||
+        activeWorkspace ||
         workspaces.find((workspace) => workspace.folders.some((folder) => String(folder.id) === String(id)));
 
       if (!workspaceCanEdit(parentWorkspace)) {
@@ -682,7 +854,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
     }
 
     if (type === 'video') {
-      const parentWorkspace = currentLevel.ws;
+      const parentWorkspace = activeWorkspace;
       if (!workspaceCanEdit(parentWorkspace)) {
         throw new Error('You do not have permission to rename this video.');
       }
@@ -698,8 +870,10 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
                 ? {
                     ...video,
                     name: newName,
+                    lastModifiedBy: authUser?.name || authUser?.email || 'You',
+                    lastModifiedAt: new Date().toISOString(),
                     lastEditedBy: authUser?.name || authUser?.email || 'You',
-                    lastEditedAt: new Date().toLocaleString()
+                    lastEditedAt: new Date().toISOString()
                   }
                 : video
             )
@@ -761,7 +935,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
     if (type === 'folder') {
       const parentWorkspace =
         workspaceContext ||
-        currentLevel.ws ||
+        activeWorkspace ||
         workspaces.find((workspace) => workspace.folders.some((folder) => String(folder.id) === String(id)));
 
       if (!workspaceCanEdit(parentWorkspace)) {
@@ -800,8 +974,8 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
     }
 
     if (type === 'video') {
-      const parentWorkspace = currentLevel.ws;
-      const parentFolder = currentLevel.folder;
+      const parentWorkspace = activeWorkspace;
+      const parentFolder = activeFolder;
       if (!workspaceCanEdit(parentWorkspace)) {
         showToast('You do not have permission to delete this project.', 'error');
         return;
@@ -842,9 +1016,40 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
     }
   };
 
-  const handleManageContributors = async (workspace) => {
+  const handleManageWorkspace = async (workspace) => {
     setContributorsPanel({ open: true, workspace });
+    setRenameWorkspaceName(workspace.name || '');
     await loadContributorsForWorkspace(workspace);
+  };
+
+  const handleRenameWorkspaceInsidePanel = async () => {
+    const workspace = contributorsPanel.workspace;
+    if (!workspace) return;
+    const newName = renameWorkspaceName.trim();
+    if (!newName) {
+      showToast('Workspace name cannot be empty', 'error');
+      return;
+    }
+    if (newName === workspace.name) {
+      return;
+    }
+
+    try {
+      await workspaceService.updateWorkspace(workspace.id, { name: newName });
+      
+      setWorkspaces((prev) =>
+        prev.map((item) => (String(item.id) === String(workspace.id) ? { ...item, name: newName } : item))
+      );
+
+      setContributorsPanel((prev) => ({
+        ...prev,
+        workspace: prev.workspace ? { ...prev.workspace, name: newName } : null
+      }));
+
+      showToast('Workspace renamed successfully', 'success');
+    } catch (error) {
+      showToast(error.message || 'Failed to rename workspace', 'error');
+    }
   };
 
   const handleInviteContributor = async () => {
@@ -911,13 +1116,11 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           workspace={workspace}
           onClick={() => setCurrentLevel({ type: 'workspace', id: workspace.id, ws: workspace })}
           contextProps={{
-            onRename:
+            onDetails: () => setDetailsTarget({ type: 'workspace', item: workspace }),
+            onManageWorkspace:
               workspace.type === 'workspace' && String(workspace.userRole).toUpperCase() === 'OWNER'
-                ? () => renameItem('workspace', workspace.id)
+                ? () => handleManageWorkspace(workspace)
                 : null,
-            onAddMembers: workspaceCanManageContributors(workspace)
-              ? () => handleManageContributors(workspace)
-              : null,
             onDelete:
               workspace.type === 'personal'
                 ? null
@@ -939,13 +1142,11 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
         workspace={workspace}
         onClick={() => setCurrentLevel({ type: 'workspace', id: workspace.id, ws: workspace })}
         contextProps={{
-          onRename:
+          onDetails: () => setDetailsTarget({ type: 'workspace', item: workspace }),
+          onManageWorkspace:
             workspace.type === 'workspace' && String(workspace.userRole).toUpperCase() === 'OWNER'
-              ? () => renameItem('workspace', workspace.id)
+              ? () => handleManageWorkspace(workspace)
               : null,
-          onAddMembers: workspaceCanManageContributors(workspace)
-            ? () => handleManageContributors(workspace)
-            : null,
           onDelete:
             workspace.type === 'personal'
               ? null
@@ -971,6 +1172,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           folder={folder}
           onClick={() => setCurrentLevel({ type: 'folder', id: folder.id, folder, ws: workspace })}
           contextProps={{
+            onDetails: () => setDetailsTarget({ type: 'folder', item: folder }),
             onRename: workspaceCanEdit(workspace) ? () => renameItem('folder', folder.id, workspace) : null,
             onDelete: workspaceCanEdit(workspace) ? () => deleteItem('folder', folder.id, workspace) : null
           }}
@@ -984,11 +1186,63 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
         folder={folder}
         onClick={() => setCurrentLevel({ type: 'folder', id: folder.id, folder, ws: workspace })}
         contextProps={{
+          onDetails: () => setDetailsTarget({ type: 'folder', item: folder }),
           onRename: workspaceCanEdit(workspace) ? () => renameItem('folder', folder.id, workspace) : null,
           onDelete: workspaceCanEdit(workspace) ? () => deleteItem('folder', folder.id, workspace) : null
         }}
       />
     ));
+  };
+
+  const handleMoveProject = async (targetFolderId) => {
+    if (!moveTargetVideo || !moveTargetWorkspace) return;
+    try {
+      await workspaceService.moveProjectFolder(moveTargetWorkspace.id, moveTargetVideo.id, targetFolderId);
+      
+      setWorkspaces((prev) =>
+        prev.map((workspace) => {
+          if (String(workspace.id) !== String(moveTargetWorkspace.id)) return workspace;
+
+          // Remove video from old folder
+          const updatedFolders = workspace.folders.map((folder) => {
+            return {
+              ...folder,
+              videos: (folder.videos || []).filter((v) => String(v.id) !== String(moveTargetVideo.id))
+            };
+          });
+
+          // Add video to new folder (if targetFolderId is set)
+          const updatedFoldersWithAdded = updatedFolders.map((folder) => {
+            if (String(folder.id) !== String(targetFolderId)) return folder;
+            const alreadyExists = (folder.videos || []).some((v) => String(v.id) === String(moveTargetVideo.id));
+            const updatedVideo = { ...moveTargetVideo, folderId: targetFolderId };
+            return {
+              ...folder,
+              videos: alreadyExists ? folder.videos : [...(folder.videos || []), updatedVideo]
+            };
+          });
+
+          // Filter out from root videos
+          let updatedRootVideos = (workspace.videos || []).filter((v) => String(v.id) !== String(moveTargetVideo.id));
+          if (!targetFolderId) {
+            const alreadyExists = updatedRootVideos.some((v) => String(v.id) === String(moveTargetVideo.id));
+            const updatedVideo = { ...moveTargetVideo, folderId: null };
+            updatedRootVideos = alreadyExists ? updatedRootVideos : [...updatedRootVideos, updatedVideo];
+          }
+
+          return {
+            ...workspace,
+            folders: updatedFoldersWithAdded,
+            videos: updatedRootVideos
+          };
+        })
+      );
+
+      showToast('Video moved successfully', 'success');
+    } catch (err) {
+      showToast(err.message || 'Failed to move video', 'error');
+      throw err;
+    }
   };
 
   const renderVideoItems = (videos, workspace) => {
@@ -1001,7 +1255,9 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           video={video}
           onClick={() => onEdit && onEdit({ ...video, workspaceId: workspace.id })}
           contextProps={{
+            onDetails: () => setDetailsTarget({ type: 'video', item: video }),
             onRename: workspaceCanEdit(workspace) ? () => renameItem('video', video.id, workspace) : null,
+            onMove: workspaceCanEdit(workspace) ? () => { setMoveTargetVideo(video); setMoveTargetWorkspace(workspace); } : null,
             onDelete: workspaceCanEdit(workspace) ? () => deleteItem('video', video.id, workspace) : null
           }}
         />
@@ -1014,7 +1270,9 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
         video={video}
         onClick={() => onEdit && onEdit({ ...video, workspaceId: workspace.id })}
         contextProps={{
+          onDetails: () => setDetailsTarget({ type: 'video', item: video }),
           onRename: workspaceCanEdit(workspace) ? () => renameItem('video', video.id, workspace) : null,
+          onMove: workspaceCanEdit(workspace) ? () => { setMoveTargetVideo(video); setMoveTargetWorkspace(workspace); } : null,
           onDelete: workspaceCanEdit(workspace) ? () => deleteItem('video', video.id, workspace) : null
         }}
       />
@@ -1055,6 +1313,16 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           showCreateButton={true}
           onCreateClick={() => setIsCreateWorkspaceOpen(true)}
         >
+          {viewMode === 'list' && (
+            <div className="list-header">
+              <div className="col" />
+              <div className="col">Name</div>
+              <div className="col">Owner</div>
+              <div className="col">Date modified</div>
+              <div className="col">Members</div>
+              <div className="col" />
+            </div>
+          )}
           {renderWorkspaceItems(myWorkspaces)}
         </WorkspaceSection>
       )}
@@ -1066,6 +1334,16 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           viewMode={viewMode}
           emptyMessage="No workspaces have been shared with you yet."
         >
+          {viewMode === 'list' && (
+            <div className="list-header">
+              <div className="col" />
+              <div className="col">Name</div>
+              <div className="col">Owner</div>
+              <div className="col">Date modified</div>
+              <div className="col">Members</div>
+              <div className="col" />
+            </div>
+          )}
           {renderWorkspaceItems(sharedWithMe)}
         </WorkspaceSection>
       )}
@@ -1073,7 +1351,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
   );
 
   const renderWorkspaceLevel = () => {
-    const workspace = workspaces.find((item) => String(item.id) === String(currentLevel.ws?.id));
+    const workspace = activeWorkspace;
     if (!workspace) return null;
 
     const canEdit = workspaceCanEdit(workspace);
@@ -1085,7 +1363,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           <span className="breadcrumb-link" onClick={() => setCurrentLevel({ type: 'root', id: null })}>
             Workspaces
           </span>
-          <span className="breadcrumb-separator">/</span>
+          <span className="breadcrumb-separator">&gt;</span>
           <span>{workspace.name}</span>
         </div>
 
@@ -1098,8 +1376,9 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
 
         <WorkspaceSection
           title="Folders"
-          count={workspace.folders.length}
+          count={(workspace.folders || []).length}
           viewMode={viewMode}
+          listClassName="folder-list-view"
           emptyMessage="No folders yet"
           emptyIcon={MdFolderOpen}
           emptyActionLabel="Create Folder"
@@ -1118,7 +1397,19 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
             setIsCreateFolderOpen(true);
           }}
         >
-          {renderFolderItems(workspace.folders, workspace)}
+          {viewMode === 'list' && (
+            <div className="list-header folder-list-header">
+              <div className="col" />
+              <div className="col">Name</div>
+              <div className="col">Owner</div>
+              <div className="col">Date created</div>
+              <div className="col">Modified by</div>
+              <div className="col">Modified at</div>
+              <div className="col">Size</div>
+              <div className="col" />
+            </div>
+          )}
+          {renderFolderItems(workspace.folders || [], workspace)}
         </WorkspaceSection>
 
         {workspace.type === 'workspace' && String(workspace.userRole || '').toUpperCase() !== 'OWNER' && (
@@ -1143,8 +1434,8 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
   };
 
   const renderFolderLevel = () => {
-    const workspace = workspaces.find((item) => String(item.id) === String(currentLevel.ws?.id));
-    const folder = workspace?.folders.find((item) => String(item.id) === String(currentLevel.folder?.id));
+    const workspace = activeWorkspace;
+    const folder = activeFolder;
     if (!workspace || !folder) return null;
 
     const canEdit = workspaceCanEdit(workspace);
@@ -1156,19 +1447,15 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           <span className="breadcrumb-link" onClick={() => setCurrentLevel({ type: 'root', id: null })}>
             Workspaces
           </span>
-          <span className="breadcrumb-separator">/</span>
+          <span className="breadcrumb-separator">&gt;</span>
           <span
             className="breadcrumb-link"
             onClick={() => setCurrentLevel({ type: 'workspace', id: workspace.id, ws: workspace })}
           >
             {workspace.name}
           </span>
-          <span className="breadcrumb-separator">/</span>
+          <span className="breadcrumb-separator">&gt;</span>
           <span>{folder.name}</span>
-        </div>
-
-        <div style={{ marginBottom: 16, color: 'var(--text-muted)', fontSize: 13 }}>
-          Created by {folder.createdBy} | Last modified by {folder.lastModifiedBy} at {folder.lastModifiedAt}
         </div>
 
         {!canEdit && (
@@ -1180,8 +1467,9 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
 
         <WorkspaceSection
           title="Videos"
-          count={folder.videos.length}
+          count={(folder.videos || []).length}
           viewMode={viewMode}
+          listClassName="project-list-view"
           emptyMessage="No videos yet"
           emptyIcon={MdVideoLibrary}
           emptyActionLabel="Create Video"
@@ -1203,6 +1491,18 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
             })
           }
         >
+          {viewMode === 'list' && (
+            <div className="list-header project-list-header">
+              <div className="col" />
+              <div className="col">Name</div>
+              <div className="col">Owner</div>
+              <div className="col">Date created</div>
+              <div className="col">Modified by</div>
+              <div className="col">Modified at</div>
+              <div className="col">Size</div>
+              <div className="col" />
+            </div>
+          )}
           {renderVideoItems(folder.videos || [], workspace)}
         </WorkspaceSection>
       </div>
@@ -1248,6 +1548,22 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
         onRename={handleRename}
         currentName={renameTarget?.name || ''}
         itemType={renameTarget?.type || 'workspace'}
+      />
+
+      <ItemDetailsModal
+        isOpen={!!detailsTarget}
+        onClose={() => setDetailsTarget(null)}
+        itemType={detailsTarget?.type}
+        item={detailsTarget?.item}
+      />
+
+      <MoveProjectModal
+        isOpen={!!moveTargetVideo}
+        onClose={() => { setMoveTargetVideo(null); setMoveTargetWorkspace(null); }}
+        onMove={handleMoveProject}
+        folders={moveTargetWorkspace?.folders || []}
+        currentFolderId={moveTargetVideo?.folderId || (moveTargetVideo?.folder && (moveTargetVideo.folder.id || moveTargetVideo.folder._id)) || null}
+        videoTitle={moveTargetVideo?.name || moveTargetVideo?.title || ''}
       />
 
       <AnimatePresence>
@@ -1378,7 +1694,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
               onClick={(e) => e.stopPropagation()}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2 style={{ margin: 0, fontSize: 20 }}>Manage Contributors</h2>
+                <h2 style={{ margin: 0, fontSize: 20 }}>Manage Workspace</h2>
                 <button
                   onClick={() => setContributorsPanel({ open: false, workspace: null })}
                   style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
@@ -1387,33 +1703,58 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
                 </button>
               </div>
 
-              <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-                Workspace: {contributorsPanel.workspace.name}
-              </div>
-
-              <div style={{ border: '1px solid var(--border-color)', borderRadius: 10, padding: 12 }}>
-                <div style={{ fontWeight: 600, marginBottom: 10 }}>Invite Contributor</div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input
-                    type="email"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    placeholder="Email address"
-                    style={{ flex: 1, height: 36, borderRadius: 8, border: '1px solid var(--border-color)', padding: '0 10px', background: 'var(--bg-card)', color: 'var(--text-main)' }}
-                  />
-                  <select
-                    value={inviteRole}
-                    onChange={(e) => setInviteRole(e.target.value)}
-                    style={{ width: 100, height: 36, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-main)' }}
-                  >
-                    <option value="MEMBER">Member</option>
-                    <option value="ADMIN">Admin</option>
-                  </select>
-                  <button className="btn-primary" type="button" onClick={handleInviteContributor}>
-                    <MdAdd size={16} />
-                  </button>
+              {String(contributorsPanel.workspace.userRole).toUpperCase() === 'OWNER' ? (
+                <div style={{ border: '1px solid var(--border-color)', borderRadius: 10, padding: 12 }}>
+                  <div style={{ fontWeight: 600, marginBottom: 10 }}>Workspace Settings</div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      type="text"
+                      value={renameWorkspaceName}
+                      onChange={(e) => setRenameWorkspaceName(e.target.value)}
+                      placeholder="Workspace name"
+                      style={{ flex: 1, height: 36, borderRadius: 8, border: '1px solid var(--border-color)', padding: '0 10px', background: 'var(--bg-card)', color: 'var(--text-main)' }}
+                    />
+                    <button
+                      className="btn-primary"
+                      type="button"
+                      onClick={handleRenameWorkspaceInsidePanel}
+                      style={{ height: 36, padding: '0 16px', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      Rename
+                    </button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+                  Workspace: {contributorsPanel.workspace.name}
+                </div>
+              )}
+
+              {workspaceCanManageContributors(contributorsPanel.workspace) && (
+                <div style={{ border: '1px solid var(--border-color)', borderRadius: 10, padding: 12 }}>
+                  <div style={{ fontWeight: 600, marginBottom: 10 }}>Invite Contributor</div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      type="email"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      placeholder="Email address"
+                      style={{ flex: 1, height: 36, borderRadius: 8, border: '1px solid var(--border-color)', padding: '0 10px', background: 'var(--bg-card)', color: 'var(--text-main)' }}
+                    />
+                    <select
+                      value={inviteRole}
+                      onChange={(e) => setInviteRole(e.target.value)}
+                      style={{ width: 100, height: 36, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-main)' }}
+                    >
+                      <option value="MEMBER">Member</option>
+                      <option value="ADMIN">Admin</option>
+                    </select>
+                    <button className="btn-primary" type="button" onClick={handleInviteContributor}>
+                      <MdAdd size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div style={{ overflowY: 'auto', flex: 1 }}>
                 <div style={{ fontWeight: 600, marginBottom: 8 }}>Members</div>
@@ -1439,17 +1780,20 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
                             </div>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <select
-                              value={role}
-                              onChange={(e) => handleChangeMemberRole(memberId, e.target.value)}
-                              disabled={role === 'OWNER'}
-                              style={{ height: 32, borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-main)' }}
-                            >
-                              <option value="ADMIN">Admin</option>
-                              <option value="MEMBER">Member</option>
-                              <option value="OWNER">Owner</option>
-                            </select>
-                            {role !== 'OWNER' && (
+                            {role === 'OWNER' ? (
+                              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--primary)', paddingRight: 8 }}>Owner</span>
+                            ) : (
+                              <select
+                                value={role}
+                                onChange={(e) => handleChangeMemberRole(memberId, e.target.value)}
+                                disabled={String(contributorsPanel.workspace?.userRole).toUpperCase() !== 'OWNER'}
+                                style={{ height: 32, borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-main)' }}
+                              >
+                                <option value="ADMIN">Admin</option>
+                                <option value="MEMBER">Member</option>
+                              </select>
+                            )}
+                            {role !== 'OWNER' && workspaceCanManageContributors(contributorsPanel.workspace) && (
                               <button className="btn-secondary add-btn-small" onClick={() => handleRemoveMember(memberId)}>
                                 Remove
                               </button>
@@ -1474,12 +1818,14 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
                             Role: {String(invitee.role || 'MEMBER').toUpperCase()} | Status: {String(invitee.status || 'PENDING').toUpperCase()}
                           </div>
                         </div>
-                        <button
-                          className="btn-secondary add-btn-small"
-                          onClick={() => workspaceService.removeInvitation(contributorsPanel.workspace.id, invitee.id).then(() => loadContributorsForWorkspace(contributorsPanel.workspace))}
-                        >
-                          Remove
-                        </button>
+                        {workspaceCanManageContributors(contributorsPanel.workspace) && (
+                          <button
+                            className="btn-secondary add-btn-small"
+                            onClick={() => workspaceService.removeInvitation(contributorsPanel.workspace.id, invitee.id).then(() => loadContributorsForWorkspace(contributorsPanel.workspace))}
+                          >
+                            Remove
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))

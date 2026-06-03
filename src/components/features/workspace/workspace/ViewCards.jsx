@@ -1,6 +1,7 @@
 import React from 'react';
 import { MdFolder, MdVideoLibrary, MdPerson, MdPeople } from 'react-icons/md';
 import ContextMenu from './ContextMenu.jsx';
+import UserIdentity from './UserIdentity.jsx';
 
 export const WorkspaceCard = ({ workspace, onClick, contextProps }) => {
     return (
@@ -16,9 +17,7 @@ export const WorkspaceCard = ({ workspace, onClick, contextProps }) => {
             <div className="workspace-item-meta">
                 <div className="meta-left">
                     <h4>{workspace.name}</h4>
-                    <span className="subtitle">
-                        {workspace.type === 'personal' ? 'Private' : `${(workspace.members?.length || 0) + 1} Members`}
-                    </span>
+                    <UserIdentity name={workspace.ownerName} compact />
                 </div>
                 <ContextMenu type="workspace" {...contextProps} />
             </div>
@@ -38,8 +37,7 @@ export const FolderCard = ({ folder, onClick, contextProps }) => {
             <div className="workspace-item-meta">
                 <div className="meta-left">
                     <h4>{folder.name}</h4>
-                    <span className="subtitle">By {folder.createdBy}</span>
-                    <span className="subtitle">Last modified by {folder.lastModifiedBy} {folder.lastModifiedAt ? `• ${folder.lastModifiedAt}` : ''}</span>
+                    <UserIdentity name={folder.createdBy} compact />
                 </div>
                 <ContextMenu type="folder" {...contextProps} />
             </div>
@@ -59,7 +57,7 @@ export const VideoCard = ({ video, onClick, contextProps }) => {
             <div className="workspace-item-meta">
                 <div className="meta-left">
                     <h4>{video.name}</h4>
-                    <span className="subtitle">Last edited by {video.lastEditedBy}</span>
+                    <UserIdentity name={video.createdBy} compact />
                 </div>
                 <ContextMenu type="video" {...contextProps} />
             </div>

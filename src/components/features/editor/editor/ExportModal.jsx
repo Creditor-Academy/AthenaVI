@@ -213,8 +213,14 @@ const ExportModal = ({
           </div>
         )}
       </div>
-    </div>
-  )
-}
 
-export default ExportModal
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export default ExportModal;

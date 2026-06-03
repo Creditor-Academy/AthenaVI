@@ -1,8 +1,10 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Image, Music2, Type, LayoutGrid } from 'lucide-react'
 import {
   MdCloudUpload,
   MdImage,
+  MdSearch,
+  MdFolder,
   MdPlayCircleFilled,
   MdMusicNote,
   MdGridView,
@@ -73,10 +75,13 @@ const CATEGORY_CARDS = [
 function Library() {
   const [activeView, setActiveView] = useState('grid')
   const [activeTab, setActiveTab] = useState('images')
+  const [searchQuery, setSearchQuery] = useState('')
   const [showUploadModal, setShowUploadModal] = useState(false)
   const fileInputRef = useRef(null)
+  const searchRef = useRef(null)
   const [uploadType, setUploadType] = useState('images')
-  const [selectedCategory, setSelectedCategory] = useState(null)
+  // default to media so Photos/Videos are selected on first open
+  const [selectedCategory, setSelectedCategory] = useState('media')
 
   const mediaTabs = [
     { id: 'images', label: 'Photos' },
@@ -85,12 +90,12 @@ function Library() {
 
   const [assets, setAssets] = useState({
     images: [
-      { id: 1, name: 'instructor_profile_01.png', size: '2.4 MB', type: 'PNG', thumb: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200' },
-      { id: 2, name: 'modern_office_backdrop.jpg', size: '1.8 MB', type: 'JPG', thumb: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=200' },
-      { id: 3, name: 'product_demo_04.jpg', size: '3.1 MB', type: 'JPG', thumb: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=200' }
+      { id: 1, name: 'instructor_profile_01.png', size: '2.4 MB', type: 'PNG', thumb: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200', owner: 'me', modified: '12 Apr' },
+      { id: 2, name: 'modern_office_backdrop.jpg', size: '1.8 MB', type: 'JPG', thumb: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=200', owner: 'me', modified: '11 Apr' },
+      { id: 3, name: 'project_folder', size: '--', type: 'FOLDER', isFolder: true, icon: <MdFolder />, owner: 'me', modified: '30 May' }
     ],
     videos: [
-      { id: 4, name: 'intro_animation_hq.mp4', size: '12.4 MB', type: 'MP4', thumb: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&q=80&w=200' }
+      { id: 4, name: 'intro_animation_hq.mp4', size: '12.4 MB', type: 'MP4', thumb: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&q=80&w=200', owner: 'me', modified: '18 May' }
     ],
     music: [
       { id: 5, name: 'uplifting_background.mp3', size: '4.1 MB', type: 'MP3', icon: <MdMusicNote /> }
@@ -130,6 +135,11 @@ function Library() {
   }
 
   const isCurrentTabEmpty = currentAssetList().length === 0
+
+  useEffect(() => {
+    // focus the search input when the library opens
+    if (searchRef && searchRef.current) searchRef.current.focus()
+  }, [])
 
   return (
     <div className="library-page">
@@ -176,6 +186,19 @@ function Library() {
                 </div>
 
                 <div className="filters-right-actions">
+                  <div className="library-search" style={{ marginRight: 12, position: 'relative', display: 'flex', alignItems: 'center' }}>
+                    <MdSearch style={{ position: 'absolute', left: 12, color: '#9CA3AF' }} />
+                    <input
+                      ref={searchRef}
+                      type="text"
+                      className="library-search-input"
+                      placeholder="Search assets..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      aria-label="Search assets"
+                      style={{ padding: '8px 12px 8px 36px', borderRadius: 999, border: '1px solid #E5E7EB', width: 220 }}
+                    />
+                  </div>
                   <button type="button" className="btn-upload-primary" onClick={() => setShowUploadModal(true)}>
                     <MdCloudUpload /> Upload
                   </button>
@@ -232,8 +255,18 @@ function Library() {
                 </div>
               ) : (
                 <div className={activeView === 'grid' ? 'assets-grid' : 'assets-list'}>
+                  {activeView === 'list' && (
+                    <div className="list-header">
+                      <div className="col name">Name</div>
+                      <div className="col owner">Owner</div>
+                      <div className="col modified">Date modified</div>
+                      <div className="col size">Size</div>
+                      <div className="col actions" />
+                    </div>
+                  )}
+
                   {currentAssetList().map((asset) => (
-                    <div key={asset.id} className={`asset-card ${activeView}`}>
+                    <div key={asset.id} className={`asset-card ${activeView} ${asset.isFolder ? 'asset-folder' : ''}`}>
                       {activeView === 'grid' ? (
                         <>
                           <div className="asset-preview">
@@ -244,40 +277,40 @@ function Library() {
                             )}
                           </div>
 
-                          <div className="asset-title-row">
-                            <div className="asset-name" title={asset.name}>{asset.name}</div>
+                          <div style={{ padding: '12px' }}>
+                            <div className="asset-name" title={asset.name} style={{ fontSize: 14, fontWeight: 700 }}>{asset.name}</div>
+                            <div className="asset-meta" style={{ marginTop: 8 }}>
+                              <span>{asset.owner || ''}</span>
+                              <span>{asset.modified || ''}</span>
+                              <span>{asset.size || ''}</span>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="col name" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <div style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, background: 'var(--bg-surface)' }}>
+                              {asset.isFolder ? (asset.icon || <MdFolder />) : (asset.thumb ? <img src={asset.thumb} alt={asset.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div className="asset-preview-icon">{asset.icon}</div>)}
+                            </div>
+                            <div style={{ minWidth: 0 }}>
+                              <div className="asset-name" title={asset.name}>{asset.name}</div>
+                            </div>
+                          </div>
+
+                          <div className="col owner" style={{ color: 'var(--text-muted)', fontSize: 13 }}>{asset.owner || ''}</div>
+                          <div className="col modified" style={{ color: 'var(--text-muted)', fontSize: 13 }}>{asset.modified || ''}</div>
+                          <div className="col size" style={{ color: 'var(--text-muted)', fontSize: 13 }}>{asset.size || ''}</div>
+
+                          <div className="col actions">
                             <button
                               type="button"
-                              className="asset-delete-btn"
+                              className="asset-delete-btn asset-delete-btn--list"
                               aria-label={`Delete ${asset.name}`}
                               onClick={() => handleDeleteAsset(asset.id)}
                             >
                               <MdDeleteOutline />
                             </button>
                           </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="asset-preview">
-                            {asset.thumb ? (
-                              <img src={asset.thumb} alt={asset.name} />
-                            ) : (
-                              <div className="asset-preview-icon">{asset.icon}</div>
-                            )}
-                          </div>
-
-                          <div className="asset-list-text">
-                            <div className="asset-name" title={asset.name}>{asset.name}</div>
-                          </div>
-
-                          <button
-                            type="button"
-                            className="asset-delete-btn asset-delete-btn--list"
-                            aria-label={`Delete ${asset.name}`}
-                            onClick={() => handleDeleteAsset(asset.id)}
-                          >
-                            <MdDeleteOutline />
-                          </button>
                         </>
                       )}
                     </div>
