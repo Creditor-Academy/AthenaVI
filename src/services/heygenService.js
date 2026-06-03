@@ -3,12 +3,69 @@ import API_CONFIG, { buildUrl, getAuthHeaders } from '../config/api.js';
 class HeygenService {
   async getAvatarLooks(params = {}) {
     try {
-      // Backend validates pagination cursor as `token` (not `next_token`).
       const mergedParams = { limit: 50, ...params };
       if (mergedParams.next_token && !mergedParams.token) {
         mergedParams.token = mergedParams.next_token;
         delete mergedParams.next_token;
       }
+
+      // Automatically fetch all pages for a group_id
+      if (mergedParams.group_id && mergedParams.getAllPages !== false) {
+        let allLooks = [];
+        let hasMore = true;
+        let currentToken = mergedParams.token || null;
+        const limit = mergedParams.limit || 50;
+
+        while (hasMore) {
+          const pageParams = {
+            group_id: mergedParams.group_id,
+            limit: limit,
+          };
+          if (currentToken) {
+            pageParams.token = currentToken;
+          }
+          if (mergedParams.avatar_type) pageParams.avatar_type = mergedParams.avatar_type;
+          if (mergedParams.ownership) pageParams.ownership = mergedParams.ownership;
+
+          const queryParams = new URLSearchParams(pageParams).toString();
+          const endpoint = `${API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.LOOKS}${queryParams ? `?${queryParams}` : ''}`;
+
+          const response = await fetch(buildUrl(endpoint), {
+            method: 'GET',
+            headers: getAuthHeaders()
+          });
+
+          if (!response.ok) {
+            throw new Error(`Failed to fetch avatar looks: ${response.status}`);
+          }
+
+          const responseData = await response.json();
+          const data = responseData.data || responseData;
+
+          let lookList = [];
+          if (Array.isArray(data)) {
+            lookList = data;
+          } else {
+            lookList = data.data || data.looks || data.avatar_looks || [];
+          }
+
+          allLooks = [...allLooks, ...lookList];
+
+          hasMore = !!(data.has_more ?? responseData.has_more);
+          currentToken = data.token ?? responseData.token ?? data.next_token ?? responseData.next_token ?? null;
+
+          if (!currentToken) {
+            hasMore = false;
+          }
+        }
+
+        return {
+          data: allLooks,
+          has_more: false,
+          token: null
+        };
+      }
+
       const queryParams = new URLSearchParams(mergedParams).toString();
       const endpoint = `${API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.LOOKS}${queryParams ? `?${queryParams}` : ''}`;
 
@@ -22,7 +79,7 @@ class HeygenService {
       }
 
       const data = await response.json();
-      return data.data || data; // Backend might wrap it in .data
+      return data.data || data;
     } catch (error) {
       console.error('Error fetching avatar looks:', error);
       throw error;
@@ -170,7 +227,7 @@ class HeygenService {
         let errorData;
         try {
           errorData = await response.json();
-        } catch (e) {
+        } catch {
           errorData = { message: await response.text() };
         }
         console.error('Athena VI: Clone Voice API Error:', errorData);
@@ -188,9 +245,7 @@ class HeygenService {
   async selectVoice(voiceData) {
     try {
       const endpoint = API_CONFIG.ENDPOINTS.HEYGEN.VOICES.SELECT;
-      // Handle both raw ID string and voice object
       const vId = typeof voiceData === 'string' ? voiceData : (voiceData.voice_id || voiceData.id);
-      const name = typeof voiceData === 'object' ? voiceData.name : '';
       
       const payload = { 
         voiceId: vId, 

@@ -12,6 +12,9 @@ export function normalizeAvatarEngine(engine) {
 export function supportsAvatarEngine(item, engine) {
   const normalized = normalizeAvatarEngine(engine);
   const engines = item?.supported_api_engines ?? item?.supportedApiEngines ?? [];
+  if (Array.isArray(engines) && engines.length === 0) {
+    return true;
+  }
   return Array.isArray(engines) && engines.includes(normalized);
 }
 
@@ -48,6 +51,7 @@ export function getLookId(look) {
     if (!raw) continue;
     const id = String(raw);
     if (id.startsWith('ag_')) continue;
+    if (/^[0-9a-fA-F]{32}$/.test(id)) continue;
     if (id.startsWith('lk_') || id.length > 0) return id;
   }
   return null;
@@ -57,7 +61,7 @@ export function getGroupId(group) {
   return group?.avatar_group_id ?? group?.group_id ?? group?.id ?? null;
 }
 
-export function mapAvatarGroup(group, index = 0) {
+export function mapAvatarGroup(group) {
   const id = getGroupId(group);
   return {
     id,
@@ -115,6 +119,7 @@ export function getSceneAvatarLookId(scene) {
     if (!raw) continue;
     const id = String(raw);
     if (id.startsWith('ag_')) continue;
+    if (/^[0-9a-fA-F]{32}$/.test(id)) continue;
     if (AVATAR_KINDS.has(id)) continue;
     return id;
   }
