@@ -17,8 +17,11 @@ const GeneratedVideoModal = ({ isOpen, onClose, videoUrl, onUseInEditor, onRemak
 
   const handleLayoutClick = (layoutId) => {
     setActiveLayout(layoutId);
-    if (onSelectLayout) {
-      onSelectLayout(layoutId);
+  };
+
+  const handleApplyLayout = () => {
+    if (activeLayout && onSelectLayout) {
+      onSelectLayout(activeLayout);
     }
   };
 
@@ -73,7 +76,7 @@ const GeneratedVideoModal = ({ isOpen, onClose, videoUrl, onUseInEditor, onRemak
             <span>✨</span> AI Presenter Ready
           </h2>
           <p style={{ color: 'var(--text-muted, #94a3b8)', margin: 0, fontSize: '12px', paddingRight: '20px' }}>
-            Preview your generated clip and apply a scene template to fit it into the canvas.
+            Your presenter is already centered on the scene. Preview below, or optionally replace the layout with a template.
           </p>
         </div>
 
@@ -113,7 +116,7 @@ const GeneratedVideoModal = ({ isOpen, onClose, videoUrl, onUseInEditor, onRemak
         {videoUrl && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <span style={{ color: 'var(--text-main, #f8fafc)', fontSize: '13px', fontWeight: '500' }}>
-              Select Scene Template:
+              Optional — replace layout with template:
             </span>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', maxHeight: '150px', overflowY: 'auto', paddingRight: '4px' }} className="premium-scrollbar">
               {templates.map(layout => (
@@ -143,6 +146,24 @@ const GeneratedVideoModal = ({ isOpen, onClose, videoUrl, onUseInEditor, onRemak
                 </button>
               ))}
             </div>
+            {activeLayout ? (
+              <button
+                type="button"
+                onClick={handleApplyLayout}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid rgba(168, 85, 247, 0.5)',
+                  background: 'rgba(168, 85, 247, 0.15)',
+                  color: '#c084fc',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}
+              >
+                Apply selected template (replaces scene layout)
+              </button>
+            ) : null}
           </div>
         )}
 

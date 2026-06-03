@@ -25,7 +25,12 @@ import {
   rehydrateSceneVideos,
   toBackendProjectData,
 } from '../../utils/projectDataMapper'
-import { ensureSceneIdentity, nextHeygenSceneId } from '../../utils/heygenVideo'
+import {
+  applyGeneratedHeygenToClips,
+  ensureSceneIdentity,
+  getCenteredAvatarPlacement,
+  nextHeygenSceneId,
+} from '../../utils/heygenVideo'
 import { exportFullProjectVideo } from '../../utils/projectRender'
 import {
   applyDurationToSceneClips,
@@ -252,10 +257,12 @@ function Create({ onBack, initialConfig = null }) {
     return () => window.removeEventListener('render-download-ready', handleReady)
   }, [])
 
+  const quickCreateAutoDismissedRef = useRef(false)
   useEffect(() => {
-    if (isProjectLoading) return
+    if (isProjectLoading || quickCreateAutoDismissedRef.current) return
     if (projectHasPreExistingScenes(project.scenes)) {
       setShowQuickCreateModal(false)
+      quickCreateAutoDismissedRef.current = true
     }
   }, [isProjectLoading, project.scenes])
 
@@ -496,6 +503,7 @@ function Create({ onBack, initialConfig = null }) {
       endTime: targetScene.duration || 8.0,
       position: { x: 50, y: 50 },
       size: type === 'avatar' ? { width: 250, height: 330 } : type === 'shape' ? { width: parseInt(content?.style?.width) || 200, height: parseInt(content?.style?.height) || 200 } : { width: 400, height: 400 },
+      role: type === 'avatar' ? 'avatar' : undefined,
       opacity: 1.0,
       style: type === 'text'
         ? {
@@ -521,6 +529,12 @@ function Create({ onBack, initialConfig = null }) {
       newClip.layer = 0
       newClip.position = meta?.position ?? { x: 960, y: 540 }
       newClip.size = meta?.size ?? { width: 1920, height: 1080 }
+    }
+
+    if (type === 'avatar') {
+      const centered = getCenteredAvatarPlacement(project.resolution)
+      newClip.position = centered.position
+      newClip.size = centered.size
     }
 
     setProject(prev => ({
@@ -1043,15 +1057,9 @@ function Create({ onBack, initialConfig = null }) {
     setExportError('')
   }
 
-  // Handle preview with text-to-speech
   const handlePreview = () => {
+    window.speechSynthesis?.cancel()
     setShowPreviewModal(true)
-    // Start speaking the script when preview opens
-    if (activeScene?.script) {
-      setTimeout(() => {
-        speakText(activeScene.script, activeSceneId)
-      }, 500)
-    }
   }
 
   const generateSceneVideo = async (sceneId, overrides = null) => {
@@ -1205,7 +1213,23 @@ function Create({ onBack, initialConfig = null }) {
             }
 
             const latestScene = projectRef.current.scenes.find((s) => s.id === sceneId) || scene;
-            const finalClips = applyDurationToSceneClips(latestScene?.clips, finalDuration);
+            const sceneForPlacement = {
+              ...latestScene,
+              sceneId: stableSceneId,
+              heygenVideoId,
+              heygenStatus: 'completed',
+              generatedVideoUrl: videoUrl,
+              duration: finalDuration,
+              avatar: videoData.thumbnail_url || latestScene?.avatar || scene?.avatar,
+            };
+            const placedClips = applyGeneratedHeygenToClips(latestScene?.clips || [], {
+              videoUrl,
+              resolution: projectRef.current.resolution,
+              sceneDuration: finalDuration,
+              scene: sceneForPlacement,
+              buildContent: buildHeygenAvatarContent,
+            });
+            const finalClips = applyDurationToSceneClips(placedClips, finalDuration);
 
             updateScene(sceneId, {
               heygenStatus: 'completed',
@@ -1216,6 +1240,8 @@ function Create({ onBack, initialConfig = null }) {
               durationFromScript: true,
               clips: finalClips,
             });
+
+            showToast('Presenter placed in the center — your other elements are unchanged.', 'success');
 
             window.dispatchEvent(
               new CustomEvent('open-generated-video', { detail: { url: videoUrl, sceneId } })
@@ -1473,6 +1499,7 @@ function Create({ onBack, initialConfig = null }) {
         }),
       };
     } else {
+      const centered = getCenteredAvatarPlacement(project.resolution)
       const newClip = {
         id: `clip_${Date.now()}`,
         type: 'avatar',
@@ -1481,8 +1508,8 @@ function Create({ onBack, initialConfig = null }) {
         layer: updatedClips.length,
         startTime: 0.0,
         endTime: durationPatch.duration,
-        position: { x: 50, y: 50 },
-        size: { width: 250, height: 330 },
+        position: centered.position,
+        size: centered.size,
         opacity: 1.0,
         effects: {
           brightness: 1,
@@ -1541,28 +1568,27 @@ function Create({ onBack, initialConfig = null }) {
   const handleUseGeneratedVideo = () => {
     if (!generatingSceneId || !generatedVideoUrl) return;
 
-    // Find the scene
     const scene = project.scenes.find(s => s.id === generatingSceneId);
     if (!scene) return;
 
-    // Update the avatar clip with the generated video URL and type 'video'
-    const updatedClips = (scene.clips || []).map(clip => 
-      (clip.role === 'avatar' || clip.type === 'avatar') 
-        ? { ...clip, src: generatedVideoUrl, type: 'video' } 
-        : clip
-    );
+    const placedClips = applyGeneratedHeygenToClips(scene.clips || [], {
+      videoUrl: generatedVideoUrl,
+      resolution: project.resolution,
+      sceneDuration: scene.duration,
+      scene: { ...scene, generatedVideoUrl },
+      buildContent: buildHeygenAvatarContent,
+    });
 
     setProject(prev => {
       const newProj = {
         ...prev,
         scenes: prev.scenes.map(s => s.id === generatingSceneId ? {
           ...s,
-          clips: updatedClips,
-          generatedVideoUrl: generatedVideoUrl
+          clips: placedClips,
+          generatedVideoUrl,
         } : s)
       };
       
-      // Auto-save the project
       setTimeout(() => {
         saveProject(false, newProj);
       }, 100);
@@ -1791,11 +1817,7 @@ function Create({ onBack, initialConfig = null }) {
         </div>
       )}
       <QuickCreateModal
-        isOpen={
-          showQuickCreateModal &&
-          !isProjectLoading &&
-          !projectHasPreExistingScenes(scenes)
-        }
+        isOpen={showQuickCreateModal && !isProjectLoading}
         onClose={() => setShowQuickCreateModal(false)}
         onGenerate={handleQuickCreateGenerate}
       />
@@ -2056,7 +2078,6 @@ function Create({ onBack, initialConfig = null }) {
         bgMusic={bgMusic}
         bgMusicVolume={bgMusicVolume}
         setIsPlaying={setIsPlaying}
-        speakText={speakText}
         getSceneForFrame={getSceneForFrame}
         setActiveSceneId={setActiveSceneId}
         workspaceId={project.workspaceId || project.createConfig?.workspaceId}

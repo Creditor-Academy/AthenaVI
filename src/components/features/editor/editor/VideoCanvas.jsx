@@ -3,7 +3,11 @@ import { Player } from '@remotion/player'
 import VideoComposition from './VideoComposition'
 import LiveCanvasRenderer from './LiveCanvasRenderer'
 import heygenService from '../../../../services/heygenService'
-import { resolveScenePlaybackUrls } from '../../../../utils/heygenVideo'
+import {
+  preloadSceneHeygenVideos,
+  resolveScenePlaybackUrls,
+  sceneHasHeygenPlayback,
+} from '../../../../utils/heygenVideo'
 
 const VideoCanvas = forwardRef(({
   scenes,
@@ -58,7 +62,12 @@ const VideoCanvas = forwardRef(({
 
     let cancelled = false
     resolveScenePlaybackUrls(baseCompositionScenes, workspaceId, projectId, heygenService)
-      .then((withUrls) => {
+      .then(async (withUrls) => {
+        if (cancelled) return
+        const heygenCount = withUrls.filter((s) => s.heygenVideoId).length
+        if (heygenCount > 0) {
+          await preloadSceneHeygenVideos(withUrls)
+        }
         if (!cancelled) setResolvedPlayScenes(withUrls)
       })
       .catch((err) => {
@@ -208,7 +217,7 @@ const VideoCanvas = forwardRef(({
               const { scene } = getSceneForFrame(frame)
               if (scene && scene.id !== activeSceneId) {
                 setActiveSceneId(scene.id)
-                if (scene.script) {
+                if (scene.script && !sceneHasHeygenPlayback(scene) && speakText) {
                   speakText(scene.script, scene.id)
                 }
               }
