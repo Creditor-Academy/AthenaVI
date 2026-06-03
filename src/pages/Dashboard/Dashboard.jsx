@@ -37,7 +37,13 @@ function Dashboard({ onCreate, initialSection }) {
     }
     
     // Fallback: Initialize section based on current URL path
-    const currentPath = window.location.pathname
+    let currentPath = window.location.pathname
+    if (window.location.hash && window.location.hash !== '#') {
+      currentPath = window.location.hash.replace('#', '') || '/'
+      if (currentPath.endsWith('/') && currentPath.length > 1) {
+        currentPath = currentPath.slice(0, -1)
+      }
+    }
     if (currentPath.startsWith('/dashboard/')) {
       return currentPath.replace('/dashboard/', '') || 'home'
     }
@@ -137,7 +143,13 @@ function Dashboard({ onCreate, initialSection }) {
   // Handle browser back/forward for dashboard sections
   useEffect(() => {
     const handlePopState = () => {
-      const currentPath = window.location.pathname
+      let currentPath = window.location.pathname
+      if (window.location.hash && window.location.hash !== '#') {
+        currentPath = window.location.hash.replace('#', '') || '/'
+        if (currentPath.endsWith('/') && currentPath.length > 1) {
+          currentPath = currentPath.slice(0, -1)
+        }
+      }
       if (currentPath === '/profile') {
         setSection('profile')
       } else if (currentPath.startsWith('/dashboard/')) {

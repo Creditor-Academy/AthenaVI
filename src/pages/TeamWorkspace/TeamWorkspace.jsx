@@ -230,11 +230,29 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
   const [workspaces, setWorkspaces] = useState([]);
   const [invitations, setInvitations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentLevel, setCurrentLevel] = useState({ type: 'root', id: null });
+  const [currentLevel, setCurrentLevel] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('workspaceCurrentLevel');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          type: parsed.type || 'root',
+          id: parsed.id || null,
+          ws: parsed.ws || null,
+          folder: parsed.folder || null
+        };
+      }
+    } catch (e) {
+      console.error('Failed to parse workspace level from sessionStorage:', e);
+    }
+    return { type: 'root', id: null };
+  });
 
   const [viewMode, setViewMode] = useState('tile');
   const [sortBy, setSortBy] = useState('name_asc');
-  const [activeRootTab, setActiveRootTab] = useState('my-workspaces');
+  const [activeRootTab, setActiveRootTab] = useState(() => {
+    return sessionStorage.getItem('workspaceActiveRootTab') || 'my-workspaces';
+  });
 
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
   const [selectedWorkspaceForFolder, setSelectedWorkspaceForFolder] = useState(null);
@@ -272,6 +290,69 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
   const openConfirmDialog = useCallback((message, onConfirm) => {
     setConfirmDialog({ message, onConfirm });
   }, []);
+
+  const activeWorkspace = useMemo(() => {
+    if (currentLevel.type === 'root') return null;
+    const wsId = currentLevel.ws?.id || currentLevel.id;
+    const found = workspaces.find((w) => String(w.id) === String(wsId));
+    return found || currentLevel.ws;
+  }, [workspaces, currentLevel]);
+
+  const activeFolder = useMemo(() => {
+    if (currentLevel.type !== 'folder') return null;
+    const fId = currentLevel.folder?.id || currentLevel.id;
+    const found = activeWorkspace?.folders?.find((f) => String(f.id) === String(fId));
+    return found || currentLevel.folder;
+  }, [activeWorkspace, currentLevel]);
+
+  // Sync full resolved workspace/folder back to currentLevel once loaded
+  useEffect(() => {
+    if (loading || workspaces.length === 0) return;
+
+    const wsId = currentLevel.ws?.id || currentLevel.id;
+    const resolvedWs = workspaces.find((w) => String(w.id) === String(wsId));
+    
+    if (resolvedWs) {
+      const isWsSkeleton = !currentLevel.ws || !currentLevel.ws.folders;
+      let resolvedFolder = null;
+      let isFolderSkeleton = false;
+
+      if (currentLevel.type === 'folder') {
+        const fId = currentLevel.folder?.id || currentLevel.id;
+        resolvedFolder = resolvedWs.folders?.find((f) => String(f.id) === String(fId));
+        isFolderSkeleton = !currentLevel.folder || !currentLevel.folder.videos;
+      }
+
+      if (isWsSkeleton || isFolderSkeleton) {
+        setCurrentLevel((prev) => {
+          if (prev.type === 'root') return prev;
+          return {
+            ...prev,
+            ws: resolvedWs,
+            folder: resolvedFolder || prev.folder
+          };
+        });
+      }
+    }
+  }, [workspaces, loading, currentLevel]);
+
+  useEffect(() => {
+    try {
+      const serialized = {
+        type: currentLevel.type,
+        id: currentLevel.id,
+        ws: currentLevel.ws ? { id: currentLevel.ws.id, name: currentLevel.ws.name, type: currentLevel.ws.type, userRole: currentLevel.ws.userRole } : null,
+        folder: currentLevel.folder ? { id: currentLevel.folder.id, name: currentLevel.folder.name } : null
+      };
+      sessionStorage.setItem('workspaceCurrentLevel', JSON.stringify(serialized));
+    } catch (e) {
+      console.error('Failed to save workspace level to sessionStorage:', e);
+    }
+  }, [currentLevel]);
+
+  useEffect(() => {
+    sessionStorage.setItem('workspaceActiveRootTab', activeRootTab);
+  }, [activeRootTab]);
 
   useEffect(() => {
     return () => {
@@ -746,7 +827,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
 
     if (type === 'folder') {
       const parentWorkspace =
-        currentLevel.ws ||
+        activeWorkspace ||
         workspaces.find((workspace) => workspace.folders.some((folder) => String(folder.id) === String(id)));
 
       if (!workspaceCanEdit(parentWorkspace)) {
@@ -773,7 +854,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
     }
 
     if (type === 'video') {
-      const parentWorkspace = currentLevel.ws;
+      const parentWorkspace = activeWorkspace;
       if (!workspaceCanEdit(parentWorkspace)) {
         throw new Error('You do not have permission to rename this video.');
       }
@@ -854,7 +935,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
     if (type === 'folder') {
       const parentWorkspace =
         workspaceContext ||
-        currentLevel.ws ||
+        activeWorkspace ||
         workspaces.find((workspace) => workspace.folders.some((folder) => String(folder.id) === String(id)));
 
       if (!workspaceCanEdit(parentWorkspace)) {
@@ -893,8 +974,8 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
     }
 
     if (type === 'video') {
-      const parentWorkspace = currentLevel.ws;
-      const parentFolder = currentLevel.folder;
+      const parentWorkspace = activeWorkspace;
+      const parentFolder = activeFolder;
       if (!workspaceCanEdit(parentWorkspace)) {
         showToast('You do not have permission to delete this project.', 'error');
         return;
@@ -1270,7 +1351,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
   );
 
   const renderWorkspaceLevel = () => {
-    const workspace = workspaces.find((item) => String(item.id) === String(currentLevel.ws?.id));
+    const workspace = activeWorkspace;
     if (!workspace) return null;
 
     const canEdit = workspaceCanEdit(workspace);
@@ -1295,7 +1376,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
 
         <WorkspaceSection
           title="Folders"
-          count={workspace.folders.length}
+          count={(workspace.folders || []).length}
           viewMode={viewMode}
           listClassName="folder-list-view"
           emptyMessage="No folders yet"
@@ -1328,7 +1409,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
               <div className="col" />
             </div>
           )}
-          {renderFolderItems(workspace.folders, workspace)}
+          {renderFolderItems(workspace.folders || [], workspace)}
         </WorkspaceSection>
 
         {workspace.type === 'workspace' && String(workspace.userRole || '').toUpperCase() !== 'OWNER' && (
@@ -1353,8 +1434,8 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
   };
 
   const renderFolderLevel = () => {
-    const workspace = workspaces.find((item) => String(item.id) === String(currentLevel.ws?.id));
-    const folder = workspace?.folders.find((item) => String(item.id) === String(currentLevel.folder?.id));
+    const workspace = activeWorkspace;
+    const folder = activeFolder;
     if (!workspace || !folder) return null;
 
     const canEdit = workspaceCanEdit(workspace);
@@ -1386,7 +1467,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
 
         <WorkspaceSection
           title="Videos"
-          count={folder.videos.length}
+          count={(folder.videos || []).length}
           viewMode={viewMode}
           listClassName="project-list-view"
           emptyMessage="No videos yet"

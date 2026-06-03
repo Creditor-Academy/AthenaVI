@@ -567,7 +567,13 @@ function App() {
             }}
             initialSection={(() => {
               // Pass the initial section from URL to Dashboard
-              const currentPath = window.location.pathname
+              let currentPath = window.location.pathname
+              if (window.location.hash && window.location.hash !== '#') {
+                currentPath = window.location.hash.replace('#', '') || '/'
+                if (currentPath.endsWith('/') && currentPath.length > 1) {
+                  currentPath = currentPath.slice(0, -1)
+                }
+              }
               if (currentPath.startsWith('/dashboard/')) {
                 return currentPath.replace('/dashboard/', '') || 'home'
               }
