@@ -1363,7 +1363,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           <span className="breadcrumb-link" onClick={() => setCurrentLevel({ type: 'root', id: null })}>
             Workspaces
           </span>
-          <span className="breadcrumb-separator">/</span>
+          <span className="breadcrumb-separator">&gt;</span>
           <span>{workspace.name}</span>
         </div>
 
@@ -1447,14 +1447,14 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           <span className="breadcrumb-link" onClick={() => setCurrentLevel({ type: 'root', id: null })}>
             Workspaces
           </span>
-          <span className="breadcrumb-separator">/</span>
+          <span className="breadcrumb-separator">&gt;</span>
           <span
             className="breadcrumb-link"
             onClick={() => setCurrentLevel({ type: 'workspace', id: workspace.id, ws: workspace })}
           >
             {workspace.name}
           </span>
-          <span className="breadcrumb-separator">/</span>
+          <span className="breadcrumb-separator">&gt;</span>
           <span>{folder.name}</span>
         </div>
 
