@@ -114,7 +114,22 @@ function normalizeWorkspace(rawWorkspace, currentUserId, authUser) {
   return {
     ...rawWorkspace,
     id,
-    name: rawWorkspace.name || rawWorkspace.title || 'Untitled Workspace',
+    name: (() => {
+      if (isPersonal) {
+        const fullName = authUser?.name || rawWorkspace.owner?.name || '';
+        let firstName = fullName.trim().split(/\s+/)[0];
+        if (!firstName && (authUser?.email || rawWorkspace.owner?.email)) {
+          const email = authUser?.email || rawWorkspace.owner?.email;
+          firstName = email.split('@')[0].split(/[._-]/)[0];
+        }
+        if (firstName) {
+          firstName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+          return `${firstName}'s Personal`;
+        }
+        return "Your Personal";
+      }
+      return rawWorkspace.name || rawWorkspace.title || 'Untitled Workspace';
+    })(),
     type: isPersonal ? 'personal' : 'workspace',
     userRole: effectiveRole,
     ownerId: ownerId || (isOwner ? currentUserId : ''),
