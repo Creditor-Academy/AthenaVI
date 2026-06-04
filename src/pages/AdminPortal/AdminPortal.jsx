@@ -13,10 +13,10 @@ import {
 } from 'react-icons/md';
 import AdminPortalSkeleton from '../page-skeleton/AdminPortalSkeleton';
 import DashboardOverview from '../../components/features/admin/DashboardOverview';
-import UsersModule from './components/UsersModule';
-import RenderingModule from './components/RenderingModule';
-import ContentModule from './components/ContentModule';
-import PlatformModule from './components/PlatformModule';
+import UsersModule from '../../components/features/admin/UsersModule';
+import RenderingModule from '../../components/features/admin/RenderingModule';
+import ContentModule from '../../components/features/admin/ContentModule';
+import PlatformModule from '../../components/features/admin/PlatformModule';
 import './AdminPortal.css';
 
 const AdminPortal = () => {

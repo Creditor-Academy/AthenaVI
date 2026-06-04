@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import ContentModeration from '../../../components/features/admin/ContentModeration';
+import ContentModeration from './ContentModeration';
 import { MdVideoLibrary, MdReport, MdPerson } from 'react-icons/md';
-import '../AdminPortal.css';
+import '../../../pages/AdminPortal/AdminPortal.css';
 
 const ContentModule = () => {
   const [activeSubTab, setActiveSubTab] = useState('videos');

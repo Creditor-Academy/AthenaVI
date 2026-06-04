@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import PlatformConfig from '../../../components/features/admin/PlatformConfig';
+import PlatformConfig from './PlatformConfig';
 import { MdCreditCard, MdExtension, MdLock } from 'react-icons/md';
-import '../AdminPortal.css';
+import '../../../pages/AdminPortal/AdminPortal.css';
 
 const PlatformModule = () => {
   const [activeSubTab, setActiveSubTab] = useState('plans');

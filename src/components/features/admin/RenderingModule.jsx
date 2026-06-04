@@ -1,5 +1,5 @@
 import React from 'react';
-import RenderPipelineMonitor from '../../../components/features/admin/RenderPipelineMonitor';
+import RenderPipelineMonitor from './RenderPipelineMonitor';
 
 const RenderingModule = () => {
   const subTabs = [

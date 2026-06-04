@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
-import UsersList from '../../../components/features/admin/UsersList';
-import CreditLedgerAudit from '../../../components/features/admin/CreditLedgerAudit';
+import UsersList from './UsersList';
+import CreditLedgerAudit from './CreditLedgerAudit';
 import { 
   MdOutlineFolderShared, 
   MdAttachMoney, 
@@ -14,8 +14,8 @@ import {
   MdRemoveCircleOutline, 
   MdAdd 
 } from 'react-icons/md';
-import '../AdminPortal.css';
-import '../../../components/features/admin/UserProfileModal.css';
+import '../../../pages/AdminPortal/AdminPortal.css';
+import './UserProfileModal.css';
 
 const DeleteConfirmationModal = ({ workspaceName, onConfirm, onCancel }) => {
   return (
