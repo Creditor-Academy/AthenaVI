@@ -71,7 +71,7 @@ const ContextMenu = ({ type, onRename, onAddMembers, onSort, onView, onDelete, o
                     )}
                     {onDelete && (
                         <button className="menu-item text-danger" onClick={(e) => handleAction(e, onDelete)}>
-                            <MdDelete size={16} /> Move to Trash
+                            <MdDelete size={16} /> Delete
                         </button>
                     )}
                 </div>
