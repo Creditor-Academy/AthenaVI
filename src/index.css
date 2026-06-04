@@ -129,6 +129,11 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+select option {
+  background-color: var(--bg-card, #1e293b);
+  color: var(--text-main, #ffffff);
+}
+
 #root {
   width: 100%;
   min-height: 100vh;
