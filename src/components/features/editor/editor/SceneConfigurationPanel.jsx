@@ -1,15 +1,10 @@
-import { useState } from 'react';
+import { normalizeClipStack } from '../../../../utils/editorLayerUtils';
 import {
   MdTextFields,
   MdColorLens,
-  MdMonitor,
   MdTune,
-  MdGridView,
   MdVisibility,
   MdVisibilityOff,
-  MdCheckCircle,
-  MdWarning,
-  MdRefresh,
   MdImage,
   MdWallpaper,
   MdCropFree,
@@ -24,23 +19,21 @@ import {
   MdOpenInFull,
   MdFitScreen,
   MdCenterFocusStrong,
-  MdSettings,
   MdPerson,
-  MdRecordVoiceOver,
-  MdSmartDisplay,
-  MdSchedule,
-  MdSpeed,
-  MdEdit,
-  MdPersonAdd,
   MdLock,
   MdLockOpen,
-  MdContentCopy,
   MdLayers,
-  MdSwapHoriz,
 } from 'react-icons/md';
-import projectTemplate from '../../../../constants/projectTemplate.json';
 import { isTextLayer } from '../../../../utils/textClip';
-import TextLayerPropertiesPanel from './TextLayerPropertiesPanel';
+import TextSidebarPanel from './TextSidebarPanel';
+import LayerAnimatePanel from './LayerAnimatePanel';
+import LayerFitFlipAdjustments from './LayerFitFlipAdjustments';
+import LayerAdjustmentsCompact from './LayerAdjustmentsCompact';
+import LayerTransformBar from './LayerTransformBar';
+import { resolveClipMediaSrc, isAvatarClip, isVideoMedia } from '../../../../utils/heygenVideo';
+import SceneSettingsPanel from './SceneSettingsPanel';
+import './TextSidebarPanel.css';
+import './SceneSettingsPanel.css';
 
 /* ── Tiny helpers ─────────────────────────────────────────────────────────── */
 
@@ -153,15 +146,6 @@ const Card = ({ children, className = '', style = {} }) => (
   </div>
 );
 
-const StatusDot = ({ active }) => (
-  <span className={`scp-status-dot ${active ? 'scp-status-dot--on' : 'scp-status-dot--off'}`} />
-);
-
-const displayName = (name, emptyLabel = 'Not selected') => {
-  const trimmed = (name || '').trim();
-  return trimmed || emptyLabel;
-};
-
 /* ── Toggle switch helper ─────────────────────────────────────────────────── */
 const ToggleSwitch = ({ checked, onChange, accent = 'var(--primary)' }) => (
   <label style={{ position: 'relative', display: 'inline-block', width: 36, height: 20, flexShrink: 0 }}>
@@ -251,7 +235,10 @@ const LayerOrderLockBar = ({ activeLayer, clips, onMoveLayerOrder, onToggleLayer
 
 const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScene, onMoveLayerOrder, onToggleLayerLock }) => {
   const updateLayer = (updates) => {
-    const newClips = clips.map(l => l.id === activeLayer.id ? { ...l, ...updates } : l);
+    let newClips = clips.map(l => l.id === activeLayer.id ? { ...l, ...updates } : l);
+    if ('isBackground' in updates) {
+      newClips = normalizeClipStack(newClips);
+    }
     updateScene(activeSceneId, { clips: newClips });
   };
   const updateStyle  = (updates) => updateLayer({ style:   { ...activeLayer.style,   ...updates } });
@@ -263,7 +250,14 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
   const isImage  = activeLayer.type === 'image';
   const isText   = isTextLayer(activeLayer);
   const isHeading = isText && (activeLayer.role === 'main-text' || activeLayer.label?.toLowerCase().includes('head'));
-  const isMedia  = !isImage && (activeLayer.type === 'video' || activeLayer.role === 'avatar' || activeLayer.role === 'media');
+  const isAvatarLayer = isAvatarClip(activeLayer);
+  const isMedia  =
+    !isImage &&
+    (activeLayer.type === 'video' ||
+      activeLayer.type === 'avatar' ||
+      isAvatarLayer ||
+      activeLayer.role === 'avatar' ||
+      activeLayer.role === 'media');
   const isShape  = activeLayer.type === 'shape';
 
   const roleLabel = isHeading
@@ -273,35 +267,17 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
 
   if (isText) {
     return (
-      <div
-        className="scene-config-panel text-layer-panel"
-        style={{ padding: '0 14px 20px', display: 'flex', flexDirection: 'column', gap: 2 }}
-      >
-        <PanelHeader
-          icon={<MdTextFields size={17} />}
-          title="Text Properties"
-          subtitle={roleLabel}
-        />
-        <TextLayerPropertiesPanel
+      <div className="scene-config-panel text-layer-panel text-layer-panel--sidebar">
+        <TextSidebarPanel
+          variant="right"
           activeLayer={activeLayer}
           updateLayer={updateLayer}
           updateStyle={updateStyle}
-          isHeading={isHeading}
-        />
-        <Divider />
-        <LayerOrderLockBar
-          activeLayer={activeLayer}
+          layerSubtitle={roleLabel}
           clips={clips}
           onMoveLayerOrder={onMoveLayerOrder}
           onToggleLayerLock={onToggleLayerLock}
         />
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0 2px' }}>
-          <span style={{ fontSize: 11, color: 'var(--text-muted, #64748b)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
-            {activeLayer.visible !== false ? <MdVisibility size={14} /> : <MdVisibilityOff size={14} />}
-            Visible
-          </span>
-          <ToggleSwitch checked={activeLayer.visible !== false} onChange={(v) => updateLayer({ visible: v })} />
-        </div>
       </div>
     );
   }
@@ -342,13 +318,32 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
   const cf = activeLayer.cssFilters || {};
 
   return (
-    <div className="scene-config-panel" style={{ padding: '0 14px 20px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <PanelHeader
-        icon={isImage ? <MdImage size={17} /> : isText ? <MdTextFields size={17} /> : <MdTune size={17} />}
-        title={isImage ? 'Image Properties' : isHeading ? 'Heading Settings' : 'Layer Properties'}
-        subtitle={roleLabel}
+    <div className="scene-config-panel" style={{ padding: '0 0 20px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <div style={{ padding: '0 14px' }}>
+        <PanelHeader
+          icon={isImage ? <MdImage size={17} /> : isText ? <MdTextFields size={17} /> : <MdTune size={17} />}
+          title={isImage ? 'Image Properties' : isHeading ? 'Heading Settings' : 'Layer Properties'}
+          subtitle={roleLabel}
+        />
+      </div>
+
+      <LayerTransformBar
+        clip={activeLayer}
+        onPositionChange={(x, y) =>
+          updateLayer({ position: { ...(activeLayer.position || {}), x, y } })
+        }
+        onSizeChange={(w, h) =>
+          updateLayer({ size: { ...(activeLayer.size || {}), width: w, height: h } })
+        }
       />
 
+      {(isImage || isMedia || isShape) && (
+        <div style={{ padding: '0 14px' }}>
+          <LayerAnimatePanel activeLayer={activeLayer} updateLayer={updateLayer} />
+        </div>
+      )}
+
+      <div style={{ padding: '0 14px' }}>
       <Divider />
 
       {isImage && (
@@ -373,109 +368,69 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
               style={{ marginBottom: 4 }}
             >
               <MdWallpaper size={16} />
-              {activeLayer.src ? 'Set as Scene Background' : 'Add image URL first'}
+              {activeLayer.src ? 'Set as Scene Background' : 'Add an image from the sidebar first'}
             </button>
           )}
 
-          {/* Image source URL */}
-          <SectionHeader icon={<MdLink size={14} />} label="Image Source" />
+          {/* Fit, flip & adjustments — live preview */}
+          <SectionHeader icon={<MdCropFree size={14} />} label="Fit & Adjustments" />
           <Card>
-            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted, #64748b)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>URL</span>
-            <input
-              type="text"
-              value={activeLayer.src || ''}
-              onChange={(e) => updateLayer({ src: e.target.value })}
-              placeholder="https://..."
-              style={{
-                width: '100%', boxSizing: 'border-box',
-                background: 'white', border: '1px solid var(--border-subtle, rgba(0,0,0,0.1))',
-                borderRadius: 8, padding: '7px 10px', fontSize: 11,
-                color: 'var(--text-main, #1a1b1c)', outline: 'none',
-              }}
+            <LayerFitFlipAdjustments
+              clip={activeLayer}
+              src={activeLayer.src}
+              isVideo={false}
+              style={activeLayer.style || {}}
+              cssFilters={cf}
+              opacity={activeLayer.opacity ?? 1}
+              variant="rect"
+              caption={`${(activeLayer.style?.objectFit || 'cover')} · ${Math.round((activeLayer.opacity ?? 1) * 100)}% opacity`}
+              onUpdateStyle={updateStyle}
+              onUpdateFilter={updateFilter}
+              onOpacityChange={(v) => updateLayer({ opacity: v })}
+              extraEffects={(
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <MdInvertColors size={13} /> Invert
+                    </span>
+                    <ToggleSwitch checked={cf.invert > 0} onChange={(v) => updateFilter('invert', v ? 1 : 0)} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>Grayscale</span>
+                    <ToggleSwitch checked={cf.grayscale > 0} onChange={(v) => updateFilter('grayscale', v ? 1 : 0)} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>Sepia</span>
+                    <ToggleSwitch checked={(cf.sepia ?? 0) > 0} onChange={(v) => updateFilter('sepia', v ? 0.8 : 0)} />
+                  </div>
+                </>
+              )}
             />
-            {activeLayer.src && (
-              <div style={{
-                width: '100%', height: 80, borderRadius: 8, overflow: 'hidden',
-                background: '#f1f5f9', border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
-                marginTop: 4,
-              }}>
-                <img src={activeLayer.src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  onError={(e) => { e.target.style.display = 'none' }} />
-              </div>
-            )}
-          </Card>
-
-          {/* Fit & Flip */}
-          <SectionHeader icon={<MdCropFree size={14} />} label="Fit & Flip" />
-          <Card>
-            <Row label="Object Fit" column>
-              <FitButtons
-                value={activeLayer.style?.objectFit || 'cover'}
-                onChange={(v) => updateStyle({ objectFit: v })}
-              />
-            </Row>
-            <div style={{ display: 'flex', gap: 6, paddingTop: 4 }}>
-              <button
-                onClick={() => updateStyle({ scaleX: activeLayer.style?.scaleX === -1 ? 1 : -1 })}
-                style={{
-                  flex: 1, padding: '6px', borderRadius: 7, border: '1px solid var(--border-subtle, rgba(0,0,0,0.1))',
-                  background: activeLayer.style?.scaleX === -1 ? 'rgba(var(--primary-rgb), 0.1)' : 'white',
-                  color: activeLayer.style?.scaleX === -1 ? 'var(--primary)' : 'var(--text-muted)',
-                  cursor: 'pointer', fontSize: 10, fontWeight: 700,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-                }}
-              >
-                <MdFlip size={13} /> Flip H
-              </button>
-              <button
-                onClick={() => updateStyle({ scaleY: activeLayer.style?.scaleY === -1 ? 1 : -1 })}
-                style={{
-                  flex: 1, padding: '6px', borderRadius: 7, border: '1px solid var(--border-subtle, rgba(0,0,0,0.1))',
-                  background: activeLayer.style?.scaleY === -1 ? 'rgba(var(--primary-rgb), 0.1)' : 'white',
-                  color: activeLayer.style?.scaleY === -1 ? 'var(--primary)' : 'var(--text-muted)',
-                  cursor: 'pointer', fontSize: 10, fontWeight: 700,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-                  transform: 'rotate(90deg)',
-                }}
-              >
-                <MdFlip size={13} /> Flip V
-              </button>
-            </div>
-          </Card>
-
-          {/* Adjustments */}
-          <SectionHeader icon={<MdContrast size={14} />} label="Adjustments" />
-          <Card>
-            <SliderRow label="Opacity"    value={Math.round((activeLayer.opacity ?? 1) * 100)} min={0}   max={100} unit="%" onChange={(v) => updateLayer({ opacity: v / 100 })} />
-            <SliderRow label="Brightness" value={Math.round((cf.brightness ?? 1) * 100)} min={0}   max={200} unit="%" onChange={(v) => updateFilter('brightness', v / 100)} />
-            <SliderRow label="Contrast"   value={Math.round((cf.contrast   ?? 1) * 100)} min={0}   max={200} unit="%" onChange={(v) => updateFilter('contrast',   v / 100)} />
-            <SliderRow label="Saturation" value={Math.round((cf.saturate   ?? 1) * 100)} min={0}   max={200} unit="%" onChange={(v) => updateFilter('saturate',   v / 100)} />
-            <SliderRow label="Blur"       value={cf.blur ?? 0}                             min={0}   max={20}  unit="px" onChange={(v) => updateFilter('blur',       v)} />
-            <SliderRow label="Hue Shift"  value={cf.hueRotate ?? 0}                        min={0}   max={360} unit="°"  onChange={(v) => updateFilter('hueRotate',  v)} />
-          </Card>
-
-          {/* Effects */}
-          <SectionHeader icon={<MdFilterVintage size={14} />} label="Effects" />
-          <Card>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <MdInvertColors size={13} /> Invert Colors
-                </span>
-                <ToggleSwitch checked={cf.invert > 0}                  onChange={(v) => updateFilter('invert', v ? 1 : 0)} />
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>Grayscale</span>
-                <ToggleSwitch checked={cf.grayscale > 0}                  onChange={(v) => updateFilter('grayscale', v ? 1 : 0)} />
-              </div>
-              <SliderRow label="Sepia" value={Math.round((cf.sepia ?? 0) * 100)} min={0} max={100} unit="%"                onChange={(v) => updateFilter('sepia', v / 100)} />
-            </div>
           </Card>
 
           {/* Border & Frame */}
           <SectionHeader icon={<MdBorderStyle size={14} />} label="Border & Frame" />
           <Card>
-            <SliderRow label="Radius" value={parseInt(activeLayer.style?.borderRadius || 0)} min={0} max={200} unit="px"              onChange={(v) => updateStyle({ borderRadius: `${v}px` })} />
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {[0, 8, 16, 24, 48].map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => updateStyle({ borderRadius: `${r}px` })}
+                  style={{
+                    padding: '6px 10px',
+                    borderRadius: 8,
+                    border: `1px solid ${parseInt(activeLayer.style?.borderRadius || 0) === r ? 'var(--primary)' : 'var(--border-subtle, rgba(0,0,0,0.1))'}`,
+                    background: parseInt(activeLayer.style?.borderRadius || 0) === r ? 'rgba(124,58,237,0.08)' : 'white',
+                    fontSize: 10,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {r}px
+                </button>
+              ))}
+            </div>
             <Row label="Border" column>
               <div style={{ display: 'flex', gap: 6, width: '100%', alignItems: 'center', flexWrap: 'wrap' }}>
                 <input
@@ -509,9 +464,9 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
 
       {/* ── MEDIA / AVATAR ─────────────────────────────────────────────── */}
       {isMedia && (() => {
-        const isAvatar = activeLayer.type === 'avatar' || activeLayer.role === 'avatar';
-        const src = activeLayer.src;
-        const isVideoSrc = src && (src.includes('blob:') || src.match(/\.(mp4|webm|mov|avi)(\?|$)/i));
+        const isAvatar = isAvatarClip(activeLayer);
+        const src = resolveClipMediaSrc(activeLayer, activeScene) || activeLayer.src;
+        const isVideoSrc = isVideoMedia(activeLayer, src);
         const shapePresets = [
           { label: 'Circle',    value: '50%'    },
           { label: 'Rounded',  value: '24px'   },
@@ -521,63 +476,9 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
         const currentRadius = activeLayer.style?.borderRadius || '50%';
 
         const avCf = activeLayer.cssFilters || {};
-        const avBuildFilter = (cf) => {
-          const parts = [];
-          if (cf.brightness != null && cf.brightness !== 1) parts.push(`brightness(${cf.brightness})`);
-          if (cf.contrast   != null && cf.contrast   !== 1) parts.push(`contrast(${cf.contrast})`);
-          if (cf.saturate   != null && cf.saturate   !== 1) parts.push(`saturate(${cf.saturate})`);
-          if (cf.blur       != null && cf.blur       !== 0) parts.push(`blur(${cf.blur}px)`);
-          if (cf.grayscale  != null && cf.grayscale  !== 0) parts.push(`grayscale(${cf.grayscale})`);
-          return parts.length ? parts.join(' ') : undefined;
-        };
-        const previewFilter = avBuildFilter(avCf);
 
         return (
           <>
-            {/* ─ Live preview ─ */}
-            <SectionHeader icon={<MdImage size={14} />} label={isAvatar ? 'Avatar Preview' : 'Media Preview'} />
-            <Card style={{ alignItems: 'center', padding: '12px' }}>
-              {src ? (
-                <div style={{
-                  width: 110, height: 110,
-                  borderRadius: currentRadius,
-                  overflow: 'hidden',
-                  border: activeLayer.style?.borderWidth
-                    ? `${activeLayer.style.borderWidth} solid ${activeLayer.style.borderColor || 'var(--border-color)'}`
-                    : '1px solid var(--border-color)',
-                  boxShadow: activeLayer.style?.boxShadow || 'none',
-                  background: '#f1f5f9',
-                  flexShrink: 0,
-                  filter: previewFilter,
-                  opacity: activeLayer.opacity ?? 1,
-                  transform: [
-                    activeLayer.style?.scaleX === -1 ? 'scaleX(-1)' : '',
-                    activeLayer.style?.scaleY === -1 ? 'scaleY(-1)' : '',
-                  ].filter(Boolean).join(' ') || undefined,
-                }}>
-                  {isVideoSrc ? (
-                    <video src={src} style={{ width: '100%', height: '100%', objectFit: activeLayer.style?.objectFit || 'cover' }}
-                      muted autoPlay loop playsInline />
-                  ) : (
-                    <img src={src} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: activeLayer.style?.objectFit || 'cover' }}
-                      onError={(e) => { e.target.style.display = 'none' }} />
-                  )}
-                </div>
-              ) : (
-                <div style={{
-                  width: 110, height: 110, borderRadius: currentRadius,
-                  background: 'var(--bg-surface)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  border: '1px dashed var(--border-color)',
-                }}>
-                  <MdPerson size={40} color="var(--text-muted)" />
-                </div>
-              )}
-              <span style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 8, fontWeight: 600 }}>
-                {isAvatar ? 'Avatar' : 'Media'} · {activeLayer.style?.objectFit || 'cover'} fit
-              </span>
-            </Card>
-
             {/* ─ Source URL ─ */}
             <SectionHeader icon={<MdLink size={14} />} label="Source" />
             <Card>
@@ -616,58 +517,28 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
               <SliderRow label="Custom" value={parseInt(currentRadius) || 0} min={0} max={500} unit="px"                onChange={(v) => updateStyle({ borderRadius: `${v}px` })} />
             </Card>
 
-            {/* ─ Fit & Flip ─ */}
-            <SectionHeader icon={<MdCropFree size={14} />} label="Fit & Flip" />
+            {/* ─ Fit, flip & adjustments (same as image + live preview) ─ */}
+            <SectionHeader icon={<MdCropFree size={14} />} label="Fit & Adjustments" />
             <Card>
-              <Row label="Object Fit" column>
-                <FitButtons
-                  value={activeLayer.style?.objectFit || 'cover'}
-                  onChange={(v) => updateStyle({ objectFit: v })}
-                />
-              </Row>
-              <div style={{ display: 'flex', gap: 6, paddingTop: 4 }}>
-                <button
-                  onClick={() => updateStyle({ scaleX: activeLayer.style?.scaleX === -1 ? 1 : -1 })}
-                  style={{
-                    flex: 1, padding: '7px', borderRadius: 7,
-                    background: activeLayer.style?.scaleX === -1 ? 'rgba(var(--primary-rgb), 0.1)' : 'white',
-                    color: activeLayer.style?.scaleX === -1 ? 'var(--primary)' : 'var(--text-muted)',
-                    border: `1px solid ${activeLayer.style?.scaleX === -1 ? 'var(--primary)' : 'var(--border-color)'}`,
-                    cursor: 'pointer', fontSize: 11, fontWeight: 700,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-                  }}
-                >
-                  <MdFlip size={13} /> Flip H
-                </button>
-                <button
-                  onClick={() => updateStyle({ scaleY: activeLayer.style?.scaleY === -1 ? 1 : -1 })}
-                  style={{
-                    flex: 1, padding: '7px', borderRadius: 7,
-                    background: activeLayer.style?.scaleY === -1 ? 'rgba(var(--primary-rgb), 0.1)' : 'white',
-                    color: activeLayer.style?.scaleY === -1 ? 'var(--primary)' : 'var(--text-muted)',
-                    border: `1px solid ${activeLayer.style?.scaleY === -1 ? 'var(--primary)' : 'var(--border-color)'}`,
-                    cursor: 'pointer', fontSize: 11, fontWeight: 700,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-                    transform: 'rotate(90deg)',
-                  }}
-                >
-                  <MdFlip size={13} /> Flip V
-                </button>
-              </div>
-            </Card>
-
-            {/* ─ Adjustments ─ */}
-            <SectionHeader icon={<MdContrast size={14} />} label="Adjustments" />
-            <Card>
-              <SliderRow label="Opacity"    value={Math.round((activeLayer.opacity ?? 1) * 100)} min={0} max={100} unit="%" onChange={(v) => updateLayer({ opacity: v / 100 })} />
-              <SliderRow label="Brightness" value={Math.round((avCf.brightness ?? 1) * 100)} min={0} max={200} unit="%" onChange={(v) => updateFilter('brightness', v / 100)} />
-              <SliderRow label="Contrast"   value={Math.round((avCf.contrast   ?? 1) * 100)} min={0} max={200} unit="%" onChange={(v) => updateFilter('contrast',   v / 100)} />
-              <SliderRow label="Saturation" value={Math.round((avCf.saturate   ?? 1) * 100)} min={0} max={200} unit="%" onChange={(v) => updateFilter('saturate',   v / 100)} />
-              <SliderRow label="Blur"       value={avCf.blur ?? 0}                             min={0} max={20}  unit="px" onChange={(v) => updateFilter('blur',       v)} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' }}>
-                <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>Grayscale</span>
-                <ToggleSwitch checked={avCf.grayscale > 0}                  onChange={(v) => updateFilter('grayscale', v ? 1 : 0)} />
-              </div>
+              <LayerFitFlipAdjustments
+                clip={activeLayer}
+                src={src}
+                isVideo={isVideoSrc}
+                style={activeLayer.style || {}}
+                cssFilters={avCf}
+                opacity={activeLayer.opacity ?? 1}
+                variant={isAvatar ? 'circle' : 'rect'}
+                caption={`${isAvatar ? 'Avatar' : 'Media'} · ${activeLayer.style?.objectFit || (isAvatar ? 'contain' : 'cover')} · ${Math.round((activeLayer.opacity ?? 1) * 100)}%`}
+                onUpdateStyle={updateStyle}
+                onUpdateFilter={updateFilter}
+                onOpacityChange={(v) => updateLayer({ opacity: v })}
+                extraEffects={(
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>Grayscale</span>
+                    <ToggleSwitch checked={avCf.grayscale > 0} onChange={(v) => updateFilter('grayscale', v ? 1 : 0)} />
+                  </div>
+                )}
+              />
             </Card>
 
             {/* ─ Border & Shadow ─ */}
@@ -731,8 +602,32 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
                 onChange={(e) => updateStyle({ backgroundColor: e.target.value })}
                 style={{ width: 36, height: 28, border: 'none', borderRadius: 6, cursor: 'pointer', padding: 2, background: 'none' }} />
             </Row>
-            <SliderRow label="Opacity"    value={Math.round((activeLayer.opacity ?? 1) * 100)} min={0} max={100} unit="%" onChange={(v) => updateLayer({ opacity: v / 100 })} />
-            <SliderRow label="Radius" value={parseInt(activeLayer.style?.borderRadius || 0)} min={0} max={500} unit="px"              onChange={(v) => updateStyle({ borderRadius: `${v}px` })} />
+            <LayerAdjustmentsCompact
+              opacity={activeLayer.opacity ?? 1}
+              cssFilters={{}}
+              onOpacityChange={(v) => updateLayer({ opacity: v })}
+              onFilterChange={() => {}}
+            />
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+              {[0, 8, 16, 32, 64].map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => updateStyle({ borderRadius: `${r}px` })}
+                  style={{
+                    padding: '6px 10px',
+                    borderRadius: 8,
+                    border: `1px solid ${parseInt(activeLayer.style?.borderRadius || 0) === r ? 'var(--primary)' : 'var(--border-subtle, rgba(0,0,0,0.1))'}`,
+                    background: parseInt(activeLayer.style?.borderRadius || 0) === r ? 'rgba(124,58,237,0.08)' : 'white',
+                    fontSize: 10,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {r}px
+                </button>
+              ))}
+            </div>
           </Card>
         </>
       )}
@@ -742,11 +637,24 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
         <>
           <SectionHeader icon={<MdColorLens size={14} />} label="Visual" />
           <Card>
-            <SliderRow label="Opacity"    value={Math.round((activeLayer.opacity ?? 1) * 100)} min={0} max={100} unit="%" onChange={(v) => updateLayer({ opacity: v / 100 })} />
-            <SliderRow label="Brightness" value={Math.round((activeLayer.effects?.brightness ?? 1) * 100)} min={0} max={200} unit="%" onChange={(v) => updateEffect({ brightness: v / 100 })} />
+            <LayerAdjustmentsCompact
+              opacity={activeLayer.opacity ?? 1}
+              cssFilters={{
+                brightness: activeLayer.effects?.brightness ?? 1,
+                contrast: 1,
+                saturate: 1,
+                blur: 0,
+              }}
+              onOpacityChange={(v) => updateLayer({ opacity: v })}
+              onFilterChange={(key, val) => {
+                if (key === 'brightness') updateEffect({ brightness: val });
+              }}
+            />
           </Card>
         </>
       )}
+
+      <Divider />
 
       <LayerOrderLockBar
         activeLayer={activeLayer}
@@ -762,6 +670,7 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
           Visible
         </span>
         <ToggleSwitch checked={activeLayer.visible !== false} onChange={(v) => updateLayer({ visible: v })} />
+      </div>
       </div>
     </div>
   );
@@ -802,299 +711,17 @@ const SceneConfigurationPanel = ({
     );
   }
 
-  /* ── Scene-level panel ─────────────────────────────────────────────── */
-  const isGenerating = activeScene.heygenStatus === 'processing';
-  const isGenerated  = activeScene.heygenStatus === 'completed';
-  const isFailed     = activeScene.heygenStatus === 'failed';
-  const canGenerate  = activeScene.avatarType && activeScene.voiceId && activeScene.script;
-  const hasVoiceover = !!(
-    activeScene.avatarType ||
-    activeScene.voiceId ||
-    (activeScene.script || '').trim()
-  );
-
   return (
-    <div className="scene-config-panel" style={{ padding: '0 14px 20px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <PanelHeader
-        icon={<MdSettings size={17} />}
-        title="Scene Settings"
-        subtitle="Configuration"
-      />
-
-      <button
-        type="button"
-        className="scp-btn scp-btn--ghost scp-btn--block"
-        style={{ marginBottom: 8 }}
-        onClick={onDuplicateScene}
-      >
-        <MdContentCopy size={14} />
-        Duplicate scene
-      </button>
-
-      <Divider />
-      <div className="scp-voiceover-summary">
-        <div className="scp-voiceover-summary__head">
-          <SectionHeader icon={<MdRecordVoiceOver size={14} />} label="AI Voiceover & Script" />
-          {hasVoiceover && (
-            <button
-              type="button"
-              className="scp-btn scp-btn--ghost scp-voiceover-summary__edit"
-              onClick={onOpenQuickCreate}
-            >
-              <MdEdit size={14} />
-              Edit
-            </button>
-          )}
-        </div>
-
-        {hasVoiceover ? (
-          <>
-            <div className="scp-summary-field scp-summary-field--row">
-              <div className="scp-summary-field__main">
-                <div className="scp-summary-field__label">
-                  <StatusDot active={!!activeScene.avatarType} />
-                  <span>Avatar</span>
-                </div>
-                <div className="scp-summary-field__value">
-                  {displayName(activeScene.avatarName)}
-                </div>
-              </div>
-              {activeScene.avatarType && (
-                <button
-                  type="button"
-                  className="scp-btn scp-btn--ghost scp-summary-field__action"
-                  onClick={() => applyGlobalSetting && applyGlobalSetting('avatar')}
-                >
-                  Apply all
-                </button>
-              )}
-            </div>
-
-            <div className="scp-summary-field scp-summary-field--row">
-              <div className="scp-summary-field__main">
-                <div className="scp-summary-field__label">
-                  <StatusDot active={!!activeScene.voiceId} />
-                  <span>Voice</span>
-                </div>
-                <div className="scp-summary-field__value">
-                  {displayName(activeScene.voiceName)}
-                </div>
-              </div>
-              {activeScene.voiceId && (
-                <button
-                  type="button"
-                  className="scp-btn scp-btn--ghost scp-summary-field__action"
-                  onClick={() => applyGlobalSetting && applyGlobalSetting('voice')}
-                >
-                  Apply all
-                </button>
-              )}
-            </div>
-
-            <div className="scp-summary-field scp-summary-field--script">
-              <div className="scp-summary-field__label">
-                <StatusDot active={!!(activeScene.script || '').trim()} />
-                <span>Script</span>
-              </div>
-              <p className="scp-summary-field__script scp-summary-field__script--full">
-                {(activeScene.script || '').trim()}
-              </p>
-              <span className="scp-summary-field__meta">
-                {(activeScene.script || '').length} characters
-              </span>
-            </div>
-          </>
-        ) : (
-          <div className="scp-voiceover-empty">
-            <p>No presenter or script on this scene yet.</p>
-            <button
-              type="button"
-              className="scp-btn scp-btn--primary scp-btn--block"
-              onClick={onOpenQuickCreate}
-            >
-              <MdPersonAdd size={16} />
-              Set up presenter & script
-            </button>
-          </div>
-        )}
-      </div>
-
-      <Divider />
-
-      {/* Generate button */}
-      <div style={{ marginTop: 4 }}>
-        <button
-          type="button"
-          className="scp-btn scp-btn--primary scp-btn--block"
-          disabled={isGenerating || (!canGenerate && !isGenerating)}
-          onClick={() => generateSceneVideo(activeSceneId)}
-          style={{ padding: '10px 14px', fontSize: 12 }}
-        >
-          {isGenerating ? (
-            <>
-              <div style={{ width: 14, height: 14, border: '2px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-              Generating…
-            </>
-          ) : isGenerated ? (
-            <><MdRefresh size={16} /> Regenerate Scene</>
-          ) : (
-            <><MdSmartDisplay size={16} /> Generate Scene Video</>
-          )}
-        </button>
-
-        {/* Status messages */}
-        {isGenerating && (
-          <p style={{ fontSize: 11, color: 'var(--text-muted, #64748b)', textAlign: 'center', marginTop: 8 }}>
-            HeyGen is crafting your video. This may take a minute…
-          </p>
-        )}
-        {isGenerated && (
-          <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
-              <MdCheckCircle size={14} color="#10b981" />
-              <span style={{ fontSize: 11, color: '#10b981', fontWeight: 600 }}>Video generated successfully</span>
-            </div>
-            <button
-              type="button"
-              className="scp-btn scp-btn--block"
-              onClick={() => {
-                const url = activeScene.generatedVideoUrl || activeScene.clips?.find(c => c.role === 'avatar' || c.type === 'video')?.src;
-                if (url) window.dispatchEvent(new CustomEvent('open-generated-video', { detail: { url } }));
-                else alert('Video URL not found. It might still be processing.');
-              }}
-            >
-              <MdMonitor size={14} /> View Generated Video
-            </button>
-          </div>
-        )}
-        {isFailed && (
-          <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
-            <MdWarning size={14} color="#ef4444" />
-            <span style={{ fontSize: 11, color: '#ef4444', fontWeight: 600 }}>Generation failed. Please try again.</span>
-          </div>
-        )}
-      </div>
-
-      <Divider />
-
-      {/* ── Visual Composition ─────────────────────────────────────── */}
-      <SectionHeader icon={<MdGridView size={14} />} label="Visual Composition" />
-      <Card>
-        <Row label="Scene Layout" column>
-          <select
-            value={activeScene.layout || 'split-right'}
-            onChange={(e) => {
-              const newLayout = e.target.value;
-              const template = projectTemplate.project.scenes.find(t => t.id === newLayout);
-              let newClips = clips;
-              if (template) {
-                let tc = JSON.parse(JSON.stringify(template.clips));
-                const existingAvatar = clips.find(c => c.role === 'avatar' || c.type === 'video');
-                if (existingAvatar) {
-                  const ai = tc.findIndex(c =>
-                    c.label?.toLowerCase().includes('avatar') ||
-                    c.label?.toLowerCase().includes('media') ||
-                    c.label?.toLowerCase().includes('center image') ||
-                    (c.type === 'image' && !c.label?.toLowerCase().includes('logo'))
-                  );
-                  if (ai !== -1) tc[ai] = { ...tc[ai], src: existingAvatar.src, type: existingAvatar.type, role: 'avatar' };
-                }
-                const existingText = clips.find(c => c.type === 'text' || c.role === 'main-text');
-                if (existingText) {
-                  const ti = tc.findIndex(c => c.type === 'text');
-                  if (ti !== -1) tc[ti].content = existingText.content;
-                }
-                newClips = tc;
-              }
-              updateScene(activeSceneId, { layout: newLayout, clips: newClips });
-            }}
-            style={{
-              width: '100%', background: 'white', border: '1px solid var(--border-subtle, rgba(0,0,0,0.1))',
-              borderRadius: 8, padding: '7px 10px', fontSize: 11, fontWeight: 600,
-              color: 'var(--text-main, #1a1b1c)', cursor: 'pointer', outline: 'none',
-            }}
-          >
-            {projectTemplate.project.scenes.map(s => (
-              <option key={s.id} value={s.id}>{s.title}</option>
-            ))}
-          </select>
-        </Row>
-        <SliderRow label="Background Blur" value={activeScene.bgBlur || 0} min={0} max={20} unit="px" onChange={(v) => updateScene(activeSceneId, { bgBlur: v })} />
-      </Card>
-
-      {/* ── Timing & Playback ──────────────────────────────────────── */}
-      <SectionHeader icon={<MdSchedule size={14} />} label="Timing & Playback" />
-      <Card>
-        <SliderRow label="Duration" value={activeScene.duration || 8} min={1} max={60} step={0.5} unit="s" onChange={(v) => updateScene(activeSceneId, { duration: v })} />
-        <SelectRow
-          label="Entrance Speed"
-          value={activeScene.entranceSpeed || 'normal'}
-          options={[
-            { value: 'slow', label: 'Slow (0.5×)' },
-            { value: 'normal', label: 'Normal (1×)' },
-            { value: 'fast', label: 'Fast (1.5×)' },
-          ]}
-          onChange={(v) => updateScene(activeSceneId, { entranceSpeed: v })}
-        />
-        <SliderRow
-          label="Voice speed"
-          value={activeScene.voiceSettings?.speed || 1}
-          min={0.5}
-          max={2}
-          step={0.1}
-          unit="×"
-          onChange={(v) => updateScene(activeSceneId, { voiceSettings: { ...(activeScene.voiceSettings || {}), speed: v } })}
-        />
-      </Card>
-
-      <SectionHeader icon={<MdSwapHoriz size={14} />} label="Scene transition" />
-      <Card>
-        <SelectRow
-          label="Type"
-          value={activeScene.transition?.type || 'fade'}
-          options={[
-            { value: 'none', label: 'None' },
-            { value: 'fade', label: 'Fade' },
-            { value: 'slide', label: 'Slide' },
-          ]}
-          onChange={(v) =>
-            updateScene(activeSceneId, {
-              transition: { ...(activeScene.transition || {}), type: v },
-            })
-          }
-        />
-        <SliderRow
-          label="Duration"
-          value={activeScene.transition?.duration ?? 0.5}
-          min={0}
-          max={2}
-          step={0.1}
-          unit="s"
-          onChange={(v) =>
-            updateScene(activeSceneId, {
-              transition: { ...(activeScene.transition || { type: 'fade' }), duration: v },
-            })
-          }
-        />
-        {activeScene.transition?.type === 'slide' && (
-          <SelectRow
-            label="Direction"
-            value={activeScene.transition?.direction || 'left'}
-            options={[
-              { value: 'left', label: 'Slide left' },
-              { value: 'right', label: 'Slide right' },
-              { value: 'up', label: 'Slide up' },
-              { value: 'down', label: 'Slide down' },
-            ]}
-            onChange={(v) =>
-              updateScene(activeSceneId, {
-                transition: { ...(activeScene.transition || { type: 'slide' }), direction: v },
-              })
-            }
-          />
-        )}
-      </Card>
-    </div>
+    <SceneSettingsPanel
+      activeScene={activeScene}
+      activeSceneId={activeSceneId}
+      updateScene={updateScene}
+      clips={clips}
+      generateSceneVideo={generateSceneVideo}
+      applyGlobalSetting={applyGlobalSetting}
+      onOpenQuickCreate={onOpenQuickCreate}
+      onDuplicateScene={onDuplicateScene}
+    />
   );
 };
 

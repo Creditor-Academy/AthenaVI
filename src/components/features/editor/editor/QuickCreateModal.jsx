@@ -16,18 +16,26 @@ import { Loader2 } from 'lucide-react';
 import heygenService from '../../../../services/heygenService';
 import {
   extractHeygenList,
-  filterAvatarIvLooks,
+  filterAvatarLooksByEngine,
   formatAvatarTypeLabel,
   mapAvatarGroup,
   mapAvatarLook,
+  normalizeAvatarEngine,
 } from '../../../../utils/heygenAvatars';
 import './QuickCreateModal.css';
 
 const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
   const [step, setStep] = useState(1);
   const [avatarPhase, setAvatarPhase] = useState('groups');
+  const [avatarEngine, setAvatarEngine] = useState(() => normalizeAvatarEngine('avatar_iv'));
   const [groups, setGroups] = useState([]);
+  const [groupsHasMore, setGroupsHasMore] = useState(false);
+  const [groupsNextToken, setGroupsNextToken] = useState(null);
+  const [loadingMoreGroups, setLoadingMoreGroups] = useState(false);
   const [looks, setLooks] = useState([]);
+  const [looksHasMore, setLooksHasMore] = useState(false);
+  const [looksNextToken, setLooksNextToken] = useState(null);
+  const [loadingMoreLooks, setLoadingMoreLooks] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [selectedAvatar, setSelectedAvatar] = useState(null);
   const [voices, setVoices] = useState([]);
@@ -51,6 +59,8 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     setSelectedAvatar(null);
     setLooks([]);
     setLooksError('');
+    setLooksHasMore(false);
+    setLooksNextToken(null);
   }, []);
 
   useEffect(() => {
@@ -95,52 +105,126 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
         ownership: 'public',
         limit: 20,
       });
+      const data = responseData?.data || responseData;
       const groupList = extractHeygenList(responseData, [
         'avatar_groups',
         'groups',
         'avatars',
       ]);
       setGroups(groupList.map(mapAvatarGroup).filter((g) => g.id));
+      setGroupsHasMore(!!(data?.has_more ?? responseData?.has_more));
+      setGroupsNextToken(data?.token ?? responseData?.token ?? data?.next_token ?? responseData?.next_token ?? null);
     } catch (err) {
       console.error('Failed to load avatar groups:', err);
       setGroups([]);
+      setGroupsHasMore(false);
+      setGroupsNextToken(null);
     } finally {
       setLoadingGroups(false);
     }
   };
 
-  const fetchLooksForGroup = async (group) => {
+  const loadMoreGroups = async () => {
+    if (!groupsHasMore || !groupsNextToken || loadingMoreGroups) return;
+    setLoadingMoreGroups(true);
+    try {
+      const responseData = await heygenService.getAvatarGroups({
+        ownership: 'public',
+        limit: 20,
+        token: groupsNextToken,
+      });
+      const data = responseData?.data || responseData;
+      const groupList = extractHeygenList(responseData, ['avatar_groups', 'groups', 'avatars']);
+      const mapped = groupList.map(mapAvatarGroup).filter((g) => g.id);
+      setGroups((prev) => {
+        const seen = new Set(prev.map((g) => g.id));
+        const next = [...prev];
+        mapped.forEach((g) => { if (!seen.has(g.id)) next.push(g); });
+        return next;
+      });
+      setGroupsHasMore(!!(data?.has_more ?? responseData?.has_more));
+      setGroupsNextToken(data?.token ?? responseData?.token ?? data?.next_token ?? responseData?.next_token ?? null);
+    } catch (err) {
+      console.error('Failed to load more avatar groups:', err);
+      setGroupsHasMore(false);
+      setGroupsNextToken(null);
+    } finally {
+      setLoadingMoreGroups(false);
+    }
+  };
+
+  const fetchLooksForGroup = async (group, engineOverride = null) => {
     setLoadingLooks(true);
     setLooksError('');
     setSelectedGroup(group);
     setSelectedAvatar(null);
     setAvatarPhase('looks');
     try {
+      const desiredEngine = normalizeAvatarEngine(engineOverride || avatarEngine)
       const responseData = await heygenService.getAvatarLooks({
         group_id: group.id,
         limit: 20,
       });
+      const data = responseData?.data || responseData;
       const lookList = extractHeygenList(responseData, [
         'avatar_looks',
         'looks',
         'avatars',
       ]);
-      const compatible = filterAvatarIvLooks(lookList)
+      const compatible = filterAvatarLooksByEngine(lookList, desiredEngine)
         .map((look) => mapAvatarLook(look, group.name))
         .filter((look) => look.id);
 
       setLooks(compatible);
+      setLooksHasMore(!!(data?.has_more ?? responseData?.has_more));
+      setLooksNextToken(data?.token ?? responseData?.token ?? data?.next_token ?? responseData?.next_token ?? null);
       if (compatible.length === 0) {
         setLooksError(
-          'No Avatar IV–compatible looks for this character. Pick another character.'
+          `No ${desiredEngine === 'avatar_v' ? 'Avatar V' : 'Avatar IV'}–compatible looks for this character. Pick another character.`
         );
       }
     } catch (err) {
       console.error('Failed to load avatar looks:', err);
       setLooks([]);
       setLooksError('Could not load looks. Please try again.');
+      setLooksHasMore(false);
+      setLooksNextToken(null);
     } finally {
       setLoadingLooks(false);
+    }
+  };
+
+  const loadMoreLooks = async (engineOverride = null) => {
+    if (!selectedGroup || !looksHasMore || !looksNextToken || loadingMoreLooks) return;
+    setLoadingMoreLooks(true);
+    try {
+      const desiredEngine = normalizeAvatarEngine(engineOverride || avatarEngine);
+      const responseData = await heygenService.getAvatarLooks({
+        group_id: selectedGroup.id,
+        limit: 20,
+        token: looksNextToken,
+      });
+      const data = responseData?.data || responseData;
+      const lookList = extractHeygenList(responseData, ['avatar_looks', 'looks', 'avatars']);
+      const compatible = filterAvatarLooksByEngine(lookList, desiredEngine)
+        .map((look) => mapAvatarLook(look, selectedGroup.name))
+        .filter((look) => look.id);
+
+      setLooks((prev) => {
+        const seen = new Set(prev.map((l) => l.id));
+        const next = [...prev];
+        compatible.forEach((l) => { if (!seen.has(l.id)) next.push(l); });
+        return next;
+      });
+
+      setLooksHasMore(!!(data?.has_more ?? responseData?.has_more));
+      setLooksNextToken(data?.next_token ?? responseData?.next_token ?? null);
+    } catch (err) {
+      console.error('Failed to load more looks:', err);
+      setLooksHasMore(false);
+      setLooksNextToken(null);
+    } finally {
+      setLoadingMoreLooks(false);
     }
   };
 
@@ -182,6 +266,7 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     avatarImage: selectedAvatar.image,
     avatarName: selectedAvatar.name,
     avatarTypeLabel: selectedAvatar.avatarType,
+    avatarEngine,
     voiceId: selectedVoice.id,
     voiceName: selectedVoice.name,
     script,
@@ -235,7 +320,7 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
             : 'Select your presenter',
         subtitle:
           avatarPhase === 'looks'
-            ? 'Only Avatar IV–compatible looks are shown.'
+            ? `Only ${avatarEngine === 'avatar_v' ? 'Avatar V' : 'Avatar IV'}–compatible looks are shown.`
             : 'Pick a character, then choose a compatible look.',
       },
       {
@@ -285,6 +370,47 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
             )}
             {current.title && <h2 className="qc-title">{current.title}</h2>}
             {current.subtitle && <p className="qc-subtitle">{current.subtitle}</p>}
+
+            {step === 1 && (
+              <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = 'avatar_iv'
+                    setAvatarEngine(next)
+                    if (avatarPhase === 'looks' && selectedGroup) fetchLooksForGroup(selectedGroup, next)
+                  }}
+                  style={{
+                    padding: '8px 10px',
+                    borderRadius: 10,
+                    border: '1px solid rgba(0,0,0,0.1)',
+                    background: avatarEngine === 'avatar_iv' ? 'rgba(26,115,232,0.10)' : '#fff',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Avatar IV
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = 'avatar_v'
+                    setAvatarEngine(next)
+                    if (avatarPhase === 'looks' && selectedGroup) fetchLooksForGroup(selectedGroup, next)
+                  }}
+                  style={{
+                    padding: '8px 10px',
+                    borderRadius: 10,
+                    border: '1px solid rgba(0,0,0,0.1)',
+                    background: avatarEngine === 'avatar_v' ? 'rgba(168,85,247,0.12)' : '#fff',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Avatar V
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -335,6 +461,15 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
               </p>
             </div>
           </div>
+
+          {groupsHasMore && (
+            <div className="qc-avatar-card upload-card" onClick={loadMoreGroups} style={{ cursor: loadingMoreGroups ? 'not-allowed' : 'pointer' }}>
+              <div className="qc-upload-content">
+                <MdAddCircleOutline size={32} />
+                <p>{loadingMoreGroups ? 'Loading…' : 'Load more'}</p>
+              </div>
+            </div>
+          )}
         </div>
       );
     }
@@ -380,6 +515,15 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
             </div>
           );
         })}
+
+        {looksHasMore && (
+          <div className="qc-avatar-card upload-card" onClick={() => loadMoreLooks()} style={{ cursor: loadingMoreLooks ? 'not-allowed' : 'pointer' }}>
+            <div className="qc-upload-content">
+              <MdAddCircleOutline size={32} />
+              <p>{loadingMoreLooks ? 'Loading…' : 'Load more looks'}</p>
+            </div>
+          </div>
+        )}
       </div>
     );
   };

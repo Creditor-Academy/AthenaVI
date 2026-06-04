@@ -24,6 +24,8 @@ import InviteAcceptance from './pages/InviteAcceptance/InviteAcceptance.jsx'
 import AIAvatarsVideos from './pages/AIAvatarsVideos/AIAvatarsVideos.jsx'
 import AIVideos from './pages/AIVideos/AIVideos.jsx'
 import Help from './pages/UserHelp/Help.jsx'
+import NotFound from './pages/NotFound/NotFound.jsx'
+import RenderDownload from './pages/Download/RenderDownload.jsx'
 
 // Protected Route Component
 const ProtectedRoute = ({ children, setView }) => {
@@ -207,13 +209,21 @@ function App() {
     const pathToViewMap = {
       '/': 'landing',
       '/dashboard': 'dashboard',
+      '/dashboard/home': 'dashboard',
       '/dashboard/videos': 'dashboard',
       '/dashboard/avatars': 'dashboard',
+      '/dashboard/create-avatar': 'dashboard',
       '/dashboard/templates': 'dashboard',
+      '/dashboard/template-details': 'dashboard',
       '/dashboard/library': 'dashboard',
-      '/dashboard/team-workspace': 'dashboard',
+      '/dashboard/workspace': 'dashboard',
       '/dashboard/admin-portal': 'dashboard',
       '/dashboard/settings': 'dashboard',
+      '/dashboard/trash': 'dashboard',
+      '/dashboard/voices': 'dashboard',
+      '/dashboard/create-voice': 'dashboard',
+      '/dashboard/brandkits': 'dashboard',
+      '/dashboard/credits': 'dashboard',
       '/profile': 'dashboard',
       '/create': 'create',
       '/products': 'products',
@@ -232,15 +242,27 @@ function App() {
       '/settings': 'settings',
       '/ai-videos': 'ai-videos',
       '/ai-avatars-videos': 'ai-avatars-videos',
-      '/support': 'help'
+      '/support': 'help',
+      '/download': 'download',
     }
     
     // Get current path (handle both hash and regular routing)
     let currentPath = window.location.pathname
+    if (currentPath.endsWith('/') && currentPath.length > 1) {
+      currentPath = currentPath.slice(0, -1)
+    }
+    
+    // Check if current URL is a Google Auth callback redirect (contains access_token in the hash)
+    if (window.location.hash && window.location.hash.includes('access_token=')) {
+      return 'dashboard'
+    }
     
     // If hash routing is being used, extract from hash
     if (window.location.hash && window.location.hash !== '#') {
       currentPath = window.location.hash.replace('#', '') || '/'
+      if (currentPath.endsWith('/') && currentPath.length > 1) {
+        currentPath = currentPath.slice(0, -1)
+      }
     }
     
     const urlView = pathToViewMap[currentPath]
@@ -248,10 +270,17 @@ function App() {
     if (urlView) {
       return urlView
     }
+
+    const isSpecialPath = currentPath.includes('/reset-password') || 
+                          currentPath.includes('/invite/accept') || 
+                          currentPath.includes('/invitations/accept')
+    if (isSpecialPath) {
+      // Fallback to localStorage for special overlay pages
+      const savedView = window.localStorage.getItem('athenavi:view')
+      return savedView || 'landing'
+    }
     
-    // Fallback to localStorage
-    const savedView = window.localStorage.getItem('athenavi:view')
-    return savedView || 'landing'
+    return 'not-found'
   })
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [productSection, setProductSection] = useState(null)
@@ -279,6 +308,8 @@ function App() {
 
   // Save view to localStorage whenever it changes
   useEffect(() => {
+    if (view === 'not-found') return
+
     window.localStorage.setItem('athenavi:view', view)
     
     // Update browser URL to reflect current view
@@ -302,7 +333,8 @@ function App() {
       'settings': '/settings',
       'ai-videos': '/ai-videos',
       'ai-avatars-videos': '/ai-avatars-videos',
-      'help': '/support'
+      'help': '/support',
+      'download': '/download',
     }
     
     const newUrl = urlMap[view] || '/'
@@ -337,13 +369,21 @@ function App() {
       const pathToViewMap = {
         '/': 'landing',
         '/dashboard': 'dashboard',
+        '/dashboard/home': 'dashboard',
         '/dashboard/videos': 'dashboard',
         '/dashboard/avatars': 'dashboard',
+        '/dashboard/create-avatar': 'dashboard',
         '/dashboard/templates': 'dashboard',
+        '/dashboard/template-details': 'dashboard',
         '/dashboard/library': 'dashboard',
-        '/dashboard/team-workspace': 'dashboard',
+        '/dashboard/workspace': 'dashboard',
         '/dashboard/admin-portal': 'dashboard',
         '/dashboard/settings': 'dashboard',
+        '/dashboard/trash': 'dashboard',
+        '/dashboard/voices': 'dashboard',
+        '/dashboard/create-voice': 'dashboard',
+        '/dashboard/brandkits': 'dashboard',
+        '/dashboard/credits': 'dashboard',
         '/profile': 'dashboard',
         '/create': 'create',
         '/products': 'products',
@@ -362,14 +402,39 @@ function App() {
         '/settings': 'settings',
         '/ai-videos': 'ai-videos',
         '/ai-avatars-videos': 'ai-avatars-videos',
-        '/support': 'help'
+        '/support': 'help',
+        '/download': 'download',
       }
       
-      const currentPath = window.location.pathname
+      let currentPath = window.location.pathname
+      if (currentPath.endsWith('/') && currentPath.length > 1) {
+        currentPath = currentPath.slice(0, -1)
+      }
+      
+      // Check if current URL is a Google Auth callback redirect (contains access_token in the hash)
+      if (window.location.hash && window.location.hash.includes('access_token=')) {
+        setView('dashboard')
+        return
+      }
+      
+      // If hash routing is being used, extract from hash
+      if (window.location.hash && window.location.hash !== '#') {
+        currentPath = window.location.hash.replace('#', '') || '/'
+        if (currentPath.endsWith('/') && currentPath.length > 1) {
+          currentPath = currentPath.slice(0, -1)
+        }
+      }
       const urlView = pathToViewMap[currentPath]
       
       if (urlView) {
         setView(urlView)
+      } else {
+        const isSpecialPath = currentPath.includes('/reset-password') || 
+                              currentPath.includes('/invite/accept') || 
+                              currentPath.includes('/invitations/accept')
+        if (!isSpecialPath) {
+          setView('not-found')
+        }
       }
     }
 
@@ -512,6 +577,18 @@ function App() {
         </ProtectedRoute>
       )}
 
+      {view === 'download' && (
+        <ProtectedRoute view={view} setView={setView}>
+          <RenderDownload onBack={() => setView('create')} />
+          {showAuthModal && (
+            <Auth 
+              onAuthComplete={handleAuthComplete}
+              onClose={() => setShowAuthModal(false)}
+            />
+          )}
+        </ProtectedRoute>
+      )}
+
       {view === 'dashboard' && (
         <ProtectedRoute view={view} setView={setView}>
           <Dashboard
@@ -525,7 +602,13 @@ function App() {
             }}
             initialSection={(() => {
               // Pass the initial section from URL to Dashboard
-              const currentPath = window.location.pathname
+              let currentPath = window.location.pathname
+              if (window.location.hash && window.location.hash !== '#') {
+                currentPath = window.location.hash.replace('#', '') || '/'
+                if (currentPath.endsWith('/') && currentPath.length > 1) {
+                  currentPath = currentPath.slice(0, -1)
+                }
+              }
               if (currentPath.startsWith('/dashboard/')) {
                 return currentPath.replace('/dashboard/', '') || 'home'
               }
@@ -986,7 +1069,11 @@ function App() {
         </>
       )}
 
-      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings', 'help'].includes(view) && (
+      {view === 'not-found' && (
+        <NotFound setView={setView} />
+      )}
+
+      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings', 'help', 'not-found'].includes(view) && (
         <>
           <Landing 
             onLoginClick={handleLoginClick}
