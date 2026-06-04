@@ -367,3 +367,279 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ═══════════════════════════════════════════════════════
+   Workspace pill badges (used in the users table)
+   ═══════════════════════════════════════════════════════ */
+
+.workspace-count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.16);
+  color: #a5b4fc;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.workspace-count-badge:hover {
+  transform: translateY(-1.5px);
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.2);
+  color: #c7d2fe;
+}
+
+.workspace-count-icon {
+  color: #818cf8;
+  display: flex;
+  align-items: center;
+  transition: transform 0.2s ease;
+}
+
+.workspace-count-badge:hover .workspace-count-icon {
+  transform: scale(1.1);
+}
+
+.workspace-badge-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 300px;
+}
+
+.workspace-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px 5px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: rgba(99, 102, 241, 0.10);
+  border: 1px solid rgba(99, 102, 241, 0.18);
+  color: #a5b4fc;
+  white-space: nowrap;
+  transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+  cursor: default;
+}
+
+.workspace-pill-badge:hover {
+  transform: translateY(-1px);
+  background: rgba(99, 102, 241, 0.16);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.12);
+}
+
+.workspace-pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #818cf8;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px rgba(129, 140, 248, 0.5);
+}
+
+.workspace-pill-name {
+  color: var(--text-main, #e2e8f0);
+  font-weight: 600;
+}
+
+.workspace-pill-role {
+  color: var(--text-muted, #94a3b8);
+  font-weight: 500;
+  font-size: 0.72rem;
+  opacity: 0.8;
+}
+
+/* ═══════════════════════════════════════════════════════
+   Workspace management tab in UserProfileModal
+   ═══════════════════════════════════════════════════════ */
+
+.ws-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.ws-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 24px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1.5px dashed rgba(255, 255, 255, 0.08);
+  color: var(--text-muted, #94a3b8);
+}
+
+.ws-empty-state p {
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.ws-list-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: background 0.2s, border-color 0.2s, transform 0.18s;
+}
+
+.ws-list-item:hover {
+  background: rgba(255, 255, 255, 0.055);
+  border-color: rgba(99, 102, 241, 0.18);
+  transform: translateX(2px);
+}
+
+.ws-list-item-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.12) 100%);
+  display: grid;
+  place-items: center;
+  color: #a5b4fc;
+  flex-shrink: 0;
+}
+
+.ws-list-item-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ws-list-item-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main, #e2e8f0);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ws-role-select {
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.16);
+  color: #a5b4fc;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+  appearance: auto;
+}
+
+.ws-role-select:focus {
+  border-color: #818cf8;
+  background: rgba(99, 102, 241, 0.14);
+}
+
+.ws-role-select option {
+  background: #1e293b;
+  color: #e2e8f0;
+}
+
+.ws-remove-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid rgba(248, 113, 113, 0.16);
+  background: rgba(248, 113, 113, 0.06);
+  color: #f87171;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.2s, background 0.2s, border-color 0.2s;
+}
+
+.ws-remove-btn:hover {
+  background: rgba(248, 113, 113, 0.18);
+  border-color: rgba(248, 113, 113, 0.3);
+  transform: scale(1.08);
+}
+
+/* Add workspace form */
+.ws-add-form {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 20px;
+  padding: 22px;
+}
+
+.ws-add-form h4 {
+  margin: 0 0 16px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main, #e2e8f0);
+}
+
+.ws-add-controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.ws-add-select {
+  flex: 2;
+  min-width: 160px;
+}
+
+.ws-add-role {
+  flex: 1;
+  min-width: 120px;
+}
+
+.ws-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ws-add-btn:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .ws-list-item-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .ws-add-controls {
+    flex-direction: column;
+  }
+
+  .ws-add-select,
+  .ws-add-role,
+  .ws-add-btn {
+    width: 100%;
+    flex: unset;
+  }
+
+  .workspace-badge-list {
+    max-width: 200px;
+  }
+}

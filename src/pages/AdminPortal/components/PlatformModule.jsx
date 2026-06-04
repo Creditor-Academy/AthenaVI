@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PlatformConfig from '../../../components/features/admin/PlatformConfig';
-import { MdCreditCard, MdExtension, MdStorage, MdLock } from 'react-icons/md';
+import { MdCreditCard, MdExtension, MdLock } from 'react-icons/md';
 import '../AdminPortal.css';
 
 const PlatformModule = () => {
@@ -9,7 +9,7 @@ const PlatformModule = () => {
   const subTabs = [
     { id: 'plans', label: 'Plans', icon: null },
     { id: 'integrations', label: 'Integrations', icon: <MdExtension size={16} /> },
-    { id: 'infrastructure', label: 'Infrastructure', icon: <MdStorage size={16} /> },
+
     { id: 'permissions', label: 'Permissions', icon: <MdLock size={16} /> },
   ];
 
@@ -20,11 +20,7 @@ const PlatformModule = () => {
     { id: 'INT-004', name: 'Slack', status: 'Disconnected', lastSync: '2026-05-18 09:20', type: 'Communication' },
   ];
 
-  const infrastructure = [
-    { id: 'INF-001', name: 'US-East-1', region: 'Virginia', status: 'Healthy', capacity: '85%', latency: '24ms' },
-    { id: 'INF-002', name: 'EU-West-1', region: 'Ireland', status: 'Healthy', capacity: '72%', latency: '89ms' },
-    { id: 'INF-003', name: 'AP-South-1', region: 'Mumbai', status: 'Degraded', capacity: '94%', latency: '156ms' },
-  ];
+
 
   const permissions = [
     { id: 'PERM-001', role: 'Super Admin', users: 3, permissions: ['Full Access', 'User Management', 'System Config'] },
@@ -104,54 +100,7 @@ const PlatformModule = () => {
           </section>
         )}
         
-        {activeSubTab === 'infrastructure' && (
-          <section className="admin-card-section" style={{ marginTop: '24px' }}>
-            <div className="billing-hero">
-              <div>
-                <h2>Infrastructure</h2>
-                <p className="admin-placeholder-text">Monitor server regions, capacity, and system health.</p>
-              </div>
-            </div>
 
-            <div className="admin-table-container">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Region</th>
-                    <th>Location</th>
-                    <th>Status</th>
-                    <th>Capacity</th>
-                    <th>Latency</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {infrastructure.map((infra) => (
-                    <tr key={infra.id}>
-                      <td>
-                        <div style={{ fontWeight: 600 }}>{infra.name}</div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{infra.id}</div>
-                      </td>
-                      <td>{infra.region}</td>
-                      <td>
-                        <span className={`status-badge ${infra.status === 'Healthy' ? 'status-active' : 'status-suspended'}`}>
-                          {infra.status}
-                        </span>
-                      </td>
-                      <td>{infra.capacity}</td>
-                      <td>{infra.latency}</td>
-                      <td>
-                        <button className="user-action-btn" onClick={() => alert(`Manage: ${infra.name}`)}>
-                          Manage
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
         
         {activeSubTab === 'permissions' && (
           <section className="admin-card-section" style={{ marginTop: '24px' }}>

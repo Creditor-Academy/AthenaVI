@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { MdSync, MdSearch, MdFilterList, MdAdd, MdEdit, MdPersonSearch, MdPowerSettingsNew, MdDeleteForever, MdRestore } from 'react-icons/md';
+import { MdSync, MdSearch, MdFilterList, MdAdd, MdEdit, MdPowerSettingsNew, MdDeleteForever, MdRestore, MdOutlineFolderShared } from 'react-icons/md';
 import UserProfileModal from './UserProfileModal';
+import './UserProfileModal.css';
 
 const roleOptions = ['Owner', 'Admin', 'Editor', 'Viewer', 'Super Admin', 'Workspace Admin', 'Member'];
 const workspaceOptions = ['Global', 'Forge Studio', 'Pulse CRM', 'Beacon Media', 'Astra Ventures'];
@@ -114,29 +115,32 @@ const AddUserModal = ({ isOpen, onClose, onCreate }) => {
   );
 };
 
-const UsersList = () => {
+const UsersList = ({ users = [], setUsers }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const [users, setUsers] = useState([
-    { id: 1, name: 'Alex Johnson', email: 'alex@example.com', plan: 'Enterprise', role: 'Super Admin', workspace: 'Global', status: 'Active', joined: '2025-01-12', credits: 15000 },
-    { id: 2, name: 'Sarah Chen', email: 'sarah.c@tech.com', plan: 'Pro', role: 'Workspace Admin', workspace: 'Forge Studio', status: 'Active', joined: '2025-02-01', credits: 2500 },
-    { id: 3, name: 'Michael Smith', email: 'mike.s@gmail.com', plan: 'Free', role: 'Member', workspace: 'Pulse CRM', status: 'Suspended', joined: '2025-02-15', credits: 0 },
-    { id: 4, name: 'Elena Gilbert', email: 'elena@mystic.com', plan: 'Pro', role: 'Editor', workspace: 'Beacon Media', status: 'Active', joined: '2025-03-01', credits: 1200 },
-    { id: 5, name: 'Harvey Specter', email: 'harvey@pearson.com', plan: 'Enterprise', role: 'Workspace Admin', workspace: 'Astra Ventures', status: 'Active', joined: '2025-03-05', credits: 50000 }
-  ]);
-
-  const filteredUsers = users.filter((user) => 
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    user.role.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    user.workspace.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch = 
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      user.role.toLowerCase().includes(searchTerm.toLowerCase());
+      
+    const workspacesList = user.workspaces || [{ name: user.workspace || '', role: user.role || '' }];
+    const matchesWorkspace = workspacesList.some(ws => ws.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    return matchesSearch || matchesWorkspace;
+  });
 
   const handleCreateUser = (userData) => {
     const id = Math.max(0, ...users.map((user) => user.id)) + 1;
-    setUsers([{ ...userData, id, joined: new Date().toISOString().slice(0, 10) }, ...users]);
+    const initialWorkspace = { name: userData.workspace, role: userData.role };
+    setUsers([{ 
+      ...userData, 
+      id, 
+      workspaces: [initialWorkspace], 
+      joined: new Date().toISOString().slice(0, 10) 
+    }, ...users]);
   };
 
   const handleUpdateUser = (updatedUser) => {
@@ -186,7 +190,7 @@ const UsersList = () => {
             <tr>
               <th>User</th>
               <th>Role</th>
-              <th>Workspace</th>
+              <th>Workspaces</th>
               <th>Plan</th>
               <th>Status</th>
               <th>Joined</th>
@@ -202,7 +206,19 @@ const UsersList = () => {
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{user.email}</div>
                 </td>
                 <td>{user.role}</td>
-                <td>{user.workspace}</td>
+                <td>
+                  {(() => {
+                    const wsList = user.workspaces || [{ name: user.workspace, role: user.role }];
+                    const count = wsList.length;
+                    const tooltipText = wsList.map(ws => `${ws.name} (${ws.role})`).join('\n');
+                    return (
+                      <span className="workspace-count-badge" title={tooltipText}>
+                        <MdOutlineFolderShared className="workspace-count-icon" size={16} />
+                        <span>{count} {count === 1 ? 'Workspace' : 'Workspaces'}</span>
+                      </span>
+                    );
+                  })()}
+                </td>
                 <td><span className="plan-tag">{user.plan}</span></td>
                 <td>
                   <span className={`status-badge ${user.status === 'Active' ? 'status-active' : 'status-suspended'}`}>
@@ -215,9 +231,6 @@ const UsersList = () => {
                   <div className="table-action-group">
                     <button className="user-action-btn icon-only" title="Edit User" onClick={(e) => { e.stopPropagation(); setSelectedUser(user); }}>
                       <MdEdit size={18} />
-                    </button>
-                    <button className="user-action-btn icon-only" title="Impersonate User" onClick={(e) => { e.stopPropagation(); alert(`Impersonating ${user.name} in view-only mode.`); }}>
-                      <MdPersonSearch size={18} />
                     </button>
                     <button className="user-action-btn icon-only" title={user.status === 'Active' ? 'Suspend User' : 'Reactivate User'} onClick={(e) => handleToggleStatus(user, e)}>
                       {user.status === 'Active' ? <MdPowerSettingsNew size={18} /> : <MdRestore size={18} />}
