@@ -252,6 +252,11 @@ function App() {
       currentPath = currentPath.slice(0, -1)
     }
     
+    // Check if current URL is a Google Auth callback redirect (contains access_token in the hash)
+    if (window.location.hash && window.location.hash.includes('access_token=')) {
+      return 'dashboard'
+    }
+    
     // If hash routing is being used, extract from hash
     if (window.location.hash && window.location.hash !== '#') {
       currentPath = window.location.hash.replace('#', '') || '/'
@@ -404,6 +409,20 @@ function App() {
       let currentPath = window.location.pathname
       if (currentPath.endsWith('/') && currentPath.length > 1) {
         currentPath = currentPath.slice(0, -1)
+      }
+      
+      // Check if current URL is a Google Auth callback redirect (contains access_token in the hash)
+      if (window.location.hash && window.location.hash.includes('access_token=')) {
+        setView('dashboard')
+        return
+      }
+      
+      // If hash routing is being used, extract from hash
+      if (window.location.hash && window.location.hash !== '#') {
+        currentPath = window.location.hash.replace('#', '') || '/'
+        if (currentPath.endsWith('/') && currentPath.length > 1) {
+          currentPath = currentPath.slice(0, -1)
+        }
       }
       const urlView = pathToViewMap[currentPath]
       

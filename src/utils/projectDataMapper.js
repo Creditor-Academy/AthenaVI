@@ -1,6 +1,6 @@
 import heygenService from '../services/heygenService';
 import { buildHeygenAvatarContent, getSceneAvatarKind, getSceneAvatarLookId } from './heygenAvatars';
-import { getClipTextContent, isTextLayer, parseFontSize } from './textClip';
+import { getClipTextContent, isTextLayer, parseCssPx, parseFontSize } from './textClip';
 import {
   mapAnimationsForBackend,
   mapAnimationsFromBackend,
@@ -413,6 +413,10 @@ function elementToClip(element) {
         ? { text: getClipTextContent(clip) }
         : { text: String(clip.content ?? '') };
     clip.style = normalizeTextStyle(clip.style);
+    const styleWidth = parseCssPx(clip.style?.width);
+    if (styleWidth && clip.size.width < styleWidth) {
+      clip.size = { ...clip.size, width: styleWidth };
+    }
   }
 
   return clip;

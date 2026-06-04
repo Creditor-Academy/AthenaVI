@@ -15,8 +15,8 @@ import {
     MdPhotoSizeSelectActual,
     MdVideoLibrary
 } from 'react-icons/md'
-import { getClipTextContent, isTextLayer, parseFontSize } from '../../../../utils/textClip'
-import { getClipZIndex, sortClipsForRender } from '../../../../utils/editorLayerUtils'
+import { getClipTextContent, isTextLayer, resolveTextClipRect } from '../../../../utils/textClip'
+import { getClipZIndex, isBackgroundClip, sortClipsForRender } from '../../../../utils/editorLayerUtils'
 import { resolveClipMediaSrc, isVideoMedia, isAvatarClip } from '../../../../utils/heygenVideo'
 import {
   computeClipAnimationState,
@@ -81,47 +81,93 @@ function ClipSequenceVideo({ src, clip, scene, frameInScene, fps, style, audioEn
 }
 
 function getSceneBackgroundStyle(scene) {
-  let backgroundStyle = {
-    position: 'absolute',
-    inset: 0,
-    backgroundColor: '#ffffff',
-    backgroundImage: 'radial-gradient(#e5e7eb 1.5px, transparent 1.5px)',
-    backgroundSize: '32px 32px',
-    zIndex: 0,
-  }
+  const bg = scene?.background?.value
+  const bgImage = scene?.backgroundImage
 
-  if (scene.backgroundImage) {
-    backgroundStyle = {
-      ...backgroundStyle,
-      backgroundImage: `url(${scene.backgroundImage})`,
+  if (bgImage) {
+    return {
+      position: 'absolute',
+      inset: 0,
+      zIndex: 0,
+      backgroundColor: '#f8fafc',
+      backgroundImage: `url(${bgImage})`,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
     }
-  } else if (scene.background?.value) {
-    const value = String(scene.background.value)
+  }
+
+  if (bg) {
+    const value = String(bg)
     const isGradient = value.includes('gradient(')
-    backgroundStyle = {
-      ...backgroundStyle,
-      backgroundColor: isGradient ? '#ffffff' : value,
+    return {
+      position: 'absolute',
+      inset: 0,
+      zIndex: 0,
+      backgroundColor: isGradient ? '#f8fafc' : value,
       backgroundImage: isGradient ? value : 'none',
-      backgroundSize: isGradient ? 'cover' : backgroundStyle.backgroundSize,
-      backgroundPosition: isGradient ? 'center' : backgroundStyle.backgroundPosition,
+      backgroundSize: isGradient ? 'cover' : '28px 28px',
+      backgroundPosition: 'center',
     }
   }
 
-  return backgroundStyle
+  return {
+    position: 'absolute',
+    inset: 0,
+    zIndex: 0,
+    backgroundColor: '#f8fafc',
+    backgroundImage: 'radial-gradient(#e2e8f0 1.5px, transparent 1.5px)',
+    backgroundSize: '28px 28px',
+    backgroundPosition: 'center',
+  }
 }
 
 function SceneFrame({ scene, frameInScene, fps, audioEnabled = true }) {
   const backgroundStyle = getSceneBackgroundStyle(scene)
+  const hasBgClip = (scene.clips || []).some((c) => isBackgroundClip(c) && resolveClipMediaSrc(c, scene))
 
   return (
     <>
-      <div style={backgroundStyle} />
+      {!hasBgClip && <div style={backgroundStyle} />}
       {sortClipsForRender(scene.clips || []).map((clip) => {
         const clipStart = (clip.startTime || 0) * fps
         const clipDuration = ((clip.endTime || scene.duration || 5) - (clip.startTime || 0)) * fps
         if (frameInScene < clipStart || frameInScene >= clipStart + clipDuration) return null
+
+        if (isBackgroundClip(clip)) {
+          const src = resolveClipMediaSrc(clip, scene)
+          const isVideo = isVideoMedia(clip, src)
+          return (
+            <div
+              key={clip.id}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                zIndex: 0,
+                overflow: 'hidden',
+                pointerEvents: 'none',
+              }}
+            >
+              {src ? (
+                isVideo ? (
+                  <ClipSequenceVideo
+                    src={src}
+                    clip={clip}
+                    scene={scene}
+                    frameInScene={frameInScene}
+                    fps={fps}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <img
+                    src={src}
+                    alt=""
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  />
+                )
+              ) : null}
+            </div>
+          )
+        }
 
         const frameInClip = frameInScene - clipStart
         const hasCustomAnim = !!getEntranceAnimation(clip)
@@ -136,6 +182,8 @@ function SceneFrame({ scene, frameInScene, fps, audioEnabled = true }) {
         let blurPx = 0
         const animRotation = animState?.rotation ?? 0
 
+        const startsAtSceneOpen = (clip.startTime || 0) < 0.02
+
         if (animState) {
           if (!animState.visible) return null
           opacity = animState.opacity
@@ -143,6 +191,9 @@ function SceneFrame({ scene, frameInScene, fps, audioEnabled = true }) {
           translateX = animState.translateX
           translateY = animState.translateY
           blurPx = animState.blur
+        } else if (startsAtSceneOpen) {
+          opacity = clip.opacity ?? 1
+          scale = clip.scale ?? 1
         } else {
           const animProgress = spring({
             frame: frameInClip,
@@ -153,7 +204,12 @@ function SceneFrame({ scene, frameInScene, fps, audioEnabled = true }) {
           scale = interpolate(animProgress, [0, 1], [0.95, 1])
         }
 
-        const rect = pixelRectToPercent(clip.position, clip.size)
+        const isText = clip.type === 'text' || isTextLayer(clip)
+        const textLayout = isText ? resolveTextClipRect(clip) : null
+        const pos = textLayout?.position ?? clip.position ?? { x: 0, y: 0 }
+        const size = textLayout?.size ?? clip.size ?? { width: 400, height: 400 }
+        const rect = pixelRectToPercent(pos, size)
+        const clipScale = scale * (clip.scale || 1)
         const style = {
           position: 'absolute',
           left: rect.left,
@@ -170,9 +226,12 @@ function SceneFrame({ scene, frameInScene, fps, audioEnabled = true }) {
           alignItems: clip.style?.textAlign === 'left' ? 'flex-start' : (clip.style?.textAlign === 'right' ? 'flex-end' : 'center'),
           justifyContent: 'center',
           pointerEvents: 'none',
+          overflow: isText ? 'hidden' : undefined,
+          boxSizing: 'border-box',
         }
 
-        if (clip.type === 'text' || isTextLayer(clip)) {
+        if (isText) {
+          const { fontSize: resolvedFontSize } = textLayout
           const textStyle = buildTextDisplayStyle(clip.style || {}, clip.opacity ?? 1)
           const shapeWrap = getTextShapeWrapperStyle(clip.style?.textShape)
           const shapeInner = getTextShapeInnerStyle(clip.style?.textShape)
@@ -181,16 +240,19 @@ function SceneFrame({ scene, frameInScene, fps, audioEnabled = true }) {
           const textInner = (
             <div style={{
               ...textStyle,
-              fontSize: `${parseFontSize(clip.style?.fontSize, 48)}px`,
+              fontSize: `${resolvedFontSize}px`,
               width: '100%',
               maxWidth: '100%',
+              height: '100%',
+              overflow: 'hidden',
               display: 'flex',
-              alignItems: 'center',
+              alignItems: 'flex-start',
               justifyContent: clip.style?.textAlign === 'left' ? 'flex-start' : (clip.style?.textAlign === 'right' ? 'flex-end' : 'center'),
               outline: 'none',
               margin: 0,
               position: 'relative',
               zIndex: 1,
+              boxSizing: 'border-box',
               ...shapeInner,
             }}>
               {getAnimatedTextContent(clip, animState?.typewriterChars ?? null, getClipTextContent)}
@@ -198,7 +260,7 @@ function SceneFrame({ scene, frameInScene, fps, audioEnabled = true }) {
           )
           return (
             <div key={clip.id} style={style}>
-              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', ...shapeWrap }}>
+              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', ...shapeWrap }}>
                 {isBlockAnim ? (
                   <div
                     className="text-live-block-wrap"
@@ -219,17 +281,22 @@ function SceneFrame({ scene, frameInScene, fps, audioEnabled = true }) {
         if (clip.type === 'image' || clip.type === 'avatar' || clip.type === 'video') {
           const src = resolveClipMediaSrc(clip, scene)
           const isVideo = isVideoMedia(clip, src)
+          const w = typeof clip.size?.width === 'number' ? clip.size.width : 0
+          const h = typeof clip.size?.height === 'number' ? clip.size.height : 0
+          const avatarRound =
+            isAvatarClip(clip) && !isVideo && w > 0 && h > 0 && Math.abs(w - h) < 40
 
           return (
             <div key={clip.id} style={{
               ...style,
               border: 'none',
-              borderRadius: isAvatarClip(clip) ? '50%' : '16px',
+              borderRadius: avatarRound ? '50%' : isAvatarClip(clip) ? '12px' : '16px',
               background: src ? 'transparent' : 'rgba(0,0,0,0.03)',
               overflow: 'hidden',
             }}>
               {src ? (
                 isVideo ? (
+                  <ClipSequenceVideo
                   <ClipSequenceVideo
                     src={src}
                     clip={clip}

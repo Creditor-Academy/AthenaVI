@@ -136,6 +136,12 @@ export function resolveClipMediaSrc(clip, scene) {
       clip?.src
     )
     if (http) return http
+    const http = pickHttpPlaybackUrl(
+      scene?.playbackUrl,
+      scene?.generatedVideoUrl,
+      clip?.src
+    )
+    if (http) return http
     return scene?.playbackUrl || scene?.generatedVideoUrl || clip?.src || null
   }
   return clip?.src || null
@@ -150,8 +156,18 @@ function looksLikeVideoUrl(src) {
   return false
 }
 
+function looksLikeVideoUrl(src) {
+  if (!src || typeof src !== 'string') return false
+  if (src.startsWith('blob:')) return true
+  if (/\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(src)) return true
+  if (/\.(jpg|jpeg|png|gif|webp|svg)(\?|#|$)/i.test(src)) return false
+  if (/^https?:\/\//i.test(src)) return true
+  return false
+}
+
 export function isVideoMedia(clip, src) {
   if (clip?.type === 'video') return true
+  if (isAvatarClip(clip) && src) return looksLikeVideoUrl(src)
   if (isAvatarClip(clip) && src) return looksLikeVideoUrl(src)
   return false
 }
@@ -201,6 +217,8 @@ export function applyPlaybackUrlToScene(scene, url) {
 export async function resolveScenePlaybackUrls(scenes, workspaceId, projectId, heygenService) {
   if (!scenes?.length) return scenes
   if (!workspaceId || !projectId) return scenes
+  if (!scenes?.length) return scenes
+  if (!workspaceId || !projectId) return scenes
 
   return Promise.all(
     scenes.map(async (scene) => {
@@ -213,7 +231,15 @@ export async function resolveScenePlaybackUrls(scenes, workspaceId, projectId, h
         avatarClip?.src
       )
 
+      const avatarClip = (scene.clips || []).find(isAvatarClip)
+      const existing = pickHttpPlaybackUrl(
+        scene.playbackUrl,
+        scene.generatedVideoUrl,
+        avatarClip?.src
+      )
+
       try {
+        const data = await heygenService.downloadVideo(
         const data = await heygenService.downloadVideo(
           workspaceId,
           projectId,

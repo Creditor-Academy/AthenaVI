@@ -70,7 +70,6 @@ export function buildTextDisplayStyle(style = {}, layerOpacity = 1) {
   const opacity = (style.opacity ?? layerOpacity ?? 1);
 
   const base = {
-    fontSize: style.fontSize,
     fontWeight: style.fontWeight || '700',
     color,
     textAlign: style.textAlign || 'left',

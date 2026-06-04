@@ -150,6 +150,23 @@ function Help() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [expandedFaq, setExpandedFaq] = useState(null)
 
+  useEffect(() => {
+    const previousMode = document.documentElement.getAttribute('data-mode')
+    const previousClassName = document.documentElement.className
+
+    document.documentElement.setAttribute('data-mode', 'light')
+    document.documentElement.className = previousClassName.replace(/\bmode-[^\s]+\b/, 'mode-light')
+
+    return () => {
+      if (previousMode) {
+        document.documentElement.setAttribute('data-mode', previousMode)
+      } else {
+        document.documentElement.removeAttribute('data-mode')
+      }
+      document.documentElement.className = previousClassName
+    }
+  }, [])
+
   // Ticketing states
   const [tickets, setTickets] = useState(() => {
     const saved = localStorage.getItem('athena_support_tickets')
