@@ -89,6 +89,8 @@
   --delete-red: #ef4444;
   --success-green: #10b981;
   --warning-amber: #f59e0b;
+  --shape-preview-fill: #64748b;
+  --topbar-panel-hover: rgba(var(--primary-rgb), 0.08);
 }
 
 /* Mode: Dark */
@@ -107,6 +109,8 @@
   --delete-red: #f87171;
   --success-green: #34d399;
   --warning-amber: #fbbf24;
+  --shape-preview-fill: #cbd5e1;
+  --topbar-panel-hover: rgba(var(--primary-rgb), 0.15);
 }
 
 * {

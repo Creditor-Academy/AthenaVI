@@ -33,6 +33,66 @@ export function parseFontSize(value, fallback = 32) {
   return Number.isNaN(n) ? fallback : Math.round(n);
 }
 
+/** Parse CSS lengths like `800px`, `50%` (returns number for px only). */
+export function parseCssPx(value, fallback = null) {
+  if (value == null || value === '') return fallback;
+  if (typeof value === 'number' && !Number.isNaN(value)) return value;
+  const str = String(value).trim();
+  if (str.endsWith('%')) return fallback;
+  const n = parseFloat(str);
+  return Number.isNaN(n) ? fallback : Math.round(n);
+}
+
+const COMPOSITION_W = 1920;
+const COMPOSITION_H = 1080;
+
+/**
+ * Text box in Remotion must match editor intent: use style.width / sensible defaults
+ * when placement size is missing or too small (common after backend load).
+ */
+export function resolveTextClipRect(clip) {
+  const pos = {
+    x: Number(clip?.position?.x ?? 0),
+    y: Number(clip?.position?.y ?? 0),
+  };
+  const style = clip?.style || {};
+  const fontSize = parseFontSize(style.fontSize, 32);
+
+  let width = parseCssPx(clip?.size?.width);
+  let height = parseCssPx(clip?.size?.height);
+  const styleWidth = parseCssPx(style.width);
+  const styleMaxWidth = parseCssPx(style.maxWidth);
+
+  if (styleWidth && (!width || width < styleWidth * 0.85)) {
+    width = styleWidth;
+  } else if (styleMaxWidth && width && width > styleMaxWidth) {
+    width = styleMaxWidth;
+  }
+
+  const text = getClipTextContent(clip);
+  const lineCount = Math.max(1, text.split('\n').length);
+  const lineHeight = typeof style.lineHeight === 'number' ? style.lineHeight : parseFloat(style.lineHeight) || 1.2;
+  const minHeight = Math.ceil(fontSize * lineHeight * lineCount + 32);
+
+  if (!width || width < 120) {
+    width = styleWidth || styleMaxWidth || Math.min(720, Math.max(360, text.length * fontSize * 0.22));
+  }
+  if (!height || height < 60) {
+    height = Math.min(600, Math.max(minHeight, fontSize * 2.5));
+  }
+
+  width = Math.min(width, COMPOSITION_W - Math.max(0, pos.x));
+  height = Math.min(height, COMPOSITION_H - Math.max(0, pos.y));
+  width = Math.max(120, width);
+  height = Math.max(48, height);
+
+  return {
+    position: pos,
+    size: { width, height },
+    fontSize,
+  };
+}
+
 export function toFontSizeCss(value, fallback = 32) {
   const n = parseFontSize(value, fallback);
   return typeof value === 'number' || /^\d+(\.\d+)?$/.test(String(value).trim())

@@ -25,6 +25,7 @@ import AIAvatarsVideos from './pages/AIAvatarsVideos/AIAvatarsVideos.jsx'
 import AIVideos from './pages/AIVideos/AIVideos.jsx'
 import Help from './pages/UserHelp/Help.jsx'
 import NotFound from './pages/NotFound/NotFound.jsx'
+import RenderDownload from './pages/Download/RenderDownload.jsx'
 
 // Protected Route Component
 const ProtectedRoute = ({ children, setView }) => {
@@ -241,13 +242,19 @@ function App() {
       '/settings': 'settings',
       '/ai-videos': 'ai-videos',
       '/ai-avatars-videos': 'ai-avatars-videos',
-      '/support': 'help'
+      '/support': 'help',
+      '/download': 'download',
     }
     
     // Get current path (handle both hash and regular routing)
     let currentPath = window.location.pathname
     if (currentPath.endsWith('/') && currentPath.length > 1) {
       currentPath = currentPath.slice(0, -1)
+    }
+    
+    // Check if current URL is a Google Auth callback redirect (contains access_token in the hash)
+    if (window.location.hash && window.location.hash.includes('access_token=')) {
+      return 'dashboard'
     }
     
     // If hash routing is being used, extract from hash
@@ -326,7 +333,8 @@ function App() {
       'settings': '/settings',
       'ai-videos': '/ai-videos',
       'ai-avatars-videos': '/ai-avatars-videos',
-      'help': '/support'
+      'help': '/support',
+      'download': '/download',
     }
     
     const newUrl = urlMap[view] || '/'
@@ -394,12 +402,27 @@ function App() {
         '/settings': 'settings',
         '/ai-videos': 'ai-videos',
         '/ai-avatars-videos': 'ai-avatars-videos',
-        '/support': 'help'
+        '/support': 'help',
+        '/download': 'download',
       }
       
       let currentPath = window.location.pathname
       if (currentPath.endsWith('/') && currentPath.length > 1) {
         currentPath = currentPath.slice(0, -1)
+      }
+      
+      // Check if current URL is a Google Auth callback redirect (contains access_token in the hash)
+      if (window.location.hash && window.location.hash.includes('access_token=')) {
+        setView('dashboard')
+        return
+      }
+      
+      // If hash routing is being used, extract from hash
+      if (window.location.hash && window.location.hash !== '#') {
+        currentPath = window.location.hash.replace('#', '') || '/'
+        if (currentPath.endsWith('/') && currentPath.length > 1) {
+          currentPath = currentPath.slice(0, -1)
+        }
       }
       const urlView = pathToViewMap[currentPath]
       
@@ -545,6 +568,18 @@ function App() {
       {view === 'create' && (
         <ProtectedRoute view={view} setView={setView}>
           <Create onBack={() => { setCreateVideoConfig(null); setView('dashboard'); }} initialConfig={createVideoConfig} />
+          {showAuthModal && (
+            <Auth 
+              onAuthComplete={handleAuthComplete}
+              onClose={() => setShowAuthModal(false)}
+            />
+          )}
+        </ProtectedRoute>
+      )}
+
+      {view === 'download' && (
+        <ProtectedRoute view={view} setView={setView}>
+          <RenderDownload onBack={() => setView('create')} />
           {showAuthModal && (
             <Auth 
               onAuthComplete={handleAuthComplete}

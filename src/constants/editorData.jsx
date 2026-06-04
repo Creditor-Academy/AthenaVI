@@ -56,12 +56,7 @@ export const predefinedAudios = [
     { id: 'a4', name: 'Ambient Lo-fi', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3', duration: 350 },
 ]
 
-export const predefinedShapes = [
-    { id: 's1', type: 'rect', name: 'Square', style: { width: '100px', height: '100px', background: '#3b82f6' } },
-    { id: 's2', type: 'circle', name: 'Circle', style: { width: '100px', height: '100px', background: '#ef4444', borderRadius: '50%' } },
-    { id: 's3', type: 'rect', name: 'Rectangle', style: { width: '200px', height: '100px', background: '#10b981' } },
-    { id: 's4', type: 'rect', name: 'Pill', style: { width: '150px', height: '60px', background: '#8b5cf6', borderRadius: '30px' } },
-]
+export { predefinedShapes, SHAPE_LIBRARY } from './shapeLibrary';
 
 export const pageTemplates = [
     {

@@ -123,9 +123,9 @@ const TimelineEditor = ({
         return tracks.filter(Boolean);
     }, [scopedScenes, scenes, timelineScope]);
 
-    const stateRef = useRef({ zoom, activeSceneStart, activeScene, totalDuration: effectiveTotalDuration, scenes, globalTracks })
+    const stateRef = useRef({ zoom, activeSceneStart, activeScene, totalDuration: effectiveTotalDuration, scenes, globalTracks, timelineScope })
     useEffect(() => {
-        stateRef.current = { zoom, activeSceneStart, activeScene, totalDuration: effectiveTotalDuration, scenes, globalTracks }
+        stateRef.current = { zoom, activeSceneStart, activeScene, totalDuration: effectiveTotalDuration, scenes, globalTracks, timelineScope }
     })
 
     // Auto-scroll during playback
@@ -165,7 +165,20 @@ const TimelineEditor = ({
     }
 
     const handleMouseDown = (e) => {
-        if (e.target.closest('.playhead-head') || e.target.closest('.timeline-ruler')) {
+        const isClipInteraction =
+            e.target.closest('.layer-clip') ||
+            e.target.closest('.canva-clip') ||
+            e.target.closest('.clip-trim-handle') ||
+            e.target.closest('.music-trim-handle') ||
+            e.target.closest('.add-scene-timeline-btn')
+
+        if (!isClipInteraction && (
+            e.target.closest('.playhead-head') ||
+            e.target.closest('.timeline-ruler') ||
+            e.target.closest('.clip-track') ||
+            e.target.closest('.music-track') ||
+            e.target.closest('.layer-track')
+        )) {
             isDraggingPlayhead.current = true
             handleTimelineAction(e.clientX)
             window.addEventListener('mousemove', handleMouseMove)
@@ -179,13 +192,13 @@ const TimelineEditor = ({
 
     const handleMouseMove = (e) => {
         if (!scrollContainerRef.current) return
-        const { zoom, totalDuration, scenes } = stateRef.current
+        const { zoom, totalDuration, scenes, activeSceneStart, timelineScope: scope } = stateRef.current
         const rect = scrollContainerRef.current.getBoundingClientRect()
         const x = e.clientX - rect.left + scrollContainerRef.current.scrollLeft
         
         if (isDraggingPlayhead.current) {
             const time = Math.max(0, Math.min(x / zoom, totalDuration))
-            if (timelineScope === 'single') {
+            if (scope === 'single') {
                 onSeek(activeSceneStart + time)
             } else {
                 onSeek(time)
@@ -327,6 +340,8 @@ const TimelineEditor = ({
         onUpdateScene(activeScene.id, { clips: newClips })
     }
 
+    const timelineCanvasHeight = 24 + globalTracks.length * 49 + 50 + 50
+
     return (
         <div className="timeline-editor-root">
             <style>{`
@@ -409,16 +424,21 @@ const TimelineEditor = ({
             scrollbar-color: var(--border-color) transparent;
           }
 
+          .timeline-canvas {
+            position: relative;
+            min-height: 100%;
+          }
+
           .timeline-ruler {
             height: 24px;
             background: var(--bg-card);
-            position: sticky;
-            top: 0;
-            z-index: 50;
+            position: relative;
+            z-index: 20;
             border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: flex-end;
-            pointer-events: none;
+            pointer-events: auto;
+            cursor: pointer;
           }
 
           .ruler-tick {
@@ -532,31 +552,45 @@ const TimelineEditor = ({
             position: absolute;
             top: 0;
             bottom: 0;
-            width: 1px;
-            background: #ffffff;
-            z-index: 100;
+            width: 3px;
+            margin-left: -1px;
+            background: linear-gradient(180deg, #a855f7 0%, #7c3aed 50%, #6d28d9 100%);
+            z-index: 500;
             pointer-events: none;
-            box-shadow: 0 0 4px rgba(255,255,255,0.5);
+            box-shadow:
+              0 0 0 1px rgba(255, 255, 255, 0.9),
+              0 0 12px rgba(124, 58, 237, 0.65);
+          }
+
+          .playhead::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 1px;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.55);
           }
 
           .playhead-head {
             position: absolute;
-            top: 0px;
-            left: -5.5px;
-            width: 0;
-            height: 0;
-            border-left: 6px solid transparent;
-            border-right: 6px solid transparent;
-            border-top: 10px solid #ffffff;
-            background: transparent;
+            top: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #7c3aed;
+            border: 2px solid #ffffff;
             pointer-events: auto;
             cursor: grab;
-            box-shadow: none;
+            box-shadow: 0 2px 8px rgba(124, 58, 237, 0.55);
             transition: transform 0.1s;
           }
           
           .playhead-head:hover {
-            transform: scale(1.1);
+            transform: translateX(-50%) scale(1.15);
           }
 
           .playhead-head::after {
@@ -875,7 +909,15 @@ const TimelineEditor = ({
                     onMouseDown={handleMouseDown}
                     onScroll={handleViewportScroll}
                 >
-                    <div className="timeline-ruler" style={{ width: `${effectiveTotalDuration * zoom + 500}px` }}>
+                    <div
+                        className="timeline-canvas"
+                        style={{
+                            width: `${Math.max(effectiveTotalDuration, 60) * zoom + 500}px`,
+                            minHeight: timelineCanvasHeight,
+                            height: timelineCanvasHeight,
+                        }}
+                    >
+                    <div className="timeline-ruler">
                         {Array.from({ length: Math.ceil(effectiveTotalDuration) * 2 + 10 }).map((_, i) => {
                             const time = i * 0.5;
                             const isMajor = i % 2 === 0;
@@ -891,7 +933,7 @@ const TimelineEditor = ({
                         })}
                     </div>
 
-                    <div className="timeline-tracks" style={{ width: `${Math.max(effectiveTotalDuration, 60) * zoom + 500}px` }}>
+                    <div className="timeline-tracks">
                         {scopedScenes.length === 0 ? (
                             <div className="timeline-empty-state">
                                 <div className="empty-state-card" onClick={onAddScene}>
@@ -1039,18 +1081,21 @@ const TimelineEditor = ({
                                     )}
                                 </div>
 
-                                <div
-                                    className="playhead"
-                                    style={{
-                                        left: `${currentTime * zoom}px`,
-                                        transition: isPlaying ? 'left 0.1s linear' : 'left 0.1s ease-out'
-                                    }}
-                                >
-
-                                    <div className="playhead-head" onMouseDown={handleMouseDown} />
-                                </div>
                             </>
                         )}
+                    </div>
+
+                    {scopedScenes.length > 0 && (
+                        <div
+                            className="playhead"
+                            style={{
+                                left: `${effectiveCurrentTime * zoom}px`,
+                                height: timelineCanvasHeight,
+                            }}
+                        >
+                            <div className="playhead-head" onMouseDown={handleMouseDown} />
+                        </div>
+                    )}
                     </div>
                 </div>
             </div>

@@ -1,6 +1,14 @@
 import heygenService from '../services/heygenService';
 import { buildHeygenAvatarContent, getSceneAvatarKind, getSceneAvatarLookId } from './heygenAvatars';
-import { getClipTextContent, isTextLayer, parseFontSize } from './textClip';
+import { getClipTextContent, isTextLayer, parseCssPx, parseFontSize } from './textClip';
+import {
+  mapAnimationsForBackend,
+  mapAnimationsFromBackend,
+} from './animationPayloadMapper';
+import {
+  mapSceneTransitionForBackend,
+  mapSceneTransitionFromBackend,
+} from './sceneTransitionUtils';
 
 const FPS = 30;
 
@@ -50,6 +58,10 @@ export function normalizeTextStyle(style = {}) {
   }
   if (style.borderRadius) normalized.borderRadius = style.borderRadius;
   if (style.boxShadow) normalized.boxShadow = style.boxShadow;
+  if (style.textEffect) normalized.textEffect = style.textEffect;
+  if (style.textShape) normalized.textShape = style.textShape;
+  if (style.effectBackground) normalized.effectBackground = style.effectBackground;
+  if (style.fillColor) normalized.fillColor = style.fillColor;
 
   return normalized;
 }
@@ -181,7 +193,7 @@ function textClipToElement(clip, cIdx) {
     placement: readClipPlacement(clip),
     content: buildTextContent(clip),
     style: normalizeTextStyle(clip.style),
-    animations: clip.animations ?? [],
+    animations: mapAnimationsForBackend(clip.animations),
   };
 
   if (clip.role) element.role = clip.role;
@@ -207,7 +219,7 @@ function clipToElement(clip, scene, cIdx) {
     timing: { startFrame, durationInFrames },
     placement: readClipPlacement(clip),
     content,
-    animations: clip.animations ?? [],
+    animations: mapAnimationsForBackend(clip.animations),
   };
 
   if (clip.role) element.role = clip.role;
@@ -232,6 +244,7 @@ function buildPresenter(scene) {
     avatarId: avatarId || base.avatarId,
     avatarName: scene.avatarName || base.avatarName,
     avatarType: getSceneAvatarKind(scene),
+    avatarEngine: scene.avatarEngine || base.avatarEngine || 'avatar_iv',
     voiceId: scene.voiceId || base.voiceId,
     voiceName: scene.voiceName || base.voiceName,
     script: scene.script ?? base.script ?? '',
@@ -291,25 +304,30 @@ export function toBackendProjectData(projectState) {
     },
     scenes: (projectState.scenes || []).map((scene, idx) => {
       const sceneId = scene.sceneId || scene.id || `scene_${idx}`;
+      const isRenderableElement = (el) => {
+        if (!el) return false;
+        if (el.type !== 'image' && el.type !== 'video' && el.type !== 'audio') return true;
+        const content = el.content;
+        const src =
+          el.src ||
+          (typeof content === 'object' && content !== null ? (content.src || content.url) : null) ||
+          (typeof content === 'string' ? content : null);
+        const assetId = typeof content === 'object' && content !== null ? content.assetId : null;
+        return !!(assetId || (src && !isEphemeralUrl(src)));
+      };
       const scenePayload = {
         sceneId,
         name: scene.title || scene.name || `Scene ${idx + 1}`,
         durationInFrames: Math.max(1, Math.round((scene.duration || 8) * FPS)),
         background: normalizeBackground(scene.background),
-        elements: (scene.clips || []).map((clip, cIdx) =>
-          clipToElement(clip, { ...scene, sceneId }, cIdx)
-        ),
+        elements: (scene.clips || [])
+          .map((clip, cIdx) => clipToElement(clip, { ...scene, sceneId }, cIdx))
+          .filter(isRenderableElement),
       };
 
-      if (scene.transition?.type && scene.transition.type !== 'none') {
-        scenePayload.transition = {
-          type: scene.transition.type,
-          durationInFrames: Math.max(
-            0,
-            Math.round((scene.transition.duration ?? 0.5) * FPS)
-          ),
-          ...(scene.transition.direction ? { direction: scene.transition.direction } : {}),
-        };
+      const backendTransition = mapSceneTransitionForBackend(scene.transition, idx);
+      if (backendTransition) {
+        scenePayload.transition = backendTransition;
       }
 
       const presenter = buildPresenter(scene);
@@ -367,7 +385,9 @@ function elementToClip(element) {
   if (element.role) clip.role = element.role;
   if (element.style) clip.style = { ...element.style };
   if (element.filters) clip.filters = element.filters;
-  if (element.animations) clip.animations = element.animations;
+  if (element.animations) {
+    clip.animations = mapAnimationsFromBackend(element.animations);
+  }
   if (element.visible !== undefined) clip.visible = element.visible;
 
   if (isTextLayer(clip)) {
@@ -377,6 +397,10 @@ function elementToClip(element) {
         ? { text: getClipTextContent(clip) }
         : { text: String(clip.content ?? '') };
     clip.style = normalizeTextStyle(clip.style);
+    const styleWidth = parseCssPx(clip.style?.width);
+    if (styleWidth && clip.size.width < styleWidth) {
+      clip.size = { ...clip.size, width: styleWidth };
+    }
   }
 
   return clip;
@@ -399,6 +423,7 @@ export function sceneFromBackend(scene) {
     sceneId: scene.sceneId || scene.id,
     id: scene.sceneId || scene.id,
     title: scene.name || scene.title || 'Scene',
+    transition: mapSceneTransitionFromBackend(scene.transition),
     duration: scene.durationInFrames ? scene.durationInFrames / FPS : scene.duration || 8,
     avatar: presenter.avatarPreviewSrc || scene.avatar || avatarContent.previewSrc,
     avatarLookId: lookId,

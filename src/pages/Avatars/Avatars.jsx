@@ -10,6 +10,9 @@ import './Avatars.css'
 function Avatars({ onCreate, onCreateAvatar }) {
   const [avatars, setAvatars] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(false)
+  const [nextToken, setNextToken] = useState(null)
   const [selectedAvatar, setSelectedAvatar] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [ownership, setOwnership] = useState('public')
@@ -19,7 +22,7 @@ function Avatars({ onCreate, onCreateAvatar }) {
     const fetchAvatars = async () => {
       try {
         setLoading(true)
-        const responseData = await heygenService.getAvatarGroups({ ownership })
+        const responseData = await heygenService.getAvatarGroups({ ownership, limit: 20 })
 
         // Comprehensive mapping to handle different API versions and response shapes
         let avatarList = [];
@@ -61,15 +64,69 @@ function Avatars({ onCreate, onCreateAvatar }) {
         } else {
           setAvatars(mappedAvatars);
         }
+
+        setHasMore(!!(data?.has_more ?? responseData?.has_more))
+        setNextToken(data?.token ?? responseData?.token ?? data?.next_token ?? responseData?.next_token ?? null)
       } catch (error) {
         console.error('Failed to fetch avatars:', error)
         setAvatars([])
+        setHasMore(false)
+        setNextToken(null)
       } finally {
         setLoading(false)
       }
     }
     fetchAvatars()
   }, [ownership])
+
+  const loadMoreAvatars = async () => {
+    if (!hasMore || !nextToken || loadingMore) return
+    try {
+      setLoadingMore(true)
+      const responseData = await heygenService.getAvatarGroups({
+        ownership,
+        limit: 20,
+        token: nextToken,
+      })
+      const data = responseData?.data || responseData
+      const avatarList =
+        Array.isArray(data) ? data :
+        data?.avatar_groups ? data.avatar_groups :
+        data?.avatars ? data.avatars :
+        responseData?.avatar_groups ? responseData.avatar_groups :
+        []
+
+      const mapped = avatarList.map((av, idx) => ({
+        id: av.avatar_group_id || av.id || `group-more-${idx}`,
+        name: av.name || av.group_name || 'AI Presenter',
+        role: av.role || 'Virtual Presenter',
+        description: av.description || 'High-fidelity Athena VI avatar.',
+        image: av.preview_image_url || av.thumbnail_url || av.normal_image_url || av.image_url || 'https://via.placeholder.com/300x400?text=Avatar',
+        preview: av.preview_video_url || null,
+        category: av.category || (ownership === 'public' ? 'Professional' : 'All'),
+        gender: av.gender || 'Unknown',
+        style: av.style || 'Modern',
+        rating: 4.9,
+        rawLooks: av.avatar_looks || [],
+      }))
+
+      setAvatars((prev) => {
+        const seen = new Set(prev.map((a) => a.id))
+        const next = [...prev]
+        mapped.forEach((a) => { if (a?.id && !seen.has(a.id)) next.push(a) })
+        return next
+      })
+
+      setHasMore(!!(data?.has_more ?? responseData?.has_more))
+      setNextToken(data?.token ?? responseData?.token ?? data?.next_token ?? responseData?.next_token ?? null)
+    } catch (error) {
+      console.error('Failed to load more avatars:', error)
+      setHasMore(false)
+      setNextToken(null)
+    } finally {
+      setLoadingMore(false)
+    }
+  }
 
   const filteredAvatars = (avatars || []).filter(avatar => {
     if (!avatar) return false;
@@ -189,6 +246,26 @@ function Avatars({ onCreate, onCreateAvatar }) {
                 </div>
               ))}
             </div>
+
+            {hasMore && !loading && !selectedAvatar && (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '18px 0 6px' }}>
+                <button
+                  type="button"
+                  onClick={loadMoreAvatars}
+                  disabled={loadingMore}
+                  style={{
+                    padding: '10px 16px',
+                    borderRadius: 12,
+                    border: '1px solid rgba(0,0,0,0.12)',
+                    background: '#fff',
+                    cursor: loadingMore ? 'not-allowed' : 'pointer',
+                    fontWeight: 700,
+                  }}
+                >
+                  {loadingMore ? 'Loading…' : 'Load more'}
+                </button>
+              </div>
+            )}
 
             {filteredAvatars.length === 0 && !loading && ownership === 'workspace' && (
               <div className="empty-state-container">
