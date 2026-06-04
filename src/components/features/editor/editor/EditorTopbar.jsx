@@ -88,6 +88,7 @@ const EditorTopbar = ({
     addAudioClip,
     onUploadError,
     setSelectedLayerId,
+    onPresenterChanged,
 }) => {
     const [saved, setSaved] = useState(false)
     const [showShortcuts, setShowShortcuts] = useState(false)
@@ -187,6 +188,7 @@ const EditorTopbar = ({
                         updateScene={updateScene}
                         setShowTemplateModal={setShowTemplateModal}
                         addLayer={addLayerWithClose}
+                        onPresenterChanged={onPresenterChanged}
                     />
                 )
             case 'image':

@@ -18,6 +18,7 @@ import projectTemplate from '../../../../constants/projectTemplate.json';
 import { buildSceneDurationPatch, estimateHeygenSceneDuration } from '../../../../utils/sceneDuration';
 import { normalizeClipsToScene } from '../../../../utils/editorLayerUtils';
 import { SCENE_TRANSITION_OPTIONS, normalizeSceneTransition } from '../../../../utils/sceneTransitionUtils';
+import { sceneNeedsHeygenRegeneration } from '../../../../utils/heygenVideo';
 import './SceneSettingsPanel.css';
 
 const DURATION_PRESETS = [5, 8, 10, 15, 30];
@@ -78,6 +79,7 @@ const SceneSettingsPanel = ({
 }) => {
   const isGenerating = activeScene.heygenStatus === 'processing';
   const isGenerated = activeScene.heygenStatus === 'completed';
+  const needsRegeneration = sceneNeedsHeygenRegeneration(activeScene);
   const isFailed = activeScene.heygenStatus === 'failed';
   const canGenerate = activeScene.avatarType && activeScene.voiceId && activeScene.script;
   const hasVoiceover = !!(
@@ -129,7 +131,7 @@ const SceneSettingsPanel = ({
           {hasVoiceover ? (
             <button type="button" className="scene-settings__ghost-btn" onClick={onOpenQuickCreate}>
               <MdEdit size={13} />
-              Edit
+              {isGenerated || needsRegeneration ? 'Change' : 'Edit'}
             </button>
           ) : null}
         </div>
@@ -199,10 +201,10 @@ const SceneSettingsPanel = ({
                 <span className="scene-settings__spin" />
                 Generating…
               </>
-            ) : isGenerated ? (
+            ) : isGenerated || needsRegeneration ? (
               <>
                 <MdRefresh size={16} />
-                Regenerate video
+                {needsRegeneration ? 'Generate with new presenter' : 'Regenerate video'}
               </>
             ) : (
               <>
@@ -214,11 +216,16 @@ const SceneSettingsPanel = ({
           {isGenerating && (
             <p className="scene-settings__status">HeyGen is processing. This may take a minute.</p>
           )}
-          {isGenerated && (
+          {needsRegeneration && (
+            <p className="scene-settings__status">
+              Presenter updated — generate again to replace the previous avatar video.
+            </p>
+          )}
+          {isGenerated && !needsRegeneration && (
             <>
               <p className="scene-settings__status scene-settings__status--ok">
                 <MdCheckCircle size={14} />
-                Video ready
+                Video ready — use Change above or the Avatar tool, then regenerate for a new look.
               </p>
               <button
                 type="button"

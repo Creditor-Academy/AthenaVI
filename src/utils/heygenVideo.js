@@ -117,9 +117,24 @@ export function isVideoMedia(clip, src) {
 
 /** Scene has a generated HeyGen video we can play (audio comes from the video, not TTS). */
 export function sceneHasHeygenPlayback(scene) {
+  if (scene?.heygenStatus === 'needs_regeneration') return false
   if (!scene?.heygenVideoId) return false
   const url = scene.playbackUrl || scene.generatedVideoUrl
   return !!(url && typeof url === 'string')
+}
+
+/** Clear generated HeyGen output after presenter / script changes (until user regenerates). */
+export function invalidateHeygenSceneVideo() {
+  return {
+    heygenStatus: 'needs_regeneration',
+    heygenVideoId: undefined,
+    generatedVideoUrl: undefined,
+    playbackUrl: undefined,
+  }
+}
+
+export function sceneNeedsHeygenRegeneration(scene) {
+  return scene?.heygenStatus === 'needs_regeneration'
 }
 
 function pickHttpPlaybackUrl(...candidates) {

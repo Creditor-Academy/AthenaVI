@@ -1872,6 +1872,7 @@ function Create({ onBack, initialConfig = null }) {
         addAudioClip={addAudioClip}
         onUploadError={(msg) => showToast(msg, 'error')}
         setSelectedLayerId={handleSelectLayerId}
+        onPresenterChanged={({ message }) => showToast(message, 'info')}
       />
 
       <div className="editor-container">

@@ -10,8 +10,18 @@ import {
   mapAvatarGroup,
   mapAvatarLook,
 } from '../../../../utils/heygenAvatars';
+import { invalidateHeygenSceneVideo } from '../../../../utils/heygenVideo';
 
-const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateScene, updateScene, setShowTemplateModal, addLayer }) => {
+const EditorSidebarAvatar = ({
+  activeScene,
+  activeSceneId,
+  scenes,
+  autoCreateScene,
+  updateScene,
+  setShowTemplateModal,
+  addLayer,
+  onPresenterChanged,
+}) => {
   const [activeTab, setActiveTab] = useState('studio');
   const [searchQuery, setSearchQuery] = useState('');
   const [avatarEngine, setAvatarEngine] = useState(() =>
@@ -187,6 +197,11 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
           addLayer('avatar', look.image);
         }
 
+        const targetScene =
+          sceneId === activeSceneId ? activeScene : scenes.find((s) => s.id === sceneId)
+        const hadGeneratedVideo =
+          !!targetScene?.heygenVideoId || targetScene?.heygenStatus === 'completed'
+
         updateScene(sceneId, {
           avatar: look.image,
           avatarType: look.id,
@@ -200,7 +215,14 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
             avatarEngine,
           },
           clips: updatedClips,
-        });
+          ...(hadGeneratedVideo ? invalidateHeygenSceneVideo() : {}),
+        })
+
+        if (hadGeneratedVideo) {
+          onPresenterChanged?.({
+            message: 'Avatar updated — click Regenerate video in Scene settings to apply the new look.',
+          })
+        }
       };
 
       if (!activeSceneId || scenes.length === 0) {
@@ -219,13 +241,14 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
     [
       activeScene,
       activeSceneId,
-      scenes.length,
+      scenes,
       selectedGroup,
       avatarEngine,
       autoCreateScene,
       updateScene,
       addLayer,
       setShowTemplateModal,
+      onPresenterChanged,
     ]
   );
 
