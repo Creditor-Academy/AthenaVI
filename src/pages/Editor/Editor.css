@@ -996,6 +996,20 @@ kbd.shortcut-key {
     background: var(--bg-main);
 }
 
+.canvas-playback-preparing {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 10, 10, 0.55);
+    color: #f8fafc;
+    font-size: 13px;
+    font-weight: 600;
+    pointer-events: none;
+}
+
 .preview-wrapper {
     position: relative;
     aspect-ratio: 16 / 9;
@@ -1028,18 +1042,64 @@ kbd.shortcut-key {
     backdrop-filter: blur(12px);
     display: flex;
     flex-direction: column;
+    min-height: 0;
     color: var(--text-main);
     overflow: hidden;
     margin: 0 12px 12px 12px;
     border-radius: 12px;
     border: 1px solid rgba(var(--border-color-rgb, 0, 0, 0), 0.1);
-    max-height: 240px;
-    min-height: 180px;
     flex-shrink: 0;
     position: relative;
     z-index: 5;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-    transition: all 0.3s ease;
+}
+
+.timeline-area > .timeline-editor-root {
+    flex: 1;
+    min-height: 0;
+}
+
+.properties-panel-shell {
+    position: relative;
+}
+
+/* Drag handles for timeline height & properties panel width */
+.panel-resize-handle {
+    position: absolute;
+    z-index: 60;
+    background: transparent;
+    touch-action: none;
+}
+
+.panel-resize-handle--y.panel-resize-handle--top {
+    top: -5px;
+    left: 0;
+    right: 0;
+    height: 10px;
+    cursor: row-resize;
+}
+
+.panel-resize-handle--x.panel-resize-handle--start {
+    left: -5px;
+    top: 0;
+    bottom: 0;
+    width: 10px;
+    cursor: col-resize;
+}
+
+.panel-resize-handle:hover,
+.panel-resize-handle:active {
+    background: color-mix(in srgb, var(--primary, #7c3aed) 25%, transparent);
+}
+
+.panel-resize-handle--y.panel-resize-handle--top:hover,
+.panel-resize-handle--y.panel-resize-handle--top:active {
+    border-top: 2px solid var(--primary, #7c3aed);
+}
+
+.panel-resize-handle--x.panel-resize-handle--start:hover,
+.panel-resize-handle--x.panel-resize-handle--start:active {
+    border-left: 2px solid var(--primary, #7c3aed);
 }
 
 .timeline-area.timeline-shifted {

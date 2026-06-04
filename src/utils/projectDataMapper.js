@@ -223,11 +223,19 @@ function clipToElement(clip, scene, cIdx) {
   };
 
   if (clip.role) element.role = clip.role;
-  const style = sanitizeStyle(clip.style, clip.type);
+  const style = sanitizeStyle(
+    {
+      ...(clip.style || {}),
+      ...(clip.objectFit ? { objectFit: clip.objectFit } : {}),
+    },
+    clip.type
+  );
   if (style) element.style = style;
   const filters = clip.filters || clip.cssFilters;
   if (filters) element.filters = filters;
+  if (clip.effects && Object.keys(clip.effects).length) element.effects = clip.effects;
   if (clip.visible !== undefined) element.visible = clip.visible;
+  if (clip.isBackground) element.isBackground = true;
 
   return element;
 }
@@ -383,12 +391,20 @@ function elementToClip(element) {
   };
 
   if (element.role) clip.role = element.role;
-  if (element.style) clip.style = { ...element.style };
-  if (element.filters) clip.filters = element.filters;
+  if (element.style) {
+    clip.style = { ...element.style };
+    if (element.style.objectFit) clip.objectFit = element.style.objectFit;
+  }
+  if (element.filters) {
+    clip.filters = element.filters;
+    clip.cssFilters = element.filters;
+  }
+  if (element.effects) clip.effects = { ...element.effects };
   if (element.animations) {
     clip.animations = mapAnimationsFromBackend(element.animations);
   }
   if (element.visible !== undefined) clip.visible = element.visible;
+  if (element.isBackground) clip.isBackground = true;
 
   if (isTextLayer(clip)) {
     clip.type = 'text';

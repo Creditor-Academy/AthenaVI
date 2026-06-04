@@ -19,7 +19,7 @@ import avatar1 from '../../assets/Avatarr1.png'
 import projectTemplate from '../../constants/projectTemplate.json'
 import workspaceService from '../../services/workspaceService'
 import { buildHeygenAvatarContent, getSceneAvatarKind, getSceneAvatarLookId } from '../../utils/heygenAvatars'
-import { buildClipTextContent, isTextLayer } from '../../utils/textClip'
+import { buildClipTextContent } from '../../utils/textClip'
 import {
   fromBackendProjectData,
   rehydrateSceneVideos,
@@ -41,9 +41,27 @@ import { normalizeClipStack, normalizeClipsToScene } from '../../utils/editorLay
 import { saveVersionSnapshot, loadVersionSnapshot, listVersionSnapshots } from '../../utils/editorVersionHistory'
 import EditorToast from '../../components/features/editor/editor/EditorToast'
 import EditorViewControls from '../../components/features/editor/editor/EditorViewControls'
+import PanelResizeHandle from '../../components/features/editor/editor/PanelResizeHandle'
+import {
+  readStoredPanelSize,
+  writeStoredPanelSize,
+} from '../../hooks/useDragResize'
 
 function projectHasPreExistingScenes(scenes) {
   return Array.isArray(scenes) && scenes.length > 0
+}
+
+const TIMELINE_HEIGHT_STORAGE = 'athena-editor-timeline-height'
+const PROPERTIES_WIDTH_STORAGE = 'athena-editor-properties-width'
+const TIMELINE_HEIGHT_DEFAULT = 220
+const TIMELINE_HEIGHT_MIN = 120
+const TIMELINE_HEIGHT_MAX = 520
+const PROPERTIES_WIDTH_DEFAULT = 320
+const PROPERTIES_WIDTH_MIN = 240
+const PROPERTIES_WIDTH_MAX = 640
+
+function clampPanelSize(value, min, max) {
+  return Math.min(max, Math.max(min, value))
 }
 
 function buildInitialProject(initialConfig) {
@@ -132,6 +150,21 @@ function Create({ onBack, initialConfig = null }) {
   const [exportError, setExportError] = useState('')
   const [showTemplateModal, setShowTemplateModal] = useState(false)
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false)
+  const [timelineHeight, setTimelineHeight] = useState(() =>
+    clampPanelSize(
+      readStoredPanelSize(TIMELINE_HEIGHT_STORAGE, TIMELINE_HEIGHT_DEFAULT),
+      TIMELINE_HEIGHT_MIN,
+      TIMELINE_HEIGHT_MAX
+    )
+  )
+  const [propertiesPanelWidth, setPropertiesPanelWidth] = useState(() =>
+    clampPanelSize(
+      readStoredPanelSize(PROPERTIES_WIDTH_STORAGE, PROPERTIES_WIDTH_DEFAULT),
+      PROPERTIES_WIDTH_MIN,
+      PROPERTIES_WIDTH_MAX
+    )
+  )
+  const [isResizingLayout, setIsResizingLayout] = useState(false)
   const [selectedLayerId, setSelectedLayerId] = useState(null)
   const [musicDuration, setMusicDuration] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -545,7 +578,9 @@ function Create({ onBack, initialConfig = null }) {
         if (s.id !== activeSceneId) return s
         return {
           ...s,
-          clips: s.clips.map(c => c.id === layerId ? { ...c, size: { width, height } } : c)
+          clips: s.clips.map(c =>
+            c.id === layerId ? { ...c, size: { width, height }, _userPlaced: true } : c
+          )
         }
       })
     }))
@@ -630,7 +665,33 @@ function Create({ onBack, initialConfig = null }) {
 
   const activeScene = project.scenes.find(s => s.id === activeSceneId)
   const selectedLayer = activeScene?.clips?.find((c) => c.id === selectedLayerId)
-  const propertiesPanelWidth = selectedLayer && isTextLayer(selectedLayer) ? 380 : 320
+
+  const handleTimelineResize = useCallback((delta) => {
+    setTimelineHeight((h) =>
+      clampPanelSize(h + delta, TIMELINE_HEIGHT_MIN, TIMELINE_HEIGHT_MAX)
+    )
+  }, [])
+
+  const handlePropertiesResize = useCallback((delta) => {
+    setPropertiesPanelWidth((w) =>
+      clampPanelSize(w + delta, PROPERTIES_WIDTH_MIN, PROPERTIES_WIDTH_MAX)
+    )
+  }, [])
+
+  const timelineHeightRef = useRef(timelineHeight)
+  const propertiesPanelWidthRef = useRef(propertiesPanelWidth)
+  timelineHeightRef.current = timelineHeight
+  propertiesPanelWidthRef.current = propertiesPanelWidth
+
+  const persistTimelineHeight = useCallback(() => {
+    setIsResizingLayout(false)
+    writeStoredPanelSize(TIMELINE_HEIGHT_STORAGE, timelineHeightRef.current)
+  }, [])
+
+  const persistPropertiesWidth = useCallback(() => {
+    setIsResizingLayout(false)
+    writeStoredPanelSize(PROPERTIES_WIDTH_STORAGE, propertiesPanelWidthRef.current)
+  }, [])
 
   const totalDurationInFrames = useMemo(() => {
     return project.scenes.reduce((sum, s) => sum + (s.duration || 8), 0) * 30
@@ -792,12 +853,11 @@ function Create({ onBack, initialConfig = null }) {
       // Space: Play/Pause
       if (e.code === 'Space') {
         e.preventDefault()
-        if (playerRef.current) {
-          if (isPlaying) {
-            playerRef.current.pause()
-          } else {
-            playerRef.current.play()
-          }
+        if (isPlaying) {
+          playerRef.current?.pause()
+        } else {
+          window.speechSynthesis?.cancel()
+          playerRef.current?.play()
         }
       }
 
@@ -1043,15 +1103,10 @@ function Create({ onBack, initialConfig = null }) {
     setExportError('')
   }
 
-  // Handle preview with text-to-speech
   const handlePreview = () => {
+    window.speechSynthesis?.cancel()
+    setIsPlaying(false)
     setShowPreviewModal(true)
-    // Start speaking the script when preview opens
-    if (activeScene?.script) {
-      setTimeout(() => {
-        speakText(activeScene.script, activeSceneId)
-      }, 500)
-    }
   }
 
   const generateSceneVideo = async (sceneId, overrides = null) => {
@@ -1930,7 +1985,23 @@ function Create({ onBack, initialConfig = null }) {
           </div>
 
           {/* Timeline Area - Always Visible */}
-          <div className="timeline-area">
+          <div
+            className="timeline-area"
+            style={{
+              height: timelineHeight,
+              minHeight: timelineHeight,
+              maxHeight: timelineHeight,
+            }}
+          >
+            <PanelResizeHandle
+              axis="y"
+              edge="top"
+              onResize={(delta) => {
+                setIsResizingLayout(true)
+                handleTimelineResize(delta)
+              }}
+              onResizeEnd={persistTimelineHeight}
+            />
             <TimelineEditor
               scenes={scenes}
               bgMusic={bgMusic}
@@ -1958,12 +2029,11 @@ function Create({ onBack, initialConfig = null }) {
               musicDuration={musicDuration || (totalDurationInFrames / 30)}
               onMusicDurationChange={handleMusicDurationChange}
               onPlayPause={() => {
-                if (playerRef.current) {
-                  if (isPlaying) {
-                    playerRef.current.pause()
-                  } else {
-                    playerRef.current.play()
-                  }
+                if (isPlaying) {
+                  playerRef.current?.pause()
+                } else {
+                  window.speechSynthesis?.cancel()
+                  playerRef.current?.play()
                 }
               }}
               onStop={() => {
@@ -2012,17 +2082,42 @@ function Create({ onBack, initialConfig = null }) {
           </button>
 
           {/* Properties Panel (Script, Duration, Audio, etc.) */}
-          <div style={{
-            width: isRightSidebarOpen ? `${propertiesPanelWidth}px` : '0px',
-            flexShrink: 0,
-            height: '100%',
-            overflow: 'hidden',
-            transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            borderLeft: isRightSidebarOpen ? '1px solid var(--border-color)' : 'none',
-            background: 'var(--bg-panel)',
-            zIndex: 40
-          }}>
-            <div className="scene-config-panel-scroll premium-scrollbar" style={{ width: `${propertiesPanelWidth}px`, height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
+          <div
+            className="properties-panel-shell"
+            style={{
+              width: isRightSidebarOpen ? `${propertiesPanelWidth}px` : '0px',
+              flexShrink: 0,
+              height: '100%',
+              overflow: 'hidden',
+              transition: isResizingLayout
+                ? 'none'
+                : 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              borderLeft: isRightSidebarOpen ? '1px solid var(--border-color)' : 'none',
+              background: 'var(--bg-panel)',
+              zIndex: 40,
+              position: 'relative',
+            }}
+          >
+            {isRightSidebarOpen ? (
+              <PanelResizeHandle
+                axis="x"
+                edge="start"
+                onResize={(delta) => {
+                  setIsResizingLayout(true)
+                  handlePropertiesResize(delta)
+                }}
+                onResizeEnd={persistPropertiesWidth}
+              />
+            ) : null}
+            <div
+              className="scene-config-panel-scroll premium-scrollbar"
+              style={{
+                width: `${propertiesPanelWidth}px`,
+                height: '100%',
+                overflowY: 'auto',
+                overflowX: 'hidden',
+              }}
+            >
               <SceneConfigurationPanel
                 activeScene={activeScene}
                 activeSceneId={activeSceneId}

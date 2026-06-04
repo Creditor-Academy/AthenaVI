@@ -174,6 +174,11 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
   const applyLookToScene = useCallback(
     (look) => {
       const assign = (sceneId, clips = []) => {
+        const targetScene =
+          sceneId === activeSceneId ? activeScene : scenes.find((s) => s.id === sceneId)
+        const hadGeneratedVideo =
+          !!targetScene?.heygenVideoId || targetScene?.heygenStatus === 'completed'
+
         const avatarClipIndex = clips.findIndex((c) => c.role === 'avatar' || c.type === 'avatar');
         let updatedClips = [...clips];
         if (avatarClipIndex !== -1) {
@@ -181,7 +186,7 @@ const EditorSidebarAvatar = ({ activeScene, activeSceneId, scenes, autoCreateSce
             ...updatedClips[avatarClipIndex],
             src: look.image,
             role: 'avatar',
-            type: 'avatar',
+            type: hadGeneratedVideo ? 'avatar' : updatedClips[avatarClipIndex].type,
           };
         } else if (addLayer) {
           addLayer('avatar', look.image);

@@ -235,7 +235,15 @@ const LayerOrderLockBar = ({ activeLayer, clips, onMoveLayerOrder, onToggleLayer
 
 const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScene, onMoveLayerOrder, onToggleLayerLock }) => {
   const updateLayer = (updates) => {
-    let newClips = clips.map(l => l.id === activeLayer.id ? { ...l, ...updates } : l);
+    const marksPlaced =
+      'position' in updates ||
+      'size' in updates ||
+      ('style' in updates && updates.style != null)
+    let newClips = clips.map((l) =>
+      l.id === activeLayer.id
+        ? { ...l, ...updates, ...(marksPlaced ? { _userPlaced: true } : {}) }
+        : l
+    );
     if ('isBackground' in updates) {
       newClips = normalizeClipStack(newClips);
     }

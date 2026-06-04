@@ -1,5 +1,14 @@
 import React from 'react'
-import { useCurrentFrame, spring, interpolate, useVideoConfig, Audio, Video } from 'remotion'
+import {
+  useCurrentFrame,
+  spring,
+  interpolate,
+  useVideoConfig,
+  Audio,
+  Video,
+  OffthreadVideo,
+  Sequence,
+} from 'remotion'
 import {
     MdPerson,
     MdAddCircleOutline,
@@ -40,6 +49,37 @@ export function pixelRectToPercent(position = {}, size = {}) {
   };
 }
 
+/** Scene-local video synced to timeline (HeyGen avatar + clip timing). */
+function ClipSequenceVideo({ src, clip, scene, frameInScene, fps, style, audioEnabled = true }) {
+  const clipStartSec = clip.startTime || 0
+  const clipEndSec = clip.endTime ?? scene.duration ?? 5
+  const clipStart = Math.floor(clipStartSec * fps)
+  const clipDuration = Math.max(1, Math.floor((clipEndSec - clipStartSec) * fps))
+
+  if (frameInScene < clipStart || frameInScene >= clipStart + clipDuration) {
+    return null
+  }
+
+  const isAvatar = isAvatarClip(clip)
+  const useOffthread =
+    typeof src === 'string' &&
+    /^https?:\/\//i.test(src) &&
+    !/\/api\/workspaces\//i.test(src)
+  const VideoTag = useOffthread ? OffthreadVideo : Video
+  const avatarVolume = isAvatar && audioEnabled ? 1 : 0
+
+  return (
+    <Sequence from={clipStart} durationInFrames={clipDuration} layout="none">
+      <VideoTag
+        src={src}
+        style={style}
+        volume={avatarVolume}
+        muted={avatarVolume === 0}
+      />
+    </Sequence>
+  )
+}
+
 function getSceneBackgroundStyle(scene) {
   let backgroundStyle = {
     position: 'absolute',
@@ -72,9 +112,7 @@ function getSceneBackgroundStyle(scene) {
   return backgroundStyle
 }
 
-function SceneFrame({ scene, frameInScene, fps }) {
-  const sceneDurationFrames = Math.max((scene.duration || 8) * fps, 1)
-  const zoomFactor = interpolate(frameInScene, [0, sceneDurationFrames], [1, 1.05])
+function SceneFrame({ scene, frameInScene, fps, audioEnabled = true }) {
   const backgroundStyle = getSceneBackgroundStyle(scene)
 
   return (
@@ -122,7 +160,7 @@ function SceneFrame({ scene, frameInScene, fps }) {
           top: rect.top,
           width: rect.width,
           height: rect.height,
-          transform: `translate(${translateX}px, ${translateY}px) rotate(${(clip.rotation ?? 0) + animRotation}deg) scale(${scale * zoomFactor * (clip.scale || 1)})`,
+          transform: `translate(${translateX}px, ${translateY}px) rotate(${(clip.rotation ?? 0) + animRotation}deg) scale(${scale * (clip.scale || 1)})`,
           transformOrigin: 'top left',
           zIndex: getClipZIndex(clip, false),
           opacity,
@@ -192,9 +230,18 @@ function SceneFrame({ scene, frameInScene, fps }) {
             }}>
               {src ? (
                 isVideo ? (
-                  <Video
+                  <ClipSequenceVideo
                     src={src}
-                    style={{ width: '100%', height: '100%', objectFit: clip.role === 'avatar' ? 'contain' : 'cover' }}
+                    clip={clip}
+                    scene={scene}
+                    frameInScene={frameInScene}
+                    fps={fps}
+                    audioEnabled={audioEnabled}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: clip.style?.objectFit || clip.objectFit || (clip.role === 'avatar' ? 'contain' : 'cover'),
+                    }}
                   />
                 ) : (
                   <img src={src} style={{ width: '100%', height: '100%', objectFit: clip.role === 'avatar' ? 'contain' : 'cover' }} alt="" />
@@ -324,6 +371,7 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) 
                   scene={layer.scene}
                   frameInScene={layer.frameInScene}
                   fps={fps}
+                  audioEnabled={index === layers.length - 1}
                 />
               </div>
             ))}

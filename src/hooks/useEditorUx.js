@@ -146,7 +146,7 @@ export function useEditorUx({
             ...s,
             clips: s.clips.map((c) => {
               if (c.id !== layerId || c.locked) return c;
-              return { ...c, position: snapped };
+              return { ...c, position: snapped, _userPlaced: true };
             }),
           };
         }),

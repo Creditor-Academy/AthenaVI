@@ -1,187 +1,245 @@
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, useCallback } from 'react'
 import { Player } from '@remotion/player'
+import { MdClose, MdPlayCircleOutline, MdMovie } from 'react-icons/md'
 import VideoComposition from './VideoComposition'
 import heygenService from '../../../../services/heygenService'
-import { resolveScenePlaybackUrls } from '../../../../utils/heygenVideo'
+import {
+  prepareScenesForPlayback,
+  unmuteRemotionPlayer,
+} from '../../../../utils/heygenVideo'
+import './PreviewModal.css'
 
-const PreviewModal = ({ 
-  showPreviewModal, 
-  setShowPreviewModal, 
-  scenes, 
-  activeSceneId, 
-  totalDurationInFrames, 
-  bgMusic, 
-  bgMusicVolume, 
-  setIsPlaying, 
-  speakText, 
-  getSceneForFrame, 
+const PreviewModal = ({
+  showPreviewModal,
+  setShowPreviewModal,
+  scenes,
+  totalDurationInFrames,
+  bgMusic,
+  bgMusicVolume,
+  setIsPlaying,
+  getSceneForFrame,
   setActiveSceneId,
   workspaceId,
   projectId,
 }) => {
   const playerRef = useRef(null)
+  const playbackStartedRef = useRef(false)
   const [resolvedScenes, setResolvedScenes] = useState(null)
-  const [isResolving, setIsResolving] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [loadLabel, setLoadLabel] = useState('Preparing preview…')
+  const [loadProgress, setLoadProgress] = useState(0)
+  const [previewSceneLabel, setPreviewSceneLabel] = useState('')
+  const [playerReady, setPlayerReady] = useState(false)
+
+  const closePreview = useCallback(() => {
+    setShowPreviewModal(false)
+    setIsPlaying(false)
+    setPlayerReady(false)
+    playerRef.current?.pause()
+    window.speechSynthesis?.cancel()
+  }, [setShowPreviewModal, setIsPlaying])
 
   useEffect(() => {
     if (!showPreviewModal) {
+      playbackStartedRef.current = false
       setResolvedScenes(null)
-      return
+      setIsLoading(false)
+      setLoadProgress(0)
+      setPlayerReady(false)
+      return undefined
     }
+
+    window.speechSynthesis?.cancel()
 
     let cancelled = false
 
-    const resolve = async () => {
-      setIsResolving(true)
+    const prepare = async () => {
+      setIsLoading(true)
+      setPlayerReady(false)
+      setLoadProgress(0)
+      setLoadLabel('Connecting to project…')
+
       try {
-        const withUrls = await resolveScenePlaybackUrls(
+        setLoadLabel('Refreshing avatar videos…')
+        const withUrls = await prepareScenesForPlayback(
           scenes,
           workspaceId,
           projectId,
-          heygenService
+          heygenService,
+          ({ done, total, label }) => {
+            if (cancelled) return
+            setLoadLabel(label)
+            setLoadProgress(total > 0 ? Math.round((done / total) * 100) : 100)
+          }
         )
-        if (!cancelled) setResolvedScenes(withUrls)
+        if (cancelled) return
+        if (!withUrls.some((s) => s.heygenVideoId)) {
+          setLoadProgress(100)
+          setLoadLabel('Almost ready…')
+        }
+
+        if (cancelled) return
+        setResolvedScenes(withUrls)
+        setLoadLabel('Starting playback…')
+        setLoadProgress(100)
+        await new Promise((r) => setTimeout(r, 200))
+        if (!cancelled) setPlayerReady(true)
       } catch (err) {
         console.error('[Preview] Failed to resolve HeyGen playback URLs:', err)
-        if (!cancelled) setResolvedScenes(scenes)
+        if (!cancelled) {
+          setResolvedScenes(scenes)
+          setPlayerReady(true)
+        }
       } finally {
-        if (!cancelled) setIsResolving(false)
+        if (!cancelled) setIsLoading(false)
       }
     }
 
-    resolve()
-    return () => { cancelled = true }
+    prepare()
+    return () => {
+      cancelled = true
+    }
   }, [showPreviewModal, scenes, workspaceId, projectId])
+
+  useEffect(() => {
+    if (!showPreviewModal) return undefined
+    const onKey = (e) => {
+      if (e.key === 'Escape') closePreview()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [showPreviewModal, closePreview])
+
+  const syncSceneFromFrame = useCallback(
+    (frame) => {
+      const { scene } = getSceneForFrame(frame)
+      if (!scene) return
+      setActiveSceneId(scene.id)
+      setPreviewSceneLabel(scene.title || scene.name || 'Scene')
+    },
+    [getSceneForFrame, setActiveSceneId]
+  )
+
+  const startPlaybackWithSound = useCallback(() => {
+    const player = playerRef.current
+    if (!player) return
+    unmuteRemotionPlayer(player)
+    const playResult = player.play()
+    if (playResult && typeof playResult.catch === 'function') {
+      playResult.catch(() => {})
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!playerReady || isLoading || playbackStartedRef.current) return undefined
+    playbackStartedRef.current = true
+    const timer = setTimeout(startPlaybackWithSound, 150)
+    return () => clearTimeout(timer)
+  }, [playerReady, isLoading, startPlaybackWithSound])
 
   if (!showPreviewModal) return null
 
   const previewScenes = resolvedScenes ?? scenes
+  const hasHeygenInProject = previewScenes.some((s) => s.heygenVideoId)
+  const showOverlay = isLoading || !playerReady
+  const progressPct = Math.min(100, Math.max(0, loadProgress))
 
   return (
-    <div className="fullscreen-preview-page">
-      <style>{`
-        .fullscreen-preview-page {
-          position: fixed;
-          inset: 0;
-          background: #f8f9fa;
-          z-index: 2000;
-          display: flex;
-          flex-direction: column;
-          color: #202124;
-        }
-        .preview-topbar {
-          height: 60px;
-          padding: 0 24px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          background: rgba(255,255,255,0.95);
-          backdrop-filter: blur(10px);
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          z-index: 100;
-          border-bottom: 1px solid #e8eaed;
-          box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
-        }
-        .preview-content {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: #f8f9fa;
-        }
-        .close-preview {
-          background: #1a73e8;
-          border: none;
-          color: #ffffff;
-          padding: 8px 16px;
-          border-radius: 8px;
-          cursor: pointer;
-          font-weight: 500;
-          transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .close-preview:hover {
-          background: #1557b0;
-        }
-        .preview-loading {
-          color: #5f6368;
-          font-size: 15px;
-          font-weight: 500;
-        }
-      `}</style>
-      <div className="preview-topbar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ fontWeight: 700, fontSize: '18px' }}>AthenaVI Preview</span>
-          <span style={{ color: '#5f6368', fontSize: '14px' }}>Draft - {scenes.length} Scenes</span>
+    <div className="video-preview" role="dialog" aria-modal="true" aria-label="Video preview">
+      <header className="video-preview__topbar">
+        <div className="video-preview__brand">
+          <div className="video-preview__logo" aria-hidden>
+            <MdMovie size={20} />
+          </div>
+          <div>
+            <h1 className="video-preview__title">Preview</h1>
+            <p className="video-preview__meta">
+              {scenes.length} scene{scenes.length === 1 ? '' : 's'}
+              {bgMusic ? ' · Background music on' : ''}
+            </p>
+          </div>
         </div>
-        <button className="close-preview" onClick={() => {
-          setShowPreviewModal(false)
-          setIsPlaying(false)
-          if (playerRef.current) playerRef.current.pause()
-          window.speechSynthesis.cancel()
-        }}>
-          Exit Preview
-        </button>
+
+        {previewSceneLabel && playerReady && !isLoading ? (
+          <div className="video-preview__scene-pill" title={previewSceneLabel}>
+            <span className="video-preview__scene-pill-dot" aria-hidden />
+            {previewSceneLabel}
+          </div>
+        ) : null}
+
+        <div className="video-preview__actions">
+          <button type="button" className="video-preview__exit" onClick={closePreview}>
+            <MdClose size={18} />
+            Exit
+          </button>
+        </div>
+      </header>
+
+      <div className="video-preview__body">
+        <div className="video-preview__stage">
+          {showOverlay && (
+            <div className="video-preview__overlay">
+              <div className="video-preview__spinner" aria-hidden />
+              <p className="video-preview__load-title">{loadLabel}</p>
+              <p className="video-preview__load-sub">
+                Avatar videos are cached so playback stays in sync with your scene. Layers at 0:00
+                appear together when the scene starts.
+              </p>
+              {progressPct > 0 && progressPct < 100 ? (
+                <div className="video-preview__progress" aria-hidden>
+                  <div
+                    className="video-preview__progress-bar"
+                    style={{ width: `${progressPct}%` }}
+                  />
+                </div>
+              ) : null}
+            </div>
+          )}
+
+          {playerReady && (
+            <div className="video-preview__player-shell">
+              <Player
+                key={`preview-${previewScenes.map((s) => s.playbackUrl || s.generatedVideoUrl || s.id).join('|')}`}
+                ref={playerRef}
+                className="video-preview__player"
+                component={VideoComposition}
+                durationInFrames={Math.max(totalDurationInFrames, 30)}
+                compositionWidth={1920}
+                compositionHeight={1080}
+                fps={30}
+                controls
+                showVolumeControls
+                numberOfSharedAudioTags={12}
+                showOutlines={false}
+                autoPlay={false}
+                inputProps={{
+                  scenes: previewScenes,
+                  bgMusic,
+                  bgMusicVolume,
+                }}
+                onPlay={() => {
+                  unmuteRemotionPlayer(playerRef.current)
+                  setIsPlaying(true)
+                  window.speechSynthesis?.cancel()
+                }}
+                onPause={() => {
+                  setIsPlaying(false)
+                  window.speechSynthesis?.cancel()
+                }}
+                onSeek={(frame) => syncSceneFromFrame(frame)}
+                onFrameUpdate={(frame) => syncSceneFromFrame(frame)}
+              />
+            </div>
+          )}
+        </div>
       </div>
-      <div className="preview-content">
-        {isResolving ? (
-          <p className="preview-loading">Loading HeyGen videos…</p>
-        ) : (
-          <Player
-            ref={playerRef}
-            component={VideoComposition}
-            durationInFrames={Math.max(totalDurationInFrames, 30)}
-            compositionWidth={1920}
-            compositionHeight={1080}
-            fps={30}
-            controls
-            autoPlay
-            style={{
-              width: '100%',
-              height: '100%',
-              maxHeight: '100vh'
-            }}
-            inputProps={{
-              scenes: previewScenes,
-              bgMusic: bgMusic,
-              bgMusicVolume: bgMusicVolume
-            }}
-            onPlay={() => {
-              setIsPlaying(true)
-              const currentScene = previewScenes.find(s => s.id === activeSceneId)
-              if (currentScene?.script) {
-                speakText(currentScene.script, activeSceneId)
-              }
-            }}
-            onPause={() => {
-              setIsPlaying(false)
-              window.speechSynthesis.pause()
-            }}
-            onSeek={(frame) => {
-              const { scene } = getSceneForFrame(frame)
-              if (scene) {
-                setActiveSceneId(scene.id)
-                if (scene.script) {
-                  window.speechSynthesis.cancel()
-                  setTimeout(() => speakText(scene.script, scene.id), 300)
-                }
-              }
-            }}
-            onFrameUpdate={(frame) => {
-              const { scene } = getSceneForFrame(frame)
-              if (scene && scene.id !== activeSceneId) {
-                setActiveSceneId(scene.id)
-                if (scene.script) {
-                  window.speechSynthesis.cancel()
-                  setTimeout(() => speakText(scene.script, scene.id), 300)
-                }
-              }
-            }}
-          />
-        )}
-      </div>
+
+      {playerReady && !isLoading && hasHeygenInProject && (
+        <p className="video-preview__footer-hint">
+          <MdPlayCircleOutline size={13} style={{ verticalAlign: -2, marginRight: 4 }} />
+          Voice plays from your generated avatar video — use the player play button if audio is muted
+        </p>
+      )}
     </div>
   )
 }
