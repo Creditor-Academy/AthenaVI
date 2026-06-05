@@ -202,11 +202,6 @@ const EditorSidebarAvatar = ({
           addLayer('avatar', look.image);
         }
 
-        const targetScene =
-          sceneId === activeSceneId ? activeScene : scenes.find((s) => s.id === sceneId)
-        const hadGeneratedVideo =
-          !!targetScene?.heygenVideoId || targetScene?.heygenStatus === 'completed'
-
         updateScene(sceneId, {
           avatar: look.image,
           avatarType: look.id,

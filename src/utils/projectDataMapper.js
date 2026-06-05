@@ -62,6 +62,7 @@ export function normalizeTextStyle(style = {}) {
   if (style.textShape) normalized.textShape = style.textShape;
   if (style.effectBackground) normalized.effectBackground = style.effectBackground;
   if (style.fillColor) normalized.fillColor = style.fillColor;
+  if (style.textGradient) normalized.textGradient = style.textGradient;
 
   return normalized;
 }

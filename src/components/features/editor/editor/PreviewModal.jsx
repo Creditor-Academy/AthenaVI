@@ -1,7 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
-import { useRef, useEffect, useState, useCallback } from 'react'
 import { Player } from '@remotion/player'
-import { MdClose, MdPlayCircleOutline, MdMovie } from 'react-icons/md'
 import { MdClose, MdPlayCircleOutline, MdMovie } from 'react-icons/md'
 import VideoComposition from './VideoComposition'
 import heygenService from '../../../../services/heygenService'
@@ -40,19 +38,6 @@ const PreviewModal = ({
     playerRef.current?.pause()
     window.speechSynthesis?.cancel()
   }, [setShowPreviewModal, setIsPlaying])
-  const [isLoading, setIsLoading] = useState(false)
-  const [loadLabel, setLoadLabel] = useState('Preparing preview…')
-  const [loadProgress, setLoadProgress] = useState(0)
-  const [previewSceneLabel, setPreviewSceneLabel] = useState('')
-  const [playerReady, setPlayerReady] = useState(false)
-
-  const closePreview = useCallback(() => {
-    setShowPreviewModal(false)
-    setIsPlaying(false)
-    setPlayerReady(false)
-    playerRef.current?.pause()
-    window.speechSynthesis?.cancel()
-  }, [setShowPreviewModal, setIsPlaying])
 
   useEffect(() => {
     if (!showPreviewModal) {
@@ -62,13 +47,7 @@ const PreviewModal = ({
       setLoadProgress(0)
       setPlayerReady(false)
       return undefined
-      setIsLoading(false)
-      setLoadProgress(0)
-      setPlayerReady(false)
-      return undefined
     }
-
-    window.speechSynthesis?.cancel()
 
     window.speechSynthesis?.cancel()
 
@@ -113,14 +92,9 @@ const PreviewModal = ({
         }
       } finally {
         if (!cancelled) setIsLoading(false)
-        if (!cancelled) setIsLoading(false)
       }
     }
 
-    prepare()
-    return () => {
-      cancelled = true
-    }
     prepare()
     return () => {
       cancelled = true
@@ -166,9 +140,6 @@ const PreviewModal = ({
   if (!showPreviewModal) return null
 
   const previewScenes = resolvedScenes ?? scenes
-  const hasHeygenInProject = previewScenes.some((s) => s.heygenVideoId)
-  const showOverlay = isLoading || !playerReady
-  const progressPct = Math.min(100, Math.max(0, loadProgress))
   const hasHeygenInProject = previewScenes.some((s) => s.heygenVideoId)
   const showOverlay = isLoading || !playerReady
   const progressPct = Math.min(100, Math.max(0, loadProgress))

@@ -297,7 +297,6 @@ function SceneFrame({ scene, frameInScene, fps, audioEnabled = true }) {
               {src ? (
                 isVideo ? (
                   <ClipSequenceVideo
-                  <ClipSequenceVideo
                     src={src}
                     clip={clip}
                     scene={scene}

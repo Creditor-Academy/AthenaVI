@@ -399,6 +399,13 @@
     font-size: clamp(11px, 3.2vw, 15px);
 }
 
+.text-tool-combo-preview--multiline {
+    white-space: pre-line;
+    font-size: clamp(8px, 2.4vw, 11px);
+    line-height: 1.1;
+    letter-spacing: 0.02em;
+}
+
 @keyframes topbarDropdownIn {
     from {
         opacity: 0;
