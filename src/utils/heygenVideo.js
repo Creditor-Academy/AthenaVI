@@ -1,5 +1,53 @@
 import { normalizeClipStack } from './editorLayerUtils'
 
+const HEYGEN_POLL_INTERVAL_MS = 2000
+const HEYGEN_POLL_MAX_ATTEMPTS = 60
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+export function isHeygenVideoFailed(videoData) {
+  const status = videoData?.status
+  return status === 'failed' || status === 'error'
+}
+
+/** True when the authenticated /stream endpoint can serve the avatar video. */
+export function isHeygenVideoPlaybackReady(videoData) {
+  return !!videoData?.playbackReady
+}
+
+/**
+ * Poll until playbackReady (do not wait for s3Key).
+ * Uses ?sync=status — never sync=full for canvas polling.
+ */
+export async function pollUntilHeygenPlaybackReady(
+  workspaceId,
+  projectId,
+  heygenVideoId,
+  heygenService,
+  { intervalMs = HEYGEN_POLL_INTERVAL_MS, maxAttempts = HEYGEN_POLL_MAX_ATTEMPTS, onProgress } = {}
+) {
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const videoData = await heygenService.getVideo(workspaceId, projectId, heygenVideoId, {
+      sync: 'status',
+    })
+
+    if (isHeygenVideoFailed(videoData)) {
+      throw new Error('HeyGen generation failed')
+    }
+
+    if (isHeygenVideoPlaybackReady(videoData)) {
+      return videoData
+    }
+
+    onProgress?.(videoData, attempt)
+    await sleep(intervalMs)
+  }
+
+  throw new Error('HeyGen generation timed out')
+}
+
 function isNonDefaultAvatarPlacement(clip, resolution) {
   if (!clip?.position || !clip?.size) return false
   const x = clip.position.x ?? 0
@@ -160,7 +208,13 @@ export function isVideoMedia(clip, src) {
 export function sceneHasHeygenPlayback(scene) {
   if (scene?.heygenStatus === 'needs_regeneration') return false
   if (!scene?.heygenVideoId) return false
+  if (scene.heygenStatus === 'completed' || scene.generation?.status === 'completed') {
+    return true
+  }
   const url = scene.playbackUrl || scene.generatedVideoUrl
+  for (const clip of scene.clips || []) {
+    if (isAvatarClip(clip) && clip.src && typeof clip.src === 'string') return true
+  }
   return !!(url && typeof url === 'string')
 }
 
@@ -198,56 +252,34 @@ export function applyPlaybackUrlToScene(scene, url) {
   }
 }
 
+/** Resolve session playback via authenticated /stream (works before s3Key exists). */
+export async function resolveScenePlaybackUrl(scene, workspaceId, projectId, heygenService) {
+  if (!scene?.heygenVideoId || !workspaceId || !projectId) return scene
+
+  const avatarClip = (scene.clips || []).find(isAvatarClip)
+  if (avatarClip?.src?.startsWith('blob:')) {
+    return scene
+  }
+
+  try {
+    const blobUrl = await heygenService.getVideoBlobUrl(
+      workspaceId,
+      projectId,
+      scene.heygenVideoId
+    )
+    return applyPlaybackUrlToScene(scene, blobUrl)
+  } catch (err) {
+    console.warn('[HeyGen] Stream playback failed for scene', scene.id, err)
+    return scene
+  }
+}
+
 export async function resolveScenePlaybackUrls(scenes, workspaceId, projectId, heygenService) {
   if (!scenes?.length) return scenes
   if (!workspaceId || !projectId) return scenes
 
   return Promise.all(
-    scenes.map(async (scene) => {
-      if (!scene.heygenVideoId) return scene
-
-      const avatarClip = (scene.clips || []).find(isAvatarClip)
-      const existing = pickHttpPlaybackUrl(
-        scene.playbackUrl,
-        scene.generatedVideoUrl,
-        avatarClip?.src
-      )
-
-      try {
-        const data = await heygenService.downloadVideo(
-          workspaceId,
-          projectId,
-          scene.heygenVideoId,
-          3600
-        )
-        const presigned = data?.presignedUrl || data?.url || data?.downloadUrl
-        const resolved = pickHttpPlaybackUrl(presigned)
-        if (resolved) {
-          return applyPlaybackUrlToScene(scene, resolved)
-        }
-      } catch (err) {
-        console.warn('[HeyGen] Presigned URL failed for scene', scene.id, err)
-      }
-
-      if (existing) {
-        return applyPlaybackUrlToScene(scene, existing)
-      }
-
-      try {
-        const streamUrl = heygenService.getStreamUrl(
-          workspaceId,
-          projectId,
-          scene.heygenVideoId
-        )
-        if (streamUrl) {
-          return applyPlaybackUrlToScene(scene, streamUrl)
-        }
-      } catch (err) {
-        console.warn('[HeyGen] Stream URL failed for scene', scene.id, err)
-      }
-
-      return scene
-    })
+    scenes.map((scene) => resolveScenePlaybackUrl(scene, workspaceId, projectId, heygenService))
   )
 }
 

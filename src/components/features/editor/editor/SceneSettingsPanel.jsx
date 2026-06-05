@@ -17,6 +17,7 @@ import {
 import projectTemplate from '../../../../constants/projectTemplate.json';
 import { buildSceneDurationPatch, estimateHeygenSceneDuration } from '../../../../utils/sceneDuration';
 import { normalizeClipsToScene } from '../../../../utils/editorLayerUtils';
+import { normalizeSceneClips } from '../../../../utils/clipLayout';
 import { SCENE_TRANSITION_OPTIONS, normalizeSceneTransition } from '../../../../utils/sceneTransitionUtils';
 import { sceneNeedsHeygenRegeneration } from '../../../../utils/heygenVideo';
 import './SceneSettingsPanel.css';
@@ -290,7 +291,10 @@ const SceneSettingsPanel = ({
                     const ti = tc.findIndex((c) => c.type === 'text');
                     if (ti !== -1) tc[ti].content = existingText.content;
                   }
-                  newClips = normalizeClipsToScene(tc, activeScene?.duration || 8);
+                  newClips = normalizeClipsToScene(
+                    normalizeSceneClips(tc),
+                    activeScene?.duration || 8
+                  );
                 }
                 updateScene(activeSceneId, { layout: newLayout, clips: newClips });
               }}

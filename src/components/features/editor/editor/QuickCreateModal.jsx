@@ -15,12 +15,19 @@ import {
 import { Loader2 } from 'lucide-react';
 import heygenService from '../../../../services/heygenService';
 import {
+  AVATAR_IV_ENGINE,
+  AVATAR_V_ENGINE,
   extractHeygenList,
-  filterAvatarLooksByEngine,
   formatAvatarTypeLabel,
+  LOOK_ENGINE_FILTERS,
+  looksForEngineFilter,
   mapAvatarGroup,
   mapAvatarLook,
+  mergeAvatarLooksPages,
   normalizeAvatarEngine,
+  parseAvatarLooksResponse,
+  canUseExpressiveness,
+  resolveAvatarEngine,
 } from '../../../../utils/heygenAvatars';
 import './QuickCreateModal.css';
 
@@ -50,6 +57,8 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
   const [loadingGroups, setLoadingGroups] = useState(false);
   const [loadingLooks, setLoadingLooks] = useState(false);
   const [looksError, setLooksError] = useState('');
+  const [lookEngineFilter, setLookEngineFilter] = useState(LOOK_ENGINE_FILTERS.ALL);
+  const [looksPageData, setLooksPageData] = useState(null);
   const [loadingVoices, setLoadingVoices] = useState(false);
   const [voiceSearch, setVoiceSearch] = useState('');
 
@@ -61,6 +70,8 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     setLooksError('');
     setLooksHasMore(false);
     setLooksNextToken(null);
+    setLooksPageData(null);
+    setLookEngineFilter(LOOK_ENGINE_FILTERS.ALL);
   }, []);
 
   useEffect(() => {
@@ -153,39 +164,51 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     }
   };
 
-  const fetchLooksForGroup = async (group, engineOverride = null) => {
+  const applyLooksDisplay = useCallback((pageData, filter, groupName) => {
+    const rawList = looksForEngineFilter(pageData, filter);
+    const mapped = rawList.map((look) => mapAvatarLook(look, groupName)).filter((l) => l.id);
+    setLooks(mapped);
+    if (mapped.length === 0) {
+      const filterLabels = {
+        [LOOK_ENGINE_FILTERS.ALL]: 'any',
+        [LOOK_ENGINE_FILTERS.AVATAR_IV]: 'Avatar IV',
+        [LOOK_ENGINE_FILTERS.AVATAR_V]: 'Avatar V',
+        [LOOK_ENGINE_FILTERS.UNKNOWN]: 'unspecified-engine',
+      };
+      setLooksError(`No ${filterLabels[filter] || ''} looks for this character. Pick another character.`);
+    } else {
+      setLooksError('');
+    }
+  }, []);
+
+  const handleLookEngineFilter = (filter) => {
+    setLookEngineFilter(filter);
+    if (looksPageData && selectedGroup) {
+      applyLooksDisplay(looksPageData, filter, selectedGroup.name);
+    }
+  };
+
+  const fetchLooksForGroup = async (group) => {
     setLoadingLooks(true);
     setLooksError('');
     setSelectedGroup(group);
     setSelectedAvatar(null);
     setAvatarPhase('looks');
     try {
-      const desiredEngine = normalizeAvatarEngine(engineOverride || avatarEngine)
       const responseData = await heygenService.getAvatarLooks({
         group_id: group.id,
         limit: 20,
       });
-      const data = responseData?.data || responseData;
-      const lookList = extractHeygenList(responseData, [
-        'avatar_looks',
-        'looks',
-        'avatars',
-      ]);
-      const compatible = filterAvatarLooksByEngine(lookList, desiredEngine)
-        .map((look) => mapAvatarLook(look, group.name))
-        .filter((look) => look.id);
-
-      setLooks(compatible);
-      setLooksHasMore(!!(data?.has_more ?? responseData?.has_more));
-      setLooksNextToken(data?.token ?? responseData?.token ?? data?.next_token ?? responseData?.next_token ?? null);
-      if (compatible.length === 0) {
-        setLooksError(
-          `No ${desiredEngine === 'avatar_v' ? 'Avatar V' : 'Avatar IV'}–compatible looks for this character. Pick another character.`
-        );
-      }
+      const parsed = parseAvatarLooksResponse(responseData);
+      setLooksPageData(parsed);
+      setLookEngineFilter(LOOK_ENGINE_FILTERS.ALL);
+      applyLooksDisplay(parsed, LOOK_ENGINE_FILTERS.ALL, group.name);
+      setLooksHasMore(parsed.hasMore);
+      setLooksNextToken(parsed.nextToken);
     } catch (err) {
       console.error('Failed to load avatar looks:', err);
       setLooks([]);
+      setLooksPageData(null);
       setLooksError('Could not load looks. Please try again.');
       setLooksHasMore(false);
       setLooksNextToken(null);
@@ -194,31 +217,21 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     }
   };
 
-  const loadMoreLooks = async (engineOverride = null) => {
-    if (!selectedGroup || !looksHasMore || !looksNextToken || loadingMoreLooks) return;
+  const loadMoreLooks = async () => {
+    if (!selectedGroup || !looksHasMore || !looksNextToken || loadingMoreLooks || !looksPageData) return;
     setLoadingMoreLooks(true);
     try {
-      const desiredEngine = normalizeAvatarEngine(engineOverride || avatarEngine);
       const responseData = await heygenService.getAvatarLooks({
         group_id: selectedGroup.id,
         limit: 20,
         token: looksNextToken,
       });
-      const data = responseData?.data || responseData;
-      const lookList = extractHeygenList(responseData, ['avatar_looks', 'looks', 'avatars']);
-      const compatible = filterAvatarLooksByEngine(lookList, desiredEngine)
-        .map((look) => mapAvatarLook(look, selectedGroup.name))
-        .filter((look) => look.id);
-
-      setLooks((prev) => {
-        const seen = new Set(prev.map((l) => l.id));
-        const next = [...prev];
-        compatible.forEach((l) => { if (!seen.has(l.id)) next.push(l); });
-        return next;
-      });
-
-      setLooksHasMore(!!(data?.has_more ?? responseData?.has_more));
-      setLooksNextToken(data?.next_token ?? responseData?.next_token ?? null);
+      const nextParsed = parseAvatarLooksResponse(responseData);
+      const merged = mergeAvatarLooksPages(looksPageData, nextParsed);
+      setLooksPageData(merged);
+      applyLooksDisplay(merged, lookEngineFilter, selectedGroup.name);
+      setLooksHasMore(merged.hasMore);
+      setLooksNextToken(merged.nextToken);
     } catch (err) {
       console.error('Failed to load more looks:', err);
       setLooksHasMore(false);
@@ -260,21 +273,42 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     );
   }, [voices, voiceSearch]);
 
-  const buildGeneratePayload = () => ({
-    avatarType: selectedAvatar.id,
-    avatarGroupId: selectedGroup?.id,
-    avatarImage: selectedAvatar.image,
-    avatarName: selectedAvatar.name,
-    avatarTypeLabel: selectedAvatar.avatarType,
-    avatarEngine,
-    voiceId: selectedVoice.id,
-    voiceName: selectedVoice.name,
-    script,
-    removeBackground,
-    backgroundColor,
-    aspectRatio,
-    expressiveness,
-  });
+  const buildGeneratePayload = () => {
+    const preferredFromFilter =
+      lookEngineFilter === LOOK_ENGINE_FILTERS.AVATAR_IV
+        ? AVATAR_IV_ENGINE
+        : lookEngineFilter === LOOK_ENGINE_FILTERS.AVATAR_V
+          ? AVATAR_V_ENGINE
+          : avatarEngine;
+    const resolvedEngine = resolveAvatarEngine(
+      {
+        avatar_type: selectedAvatar.avatarType,
+        supportedEngines: selectedAvatar.supportedEngines,
+      },
+      preferredFromFilter
+    );
+    const avatarKind = selectedAvatar.avatarType || 'studio_avatar';
+    const includeExpressiveness = canUseExpressiveness(selectedAvatar, resolvedEngine);
+
+    return {
+      avatarType: selectedAvatar.id,
+      avatarLookId: selectedAvatar.id,
+      avatarGroupId: selectedGroup?.id,
+      avatarImage: selectedAvatar.image,
+      avatarName: selectedAvatar.name,
+      avatarTypeLabel: avatarKind,
+      avatarEngine: resolvedEngine,
+      supportedEngines: selectedAvatar.supportedEngines,
+      engineUnknown: selectedAvatar.engineUnknown,
+      voiceId: selectedVoice.id,
+      voiceName: selectedVoice.name,
+      script,
+      removeBackground,
+      backgroundColor,
+      aspectRatio,
+      ...(includeExpressiveness ? { expressiveness } : {}),
+    };
+  };
 
   const handleGenerate = () => {
     if (selectedAvatar?.id && selectedVoice && script) {
@@ -299,6 +333,8 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
       setAvatarPhase('groups');
       setSelectedAvatar(null);
       setLooks([]);
+      setLooksPageData(null);
+      setLookEngineFilter(LOOK_ENGINE_FILTERS.ALL);
       setLooksError('');
       return;
     }
@@ -320,8 +356,8 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
             : 'Select your presenter',
         subtitle:
           avatarPhase === 'looks'
-            ? `Only ${avatarEngine === 'avatar_v' ? 'Avatar V' : 'Avatar IV'}–compatible looks are shown.`
-            : 'Pick a character, then choose a compatible look.',
+            ? 'Filter by rendering engine, then pick a look.'
+            : 'Pick a character, then choose a look.',
       },
       {
         title: 'Choose a Voice',
@@ -362,6 +398,8 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
                   setAvatarPhase('groups');
                   setSelectedAvatar(null);
                   setLooks([]);
+                  setLooksPageData(null);
+                  setLookEngineFilter(LOOK_ENGINE_FILTERS.ALL);
                   setLooksError('');
                 }}
               >
@@ -371,45 +409,44 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
             {current.title && <h2 className="qc-title">{current.title}</h2>}
             {current.subtitle && <p className="qc-subtitle">{current.subtitle}</p>}
 
-            {step === 1 && (
-              <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const next = 'avatar_iv'
-                    setAvatarEngine(next)
-                    if (avatarPhase === 'looks' && selectedGroup) fetchLooksForGroup(selectedGroup, next)
-                  }}
-                  style={{
-                    padding: '8px 10px',
-                    borderRadius: 10,
-                    border: '1px solid rgba(0,0,0,0.1)',
-                    background: avatarEngine === 'avatar_iv' ? 'rgba(26,115,232,0.10)' : '#fff',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Avatar IV
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const next = 'avatar_v'
-                    setAvatarEngine(next)
-                    if (avatarPhase === 'looks' && selectedGroup) fetchLooksForGroup(selectedGroup, next)
-                  }}
-                  style={{
-                    padding: '8px 10px',
-                    borderRadius: 10,
-                    border: '1px solid rgba(0,0,0,0.1)',
-                    background: avatarEngine === 'avatar_v' ? 'rgba(168,85,247,0.12)' : '#fff',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Avatar V
-                </button>
+            {step === 1 && avatarPhase === 'looks' && looksPageData && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+                {[
+                  { id: LOOK_ENGINE_FILTERS.ALL, label: 'All', count: looksPageData.engineCounts.totalLooks },
+                  { id: LOOK_ENGINE_FILTERS.AVATAR_IV, label: 'Avatar IV', count: looksPageData.engineCounts.avatar_iv },
+                  { id: LOOK_ENGINE_FILTERS.AVATAR_V, label: 'Avatar V', count: looksPageData.engineCounts.avatar_v },
+                  ...(looksPageData.engineCounts.unknown > 0
+                    ? [{ id: LOOK_ENGINE_FILTERS.UNKNOWN, label: 'Other', count: looksPageData.engineCounts.unknown }]
+                    : []),
+                ].map((chip) => (
+                  <button
+                    key={chip.id}
+                    type="button"
+                    onClick={() => handleLookEngineFilter(chip.id)}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: 999,
+                      border: '1px solid rgba(0,0,0,0.1)',
+                      background:
+                        lookEngineFilter === chip.id
+                          ? chip.id === LOOK_ENGINE_FILTERS.AVATAR_V
+                            ? 'rgba(168,85,247,0.12)'
+                            : 'rgba(26,115,232,0.10)'
+                          : '#fff',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {chip.label} ({chip.count})
+                  </button>
+                ))}
               </div>
+            )}
+            {step === 1 && avatarPhase === 'looks' && lookEngineFilter === LOOK_ENGINE_FILTERS.UNKNOWN && (
+              <p style={{ margin: '8px 0 0', fontSize: 11, color: '#64748b', lineHeight: 1.45 }}>
+                Engine compatibility not specified by provider.
+              </p>
             )}
           </div>
         )}
@@ -500,7 +537,21 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
             <div
               key={look.id}
               className={`qc-avatar-card ${isSelected ? 'selected' : ''}`}
-              onClick={() => setSelectedAvatar(look)}
+              onClick={() => {
+                setSelectedAvatar(look);
+                const preferred =
+                  lookEngineFilter === LOOK_ENGINE_FILTERS.AVATAR_IV
+                    ? AVATAR_IV_ENGINE
+                    : lookEngineFilter === LOOK_ENGINE_FILTERS.AVATAR_V
+                      ? AVATAR_V_ENGINE
+                      : avatarEngine;
+                setAvatarEngine(
+                  resolveAvatarEngine(
+                    { avatar_type: look.avatarType, supportedEngines: look.supportedEngines },
+                    preferred
+                  )
+                );
+              }}
             >
               <div className="qc-avatar-img-wrap">
                 <img src={look.image} alt={look.name} />
@@ -770,6 +821,14 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
                   </div>
                 </div>
 
+                {selectedAvatar?.engineUnknown && (
+                  <p style={{ margin: '0 0 12px', fontSize: 11, color: '#64748b', lineHeight: 1.45 }}>
+                    Engine compatibility not specified for this look. We will pick the best engine automatically.
+                  </p>
+                )}
+
+                {selectedAvatar &&
+                  canUseExpressiveness(selectedAvatar, avatarEngine) && (
                 <div className="qc-setting-section full-width">
                   <label className="qc-label">EXPRESSIVENESS</label>
                   <div className="qc-express-cards">
@@ -820,6 +879,7 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
                     </label>
                   </div>
                 </div>
+                )}
               </div>
             </div>
           )}

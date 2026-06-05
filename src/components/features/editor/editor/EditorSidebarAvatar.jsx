@@ -3,12 +3,18 @@ import { MdAdd, MdMic, MdSearch, MdStar, MdAutoAwesome, MdCloudUpload, MdChevron
 import { Loader2 } from 'lucide-react';
 import heygenService from '../../../../services/heygenService';
 import {
+  AVATAR_IV_ENGINE,
+  AVATAR_V_ENGINE,
   extractHeygenList,
-  filterAvatarLooksByEngine,
-  normalizeAvatarEngine,
   formatAvatarTypeLabel,
+  LOOK_ENGINE_FILTERS,
+  looksForEngineFilter,
   mapAvatarGroup,
   mapAvatarLook,
+  mergeAvatarLooksPages,
+  normalizeAvatarEngine,
+  parseAvatarLooksResponse,
+  resolveAvatarEngine,
 } from '../../../../utils/heygenAvatars';
 import { invalidateHeygenSceneVideo } from '../../../../utils/heygenVideo';
 
@@ -43,6 +49,8 @@ const EditorSidebarAvatar = ({
   const [loading, setLoading] = useState(true);
   const [loadingLooks, setLoadingLooks] = useState(false);
   const [looksError, setLooksError] = useState('');
+  const [lookEngineFilter, setLookEngineFilter] = useState(LOOK_ENGINE_FILTERS.ALL);
+  const [looksPageData, setLooksPageData] = useState(null);
 
   const ownershipForTab = activeTab === 'mine' ? 'private' : activeTab === 'team' ? 'workspace' : 'public';
 
@@ -60,6 +68,8 @@ const EditorSidebarAvatar = ({
     setLooksError('');
     setLooksHasMore(false);
     setLooksNextToken(null);
+    setLooksPageData(null);
+    setLookEngineFilter(LOOK_ENGINE_FILTERS.ALL);
 
     const fetchGroups = async () => {
       setLoading(true);
@@ -114,31 +124,50 @@ const EditorSidebarAvatar = ({
     }
   };
 
-  const fetchLooksForGroup = async (group, engineOverride = null) => {
+  const applyLooksDisplay = useCallback((pageData, filter, groupName) => {
+    const rawList = looksForEngineFilter(pageData, filter);
+    const mapped = rawList.map((look) => mapAvatarLook(look, groupName)).filter((l) => l.id);
+    setLooks(mapped);
+    if (mapped.length === 0) {
+      const filterLabels = {
+        [LOOK_ENGINE_FILTERS.ALL]: 'any',
+        [LOOK_ENGINE_FILTERS.AVATAR_IV]: 'Avatar IV',
+        [LOOK_ENGINE_FILTERS.AVATAR_V]: 'Avatar V',
+        [LOOK_ENGINE_FILTERS.UNKNOWN]: 'unspecified-engine',
+      };
+      setLooksError(`No ${filterLabels[filter] || ''} looks for this character.`);
+    } else {
+      setLooksError('');
+    }
+  }, []);
+
+  const handleLookEngineFilter = (filter) => {
+    setLookEngineFilter(filter);
+    if (looksPageData && selectedGroup) {
+      applyLooksDisplay(looksPageData, filter, selectedGroup.name);
+    }
+  };
+
+  const fetchLooksForGroup = async (group) => {
     setLoadingLooks(true);
     setLooksError('');
     setSelectedGroup(group);
     setPickerView('looks');
     try {
-      const desiredEngine = normalizeAvatarEngine(engineOverride || avatarEngine);
       const responseData = await heygenService.getAvatarLooks({
         group_id: group.id,
         limit: 20,
       });
-      const data = responseData?.data || responseData;
-      const lookList = extractHeygenList(responseData, ['avatar_looks', 'looks', 'avatars']);
-      const compatible = filterAvatarLooksByEngine(lookList, desiredEngine)
-        .map((look) => mapAvatarLook(look, group.name))
-        .filter((look) => look.id);
-      setLooks(compatible);
-      setLooksHasMore(!!(data?.has_more ?? responseData?.has_more));
-      setLooksNextToken(data?.token ?? responseData?.token ?? data?.next_token ?? responseData?.next_token ?? null);
-      if (compatible.length === 0) {
-        setLooksError(`No ${desiredEngine === 'avatar_v' ? 'Avatar V' : 'Avatar IV'} looks for this character.`);
-      }
+      const parsed = parseAvatarLooksResponse(responseData);
+      setLooksPageData(parsed);
+      setLookEngineFilter(LOOK_ENGINE_FILTERS.ALL);
+      applyLooksDisplay(parsed, LOOK_ENGINE_FILTERS.ALL, group.name);
+      setLooksHasMore(parsed.hasMore);
+      setLooksNextToken(parsed.nextToken);
     } catch (err) {
       console.error('Failed to load looks:', err);
       setLooks([]);
+      setLooksPageData(null);
       setLooksError('Could not load looks.');
       setLooksHasMore(false);
       setLooksNextToken(null);
@@ -147,31 +176,21 @@ const EditorSidebarAvatar = ({
     }
   };
 
-  const loadMoreLooks = async (engineOverride = null) => {
-    if (!selectedGroup || !looksHasMore || !looksNextToken || loadingMoreLooks) return;
+  const loadMoreLooks = async () => {
+    if (!selectedGroup || !looksHasMore || !looksNextToken || loadingMoreLooks || !looksPageData) return;
     setLoadingMoreLooks(true);
     try {
-      const desiredEngine = normalizeAvatarEngine(engineOverride || avatarEngine);
       const responseData = await heygenService.getAvatarLooks({
         group_id: selectedGroup.id,
         limit: 20,
         token: looksNextToken,
       });
-      const data = responseData?.data || responseData;
-      const lookList = extractHeygenList(responseData, ['avatar_looks', 'looks', 'avatars']);
-      const compatible = filterAvatarLooksByEngine(lookList, desiredEngine)
-        .map((look) => mapAvatarLook(look, selectedGroup.name))
-        .filter((look) => look.id);
-
-      setLooks((prev) => {
-        const seen = new Set(prev.map((l) => l.id));
-        const next = [...prev];
-        compatible.forEach((l) => { if (!seen.has(l.id)) next.push(l); });
-        return next;
-      });
-
-      setLooksHasMore(!!(data?.has_more ?? responseData?.has_more));
-      setLooksNextToken(data?.token ?? responseData?.token ?? data?.next_token ?? responseData?.next_token ?? null);
+      const nextParsed = parseAvatarLooksResponse(responseData);
+      const merged = mergeAvatarLooksPages(looksPageData, nextParsed);
+      setLooksPageData(merged);
+      applyLooksDisplay(merged, lookEngineFilter, selectedGroup.name);
+      setLooksHasMore(merged.hasMore);
+      setLooksNextToken(merged.nextToken);
     } catch (err) {
       console.error('Failed to load more looks:', err);
       setLooksHasMore(false);
@@ -202,18 +221,44 @@ const EditorSidebarAvatar = ({
           addLayer('avatar', look.image);
         }
 
+        const basePresenter = targetScene?.presenter || {};
+        const preferredFromFilter =
+          lookEngineFilter === LOOK_ENGINE_FILTERS.AVATAR_IV
+            ? AVATAR_IV_ENGINE
+            : lookEngineFilter === LOOK_ENGINE_FILTERS.AVATAR_V
+              ? AVATAR_V_ENGINE
+              : avatarEngine;
+        const resolvedEngine = resolveAvatarEngine(
+          { avatar_type: look.avatarType, supportedEngines: look.supportedEngines },
+          preferredFromFilter
+        );
+        const avatarKind = look.avatarType || basePresenter.avatarType || 'studio_avatar';
+        setAvatarEngine(resolvedEngine);
+
         updateScene(sceneId, {
           avatar: look.image,
           avatarType: look.id,
           avatarLookId: look.id,
-          avatarKind: look.avatarType,
+          avatarKind,
           avatarName: look.name,
           avatarGroupId: selectedGroup?.id,
-          avatarEngine,
+          avatarEngine: resolvedEngine,
           presenter: {
-            ...(activeScene?.presenter || {}),
-            avatarEngine,
+            ...basePresenter,
+            avatarId: look.id,
+            avatarLookId: look.id,
+            avatarEngine: resolvedEngine,
+            avatarType: avatarKind,
+            avatarName: look.name,
+            avatarGroupId: selectedGroup?.id,
+            voiceId: basePresenter.voiceId ?? targetScene?.voiceId,
+            voiceName: basePresenter.voiceName ?? targetScene?.voiceName,
+            script: basePresenter.script ?? targetScene?.script ?? '',
+            supportedEngines: look.supportedEngines,
+            engineUnknown: look.engineUnknown,
           },
+          supportedEngines: look.supportedEngines,
+          engineUnknown: look.engineUnknown,
           clips: updatedClips,
           ...(hadGeneratedVideo ? invalidateHeygenSceneVideo() : {}),
         })
@@ -244,6 +289,7 @@ const EditorSidebarAvatar = ({
       scenes,
       selectedGroup,
       avatarEngine,
+      lookEngineFilter,
       autoCreateScene,
       updateScene,
       addLayer,
@@ -366,53 +412,6 @@ const EditorSidebarAvatar = ({
           <MdMic size={16} style={{ color: 'var(--text-muted)', cursor: 'pointer' }} />
         </div>
 
-        {/* Avatar Engine selector */}
-        <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-          <button
-            type="button"
-            onClick={() => {
-              const next = 'avatar_iv'
-              setAvatarEngine(next)
-              if (pickerView === 'looks' && selectedGroup) fetchLooksForGroup(selectedGroup, next)
-            }}
-            style={{
-              flex: 1,
-              padding: '8px 10px',
-              borderRadius: 10,
-              border: '1px solid var(--border-color)',
-              background: avatarEngine === 'avatar_iv' ? 'rgba(26,115,232,0.12)' : 'var(--bg-card)',
-              color: 'var(--text-main)',
-              fontSize: 12,
-              fontWeight: 700,
-              cursor: 'pointer',
-            }}
-            title="HeyGen Avatar IV engine"
-          >
-            Avatar IV
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              const next = 'avatar_v'
-              setAvatarEngine(next)
-              if (pickerView === 'looks' && selectedGroup) fetchLooksForGroup(selectedGroup, next)
-            }}
-            style={{
-              flex: 1,
-              padding: '8px 10px',
-              borderRadius: 10,
-              border: '1px solid var(--border-color)',
-              background: avatarEngine === 'avatar_v' ? 'rgba(168,85,247,0.14)' : 'var(--bg-card)',
-              color: 'var(--text-main)',
-              fontSize: 12,
-              fontWeight: 700,
-              cursor: 'pointer',
-            }}
-            title="HeyGen Avatar V engine"
-          >
-            Avatar V
-          </button>
-        </div>
       </div>
 
       {/* Tabs */}
@@ -512,6 +511,8 @@ const EditorSidebarAvatar = ({
                 setPickerView('groups');
                 setSelectedGroup(null);
                 setLooks([]);
+                setLooksPageData(null);
+                setLookEngineFilter(LOOK_ENGINE_FILTERS.ALL);
                 setLooksError('');
               }}
               style={{
@@ -530,6 +531,49 @@ const EditorSidebarAvatar = ({
             >
               <MdChevronLeft size={16} /> {selectedGroup.name}
             </button>
+          )}
+
+          {pickerView === 'looks' && looksPageData && (
+            <>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                {[
+                  { id: LOOK_ENGINE_FILTERS.ALL, label: 'All', count: looksPageData.engineCounts.totalLooks },
+                  { id: LOOK_ENGINE_FILTERS.AVATAR_IV, label: 'Avatar IV', count: looksPageData.engineCounts.avatar_iv },
+                  { id: LOOK_ENGINE_FILTERS.AVATAR_V, label: 'Avatar V', count: looksPageData.engineCounts.avatar_v },
+                  ...(looksPageData.engineCounts.unknown > 0
+                    ? [{ id: LOOK_ENGINE_FILTERS.UNKNOWN, label: 'Other', count: looksPageData.engineCounts.unknown }]
+                    : []),
+                ].map((chip) => (
+                  <button
+                    key={chip.id}
+                    type="button"
+                    onClick={() => handleLookEngineFilter(chip.id)}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: 999,
+                      border: '1px solid var(--border-color)',
+                      background:
+                        lookEngineFilter === chip.id
+                          ? chip.id === LOOK_ENGINE_FILTERS.AVATAR_V
+                            ? 'rgba(168,85,247,0.14)'
+                            : 'rgba(26,115,232,0.12)'
+                          : 'var(--bg-card)',
+                      color: 'var(--text-main)',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {chip.label} ({chip.count})
+                  </button>
+                ))}
+              </div>
+              {lookEngineFilter === LOOK_ENGINE_FILTERS.UNKNOWN && (
+                <p style={{ margin: '0 0 10px', fontSize: 10, color: 'var(--text-muted)', lineHeight: 1.45 }}>
+                  Engine compatibility not specified by provider.
+                </p>
+              )}
+            </>
           )}
 
             <div style={{

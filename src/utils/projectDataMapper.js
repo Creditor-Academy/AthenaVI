@@ -1,5 +1,10 @@
 import heygenService from '../services/heygenService';
-import { buildHeygenAvatarContent, getSceneAvatarKind, getSceneAvatarLookId } from './heygenAvatars';
+import {
+  buildHeygenAvatarContent,
+  canUseExpressiveness,
+  getSceneAvatarKind,
+  getSceneAvatarLookId,
+} from './heygenAvatars';
 import { getClipTextContent, isTextLayer, parseCssPx, parseFontSize } from './textClip';
 import {
   mapAnimationsForBackend,
@@ -9,6 +14,8 @@ import {
   mapSceneTransitionForBackend,
   mapSceneTransitionFromBackend,
 } from './sceneTransitionUtils';
+import { normalizeSceneClips } from './clipLayout';
+import { applyPlaybackUrlToScene } from './heygenVideo';
 
 const FPS = 30;
 
@@ -249,15 +256,39 @@ function buildPresenter(scene) {
   if (!hasPresenterData) return undefined;
 
   const base = scene.presenter || {};
+  const avatarKind = getSceneAvatarKind(scene);
+  const avatarEngine = scene.avatarEngine || base.avatarEngine || 'avatar_iv';
   const presenter = {
     avatarId: avatarId || base.avatarId,
+    avatarLookId: avatarId || base.avatarLookId || base.avatarId,
     avatarName: scene.avatarName || base.avatarName,
-    avatarType: getSceneAvatarKind(scene),
-    avatarEngine: scene.avatarEngine || base.avatarEngine || 'avatar_iv',
+    avatarType: avatarKind,
+    avatarEngine,
+    avatarGroupId: scene.avatarGroupId || base.avatarGroupId,
     voiceId: scene.voiceId || base.voiceId,
     voiceName: scene.voiceName || base.voiceName,
     script: scene.script ?? base.script ?? '',
   };
+
+  const supportedEngines = scene.supportedEngines ?? base.supportedEngines;
+  if (Array.isArray(supportedEngines)) {
+    presenter.supportedEngines = supportedEngines;
+    presenter.engineUnknown =
+      scene.engineUnknown ?? base.engineUnknown ?? supportedEngines.length === 0;
+  }
+
+  if (
+    scene.expressiveness &&
+    canUseExpressiveness(
+      {
+        avatar_type: avatarKind,
+        supportedEngines: presenter.supportedEngines ?? [],
+      },
+      avatarEngine
+    )
+  ) {
+    presenter.expressiveness = scene.expressiveness;
+  }
 
   const preview = scene.avatar || base.avatarPreviewSrc;
   if (preview && !isEphemeralUrl(preview)) {
@@ -288,8 +319,9 @@ function buildGeneration(scene) {
 
   if (!heygenVideoId && !scene.heygenStatus && !scene.generation) return undefined;
 
+  const status = scene.heygenStatus || scene.generation?.status || 'pending';
   return {
-    status: scene.heygenStatus || scene.generation?.status || 'pending',
+    status: status === 'completed' || status === 'success' ? 'completed' : status,
     heygenVideoId: heygenVideoId || undefined,
   };
 }
@@ -315,8 +347,11 @@ export function toBackendProjectData(projectState) {
       const sceneId = scene.sceneId || scene.id || `scene_${idx}`;
       const isRenderableElement = (el) => {
         if (!el) return false;
-        if (el.type !== 'image' && el.type !== 'video' && el.type !== 'audio') return true;
+        // HeyGen avatar: persist placement/layer via heygenVideoId — playback URL is re-fetched on load
+        if (el.role === 'avatar' || el.type === 'avatar') return true;
         const content = el.content;
+        if (typeof content === 'object' && content !== null && content.heygenVideoId) return true;
+        if (el.type !== 'image' && el.type !== 'video' && el.type !== 'audio') return true;
         const src =
           el.src ||
           (typeof content === 'object' && content !== null ? (content.src || content.url) : null) ||
@@ -447,6 +482,9 @@ export function sceneFromBackend(scene) {
     avatarType: lookId || scene.avatarType,
     avatarKind: presenter.avatarType || scene.avatarKind,
     avatarName: presenter.avatarName || scene.avatarName,
+    avatarEngine: presenter.avatarEngine || scene.avatarEngine || 'avatar_iv',
+    avatarGroupId: presenter.avatarGroupId || scene.avatarGroupId,
+    expressiveness: presenter.expressiveness || scene.expressiveness,
     voiceId: presenter.voiceId || avatarContent.voiceId || scene.voiceId,
     voiceName: presenter.voiceName || scene.voiceName,
     voiceSettings: presenter.voiceSettings || scene.voiceSettings,
@@ -455,7 +493,7 @@ export function sceneFromBackend(scene) {
     heygenStatus: generation.status || scene.heygenStatus,
     presenter,
     generation,
-    clips: (scene.elements || scene.clips || []).map(elementToClip),
+    clips: normalizeSceneClips((scene.elements || scene.clips || []).map(elementToClip)),
   };
 }
 
@@ -487,9 +525,12 @@ export async function rehydrateSceneVideos(scenes, workspaceId, projectId) {
           scene.heygenVideoId
         );
         return {
-          ...scene,
-          generatedVideoUrl: blobUrl,
+          ...applyPlaybackUrlToScene(scene, blobUrl),
           heygenStatus: scene.heygenStatus || 'completed',
+          generation: {
+            heygenVideoId: scene.heygenVideoId,
+            status: 'completed',
+          },
         };
       } catch (err) {
         console.warn(

@@ -15,7 +15,8 @@ import {
     MdPhotoSizeSelectActual,
     MdVideoLibrary
 } from 'react-icons/md'
-import { getClipTextContent, isTextLayer, resolveTextClipRect } from '../../../../utils/textClip'
+import { getClipTextContent, isTextLayer } from '../../../../utils/textClip'
+import { pixelRectToPercent, resolveClipRect } from '../../../../utils/clipLayout'
 import { getClipZIndex, isBackgroundClip, sortClipsForRender } from '../../../../utils/editorLayerUtils'
 import { resolveClipMediaSrc, isVideoMedia, isAvatarClip } from '../../../../utils/heygenVideo'
 import {
@@ -30,24 +31,6 @@ import {
 } from '../../../../utils/textEffects'
 import { resolveSceneLayersAtFrame } from '../../../../utils/sceneTransitionRender'
 import './TextSidebarPanel.css'
-
-export const COMPOSITION_W = 1920
-export const COMPOSITION_H = 1080
-
-/** Map editor pixel coords (1920×1080) to % for Remotion composition */
-export function pixelRectToPercent(position = {}, size = {}) {
-  const x = Number(position.x ?? 0)
-  const y = Number(position.y ?? 0)
-  const width = size.width ?? 'auto'
-  const height = size.height ?? 'auto'
-
-  return {
-    left: `${(x / COMPOSITION_W) * 100}%`,
-    top: `${(y / COMPOSITION_H) * 100}%`,
-    width: typeof width === 'number' ? `${(width / COMPOSITION_W) * 100}%` : width,
-    height: typeof height === 'number' ? `${(height / COMPOSITION_H) * 100}%` : height,
-  };
-}
 
 /** Scene-local video synced to timeline (HeyGen avatar + clip timing). */
 function ClipSequenceVideo({ src, clip, scene, frameInScene, fps, style, audioEnabled = true }) {
@@ -145,6 +128,7 @@ function SceneFrame({ scene, frameInScene, fps, audioEnabled = true }) {
                 zIndex: 0,
                 overflow: 'hidden',
                 pointerEvents: 'none',
+                opacity: clip.opacity ?? 1,
               }}
             >
               {src ? (
@@ -205,11 +189,8 @@ function SceneFrame({ scene, frameInScene, fps, audioEnabled = true }) {
         }
 
         const isText = clip.type === 'text' || isTextLayer(clip)
-        const textLayout = isText ? resolveTextClipRect(clip) : null
-        const pos = textLayout?.position ?? clip.position ?? { x: 0, y: 0 }
-        const size = textLayout?.size ?? clip.size ?? { width: 400, height: 400 }
-        const rect = pixelRectToPercent(pos, size)
-        const clipScale = scale * (clip.scale || 1)
+        const layout = resolveClipRect(clip)
+        const rect = pixelRectToPercent(layout.position, layout.size)
         const style = {
           position: 'absolute',
           left: rect.left,
@@ -231,7 +212,7 @@ function SceneFrame({ scene, frameInScene, fps, audioEnabled = true }) {
         }
 
         if (isText) {
-          const { fontSize: resolvedFontSize } = textLayout
+          const resolvedFontSize = layout.fontSize
           const textStyle = buildTextDisplayStyle(clip.style || {}, clip.opacity ?? 1)
           const shapeWrap = getTextShapeWrapperStyle(clip.style?.textShape)
           const shapeInner = getTextShapeInnerStyle(clip.style?.textShape)
@@ -281,16 +262,19 @@ function SceneFrame({ scene, frameInScene, fps, audioEnabled = true }) {
         if (clip.type === 'image' || clip.type === 'avatar' || clip.type === 'video') {
           const src = resolveClipMediaSrc(clip, scene)
           const isVideo = isVideoMedia(clip, src)
+          const isAvatar = isAvatarClip(clip)
           const w = typeof clip.size?.width === 'number' ? clip.size.width : 0
           const h = typeof clip.size?.height === 'number' ? clip.size.height : 0
-          const avatarRound =
-            isAvatarClip(clip) && !isVideo && w > 0 && h > 0 && Math.abs(w - h) < 40
+          const avatarRound = isAvatar && !isVideo && w > 0 && h > 0 && Math.abs(w - h) < 40
+          const borderRadius = clip.style?.borderRadius || (isAvatar ? '50%' : '16px')
+          const objectFit =
+            clip.style?.objectFit || clip.objectFit || (isAvatar ? 'contain' : 'cover')
 
           return (
             <div key={clip.id} style={{
               ...style,
               border: 'none',
-              borderRadius: avatarRound ? '50%' : isAvatarClip(clip) ? '12px' : '16px',
+              borderRadius: avatarRound ? '50%' : borderRadius,
               background: src ? 'transparent' : 'rgba(0,0,0,0.03)',
               overflow: 'hidden',
             }}>
@@ -306,15 +290,19 @@ function SceneFrame({ scene, frameInScene, fps, audioEnabled = true }) {
                     style={{
                       width: '100%',
                       height: '100%',
-                      objectFit: clip.style?.objectFit || clip.objectFit || (clip.role === 'avatar' ? 'contain' : 'cover'),
+                      objectFit,
                     }}
                   />
                 ) : (
-                  <img src={src} style={{ width: '100%', height: '100%', objectFit: clip.role === 'avatar' ? 'contain' : 'cover' }} alt="" />
+                  <img
+                    src={src}
+                    style={{ width: '100%', height: '100%', objectFit }}
+                    alt=""
+                  />
                 )
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                  {isAvatarClip(clip) ? (
+                  {isAvatar ? (
                     <MdPerson size={Math.min(64, (clip.size?.width || 128) / 2)} color="rgba(0,0,0,0.1)" />
                   ) : clip.type === 'video' ? (
                     <MdVideoLibrary size={Math.min(64, (clip.size?.width || 128) / 2)} color="rgba(0,0,0,0.1)" />

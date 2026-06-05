@@ -18,7 +18,14 @@ import heygenService from '../../services/heygenService'
 import avatar1 from '../../assets/Avatarr1.png'
 import projectTemplate from '../../constants/projectTemplate.json'
 import workspaceService from '../../services/workspaceService'
-import { buildHeygenAvatarContent, getSceneAvatarKind, getSceneAvatarLookId } from '../../utils/heygenAvatars'
+import {
+  buildHeygenAvatarContent,
+  getSceneAvatarKind,
+  getSceneAvatarLookId,
+  canUseExpressiveness,
+  getSceneLookEngineContext,
+  resolveAvatarEngine,
+} from '../../utils/heygenAvatars'
 import { buildClipTextContent } from '../../utils/textClip'
 import {
   fromBackendProjectData,
@@ -30,6 +37,7 @@ import {
   ensureSceneIdentity,
   getCenteredAvatarPlacement,
   nextHeygenSceneId,
+  pollUntilHeygenPlaybackReady,
 } from '../../utils/heygenVideo'
 import { exportFullProjectVideo } from '../../utils/projectRender'
 import {
@@ -43,6 +51,8 @@ import {
 import { useEditorHistory } from '../../hooks/useEditorHistory'
 import { useEditorUx } from '../../hooks/useEditorUx'
 import { normalizeClipStack, normalizeClipsToScene } from '../../utils/editorLayerUtils'
+import { normalizeSceneClips } from '../../utils/clipLayout'
+import { prepareTemplateSceneForEditor } from '../../utils/templateSceneUtils'
 import { saveVersionSnapshot, loadVersionSnapshot, listVersionSnapshots } from '../../utils/editorVersionHistory'
 import EditorToast from '../../components/features/editor/editor/EditorToast'
 import EditorViewControls from '../../components/features/editor/editor/EditorViewControls'
@@ -84,7 +94,10 @@ function buildInitialProject(initialConfig) {
       ...mapped,
       scenes: (mapped.scenes || []).map((scene) => ({
         ...scene,
-        clips: normalizeClipsToScene(normalizeClipStack(scene.clips || []), scene.duration || 8),
+        clips: normalizeClipsToScene(
+          normalizeSceneClips(normalizeClipStack(scene.clips || []), mapped.resolution),
+          scene.duration || 8
+        ),
       })),
     };
   }
@@ -106,7 +119,10 @@ function buildInitialProject(initialConfig) {
     scenes: initialScenes.length > 0
       ? initialScenes.map((scene, idx) => ({
           ...ensureSceneIdentity(scene, idx),
-          clips: normalizeClipsToScene(normalizeClipStack(scene.clips || []), scene.duration || 8),
+          clips: normalizeClipsToScene(
+            normalizeSceneClips(normalizeClipStack(scene.clips || []), resolvedResolution),
+            scene.duration || 8
+          ),
         }))
       : [],
     updatedAt: new Date().toISOString(),
@@ -956,15 +972,6 @@ function Create({ onBack, initialConfig = null }) {
   }
 
   const handleAddTemplateScene = (template) => {
-    // Deep copy the scene template to avoid shared references
-    const templateScene = JSON.parse(JSON.stringify(template));
-    // Keep template scene clean (no generation / playback artifacts)
-    delete templateScene.heygenVideoId;
-    delete templateScene.generatedVideoUrl;
-    delete templateScene.playbackUrl;
-    delete templateScene.heygenStatus;
-    delete templateScene.generation;
-
     const insertAfter = insertAfterIndexRef.current
     insertAfterIndexRef.current = null
 
@@ -983,15 +990,12 @@ function Create({ onBack, initialConfig = null }) {
 
       nextActiveSceneId = newSceneId
 
+      const prepared = prepareTemplateSceneForEditor(template, prev.resolution)
       const newScene = {
-        ...templateScene,
+        ...prepared,
         id: newSceneId,
         sceneId: newSceneId,
         order: isDefaultSingleScene ? 0 : prev.scenes.length,
-        clips: (templateScene.clips || []).map(clip => ({
-          ...clip,
-          id: `clip_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-        })),
       }
 
       let newScenes;
@@ -1128,7 +1132,7 @@ function Create({ onBack, initialConfig = null }) {
     if (!scene && !overrides) return;
 
     const avatarLookId =
-      overrides?.avatarType || getSceneAvatarLookId(scene);
+      overrides?.avatarLookId || overrides?.avatarType || getSceneAvatarLookId(scene);
     const avatarKind =
       overrides?.avatarTypeLabel || getSceneAvatarKind(scene);
     const voiceId = overrides?.voiceId || scene?.voiceId;
@@ -1190,7 +1194,11 @@ function Create({ onBack, initialConfig = null }) {
       const payload = {
         sceneId: stableSceneId,
         avatarId: avatarLookId,
-        avatarEngine: overrides?.avatarEngine || scene?.presenter?.avatarEngine || scene?.avatarEngine || 'avatar_iv',
+        avatarEngine:
+          overrides?.avatarEngine ||
+          scene?.presenter?.avatarEngine ||
+          scene?.avatarEngine ||
+          resolveAvatarEngine(getSceneLookEngineContext(scene)),
         avatarType: avatarKind,
         title: `${project.title} - ${scene?.title || 'Scene'}`,
         resolution: project.resolution?.height >= 1080 ? '1080p' : '720p',
@@ -1203,7 +1211,17 @@ function Create({ onBack, initialConfig = null }) {
         outputFormat: scene?.outputFormat || 'mp4'
       };
 
-      if (payload.avatarEngine === 'avatar_iv' && avatarKind === 'photo_avatar') {
+      if (
+        canUseExpressiveness(
+          {
+            ...getSceneLookEngineContext(scene),
+            avatar_type: avatarKind,
+            supportedEngines:
+              overrides?.supportedEngines ?? getSceneLookEngineContext(scene).supportedEngines,
+          },
+          payload.avatarEngine
+        )
+      ) {
         payload.expressiveness = overrides?.expressiveness || scene?.expressiveness || 'medium';
       }
 
@@ -1242,92 +1260,76 @@ function Create({ onBack, initialConfig = null }) {
 
       setTimeout(() => saveProject(false), 200);
 
-      let pollAttempts = 0;
-      const maxPollAttempts = 24;
+      const finishWithPlayback = async (videoData) => {
+        const videoUrl = await heygenService.getVideoBlobUrl(
+          workspaceId,
+          projectId,
+          heygenVideoId
+        );
 
-      const pollStatus = async () => {
+        let finalDuration =
+          durationFromVideoMetadata(videoData) ?? durationPatch.duration;
+
         try {
-          pollAttempts += 1;
-          const videoData = await heygenService.getVideo(workspaceId, projectId, heygenVideoId);
-          const s3Ready = !!(videoData.s3Key || videoData.s3_key);
-          const isDone =
-            (videoData.status === 'completed' || videoData.status === 'success') && s3Ready;
-
-          if (isDone) {
-            const videoUrl = await heygenService.getVideoBlobUrl(
-              workspaceId,
-              projectId,
-              heygenVideoId
-            );
-
-            let finalDuration =
-              durationFromVideoMetadata(videoData) ??
-              durationPatch.duration
-
-            try {
-              const probed = await probeVideoDuration(videoUrl);
-              if (Number.isFinite(probed) && probed > 0) {
-                finalDuration = roundSceneDuration(probed);
-              }
-            } catch {
-              // keep estimate / API metadata
-            }
-
-            const latestScene = projectRef.current.scenes.find((s) => s.id === sceneId) || scene;
-            const sceneForPlacement = {
-              ...latestScene,
-              sceneId: stableSceneId,
-              heygenVideoId,
-              heygenStatus: 'completed',
-              generatedVideoUrl: videoUrl,
-              duration: finalDuration,
-              avatar: videoData.thumbnail_url || latestScene?.avatar || scene?.avatar,
-            };
-            const placedClips = applyGeneratedHeygenToClips(latestScene?.clips || [], {
-              videoUrl,
-              resolution: projectRef.current.resolution,
-              sceneDuration: finalDuration,
-              scene: sceneForPlacement,
-              buildContent: buildHeygenAvatarContent,
-            });
-            const finalClips = applyDurationToSceneClips(placedClips, finalDuration);
-
-            updateScene(sceneId, {
-              heygenStatus: 'completed',
-              heygenVideoId,
-              avatar: videoData.thumbnail_url || scene?.avatar,
-              generatedVideoUrl: videoUrl,
-              duration: finalDuration,
-              durationFromScript: true,
-              clips: finalClips,
-            });
-
-            showToast('Presenter placed in the center — your other elements are unchanged.', 'success');
-
-            window.dispatchEvent(
-              new CustomEvent('open-generated-video', { detail: { url: videoUrl, sceneId } })
-            );
-          } else if (videoData.status === 'failed' || videoData.status === 'error') {
-            updateScene(sceneId, { heygenStatus: 'failed' });
-            window.dispatchEvent(new CustomEvent('generation-failed'));
-          } else if (pollAttempts < maxPollAttempts) {
-            setTimeout(pollStatus, 5000);
-          } else {
-            updateScene(sceneId, { heygenStatus: 'failed' });
-            window.dispatchEvent(new CustomEvent('generation-failed'));
+          const probed = await probeVideoDuration(videoUrl);
+          if (Number.isFinite(probed) && probed > 0) {
+            finalDuration = roundSceneDuration(probed);
           }
-        } catch (err) {
-          console.error('Polling failed:', err);
-          if (pollAttempts < maxPollAttempts) {
-            setTimeout(pollStatus, 5000);
-          } else {
-            updateScene(sceneId, { heygenStatus: 'failed' });
-            window.dispatchEvent(new CustomEvent('generation-failed'));
-          }
+        } catch {
+          // keep estimate / API metadata
         }
+
+        const latestScene = projectRef.current.scenes.find((s) => s.id === sceneId) || scene;
+        const sceneForPlacement = {
+          ...latestScene,
+          sceneId: stableSceneId,
+          heygenVideoId,
+          heygenStatus: 'completed',
+          generation: { heygenVideoId, status: 'completed' },
+          generatedVideoUrl: videoUrl,
+          duration: finalDuration,
+          avatar: videoData.thumbnail_url || latestScene?.avatar || scene?.avatar,
+        };
+        const placedClips = applyGeneratedHeygenToClips(latestScene?.clips || [], {
+          videoUrl,
+          resolution: projectRef.current.resolution,
+          sceneDuration: finalDuration,
+          scene: sceneForPlacement,
+          buildContent: buildHeygenAvatarContent,
+        });
+        const finalClips = applyDurationToSceneClips(placedClips, finalDuration);
+
+        updateScene(sceneId, {
+          heygenStatus: 'completed',
+          heygenVideoId,
+          generation: { heygenVideoId, status: 'completed' },
+          avatar: videoData.thumbnail_url || scene?.avatar,
+          generatedVideoUrl: videoUrl,
+          duration: finalDuration,
+          durationFromScript: true,
+          clips: finalClips,
+        });
+
+        showToast('Presenter placed in the center — your other elements are unchanged.', 'success');
+
+        window.dispatchEvent(
+          new CustomEvent('open-generated-video', { detail: { url: videoUrl, sceneId } })
+        );
       };
 
-      pollStatus();
+      try {
+        const videoData = await pollUntilHeygenPlaybackReady(
+          workspaceId,
+          projectId,
+          heygenVideoId,
+          heygenService
+        );
+        await finishWithPlayback(videoData);
+      } catch (err) {
+        console.error('HeyGen generation polling failed:', err);
+        updateScene(sceneId, { heygenStatus: 'failed' });
+        window.dispatchEvent(new CustomEvent('generation-failed'));
+      }
 
     } catch (error) {
       console.error('Failed to start video generation:', error);
@@ -1478,13 +1480,31 @@ function Create({ onBack, initialConfig = null }) {
           durationFromScript: true,
           background: { type: 'color', value: payload.backgroundColor || '#101828' },
           avatar: payload.avatarImage,
-          avatarType: payload.avatarType,
-          avatarLookId: payload.avatarType,
+          avatarType: payload.avatarLookId || payload.avatarType,
+          avatarLookId: payload.avatarLookId || payload.avatarType,
           avatarKind: payload.avatarTypeLabel,
           avatarName: payload.avatarName || 'AI Presenter',
+          avatarGroupId: payload.avatarGroupId,
+          avatarEngine: payload.avatarEngine,
           voiceId: payload.voiceId,
           voiceName: payload.voiceName,
           script: paraText,
+          presenter: {
+            avatarId: payload.avatarLookId || payload.avatarType,
+            avatarLookId: payload.avatarLookId || payload.avatarType,
+            avatarEngine: payload.avatarEngine,
+            avatarType: payload.avatarTypeLabel,
+            avatarName: payload.avatarName || 'AI Presenter',
+            avatarGroupId: payload.avatarGroupId,
+            voiceId: payload.voiceId,
+            voiceName: payload.voiceName,
+            script: paraText,
+            supportedEngines: payload.supportedEngines,
+            engineUnknown: payload.engineUnknown,
+            ...(payload.expressiveness ? { expressiveness: payload.expressiveness } : {}),
+          },
+          supportedEngines: payload.supportedEngines,
+          engineUnknown: payload.engineUnknown,
           clips: clips
         };
       });
@@ -1541,9 +1561,10 @@ function Create({ onBack, initialConfig = null }) {
     const sceneDraft = {
       ...(targetScene || {}),
       sceneId: stableSceneId,
-      avatarType: payload.avatarType,
-      avatarLookId: payload.avatarType,
+      avatarType: payload.avatarLookId || payload.avatarType,
+      avatarLookId: payload.avatarLookId || payload.avatarType,
       avatarKind: payload.avatarTypeLabel,
+      avatarEngine: payload.avatarEngine,
       voiceId: payload.voiceId,
       script: payload.script,
     };
@@ -1590,11 +1611,12 @@ function Create({ onBack, initialConfig = null }) {
           ...s,
           sceneId: stableSceneId,
           avatar: payload.avatarImage,
-          avatarType: payload.avatarType,
-          avatarLookId: payload.avatarType,
+          avatarType: payload.avatarLookId || payload.avatarType,
+          avatarLookId: payload.avatarLookId || payload.avatarType,
           avatarKind: payload.avatarTypeLabel,
           avatarName: payload.avatarName,
           avatarGroupId: payload.avatarGroupId,
+          avatarEngine: payload.avatarEngine,
           voiceId: payload.voiceId,
           voiceName: payload.voiceName,
           voiceSettings,
@@ -1602,6 +1624,22 @@ function Create({ onBack, initialConfig = null }) {
           expressiveness: payload.expressiveness,
           backgroundColor: payload.backgroundColor,
           removeBackground: payload.removeBackground,
+          presenter: {
+            avatarId: payload.avatarLookId || payload.avatarType,
+            avatarLookId: payload.avatarLookId || payload.avatarType,
+            avatarEngine: payload.avatarEngine,
+            avatarType: payload.avatarTypeLabel,
+            avatarName: payload.avatarName,
+            avatarGroupId: payload.avatarGroupId,
+            voiceId: payload.voiceId,
+            voiceName: payload.voiceName,
+            script: payload.script,
+            supportedEngines: payload.supportedEngines,
+            engineUnknown: payload.engineUnknown,
+            ...(payload.expressiveness ? { expressiveness: payload.expressiveness } : {}),
+          },
+          supportedEngines: payload.supportedEngines,
+          engineUnknown: payload.engineUnknown,
           duration: durationPatch.duration,
           durationFromScript: true,
           clips: updatedClips
@@ -1712,7 +1750,10 @@ function Create({ onBack, initialConfig = null }) {
               templateClips[newTextIndex].content = oldTextClip.content;
             }
 
-            templateClips = normalizeClipsToScene(templateClips, s.duration || 8);
+            templateClips = normalizeClipsToScene(
+              normalizeSceneClips(templateClips, prev.resolution),
+              s.duration || 8
+            );
             return { ...s, clips: templateClips, layout: layoutId, generatedVideoUrl, title: template.title };
           }
 

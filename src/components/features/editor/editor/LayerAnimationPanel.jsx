@@ -106,6 +106,17 @@ const LayerAnimationPanel = ({ activeLayer, updateLayer }) => {
             unit="s"
             onChange={(v) => applyEntrance({ duration: v })}
           />
+          {(currentType === 'typewriter' || currentType === 'wordFade') && (
+            <SliderRow
+              label="Speed"
+              value={entrance?.speed ?? 1}
+              min={0.25}
+              max={3}
+              step={0.25}
+              unit="×"
+              onChange={(v) => applyEntrance({ speed: v, previewSeed: Date.now() })}
+            />
+          )}
           <SliderRow
             label="Delay"
             value={entrance?.delay ?? 0}

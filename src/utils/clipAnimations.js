@@ -68,14 +68,18 @@ export function setEntranceAnimation(clip, patch) {
   const list = Array.isArray(clip?.animations) ? [...clip.animations] : [];
   const idx = list.findIndex((a) => a?.phase === ANIMATION_PHASE.ENTRANCE);
   const prev = idx >= 0 ? list[idx] : {};
+  const nextType = patch.type ?? prev.type ?? 'fadeIn';
   const next = {
     phase: ANIMATION_PHASE.ENTRANCE,
-    type: patch.type ?? prev.type ?? 'fadeIn',
+    type: nextType,
     duration: patch.duration ?? prev.duration ?? 0.6,
     delay: patch.delay ?? prev.delay ?? 0,
     ...(prev.direction ? { direction: prev.direction } : {}),
     ...(patch.direction != null ? { direction: patch.direction } : {}),
     ...(patch.previewSeed != null ? { previewSeed: patch.previewSeed } : {}),
+    ...((nextType === 'typewriter' || nextType === 'wordFade' || prev.speed != null || patch.speed != null)
+      ? { speed: patch.speed ?? prev.speed ?? 1 }
+      : {}),
   };
   if (next.type === 'none') {
     const filtered = list.filter((a) => a?.phase !== ANIMATION_PHASE.ENTRANCE);
@@ -117,7 +121,19 @@ export function computeClipAnimationState(frameInClip, fps, clip) {
   }
 
   const delayFrames = Math.round((entrance.delay || 0) * fps);
-  const durationFrames = Math.max(1, Math.round((entrance.duration || 0.6) * fps));
+  const baseDuration = entrance.duration || 0.6;
+  const speed =
+    entrance.type === 'typewriter' || entrance.type === 'wordFade'
+      ? Math.max(0.25, entrance.speed ?? 1)
+      : 1;
+  const durationFrames = Math.max(
+    1,
+    Math.round(
+      (entrance.type === 'typewriter' || entrance.type === 'wordFade'
+        ? baseDuration / speed
+        : baseDuration) * fps
+    )
+  );
   const localFrame = frameInClip - delayFrames;
 
   if (localFrame < 0) {

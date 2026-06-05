@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import TemplatePreview from './TemplatePreview';
+import TemplateScenePreview from './features/editor/editor/TemplateScenePreview';
 
 /**
  * TemplateCard Component
@@ -178,12 +179,16 @@ const TemplateCard = ({ template, onSelect }) => {
           </button>
         </div>
 
-              <TemplatePreview 
-          template={template}
-          layoutType={layoutType} 
-          variant={variant} 
-          style={{ borderRadius: '8px' }}
-        />
+        {template?.clips?.length > 0 ? (
+          <TemplateScenePreview template={template} />
+        ) : (
+          <TemplatePreview
+            template={template}
+            layoutType={layoutType}
+            variant={variant}
+            style={{ borderRadius: '8px' }}
+          />
+        )}
       </div>
 
       {/* Footer Section */}
