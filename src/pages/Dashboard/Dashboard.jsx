@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import Home from '../Home/Home.jsx'
 import Videos from '../Videos/Videos.jsx'
-import Trash from '../Trash/Trash.jsx'
 import Avatars from '../Avatars/Avatars.jsx'
 import CreateAvatar from '../Avatars/CreateAvatar.jsx'
 import Voices from '../Voices/Voices.jsx'
@@ -72,7 +71,6 @@ function Dashboard({ onCreate, initialSection }) {
     'home',
     'videos',
     'workspace',
-    'trash',
     'library',
     'brandkits',
     'avatars',
@@ -255,7 +253,6 @@ function Dashboard({ onCreate, initialSection }) {
               }} 
             />
           )}
-          {section === 'trash' && <Trash />}
           {section === 'voices' && (
             <Voices 
               onCreateVoice={() => goToSection('create-voice')} 

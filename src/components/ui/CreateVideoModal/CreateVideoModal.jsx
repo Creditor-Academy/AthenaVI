@@ -90,7 +90,7 @@ function readRole(workspace) {
   return String(role).toUpperCase();
 }
 
-function normalizeWorkspace(workspace, currentUserId) {
+function normalizeWorkspace(workspace, currentUserId, authUser) {
   const id = workspace.id || workspace._id;
   const typeRaw = String(workspace.type || '').toUpperCase();
   const isPersonal = Boolean(workspace.isPersonal) || typeRaw === 'PRIVATE' || typeRaw === 'PERSONAL';
@@ -135,7 +135,22 @@ function normalizeWorkspace(workspace, currentUserId) {
   return {
     ...workspace,
     id,
-    name: workspace.name || workspace.title || 'Untitled Workspace',
+    name: (() => {
+      if (isPersonal) {
+        const fullName = authUser?.name || workspace.owner?.name || '';
+        let firstName = fullName.trim().split(/\s+/)[0];
+        if (!firstName && (authUser?.email || workspace.owner?.email)) {
+          const email = authUser?.email || workspace.owner?.email;
+          firstName = email.split('@')[0].split(/[._-]/)[0];
+        }
+        if (firstName) {
+          firstName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+          return `${firstName}'s Personal`;
+        }
+        return "Your Personal";
+      }
+      return workspace.name || workspace.title || 'Untitled Workspace';
+    })(),
     section: isPersonal ? 'personal' : (isOwner ? 'my' : 'shared'),
     type: isPersonal ? 'personal' : 'workspace',
     userRole: effectiveRole
@@ -280,7 +295,7 @@ const CreateVideoModal = ({
     setWorkspaceLoading(true);
     try {
       const fetched = await workspaceService.listWorkspaces();
-      const normalized = (fetched || []).map((ws) => normalizeWorkspace(ws, currentUserId));
+      const normalized = (fetched || []).map((ws) => normalizeWorkspace(ws, currentUserId, authUser));
       setWorkspaceOptions(normalized);
 
       const defaultWorkspace =
@@ -361,7 +376,7 @@ const CreateVideoModal = ({
     const onWorkspaceCreated = (event) => {
       const created = event.detail?.workspace;
       if (!created) return;
-      const normalized = normalizeWorkspace(created, currentUserId);
+      const normalized = normalizeWorkspace(created, currentUserId, authUser);
       setWorkspaceOptions((prev) => {
         if (prev.some((workspace) => String(workspace.id) === String(normalized.id))) return prev;
         return [...prev, normalized];
@@ -501,7 +516,7 @@ const CreateVideoModal = ({
     setCreatingWorkspace(true);
     try {
       const created = await workspaceService.createWorkspace(trimmedName);
-      const normalized = normalizeWorkspace({ ...created, userRole: 'OWNER' }, currentUserId);
+      const normalized = normalizeWorkspace({ ...created, userRole: 'OWNER' }, currentUserId, authUser);
 
       setWorkspaceOptions((prev) => {
         if (prev.some((workspace) => String(workspace.id) === String(normalized.id))) return prev;

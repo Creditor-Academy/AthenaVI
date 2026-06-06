@@ -114,7 +114,22 @@ function normalizeWorkspace(rawWorkspace, currentUserId, authUser) {
   return {
     ...rawWorkspace,
     id,
-    name: rawWorkspace.name || rawWorkspace.title || 'Untitled Workspace',
+    name: (() => {
+      if (isPersonal) {
+        const fullName = authUser?.name || rawWorkspace.owner?.name || '';
+        let firstName = fullName.trim().split(/\s+/)[0];
+        if (!firstName && (authUser?.email || rawWorkspace.owner?.email)) {
+          const email = authUser?.email || rawWorkspace.owner?.email;
+          firstName = email.split('@')[0].split(/[._-]/)[0];
+        }
+        if (firstName) {
+          firstName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+          return `${firstName}'s Personal`;
+        }
+        return "Your Personal";
+      }
+      return rawWorkspace.name || rawWorkspace.title || 'Untitled Workspace';
+    })(),
     type: isPersonal ? 'personal' : 'workspace',
     userRole: effectiveRole,
     ownerId: ownerId || (isOwner ? currentUserId : ''),
@@ -535,6 +550,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
         if (!localWorkspaceMeta) return workspace;
         return {
           ...workspace,
+          name: localWorkspaceMeta.name || workspace.name,
           type: 'workspace',
           userRole: 'OWNER',
           ownerId: currentUserId || workspace.ownerId,
@@ -822,6 +838,30 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
 
       await workspaceService.updateWorkspace(id, { name: newName });
       setWorkspaces((prev) => prev.map((workspace) => (String(workspace.id) === String(id) ? { ...workspace, name: newName } : workspace)));
+      
+      setLocalAdditions((prev) => {
+        const otherWorkspaces = (prev.workspaces || []).filter((ws) => String(ws.id) !== String(id));
+        const targetWs = workspaces.find((ws) => String(ws.id) === String(id));
+        const updated = {
+          ...targetWs,
+          name: newName,
+          createdByCurrentUser: true
+        };
+        return {
+          ...prev,
+          workspaces: [...otherWorkspaces, updated]
+        };
+      });
+
+      setCurrentLevel((prev) => {
+        if (prev.ws && String(prev.ws.id) === String(id)) {
+          return {
+            ...prev,
+            ws: { ...prev.ws, name: newName }
+          };
+        }
+        return prev;
+      });
       showToast('Workspace renamed successfully', 'success');
     }
 
@@ -1041,6 +1081,30 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
         prev.map((item) => (String(item.id) === String(workspace.id) ? { ...item, name: newName } : item))
       );
 
+      setLocalAdditions((prev) => {
+        const otherWorkspaces = (prev.workspaces || []).filter((ws) => String(ws.id) !== String(workspace.id));
+        const targetWs = workspaces.find((ws) => String(ws.id) === String(workspace.id));
+        const updated = {
+          ...targetWs,
+          name: newName,
+          createdByCurrentUser: true
+        };
+        return {
+          ...prev,
+          workspaces: [...otherWorkspaces, updated]
+        };
+      });
+
+      setCurrentLevel((prev) => {
+        if (prev.ws && String(prev.ws.id) === String(workspace.id)) {
+          return {
+            ...prev,
+            ws: { ...prev.ws, name: newName }
+          };
+        }
+        return prev;
+      });
+
       setContributorsPanel((prev) => ({
         ...prev,
         workspace: prev.workspace ? { ...prev.workspace, name: newName } : null
@@ -1117,6 +1181,10 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           onClick={() => setCurrentLevel({ type: 'workspace', id: workspace.id, ws: workspace })}
           contextProps={{
             onDetails: () => setDetailsTarget({ type: 'workspace', item: workspace }),
+            onRename:
+              workspace.type === 'workspace' && String(workspace.userRole).toUpperCase() === 'OWNER'
+                ? () => renameItem('workspace', workspace.id)
+                : null,
             onManageWorkspace:
               workspace.type === 'workspace' && String(workspace.userRole).toUpperCase() === 'OWNER'
                 ? () => handleManageWorkspace(workspace)
@@ -1143,6 +1211,10 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
         onClick={() => setCurrentLevel({ type: 'workspace', id: workspace.id, ws: workspace })}
         contextProps={{
           onDetails: () => setDetailsTarget({ type: 'workspace', item: workspace }),
+          onRename:
+            workspace.type === 'workspace' && String(workspace.userRole).toUpperCase() === 'OWNER'
+              ? () => renameItem('workspace', workspace.id)
+              : null,
           onManageWorkspace:
             workspace.type === 'workspace' && String(workspace.userRole).toUpperCase() === 'OWNER'
               ? () => handleManageWorkspace(workspace)

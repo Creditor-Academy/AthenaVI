@@ -34,9 +34,9 @@ const ContextMenu = ({ type, onRename, onAddMembers, onSort, onView, onDelete, o
 
             {isOpen && (
                 <div className="context-menu-dropdown fade-in-fast">
-                    {onDetails && (
-                        <button className="menu-item" onClick={(e) => handleAction(e, onDetails)}>
-                            <MdInfo size={16} /> Details
+                    {onRename && (
+                        <button className="menu-item" onClick={(e) => handleAction(e, onRename)}>
+                            <MdEdit size={16} /> Rename
                         </button>
                     )}
                     {type === 'workspace' && onManageWorkspace && (
@@ -44,9 +44,9 @@ const ContextMenu = ({ type, onRename, onAddMembers, onSort, onView, onDelete, o
                             <MdSettings size={16} /> Manage
                         </button>
                     )}
-                    {onRename && (
-                        <button className="menu-item" onClick={(e) => handleAction(e, onRename)}>
-                            <MdEdit size={16} /> Rename
+                    {onDetails && (
+                        <button className="menu-item" onClick={(e) => handleAction(e, onDetails)}>
+                            <MdInfo size={16} /> Details
                         </button>
                     )}
                     {onMove && (
@@ -71,7 +71,7 @@ const ContextMenu = ({ type, onRename, onAddMembers, onSort, onView, onDelete, o
                     )}
                     {onDelete && (
                         <button className="menu-item text-danger" onClick={(e) => handleAction(e, onDelete)}>
-                            <MdDelete size={16} /> Move to Trash
+                            <MdDelete size={16} /> Delete
                         </button>
                     )}
                 </div>
