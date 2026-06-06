@@ -980,3 +980,46 @@
 .btn-add-circle:active {
   transform: scale(0.95);
 }
+
+/* Count Circle Badges styling */
+.tab-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #cbd5e1;
+  color: #ffffff !important;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 99px;
+  border: none;
+  transition: all 0.2s ease;
+  margin-left: 4px;
+}
+
+.workspace-root-tab:hover .tab-count-badge {
+  background: #94a3b8;
+  color: #ffffff !important;
+}
+
+.workspace-root-tab.active .tab-count-badge {
+  background: var(--primary);
+  color: #ffffff !important;
+}
+
+.section-count-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 99px;
+  border: 1px solid var(--border-color);
+}
