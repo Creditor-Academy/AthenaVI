@@ -79,6 +79,81 @@ function clampPanelSize(value, min, max) {
   return Math.min(max, Math.max(min, value))
 }
 
+const PROJECT_DRAFT_KEY = 'athenavi_project'
+
+function countSceneClips(scenes = []) {
+  return scenes.reduce((total, scene) => total + (scene.clips?.length ?? 0), 0)
+}
+
+function normalizeBootScenes(scenes = [], resolution) {
+  return scenes.map((scene) => ({
+    ...scene,
+    clips: normalizeClipsToScene(
+      normalizeSceneClips(normalizeClipStack(scene.clips || []), resolution),
+      scene.duration || 8
+    ),
+  }))
+}
+
+function loadProjectDraft(projectId) {
+  if (!projectId) return null
+  try {
+    const raw = localStorage.getItem(PROJECT_DRAFT_KEY)
+    if (!raw) return null
+    const draft = JSON.parse(raw)
+    const draftId = draft?.id || draft?.createConfig?.videoId
+    if (String(draftId) !== String(projectId)) return null
+    return draft
+  } catch {
+    return null
+  }
+}
+
+/** Prefer the local draft when it has more content or a newer timestamp. */
+function mergeProjectWithDraft(base, draft) {
+  if (!draft?.scenes?.length) return base
+
+  const baseClips = countSceneClips(base.scenes)
+  const draftClips = countSceneClips(draft.scenes)
+  const baseUpdated = Date.parse(base.updatedAt || 0) || 0
+  const draftUpdated = Date.parse(draft.updatedAt || 0) || 0
+  const preferDraft = draftClips > baseClips || draftUpdated > baseUpdated
+
+  if (!preferDraft) return base
+
+  const resolution = draft.resolution || base.resolution
+  return {
+    ...base,
+    title: draft.title || base.title,
+    resolution,
+    meta: draft.meta || base.meta,
+    scenes: normalizeBootScenes(draft.scenes, resolution),
+    updatedAt: draft.updatedAt || base.updatedAt,
+    id: base.id || draft.id,
+    workspaceId: base.workspaceId || draft.workspaceId,
+    folderId: base.folderId || draft.folderId,
+    createConfig: base.createConfig || draft.createConfig,
+  }
+}
+
+function shouldPreferLocalProject(localProject, backendScenes, backendUpdatedAt) {
+  const localClips = countSceneClips(localProject?.scenes)
+  const backendClips = countSceneClips(backendScenes)
+  if (localClips > backendClips) return true
+  if (backendClips > localClips) return false
+
+  const localUpdated = Date.parse(localProject?.updatedAt || 0) || 0
+  const backendUpdated = Date.parse(backendUpdatedAt || 0) || 0
+  return localUpdated > backendUpdated
+}
+
+function resolveProjectIds(projectState) {
+  return {
+    workspaceId: projectState.workspaceId || projectState.createConfig?.workspaceId,
+    projectId: projectState.id || projectState.createConfig?.videoId,
+  }
+}
+
 function buildInitialProject(initialConfig) {
   if (initialConfig?.videoData?.data) {
     const data = initialConfig.videoData.data;
@@ -89,17 +164,13 @@ function buildInitialProject(initialConfig) {
       workspaceId: initialConfig.videoData.workspaceId,
       folderId: initialConfig.videoData.folderId,
     });
-    return {
+    const projectId = initialConfig.videoData.id || initialConfig.videoData._id
+    const base = {
       ...projectTemplate.project,
       ...mapped,
-      scenes: (mapped.scenes || []).map((scene) => ({
-        ...scene,
-        clips: normalizeClipsToScene(
-          normalizeSceneClips(normalizeClipStack(scene.clips || []), mapped.resolution),
-          scene.duration || 8
-        ),
-      })),
-    };
+      scenes: normalizeBootScenes(mapped.scenes || [], mapped.resolution),
+    }
+    return mergeProjectWithDraft(base, loadProjectDraft(projectId))
   }
 
   const pageSizeToResolution = {
@@ -112,36 +183,36 @@ function buildInitialProject(initialConfig) {
   const resolvedTitle = initialConfig?.name?.trim() || projectTemplate.project.title;
   const initialScenes = initialConfig?.template?.scenes || (initialConfig?.template ? [initialConfig.template] : []);
 
-  return {
+  const projectId = initialConfig?.videoId || initialConfig?.videoData?.id || initialConfig?.videoData?._id
+  const base = {
     ...projectTemplate.project,
     title: resolvedTitle,
     resolution: resolvedResolution,
     scenes: initialScenes.length > 0
-      ? initialScenes.map((scene, idx) => ({
-          ...ensureSceneIdentity(scene, idx),
-          clips: normalizeClipsToScene(
-            normalizeSceneClips(normalizeClipStack(scene.clips || []), resolvedResolution),
-            scene.duration || 8
-          ),
-        }))
+      ? normalizeBootScenes(
+          initialScenes.map((scene, idx) => ensureSceneIdentity(scene, idx)),
+          resolvedResolution
+        )
       : [],
     updatedAt: new Date().toISOString(),
-    id: initialConfig?.videoId,
-    workspaceId: initialConfig?.workspaceId,
-    folderId: initialConfig?.folderId,
+    id: projectId,
+    workspaceId: initialConfig?.workspaceId || initialConfig?.videoData?.workspaceId,
+    folderId: initialConfig?.folderId || initialConfig?.videoData?.folderId,
     createConfig: initialConfig
       ? {
           template: initialConfig.template || null,
           pageSize: initialConfig.pageSize || 'landscape',
           workspace: initialConfig.workspace || '',
-          workspaceId: initialConfig.workspaceId || '',
+          workspaceId: initialConfig.workspaceId || initialConfig.videoData?.workspaceId || '',
           folder: initialConfig.folder || '',
-          folderId: initialConfig.folderId || '',
+          folderId: initialConfig.folderId || initialConfig.videoData?.folderId || '',
           tags: initialConfig.tags || [],
           name: initialConfig.name || resolvedTitle,
+          videoId: projectId || '',
         }
       : null,
-  };
+  }
+  return mergeProjectWithDraft(base, loadProjectDraft(projectId))
 }
 
 function Create({ onBack, initialConfig = null }) {
@@ -318,6 +389,7 @@ function Create({ onBack, initialConfig = null }) {
   const projectRef = useRef(project)
   const insertAfterIndexRef = useRef(null)
   projectRef.current = project
+  const saveProjectRef = useRef(null)
 
   // Fetch the latest project state from the backend on mount
   useEffect(() => {
@@ -333,21 +405,37 @@ function Create({ onBack, initialConfig = null }) {
         if (!fetchedProject) return
 
         const backendScenes = fetchedProject.data?.scenes || []
+        const localProject = projectRef.current
 
         // If backend has no scenes but editor already has scenes (e.g. template), do an initial save
-        if (backendScenes.length === 0 && projectRef.current.scenes.length > 0) {
+        if (backendScenes.length === 0 && localProject.scenes.length > 0) {
           console.log('[Editor] Fresh project – saving initial template scenes to backend')
-          setTimeout(() => saveProject(false, projectRef.current), 500)
+          saveProjectRef.current?.(false, localProject)
           return
         }
 
         if (backendScenes.length > 0) {
-          const mapped = fromBackendProjectData(fetchedProject.data);
+          const mapped = fromBackendProjectData(fetchedProject.data)
+          const resolution = mapped.resolution || localProject.resolution
+          const normalizedBackendScenes = normalizeBootScenes(mapped.scenes || [], resolution)
+
+          if (
+            shouldPreferLocalProject(
+              localProject,
+              normalizedBackendScenes,
+              fetchedProject.updatedAt
+            )
+          ) {
+            console.log('[Editor] Local draft is newer than backend — syncing up')
+            saveProjectRef.current?.(false, localProject)
+            return
+          }
+
           const scenesWithVideo = await rehydrateSceneVideos(
-            mapped.scenes,
+            normalizedBackendScenes,
             workspaceId,
             projectId
-          );
+          )
 
           setProject((prev) => ({
             ...prev,
@@ -355,7 +443,7 @@ function Create({ onBack, initialConfig = null }) {
             meta: mapped.meta || prev.meta,
             scenes: scenesWithVideo.map((s, idx) => ensureSceneIdentity(s, idx)),
             updatedAt: fetchedProject.updatedAt || new Date().toISOString(),
-          }));
+          }))
         }
       } catch (err) {
         console.warn('[Editor] Failed to fetch project from backend:', err)
@@ -369,45 +457,86 @@ function Create({ onBack, initialConfig = null }) {
   }, [])
 
   const saveProject = useCallback(async (manual = false, projectState = projectRef.current) => {
+    const { workspaceId, projectId } = resolveProjectIds(projectState)
+
     try {
-      localStorage.setItem('athenavi_project', JSON.stringify(projectState));
+      localStorage.setItem(PROJECT_DRAFT_KEY, JSON.stringify({ ...projectState, id: projectId || projectState.id, workspaceId: workspaceId || projectState.workspaceId }))
     } catch (e) {
-      console.warn('Failed to save to localStorage', e);
+      console.warn('Failed to save to localStorage', e)
     }
 
-    if (!projectState.id || !projectState.workspaceId) {
+    if (!projectId || !workspaceId) {
       if (manual) {
-        showToast('Cannot save — project is missing workspace or ID', 'warning');
+        showToast('Cannot save — project is missing workspace or ID', 'warning')
       }
-      return;
+      return
     }
 
     if (!isOnline) {
-      if (manual) showToast('Offline — changes saved locally only', 'warning');
-      return;
+      if (manual) showToast('Offline — changes saved locally only', 'warning')
+      return
     }
 
     try {
-      setIsSaving(true);
+      setIsSaving(true)
 
-      const payload = toBackendProjectData(projectState);
+      const payload = toBackendProjectData({
+        ...projectState,
+        id: projectId,
+        workspaceId,
+      })
 
-      await workspaceService.saveProjectState(projectState.workspaceId, projectState.id, payload);
+      await workspaceService.saveProjectState(workspaceId, projectId, payload)
 
       if (manual) {
-        await workspaceService.updateProject(projectState.workspaceId, projectState.id, { name: projectState.title });
+        await workspaceService.updateProject(workspaceId, projectId, { name: projectState.title })
       }
 
-      saveVersionSnapshot(projectState.id, projectState);
-      setLastSaved(new Date());
-      if (manual) showToast('Project saved', 'success');
+      saveVersionSnapshot(projectId, projectState)
+      setLastSaved(new Date())
+      if (manual) showToast('Project saved', 'success')
     } catch (error) {
-      console.error('Failed to save project:', error);
-      showToast(error?.message || 'Save failed — your work is kept locally', 'error');
+      console.error('Failed to save project:', error)
+      showToast(error?.message || 'Save failed — your work is kept locally', 'error')
     } finally {
-      setIsSaving(false);
+      setIsSaving(false)
     }
-  }, [isOnline, showToast]);
+  }, [isOnline, showToast])
+
+  saveProjectRef.current = saveProject
+
+  // Keep a local draft in sync so refresh doesn't lose unsaved edits
+  useEffect(() => {
+    const { projectId, workspaceId } = resolveProjectIds(project)
+    if (!projectId) return undefined
+
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(
+          PROJECT_DRAFT_KEY,
+          JSON.stringify({ ...project, id: projectId, workspaceId: workspaceId || project.workspaceId })
+        )
+      } catch (e) {
+        console.warn('Failed to persist project draft', e)
+      }
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [project])
+
+  // Flush save when tab closes or user refreshes (localStorage is sync; API gets a best-effort push)
+  useEffect(() => {
+    const flushSave = () => {
+      saveProjectRef.current?.(false, projectRef.current)
+    }
+
+    document.addEventListener('visibilitychange', flushSave)
+    window.addEventListener('pagehide', flushSave)
+    return () => {
+      document.removeEventListener('visibilitychange', flushSave)
+      window.removeEventListener('pagehide', flushSave)
+    }
+  }, [])
 
   const applyGlobalSetting = (type) => {
     const activeScene = project.scenes.find(s => s.id === activeSceneId);
