@@ -393,6 +393,7 @@ const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdateP
   const flipX = s.scaleX === -1 ? -1 : 1
   const flipY = s.scaleY === -1 ? -1 : 1
   const flipTransform = (flipX !== 1 || flipY !== 1) ? `scale(${flipX}, ${flipY})` : undefined
+  const isBg = isBackgroundClip(clip)
   const borderStyle = s.borderWidth
     ? `${s.borderWidth} ${s.borderStyle || 'solid'} ${s.borderColor || '#7c3aed'}`
     : (s.border || 'none')
@@ -401,12 +402,14 @@ const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdateP
     flipTransform,
     cssFilter,
     overlayMode,
-    borderRadius: s.borderRadius || '50%',
+    borderRadius: isBg ? '0' : (s.borderRadius || '50%'),
     border: borderStyle,
     boxShadow: s.boxShadow || 'none',
     overflow: 'hidden',
     background: overlayMode ? 'transparent' : (src ? 'transparent' : (s.backgroundColor || s.background || 'linear-gradient(135deg, #818cf8 0%, #a78bfa 100%)')),
   })
+
+  const avatarFit = s.objectFit || (isBg ? 'cover' : 'contain')
 
   return (
     <div
@@ -427,10 +430,10 @@ const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdateP
         isVideo ? (
           <PausedVideoPreview
             src={src}
-            style={{ width: '100%', height: '100%', objectFit: s.objectFit || 'cover', display: 'block', pointerEvents: 'none' }}
+            style={{ width: '100%', height: '100%', objectFit: avatarFit, display: 'block', pointerEvents: 'none' }}
           />
         ) : (
-          <img src={src} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: s.objectFit || 'contain', display: 'block', pointerEvents: 'none' }} />
+          <img src={src} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: avatarFit, display: 'block', pointerEvents: 'none' }} />
         )
         ) : null
       ) : !overlayMode ? (
@@ -455,14 +458,15 @@ const VideoClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePo
   const borderStyle = s.borderWidth
     ? `${s.borderWidth} ${s.borderStyle || 'solid'} ${s.borderColor || '#000'}`
     : (s.border || 'none')
-  const fitMode = s.objectFit || (clip.role === 'avatar' ? 'contain' : 'cover')
+  const isBg = isBackgroundClip(clip)
+  const fitMode = s.objectFit || (isBg ? 'cover' : (clip.role === 'avatar' ? 'contain' : 'cover'))
 
   const wrapperStyle = buildLiveAnimStyle(clipBase(clip, isSelected), clip, animState, {
     flipTransform,
     cssFilter,
     overlayMode,
     overflow: 'hidden',
-    borderRadius: s.borderRadius || (clip.role === 'avatar' ? '50%' : '16px'),
+    borderRadius: isBg ? '0' : (s.borderRadius || (clip.role === 'avatar' ? '50%' : '16px')),
     border: borderStyle,
     boxShadow: s.boxShadow || 'none',
     background: overlayMode ? 'transparent' : (src ? 'transparent' : (s.backgroundColor || s.background || 'rgba(0,0,0,0.04)')),

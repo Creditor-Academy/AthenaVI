@@ -1,4 +1,4 @@
-import { normalizeClipStack } from './editorLayerUtils'
+import { isBackgroundClip, normalizeClipStack } from './editorLayerUtils'
 
 const HEYGEN_POLL_INTERVAL_MS = 2000
 const HEYGEN_POLL_MAX_ATTEMPTS = 60
@@ -127,6 +127,16 @@ export function applyGeneratedHeygenToClips(
       merged.size = centered.size
     }
 
+    if (existing?.isBackground || isBackgroundClip(existing)) {
+      merged.isBackground = true
+      merged.position = { x: 0, y: 0 }
+      merged.size = { width: 1920, height: 1080 }
+      merged.style = {
+        ...(merged.style || {}),
+        objectFit: 'cover',
+      }
+    }
+
     return merged
   }
 
@@ -166,6 +176,23 @@ export function isAvatarClip(clip) {
   )
 }
 
+/** Generated HeyGen A/V — foreground avatar or avatar sent to scene background. */
+export function isHeygenPlaybackClip(clip, scene) {
+  if (!scene?.heygenVideoId) return false
+  if (isAvatarClip(clip)) return true
+  if (
+    isBackgroundClip(clip) &&
+    (clip.type === 'video' || clip.type === 'avatar')
+  ) {
+    return true
+  }
+  return false
+}
+
+export function clipHasHeygenAudio(clip, scene) {
+  return isHeygenPlaybackClip(clip, scene)
+}
+
 function pickHttpPlaybackUrl(...candidates) {
   for (const raw of candidates) {
     if (!raw || typeof raw !== 'string') continue
@@ -177,15 +204,14 @@ function pickHttpPlaybackUrl(...candidates) {
 
 /** Resolve playable src for a clip, preferring fresh presigned HeyGen URLs when available. */
 export function resolveClipMediaSrc(clip, scene) {
-  if (isAvatarClip(clip)) {
-    const http = pickHttpPlaybackUrl(
-      scene?.playbackUrl,
-      scene?.generatedVideoUrl,
-      clip?.src
-    )
+  const scenePlayback = scene?.playbackUrl || scene?.generatedVideoUrl || null
+
+  if (isHeygenPlaybackClip(clip, scene)) {
+    const http = pickHttpPlaybackUrl(scene?.playbackUrl, scene?.generatedVideoUrl, clip?.src)
     if (http) return http
-    return scene?.playbackUrl || scene?.generatedVideoUrl || clip?.src || null
+    return scenePlayback || clip?.src || null
   }
+
   return clip?.src || null
 }
 
@@ -213,7 +239,7 @@ export function sceneHasHeygenPlayback(scene) {
   }
   const url = scene.playbackUrl || scene.generatedVideoUrl
   for (const clip of scene.clips || []) {
-    if (isAvatarClip(clip) && clip.src && typeof clip.src === 'string') return true
+    if (isHeygenPlaybackClip(clip, scene) && clip.src && typeof clip.src === 'string') return true
   }
   return !!(url && typeof url === 'string')
 }
@@ -232,16 +258,15 @@ export function sceneNeedsHeygenRegeneration(scene) {
   return scene?.heygenStatus === 'needs_regeneration'
 }
 
-/** Attach resolved HeyGen URL to scene + avatar clip so every scene can play audio. */
+/** Attach resolved HeyGen URL to scene + every clip that carries HeyGen A/V. */
 export function applyPlaybackUrlToScene(scene, url) {
   if (!url || !scene) return scene
   const clips = (scene.clips || []).map((clip) => {
-    if (!isAvatarClip(clip)) return clip
+    if (!isHeygenPlaybackClip(clip, scene)) return clip
     return {
       ...clip,
       src: url,
       type: clip.type === 'avatar' ? 'video' : clip.type,
-      role: 'avatar',
     }
   })
   return {
@@ -256,9 +281,15 @@ export function applyPlaybackUrlToScene(scene, url) {
 export async function resolveScenePlaybackUrl(scene, workspaceId, projectId, heygenService) {
   if (!scene?.heygenVideoId || !workspaceId || !projectId) return scene
 
-  const avatarClip = (scene.clips || []).find(isAvatarClip)
-  if (avatarClip?.src?.startsWith('blob:')) {
-    return scene
+  const playbackClips = (scene.clips || []).filter((c) => isHeygenPlaybackClip(c, scene))
+  const existingUrl =
+    scene.playbackUrl ||
+    scene.generatedVideoUrl ||
+    playbackClips.find((c) => c.src)?.src ||
+    null
+
+  if (existingUrl) {
+    return applyPlaybackUrlToScene(scene, existingUrl)
   }
 
   try {
@@ -372,7 +403,7 @@ export async function preloadSceneHeygenVideos(scenes, onProgress) {
           list.push(s.playbackUrl, s.generatedVideoUrl)
         }
         for (const clip of s.clips || []) {
-          if (isAvatarClip(clip)) list.push(clip.src)
+          if (isHeygenPlaybackClip(clip, s)) list.push(clip.src)
         }
         return list.filter((u) => u && typeof u === 'string')
       })

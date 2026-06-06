@@ -5,7 +5,12 @@ export const DEFAULT_GRID_SIZE = 20;
 /** Layers that can fill the canvas via "Set as Scene Background" (not shapes). */
 export function canSetAsSceneBackground(clip) {
   if (!clip) return false;
-  return clip.type === 'image' || clip.type === 'video';
+  return (
+    clip.type === 'image' ||
+    clip.type === 'video' ||
+    clip.type === 'avatar' ||
+    clip.role === 'avatar'
+  );
 }
 
 /** True when a clip should render behind all other scene layers. */
@@ -157,15 +162,20 @@ export function getClipStackIndex(clips, clipId) {
 export function buildSceneBackgroundPatch(clip) {
   const origPos = clip._origPosition || clip.position;
   const origSize = clip._origSize || clip.size;
+  const isAvatar =
+    clip.role === 'avatar' ||
+    clip.type === 'avatar' ||
+    (clip.type === 'video' && clip.role === 'avatar');
   const patch = {
     isBackground: true,
-    role: 'background',
+    // Keep avatar role so HeyGen playback URLs still resolve in preview/export
+    ...(isAvatar ? {} : { role: 'background' }),
     _origPosition: origPos,
     _origSize: origSize,
     position: { x: 0, y: 0 },
     size: { width: 1920, height: 1080 },
   };
-  if (clip.type === 'image' || clip.type === 'video') {
+  if (clip.type === 'image' || clip.type === 'video' || clip.type === 'avatar') {
     patch.style = {
       ...(clip.style || {}),
       objectFit: clip.style?.objectFit || 'cover',

@@ -18,7 +18,7 @@ import {
 import { getClipTextContent, isTextLayer } from '../../../../utils/textClip'
 import { pixelRectToPercent, resolveClipRect } from '../../../../utils/clipLayout'
 import { getClipZIndex, isBackgroundClip, sortClipsForRender } from '../../../../utils/editorLayerUtils'
-import { resolveClipMediaSrc, isVideoMedia, isAvatarClip } from '../../../../utils/heygenVideo'
+import { resolveClipMediaSrc, isVideoMedia, isAvatarClip, clipHasHeygenAudio } from '../../../../utils/heygenVideo'
 import {
   computeClipAnimationState,
   getAnimatedTextContent,
@@ -43,13 +43,13 @@ function ClipSequenceVideo({ src, clip, scene, frameInScene, fps, style, audioEn
     return null
   }
 
-  const isAvatar = isAvatarClip(clip)
+  const carriesHeygenAudio = clipHasHeygenAudio(clip, scene)
   const useOffthread =
     typeof src === 'string' &&
     /^https?:\/\//i.test(src) &&
     !/\/api\/workspaces\//i.test(src)
   const VideoTag = useOffthread ? OffthreadVideo : Video
-  const avatarVolume = isAvatar && audioEnabled ? 1 : 0
+  const avatarVolume = carriesHeygenAudio && audioEnabled ? 1 : 0
 
   return (
     <Sequence from={clipStart} durationInFrames={clipDuration} layout="none">
@@ -119,6 +119,7 @@ function SceneFrame({ scene, frameInScene, fps, audioEnabled = true }) {
         if (isBackgroundClip(clip)) {
           const src = resolveClipMediaSrc(clip, scene)
           const isVideo = isVideoMedia(clip, src)
+          const bgObjectFit = clip.style?.objectFit || 'cover'
           return (
             <div
               key={clip.id}
@@ -139,7 +140,8 @@ function SceneFrame({ scene, frameInScene, fps, audioEnabled = true }) {
                     scene={scene}
                     frameInScene={frameInScene}
                     fps={fps}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    audioEnabled={audioEnabled}
+                    style={{ width: '100%', height: '100%', objectFit: bgObjectFit }}
                   />
                 ) : (
                   <img
@@ -212,23 +214,23 @@ function SceneFrame({ scene, frameInScene, fps, audioEnabled = true }) {
         }
 
         if (isText) {
+          const s = clip.style || {}
           const resolvedFontSize = layout.fontSize
-          const textStyle = buildTextDisplayStyle(clip.style || {}, clip.opacity ?? 1)
-          const shapeWrap = getTextShapeWrapperStyle(clip.style?.textShape)
-          const shapeInner = getTextShapeInnerStyle(clip.style?.textShape)
+          const textStyle = buildTextDisplayStyle(s, clip.opacity ?? 1)
+          const shapeWrap = getTextShapeWrapperStyle(s.textShape)
+          const shapeInner = getTextShapeInnerStyle(s.textShape)
           const entranceType = getEntranceAnimation(clip)?.type
           const isBlockAnim = entranceType === 'block'
+          const hasFill =
+            !!(s.backgroundColor && s.backgroundColor !== 'transparent') ||
+            !!(s.boxShadow && s.boxShadow !== 'none')
           const textInner = (
             <div style={{
               ...textStyle,
               fontSize: `${resolvedFontSize}px`,
               width: '100%',
               maxWidth: '100%',
-              height: '100%',
               overflow: 'hidden',
-              display: 'flex',
-              alignItems: 'flex-start',
-              justifyContent: clip.style?.textAlign === 'left' ? 'flex-start' : (clip.style?.textAlign === 'right' ? 'flex-end' : 'center'),
               outline: 'none',
               margin: 0,
               position: 'relative',
@@ -240,7 +242,12 @@ function SceneFrame({ scene, frameInScene, fps, audioEnabled = true }) {
             </div>
           )
           return (
-            <div key={clip.id} style={style}>
+            <div key={clip.id} style={{
+              ...style,
+              borderRadius: hasFill ? (s.borderRadius || '12px') : style.borderRadius,
+              backgroundColor: hasFill ? (s.backgroundColor || 'transparent') : undefined,
+              boxShadow: hasFill ? (s.boxShadow || 'none') : undefined,
+            }}>
               <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', ...shapeWrap }}>
                 {isBlockAnim ? (
                   <div
@@ -263,12 +270,13 @@ function SceneFrame({ scene, frameInScene, fps, audioEnabled = true }) {
           const src = resolveClipMediaSrc(clip, scene)
           const isVideo = isVideoMedia(clip, src)
           const isAvatar = isAvatarClip(clip)
+          const isBg = isBackgroundClip(clip)
           const w = typeof clip.size?.width === 'number' ? clip.size.width : 0
           const h = typeof clip.size?.height === 'number' ? clip.size.height : 0
-          const avatarRound = isAvatar && !isVideo && w > 0 && h > 0 && Math.abs(w - h) < 40
-          const borderRadius = clip.style?.borderRadius || (isAvatar ? '50%' : '16px')
+          const avatarRound = isAvatar && !isVideo && !isBg && w > 0 && h > 0 && Math.abs(w - h) < 40
+          const borderRadius = isBg ? '0' : (clip.style?.borderRadius || (isAvatar ? '50%' : '16px'))
           const objectFit =
-            clip.style?.objectFit || clip.objectFit || (isAvatar ? 'contain' : 'cover')
+            clip.style?.objectFit || clip.objectFit || (isAvatar && !isBg ? 'contain' : 'cover')
 
           return (
             <div key={clip.id} style={{
