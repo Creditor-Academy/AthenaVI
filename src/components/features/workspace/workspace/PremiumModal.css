@@ -195,14 +195,31 @@
   color: #ef4444;
   margin-top: 6px;
   font-weight: 600;
-  animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+  animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
 }
 
 @keyframes shake {
-  10%, 90% { transform: translate3d(-1px, 0, 0); }
-  20%, 80% { transform: translate3d(2px, 0, 0); }
-  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-  40%, 60% { transform: translate3d(4px, 0, 0); }
+
+  10%,
+  90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+
+  20%,
+  80% {
+    transform: translate3d(2px, 0, 0);
+  }
+
+  30%,
+  50%,
+  70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+
+  40%,
+  60% {
+    transform: translate3d(4px, 0, 0);
+  }
 }
 
 /* Astryd UI Design System - Workspace Modal Styles */
@@ -338,7 +355,7 @@
   font-size: 11px;
   color: var(--delete-red);
   font-weight: 600;
-  animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+  animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
 }
 
 .astryd-email-group {
@@ -530,8 +547,8 @@
 .astryd-header {
   background: var(--primary);
   padding: 18px 24px;
-  border-top-left-radius: 9px;
-  border-top-right-radius: 9px;
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
   box-sizing: border-box;
 }
 
@@ -564,5 +581,3 @@
   padding: 20px 24px 24px 24px;
   box-sizing: border-box;
 }
-
-
