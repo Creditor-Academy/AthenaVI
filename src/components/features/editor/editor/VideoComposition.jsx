@@ -29,19 +29,22 @@ import {
   getTextShapeWrapperStyle,
   getTextShapeInnerStyle,
 } from '../../../../utils/textEffects'
-import { resolveSceneLayersAtFrame } from '../../../../utils/sceneTransitionRender'
+import {
+  getSceneStartFrames,
+  resolveSceneLayersAtFrame,
+} from '../../../../utils/sceneTransitionRender'
 import './TextSidebarPanel.css'
 
-/** Scene-local video synced to timeline (HeyGen avatar + clip timing). */
-function ClipSequenceVideo({ src, clip, scene, frameInScene, fps, style, audioEnabled = true }) {
+/**
+ * Scene-local video synced to the global composition timeline.
+ * Sequence `from` must include the scene's global start frame — not just clip offset.
+ */
+function ClipSequenceVideo({ src, clip, scene, sceneStartFrame, fps, style, audioEnabled = true }) {
   const clipStartSec = clip.startTime || 0
   const clipEndSec = clip.endTime ?? scene.duration ?? 5
   const clipStart = Math.floor(clipStartSec * fps)
   const clipDuration = Math.max(1, Math.floor((clipEndSec - clipStartSec) * fps))
-
-  if (frameInScene < clipStart || frameInScene >= clipStart + clipDuration) {
-    return null
-  }
+  const globalFrom = sceneStartFrame + clipStart
 
   const carriesHeygenAudio = clipHasHeygenAudio(clip, scene)
   const useOffthread =
@@ -52,7 +55,7 @@ function ClipSequenceVideo({ src, clip, scene, frameInScene, fps, style, audioEn
   const avatarVolume = carriesHeygenAudio && audioEnabled ? 1 : 0
 
   return (
-    <Sequence from={clipStart} durationInFrames={clipDuration} layout="none">
+    <Sequence from={globalFrom} durationInFrames={clipDuration} layout="none">
       <VideoTag
         src={src}
         style={style}
@@ -104,7 +107,7 @@ function getSceneBackgroundStyle(scene) {
   }
 }
 
-function SceneFrame({ scene, frameInScene, fps, audioEnabled = true }) {
+function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = true }) {
   const backgroundStyle = getSceneBackgroundStyle(scene)
   const hasBgClip = (scene.clips || []).some((c) => isBackgroundClip(c) && resolveClipMediaSrc(c, scene))
 
@@ -138,7 +141,7 @@ function SceneFrame({ scene, frameInScene, fps, audioEnabled = true }) {
                     src={src}
                     clip={clip}
                     scene={scene}
-                    frameInScene={frameInScene}
+                    sceneStartFrame={sceneStartFrame}
                     fps={fps}
                     audioEnabled={audioEnabled}
                     style={{ width: '100%', height: '100%', objectFit: bgObjectFit }}
@@ -292,7 +295,7 @@ function SceneFrame({ scene, frameInScene, fps, audioEnabled = true }) {
                     src={src}
                     clip={clip}
                     scene={scene}
-                    frameInScene={frameInScene}
+                    sceneStartFrame={sceneStartFrame}
                     fps={fps}
                     audioEnabled={audioEnabled}
                     style={{
@@ -350,6 +353,10 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) 
     const frame = useCurrentFrame()
     const { fps } = useVideoConfig()
     const scenesList = scenes || []
+    const sceneStartFrames = React.useMemo(
+      () => getSceneStartFrames(scenes || [], fps),
+      [scenes, fps]
+    )
 
     if (!scenesList || scenesList.length === 0) {
         return (
@@ -416,27 +423,33 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) 
         }}>
             {bgMusic && <Audio src={bgMusic} volume={bgMusicVolume} placeholder={null} />}
 
-            {layers.map((layer, index) => (
-              <div
-                key={`${layer.scene.id || index}-${index}`}
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  overflow: 'hidden',
+            {layers.map((layer, index) => {
+              const sceneKey = layer.scene.id || layer.scene.sceneId
+              const sceneStartFrame = sceneStartFrames.get(sceneKey) ?? 0
+              return (
+                <div
+                  key={`${sceneKey || index}-${index}`}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    overflow: 'hidden',
                   opacity: layer.opacity,
                   transform: `translate(${layer.translateX}px, ${layer.translateY}px) scale(${layer.scale})`,
                   filter: layer.filter,
+                  clipPath: layer.clipPath,
                   zIndex: index,
-                }}
-              >
-                <SceneFrame
-                  scene={layer.scene}
-                  frameInScene={layer.frameInScene}
-                  fps={fps}
-                  audioEnabled={index === layers.length - 1}
-                />
-              </div>
-            ))}
+                  }}
+                >
+                  <SceneFrame
+                    scene={layer.scene}
+                    frameInScene={layer.frameInScene}
+                    sceneStartFrame={sceneStartFrame}
+                    fps={fps}
+                    audioEnabled={index === layers.length - 1}
+                  />
+                </div>
+              )
+            })}
         </div>
     )
 }

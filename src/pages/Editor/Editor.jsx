@@ -13,7 +13,6 @@ import PreviewModal from '../../components/features/editor/editor/PreviewModal'
 import ExportModal from '../../components/features/editor/editor/ExportModal'
 import GeneratedVideoModal from '../../components/features/editor/editor/GeneratedVideoModal'
 import QuickCreateModal from '../../components/features/editor/editor/QuickCreateModal'
-import RenderDownloadModal from '../../components/features/editor/editor/RenderDownloadModal'
 import heygenService from '../../services/heygenService'
 import avatar1 from '../../assets/Avatarr1.png'
 import projectTemplate from '../../constants/projectTemplate.json'
@@ -260,7 +259,6 @@ function Create({ onBack, initialConfig = null }) {
   const [selectedLayerId, setSelectedLayerId] = useState(null)
   const [musicDuration, setMusicDuration] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
-  const [showRenderDownload, setShowRenderDownload] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [lastSaved, setLastSaved] = useState(null)
   const [showGeneratedVideoModal, setShowGeneratedVideoModal] = useState(false)
@@ -371,12 +369,6 @@ function Create({ onBack, initialConfig = null }) {
     return () => window.removeEventListener('open-generated-video', handleOpenGeneratedVideo)
   }, [])
 
-  useEffect(() => {
-    const handleReady = () => setShowRenderDownload(true)
-    window.addEventListener('render-download-ready', handleReady)
-    return () => window.removeEventListener('render-download-ready', handleReady)
-  }, [])
-
   const quickCreateAutoDismissedRef = useRef(false)
   useEffect(() => {
     if (isProjectLoading || quickCreateAutoDismissedRef.current) return
@@ -408,9 +400,24 @@ function Create({ onBack, initialConfig = null }) {
         const localProject = projectRef.current
 
         // If backend has no scenes but editor already has scenes (e.g. template), do an initial save
+        const applyHydratedScenes = (scenes, patch = {}) => {
+          setProject((prev) => ({
+            ...prev,
+            ...patch,
+            scenes: scenes.map((s, idx) => ensureSceneIdentity(s, idx)),
+          }))
+        }
+
         if (backendScenes.length === 0 && localProject.scenes.length > 0) {
           console.log('[Editor] Fresh project – saving initial template scenes to backend')
-          saveProjectRef.current?.(false, localProject)
+          const scenesWithVideo = await rehydrateSceneVideos(
+            localProject.scenes,
+            workspaceId,
+            projectId
+          )
+          const hydrated = { ...localProject, scenes: scenesWithVideo }
+          applyHydratedScenes(scenesWithVideo)
+          saveProjectRef.current?.(false, hydrated)
           return
         }
 
@@ -426,8 +433,15 @@ function Create({ onBack, initialConfig = null }) {
               fetchedProject.updatedAt
             )
           ) {
-            console.log('[Editor] Local draft is newer than backend — syncing up')
-            saveProjectRef.current?.(false, localProject)
+            console.log('[Editor] Local draft is newer than backend — rehydrating avatar videos')
+            const scenesWithVideo = await rehydrateSceneVideos(
+              localProject.scenes,
+              workspaceId,
+              projectId
+            )
+            const hydrated = { ...localProject, scenes: scenesWithVideo }
+            applyHydratedScenes(scenesWithVideo)
+            saveProjectRef.current?.(false, hydrated)
             return
           }
 
@@ -437,13 +451,11 @@ function Create({ onBack, initialConfig = null }) {
             projectId
           )
 
-          setProject((prev) => ({
-            ...prev,
-            resolution: mapped.resolution || prev.resolution,
-            meta: mapped.meta || prev.meta,
-            scenes: scenesWithVideo.map((s, idx) => ensureSceneIdentity(s, idx)),
+          applyHydratedScenes(scenesWithVideo, {
+            resolution: mapped.resolution || localProject.resolution,
+            meta: mapped.meta || localProject.meta,
             updatedAt: fetchedProject.updatedAt || new Date().toISOString(),
-          }))
+          })
         }
       } catch (err) {
         console.warn('[Editor] Failed to fetch project from backend:', err)
@@ -1439,6 +1451,11 @@ function Create({ onBack, initialConfig = null }) {
           clips: finalClips,
         });
 
+        setTimeout(() => {
+          const latest = projectRef.current.scenes.find((s) => s.id === sceneId)
+          if (latest) saveProjectRef.current?.(false, projectRef.current)
+        }, 300)
+
         showToast('Presenter placed in the center — your other elements are unchanged.', 'success');
 
         window.dispatchEvent(
@@ -1990,10 +2007,6 @@ function Create({ onBack, initialConfig = null }) {
 
   return (
     <div className="video-editor-shell">
-      <RenderDownloadModal
-        isOpen={showRenderDownload}
-        onClose={() => setShowRenderDownload(false)}
-      />
       {isProjectLoading && (
         <div
           style={{

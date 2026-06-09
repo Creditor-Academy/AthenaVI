@@ -15,7 +15,13 @@ import {
   mapSceneTransitionFromBackend,
 } from './sceneTransitionUtils';
 import { normalizeSceneClips } from './clipLayout';
-import { applyPlaybackUrlToScene } from './heygenVideo';
+import {
+  applyPlaybackUrlToScene,
+  fetchHeygenPlaybackUrl,
+  resolveSceneHeygenVideoId,
+} from './heygenVideo';
+
+export { resolveSceneHeygenVideoId };
 
 const FPS = 30;
 
@@ -516,19 +522,31 @@ export async function rehydrateSceneVideos(scenes, workspaceId, projectId) {
 
   return Promise.all(
     scenes.map(async (scene) => {
-      if (!scene.heygenVideoId) return scene;
+      const heygenVideoId = resolveSceneHeygenVideoId(scene);
+      if (!heygenVideoId) return scene;
+
+      const sceneWithId = {
+        ...scene,
+        heygenVideoId,
+        generation: {
+          ...(scene.generation || {}),
+          heygenVideoId,
+          status: scene.generation?.status || scene.heygenStatus || 'completed',
+        },
+      };
 
       try {
-        const blobUrl = await heygenService.getVideoBlobUrl(
+        const playbackUrl = await fetchHeygenPlaybackUrl(
           workspaceId,
           projectId,
-          scene.heygenVideoId
+          heygenVideoId,
+          heygenService
         );
         return {
-          ...applyPlaybackUrlToScene(scene, blobUrl),
-          heygenStatus: scene.heygenStatus || 'completed',
+          ...applyPlaybackUrlToScene(sceneWithId, playbackUrl),
+          heygenStatus: sceneWithId.heygenStatus || 'completed',
           generation: {
-            heygenVideoId: scene.heygenVideoId,
+            heygenVideoId,
             status: 'completed',
           },
         };
@@ -536,9 +554,10 @@ export async function rehydrateSceneVideos(scenes, workspaceId, projectId) {
         console.warn(
           '[ProjectData] Failed to rehydrate HeyGen video for scene',
           scene.sceneId || scene.id,
+          heygenVideoId,
           err
         );
-        return scene;
+        return sceneWithId;
       }
     })
   );

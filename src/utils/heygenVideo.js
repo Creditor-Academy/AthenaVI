@@ -176,9 +176,23 @@ export function isAvatarClip(clip) {
   )
 }
 
+/** Resolve persisted HeyGen id from scene-level fields or avatar element content. */
+export function resolveSceneHeygenVideoId(scene) {
+  if (!scene) return null
+  if (scene.heygenVideoId) return scene.heygenVideoId
+  if (scene.generation?.heygenVideoId) return scene.generation.heygenVideoId
+
+  for (const clip of scene.clips || []) {
+    const content = typeof clip?.content === 'object' ? clip.content : null
+    if (content?.heygenVideoId) return content.heygenVideoId
+  }
+
+  return null
+}
+
 /** Generated HeyGen A/V — foreground avatar or avatar sent to scene background. */
 export function isHeygenPlaybackClip(clip, scene) {
-  if (!scene?.heygenVideoId) return false
+  if (!resolveSceneHeygenVideoId(scene)) return false
   if (isAvatarClip(clip)) return true
   if (
     isBackgroundClip(clip) &&
@@ -277,31 +291,69 @@ export function applyPlaybackUrlToScene(scene, url) {
   }
 }
 
-/** Resolve session playback via authenticated /stream (works before s3Key exists). */
-export async function resolveScenePlaybackUrl(scene, workspaceId, projectId, heygenService) {
-  if (!scene?.heygenVideoId || !workspaceId || !projectId) return scene
+/**
+ * Fetch a playable URL for a generated HeyGen clip.
+ * Backend stores the MP4 in S3; the editor must request a fresh URL on each load.
+ * Tries authenticated /stream first, then S3 presigned /download.
+ */
+export async function fetchHeygenPlaybackUrl(
+  workspaceId,
+  projectId,
+  heygenVideoId,
+  heygenService
+) {
+  try {
+    return await heygenService.getVideoBlobUrl(workspaceId, projectId, heygenVideoId)
+  } catch (streamErr) {
+    console.warn('[HeyGen] /stream failed, trying S3 presigned /download', heygenVideoId, streamErr)
+    const download = await heygenService.downloadVideo(workspaceId, projectId, heygenVideoId)
+    const presigned =
+      download?.presignedUrl ||
+      download?.heygenVideo?.presignedUrl ||
+      download?.url ||
+      download?.videoUrl
+    if (presigned && typeof presigned === 'string') return presigned
+    throw streamErr
+  }
+}
 
-  const playbackClips = (scene.clips || []).filter((c) => isHeygenPlaybackClip(c, scene))
-  const existingUrl =
-    scene.playbackUrl ||
-    scene.generatedVideoUrl ||
-    playbackClips.find((c) => c.src)?.src ||
-    null
+/** Resolve session playback via /stream or S3 presigned /download (not the raw s3Key in project JSON). */
+export async function resolveScenePlaybackUrl(scene, workspaceId, projectId, heygenService) {
+  const heygenVideoId = resolveSceneHeygenVideoId(scene)
+  if (!heygenVideoId || !workspaceId || !projectId) return scene
+
+  const sceneWithId = {
+    ...scene,
+    heygenVideoId,
+    generation: {
+      ...(scene.generation || {}),
+      heygenVideoId,
+      status: scene.generation?.status || scene.heygenStatus || 'completed',
+    },
+  }
+
+  const playbackClips = (sceneWithId.clips || []).filter((c) => isHeygenPlaybackClip(c, sceneWithId))
+  const existingUrl = pickHttpPlaybackUrl(
+    sceneWithId.playbackUrl,
+    sceneWithId.generatedVideoUrl,
+    playbackClips.find((c) => c.src)?.src
+  )
 
   if (existingUrl) {
-    return applyPlaybackUrlToScene(scene, existingUrl)
+    return applyPlaybackUrlToScene(sceneWithId, existingUrl)
   }
 
   try {
-    const blobUrl = await heygenService.getVideoBlobUrl(
+    const playbackUrl = await fetchHeygenPlaybackUrl(
       workspaceId,
       projectId,
-      scene.heygenVideoId
+      heygenVideoId,
+      heygenService
     )
-    return applyPlaybackUrlToScene(scene, blobUrl)
+    return applyPlaybackUrlToScene(sceneWithId, playbackUrl)
   } catch (err) {
-    console.warn('[HeyGen] Stream playback failed for scene', scene.id, err)
-    return scene
+    console.warn('[HeyGen] Playback rehydration failed for scene', scene.id, err)
+    return sceneWithId
   }
 }
 
@@ -387,7 +439,7 @@ export async function prepareScenesForPlayback(
     projectId,
     heygenService
   )
-  const heygenCount = withUrls.filter((s) => s.heygenVideoId).length
+  const heygenCount = withUrls.filter((s) => resolveSceneHeygenVideoId(s)).length
   if (heygenCount > 0) {
     await preloadSceneHeygenVideos(withUrls, onProgress)
   }
@@ -399,7 +451,7 @@ export async function preloadSceneHeygenVideos(scenes, onProgress) {
     ...new Set(
       (scenes || []).flatMap((s) => {
         const list = []
-        if (s?.heygenVideoId) {
+        if (resolveSceneHeygenVideoId(s)) {
           list.push(s.playbackUrl, s.generatedVideoUrl)
         }
         for (const clip of s.clips || []) {
