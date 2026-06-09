@@ -75,30 +75,30 @@ function normalizeWorkspace(rawWorkspace, currentUserId, authUser) {
 
   const ownerId = normalizeId(
     rawWorkspace.ownerId ||
-      rawWorkspace.ownerUserId ||
-      rawWorkspace.owner_id ||
-      rawWorkspace.owner?.id ||
-      rawWorkspace.owner?._id ||
-      rawWorkspace.owner
+    rawWorkspace.ownerUserId ||
+    rawWorkspace.owner_id ||
+    rawWorkspace.owner?.id ||
+    rawWorkspace.owner?._id ||
+    rawWorkspace.owner
   );
 
   const creatorId = normalizeId(
     rawWorkspace.createdBy ||
-      rawWorkspace.createdById ||
-      rawWorkspace.creatorId ||
-      rawWorkspace.creator?.id ||
-      rawWorkspace.creator?._id
+    rawWorkspace.createdById ||
+    rawWorkspace.creatorId ||
+    rawWorkspace.creator?.id ||
+    rawWorkspace.creator?._id
   );
 
   const role = readRole(rawWorkspace);
 
   const ownerInMembers = Array.isArray(rawWorkspace.members)
     ? rawWorkspace.members.some((member) => {
-        const memberId = normalizeId(
-          member.userId || member.user?.id || member.user?._id || member.user || member.id || member._id
-        );
-        return memberId === currentUserId && String(member.role || '').toUpperCase() === 'OWNER';
-      })
+      const memberId = normalizeId(
+        member.userId || member.user?.id || member.user?._id || member.user || member.id || member._id
+      );
+      return memberId === currentUserId && String(member.role || '').toUpperCase() === 'OWNER';
+    })
     : false;
 
   const isOwner =
@@ -332,7 +332,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
 
     const wsId = currentLevel.ws?.id || currentLevel.id;
     const resolvedWs = workspaces.find((w) => String(w.id) === String(wsId));
-    
+
     if (resolvedWs) {
       const isWsSkeleton = !currentLevel.ws || !currentLevel.ws.folders;
       let resolvedFolder = null;
@@ -844,7 +844,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
 
       await workspaceService.updateWorkspace(id, { name: newName });
       setWorkspaces((prev) => prev.map((workspace) => (String(workspace.id) === String(id) ? { ...workspace, name: newName } : workspace)));
-      
+
       setLocalAdditions((prev) => {
         const otherWorkspaces = (prev.workspaces || []).filter((ws) => String(ws.id) !== String(id));
         const targetWs = workspaces.find((ws) => String(ws.id) === String(id));
@@ -887,11 +887,11 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           folders: workspace.folders.map((folder) =>
             String(folder.id) === String(id)
               ? {
-                  ...folder,
-                  name: newName,
-                  lastModifiedBy: authUser?.name || authUser?.email || 'You',
-                  lastModifiedAt: new Date().toLocaleString()
-                }
+                ...folder,
+                name: newName,
+                lastModifiedBy: authUser?.name || authUser?.email || 'You',
+                lastModifiedAt: new Date().toLocaleString()
+              }
               : folder
           )
         }))
@@ -914,13 +914,13 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
             videos: (folder.videos || []).map((video) =>
               String(video.id) === String(id)
                 ? {
-                    ...video,
-                    name: newName,
-                    lastModifiedBy: authUser?.name || authUser?.email || 'You',
-                    lastModifiedAt: new Date().toISOString(),
-                    lastEditedBy: authUser?.name || authUser?.email || 'You',
-                    lastEditedAt: new Date().toISOString()
-                  }
+                  ...video,
+                  name: newName,
+                  lastModifiedBy: authUser?.name || authUser?.email || 'You',
+                  lastModifiedAt: new Date().toISOString(),
+                  lastEditedBy: authUser?.name || authUser?.email || 'You',
+                  lastEditedAt: new Date().toISOString()
+                }
                 : video
             )
           }))
@@ -1034,16 +1034,16 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
             prev.map((workspace) =>
               String(workspace.id) === String(parentWorkspace.id)
                 ? {
-                    ...workspace,
-                    folders: workspace.folders.map((folder) =>
-                      String(folder.id) === String(parentFolder.id)
-                        ? {
-                            ...folder,
-                            videos: (folder.videos || []).filter((video) => String(video.id) !== String(id))
-                          }
-                        : folder
-                    )
-                  }
+                  ...workspace,
+                  folders: workspace.folders.map((folder) =>
+                    String(folder.id) === String(parentFolder.id)
+                      ? {
+                        ...folder,
+                        videos: (folder.videos || []).filter((video) => String(video.id) !== String(id))
+                      }
+                      : folder
+                  )
+                }
                 : workspace
             )
           );
@@ -1199,12 +1199,12 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
               workspace.type === 'personal'
                 ? null
                 : () => {
-                    if (String(workspace.userRole).toUpperCase() === 'OWNER') {
-                      deleteItem('workspace', workspace.id, workspace);
-                    } else {
-                      handleLeaveSharedWorkspace(workspace);
-                    }
+                  if (String(workspace.userRole).toUpperCase() === 'OWNER') {
+                    deleteItem('workspace', workspace.id, workspace);
+                  } else {
+                    handleLeaveSharedWorkspace(workspace);
                   }
+                }
           }}
         />
       ));
@@ -1229,12 +1229,12 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
             workspace.type === 'personal'
               ? null
               : () => {
-                  if (String(workspace.userRole).toUpperCase() === 'OWNER') {
-                    deleteItem('workspace', workspace.id, workspace);
-                  } else {
-                    handleLeaveSharedWorkspace(workspace);
-                  }
+                if (String(workspace.userRole).toUpperCase() === 'OWNER') {
+                  deleteItem('workspace', workspace.id, workspace);
+                } else {
+                  handleLeaveSharedWorkspace(workspace);
                 }
+              }
         }}
       />
     ));
@@ -1276,7 +1276,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
     if (!moveTargetVideo || !moveTargetWorkspace) return;
     try {
       await workspaceService.moveProjectFolder(moveTargetWorkspace.id, moveTargetVideo.id, targetFolderId);
-      
+
       setWorkspaces((prev) =>
         prev.map((workspace) => {
           if (String(workspace.id) !== String(moveTargetWorkspace.id)) return workspace;
@@ -1468,9 +1468,9 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           onEmptyAction={
             canEdit
               ? () => {
-                  setSelectedWorkspaceForFolder(workspace);
-                  setIsCreateFolderOpen(true);
-                }
+                setSelectedWorkspaceForFolder(workspace);
+                setIsCreateFolderOpen(true);
+              }
               : null
           }
           showCreateButton={canEdit}
@@ -1559,10 +1559,10 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           onEmptyAction={
             canEdit
               ? () =>
-                  openCreateVideoModal({
-                    initialWorkspaceId: workspace.id,
-                    initialFolderId: folder.id
-                  })
+                openCreateVideoModal({
+                  initialWorkspaceId: workspace.id,
+                  initialFolderId: folder.id
+                })
               : null
           }
           showCreateButton={canEdit}
@@ -1847,7 +1847,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
                             className="astryd-btn-secondary"
                             style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', height: '30px' }}
                           >
-                            <MdAdd size={14} /> + Add more
+                            <MdAdd size={14} /> Add more
                           </button>
                           <button
                             type="button"
@@ -1981,7 +1981,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
                                 </div>
                               </div>
                             </div>
-                            
+
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                               {workspaceCanManageContributors(contributorsPanel.workspace) ? (
                                 <div style={{ position: 'relative' }}>
