@@ -1353,7 +1353,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
 
   const renderRoot = () => (
     <div>
-      <WorkspaceSection title="Personal Workspace" count={personalWorkspace ? 1 : 0} viewMode={viewMode}>
+      <WorkspaceSection title="Personal Workspace" count={personalWorkspace ? 1 : 0} viewMode={viewMode} showCountBadge={false}>
         {personalWorkspace && renderWorkspaceItems([personalWorkspace])}
       </WorkspaceSection>
 
@@ -1364,12 +1364,14 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
             onClick={() => setActiveRootTab('my-workspaces')}
           >
             <MdFolderOpen size={18} /> My Workspaces
+            <span className="tab-count-badge">{myWorkspaces.length}</span>
           </button>
           <button
             className={`workspace-root-tab ${activeRootTab === 'shared-with-me' ? 'active' : ''}`}
             onClick={() => setActiveRootTab('shared-with-me')}
           >
             <MdMail size={18} /> Shared with Me
+            <span className="tab-count-badge">{sharedWithMe.length}</span>
           </button>
         </div>
       </div>
@@ -1380,9 +1382,12 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           count={myWorkspaces.length}
           viewMode={viewMode}
           emptyMessage="You do not have any custom workspaces yet."
-          emptyActionLabel="Create Workspace"
+          emptyActionLabel="New Workspace"
+          emptyActionClass="btn-primary add-btn-small"
           onEmptyAction={() => setIsCreateWorkspaceOpen(true)}
           showCreateButton={true}
+          createButtonLabel="New Workspace"
+          createButtonClass="btn-primary add-btn-small"
           onCreateClick={() => setIsCreateWorkspaceOpen(true)}
         >
           {viewMode === 'list' && (

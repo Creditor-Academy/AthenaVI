@@ -85,7 +85,7 @@ const WorkspaceHeader = ({ viewMode, onViewChange, sortBy, onSortChange, onCreat
                 )}
 
                 <button className="btn-primary" onClick={onCreateClick}>
-                    <MdAdd size={18} /> Create
+                    <MdAdd size={18} /> Video
                 </button>
             </div>
         </div>
