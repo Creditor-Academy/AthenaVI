@@ -1,4 +1,68 @@
-import { normalizeClipStack } from './editorLayerUtils'
+import { isBackgroundClip, normalizeClipStack } from './editorLayerUtils'
+
+const HEYGEN_POLL_INTERVAL_MS = 2000
+const HEYGEN_POLL_MAX_ATTEMPTS = 60
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+export function isHeygenVideoFailed(videoData) {
+  const status = videoData?.status
+  return status === 'failed' || status === 'error'
+}
+
+/** True when the authenticated /stream endpoint can serve the avatar video. */
+export function isHeygenVideoPlaybackReady(videoData) {
+  return !!videoData?.playbackReady
+}
+
+/**
+ * Poll until playbackReady (do not wait for s3Key).
+ * Uses ?sync=status — never sync=full for canvas polling.
+ */
+export async function pollUntilHeygenPlaybackReady(
+  workspaceId,
+  projectId,
+  heygenVideoId,
+  heygenService,
+  { intervalMs = HEYGEN_POLL_INTERVAL_MS, maxAttempts = HEYGEN_POLL_MAX_ATTEMPTS, onProgress } = {}
+) {
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const videoData = await heygenService.getVideo(workspaceId, projectId, heygenVideoId, {
+      sync: 'status',
+    })
+
+    if (isHeygenVideoFailed(videoData)) {
+      throw new Error('HeyGen generation failed')
+    }
+
+    if (isHeygenVideoPlaybackReady(videoData)) {
+      return videoData
+    }
+
+    onProgress?.(videoData, attempt)
+    await sleep(intervalMs)
+  }
+
+  throw new Error('HeyGen generation timed out')
+}
+
+function isNonDefaultAvatarPlacement(clip, resolution) {
+  if (!clip?.position || !clip?.size) return false
+  const x = clip.position.x ?? 0
+  const y = clip.position.y ?? 0
+  const w = clip.size.width ?? 0
+  const h = clip.size.height ?? 0
+  if (x === 50 && y === 50) return false
+  const c = getCenteredAvatarPlacement(resolution)
+  const nearCenter =
+    Math.abs(x - c.position.x) < 12 &&
+    Math.abs(y - c.position.y) < 12 &&
+    Math.abs(w - c.size.width) < 24 &&
+    Math.abs(h - c.size.height) < 24
+  return !nearCenter
+}
 
 /** Centered presenter box for the virtual 1920×1080 canvas (top-left origin). */
 export function getCenteredAvatarPlacement(resolution = { width: 1920, height: 1080 }) {
@@ -17,49 +81,75 @@ export function getCenteredAvatarPlacement(resolution = { width: 1920, height: 1
 
 /**
  * Insert or update the HeyGen presenter clip without removing other scene layers.
- * Avatar is centered and stacked above non-background clips.
+ * New clips are centered; existing clips keep position, size, style, fit, and effects.
  */
 export function applyGeneratedHeygenToClips(
   clips = [],
-  { videoUrl, resolution, sceneDuration, scene, buildContent }
+  { videoUrl, resolution, sceneDuration, scene, buildContent, forceCenter = false }
 ) {
   if (!videoUrl) return clips
 
-  const { position, size } = getCenteredAvatarPlacement(resolution)
+  const centered = getCenteredAvatarPlacement(resolution)
   const duration = sceneDuration ?? 8
   let next = [...clips]
   const idx = next.findIndex(isAvatarClip)
 
-  const baseClip = {
-    type: 'video',
-    role: 'avatar',
-    src: videoUrl,
-    startTime: 0,
-    endTime: duration,
-    opacity: 1,
-    position,
-    size,
-    objectFit: 'contain',
+  const mergeVideoIntoClip = (existing) => {
+    const hadCustomLayout =
+      !forceCenter &&
+      existing &&
+      (existing._userPlaced || isNonDefaultAvatarPlacement(existing, resolution))
+
+    const merged = {
+      ...existing,
+      type: 'video',
+      role: 'avatar',
+      src: videoUrl,
+      startTime: existing?.startTime ?? 0,
+      endTime: duration,
+      opacity: existing?.opacity ?? 1,
+      style: {
+        ...(existing?.style || {}),
+        objectFit: existing?.style?.objectFit || existing?.objectFit || 'contain',
+      },
+      content: buildContent
+        ? buildContent(scene, {
+            ...existing,
+            src: videoUrl,
+            type: 'video',
+            role: 'avatar',
+          })
+        : existing?.content,
+    }
+
+    if (!hadCustomLayout) {
+      merged.position = centered.position
+      merged.size = centered.size
+    }
+
+    if (existing?.isBackground || isBackgroundClip(existing)) {
+      merged.isBackground = true
+      merged.position = { x: 0, y: 0 }
+      merged.size = { width: 1920, height: 1080 }
+      merged.style = {
+        ...(merged.style || {}),
+        objectFit: 'cover',
+      }
+    }
+
+    return merged
   }
 
   if (idx >= 0) {
-    const existing = next[idx]
-    const updated = {
-      ...existing,
-      ...baseClip,
-      id: existing.id,
-      content: buildContent
-        ? buildContent(scene, { ...existing, ...baseClip })
-        : existing.content,
-    }
+    const updated = mergeVideoIntoClip(next[idx])
+    updated.id = next[idx].id
     next = next.filter((_, i) => i !== idx)
     next.push(updated)
   } else {
     next.push({
       id: `clip_avatar_${Date.now()}`,
       layer: next.length,
-      ...baseClip,
-      content: buildContent ? buildContent(scene, baseClip) : undefined,
+      ...mergeVideoIntoClip({}),
     })
   }
 
@@ -86,17 +176,56 @@ export function isAvatarClip(clip) {
   )
 }
 
+/** Resolve persisted HeyGen id from scene-level fields or avatar element content. */
+export function resolveSceneHeygenVideoId(scene) {
+  if (!scene) return null
+  if (scene.heygenVideoId) return scene.heygenVideoId
+  if (scene.generation?.heygenVideoId) return scene.generation.heygenVideoId
+
+  for (const clip of scene.clips || []) {
+    const content = typeof clip?.content === 'object' ? clip.content : null
+    if (content?.heygenVideoId) return content.heygenVideoId
+  }
+
+  return null
+}
+
+/** Generated HeyGen A/V — foreground avatar or avatar sent to scene background. */
+export function isHeygenPlaybackClip(clip, scene) {
+  if (!resolveSceneHeygenVideoId(scene)) return false
+  if (isAvatarClip(clip)) return true
+  if (
+    isBackgroundClip(clip) &&
+    (clip.type === 'video' || clip.type === 'avatar')
+  ) {
+    return true
+  }
+  return false
+}
+
+export function clipHasHeygenAudio(clip, scene) {
+  return isHeygenPlaybackClip(clip, scene)
+}
+
+function pickHttpPlaybackUrl(...candidates) {
+  for (const raw of candidates) {
+    if (!raw || typeof raw !== 'string') continue
+    if (raw.startsWith('blob:')) continue
+    if (/^https?:\/\//i.test(raw)) return raw
+  }
+  return null
+}
+
 /** Resolve playable src for a clip, preferring fresh presigned HeyGen URLs when available. */
 export function resolveClipMediaSrc(clip, scene) {
-  if (isAvatarClip(clip)) {
-    const http = pickHttpPlaybackUrl(
-      scene?.playbackUrl,
-      scene?.generatedVideoUrl,
-      clip?.src
-    )
+  const scenePlayback = scene?.playbackUrl || scene?.generatedVideoUrl || null
+
+  if (isHeygenPlaybackClip(clip, scene)) {
+    const http = pickHttpPlaybackUrl(scene?.playbackUrl, scene?.generatedVideoUrl, clip?.src)
     if (http) return http
-    return scene?.playbackUrl || scene?.generatedVideoUrl || clip?.src || null
+    return scenePlayback || clip?.src || null
   }
+
   return clip?.src || null
 }
 
@@ -119,11 +248,17 @@ export function isVideoMedia(clip, src) {
 export function sceneHasHeygenPlayback(scene) {
   if (scene?.heygenStatus === 'needs_regeneration') return false
   if (!scene?.heygenVideoId) return false
+  if (scene.heygenStatus === 'completed' || scene.generation?.status === 'completed') {
+    return true
+  }
   const url = scene.playbackUrl || scene.generatedVideoUrl
+  for (const clip of scene.clips || []) {
+    if (isHeygenPlaybackClip(clip, scene) && clip.src && typeof clip.src === 'string') return true
+  }
   return !!(url && typeof url === 'string')
 }
 
-/** Clear generated HeyGen output after presenter / script changes (until user regenerates). */
+/** Clear generated HeyGen output after presenter changes (until user regenerates). */
 export function invalidateHeygenSceneVideo() {
   return {
     heygenStatus: 'needs_regeneration',
@@ -137,13 +272,89 @@ export function sceneNeedsHeygenRegeneration(scene) {
   return scene?.heygenStatus === 'needs_regeneration'
 }
 
-function pickHttpPlaybackUrl(...candidates) {
-  for (const raw of candidates) {
-    if (!raw || typeof raw !== 'string') continue
-    if (raw.startsWith('blob:')) continue
-    if (/^https?:\/\//i.test(raw)) return raw
+/** Attach resolved HeyGen URL to scene + every clip that carries HeyGen A/V. */
+export function applyPlaybackUrlToScene(scene, url) {
+  if (!url || !scene) return scene
+  const clips = (scene.clips || []).map((clip) => {
+    if (!isHeygenPlaybackClip(clip, scene)) return clip
+    return {
+      ...clip,
+      src: url,
+      type: clip.type === 'avatar' ? 'video' : clip.type,
+    }
+  })
+  return {
+    ...scene,
+    playbackUrl: url,
+    generatedVideoUrl: url,
+    clips,
   }
-  return null
+}
+
+/**
+ * Fetch a playable URL for a generated HeyGen clip.
+ * Backend stores the MP4 in S3; the editor must request a fresh URL on each load.
+ * Tries authenticated /stream first, then S3 presigned /download.
+ */
+export async function fetchHeygenPlaybackUrl(
+  workspaceId,
+  projectId,
+  heygenVideoId,
+  heygenService
+) {
+  try {
+    return await heygenService.getVideoBlobUrl(workspaceId, projectId, heygenVideoId)
+  } catch (streamErr) {
+    console.warn('[HeyGen] /stream failed, trying S3 presigned /download', heygenVideoId, streamErr)
+    const download = await heygenService.downloadVideo(workspaceId, projectId, heygenVideoId)
+    const presigned =
+      download?.presignedUrl ||
+      download?.heygenVideo?.presignedUrl ||
+      download?.url ||
+      download?.videoUrl
+    if (presigned && typeof presigned === 'string') return presigned
+    throw streamErr
+  }
+}
+
+/** Resolve session playback via /stream or S3 presigned /download (not the raw s3Key in project JSON). */
+export async function resolveScenePlaybackUrl(scene, workspaceId, projectId, heygenService) {
+  const heygenVideoId = resolveSceneHeygenVideoId(scene)
+  if (!heygenVideoId || !workspaceId || !projectId) return scene
+
+  const sceneWithId = {
+    ...scene,
+    heygenVideoId,
+    generation: {
+      ...(scene.generation || {}),
+      heygenVideoId,
+      status: scene.generation?.status || scene.heygenStatus || 'completed',
+    },
+  }
+
+  const playbackClips = (sceneWithId.clips || []).filter((c) => isHeygenPlaybackClip(c, sceneWithId))
+  const existingUrl = pickHttpPlaybackUrl(
+    sceneWithId.playbackUrl,
+    sceneWithId.generatedVideoUrl,
+    playbackClips.find((c) => c.src)?.src
+  )
+
+  if (existingUrl) {
+    return applyPlaybackUrlToScene(sceneWithId, existingUrl)
+  }
+
+  try {
+    const playbackUrl = await fetchHeygenPlaybackUrl(
+      workspaceId,
+      projectId,
+      heygenVideoId,
+      heygenService
+    )
+    return applyPlaybackUrlToScene(sceneWithId, playbackUrl)
+  } catch (err) {
+    console.warn('[HeyGen] Playback rehydration failed for scene', scene.id, err)
+    return sceneWithId
+  }
 }
 
 export async function resolveScenePlaybackUrls(scenes, workspaceId, projectId, heygenService) {
@@ -151,51 +362,7 @@ export async function resolveScenePlaybackUrls(scenes, workspaceId, projectId, h
   if (!workspaceId || !projectId) return scenes
 
   return Promise.all(
-    scenes.map(async (scene) => {
-      if (!scene.heygenVideoId) return scene
-
-      const avatarClip = (scene.clips || []).find(isAvatarClip)
-      const existing = pickHttpPlaybackUrl(
-        scene.playbackUrl,
-        scene.generatedVideoUrl,
-        avatarClip?.src
-      )
-
-      try {
-        const data = await heygenService.downloadVideo(
-          workspaceId,
-          projectId,
-          scene.heygenVideoId,
-          3600
-        )
-        const presigned = data?.presignedUrl || data?.url || data?.downloadUrl
-        const resolved = pickHttpPlaybackUrl(presigned)
-        if (resolved) {
-          return { ...scene, playbackUrl: resolved, generatedVideoUrl: resolved }
-        }
-      } catch (err) {
-        console.warn('[HeyGen] Presigned URL failed for scene', scene.id, err)
-      }
-
-      if (existing) {
-        return { ...scene, playbackUrl: existing, generatedVideoUrl: existing }
-      }
-
-      try {
-        const streamUrl = heygenService.getStreamUrl(
-          workspaceId,
-          projectId,
-          scene.heygenVideoId
-        )
-        if (streamUrl) {
-          return { ...scene, playbackUrl: streamUrl, generatedVideoUrl: streamUrl }
-        }
-      } catch (err) {
-        console.warn('[HeyGen] Stream URL failed for scene', scene.id, err)
-      }
-
-      return scene
-    })
+    scenes.map((scene) => resolveScenePlaybackUrl(scene, workspaceId, projectId, heygenService))
   )
 }
 
@@ -246,20 +413,49 @@ function preloadVideoUrl(url, timeoutMs = 45000) {
   })
 }
 
-/**
- * Warm browser cache for HeyGen scene videos before Remotion playback.
- * @param {Function} [onProgress] - ({ done, total, label })
- */
+/** Unmute Remotion Player after user-initiated playback. */
+export function unmuteRemotionPlayer(player) {
+  if (!player) return
+  try {
+    if (typeof player.unmute === 'function') player.unmute()
+    if (typeof player.setVolume === 'function') player.setVolume(1)
+  } catch {
+    // ignore
+  }
+}
+
+/** Resolve HeyGen URLs and warm cache before Player / Preview playback. */
+export async function prepareScenesForPlayback(
+  scenes,
+  workspaceId,
+  projectId,
+  heygenService,
+  onProgress
+) {
+  const list = scenes || []
+  const withUrls = await resolveScenePlaybackUrls(
+    list,
+    workspaceId,
+    projectId,
+    heygenService
+  )
+  const heygenCount = withUrls.filter((s) => resolveSceneHeygenVideoId(s)).length
+  if (heygenCount > 0) {
+    await preloadSceneHeygenVideos(withUrls, onProgress)
+  }
+  return withUrls
+}
+
 export async function preloadSceneHeygenVideos(scenes, onProgress) {
   const urls = [
     ...new Set(
       (scenes || []).flatMap((s) => {
         const list = []
-        if (s?.heygenVideoId) {
+        if (resolveSceneHeygenVideoId(s)) {
           list.push(s.playbackUrl, s.generatedVideoUrl)
         }
         for (const clip of s.clips || []) {
-          if (isAvatarClip(clip)) list.push(clip.src)
+          if (isHeygenPlaybackClip(clip, s)) list.push(clip.src)
         }
         return list.filter((u) => u && typeof u === 'string')
       })

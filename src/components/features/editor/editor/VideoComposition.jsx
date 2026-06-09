@@ -8,7 +8,6 @@ import {
   Video,
   OffthreadVideo,
   Sequence,
-  Freeze,
 } from 'remotion'
 import {
     MdPerson,
@@ -16,9 +15,10 @@ import {
     MdPhotoSizeSelectActual,
     MdVideoLibrary
 } from 'react-icons/md'
-import { getClipTextContent, isTextLayer, resolveTextClipRect } from '../../../../utils/textClip'
+import { getClipTextContent, isTextLayer } from '../../../../utils/textClip'
+import { pixelRectToPercent, resolveClipRect } from '../../../../utils/clipLayout'
 import { getClipZIndex, isBackgroundClip, sortClipsForRender } from '../../../../utils/editorLayerUtils'
-import { resolveClipMediaSrc, isVideoMedia, isAvatarClip } from '../../../../utils/heygenVideo'
+import { resolveClipMediaSrc, isVideoMedia, isAvatarClip, clipHasHeygenAudio } from '../../../../utils/heygenVideo'
 import {
   computeClipAnimationState,
   getAnimatedTextContent,
@@ -29,52 +29,38 @@ import {
   getTextShapeWrapperStyle,
   getTextShapeInnerStyle,
 } from '../../../../utils/textEffects'
-import { resolveSceneLayersAtFrame } from '../../../../utils/sceneTransitionRender'
+import {
+  getSceneStartFrames,
+  resolveSceneLayersAtFrame,
+} from '../../../../utils/sceneTransitionRender'
 import './TextSidebarPanel.css'
 
-export const COMPOSITION_W = 1920
-export const COMPOSITION_H = 1080
-
-/** Map editor pixel coords (1920×1080) to % for Remotion composition */
-export function pixelRectToPercent(position = {}, size = {}) {
-  const x = Number(position.x ?? 0)
-  const y = Number(position.y ?? 0)
-  const width = size.width ?? 'auto'
-  const height = size.height ?? 'auto'
-
-  return {
-    left: `${(x / COMPOSITION_W) * 100}%`,
-    top: `${(y / COMPOSITION_H) * 100}%`,
-    width: typeof width === 'number' ? `${(width / COMPOSITION_W) * 100}%` : width,
-    height: typeof height === 'number' ? `${(height / COMPOSITION_H) * 100}%` : height,
-  };
-}
-
-/** Scene-local video synced to timeline (HeyGen avatar + clip timing). */
-function ClipSequenceVideo({ src, clip, scene, frameInScene, fps, style }) {
+/**
+ * Scene-local video synced to the global composition timeline.
+ * Sequence `from` must include the scene's global start frame — not just clip offset.
+ */
+function ClipSequenceVideo({ src, clip, scene, sceneStartFrame, fps, style, audioEnabled = true }) {
   const clipStartSec = clip.startTime || 0
   const clipEndSec = clip.endTime ?? scene.duration ?? 5
   const clipStart = Math.floor(clipStartSec * fps)
   const clipDuration = Math.max(1, Math.floor((clipEndSec - clipStartSec) * fps))
+  const globalFrom = sceneStartFrame + clipStart
 
-  if (frameInScene < clipStart || frameInScene >= clipStart + clipDuration) {
-    return null
-  }
-
+  const carriesHeygenAudio = clipHasHeygenAudio(clip, scene)
   const useOffthread =
     typeof src === 'string' &&
     /^https?:\/\//i.test(src) &&
     !/\/api\/workspaces\//i.test(src)
   const VideoTag = useOffthread ? OffthreadVideo : Video
-  const isAvatar = isAvatarClip(clip)
+  const avatarVolume = carriesHeygenAudio && audioEnabled ? 1 : 0
 
   return (
-    <Sequence from={clipStart} durationInFrames={clipDuration} layout="none">
+    <Sequence from={globalFrom} durationInFrames={clipDuration} layout="none">
       <VideoTag
         src={src}
         style={style}
-        volume={isAvatar ? 1 : 0}
-        muted={!isAvatar}
+        volume={avatarVolume}
+        muted={avatarVolume === 0}
       />
     </Sequence>
   )
@@ -121,8 +107,7 @@ function getSceneBackgroundStyle(scene) {
   }
 }
 
-function SceneFrame({ scene, fps }) {
-  const frameInScene = useCurrentFrame()
+function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = true }) {
   const backgroundStyle = getSceneBackgroundStyle(scene)
   const hasBgClip = (scene.clips || []).some((c) => isBackgroundClip(c) && resolveClipMediaSrc(c, scene))
 
@@ -137,6 +122,7 @@ function SceneFrame({ scene, fps }) {
         if (isBackgroundClip(clip)) {
           const src = resolveClipMediaSrc(clip, scene)
           const isVideo = isVideoMedia(clip, src)
+          const bgObjectFit = clip.style?.objectFit || 'cover'
           return (
             <div
               key={clip.id}
@@ -146,6 +132,7 @@ function SceneFrame({ scene, fps }) {
                 zIndex: 0,
                 overflow: 'hidden',
                 pointerEvents: 'none',
+                opacity: clip.opacity ?? 1,
               }}
             >
               {src ? (
@@ -154,9 +141,10 @@ function SceneFrame({ scene, fps }) {
                     src={src}
                     clip={clip}
                     scene={scene}
-                    frameInScene={frameInScene}
+                    sceneStartFrame={sceneStartFrame}
                     fps={fps}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    audioEnabled={audioEnabled}
+                    style={{ width: '100%', height: '100%', objectFit: bgObjectFit }}
                   />
                 ) : (
                   <img
@@ -206,18 +194,15 @@ function SceneFrame({ scene, fps }) {
         }
 
         const isText = clip.type === 'text' || isTextLayer(clip)
-        const textLayout = isText ? resolveTextClipRect(clip) : null
-        const pos = textLayout?.position ?? clip.position ?? { x: 0, y: 0 }
-        const size = textLayout?.size ?? clip.size ?? { width: 400, height: 400 }
-        const rect = pixelRectToPercent(pos, size)
-        const clipScale = scale * (clip.scale || 1)
+        const layout = resolveClipRect(clip)
+        const rect = pixelRectToPercent(layout.position, layout.size)
         const style = {
           position: 'absolute',
           left: rect.left,
           top: rect.top,
           width: rect.width,
           height: rect.height,
-          transform: `translate(${translateX}px, ${translateY}px) rotate(${(clip.rotation ?? 0) + animRotation}deg) scale(${clipScale})`,
+          transform: `translate(${translateX}px, ${translateY}px) rotate(${(clip.rotation ?? 0) + animRotation}deg) scale(${scale * (clip.scale || 1)})`,
           transformOrigin: 'top left',
           zIndex: getClipZIndex(clip, false),
           opacity,
@@ -232,23 +217,23 @@ function SceneFrame({ scene, fps }) {
         }
 
         if (isText) {
-          const { fontSize: resolvedFontSize } = textLayout
-          const textStyle = buildTextDisplayStyle(clip.style || {}, clip.opacity ?? 1)
-          const shapeWrap = getTextShapeWrapperStyle(clip.style?.textShape)
-          const shapeInner = getTextShapeInnerStyle(clip.style?.textShape)
+          const s = clip.style || {}
+          const resolvedFontSize = layout.fontSize
+          const textStyle = buildTextDisplayStyle(s, clip.opacity ?? 1)
+          const shapeWrap = getTextShapeWrapperStyle(s.textShape)
+          const shapeInner = getTextShapeInnerStyle(s.textShape)
           const entranceType = getEntranceAnimation(clip)?.type
           const isBlockAnim = entranceType === 'block'
+          const hasFill =
+            !!(s.backgroundColor && s.backgroundColor !== 'transparent') ||
+            !!(s.boxShadow && s.boxShadow !== 'none')
           const textInner = (
             <div style={{
               ...textStyle,
               fontSize: `${resolvedFontSize}px`,
               width: '100%',
               maxWidth: '100%',
-              height: '100%',
               overflow: 'hidden',
-              display: 'flex',
-              alignItems: 'flex-start',
-              justifyContent: clip.style?.textAlign === 'left' ? 'flex-start' : (clip.style?.textAlign === 'right' ? 'flex-end' : 'center'),
               outline: 'none',
               margin: 0,
               position: 'relative',
@@ -260,7 +245,12 @@ function SceneFrame({ scene, fps }) {
             </div>
           )
           return (
-            <div key={clip.id} style={style}>
+            <div key={clip.id} style={{
+              ...style,
+              borderRadius: hasFill ? (s.borderRadius || '12px') : style.borderRadius,
+              backgroundColor: hasFill ? (s.backgroundColor || 'transparent') : undefined,
+              boxShadow: hasFill ? (s.boxShadow || 'none') : undefined,
+            }}>
               <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', ...shapeWrap }}>
                 {isBlockAnim ? (
                   <div
@@ -282,16 +272,20 @@ function SceneFrame({ scene, fps }) {
         if (clip.type === 'image' || clip.type === 'avatar' || clip.type === 'video') {
           const src = resolveClipMediaSrc(clip, scene)
           const isVideo = isVideoMedia(clip, src)
+          const isAvatar = isAvatarClip(clip)
+          const isBg = isBackgroundClip(clip)
           const w = typeof clip.size?.width === 'number' ? clip.size.width : 0
           const h = typeof clip.size?.height === 'number' ? clip.size.height : 0
-          const avatarRound =
-            isAvatarClip(clip) && !isVideo && w > 0 && h > 0 && Math.abs(w - h) < 40
+          const avatarRound = isAvatar && !isVideo && !isBg && w > 0 && h > 0 && Math.abs(w - h) < 40
+          const borderRadius = isBg ? '0' : (clip.style?.borderRadius || (isAvatar ? '50%' : '16px'))
+          const objectFit =
+            clip.style?.objectFit || clip.objectFit || (isAvatar && !isBg ? 'contain' : 'cover')
 
           return (
             <div key={clip.id} style={{
               ...style,
               border: 'none',
-              borderRadius: avatarRound ? '50%' : isAvatarClip(clip) ? '12px' : '16px',
+              borderRadius: avatarRound ? '50%' : borderRadius,
               background: src ? 'transparent' : 'rgba(0,0,0,0.03)',
               overflow: 'hidden',
             }}>
@@ -301,20 +295,25 @@ function SceneFrame({ scene, fps }) {
                     src={src}
                     clip={clip}
                     scene={scene}
-                    frameInScene={frameInScene}
+                    sceneStartFrame={sceneStartFrame}
                     fps={fps}
+                    audioEnabled={audioEnabled}
                     style={{
                       width: '100%',
                       height: '100%',
-                      objectFit: clip.objectFit || (clip.role === 'avatar' ? 'contain' : 'cover'),
+                      objectFit,
                     }}
                   />
                 ) : (
-                  <img src={src} style={{ width: '100%', height: '100%', objectFit: clip.role === 'avatar' ? 'contain' : 'cover' }} alt="" />
+                  <img
+                    src={src}
+                    style={{ width: '100%', height: '100%', objectFit }}
+                    alt=""
+                  />
                 )
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                  {isAvatarClip(clip) ? (
+                  {isAvatar ? (
                     <MdPerson size={Math.min(64, (clip.size?.width || 128) / 2)} color="rgba(0,0,0,0.1)" />
                   ) : clip.type === 'video' ? (
                     <MdVideoLibrary size={Math.min(64, (clip.size?.width || 128) / 2)} color="rgba(0,0,0,0.1)" />
@@ -354,6 +353,10 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) 
     const frame = useCurrentFrame()
     const { fps } = useVideoConfig()
     const scenesList = scenes || []
+    const sceneStartFrames = React.useMemo(
+      () => getSceneStartFrames(scenes || [], fps),
+      [scenes, fps]
+    )
 
     if (!scenesList || scenesList.length === 0) {
         return (
@@ -420,24 +423,33 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) 
         }}>
             {bgMusic && <Audio src={bgMusic} volume={bgMusicVolume} placeholder={null} />}
 
-            {layers.map((layer, index) => (
-              <div
-                key={`${layer.scene.id || index}-${index}`}
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  overflow: 'hidden',
+            {layers.map((layer, index) => {
+              const sceneKey = layer.scene.id || layer.scene.sceneId
+              const sceneStartFrame = sceneStartFrames.get(sceneKey) ?? 0
+              return (
+                <div
+                  key={`${sceneKey || index}-${index}`}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    overflow: 'hidden',
                   opacity: layer.opacity,
                   transform: `translate(${layer.translateX}px, ${layer.translateY}px) scale(${layer.scale})`,
                   filter: layer.filter,
+                  clipPath: layer.clipPath,
                   zIndex: index,
-                }}
-              >
-                <Freeze frame={layer.frameInScene}>
-                  <SceneFrame scene={layer.scene} fps={fps} />
-                </Freeze>
-              </div>
-            ))}
+                  }}
+                >
+                  <SceneFrame
+                    scene={layer.scene}
+                    frameInScene={layer.frameInScene}
+                    sceneStartFrame={sceneStartFrame}
+                    fps={fps}
+                    audioEnabled={index === layers.length - 1}
+                  />
+                </div>
+              )
+            })}
         </div>
     )
 }

@@ -1,5 +1,10 @@
 import heygenService from '../services/heygenService';
-import { buildHeygenAvatarContent, getSceneAvatarKind, getSceneAvatarLookId } from './heygenAvatars';
+import {
+  buildHeygenAvatarContent,
+  canUseExpressiveness,
+  getSceneAvatarKind,
+  getSceneAvatarLookId,
+} from './heygenAvatars';
 import { getClipTextContent, isTextLayer, parseCssPx, parseFontSize } from './textClip';
 import {
   mapAnimationsForBackend,
@@ -9,6 +14,14 @@ import {
   mapSceneTransitionForBackend,
   mapSceneTransitionFromBackend,
 } from './sceneTransitionUtils';
+import { normalizeSceneClips } from './clipLayout';
+import {
+  applyPlaybackUrlToScene,
+  fetchHeygenPlaybackUrl,
+  resolveSceneHeygenVideoId,
+} from './heygenVideo';
+
+export { resolveSceneHeygenVideoId };
 
 const FPS = 30;
 
@@ -62,6 +75,7 @@ export function normalizeTextStyle(style = {}) {
   if (style.textShape) normalized.textShape = style.textShape;
   if (style.effectBackground) normalized.effectBackground = style.effectBackground;
   if (style.fillColor) normalized.fillColor = style.fillColor;
+  if (style.textGradient) normalized.textGradient = style.textGradient;
 
   return normalized;
 }
@@ -223,11 +237,19 @@ function clipToElement(clip, scene, cIdx) {
   };
 
   if (clip.role) element.role = clip.role;
-  const style = sanitizeStyle(clip.style, clip.type);
+  const style = sanitizeStyle(
+    {
+      ...(clip.style || {}),
+      ...(clip.objectFit ? { objectFit: clip.objectFit } : {}),
+    },
+    clip.type
+  );
   if (style) element.style = style;
   const filters = clip.filters || clip.cssFilters;
   if (filters) element.filters = filters;
+  if (clip.effects && Object.keys(clip.effects).length) element.effects = clip.effects;
   if (clip.visible !== undefined) element.visible = clip.visible;
+  if (clip.isBackground) element.isBackground = true;
 
   return element;
 }
@@ -240,15 +262,39 @@ function buildPresenter(scene) {
   if (!hasPresenterData) return undefined;
 
   const base = scene.presenter || {};
+  const avatarKind = getSceneAvatarKind(scene);
+  const avatarEngine = scene.avatarEngine || base.avatarEngine || 'avatar_iv';
   const presenter = {
     avatarId: avatarId || base.avatarId,
+    avatarLookId: avatarId || base.avatarLookId || base.avatarId,
     avatarName: scene.avatarName || base.avatarName,
-    avatarType: getSceneAvatarKind(scene),
-    avatarEngine: scene.avatarEngine || base.avatarEngine || 'avatar_iv',
+    avatarType: avatarKind,
+    avatarEngine,
+    avatarGroupId: scene.avatarGroupId || base.avatarGroupId,
     voiceId: scene.voiceId || base.voiceId,
     voiceName: scene.voiceName || base.voiceName,
     script: scene.script ?? base.script ?? '',
   };
+
+  const supportedEngines = scene.supportedEngines ?? base.supportedEngines;
+  if (Array.isArray(supportedEngines)) {
+    presenter.supportedEngines = supportedEngines;
+    presenter.engineUnknown =
+      scene.engineUnknown ?? base.engineUnknown ?? supportedEngines.length === 0;
+  }
+
+  if (
+    scene.expressiveness &&
+    canUseExpressiveness(
+      {
+        avatar_type: avatarKind,
+        supportedEngines: presenter.supportedEngines ?? [],
+      },
+      avatarEngine
+    )
+  ) {
+    presenter.expressiveness = scene.expressiveness;
+  }
 
   const preview = scene.avatar || base.avatarPreviewSrc;
   if (preview && !isEphemeralUrl(preview)) {
@@ -279,8 +325,9 @@ function buildGeneration(scene) {
 
   if (!heygenVideoId && !scene.heygenStatus && !scene.generation) return undefined;
 
+  const status = scene.heygenStatus || scene.generation?.status || 'pending';
   return {
-    status: scene.heygenStatus || scene.generation?.status || 'pending',
+    status: status === 'completed' || status === 'success' ? 'completed' : status,
     heygenVideoId: heygenVideoId || undefined,
   };
 }
@@ -306,8 +353,11 @@ export function toBackendProjectData(projectState) {
       const sceneId = scene.sceneId || scene.id || `scene_${idx}`;
       const isRenderableElement = (el) => {
         if (!el) return false;
-        if (el.type !== 'image' && el.type !== 'video' && el.type !== 'audio') return true;
+        // HeyGen avatar: persist placement/layer via heygenVideoId — playback URL is re-fetched on load
+        if (el.role === 'avatar' || el.type === 'avatar') return true;
         const content = el.content;
+        if (typeof content === 'object' && content !== null && content.heygenVideoId) return true;
+        if (el.type !== 'image' && el.type !== 'video' && el.type !== 'audio') return true;
         const src =
           el.src ||
           (typeof content === 'object' && content !== null ? (content.src || content.url) : null) ||
@@ -383,12 +433,20 @@ function elementToClip(element) {
   };
 
   if (element.role) clip.role = element.role;
-  if (element.style) clip.style = { ...element.style };
-  if (element.filters) clip.filters = element.filters;
+  if (element.style) {
+    clip.style = { ...element.style };
+    if (element.style.objectFit) clip.objectFit = element.style.objectFit;
+  }
+  if (element.filters) {
+    clip.filters = element.filters;
+    clip.cssFilters = element.filters;
+  }
+  if (element.effects) clip.effects = { ...element.effects };
   if (element.animations) {
     clip.animations = mapAnimationsFromBackend(element.animations);
   }
   if (element.visible !== undefined) clip.visible = element.visible;
+  if (element.isBackground) clip.isBackground = true;
 
   if (isTextLayer(clip)) {
     clip.type = 'text';
@@ -430,6 +488,9 @@ export function sceneFromBackend(scene) {
     avatarType: lookId || scene.avatarType,
     avatarKind: presenter.avatarType || scene.avatarKind,
     avatarName: presenter.avatarName || scene.avatarName,
+    avatarEngine: presenter.avatarEngine || scene.avatarEngine || 'avatar_iv',
+    avatarGroupId: presenter.avatarGroupId || scene.avatarGroupId,
+    expressiveness: presenter.expressiveness || scene.expressiveness,
     voiceId: presenter.voiceId || avatarContent.voiceId || scene.voiceId,
     voiceName: presenter.voiceName || scene.voiceName,
     voiceSettings: presenter.voiceSettings || scene.voiceSettings,
@@ -438,7 +499,7 @@ export function sceneFromBackend(scene) {
     heygenStatus: generation.status || scene.heygenStatus,
     presenter,
     generation,
-    clips: (scene.elements || scene.clips || []).map(elementToClip),
+    clips: normalizeSceneClips((scene.elements || scene.clips || []).map(elementToClip)),
   };
 }
 
@@ -461,26 +522,42 @@ export async function rehydrateSceneVideos(scenes, workspaceId, projectId) {
 
   return Promise.all(
     scenes.map(async (scene) => {
-      if (!scene.heygenVideoId) return scene;
+      const heygenVideoId = resolveSceneHeygenVideoId(scene);
+      if (!heygenVideoId) return scene;
+
+      const sceneWithId = {
+        ...scene,
+        heygenVideoId,
+        generation: {
+          ...(scene.generation || {}),
+          heygenVideoId,
+          status: scene.generation?.status || scene.heygenStatus || 'completed',
+        },
+      };
 
       try {
-        const blobUrl = await heygenService.getVideoBlobUrl(
+        const playbackUrl = await fetchHeygenPlaybackUrl(
           workspaceId,
           projectId,
-          scene.heygenVideoId
+          heygenVideoId,
+          heygenService
         );
         return {
-          ...scene,
-          generatedVideoUrl: blobUrl,
-          heygenStatus: scene.heygenStatus || 'completed',
+          ...applyPlaybackUrlToScene(sceneWithId, playbackUrl),
+          heygenStatus: sceneWithId.heygenStatus || 'completed',
+          generation: {
+            heygenVideoId,
+            status: 'completed',
+          },
         };
       } catch (err) {
         console.warn(
           '[ProjectData] Failed to rehydrate HeyGen video for scene',
           scene.sceneId || scene.id,
+          heygenVideoId,
           err
         );
-        return scene;
+        return sceneWithId;
       }
     })
   );

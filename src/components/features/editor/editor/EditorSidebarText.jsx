@@ -1,5 +1,24 @@
 import { MdTextFields } from 'react-icons/md';
 import { FONT_COMBINATIONS, TEXT_STYLE_PRESETS } from '../../../../constants/textPresets';
+import { buildTextDisplayStyle } from '../../../../utils/textEffects';
+
+function comboPreviewStyle(combo) {
+  const built = buildTextDisplayStyle(
+    {
+      ...combo.style,
+      ...(combo.textEffect ? { textEffect: combo.textEffect } : {}),
+    },
+    1
+  );
+  const size = combo.previewFontSize ?? combo.style?.fontSize;
+  return {
+    ...built,
+    fontSize: typeof size === 'number' ? `${size}px` : size,
+    whiteSpace: combo.multiline ? 'pre-line' : 'nowrap',
+    lineHeight: combo.multiline ? 1.15 : built.lineHeight,
+    maxWidth: '100%',
+  };
+}
 
 const EditorSidebarText = ({ addLayer, setSelectedLayerId, onClose }) => {
   const addTextClip = (text, meta = {}) => {
@@ -68,7 +87,10 @@ const EditorSidebarText = ({ addLayer, setSelectedLayerId, onClose }) => {
               onClick={() => handleCombination(combo)}
               title={combo.text}
             >
-              <span className="text-tool-combo-preview" style={combo.style}>
+              <span
+                className={`text-tool-combo-preview${combo.multiline ? ' text-tool-combo-preview--multiline' : ''}`}
+                style={comboPreviewStyle(combo)}
+              >
                 {combo.preview}
               </span>
             </button>

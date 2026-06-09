@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { MdCloudUpload } from 'react-icons/md';
-import { predefinedMedia } from '../../../../constants/editorData';
+import { predefinedMedia, predefinedVideos } from '../../../../constants/editorData';
 import assetService from '../../../../services/assetService';
 
 const EditorSidebarUploads = ({ addLayer, workspaceId, onUploadError }) => {
@@ -123,14 +123,18 @@ const EditorSidebarUploads = ({ addLayer, workspaceId, onUploadError }) => {
       <div className="tool-section">
         <h4 className="tool-section-title">Sample Media</h4>
         <div className="media-grid premium-scrollbar">
-          {predefinedMedia.map((media) => (
+          {[...predefinedMedia, ...predefinedVideos].map((media) => (
             <div
               key={media.id}
               className="media-item"
-              onClick={() => addLayer('image', media.full)}
+              onClick={() => addLayer(media.type || 'image', media.full)}
               title={`Add ${media.name}`}
             >
-              <img src={media.image} alt={media.name} />
+              {media.type === 'video' ? (
+                <video src={media.full} muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <img src={media.image} alt={media.name} />
+              )}
             </div>
           ))}
         </div>

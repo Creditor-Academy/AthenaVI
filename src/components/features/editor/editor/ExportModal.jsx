@@ -187,7 +187,7 @@ const ExportModal = ({
         {isSuccess && (
           <div className="export-modal-result export-modal-result--success">
             <MdCheckCircle size={48} />
-            <p>Your video has been rendered and the download should begin shortly.</p>
+            <p>Your video has been saved to your downloads folder.</p>
             <button type="button" className="btn-primary" onClick={onClose}>
               Done
             </button>

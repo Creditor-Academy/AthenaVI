@@ -1,9 +1,11 @@
 import {
   bringClipForward,
+  bringClipToFront,
   duplicateClip,
   duplicateScene,
   pasteClipsAt,
   sendClipBackward,
+  sendClipToBack,
   snapPoint,
 } from '../utils/editorLayerUtils';
 
@@ -49,6 +51,8 @@ export function useEditorUx({
     updateActiveSceneClips((clips) => {
       if (direction === 'forward') return bringClipForward(clips, clipId);
       if (direction === 'backward') return sendClipBackward(clips, clipId);
+      if (direction === 'toFront') return bringClipToFront(clips, clipId);
+      if (direction === 'toBack') return sendClipToBack(clips, clipId);
       return clips;
     });
   };
@@ -146,7 +150,7 @@ export function useEditorUx({
             ...s,
             clips: s.clips.map((c) => {
               if (c.id !== layerId || c.locked) return c;
-              return { ...c, position: snapped };
+              return { ...c, position: snapped, _userPlaced: true };
             }),
           };
         }),

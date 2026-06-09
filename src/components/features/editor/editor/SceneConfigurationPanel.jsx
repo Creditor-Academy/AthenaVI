@@ -1,4 +1,13 @@
-import { normalizeClipStack } from '../../../../utils/editorLayerUtils';
+import {
+  normalizeClipStack,
+  canSetAsSceneBackground,
+  buildSceneBackgroundPatch,
+  buildUnsetSceneBackgroundPatch,
+  getClipStackIndex,
+  isBackgroundClip,
+  minMovableStackIndex,
+  sortClipsByPaintOrder,
+} from '../../../../utils/editorLayerUtils';
 import {
   MdTextFields,
   MdColorLens,
@@ -193,19 +202,35 @@ const FitButtons = ({ value, onChange }) => {
 /* ══════════════════════════════════════════════════════════════════════════
    LAYER PROPERTIES PANEL
 ══════════════════════════════════════════════════════════════════════════ */
-const LayerOrderLockBar = ({ activeLayer, clips, onMoveLayerOrder, onToggleLayerLock }) => {
-  const layerIndex = clips.findIndex((c) => c.id === activeLayer.id);
-  const maxIndex = Math.max(0, clips.length - 1);
+const LayerOrderLockBar = ({ activeLayer, clips, onMoveLayerOrder, onToggleLayerLock, hint }) => {
+  const paintOrder = sortClipsByPaintOrder(clips);
+  const layerIndex = getClipStackIndex(clips, activeLayer.id);
+  const maxIndex = Math.max(0, paintOrder.length - 1);
+  const minIndex = minMovableStackIndex(paintOrder);
+  const isBg = isBackgroundClip(activeLayer);
 
   return (
     <>
       <SectionHeader icon={<MdLayers size={14} />} label="Layer order" />
       <Card>
+        {hint ? (
+          <p style={{ margin: '0 0 8px', fontSize: 10, color: 'var(--text-muted)', lineHeight: 1.45 }}>
+            {hint}
+          </p>
+        ) : null}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           <button
             type="button"
             className="scp-btn scp-btn--ghost"
-            disabled={layerIndex >= maxIndex}
+            disabled={isBg || layerIndex >= maxIndex}
+            onClick={() => onMoveLayerOrder?.(activeLayer.id, 'toFront')}
+          >
+            Bring to front
+          </button>
+          <button
+            type="button"
+            className="scp-btn scp-btn--ghost"
+            disabled={isBg || layerIndex >= maxIndex}
             onClick={() => onMoveLayerOrder?.(activeLayer.id, 'forward')}
           >
             Bring forward
@@ -213,10 +238,18 @@ const LayerOrderLockBar = ({ activeLayer, clips, onMoveLayerOrder, onToggleLayer
           <button
             type="button"
             className="scp-btn scp-btn--ghost"
-            disabled={layerIndex <= 0}
+            disabled={isBg || layerIndex <= minIndex}
             onClick={() => onMoveLayerOrder?.(activeLayer.id, 'backward')}
           >
             Send backward
+          </button>
+          <button
+            type="button"
+            className="scp-btn scp-btn--ghost"
+            disabled={isBg || layerIndex <= minIndex}
+            onClick={() => onMoveLayerOrder?.(activeLayer.id, 'toBack')}
+          >
+            Send to back
           </button>
           <button
             type="button"
@@ -235,7 +268,15 @@ const LayerOrderLockBar = ({ activeLayer, clips, onMoveLayerOrder, onToggleLayer
 
 const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScene, onMoveLayerOrder, onToggleLayerLock }) => {
   const updateLayer = (updates) => {
-    let newClips = clips.map(l => l.id === activeLayer.id ? { ...l, ...updates } : l);
+    const marksPlaced =
+      'position' in updates ||
+      'size' in updates ||
+      ('style' in updates && updates.style != null)
+    let newClips = clips.map((l) =>
+      l.id === activeLayer.id
+        ? { ...l, ...updates, ...(marksPlaced ? { _userPlaced: true } : {}) }
+        : l
+    );
     if ('isBackground' in updates) {
       newClips = normalizeClipStack(newClips);
     }
@@ -285,33 +326,16 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
   // Broad image detection — covers type='image' regardless of role/label
 
   const isBackground = !!activeLayer.isBackground;
+  const canBeSceneBackground = canSetAsSceneBackground(activeLayer);
+  const hasBackgroundSource = !!(resolveClipMediaSrc(activeLayer, activeScene) || activeLayer.src);
 
-  // "Set as Background" – keeps the clip but stretches it to fill the full canvas.
-  // The clip stays in the timeline and is fully editable.
   const setAsBackground = () => {
-    if (!activeLayer.src) return;
-    // Save original dimensions so we can restore them if user unsets
-    const origPos  = activeLayer._origPosition  || activeLayer.position;
-    const origSize = activeLayer._origSize       || activeLayer.size;
-    updateLayer({
-      isBackground: true,
-      _origPosition: origPos,
-      _origSize: origSize,
-      position: { x: 0, y: 0 },
-      size: { width: 1920, height: 1080 },
-      style: { ...(activeLayer.style || {}), objectFit: activeLayer.style?.objectFit || 'cover', zIndex: 0 },
-    });
+    if (!hasBackgroundSource) return;
+    updateLayer(buildSceneBackgroundPatch(activeLayer));
   };
 
-  // Restore the clip to its previous position/size and clear the background flag
   const unsetAsBackground = () => {
-    updateLayer({
-      isBackground: false,
-      position: activeLayer._origPosition || { x: 200, y: 200 },
-      size: activeLayer._origSize || { width: 600, height: 400 },
-      _origPosition: undefined,
-      _origSize: undefined,
-    });
+    updateLayer(buildUnsetSceneBackgroundPatch(activeLayer));
   };
 
   // CSS filter helpers
@@ -337,6 +361,18 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
         }
       />
 
+      {isShape && (
+        <div style={{ padding: '0 14px' }}>
+          <LayerOrderLockBar
+            activeLayer={activeLayer}
+            clips={clips}
+            onMoveLayerOrder={onMoveLayerOrder}
+            onToggleLayerLock={onToggleLayerLock}
+            hint="Place shapes above the scene background and behind text or avatars. Use Send to back or Send backward."
+          />
+        </div>
+      )}
+
       {(isImage || isMedia || isShape) && (
         <div style={{ padding: '0 14px' }}>
           <LayerAnimatePanel activeLayer={activeLayer} updateLayer={updateLayer} />
@@ -346,9 +382,8 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
       <div style={{ padding: '0 14px' }}>
       <Divider />
 
-      {isImage && (
+      {canBeSceneBackground && (
         <>
-          {/* Background toggle hero button */}
           {isBackground ? (
             <div className="scp-banner scp-banner--active" style={{ marginBottom: 4, justifyContent: 'space-between' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
@@ -364,14 +399,18 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
               type="button"
               className="scp-banner"
               onClick={setAsBackground}
-              disabled={!activeLayer.src}
+              disabled={!hasBackgroundSource}
               style={{ marginBottom: 4 }}
             >
               <MdWallpaper size={16} />
-              {activeLayer.src ? 'Set as Scene Background' : 'Add an image from the sidebar first'}
+              {hasBackgroundSource ? 'Set as Scene Background' : 'Add media from the sidebar first'}
             </button>
           )}
+        </>
+      )}
 
+      {isImage && (
+        <>
           {/* Fit, flip & adjustments — live preview */}
           <SectionHeader icon={<MdCropFree size={14} />} label="Fit & Adjustments" />
           <Card>
@@ -656,12 +695,14 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
 
       <Divider />
 
-      <LayerOrderLockBar
-        activeLayer={activeLayer}
-        clips={clips}
-        onMoveLayerOrder={onMoveLayerOrder}
-        onToggleLayerLock={onToggleLayerLock}
-      />
+      {!isShape && (
+        <LayerOrderLockBar
+          activeLayer={activeLayer}
+          clips={clips}
+          onMoveLayerOrder={onMoveLayerOrder}
+          onToggleLayerLock={onToggleLayerLock}
+        />
+      )}
 
       {/* ── Visibility (universal) ─────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0 2px' }}>

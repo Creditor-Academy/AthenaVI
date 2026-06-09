@@ -361,30 +361,26 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
 
     if (template.title?.includes('Avatar Group Hero')) {
       return (
-        <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <div style={{ fontSize: '15px', fontWeight: '900', color: '#0f172a', lineHeight: '1.1', textTransform: 'uppercase' }}>JOIN OUR GLOBAL<br/>COMMUNITY</div>
-            <div style={{ fontSize: '7px', fontWeight: '600', color: '#3b82f6', letterSpacing: '0.05em' }}>10k+ ACTIVE CREATORS</div>
+        <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '14px', padding: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: '12px' }}>
+            {[120, 160, 120].map((size, i) => (
+              <div
+                key={i}
+                style={{
+                  width: `${size * 0.22}px`,
+                  height: `${size * 0.22}px`,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #818cf8 0%, #a78bfa 100%)',
+                  border: '2px solid #ffffff',
+                  boxShadow: '0 4px 12px rgba(99,102,241,0.25)',
+                  opacity: i === 1 ? 1 : 0.85,
+                }}
+              />
+            ))}
           </div>
-          <div style={{ width: '50%', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
-             {[...Array(9)].map((_, i) => (
-               <div key={i} style={{ aspectRatio: '1/1', backgroundColor: '#e2e8f0', borderRadius: '6px', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#64748b"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
-               </div>
-             ))}
+          <div style={{ fontSize: '11px', fontWeight: '900', color: '#1e293b', textAlign: 'center', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            Trusted by 10,000+ Creators
           </div>
-          {renderMockupExtras()}
-        </div>
-      );
-    }
-
-    if (template.title?.includes('Centered Impact Hero')) {
-      return (
-        <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-          <div style={{ ...textLineStyle, width: '60%', height: '14px' }} />
-          <div style={{ ...textLineStyle, width: '40%', height: '10px' }} />
-          <div style={{ ...textLineStyle, width: '80%', height: '10px' }} />
-          <div style={{ ...textLineStyle, width: '50%', height: '10px' }} />
           {renderMockupExtras()}
         </div>
       );

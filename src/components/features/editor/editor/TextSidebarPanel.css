@@ -293,6 +293,37 @@
   padding: 12px 12px 4px;
 }
 
+.text-typewriter-speed {
+  padding-top: 4px;
+  padding-bottom: 8px;
+}
+
+.text-typewriter-speed__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.text-typewriter-speed__label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ts-text);
+}
+
+.text-typewriter-speed__value {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ts-muted);
+}
+
+.text-typewriter-speed__slider {
+  width: 100%;
+  height: 4px;
+  cursor: pointer;
+  accent-color: var(--ts-accent);
+}
+
 .text-sidebar-section__head {
   display: flex;
   align-items: center;

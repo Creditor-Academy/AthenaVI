@@ -37,6 +37,12 @@ import {
   getEntranceAnimation,
   setEntranceAnimation,
 } from '../../../../utils/clipAnimations';
+import {
+  getClipStackIndex,
+  isBackgroundClip,
+  minMovableStackIndex,
+  sortClipsByPaintOrder,
+} from '../../../../utils/editorLayerUtils';
 import LayerTransformBar from './LayerTransformBar';
 import './TextSidebarPanel.css';
 
@@ -231,8 +237,11 @@ const EffectGrid = ({ title, options, activeId, onSelect, renderPreview }) => (
 );
 
 const TextLayerFooter = ({ activeLayer, clips, onMoveLayerOrder, onToggleLayerLock, updateLayer }) => {
-  const layerIndex = clips.findIndex((c) => c.id === activeLayer.id);
-  const maxIndex = Math.max(0, clips.length - 1);
+  const paintOrder = sortClipsByPaintOrder(clips);
+  const layerIndex = getClipStackIndex(clips, activeLayer.id);
+  const maxIndex = Math.max(0, paintOrder.length - 1);
+  const minIndex = minMovableStackIndex(paintOrder);
+  const isBg = isBackgroundClip(activeLayer);
 
   return (
     <div className="text-sidebar-footer">
@@ -246,18 +255,34 @@ const TextLayerFooter = ({ activeLayer, clips, onMoveLayerOrder, onToggleLayerLo
         <button
           type="button"
           className="text-sidebar-footer__btn"
-          disabled={layerIndex >= maxIndex}
-          onClick={() => onMoveLayerOrder?.(activeLayer.id, 'forward')}
+          disabled={isBg || layerIndex >= maxIndex}
+          onClick={() => onMoveLayerOrder?.(activeLayer.id, 'toFront')}
         >
-          Bring forward
+          To front
         </button>
         <button
           type="button"
           className="text-sidebar-footer__btn"
-          disabled={layerIndex <= 0}
+          disabled={isBg || layerIndex >= maxIndex}
+          onClick={() => onMoveLayerOrder?.(activeLayer.id, 'forward')}
+        >
+          Forward
+        </button>
+        <button
+          type="button"
+          className="text-sidebar-footer__btn"
+          disabled={isBg || layerIndex <= minIndex}
           onClick={() => onMoveLayerOrder?.(activeLayer.id, 'backward')}
         >
-          Send backward
+          Backward
+        </button>
+        <button
+          type="button"
+          className="text-sidebar-footer__btn"
+          disabled={isBg || layerIndex <= minIndex}
+          onClick={() => onMoveLayerOrder?.(activeLayer.id, 'toBack')}
+        >
+          To back
         </button>
         <button
           type="button"
@@ -360,6 +385,7 @@ const TextSidebarPanel = ({
       type: preset.entrance,
       duration: durationByType[preset.entrance] ?? 0.75,
       delay: 0,
+      speed: preset.entrance === 'typewriter' || preset.entrance === 'wordFade' ? 1 : undefined,
       previewSeed: Date.now(),
     });
     updateLayer({ animations: next.animations });
@@ -523,6 +549,31 @@ const TextSidebarPanel = ({
           }}
           renderPreview={(id) => <SuggestedPreview presetId={id} />}
         />
+
+        {(activeEntrance === 'typewriter' || activeEntrance === 'wordFade') && (
+          <div className="text-sidebar-section text-typewriter-speed">
+            <div className="text-typewriter-speed__row">
+              <span className="text-typewriter-speed__label">Speed</span>
+              <span className="text-typewriter-speed__value">{(entrance?.speed ?? 1).toFixed(1)}×</span>
+            </div>
+            <input
+              type="range"
+              className="text-typewriter-speed__slider"
+              min={0.25}
+              max={3}
+              step={0.25}
+              value={entrance?.speed ?? 1}
+              onChange={(e) => {
+                const next = setEntranceAnimation(activeLayer, {
+                  speed: Number(e.target.value),
+                  previewSeed: Date.now(),
+                });
+                updateLayer({ animations: next.animations });
+              }}
+              aria-label="Typewriter speed"
+            />
+          </div>
+        )}
 
         <CollapsibleEffectGrid
           title="Effects"
