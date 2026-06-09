@@ -1,0 +1,63 @@
+export function formatAc(value) {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return '—'
+  return `${new Intl.NumberFormat().format(n)} AC`
+}
+
+export function formatDate(iso) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+export function formatShortDate(iso) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
+
+export const TX_TYPE_LABELS = {
+  platform_grant: 'Platform grant',
+  platform_revoke: 'Platform revoke',
+  usage: 'Usage',
+  allocation: 'Allocation',
+  deallocation: 'Deallocation',
+  refund: 'Refund',
+}
+
+export function txTypeLabel(type) {
+  return TX_TYPE_LABELS[type] || type || 'Unknown'
+}
+
+export function txAmountClass(amount) {
+  const n = Number(amount)
+  if (n > 0) return 'sa-amount--positive'
+  if (n < 0) return 'sa-amount--negative'
+  return ''
+}
+
+export function toIsoDateInput(date) {
+  const d = date instanceof Date ? date : new Date(date)
+  return d.toISOString().slice(0, 10)
+}
+
+export function defaultReportRange() {
+  const to = new Date()
+  const from = new Date()
+  from.setDate(from.getDate() - 30)
+  return { from: toIsoDateInput(from), to: toIsoDateInput(to) }
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+export function isValidUuid(value) {
+  return UUID_RE.test(String(value || '').trim())
+}

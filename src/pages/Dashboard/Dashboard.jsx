@@ -69,9 +69,11 @@ function Dashboard({ onCreate, initialSection }) {
   const [topbarMobileOpen, setTopbarMobileOpen] = useState(false)
   const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false)
   const [lastVoiceCreated, setLastVoiceCreated] = useState(false)
-  const [adminTab, setAdminTab] = useState(
-    () => localStorage.getItem('adminPortalTab') || 'dashboard'
-  )
+  const [adminTab, setAdminTab] = useState(() => {
+    const saved = localStorage.getItem('adminPortalTab')
+    const valid = ['users', 'workspaces', 'reports']
+    return valid.includes(saved) ? saved : 'users'
+  })
 
   const cartCount = 2
   const notificationCount = 9
@@ -283,7 +285,7 @@ function Dashboard({ onCreate, initialSection }) {
         />
 
         <main
-          className={`content ${!noPaddingSections.includes(section) ? 'with-padding' : ''} ${section === 'home' ? 'content--home' : ''} ${workspaceConsistentSections.includes(section) ? 'content--workspace-consistent' : ''}`}
+          className={`content ${!noPaddingSections.includes(section) ? 'with-padding' : ''} ${section === 'home' ? 'content--home' : ''} ${workspaceConsistentSections.includes(section) ? 'content--workspace-consistent' : ''} ${isAdminPortal ? 'content--superadmin' : ''}`}
         >
           {section === 'home' && (
             <Home 

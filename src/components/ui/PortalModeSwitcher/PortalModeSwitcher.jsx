@@ -36,10 +36,10 @@ function PortalModeSwitcher({ mode = 'main', onSelectMain, onSelectAdmin, onClos
           className={`vi-mode-rail-btn ${isAdmin ? 'vi-mode-rail-btn--active' : ''}`}
           onClick={() => handleSelect('admin')}
           aria-pressed={isAdmin}
-          title="Command Center"
+          title="Superadmin"
         >
           <Radar size={13} strokeWidth={1.75} aria-hidden />
-          <span>Command</span>
+          <span>Superadmin</span>
         </button>
       </div>
     </div>

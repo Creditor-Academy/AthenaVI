@@ -941,6 +941,18 @@
   height: 100%;
 }
 
+.content.content--superadmin {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.content.content--superadmin > .sa-portal {
+  flex: 1;
+  min-height: 0;
+}
+
 .content.content--workspace-consistent :is(
   .videos-page-title,
   .library-page-title,
