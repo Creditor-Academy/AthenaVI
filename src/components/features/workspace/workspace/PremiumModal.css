@@ -450,6 +450,27 @@
   border-color: var(--text-muted);
 }
 
+.astryd-btn-accent-outline {
+  padding: 10px 18px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--primary);
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, transform 0.1s;
+}
+
+.astryd-btn-accent-outline:hover {
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  border-color: var(--primary);
+}
+
+.astryd-btn-accent-outline:active {
+  transform: scale(0.98);
+}
+
 .astryd-btn-primary {
   padding: 10px 18px;
   border-radius: 8px;
@@ -507,6 +528,19 @@
   min-width: 130px;
   padding: 4px 0;
   margin-top: 4px;
+  animation: astrydSlideIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: top right;
+}
+
+@keyframes astrydSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .astryd-dropdown-item {
@@ -526,6 +560,12 @@
 
 .astryd-dropdown-item:hover {
   background: color-mix(in srgb, var(--text-main) 8%, transparent);
+}
+
+.astryd-dropdown-item.active {
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  color: var(--primary);
+  font-weight: 600;
 }
 
 .astryd-dropdown-item.danger {
@@ -580,4 +620,167 @@
 .astryd-form {
   padding: 20px 24px 24px 24px;
   box-sizing: border-box;
+}
+
+/* Choose Role & List UI Enhancements */
+.astryd-select-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.astryd-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 100%;
+  padding: 0 30px 0 12px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 40%, transparent);
+  color: var(--text-main);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.astryd-select:focus {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--bg-surface) 60%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 15%, transparent);
+}
+
+.astryd-select-arrow {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  transition: color 0.2s, transform 0.2s ease;
+}
+
+.astryd-select:focus + .astryd-select-arrow {
+  color: var(--primary);
+}
+
+.astryd-select-arrow.open {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.astryd-member-card {
+  border: 1px solid color-mix(in srgb, var(--border-color) 45%, transparent);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  background: color-mix(in srgb, var(--bg-surface) 35%, transparent);
+  position: relative;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.astryd-member-card:hover {
+  background: color-mix(in srgb, var(--bg-surface) 65%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 20%, var(--border-color));
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1.5px);
+}
+
+.astryd-role-tag {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.astryd-role-tag.owner {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
+}
+
+.astryd-role-tag.admin {
+  background: color-mix(in srgb, var(--secondary) 12%, transparent);
+  color: var(--secondary);
+  border: 1px solid color-mix(in srgb, var(--secondary) 25%, transparent);
+}
+
+.astryd-role-tag.member {
+  background: color-mix(in srgb, var(--text-muted) 10%, transparent);
+  color: var(--text-muted);
+  border: 1px solid color-mix(in srgb, var(--text-muted) 20%, transparent);
+}
+
+.astryd-role-tag.invitee {
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  color: var(--primary);
+  border: 1px dashed color-mix(in srgb, var(--primary) 30%, transparent);
+}
+
+.astryd-member-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--text-muted) 10%, transparent);
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: all 0.22s ease;
+}
+
+.astryd-member-card:hover .astryd-member-avatar {
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  color: var(--primary);
+}
+
+.astryd-invitee-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  color: var(--primary);
+  flex-shrink: 0;
+  border: 1px dashed color-mix(in srgb, var(--primary) 30%, transparent);
+}
+
+.astryd-action-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.astryd-action-btn:hover {
+  background: color-mix(in srgb, var(--text-muted) 12%, transparent);
+  color: var(--text-main);
+}
+
+.astryd-count-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-muted) 12%, transparent);
+  color: var(--text-muted);
 }
