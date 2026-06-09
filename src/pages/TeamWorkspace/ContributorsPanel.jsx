@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MdClose,
@@ -36,15 +36,19 @@ const ContributorsPanel = ({
   loadContributors
 }) => {
   const canManage = workspace ? workspaceCanManageContributors(workspace) : false;
+  const [activeRoleDropdownIndex, setActiveRoleDropdownIndex] = useState(null);
 
-  // Close the member action dropdown when clicking outside
+  // Close the dropdowns when clicking outside
   useEffect(() => {
-    const handleClickOutside = () => setActiveMemberMenuId(null);
-    if (activeMemberMenuId !== null) {
+    const handleClickOutside = () => {
+      setActiveMemberMenuId(null);
+      setActiveRoleDropdownIndex(null);
+    };
+    if (activeMemberMenuId !== null || activeRoleDropdownIndex !== null) {
       document.addEventListener('click', handleClickOutside);
     }
     return () => document.removeEventListener('click', handleClickOutside);
-  }, [activeMemberMenuId, setActiveMemberMenuId]);
+  }, [activeMemberMenuId, setActiveMemberMenuId, activeRoleDropdownIndex]);
 
   return (
     <AnimatePresence>
@@ -56,6 +60,11 @@ const ContributorsPanel = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
+            style={{
+              background: 'rgba(9, 14, 26, 0.65)',
+              backdropFilter: 'blur(6px)',
+              WebkitBackdropFilter: 'blur(6px)',
+            }}
           />
           <motion.div
             className="modal-content astryd-modal"
@@ -107,12 +116,12 @@ const ContributorsPanel = ({
                     }}
                   >
                     <span style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-main)' }}>
-                      Add contributors
+                      Add contributors 
                     </span>
                     <button
                       type="button"
                       onClick={() => setShowAddContributors(!showAddContributors)}
-                      className="astryd-btn-secondary"
+                      className="astryd-btn-accent-outline"
                       style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', height: '30px' }}
                     >
                       {showAddContributors ? 'Cancel' : 'Add'}
@@ -143,15 +152,48 @@ const ContributorsPanel = ({
                               onChange={(e) => onUpdateInput(index, 'email', e.target.value)}
                               style={{ flex: 1, height: '36px' }}
                             />
-                            <select
-                              className="astryd-input"
-                              value={input.role}
-                              onChange={(e) => onUpdateInput(index, 'role', e.target.value)}
-                              style={{ width: '100px', height: '36px', padding: '0 8px' }}
-                            >
-                              <option value="MEMBER">Member</option>
-                              <option value="ADMIN">Admin</option>
-                            </select>
+                            <div className="astryd-select-wrapper" style={{ width: '110px' }}>
+                              <button
+                                type="button"
+                                className="astryd-select"
+                                style={{ height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', textAlign: 'left' }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveRoleDropdownIndex(activeRoleDropdownIndex === index ? null : index);
+                                }}
+                              >
+                                <span>{input.role === 'ADMIN' ? 'Admin' : 'Member'}</span>
+                              </button>
+                              <div className={`astryd-select-arrow ${activeRoleDropdownIndex === index ? 'open' : ''}`}>
+                                <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              </div>
+                              {activeRoleDropdownIndex === index && (
+                                <div className="astryd-dropdown-menu" style={{ width: '100%', left: 0, top: '100%', backdropFilter: 'blur(12px)', marginTop: '4px' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      onUpdateInput(index, 'role', 'MEMBER');
+                                      setActiveRoleDropdownIndex(null);
+                                    }}
+                                    className={`astryd-dropdown-item ${input.role === 'MEMBER' ? 'active' : ''}`}
+                                  >
+                                    Member
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      onUpdateInput(index, 'role', 'ADMIN');
+                                      setActiveRoleDropdownIndex(null);
+                                    }}
+                                    className={`astryd-dropdown-item ${input.role === 'ADMIN' ? 'active' : ''}`}
+                                  >
+                                    Admin
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                             {inviteInputs.length > 1 && (
                               <button
                                 type="button"
@@ -178,7 +220,7 @@ const ContributorsPanel = ({
                         <button
                           type="button"
                           onClick={onAddInput}
-                          className="astryd-btn-secondary"
+                          className="astryd-btn-accent-outline"
                           style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', height: '30px' }}
                         >
                           <MdAdd size={14} /> Add more
@@ -212,8 +254,9 @@ const ContributorsPanel = ({
               >
                 {/* Members */}
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8, color: 'var(--text-main)' }}>
-                    Members
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600, fontSize: 13, marginBottom: 10, color: 'var(--text-main)' }}>
+                    <span>Members</span>
+                    <span className="astryd-count-badge">{members.length}</span>
                   </div>
                   {membersLoading ? (
                     <div className="astryd-hint">Loading members...</div>
@@ -229,18 +272,13 @@ const ContributorsPanel = ({
                       return (
                         <div
                           key={memberId}
-                          style={{
-                            border: '1px solid color-mix(in srgb, var(--border-color) 45%, transparent)',
-                            borderRadius: 8,
-                            padding: 10,
-                            marginBottom: 8,
-                            background: 'color-mix(in srgb, var(--bg-surface) 30%, transparent)',
-                            position: 'relative'
-                          }}
+                          className="astryd-member-card"
                         >
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                              <MdPerson size={18} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                              <div className="astryd-member-avatar">
+                                <MdPerson size={18} />
+                              </div>
                               <div style={{ minWidth: 0 }}>
                                 <div style={{ fontWeight: 600, fontSize: 13, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', color: 'var(--text-main)' }}>
                                   {label}
@@ -249,17 +287,14 @@ const ContributorsPanel = ({
                                   <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                                     {member.user?.email || member.email || ''}
                                   </span>
-                                  <span style={{ height: '3px', width: '3px', borderRadius: '50%', background: 'var(--text-muted)', flexShrink: 0 }} />
-                                  <span style={{ textTransform: 'capitalize', fontWeight: 500, color: 'var(--primary)', flexShrink: 0 }}>
-                                    {role.toLowerCase()}
-                                  </span>
                                 </div>
                               </div>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                              {role === 'OWNER' ? (
-                                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--primary)', paddingRight: 8 }}>Owner</span>
-                              ) : canManage ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+                              <span className={`astryd-role-tag ${role.toLowerCase()}`}>
+                                {role.toLowerCase()}
+                              </span>
+                              {canManage && role !== 'OWNER' && (
                                 <div style={{ position: 'relative' }}>
                                   <button
                                     type="button"
@@ -267,17 +302,7 @@ const ContributorsPanel = ({
                                       e.stopPropagation();
                                       setActiveMemberMenuId(activeMemberMenuId === memberId ? null : memberId);
                                     }}
-                                    style={{
-                                      background: 'none',
-                                      border: 'none',
-                                      color: 'var(--text-muted)',
-                                      cursor: 'pointer',
-                                      padding: '6px',
-                                      borderRadius: '4px',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center'
-                                    }}
+                                    className="astryd-action-btn"
                                   >
                                     <MdMoreVert size={20} />
                                   </button>
@@ -309,10 +334,6 @@ const ContributorsPanel = ({
                                     </div>
                                   )}
                                 </div>
-                              ) : (
-                                <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-muted)', paddingRight: 8, textTransform: 'capitalize' }}>
-                                  {role.toLowerCase()}
-                                </span>
                               )}
                             </div>
                           </div>
@@ -324,8 +345,9 @@ const ContributorsPanel = ({
 
                 {/* Invitees */}
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8, color: 'var(--text-main)' }}>
-                    Invitees
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600, fontSize: 13, marginBottom: 10, color: 'var(--text-main)' }}>
+                    <span>Invitees</span>
+                    <span className="astryd-count-badge">{invitees.length}</span>
                   </div>
                   {invitees.length === 0 ? (
                     <div className="astryd-hint">No pending invitees.</div>
@@ -333,33 +355,27 @@ const ContributorsPanel = ({
                     invitees.map((invitee) => (
                       <div
                         key={invitee.id}
-                        style={{
-                          border: '1px solid color-mix(in srgb, var(--border-color) 45%, transparent)',
-                          borderRadius: 8,
-                          padding: 10,
-                          marginBottom: 8,
-                          background: 'color-mix(in srgb, var(--bg-surface) 30%, transparent)',
-                          position: 'relative'
-                        }}
+                        className="astryd-member-card"
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                            <MdMail size={18} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                            <div className="astryd-invitee-avatar">
+                              <MdMail size={18} />
+                            </div>
                             <div style={{ minWidth: 0 }}>
                               <div style={{ fontWeight: 600, fontSize: 13, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', color: 'var(--text-main)' }}>
                                 {invitee.email || invitee.inviteeEmail || 'Invitee'}
                               </div>
                               <div style={{ color: 'var(--text-muted)', fontSize: 11, display: 'flex', alignItems: 'center', gap: 6 }}>
                                 <span>Pending Invite</span>
-                                <span style={{ height: '3px', width: '3px', borderRadius: '50%', background: 'var(--text-muted)', flexShrink: 0 }} />
-                                <span style={{ textTransform: 'capitalize', fontWeight: 500, color: 'var(--primary)', flexShrink: 0 }}>
-                                  {String(invitee.role || 'MEMBER').toLowerCase()}
-                                </span>
                               </div>
                             </div>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                            {canManage ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+                            <span className="astryd-role-tag invitee">
+                              {String(invitee.role || 'MEMBER').toLowerCase()}
+                            </span>
+                            {canManage && (
                               <div style={{ position: 'relative' }}>
                                 <button
                                   type="button"
@@ -367,17 +383,7 @@ const ContributorsPanel = ({
                                     e.stopPropagation();
                                     setActiveMemberMenuId(activeMemberMenuId === invitee.id ? null : invitee.id);
                                   }}
-                                  style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'var(--text-muted)',
-                                    cursor: 'pointer',
-                                    padding: '6px',
-                                    borderRadius: '4px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                  }}
+                                  className="astryd-action-btn"
                                 >
                                   <MdMoreVert size={20} />
                                 </button>
@@ -398,10 +404,6 @@ const ContributorsPanel = ({
                                   </div>
                                 )}
                               </div>
-                            ) : (
-                              <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-muted)', paddingRight: 8, textTransform: 'capitalize' }}>
-                                {String(invitee.role || 'MEMBER').toLowerCase()}
-                              </span>
                             )}
                           </div>
                         </div>
