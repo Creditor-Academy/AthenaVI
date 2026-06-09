@@ -19,20 +19,26 @@ import ContentModule from '../../components/features/admin/ContentModule';
 import PlatformModule from '../../components/features/admin/PlatformModule';
 import './AdminPortal.css';
 
-const AdminPortal = () => {
-  const [activeTab, setActiveTab] = useState(() => {
+const AdminPortal = ({
+  activeTab: controlledActiveTab,
+  onTabChange,
+  hideTabBar = false,
+}) => {
+  const [internalActiveTab, setInternalActiveTab] = useState(() => {
     return localStorage.getItem('adminPortalTab') || 'dashboard';
   });
+  const isControlled = controlledActiveTab !== undefined;
+  const activeTab = isControlled ? controlledActiveTab : internalActiveTab;
   const [loading, setLoading] = useState(true);
 
-  // Simulate network request for data fetching
   useEffect(() => {
+    setLoading(true);
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 1500); // 1.5 seconds loading state
+    }, 1500);
 
     return () => clearTimeout(timer);
-  }, [activeTab]); // Trigger loading state whenever tab changes
+  }, [activeTab]);
 
   const adminTabs = [
     { id: 'dashboard', label: 'Dashboard', icon: <MdAdminPanelSettings /> },
@@ -45,8 +51,12 @@ const AdminPortal = () => {
 
   const handleTabChange = (tabId) => {
     setLoading(true);
-    setActiveTab(tabId);
-    localStorage.setItem('adminPortalTab', tabId);
+    if (onTabChange) {
+      onTabChange(tabId);
+    } else {
+      setInternalActiveTab(tabId);
+      localStorage.setItem('adminPortalTab', tabId);
+    }
   };
 
   const billingMetrics = [
@@ -100,24 +110,26 @@ const AdminPortal = () => {
           </div>
         </header>
 
-        <div className="admin-tab-switch" role="tablist" aria-label="Admin sections">
-          {adminTabs.map((tab) => {
-            const isActive = activeTab === tab.id
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                className={`admin-tab-btn ${isActive ? 'active' : ''}`}
-                onClick={() => handleTabChange(tab.id)}
-              >
-                <span className="admin-tab-icon" aria-hidden>{tab.icon}</span>
-                <span>{tab.label}</span>
-              </button>
-            )
-          })}
-        </div>
+        {!hideTabBar && (
+          <div className="admin-tab-switch" role="tablist" aria-label="Admin sections">
+            {adminTabs.map((tab) => {
+              const isActive = activeTab === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  className={`admin-tab-btn ${isActive ? 'active' : ''}`}
+                  onClick={() => handleTabChange(tab.id)}
+                >
+                  <span className="admin-tab-icon" aria-hidden>{tab.icon}</span>
+                  <span>{tab.label}</span>
+                </button>
+              )
+            })}
+          </div>
+        )}
 
         <main className="admin-main">
           {activeTab === 'dashboard' ? (

@@ -536,8 +536,9 @@
 
 .dashboard-sidebar-header {
   flex-shrink: 0;
-  padding: 12px 12px 14px;
+  padding: 12px 12px 10px;
   background: var(--bg-main);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
 }
 
 .dashboard-sidebar-brand {

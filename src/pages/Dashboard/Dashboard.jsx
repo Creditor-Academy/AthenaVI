@@ -17,6 +17,8 @@ import TeamWorkspace from '../TeamWorkspace/TeamWorkspace.jsx'
 import AdminPortal from '../AdminPortal/AdminPortal.jsx'
 import DashboardTopbar from '../../components/layout/DashboardTopbar/DashboardTopbar.jsx'
 import DashboardSidebar from '../../components/layout/DashboardSidebar/DashboardSidebar.jsx'
+import AdminPortalSidebar from '../../components/layout/AdminPortalSidebar/AdminPortalSidebar.jsx'
+import PortalModeSwitcher from '../../components/ui/PortalModeSwitcher/PortalModeSwitcher.jsx'
 
 import AIVideoAssistant from '../../components/ui/AIVideoAssistant/AIVideoAssistant.jsx'
 import ImportPowerPointModal from '../../components/ui/ImportPowerPointModal/ImportPowerPointModal.jsx'
@@ -29,7 +31,11 @@ import './Dashboard.css'
 
 
 function Dashboard({ onCreate, initialSection }) {
-  const { updateUser } = useAuth()
+  const {
+    updateUser,
+    canAccessSuperadminPortal,
+    capabilitiesLoading,
+  } = useAuth()
   const [section, setSection] = useState(() => {
     // Use initialSection from props if provided, otherwise get from URL
     if (initialSection) {
@@ -63,6 +69,9 @@ function Dashboard({ onCreate, initialSection }) {
   const [topbarMobileOpen, setTopbarMobileOpen] = useState(false)
   const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false)
   const [lastVoiceCreated, setLastVoiceCreated] = useState(false)
+  const [adminTab, setAdminTab] = useState(
+    () => localStorage.getItem('adminPortalTab') || 'dashboard'
+  )
 
   const cartCount = 2
   const notificationCount = 9
@@ -81,11 +90,36 @@ function Dashboard({ onCreate, initialSection }) {
     'settings',
   ]
 
+  const isAdminPortal = section === 'admin-portal'
+
   const goToSection = useCallback((id) => {
+    if (id === 'admin-portal' && !canAccessSuperadminPortal) {
+      id = 'home'
+    }
     setTopbarMobileOpen(false)
     setSidebarMobileOpen(false)
     setSection(id)
+  }, [canAccessSuperadminPortal])
+
+  const handlePortalToggle = useCallback(() => {
+    if (isAdminPortal) {
+      goToSection('home')
+    } else {
+      goToSection('admin-portal')
+    }
+  }, [isAdminPortal, goToSection])
+
+  const handleAdminTabChange = useCallback((tabId) => {
+    setAdminTab(tabId)
+    localStorage.setItem('adminPortalTab', tabId)
   }, [])
+
+  useEffect(() => {
+    if (capabilitiesLoading) return
+    if (section === 'admin-portal' && !canAccessSuperadminPortal) {
+      setSection('home')
+    }
+  }, [section, canAccessSuperadminPortal, capabilitiesLoading])
 
   const handleNavigationWithModal = (targetSection) => {
     setPendingSection(targetSection)
@@ -181,7 +215,7 @@ function Dashboard({ onCreate, initialSection }) {
 
   return (
     <div
-      className={`dashboard-shell ${sidebarMobileOpen ? 'dashboard-shell--sidebar-open' : ''}`}
+      className={`dashboard-shell ${sidebarMobileOpen ? 'dashboard-shell--sidebar-open' : ''} ${isAdminPortal ? 'dashboard-shell--admin-portal' : ''}`}
     >
       {sidebarMobileOpen && (
         <button
@@ -197,23 +231,40 @@ function Dashboard({ onCreate, initialSection }) {
           <button
             type="button"
             className="dashboard-sidebar-brand"
-            onClick={() => goToSection('home')}
-            aria-label="Virtual Instructor, go to home"
+            onClick={() => (isAdminPortal ? handlePortalToggle() : goToSection('home'))}
+            aria-label={isAdminPortal ? 'Back to platform' : 'Virtual Instructor, go to home'}
           >
             <span className="dashboard-sidebar-brand-logo" aria-hidden>
               V
             </span>
             <span className="dashboard-sidebar-brand-name">Virtual Instructor</span>
           </button>
+
+          {canAccessSuperadminPortal && (
+            <PortalModeSwitcher
+              mode={isAdminPortal ? 'admin' : 'main'}
+              onSelectMain={handlePortalToggle}
+              onSelectAdmin={() => goToSection('admin-portal')}
+              onCloseMobile={() => setSidebarMobileOpen(false)}
+            />
+          )}
         </div>
 
-        <DashboardSidebar
-          section={section}
-          onNavigate={goToSection}
-          onOpenTranslate={() => setShowTranslateModal(true)}
-          onOpenAI={() => setShowAIAssistant(true)}
-          onCloseMobile={() => setSidebarMobileOpen(false)}
-        />
+        {isAdminPortal ? (
+          <AdminPortalSidebar
+            activeTab={adminTab}
+            onTabChange={handleAdminTabChange}
+            onCloseMobile={() => setSidebarMobileOpen(false)}
+          />
+        ) : (
+          <DashboardSidebar
+            section={section}
+            onNavigate={goToSection}
+            onOpenTranslate={() => setShowTranslateModal(true)}
+            onOpenAI={() => setShowAIAssistant(true)}
+            onCloseMobile={() => setSidebarMobileOpen(false)}
+          />
+        )}
       </div>
 
       <div className="dashboard-main-column">
@@ -228,6 +279,7 @@ function Dashboard({ onCreate, initialSection }) {
           goToSection={handleNavigationWithModal}
           onNotificationClick={() => setShowNotificationsModal(true)}
           onCartClick={() => setShowCreditsModal(true)}
+          isAdminPortal={isAdminPortal}
         />
 
         <main
@@ -290,7 +342,13 @@ function Dashboard({ onCreate, initialSection }) {
             />
           )}
           {section === 'workspace' && <TeamWorkspace onCreate={handleOpenCreateVideoModal} onEdit={handleEditVideo} />}
-          {section === 'admin-portal' && <AdminPortal />}
+          {section === 'admin-portal' && canAccessSuperadminPortal && (
+            <AdminPortal
+              activeTab={adminTab}
+              onTabChange={handleAdminTabChange}
+              hideTabBar
+            />
+          )}
           {section === 'brandkits' && <BrandKits />}
           {section === 'credits' && <Settings onBack={() => goToSection('home')} initialTab="billing" />}
           {section === 'profile' && <Profile onBack={() => goToSection('home')} />}

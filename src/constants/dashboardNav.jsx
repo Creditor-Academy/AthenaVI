@@ -8,14 +8,13 @@ import {
   BookOpen,
   User,
   Volume2,
-  LayoutDashboard,
   Settings
 } from 'lucide-react'
 
 /**
- * Grouped sidebar nav (fixed column).
+ * Main platform sidebar — admin portal is reached via topbar toggle (superadmins only).
  */
-export const dashboardSidebarGroups = [
+export const mainDashboardSidebarGroups = [
   {
     items: [{ id: 'home', label: 'Home', Icon: Home }]
   },
@@ -39,8 +38,10 @@ export const dashboardSidebarGroups = [
   {
     label: 'Account',
     items: [
-      { id: 'admin-portal', label: 'Admin Portal', Icon: LayoutDashboard },
       { id: 'settings', label: 'Settings', Icon: Settings }
     ]
   }
 ]
+
+/** @deprecated Use mainDashboardSidebarGroups */
+export const dashboardSidebarGroups = mainDashboardSidebarGroups

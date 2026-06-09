@@ -5,10 +5,54 @@ import authService from '../services/authService.js'
 const AuthContext = createContext()
 
 // Auth Provider Component
+const DEFAULT_CAPABILITIES = {
+  isPlatformSuperadmin: false,
+  canAccessSuperadminPortal: false,
+}
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [capabilities, setCapabilities] = useState(null)
+  const [capabilitiesLoading, setCapabilitiesLoading] = useState(false)
+
+  const fetchCapabilities = React.useCallback(async () => {
+    if (!authService.isAuthenticated()) {
+      setCapabilities(null)
+      return DEFAULT_CAPABILITIES
+    }
+
+    setCapabilitiesLoading(true)
+    try {
+      const { default: userService } = await import('../services/userService.js')
+      const caps = await userService.getUserCapabilities()
+      setCapabilities(caps)
+      return caps
+    } catch (error) {
+      console.error('Failed to fetch capabilities:', error)
+      setCapabilities(DEFAULT_CAPABILITIES)
+      return DEFAULT_CAPABILITIES
+    } finally {
+      setCapabilitiesLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchCapabilities()
+    } else {
+      setCapabilities(null)
+    }
+  }, [isAuthenticated, fetchCapabilities])
+
+  useEffect(() => {
+    const onTokenRefreshed = () => {
+      fetchCapabilities()
+    }
+    window.addEventListener('auth:token-refreshed', onTokenRefreshed)
+    return () => window.removeEventListener('auth:token-refreshed', onTokenRefreshed)
+  }, [fetchCapabilities])
 
   // Check authentication status on mount
   useEffect(() => {
@@ -225,11 +269,13 @@ export const AuthProvider = ({ children }) => {
       await authService.logout()
       setUser(null)
       setIsAuthenticated(false)
+      setCapabilities(null)
     } catch (error) {
       console.error('Logout error:', error)
       // Still logout locally even if backend call fails
       setUser(null)
       setIsAuthenticated(false)
+      setCapabilities(null)
     } finally {
       setLoading(false)
     }
@@ -242,11 +288,13 @@ export const AuthProvider = ({ children }) => {
       await authService.logoutAll()
       setUser(null)
       setIsAuthenticated(false)
+      setCapabilities(null)
     } catch (error) {
       console.error('Logout all error:', error)
       // Still logout locally even if backend call fails
       setUser(null)
       setIsAuthenticated(false)
+      setCapabilities(null)
     } finally {
       setLoading(false)
     }
@@ -258,10 +306,18 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(newUserData))
   }, [])
 
+  const canAccessSuperadminPortal = Boolean(
+    capabilities?.canAccessSuperadminPortal
+  )
+
   const value = {
     user,
     loading,
     isAuthenticated,
+    capabilities,
+    capabilitiesLoading,
+    canAccessSuperadminPortal,
+    fetchCapabilities,
     login,
     register,
     generateOTP,

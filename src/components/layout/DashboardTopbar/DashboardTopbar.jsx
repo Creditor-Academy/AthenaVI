@@ -12,7 +12,8 @@ function DashboardTopbar({
     cartCount = 2,
     goToSection,
     onNotificationClick,
-    onCartClick
+    onCartClick,
+    isAdminPortal = false,
 }) {
     return (
         <header className="topbar topbar--main">
@@ -44,13 +45,15 @@ function DashboardTopbar({
                 </div>
 
                 <div className="topbar-right">
-                    <button
-                        type="button"
-                        className="topbar-create-btn"
-                        onClick={() => onCreate && onCreate()}
-                    >
-                        Create
-                    </button>
+                    {!isAdminPortal && (
+                        <button
+                            type="button"
+                            className="topbar-create-btn"
+                            onClick={() => onCreate && onCreate()}
+                        >
+                            Create
+                        </button>
+                    )}
 
                     <div className="topbar-icon-group topbar-icon-group--desktop">
                         <button 

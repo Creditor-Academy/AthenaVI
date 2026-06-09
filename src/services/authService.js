@@ -38,7 +38,8 @@ api.interceptors.response.use(
         const response = await api.post('/api/auth/refresh', {})
         const { accessToken } = response.data.data
         localStorage.setItem('accessToken', accessToken)
-        
+        window.dispatchEvent(new CustomEvent('auth:token-refreshed'))
+
         // Retry the original request
         error.config.headers.Authorization = `Bearer ${accessToken}`
         return api.request(error.config)
