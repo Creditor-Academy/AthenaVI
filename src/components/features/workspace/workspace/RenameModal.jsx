@@ -47,30 +47,30 @@ const RenameModal = ({ isOpen, onClose, onRename, currentName, itemType }) => {
                         onClick={onClose}
                     />
                     <motion.div
-                        className="modal-content professional-modal"
+                        className="modal-content astryd-modal"
                         initial={{ opacity: 0, scale: 0.9, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         onClick={e => e.stopPropagation()}
                     >
-                        <button className="icon-btn-close-outside" onClick={onClose} title="Close">
-                            <MdClose size={20} />
-                        </button>
-                        <div className="modal-header">
-                            <div className="header-icon-title">
-                                <div className="header-icon-container folder-icon-bg">
-                                    <MdEdit size={24} />
+                        <div className="astryd-header">
+                            <div className="astryd-title-group">
+                                <div className="astryd-icon-container">
+                                    <MdEdit size={20} />
                                 </div>
                                 <div>
                                     <h2>Rename {label}</h2>
-                                    <p className="modal-subtitle">Enter a new name for this {label.toLowerCase()}</p>
+                                    <p className="astryd-subtitle">Enter a new name for this {label.toLowerCase()}</p>
                                 </div>
                             </div>
+                            <button className="astryd-close-btn" onClick={onClose} title="Close">
+                                <MdClose size={18} />
+                            </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="modal-body-premium">
-                            <div className="form-group">
+                        <form onSubmit={handleSubmit} className="astryd-form">
+                            <div className="astryd-form-group">
                                 <label htmlFor="rename-input">{label} Name</label>
                                 <input
                                     id="rename-input"
@@ -82,17 +82,17 @@ const RenameModal = ({ isOpen, onClose, onRename, currentName, itemType }) => {
                                         if (error) setError('');
                                     }}
                                     placeholder={`Enter new ${label.toLowerCase()} name`}
-                                    className={`form-input-premium ${error ? 'input-error' : ''}`}
+                                    className={`astryd-input ${error ? 'astryd-input-error' : ''}`}
                                     disabled={isSubmitting}
                                     required
                                 />
-                                {error && <span className="error-message-modal">{error}</span>}
+                                {error && <span className="astryd-error">{error}</span>}
                             </div>
 
-                            <div className="modal-footer-premium">
+                            <div className="astryd-footer">
                                 <button
                                     type="button"
-                                    className="btn-secondary-premium"
+                                    className="astryd-btn-secondary"
                                     onClick={onClose}
                                     disabled={isSubmitting}
                                 >
@@ -100,7 +100,7 @@ const RenameModal = ({ isOpen, onClose, onRename, currentName, itemType }) => {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="btn-primary-premium"
+                                    className="astryd-btn-primary"
                                     disabled={!name.trim() || name.trim() === currentName || isSubmitting}
                                 >
                                     {isSubmitting ? 'Renaming...' : 'Rename'}
