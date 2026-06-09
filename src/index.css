@@ -5,6 +5,7 @@
   --primary-hover: #1d4ed8;
   --primary-light: #60a5fa;
   --primary-dark: #1e40af;
+  --primary-contrast: #ffffff;
   
   --secondary-rgb: 168, 85, 247;
   --secondary: rgb(var(--secondary-rgb));
@@ -20,6 +21,7 @@
   --primary-hover: #4f46e5;
   --primary-light: #818cf8;
   --primary-dark: #3730a3;
+  --primary-contrast: #ffffff;
 }
 
 /* Theme: Sapphire */
@@ -29,6 +31,7 @@
   --primary-hover: #1d4ed8;
   --primary-light: #60a5fa;
   --primary-dark: #1e40af;
+  --primary-contrast: #ffffff;
 }
 
 /* Theme: Ocean */
@@ -38,6 +41,7 @@
   --primary-hover: #0284c7;
   --primary-light: #7dd3fc;
   --primary-dark: #075985;
+  --primary-contrast: #ffffff;
 }
 
 /* Theme: Forest */
@@ -47,6 +51,8 @@
   --primary-hover: #16a34a;
   --primary-light: #86efac;
   --primary-dark: #166534;
+  /* Forest green is mid-luminance; dark text reads better on it */
+  --primary-contrast: #0f172a;
 }
 
 /* Theme: Sunset */
@@ -56,6 +62,7 @@
   --primary-hover: #e11d48;
   --primary-light: #fda4af;
   --primary-dark: #9f1239;
+  --primary-contrast: #ffffff;
 }
 
 /* Theme Accent Tints for Sidebar */

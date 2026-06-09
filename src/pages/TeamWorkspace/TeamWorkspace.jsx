@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   MdMail,
   MdClose,
@@ -12,13 +12,15 @@ import {
   MdPerson,
   MdCheckCircle,
   MdCancel,
-  MdWarning
+  MdWarning,
+  MdSettings,
+  MdMoreVert
 } from 'react-icons/md';
 import { useAuth } from '../../contexts/AuthContext';
 import WorkspaceHeader from '../../components/features/workspace/workspace/WorkspaceHeader.jsx';
 import WorkspaceSection from '../../components/features/workspace/workspace/WorkspaceSection.jsx';
 import { WorkspaceCard, FolderCard, VideoCard } from '../../components/features/workspace/workspace/ViewCards.jsx';
-import { WorkspaceRow, FolderRow, VideoRow, formatOnlyDate } from '../../components/features/workspace/workspace/ViewRows.jsx';
+import { WorkspaceRow, FolderRow, VideoRow } from '../../components/features/workspace/workspace/ViewRows.jsx';
 import CreateWorkspaceModal from '../../components/features/workspace/workspace/CreateWorkspaceModal.jsx';
 import CreateFolderModal from '../../components/features/workspace/workspace/CreateFolderModal.jsx';
 import RenameModal from '../../components/features/workspace/workspace/RenameModal.jsx';
@@ -34,6 +36,7 @@ import {
   resolveUserDisplayName
 } from '../../utils/workspaceUsers.js';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
+import '../../components/features/workspace/workspace/PremiumModal.css';
 
 function normalizeId(value) {
   if (value == null || value === '') return '';
@@ -116,6 +119,9 @@ function normalizeWorkspace(rawWorkspace, currentUserId, authUser) {
     id,
     name: (() => {
       if (isPersonal) {
+        if (rawWorkspace.name && rawWorkspace.name !== 'Personal' && rawWorkspace.name !== 'Personal Workspace') {
+          return rawWorkspace.name;
+        }
         const fullName = authUser?.name || rawWorkspace.owner?.name || '';
         let firstName = fullName.trim().split(/\s+/)[0];
         if (!firstName && (authUser?.email || rawWorkspace.owner?.email)) {
@@ -285,9 +291,9 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
   const [members, setMembers] = useState([]);
   const [invitees, setInvitees] = useState([]);
   const [membersLoading, setMembersLoading] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState('MEMBER');
-  const [renameWorkspaceName, setRenameWorkspaceName] = useState('');
+  const [showAddContributors, setShowAddContributors] = useState(false);
+  const [inviteInputs, setInviteInputs] = useState([{ email: '', role: 'MEMBER' }]);
+  const [activeMemberMenuId, setActiveMemberMenuId] = useState(null);
   const [moveTargetVideo, setMoveTargetVideo] = useState(null);
   const [moveTargetWorkspace, setMoveTargetWorkspace] = useState(null);
 
@@ -831,7 +837,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
 
     if (type === 'workspace') {
       const targetWorkspace = workspaces.find((workspace) => String(workspace.id) === String(id));
-      if (!targetWorkspace || targetWorkspace.type === 'personal') return;
+      if (!targetWorkspace) return;
       if (String(targetWorkspace.userRole || '').toUpperCase() !== 'OWNER') {
         throw new Error('Only the owner can rename this workspace.');
       }
@@ -1058,77 +1064,77 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
 
   const handleManageWorkspace = async (workspace) => {
     setContributorsPanel({ open: true, workspace });
-    setRenameWorkspaceName(workspace.name || '');
+    setShowAddContributors(false);
+    setInviteInputs([{ email: '', role: 'MEMBER' }]);
+    setActiveMemberMenuId(null);
     await loadContributorsForWorkspace(workspace);
   };
 
-  const handleRenameWorkspaceInsidePanel = async () => {
-    const workspace = contributorsPanel.workspace;
-    if (!workspace) return;
-    const newName = renameWorkspaceName.trim();
-    if (!newName) {
-      showToast('Workspace name cannot be empty', 'error');
-      return;
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setActiveMemberMenuId(null);
+    };
+    if (activeMemberMenuId !== null) {
+      document.addEventListener('click', handleClickOutside);
     }
-    if (newName === workspace.name) {
-      return;
-    }
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [activeMemberMenuId]);
 
-    try {
-      await workspaceService.updateWorkspace(workspace.id, { name: newName });
-      
-      setWorkspaces((prev) =>
-        prev.map((item) => (String(item.id) === String(workspace.id) ? { ...item, name: newName } : item))
-      );
+  const handleAddInviteInput = () => {
+    setInviteInputs([...inviteInputs, { email: '', role: 'MEMBER' }]);
+  };
 
-      setLocalAdditions((prev) => {
-        const otherWorkspaces = (prev.workspaces || []).filter((ws) => String(ws.id) !== String(workspace.id));
-        const targetWs = workspaces.find((ws) => String(ws.id) === String(workspace.id));
-        const updated = {
-          ...targetWs,
-          name: newName,
-          createdByCurrentUser: true
-        };
-        return {
-          ...prev,
-          workspaces: [...otherWorkspaces, updated]
-        };
-      });
+  const handleUpdateInviteInput = (index, field, value) => {
+    const next = [...inviteInputs];
+    next[index] = { ...next[index], [field]: value };
+    setInviteInputs(next);
+  };
 
-      setCurrentLevel((prev) => {
-        if (prev.ws && String(prev.ws.id) === String(workspace.id)) {
-          return {
-            ...prev,
-            ws: { ...prev.ws, name: newName }
-          };
-        }
-        return prev;
-      });
-
-      setContributorsPanel((prev) => ({
-        ...prev,
-        workspace: prev.workspace ? { ...prev.workspace, name: newName } : null
-      }));
-
-      showToast('Workspace renamed successfully', 'success');
-    } catch (error) {
-      showToast(error.message || 'Failed to rename workspace', 'error');
+  const handleRemoveInviteInput = (index) => {
+    if (inviteInputs.length > 1) {
+      setInviteInputs(inviteInputs.filter((_, i) => i !== index));
+    } else {
+      setInviteInputs([{ email: '', role: 'MEMBER' }]);
     }
   };
 
-  const handleInviteContributor = async () => {
-    if (!contributorsPanel.workspace || !inviteEmail.trim()) return;
-    try {
-      await workspaceService.inviteMember(contributorsPanel.workspace.id, {
-        email: inviteEmail.trim(),
-        role: inviteRole
-      });
-      setInviteEmail('');
-      await loadContributorsForWorkspace(contributorsPanel.workspace);
-      showToast('Member invited successfully', 'success');
-    } catch (error) {
-      showToast(error.message || 'Failed to invite member', 'error');
+  const handleSendInvites = async () => {
+    if (!contributorsPanel.workspace) return;
+    const validInputs = inviteInputs.filter((input) => input.email.trim());
+    if (validInputs.length === 0) {
+      showToast('Please enter at least one email address', 'error');
+      return;
     }
+
+    let successCount = 0;
+    let failCount = 0;
+    let lastError = null;
+
+    for (const input of validInputs) {
+      try {
+        await workspaceService.inviteMember(contributorsPanel.workspace.id, {
+          email: input.email.trim(),
+          role: input.role
+        });
+        successCount++;
+      } catch (err) {
+        failCount++;
+        lastError = err;
+      }
+    }
+
+    if (successCount > 0) {
+      showToast(`Successfully invited ${successCount} member(s)`, 'success');
+    }
+    if (failCount > 0) {
+      showToast(`Failed to invite ${failCount} member(s): ${lastError?.message || 'Error'}`, 'error');
+    }
+
+    setInviteInputs([{ email: '', role: 'MEMBER' }]);
+    setShowAddContributors(false);
+    await loadContributorsForWorkspace(contributorsPanel.workspace);
   };
 
   const handleChangeMemberRole = async (memberId, role) => {
@@ -1182,7 +1188,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           contextProps={{
             onDetails: () => setDetailsTarget({ type: 'workspace', item: workspace }),
             onRename:
-              workspace.type === 'workspace' && String(workspace.userRole).toUpperCase() === 'OWNER'
+              String(workspace.userRole).toUpperCase() === 'OWNER'
                 ? () => renameItem('workspace', workspace.id)
                 : null,
             onManageWorkspace:
@@ -1212,7 +1218,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
         contextProps={{
           onDetails: () => setDetailsTarget({ type: 'workspace', item: workspace }),
           onRename:
-            workspace.type === 'workspace' && String(workspace.userRole).toUpperCase() === 'OWNER'
+            String(workspace.userRole).toUpperCase() === 'OWNER'
               ? () => renameItem('workspace', workspace.id)
               : null,
           onManageWorkspace:
@@ -1742,173 +1748,294 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
 
       <AnimatePresence>
         {contributorsPanel.open && contributorsPanel.workspace && (
-          <div
-            className="notifications-overlay"
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'rgba(0,0,0,0.5)',
-              zIndex: 9999,
-              display: 'flex',
-              justifyContent: 'flex-end'
-            }}
-            onClick={() => setContributorsPanel({ open: false, workspace: null })}
-          >
-            <div
-              style={{
-                width: '460px',
-                background: 'var(--bg-card)',
-                borderLeft: '1px solid var(--border-color)',
-                height: '100vh',
-                padding: '24px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 16
-              }}
-              onClick={(e) => e.stopPropagation()}
+          <div className="modal-overlay-wrapper">
+            <motion.div
+              className="modal-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setContributorsPanel({ open: false, workspace: null })}
+            />
+            <motion.div
+              className="modal-content astryd-modal"
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              onClick={e => e.stopPropagation()}
+              style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column', width: 'min(680px, 95vw)', maxWidth: 'min(680px, 95vw)' }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2 style={{ margin: 0, fontSize: 20 }}>Manage Workspace</h2>
-                <button
-                  onClick={() => setContributorsPanel({ open: false, workspace: null })}
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
-                >
-                  <MdClose size={20} />
+              <div className="astryd-header">
+                <div className="astryd-title-group">
+                  <div className="astryd-icon-container">
+                    <MdSettings size={20} />
+                  </div>
+                  <div>
+                    <h2>Manage Workspace</h2>
+                    <p className="astryd-subtitle">Workspace Contributors</p>
+                  </div>
+                </div>
+                <button className="astryd-close-btn" onClick={() => setContributorsPanel({ open: false, workspace: null })} title="Close">
+                  <MdClose size={18} />
                 </button>
               </div>
 
-              {String(contributorsPanel.workspace.userRole).toUpperCase() === 'OWNER' ? (
-                <div style={{ border: '1px solid var(--border-color)', borderRadius: 10, padding: 12 }}>
-                  <div style={{ fontWeight: 600, marginBottom: 10 }}>Workspace Settings</div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <input
-                      type="text"
-                      value={renameWorkspaceName}
-                      onChange={(e) => setRenameWorkspaceName(e.target.value)}
-                      placeholder="Workspace name"
-                      style={{ flex: 1, height: 36, borderRadius: 8, border: '1px solid var(--border-color)', padding: '0 10px', background: 'var(--bg-card)', color: 'var(--text-main)' }}
-                    />
-                    <button
-                      className="btn-primary"
-                      type="button"
-                      onClick={handleRenameWorkspaceInsidePanel}
-                      style={{ height: 36, padding: '0 16px', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    >
-                      Rename
-                    </button>
+              <div className="astryd-form" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16, overflow: 'hidden', width: '100%' }}>
+                {workspaceCanManageContributors(contributorsPanel.workspace) && (
+                  <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid color-mix(in srgb, var(--border-color) 45%, transparent)', paddingBottom: '10px', marginBottom: '10px' }}>
+                      <span style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-main)' }}>Add contributors</span>
+                      <button
+                        type="button"
+                        onClick={() => setShowAddContributors(!showAddContributors)}
+                        className="astryd-btn-secondary"
+                        style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', height: '30px' }}
+                      >
+                        {showAddContributors ? 'Cancel' : 'Add'}
+                      </button>
+                    </div>
+
+                    {showAddContributors && (
+                      <div style={{
+                        background: 'rgba(255, 255, 255, 0.02)',
+                        border: '1px solid color-mix(in srgb, var(--border-color) 30%, transparent)',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        marginBottom: '14px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '10px'
+                      }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {inviteInputs.map((input, index) => (
+                            <div key={index} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                              <input
+                                type="email"
+                                placeholder="Email address"
+                                className="astryd-input"
+                                value={input.email}
+                                onChange={(e) => handleUpdateInviteInput(index, 'email', e.target.value)}
+                                style={{ flex: 1, height: '36px' }}
+                              />
+                              <select
+                                className="astryd-input"
+                                value={input.role}
+                                onChange={(e) => handleUpdateInviteInput(index, 'role', e.target.value)}
+                                style={{ width: '100px', height: '36px', padding: '0 8px' }}
+                              >
+                                <option value="MEMBER">Member</option>
+                                <option value="ADMIN">Admin</option>
+                              </select>
+                              {inviteInputs.length > 1 && (
+                                <button
+                                  type="button"
+                                  className="astryd-btn-secondary"
+                                  onClick={() => handleRemoveInviteInput(index)}
+                                  style={{ padding: '0 10px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', border: '1px solid color-mix(in srgb, #ef4444 30%, transparent)' }}
+                                  title="Remove"
+                                >
+                                  <MdCancel size={16} />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+                          <button
+                            type="button"
+                            onClick={handleAddInviteInput}
+                            className="astryd-btn-secondary"
+                            style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', height: '30px' }}
+                          >
+                            <MdAdd size={14} /> + Add more
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleSendInvites}
+                            className="astryd-btn-primary"
+                            style={{ padding: '6px 16px', fontSize: '12px', height: '30px' }}
+                          >
+                            Invite
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ) : (
-                <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-                  Workspace: {contributorsPanel.workspace.name}
-                </div>
-              )}
+                )}
 
-              {workspaceCanManageContributors(contributorsPanel.workspace) && (
-                <div style={{ border: '1px solid var(--border-color)', borderRadius: 10, padding: 12 }}>
-                  <div style={{ fontWeight: 600, marginBottom: 10 }}>Invite Contributor</div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <input
-                      type="email"
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      placeholder="Email address"
-                      style={{ flex: 1, height: 36, borderRadius: 8, border: '1px solid var(--border-color)', padding: '0 10px', background: 'var(--bg-card)', color: 'var(--text-main)' }}
-                    />
-                    <select
-                      value={inviteRole}
-                      onChange={(e) => setInviteRole(e.target.value)}
-                      style={{ width: 100, height: 36, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-main)' }}
-                    >
-                      <option value="MEMBER">Member</option>
-                      <option value="ADMIN">Admin</option>
-                    </select>
-                    <button className="btn-primary" type="button" onClick={handleInviteContributor}>
-                      <MdAdd size={16} />
-                    </button>
-                  </div>
-                </div>
-              )}
+                <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 16, paddingRight: 4, paddingBottom: 60, width: '100%' }}>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8, color: 'var(--text-main)' }}>Members</div>
+                    {membersLoading ? (
+                      <div className="astryd-hint">Loading members...</div>
+                    ) : members.length === 0 ? (
+                      <div className="astryd-hint">No members found.</div>
+                    ) : (
+                      members.map((member) => {
+                        const memberId = member.id || member.userId || member.user?.id || member.user?._id;
+                        const label = member.user?.name || member.user?.email || member.name || member.email || 'Member';
+                        const rawRole = String(member.role || 'MEMBER').toUpperCase();
+                        const role = rawRole === 'EDITOR' || rawRole === 'VIEWER' ? 'MEMBER' : rawRole;
 
-              <div style={{ overflowY: 'auto', flex: 1 }}>
-                <div style={{ fontWeight: 600, marginBottom: 8 }}>Members</div>
-                {membersLoading ? (
-                  <div style={{ color: 'var(--text-muted)' }}>Loading members...</div>
-                ) : members.length === 0 ? (
-                  <div style={{ color: 'var(--text-muted)' }}>No members found.</div>
-                ) : (
-                  members.map((member) => {
-                    const memberId = member.id || member.userId || member.user?.id || member.user?._id;
-                    const label = member.user?.name || member.user?.email || member.name || member.email || 'Member';
-                    const rawRole = String(member.role || 'MEMBER').toUpperCase();
-                    const role = rawRole === 'EDITOR' || rawRole === 'VIEWER' ? 'MEMBER' : rawRole;
+                        return (
+                          <div key={memberId} style={{ border: '1px solid color-mix(in srgb, var(--border-color) 45%, transparent)', borderRadius: 8, padding: 10, marginBottom: 8, background: 'color-mix(in srgb, var(--bg-surface) 30%, transparent)', position: 'relative' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                                <MdPerson size={18} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                                <div style={{ minWidth: 0 }}>
+                                  <div style={{ fontWeight: 600, fontSize: 13, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', color: 'var(--text-main)' }}>{label}</div>
+                                  <div style={{ color: 'var(--text-muted)', fontSize: 11, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{member.user?.email || member.email || ''}</span>
+                                    <span style={{ height: '3px', width: '3px', borderRadius: '50%', background: 'var(--text-muted)', flexShrink: 0 }} />
+                                    <span style={{ textTransform: 'capitalize', fontWeight: 500, color: 'var(--primary)', flexShrink: 0 }}>
+                                      {role.toLowerCase()}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                                {role === 'OWNER' ? (
+                                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--primary)', paddingRight: 8 }}>Owner</span>
+                                ) : workspaceCanManageContributors(contributorsPanel.workspace) ? (
+                                  <div style={{ position: 'relative' }}>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActiveMemberMenuId(activeMemberMenuId === memberId ? null : memberId);
+                                      }}
+                                      style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        color: 'var(--text-muted)',
+                                        cursor: 'pointer',
+                                        padding: '6px',
+                                        borderRadius: '4px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                      }}
+                                    >
+                                      <MdMoreVert size={20} />
+                                    </button>
 
-                    return (
-                      <div key={memberId} style={{ border: '1px solid var(--border-color)', borderRadius: 10, padding: 10, marginBottom: 8 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <MdPerson size={18} />
-                            <div>
-                              <div style={{ fontWeight: 600 }}>{label}</div>
-                              <div style={{ color: 'var(--text-muted)', fontSize: 12 }}>{member.user?.email || member.email || ''}</div>
+                                    {activeMemberMenuId === memberId && (
+                                      <div className="astryd-dropdown-menu" style={{ backdropFilter: 'blur(12px)' }}>
+                                        {String(contributorsPanel.workspace?.userRole).toUpperCase() === 'OWNER' && (
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              const nextRole = role === 'ADMIN' ? 'MEMBER' : 'ADMIN';
+                                              handleChangeMemberRole(memberId, nextRole);
+                                              setActiveMemberMenuId(null);
+                                            }}
+                                            className="astryd-dropdown-item"
+                                          >
+                                            Change to {role === 'ADMIN' ? 'Member' : 'Admin'}
+                                          </button>
+                                        )}
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            handleRemoveMember(memberId);
+                                            setActiveMemberMenuId(null);
+                                          }}
+                                          className="astryd-dropdown-item danger"
+                                        >
+                                          Remove
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-muted)', paddingRight: 8, textTransform: 'capitalize' }}>
+                                    {role.toLowerCase()}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            {role === 'OWNER' ? (
-                              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--primary)', paddingRight: 8 }}>Owner</span>
-                            ) : (
-                              <select
-                                value={role}
-                                onChange={(e) => handleChangeMemberRole(memberId, e.target.value)}
-                                disabled={String(contributorsPanel.workspace?.userRole).toUpperCase() !== 'OWNER'}
-                                style={{ height: 32, borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-main)' }}
-                              >
-                                <option value="ADMIN">Admin</option>
-                                <option value="MEMBER">Member</option>
-                              </select>
-                            )}
-                            {role !== 'OWNER' && workspaceCanManageContributors(contributorsPanel.workspace) && (
-                              <button className="btn-secondary add-btn-small" onClick={() => handleRemoveMember(memberId)}>
-                                Remove
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
+                        );
+                      })
+                    )}
+                  </div>
 
-                <div style={{ fontWeight: 600, margin: '16px 0 8px' }}>Invitees</div>
-                {invitees.length === 0 ? (
-                  <div style={{ color: 'var(--text-muted)' }}>No pending invitees.</div>
-                ) : (
-                  invitees.map((invitee) => (
-                    <div key={invitee.id} style={{ border: '1px solid var(--border-color)', borderRadius: 10, padding: 10, marginBottom: 8 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                        <div>
-                          <div style={{ fontWeight: 600 }}>{invitee.email || invitee.inviteeEmail || 'Invitee'}</div>
-                          <div style={{ color: 'var(--text-muted)', fontSize: 12 }}>
-                            Role: {String(invitee.role || 'MEMBER').toUpperCase()} | Status: {String(invitee.status || 'PENDING').toUpperCase()}
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8, color: 'var(--text-main)' }}>Invitees</div>
+                    {invitees.length === 0 ? (
+                      <div className="astryd-hint">No pending invitees.</div>
+                    ) : (
+                      invitees.map((invitee) => (
+                        <div key={invitee.id} style={{ border: '1px solid color-mix(in srgb, var(--border-color) 45%, transparent)', borderRadius: 8, padding: 10, marginBottom: 8, background: 'color-mix(in srgb, var(--bg-surface) 30%, transparent)', position: 'relative' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                              <MdMail size={18} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                              <div style={{ minWidth: 0 }}>
+                                <div style={{ fontWeight: 600, fontSize: 13, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', color: 'var(--text-main)' }}>{invitee.email || invitee.inviteeEmail || 'Invitee'}</div>
+                                <div style={{ color: 'var(--text-muted)', fontSize: 11, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  <span>Pending Invite</span>
+                                  <span style={{ height: '3px', width: '3px', borderRadius: '50%', background: 'var(--text-muted)', flexShrink: 0 }} />
+                                  <span style={{ textTransform: 'capitalize', fontWeight: 500, color: 'var(--primary)', flexShrink: 0 }}>
+                                    {String(invitee.role || 'MEMBER').toLowerCase()}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                              {workspaceCanManageContributors(contributorsPanel.workspace) ? (
+                                <div style={{ position: 'relative' }}>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setActiveMemberMenuId(activeMemberMenuId === invitee.id ? null : invitee.id);
+                                    }}
+                                    style={{
+                                      background: 'none',
+                                      border: 'none',
+                                      color: 'var(--text-muted)',
+                                      cursor: 'pointer',
+                                      padding: '6px',
+                                      borderRadius: '4px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center'
+                                    }}
+                                  >
+                                    <MdMoreVert size={20} />
+                                  </button>
+
+                                  {activeMemberMenuId === invitee.id && (
+                                    <div className="astryd-dropdown-menu" style={{ backdropFilter: 'blur(12px)' }}>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          workspaceService.removeInvitation(contributorsPanel.workspace.id, invitee.id)
+                                            .then(() => loadContributorsForWorkspace(contributorsPanel.workspace));
+                                          setActiveMemberMenuId(null);
+                                        }}
+                                        className="astryd-dropdown-item danger"
+                                      >
+                                        Cancel Invite
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-muted)', paddingRight: 8, textTransform: 'capitalize' }}>
+                                  {String(invitee.role || 'MEMBER').toLowerCase()}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                        {workspaceCanManageContributors(contributorsPanel.workspace) && (
-                          <button
-                            className="btn-secondary add-btn-small"
-                            onClick={() => workspaceService.removeInvitation(contributorsPanel.workspace.id, invitee.id).then(() => loadContributorsForWorkspace(contributorsPanel.workspace))}
-                          >
-                            Remove
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
+            </motion.div>
           </div>
         )}
       </AnimatePresence>

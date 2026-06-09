@@ -47,30 +47,30 @@ const CreateWorkspaceModal = ({ isOpen, onClose, onCreate, workspaces = [] }) =>
                         onClick={onClose}
                     />
                     <motion.div
-                        className="modal-content professional-modal"
+                        className="modal-content astryd-modal"
                         initial={{ opacity: 0, scale: 0.9, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         onClick={e => e.stopPropagation()}
                     >
-                        <button className="icon-btn-close-outside" onClick={onClose} title="Close">
-                            <MdClose size={20} />
-                        </button>
-                        <div className="modal-header">
-                            <div className="header-icon-title">
-                                <div className="header-icon-container folder-icon-bg">
-                                    <MdGroupWork size={24} />
+                        <div className="astryd-header">
+                            <div className="astryd-title-group">
+                                <div className="astryd-icon-container">
+                                    <MdGroupWork size={20} />
                                 </div>
                                 <div>
                                     <h2>Create New Workspace</h2>
-                                    <p className="modal-subtitle">Set up a collaborative workspace for your team</p>
+                                    <p className="astryd-subtitle">Set up a collaborative workspace for your team</p>
                                 </div>
                             </div>
+                            <button className="astryd-close-btn" onClick={onClose} title="Close">
+                                <MdClose size={18} />
+                            </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="modal-body-premium">
-                            <div className="form-group">
+                        <form onSubmit={handleSubmit} className="astryd-form">
+                            <div className="astryd-form-group">
                                 <label htmlFor="workspace-name">Workspace Name</label>
                                 <input
                                     id="workspace-name"
@@ -80,32 +80,32 @@ const CreateWorkspaceModal = ({ isOpen, onClose, onCreate, workspaces = [] }) =>
                                     onChange={e => setName(e.target.value)}
                                     placeholder="e.g. Marketing Team"
                                     required
-                                    className={`form-input-premium ${isDuplicate ? 'input-error' : ''}`}
+                                    className={`astryd-input ${isDuplicate ? 'astryd-input-error' : ''}`}
                                     disabled={isSubmitting}
                                 />
-                                {isDuplicate && <span className="error-message-modal">This workspace name already exists</span>}
-                                {!isDuplicate && <span className="input-hint">Choose a clear name that describes your team or project</span>}
+                                {isDuplicate && <span className="astryd-error">This workspace name already exists</span>}
+                                {!isDuplicate && <span className="astryd-hint">Choose a clear name that describes your team or project</span>}
                             </div>
 
-                            <div className="form-group">
+                            <div className="astryd-form-group">
                                 <label>Invite Members (Optional)</label>
-                                <div className="email-input-group">
+                                <div className="astryd-email-group">
                                     <input
                                         type="email"
                                         value={emailInput}
                                         onChange={e => setEmailInput(e.target.value)}
                                         placeholder="colleague@example.com"
-                                        className="form-input-premium"
+                                        className="astryd-input"
                                         disabled={isSubmitting}
                                     />
-                                    <button type="button" className="btn-add-circle" onClick={handleAddEmail} title="Add member" disabled={isSubmitting}>
+                                    <button type="button" className="astryd-email-btn" onClick={handleAddEmail} title="Add member" disabled={isSubmitting}>
                                         <MdAdd size={20} />
                                     </button>
                                 </div>
                                 {invites.length > 0 && (
-                                    <div className="invites-list">
+                                    <div className="astryd-chips-container">
                                         {invites.map(email => (
-                                            <span key={email} className="invite-chip">
+                                            <span key={email} className="astryd-chip">
                                                 {email}
                                                 <button type="button" onClick={() => setInvites(invites.filter(e => e !== email))}>
                                                     <MdClose size={12} />
@@ -116,10 +116,10 @@ const CreateWorkspaceModal = ({ isOpen, onClose, onCreate, workspaces = [] }) =>
                                 )}
                             </div>
 
-                            <div className="modal-footer-premium">
+                            <div className="astryd-footer">
                                 <button
                                     type="button"
-                                    className="btn-secondary-premium"
+                                    className="astryd-btn-secondary"
                                     onClick={onClose}
                                     disabled={isSubmitting}
                                 >
@@ -127,7 +127,7 @@ const CreateWorkspaceModal = ({ isOpen, onClose, onCreate, workspaces = [] }) =>
                                 </button>
                                 <button
                                     type="submit"
-                                    className="btn-primary-premium"
+                                    className="astryd-btn-primary"
                                     disabled={!name || isDuplicate || isSubmitting}
                                 >
                                     {isSubmitting ? 'Creating...' : 'Create Workspace'}

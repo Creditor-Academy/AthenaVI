@@ -203,15 +203,18 @@ class WorkspaceService {
       });
 
       if (!response.ok) {
-        console.warn(`Backend returned status ${response.status} for updateWorkspace. Falling back to local/mock response.`);
-        return { id: workspaceId, ...formData };
+        throw new Error(await this.readErrorMessage(response, `Failed to update workspace: ${response.status}`));
       }
 
       const data = await response.json();
-      return this.normalizeId(data.data?.workspace || data.workspace);
+      const workspace = data.data?.workspace || data.workspace;
+      if (!workspace) {
+        throw new Error('Workspace not found in response');
+      }
+      return this.normalizeId(workspace);
     } catch (error) {
-      console.warn('Error in updateWorkspace, using local fallback:', error);
-      return { id: workspaceId, ...formData };
+      console.error('Error in updateWorkspace:', error);
+      throw error;
     }
   }
 

@@ -86,32 +86,33 @@ const GlobalCreateModal = ({ isOpen, onClose, onCreateVideo, workspaces, initial
                         onClick={onClose}
                     />
                     <motion.div 
-                        className="modal-content professional-modal"
+                        className="modal-content astryd-modal"
                         initial={{ opacity: 0, scale: 0.9, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         onClick={e => e.stopPropagation()}
                     >
-                        <button className="icon-btn-close-outside" onClick={onClose} title="Close">
-                            <MdClose size={20} />
-                        </button>
-                        <div className="modal-header">
-                            <div className="header-icon-title">
-                                <div className="header-icon-container folder-icon-bg">
-                                    <MdVideoLibrary size={24} />
+                        <div className="astryd-header">
+                            <div className="astryd-title-group">
+                                <div className="astryd-icon-container">
+                                    <MdVideoLibrary size={20} />
                                 </div>
                                 <div>
                                     <h2>Create New Video</h2>
-                                    <p className="modal-subtitle">Set up your workspace, folder and video</p>
+                                    <p className="astryd-subtitle">Set up your workspace, folder and video</p>
                                 </div>
                             </div>
+                            <button className="astryd-close-btn" onClick={onClose} title="Close">
+                                <MdClose size={18} />
+                            </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="modal-body-premium">
-                            <div className="form-group">
-                                <label>Video Name</label>
+                        <form onSubmit={handleSubmit} className="astryd-form">
+                            <div className="astryd-form-group">
+                                <label htmlFor="video-name">Video Name</label>
                                 <input
+                                    id="video-name"
                                     type="text"
                                     value={videoName}
                                     onChange={e => {
@@ -120,16 +121,16 @@ const GlobalCreateModal = ({ isOpen, onClose, onCreateVideo, workspaces, initial
                                     }}
                                     placeholder="e.g. Tutorial for New Users"
                                     required
-                                    className={`form-input-premium ${error.includes('video') || isVideoNameDuplicate ? 'input-error' : ''}`}
+                                    className={`astryd-input ${error.includes('video') || isVideoNameDuplicate ? 'astryd-input-error' : ''}`}
                                     disabled={isSubmitting}
                                 />
-                                {isVideoNameDuplicate && <span className="error-message-modal">A video with this name already exists in this folder</span>}
+                                {isVideoNameDuplicate && <span className="astryd-error">A video with this name already exists in this folder</span>}
                             </div>
 
-                            <div className="form-group">
+                            <div className="astryd-form-group">
                                 <label>Workspace</label>
                                 {!isCreatingWorkspace ? (
-                                    <div className="input-with-action">
+                                    <div style={{ width: '100%' }}>
                                         <select
                                             value={selectedWorkspaceId}
                                             onChange={e => {
@@ -139,7 +140,7 @@ const GlobalCreateModal = ({ isOpen, onClose, onCreateVideo, workspaces, initial
                                                 if (error) setError('');
                                             }}
                                             required={!isCreatingWorkspace}
-                                            className={`form-input-premium ${error.includes('workspace') ? 'input-error' : ''}`}
+                                            className={`astryd-input ${error.includes('workspace') ? 'astryd-input-error' : ''}`}
                                             disabled={isSubmitting}
                                         >
                                             <option value="">-- Select a workspace --</option>
@@ -147,17 +148,17 @@ const GlobalCreateModal = ({ isOpen, onClose, onCreateVideo, workspaces, initial
                                                 <option key={w.id} value={w.id}>{w.name}</option>
                                             ))}
                                         </select>
-                                        <button type="button" className="btn-text mt-2" onClick={() => {
+                                        <button type="button" className="astryd-btn-text" onClick={() => {
                                             setIsCreatingWorkspace(true);
                                             setSelectedWorkspaceId('');
                                             setSelectedFolderId('');
-                                            setIsCreatingFolder(true); // Default to new folder if new workspace
+                                            setIsCreatingFolder(true);
                                         }}>
                                             + Create new workspace
                                         </button>
                                     </div>
                                 ) : (
-                                    <div className="input-with-action">
+                                    <div style={{ width: '100%' }}>
                                         <input
                                             type="text"
                                             value={newWorkspaceName}
@@ -167,11 +168,11 @@ const GlobalCreateModal = ({ isOpen, onClose, onCreateVideo, workspaces, initial
                                             }}
                                             placeholder="Workspace name"
                                             required
-                                            className={`form-input-premium ${error.includes('workspace') || isWSNameDuplicate ? 'input-error' : ''}`}
+                                            className={`astryd-input ${error.includes('workspace') || isWSNameDuplicate ? 'astryd-input-error' : ''}`}
                                             disabled={isSubmitting}
                                         />
-                                        {isWSNameDuplicate && <span className="error-message-modal">This workspace name is already taken</span>}
-                                        <button type="button" className="btn-text mt-2" onClick={() => {
+                                        {isWSNameDuplicate && <span className="astryd-error">This workspace name is already taken</span>}
+                                        <button type="button" className="astryd-btn-text" onClick={() => {
                                             setIsCreatingWorkspace(false);
                                             setNewWorkspaceName('');
                                         }}>
@@ -182,15 +183,15 @@ const GlobalCreateModal = ({ isOpen, onClose, onCreateVideo, workspaces, initial
                             </div>
 
                             {(selectedWorkspaceId || isCreatingWorkspace) && (
-                                <div className="form-group">
+                                <div className="astryd-form-group">
                                     <label>Folder</label>
                                     {!isCreatingFolder ? (
-                                        <div className="input-with-action">
+                                        <div style={{ width: '100%' }}>
                                             <select
                                                 value={selectedFolderId}
                                                 onChange={e => setSelectedFolderId(e.target.value)}
                                                 required={!isCreatingFolder}
-                                                className="form-input-premium"
+                                                className="astryd-input"
                                                 disabled={isSubmitting}
                                             >
                                                 <option value="">-- Select a folder --</option>
@@ -198,12 +199,12 @@ const GlobalCreateModal = ({ isOpen, onClose, onCreateVideo, workspaces, initial
                                                     <option key={f.id} value={f.id}>{f.name}</option>
                                                 ))}
                                             </select>
-                                            <button type="button" className="btn-text mt-2" onClick={() => setIsCreatingFolder(true)}>
+                                            <button type="button" className="astryd-btn-text" onClick={() => setIsCreatingFolder(true)}>
                                                 + Create new folder
                                             </button>
                                         </div>
                                     ) : (
-                                        <div className="input-with-action">
+                                        <div style={{ width: '100%' }}>
                                             <input
                                                 type="text"
                                                 value={newFolderName}
@@ -213,12 +214,12 @@ const GlobalCreateModal = ({ isOpen, onClose, onCreateVideo, workspaces, initial
                                                 }}
                                                 placeholder="Folder name"
                                                 required
-                                                className={`form-input-premium ${error.includes('folder') || isFolderNameDuplicate ? 'input-error' : ''}`}
+                                                className={`astryd-input ${error.includes('folder') || isFolderNameDuplicate ? 'astryd-input-error' : ''}`}
                                                 disabled={isSubmitting}
                                             />
-                                            {isFolderNameDuplicate && <span className="error-message-modal">This folder name already exists in the selected workspace</span>}
+                                            {isFolderNameDuplicate && <span className="astryd-error">This folder name already exists in the selected workspace</span>}
                                             {!isCreatingWorkspace && (
-                                                <button type="button" className="btn-text mt-2" onClick={() => {
+                                                <button type="button" className="astryd-btn-text" onClick={() => {
                                                     setIsCreatingFolder(false);
                                                     setNewFolderName('');
                                                 }}>
@@ -230,15 +231,15 @@ const GlobalCreateModal = ({ isOpen, onClose, onCreateVideo, workspaces, initial
                                 </div>
                             )}
 
-                            {error && <div className="error-message-modal" style={{ marginBottom: '16px' }}>{error}</div>}
+                            {error && <div className="astryd-error">{error}</div>}
 
-                            <div className="modal-footer-premium">
-                                <button type="button" className="btn-secondary-premium" onClick={onClose} disabled={isSubmitting}>
+                            <div className="astryd-footer">
+                                <button type="button" className="astryd-btn-secondary" onClick={onClose} disabled={isSubmitting}>
                                     Cancel
                                 </button>
                                 <button 
                                     type="submit" 
-                                    className="btn-primary-premium" 
+                                    className="astryd-btn-primary" 
                                     disabled={
                                         isSubmitting ||
                                         !videoName || 
