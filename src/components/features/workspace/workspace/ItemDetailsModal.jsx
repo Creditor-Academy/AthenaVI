@@ -75,38 +75,38 @@ const ItemDetailsModal = ({ isOpen, onClose, itemType, item }) => {
             onClick={onClose}
           />
           <motion.div
-            className="modal-content professional-modal item-details-modal"
+            className="modal-content astryd-modal item-details-modal"
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <button className="icon-btn-close-outside" type="button" onClick={onClose} title="Close">
-              <MdClose size={20} />
-            </button>
-            <div className="modal-header">
-              <div className="header-icon-title">
-                <div className="header-icon-container folder-icon-bg">
-                  <MdInfo size={24} />
+            <div className="astryd-header">
+              <div className="astryd-title-group">
+                <div className="astryd-icon-container">
+                  <MdInfo size={20} />
                 </div>
                 <div>
                   <h2>{typeLabel} details</h2>
-                  <p className="modal-subtitle">{itemName}</p>
+                  <p className="astryd-subtitle">{itemName}</p>
                 </div>
               </div>
+              <button className="astryd-close-btn" type="button" onClick={onClose} title="Close">
+                <MdClose size={18} />
+              </button>
             </div>
 
-            <div className="modal-body-premium item-details-body">
-              <div className="item-details-rows">
+            <div className="astryd-form item-details-body">
+              <div className="item-details-rows" style={{ width: '100%' }}>
                 {rows.map((row) => (
                   <DetailRow key={row.label} label={row.label}>
                     {row.value}
                   </DetailRow>
                 ))}
               </div>
-              <div className="modal-footer-premium">
-                <button type="button" className="btn-primary-apply" onClick={onClose}>
+              <div className="astryd-footer">
+                <button type="button" className="astryd-btn-primary" onClick={onClose}>
                   Close
                 </button>
               </div>
