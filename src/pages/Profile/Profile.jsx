@@ -18,6 +18,7 @@ import {
   MdCardMembership
 } from 'react-icons/md'
 import userService from '../../services/userService.js'
+import creditsService from '../../services/creditsService.js'
 
 const Profile = () => {
   const { user, isAuthenticated, updateUser } = useAuth()
@@ -32,6 +33,7 @@ const Profile = () => {
   const [loading, setLoading] = useState(false)
   const [imageLoading, setImageLoading] = useState(true)
   const [error, setError] = useState('')
+  const [personalCredits, setPersonalCredits] = useState(null)
   const fileInputRef = useRef(null)
 
   // Load user profile on component mount
@@ -59,6 +61,14 @@ const Profile = () => {
       }
       setProfile(newProfile)
       updateUser(newProfile)
+
+      try {
+        const credits = await creditsService.getPersonalBalance()
+        setPersonalCredits(credits.personalCredits)
+      } catch (creditsError) {
+        console.warn('Failed to load personal credits:', creditsError)
+      }
+
       setImageLoading(false)
     } catch (err) {
       console.error('Error loading profile:', err)
@@ -888,7 +898,9 @@ const Profile = () => {
               <MdGeneratingTokens />
               Credits Balance
             </span>
-            <span className="credits-value">1,240</span>
+            <span className="credits-value">
+              {personalCredits == null ? '—' : Number(personalCredits).toLocaleString()}
+            </span>
           </div>
         </section>
 
