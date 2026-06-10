@@ -14,6 +14,7 @@ import ExportModal from '../../components/features/editor/editor/ExportModal'
 import GeneratedVideoModal from '../../components/features/editor/editor/GeneratedVideoModal'
 import QuickCreateModal from '../../components/features/editor/editor/QuickCreateModal'
 import heygenService from '../../services/heygenService'
+import { isInsufficientCreditsError } from '../../services/creditsService.js'
 import avatar1 from '../../assets/Avatarr1.png'
 import projectTemplate from '../../constants/projectTemplate.json'
 import workspaceService from '../../services/workspaceService'
@@ -1480,7 +1481,11 @@ function Create({ onBack, initialConfig = null }) {
     } catch (error) {
       console.error('Failed to start video generation:', error);
       updateScene(sceneId, { heygenStatus: 'failed' });
-      alert('Failed to start video generation: ' + error.message);
+      if (isInsufficientCreditsError(error)) {
+        alert('Not enough workspace credits to generate this avatar video. Allocate credits in Settings → Billing or ask your workspace owner.');
+      } else {
+        alert('Failed to start video generation: ' + error.message);
+      }
       window.dispatchEvent(new CustomEvent('generation-failed'));
     }
   }

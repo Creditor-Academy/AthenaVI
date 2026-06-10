@@ -1,5 +1,5 @@
 import React from 'react';
-import { MdFolder, MdVideoLibrary, MdPerson, MdPeople } from 'react-icons/md';
+import { MdFolder, MdVideoLibrary, MdPerson, MdPeople, MdAccountBalanceWallet } from 'react-icons/md';
 import ContextMenu from './ContextMenu.jsx';
 import UserIdentity from './UserIdentity.jsx';
 import { formatFolderSize, formatProjectSize } from '../../../../utils/formatSize.js';
@@ -36,7 +36,7 @@ export const formatOnlyDate = (dateStr) => {
     }
 };
 
-export const WorkspaceRow = ({ workspace, onClick, contextProps }) => {
+export const WorkspaceRow = ({ workspace, onClick, contextProps, onAllocateCredits, showAllocateCredits = false }) => {
     return (
         <div className="workspace-item-row" onClick={onClick}>
             <div className="row-icon-container">
@@ -45,6 +45,19 @@ export const WorkspaceRow = ({ workspace, onClick, contextProps }) => {
 
             <div className="col col-name">
                 <h4>{workspace.name}</h4>
+                {showAllocateCredits && onAllocateCredits && (
+                    <button
+                        type="button"
+                        className="workspace-allocate-btn workspace-allocate-btn--inline"
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            onAllocateCredits(workspace);
+                        }}
+                    >
+                        <MdAccountBalanceWallet size={14} />
+                        Transfer credits
+                    </button>
+                )}
             </div>
 
             <div className="col col-owner">{workspace.ownerName || workspace.ownerId || '-'}</div>

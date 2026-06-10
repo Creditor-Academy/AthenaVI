@@ -16,6 +16,7 @@ import CreateFolderModal from '../../components/features/workspace/workspace/Cre
 import RenameModal from '../../components/features/workspace/workspace/RenameModal.jsx';
 import ItemDetailsModal from '../../components/features/workspace/workspace/ItemDetailsModal.jsx';
 import MoveProjectModal from '../../components/features/workspace/workspace/MoveProjectModal.jsx';
+import AllocateCreditsModal from '../../components/features/workspace/workspace/AllocateCreditsModal.jsx';
 import TeamWorkspaceSkeleton from '../page-skeleton/TeamWorkspaceSkeleton';
 
 import { extractUserId, normalizeWorkspace, normalizeFolder, normalizeVideo, workspaceCanEdit, workspaceCanManageContributors } from './workspaceUtils.js';
@@ -77,6 +78,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
   const [activeMemberMenuId, setActiveMemberMenuId] = useState(null);
   const [moveTargetVideo, setMoveTargetVideo] = useState(null);
   const [moveTargetWorkspace, setMoveTargetWorkspace] = useState(null);
+  const [allocateCreditsWorkspace, setAllocateCreditsWorkspace] = useState(null);
 
   // ------------------------------------------------------------------
   // Toast & confirm dialog
@@ -391,7 +393,14 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
   // ------------------------------------------------------------------
   // Render helpers
   // ------------------------------------------------------------------
-  const renderWorkspaceItems = (items) => {
+  const isOwnedTeamWorkspace = (workspace) =>
+    workspace?.type === 'workspace' && String(workspace.userRole || '').toUpperCase() === 'OWNER';
+
+  const handleOpenAllocateCredits = useCallback((workspace) => {
+    setAllocateCreditsWorkspace(workspace);
+  }, []);
+
+  const renderWorkspaceItems = (items, { allowAllocate = false } = {}) => {
     const sorted = sortItems(items);
     const Component = viewMode === 'tile' ? WorkspaceCard : WorkspaceRow;
     return sorted.map((workspace) => (
@@ -399,6 +408,8 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
         key={workspace.id}
         workspace={workspace}
         onClick={() => setCurrentLevel({ type: 'workspace', id: workspace.id, ws: workspace })}
+        showAllocateCredits={allowAllocate && isOwnedTeamWorkspace(workspace)}
+        onAllocateCredits={handleOpenAllocateCredits}
         contextProps={{
           onDetails: () => setDetailsTarget({ type: 'workspace', item: workspace }),
           onRename:
@@ -513,7 +524,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
               <div className="col" />
             </div>
           )}
-          {renderWorkspaceItems(myWorkspaces)}
+          {renderWorkspaceItems(myWorkspaces, { allowAllocate: true })}
         </WorkspaceSection>
       )}
 
@@ -748,6 +759,31 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           null
         }
         videoTitle={moveTargetVideo?.name || moveTargetVideo?.title || ''}
+      />
+
+      <AllocateCreditsModal
+        isOpen={!!allocateCreditsWorkspace}
+        workspace={allocateCreditsWorkspace}
+        onClose={() => setAllocateCreditsWorkspace(null)}
+        onSuccess={({ workspaceId, amount, mode }) => {
+          const workspaceName = allocateCreditsWorkspace?.name || 'workspace'
+          const message =
+            mode === 'deallocate'
+              ? `Returned ${amount.toLocaleString()} credits from ${workspaceName} to your personal balance.`
+              : `Allocated ${amount.toLocaleString()} credits to ${workspaceName}.`
+          showToast(message)
+          setWorkspaces((prev) =>
+            prev.map((ws) =>
+              String(ws.id) === String(workspaceId)
+                ? {
+                    ...ws,
+                    workspaceCredits:
+                      (Number(ws.workspaceCredits) || 0) + (mode === 'deallocate' ? -amount : amount),
+                  }
+                : ws
+            )
+          )
+        }}
       />
 
       {/* Panels */}

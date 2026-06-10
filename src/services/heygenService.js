@@ -1,4 +1,5 @@
 import API_CONFIG, { buildUrl, getAuthHeaders } from '../config/api.js';
+import { InsufficientCreditsError } from './creditsService.js';
 
 class HeygenService {
   async getAvatarLooks(params = {}) {
@@ -366,6 +367,14 @@ class HeygenService {
         headers: getAuthHeaders(),
         body: JSON.stringify(payload)
       });
+
+      if (response.status === 402) {
+        const payload = await response.json().catch(() => ({}));
+        throw new InsufficientCreditsError(
+          payload.message || 'Insufficient workspace credits for video generation',
+          payload
+        );
+      }
 
       if (!response.ok) {
         const errText = await response.text();

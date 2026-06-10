@@ -352,6 +352,46 @@
   color: var(--text-muted);
 }
 
+.workspace-card-footer {
+  padding: 0 16px 14px;
+  border-top: 1px solid var(--border-color);
+}
+
+.workspace-allocate-btn {
+  width: 100%;
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 10px;
+  background: var(--bg-surface, #f8fafc);
+  color: var(--text-main, #0f172a);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.workspace-card-footer .workspace-allocate-btn {
+  margin-top: 0;
+}
+
+.workspace-allocate-btn:hover {
+  background: var(--bg-card, #fff);
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.workspace-allocate-btn--inline {
+  width: auto;
+  margin-top: 6px;
+  padding: 6px 10px;
+  font-size: 0.76rem;
+}
+
 /* List View */
 .list-view {
   display: flex;

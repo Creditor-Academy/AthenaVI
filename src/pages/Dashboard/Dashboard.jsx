@@ -11,7 +11,6 @@ import TemplateDetails from '../TemplateDetails/TemplateDetails.jsx'
 import Profile from '../Profile/Profile.jsx'
 import Settings from '../Settings/Settings.jsx'
 import BrandKits from '../BrandKits/BrandKits.jsx'
-import Credits from '../Credits/Credits.jsx'
 import TeamWorkspace from '../TeamWorkspace/TeamWorkspace.jsx'
 import AdminPortal from '../AdminPortal/AdminPortal.jsx'
 import DashboardTopbar from '../../components/layout/DashboardTopbar/DashboardTopbar.jsx'
@@ -23,6 +22,7 @@ import TranslateVideoModal from '../../components/ui/TranslateVideoModal/Transla
 import CreateVideoModal from '../../components/ui/CreateVideoModal/CreateVideoModal.jsx'
 import { X } from 'lucide-react'
 import userService from '../../services/userService.js'
+import CreditsQuickModal from '../../components/ui/CreditsQuickModal/CreditsQuickModal.jsx'
 import { useAuth } from '../../contexts/AuthContext'
 import './Dashboard.css'
 
@@ -366,26 +366,14 @@ function Dashboard({ onCreate, initialSection }) {
         </div>
       )}
 
-      {/* Credits Modal Overlay */}
       {showCreditsModal && (
-        <div className="quick-access-modal-overlay" onClick={() => setShowCreditsModal(false)}>
-          <div className="quick-access-modal credits-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header-sleek">
-              <h4>Credits & Billing</h4>
-              <button className="close-mini-btn" onClick={() => setShowCreditsModal(false)}><X size={18} /></button>
-            </div>
-            <div className="credits-display-mini">
-              <div className="credits-amount-card">
-                <span className="credits-value">1,240</span>
-                <span className="credits-label">Available Credits</span>
-              </div>
-              <p className="credits-subtext">Credits are used for generating videos and high-quality avatars.</p>
-            </div>
-            <div className="modal-footer-sleek">
-              <button className="btn-primary-apply full-width" onClick={() => { setShowCreditsModal(false); handleNavigationWithModal('credits'); }}>View More & Upgrade</button>
-            </div>
-          </div>
-        </div>
+        <CreditsQuickModal
+          onClose={() => setShowCreditsModal(false)}
+          onManageBilling={() => {
+            setShowCreditsModal(false)
+            handleNavigationWithModal('credits')
+          }}
+        />
       )}
     </div>
   )

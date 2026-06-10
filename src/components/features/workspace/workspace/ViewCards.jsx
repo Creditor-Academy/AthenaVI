@@ -1,9 +1,9 @@
 import React from 'react';
-import { MdFolder, MdVideoLibrary, MdPerson, MdPeople } from 'react-icons/md';
+import { MdFolder, MdVideoLibrary, MdPerson, MdPeople, MdAccountBalanceWallet } from 'react-icons/md';
 import ContextMenu from './ContextMenu.jsx';
 import UserIdentity from './UserIdentity.jsx';
 
-export const WorkspaceCard = ({ workspace, onClick, contextProps }) => {
+export const WorkspaceCard = ({ workspace, onClick, contextProps, onAllocateCredits, showAllocateCredits = false }) => {
     return (
         <div className="workspace-item-card" onClick={onClick}>
             <div className="card-thumb-container">
@@ -21,6 +21,21 @@ export const WorkspaceCard = ({ workspace, onClick, contextProps }) => {
                 </div>
                 <ContextMenu type="workspace" {...contextProps} />
             </div>
+            {showAllocateCredits && onAllocateCredits && (
+                <div className="workspace-card-footer">
+                    <button
+                        type="button"
+                        className="workspace-allocate-btn"
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            onAllocateCredits(workspace);
+                        }}
+                    >
+                        <MdAccountBalanceWallet size={15} />
+                        Transfer credits
+                    </button>
+                </div>
+            )}
         </div>
     );
 };

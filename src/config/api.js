@@ -39,6 +39,20 @@ const API_CONFIG = {
       }
     },
     
+    // Credits API
+    CREDITS: {
+      ME: '/api/credits/me',
+      ME_HISTORY: '/api/credits/me/history',
+      ME_ESTIMATE: '/api/credits/me/estimate',
+      WORKSPACE: (workspaceId) => `/api/credits/${workspaceId}`,
+      WORKSPACE_HISTORY: (workspaceId) => `/api/credits/${workspaceId}/history`,
+      MY_HISTORY: (workspaceId) => `/api/credits/${workspaceId}/my-history`,
+      USAGE_BY_MEMBER: (workspaceId) => `/api/credits/${workspaceId}/usage-by-member`,
+      ESTIMATE: (workspaceId) => `/api/credits/${workspaceId}/estimate`,
+      ALLOCATE: (workspaceId) => `/api/credits/${workspaceId}/allocate`,
+      DEALLOCATE: (workspaceId) => `/api/credits/${workspaceId}/deallocate`,
+    },
+
     // HeyGen API
     HEYGEN: {
       AVATARS: {
