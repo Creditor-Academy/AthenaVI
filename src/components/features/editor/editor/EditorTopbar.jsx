@@ -34,6 +34,7 @@ import EditorSidebarStock from './EditorSidebarStock'
 import EditorSidebarShapes from './EditorSidebarShapes'
 import EditorSidebarMagic from './EditorSidebarMagic'
 import ProfileDropdown from '../../../ui/ProfileDropdown/ProfileDropdown'
+import EditorCreditsBar from './EditorCreditsBar'
 
 const TOOL_GROUPS = [
     {
@@ -89,6 +90,7 @@ const EditorTopbar = ({
     onUploadError,
     setSelectedLayerId,
     onPresenterChanged,
+    creditsRefreshKey = 0,
 }) => {
     const [saved, setSaved] = useState(false)
     const [showShortcuts, setShowShortcuts] = useState(false)
@@ -373,6 +375,10 @@ const EditorTopbar = ({
                 </div>
 
                 <div className="top-right">
+                    <EditorCreditsBar workspaceId={workspaceId} refreshKey={creditsRefreshKey} />
+
+                    <div className="topbar-divider" />
+
                     <div className="topbar-zoom-group">
                         <button
                             className="icon-btn"

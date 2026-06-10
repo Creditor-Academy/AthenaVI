@@ -261,6 +261,10 @@ function Create({ onBack, initialConfig = null }) {
   const [musicDuration, setMusicDuration] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [creditsRefreshKey, setCreditsRefreshKey] = useState(0)
+  const bumpCreditsRefresh = useCallback(() => {
+    setCreditsRefreshKey((key) => key + 1)
+  }, [])
   const [lastSaved, setLastSaved] = useState(null)
   const [showGeneratedVideoModal, setShowGeneratedVideoModal] = useState(false)
   const [generatedVideoUrl, setGeneratedVideoUrl] = useState(null)
@@ -1246,6 +1250,7 @@ function Create({ onBack, initialConfig = null }) {
       })
       setExportPhase('success')
       showToast('Download started', 'success')
+      bumpCreditsRefresh()
     } catch (err) {
       console.error('[Export] Full render download failed:', err)
       setExportError(err?.message || 'Download failed. The video may still be rendering.')
@@ -1368,6 +1373,7 @@ function Create({ onBack, initialConfig = null }) {
       }
 
       const result = await heygenService.generateVideo(workspaceId, projectId, payload);
+      bumpCreditsRefresh();
       const heygenVideoId = result.id || result.heygenVideoId || result.video_id;
 
       const sceneForContent = {
@@ -1482,6 +1488,7 @@ function Create({ onBack, initialConfig = null }) {
       console.error('Failed to start video generation:', error);
       updateScene(sceneId, { heygenStatus: 'failed' });
       if (isInsufficientCreditsError(error)) {
+        bumpCreditsRefresh();
         alert('Not enough workspace credits to generate this avatar video. Allocate credits in Settings → Billing or ask your workspace owner.');
       } else {
         alert('Failed to start video generation: ' + error.message);
@@ -2122,6 +2129,7 @@ function Create({ onBack, initialConfig = null }) {
         onUploadError={(msg) => showToast(msg, 'error')}
         setSelectedLayerId={handleSelectLayerId}
         onPresenterChanged={({ message }) => showToast(message, 'info')}
+        creditsRefreshKey={creditsRefreshKey}
       />
 
       <div className="editor-container">
