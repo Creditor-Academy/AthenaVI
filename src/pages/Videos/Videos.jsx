@@ -86,8 +86,22 @@ function Videos({ onCreate, onEdit }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [cardMenu])
 
+  const isRenameNameDuplicate = renameDialog
+    ? videos.some((video) => {
+        if (String(video.id) !== String(renameDialog.videoId)) {
+          const sameFolder =
+            String(video.workspaceId) === String(renameDialog.workspaceId) &&
+            String(video.folderId || '') === String(renameDialog.folderId || '');
+          const sameName =
+            String(video.title || video.name || '').trim().toLowerCase() === newName.trim().toLowerCase();
+          return sameFolder && sameName;
+        }
+        return false;
+      })
+    : false
+
   const handleRename = async () => {
-    if (!newName.trim() || !renameDialog) return
+    if (!newName.trim() || !renameDialog || isRenameNameDuplicate) return
     try {
       await workspaceService.updateProject(renameDialog.workspaceId, renameDialog.videoId, { name: newName.trim() })
       setRenameDialog(null)
@@ -221,10 +235,11 @@ function Videos({ onCreate, onEdit }) {
                           <button
                             className="video-menu-item"
                             onClick={() => {
-                              setRenameDialog({ 
-                                videoId: video.id, 
-                                workspaceId: video.workspaceId, 
-                                title: video.title 
+                              setRenameDialog({
+                                videoId: video.id,
+                                workspaceId: video.workspaceId,
+                                folderId: video.folderId,
+                                title: video.title
                               })
                               setNewName(video.title)
                               setCardMenu(null)
@@ -306,9 +321,14 @@ function Videos({ onCreate, onEdit }) {
               }}
               autoFocus
             />
+            {isRenameNameDuplicate && (
+              <p style={{ margin: '8px 0 0', color: '#dc2626', fontSize: '13px', fontWeight: 600 }}>
+                A project with this name already exists in this folder
+              </p>
+            )}
             <div className="rename-dialog-actions">
               <button className="btn-secondary" onClick={() => setRenameDialog(null)}>Cancel</button>
-              <button className="btn-primary" onClick={handleRename}>Rename</button>
+              <button className="btn-primary" onClick={handleRename} disabled={isRenameNameDuplicate}>Rename</button>
             </div>
           </div>
         </div>

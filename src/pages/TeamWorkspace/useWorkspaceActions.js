@@ -238,6 +238,18 @@ export function useWorkspaceActions({
         throw new Error('You do not have permission to rename this video.');
       }
 
+      const parentFolder = parentWorkspace.folders.find((folder) =>
+        (folder.videos || []).some((video) => String(video.id) === String(id))
+      );
+      const duplicateProject = (parentFolder?.videos || []).some((video) => {
+        if (String(video.id) === String(id)) return false;
+        const existingName = String(video.name || video.title || '').trim().toLowerCase();
+        return existingName === String(newName || '').trim().toLowerCase();
+      });
+      if (duplicateProject) {
+        throw new Error(`A project named "${newName}" already exists in this folder.`);
+      }
+
       await workspaceService.updateProject(parentWorkspace.id, id, { name: newName });
       setWorkspaces((prev) =>
         prev.map((workspace) => ({
