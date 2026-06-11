@@ -552,18 +552,36 @@ const LiveCanvasRenderer = ({
   showSafeZone = true,
   gridSize = 20,
   overlayMode = false,
+  scaleMode = 'contain',
+  compositionWidth = 1920,
+  compositionHeight = 1080,
 }) => {
   const containerRef = useRef(null)
   const [displayScale, setDisplayScale] = useState(0.2)
+  const [displayOffset, setDisplayOffset] = useState({ x: 0, y: 0 })
 
   const updateDisplayScale = useCallback(() => {
     const el = containerRef.current
     if (!el) return
     const { width, height } = el.getBoundingClientRect()
     if (width > 0 && height > 0) {
-      setDisplayScale(Math.min(width / 1920, height / 1080))
+      const scaleX = width / compositionWidth
+      const scaleY = height / compositionHeight
+      const scale =
+        scaleMode === 'cover'
+          ? Math.max(scaleX, scaleY)
+          : Math.min(scaleX, scaleY)
+      setDisplayScale(scale)
+      if (scaleMode === 'cover') {
+        setDisplayOffset({
+          x: (width - compositionWidth * scale) / 2,
+          y: (height - compositionHeight * scale) / 2,
+        })
+      } else {
+        setDisplayOffset({ x: 0, y: 0 })
+      }
     }
-  }, [])
+  }, [scaleMode, compositionWidth, compositionHeight])
 
   useLayoutEffect(() => {
     updateDisplayScale()
@@ -628,22 +646,22 @@ const LiveCanvasRenderer = ({
         ...backgroundStyle,
       }}
     >
-      {/* Fixed 1920×1080 virtual canvas, scaled to fit */}
+      {/* Fixed composition virtual canvas, scaled to fit or cover */}
       <div
         style={{
-          width: 1920,
-          height: 1080,
+          width: compositionWidth,
+          height: compositionHeight,
           position: 'absolute',
           top: 0,
           left: 0,
-          transform: `scale(${displayScale})`,
+          transform: `translate(${displayOffset.x}px, ${displayOffset.y}px) scale(${displayScale})`,
           transformOrigin: 'top left',
         }}
       >
         {(showGuides || showSafeZone) && (
           <CanvasGuidesOverlay
-            width={1920}
-            height={1080}
+            width={compositionWidth}
+            height={compositionHeight}
             showGrid={showGuides}
             showSafeZone={showSafeZone}
             gridSize={gridSize}

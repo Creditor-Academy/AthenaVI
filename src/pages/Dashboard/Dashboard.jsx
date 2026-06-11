@@ -116,6 +116,9 @@ function Dashboard({ onCreate, initialSection }) {
       onCreate({
         videoId: video.id || video._id,
         workspaceId: video.workspaceId,
+        folderId: video.folderId || (video.folder && (video.folder.id || video.folder._id)) || null,
+        workspace: video.workspace || video.workspaceName || '',
+        folder: video.folder?.name || video.folderName || video.folder || '',
         name: video.title || video.name,
         videoData: video
       })

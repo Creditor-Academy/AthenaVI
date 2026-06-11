@@ -10,6 +10,8 @@ import {
 } from 'react-icons/md';
 import workspaceService from '../../../services/workspaceService.js';
 import { useAuth } from '../../../contexts/AuthContext';
+import { fetchEditorTemplateScenes } from '../../../utils/fetchEditorTemplates.js';
+import TemplateScenePreview from '../../features/editor/editor/TemplateScenePreview';
 import './CreateVideoModal.css';
 
 const WIZARD_STEPS = [
@@ -29,36 +31,6 @@ const CANVAS_OPTIONS = [
 const PREBUILT_TAGS = ['Professional', 'Presentation', 'Marketing', 'Social Media', 'Education', 'Personal'];
 
 const TEMPLATE_FILTERS = ['All', 'Corporate', 'Training', 'Marketing', 'Social', 'Minimal'];
-
-const FALLBACK_TEMPLATES = [
-  {
-    id: 'tpl-corp-kickoff',
-    name: 'Corporate Kickoff',
-    badge: 'NEW',
-    badgeType: 'new',
-    tags: ['Corporate', 'Training'],
-    ratios: ['16:9', '1:1'],
-    thumbnail: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80'
-  },
-  {
-    id: 'tpl-edu-lesson',
-    name: 'Lesson Overview',
-    badge: 'HOT',
-    badgeType: 'interactive',
-    tags: ['Training', 'Education'],
-    ratios: ['16:9', '9:16', '4:5'],
-    thumbnail: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1200&q=80'
-  },
-  {
-    id: 'tpl-social-promo',
-    name: 'Social Promo',
-    badge: 'TRENDING',
-    badgeType: 'interactive',
-    tags: ['Marketing', 'Social'],
-    ratios: ['9:16', '4:5', '1:1'],
-    thumbnail: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80'
-  }
-];
 
 function normalizeId(value) {
   if (value == null || value === '') return '';
@@ -204,6 +176,7 @@ const CreateVideoModal = ({
   const [folderOptions, setFolderOptions] = useState([]);
   const [folderLoading, setFolderLoading] = useState(false);
   const [folderId, setFolderId] = useState(initialFolderId || '');
+  const [folderProjects, setFolderProjects] = useState([]);
 
   const [showInlineWorkspaceCreate, setShowInlineWorkspaceCreate] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
@@ -237,7 +210,8 @@ const CreateVideoModal = ({
 
   const selectedTemplate = useMemo(() => {
     if (selectedTemplateId === 'blank') return null;
-    return templateItems.find((item) => String(item.id) === String(selectedTemplateId)) || null;
+    const item = templateItems.find((template) => String(template.id) === String(selectedTemplateId));
+    return item?.scene || null;
   }, [selectedTemplateId, templateItems]);
 
   const aspectRatio = useMemo(
@@ -246,9 +220,12 @@ const CreateVideoModal = ({
   );
 
   const filteredTemplates = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
     return templateItems.filter((item) => {
-      const matchesSearch = item.name.toLowerCase().includes(searchQuery.trim().toLowerCase());
-      const matchesFilter = selectedFilter === 'All' || (item.tags || []).includes(selectedFilter);
+      const matchesSearch =
+        item.name.toLowerCase().includes(query) ||
+        (item.tags || []).some((tag) => String(tag).toLowerCase().includes(query));
+      const matchesFilter = selectedFilter === 'All' || item.category === selectedFilter;
       return matchesSearch && matchesFilter;
     });
   }, [templateItems, searchQuery, selectedFilter]);
@@ -282,10 +259,21 @@ const CreateVideoModal = ({
     customCanvas.height
   ]);
 
+  const trimmedVideoTitle = videoTitle.trim();
+
+  const isProjectNameDuplicate = useMemo(() => {
+    if (!trimmedVideoTitle || !folderId) return false;
+    return folderProjects.some((project) => {
+      const name = (project.name || project.title || '').trim();
+      return name.toLowerCase() === trimmedVideoTitle.toLowerCase();
+    });
+  }, [trimmedVideoTitle, folderId, folderProjects]);
+
   const canProceedStep1 = Boolean(aspectRatio);
   const canProceedStep2 = selectedTemplateId !== null;
   const canCreateVideo =
-    Boolean(videoTitle.trim()) &&
+    Boolean(trimmedVideoTitle) &&
+    !isProjectNameDuplicate &&
     Boolean(aspectRatio) &&
     Boolean(workspaceId) &&
     Boolean(folderId) &&
@@ -311,6 +299,20 @@ const CreateVideoModal = ({
       setWorkspaceOptions([]);
     } finally {
       setWorkspaceLoading(false);
+    }
+  }
+
+  async function loadFolderProjects(nextWorkspaceId, nextFolderId) {
+    if (!nextWorkspaceId || !nextFolderId) {
+      setFolderProjects([]);
+      return;
+    }
+
+    try {
+      const projects = await workspaceService.listProjects(nextWorkspaceId, nextFolderId);
+      setFolderProjects(projects || []);
+    } catch {
+      setFolderProjects([]);
     }
   }
 
@@ -356,7 +358,7 @@ const CreateVideoModal = ({
       setTemplateItems([]);
       return;
     }
-    loadTemplates(aspectRatio);
+    loadTemplates();
   }, [isOpen, aspectRatio]);
 
   useEffect(() => {
@@ -364,11 +366,18 @@ const CreateVideoModal = ({
     if (!workspaceId) {
       setFolderOptions([]);
       setFolderId('');
+      setFolderProjects([]);
       return;
     }
     loadFolders(workspaceId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, workspaceId]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    loadFolderProjects(workspaceId, folderId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, workspaceId, folderId]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -399,14 +408,38 @@ const CreateVideoModal = ({
       }
     };
 
+    const onVideoCreated = (event) => {
+      const createdWorkspaceId = event.detail?.workspaceId;
+      const createdFolderId = event.detail?.folderId;
+      const video = event.detail?.video;
+      if (!video || !createdWorkspaceId || !createdFolderId) return;
+
+      if (
+        String(createdWorkspaceId) === String(workspaceId) &&
+        String(createdFolderId) === String(folderId)
+      ) {
+        const normalizedVideo = {
+          ...video,
+          id: video.id || video._id,
+          name: video.name || video.title
+        };
+        setFolderProjects((prev) => {
+          if (prev.some((project) => String(project.id) === String(normalizedVideo.id))) return prev;
+          return [...prev, normalizedVideo];
+        });
+      }
+    };
+
     window.addEventListener('workspace:created', onWorkspaceCreated);
     window.addEventListener('workspace:folder-created', onFolderCreated);
+    window.addEventListener('workspace:video-created', onVideoCreated);
 
     return () => {
       window.removeEventListener('workspace:created', onWorkspaceCreated);
       window.removeEventListener('workspace:folder-created', onFolderCreated);
+      window.removeEventListener('workspace:video-created', onVideoCreated);
     };
-  }, [isOpen, workspaceId, currentUserId]);
+  }, [isOpen, workspaceId, folderId, currentUserId]);
 
   useEffect(() => {
     return () => {
@@ -426,31 +459,13 @@ const CreateVideoModal = ({
     onClose();
   };
 
-  async function loadTemplates(nextAspectRatio) {
+  async function loadTemplates() {
     setTemplatesLoading(true);
     try {
-      const apiTemplates = await workspaceService.listTemplatesByAspectRatio(nextAspectRatio);
-      if (apiTemplates.length > 0) {
-        const normalized = apiTemplates.map((template) => ({
-          id: template.id || template._id,
-          name: template.name || template.title || 'Untitled Template',
-          tags: Array.isArray(template.tags) ? template.tags : ['Corporate'],
-          badge: template.badge || 'TEMPLATE',
-          badgeType: template.badgeType || 'interactive',
-          thumbnail:
-            template.thumbnail ||
-            template.preview ||
-            template.image ||
-            'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=1200&q=80'
-        }));
-        setTemplateItems(normalized);
-      } else {
-        const fallback = FALLBACK_TEMPLATES.filter((template) => (template.ratios || []).includes(nextAspectRatio));
-        setTemplateItems(fallback);
-      }
+      const scenes = await fetchEditorTemplateScenes();
+      setTemplateItems(scenes);
     } catch {
-      const fallback = FALLBACK_TEMPLATES.filter((template) => (template.ratios || []).includes(nextAspectRatio));
-      setTemplateItems(fallback);
+      setTemplateItems([]);
     } finally {
       setTemplatesLoading(false);
     }
@@ -572,10 +587,10 @@ const CreateVideoModal = ({
   };
 
   const handleCreate = async () => {
-    if (!canCreateVideo) return;
+    if (!canCreateVideo || isProjectNameDuplicate) return;
 
     const payload = {
-      title: videoTitle.trim(),
+      title: trimmedVideoTitle,
       tags: videoTags,
       aspectRatio: canvasSize === 'custom' ? 'custom' : aspectRatio,
     };
@@ -612,7 +627,12 @@ const CreateVideoModal = ({
       if (onCreateVideo) {
         showToast('Project created successfully', 'success');
         onCreateVideo({
-          template: selectedTemplate,
+          template: selectedTemplate
+            ? {
+                scenes: [],
+                scene: selectedTemplate
+              }
+            : null,
           pageSize: canvasSize,
           canvasSize: aspectRatio,
           workspace: selectedWorkspace?.name || '',
@@ -786,7 +806,11 @@ const CreateVideoModal = ({
                         onClick={() => handleSelectTemplate(template.id)}
                       >
                         <div className="create-video-thumb-wrap">
-                          <img src={template.thumbnail} alt={template.name} />
+                          {template.scene ? (
+                            <TemplateScenePreview template={template.scene} />
+                          ) : (
+                            <img src={template.thumbnail} alt={template.name} />
+                          )}
                           <span className={`create-video-template-badge ${template.badgeType}`}>{template.badge}</span>
                           <span className="create-video-template-overlay" />
                         </div>
@@ -807,7 +831,13 @@ const CreateVideoModal = ({
                     value={videoTitle}
                     onChange={(event) => setVideoTitle(event.target.value)}
                     placeholder="Enter project title..."
+                    className={isProjectNameDuplicate ? 'create-video-input-error' : ''}
                   />
+                  {isProjectNameDuplicate && (
+                    <span className="create-video-field-error">
+                      A project with this name already exists in this folder
+                    </span>
+                  )}
                 </label>
 
                 <div className="create-video-field">

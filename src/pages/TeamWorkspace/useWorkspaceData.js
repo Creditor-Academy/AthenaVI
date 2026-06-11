@@ -61,7 +61,16 @@ export function useWorkspaceData({ currentUserId, authUser, authLoading }) {
                   return String(pFolderId) === String(folder.id);
                 })
                 .map((p) =>
-                  normalizeVideo({ ...p, workspaceId: enrichedWorkspace.id }, currentUserId, authUser, userLookup)
+                  normalizeVideo(
+                    {
+                      ...p,
+                      workspaceId: enrichedWorkspace.id,
+                      folderId: p.folderId || (p.folder && (p.folder.id || p.folder._id))
+                    },
+                    currentUserId,
+                    authUser,
+                    userLookup
+                  )
                 );
               folder.videos = folderVideos;
               folder.displaySize = formatFolderSize(folder);

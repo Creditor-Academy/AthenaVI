@@ -2,6 +2,7 @@ import React from 'react';
 import { MdFolder, MdVideoLibrary, MdPerson, MdPeople, MdAccountBalanceWallet } from 'react-icons/md';
 import ContextMenu from './ContextMenu.jsx';
 import UserIdentity from './UserIdentity.jsx';
+import ProjectSceneThumbnail from './ProjectSceneThumbnail.jsx';
 
 export const WorkspaceCard = ({ workspace, onClick, contextProps, onAllocateCredits, showAllocateCredits = false }) => {
     return (
@@ -64,7 +65,7 @@ export const VideoCard = ({ video, onClick, contextProps }) => {
     return (
         <div className="workspace-item-card" onClick={onClick}>
             <div className="card-thumb-container video-thumb">
-                <MdVideoLibrary size={48} className="video-icon" />
+                <ProjectSceneThumbnail video={video} />
                 <div className="project-overlay">
                     <button className="btn-edit-premium">Watch Video</button>
                 </div>

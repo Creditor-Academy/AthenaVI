@@ -182,7 +182,19 @@ function buildInitialProject(initialConfig) {
 
   const resolvedResolution = pageSizeToResolution[initialConfig?.pageSize] || projectTemplate.project.resolution;
   const resolvedTitle = initialConfig?.name?.trim() || projectTemplate.project.title;
-  const initialScenes = initialConfig?.template?.scenes || (initialConfig?.template ? [initialConfig.template] : []);
+  const pendingCreateScene = initialConfig?.template?.scene;
+  const initialScenes = (() => {
+    if (Array.isArray(initialConfig?.template?.scenes) && initialConfig.template.scenes.length > 0) {
+      return initialConfig.template.scenes;
+    }
+    if (pendingCreateScene) {
+      return [prepareTemplateSceneForEditor(pendingCreateScene, resolvedResolution)];
+    }
+    if (initialConfig?.template) {
+      return [initialConfig.template];
+    }
+    return [];
+  })();
 
   const projectId = initialConfig?.videoId || initialConfig?.videoData?.id || initialConfig?.videoData?._id
   const base = {
@@ -273,6 +285,7 @@ function Create({ onBack, initialConfig = null }) {
   const [generatingSceneId, setGeneratingSceneId] = useState(null)
   const [showQuickCreateModal, setShowQuickCreateModal] = useState(() => {
     const initial = buildInitialProject(initialConfig)
+    if (initialConfig?.template?.scene) return true
     if (!initialConfig?.videoData?.data && !initialConfig?.template) return true
     if (!initial.scenes || initial.scenes.length === 0) return true
     if (!initial.scenes[0].clips || initial.scenes[0].clips.length === 0) return true
@@ -382,11 +395,18 @@ function Create({ onBack, initialConfig = null }) {
   const quickCreateAutoDismissedRef = useRef(false)
   useEffect(() => {
     if (isProjectLoading || quickCreateAutoDismissedRef.current) return
+    if (project.createConfig?.template?.scene) return
     if (projectHasPreExistingScenes(project.scenes)) {
       setShowQuickCreateModal(false)
       quickCreateAutoDismissedRef.current = true
     }
-  }, [isProjectLoading, project.scenes])
+  }, [isProjectLoading, project.scenes, project.createConfig?.template?.scene])
+
+  useEffect(() => {
+    if (!activeSceneId && project.scenes.length > 0) {
+      setActiveSceneId(project.scenes[0].id)
+    }
+  }, [activeSceneId, project.scenes])
 
   const projectRef = useRef(project)
   const insertAfterIndexRef = useRef(null)
