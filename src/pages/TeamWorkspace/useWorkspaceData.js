@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import workspaceService from '../../services/workspaceService.js';
+import creditsService from '../../services/creditsService.js';
 import { formatFolderSize } from '../../utils/formatSize.js';
 import { buildWorkspaceUserLookup } from '../../utils/workspaceUsers.js';
 import {
@@ -95,9 +96,25 @@ export function useWorkspaceData({ currentUserId, authUser, authLoading }) {
         })
       );
 
+      const withCredits = await Promise.all(
+        withFolders.map(async (workspace) => {
+          if (workspace.type === 'personal') return workspace;
+          try {
+            const balance = await creditsService.getWorkspaceBalance(workspace.id);
+            return {
+              ...workspace,
+              workspaceCredits: Number(balance.workspaceCredits ?? 0),
+            };
+          } catch (error) {
+            console.warn(`Failed to load credits for workspace ${workspace.id}:`, error);
+            return workspace;
+          }
+        })
+      );
+
       // Read localAdditions fresh from state via callback to avoid stale closure
       setLocalAdditions((currentLocalAdditions) => {
-        let merged = withFolders.map((workspace) => {
+        let merged = withCredits.map((workspace) => {
           const localWorkspaceMeta = currentLocalAdditions.workspaces.find(
             (localWorkspace) =>
               String(localWorkspace.id) === String(workspace.id) && localWorkspace.createdByCurrentUser

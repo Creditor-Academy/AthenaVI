@@ -159,9 +159,9 @@ function Videos({ onCreate, onEdit }) {
                 <MdViewList />
               </button>
             </div>
-            <button className="new-folder-btn" onClick={onCreate}>
+            <button type="button" className="btn-primary videos-create-btn" onClick={onCreate}>
               <MdAdd size={18} />
-              New Video
+              Create Video
             </button>
           </div>
         </header>

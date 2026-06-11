@@ -989,6 +989,19 @@
   color: var(--text-muted);
 }
 
+.content.content--workspace-consistent .videos-page .videos-create-btn {
+  background: var(--primary) !important;
+  color: var(--primary-contrast) !important;
+  border: none;
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.25);
+}
+
+.content.content--workspace-consistent .videos-page .videos-create-btn:hover {
+  background: var(--primary-hover) !important;
+  color: var(--primary-contrast) !important;
+  box-shadow: 0 6px 16px rgba(var(--primary-rgb), 0.35);
+}
+
 /* Trash page hard alignment with common dashboard spacing */
 .content.content--workspace-consistent .athena-trash-view {
   min-height: 100%;

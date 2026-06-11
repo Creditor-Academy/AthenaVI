@@ -29,6 +29,7 @@ import Toast from './Toast.jsx';
 
 import { buildWorkspaceUserLookup, getAuthDisplayName } from '../../utils/workspaceUsers.js';
 import { formatFolderSize } from '../../utils/formatSize.js';
+import creditsService from '../../services/creditsService.js';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
 import '../../components/features/workspace/workspace/PremiumModal.css';
 
@@ -79,6 +80,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
   const [moveTargetVideo, setMoveTargetVideo] = useState(null);
   const [moveTargetWorkspace, setMoveTargetWorkspace] = useState(null);
   const [allocateCreditsWorkspace, setAllocateCreditsWorkspace] = useState(null);
+  const [personalCredits, setPersonalCredits] = useState(null);
 
   // ------------------------------------------------------------------
   // Toast & confirm dialog
@@ -155,6 +157,33 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
     ),
     [workspaces]
   );
+
+  const totalAvailableCredits = useMemo(() => {
+    const personal = Number(personalCredits ?? 0);
+    const workspaceTotal = workspaces.reduce((sum, workspace) => {
+      if (workspace.type !== 'workspace') return sum;
+      return sum + Number(workspace.workspaceCredits ?? 0);
+    }, 0);
+    return personal + workspaceTotal;
+  }, [personalCredits, workspaces]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    creditsService.getPersonalBalance()
+      .then((data) => {
+        if (!cancelled) {
+          setPersonalCredits(Number(data.personalCredits ?? 0));
+        }
+      })
+      .catch((error) => {
+        console.warn('Failed to load personal credits for workspace header:', error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // ------------------------------------------------------------------
   // Actions layer
@@ -390,6 +419,16 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
     if (onCreate) onCreate(context);
   };
 
+  const handleNavigateBack = useCallback(() => {
+    if (currentLevel.type === 'folder' && activeWorkspace) {
+      setCurrentLevel({ type: 'workspace', id: activeWorkspace.id, ws: activeWorkspace });
+      return;
+    }
+    if (currentLevel.type === 'workspace') {
+      setCurrentLevel({ type: 'root', id: null });
+    }
+  }, [currentLevel.type, activeWorkspace]);
+
   // ------------------------------------------------------------------
   // Render helpers
   // ------------------------------------------------------------------
@@ -419,6 +458,10 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           onManageWorkspace:
             workspace.type === 'workspace' && String(workspace.userRole).toUpperCase() === 'OWNER'
               ? () => handleManageWorkspace(workspace)
+              : null,
+          onTransferCredits:
+            allowAllocate && isOwnedTeamWorkspace(workspace)
+              ? () => handleOpenAllocateCredits(workspace)
               : null,
           onDelete:
             workspace.type === 'personal'
@@ -527,6 +570,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
             <div className="list-header">
               <div className="col" />
               <div className="col">Name</div>
+              <div className="col">Credits</div>
               <div className="col">Owner</div>
               <div className="col">Date modified</div>
               <div className="col">Members</div>
@@ -548,6 +592,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
             <div className="list-header">
               <div className="col" />
               <div className="col">Name</div>
+              <div className="col">Credits</div>
               <div className="col">Owner</div>
               <div className="col">Date modified</div>
               <div className="col">Members</div>
@@ -684,6 +729,8 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           }
           showCreateButton={canEdit}
           createButtonLabel="Create Video"
+          createButtonClass="btn-primary add-btn-small"
+          emptyActionClass="btn-primary add-btn-small"
           onCreateClick={() => openCreateVideoModal({ initialWorkspaceId: workspace.id, initialFolderId: folder.id })}
         >
           {viewMode === 'list' && (
@@ -717,6 +764,15 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
         onCreateClick={() => openCreateVideoModal()}
         invitationCount={invitations.length}
         onInviteClick={() => setShowNotifications(true)}
+        totalCredits={totalAvailableCredits}
+        creditsLoading={personalCredits === null}
+        showBack={currentLevel.type !== 'root'}
+        onBack={handleNavigateBack}
+        backLabel={
+          currentLevel.type === 'folder'
+            ? `Back to ${activeWorkspace?.name || 'workspace'}`
+            : 'Back to workspaces'
+        }
       />
 
       <div className="workspace-content-area" style={{ flex: 1 }}>
@@ -774,13 +830,16 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
         isOpen={!!allocateCreditsWorkspace}
         workspace={allocateCreditsWorkspace}
         onClose={() => setAllocateCreditsWorkspace(null)}
-        onSuccess={({ workspaceId, amount, mode }) => {
+        onSuccess={({ workspaceId, amount, mode, personalCredits: nextPersonal }) => {
           const workspaceName = allocateCreditsWorkspace?.name || 'workspace'
           const message =
             mode === 'deallocate'
               ? `Returned ${amount.toLocaleString()} credits from ${workspaceName} to your personal balance.`
               : `Allocated ${amount.toLocaleString()} credits to ${workspaceName}.`
           showToast(message)
+          if (nextPersonal != null) {
+            setPersonalCredits(Number(nextPersonal));
+          }
           setWorkspaces((prev) =>
             prev.map((ws) =>
               String(ws.id) === String(workspaceId)
