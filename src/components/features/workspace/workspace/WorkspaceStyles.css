@@ -124,33 +124,34 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 8px 12px;
   cursor: pointer;
+  color: var(--text-main);
   transition: all 0.2s;
 }
 
 .sort-dropdown-btn:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
+  background: var(--bg-surface);
+  border-color: rgba(var(--primary-rgb), 0.35);
 }
 
 .sort-icon {
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .sort-label {
   font-size: 14px;
   font-weight: 500;
-  color: #475569;
+  color: var(--text-main);
   min-width: 90px;
   text-align: left;
 }
 
 .sort-arrow {
-  color: #94a3b8;
+  color: var(--text-muted);
   transition: transform 0.2s;
 }
 
@@ -165,7 +166,7 @@
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow);
   padding: 8px 0;
   min-width: 160px;
   z-index: 50;
@@ -932,27 +933,27 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 8px 10px;
   cursor: pointer;
-  color: #64748b;
+  color: var(--text-muted);
   transition: all 0.2s;
 }
 
 .invite-icon-btn:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-  color: #4f46e5;
+  background: var(--bg-surface);
+  border-color: rgba(var(--primary-rgb), 0.35);
+  color: var(--primary);
 }
 
 .invite-badge {
   position: absolute;
   top: -6px;
   right: -6px;
-  background: #ef4444;
-  color: white;
+  background: var(--delete-red);
+  color: var(--primary-contrast);
   border-radius: 99px;
   padding: 2px 5px;
   font-size: 10px;
