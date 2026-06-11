@@ -1,22 +1,57 @@
 import { useEffect, useMemo, useState } from 'react'
 import { X } from 'lucide-react'
-import { MdAccountBalanceWallet, MdOutlineBolt, MdHistory } from 'react-icons/md'
+import {
+  MdAccountBalanceWallet,
+  MdOutlineBolt,
+  MdHistory,
+  MdMovie,
+  MdMic,
+  MdGroups,
+} from 'react-icons/md'
 import creditsService from '../../../services/creditsService.js'
 import workspaceService from '../../../services/workspaceService.js'
 import { isTeamWorkspaceType } from '../../../utils/creditTransactions.js'
 import './CreditsQuickModal.css'
 
+const NUMBER_LOCALE = 'en-US'
+
+function formatCredits(value) {
+  const num = Number(value ?? 0)
+  if (!Number.isFinite(num)) return '0'
+  return num.toLocaleString(NUMBER_LOCALE)
+}
+
+function formatCreditsCompact(value) {
+  const num = Number(value ?? 0)
+  if (!Number.isFinite(num)) return '0'
+  if (Math.abs(num) >= 10_000) {
+    return new Intl.NumberFormat(NUMBER_LOCALE, {
+      notation: 'compact',
+      maximumFractionDigits: 2,
+    }).format(num)
+  }
+  return num.toLocaleString(NUMBER_LOCALE)
+}
+
 const USAGE_ITEMS = [
-  { pool: 'personal', label: 'Voice clone, avatar create, private workspace' },
-  { pool: 'workspace', label: 'HeyGen scene videos, Remotion export' },
+  {
+    pool: 'personal',
+    icon: MdMic,
+    title: 'Personal pool',
+    label: 'Voice clone, avatar create, private workspace',
+  },
+  {
+    pool: 'workspace',
+    icon: MdMovie,
+    title: 'Workspace pool',
+    label: 'HeyGen scene videos, Remotion export',
+  },
 ]
 
 function CreditsQuickModal({ onClose, onManageBilling }) {
   const [loading, setLoading] = useState(true)
   const [personalCredits, setPersonalCredits] = useState(null)
-  const [workspaceCredits, setWorkspaceCredits] = useState(null)
-  const [workspaceName, setWorkspaceName] = useState('')
-  const [hasTeamWorkspace, setHasTeamWorkspace] = useState(false)
+  const [workspaceBalances, setWorkspaceBalances] = useState([])
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -25,6 +60,8 @@ function CreditsQuickModal({ onClose, onManageBilling }) {
     async function load() {
       setLoading(true)
       setError('')
+      setWorkspaceBalances([])
+
       try {
         const [personal, workspaceList] = await Promise.all([
           creditsService.getPersonalBalance(),
@@ -34,18 +71,30 @@ function CreditsQuickModal({ onClose, onManageBilling }) {
 
         setPersonalCredits(personal.personalCredits)
 
-        const teamWorkspace =
-          workspaceList.find((ws) => isTeamWorkspaceType(ws.type)) ||
-          workspaceList.find((ws) => String(ws.type || '').toUpperCase() === 'PRIVATE') ||
-          workspaceList[0]
+        const teamWorkspaces = (workspaceList || []).filter((ws) =>
+          isTeamWorkspaceType(ws.type)
+        )
 
-        if (teamWorkspace?.id) {
-          const balance = await creditsService.getWorkspaceBalance(teamWorkspace.id)
-          if (cancelled) return
-          setWorkspaceName(teamWorkspace.name || 'Workspace')
-          setWorkspaceCredits(balance.workspaceCredits)
-          setHasTeamWorkspace(isTeamWorkspaceType(balance.workspaceType || teamWorkspace.type))
+        if (teamWorkspaces.length === 0) {
+          setWorkspaceBalances([])
+          return
         }
+
+        const balances = await Promise.all(
+          teamWorkspaces.map(async (workspace) => {
+            const balance = await creditsService.getWorkspaceBalance(workspace.id)
+            return {
+              id: workspace.id,
+              name: workspace.name || 'Workspace',
+              credits: Number(balance.workspaceCredits ?? 0),
+            }
+          })
+        )
+
+        if (cancelled) return
+
+        balances.sort((a, b) => a.name.localeCompare(b.name))
+        setWorkspaceBalances(balances)
       } catch (err) {
         if (!cancelled) {
           setError(err.message || 'Failed to load credits')
@@ -61,70 +110,157 @@ function CreditsQuickModal({ onClose, onManageBilling }) {
     }
   }, [])
 
+  const hasTeamWorkspaces = workspaceBalances.length > 0
+  const totalWorkspaceCredits = useMemo(
+    () => workspaceBalances.reduce((sum, ws) => sum + Number(ws.credits || 0), 0),
+    [workspaceBalances]
+  )
+  const grandTotal = useMemo(
+    () => Number(personalCredits ?? 0) + totalWorkspaceCredits,
+    [personalCredits, totalWorkspaceCredits]
+  )
+
   const visibleUsage = useMemo(
-    () => USAGE_ITEMS.filter((item) => item.pool !== 'workspace' || hasTeamWorkspace),
-    [hasTeamWorkspace]
+    () => USAGE_ITEMS.filter((item) => item.pool !== 'workspace' || hasTeamWorkspaces),
+    [hasTeamWorkspaces]
   )
 
   return (
-    <div className="quick-access-modal-overlay" onClick={onClose}>
-      <div className="quick-access-modal credits-modal credits-quick-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header-sleek">
-          <h4>Credits</h4>
-          <button type="button" className="close-mini-btn" onClick={onClose} aria-label="Close">
+    <div className="credits-modal-overlay" onClick={onClose}>
+      <div
+        className="credits-modal"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-labelledby="credits-modal-title"
+        aria-busy={loading}
+      >
+        <header className="credits-modal-header">
+          <div className="credits-modal-brand">
+            <span className="credits-modal-brand-icon" aria-hidden>
+              <MdAccountBalanceWallet size={20} />
+            </span>
+            <div>
+              <h2 id="credits-modal-title">Credits</h2>
+              <p>{loading ? 'Fetching balances…' : 'Overview of your credit pools'}</p>
+            </div>
+          </div>
+          <button type="button" className="credits-modal-close" onClick={onClose} aria-label="Close">
             <X size={18} />
           </button>
-        </div>
+        </header>
 
-        {error && <div className="credits-quick-error">{error}</div>}
+        {error && <div className="credits-modal-error">{error}</div>}
 
-        <div className="credits-quick-body">
-          <div className={`credits-quick-balances ${hasTeamWorkspace ? 'credits-quick-balances--dual' : ''}`}>
-            <article className="credits-quick-balance-card">
-              <div className="credits-quick-balance-icon" aria-hidden>
-                <MdAccountBalanceWallet size={20} />
-              </div>
-              <div>
-                <span className="credits-quick-balance-label">Personal</span>
-                <strong className="credits-quick-balance-value">
-                  {loading ? '—' : Number(personalCredits ?? 0).toLocaleString()}
+        <div className="credits-modal-body">
+          {loading ? (
+            <div className="credits-modal-loading" aria-hidden>
+              <div className="credits-modal-skeleton credits-modal-skeleton--hero" />
+              <div className="credits-modal-skeleton credits-modal-skeleton--pool" />
+              <div className="credits-modal-skeleton credits-modal-skeleton--row" />
+              <div className="credits-modal-skeleton credits-modal-skeleton--row" />
+            </div>
+          ) : (
+            <>
+              <section className="credits-modal-hero" aria-label="Total credits">
+                <span className="credits-modal-hero-label">Total available</span>
+                <strong className="credits-modal-hero-value" title={formatCredits(grandTotal)}>
+                  {formatCreditsCompact(grandTotal)}
                 </strong>
-                <span className="credits-quick-balance-hint">Voices & avatars</span>
+                <span className="credits-modal-hero-meta">
+                  {hasTeamWorkspaces
+                    ? `${formatCreditsCompact(personalCredits)} personal · ${formatCreditsCompact(totalWorkspaceCredits)} across ${workspaceBalances.length} workspace${workspaceBalances.length === 1 ? '' : 's'}`
+                    : `${formatCredits(personalCredits)} in your personal pool`}
+                </span>
+              </section>
+
+              <section className="credits-modal-section" aria-label="Personal credits">
+                <div className="credits-modal-section-head">
+                  <span className="credits-modal-section-title">
+                    <MdAccountBalanceWallet size={15} />
+                    Personal
+                  </span>
+                  <span className="credits-modal-section-tag">Voices & avatars</span>
+                </div>
+                <div className="credits-modal-pool-card credits-modal-pool-card--personal">
+                  <strong className="credits-modal-pool-value">{formatCredits(personalCredits)}</strong>
+                  <span className="credits-modal-pool-caption">Available for personal actions</span>
+                </div>
+              </section>
+
+              {hasTeamWorkspaces && (
+                <section className="credits-modal-section" aria-label="Team workspace credits">
+                  <div className="credits-modal-section-head">
+                    <span className="credits-modal-section-title">
+                      <MdGroups size={15} />
+                      Team workspaces
+                    </span>
+                    <span className="credits-modal-section-total" title={formatCredits(totalWorkspaceCredits)}>
+                      {formatCreditsCompact(totalWorkspaceCredits)} total
+                    </span>
+                  </div>
+                  <ul className="credits-modal-workspace-list">
+                    {workspaceBalances.map((workspace) => (
+                      <li key={workspace.id} className="credits-modal-workspace-item">
+                        <span className="credits-modal-workspace-icon" aria-hidden>
+                          <MdOutlineBolt size={15} />
+                        </span>
+                        <div className="credits-modal-workspace-copy">
+                          <span className="credits-modal-workspace-name">{workspace.name}</span>
+                          <span className="credits-modal-workspace-hint">Videos & exports</span>
+                        </div>
+                        <strong
+                          className="credits-modal-workspace-credits"
+                          title={formatCredits(workspace.credits)}
+                        >
+                          {formatCredits(workspace.credits)}
+                        </strong>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </>
+          )}
+
+          <section className="credits-modal-usage" aria-label="What uses credits">
+            <p className="credits-modal-usage-title">What uses credits</p>
+            {loading ? (
+              <div className="credits-modal-usage-loading" aria-hidden>
+                <div className="credits-modal-skeleton credits-modal-skeleton--usage" />
+                <div className="credits-modal-skeleton credits-modal-skeleton--usage" />
               </div>
-            </article>
-
-            {hasTeamWorkspace && (
-              <article className="credits-quick-balance-card">
-                <div className="credits-quick-balance-icon" aria-hidden>
-                  <MdOutlineBolt size={20} />
-                </div>
-                <div>
-                  <span className="credits-quick-balance-label">Workspace</span>
-                  <strong className="credits-quick-balance-value">
-                    {loading ? '—' : Number(workspaceCredits ?? 0).toLocaleString()}
-                  </strong>
-                  <span className="credits-quick-balance-hint">{workspaceName} — videos & exports</span>
-                </div>
-              </article>
+            ) : (
+              <div className="credits-modal-usage-grid">
+                {visibleUsage.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <article key={item.pool} className="credits-modal-usage-card">
+                      <span className="credits-modal-usage-icon" aria-hidden>
+                        <Icon size={16} />
+                      </span>
+                      <div>
+                        <strong>{item.title}</strong>
+                        <p>{item.label}</p>
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
             )}
-          </div>
-
-          <div className="credits-quick-usage">
-            <p className="credits-quick-usage-title">What uses credits</p>
-            <ul>
-              {visibleUsage.map((item) => (
-                <li key={item.pool}>{item.label}</li>
-              ))}
-            </ul>
-          </div>
+          </section>
         </div>
 
-        <div className="modal-footer-sleek credits-quick-footer">
-          <button type="button" className="btn-primary-apply full-width" onClick={onManageBilling}>
-            <MdHistory size={16} />
+        <footer className="credits-modal-footer">
+          <button
+            type="button"
+            className="credits-modal-billing-btn"
+            onClick={onManageBilling}
+            disabled={loading}
+          >
+            <MdHistory size={17} />
             Manage billing & history
           </button>
-        </div>
+        </footer>
       </div>
     </div>
   )

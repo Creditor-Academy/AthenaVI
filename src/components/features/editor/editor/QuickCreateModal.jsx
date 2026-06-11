@@ -1,16 +1,19 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   MdClose,
   MdChevronRight,
   MdChevronLeft,
   MdAutoAwesome,
   MdSearch,
+  MdRecordVoiceOver,
+  MdSkipNext,
+  MdLayers,
+  MdPalette,
+  MdMonitor,
+  MdPhoneAndroid,
+  MdTune,
   MdPlayArrow,
   MdPause,
-  MdTranslate,
-  MdHistory,
-  MdLightbulbOutline,
-  MdAddCircleOutline,
 } from 'react-icons/md';
 import { Loader2 } from 'lucide-react';
 import heygenService from '../../../../services/heygenService';
@@ -20,7 +23,8 @@ import {
   extractHeygenList,
   formatAvatarTypeLabel,
   LOOK_ENGINE_FILTERS,
-  looksForEngineFilter,
+  getIvOrVLooks,
+  groupHasSupportedLooks,
   mapAvatarGroup,
   mapAvatarLook,
   mergeAvatarLooksPages,
@@ -30,6 +34,87 @@ import {
   resolveAvatarEngine,
 } from '../../../../utils/heygenAvatars';
 import './QuickCreateModal.css';
+
+const VOICE_PREVIEW_SAMPLE =
+  'Hello! This is a quick preview of how this voice sounds for your video narration.';
+
+const BACKGROUND_COLOR_PALETTE = [
+  {
+    id: 'neutrals',
+    label: 'Neutrals',
+    colors: [
+      { color: '#ffffff', label: 'White' },
+      { color: '#f8fafc', label: 'Off white' },
+      { color: '#f1f5f9', label: 'Light gray' },
+      { color: '#e2e8f0', label: 'Silver' },
+      { color: '#94a3b8', label: 'Slate' },
+      { color: '#64748b', label: 'Gray' },
+      { color: '#334155', label: 'Charcoal' },
+      { color: '#101828', label: 'Near black' },
+      { color: '#000000', label: 'Black' },
+    ],
+  },
+  {
+    id: 'blues',
+    label: 'Blues',
+    colors: [
+      { color: '#eff6ff', label: 'Ice' },
+      { color: '#dbeafe', label: 'Sky' },
+      { color: '#93c5fd', label: 'Periwinkle' },
+      { color: '#3b82f6', label: 'Blue' },
+      { color: '#1d4ed8', label: 'Royal blue' },
+      { color: '#1e3a8a', label: 'Navy' },
+    ],
+  },
+  {
+    id: 'greens',
+    label: 'Greens',
+    colors: [
+      { color: '#ecfdf5', label: 'Frost' },
+      { color: '#dcfce7', label: 'Mint' },
+      { color: '#86efac', label: 'Sage' },
+      { color: '#22c55e', label: 'Green' },
+      { color: '#166534', label: 'Forest' },
+      { color: '#0f766e', label: 'Teal' },
+    ],
+  },
+  {
+    id: 'purples',
+    label: 'Purples',
+    colors: [
+      { color: '#faf5ff', label: 'Lilac' },
+      { color: '#ede9fe', label: 'Lavender' },
+      { color: '#c4b5fd', label: 'Violet' },
+      { color: '#5b3a7a', label: 'Brand' },
+      { color: '#7c3aed', label: 'Purple' },
+      { color: '#4c1d95', label: 'Plum' },
+    ],
+  },
+  {
+    id: 'warm',
+    label: 'Warm',
+    colors: [
+      { color: '#fffbeb', label: 'Ivory' },
+      { color: '#fef3c7', label: 'Cream' },
+      { color: '#fde68a', label: 'Butter' },
+      { color: '#f59e0b', label: 'Amber' },
+      { color: '#d4a373', label: 'Sand' },
+      { color: '#ea580c', label: 'Orange' },
+    ],
+  },
+  {
+    id: 'accent',
+    label: 'Accent',
+    colors: [
+      { color: '#fff1f2', label: 'Petal' },
+      { color: '#fecdd3', label: 'Blush' },
+      { color: '#fda4af', label: 'Pink' },
+      { color: '#f43f5e', label: 'Rose' },
+      { color: '#e11d48', label: 'Crimson' },
+      { color: '#881337', label: 'Wine' },
+    ],
+  },
+];
 
 const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
   const [step, setStep] = useState(1);
@@ -61,6 +146,20 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
   const [looksPageData, setLooksPageData] = useState(null);
   const [loadingVoices, setLoadingVoices] = useState(false);
   const [voiceSearch, setVoiceSearch] = useState('');
+  const [skipVoice, setSkipVoice] = useState(false);
+  const [activeColorCategory, setActiveColorCategory] = useState('neutrals');
+  const [previewingVoiceId, setPreviewingVoiceId] = useState(null);
+  const [previewLoadingVoiceId, setPreviewLoadingVoiceId] = useState(null);
+  const previewAudioRef = useRef(null);
+
+  const stopVoicePreview = useCallback(() => {
+    if (previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      previewAudioRef.current = null;
+    }
+    setPreviewingVoiceId(null);
+    setPreviewLoadingVoiceId(null);
+  }, []);
 
   const resetAvatarPicker = useCallback(() => {
     setAvatarPhase('groups');
@@ -76,14 +175,19 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
 
   useEffect(() => {
     if (!isOpen) {
+      stopVoicePreview();
       setStep(1);
+      setSkipVoice(false);
+      setSelectedVoice(null);
+      setVoiceSearch('');
+      setActiveColorCategory('neutrals');
       resetAvatarPicker();
       return;
     }
     if (step === 1 && avatarPhase === 'groups' && groups.length === 0) {
       fetchGroups();
     }
-  }, [isOpen, step, avatarPhase, groups.length, resetAvatarPicker]);
+  }, [isOpen, step, avatarPhase, groups.length, resetAvatarPicker, stopVoicePreview]);
 
   useEffect(() => {
     if (isOpen && step === 2 && voices.length === 0) {
@@ -109,6 +213,25 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     };
   }, [step, onClose]);
 
+  const filterGroupsWithSupportedLooks = async (groupList) => {
+    const mapped = groupList.map(mapAvatarGroup).filter((g) => g.id);
+    const results = await Promise.all(
+      mapped.map(async (group) => {
+        try {
+          const responseData = await heygenService.getAvatarLooks({
+            group_id: group.id,
+            limit: 20,
+          });
+          const parsed = parseAvatarLooksResponse(responseData);
+          return groupHasSupportedLooks(parsed) ? group : null;
+        } catch {
+          return null;
+        }
+      })
+    );
+    return results.filter(Boolean);
+  };
+
   const fetchGroups = async () => {
     setLoadingGroups(true);
     try {
@@ -122,7 +245,8 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
         'groups',
         'avatars',
       ]);
-      setGroups(groupList.map(mapAvatarGroup).filter((g) => g.id));
+      const supportedGroups = await filterGroupsWithSupportedLooks(groupList);
+      setGroups(supportedGroups);
       setGroupsHasMore(!!(data?.has_more ?? responseData?.has_more));
       setGroupsNextToken(data?.token ?? responseData?.token ?? data?.next_token ?? responseData?.next_token ?? null);
     } catch (err) {
@@ -146,11 +270,11 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
       });
       const data = responseData?.data || responseData;
       const groupList = extractHeygenList(responseData, ['avatar_groups', 'groups', 'avatars']);
-      const mapped = groupList.map(mapAvatarGroup).filter((g) => g.id);
+      const supportedGroups = await filterGroupsWithSupportedLooks(groupList);
       setGroups((prev) => {
         const seen = new Set(prev.map((g) => g.id));
         const next = [...prev];
-        mapped.forEach((g) => { if (!seen.has(g.id)) next.push(g); });
+        supportedGroups.forEach((g) => { if (!seen.has(g.id)) next.push(g); });
         return next;
       });
       setGroupsHasMore(!!(data?.has_more ?? responseData?.has_more));
@@ -165,17 +289,18 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
   };
 
   const applyLooksDisplay = useCallback((pageData, filter, groupName) => {
-    const rawList = looksForEngineFilter(pageData, filter);
-    const mapped = rawList.map((look) => mapAvatarLook(look, groupName)).filter((l) => l.id);
+    const rawList = getIvOrVLooks(pageData, filter);
+    const mapped = rawList
+      .map((look) => mapAvatarLook(look, groupName))
+      .filter((l) => l.id && !l.engineUnknown);
     setLooks(mapped);
     if (mapped.length === 0) {
       const filterLabels = {
-        [LOOK_ENGINE_FILTERS.ALL]: 'any',
+        [LOOK_ENGINE_FILTERS.ALL]: 'supported',
         [LOOK_ENGINE_FILTERS.AVATAR_IV]: 'Avatar IV',
         [LOOK_ENGINE_FILTERS.AVATAR_V]: 'Avatar V',
-        [LOOK_ENGINE_FILTERS.UNKNOWN]: 'unspecified-engine',
       };
-      setLooksError(`No ${filterLabels[filter] || ''} looks for this character. Pick another character.`);
+      setLooksError(`No ${filterLabels[filter] || 'supported'} looks for this character. Try another character or engine.`);
     } else {
       setLooksError('');
     }
@@ -249,14 +374,12 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
         limit: 50,
       });
       const voiceList = extractHeygenList(responseData, ['voices']);
-      const mappedVoices = voiceList.map((v, index) => ({
+      const mappedVoices = voiceList.map((v) => ({
         id: v.voice_id || v.voiceId || v.id,
         name: v.name || v.voice_name || 'AI Voice',
         gender: v.gender || 'Unknown',
         language: v.language || v.language_code || 'English (US)',
-        attributes: index % 2 === 0 ? ['Documentary', 'Narration'] : ['Corporate', 'Ads'],
-        subtitle: index % 2 === 0 ? 'Calm & Professional' : 'Friendly & Energetic',
-        image: `https://i.pravatar.cc/150?u=${v.voice_id || v.id || index}`,
+        previewUrl: v.preview_audio_url || v.preview_url || v.preview_audio || null,
       }));
       setVoices(mappedVoices.filter((v) => v.id));
     } catch (err) {
@@ -300,8 +423,9 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
       avatarEngine: resolvedEngine,
       supportedEngines: selectedAvatar.supportedEngines,
       engineUnknown: selectedAvatar.engineUnknown,
-      voiceId: selectedVoice.id,
-      voiceName: selectedVoice.name,
+      voiceId: skipVoice ? null : selectedVoice?.id,
+      voiceName: skipVoice ? null : selectedVoice?.name,
+      skipVoice,
       script,
       removeBackground,
       backgroundColor,
@@ -310,23 +434,91 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     };
   };
 
+  const canProceedFromVoice = skipVoice || !!selectedVoice;
+
   const handleGenerate = () => {
-    if (selectedAvatar?.id && selectedVoice && script) {
-      setStep(5);
-      onGenerate(buildGeneratePayload());
-    } else {
-      alert('Please select a look, voice, and provide a script.');
+    if (!selectedAvatar?.id || !script.trim()) {
+      alert('Please select a presenter look and provide a script.');
+      return;
+    }
+    if (!skipVoice && !selectedVoice) {
+      alert('Please select a voice or choose Skip voice for now.');
+      return;
+    }
+    const payload = buildGeneratePayload();
+    if (skipVoice) {
+      onGenerate(payload);
+      onClose();
+      return;
+    }
+    setStep(5);
+    onGenerate(payload);
+  };
+
+  const handleSelectVoice = (voice) => {
+    setSkipVoice(false);
+    setSelectedVoice(voice);
+  };
+
+  const handleSkipVoice = () => {
+    setSkipVoice(true);
+    setSelectedVoice(null);
+    stopVoicePreview();
+  };
+
+  const playVoicePreview = async (e, voice) => {
+    e.stopPropagation();
+
+    if (previewingVoiceId === voice.id) {
+      stopVoicePreview();
+      return;
+    }
+
+    stopVoicePreview();
+    setPreviewLoadingVoiceId(voice.id);
+
+    try {
+      let audioUrl = voice.previewUrl;
+
+      if (!audioUrl) {
+        const res = await heygenService.previewSpeech({
+          text: VOICE_PREVIEW_SAMPLE,
+          voice_id: voice.id,
+        });
+        audioUrl = res?.preview_audio_url || res?.audio_url || res?.url;
+      }
+
+      if (!audioUrl) {
+        alert('Preview audio is not available for this voice.');
+        return;
+      }
+
+      const audio = new Audio(audioUrl);
+      previewAudioRef.current = audio;
+      audio.onended = () => {
+        setPreviewingVoiceId(null);
+        previewAudioRef.current = null;
+      };
+      audio.onerror = () => {
+        setPreviewingVoiceId(null);
+        previewAudioRef.current = null;
+      };
+
+      await audio.play();
+      setPreviewingVoiceId(voice.id);
+    } catch (err) {
+      console.error('Voice preview failed:', err);
+      alert('Could not play voice preview. Try again in a moment.');
+    } finally {
+      setPreviewLoadingVoiceId(null);
     }
   };
 
-  const handleSmartStoryboard = () => {
-    if (selectedAvatar?.id && selectedVoice && script) {
-      setStep(5);
-      onGenerate({ ...buildGeneratePayload(), isStoryboard: true });
-    } else {
-      alert('Please select a look, voice, and enter a script first.');
-    }
-  };
+  const activePaletteCategory = useMemo(
+    () => BACKGROUND_COLOR_PALETTE.find((cat) => cat.id === activeColorCategory)
+      || BACKGROUND_COLOR_PALETTE[0],
+    [activeColorCategory]
+  );
 
   const handleBack = () => {
     if (step === 1 && avatarPhase === 'looks') {
@@ -345,6 +537,17 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     if (step < 4) setStep(step + 1);
   };
 
+  const stepLabels = ['Presenter', 'Voice', 'Script', 'Settings'];
+
+  const expressivenessOptions = [
+    { id: 'low', label: 'Low', hint: 'Formal, subtle delivery' },
+    { id: 'medium', label: 'Medium', hint: 'Natural presentation' },
+    { id: 'high', label: 'High', hint: 'Dynamic, expressive' },
+  ];
+
+  const showExpressiveness =
+    selectedAvatar && canUseExpressiveness(selectedAvatar, avatarEngine);
+
   if (!isOpen) return null;
 
   const renderHeader = () => {
@@ -352,20 +555,22 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
       {
         title:
           avatarPhase === 'looks'
-            ? `Choose a look — ${selectedGroup?.name || 'Character'}`
-            : 'Select your presenter',
+            ? selectedGroup?.name || 'Choose a look'
+            : 'Choose your presenter',
         subtitle:
           avatarPhase === 'looks'
-            ? 'Filter by rendering engine, then pick a look.'
-            : 'Pick a character, then choose a look.',
+            ? 'Only Avatar IV and Avatar V looks are shown for reliable generation.'
+            : 'Select a character, then pick a supported look.',
       },
       {
-        title: 'Choose a Voice',
-        subtitle: 'Select the perfect AI voice for your video script.',
+        title: 'Select a voice',
+        subtitle: skipVoice
+          ? 'Voice skipped — you can add one later before generating video.'
+          : 'Pick a voice for narration, or skip and configure later.',
       },
-      { title: 'Step 3: Script Input', subtitle: '' },
-      { title: 'Quick Create Wizard', subtitle: 'Configure advanced settings.' },
-      { title: 'Generating Video', subtitle: 'Your masterpiece is being created.' },
+      { title: 'Write your script', subtitle: 'Enter what your presenter should say.' },
+      { title: 'Video settings', subtitle: 'Background, format, and delivery options.' },
+      { title: 'Generating video', subtitle: 'This may take a few moments.' },
     ];
 
     const current = titles[step - 1] || titles[0];
@@ -373,19 +578,35 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     return (
       <div className="qc-header">
         <div className="qc-header-top">
-          <div className="qc-step-indicator">
-            <span className="qc-step-text">Step {Math.min(step, 4)} of 4</span>
+          <div className="qc-brand">
+            <span className="qc-brand-icon" aria-hidden>
+              <MdAutoAwesome size={18} />
+            </span>
+            <div>
+              <span className="qc-brand-title">Quick Create</span>
+              <span className="qc-brand-step">Step {Math.min(step, 4)} of 4</span>
+            </div>
           </div>
-          <button className="qc-close-btn" onClick={onClose} disabled={step === 5}>
+          <button type="button" className="qc-close-btn" onClick={onClose} disabled={step === 5} aria-label="Close">
             <MdClose size={20} />
           </button>
         </div>
 
-        <div className="qc-progress-container">
-          <div
-            className="qc-progress-bar"
-            style={{ width: `${(Math.min(step, 4) / 4) * 100}%` }}
-          />
+        <div className="qc-step-nav" aria-hidden={step === 5}>
+          {stepLabels.map((label, index) => {
+            const stepNum = index + 1;
+            const isActive = step === stepNum;
+            const isDone = step > stepNum;
+            return (
+              <div
+                key={label}
+                className={`qc-step-pill ${isActive ? 'active' : ''} ${isDone ? 'done' : ''}`}
+              >
+                <span className="qc-step-pill-num">{stepNum}</span>
+                <span className="qc-step-pill-label">{label}</span>
+              </div>
+            );
+          })}
         </div>
 
         {(current.title || current.subtitle) && (
@@ -410,43 +631,22 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
             {current.subtitle && <p className="qc-subtitle">{current.subtitle}</p>}
 
             {step === 1 && avatarPhase === 'looks' && looksPageData && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+              <div className="qc-engine-filters">
                 {[
-                  { id: LOOK_ENGINE_FILTERS.ALL, label: 'All', count: looksPageData.engineCounts.totalLooks },
+                  { id: LOOK_ENGINE_FILTERS.ALL, label: 'All supported', count: looksPageData.engineCounts.avatar_iv + looksPageData.engineCounts.avatar_v },
                   { id: LOOK_ENGINE_FILTERS.AVATAR_IV, label: 'Avatar IV', count: looksPageData.engineCounts.avatar_iv },
                   { id: LOOK_ENGINE_FILTERS.AVATAR_V, label: 'Avatar V', count: looksPageData.engineCounts.avatar_v },
-                  ...(looksPageData.engineCounts.unknown > 0
-                    ? [{ id: LOOK_ENGINE_FILTERS.UNKNOWN, label: 'Other', count: looksPageData.engineCounts.unknown }]
-                    : []),
                 ].map((chip) => (
                   <button
                     key={chip.id}
                     type="button"
+                    className={`qc-engine-chip ${lookEngineFilter === chip.id ? 'active' : ''}`}
                     onClick={() => handleLookEngineFilter(chip.id)}
-                    style={{
-                      padding: '6px 10px',
-                      borderRadius: 999,
-                      border: '1px solid rgba(0,0,0,0.1)',
-                      background:
-                        lookEngineFilter === chip.id
-                          ? chip.id === LOOK_ENGINE_FILTERS.AVATAR_V
-                            ? 'rgba(168,85,247,0.12)'
-                            : 'rgba(26,115,232,0.10)'
-                          : '#fff',
-                      fontSize: 11,
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                    }}
                   >
                     {chip.label} ({chip.count})
                   </button>
                 ))}
               </div>
-            )}
-            {step === 1 && avatarPhase === 'looks' && lookEngineFilter === LOOK_ENGINE_FILTERS.UNKNOWN && (
-              <p style={{ margin: '8px 0 0', fontSize: 11, color: '#64748b', lineHeight: 1.45 }}>
-                Engine compatibility not specified by provider.
-              </p>
             )}
           </div>
         )}
@@ -460,14 +660,14 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
         return (
           <div className="qc-loading">
             <Loader2 className="qc-spinner" size={32} />
-            <p>Loading characters...</p>
+            <p>Loading compatible presenters…</p>
           </div>
         );
       }
       if (groups.length === 0) {
         return (
           <div className="qc-loading">
-            <p>No characters available. Check your HeyGen connection.</p>
+            <p>No Avatar IV or V presenters available. Check your HeyGen connection.</p>
           </div>
         );
       }
@@ -488,24 +688,15 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
               </div>
             </div>
           ))}
-          <div className="qc-avatar-card upload-card">
-            <div className="qc-upload-content">
-              <MdAddCircleOutline size={32} />
-              <p>
-                Upload Custom
-                <br />
-                Avatar
-              </p>
-            </div>
-          </div>
-
           {groupsHasMore && (
-            <div className="qc-avatar-card upload-card" onClick={loadMoreGroups} style={{ cursor: loadingMoreGroups ? 'not-allowed' : 'pointer' }}>
-              <div className="qc-upload-content">
-                <MdAddCircleOutline size={32} />
-                <p>{loadingMoreGroups ? 'Loading…' : 'Load more'}</p>
-              </div>
-            </div>
+            <button
+              type="button"
+              className="qc-load-more-btn"
+              onClick={loadMoreGroups}
+              disabled={loadingMoreGroups}
+            >
+              {loadingMoreGroups ? 'Loading…' : 'Load more characters'}
+            </button>
           )}
         </div>
       );
@@ -568,12 +759,14 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
         })}
 
         {looksHasMore && (
-          <div className="qc-avatar-card upload-card" onClick={() => loadMoreLooks()} style={{ cursor: loadingMoreLooks ? 'not-allowed' : 'pointer' }}>
-            <div className="qc-upload-content">
-              <MdAddCircleOutline size={32} />
-              <p>{loadingMoreLooks ? 'Loading…' : 'Load more looks'}</p>
-            </div>
-          </div>
+          <button
+            type="button"
+            className="qc-load-more-btn"
+            onClick={() => loadMoreLooks()}
+            disabled={loadingMoreLooks}
+          >
+            {loadingMoreLooks ? 'Loading…' : 'Load more looks'}
+          </button>
         )}
       </div>
     );
@@ -589,90 +782,77 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
 
           {step === 2 && (
             <div className="qc-step-pane">
-              <div className="qc-voice-filters">
+              <button
+                type="button"
+                className={`qc-skip-voice-card ${skipVoice ? 'active' : ''}`}
+                onClick={handleSkipVoice}
+              >
+                <span className="qc-skip-voice-icon" aria-hidden>
+                  <MdSkipNext size={20} />
+                </span>
+                <div className="qc-skip-voice-copy">
+                  <strong>Skip voice for now</strong>
+                  <p>Set up the scene first and choose a voice later in the editor.</p>
+                </div>
+              </button>
+
+              <div className="qc-voice-toolbar">
                 <div className="qc-search-box">
-                  <MdSearch size={20} />
+                  <MdSearch size={18} />
                   <input
                     type="text"
-                    placeholder="Search voices by name or style..."
+                    placeholder="Search voices by name..."
                     value={voiceSearch}
                     onChange={(e) => setVoiceSearch(e.target.value)}
                   />
                 </div>
-                <select className="qc-select">
-                  <option>Gender: All</option>
-                </select>
-                <select className="qc-select">
-                  <option>Language: English</option>
-                </select>
-              </div>
-
-              <div className="qc-voice-chips">
-                <span className="qc-chip active">
-                  English (US) <MdClose size={14} />
-                </span>
-                <span className="qc-chip">Male</span>
-                <span className="qc-chip">Female</span>
-                <span className="qc-chip">Neural Plus</span>
-                <span className="qc-chip clear-all">Clear all</span>
               </div>
 
               {loadingVoices ? (
                 <div className="qc-loading">
                   <Loader2 className="qc-spinner" size={32} />
+                  <p>Loading voices…</p>
                 </div>
               ) : (
-                <div className="qc-voice-table premium-scrollbar">
-                  <div className="qc-vt-header">
-                    <div className="qc-vt-col">VOICE NAME</div>
-                    <div className="qc-vt-col">GENDER</div>
-                    <div className="qc-vt-col">LANGUAGE</div>
-                    <div className="qc-vt-col">ATTRIBUTES</div>
-                    <div className="qc-vt-col center">PREVIEW</div>
-                  </div>
-
+                <div className="qc-voice-list premium-scrollbar">
                   {filteredVoices.map((voice) => {
-                    const isSelected = selectedVoice?.id === voice.id;
+                    const isSelected = !skipVoice && selectedVoice?.id === voice.id;
+                    const isPreviewing = previewingVoiceId === voice.id;
+                    const isPreviewLoading = previewLoadingVoiceId === voice.id;
                     return (
                       <div
                         key={voice.id}
-                        className={`qc-vt-row ${isSelected ? 'selected' : ''}`}
-                        onClick={() => setSelectedVoice(voice)}
+                        className={`qc-voice-card ${isSelected ? 'selected' : ''}`}
                       >
-                        <div className="qc-vt-col voice-name-col">
-                          <img
-                            src={voice.image}
-                            alt={voice.name}
-                            className="qc-voice-avatar"
-                          />
-                          <div>
-                            <strong>
-                              {voice.name} <span className="qc-badge">NEURAL</span>
-                            </strong>
-                            <span className="qc-voice-sub">{voice.subtitle}</span>
+                        <button
+                          type="button"
+                          className="qc-voice-card-main"
+                          onClick={() => handleSelectVoice(voice)}
+                        >
+                          <span className="qc-voice-card-icon" aria-hidden>
+                            <MdRecordVoiceOver size={18} />
+                          </span>
+                          <div className="qc-voice-card-copy">
+                            <strong>{voice.name}</strong>
+                            <span>{voice.gender} · {voice.language}</span>
                           </div>
-                        </div>
-                        <div className="qc-vt-col">{voice.gender}</div>
-                        <div className="qc-vt-col">{voice.language}</div>
-                        <div className="qc-vt-col tags-col">
-                          {voice.attributes.map((attr) => (
-                            <span key={attr} className="qc-attr-tag">
-                              {attr}
-                            </span>
-                          ))}
-                        </div>
-                        <div className="qc-vt-col center">
-                          <button
-                            className={`qc-play-btn ${isSelected ? 'playing' : ''}`}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {isSelected ? (
-                              <MdPause size={18} />
-                            ) : (
-                              <MdPlayArrow size={18} />
-                            )}
-                          </button>
-                        </div>
+                          {isSelected && <span className="qc-voice-card-check">Selected</span>}
+                        </button>
+                        <button
+                          type="button"
+                          className={`qc-play-btn ${isPreviewing ? 'playing' : ''}`}
+                          onClick={(e) => playVoicePreview(e, voice)}
+                          disabled={isPreviewLoading}
+                          aria-label={isPreviewing ? `Stop preview for ${voice.name}` : `Preview ${voice.name}`}
+                        >
+                          {isPreviewLoading ? (
+                            <Loader2 className="qc-spinner" size={14} />
+                          ) : isPreviewing ? (
+                            <MdPause size={16} />
+                          ) : (
+                            <MdPlayArrow size={16} />
+                          )}
+                        </button>
                       </div>
                     );
                   })}
@@ -685,76 +865,59 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
             <div className="qc-step-pane">
               <div className="qc-script-container">
                 <div className="qc-script-header">
-                  <span className="qc-label">VIDEO SCRIPT</span>
+                  <span className="qc-label">Video script</span>
                   <span className="qc-char-count">{script.length} / 1000</span>
                 </div>
 
                 <div className="qc-textarea-wrapper">
                   <textarea
                     className="qc-script-textarea premium-scrollbar"
-                    placeholder="Enter your script here or use AI to generate one..."
+                    placeholder="Write what your presenter should say…"
                     value={script}
                     onChange={(e) => setScript(e.target.value)}
                     maxLength={1000}
                   />
-                  <button type="button" className="qc-ai-fab">
-                    <MdAutoAwesome size={20} />
-                  </button>
                 </div>
-
-                <div className="qc-script-actions">
-                  <button type="button" className="qc-action-btn">
-                    <MdAutoAwesome /> AI Polish
-                  </button>
-                  <button type="button" className="qc-action-btn">
-                    <MdTranslate /> Translate
-                  </button>
-                  <button type="button" className="qc-action-btn">
-                    <MdHistory /> Last Draft
-                  </button>
-                  <button
-                    type="button"
-                    className="qc-action-btn"
-                    onClick={handleSmartStoryboard}
-                    style={{
-                      marginLeft: 'auto',
-                      background: 'linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)',
-                      color: 'white',
-                      border: 'none',
-                      boxShadow: '0 2px 8px rgba(168, 85, 247, 0.25)',
-                    }}
-                  >
-                    <MdAutoAwesome /> Smart Storyboard
-                  </button>
-                </div>
-              </div>
-
-              <div className="qc-pro-tip">
-                <MdLightbulbOutline size={20} className="qc-tip-icon" />
-                <div className="qc-tip-content">
-                  <strong>Pro Creative Tip</strong>
-                  <p>
-                    Keep your script under 500 characters for optimal social media
-                    engagement. Use the &quot;AI Polish&quot; tool to summarize long
-                    paragraphs into punchy, high-conversion hooks.
-                  </p>
-                </div>
-                <button type="button" className="qc-tip-close">
-                  <MdClose />
-                </button>
               </div>
             </div>
           )}
 
           {step === 4 && (
-            <div className="qc-step-pane">
-              <div className="qc-settings-grid premium-scrollbar">
-                <div className="qc-setting-section">
-                  <label className="qc-label">BACKGROUND PROCESSING</label>
-                  <div className="qc-toggle-card">
-                    <div className="qc-toggle-label">
-                      <MdAutoAwesome size={18} className="text-primary" />
-                      <span>Remove Background</span>
+            <div className="qc-step-pane qc-settings-pane">
+              <div className="qc-settings-summary">
+                {selectedAvatar?.image && (
+                  <img
+                    src={selectedAvatar.image}
+                    alt=""
+                    className="qc-settings-summary-thumb"
+                  />
+                )}
+                <div className="qc-settings-summary-copy">
+                  <strong>{selectedAvatar?.name || 'Presenter'}</strong>
+                  <span>
+                    {skipVoice ? 'Voice skipped' : selectedVoice?.name || 'No voice'}
+                    {' · '}
+                    {script.trim().length} characters
+                  </span>
+                </div>
+              </div>
+
+              <div className="qc-settings-stack premium-scrollbar">
+                <section className="qc-settings-card">
+                  <header className="qc-settings-card-head">
+                    <span className="qc-settings-card-icon" aria-hidden>
+                      <MdLayers size={17} />
+                    </span>
+                    <div>
+                      <h3>Background</h3>
+                      <p>Transparent cutout or a solid backdrop behind your presenter.</p>
+                    </div>
+                  </header>
+
+                  <div className="qc-settings-row">
+                    <div className="qc-settings-row-copy">
+                      <strong>Remove background</strong>
+                      <span>Export presenter without a backdrop</span>
                     </div>
                     <label className="qc-switch">
                       <input
@@ -767,22 +930,33 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
                   </div>
 
                   {!removeBackground && (
-                    <div className="qc-color-section">
-                      <label className="qc-label">BACKGROUND COLOR</label>
+                    <div className="qc-settings-subsection">
+                      <span className="qc-settings-subtitle">
+                        <MdPalette size={14} />
+                        Color palette
+                      </span>
+                      <div className="qc-color-categories">
+                        {BACKGROUND_COLOR_PALETTE.map((category) => (
+                          <button
+                            key={category.id}
+                            type="button"
+                            className={`qc-color-category-chip ${activeColorCategory === category.id ? 'active' : ''}`}
+                            onClick={() => setActiveColorCategory(category.id)}
+                          >
+                            {category.label}
+                          </button>
+                        ))}
+                      </div>
                       <div className="qc-color-swatches">
-                        {[
-                          '#ffffff',
-                          '#a855f7',
-                          '#64748b',
-                          '#e2e8f0',
-                          '#d4a373',
-                          '#94a3b8',
-                        ].map((color) => (
-                          <div
-                            key={color}
-                            className={`qc-swatch ${backgroundColor === color ? 'active' : ''}`}
-                            style={{ backgroundColor: color }}
-                            onClick={() => setBackgroundColor(color)}
+                        {activePaletteCategory.colors.map((preset) => (
+                          <button
+                            key={`${activePaletteCategory.id}-${preset.label}`}
+                            type="button"
+                            className={`qc-swatch-btn ${backgroundColor.toLowerCase() === preset.color.toLowerCase() ? 'active' : ''}`}
+                            style={{ backgroundColor: preset.color }}
+                            title={preset.label}
+                            aria-label={preset.label}
+                            onClick={() => setBackgroundColor(preset.color)}
                           />
                         ))}
                       </div>
@@ -790,95 +964,83 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
                         <div
                           className="qc-color-preview"
                           style={{ backgroundColor }}
+                          aria-hidden
                         />
                         <input
                           type="text"
                           value={backgroundColor}
                           onChange={(e) => setBackgroundColor(e.target.value)}
+                          aria-label="Custom background color"
+                          placeholder="#ffffff"
                         />
                       </div>
                     </div>
                   )}
-                </div>
+                </section>
 
-                <div className="qc-setting-section">
-                  <label className="qc-label">VIDEO FORMAT</label>
-                  <div className="qc-format-cards">
-                    <div
-                      className={`qc-format-card landscape ${aspectRatio === '16:9' ? 'active' : ''}`}
+                <section className="qc-settings-card">
+                  <header className="qc-settings-card-head">
+                    <span className="qc-settings-card-icon" aria-hidden>
+                      <MdMonitor size={17} />
+                    </span>
+                    <div>
+                      <h3>Video format</h3>
+                      <p>Choose the aspect ratio for your generated scene.</p>
+                    </div>
+                  </header>
+
+                  <div className="qc-format-options">
+                    <button
+                      type="button"
+                      className={`qc-format-option ${aspectRatio === '16:9' ? 'active' : ''}`}
                       onClick={() => setAspectRatio('16:9')}
                     >
-                      <div className="qc-format-icon" />
-                      <span>16:9 Landscape</span>
-                    </div>
-                    <div
-                      className={`qc-format-card portrait ${aspectRatio === '9:16' ? 'active' : ''}`}
+                      <span className="qc-format-option-icon qc-format-option-icon--landscape" aria-hidden>
+                        <MdMonitor size={20} />
+                      </span>
+                      <strong>16:9 Landscape</strong>
+                      <span>YouTube, web, presentations</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`qc-format-option ${aspectRatio === '9:16' ? 'active' : ''}`}
                       onClick={() => setAspectRatio('9:16')}
                     >
-                      <div className="qc-format-icon" />
-                      <span>9:16 Portrait</span>
+                      <span className="qc-format-option-icon qc-format-option-icon--portrait" aria-hidden>
+                        <MdPhoneAndroid size={20} />
+                      </span>
+                      <strong>9:16 Portrait</strong>
+                      <span>Reels, TikTok, Stories</span>
+                    </button>
+                  </div>
+                </section>
+
+                {showExpressiveness && (
+                  <section className="qc-settings-card">
+                    <header className="qc-settings-card-head">
+                      <span className="qc-settings-card-icon" aria-hidden>
+                        <MdTune size={17} />
+                      </span>
+                      <div>
+                        <h3>Expressiveness</h3>
+                        <p>How animated the presenter should appear on camera.</p>
+                      </div>
+                    </header>
+
+                    <div className="qc-express-options">
+                      {expressivenessOptions.map((option) => (
+                        <button
+                          key={option.id}
+                          type="button"
+                          className={`qc-express-option ${expressiveness === option.id ? 'active' : ''}`}
+                          onClick={() => setExpressiveness(option.id)}
+                        >
+                          <strong>{option.label}</strong>
+                          <span>{option.hint}</span>
+                        </button>
+                      ))}
                     </div>
-                  </div>
-                </div>
-
-                {selectedAvatar?.engineUnknown && (
-                  <p style={{ margin: '0 0 12px', fontSize: 11, color: '#64748b', lineHeight: 1.45 }}>
-                    Engine compatibility not specified for this look. We will pick the best engine automatically.
-                  </p>
-                )}
-
-                {selectedAvatar &&
-                  canUseExpressiveness(selectedAvatar, avatarEngine) && (
-                <div className="qc-setting-section full-width">
-                  <label className="qc-label">EXPRESSIVENESS</label>
-                  <div className="qc-express-cards">
-                    <label
-                      className={`qc-express-card ${expressiveness === 'low' ? 'active' : ''}`}
-                    >
-                      <input
-                        type="radio"
-                        name="exp"
-                        value="low"
-                        checked={expressiveness === 'low'}
-                        onChange={() => setExpressiveness('low')}
-                      />
-                      <div className="qc-express-content">
-                        <strong>Low</strong>
-                        <p>Subtle delivery for formal or instructional content.</p>
-                      </div>
-                    </label>
-                    <label
-                      className={`qc-express-card ${expressiveness === 'medium' ? 'active' : ''}`}
-                    >
-                      <input
-                        type="radio"
-                        name="exp"
-                        value="medium"
-                        checked={expressiveness === 'medium'}
-                        onChange={() => setExpressiveness('medium')}
-                      />
-                      <div className="qc-express-content">
-                        <strong>Medium</strong>
-                        <p>Natural facial movements for standard presentations.</p>
-                      </div>
-                    </label>
-                    <label
-                      className={`qc-express-card ${expressiveness === 'high' ? 'active' : ''}`}
-                    >
-                      <input
-                        type="radio"
-                        name="exp"
-                        value="high"
-                        checked={expressiveness === 'high'}
-                        onChange={() => setExpressiveness('high')}
-                      />
-                      <div className="qc-express-content">
-                        <strong>High</strong>
-                        <p>Exaggerated emotions for dynamic social content.</p>
-                      </div>
-                    </label>
-                  </div>
-                </div>
+                  </section>
                 )}
               </div>
             </div>
@@ -937,10 +1099,10 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
             )}
 
             <div className="qc-footer-right">
-              {step === 2 && selectedVoice && (
+              {step === 2 && (
                 <div className="qc-selected-info">
-                  <span>SELECTED VOICE</span>
-                  <strong>{selectedVoice.name}</strong>
+                  <span>VOICE</span>
+                  <strong>{skipVoice ? 'Skipped' : selectedVoice?.name || 'Not selected'}</strong>
                 </div>
               )}
 
@@ -952,16 +1114,16 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
                   disabled={
                     (step === 1 &&
                       (avatarPhase !== 'looks' || !selectedAvatar?.id)) ||
-                    (step === 2 && !selectedVoice) ||
+                    (step === 2 && !canProceedFromVoice) ||
                     (step === 3 && !script.trim())
                   }
                 >
-                  Next: {step === 1 ? 'Voice' : step === 2 ? 'Script' : 'Advanced'}{' '}
+                  Continue{' '}
                   <MdChevronRight size={18} />
                 </button>
               ) : (
                 <button type="button" className="qc-btn-primary" onClick={handleGenerate}>
-                  Generate Video{' '}
+                  {skipVoice ? 'Add to scene' : 'Generate video'}{' '}
                   <MdAutoAwesome size={16} style={{ marginLeft: '6px' }} />
                 </button>
               )}
