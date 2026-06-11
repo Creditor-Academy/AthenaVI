@@ -452,14 +452,23 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
     ));
   };
 
-  const renderVideoItems = (videos, workspace) => {
+  const renderVideoItems = (videos, workspace, folder = null) => {
     const sorted = sortItems(videos);
     const Component = viewMode === 'tile' ? VideoCard : VideoRow;
     return sorted.map((video) => (
       <Component
         key={video.id}
         video={video}
-        onClick={() => onEdit && onEdit({ ...video, workspaceId: workspace.id })}
+        onClick={() =>
+          onEdit &&
+          onEdit({
+            ...video,
+            workspaceId: workspace.id,
+            workspace: workspace.name,
+            folderId: video.folderId || folder?.id || null,
+            folder: folder?.name || video.folderName || video.folder?.name || ''
+          })
+        }
         contextProps={{
           onDetails: () => setDetailsTarget({ type: 'video', item: video }),
           onRename: workspaceCanEdit(workspace) ? () => renameItem('video', video.id, workspace) : null,
@@ -689,7 +698,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
               <div className="col" />
             </div>
           )}
-          {renderVideoItems(folder.videos || [], workspace)}
+          {renderVideoItems(folder.videos || [], workspace, folder)}
         </WorkspaceSection>
       </div>
     );

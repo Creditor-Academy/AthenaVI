@@ -319,6 +319,23 @@
 .video-thumb {
   background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%);
   color: #6d28d9;
+  overflow: hidden;
+}
+
+.video-thumb .project-scene-thumb {
+  position: absolute;
+  inset: 0;
+  background: #0f172a;
+}
+
+.video-thumb .project-scene-thumb > div {
+  width: 100%;
+  height: 100%;
+}
+
+.video-thumb .video-icon {
+  position: relative;
+  z-index: 1;
 }
 
 .workspace-card-icon {

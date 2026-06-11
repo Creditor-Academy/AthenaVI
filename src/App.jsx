@@ -26,6 +26,7 @@ import AIVideos from './pages/AIVideos/AIVideos.jsx'
 import Help from './pages/UserHelp/Help.jsx'
 import NotFound from './pages/NotFound/NotFound.jsx'
 import RenderDownload from './pages/Download/RenderDownload.jsx'
+import { persistWorkspaceFolderNavigation } from './utils/navigateToWorkspaceFolder.js'
 
 // Protected Route Component
 const ProtectedRoute = ({ children, setView }) => {
@@ -565,7 +566,17 @@ function App() {
       {/* Protected Routes */}
       {view === 'create' && (
         <ProtectedRoute view={view} setView={setView}>
-          <Create onBack={() => { setCreateVideoConfig(null); setView('dashboard'); }} initialConfig={createVideoConfig} />
+          <Create
+            onBack={() => {
+              const dashboardPath = persistWorkspaceFolderNavigation(createVideoConfig)
+              setCreateVideoConfig(null)
+              if (window.location.pathname !== dashboardPath) {
+                window.history.pushState({ section: 'workspace' }, '', dashboardPath)
+              }
+              setView('dashboard')
+            }}
+            initialConfig={createVideoConfig}
+          />
           {showAuthModal && (
             <Auth 
               onAuthComplete={handleAuthComplete}
