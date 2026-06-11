@@ -1818,6 +1818,11 @@ function Create({ onBack, initialConfig = null }) {
     // but the simplest is just let it update the scene and tell user to click generate, OR
     // we can use a ref. But let's just trigger it with a small delay.
     setTimeout(() => {
+      if (payload.skipVoice || !payload.voiceId) {
+        setShowQuickCreateModal(false);
+        showToast('Scene ready — add a voice when you want to generate video.', 'info');
+        return;
+      }
       generateSceneVideo(targetSceneId, payload);
     }, 500);
   };

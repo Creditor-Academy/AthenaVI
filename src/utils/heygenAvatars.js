@@ -31,6 +31,44 @@ export function isUnknownEngineLook(look) {
   return getLookSupportedEngines(look).length === 0;
 }
 
+/** True when the look explicitly supports Avatar IV or Avatar V generation. */
+export function hasIvOrVEngineSupport(look) {
+  return (
+    supportsAvatarEngine(look, AVATAR_IV_ENGINE) ||
+    supportsAvatarEngine(look, AVATAR_V_ENGINE)
+  );
+}
+
+/** Looks safe to show in quick-create / generation flows (IV or V only). */
+export function getIvOrVLooks(parsed, filter = LOOK_ENGINE_FILTERS.ALL) {
+  if (!parsed) return [];
+
+  if (filter === LOOK_ENGINE_FILTERS.AVATAR_IV) {
+    return looksForEngineFilter(parsed, LOOK_ENGINE_FILTERS.AVATAR_IV).filter(hasIvOrVEngineSupport);
+  }
+  if (filter === LOOK_ENGINE_FILTERS.AVATAR_V) {
+    return looksForEngineFilter(parsed, LOOK_ENGINE_FILTERS.AVATAR_V).filter(hasIvOrVEngineSupport);
+  }
+
+  const seen = new Set();
+  const merged = [];
+  const ivLooks = looksForEngineFilter(parsed, LOOK_ENGINE_FILTERS.AVATAR_IV);
+  const vLooks = looksForEngineFilter(parsed, LOOK_ENGINE_FILTERS.AVATAR_V);
+
+  [...ivLooks, ...vLooks].forEach((look) => {
+    const id = getLookId(look) || look?.id;
+    if (!id || seen.has(id) || !hasIvOrVEngineSupport(look)) return;
+    seen.add(id);
+    merged.push(look);
+  });
+
+  return merged;
+}
+
+export function groupHasSupportedLooks(parsed) {
+  return getIvOrVLooks(parsed, LOOK_ENGINE_FILTERS.ALL).length > 0;
+}
+
 export function supportsAvatarEngine(item, engine) {
   const normalized = normalizeAvatarEngine(engine);
   const engines = getLookSupportedEngines(item);
