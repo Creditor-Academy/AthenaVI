@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MdMoreVert, MdEdit, MdPersonAdd, MdSort, MdViewModule, MdDelete, MdSettings, MdFolder, MdInfo } from 'react-icons/md';
+import { MdMoreVert, MdEdit, MdPersonAdd, MdSort, MdViewModule, MdDelete, MdSettings, MdFolder, MdInfo, MdMonetizationOn } from 'react-icons/md';
 
-const ContextMenu = ({ type, onRename, onAddMembers, onSort, onView, onDelete, onManageWorkspace, onMove, onDetails }) => {
+const ContextMenu = ({ type, onRename, onAddMembers, onSort, onView, onDelete, onManageWorkspace, onMove, onDetails, onTransferCredits }) => {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef(null);
 
@@ -23,7 +23,7 @@ const ContextMenu = ({ type, onRename, onAddMembers, onSort, onView, onDelete, o
     };
 
     return (
-        <div className="context-menu-wrapper" ref={menuRef} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+        <div className={`context-menu-wrapper${isOpen ? ' is-open' : ''}`} ref={menuRef} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
             <button className="context-menu-btn" onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -42,6 +42,11 @@ const ContextMenu = ({ type, onRename, onAddMembers, onSort, onView, onDelete, o
                     {type === 'workspace' && onManageWorkspace && (
                         <button className="menu-item" onClick={(e) => handleAction(e, onManageWorkspace)}>
                             <MdSettings size={16} /> Manage
+                        </button>
+                    )}
+                    {type === 'workspace' && onTransferCredits && (
+                        <button className="menu-item" onClick={(e) => handleAction(e, onTransferCredits)}>
+                            <MdMonetizationOn size={16} /> Transfer Credits
                         </button>
                     )}
                     {onDetails && (

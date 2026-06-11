@@ -37,10 +37,14 @@ const InvitationsPanel = ({ open, onClose, invitations, onAccept, onDecline }) =
           onClick={(e) => e.stopPropagation()}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <h2 style={{ margin: 0, fontSize: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h2 style={{ margin: 0, fontSize: '20px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)' }}>
               <MdMail /> Invitations
             </h2>
-            <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
+            <button
+              onClick={onClose}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+              aria-label="Close invitations"
+            >
               <MdClose size={20} />
             </button>
           </div>
@@ -58,7 +62,7 @@ const InvitationsPanel = ({ open, onClose, invitations, onAccept, onDecline }) =
                     background: 'var(--bg-card)'
                   }}
                 >
-                  <h4 style={{ margin: '0 0 4px 0' }}>
+                  <h4 style={{ margin: '0 0 4px 0', color: 'var(--text-main)' }}>
                     {invitation.workspaceName || invitation.workspace?.name || 'Workspace'}
                   </h4>
                   <p style={{ margin: '0 0 12px 0', fontSize: '12px', color: 'var(--text-muted)' }}>
@@ -70,7 +74,7 @@ const InvitationsPanel = ({ open, onClose, invitations, onAccept, onDecline }) =
                       style={{
                         padding: '6px 12px',
                         background: 'var(--success-green)',
-                        color: 'white',
+                        color: 'var(--primary-contrast)',
                         border: 'none',
                         borderRadius: '6px',
                         cursor: 'pointer',
@@ -84,8 +88,8 @@ const InvitationsPanel = ({ open, onClose, invitations, onAccept, onDecline }) =
                       style={{
                         padding: '6px 12px',
                         background: 'var(--bg-surface)',
-                        color: 'var(--text-muted)',
-                        border: 'none',
+                        color: 'var(--text-main)',
+                        border: '1px solid var(--border-color)',
                         borderRadius: '6px',
                         cursor: 'pointer',
                         flex: 1
@@ -97,7 +101,7 @@ const InvitationsPanel = ({ open, onClose, invitations, onAccept, onDecline }) =
                 </div>
               ))
             ) : (
-              <div style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0' }}>
+              <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px 0' }}>
                 No pending invitations
               </div>
             )}

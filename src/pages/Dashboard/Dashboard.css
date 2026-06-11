@@ -679,7 +679,8 @@
   color: var(--text-muted);
   padding: 2px 5px;
   border-radius: 4px;
-  background: #e5e7eb;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
 }
 
 .dashboard-sidebar-footer {
@@ -693,9 +694,9 @@
   margin-bottom: 8px;
   padding: 10px;
   border-radius: 10px;
-  background: #ffffff;
-  border: 1px solid rgba(0, 86, 210, 0.18);
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  background: var(--bg-card);
+  border: 1px solid rgba(var(--primary-rgb), 0.22);
+  box-shadow: var(--shadow);
 }
 
 .dashboard-storage-label {
@@ -712,7 +713,7 @@
 
 .dashboard-storage-bar {
   height: 6px;
-  background: rgba(0, 86, 210, 0.12);
+  background: rgba(var(--primary-rgb), 0.14);
   border-radius: 3px;
   overflow: hidden;
   margin-bottom: 8px;
@@ -721,7 +722,7 @@
 .dashboard-storage-progress {
   height: 100%;
   max-width: 100%;
-  background: #0056d2;
+  background: var(--primary);
   border-radius: 3px;
   transition: width 0.25s ease;
 }
@@ -738,10 +739,10 @@
   width: 100%;
   margin: 0;
   padding: 7px 9px;
-  border: 1px solid #0056d2;
+  border: 1px solid var(--primary);
   border-radius: 8px;
-  background: #ffffff;
-  color: #0056d2;
+  background: var(--bg-card);
+  color: var(--primary);
   font-family: inherit;
   font-size: 11px;
   font-weight: 500;
@@ -753,12 +754,12 @@
 }
 
 .dashboard-storage-upgrade-btn:hover {
-  background: #0056d2;
-  color: #ffffff;
+  background: var(--primary);
+  color: var(--primary-contrast);
 }
 
 .dashboard-storage-upgrade-btn:focus-visible {
-  outline: 2px solid #0056d2;
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 
@@ -986,6 +987,19 @@
   margin-top: 4px;
   font-size: 14px;
   color: var(--text-muted);
+}
+
+.content.content--workspace-consistent .videos-page .videos-create-btn {
+  background: var(--primary) !important;
+  color: var(--primary-contrast) !important;
+  border: none;
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.25);
+}
+
+.content.content--workspace-consistent .videos-page .videos-create-btn:hover {
+  background: var(--primary-hover) !important;
+  color: var(--primary-contrast) !important;
+  box-shadow: 0 6px 16px rgba(var(--primary-rgb), 0.35);
 }
 
 /* Trash page hard alignment with common dashboard spacing */

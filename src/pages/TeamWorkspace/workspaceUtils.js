@@ -121,6 +121,7 @@ export function normalizeWorkspace(rawWorkspace, currentUserId, authUser) {
     userRole: effectiveRole,
     ownerId: ownerId || (isOwner ? currentUserId : ''),
     ownerName,
+    workspaceCredits: Number(rawWorkspace.workspaceCredits ?? rawWorkspace.credits ?? 0),
     members: Array.isArray(rawWorkspace.members) ? rawWorkspace.members : [],
     folders: []
   };

@@ -1,8 +1,9 @@
 import React from 'react';
-import { MdFolder, MdVideoLibrary, MdPerson, MdPeople, MdAccountBalanceWallet } from 'react-icons/md';
+import { MdFolder, MdVideoLibrary, MdPerson, MdPeople } from 'react-icons/md';
 import ContextMenu from './ContextMenu.jsx';
 import UserIdentity from './UserIdentity.jsx';
 import ProjectSceneThumbnail from './ProjectSceneThumbnail.jsx';
+import WorkspaceCreditsBadge from './WorkspaceCreditsBadge.jsx';
 
 export const WorkspaceCard = ({ workspace, onClick, contextProps, onAllocateCredits, showAllocateCredits = false }) => {
     return (
@@ -11,6 +12,12 @@ export const WorkspaceCard = ({ workspace, onClick, contextProps, onAllocateCred
                 <div className="workspace-card-icon">
                     {workspace.type === 'personal' ? <MdPerson size={36} /> : <MdPeople size={36} />}
                 </div>
+                <WorkspaceCreditsBadge
+                    workspace={workspace}
+                    className="workspace-credits-badge--tile"
+                    clickable={showAllocateCredits && Boolean(onAllocateCredits)}
+                    onClick={onAllocateCredits}
+                />
                 <div className="project-overlay">
                     <button className="btn-edit-premium">Open Workspace</button>
                 </div>
@@ -22,21 +29,6 @@ export const WorkspaceCard = ({ workspace, onClick, contextProps, onAllocateCred
                 </div>
                 <ContextMenu type="workspace" {...contextProps} />
             </div>
-            {showAllocateCredits && onAllocateCredits && (
-                <div className="workspace-card-footer">
-                    <button
-                        type="button"
-                        className="workspace-allocate-btn"
-                        onClick={(event) => {
-                            event.stopPropagation();
-                            onAllocateCredits(workspace);
-                        }}
-                    >
-                        <MdAccountBalanceWallet size={15} />
-                        Transfer credits
-                    </button>
-                </div>
-            )}
         </div>
     );
 };
