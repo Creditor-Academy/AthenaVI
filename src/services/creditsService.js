@@ -1,4 +1,5 @@
 import API_CONFIG, { buildUrl, getAuthHeaders } from '../config/api.js';
+import { findRecentUsageCredits } from '../utils/creditTransactions.js';
 
 export class InsufficientCreditsError extends Error {
   constructor(message, data = {}) {
@@ -137,6 +138,25 @@ class CreditsService {
       method: 'POST',
       body: JSON.stringify({ amount: Number(amount) }),
     });
+  }
+
+  async resolveRecentUsageCredits(workspaceId, { withinMs = 180000 } = {}) {
+    if (workspaceId) {
+      try {
+        const { transactions } = await this.getMyWorkspaceHistory(workspaceId, { page: 1, limit: 15 });
+        const used = findRecentUsageCredits(transactions, { withinMs });
+        if (used != null) return used;
+      } catch {
+        // fall through to personal history
+      }
+    }
+
+    try {
+      const { transactions } = await this.getPersonalHistory({ page: 1, limit: 15 });
+      return findRecentUsageCredits(transactions, { withinMs });
+    } catch {
+      return null;
+    }
   }
 }
 

@@ -14,7 +14,8 @@ import ExportModal from '../../components/features/editor/editor/ExportModal'
 import GeneratedVideoModal from '../../components/features/editor/editor/GeneratedVideoModal'
 import QuickCreateModal from '../../components/features/editor/editor/QuickCreateModal'
 import heygenService from '../../services/heygenService'
-import { isInsufficientCreditsError } from '../../services/creditsService.js'
+import creditsService, { isInsufficientCreditsError } from '../../services/creditsService.js'
+import { extractCreditsUsed } from '../../utils/creditTransactions.js'
 import avatar1 from '../../assets/Avatarr1.png'
 import projectTemplate from '../../constants/projectTemplate.json'
 import workspaceService from '../../services/workspaceService'
@@ -268,6 +269,7 @@ function Create({ onBack, initialConfig = null }) {
   const [lastSaved, setLastSaved] = useState(null)
   const [showGeneratedVideoModal, setShowGeneratedVideoModal] = useState(false)
   const [generatedVideoUrl, setGeneratedVideoUrl] = useState(null)
+  const [generationCreditsUsed, setGenerationCreditsUsed] = useState(null)
   const [generatingSceneId, setGeneratingSceneId] = useState(null)
   const [showQuickCreateModal, setShowQuickCreateModal] = useState(() => {
     const initial = buildInitialProject(initialConfig)
@@ -367,6 +369,9 @@ function Create({ onBack, initialConfig = null }) {
       if (e.detail?.url) {
         setGeneratedVideoUrl(e.detail.url)
         setGeneratingSceneId(e.detail.sceneId || null)
+        setGenerationCreditsUsed(
+          e.detail?.creditsUsed != null ? Number(e.detail.creditsUsed) : null
+        )
         setShowGeneratedVideoModal(true)
       }
     }
@@ -1463,10 +1468,32 @@ function Create({ onBack, initialConfig = null }) {
           if (latest) saveProjectRef.current?.(false, projectRef.current)
         }, 300)
 
-        showToast('Presenter placed in the center — your other elements are unchanged.', 'success');
+        let creditsUsed =
+          extractCreditsUsed(videoData)
+          ?? extractCreditsUsed(result);
+
+        if (creditsUsed == null) {
+          try {
+            await new Promise((resolve) => setTimeout(resolve, 400));
+            creditsUsed = await creditsService.resolveRecentUsageCredits(workspaceId);
+          } catch (usageErr) {
+            console.warn('Could not resolve credits used for generation:', usageErr);
+          }
+        }
+
+        bumpCreditsRefresh();
+
+        showToast(
+          creditsUsed != null
+            ? `Video ready — ${Number(creditsUsed).toLocaleString()} credits used.`
+            : 'Presenter placed in the center — your other elements are unchanged.',
+          'success'
+        );
 
         window.dispatchEvent(
-          new CustomEvent('open-generated-video', { detail: { url: videoUrl, sceneId } })
+          new CustomEvent('open-generated-video', {
+            detail: { url: videoUrl, sceneId, creditsUsed },
+          })
         );
       };
 
@@ -2084,8 +2111,12 @@ function Create({ onBack, initialConfig = null }) {
       />
       <GeneratedVideoModal 
         isOpen={showGeneratedVideoModal} 
-        onClose={() => setShowGeneratedVideoModal(false)} 
-        videoUrl={generatedVideoUrl} 
+        onClose={() => {
+          setShowGeneratedVideoModal(false)
+          setGenerationCreditsUsed(null)
+        }} 
+        videoUrl={generatedVideoUrl}
+        creditsUsed={generationCreditsUsed}
         onUseInEditor={handleUseGeneratedVideo}
         onRemake={handleRemakeVideo}
         onSelectLayout={handleSelectLayout}
