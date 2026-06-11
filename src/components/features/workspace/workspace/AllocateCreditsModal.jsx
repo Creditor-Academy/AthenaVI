@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MdClose, MdAccountBalanceWallet, MdSwapHoriz, MdOutlineBolt, MdCheckCircle } from 'react-icons/md'
+import {
+  MdClose,
+  MdAccountBalanceWallet,
+  MdSwapHoriz,
+  MdOutlineBolt,
+  MdCheckCircle,
+  MdMonetizationOn,
+} from 'react-icons/md'
 import creditsService from '../../../../services/creditsService.js'
 import './PremiumModal.css'
 import './AllocateCreditsModal.css'
@@ -19,6 +26,7 @@ function AllocateCreditsModal({ isOpen, workspace, onClose, onSuccess }) {
 
   const workspaceId = workspace?.id
   const workspaceName = workspace?.name || 'Workspace'
+  const canReturnCredits = workspaceCredits > 0
 
   useEffect(() => {
     if (!isOpen || !workspaceId) return
@@ -162,39 +170,52 @@ function AllocateCreditsModal({ isOpen, workspace, onClose, onSuccess }) {
             onClick={phase === 'transferring' ? undefined : onClose}
           />
           <motion.div
-            className="allocate-credits-modal"
-            initial={{ opacity: 0, scale: 0.94, y: 16 }}
+            className="modal-content astryd-modal allocate-credits-modal"
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.94, y: 16 }}
-            transition={{ type: 'spring', damping: 24, stiffness: 320 }}
-            onClick={(e) => e.stopPropagation()}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            onClick={(event) => event.stopPropagation()}
           >
-            <div className="allocate-credits-header">
-              <div>
-                <h2>Transfer credits</h2>
-                <p>Move credits between your personal balance and <strong>{workspaceName}</strong></p>
+            <div className="astryd-header">
+              <div className="astryd-title-group">
+                <div className="astryd-icon-container">
+                  <MdMonetizationOn size={20} />
+                </div>
+                <div>
+                  <h2>Transfer credits</h2>
+                  <p className="astryd-subtitle">
+                    Move credits between your personal balance and <strong>{workspaceName}</strong>
+                  </p>
+                </div>
               </div>
               {phase !== 'transferring' && (
-                <button type="button" className="allocate-credits-close" onClick={onClose} aria-label="Close">
+                <button
+                  type="button"
+                  className="astryd-close-btn"
+                  onClick={onClose}
+                  title="Close"
+                  aria-label="Close"
+                >
                   <MdClose size={18} />
                 </button>
               )}
             </div>
 
-            {error && <div className="allocate-credits-error">{error}</div>}
-
             {phase === 'form' && (
-              <form className="allocate-credits-body" onSubmit={handleAllocate}>
+              <form className="astryd-form allocate-credits-form" onSubmit={handleAllocate}>
+                {error && <div className="allocate-credits-error">{error}</div>}
+
                 <div className="allocate-credits-balances">
                   <div className="allocate-credits-pool">
-                    <MdAccountBalanceWallet size={20} />
+                    <MdAccountBalanceWallet size={20} className="allocate-credits-pool__icon" />
                     <div>
                       <span>Your personal credits</span>
                       <strong>{loading ? '—' : personalCredits.toLocaleString()}</strong>
                     </div>
                   </div>
                   <div className="allocate-credits-pool">
-                    <MdOutlineBolt size={20} />
+                    <MdOutlineBolt size={20} className="allocate-credits-pool__icon allocate-credits-pool__icon--workspace" />
                     <div>
                       <span>{workspaceName}</span>
                       <strong>{loading ? '—' : workspaceCredits.toLocaleString()}</strong>
@@ -202,44 +223,51 @@ function AllocateCreditsModal({ isOpen, workspace, onClose, onSuccess }) {
                   </div>
                 </div>
 
-                <label className="allocate-credits-label" htmlFor="allocate-amount">
-                  Credits to transfer
-                </label>
-                <input
-                  id="allocate-amount"
-                  type="number"
-                  min="1"
-                  step="1"
-                  placeholder="e.g. 500"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  disabled={loading}
-                />
+                <div className="astryd-form-group">
+                  <label htmlFor="allocate-amount">Credits to transfer</label>
+                  <input
+                    id="allocate-amount"
+                    type="number"
+                    min="1"
+                    step="1"
+                    placeholder="e.g. 500"
+                    value={amount}
+                    onChange={(event) => setAmount(event.target.value)}
+                    disabled={loading}
+                    className={`astryd-input ${error ? 'astryd-input-error' : ''}`}
+                  />
+                </div>
 
-                <div className="allocate-credits-actions">
+                <div
+                  className={`allocate-credits-actions ${
+                    canReturnCredits ? '' : 'allocate-credits-actions--single'
+                  }`}
+                >
                   <button
                     type="submit"
-                    className="allocate-credits-submit"
+                    className="astryd-btn-primary"
                     disabled={loading || personalCredits <= 0}
                   >
                     <MdSwapHoriz size={18} />
                     Allocate to workspace
                   </button>
-                  <button
-                    type="button"
-                    className="allocate-credits-submit allocate-credits-submit--secondary"
-                    disabled={loading || workspaceCredits <= 0}
-                    onClick={handleDeallocate}
-                  >
-                    <MdSwapHoriz size={18} />
-                    Return to personal
-                  </button>
+                  {canReturnCredits && (
+                    <button
+                      type="button"
+                      className="astryd-btn-accent-outline"
+                      disabled={loading}
+                      onClick={handleDeallocate}
+                    >
+                      <MdSwapHoriz size={18} />
+                      Return to personal
+                    </button>
+                  )}
                 </div>
               </form>
             )}
 
             {(phase === 'transferring' || phase === 'success') && (
-              <div className="allocate-credits-transfer">
+              <div className="astryd-form allocate-credits-transfer">
                 <div className="allocate-transfer-columns">
                   <div className="allocate-transfer-card">
                     <span>Personal</span>

@@ -1,7 +1,8 @@
 import React from 'react';
-import { MdFolder, MdVideoLibrary, MdPerson, MdPeople, MdAccountBalanceWallet } from 'react-icons/md';
+import { MdFolder, MdVideoLibrary, MdPerson, MdPeople } from 'react-icons/md';
 import ContextMenu from './ContextMenu.jsx';
 import UserIdentity from './UserIdentity.jsx';
+import WorkspaceCreditsBadge from './WorkspaceCreditsBadge.jsx';
 import { formatFolderSize, formatProjectSize } from '../../../../utils/formatSize.js';
 
 const formatSize = (item) => {
@@ -45,22 +46,19 @@ export const WorkspaceRow = ({ workspace, onClick, contextProps, onAllocateCredi
 
             <div className="col col-name">
                 <h4>{workspace.name}</h4>
-                {showAllocateCredits && onAllocateCredits && (
-                    <button
-                        type="button"
-                        className="workspace-allocate-btn workspace-allocate-btn--inline"
-                        onClick={(event) => {
-                            event.stopPropagation();
-                            onAllocateCredits(workspace);
-                        }}
-                    >
-                        <MdAccountBalanceWallet size={14} />
-                        Transfer credits
-                    </button>
-                )}
             </div>
 
-            <div className="col col-owner">{workspace.ownerName || workspace.ownerId || '-'}</div>
+            <div className="col col-credits">
+                <WorkspaceCreditsBadge
+                    workspace={workspace}
+                    clickable={showAllocateCredits && Boolean(onAllocateCredits)}
+                    onClick={onAllocateCredits}
+                />
+            </div>
+
+            <div className="col col-owner">
+                <UserIdentity name={workspace.ownerName || workspace.ownerId || '-'} compact />
+            </div>
 
             <div className="col col-modified">{formatOnlyDate(workspace.lastModifiedAt || workspace.updatedAt)}</div>
 
