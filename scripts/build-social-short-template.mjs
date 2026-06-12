@@ -50,6 +50,7 @@ const COPY = {
   ctaTitle: 'Follow for\npart 2',
   ctaBody: 'Save this reel, share it with your team, and drop a comment if you want the full template pack.',
   ctaHandle: '@yourbrand',
+  stepsIntro: 'Three quick actions to keep the series going — pick one and repeat it on your last frame.',
 };
 
 const AVATAR_STYLE_LIGHT = {
@@ -437,10 +438,31 @@ function frameworkRow(id, layer, x, y, w, letter, title, body, accent = C.pink) 
   ];
 }
 
-function metaPill(id, layer, x, y, w, label, bg, color) {
+function metaPill(id, layer, x, y, w, h, label, bg, color) {
+  const pillH = h || 28;
   return [
-    shape(`${id}_pill`, layer, x, y, w, 28, { backgroundColor: bg, borderRadius: '100px' }),
-    text(`${id}_txt`, layer + 1, x + 8, y + 5, w - 16, 20, label, { ...TYPE.label, fontSize: 10, color, textTransform: 'none', letterSpacing: '0.06em', textAlign: 'center' }),
+    shape(`${id}_pill`, layer, x, y, w, pillH, { backgroundColor: bg, borderRadius: '100px' }),
+    text(`${id}_txt`, layer + 1, x + 8, y + Math.round((pillH - 20) / 2), w - 16, 20, label, { ...TYPE.label, fontSize: 10, color, textTransform: 'none', letterSpacing: '0.06em', textAlign: 'center' }),
+  ];
+}
+
+/** Sales-Demo-style action row — white card, number, icon, meta tag */
+function actionStepRow(id, layer, x, y, w, step) {
+  const rowH = 108;
+  return [
+    shape(`${id}_card`, layer, x, y, w, rowH, {
+      backgroundColor: C.ice,
+      borderRadius: '16px',
+      boxShadow: '0 12px 32px rgba(15,23,42,0.08)',
+      border: '1px solid rgba(15,23,42,0.06)',
+      borderLeft: `5px solid ${step.color}`,
+    }, 'decoration', 'social-card-white'),
+    shape(`${id}_num`, layer + 1, x + 18, y + 18, 40, 40, { backgroundColor: step.color, borderRadius: '12px' }),
+    text(`${id}_numt`, layer + 2, x + 18, y + 26, 40, 28, step.num, { ...TYPE.stat, fontSize: 15, color: C.white, textAlign: 'center' }),
+    ...iconBadge(`${id}_ico`, layer + 1, x + 72, y + 20, 40, step.icon, C.white),
+    text(`${id}_title`, layer + 3, x + 122, y + 18, w - 134, 28, step.title, { ...TYPE.cardTitle, fontSize: 18 }),
+    text(`${id}_body`, layer + 4, x + 122, y + 46, w - 134, 40, step.body, { ...TYPE.cardBody, fontSize: 13, lineHeight: 1.5 }),
+    ...metaPill(`${id}_tag`, layer + 2, x + 122, y + 72, 108, 28, step.tag, step.tagBg, step.color),
   ];
 }
 
@@ -701,39 +723,90 @@ scene06.clips = [
   ...slideBadge(9, '06'),
 ];
 
-// ─── 7: CTA — anchor closing left, community panel right ─────────────────────
-const CTA_COPY_W = 480;
-const CTA_PANEL_X = CONTENT.x + CTA_COPY_W + 36;
-const CTA_PANEL_W = CONTENT.maxX - CTA_PANEL_X;
-const scene07 = sceneBase('ss_scene_07', 7, 'Follow & CTA', 'Promo', 'Elevated closing copy left, community visual panel right.', 'CTA → End', ['cta', 'closing'], {
-  copy: { x: CONTENT.x, y: CONTENT.y, width: CTA_COPY_W, height: CONTENT.h },
-  panel: { x: CTA_PANEL_X, y: CONTENT.y, width: CTA_PANEL_W, height: CONTENT.h },
-}, 'bg-gradient-navy', 'dark');
+// ─── 7: CTA — action rows left + navy momentum panel (Sales Demo style) ───
+const STEPS_LEFT_W = 588;
+const MAP_PANEL_X = CONTENT.x + STEPS_LEFT_W + 24;
+const MAP_PANEL_W = CONTENT.maxX - MAP_PANEL_X;
+const ctaSteps = [
+  {
+    num: '01',
+    icon: 'heart',
+    title: 'Follow for part 2',
+    body: 'Tap follow so the next drop lands in your feed — no searching required.',
+    tag: 'NOW',
+    color: C.pink,
+    tagBg: 'rgba(236,72,153,0.12)',
+  },
+  {
+    num: '02',
+    icon: 'share',
+    title: 'Save & share',
+    body: 'Bookmark this reel and send it to one teammate who needs the playbook.',
+    tag: 'TODAY',
+    color: C.cyan,
+    tagBg: 'rgba(34,211,238,0.14)',
+  },
+  {
+    num: '03',
+    icon: 'clipboard',
+    title: 'Comment to unlock',
+    body: 'Drop a comment if you want the full template pack — we reply with the link.',
+    tag: 'PART 2',
+    color: C.violet,
+    tagBg: 'rgba(139,92,246,0.14)',
+  },
+];
+const momentumChecks = [
+  'Follow before the next episode drops',
+  'Save the structure for your next post',
+  'Comment if you want the template pack',
+];
+const scene07 = sceneBase('ss_scene_07', 7, 'Follow & CTA', 'Split', 'Action rows left, navy momentum panel right — no duplicate CTAs.', 'CTA → End', ['cta', 'closing'], {
+  steps: { x: CONTENT.x, y: CONTENT.y + 80, width: STEPS_LEFT_W, height: CONTENT.h - 80 },
+  panel: { x: MAP_PANEL_X, y: CONTENT.y + 80, width: MAP_PANEL_W, height: CONTENT.h - 80 },
+}, 'bg-gradient-light', 'br-mini');
 scene07.clips = [
-  shape('bg07', 0, 0, 0, W, H, { background: `linear-gradient(165deg, ${C.navy} 0%, #0c4a6e 45%, ${C.navyMid} 100%)` }),
-  ...cornerArcs(1),
-  neonGlow('glow07', 2, CONTENT.x - 20, CONTENT.y + 80, 180, C.glowPink),
-  neonGlow('glow07b', 2, CTA_PANEL_X, CONTENT.y + 200, 160, C.glowCyan),
-  ...titlePill('cta_pill', 8, CONTENT.x, CONTENT.y + 16, 300, 'heart', 'FOLLOW UP'),
-  text('t_title', 10, CONTENT.x, CONTENT.y + 108, CTA_COPY_W - 16, 96, COPY.ctaTitle, { ...TYPE.display, fontSize: 40, color: C.white, lineHeight: 1.08 }),
-  text('t_body', 11, CONTENT.x, CONTENT.y + 212, CTA_COPY_W - 16, 100, COPY.ctaBody, { ...TYPE.bodyOnDark, fontSize: 15, lineHeight: 1.65, color: 'rgba(241,245,249,0.88)' }),
-  shape('cta_btn', 5, CONTENT.x, CONTENT.y + 328, 260, 52, { backgroundColor: C.pink, borderRadius: '100px', boxShadow: `0 12px 36px ${C.glowPink}` }, 'decoration', 'social-cta-btn'),
-  text('t_btn', 12, CONTENT.x + 20, CONTENT.y + 342, 220, 28, 'FOLLOW FOR MORE', { ...TYPE.label, fontSize: 12, color: C.white, textAlign: 'center', letterSpacing: '0.14em' }),
-  text('t_handle', 13, CONTENT.x, CONTENT.y + 396, 240, 28, COPY.ctaHandle, { ...TYPE.heading, fontSize: 16, color: C.cyan, textTransform: 'none' }),
-  ...brandFooter(10, CONTENT.x, CONTENT.maxY - 36),
-  shape('cta_panel', 3, CTA_PANEL_X, CONTENT.y + 8, CTA_PANEL_W, CONTENT.h - 16, {
-    backgroundColor: C.ice,
-    borderRadius: '24px',
-    boxShadow: '0 22px 52px rgba(15,23,42,0.2)',
-  }, 'decoration', 'social-card-white'),
-  ...heroImage('img_close', 5, CTA_PANEL_X + 16, CONTENT.y + 24, CTA_PANEL_W - 32, 200, 'social-team', C.navyMid, {
-    style: { borderRadius: '18px', objectFit: 'cover' },
+  shape('bg07', 0, 0, 0, W, H, { background: `linear-gradient(145deg, ${C.ice} 0%, #EEF2FF 55%, #FDF2F8 100%)` }),
+  neonGlow('glow07', 1, MAP_PANEL_X - 40, CONTENT.y + 40, 200, C.glowPink),
+  text('t_label', 10, CONTENT.x, CONTENT.y + 4, 240, 22, 'YOUR NEXT ACTIONS', { ...TYPE.subheading, color: C.pink }),
+  text('t_title', 11, CONTENT.x, CONTENT.y + 28, STEPS_LEFT_W, 52, 'Keep the Momentum', { ...TYPE.display, fontSize: 38, color: C.navy, lineHeight: 1.05 }),
+  text('t_sub', 12, CONTENT.x, CONTENT.y + 80, STEPS_LEFT_W, 40, COPY.stepsIntro, { ...TYPE.body, fontSize: 15, lineHeight: 1.55, color: C.slate }),
+  ...ctaSteps.flatMap((step, i) => actionStepRow(`step${i}`, 3, CONTENT.x, CONTENT.y + 128 + i * 114, STEPS_LEFT_W, step)),
+  shape('map_panel', 2, MAP_PANEL_X, CONTENT.y + 80, MAP_PANEL_W, CONTENT.h - 88, {
+    backgroundColor: C.navy,
+    borderRadius: '22px',
+    boxShadow: '0 22px 52px rgba(15,23,42,0.22)',
+  }, 'decoration', 'social-navy-panel'),
+  shape('map_glow', 3, MAP_PANEL_X, CONTENT.y + 80, MAP_PANEL_W, 120, {
+    background: `radial-gradient(ellipse at 90% 0%, ${C.glowPink} 0%, transparent 70%)`,
+    borderRadius: '22px 22px 0 0',
+  }),
+  ...iconBadge('map_ico', 6, MAP_PANEL_X + 24, CONTENT.y + 104, 44, 'heart', C.violet),
+  text('t_map_lbl', 13, MAP_PANEL_X + 80, CONTENT.y + 110, MAP_PANEL_W - 96, 22, 'STAY IN THE LOOP', { ...TYPE.label, fontSize: 10, color: C.cyan }),
+  text('t_map_title', 14, MAP_PANEL_X + 24, CONTENT.y + 140, MAP_PANEL_W - 48, 72, '3 ways to\nstay connected', { ...TYPE.display, fontSize: 28, color: C.white, lineHeight: 1.12 }),
+  ...momentumChecks.flatMap((line, i) => [
+    ...iconBadge(`chk${i}`, 7, MAP_PANEL_X + 24, CONTENT.y + 228 + i * 44, 28, 'check', C.violet),
+    text(`chkt${i}`, 15 + i, MAP_PANEL_X + 60, CONTENT.y + 232 + i * 44, MAP_PANEL_W - 84, 32, line, {
+      ...TYPE.bodyOnDark,
+      fontSize: 14,
+      lineHeight: 1.4,
+      color: 'rgba(241,245,249,0.92)',
+    }),
+  ]),
+  ...heroImage('img_map', 5, MAP_PANEL_X + 24, CONTENT.y + 360, MAP_PANEL_W - 48, 112, 'social-team', C.navyMid, {
+    style: { borderRadius: '14px', objectFit: 'cover', opacity: 0.92 },
     alt: 'Community',
   }),
-  text('t_panel', 14, CTA_PANEL_X + 24, CONTENT.y + 240, CTA_PANEL_W - 48, 80, 'Save this video and share it with your team — comment if you want the full template pack.', { ...TYPE.body, fontSize: 14, color: C.slate, lineHeight: 1.6 }),
-  shape('save_pill', 6, CTA_PANEL_X + 24, CONTENT.y + 336, CTA_PANEL_W - 48, 40, { backgroundColor: C.gold, borderRadius: '100px' }),
-  text('t_save', 15, CTA_PANEL_X + 32, CONTENT.y + 346, CTA_PANEL_W - 64, 24, 'SAVE · SHARE · COMMENT', { ...TYPE.label, fontSize: 10, color: C.navy, textAlign: 'center' }),
-  ...iconBadge('ico_share', 7, CTA_PANEL_X + CTA_PANEL_W - 56, CONTENT.y + 400, 36, 'share', C.white),
+  shape('map_pill', 6, MAP_PANEL_X + 24, CONTENT.y + 484, MAP_PANEL_W - 48, 36, { backgroundColor: C.gold, borderRadius: '100px' }),
+  text('t_map_pill', 16, MAP_PANEL_X + 36, CONTENT.y + 492, MAP_PANEL_W - 72, 24, COPY.ctaHandle.toUpperCase(), {
+    ...TYPE.label,
+    fontSize: 10,
+    color: C.navy,
+    textAlign: 'center',
+    letterSpacing: '0.12em',
+  }),
+  image('img_logo', 8, CONTENT.x, CONTENT.maxY - 44, 120, 32, 'social-logo', { style: { objectFit: 'contain' }, alt: 'Brand', role: 'logo' }),
+  text('t_handle', 17, CONTENT.x + 132, CONTENT.maxY - 36, 200, 24, COPY.ctaHandle, { ...TYPE.body, fontSize: 14, fontWeight: '600', color: C.slate }),
   ...slideBadge(9, '07'),
 ];
 
@@ -744,7 +817,7 @@ const SCENE_BG = [
   'bg-gradient-navy',
   'bg-gradient-navy',
   'bg-gradient-navy',
-  'bg-gradient-navy',
+  'bg-gradient-light',
 ];
 
 const SCENE_AVATAR = [
@@ -754,7 +827,7 @@ const SCENE_AVATAR = [
   'br-mini',
   'br-mini',
   'bl-mini',
-  'dark',
+  'br-mini',
 ];
 
 [scene01, scene02, scene03, scene04, scene05, scene06, scene07].forEach((scene, i) => {

@@ -10,7 +10,10 @@ import {
 } from 'react-icons/md';
 import workspaceService from '../../../services/workspaceService.js';
 import { useAuth } from '../../../contexts/AuthContext';
-import { fetchEditorTemplateScenes } from '../../../utils/fetchEditorTemplates.js';
+import {
+  fetchEditorTemplateScenes,
+  sceneMatchesAspectRatio,
+} from '../../../utils/fetchEditorTemplates.js';
 import TemplateScenePreview from '../../features/editor/editor/TemplateScenePreview';
 import './CreateVideoModal.css';
 
@@ -222,13 +225,16 @@ const CreateVideoModal = ({
   const filteredTemplates = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     return templateItems.filter((item) => {
+      const name = (item.name || item.scene?.title || '').toLowerCase();
       const matchesSearch =
-        item.name.toLowerCase().includes(query) ||
-        (item.tags || []).some((tag) => String(tag).toLowerCase().includes(query));
+        name.includes(query) ||
+        (item.tags || []).some((tag) => String(tag).toLowerCase().includes(query)) ||
+        (item.bundleCategory || '').toLowerCase().includes(query);
       const matchesFilter = selectedFilter === 'All' || item.category === selectedFilter;
-      return matchesSearch && matchesFilter;
+      const matchesRatio = sceneMatchesAspectRatio(item.scene, aspectRatio);
+      return matchesSearch && matchesFilter && matchesRatio;
     });
-  }, [templateItems, searchQuery, selectedFilter]);
+  }, [templateItems, searchQuery, selectedFilter, aspectRatio]);
 
   const hasDirtyData = useMemo(() => {
     return Boolean(
@@ -811,7 +817,7 @@ const CreateVideoModal = ({
                           ) : (
                             <img src={template.thumbnail} alt={template.name} />
                           )}
-                          <span className={`create-video-template-badge ${template.badgeType}`}>{template.badge}</span>
+                          <span className={`create-video-template-badge ${template.badgeType || 'new'}`}>{template.badge || '01'}</span>
                           <span className="create-video-template-overlay" />
                         </div>
                         <span className="create-video-template-name">{template.name}</span>

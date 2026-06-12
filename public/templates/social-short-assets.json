@@ -39,7 +39,8 @@
     { "id": "bg-gradient-neon", "name": "Neon Gradient", "value": "linear-gradient(165deg, #18181B 0%, #09090B 45%, #1e1033 100%)" },
     { "id": "bg-gradient-navy", "name": "Navy Pro", "value": "linear-gradient(160deg, #0F172A 0%, #1E1B4B 55%, #312E81 100%)" },
     { "id": "bg-gradient-pink", "name": "Pink Burst", "value": "linear-gradient(160deg, #831843 0%, #09090B 55%, #0c4a6e 100%)" },
-    { "id": "bg-gradient-cyan", "name": "Cyan Pulse", "value": "linear-gradient(180deg, #0e7490 0%, #09090B 60%)" }
+    { "id": "bg-gradient-cyan", "name": "Cyan Pulse", "value": "linear-gradient(180deg, #0e7490 0%, #09090B 60%)" },
+    { "id": "bg-gradient-light", "name": "Light Pro", "value": "linear-gradient(145deg, #F8FAFC 0%, #EEF2FF 55%, #FDF2F8 100%)" }
   ],
   "images": [
     { "id": "social-creator", "name": "Creator Portrait", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3762940/pexels-photo-3762940.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3762940/pexels-photo-3762940.jpeg" },
