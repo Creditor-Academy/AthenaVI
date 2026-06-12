@@ -3,8 +3,9 @@ import { MdSearch } from 'react-icons/md';
 import { predefinedMedia } from '../../../../constants/editorData';
 import { loadPitchAssets, pitchImagesAsMedia } from '../../../../constants/pitchAssetLibrary';
 import { setCanvasDragData } from '../../../../utils/editorDragDrop';
+import MediaUploadTile from './MediaUploadTile';
 
-const EditorSidebarImage = ({ addLayer }) => {
+const EditorSidebarImage = ({ addLayer, workspaceId, onUploadError, onClose }) => {
   const [query, setQuery] = useState('');
   const [pitchMedia, setPitchMedia] = useState([]);
 
@@ -52,6 +53,14 @@ const EditorSidebarImage = ({ addLayer }) => {
         <div className="tool-section">
           <h4 className="tool-section-title">Pitch Deck</h4>
           <div className="media-grid premium-scrollbar">
+            <MediaUploadTile
+              addLayer={addLayer}
+              workspaceId={workspaceId}
+              onUploadError={onUploadError}
+              accept="image/*"
+              label="Upload"
+              onComplete={onClose}
+            />
             {pitchItems.map((media) => (
               <div
                 key={media.id}
@@ -71,6 +80,16 @@ const EditorSidebarImage = ({ addLayer }) => {
       <div className="tool-section">
         <h4 className="tool-section-title">Stock Images</h4>
         <div className="media-grid premium-scrollbar">
+          {pitchItems.length === 0 && (
+            <MediaUploadTile
+              addLayer={addLayer}
+              workspaceId={workspaceId}
+              onUploadError={onUploadError}
+              accept="image/*"
+              label="Upload"
+              onComplete={onClose}
+            />
+          )}
           {stockItems.map((media) => (
             <div
               key={media.id}

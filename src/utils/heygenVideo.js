@@ -176,6 +176,32 @@ export function isAvatarClip(clip) {
   )
 }
 
+/** Primary avatar layer for a scene (canvas + timeline selection). */
+export function findSceneAvatarClip(scene) {
+  const clips = scene?.clips || []
+  const explicit = clips.find(isAvatarClip)
+  if (explicit) return explicit
+
+  const hasPresenter = !!(
+    scene?.avatarType ||
+    scene?.avatar ||
+    scene?.generatedVideoUrl ||
+    scene?.heygenVideoId ||
+    scene?.heygenStatus
+  )
+  if (!hasPresenter) return null
+
+  return (
+    clips.find(
+      (c) =>
+        c.type === 'avatar' ||
+        c.type === 'video' ||
+        c.role === 'avatar' ||
+        c.label?.toLowerCase().includes('avatar')
+    ) ?? null
+  )
+}
+
 /** Resolve persisted HeyGen id from scene-level fields or avatar element content. */
 export function resolveSceneHeygenVideoId(scene) {
   if (!scene) return null
