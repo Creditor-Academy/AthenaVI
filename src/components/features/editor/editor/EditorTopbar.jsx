@@ -17,7 +17,7 @@ import {
     MdVideoLibrary,
     MdCloudUpload,
     MdTextFields,
-    MdShapeLine,
+    MdInterests,
     MdExpandMore,
     MdClose,
 } from 'react-icons/md'
@@ -31,7 +31,7 @@ import EditorSidebarLayers from './EditorSidebarLayers'
 import EditorSidebarVideo from './EditorSidebarVideo'
 import EditorSidebarVoice from './EditorSidebarVoice'
 import EditorSidebarStock from './EditorSidebarStock'
-import EditorSidebarShapes from './EditorSidebarShapes'
+import EditorSidebarGraphic from './EditorSidebarGraphic'
 import EditorSidebarMagic from './EditorSidebarMagic'
 import ProfileDropdown from '../../../ui/ProfileDropdown/ProfileDropdown'
 import EditorCreditsBar from './EditorCreditsBar'
@@ -49,7 +49,7 @@ const TOOL_GROUPS = [
         id: 'elements',
         tools: [
             { id: 'text', icon: MdTextFields, label: 'Text' },
-            { id: 'shapes', icon: MdShapeLine, label: 'Shapes' },
+            { id: 'graphic', icon: MdInterests, label: 'Graphic' },
         ],
     },
 ]
@@ -107,7 +107,7 @@ const EditorTopbar = ({
         if (!el) return
         const rect = el.getBoundingClientRect()
         const panelWidth =
-            activeTool === 'text' ? 352 : activeTool === 'shapes' ? 400 : 320
+            activeTool === 'text' ? 352 : activeTool === 'graphic' ? 400 : 320
         const margin = 12
         let left = rect.left + rect.width / 2
         left = Math.max(panelWidth / 2 + margin, Math.min(left, window.innerWidth - panelWidth / 2 - margin))
@@ -238,8 +238,15 @@ const EditorTopbar = ({
                 )
             case 'stock':
                 return <EditorSidebarStock addLayer={addLayerWithClose} />
-            case 'shapes':
-                return <EditorSidebarShapes addLayer={addLayerWithClose} />
+            case 'graphic':
+                return (
+                    <EditorSidebarGraphic
+                        addLayer={addLayerWithClose}
+                        activeScene={activeScene}
+                        activeSceneId={activeSceneId}
+                        updateScene={updateScene}
+                    />
+                )
             case 'magic':
                 return (
                     <EditorSidebarMagic
@@ -355,6 +362,7 @@ const EditorTopbar = ({
                                                 onClick={() => toggleTool(tool.id)}
                                                 aria-expanded={isOpen}
                                                 aria-haspopup="true"
+                                                title={tool.label}
                                             >
                                                 <Icon size={15} />
                                                 <span>{tool.label}</span>
@@ -456,7 +464,7 @@ const EditorTopbar = ({
                         className={`topbar-dropdown topbar-dropdown--portal${
                             activeTool === 'text'
                                 ? ' topbar-dropdown--text'
-                                : activeTool === 'shapes'
+                                : activeTool === 'graphic'
                                   ? ' topbar-dropdown--shapes'
                                   : ''
                         }`}

@@ -4,6 +4,7 @@ import {
   buildSceneBackgroundPatch,
   buildUnsetSceneBackgroundPatch,
   getClipStackIndex,
+  getLayerDisplayLabel,
   isBackgroundClip,
   minMovableStackIndex,
   sortClipsByPaintOrder,
@@ -300,11 +301,9 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
       activeLayer.role === 'avatar' ||
       activeLayer.role === 'media');
   const isShape  = activeLayer.type === 'shape';
+  const isFrame  = isShape && activeLayer.role === 'frame';
 
-  const roleLabel = isHeading
-    ? 'Heading'
-    : activeLayer.role?.split('-').map(w => w[0].toUpperCase() + w.slice(1)).join(' ')
-    || activeLayer.type?.[0].toUpperCase() + activeLayer.type?.slice(1) || 'Text';
+  const roleLabel = isHeading ? 'Heading' : getLayerDisplayLabel(activeLayer);
 
   if (isText) {
     return (
@@ -631,14 +630,102 @@ const LayerPanel = ({ activeLayer, clips, activeSceneId, updateScene, activeScen
       })()}
 
       {/* ── SHAPE ──────────────────────────────────────────────────────── */}
-      {isShape && (
+      {isFrame && (
         <>
+          <SectionHeader icon={<MdImage size={14} />} label="Image Fill" />
+          <Card>
+            {activeLayer.fillSrc ? (
+              <>
+                <img
+                  src={activeLayer.fillSrc}
+                  alt=""
+                  style={{ width: '100%', height: 88, objectFit: 'cover', borderRadius: 8, marginBottom: 8 }}
+                />
+                <SelectRow
+                  label="Image fit"
+                  value={activeLayer.fillObjectFit || 'cover'}
+                  options={[
+                    { value: 'cover', label: 'Cover' },
+                    { value: 'contain', label: 'Contain' },
+                  ]}
+                  onChange={(v) => updateLayer({ fillObjectFit: v })}
+                />
+                <button
+                  type="button"
+                  className="scp-btn scp-btn--ghost"
+                  style={{ width: '100%', marginTop: 6 }}
+                  onClick={() => updateLayer({ fillSrc: null, fillAssetId: undefined, fillObjectFit: undefined })}
+                >
+                  Remove image fill
+                </button>
+              </>
+            ) : (
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.45, margin: '0 0 8px' }}>
+                Drag an image from Images or Uploads onto this frame on the canvas, or choose a file below.
+              </p>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (!file) return
+                updateLayer({
+                  fillSrc: URL.createObjectURL(file),
+                  fillObjectFit: activeLayer.fillObjectFit || 'cover',
+                })
+                e.target.value = ''
+              }}
+              style={{ width: '100%', fontSize: 11 }}
+            />
+          </Card>
+
           <SectionHeader icon={<MdPalette size={14} />} label="Fill & Style" />
           <Card>
             <Row label="Fill Color" column>
               <input type="color"
                 value={activeLayer.style?.backgroundColor || '#000000'}
                 onChange={(e) => updateStyle({ backgroundColor: e.target.value })}
+                style={{ width: 36, height: 28, border: 'none', borderRadius: 6, cursor: 'pointer', padding: 2, background: 'none' }} />
+            </Row>
+            <LayerAdjustmentsCompact
+              opacity={activeLayer.opacity ?? 1}
+              cssFilters={{}}
+              onOpacityChange={(v) => updateLayer({ opacity: v })}
+              onFilterChange={() => {}}
+            />
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+              {[0, 8, 16, 32, 64].map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => updateStyle({ borderRadius: `${r}px` })}
+                  style={{
+                    padding: '6px 10px',
+                    borderRadius: 8,
+                    border: `1px solid ${parseInt(activeLayer.style?.borderRadius || 0) === r ? 'var(--primary)' : 'var(--border-subtle, rgba(0,0,0,0.1))'}`,
+                    background: parseInt(activeLayer.style?.borderRadius || 0) === r ? 'rgba(124,58,237,0.08)' : 'white',
+                    fontSize: 10,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {r}px
+                </button>
+              ))}
+            </div>
+          </Card>
+        </>
+      )}
+
+      {isShape && !isFrame && (
+        <>
+          <SectionHeader icon={<MdPalette size={14} />} label="Fill & Style" />
+          <Card>
+            <Row label="Fill Color" column>
+              <input type="color"
+                value={activeLayer.style?.backgroundColor || activeLayer.style?.background || '#6366f1'}
+                onChange={(e) => updateStyle({ backgroundColor: e.target.value, background: e.target.value })}
                 style={{ width: 36, height: 28, border: 'none', borderRadius: 6, cursor: 'pointer', padding: 2, background: 'none' }} />
             </Row>
             <LayerAdjustmentsCompact

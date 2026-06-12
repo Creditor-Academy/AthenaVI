@@ -31,6 +31,56 @@ function hasClipType(clips, type) {
   return clips.some((c) => c.type === type);
 }
 
+function scaleTextStyle(style, scale) {
+  if (!style) return style;
+  const next = { ...style };
+  if (next.fontSize != null) {
+    const n = parseFloat(String(next.fontSize));
+    if (!Number.isNaN(n)) next.fontSize = Math.round(n * scale);
+  }
+  return next;
+}
+
+/** Scale clip boxes authored on template.canvasSize (e.g. 1280×720) to editor composition pixels. */
+function scaleClipFromReference(clip, refW, refH, targetW, targetH) {
+  if (!clip || clip._coordsNormalized || clip._userPlaced) return clip;
+
+  const sx = targetW / refW;
+  const sy = targetH / refH;
+  const typeScale = (sx + sy) / 2;
+  const scaled = { ...clip, _coordsNormalized: true };
+
+  if (clip.position) {
+    scaled.position = {
+      x: Math.round(Number(clip.position.x ?? 0) * sx),
+      y: Math.round(Number(clip.position.y ?? 0) * sy),
+    };
+  }
+  if (clip.size) {
+    scaled.size = {
+      width: Math.round(Number(clip.size.width ?? 0) * sx),
+      height: Math.round(Number(clip.size.height ?? 0) * sy),
+    };
+  }
+  if (clip.type === 'text' || clip.content?.text != null) {
+    scaled.style = scaleTextStyle(clip.style, typeScale);
+  }
+  return scaled;
+}
+
+function scaleClipsToComposition(clips, template, resolution) {
+  const refW = template?.canvasSize?.width ?? ZONE_REF_W;
+  const refH = template?.canvasSize?.height ?? ZONE_REF_H;
+  const targetW = resolution.width ?? COMPOSITION_W;
+  const targetH = resolution.height ?? COMPOSITION_H;
+
+  if (refW === targetW && refH === targetH) {
+    return clips.map((clip) => ({ ...clip, _coordsNormalized: true }));
+  }
+
+  return clips.map((clip) => scaleClipFromReference(clip, refW, refH, targetW, targetH));
+}
+
 /**
  * Add placeholder media/avatar layers when zones define slots but clips omit them.
  * Keeps modal preview and live canvas aligned with the layout metadata.
@@ -106,6 +156,8 @@ export function prepareTemplateSceneForEditor(
     template,
     JSON.parse(JSON.stringify(template?.clips || []))
   );
+
+  clips = scaleClipsToComposition(clips, template, resolution);
 
   clips = clips.map((clip, idx) => ({
     ...clip,

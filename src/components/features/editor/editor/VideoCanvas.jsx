@@ -37,6 +37,8 @@ const VideoCanvas = forwardRef(({
   onUpdateLayerSize,
   onAddScene,
   updateClipContent,
+  onFillShape,
+  onCanvasDrop,
   editorView = {},
   workspaceId,
   projectId,
@@ -180,30 +182,6 @@ const VideoCanvas = forwardRef(({
     }
   }
 
-  const handleDragOver = (e) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'copy'
-  }
-
-  const handleDrop = (e) => {
-    e.preventDefault()
-    const rect = e.currentTarget.getBoundingClientRect()
-    const dropX = ((e.clientX - rect.left) / rect.width) * 1920
-    const dropY = ((e.clientY - rect.top) / rect.height) * 1080
-
-    const layerData = e.dataTransfer.getData('application/json')
-    if (layerData) {
-      try {
-        const data = JSON.parse(layerData)
-        window.dispatchEvent(new CustomEvent('canvas-drop', {
-          detail: { ...data, x: dropX, y: dropY },
-        }))
-      } catch (err) {
-        console.warn('Invalid drop data:', err)
-      }
-    }
-  }
-
   return (
     <div className="canvas-area">
       <div className="preview-container">
@@ -280,8 +258,6 @@ const VideoCanvas = forwardRef(({
 
           {!showRemotionPlayer && (
             <div
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
               onClick={handleOverlayClick}
               style={{
                 position: 'absolute',
@@ -309,6 +285,8 @@ const VideoCanvas = forwardRef(({
                 onUpdateLayerSize={(clipId, w, h) =>
                   onUpdateLayerSize && onUpdateLayerSize(clipId, w, h)
                 }
+                onFillShape={onFillShape}
+                onCanvasDrop={onCanvasDrop}
                 showGuides={editorView.showGuides}
                 showSafeZone={editorView.showSafeZone}
                 gridSize={editorView.gridSize || 20}
