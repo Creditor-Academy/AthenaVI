@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { MdEmail, MdLock, MdVisibility, MdVisibilityOff } from 'react-icons/md'
 import { useAuth } from '../../../../contexts/AuthContext'
+import { formatAuthErrorMessage } from '../../../../utils/apiError.js'
 
 function Login({ onSuccess, onForgotPassword }) {
   const [showPassword, setShowPassword] = useState(false)
@@ -8,12 +9,11 @@ function Login({ onSuccess, onForgotPassword }) {
   const [error, setError] = useState('')
   const { login, googleLogin } = useAuth()
 
-  // Check for auth errors in localStorage on mount
   useEffect(() => {
     const authError = localStorage.getItem('authError')
     if (authError) {
       setError(authError)
-      localStorage.removeItem('authError') // Clear error after showing
+      localStorage.removeItem('authError')
     }
   }, [])
 
@@ -33,7 +33,7 @@ function Login({ onSuccess, onForgotPassword }) {
       if (result.success) {
         if (onSuccess) onSuccess()
       } else {
-        setError(result.error || 'Login failed')
+        setError(formatAuthErrorMessage(result, 'Login failed'))
       }
     } catch (err) {
       setError(err.message || 'Login failed')
@@ -59,14 +59,18 @@ function Login({ onSuccess, onForgotPassword }) {
       </div>
 
       {error && (
-        <div style={{
-          backgroundColor: '#fee2e2',
-          color: '#dc2626',
-          padding: '12px',
-          borderRadius: '8px',
-          fontSize: '14px',
-          marginBottom: '16px'
-        }}>
+        <div
+          style={{
+            backgroundColor: '#fef2f2',
+            color: '#b91c1c',
+            padding: '12px 14px',
+            borderRadius: '8px',
+            fontSize: '14px',
+            lineHeight: 1.45,
+            marginBottom: '16px',
+            border: '1px solid #fecaca'
+          }}
+        >
           {error}
         </div>
       )}
@@ -142,4 +146,3 @@ function Login({ onSuccess, onForgotPassword }) {
 }
 
 export default Login
-

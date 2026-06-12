@@ -1,24 +1,50 @@
 import { useState } from 'react'
 import { MdPerson, MdEmail, MdLock, MdVisibility, MdVisibilityOff, MdArrowBack } from 'react-icons/md'
 import { useAuth } from '../../../../contexts/AuthContext'
+import {
+  formatAuthErrorMessage,
+  isEmailAlreadyRegisteredMessage,
+} from '../../../../utils/apiError.js'
+
+const authAlertErrorStyle = {
+  backgroundColor: '#fef2f2',
+  color: '#b91c1c',
+  padding: '12px 14px',
+  borderRadius: '8px',
+  fontSize: '14px',
+  lineHeight: 1.45,
+  marginBottom: '16px',
+  border: '1px solid #fecaca',
+}
+
+const authAlertSuccessStyle = {
+  backgroundColor: '#f0fdf4',
+  color: '#166534',
+  padding: '12px 14px',
+  borderRadius: '8px',
+  fontSize: '14px',
+  lineHeight: 1.45,
+  marginBottom: '16px',
+  border: '1px solid #bbf7d0',
+}
 
 function Signup({ onSuccess }) {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [step, setStep] = useState(1) // 1: form, 2: otp
+  const [successMessage, setSuccessMessage] = useState('')
+  const [step, setStep] = useState(1)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     otp: ''
   })
-  const { register, generateOTP, resendOTP, googleLogin } = useAuth()
+  const { register, precheckSignupEmail, generateOTP, resendOTP, googleLogin } = useAuth()
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
-    
-    // If it's OTP, only allow digits
+
     if (name === 'otp') {
       const numericValue = value.replace(/[^0-9]/g, '')
       setFormData({
@@ -37,15 +63,42 @@ function Signup({ onSuccess }) {
   const handleFormSubmit = async (event) => {
     event.preventDefault()
     setError('')
+    setSuccessMessage('')
+
+    if (formData.name.trim().length < 2) {
+      setError('Name must be at least 2 characters.')
+      return
+    }
+
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters.')
+      return
+    }
+
     setLoading(true)
 
     try {
-      // Generate OTP first
+      const precheck = await precheckSignupEmail({
+        name: formData.name.trim(),
+        email: formData.email,
+        password: formData.password,
+      })
+
+      if (!precheck.success) {
+        setError(formatAuthErrorMessage(precheck, 'Email already registered'))
+        return
+      }
+
+      if (precheck.otpAlreadySent) {
+        setStep(2)
+        return
+      }
+
       const result = await generateOTP(formData.email)
       if (result.success) {
-        setStep(2) // Move to OTP step
+        setStep(2)
       } else {
-        setError(result.error || 'Failed to generate OTP')
+        setError(formatAuthErrorMessage(result, 'Failed to generate OTP'))
       }
     } catch (err) {
       setError(err.message || 'Failed to generate OTP')
@@ -57,32 +110,38 @@ function Signup({ onSuccess }) {
   const handleOTPSubmit = async (event) => {
     event.preventDefault()
     setError('')
+    setSuccessMessage('')
     setLoading(true)
 
     try {
-      console.log('Submitting registration with data:', {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        otp: formData.otp
-      })
-      
       const result = await register({
-        name: formData.name,
+        name: formData.name.trim(),
         email: formData.email,
         password: formData.password,
         otp: Number(formData.otp)
       })
-      
-      console.log('Registration result:', result)
-      
+
       if (result.success) {
         if (onSuccess) onSuccess()
-      } else {
-        setError(result.error || 'Registration failed')
+        return
       }
+
+      const message = formatAuthErrorMessage(result, 'Registration failed')
+
+      if (result.status === 409 || isEmailAlreadyRegisteredMessage(message)) {
+        setError(message)
+        return
+      }
+
+      if (result.status === 410) {
+        setError(message)
+        setStep(1)
+        setFormData((prev) => ({ ...prev, otp: '' }))
+        return
+      }
+
+      setError(message)
     } catch (err) {
-      console.error('Registration error:', err)
       setError(err.message || 'Registration failed')
     } finally {
       setLoading(false)
@@ -91,14 +150,14 @@ function Signup({ onSuccess }) {
 
   const handleResendOTP = async () => {
     setError('')
+    setSuccessMessage('')
     try {
       const result = await resendOTP(formData.email)
       if (result.success) {
-        // Show success message
-        setError('OTP resent successfully')
-        setTimeout(() => setError(''), 3000)
+        setSuccessMessage('If this email is eligible, a new OTP has been sent.')
+        setTimeout(() => setSuccessMessage(''), 4000)
       } else {
-        setError(result.error || 'Failed to resend OTP')
+        setError(formatAuthErrorMessage(result, 'Failed to resend OTP'))
       }
     } catch (err) {
       setError(err.message || 'Failed to resend OTP')
@@ -118,6 +177,7 @@ function Signup({ onSuccess }) {
   const goBack = () => {
     setStep(1)
     setError('')
+    setSuccessMessage('')
   }
 
   return (
@@ -143,20 +203,21 @@ function Signup({ onSuccess }) {
         )}
         <h2 className="auth-form-title">Sign Up</h2>
         <p className="auth-form-subtitle">
-          {step === 1 ? 'Create your account to get started' : 'Enter the OTP sent to your email'}
+          {step === 1
+            ? 'Create your account to get started'
+            : 'Enter the OTP sent to your email'}
         </p>
       </div>
 
       {error && (
-        <div style={{
-          backgroundColor: error.includes('success') ? '#dcfce7' : '#fee2e2',
-          color: error.includes('success') ? '#166534' : '#dc2626',
-          padding: '12px',
-          borderRadius: '8px',
-          fontSize: '14px',
-          marginBottom: '16px'
-        }}>
+        <div style={authAlertErrorStyle}>
           {error}
+        </div>
+      )}
+
+      {successMessage && (
+        <div style={authAlertSuccessStyle}>
+          {successMessage}
         </div>
       )}
 
@@ -172,6 +233,7 @@ function Signup({ onSuccess }) {
               className="auth-input"
               value={formData.name}
               onChange={handleInputChange}
+              minLength={2}
               required
               disabled={loading}
             />
@@ -200,10 +262,11 @@ function Signup({ onSuccess }) {
               name="password"
               type={showPassword ? 'text' : 'password'}
               autoComplete="new-password"
-              placeholder="Password"
+              placeholder="Password (min. 8 characters)"
               className="auth-input"
               value={formData.password}
               onChange={handleInputChange}
+              minLength={8}
               required
               disabled={loading}
             />
@@ -291,4 +354,3 @@ function Signup({ onSuccess }) {
 }
 
 export default Signup
-

@@ -158,7 +158,12 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true)
       return { success: true }
     } catch (error) {
-      return { success: false, error: error.message }
+      return {
+        success: false,
+        error: error.message,
+        status: error.status,
+        retryAfter: error.retryAfter,
+      }
     } finally {
       setLoading(false)
     }
@@ -173,7 +178,30 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true)
       return { success: true }
     } catch (error) {
-      return { success: false, error: error.message }
+      return {
+        success: false,
+        error: error.message,
+        status: error.status,
+        retryAfter: error.retryAfter,
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const precheckSignupEmail = async (payload) => {
+    setLoading(true)
+    try {
+      const result = await authService.precheckSignupEmail(payload)
+      return { success: true, ...result }
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+        status: error.status,
+        retryAfter: error.retryAfter,
+        emailExists: error.emailExists,
+      }
     } finally {
       setLoading(false)
     }
@@ -186,7 +214,13 @@ export const AuthProvider = ({ children }) => {
       const result = await authService.generateOTP(email)
       return { success: true, data: result.data }
     } catch (error) {
-      return { success: false, error: error.message }
+      return {
+        success: false,
+        error: error.message,
+        status: error.status,
+        retryAfter: error.retryAfter,
+        emailExists: error.emailExists,
+      }
     } finally {
       setLoading(false)
     }
@@ -199,7 +233,12 @@ export const AuthProvider = ({ children }) => {
       const result = await authService.resendOTP(email)
       return { success: true, data: result.data }
     } catch (error) {
-      return { success: false, error: error.message }
+      return {
+        success: false,
+        error: error.message,
+        status: error.status,
+        retryAfter: error.retryAfter,
+      }
     } finally {
       setLoading(false)
     }
@@ -320,6 +359,7 @@ export const AuthProvider = ({ children }) => {
     fetchCapabilities,
     login,
     register,
+    precheckSignupEmail,
     generateOTP,
     resendOTP,
     forgotPassword,
