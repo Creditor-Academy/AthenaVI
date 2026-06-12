@@ -11,6 +11,7 @@ import {
 } from 'react-icons/md';
 import SidebarSceneThumb from './SidebarSceneThumb';
 import SceneTransitionPicker from './SceneTransitionPicker';
+import AllSequencesPanel from './AllSequencesPanel';
 import {
   getSceneTransitionCatalogValue,
   getSceneTransitionLabel,
@@ -69,8 +70,20 @@ const EditorSidebar = ({
   updateScene,
 }) => {
   const [transitionPickerSceneId, setTransitionPickerSceneId] = useState(null);
+  const [showAllSequences, setShowAllSequences] = useState(false);
 
   const pickerScene = scenes.find((s) => s.id === transitionPickerSceneId);
+
+  const trackMode = transitionPickerSceneId
+    ? 'picker'
+    : showAllSequences
+      ? 'sequences'
+      : 'scenes';
+
+  const closeOverlay = () => {
+    setTransitionPickerSceneId(null);
+    setShowAllSequences(false);
+  };
 
   const handleSelectTransition = (value) => {
     if (!transitionPickerSceneId) return;
@@ -84,14 +97,18 @@ const EditorSidebar = ({
         <div className="scenes-sidebar__header">
           <span className="scenes-sidebar__title">
             <MdGridView size={17} />
-            {transitionPickerSceneId ? 'Transitions' : 'Scenes'}
+            {transitionPickerSceneId
+              ? 'Transitions'
+              : showAllSequences
+                ? 'All Sequences'
+                : 'Scenes'}
           </span>
-          {transitionPickerSceneId ? (
+          {trackMode !== 'scenes' ? (
             <button
               type="button"
               className="scenes-sidebar__close-btn"
-              onClick={() => setTransitionPickerSceneId(null)}
-              aria-label="Close transitions"
+              onClick={closeOverlay}
+              aria-label="Close panel"
               title="Close"
             >
               <MdClose size={18} />
@@ -109,7 +126,7 @@ const EditorSidebar = ({
         </div>
 
         <div className="scenes-sidebar__viewport">
-          <div className={`scenes-sidebar__track ${transitionPickerSceneId ? 'scenes-sidebar__track--picker' : ''}`}>
+          <div className={`scenes-sidebar__track scenes-sidebar__track--${trackMode}`}>
             <div className="scenes-sidebar__pane">
               <div className="scenes-sidebar__list premium-scrollbar">
                 {scenes.map((scene, index) => {
@@ -120,7 +137,10 @@ const EditorSidebar = ({
                         <SceneConnector
                           nextScene={scene}
                           onAddScene={() => onAddSceneAfter?.(index - 1)}
-                          onOpenTransitionPicker={() => setTransitionPickerSceneId(scene.id)}
+                          onOpenTransitionPicker={() => {
+                            setShowAllSequences(false);
+                            setTransitionPickerSceneId(scene.id);
+                          }}
                         />
                       )}
                       <div
@@ -145,7 +165,7 @@ const EditorSidebar = ({
                           <div className="scene-list-card__duration">
                             {(scene.duration || 8.0).toFixed(1)}s
                           </div>
-                          {isActive && timelineScope === 'single' && (
+                          {isActive && (
                             <div className="scene-list-card__active-overlay">
                               <div className="scene-list-card__play">
                                 <MdPlayArrow size={16} />
@@ -194,25 +214,41 @@ const EditorSidebar = ({
             </div>
 
             <div className="scenes-sidebar__pane">
-              {transitionPickerSceneId && (
+              {showAllSequences && !transitionPickerSceneId ? (
+                <AllSequencesPanel
+                  scenes={scenes}
+                  activeSceneId={activeSceneId}
+                  onSelectScene={(sceneId) => {
+                    onSelectScene?.(sceneId);
+                    setTimelineScope?.('single');
+                  }}
+                />
+              ) : null}
+            </div>
+
+            <div className="scenes-sidebar__pane">
+              {transitionPickerSceneId ? (
                 <SceneTransitionPicker
                   activeValue={getSceneTransitionCatalogValue(pickerScene)}
                   onSelect={handleSelectTransition}
                 />
-              )}
+              ) : null}
             </div>
           </div>
         </div>
 
-        {!transitionPickerSceneId && (
+        {trackMode === 'scenes' && (
           <div className="scenes-sidebar__footer">
             <button
               type="button"
-              className={`scenes-sidebar__sequence-btn ${timelineScope === 'all' ? 'scenes-sidebar__sequence-btn--active' : 'scenes-sidebar__sequence-btn--idle'}`}
-              onClick={() => setTimelineScope?.('all')}
+              className="scenes-sidebar__sequence-btn scenes-sidebar__sequence-btn--idle"
+              onClick={() => {
+                setShowAllSequences(true);
+                setTimelineScope?.('all');
+              }}
             >
               <MdLayers size={16} />
-              View all sequence
+              View All Sequences
             </button>
           </div>
         )}
