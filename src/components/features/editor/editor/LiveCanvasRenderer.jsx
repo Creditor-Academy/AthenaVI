@@ -641,6 +641,7 @@ const LiveCanvasRenderer = ({
   onFillShape,
   onCanvasDrop,
   showGuides = false,
+  showPageGrid = false,
   showSafeZone = true,
   gridSize = 20,
   overlayMode = false,
@@ -793,11 +794,11 @@ const LiveCanvasRenderer = ({
           transformOrigin: 'top left',
         }}
       >
-        {(showGuides || showSafeZone) && (
+        {(showGuides || showPageGrid || showSafeZone) && (
           <CanvasGuidesOverlay
             width={compositionWidth}
             height={compositionHeight}
-            showGrid={showGuides}
+            showGrid={showGuides || showPageGrid}
             showSafeZone={showSafeZone}
             gridSize={gridSize}
           />

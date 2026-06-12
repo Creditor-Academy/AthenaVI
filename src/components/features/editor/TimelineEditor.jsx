@@ -20,9 +20,12 @@ import {
     MdContentCopy,
     MdImage,
     MdTextFields,
-    MdSmartDisplay
+    MdSmartDisplay,
+    MdPerson,
+    MdClose,
 } from 'react-icons/md'
 import { getClipTextContent } from '../../../utils/textClip'
+import { isAvatarClip, findSceneAvatarClip } from '../../../utils/heygenVideo'
 
 const TimelineEditor = ({
     scenes,
@@ -32,6 +35,7 @@ const TimelineEditor = ({
     isPlaying,
     onSeek,
     onSelectScene,
+    onSelectAvatarVideo,
     onUpdateScene,
     onAddScene,
     onDeleteScene,
@@ -490,6 +494,11 @@ const TimelineEditor = ({
             z-index: 10;
           }
 
+          .canva-clip--avatar-selected {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.35), 0 4px 16px rgba(var(--primary-rgb), 0.25);
+          }
+
           .canva-clip.drag-over {
             border: 2px dashed var(--primary);
             opacity: 0.8;
@@ -554,12 +563,12 @@ const TimelineEditor = ({
             bottom: 0;
             width: 3px;
             margin-left: -1px;
-            background: linear-gradient(180deg, #a855f7 0%, #7c3aed 50%, #6d28d9 100%);
+            background: linear-gradient(180deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 70%, #6366f1) 100%);
             z-index: 500;
             pointer-events: none;
             box-shadow:
               0 0 0 1px rgba(255, 255, 255, 0.9),
-              0 0 12px rgba(124, 58, 237, 0.65);
+              0 0 12px rgba(var(--primary-rgb), 0.55);
           }
 
           .playhead::after {
@@ -581,11 +590,11 @@ const TimelineEditor = ({
             width: 14px;
             height: 14px;
             border-radius: 50%;
-            background: #7c3aed;
+            background: var(--primary);
             border: 2px solid #ffffff;
             pointer-events: auto;
             cursor: grab;
-            box-shadow: 0 2px 8px rgba(124, 58, 237, 0.55);
+            box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.5);
             transition: transform 0.1s;
           }
           
@@ -663,9 +672,9 @@ const TimelineEditor = ({
         .layer-clip {
             position: absolute;
             height: 28px;
-            background: rgba(88, 28, 135, 0.8);
+            background: rgba(var(--primary-rgb), 0.78);
             backdrop-filter: blur(4px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.14);
             border-radius: 8px;
             display: flex;
             align-items: center;
@@ -680,14 +689,42 @@ const TimelineEditor = ({
         }
 
         .layer-clip:hover {
-            border-color: rgba(255, 255, 255, 0.3);
-            background: rgba(107, 33, 168, 0.9);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            border-color: rgba(255, 255, 255, 0.32);
+            background: rgba(var(--primary-rgb), 0.92);
+            box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.28);
         }
 
         .layer-clip.selected-layer-clip {
-            border: 2px solid var(--primary, #6366f1);
-            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.28);
+        }
+
+        .timeline-clip-remove {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            margin-left: 6px;
+            padding: 0;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 6px;
+            background: rgba(15, 23, 42, 0.35);
+            color: rgba(255, 255, 255, 0.88);
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
+        }
+
+        .timeline-clip-remove:hover {
+            background: rgba(var(--primary-rgb), 0.85);
+            border-color: rgba(255, 255, 255, 0.45);
+            color: #fff;
+            transform: scale(1.05);
+        }
+
+        .timeline-clip-remove:active {
+            transform: scale(0.96);
         }
 
         .layer-clip-icon {
@@ -894,8 +931,8 @@ const TimelineEditor = ({
                         })}
                     
                     <div className="track-label" style={{ height: '50px' }}>
-                        <div className="track-label-icon"><MdVideoLibrary size={16} /></div>
-                        Video
+                        <div className="track-label-icon"><MdPerson size={16} /></div>
+                        Avatar Video
                     </div>
                     <div className="track-label" style={{ height: '50px' }}>
                         <div className="track-label-icon"><MdMusicNote size={16} /></div>
@@ -968,22 +1005,33 @@ const TimelineEditor = ({
                                                 }}
                                             >
                                                 <div style={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
-                                                    {(clip.type === 'image' || clip.type === 'video') && clip.src ? (
+                                                    {(clip.type === 'image' || clip.type === 'video' || clip.type === 'avatar') && clip.src ? (
                                                         <div className="layer-clip-thumb" style={{ backgroundImage: `url(${clip.src})` }} />
                                                     ) : (
                                                         <div className="layer-clip-icon">
                                                             {clip.type === 'text' ? <MdTextFields size={12} /> :
+                                                             isAvatarClip(clip) ? <MdPerson size={12} /> :
                                                              clip.type === 'video' ? <MdSmartDisplay size={12} /> :
                                                              clip.type === 'image' ? <MdImage size={12} /> :
                                                              <MdContentCopy size={12} />}
                                                         </div>
                                                     )}
                                                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '80px', paddingRight: '4px' }}>
-                                                        {getClipTextContent(clip) || clip.type.toUpperCase()}
+                                                        {isAvatarClip(clip)
+                                                          ? 'Avatar Video'
+                                                          : (getClipTextContent(clip) || clip.type.toUpperCase())}
                                                     </span>
                                                 </div>
                                                 {clip.sceneId === activeSceneId && (
-                                                    <button className="delete-clip-btn" onClick={(e) => { e.stopPropagation(); onDeleteLayer(clip.sceneId, clip.id) }}>×</button>
+                                                    <button
+                                                      type="button"
+                                                      className="timeline-clip-remove"
+                                                      title="Remove layer"
+                                                      aria-label="Remove layer"
+                                                      onClick={(e) => { e.stopPropagation(); onDeleteLayer(clip.sceneId, clip.id) }}
+                                                    >
+                                                      <MdClose size={12} />
+                                                    </button>
                                                 )}
                                                 
                                                 {clip.sceneId === activeSceneId && (
@@ -1010,18 +1058,24 @@ const TimelineEditor = ({
                                         return (
                                             <div
                                                 key={scene.id}
-                                                className={`canva-clip ${activeSceneId === scene.id ? 'active' : ''} ${dragOverSceneId === scene.id ? 'drag-over' : ''}`}
+                                                className={`canva-clip ${activeSceneId === scene.id ? 'active' : ''} ${dragOverSceneId === scene.id ? 'drag-over' : ''} ${selectedLayerId && findSceneAvatarClip(scene)?.id === selectedLayerId && activeSceneId === scene.id ? 'canva-clip--avatar-selected' : ''}`}
                                                 draggable={timelineScope !== 'single'}
                                                 onDragStart={(e) => onDragStart(e, scene.id)}
                                                 onDragOver={onDragOver}
                                                 onDrop={(e) => onDrop(e, scene.id)}
-                                                onClick={() => onSelectScene(scene.id)}
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  if (onSelectAvatarVideo) onSelectAvatarVideo(scene.id);
+                                                  else onSelectScene?.(scene.id);
+                                                }}
                                                 style={{ left: prevDuration * zoom, width: (scene.duration || 8) * zoom }}
                                             >
                                                 <div className="clip-thumb" style={{ backgroundImage: `url(${scene.backgroundImage || scene.avatar})` }} />
                                                 <div className="clip-info">
-                                                    <MdVideoLibrary size={14} color="#f3f4f6" />
-                                                    <span className="clip-name">{scene.title || `Scene ${index + 1}`}</span>
+                                                    <MdPerson size={14} color="#f3f4f6" />
+                                                    <span className="clip-name">
+                                                      {findSceneAvatarClip(scene) ? 'Avatar Video' : (scene.title || `Scene ${index + 1}`)}
+                                                    </span>
                                                 </div>
                                                 
                                                 <div className="clip-trim-handle left" onMouseDown={(e) => {
@@ -1041,7 +1095,7 @@ const TimelineEditor = ({
                                                 left: scenes.reduce((sum, s) => sum + (s.duration || 8), 0) * zoom + 16,
                                                 height: '48px',
                                                 width: '48px',
-                                                background: 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)',
+                                                background: 'linear-gradient(135deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 65%, #6366f1) 100%)',
                                                 borderRadius: '12px',
                                                 display: 'flex',
                                                 alignItems: 'center',
@@ -1049,13 +1103,13 @@ const TimelineEditor = ({
                                                 cursor: 'pointer',
                                                 color: '#ffffff',
                                                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                                boxShadow: '0 4px 15px rgba(124, 58, 237, 0.4), inset 0 2px 4px rgba(255,255,255,0.3)',
+                                                boxShadow: '0 4px 15px rgba(var(--primary-rgb), 0.4), inset 0 2px 4px rgba(255,255,255,0.3)',
                                                 marginTop: '1px'
                                             }}
                                             className="add-scene-timeline-btn"
                                             title="Add New Scene"
-                                            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05) translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 25px rgba(124, 58, 237, 0.6), inset 0 2px 4px rgba(255,255,255,0.3)'; }}
-                                            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1) translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 15px rgba(124, 58, 237, 0.4), inset 0 2px 4px rgba(255,255,255,0.3)'; }}
+                                            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05) translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 25px rgba(var(--primary-rgb), 0.55), inset 0 2px 4px rgba(255,255,255,0.3)'; }}
+                                            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1) translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 15px rgba(var(--primary-rgb), 0.4), inset 0 2px 4px rgba(255,255,255,0.3)'; }}
                                         >
                                             <MdAdd size={28} />
                                         </div>
