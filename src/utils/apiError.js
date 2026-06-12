@@ -14,10 +14,16 @@ export function shouldSkipTokenRefresh(error) {
   return AUTH_NO_REFRESH_PATHS.some((path) => url.includes(path))
 }
 
+export { getFriendlyAuthErrorMessage } from './authFormValidation.js'
+
+import { getFriendlyAuthErrorMessage } from './authFormValidation.js'
+
 export function getApiError(error, fallbackMessage = 'Request failed') {
-  const message = error.response?.data?.message || error.message || fallbackMessage
+  const rawMessage = error.response?.data?.message || error.message || fallbackMessage
+  const message = getFriendlyAuthErrorMessage(rawMessage)
   const err = new Error(message)
   err.status = error.response?.status
+  err.code = error.code
   const retryAfter = error.response?.headers?.['retry-after']
   if (retryAfter != null && retryAfter !== '') {
     const seconds = Number(retryAfter)
@@ -34,7 +40,7 @@ export function isEmailAlreadyRegisteredMessage(message = '') {
 }
 
 export function formatAuthErrorMessage(result, fallback = 'Request failed') {
-  let message = result?.error || fallback
+  let message = getFriendlyAuthErrorMessage(result?.error || fallback)
   if (result?.status === 429 && result?.retryAfter) {
     const mins = Math.ceil(result.retryAfter / 60)
     message = `${message} Try again in about ${mins} minute${mins === 1 ? '' : 's'}.`

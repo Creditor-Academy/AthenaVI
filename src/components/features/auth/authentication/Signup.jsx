@@ -5,6 +5,13 @@ import {
   formatAuthErrorMessage,
   isEmailAlreadyRegisteredMessage,
 } from '../../../../utils/apiError.js'
+import {
+  clearInputValidity,
+  getFriendlyAuthErrorMessage,
+  reportEmailValidity,
+  reportNameValidity,
+  reportPasswordMinLength,
+} from '../../../../utils/authFormValidation.js'
 
 const authAlertErrorStyle = {
   backgroundColor: '#fef2f2',
@@ -44,6 +51,7 @@ function Signup({ onSuccess }) {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
+    clearInputValidity(e.target)
 
     if (name === 'otp') {
       const numericValue = value.replace(/[^0-9]/g, '')
@@ -65,13 +73,20 @@ function Signup({ onSuccess }) {
     setError('')
     setSuccessMessage('')
 
-    if (formData.name.trim().length < 2) {
-      setError('Name must be at least 2 characters.')
+    const form = event.currentTarget
+    const nameInput = form.elements.name
+    const emailInput = form.elements.email
+    const passwordInput = form.elements.password
+
+    if (!reportNameValidity(nameInput)) {
       return
     }
 
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters.')
+    if (!reportEmailValidity(emailInput)) {
+      return
+    }
+
+    if (!reportPasswordMinLength(passwordInput)) {
       return
     }
 
@@ -101,7 +116,7 @@ function Signup({ onSuccess }) {
         setError(formatAuthErrorMessage(result, 'Failed to generate OTP'))
       }
     } catch (err) {
-      setError(err.message || 'Failed to generate OTP')
+      setError(getFriendlyAuthErrorMessage(err.message || 'Failed to generate OTP'))
     } finally {
       setLoading(false)
     }
@@ -142,7 +157,7 @@ function Signup({ onSuccess }) {
 
       setError(message)
     } catch (err) {
-      setError(err.message || 'Registration failed')
+      setError(getFriendlyAuthErrorMessage(err.message || 'Registration failed'))
     } finally {
       setLoading(false)
     }
@@ -160,7 +175,7 @@ function Signup({ onSuccess }) {
         setError(formatAuthErrorMessage(result, 'Failed to resend OTP'))
       }
     } catch (err) {
-      setError(err.message || 'Failed to resend OTP')
+      setError(getFriendlyAuthErrorMessage(err.message || 'Failed to resend OTP'))
     }
   }
 
@@ -169,7 +184,7 @@ function Signup({ onSuccess }) {
       try {
         await googleLogin()
       } catch (err) {
-        setError(err.message || 'Google login failed')
+        setError(getFriendlyAuthErrorMessage(err.message || 'Google login failed'))
       }
     }
   }
@@ -233,8 +248,6 @@ function Signup({ onSuccess }) {
               className="auth-input"
               value={formData.name}
               onChange={handleInputChange}
-              minLength={2}
-              required
               disabled={loading}
             />
           </div>
@@ -244,13 +257,13 @@ function Signup({ onSuccess }) {
             <input
               id="signup-email"
               name="email"
-              type="email"
+              type="text"
+              inputMode="email"
               autoComplete="email"
               placeholder="Email address"
               className="auth-input"
               value={formData.email}
               onChange={handleInputChange}
-              required
               disabled={loading}
             />
           </div>
@@ -266,8 +279,6 @@ function Signup({ onSuccess }) {
               className="auth-input"
               value={formData.password}
               onChange={handleInputChange}
-              minLength={8}
-              required
               disabled={loading}
             />
             <button
