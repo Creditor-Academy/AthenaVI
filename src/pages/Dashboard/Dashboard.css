@@ -536,8 +536,9 @@
 
 .dashboard-sidebar-header {
   flex-shrink: 0;
-  padding: 12px 12px 14px;
+  padding: 12px 12px 10px;
   background: var(--bg-main);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
 }
 
 .dashboard-sidebar-brand {
@@ -939,6 +940,18 @@
 
 .content.content--workspace-consistent .admin-portal-container {
   height: 100%;
+}
+
+.content.content--superadmin {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.content.content--superadmin > .sa-portal {
+  flex: 1;
+  min-height: 0;
 }
 
 .content.content--workspace-consistent :is(

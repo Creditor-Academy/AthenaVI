@@ -151,7 +151,7 @@ function CreditsQuickModal({ onClose, onManageBilling }) {
 
         {error && <div className="credits-modal-error">{error}</div>}
 
-        <div className="credits-modal-body">
+        <div className="credits-modal-body premium-scrollbar">
           {loading ? (
             <div className="credits-modal-loading" aria-hidden>
               <div className="credits-modal-skeleton credits-modal-skeleton--hero" />

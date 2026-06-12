@@ -40,6 +40,11 @@ const categories = [
     previews: [BusinessImg]
   },
   {
+    id: 'pitch',
+    label: 'Pitch',
+    previews: [BusinessImg]
+  },
+  {
     id: 'social',
     label: 'Social',
     previews: [SocialImg]

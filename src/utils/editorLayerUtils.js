@@ -2,6 +2,29 @@
 
 export const DEFAULT_GRID_SIZE = 20;
 
+/** Human-readable sidebar label — prefers clip type over internal layout roles like "decoration". */
+export function getLayerDisplayLabel(clip) {
+  if (!clip) return 'Layer';
+  if (clip.type === 'shape' && clip.role === 'frame') return 'Frame';
+  if (clip.type === 'shape') return 'Shape';
+  if (clip.type === 'avatar' || clip.role === 'avatar') return 'Avatar';
+  if (clip.role === 'icon') return 'Icon';
+  if (clip.role === 'logo') return 'Logo';
+  if (clip.type === 'image') return 'Image';
+  if (clip.type === 'video') return 'Video';
+  if (clip.role === 'main-text') return 'Heading';
+  if (clip.role) {
+    return clip.role
+      .split('-')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
+  if (clip.type) {
+    return clip.type.charAt(0).toUpperCase() + clip.type.slice(1);
+  }
+  return 'Layer';
+}
+
 /** Layers that can fill the canvas via "Set as Scene Background" (not shapes). */
 export function canSetAsSceneBackground(clip) {
   if (!clip) return false;

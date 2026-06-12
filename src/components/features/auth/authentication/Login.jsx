@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react'
 import { MdEmail, MdLock, MdVisibility, MdVisibilityOff } from 'react-icons/md'
 import { useAuth } from '../../../../contexts/AuthContext'
+import { formatAuthErrorMessage } from '../../../../utils/apiError.js'
+import {
+  clearInputValidity,
+  getFriendlyAuthErrorMessage,
+  reportEmailValidity,
+} from '../../../../utils/authFormValidation.js'
 
 function Login({ onSuccess, onForgotPassword }) {
   const [showPassword, setShowPassword] = useState(false)
@@ -8,18 +14,31 @@ function Login({ onSuccess, onForgotPassword }) {
   const [error, setError] = useState('')
   const { login, googleLogin } = useAuth()
 
-  // Check for auth errors in localStorage on mount
   useEffect(() => {
     const authError = localStorage.getItem('authError')
     if (authError) {
-      setError(authError)
-      localStorage.removeItem('authError') // Clear error after showing
+      setError(getFriendlyAuthErrorMessage(authError))
+      localStorage.removeItem('authError')
     }
   }, [])
 
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError('')
+
+    const form = event.currentTarget
+    const emailInput = form.elements.email
+    const passwordInput = form.elements.password
+
+    if (!reportEmailValidity(emailInput)) {
+      return
+    }
+
+    if (!passwordInput.checkValidity()) {
+      passwordInput.reportValidity()
+      return
+    }
+
     setLoading(true)
 
     const formData = new FormData(event.target)
@@ -33,10 +52,10 @@ function Login({ onSuccess, onForgotPassword }) {
       if (result.success) {
         if (onSuccess) onSuccess()
       } else {
-        setError(result.error || 'Login failed')
+        setError(formatAuthErrorMessage(result, 'Login failed'))
       }
     } catch (err) {
-      setError(err.message || 'Login failed')
+      setError(getFriendlyAuthErrorMessage(err.message || 'Login failed'))
     } finally {
       setLoading(false)
     }
@@ -47,7 +66,7 @@ function Login({ onSuccess, onForgotPassword }) {
       try {
         await googleLogin()
       } catch (err) {
-        setError(err.message || 'Google login failed')
+        setError(getFriendlyAuthErrorMessage(err.message || 'Google login failed'))
       }
     }
   }
@@ -59,14 +78,18 @@ function Login({ onSuccess, onForgotPassword }) {
       </div>
 
       {error && (
-        <div style={{
-          backgroundColor: '#fee2e2',
-          color: '#dc2626',
-          padding: '12px',
-          borderRadius: '8px',
-          fontSize: '14px',
-          marginBottom: '16px'
-        }}>
+        <div
+          style={{
+            backgroundColor: '#fef2f2',
+            color: '#b91c1c',
+            padding: '12px 14px',
+            borderRadius: '8px',
+            fontSize: '14px',
+            lineHeight: 1.45,
+            marginBottom: '16px',
+            border: '1px solid #fecaca'
+          }}
+        >
           {error}
         </div>
       )}
@@ -76,12 +99,13 @@ function Login({ onSuccess, onForgotPassword }) {
         <input
           id="signin-email"
           name="email"
-          type="email"
+          type="text"
+          inputMode="email"
           autoComplete="email"
           placeholder="Email address"
           className="auth-input"
-          required
           disabled={loading}
+          onInput={(event) => clearInputValidity(event.target)}
         />
       </div>
 
@@ -142,4 +166,3 @@ function Login({ onSuccess, onForgotPassword }) {
 }
 
 export default Login
-

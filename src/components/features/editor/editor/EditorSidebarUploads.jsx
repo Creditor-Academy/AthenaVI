@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { MdCloudUpload } from 'react-icons/md';
 import { predefinedMedia, predefinedVideos } from '../../../../constants/editorData';
 import assetService from '../../../../services/assetService';
+import { setCanvasDragData } from '../../../../utils/editorDragDrop';
 
 const EditorSidebarUploads = ({ addLayer, workspaceId, onUploadError }) => {
   const [assets, setAssets] = useState([]);
@@ -56,6 +57,14 @@ const EditorSidebarUploads = ({ addLayer, workspaceId, onUploadError }) => {
     }
   };
 
+  const bindMediaDrag = (type, content) => ({
+    draggable: type === 'image',
+    onDragStart: (e) => {
+      if (type !== 'image') return;
+      setCanvasDragData(e, { type: 'image', content });
+    },
+  });
+
   const openFilePicker = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -99,21 +108,29 @@ const EditorSidebarUploads = ({ addLayer, workspaceId, onUploadError }) => {
           {assets.map((asset) => (
             <div
               key={asset.id}
-              className="media-item"
+              className={`media-item${asset.mediaType === 'image' ? ' media-item--draggable' : ''}`}
               onClick={() =>
                 addLayer(asset.mediaType || 'image', {
                   url: asset.url,
                   assetId: asset.id,
                 })
               }
-              title={`Add ${asset.name}`}
+              title={
+                asset.mediaType === 'image'
+                  ? `Add or drag ${asset.name} onto canvas or a frame`
+                  : `Add ${asset.name}`
+              }
+              {...bindMediaDrag(asset.mediaType || 'image', {
+                url: asset.url,
+                assetId: asset.id,
+              })}
             >
               {asset.mediaType === 'video' ? (
                 <video src={asset.url} muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : asset.mediaType === 'audio' ? (
                 <div style={{ padding: 8, fontSize: 10, textAlign: 'center' }}>{asset.name}</div>
               ) : (
-                <img src={asset.url} alt={asset.name} />
+                <img src={asset.url} alt={asset.name} draggable={false} />
               )}
             </div>
           ))}
@@ -126,14 +143,19 @@ const EditorSidebarUploads = ({ addLayer, workspaceId, onUploadError }) => {
           {[...predefinedMedia, ...predefinedVideos].map((media) => (
             <div
               key={media.id}
-              className="media-item"
+              className={`media-item${(media.type || 'image') === 'image' ? ' media-item--draggable' : ''}`}
               onClick={() => addLayer(media.type || 'image', media.full)}
-              title={`Add ${media.name}`}
+              title={
+                (media.type || 'image') === 'image'
+                  ? `Add or drag ${media.name} onto canvas or a frame`
+                  : `Add ${media.name}`
+              }
+              {...bindMediaDrag(media.type || 'image', media.full)}
             >
               {media.type === 'video' ? (
                 <video src={media.full} muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
-                <img src={media.image} alt={media.name} />
+                <img src={media.image} alt={media.name} draggable={false} />
               )}
             </div>
           ))}

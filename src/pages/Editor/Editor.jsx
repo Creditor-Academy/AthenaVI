@@ -52,6 +52,12 @@ import {
 import { useEditorHistory } from '../../hooks/useEditorHistory'
 import { useEditorUx } from '../../hooks/useEditorUx'
 import { normalizeClipStack, normalizeClipsToScene } from '../../utils/editorLayerUtils'
+import {
+  findTopFrameAtPoint,
+  resolveDropAssetId,
+  resolveDropImageSrc,
+} from '../../utils/editorDragDrop'
+import { getDefaultClipPlacement } from '../../utils/editorPlacementUtils'
 import { normalizeSceneClips } from '../../utils/clipLayout'
 import { prepareTemplateSceneForEditor } from '../../utils/templateSceneUtils'
 import { saveVersionSnapshot, loadVersionSnapshot, listVersionSnapshots } from '../../utils/editorVersionHistory'
@@ -409,8 +415,10 @@ function Create({ onBack, initialConfig = null }) {
   }, [activeSceneId, project.scenes])
 
   const projectRef = useRef(project)
+  const activeSceneIdRef = useRef(activeSceneId)
   const insertAfterIndexRef = useRef(null)
   projectRef.current = project
+  activeSceneIdRef.current = activeSceneId
   const saveProjectRef = useRef(null)
 
   // Fetch the latest project state from the backend on mount
@@ -711,8 +719,8 @@ function Create({ onBack, initialConfig = null }) {
 
     const newClip = {
       id: `clip_${Date.now()}`,
-      type: type === 'image' ? 'image' : type === 'video' ? 'video' : type === 'avatar' ? 'avatar' : type === 'shape' ? 'shape' : type === 'audio' ? 'audio' : 'text',
-      src: (type === 'image' || type === 'video' || type === 'avatar' || type === 'audio') ? mediaSrc : null,
+      type: type === 'image' ? 'image' : type === 'video' ? 'video' : type === 'avatar' ? 'avatar' : type === 'shape' ? 'shape' : type === 'audio' ? 'audio' : type === 'icon' ? 'image' : 'text',
+      src: (type === 'image' || type === 'video' || type === 'avatar' || type === 'audio' || type === 'icon') ? mediaSrc : null,
       content: type === 'text'
         ? { text: typeof content === 'string' ? content : '' }
         : assetId
@@ -722,19 +730,24 @@ function Create({ onBack, initialConfig = null }) {
       startTime: 0.0,
       endTime: targetScene.duration || 8.0,
       position: { x: 50, y: 50 },
-      size: type === 'avatar' ? { width: 250, height: 330 } : type === 'shape' ? { width: parseInt(content?.style?.width) || 200, height: parseInt(content?.style?.height) || 200 } : { width: 400, height: 400 },
-      role: type === 'avatar' ? 'avatar' : undefined,
+      size: { width: 400, height: 400 },
+      role: type === 'avatar' ? 'avatar' : meta?.role,
+      shapeKey: type === 'shape' && content?.id ? content.id : meta?.shapeKey,
       opacity: 1.0,
       style: type === 'text'
         ? {
-            fontSize: 32,
+            fontSize: 48,
             fontWeight: '700',
             color: '#1a1b1c',
             textAlign: 'left',
             fontFamily: 'Inter, system-ui, sans-serif',
             ...(meta?.style || {}),
           }
-        : type === 'shape' ? content?.style : undefined,
+        : type === 'shape'
+          ? content?.style
+          : type === 'icon'
+            ? { objectFit: 'contain', ...(meta?.style || {}) }
+            : undefined,
       effects: {
         brightness: 1,
         contrast: 1,
@@ -755,6 +768,10 @@ function Create({ onBack, initialConfig = null }) {
       const centered = getCenteredAvatarPlacement(project.resolution)
       newClip.position = centered.position
       newClip.size = centered.size
+    } else if (!meta?.isBackground) {
+      const placement = getDefaultClipPlacement(type, content, meta)
+      newClip.position = placement.position
+      newClip.size = placement.size
     }
 
     setProject(prev => ({
@@ -798,21 +815,50 @@ function Create({ onBack, initialConfig = null }) {
     setTimeout(() => saveProject(false), 250)
   }
 
-  // Listen for canvas-drop events (drag from sidebar to canvas)
-  useEffect(() => {
-    const handleCanvasDrop = (e) => {
-      const { type, content, x, y } = e.detail
-      const layerId = addLayer(type, content)
-      // Update the newly added layer's position
-      if (layerId) {
-        setTimeout(() => {
-          updateLayerPosition(layerId, x, y)
-        }, 50)
+  const fillShapeWithImage = useCallback((layerId, src, assetId = null) => {
+    if (!activeSceneId || !layerId || !src) return
+    setProject((prev) => ({
+      ...prev,
+      updatedAt: new Date().toISOString(),
+      scenes: prev.scenes.map((s) => {
+        if (s.id !== activeSceneId) return s
+        return {
+          ...s,
+          clips: s.clips.map((clip) =>
+            clip.id === layerId && clip.type === 'shape' && clip.role === 'frame'
+              ? {
+                  ...clip,
+                  fillSrc: src,
+                  fillAssetId: assetId || undefined,
+                  fillObjectFit: clip.fillObjectFit || 'cover',
+                  _userPlaced: true,
+                }
+              : clip
+          ),
+        }
+      }),
+    }), { history: true })
+    setSelectedLayerIds([layerId])
+    setSelectedLayerId(layerId)
+    setIsRightSidebarOpen(true)
+  }, [activeSceneId, setProject])
+
+  const handleCanvasDrop = (detail) => {
+    const { type, content, x, y } = detail || {}
+    const sceneId = activeSceneIdRef.current
+    const scene = projectRef.current.scenes.find((s) => s.id === sceneId)
+
+    if (type === 'image' && typeof x === 'number' && typeof y === 'number') {
+      const frame = findTopFrameAtPoint(scene?.clips, x, y)
+      const src = resolveDropImageSrc(content)
+      if (frame && src) {
+        fillShapeWithImage(frame.id, src, resolveDropAssetId(content))
+        return
       }
     }
-    window.addEventListener('canvas-drop', handleCanvasDrop)
-    return () => window.removeEventListener('canvas-drop', handleCanvasDrop)
-  }, [activeSceneId, project.scenes])
+
+    addLayer(type, content, typeof x === 'number' && typeof y === 'number' ? { dropAt: { x, y } } : undefined)
+  }
 
   const deleteLayer = (sceneId, layerId) => {
     setProject(prev => ({
@@ -2258,6 +2304,8 @@ function Create({ onBack, initialConfig = null }) {
                 onCommitLayerPosition={handleCommitLayerPosition}
                 onUpdateLayerSize={updateLayerSize}
                 updateClipContent={updateClipContent}
+                onFillShape={fillShapeWithImage}
+                onCanvasDrop={handleCanvasDrop}
                 editorView={editorView}
                 workspaceId={project.workspaceId}
                 projectId={project.id}

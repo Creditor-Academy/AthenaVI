@@ -31,6 +31,8 @@ const API_CONFIG = {
     
     // User Management
     USER: {
+      PROFILE: '/api/user/profile',
+      CAPABILITIES: '/api/user/capabilities',
       GET_ALL: '/api/user/getall',
       // user settings endpoints are under /api/user/settings
       USER_SETTINGS: {

@@ -1,5 +1,6 @@
 const TEMPLATE_SOURCES = [
   { file: 'corporate', category: 'Corporate' },
+  { file: 'pitch_template', category: 'Pitch' },
   { file: 'educational', category: 'Training' },
   { file: 'marketing', category: 'Marketing' },
   { file: 'social', category: 'Social' },

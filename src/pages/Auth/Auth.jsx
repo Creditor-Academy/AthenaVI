@@ -474,7 +474,10 @@ function Auth({ onAuthComplete, onClose }) {
                 {showForgotPassword ? (
                   <ForgotPassword onBack={handleBackToLogin} onSuccess={handleAuthSuccess} />
                 ) : (
-                  <Login onSuccess={handleAuthSuccess} onForgotPassword={handleForgotPasswordClick} />
+                  <Login
+                    onSuccess={handleAuthSuccess}
+                    onForgotPassword={handleForgotPasswordClick}
+                  />
                 )}
               </div>
             </div>

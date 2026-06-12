@@ -1,5 +1,5 @@
 import { MdHelpOutline } from 'react-icons/md'
-import { dashboardSidebarGroups } from '../../../constants/dashboardNav'
+import { mainDashboardSidebarGroups } from '../../../constants/dashboardNav'
 
 const STORAGE_USED_GB = 0.82
 const STORAGE_LIMIT_GB = 2.0
@@ -15,7 +15,7 @@ function DashboardSidebar({
   onNavigate,
   onOpenTranslate,
   onOpenAI,
-  onCloseMobile
+  onCloseMobile,
 }) {
   const handleItem = (item) => {
     if (item.id === '__translate__') {
@@ -37,7 +37,7 @@ function DashboardSidebar({
   return (
     <aside className="dashboard-sidebar-nav" aria-label="Dashboard navigation">
       <div className="dashboard-sidebar-nav-scroll">
-        {dashboardSidebarGroups.map((group, gi) => (
+        {mainDashboardSidebarGroups.map((group, gi) => (
           <div key={gi} className="dashboard-sidebar-group">
             {group.label && (
               <div className="dashboard-sidebar-section-label">{group.label}</div>

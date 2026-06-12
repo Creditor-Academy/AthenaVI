@@ -15,6 +15,13 @@ import {
 import { getClipZIndex, isBackgroundClip, sortClipsForRender } from '../../../../utils/editorLayerUtils'
 import { resolveClipRect } from '../../../../utils/clipLayout'
 import { resolveClipMediaSrc, isVideoMedia } from '../../../../utils/heygenVideo'
+import {
+  canAcceptImageFill,
+  parseCanvasDragData,
+  resolveDropAssetId,
+  resolveDropImageSrc,
+} from '../../../../utils/editorDragDrop'
+import { clientToComposition } from '../../../../utils/editorPlacementUtils'
 import CanvasGuidesOverlay from './CanvasGuidesOverlay'
 import './TextSidebarPanel.css'
 
@@ -315,6 +322,7 @@ const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition,
     borderRadius: s.borderRadius || '12px',
     border: borderStyle,
     boxShadow: s.boxShadow || 'none',
+    clipPath: s.clipPath || undefined,
     background: overlayMode ? 'transparent' : (clip.src ? 'transparent' : (s.backgroundColor || s.background || 'rgba(0,0,0,0.04)')),
   })
 
@@ -340,7 +348,7 @@ const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition,
           alt=""
           style={{
             width: '100%', height: '100%',
-            objectFit: s.objectFit || 'cover',
+            objectFit: s.objectFit || (clip.role === 'icon' ? 'contain' : 'cover'),
             display: 'block',
             pointerEvents: 'none',
           }}
@@ -508,22 +516,104 @@ const VideoClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePo
   )
 }
 
-const ShapeClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition, onUpdateSize, onCommit, overlayMode = false }) => {
+const ShapeClip = ({
+  clip,
+  isSelected,
+  onSelect,
+  displayScale,
+  onUpdatePosition,
+  onUpdateSize,
+  onCommit,
+  onFillShape,
+  overlayMode = false,
+}) => {
+  const [isDropTarget, setIsDropTarget] = useState(false)
   const { animState } = useComputedEntranceState(clip)
+  const hasFill = !!clip.fillSrc
   const wrapperStyle = buildLiveAnimStyle(clipBase(clip, isSelected), clip, animState, {
     overlayMode,
-    background: overlayMode ? 'transparent' : (clip.style?.backgroundColor || clip.style?.background || 'rgba(0,0,0,0.06)'),
+    overflow: 'hidden',
+    background: overlayMode
+      ? 'transparent'
+      : hasFill
+        ? 'transparent'
+        : (clip.style?.backgroundColor || clip.style?.background || 'rgba(0,0,0,0.06)'),
     borderRadius: clip.style?.borderRadius || '0',
     border: clip.style?.border || 'none',
     boxShadow: clip.style?.boxShadow || 'none',
     clipPath: clip.style?.clipPath || undefined,
   })
 
+  const acceptFill = canAcceptImageFill(clip) && onFillShape
+
+  const handleDragOver = (e) => {
+    if (!acceptFill) return
+    const types = Array.from(e.dataTransfer?.types || [])
+    const isImageDrag = types.includes('application/json') || types.includes('Files')
+    if (!isImageDrag) return
+    e.preventDefault()
+    e.stopPropagation()
+    e.dataTransfer.dropEffect = 'copy'
+    setIsDropTarget(true)
+  }
+
+  const handleDragLeave = (e) => {
+    if (!acceptFill) return
+    e.preventDefault()
+    setIsDropTarget(false)
+  }
+
+  const handleDrop = (e) => {
+    if (!acceptFill) return
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDropTarget(false)
+
+    const data = parseCanvasDragData(e)
+    if (data?.type === 'image') {
+      const src = resolveDropImageSrc(data.content)
+      if (src) {
+        onFillShape(clip.id, src, resolveDropAssetId(data.content))
+        onSelect(clip.id, e)
+      }
+      return
+    }
+
+    const file = e.dataTransfer.files?.[0]
+    if (file?.type?.startsWith('image/')) {
+      onFillShape(clip.id, URL.createObjectURL(file))
+      onSelect(clip.id, e)
+    }
+  }
+
   return (
   <div
+    className={isDropTarget ? 'shape-clip shape-clip--drop-target' : 'shape-clip'}
     onClick={(e) => { e.stopPropagation(); onSelect(clip.id, e) }}
+    onDragOver={handleDragOver}
+    onDragLeave={handleDragLeave}
+    onDrop={handleDrop}
     style={wrapperStyle}
   >
+    {hasFill && (
+      <img
+        src={clip.fillSrc}
+        alt=""
+        draggable={false}
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: clip.fillObjectFit || 'cover',
+          display: 'block',
+          pointerEvents: 'none',
+        }}
+      />
+    )}
+    {isSelected && !overlayMode && !hasFill && clip.role === 'frame' && (
+      <div className="shape-clip-drop-hint" aria-hidden>
+        Drop image here
+      </div>
+    )}
     {isSelected && !overlayMode && (
       <SelectionOverlay
         clip={clip}
@@ -548,6 +638,8 @@ const LiveCanvasRenderer = ({
   onUpdateLayerPosition,
   onCommitLayerPosition,
   onUpdateLayerSize,
+  onFillShape,
+  onCanvasDrop,
   showGuides = false,
   showSafeZone = true,
   gridSize = 20,
@@ -632,6 +724,47 @@ const LiveCanvasRenderer = ({
     if (onUpdateLayerSize) onUpdateLayerSize(clipId, w, h)
   }, [onUpdateLayerSize])
 
+  const handleCompositionDragOver = useCallback((e) => {
+    const types = Array.from(e.dataTransfer?.types || [])
+    if (!types.includes('application/json') && !types.includes('Files')) return
+    e.preventDefault()
+    e.stopPropagation()
+    e.dataTransfer.dropEffect = 'copy'
+  }, [])
+
+  const handleCompositionDrop = useCallback((e) => {
+    if (!onCanvasDrop) return
+    e.preventDefault()
+    e.stopPropagation()
+
+    const { x, y } = clientToComposition(
+      e.clientX,
+      e.clientY,
+      containerRef.current,
+      displayScale,
+      displayOffset,
+      compositionWidth,
+      compositionHeight
+    )
+
+    const data = parseCanvasDragData(e)
+    if (data?.type) {
+      onCanvasDrop({ ...data, x, y })
+      return
+    }
+
+    const file = e.dataTransfer.files?.[0]
+    if (file?.type?.startsWith('image/')) {
+      onCanvasDrop({
+        type: 'image',
+        content: URL.createObjectURL(file),
+        x,
+        y,
+        isBlob: true,
+      })
+    }
+  }, [onCanvasDrop, displayScale, displayOffset, compositionWidth, compositionHeight])
+
   return (
     <div
       ref={containerRef}
@@ -648,6 +781,8 @@ const LiveCanvasRenderer = ({
     >
       {/* Fixed composition virtual canvas, scaled to fit or cover */}
       <div
+        onDragOver={handleCompositionDragOver}
+        onDrop={handleCompositionDrop}
         style={{
           width: compositionWidth,
           height: compositionHeight,
@@ -688,7 +823,7 @@ const LiveCanvasRenderer = ({
           if (clip.type === 'image') return <ImageClip key={clip.id} {...sharedProps} />
           if (clip.type === 'avatar') return <AvatarClip key={clip.id} {...sharedProps} scene={scene} />
           if (clip.type === 'video') return <VideoClip key={clip.id} {...sharedProps} scene={scene} />
-          if (clip.type === 'shape') return <ShapeClip key={clip.id} {...sharedProps} />
+          if (clip.type === 'shape') return <ShapeClip key={clip.id} {...sharedProps} onFillShape={onFillShape} />
           return null
         })}
       </div>

@@ -56,6 +56,33 @@ class UserService {
     }
   }
 
+  // Platform superadmin capabilities (for admin portal toggle visibility)
+  async getUserCapabilities() {
+    try {
+      const response = await fetch(buildUrl('/api/user/capabilities'), {
+        method: 'GET',
+        headers: getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Authentication required - Please log in again');
+        }
+        throw new Error(`Failed to fetch capabilities: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const caps = data.data || {};
+      return {
+        isPlatformSuperadmin: Boolean(caps.isPlatformSuperadmin),
+        canAccessSuperadminPortal: Boolean(caps.canAccessSuperadminPortal),
+      };
+    } catch (error) {
+      console.error('Error fetching user capabilities:', error);
+      throw error;
+    }
+  }
+
   // Update user profile (name, phoneNumber only)
   async updateUserProfile(profileData) {
     try {

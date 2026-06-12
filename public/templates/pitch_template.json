@@ -1,0 +1,3946 @@
+{
+  "category": "Pitch",
+  "template": {
+    "id": "company-profile-pitch",
+    "name": "Company Profile Pitch Template",
+    "category": "Pitch",
+    "totalSlides": 8,
+    "canvasSize": {
+      "width": 1280,
+      "height": 720
+    },
+    "colorPalette": {
+      "primary": "#1e40af",
+      "secondary": "#3b82f6",
+      "light": "#bfdbfe",
+      "pale": "#dbeafe",
+      "navy": "#1e3a8a",
+      "dark": "#0f172a",
+      "white": "#ffffff",
+      "gray": "#64748b"
+    },
+    "description": "Professional 8-slide company profile pitch deck: cover, introduction, value proposition, services, USP, milestones, contact, and promo."
+  },
+  "scenes": [
+    {
+      "id": "scene_01",
+      "slideIndex": 1,
+      "title": "Cover",
+      "layoutType": "Cover",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "background": {
+        "type": "solid",
+        "value": "#ffffff"
+      },
+      "zones": {
+        "hero": {
+          "x": 448,
+          "y": 0,
+          "width": 832,
+          "height": 463
+        },
+        "logo": {
+          "x": 73,
+          "y": 74,
+          "width": 182,
+          "height": 74
+        },
+        "title": {
+          "x": 73,
+          "y": 244,
+          "width": 601,
+          "height": 430
+        },
+        "avatar": {
+          "x": 1016,
+          "y": 444,
+          "width": 200,
+          "height": 240
+        }
+      },
+      "description": "Company profile cover with hero image, logo, and title.",
+      "flow": "Cover → Intro",
+      "duration": 8,
+      "tags": [
+        "pitch",
+        "cover",
+        "title",
+        "branding"
+      ],
+      "clips": [
+        {
+          "id": "s_blue_main",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-blue-panel",
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 420,
+            "y": 0
+          },
+          "size": {
+            "width": 860,
+            "height": 520
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#3b82f6",
+            "clipPath": "polygon(12% 0%, 100% 0%, 100% 100%, 0% 72%)"
+          }
+        },
+        {
+          "id": "s_blue_light",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-light-panel",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 500,
+            "y": 40
+          },
+          "size": {
+            "width": 780,
+            "height": 380
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#dbeafe",
+            "clipPath": "polygon(8% 0%, 100% 0%, 100% 85%, 0% 100%)"
+          }
+        },
+        {
+          "id": "s_accent_line",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-accent-bar",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 73,
+            "y": 418
+          },
+          "size": {
+            "width": 140,
+            "height": 8
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1e40af",
+            "borderRadius": "4px"
+          }
+        },
+        {
+          "id": "s_circle_ring",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-circle-ring",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 930,
+            "y": 268
+          },
+          "size": {
+            "width": 210,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "transparent",
+            "border": "8px solid #1e3a8a",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "img_hero",
+          "type": "image",
+          "assetKey": "pitch-cover-hero",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 384,
+            "y": 36
+          },
+          "size": {
+            "width": 832,
+            "height": 463
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/1170412/pexels-photo-1170412.jpeg",
+          "placeholder": true,
+          "alt": "Modern office corridor",
+          "style": {
+            "borderRadius": "0",
+            "objectFit": "cover"
+          }
+        },
+        {
+          "id": "img_circle",
+          "type": "image",
+          "assetKey": "pitch-cover-circle",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 945,
+            "y": 283
+          },
+          "size": {
+            "width": 180,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg",
+          "placeholder": true,
+          "alt": "Team meeting",
+          "style": {
+            "borderRadius": "50%",
+            "objectFit": "cover"
+          }
+        },
+        {
+          "id": "img_logo",
+          "type": "image",
+          "assetKey": "pitch-logo",
+          "role": "logo",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 73,
+            "y": 74
+          },
+          "size": {
+            "width": 220,
+            "height": 56
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://placehold.co/390x74/1e40af/ffffff?text=Your+Logo",
+          "placeholder": true,
+          "alt": "Company logo",
+          "style": {
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "t_free",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 73,
+            "y": 244
+          },
+          "size": {
+            "width": 200,
+            "height": 80
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "FREE",
+          "style": {
+            "fontSize": 66,
+            "fontWeight": "800",
+            "color": "#0f172a",
+            "fontFamily": "Segoe UI"
+          }
+        },
+        {
+          "id": "t_company",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 73,
+            "y": 318
+          },
+          "size": {
+            "width": 400,
+            "height": 80
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "COMPANY",
+          "style": {
+            "fontSize": 66,
+            "fontWeight": "800",
+            "color": "#1e40af",
+            "fontFamily": "Segoe UI"
+          }
+        },
+        {
+          "id": "t_profile",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 73,
+            "y": 392
+          },
+          "size": {
+            "width": 350,
+            "height": 80
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "PROFILE",
+          "style": {
+            "fontSize": 66,
+            "fontWeight": "800",
+            "color": "#0f172a",
+            "fontFamily": "Segoe UI"
+          }
+        },
+        {
+          "id": "t_sub",
+          "type": "text",
+          "role": "section-title",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 73,
+            "y": 560
+          },
+          "size": {
+            "width": 560,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "PRESENTATION TEMPLATE",
+          "style": {
+            "fontSize": 28,
+            "fontWeight": "400",
+            "color": "#0f172a",
+            "fontFamily": "Segoe UI"
+          }
+        },
+        {
+          "id": "t_footer",
+          "type": "text",
+          "role": "placeholder",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 150,
+            "y": 620
+          },
+          "size": {
+            "width": 200,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Edit Text Here",
+          "style": {
+            "fontSize": 14,
+            "fontWeight": "400",
+            "color": "#64748b",
+            "fontFamily": "Segoe UI"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1016,
+            "y": 444
+          },
+          "size": {
+            "width": 200,
+            "height": 240
+          },
+          "startTime": 0,
+          "endTime": 8
+        }
+      ]
+    },
+    {
+      "id": "scene_02",
+      "slideIndex": 2,
+      "title": "Introduction",
+      "layoutType": "TwoColumn",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "background": {
+        "type": "solid",
+        "value": "#ffffff"
+      },
+      "zones": {
+        "content": {
+          "x": 73,
+          "y": 103,
+          "width": 500,
+          "height": 600
+        },
+        "image": {
+          "x": 585,
+          "y": 198,
+          "width": 686,
+          "height": 434
+        },
+        "avatar": {
+          "x": 1016,
+          "y": 444,
+          "width": 200,
+          "height": 240
+        }
+      },
+      "description": "Mission, purpose, and service pillars with hero image.",
+      "flow": "Intro → Value",
+      "duration": 8,
+      "tags": [
+        "pitch",
+        "introduction",
+        "mission"
+      ],
+      "clips": [
+        {
+          "id": "s_panel",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 560,
+            "y": 120
+          },
+          "size": {
+            "width": 700,
+            "height": 500
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#dbeafe",
+            "borderRadius": "12px"
+          }
+        },
+        {
+          "id": "s_outline",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 540,
+            "y": 100
+          },
+          "size": {
+            "width": 740,
+            "height": 540
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "transparent",
+            "border": "3px solid #1e3a8a",
+            "borderRadius": "12px"
+          }
+        },
+        {
+          "id": "s_trap",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 520,
+            "y": 480
+          },
+          "size": {
+            "width": 400,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#bfdbfe",
+            "clipPath": "polygon(0% 30%, 100% 0%, 100% 100%, 0% 100%)"
+          }
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 73,
+            "y": 100
+          },
+          "size": {
+            "width": 500,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Introduction",
+          "style": {
+            "fontSize": 48,
+            "fontWeight": "800",
+            "color": "#0f172a",
+            "fontFamily": "Segoe UI"
+          }
+        },
+        {
+          "id": "t_mission",
+          "type": "text",
+          "role": "section-header",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 73,
+            "y": 360
+          },
+          "size": {
+            "width": 500,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Mission and Purpose",
+          "style": {
+            "fontSize": 24,
+            "fontWeight": "700",
+            "color": "#1e40af",
+            "fontFamily": "Segoe UI"
+          }
+        },
+        {
+          "id": "t_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 73,
+            "y": 405
+          },
+          "size": {
+            "width": 480,
+            "height": 90
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text. Insert your sample text here.",
+          "style": {
+            "fontSize": 16,
+            "fontWeight": "400",
+            "color": "#0f172a",
+            "lineHeight": 1.5,
+            "fontFamily": "Segoe UI"
+          }
+        },
+        {
+          "id": "ico_serve_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 73,
+            "y": 510
+          },
+          "size": {
+            "width": 64,
+            "height": 64
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "ico_serve",
+          "type": "image",
+          "assetKey": "idea",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 83,
+            "y": 520
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/light-on.png",
+          "placeholder": true,
+          "alt": "Idea",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_serve_h",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 140,
+            "y": 512
+          },
+          "size": {
+            "width": 200,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Who we Serve",
+          "style": {
+            "fontSize": 18,
+            "fontWeight": "700",
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "t_serve_b",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 73,
+            "y": 548
+          },
+          "size": {
+            "width": 240,
+            "height": 70
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "This is a sample text. Insert your desired text here. You can add text.",
+          "style": {
+            "fontSize": 14,
+            "fontWeight": "400",
+            "color": "#64748b",
+            "lineHeight": 1.4
+          }
+        },
+        {
+          "id": "ico_why_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 340,
+            "y": 510
+          },
+          "size": {
+            "width": 64,
+            "height": 64
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "ico_why",
+          "type": "image",
+          "assetKey": "paper-plane",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 350,
+            "y": 520
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/sent.png",
+          "placeholder": true,
+          "alt": "Paper plane",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_why_h",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 408,
+            "y": 512
+          },
+          "size": {
+            "width": 200,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Why we Serve",
+          "style": {
+            "fontSize": 18,
+            "fontWeight": "700",
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "t_why_b",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 340,
+            "y": 548
+          },
+          "size": {
+            "width": 240,
+            "height": 70
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "This is a sample text. Insert your desired text here. You can add text.",
+          "style": {
+            "fontSize": 14,
+            "fontWeight": "400",
+            "color": "#64748b",
+            "lineHeight": 1.4
+          }
+        },
+        {
+          "id": "img_intro",
+          "type": "image",
+          "assetKey": "pitch-intro",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 530,
+            "y": 198
+          },
+          "size": {
+            "width": 686,
+            "height": 434
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3862132/pexels-photo-3862132.jpeg",
+          "placeholder": true,
+          "alt": "Factory automation",
+          "style": {
+            "borderRadius": "16px",
+            "objectFit": "cover"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1016,
+            "y": 444
+          },
+          "size": {
+            "width": 200,
+            "height": 240
+          },
+          "startTime": 0,
+          "endTime": 8
+        }
+      ]
+    },
+    {
+      "id": "scene_03",
+      "slideIndex": 3,
+      "title": "Value Proposition",
+      "layoutType": "StatsHighlight",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "background": {
+        "type": "solid",
+        "value": "#ffffff"
+      },
+      "zones": {
+        "content": {
+          "x": 73,
+          "y": 103,
+          "width": 720,
+          "height": 540
+        },
+        "image": {
+          "x": 834,
+          "y": 138,
+          "width": 515,
+          "height": 515
+        },
+        "avatar": {
+          "x": 1016,
+          "y": 444,
+          "width": 200,
+          "height": 240
+        }
+      },
+      "description": "Pain point, solution, and key benefit stats.",
+      "flow": "Value → Services",
+      "duration": 8,
+      "tags": [
+        "pitch",
+        "value",
+        "stats"
+      ],
+      "clips": [
+        {
+          "id": "s_right",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 820,
+            "y": 0
+          },
+          "size": {
+            "width": 460,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#dbeafe"
+          }
+        },
+        {
+          "id": "s_diamond_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 860,
+            "y": 150
+          },
+          "size": {
+            "width": 420,
+            "height": 420
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1e3a8a",
+            "clipPath": "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)",
+            "borderRadius": "8px"
+          }
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 73,
+            "y": 100
+          },
+          "size": {
+            "width": 600,
+            "height": 56
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Value Proposition",
+          "style": {
+            "fontSize": 48,
+            "fontWeight": "800",
+            "color": "#0f172a",
+            "fontFamily": "Segoe UI"
+          }
+        },
+        {
+          "id": "ico_pain_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 73,
+            "y": 200
+          },
+          "size": {
+            "width": 60,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "ico_pain",
+          "type": "image",
+          "assetKey": "target",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 82,
+            "y": 209
+          },
+          "size": {
+            "width": 42,
+            "height": 42
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/bullseye.png",
+          "placeholder": true,
+          "alt": "Target",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_pain_h",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 140,
+            "y": 202
+          },
+          "size": {
+            "width": 200,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Pain Point",
+          "style": {
+            "fontSize": 20,
+            "fontWeight": "700",
+            "color": "#1e40af"
+          }
+        },
+        {
+          "id": "t_pain_b",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 73,
+            "y": 238
+          },
+          "size": {
+            "width": 520,
+            "height": 70
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text. Insert your sample text here.",
+          "style": {
+            "fontSize": 14,
+            "color": "#64748b",
+            "lineHeight": 1.45
+          }
+        },
+        {
+          "id": "ico_sol_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 73,
+            "y": 320
+          },
+          "size": {
+            "width": 60,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "ico_sol",
+          "type": "image",
+          "assetKey": "solution",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 82,
+            "y": 329
+          },
+          "size": {
+            "width": 42,
+            "height": 42
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/puzzle.png",
+          "placeholder": true,
+          "alt": "Solution",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_sol_h",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 140,
+            "y": 322
+          },
+          "size": {
+            "width": 200,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Our Solution",
+          "style": {
+            "fontSize": 20,
+            "fontWeight": "700",
+            "color": "#1e40af"
+          }
+        },
+        {
+          "id": "t_sol_b",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 73,
+            "y": 358
+          },
+          "size": {
+            "width": 520,
+            "height": 70
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text. Insert your sample text here.",
+          "style": {
+            "fontSize": 14,
+            "color": "#64748b",
+            "lineHeight": 1.45
+          }
+        },
+        {
+          "id": "s_divider",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 73,
+            "y": 450
+          },
+          "size": {
+            "width": 560,
+            "height": 2
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#bfdbfe"
+          }
+        },
+        {
+          "id": "t_b1_l",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 73,
+            "y": 470
+          },
+          "size": {
+            "width": 160,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Key Benefit 1",
+          "style": {
+            "fontSize": 14,
+            "fontWeight": "600",
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "t_b1_v",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 73,
+            "y": 495
+          },
+          "size": {
+            "width": 260,
+            "height": 72
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "$300M",
+          "style": {
+            "fontSize": 56,
+            "fontWeight": "800",
+            "color": "#1e3a8a"
+          }
+        },
+        {
+          "id": "t_b1_d",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 17,
+          "position": {
+            "x": 73,
+            "y": 570
+          },
+          "size": {
+            "width": 280,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "This is a sample text. Insert your desired text here. You can add sample text.",
+          "style": {
+            "fontSize": 13,
+            "color": "#64748b",
+            "lineHeight": 1.4
+          }
+        },
+        {
+          "id": "t_b2_l",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 18,
+          "position": {
+            "x": 380,
+            "y": 470
+          },
+          "size": {
+            "width": 160,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Key Benefit 2",
+          "style": {
+            "fontSize": 14,
+            "fontWeight": "600",
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "t_b2_v",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 19,
+          "position": {
+            "x": 380,
+            "y": 495
+          },
+          "size": {
+            "width": 260,
+            "height": 72
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "5.6M",
+          "style": {
+            "fontSize": 56,
+            "fontWeight": "800",
+            "color": "#1e3a8a"
+          }
+        },
+        {
+          "id": "t_b2_d",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 20,
+          "position": {
+            "x": 380,
+            "y": 570
+          },
+          "size": {
+            "width": 280,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "This is a sample text. Insert your desired text here. You can add sample text.",
+          "style": {
+            "fontSize": 13,
+            "color": "#64748b",
+            "lineHeight": 1.4
+          }
+        },
+        {
+          "id": "img_value",
+          "type": "image",
+          "assetKey": "pitch-value",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 836,
+            "y": 168
+          },
+          "size": {
+            "width": 380,
+            "height": 380
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/5469257/pexels-photo-5469257.jpeg",
+          "placeholder": true,
+          "alt": "Business meeting",
+          "style": {
+            "clipPath": "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)",
+            "objectFit": "cover"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1016,
+            "y": 444
+          },
+          "size": {
+            "width": 200,
+            "height": 240
+          },
+          "startTime": 0,
+          "endTime": 8
+        }
+      ]
+    },
+    {
+      "id": "scene_04",
+      "slideIndex": 4,
+      "title": "Services",
+      "layoutType": "ServiceGrid",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "background": {
+        "type": "solid",
+        "value": "#ffffff"
+      },
+      "zones": {
+        "header": {
+          "x": 73,
+          "y": 103,
+          "width": 844,
+          "height": 155
+        },
+        "grid": {
+          "x": 73,
+          "y": 410,
+          "width": 1200,
+          "height": 300
+        },
+        "avatar": {
+          "x": 1016,
+          "y": 444,
+          "width": 200,
+          "height": 240
+        }
+      },
+      "description": "Core offering with three service columns.",
+      "flow": "Services → USP",
+      "duration": 8,
+      "tags": [
+        "pitch",
+        "services",
+        "offering"
+      ],
+      "clips": [
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 73,
+            "y": 90
+          },
+          "size": {
+            "width": 400,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Services",
+          "style": {
+            "fontSize": 48,
+            "fontWeight": "800",
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "t_sub",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 73,
+            "y": 148
+          },
+          "size": {
+            "width": 400,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "The Core Offering",
+          "style": {
+            "fontSize": 28,
+            "fontWeight": "400",
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "t_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 73,
+            "y": 255
+          },
+          "size": {
+            "width": 540,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text. Insert your desired text here. You can add sample text. This is a sample text.",
+          "style": {
+            "fontSize": 15,
+            "color": "#64748b",
+            "lineHeight": 1.5
+          }
+        },
+        {
+          "id": "img_services",
+          "type": "image",
+          "assetKey": "pitch-services",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 616,
+            "y": 90
+          },
+          "size": {
+            "width": 600,
+            "height": 320
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3184296/pexels-photo-3184296.jpeg",
+          "placeholder": true,
+          "alt": "Business team",
+          "style": {
+            "clipPath": "polygon(18% 0%, 100% 0%, 100% 100%, 0% 100%)",
+            "borderRadius": "0 0 24px 0",
+            "objectFit": "cover"
+          }
+        },
+        {
+          "id": "ico_svc1_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 73,
+            "y": 400
+          },
+          "size": {
+            "width": 56,
+            "height": 56
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1e3a8a",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "ico_svc1",
+          "type": "image",
+          "assetKey": "arrow-growth",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 81,
+            "y": 408
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/increase.png",
+          "placeholder": true,
+          "alt": "Growth arrow",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_svc1_h",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 141,
+            "y": 402
+          },
+          "size": {
+            "width": 200,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Service 1",
+          "style": {
+            "fontSize": 18,
+            "fontWeight": "700",
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "t_svc1_b",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 73,
+            "y": 440
+          },
+          "size": {
+            "width": 300,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text.",
+          "style": {
+            "fontSize": 13,
+            "color": "#64748b",
+            "lineHeight": 1.4
+          }
+        },
+        {
+          "id": "chk1a_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 73,
+            "y": 510
+          },
+          "size": {
+            "width": 28,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#bfdbfe",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "chk1a",
+          "type": "image",
+          "assetKey": "check",
+          "role": "icon",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 77,
+            "y": 514
+          },
+          "size": {
+            "width": 20,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/checkmark.png",
+          "placeholder": true,
+          "alt": "Checkmark",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_chk1a",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 20,
+          "position": {
+            "x": 109,
+            "y": 508
+          },
+          "size": {
+            "width": 260,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "This is a sample text.",
+          "style": {
+            "fontSize": 14,
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "chk1b_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 73,
+            "y": 545
+          },
+          "size": {
+            "width": 28,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#bfdbfe",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "chk1b",
+          "type": "image",
+          "assetKey": "check",
+          "role": "icon",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 77,
+            "y": 549
+          },
+          "size": {
+            "width": 20,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/checkmark.png",
+          "placeholder": true,
+          "alt": "Checkmark",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_chk1b",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 23,
+          "position": {
+            "x": 109,
+            "y": 543
+          },
+          "size": {
+            "width": 260,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "You can add sample text.",
+          "style": {
+            "fontSize": 14,
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "ico_svc2_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 430,
+            "y": 400
+          },
+          "size": {
+            "width": 56,
+            "height": 56
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#3b82f6",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "ico_svc2",
+          "type": "image",
+          "assetKey": "arrow-growth",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 438,
+            "y": 408
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/increase.png",
+          "placeholder": true,
+          "alt": "Growth arrow",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_svc2_h",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 498,
+            "y": 402
+          },
+          "size": {
+            "width": 200,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Service 2",
+          "style": {
+            "fontSize": 18,
+            "fontWeight": "700",
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "t_svc2_b",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 17,
+          "position": {
+            "x": 430,
+            "y": 440
+          },
+          "size": {
+            "width": 300,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text.",
+          "style": {
+            "fontSize": 13,
+            "color": "#64748b",
+            "lineHeight": 1.4
+          }
+        },
+        {
+          "id": "chk2a_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 430,
+            "y": 510
+          },
+          "size": {
+            "width": 28,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#bfdbfe",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "chk2a",
+          "type": "image",
+          "assetKey": "check",
+          "role": "icon",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 434,
+            "y": 514
+          },
+          "size": {
+            "width": 20,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/checkmark.png",
+          "placeholder": true,
+          "alt": "Checkmark",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_chk2a",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 21,
+          "position": {
+            "x": 466,
+            "y": 508
+          },
+          "size": {
+            "width": 260,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "This is a sample text.",
+          "style": {
+            "fontSize": 14,
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "chk2b_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 430,
+            "y": 545
+          },
+          "size": {
+            "width": 28,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#bfdbfe",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "chk2b",
+          "type": "image",
+          "assetKey": "check",
+          "role": "icon",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 434,
+            "y": 549
+          },
+          "size": {
+            "width": 20,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/checkmark.png",
+          "placeholder": true,
+          "alt": "Checkmark",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_chk2b",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 24,
+          "position": {
+            "x": 466,
+            "y": 543
+          },
+          "size": {
+            "width": 260,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "You can add sample text.",
+          "style": {
+            "fontSize": 14,
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "ico_svc3_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 787,
+            "y": 400
+          },
+          "size": {
+            "width": 56,
+            "height": 56
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#3b82f6",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "ico_svc3",
+          "type": "image",
+          "assetKey": "arrow-growth",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 795,
+            "y": 408
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/increase.png",
+          "placeholder": true,
+          "alt": "Growth arrow",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_svc3_h",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 19,
+          "position": {
+            "x": 855,
+            "y": 402
+          },
+          "size": {
+            "width": 200,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Service 3",
+          "style": {
+            "fontSize": 18,
+            "fontWeight": "700",
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "t_svc3_b",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 20,
+          "position": {
+            "x": 787,
+            "y": 440
+          },
+          "size": {
+            "width": 300,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text.",
+          "style": {
+            "fontSize": 13,
+            "color": "#64748b",
+            "lineHeight": 1.4
+          }
+        },
+        {
+          "id": "chk3a_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 787,
+            "y": 510
+          },
+          "size": {
+            "width": 28,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#bfdbfe",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "chk3a",
+          "type": "image",
+          "assetKey": "check",
+          "role": "icon",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 791,
+            "y": 514
+          },
+          "size": {
+            "width": 20,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/checkmark.png",
+          "placeholder": true,
+          "alt": "Checkmark",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_chk3a",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 22,
+          "position": {
+            "x": 823,
+            "y": 508
+          },
+          "size": {
+            "width": 260,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "This is a sample text.",
+          "style": {
+            "fontSize": 14,
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "chk3b_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 787,
+            "y": 545
+          },
+          "size": {
+            "width": 28,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#bfdbfe",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "chk3b",
+          "type": "image",
+          "assetKey": "check",
+          "role": "icon",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 791,
+            "y": 549
+          },
+          "size": {
+            "width": 20,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/checkmark.png",
+          "placeholder": true,
+          "alt": "Checkmark",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_chk3b",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 25,
+          "position": {
+            "x": 823,
+            "y": 543
+          },
+          "size": {
+            "width": 260,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "You can add sample text.",
+          "style": {
+            "fontSize": 14,
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1016,
+            "y": 444
+          },
+          "size": {
+            "width": 200,
+            "height": 240
+          },
+          "startTime": 0,
+          "endTime": 8
+        }
+      ]
+    },
+    {
+      "id": "scene_05",
+      "slideIndex": 5,
+      "title": "Unique Selling Point",
+      "layoutType": "ListRight",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "background": {
+        "type": "solid",
+        "value": "#ffffff"
+      },
+      "zones": {
+        "content": {
+          "x": 73,
+          "y": 103,
+          "width": 610,
+          "height": 540
+        },
+        "image": {
+          "x": 692,
+          "y": 87,
+          "width": 588,
+          "height": 634
+        },
+        "avatar": {
+          "x": 1016,
+          "y": 444,
+          "width": 200,
+          "height": 240
+        }
+      },
+      "description": "Three USP rows with icons and hero image.",
+      "flow": "USP → Milestones",
+      "duration": 8,
+      "tags": [
+        "pitch",
+        "usp"
+      ],
+      "clips": [
+        {
+          "id": "s_tri1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 620,
+            "y": 380
+          },
+          "size": {
+            "width": 120,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#bfdbfe",
+            "clipPath": "polygon(0% 0%, 100% 100%, 0% 100%)"
+          }
+        },
+        {
+          "id": "s_tri2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 640,
+            "y": 400
+          },
+          "size": {
+            "width": 100,
+            "height": 80
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#3b82f6",
+            "clipPath": "polygon(0% 0%, 100% 100%, 0% 100%)"
+          }
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 73,
+            "y": 100
+          },
+          "size": {
+            "width": 600,
+            "height": 56
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Unique Selling Point",
+          "style": {
+            "fontSize": 48,
+            "fontWeight": "800",
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "s_row0",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 190
+          },
+          "size": {
+            "width": 560,
+            "height": 88
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "ico_usp0_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 73,
+            "y": 200
+          },
+          "size": {
+            "width": 60,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "ico_usp0",
+          "type": "image",
+          "assetKey": "shield-user",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 82,
+            "y": 209
+          },
+          "size": {
+            "width": 42,
+            "height": 42
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/checked-shield.png",
+          "placeholder": true,
+          "alt": "Protection",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_usp0_h",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 140,
+            "y": 204
+          },
+          "size": {
+            "width": 300,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Edit Text Here",
+          "style": {
+            "fontSize": 20,
+            "fontWeight": "700",
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "t_usp0_b",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 140,
+            "y": 234
+          },
+          "size": {
+            "width": 460,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text.",
+          "style": {
+            "fontSize": 14,
+            "color": "#64748b",
+            "lineHeight": 1.4
+          }
+        },
+        {
+          "id": "s_row1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 300
+          },
+          "size": {
+            "width": 560,
+            "height": 88
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "ico_usp1_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 73,
+            "y": 310
+          },
+          "size": {
+            "width": 60,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "ico_usp1",
+          "type": "image",
+          "assetKey": "team-dollar",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 82,
+            "y": 319
+          },
+          "size": {
+            "width": 42,
+            "height": 42
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/conference-call.png",
+          "placeholder": true,
+          "alt": "Team value",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_usp1_h",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 140,
+            "y": 314
+          },
+          "size": {
+            "width": 300,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Edit Text Here",
+          "style": {
+            "fontSize": 20,
+            "fontWeight": "700",
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "t_usp1_b",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 140,
+            "y": 344
+          },
+          "size": {
+            "width": 460,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text.",
+          "style": {
+            "fontSize": 14,
+            "color": "#64748b",
+            "lineHeight": 1.4
+          }
+        },
+        {
+          "id": "s_row2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 410
+          },
+          "size": {
+            "width": 560,
+            "height": 88
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1e3a8a",
+            "borderRadius": "4px"
+          }
+        },
+        {
+          "id": "ico_usp2_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 73,
+            "y": 420
+          },
+          "size": {
+            "width": 60,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "ico_usp2",
+          "type": "image",
+          "assetKey": "lifebuoy",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 82,
+            "y": 429
+          },
+          "size": {
+            "width": 42,
+            "height": 42
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/technical-support.png",
+          "placeholder": true,
+          "alt": "Support",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_usp2_h",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 140,
+            "y": 424
+          },
+          "size": {
+            "width": 300,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Edit Text Here",
+          "style": {
+            "fontSize": 20,
+            "fontWeight": "700",
+            "color": "#ffffff"
+          }
+        },
+        {
+          "id": "t_usp2_b",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 140,
+            "y": 454
+          },
+          "size": {
+            "width": 460,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text.",
+          "style": {
+            "fontSize": 14,
+            "color": "#bfdbfe",
+            "lineHeight": 1.4
+          }
+        },
+        {
+          "id": "img_usp",
+          "type": "image",
+          "assetKey": "pitch-usp",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 628,
+            "y": 50
+          },
+          "size": {
+            "width": 588,
+            "height": 634
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/7988079/pexels-photo-7988079.jpeg",
+          "placeholder": true,
+          "alt": "Professionals at work",
+          "style": {
+            "clipPath": "polygon(22% 0%, 100% 0%, 100% 100%, 0% 100%)",
+            "objectFit": "cover"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1016,
+            "y": 444
+          },
+          "size": {
+            "width": 200,
+            "height": 240
+          },
+          "startTime": 0,
+          "endTime": 8
+        }
+      ]
+    },
+    {
+      "id": "scene_06",
+      "slideIndex": 6,
+      "title": "Key Milestones",
+      "layoutType": "Timeline",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "background": {
+        "type": "solid",
+        "value": "#ffffff"
+      },
+      "zones": {
+        "header": {
+          "x": 73,
+          "y": 103,
+          "width": 1134,
+          "height": 78
+        },
+        "timeline": {
+          "x": 73,
+          "y": 260,
+          "width": 1134,
+          "height": 420
+        },
+        "avatar": {
+          "x": 1016,
+          "y": 444,
+          "width": 200,
+          "height": 240
+        }
+      },
+      "description": "Four milestone columns in bar chart style.",
+      "flow": "Milestones → Contact",
+      "duration": 8,
+      "tags": [
+        "pitch",
+        "milestones",
+        "timeline"
+      ],
+      "clips": [
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 73,
+            "y": 100
+          },
+          "size": {
+            "width": 400,
+            "height": 56
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Key Milestones",
+          "style": {
+            "fontSize": 48,
+            "fontWeight": "800",
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "t_intro",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 500,
+            "y": 110
+          },
+          "size": {
+            "width": 700,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text. Insert your desired text here.",
+          "style": {
+            "fontSize": 15,
+            "color": "#64748b",
+            "lineHeight": 1.45
+          }
+        },
+        {
+          "id": "bar0",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 80,
+            "y": 380
+          },
+          "size": {
+            "width": 200,
+            "height": 260
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#f1f5f9",
+            "borderRadius": "8px 8px 0 0"
+          }
+        },
+        {
+          "id": "ico_ms0_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 150,
+            "y": 340
+          },
+          "size": {
+            "width": 68,
+            "height": 68
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "ico_ms0",
+          "type": "image",
+          "assetKey": "signpost",
+          "role": "icon",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 160,
+            "y": 350
+          },
+          "size": {
+            "width": 48,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/milestone.png",
+          "placeholder": true,
+          "alt": "Milestone",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_ms0_h",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 90,
+            "y": 404
+          },
+          "size": {
+            "width": 180,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Milestone 1",
+          "style": {
+            "fontSize": 18,
+            "fontWeight": "700",
+            "color": "#0f172a",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "t_ms0_b",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 90,
+            "y": 438
+          },
+          "size": {
+            "width": 180,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text.",
+          "style": {
+            "fontSize": 13,
+            "color": "#0f172a",
+            "textAlign": "center",
+            "lineHeight": 1.4
+          }
+        },
+        {
+          "id": "bar1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 340,
+            "y": 280
+          },
+          "size": {
+            "width": 200,
+            "height": 360
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#3b82f6",
+            "borderRadius": "8px 8px 0 0"
+          }
+        },
+        {
+          "id": "ico_ms1_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 410,
+            "y": 240
+          },
+          "size": {
+            "width": 68,
+            "height": 68
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "ico_ms1",
+          "type": "image",
+          "assetKey": "handshake",
+          "role": "icon",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 420,
+            "y": 250
+          },
+          "size": {
+            "width": 48,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/handshake.png",
+          "placeholder": true,
+          "alt": "Handshake",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_ms1_h",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 350,
+            "y": 304
+          },
+          "size": {
+            "width": 180,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Milestone 2",
+          "style": {
+            "fontSize": 18,
+            "fontWeight": "700",
+            "color": "#ffffff",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "t_ms1_b",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 350,
+            "y": 338
+          },
+          "size": {
+            "width": 180,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text.",
+          "style": {
+            "fontSize": 13,
+            "color": "#ffffff",
+            "textAlign": "center",
+            "lineHeight": 1.4
+          }
+        },
+        {
+          "id": "bar2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 600,
+            "y": 340
+          },
+          "size": {
+            "width": 200,
+            "height": 300
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1e40af",
+            "borderRadius": "8px 8px 0 0"
+          }
+        },
+        {
+          "id": "ico_ms2_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 670,
+            "y": 300
+          },
+          "size": {
+            "width": 68,
+            "height": 68
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "ico_ms2",
+          "type": "image",
+          "assetKey": "target",
+          "role": "icon",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 680,
+            "y": 310
+          },
+          "size": {
+            "width": 48,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/bullseye.png",
+          "placeholder": true,
+          "alt": "Target",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_ms2_h",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 610,
+            "y": 364
+          },
+          "size": {
+            "width": 180,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Milestone 3",
+          "style": {
+            "fontSize": 18,
+            "fontWeight": "700",
+            "color": "#ffffff",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "t_ms2_b",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 17,
+          "position": {
+            "x": 610,
+            "y": 398
+          },
+          "size": {
+            "width": 180,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text.",
+          "style": {
+            "fontSize": 13,
+            "color": "#ffffff",
+            "textAlign": "center",
+            "lineHeight": 1.4
+          }
+        },
+        {
+          "id": "bar3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 860,
+            "y": 240
+          },
+          "size": {
+            "width": 200,
+            "height": 400
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1e3a8a",
+            "borderRadius": "8px 8px 0 0"
+          }
+        },
+        {
+          "id": "ico_ms3_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 930,
+            "y": 200
+          },
+          "size": {
+            "width": 68,
+            "height": 68
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "ico_ms3",
+          "type": "image",
+          "assetKey": "presentation",
+          "role": "icon",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 940,
+            "y": 210
+          },
+          "size": {
+            "width": 48,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/presentation.png",
+          "placeholder": true,
+          "alt": "Presentation",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_ms3_h",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 18,
+          "position": {
+            "x": 870,
+            "y": 264
+          },
+          "size": {
+            "width": 180,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Milestone 4",
+          "style": {
+            "fontSize": 18,
+            "fontWeight": "700",
+            "color": "#ffffff",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "t_ms3_b",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 19,
+          "position": {
+            "x": 870,
+            "y": 298
+          },
+          "size": {
+            "width": 180,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text.",
+          "style": {
+            "fontSize": 13,
+            "color": "#ffffff",
+            "textAlign": "center",
+            "lineHeight": 1.4
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1016,
+            "y": 444
+          },
+          "size": {
+            "width": 200,
+            "height": 240
+          },
+          "startTime": 0,
+          "endTime": 8
+        }
+      ]
+    },
+    {
+      "id": "scene_07",
+      "slideIndex": 7,
+      "title": "Contact",
+      "layoutType": "ContactSplit",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "background": {
+        "type": "solid",
+        "value": "#ffffff"
+      },
+      "zones": {
+        "details": {
+          "x": 73,
+          "y": 101,
+          "width": 580,
+          "height": 550
+        },
+        "image": {
+          "x": 680,
+          "y": 136,
+          "width": 492,
+          "height": 584
+        },
+        "avatar": {
+          "x": 1016,
+          "y": 444,
+          "width": 200,
+          "height": 240
+        }
+      },
+      "description": "Contact details with portrait image.",
+      "flow": "Contact → End",
+      "duration": 8,
+      "tags": [
+        "pitch",
+        "contact",
+        "cta"
+      ],
+      "clips": [
+        {
+          "id": "s_blue_block",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 836,
+            "y": 36
+          },
+          "size": {
+            "width": 380,
+            "height": 280
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#3b82f6"
+          }
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 73,
+            "y": 100
+          },
+          "size": {
+            "width": 500,
+            "height": 56
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Edit Text Here",
+          "style": {
+            "fontSize": 48,
+            "fontWeight": "800",
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "t_loc_h",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 73,
+            "y": 200
+          },
+          "size": {
+            "width": 200,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Location",
+          "style": {
+            "fontSize": 20,
+            "fontWeight": "700",
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "t_loc_b",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 73,
+            "y": 232
+          },
+          "size": {
+            "width": 400,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "123 Anywhere St., Any City, ST 12345\nThis is a sample text. Edit text here.",
+          "style": {
+            "fontSize": 15,
+            "color": "#64748b",
+            "lineHeight": 1.5
+          }
+        },
+        {
+          "id": "ico_phone_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 73,
+            "y": 330
+          },
+          "size": {
+            "width": 56,
+            "height": 56
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1e3a8a",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "ico_phone",
+          "type": "image",
+          "assetKey": "phone",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 81,
+            "y": 338
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/phone.png",
+          "placeholder": true,
+          "alt": "Phone",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_phone",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 135,
+            "y": 338
+          },
+          "size": {
+            "width": 280,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "+1 (212) 123-4567",
+          "style": {
+            "fontSize": 16,
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "ico_email_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 73,
+            "y": 395
+          },
+          "size": {
+            "width": 56,
+            "height": 56
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#3b82f6",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "ico_email",
+          "type": "image",
+          "assetKey": "email",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 81,
+            "y": 403
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/new-post.png",
+          "placeholder": true,
+          "alt": "Email",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_email",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 135,
+            "y": 403
+          },
+          "size": {
+            "width": 320,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Enter your email address here",
+          "style": {
+            "fontSize": 16,
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "ico_web_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 73,
+            "y": 460
+          },
+          "size": {
+            "width": 56,
+            "height": 56
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1e3a8a",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "ico_web",
+          "type": "image",
+          "assetKey": "website",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 81,
+            "y": 468
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/domain.png",
+          "placeholder": true,
+          "alt": "Website",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_web",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 135,
+            "y": 468
+          },
+          "size": {
+            "width": 320,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Enter your website here",
+          "style": {
+            "fontSize": 16,
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "img_contact",
+          "type": "image",
+          "assetKey": "pitch-contact",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 680,
+            "y": 100
+          },
+          "size": {
+            "width": 492,
+            "height": 584
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/5324852/pexels-photo-5324852.jpeg",
+          "placeholder": true,
+          "alt": "Support representative",
+          "style": {
+            "borderRadius": "16px",
+            "objectFit": "cover"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1016,
+            "y": 444
+          },
+          "size": {
+            "width": 200,
+            "height": 240
+          },
+          "startTime": 0,
+          "endTime": 8
+        }
+      ]
+    },
+    {
+      "id": "scene_08",
+      "slideIndex": 8,
+      "title": "Promotional",
+      "layoutType": "Promo",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "background": {
+        "type": "solid",
+        "value": "#ffffff"
+      },
+      "zones": {
+        "content": {
+          "x": 73,
+          "y": 192,
+          "width": 900,
+          "height": 600
+        },
+        "cta": {
+          "x": 900,
+          "y": 192,
+          "width": 300,
+          "height": 600
+        },
+        "avatar": {
+          "x": 1016,
+          "y": 444,
+          "width": 200,
+          "height": 240
+        }
+      },
+      "description": "Promotional slide with coupon and CTA.",
+      "flow": "Promo → End",
+      "duration": 8,
+      "tags": [
+        "pitch",
+        "promo",
+        "discount",
+        "cta"
+      ],
+      "clips": [
+        {
+          "id": "s_cta_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 640,
+            "y": 80
+          },
+          "size": {
+            "width": 600,
+            "height": 560
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#dbeafe",
+            "borderRadius": "16px"
+          }
+        },
+        {
+          "id": "img_logo",
+          "type": "image",
+          "assetKey": "pitch-logo",
+          "role": "logo",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 720,
+            "y": 100
+          },
+          "size": {
+            "width": 320,
+            "height": 56
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://placehold.co/390x74/1e40af/ffffff?text=Your+Logo",
+          "placeholder": true,
+          "alt": "Logo",
+          "style": {
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "t_discount",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 680,
+            "y": 170
+          },
+          "size": {
+            "width": 520,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Get 15% discount from regular price",
+          "style": {
+            "fontSize": 18,
+            "fontWeight": "600",
+            "color": "#0f172a",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "t_coupon",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 700,
+            "y": 220
+          },
+          "size": {
+            "width": 480,
+            "height": 80
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Coupon Code:\nFREEBUNDLE15",
+          "style": {
+            "fontSize": 20,
+            "fontWeight": "700",
+            "color": "#1e40af",
+            "textAlign": "center",
+            "lineHeight": 1.4
+          }
+        },
+        {
+          "id": "t_apply",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 700,
+            "y": 340
+          },
+          "size": {
+            "width": 480,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Apply this coupon code during sign up",
+          "style": {
+            "fontSize": 15,
+            "color": "#64748b",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "t_subscribe",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 700,
+            "y": 470
+          },
+          "size": {
+            "width": 480,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "SUBSCRIBE NOW",
+          "style": {
+            "fontSize": 24,
+            "fontWeight": "800",
+            "color": "#0f172a",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "t_visit",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 720,
+            "y": 560
+          },
+          "size": {
+            "width": 440,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Visit slidemodel.com",
+          "style": {
+            "fontSize": 16,
+            "color": "#1e40af",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "t_feat_h",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 73,
+            "y": 440
+          },
+          "size": {
+            "width": 560,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Download PowerPoint templates and save hours of work.",
+          "style": {
+            "fontSize": 18,
+            "fontWeight": "600",
+            "color": "#0f172a"
+          }
+        },
+        {
+          "id": "t_feat_b",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 73,
+            "y": 480
+          },
+          "size": {
+            "width": 400,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Easy to use\nFully customizable\nCutting edge designs",
+          "style": {
+            "fontSize": 16,
+            "color": "#64748b",
+            "lineHeight": 1.6
+          }
+        },
+        {
+          "id": "img_shot",
+          "type": "image",
+          "assetKey": "pitch-promo-shot",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 100,
+            "y": 100
+          },
+          "size": {
+            "width": 480,
+            "height": 280
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://placehold.co/532x306/e2e8f0/64748b?text=Your+Screenshot+Here",
+          "placeholder": true,
+          "alt": "Product screenshot",
+          "style": {
+            "borderRadius": "12px",
+            "objectFit": "cover",
+            "border": "1px solid #e2e8f0"
+          }
+        },
+        {
+          "id": "img_banner",
+          "type": "image",
+          "assetKey": "pitch-promo-banner",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 0,
+            "y": 640
+          },
+          "size": {
+            "width": 1280,
+            "height": 80
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg",
+          "placeholder": true,
+          "alt": "Footer banner",
+          "style": {
+            "objectFit": "cover"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1016,
+            "y": 444
+          },
+          "size": {
+            "width": 200,
+            "height": 240
+          },
+          "startTime": 0,
+          "endTime": 8
+        }
+      ]
+    }
+  ]
+}

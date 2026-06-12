@@ -6,6 +6,7 @@ import {
   useVideoConfig,
   Audio,
   Video,
+  Img,
   OffthreadVideo,
   Sequence,
 } from 'remotion'
@@ -277,17 +278,20 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
           const w = typeof clip.size?.width === 'number' ? clip.size.width : 0
           const h = typeof clip.size?.height === 'number' ? clip.size.height : 0
           const avatarRound = isAvatar && !isVideo && !isBg && w > 0 && h > 0 && Math.abs(w - h) < 40
+          const isIcon = clip.role === 'icon'
           const borderRadius = isBg ? '0' : (clip.style?.borderRadius || (isAvatar ? '50%' : '16px'))
           const objectFit =
-            clip.style?.objectFit || clip.objectFit || (isAvatar && !isBg ? 'contain' : 'cover')
+            clip.style?.objectFit || clip.objectFit || (isAvatar || isIcon ? 'contain' : 'cover')
 
           return (
             <div key={clip.id} style={{
               ...style,
-              border: 'none',
+              border: clip.style?.border || 'none',
               borderRadius: avatarRound ? '50%' : borderRadius,
               background: src ? 'transparent' : 'rgba(0,0,0,0.03)',
               overflow: 'hidden',
+              clipPath: clip.style?.clipPath,
+              boxShadow: clip.style?.boxShadow || 'none',
             }}>
               {src ? (
                 isVideo ? (
@@ -328,18 +332,34 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
 
         if (clip.type === 'shape') {
           const shapeStyle = clip.style || {}
+          const hasFill = !!clip.fillSrc
           return (
             <div
               key={clip.id}
               style={{
                 ...style,
+                overflow: 'hidden',
                 border: shapeStyle.border || 'none',
                 borderRadius: shapeStyle.borderRadius || '0',
-                background: shapeStyle.background || shapeStyle.backgroundColor || 'rgba(99, 102, 241, 0.85)',
+                background: hasFill
+                  ? 'transparent'
+                  : (shapeStyle.background || shapeStyle.backgroundColor || 'rgba(99, 102, 241, 0.85)'),
                 clipPath: shapeStyle.clipPath,
                 boxShadow: shapeStyle.boxShadow || 'none',
               }}
-            />
+            >
+              {hasFill && (
+                <Img
+                  src={clip.fillSrc}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: clip.fillObjectFit || 'cover',
+                    display: 'block',
+                  }}
+                />
+              )}
+            </div>
           )
         }
 
