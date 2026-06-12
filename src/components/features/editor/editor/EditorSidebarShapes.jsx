@@ -1,17 +1,27 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { MdSearch } from 'react-icons/md';
-import { SHAPE_CATEGORIES, SHAPE_LIBRARY } from '../../../../constants/shapeLibrary';
+import { SHAPE_CATEGORIES, SHAPE_LIBRARY, shapeMatchesCategory } from '../../../../constants/shapeLibrary';
+import { loadPitchAssets, pitchShapesAsLibrary } from '../../../../constants/pitchAssetLibrary';
 
 const ShapePreview = ({ style }) => {
+  const isLine = style.height === '0px' || style.borderTop;
   const previewStyle = {
     ...style,
-    width: '36px',
-    height: '36px',
+    width: isLine ? '36px' : '36px',
+    height: isLine ? '4px' : '36px',
     maxWidth: '36px',
-    maxHeight: '36px',
-    background: style.background === 'transparent' ? 'transparent' : 'var(--shape-preview-fill, var(--text-muted))',
+    maxHeight: isLine ? '4px' : '36px',
+    background: style.background === 'transparent' && !style.borderTop
+      ? 'transparent'
+      : isLine
+        ? 'transparent'
+        : 'var(--shape-preview-fill, var(--text-muted))',
     borderColor: style.border?.includes('solid') ? 'var(--shape-preview-fill, var(--text-muted))' : undefined,
   };
+
+  if (style.borderTop) {
+    previewStyle.borderTop = style.borderTop.replace('var(--primary)', 'var(--shape-preview-fill, var(--text-muted))');
+  }
 
   if (style.background === 'transparent' && style.border) {
     previewStyle.border = style.border.replace('var(--primary)', 'var(--shape-preview-fill, var(--text-muted))');
@@ -20,24 +30,34 @@ const ShapePreview = ({ style }) => {
   return <div className="shape-tool-preview" style={previewStyle} aria-hidden />;
 };
 
-const EditorSidebarShapes = ({ addLayer }) => {
+const EditorSidebarShapes = ({ addLayer, activeSceneId, updateScene }) => {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('shapes');
+  const [pitchShapes, setPitchShapes] = useState([]);
+  const [pitchBackgrounds, setPitchBackgrounds] = useState([]);
+
+  useEffect(() => {
+    loadPitchAssets()
+      .then((assets) => {
+        setPitchShapes(pitchShapesAsLibrary(assets));
+        setPitchBackgrounds(assets.backgrounds || []);
+      })
+      .catch(() => {
+        setPitchShapes([]);
+        setPitchBackgrounds([]);
+      });
+  }, []);
+
+  const allShapes = useMemo(() => [...SHAPE_LIBRARY, ...pitchShapes], [pitchShapes]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return SHAPE_LIBRARY.filter((shape) => {
-      if (category === 'all') {
-        /* all */
-      } else if (category === 'shapes') {
-        if (shape.category === 'arrows') return false;
-      } else if (shape.category !== category) {
-        return false;
-      }
+    return allShapes.filter((shape) => {
+      if (!shapeMatchesCategory(shape, category)) return false;
       if (!q) return true;
       return shape.name.toLowerCase().includes(q) || shape.id.includes(q);
     });
-  }, [query, category]);
+  }, [allShapes, query, category]);
 
   const handleAdd = (shape) => {
     addLayer('shape', shape);
@@ -70,6 +90,24 @@ const EditorSidebarShapes = ({ addLayer }) => {
           </button>
         ))}
       </div>
+
+      {category === 'pitch' && pitchBackgrounds.length > 0 && updateScene && activeSceneId && (
+        <div className="shape-tool-backgrounds">
+          <p className="shape-tool-results-label">Scene backgrounds</p>
+          <div className="shape-tool-bg-row">
+            {pitchBackgrounds.map((bg) => (
+              <button
+                key={bg.id}
+                type="button"
+                className="shape-tool-bg-swatch"
+                title={bg.name}
+                style={{ backgroundColor: bg.value }}
+                onClick={() => updateScene(activeSceneId, { background: { type: 'solid', value: bg.value } })}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       <p className="shape-tool-results-label">
         {filtered.length} {filtered.length === 1 ? 'shape' : 'shapes'}

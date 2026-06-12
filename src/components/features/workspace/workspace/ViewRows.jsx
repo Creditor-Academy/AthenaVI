@@ -2,6 +2,7 @@ import React from 'react';
 import { MdFolder, MdVideoLibrary, MdPerson, MdPeople } from 'react-icons/md';
 import ContextMenu from './ContextMenu.jsx';
 import UserIdentity from './UserIdentity.jsx';
+import WorkspaceCreditsBadge from './WorkspaceCreditsBadge.jsx';
 import { formatFolderSize, formatProjectSize } from '../../../../utils/formatSize.js';
 
 const formatSize = (item) => {
@@ -36,7 +37,7 @@ export const formatOnlyDate = (dateStr) => {
     }
 };
 
-export const WorkspaceRow = ({ workspace, onClick, contextProps }) => {
+export const WorkspaceRow = ({ workspace, onClick, contextProps, onAllocateCredits, showAllocateCredits = false }) => {
     return (
         <div className="workspace-item-row" onClick={onClick}>
             <div className="row-icon-container">
@@ -47,7 +48,17 @@ export const WorkspaceRow = ({ workspace, onClick, contextProps }) => {
                 <h4>{workspace.name}</h4>
             </div>
 
-            <div className="col col-owner">{workspace.ownerName || workspace.ownerId || '-'}</div>
+            <div className="col col-credits">
+                <WorkspaceCreditsBadge
+                    workspace={workspace}
+                    clickable={showAllocateCredits && Boolean(onAllocateCredits)}
+                    onClick={onAllocateCredits}
+                />
+            </div>
+
+            <div className="col col-owner">
+                <UserIdentity name={workspace.ownerName || workspace.ownerId || '-'} compact />
+            </div>
 
             <div className="col col-modified">{formatOnlyDate(workspace.lastModifiedAt || workspace.updatedAt)}</div>
 

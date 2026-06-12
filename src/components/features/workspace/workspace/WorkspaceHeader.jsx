@@ -1,7 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MdViewModule, MdViewList, MdSort, MdAdd, MdKeyboardArrowDown, MdMail } from 'react-icons/md';
+import { MdViewModule, MdViewList, MdSort, MdAdd, MdKeyboardArrowDown, MdMail, MdMonetizationOn, MdArrowBack } from 'react-icons/md';
 
-const WorkspaceHeader = ({ viewMode, onViewChange, sortBy, onSortChange, onCreateClick, invitationCount = 0, onInviteClick }) => {
+const WorkspaceHeader = ({
+    viewMode,
+    onViewChange,
+    sortBy,
+    onSortChange,
+    onCreateClick,
+    invitationCount = 0,
+    onInviteClick,
+    totalCredits = 0,
+    creditsLoading = false,
+    showBack = false,
+    onBack,
+    backLabel = 'Back',
+}) => {
     const [isSortOpen, setIsSortOpen] = useState(false);
     const sortRef = useRef(null);
 
@@ -27,9 +40,28 @@ const WorkspaceHeader = ({ viewMode, onViewChange, sortBy, onSortChange, onCreat
     return (
         <div className="workspace-header-container">
             <div className="workspace-header-title">
+                {showBack && onBack && (
+                    <button
+                        type="button"
+                        className="workspace-back-btn"
+                        onClick={onBack}
+                        title={backLabel}
+                        aria-label={backLabel}
+                    >
+                        <MdArrowBack size={20} />
+                    </button>
+                )}
                 <h2>Workspaces</h2>
             </div>
             <div className="workspace-header-actions">
+                <div className="workspace-header-credits" title="Total credits available">
+                    <MdMonetizationOn className="workspace-header-credits__icon" size={16} aria-hidden />
+                    <span className="workspace-header-credits__label">Credits:</span>
+                    <span className="workspace-header-credits__amount">
+                        {creditsLoading ? '—' : Number(totalCredits).toLocaleString()}
+                    </span>
+                </div>
+
                 <div className="view-toggle">
                     <button
                         className={`view-toggle-btn ${viewMode === 'tile' ? 'active' : ''}`}
@@ -85,7 +117,7 @@ const WorkspaceHeader = ({ viewMode, onViewChange, sortBy, onSortChange, onCreat
                 )}
 
                 <button className="btn-primary" onClick={onCreateClick}>
-                    <MdAdd size={18} /> Create
+                    <MdAdd size={18} /> Video
                 </button>
             </div>
         </div>

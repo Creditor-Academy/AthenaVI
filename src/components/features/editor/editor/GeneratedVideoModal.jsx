@@ -1,9 +1,17 @@
 import React, { useState } from 'react';
-import { MdClose } from 'react-icons/md';
+import { MdClose, MdGeneratingTokens } from 'react-icons/md';
 import projectTemplate from '../../../../constants/projectTemplate.json';
 import TemplatePreview from '../../../TemplatePreview';
 
-const GeneratedVideoModal = ({ isOpen, onClose, videoUrl, onUseInEditor, onRemake, onSelectLayout }) => {
+const GeneratedVideoModal = ({
+  isOpen,
+  onClose,
+  videoUrl,
+  creditsUsed = null,
+  onUseInEditor,
+  onRemake,
+  onSelectLayout,
+}) => {
   const [activeLayout, setActiveLayout] = useState(null);
 
   if (!isOpen) return null;
@@ -79,6 +87,29 @@ const GeneratedVideoModal = ({ isOpen, onClose, videoUrl, onUseInEditor, onRemak
             Your presenter is already centered on the scene. Preview below, or optionally replace the layout with a template.
           </p>
         </div>
+
+        {creditsUsed != null && Number(creditsUsed) > 0 && (
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              alignSelf: 'flex-start',
+              padding: '8px 12px',
+              borderRadius: '10px',
+              background: 'rgba(91, 58, 122, 0.14)',
+              border: '1px solid rgba(168, 85, 247, 0.35)',
+              color: '#e9d5ff',
+              fontSize: '12px',
+              fontWeight: '600',
+            }}
+          >
+            <MdGeneratingTokens size={16} aria-hidden />
+            <span>
+              {Number(creditsUsed).toLocaleString()} credit{Number(creditsUsed) === 1 ? '' : 's'} used
+            </span>
+          </div>
+        )}
 
         {videoUrl ? (
           <div style={{ 

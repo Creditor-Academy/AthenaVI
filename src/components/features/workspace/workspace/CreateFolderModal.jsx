@@ -40,30 +40,30 @@ const CreateFolderModal = ({ isOpen, onClose, onCreate, existingFolders = [] }) 
                         onClick={onClose}
                     />
                     <motion.div 
-                        className="modal-content professional-modal"
+                        className="modal-content astryd-modal"
                         initial={{ opacity: 0, scale: 0.9, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         onClick={e => e.stopPropagation()}
                     >
-                        <button className="icon-btn-close-outside" onClick={onClose} title="Close">
-                            <MdClose size={20} />
-                        </button>
-                        <div className="modal-header">
-                            <div className="header-icon-title">
-                                <div className="header-icon-container folder-icon-bg">
-                                    <MdFolderOpen size={24} />
+                        <div className="astryd-header">
+                            <div className="astryd-title-group">
+                                <div className="astryd-icon-container">
+                                    <MdFolderOpen size={20} />
                                 </div>
                                 <div>
                                     <h2>Create Folder</h2>
-                                    <p className="modal-subtitle">Organize your work with a new folder</p>
+                                    <p className="astryd-subtitle">Organize your work with a new folder</p>
                                 </div>
                             </div>
+                            <button className="astryd-close-btn" onClick={onClose} title="Close">
+                                <MdClose size={18} />
+                            </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="modal-body-premium">
-                            <div className="form-group">
+                        <form onSubmit={handleSubmit} className="astryd-form">
+                            <div className="astryd-form-group">
                                 <label htmlFor="folder-name">Folder Name</label>
                                 <input
                                     id="folder-name"
@@ -75,19 +75,19 @@ const CreateFolderModal = ({ isOpen, onClose, onCreate, existingFolders = [] }) 
                                         if (error) setError('');
                                     }}
                                     placeholder="e.g. Q1 Marketing Materials"
-                                    className={`form-input-premium ${error || isDuplicate ? 'input-error' : ''}`}
+                                    className={`astryd-input ${error || isDuplicate ? 'astryd-input-error' : ''}`}
                                     disabled={isSubmitting}
                                     required
                                 />
-                                {isDuplicate && <span className="error-message-modal">This folder name already exists in this workspace</span>}
-                                {error && <span className="error-message-modal">{error}</span>}
-                                {!error && !isDuplicate && <span className="input-hint">Give your folder a clear, descriptive name</span>}
+                                {isDuplicate && <span className="astryd-error">This folder name already exists in this workspace</span>}
+                                {error && <span className="astryd-error">{error}</span>}
+                                {!error && !isDuplicate && <span className="astryd-hint">Give your folder a clear, descriptive name</span>}
                             </div>
 
-                            <div className="modal-footer-premium">
+                            <div className="astryd-footer">
                                 <button 
                                     type="button" 
-                                    className="btn-secondary-premium" 
+                                    className="astryd-btn-secondary" 
                                     onClick={onClose}
                                     disabled={isSubmitting}
                                 >
@@ -95,7 +95,7 @@ const CreateFolderModal = ({ isOpen, onClose, onCreate, existingFolders = [] }) 
                                 </button>
                                 <button 
                                     type="submit" 
-                                    className="btn-primary-premium"
+                                    className="astryd-btn-primary"
                                     disabled={!folderName.trim() || isSubmitting || isDuplicate}
                                 >
                                     {isSubmitting ? 'Creating...' : 'Create Folder'}

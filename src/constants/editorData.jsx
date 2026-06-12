@@ -41,12 +41,23 @@ export const predefinedMedia = [
     { id: 'm6', name: 'Mountain Lake', image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=500', full: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=2070', type: 'image' },
     { id: 'm7', name: 'Golden Gate', image: 'https://images.unsplash.com/photo-1449034446853-66c86144b0ad?auto=format&fit=crop&q=80&w=500', full: 'https://images.unsplash.com/photo-1449034446853-66c86144b0ad?auto=format&fit=crop&q=80&w=2070', type: 'image' },
     { id: 'm8', name: 'Forest Path', image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=80&w=500', full: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=80&w=2070', type: 'image' },
+    { id: 'm9', name: 'Team Meeting', image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=500', full: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=2070', type: 'image' },
+    { id: 'm10', name: 'Laptop Desk', image: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=500', full: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=2070', type: 'image' },
+    { id: 'm11', name: 'Ocean Sunset', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=500', full: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=2070', type: 'image' },
+    { id: 'm12', name: 'Data Analytics', image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=500', full: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=2070', type: 'image' },
+    { id: 'm13', name: 'Creative Studio', image: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&q=80&w=500', full: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&q=80&w=2070', type: 'image' },
+    { id: 'm14', name: 'Urban Architecture', image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=500', full: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=2070', type: 'image' },
+    { id: 'm15', name: 'Coffee Break', image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&q=80&w=500', full: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&q=80&w=2070', type: 'image' },
+    { id: 'm16', name: 'Desert Dunes', image: 'https://images.unsplash.com/photo-1509316785289-025f5b846b35?auto=format&fit=crop&q=80&w=500', full: 'https://images.unsplash.com/photo-1509316785289-025f5b846b35?auto=format&fit=crop&q=80&w=2070', type: 'image' },
 ]
 
 export const predefinedVideos = [
     { id: 'v1', name: 'Abstract Waves', image: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=500', full: 'https://assets.mixkit.co/videos/preview/mixkit-abstract-video-of-a-blue-liquid-ink-surface-43562-large.mp4', type: 'video' },
     { id: 'v2', name: 'Cloudy Sky', image: 'https://images.unsplash.com/photo-1496450681664-3df85efbd29f?auto=format&fit=crop&q=80&w=500', full: 'https://assets.mixkit.co/videos/preview/mixkit-beautiful-white-clouds-moving-slowly-in-the-sky-42526-large.mp4', type: 'video' },
     { id: 'v3', name: 'Networking', image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=500', full: 'https://assets.mixkit.co/videos/preview/mixkit-network-graphics-of-plexus-lines-background-27415-large.mp4', type: 'video' },
+    { id: 'v4', name: 'City Traffic', image: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&q=80&w=500', full: 'https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-traffic-at-night-11-large.mp4', type: 'video' },
+    { id: 'v5', name: 'Green Leaves', image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=80&w=500', full: 'https://assets.mixkit.co/videos/preview/mixkit-green-leaves-in-the-wind-1241-large.mp4', type: 'video' },
+    { id: 'v6', name: 'Typing Hands', image: 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&q=80&w=500', full: 'https://assets.mixkit.co/videos/preview/mixkit-hands-typing-on-a-computer-keyboard-491-large.mp4', type: 'video' },
 ]
 
 export const predefinedAudios = [

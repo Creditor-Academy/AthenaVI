@@ -64,6 +64,19 @@ export function getTextShapeId(style = {}) {
 /**
  * Merge base typography with effect-specific CSS for canvas / composition.
  */
+/** Gradient fill text (Canva-style) */
+function applyTextGradient(base, gradient) {
+  if (!gradient || typeof gradient !== 'string') return base;
+  return {
+    ...base,
+    background: gradient,
+    WebkitBackgroundClip: 'text',
+    backgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    color: 'transparent',
+  };
+}
+
 export function buildTextDisplayStyle(style = {}, layerOpacity = 1) {
   const color = style.color || '#7c3aed';
   const effect = getTextEffectId(style);
@@ -91,6 +104,10 @@ export function buildTextDisplayStyle(style = {}, layerOpacity = 1) {
     textShadow: 'none',
     filter: 'none',
   };
+
+  if (style.textGradient) {
+    return applyTextGradient(base, style.textGradient);
+  }
 
   switch (effect) {
     case 'drop':

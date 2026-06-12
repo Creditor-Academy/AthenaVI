@@ -1,4 +1,5 @@
 import API_CONFIG, { buildUrl, getAuthHeaders } from '../config/api.js';
+import { InsufficientCreditsError } from './creditsService.js';
 
 class HeygenService {
   async getAvatarLooks(params = {}) {
@@ -367,6 +368,14 @@ class HeygenService {
         body: JSON.stringify(payload)
       });
 
+      if (response.status === 402) {
+        const payload = await response.json().catch(() => ({}));
+        throw new InsufficientCreditsError(
+          payload.message || 'Insufficient workspace credits for video generation',
+          payload
+        );
+      }
+
       if (!response.ok) {
         const errText = await response.text();
         throw new Error(`Failed to generate video: ${response.status} - ${errText}`);
@@ -400,9 +409,18 @@ class HeygenService {
     }
   }
 
-  async getVideo(workspaceId, projectId, heygenVideoId) {
+  /**
+   * @param {{ sync?: false | 'status' | 'full' }} [options]
+   * - false: fast DB read (between polls)
+   * - 'status': refresh HeyGen status (default for generation polling)
+   * - 'full': blocks on S3 — export/render only, not canvas polling
+   */
+  async getVideo(workspaceId, projectId, heygenVideoId, options = {}) {
     try {
-      const endpoint = `/api/workspaces/${workspaceId}/projects/${projectId}/heygen/videos/${heygenVideoId}`;
+      const sync = options.sync ?? 'status';
+      const query =
+        sync === false ? '?sync=false' : sync === 'full' ? '?sync=full' : '?sync=status';
+      const endpoint = `/api/workspaces/${workspaceId}/projects/${projectId}/heygen/videos/${heygenVideoId}${query}`;
       const response = await fetch(buildUrl(endpoint), {
         method: 'GET',
         headers: getAuthHeaders()

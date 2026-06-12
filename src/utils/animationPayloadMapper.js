@@ -110,7 +110,16 @@ export function mapAnimationsForBackend(clipAnimations) {
   if (!type || !BACKEND_ANIMATION_TYPES.has(type)) return [];
 
   const startFrame = Math.max(0, Math.round((entrance.delay || 0) * FPS));
-  const durationInFrames = Math.max(1, Math.round((entrance.duration ?? 0.6) * FPS));
+  const baseDuration = entrance.duration ?? 0.6;
+  const speed =
+    entrance.type === 'typewriter' || entrance.type === 'wordFade'
+      ? Math.max(0.25, entrance.speed ?? 1)
+      : 1;
+  const effectiveDuration =
+    entrance.type === 'typewriter' || entrance.type === 'wordFade'
+      ? baseDuration / speed
+      : baseDuration;
+  const durationInFrames = Math.max(1, Math.round(effectiveDuration * FPS));
 
   return [
     {

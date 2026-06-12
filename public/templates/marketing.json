@@ -433,60 +433,87 @@
        "duration": 10,
        "tags": ["quiz", "interactive"],
        "clips": [
-        { 
-          "id": "t1", 
-          "type": "text", 
-          "role": "main-text", 
-          "editable": true, 
-          "position": { "x": 10, "y": 24 }, 
-          "size": { "width": 1000, "height": 100 },
+        {
+          "id": "t1",
+          "type": "text",
+          "role": "main-text",
+          "editable": true,
+          "position": { "x": 8, "y": 18 },
+          "size": { "width": 1000, "height": 140 },
           "startTime": 0,
           "endTime": 10,
-          "content": "WHAT IS YOUR NEXT BIG GOAL?", 
-          "style": { 
-            "fontSize": 64, 
-            "fontWeight": "900", 
-            "textAlign": "center", 
-            "color": "#0f172a" 
-          } 
+          "content": "WHAT IS YOUR NEXT BIG GOAL?",
+          "style": {
+            "fontSize": 56,
+            "fontWeight": "900",
+            "textAlign": "center",
+            "color": "#0f172a",
+            "lineHeight": 1.15
+          }
         },
-        { 
-          "id": "t2", 
-          "type": "text", 
-          "role": "choice", 
-          "editable": true, 
-          "position": { "x": 15, "y": 55 }, 
-          "size": { "width": 300, "height": 80 },
+        {
+          "id": "b1",
+          "type": "shape",
+          "role": "choice-bg",
+          "editable": true,
+          "position": { "x": 18, "y": 48 },
+          "size": { "width": 380, "height": 110 },
           "startTime": 0,
           "endTime": 10,
-          "content": "OPTION A: GROWTH", 
-          "style": { 
-            "fontSize": 28, 
-            "fontWeight": "700", 
-            "padding": "12px", 
-            "backgroundColor": "#f1f5f9", 
-            "borderRadius": "12px", 
-            "textAlign": "center" 
-          } 
+          "style": {
+            "backgroundColor": "#f1f5f9",
+            "borderRadius": "16px",
+            "border": "2px solid #e2e8f0"
+          }
         },
-        { 
-          "id": "t3", 
-          "type": "text", 
-          "role": "choice", 
-          "editable": true, 
-          "position": { "x": 55, "y": 55 }, 
-          "size": { "width": 300, "height": 80 },
+        {
+          "id": "b2",
+          "type": "shape",
+          "role": "choice-bg",
+          "editable": true,
+          "position": { "x": 54, "y": 48 },
+          "size": { "width": 380, "height": 110 },
           "startTime": 0,
           "endTime": 10,
-          "content": "OPTION B: SCALE", 
-          "style": { 
-            "fontSize": 28, 
-            "fontWeight": "700", 
-            "padding": "12px", 
-            "backgroundColor": "#f1f5f9", 
-            "borderRadius": "12px", 
-            "textAlign": "center" 
-          } 
+          "style": {
+            "backgroundColor": "#f1f5f9",
+            "borderRadius": "16px",
+            "border": "2px solid #e2e8f0"
+          }
+        },
+        {
+          "id": "t2",
+          "type": "text",
+          "role": "choice",
+          "editable": true,
+          "position": { "x": 18, "y": 48 },
+          "size": { "width": 380, "height": 110 },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "OPTION A: GROWTH",
+          "style": {
+            "fontSize": 26,
+            "fontWeight": "700",
+            "textAlign": "center",
+            "color": "#6366f1"
+          }
+        },
+        {
+          "id": "t3",
+          "type": "text",
+          "role": "choice",
+          "editable": true,
+          "position": { "x": 54, "y": 48 },
+          "size": { "width": 380, "height": 110 },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "OPTION B: SCALE",
+          "style": {
+            "fontSize": 26,
+            "fontWeight": "700",
+            "textAlign": "center",
+            "color": "#6366f1"
+          }
         }
        ]
     },
@@ -496,49 +523,93 @@
       "layoutType": "Grid",
       "avatarPosition": "bottom-right",
       "zones": {
-        "text": { "x": 100, "y": 600, "width": 1080, "height": 100 },
-        "image": { "x": 100, "y": 100, "width": 1080, "height": 400 }
+        "text": { "x": 100, "y": 600, "width": 1080, "height": 100 }
       },
       "description": "Professional 3-column layout to highlight core service offerings.",
       "flow": "Services → Value",
       "duration": 9,
       "tags": ["grid", "services"],
       "clips": [
-        { 
-          "id": "t1", 
-          "type": "text", 
-          "role": "service-title", 
-          "editable": true, 
-          "position": { "x": 10, "y": 69 }, 
-          "size": { "width": 350, "height": 60 },
+        {
+          "id": "c1",
+          "type": "shape",
+          "role": "service-column",
+          "editable": true,
+          "position": { "x": 5, "y": 14 },
+          "size": { "width": 520, "height": 420 },
           "startTime": 0,
           "endTime": 9,
-          "content": "BRAND DESIGN", 
-          "style": { "fontSize": 32, "fontWeight": "900", "textAlign": "center", "color": "#1e293b" } 
+          "style": {
+            "backgroundColor": "#6366f1",
+            "borderRadius": "20px",
+            "boxShadow": "0 8px 24px rgba(99,102,241,0.25)"
+          }
         },
-        { 
-          "id": "t2", 
-          "type": "text", 
-          "role": "service-title", 
-          "editable": true, 
-          "position": { "x": 38, "y": 69 }, 
-          "size": { "width": 350, "height": 60 },
+        {
+          "id": "c2",
+          "type": "shape",
+          "role": "service-column",
+          "editable": true,
+          "position": { "x": 36, "y": 14 },
+          "size": { "width": 520, "height": 420 },
           "startTime": 0,
           "endTime": 9,
-          "content": "AI STRATEGY", 
-          "style": { "fontSize": 32, "fontWeight": "900", "textAlign": "center", "color": "#1e293b" } 
+          "style": {
+            "backgroundColor": "#6366f1",
+            "borderRadius": "20px",
+            "boxShadow": "0 8px 24px rgba(99,102,241,0.25)"
+          }
         },
-        { 
-          "id": "t3", 
-          "type": "text", 
-          "role": "service-title", 
-          "editable": true, 
-          "position": { "x": 66, "y": 69 }, 
-          "size": { "width": 350, "height": 60 },
+        {
+          "id": "c3",
+          "type": "shape",
+          "role": "service-column",
+          "editable": true,
+          "position": { "x": 67, "y": 14 },
+          "size": { "width": 520, "height": 420 },
           "startTime": 0,
           "endTime": 9,
-          "content": "SOCIAL GROWTH", 
-          "style": { "fontSize": 32, "fontWeight": "900", "textAlign": "center", "color": "#1e293b" } 
+          "style": {
+            "backgroundColor": "#6366f1",
+            "borderRadius": "20px",
+            "boxShadow": "0 8px 24px rgba(99,102,241,0.25)"
+          }
+        },
+        {
+          "id": "t1",
+          "type": "text",
+          "role": "service-title",
+          "editable": true,
+          "position": { "x": 8, "y": 42 },
+          "size": { "width": 460, "height": 120 },
+          "startTime": 0,
+          "endTime": 9,
+          "content": "BRAND DESIGN",
+          "style": { "fontSize": 28, "fontWeight": "900", "textAlign": "center", "color": "#ffffff", "textTransform": "uppercase" }
+        },
+        {
+          "id": "t2",
+          "type": "text",
+          "role": "service-title",
+          "editable": true,
+          "position": { "x": 39, "y": 42 },
+          "size": { "width": 460, "height": 120 },
+          "startTime": 0,
+          "endTime": 9,
+          "content": "AI STRATEGY",
+          "style": { "fontSize": 28, "fontWeight": "900", "textAlign": "center", "color": "#ffffff", "textTransform": "uppercase" }
+        },
+        {
+          "id": "t3",
+          "type": "text",
+          "role": "service-title",
+          "editable": true,
+          "position": { "x": 70, "y": 42 },
+          "size": { "width": 460, "height": 120 },
+          "startTime": 0,
+          "endTime": 9,
+          "content": "SOCIAL GROWTH",
+          "style": { "fontSize": 28, "fontWeight": "900", "textAlign": "center", "color": "#ffffff", "textTransform": "uppercase" }
         }
       ]
     },

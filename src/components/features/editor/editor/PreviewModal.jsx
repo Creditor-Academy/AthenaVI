@@ -4,8 +4,8 @@ import { MdClose, MdPlayCircleOutline, MdMovie } from 'react-icons/md'
 import VideoComposition from './VideoComposition'
 import heygenService from '../../../../services/heygenService'
 import {
-  preloadSceneHeygenVideos,
-  resolveScenePlaybackUrls,
+  prepareScenesForPlayback,
+  unmuteRemotionPlayer,
 } from '../../../../utils/heygenVideo'
 import './PreviewModal.css'
 
@@ -13,7 +13,6 @@ const PreviewModal = ({
   showPreviewModal,
   setShowPreviewModal,
   scenes,
-  activeSceneId,
   totalDurationInFrames,
   bgMusic,
   bgMusicVolume,
@@ -24,6 +23,7 @@ const PreviewModal = ({
   projectId,
 }) => {
   const playerRef = useRef(null)
+  const playbackStartedRef = useRef(false)
   const [resolvedScenes, setResolvedScenes] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [loadLabel, setLoadLabel] = useState('Preparing preview…')
@@ -41,6 +41,7 @@ const PreviewModal = ({
 
   useEffect(() => {
     if (!showPreviewModal) {
+      playbackStartedRef.current = false
       setResolvedScenes(null)
       setIsLoading(false)
       setLoadProgress(0)
@@ -60,22 +61,19 @@ const PreviewModal = ({
 
       try {
         setLoadLabel('Refreshing avatar videos…')
-        const withUrls = await resolveScenePlaybackUrls(
+        const withUrls = await prepareScenesForPlayback(
           scenes,
           workspaceId,
           projectId,
-          heygenService
-        )
-        if (cancelled) return
-
-        const heygenCount = withUrls.filter((s) => s.heygenVideoId).length
-        if (heygenCount > 0) {
-          await preloadSceneHeygenVideos(withUrls, ({ done, total, label }) => {
+          heygenService,
+          ({ done, total, label }) => {
             if (cancelled) return
             setLoadLabel(label)
             setLoadProgress(total > 0 ? Math.round((done / total) * 100) : 100)
-          })
-        } else {
+          }
+        )
+        if (cancelled) return
+        if (!withUrls.some((s) => s.heygenVideoId)) {
           setLoadProgress(100)
           setLoadLabel('Almost ready…')
         }
@@ -87,7 +85,7 @@ const PreviewModal = ({
         await new Promise((r) => setTimeout(r, 200))
         if (!cancelled) setPlayerReady(true)
       } catch (err) {
-        console.error('[Preview] Prepare failed:', err)
+        console.error('[Preview] Failed to resolve HeyGen playback URLs:', err)
         if (!cancelled) {
           setResolvedScenes(scenes)
           setPlayerReady(true)
@@ -122,6 +120,23 @@ const PreviewModal = ({
     [getSceneForFrame, setActiveSceneId]
   )
 
+  const startPlaybackWithSound = useCallback(() => {
+    const player = playerRef.current
+    if (!player) return
+    unmuteRemotionPlayer(player)
+    const playResult = player.play()
+    if (playResult && typeof playResult.catch === 'function') {
+      playResult.catch(() => {})
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!playerReady || isLoading || playbackStartedRef.current) return undefined
+    playbackStartedRef.current = true
+    const timer = setTimeout(startPlaybackWithSound, 150)
+    return () => clearTimeout(timer)
+  }, [playerReady, isLoading, startPlaybackWithSound])
+
   if (!showPreviewModal) return null
 
   const previewScenes = resolvedScenes ?? scenes
@@ -130,15 +145,15 @@ const PreviewModal = ({
   const progressPct = Math.min(100, Math.max(0, loadProgress))
 
   return (
-    <div className="preview-modal" role="dialog" aria-modal="true" aria-label="Video preview">
-      <header className="preview-modal__topbar">
-        <div className="preview-modal__brand">
-          <div className="preview-modal__logo" aria-hidden>
+    <div className="video-preview" role="dialog" aria-modal="true" aria-label="Video preview">
+      <header className="video-preview__topbar">
+        <div className="video-preview__brand">
+          <div className="video-preview__logo" aria-hidden>
             <MdMovie size={20} />
           </div>
           <div>
-            <h1 className="preview-modal__title">Preview</h1>
-            <p className="preview-modal__meta">
+            <h1 className="video-preview__title">Preview</h1>
+            <p className="video-preview__meta">
               {scenes.length} scene{scenes.length === 1 ? '' : 's'}
               {bgMusic ? ' · Background music on' : ''}
             </p>
@@ -146,34 +161,34 @@ const PreviewModal = ({
         </div>
 
         {previewSceneLabel && playerReady && !isLoading ? (
-          <div className="preview-modal__scene-pill" title={previewSceneLabel}>
-            <span className="preview-modal__scene-pill-dot" aria-hidden />
+          <div className="video-preview__scene-pill" title={previewSceneLabel}>
+            <span className="video-preview__scene-pill-dot" aria-hidden />
             {previewSceneLabel}
           </div>
         ) : null}
 
-        <div className="preview-modal__actions">
-          <button type="button" className="preview-modal__exit" onClick={closePreview}>
+        <div className="video-preview__actions">
+          <button type="button" className="video-preview__exit" onClick={closePreview}>
             <MdClose size={18} />
             Exit
           </button>
         </div>
       </header>
 
-      <div className="preview-modal__body">
-        <div className="preview-modal__stage">
+      <div className="video-preview__body">
+        <div className="video-preview__stage">
           {showOverlay && (
-            <div className="preview-modal__overlay">
-              <div className="preview-modal__spinner" aria-hidden />
-              <p className="preview-modal__load-title">{loadLabel}</p>
-              <p className="preview-modal__load-sub">
+            <div className="video-preview__overlay">
+              <div className="video-preview__spinner" aria-hidden />
+              <p className="video-preview__load-title">{loadLabel}</p>
+              <p className="video-preview__load-sub">
                 Avatar videos are cached so playback stays in sync with your scene. Layers at 0:00
                 appear together when the scene starts.
               </p>
               {progressPct > 0 && progressPct < 100 ? (
-                <div className="preview-modal__progress" aria-hidden>
+                <div className="video-preview__progress" aria-hidden>
                   <div
-                    className="preview-modal__progress-bar"
+                    className="video-preview__progress-bar"
                     style={{ width: `${progressPct}%` }}
                   />
                 </div>
@@ -182,24 +197,28 @@ const PreviewModal = ({
           )}
 
           {playerReady && (
-            <div className="preview-modal__player-shell">
+            <div className="video-preview__player-shell">
               <Player
                 key={`preview-${previewScenes.map((s) => s.playbackUrl || s.generatedVideoUrl || s.id).join('|')}`}
                 ref={playerRef}
-                className="preview-modal__player"
+                className="video-preview__player"
                 component={VideoComposition}
                 durationInFrames={Math.max(totalDurationInFrames, 30)}
                 compositionWidth={1920}
                 compositionHeight={1080}
                 fps={30}
                 controls
-                autoPlay
+                showVolumeControls
+                numberOfSharedAudioTags={12}
+                showOutlines={false}
+                autoPlay={false}
                 inputProps={{
                   scenes: previewScenes,
                   bgMusic,
                   bgMusicVolume,
                 }}
                 onPlay={() => {
+                  unmuteRemotionPlayer(playerRef.current)
                   setIsPlaying(true)
                   window.speechSynthesis?.cancel()
                 }}
@@ -216,9 +235,9 @@ const PreviewModal = ({
       </div>
 
       {playerReady && !isLoading && hasHeygenInProject && (
-        <p className="preview-modal__footer-hint">
+        <p className="video-preview__footer-hint">
           <MdPlayCircleOutline size={13} style={{ verticalAlign: -2, marginRight: 4 }} />
-          Voice plays from your generated avatar video
+          Voice plays from your generated avatar video — use the player play button if audio is muted
         </p>
       )}
     </div>

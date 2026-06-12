@@ -2,6 +2,40 @@
 
 export const DEFAULT_GRID_SIZE = 20;
 
+/** Human-readable sidebar label — prefers clip type over internal layout roles like "decoration". */
+export function getLayerDisplayLabel(clip) {
+  if (!clip) return 'Layer';
+  if (clip.type === 'shape' && clip.role === 'frame') return 'Frame';
+  if (clip.type === 'shape') return 'Shape';
+  if (clip.type === 'avatar' || clip.role === 'avatar') return 'Avatar';
+  if (clip.role === 'icon') return 'Icon';
+  if (clip.role === 'logo') return 'Logo';
+  if (clip.type === 'image') return 'Image';
+  if (clip.type === 'video') return 'Video';
+  if (clip.role === 'main-text') return 'Heading';
+  if (clip.role) {
+    return clip.role
+      .split('-')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
+  if (clip.type) {
+    return clip.type.charAt(0).toUpperCase() + clip.type.slice(1);
+  }
+  return 'Layer';
+}
+
+/** Layers that can fill the canvas via "Set as Scene Background" (not shapes). */
+export function canSetAsSceneBackground(clip) {
+  if (!clip) return false;
+  return (
+    clip.type === 'image' ||
+    clip.type === 'video' ||
+    clip.type === 'avatar' ||
+    clip.role === 'avatar'
+  );
+}
+
 /** True when a clip should render behind all other scene layers. */
 export function isBackgroundClip(clip) {
   if (!clip) return false;
@@ -23,7 +57,21 @@ export function clipRenderRank(clip) {
 }
 
 export function sortClipsForRender(clips = []) {
+  return sortClipsByPaintOrder(clips);
+}
+
+/** Paint order: background clips first, then by layer (low = behind). */
+export function sortClipsByPaintOrder(clips = []) {
   return [...clips].sort((a, b) => clipRenderRank(a) - clipRenderRank(b));
+}
+
+export function countBackgroundClips(clips = []) {
+  return clips.filter(isBackgroundClip).length;
+}
+
+/** First paint-order index a non-background clip may occupy (just above backgrounds). */
+export function minMovableStackIndex(clips = []) {
+  return countBackgroundClips(clips);
 }
 
 export function getClipZIndex(clip, isSelected = false) {
@@ -61,20 +109,36 @@ export function snapPoint(point, gridSize, enabled) {
   };
 }
 
+/** Assign sequential layer numbers from the given paint order (do not re-sort). */
 export function reindexLayerNumbers(clips) {
-  return [...clips]
-    .sort((a, b) => (a.layer ?? 0) - (b.layer ?? 0))
-    .map((clip, index) => ({ ...clip, layer: index }));
+  let nextLayer = 1;
+  return clips.map((clip) => {
+    if (isBackgroundClip(clip)) {
+      return { ...clip, isBackground: true, layer: 0 };
+    }
+    const updated = { ...clip, isBackground: false, layer: nextLayer };
+    nextLayer += 1;
+    return updated;
+  });
 }
 
 export function moveClipInStack(clips, clipId, direction) {
-  const sorted = [...clips].sort((a, b) => (a.layer ?? 0) - (b.layer ?? 0));
+  const sorted = sortClipsByPaintOrder(clips);
   const index = sorted.findIndex((c) => c.id === clipId);
-  if (index === -1) return clips;
+  if (index === -1 || isBackgroundClip(sorted[index])) return clips;
 
-  const targetIndex = direction === 'up' ? index + 1 : index - 1;
-  if (targetIndex < 0 || targetIndex >= sorted.length) return clips;
+  const minIndex = minMovableStackIndex(sorted);
 
+  if (direction === 'up') {
+    const targetIndex = index + 1;
+    if (targetIndex >= sorted.length) return clips;
+    const next = [...sorted];
+    [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
+    return reindexLayerNumbers(next);
+  }
+
+  const targetIndex = index - 1;
+  if (targetIndex < minIndex) return clips;
   const next = [...sorted];
   [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
   return reindexLayerNumbers(next);
@@ -86,6 +150,72 @@ export function bringClipForward(clips, clipId) {
 
 export function sendClipBackward(clips, clipId) {
   return moveClipInStack(clips, clipId, 'down');
+}
+
+/** Place clip directly above scene backgrounds (behind avatar, text, images). */
+export function sendClipToBack(clips, clipId) {
+  const sorted = sortClipsByPaintOrder(clips);
+  const index = sorted.findIndex((c) => c.id === clipId);
+  if (index === -1 || isBackgroundClip(sorted[index])) return clips;
+
+  const minIndex = minMovableStackIndex(sorted);
+  if (index <= minIndex) return clips;
+
+  const clip = sorted[index];
+  const bgClips = sorted.filter(isBackgroundClip);
+  const others = sorted.filter((c) => !isBackgroundClip(c) && c.id !== clipId);
+  return reindexLayerNumbers([...bgClips, clip, ...others]);
+}
+
+export function bringClipToFront(clips, clipId) {
+  const sorted = sortClipsByPaintOrder(clips);
+  const index = sorted.findIndex((c) => c.id === clipId);
+  if (index === -1 || isBackgroundClip(sorted[index]) || index >= sorted.length - 1) return clips;
+
+  const clip = sorted[index];
+  const rest = sorted.filter((c) => c.id !== clipId);
+  return reindexLayerNumbers([...rest, clip]);
+}
+
+/** Layer index in paint order (low = back). */
+export function getClipStackIndex(clips, clipId) {
+  return sortClipsByPaintOrder(clips).findIndex((c) => c.id === clipId);
+}
+
+export function buildSceneBackgroundPatch(clip) {
+  const origPos = clip._origPosition || clip.position;
+  const origSize = clip._origSize || clip.size;
+  const isAvatar =
+    clip.role === 'avatar' ||
+    clip.type === 'avatar' ||
+    (clip.type === 'video' && clip.role === 'avatar');
+  const patch = {
+    isBackground: true,
+    // Keep avatar role so HeyGen playback URLs still resolve in preview/export
+    ...(isAvatar ? {} : { role: 'background' }),
+    _origPosition: origPos,
+    _origSize: origSize,
+    position: { x: 0, y: 0 },
+    size: { width: 1920, height: 1080 },
+  };
+  if (clip.type === 'image' || clip.type === 'video' || clip.type === 'avatar') {
+    patch.style = {
+      ...(clip.style || {}),
+      objectFit: clip.style?.objectFit || 'cover',
+      zIndex: 0,
+    };
+  }
+  return patch;
+}
+
+export function buildUnsetSceneBackgroundPatch(clip) {
+  return {
+    isBackground: false,
+    position: clip._origPosition || { x: 200, y: 200 },
+    size: clip._origSize || { width: 600, height: 400 },
+    _origPosition: undefined,
+    _origSize: undefined,
+  };
 }
 
 export function duplicateClip(clip, overrides = {}) {
@@ -158,5 +288,5 @@ export function pasteClipsAt(clips, pastedClips, offset = { x: 32, y: 32 }) {
       layer: maxLayer + 1 + i,
     })
   );
-  return reindexLayerNumbers([...clips, ...newClips]);
+  return reindexLayerNumbers([...sortClipsByPaintOrder(clips), ...newClips]);
 }

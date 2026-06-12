@@ -203,11 +203,15 @@ class WorkspaceService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to update workspace: ${response.status}`);
+        throw new Error(await this.readErrorMessage(response, `Failed to update workspace: ${response.status}`));
       }
 
       const data = await response.json();
-      return this.normalizeId(data.data?.workspace || data.workspace);
+      const workspace = data.data?.workspace || data.workspace;
+      if (!workspace) {
+        throw new Error('Workspace not found in response');
+      }
+      return this.normalizeId(workspace);
     } catch (error) {
       console.error('Error in updateWorkspace:', error);
       throw error;

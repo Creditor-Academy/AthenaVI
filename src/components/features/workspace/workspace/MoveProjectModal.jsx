@@ -42,31 +42,31 @@ const MoveProjectModal = ({ isOpen, onClose, onMove, folders = [], currentFolder
                         onClick={onClose}
                     />
                     <motion.div 
-                        className="modal-content professional-modal"
+                        className="modal-content astryd-modal"
                         initial={{ opacity: 0, scale: 0.9, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         onClick={e => e.stopPropagation()}
                     >
-                        <button className="icon-btn-close-outside" onClick={onClose} title="Close">
-                            <MdClose size={20} />
-                        </button>
-                        <div className="modal-header">
-                            <div className="header-icon-title">
-                                <div className="header-icon-container folder-icon-bg" style={{ backgroundColor: 'rgba(37, 99, 235, 0.1)', color: '#2563eb' }}>
-                                    <MdDriveFileMove size={24} />
+                        <div className="astryd-header">
+                            <div className="astryd-title-group">
+                                <div className="astryd-icon-container">
+                                    <MdDriveFileMove size={20} />
                                 </div>
                                 <div>
                                     <h2>Move Video</h2>
-                                    <p className="modal-subtitle">Move "{videoTitle || 'Untitled Video'}" to another folder</p>
+                                    <p className="astryd-subtitle">Move "{videoTitle || 'Untitled Video'}" to another folder</p>
                                 </div>
                             </div>
+                            <button className="astryd-close-btn" onClick={onClose} title="Close">
+                                <MdClose size={18} />
+                            </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="modal-body-premium">
-                            <div className="form-group" style={{ marginBottom: '24px' }}>
-                                <label htmlFor="target-folder" style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: 'var(--text-main)' }}>Select Destination Folder</label>
+                        <form onSubmit={handleSubmit} className="astryd-form">
+                            <div className="astryd-form-group">
+                                <label htmlFor="target-folder">Select Destination Folder</label>
                                 <select
                                     id="target-folder"
                                     value={targetFolderId}
@@ -74,19 +74,8 @@ const MoveProjectModal = ({ isOpen, onClose, onMove, folders = [], currentFolder
                                         setTargetFolderId(e.target.value);
                                         if (error) setError('');
                                     }}
-                                    className="form-input-premium"
+                                    className="astryd-input"
                                     disabled={isSubmitting}
-                                    style={{
-                                        width: '100%',
-                                        height: '42px',
-                                        borderRadius: '8px',
-                                        border: '1px solid var(--border-color)',
-                                        background: 'var(--bg-card)',
-                                        color: 'var(--text-main)',
-                                        padding: '0 12px',
-                                        fontSize: '14px',
-                                        outline: 'none'
-                                    }}
                                 >
                                     <option value="">Workspace Root (No Folder)</option>
                                     {folders.map(folder => (
@@ -95,40 +84,22 @@ const MoveProjectModal = ({ isOpen, onClose, onMove, folders = [], currentFolder
                                         </option>
                                     ))}
                                 </select>
-                                {error && <span className="error-message-modal" style={{ color: '#ef4444', fontSize: '12px', marginTop: '8px', display: 'block' }}>{error}</span>}
+                                {error && <span className="astryd-error">{error}</span>}
                             </div>
 
-                            <div className="modal-footer-premium" style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                            <div className="astryd-footer">
                                 <button 
                                     type="button" 
-                                    className="btn-secondary-premium" 
+                                    className="astryd-btn-secondary" 
                                     onClick={onClose}
                                     disabled={isSubmitting}
-                                    style={{
-                                        padding: '10px 20px',
-                                        borderRadius: '8px',
-                                        border: '1px solid var(--border-color)',
-                                        background: 'transparent',
-                                        color: 'var(--text-main)',
-                                        fontWeight: 600,
-                                        cursor: 'pointer'
-                                    }}
                                 >
                                     Cancel
                                 </button>
                                 <button 
                                     type="submit" 
-                                    className="btn-primary-premium"
+                                    className="astryd-btn-primary"
                                     disabled={isSubmitting}
-                                    style={{
-                                        padding: '10px 20px',
-                                        borderRadius: '8px',
-                                        border: 'none',
-                                        background: 'var(--primary)',
-                                        color: '#fff',
-                                        fontWeight: 600,
-                                        cursor: 'pointer'
-                                    }}
                                 >
                                     {isSubmitting ? 'Moving...' : 'Move Video'}
                                 </button>

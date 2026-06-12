@@ -17,7 +17,12 @@ import {
 import projectTemplate from '../../../../constants/projectTemplate.json';
 import { buildSceneDurationPatch, estimateHeygenSceneDuration } from '../../../../utils/sceneDuration';
 import { normalizeClipsToScene } from '../../../../utils/editorLayerUtils';
-import { SCENE_TRANSITION_OPTIONS, normalizeSceneTransition } from '../../../../utils/sceneTransitionUtils';
+import { normalizeSceneClips } from '../../../../utils/clipLayout';
+import {
+  SCENE_TRANSITION_CATALOG,
+  getSceneTransitionCatalogValue,
+  normalizeSceneTransition,
+} from '../../../../utils/sceneTransitionUtils';
 import { sceneNeedsHeygenRegeneration } from '../../../../utils/heygenVideo';
 import './SceneSettingsPanel.css';
 
@@ -28,13 +33,6 @@ const ENTRANCE_SPEED_OPTS = [
   { value: 'slow', label: 'Slow' },
   { value: 'normal', label: 'Normal' },
   { value: 'fast', label: 'Fast' },
-];
-
-const SLIDE_DIRECTIONS = [
-  { value: 'left', label: '←' },
-  { value: 'right', label: '→' },
-  { value: 'up', label: '↑' },
-  { value: 'down', label: '↓' },
 ];
 
 const displayName = (name, emptyLabel = 'Not selected') => {
@@ -88,14 +86,13 @@ const SceneSettingsPanel = ({
     (activeScene.script || '').trim()
   );
 
-  const transition = activeScene.transition || { type: 'fade', duration: 0.5 };
-  const transitionType =
-    typeof transition === 'string' ? transition : transition.type || 'fade';
+  const transition = normalizeSceneTransition(activeScene.transition);
+  const catalogValue = getSceneTransitionCatalogValue(activeScene);
 
   const patchTransition = (patch) => {
     updateScene(activeSceneId, {
       transition: normalizeSceneTransition({
-        ...(typeof transition === 'object' ? transition : { type: transitionType }),
+        ...transition,
         ...patch,
       }),
     });
@@ -290,7 +287,10 @@ const SceneSettingsPanel = ({
                     const ti = tc.findIndex((c) => c.type === 'text');
                     if (ti !== -1) tc[ti].content = existingText.content;
                   }
-                  newClips = normalizeClipsToScene(tc, activeScene?.duration || 8);
+                  newClips = normalizeClipsToScene(
+                    normalizeSceneClips(tc),
+                    activeScene?.duration || 8
+                  );
                 }
                 updateScene(activeSceneId, { layout: newLayout, clips: newClips });
               }}
@@ -420,54 +420,34 @@ const SceneSettingsPanel = ({
         <div className="scene-settings__block-body">
           <div>
             <div className="scene-settings__field-label">Transition</div>
-            <div className="scene-settings__chips">
-              {SCENE_TRANSITION_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  className={`scene-settings__chip ${transitionType === opt.value ? 'scene-settings__chip--active' : ''}`}
-                  onClick={() => patchTransition({ type: opt.value })}
-                >
+            <select
+              className="scene-settings__select"
+              value={catalogValue}
+              onChange={(e) => patchTransition({ value: e.target.value })}
+            >
+              {SCENE_TRANSITION_CATALOG.map((opt) => (
+                <option key={opt.value} value={opt.value}>
                   {opt.label}
-                </button>
+                </option>
               ))}
-            </div>
+            </select>
           </div>
-          {transitionType !== 'none' && (
-            <>
-              <div>
-                <div className="scene-settings__field-label">Duration</div>
-                <div className="scene-settings__chips">
-                  {TRANSITION_DURATION_PRESETS.map((sec) => (
-                    <button
-                      key={sec}
-                      type="button"
-                      className={`scene-settings__chip ${Math.abs((transition.duration ?? 0.5) - sec) < 0.05 ? 'scene-settings__chip--active' : ''}`}
-                      onClick={() => patchTransition({ duration: sec })}
-                    >
-                      {sec}s
-                    </button>
-                  ))}
-                </div>
+          {catalogValue !== 'none' && (
+            <div>
+              <div className="scene-settings__field-label">Duration</div>
+              <div className="scene-settings__chips">
+                {TRANSITION_DURATION_PRESETS.map((sec) => (
+                  <button
+                    key={sec}
+                    type="button"
+                    className={`scene-settings__chip ${Math.abs((transition.duration ?? 0.5) - sec) < 0.05 ? 'scene-settings__chip--active' : ''}`}
+                    onClick={() => patchTransition({ duration: sec })}
+                  >
+                    {sec}s
+                  </button>
+                ))}
               </div>
-              {transitionType === 'slide' && (
-                <div>
-                  <div className="scene-settings__field-label">Direction</div>
-                  <div className="scene-settings__chips">
-                    {SLIDE_DIRECTIONS.map((d) => (
-                      <button
-                        key={d.value}
-                        type="button"
-                        className={`scene-settings__chip ${(transition.direction || 'left') === d.value ? 'scene-settings__chip--active' : ''}`}
-                        onClick={() => patchTransition({ direction: d.value })}
-                      >
-                        {d.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
+            </div>
           )}
         </div>
       </div>

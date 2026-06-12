@@ -20,34 +20,38 @@ const useTemplates = (category) => {
       return;
     }
 
+    const fetchTemplateFile = async (file) => {
+      try {
+        const response = await fetch(`/templates/${file}.json`);
+        if (!response.ok) return { scenes: [] };
+        const data = await response.json();
+        return { scenes: data.scenes || [] };
+      } catch {
+        return { scenes: [] };
+      }
+    };
+
     const fetchTemplates = async () => {
       setLoading(true);
       setError(null);
       try {
         const cat = category.toLowerCase();
-        
+        const allFiles = ['marketing', 'educational', 'corporate', 'social', 'personal', 'pitch_template'];
+        const categoryFile = cat === 'pitch' ? 'pitch_template' : cat;
+
         if (cat === 'all') {
-          const files = ['marketing', 'educational', 'corporate', 'social', 'personal'];
-          const responses = await Promise.all(
-            files.map(file => 
-              fetch(`/templates/${file}.json`)
-                .then(res => res.ok ? res.json() : { scenes: [] })
-                .catch(() => ({ scenes: [] }))
-            )
-          );
-          
-          // Merge all scenes into a single flattened array
-          const allScenes = responses.flatMap(data => data.scenes || []);
+          const responses = await Promise.all(allFiles.map(fetchTemplateFile));
+          const allScenes = responses.flatMap((data) => data.scenes || []);
           setTemplates(allScenes);
         } else {
-          const response = await fetch(`/templates/${cat}.json`);
-          
-          if (!response.ok) {
+          const response = await fetchTemplateFile(categoryFile);
+          const scenes = response.scenes || [];
+
+          if (scenes.length === 0) {
             throw new Error(`Failed to fetch templates for category: ${category}`);
           }
 
-          const data = await response.json();
-          setTemplates(data.scenes || []);
+          setTemplates(scenes);
         }
       } catch (err) {
         console.error('Error fetching templates:', err);

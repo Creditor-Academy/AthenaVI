@@ -13,13 +13,21 @@ import PreviewModal from '../../components/features/editor/editor/PreviewModal'
 import ExportModal from '../../components/features/editor/editor/ExportModal'
 import GeneratedVideoModal from '../../components/features/editor/editor/GeneratedVideoModal'
 import QuickCreateModal from '../../components/features/editor/editor/QuickCreateModal'
-import RenderDownloadModal from '../../components/features/editor/editor/RenderDownloadModal'
 import heygenService from '../../services/heygenService'
+import creditsService, { isInsufficientCreditsError } from '../../services/creditsService.js'
+import { extractCreditsUsed } from '../../utils/creditTransactions.js'
 import avatar1 from '../../assets/Avatarr1.png'
 import projectTemplate from '../../constants/projectTemplate.json'
 import workspaceService from '../../services/workspaceService'
-import { buildHeygenAvatarContent, getSceneAvatarKind, getSceneAvatarLookId } from '../../utils/heygenAvatars'
-import { buildClipTextContent, isTextLayer } from '../../utils/textClip'
+import {
+  buildHeygenAvatarContent,
+  getSceneAvatarKind,
+  getSceneAvatarLookId,
+  canUseExpressiveness,
+  getSceneLookEngineContext,
+  resolveAvatarEngine,
+} from '../../utils/heygenAvatars'
+import { buildClipTextContent } from '../../utils/textClip'
 import {
   fromBackendProjectData,
   rehydrateSceneVideos,
@@ -30,6 +38,7 @@ import {
   ensureSceneIdentity,
   getCenteredAvatarPlacement,
   nextHeygenSceneId,
+  pollUntilHeygenPlaybackReady,
 } from '../../utils/heygenVideo'
 import { exportFullProjectVideo } from '../../utils/projectRender'
 import {
@@ -43,12 +52,113 @@ import {
 import { useEditorHistory } from '../../hooks/useEditorHistory'
 import { useEditorUx } from '../../hooks/useEditorUx'
 import { normalizeClipStack, normalizeClipsToScene } from '../../utils/editorLayerUtils'
+import {
+  findTopFrameAtPoint,
+  resolveDropAssetId,
+  resolveDropImageSrc,
+} from '../../utils/editorDragDrop'
+import { getDefaultClipPlacement } from '../../utils/editorPlacementUtils'
+import { normalizeSceneClips } from '../../utils/clipLayout'
+import { prepareTemplateSceneForEditor } from '../../utils/templateSceneUtils'
 import { saveVersionSnapshot, loadVersionSnapshot, listVersionSnapshots } from '../../utils/editorVersionHistory'
 import EditorToast from '../../components/features/editor/editor/EditorToast'
 import EditorViewControls from '../../components/features/editor/editor/EditorViewControls'
+import PanelResizeHandle from '../../components/features/editor/editor/PanelResizeHandle'
+import {
+  readStoredPanelSize,
+  writeStoredPanelSize,
+} from '../../hooks/useDragResize'
 
 function projectHasPreExistingScenes(scenes) {
   return Array.isArray(scenes) && scenes.length > 0
+}
+
+const TIMELINE_HEIGHT_STORAGE = 'athena-editor-timeline-height'
+const PROPERTIES_WIDTH_STORAGE = 'athena-editor-properties-width'
+const TIMELINE_HEIGHT_DEFAULT = 220
+const TIMELINE_HEIGHT_MIN = 120
+const TIMELINE_HEIGHT_MAX = 520
+const PROPERTIES_WIDTH_DEFAULT = 320
+const PROPERTIES_WIDTH_MIN = 240
+const PROPERTIES_WIDTH_MAX = 640
+
+function clampPanelSize(value, min, max) {
+  return Math.min(max, Math.max(min, value))
+}
+
+const PROJECT_DRAFT_KEY = 'athenavi_project'
+
+function countSceneClips(scenes = []) {
+  return scenes.reduce((total, scene) => total + (scene.clips?.length ?? 0), 0)
+}
+
+function normalizeBootScenes(scenes = [], resolution) {
+  return scenes.map((scene) => ({
+    ...scene,
+    clips: normalizeClipsToScene(
+      normalizeSceneClips(normalizeClipStack(scene.clips || []), resolution),
+      scene.duration || 8
+    ),
+  }))
+}
+
+function loadProjectDraft(projectId) {
+  if (!projectId) return null
+  try {
+    const raw = localStorage.getItem(PROJECT_DRAFT_KEY)
+    if (!raw) return null
+    const draft = JSON.parse(raw)
+    const draftId = draft?.id || draft?.createConfig?.videoId
+    if (String(draftId) !== String(projectId)) return null
+    return draft
+  } catch {
+    return null
+  }
+}
+
+/** Prefer the local draft when it has more content or a newer timestamp. */
+function mergeProjectWithDraft(base, draft) {
+  if (!draft?.scenes?.length) return base
+
+  const baseClips = countSceneClips(base.scenes)
+  const draftClips = countSceneClips(draft.scenes)
+  const baseUpdated = Date.parse(base.updatedAt || 0) || 0
+  const draftUpdated = Date.parse(draft.updatedAt || 0) || 0
+  const preferDraft = draftClips > baseClips || draftUpdated > baseUpdated
+
+  if (!preferDraft) return base
+
+  const resolution = draft.resolution || base.resolution
+  return {
+    ...base,
+    title: draft.title || base.title,
+    resolution,
+    meta: draft.meta || base.meta,
+    scenes: normalizeBootScenes(draft.scenes, resolution),
+    updatedAt: draft.updatedAt || base.updatedAt,
+    id: base.id || draft.id,
+    workspaceId: base.workspaceId || draft.workspaceId,
+    folderId: base.folderId || draft.folderId,
+    createConfig: base.createConfig || draft.createConfig,
+  }
+}
+
+function shouldPreferLocalProject(localProject, backendScenes, backendUpdatedAt) {
+  const localClips = countSceneClips(localProject?.scenes)
+  const backendClips = countSceneClips(backendScenes)
+  if (localClips > backendClips) return true
+  if (backendClips > localClips) return false
+
+  const localUpdated = Date.parse(localProject?.updatedAt || 0) || 0
+  const backendUpdated = Date.parse(backendUpdatedAt || 0) || 0
+  return localUpdated > backendUpdated
+}
+
+function resolveProjectIds(projectState) {
+  return {
+    workspaceId: projectState.workspaceId || projectState.createConfig?.workspaceId,
+    projectId: projectState.id || projectState.createConfig?.videoId,
+  }
 }
 
 function buildInitialProject(initialConfig) {
@@ -61,14 +171,13 @@ function buildInitialProject(initialConfig) {
       workspaceId: initialConfig.videoData.workspaceId,
       folderId: initialConfig.videoData.folderId,
     });
-    return {
+    const projectId = initialConfig.videoData.id || initialConfig.videoData._id
+    const base = {
       ...projectTemplate.project,
       ...mapped,
-      scenes: (mapped.scenes || []).map((scene) => ({
-        ...scene,
-        clips: normalizeClipsToScene(normalizeClipStack(scene.clips || []), scene.duration || 8),
-      })),
-    };
+      scenes: normalizeBootScenes(mapped.scenes || [], mapped.resolution),
+    }
+    return mergeProjectWithDraft(base, loadProjectDraft(projectId))
   }
 
   const pageSizeToResolution = {
@@ -79,35 +188,50 @@ function buildInitialProject(initialConfig) {
 
   const resolvedResolution = pageSizeToResolution[initialConfig?.pageSize] || projectTemplate.project.resolution;
   const resolvedTitle = initialConfig?.name?.trim() || projectTemplate.project.title;
-  const initialScenes = initialConfig?.template?.scenes || (initialConfig?.template ? [initialConfig.template] : []);
+  const pendingCreateScene = initialConfig?.template?.scene;
+  const initialScenes = (() => {
+    if (Array.isArray(initialConfig?.template?.scenes) && initialConfig.template.scenes.length > 0) {
+      return initialConfig.template.scenes;
+    }
+    if (pendingCreateScene) {
+      return [prepareTemplateSceneForEditor(pendingCreateScene, resolvedResolution)];
+    }
+    if (initialConfig?.template) {
+      return [initialConfig.template];
+    }
+    return [];
+  })();
 
-  return {
+  const projectId = initialConfig?.videoId || initialConfig?.videoData?.id || initialConfig?.videoData?._id
+  const base = {
     ...projectTemplate.project,
     title: resolvedTitle,
     resolution: resolvedResolution,
     scenes: initialScenes.length > 0
-      ? initialScenes.map((scene, idx) => ({
-          ...ensureSceneIdentity(scene, idx),
-          clips: normalizeClipsToScene(normalizeClipStack(scene.clips || []), scene.duration || 8),
-        }))
+      ? normalizeBootScenes(
+          initialScenes.map((scene, idx) => ensureSceneIdentity(scene, idx)),
+          resolvedResolution
+        )
       : [],
     updatedAt: new Date().toISOString(),
-    id: initialConfig?.videoId,
-    workspaceId: initialConfig?.workspaceId,
-    folderId: initialConfig?.folderId,
+    id: projectId,
+    workspaceId: initialConfig?.workspaceId || initialConfig?.videoData?.workspaceId,
+    folderId: initialConfig?.folderId || initialConfig?.videoData?.folderId,
     createConfig: initialConfig
       ? {
           template: initialConfig.template || null,
           pageSize: initialConfig.pageSize || 'landscape',
           workspace: initialConfig.workspace || '',
-          workspaceId: initialConfig.workspaceId || '',
+          workspaceId: initialConfig.workspaceId || initialConfig.videoData?.workspaceId || '',
           folder: initialConfig.folder || '',
-          folderId: initialConfig.folderId || '',
+          folderId: initialConfig.folderId || initialConfig.videoData?.folderId || '',
           tags: initialConfig.tags || [],
           name: initialConfig.name || resolvedTitle,
+          videoId: projectId || '',
         }
       : null,
-  };
+  }
+  return mergeProjectWithDraft(base, loadProjectDraft(projectId))
 }
 
 function Create({ onBack, initialConfig = null }) {
@@ -137,17 +261,37 @@ function Create({ onBack, initialConfig = null }) {
   const [exportError, setExportError] = useState('')
   const [showTemplateModal, setShowTemplateModal] = useState(false)
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false)
+  const [timelineHeight, setTimelineHeight] = useState(() =>
+    clampPanelSize(
+      readStoredPanelSize(TIMELINE_HEIGHT_STORAGE, TIMELINE_HEIGHT_DEFAULT),
+      TIMELINE_HEIGHT_MIN,
+      TIMELINE_HEIGHT_MAX
+    )
+  )
+  const [propertiesPanelWidth, setPropertiesPanelWidth] = useState(() =>
+    clampPanelSize(
+      readStoredPanelSize(PROPERTIES_WIDTH_STORAGE, PROPERTIES_WIDTH_DEFAULT),
+      PROPERTIES_WIDTH_MIN,
+      PROPERTIES_WIDTH_MAX
+    )
+  )
+  const [isResizingLayout, setIsResizingLayout] = useState(false)
   const [selectedLayerId, setSelectedLayerId] = useState(null)
   const [musicDuration, setMusicDuration] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
-  const [showRenderDownload, setShowRenderDownload] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [creditsRefreshKey, setCreditsRefreshKey] = useState(0)
+  const bumpCreditsRefresh = useCallback(() => {
+    setCreditsRefreshKey((key) => key + 1)
+  }, [])
   const [lastSaved, setLastSaved] = useState(null)
   const [showGeneratedVideoModal, setShowGeneratedVideoModal] = useState(false)
   const [generatedVideoUrl, setGeneratedVideoUrl] = useState(null)
+  const [generationCreditsUsed, setGenerationCreditsUsed] = useState(null)
   const [generatingSceneId, setGeneratingSceneId] = useState(null)
   const [showQuickCreateModal, setShowQuickCreateModal] = useState(() => {
     const initial = buildInitialProject(initialConfig)
+    if (initialConfig?.template?.scene) return true
     if (!initialConfig?.videoData?.data && !initialConfig?.template) return true
     if (!initial.scenes || initial.scenes.length === 0) return true
     if (!initial.scenes[0].clips || initial.scenes[0].clips.length === 0) return true
@@ -244,6 +388,9 @@ function Create({ onBack, initialConfig = null }) {
       if (e.detail?.url) {
         setGeneratedVideoUrl(e.detail.url)
         setGeneratingSceneId(e.detail.sceneId || null)
+        setGenerationCreditsUsed(
+          e.detail?.creditsUsed != null ? Number(e.detail.creditsUsed) : null
+        )
         setShowGeneratedVideoModal(true)
       }
     }
@@ -251,24 +398,28 @@ function Create({ onBack, initialConfig = null }) {
     return () => window.removeEventListener('open-generated-video', handleOpenGeneratedVideo)
   }, [])
 
-  useEffect(() => {
-    const handleReady = () => setShowRenderDownload(true)
-    window.addEventListener('render-download-ready', handleReady)
-    return () => window.removeEventListener('render-download-ready', handleReady)
-  }, [])
-
   const quickCreateAutoDismissedRef = useRef(false)
   useEffect(() => {
     if (isProjectLoading || quickCreateAutoDismissedRef.current) return
+    if (project.createConfig?.template?.scene) return
     if (projectHasPreExistingScenes(project.scenes)) {
       setShowQuickCreateModal(false)
       quickCreateAutoDismissedRef.current = true
     }
-  }, [isProjectLoading, project.scenes])
+  }, [isProjectLoading, project.scenes, project.createConfig?.template?.scene])
+
+  useEffect(() => {
+    if (!activeSceneId && project.scenes.length > 0) {
+      setActiveSceneId(project.scenes[0].id)
+    }
+  }, [activeSceneId, project.scenes])
 
   const projectRef = useRef(project)
+  const activeSceneIdRef = useRef(activeSceneId)
   const insertAfterIndexRef = useRef(null)
   projectRef.current = project
+  activeSceneIdRef.current = activeSceneId
+  const saveProjectRef = useRef(null)
 
   // Fetch the latest project state from the backend on mount
   useEffect(() => {
@@ -284,29 +435,65 @@ function Create({ onBack, initialConfig = null }) {
         if (!fetchedProject) return
 
         const backendScenes = fetchedProject.data?.scenes || []
+        const localProject = projectRef.current
 
         // If backend has no scenes but editor already has scenes (e.g. template), do an initial save
-        if (backendScenes.length === 0 && projectRef.current.scenes.length > 0) {
+        const applyHydratedScenes = (scenes, patch = {}) => {
+          setProject((prev) => ({
+            ...prev,
+            ...patch,
+            scenes: scenes.map((s, idx) => ensureSceneIdentity(s, idx)),
+          }))
+        }
+
+        if (backendScenes.length === 0 && localProject.scenes.length > 0) {
           console.log('[Editor] Fresh project – saving initial template scenes to backend')
-          setTimeout(() => saveProject(false, projectRef.current), 500)
+          const scenesWithVideo = await rehydrateSceneVideos(
+            localProject.scenes,
+            workspaceId,
+            projectId
+          )
+          const hydrated = { ...localProject, scenes: scenesWithVideo }
+          applyHydratedScenes(scenesWithVideo)
+          saveProjectRef.current?.(false, hydrated)
           return
         }
 
         if (backendScenes.length > 0) {
-          const mapped = fromBackendProjectData(fetchedProject.data);
+          const mapped = fromBackendProjectData(fetchedProject.data)
+          const resolution = mapped.resolution || localProject.resolution
+          const normalizedBackendScenes = normalizeBootScenes(mapped.scenes || [], resolution)
+
+          if (
+            shouldPreferLocalProject(
+              localProject,
+              normalizedBackendScenes,
+              fetchedProject.updatedAt
+            )
+          ) {
+            console.log('[Editor] Local draft is newer than backend — rehydrating avatar videos')
+            const scenesWithVideo = await rehydrateSceneVideos(
+              localProject.scenes,
+              workspaceId,
+              projectId
+            )
+            const hydrated = { ...localProject, scenes: scenesWithVideo }
+            applyHydratedScenes(scenesWithVideo)
+            saveProjectRef.current?.(false, hydrated)
+            return
+          }
+
           const scenesWithVideo = await rehydrateSceneVideos(
-            mapped.scenes,
+            normalizedBackendScenes,
             workspaceId,
             projectId
-          );
+          )
 
-          setProject((prev) => ({
-            ...prev,
-            resolution: mapped.resolution || prev.resolution,
-            meta: mapped.meta || prev.meta,
-            scenes: scenesWithVideo.map((s, idx) => ensureSceneIdentity(s, idx)),
+          applyHydratedScenes(scenesWithVideo, {
+            resolution: mapped.resolution || localProject.resolution,
+            meta: mapped.meta || localProject.meta,
             updatedAt: fetchedProject.updatedAt || new Date().toISOString(),
-          }));
+          })
         }
       } catch (err) {
         console.warn('[Editor] Failed to fetch project from backend:', err)
@@ -320,45 +507,86 @@ function Create({ onBack, initialConfig = null }) {
   }, [])
 
   const saveProject = useCallback(async (manual = false, projectState = projectRef.current) => {
+    const { workspaceId, projectId } = resolveProjectIds(projectState)
+
     try {
-      localStorage.setItem('athenavi_project', JSON.stringify(projectState));
+      localStorage.setItem(PROJECT_DRAFT_KEY, JSON.stringify({ ...projectState, id: projectId || projectState.id, workspaceId: workspaceId || projectState.workspaceId }))
     } catch (e) {
-      console.warn('Failed to save to localStorage', e);
+      console.warn('Failed to save to localStorage', e)
     }
 
-    if (!projectState.id || !projectState.workspaceId) {
+    if (!projectId || !workspaceId) {
       if (manual) {
-        showToast('Cannot save — project is missing workspace or ID', 'warning');
+        showToast('Cannot save — project is missing workspace or ID', 'warning')
       }
-      return;
+      return
     }
 
     if (!isOnline) {
-      if (manual) showToast('Offline — changes saved locally only', 'warning');
-      return;
+      if (manual) showToast('Offline — changes saved locally only', 'warning')
+      return
     }
 
     try {
-      setIsSaving(true);
+      setIsSaving(true)
 
-      const payload = toBackendProjectData(projectState);
+      const payload = toBackendProjectData({
+        ...projectState,
+        id: projectId,
+        workspaceId,
+      })
 
-      await workspaceService.saveProjectState(projectState.workspaceId, projectState.id, payload);
+      await workspaceService.saveProjectState(workspaceId, projectId, payload)
 
       if (manual) {
-        await workspaceService.updateProject(projectState.workspaceId, projectState.id, { name: projectState.title });
+        await workspaceService.updateProject(workspaceId, projectId, { name: projectState.title })
       }
 
-      saveVersionSnapshot(projectState.id, projectState);
-      setLastSaved(new Date());
-      if (manual) showToast('Project saved', 'success');
+      saveVersionSnapshot(projectId, projectState)
+      setLastSaved(new Date())
+      if (manual) showToast('Project saved', 'success')
     } catch (error) {
-      console.error('Failed to save project:', error);
-      showToast(error?.message || 'Save failed — your work is kept locally', 'error');
+      console.error('Failed to save project:', error)
+      showToast(error?.message || 'Save failed — your work is kept locally', 'error')
     } finally {
-      setIsSaving(false);
+      setIsSaving(false)
     }
-  }, [isOnline, showToast]);
+  }, [isOnline, showToast])
+
+  saveProjectRef.current = saveProject
+
+  // Keep a local draft in sync so refresh doesn't lose unsaved edits
+  useEffect(() => {
+    const { projectId, workspaceId } = resolveProjectIds(project)
+    if (!projectId) return undefined
+
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(
+          PROJECT_DRAFT_KEY,
+          JSON.stringify({ ...project, id: projectId, workspaceId: workspaceId || project.workspaceId })
+        )
+      } catch (e) {
+        console.warn('Failed to persist project draft', e)
+      }
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [project])
+
+  // Flush save when tab closes or user refreshes (localStorage is sync; API gets a best-effort push)
+  useEffect(() => {
+    const flushSave = () => {
+      saveProjectRef.current?.(false, projectRef.current)
+    }
+
+    document.addEventListener('visibilitychange', flushSave)
+    window.addEventListener('pagehide', flushSave)
+    return () => {
+      document.removeEventListener('visibilitychange', flushSave)
+      window.removeEventListener('pagehide', flushSave)
+    }
+  }, [])
 
   const applyGlobalSetting = (type) => {
     const activeScene = project.scenes.find(s => s.id === activeSceneId);
@@ -491,8 +719,8 @@ function Create({ onBack, initialConfig = null }) {
 
     const newClip = {
       id: `clip_${Date.now()}`,
-      type: type === 'image' ? 'image' : type === 'video' ? 'video' : type === 'avatar' ? 'avatar' : type === 'shape' ? 'shape' : type === 'audio' ? 'audio' : 'text',
-      src: (type === 'image' || type === 'video' || type === 'avatar' || type === 'audio') ? mediaSrc : null,
+      type: type === 'image' ? 'image' : type === 'video' ? 'video' : type === 'avatar' ? 'avatar' : type === 'shape' ? 'shape' : type === 'audio' ? 'audio' : type === 'icon' ? 'image' : 'text',
+      src: (type === 'image' || type === 'video' || type === 'avatar' || type === 'audio' || type === 'icon') ? mediaSrc : null,
       content: type === 'text'
         ? { text: typeof content === 'string' ? content : '' }
         : assetId
@@ -502,19 +730,24 @@ function Create({ onBack, initialConfig = null }) {
       startTime: 0.0,
       endTime: targetScene.duration || 8.0,
       position: { x: 50, y: 50 },
-      size: type === 'avatar' ? { width: 250, height: 330 } : type === 'shape' ? { width: parseInt(content?.style?.width) || 200, height: parseInt(content?.style?.height) || 200 } : { width: 400, height: 400 },
-      role: type === 'avatar' ? 'avatar' : undefined,
+      size: { width: 400, height: 400 },
+      role: type === 'avatar' ? 'avatar' : meta?.role,
+      shapeKey: type === 'shape' && content?.id ? content.id : meta?.shapeKey,
       opacity: 1.0,
       style: type === 'text'
         ? {
-            fontSize: 32,
+            fontSize: 48,
             fontWeight: '700',
             color: '#1a1b1c',
             textAlign: 'left',
             fontFamily: 'Inter, system-ui, sans-serif',
             ...(meta?.style || {}),
           }
-        : type === 'shape' ? content?.style : undefined,
+        : type === 'shape'
+          ? content?.style
+          : type === 'icon'
+            ? { objectFit: 'contain', ...(meta?.style || {}) }
+            : undefined,
       effects: {
         brightness: 1,
         contrast: 1,
@@ -535,6 +768,10 @@ function Create({ onBack, initialConfig = null }) {
       const centered = getCenteredAvatarPlacement(project.resolution)
       newClip.position = centered.position
       newClip.size = centered.size
+    } else if (!meta?.isBackground) {
+      const placement = getDefaultClipPlacement(type, content, meta)
+      newClip.position = placement.position
+      newClip.size = placement.size
     }
 
     setProject(prev => ({
@@ -559,7 +796,9 @@ function Create({ onBack, initialConfig = null }) {
         if (s.id !== activeSceneId) return s
         return {
           ...s,
-          clips: s.clips.map(c => c.id === layerId ? { ...c, size: { width, height } } : c)
+          clips: s.clips.map(c =>
+            c.id === layerId ? { ...c, size: { width, height }, _userPlaced: true } : c
+          )
         }
       })
     }))
@@ -576,21 +815,50 @@ function Create({ onBack, initialConfig = null }) {
     setTimeout(() => saveProject(false), 250)
   }
 
-  // Listen for canvas-drop events (drag from sidebar to canvas)
-  useEffect(() => {
-    const handleCanvasDrop = (e) => {
-      const { type, content, x, y } = e.detail
-      const layerId = addLayer(type, content)
-      // Update the newly added layer's position
-      if (layerId) {
-        setTimeout(() => {
-          updateLayerPosition(layerId, x, y)
-        }, 50)
+  const fillShapeWithImage = useCallback((layerId, src, assetId = null) => {
+    if (!activeSceneId || !layerId || !src) return
+    setProject((prev) => ({
+      ...prev,
+      updatedAt: new Date().toISOString(),
+      scenes: prev.scenes.map((s) => {
+        if (s.id !== activeSceneId) return s
+        return {
+          ...s,
+          clips: s.clips.map((clip) =>
+            clip.id === layerId && clip.type === 'shape' && clip.role === 'frame'
+              ? {
+                  ...clip,
+                  fillSrc: src,
+                  fillAssetId: assetId || undefined,
+                  fillObjectFit: clip.fillObjectFit || 'cover',
+                  _userPlaced: true,
+                }
+              : clip
+          ),
+        }
+      }),
+    }), { history: true })
+    setSelectedLayerIds([layerId])
+    setSelectedLayerId(layerId)
+    setIsRightSidebarOpen(true)
+  }, [activeSceneId, setProject])
+
+  const handleCanvasDrop = (detail) => {
+    const { type, content, x, y } = detail || {}
+    const sceneId = activeSceneIdRef.current
+    const scene = projectRef.current.scenes.find((s) => s.id === sceneId)
+
+    if (type === 'image' && typeof x === 'number' && typeof y === 'number') {
+      const frame = findTopFrameAtPoint(scene?.clips, x, y)
+      const src = resolveDropImageSrc(content)
+      if (frame && src) {
+        fillShapeWithImage(frame.id, src, resolveDropAssetId(content))
+        return
       }
     }
-    window.addEventListener('canvas-drop', handleCanvasDrop)
-    return () => window.removeEventListener('canvas-drop', handleCanvasDrop)
-  }, [activeSceneId, project.scenes])
+
+    addLayer(type, content, typeof x === 'number' && typeof y === 'number' ? { dropAt: { x, y } } : undefined)
+  }
 
   const deleteLayer = (sceneId, layerId) => {
     setProject(prev => ({
@@ -644,7 +912,33 @@ function Create({ onBack, initialConfig = null }) {
 
   const activeScene = project.scenes.find(s => s.id === activeSceneId)
   const selectedLayer = activeScene?.clips?.find((c) => c.id === selectedLayerId)
-  const propertiesPanelWidth = selectedLayer && isTextLayer(selectedLayer) ? 380 : 320
+
+  const handleTimelineResize = useCallback((delta) => {
+    setTimelineHeight((h) =>
+      clampPanelSize(h + delta, TIMELINE_HEIGHT_MIN, TIMELINE_HEIGHT_MAX)
+    )
+  }, [])
+
+  const handlePropertiesResize = useCallback((delta) => {
+    setPropertiesPanelWidth((w) =>
+      clampPanelSize(w + delta, PROPERTIES_WIDTH_MIN, PROPERTIES_WIDTH_MAX)
+    )
+  }, [])
+
+  const timelineHeightRef = useRef(timelineHeight)
+  const propertiesPanelWidthRef = useRef(propertiesPanelWidth)
+  timelineHeightRef.current = timelineHeight
+  propertiesPanelWidthRef.current = propertiesPanelWidth
+
+  const persistTimelineHeight = useCallback(() => {
+    setIsResizingLayout(false)
+    writeStoredPanelSize(TIMELINE_HEIGHT_STORAGE, timelineHeightRef.current)
+  }, [])
+
+  const persistPropertiesWidth = useCallback(() => {
+    setIsResizingLayout(false)
+    writeStoredPanelSize(PROPERTIES_WIDTH_STORAGE, propertiesPanelWidthRef.current)
+  }, [])
 
   const totalDurationInFrames = useMemo(() => {
     return project.scenes.reduce((sum, s) => sum + (s.duration || 8), 0) * 30
@@ -806,12 +1100,11 @@ function Create({ onBack, initialConfig = null }) {
       // Space: Play/Pause
       if (e.code === 'Space') {
         e.preventDefault()
-        if (playerRef.current) {
-          if (isPlaying) {
-            playerRef.current.pause()
-          } else {
-            playerRef.current.play()
-          }
+        if (isPlaying) {
+          playerRef.current?.pause()
+        } else {
+          window.speechSynthesis?.cancel()
+          playerRef.current?.play()
         }
       }
 
@@ -896,15 +1189,6 @@ function Create({ onBack, initialConfig = null }) {
   }
 
   const handleAddTemplateScene = (template) => {
-    // Deep copy the scene template to avoid shared references
-    const templateScene = JSON.parse(JSON.stringify(template));
-    // Keep template scene clean (no generation / playback artifacts)
-    delete templateScene.heygenVideoId;
-    delete templateScene.generatedVideoUrl;
-    delete templateScene.playbackUrl;
-    delete templateScene.heygenStatus;
-    delete templateScene.generation;
-
     const insertAfter = insertAfterIndexRef.current
     insertAfterIndexRef.current = null
 
@@ -923,15 +1207,12 @@ function Create({ onBack, initialConfig = null }) {
 
       nextActiveSceneId = newSceneId
 
+      const prepared = prepareTemplateSceneForEditor(template, prev.resolution)
       const newScene = {
-        ...templateScene,
+        ...prepared,
         id: newSceneId,
         sceneId: newSceneId,
         order: isDefaultSingleScene ? 0 : prev.scenes.length,
-        clips: (templateScene.clips || []).map(clip => ({
-          ...clip,
-          id: `clip_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-        })),
       }
 
       let newScenes;
@@ -1040,6 +1321,7 @@ function Create({ onBack, initialConfig = null }) {
       })
       setExportPhase('success')
       showToast('Download started', 'success')
+      bumpCreditsRefresh()
     } catch (err) {
       console.error('[Export] Full render download failed:', err)
       setExportError(err?.message || 'Download failed. The video may still be rendering.')
@@ -1059,6 +1341,7 @@ function Create({ onBack, initialConfig = null }) {
 
   const handlePreview = () => {
     window.speechSynthesis?.cancel()
+    setIsPlaying(false)
     setShowPreviewModal(true)
   }
 
@@ -1067,7 +1350,7 @@ function Create({ onBack, initialConfig = null }) {
     if (!scene && !overrides) return;
 
     const avatarLookId =
-      overrides?.avatarType || getSceneAvatarLookId(scene);
+      overrides?.avatarLookId || overrides?.avatarType || getSceneAvatarLookId(scene);
     const avatarKind =
       overrides?.avatarTypeLabel || getSceneAvatarKind(scene);
     const voiceId = overrides?.voiceId || scene?.voiceId;
@@ -1129,7 +1412,11 @@ function Create({ onBack, initialConfig = null }) {
       const payload = {
         sceneId: stableSceneId,
         avatarId: avatarLookId,
-        avatarEngine: overrides?.avatarEngine || scene?.presenter?.avatarEngine || scene?.avatarEngine || 'avatar_iv',
+        avatarEngine:
+          overrides?.avatarEngine ||
+          scene?.presenter?.avatarEngine ||
+          scene?.avatarEngine ||
+          resolveAvatarEngine(getSceneLookEngineContext(scene)),
         avatarType: avatarKind,
         title: `${project.title} - ${scene?.title || 'Scene'}`,
         resolution: project.resolution?.height >= 1080 ? '1080p' : '720p',
@@ -1142,11 +1429,22 @@ function Create({ onBack, initialConfig = null }) {
         outputFormat: scene?.outputFormat || 'mp4'
       };
 
-      if (payload.avatarEngine === 'avatar_iv' && avatarKind === 'photo_avatar') {
+      if (
+        canUseExpressiveness(
+          {
+            ...getSceneLookEngineContext(scene),
+            avatar_type: avatarKind,
+            supportedEngines:
+              overrides?.supportedEngines ?? getSceneLookEngineContext(scene).supportedEngines,
+          },
+          payload.avatarEngine
+        )
+      ) {
         payload.expressiveness = overrides?.expressiveness || scene?.expressiveness || 'medium';
       }
 
       const result = await heygenService.generateVideo(workspaceId, projectId, payload);
+      bumpCreditsRefresh();
       const heygenVideoId = result.id || result.heygenVideoId || result.video_id;
 
       const sceneForContent = {
@@ -1181,97 +1479,113 @@ function Create({ onBack, initialConfig = null }) {
 
       setTimeout(() => saveProject(false), 200);
 
-      let pollAttempts = 0;
-      const maxPollAttempts = 24;
+      const finishWithPlayback = async (videoData) => {
+        const videoUrl = await heygenService.getVideoBlobUrl(
+          workspaceId,
+          projectId,
+          heygenVideoId
+        );
 
-      const pollStatus = async () => {
+        let finalDuration =
+          durationFromVideoMetadata(videoData) ?? durationPatch.duration;
+
         try {
-          pollAttempts += 1;
-          const videoData = await heygenService.getVideo(workspaceId, projectId, heygenVideoId);
-          const s3Ready = !!(videoData.s3Key || videoData.s3_key);
-          const isDone =
-            (videoData.status === 'completed' || videoData.status === 'success') && s3Ready;
-
-          if (isDone) {
-            const videoUrl = await heygenService.getVideoBlobUrl(
-              workspaceId,
-              projectId,
-              heygenVideoId
-            );
-
-            let finalDuration =
-              durationFromVideoMetadata(videoData) ??
-              durationPatch.duration
-
-            try {
-              const probed = await probeVideoDuration(videoUrl);
-              if (Number.isFinite(probed) && probed > 0) {
-                finalDuration = roundSceneDuration(probed);
-              }
-            } catch {
-              // keep estimate / API metadata
-            }
-
-            const latestScene = projectRef.current.scenes.find((s) => s.id === sceneId) || scene;
-            const sceneForPlacement = {
-              ...latestScene,
-              sceneId: stableSceneId,
-              heygenVideoId,
-              heygenStatus: 'completed',
-              generatedVideoUrl: videoUrl,
-              duration: finalDuration,
-              avatar: videoData.thumbnail_url || latestScene?.avatar || scene?.avatar,
-            };
-            const placedClips = applyGeneratedHeygenToClips(latestScene?.clips || [], {
-              videoUrl,
-              resolution: projectRef.current.resolution,
-              sceneDuration: finalDuration,
-              scene: sceneForPlacement,
-              buildContent: buildHeygenAvatarContent,
-            });
-            const finalClips = applyDurationToSceneClips(placedClips, finalDuration);
-
-            updateScene(sceneId, {
-              heygenStatus: 'completed',
-              heygenVideoId,
-              avatar: videoData.thumbnail_url || scene?.avatar,
-              generatedVideoUrl: videoUrl,
-              duration: finalDuration,
-              durationFromScript: true,
-              clips: finalClips,
-            });
-
-            showToast('Presenter placed in the center — your other elements are unchanged.', 'success');
-
-            window.dispatchEvent(
-              new CustomEvent('open-generated-video', { detail: { url: videoUrl, sceneId } })
-            );
-          } else if (videoData.status === 'failed' || videoData.status === 'error') {
-            updateScene(sceneId, { heygenStatus: 'failed' });
-            window.dispatchEvent(new CustomEvent('generation-failed'));
-          } else if (pollAttempts < maxPollAttempts) {
-            setTimeout(pollStatus, 5000);
-          } else {
-            updateScene(sceneId, { heygenStatus: 'failed' });
-            window.dispatchEvent(new CustomEvent('generation-failed'));
+          const probed = await probeVideoDuration(videoUrl);
+          if (Number.isFinite(probed) && probed > 0) {
+            finalDuration = roundSceneDuration(probed);
           }
-        } catch (err) {
-          console.error('Polling failed:', err);
-          if (pollAttempts < maxPollAttempts) {
-            setTimeout(pollStatus, 5000);
-          } else {
-            updateScene(sceneId, { heygenStatus: 'failed' });
-            window.dispatchEvent(new CustomEvent('generation-failed'));
+        } catch {
+          // keep estimate / API metadata
+        }
+
+        const latestScene = projectRef.current.scenes.find((s) => s.id === sceneId) || scene;
+        const sceneForPlacement = {
+          ...latestScene,
+          sceneId: stableSceneId,
+          heygenVideoId,
+          heygenStatus: 'completed',
+          generation: { heygenVideoId, status: 'completed' },
+          generatedVideoUrl: videoUrl,
+          duration: finalDuration,
+          avatar: videoData.thumbnail_url || latestScene?.avatar || scene?.avatar,
+        };
+        const placedClips = applyGeneratedHeygenToClips(latestScene?.clips || [], {
+          videoUrl,
+          resolution: projectRef.current.resolution,
+          sceneDuration: finalDuration,
+          scene: sceneForPlacement,
+          buildContent: buildHeygenAvatarContent,
+        });
+        const finalClips = applyDurationToSceneClips(placedClips, finalDuration);
+
+        updateScene(sceneId, {
+          heygenStatus: 'completed',
+          heygenVideoId,
+          generation: { heygenVideoId, status: 'completed' },
+          avatar: videoData.thumbnail_url || scene?.avatar,
+          generatedVideoUrl: videoUrl,
+          duration: finalDuration,
+          durationFromScript: true,
+          clips: finalClips,
+        });
+
+        setTimeout(() => {
+          const latest = projectRef.current.scenes.find((s) => s.id === sceneId)
+          if (latest) saveProjectRef.current?.(false, projectRef.current)
+        }, 300)
+
+        let creditsUsed =
+          extractCreditsUsed(videoData)
+          ?? extractCreditsUsed(result);
+
+        if (creditsUsed == null) {
+          try {
+            await new Promise((resolve) => setTimeout(resolve, 400));
+            creditsUsed = await creditsService.resolveRecentUsageCredits(workspaceId);
+          } catch (usageErr) {
+            console.warn('Could not resolve credits used for generation:', usageErr);
           }
         }
+
+        bumpCreditsRefresh();
+
+        showToast(
+          creditsUsed != null
+            ? `Video ready — ${Number(creditsUsed).toLocaleString()} credits used.`
+            : 'Presenter placed in the center — your other elements are unchanged.',
+          'success'
+        );
+
+        window.dispatchEvent(
+          new CustomEvent('open-generated-video', {
+            detail: { url: videoUrl, sceneId, creditsUsed },
+          })
+        );
       };
 
-      pollStatus();
+      try {
+        const videoData = await pollUntilHeygenPlaybackReady(
+          workspaceId,
+          projectId,
+          heygenVideoId,
+          heygenService
+        );
+        await finishWithPlayback(videoData);
+      } catch (err) {
+        console.error('HeyGen generation polling failed:', err);
+        updateScene(sceneId, { heygenStatus: 'failed' });
+        window.dispatchEvent(new CustomEvent('generation-failed'));
+      }
 
     } catch (error) {
       console.error('Failed to start video generation:', error);
       updateScene(sceneId, { heygenStatus: 'failed' });
-      alert('Failed to start video generation: ' + error.message);
+      if (isInsufficientCreditsError(error)) {
+        bumpCreditsRefresh();
+        alert('Not enough workspace credits to generate this avatar video. Allocate credits in Settings → Billing or ask your workspace owner.');
+      } else {
+        alert('Failed to start video generation: ' + error.message);
+      }
       window.dispatchEvent(new CustomEvent('generation-failed'));
     }
   }
@@ -1417,13 +1731,31 @@ function Create({ onBack, initialConfig = null }) {
           durationFromScript: true,
           background: { type: 'color', value: payload.backgroundColor || '#101828' },
           avatar: payload.avatarImage,
-          avatarType: payload.avatarType,
-          avatarLookId: payload.avatarType,
+          avatarType: payload.avatarLookId || payload.avatarType,
+          avatarLookId: payload.avatarLookId || payload.avatarType,
           avatarKind: payload.avatarTypeLabel,
           avatarName: payload.avatarName || 'AI Presenter',
+          avatarGroupId: payload.avatarGroupId,
+          avatarEngine: payload.avatarEngine,
           voiceId: payload.voiceId,
           voiceName: payload.voiceName,
           script: paraText,
+          presenter: {
+            avatarId: payload.avatarLookId || payload.avatarType,
+            avatarLookId: payload.avatarLookId || payload.avatarType,
+            avatarEngine: payload.avatarEngine,
+            avatarType: payload.avatarTypeLabel,
+            avatarName: payload.avatarName || 'AI Presenter',
+            avatarGroupId: payload.avatarGroupId,
+            voiceId: payload.voiceId,
+            voiceName: payload.voiceName,
+            script: paraText,
+            supportedEngines: payload.supportedEngines,
+            engineUnknown: payload.engineUnknown,
+            ...(payload.expressiveness ? { expressiveness: payload.expressiveness } : {}),
+          },
+          supportedEngines: payload.supportedEngines,
+          engineUnknown: payload.engineUnknown,
           clips: clips
         };
       });
@@ -1480,9 +1812,10 @@ function Create({ onBack, initialConfig = null }) {
     const sceneDraft = {
       ...(targetScene || {}),
       sceneId: stableSceneId,
-      avatarType: payload.avatarType,
-      avatarLookId: payload.avatarType,
+      avatarType: payload.avatarLookId || payload.avatarType,
+      avatarLookId: payload.avatarLookId || payload.avatarType,
       avatarKind: payload.avatarTypeLabel,
+      avatarEngine: payload.avatarEngine,
       voiceId: payload.voiceId,
       script: payload.script,
     };
@@ -1529,11 +1862,12 @@ function Create({ onBack, initialConfig = null }) {
           ...s,
           sceneId: stableSceneId,
           avatar: payload.avatarImage,
-          avatarType: payload.avatarType,
-          avatarLookId: payload.avatarType,
+          avatarType: payload.avatarLookId || payload.avatarType,
+          avatarLookId: payload.avatarLookId || payload.avatarType,
           avatarKind: payload.avatarTypeLabel,
           avatarName: payload.avatarName,
           avatarGroupId: payload.avatarGroupId,
+          avatarEngine: payload.avatarEngine,
           voiceId: payload.voiceId,
           voiceName: payload.voiceName,
           voiceSettings,
@@ -1541,6 +1875,22 @@ function Create({ onBack, initialConfig = null }) {
           expressiveness: payload.expressiveness,
           backgroundColor: payload.backgroundColor,
           removeBackground: payload.removeBackground,
+          presenter: {
+            avatarId: payload.avatarLookId || payload.avatarType,
+            avatarLookId: payload.avatarLookId || payload.avatarType,
+            avatarEngine: payload.avatarEngine,
+            avatarType: payload.avatarTypeLabel,
+            avatarName: payload.avatarName,
+            avatarGroupId: payload.avatarGroupId,
+            voiceId: payload.voiceId,
+            voiceName: payload.voiceName,
+            script: payload.script,
+            supportedEngines: payload.supportedEngines,
+            engineUnknown: payload.engineUnknown,
+            ...(payload.expressiveness ? { expressiveness: payload.expressiveness } : {}),
+          },
+          supportedEngines: payload.supportedEngines,
+          engineUnknown: payload.engineUnknown,
           duration: durationPatch.duration,
           durationFromScript: true,
           clips: updatedClips
@@ -1561,6 +1911,11 @@ function Create({ onBack, initialConfig = null }) {
     // but the simplest is just let it update the scene and tell user to click generate, OR
     // we can use a ref. But let's just trigger it with a small delay.
     setTimeout(() => {
+      if (payload.skipVoice || !payload.voiceId) {
+        setShowQuickCreateModal(false);
+        showToast('Scene ready — add a voice when you want to generate video.', 'info');
+        return;
+      }
       generateSceneVideo(targetSceneId, payload);
     }, 500);
   };
@@ -1651,7 +2006,10 @@ function Create({ onBack, initialConfig = null }) {
               templateClips[newTextIndex].content = oldTextClip.content;
             }
 
-            templateClips = normalizeClipsToScene(templateClips, s.duration || 8);
+            templateClips = normalizeClipsToScene(
+              normalizeSceneClips(templateClips, prev.resolution),
+              s.duration || 8
+            );
             return { ...s, clips: templateClips, layout: layoutId, generatedVideoUrl, title: template.title };
           }
 
@@ -1759,10 +2117,6 @@ function Create({ onBack, initialConfig = null }) {
 
   return (
     <div className="video-editor-shell">
-      <RenderDownloadModal
-        isOpen={showRenderDownload}
-        onClose={() => setShowRenderDownload(false)}
-      />
       {isProjectLoading && (
         <div
           style={{
@@ -1823,8 +2177,12 @@ function Create({ onBack, initialConfig = null }) {
       />
       <GeneratedVideoModal 
         isOpen={showGeneratedVideoModal} 
-        onClose={() => setShowGeneratedVideoModal(false)} 
-        videoUrl={generatedVideoUrl} 
+        onClose={() => {
+          setShowGeneratedVideoModal(false)
+          setGenerationCreditsUsed(null)
+        }} 
+        videoUrl={generatedVideoUrl}
+        creditsUsed={generationCreditsUsed}
         onUseInEditor={handleUseGeneratedVideo}
         onRemake={handleRemakeVideo}
         onSelectLayout={handleSelectLayout}
@@ -1873,6 +2231,7 @@ function Create({ onBack, initialConfig = null }) {
         onUploadError={(msg) => showToast(msg, 'error')}
         setSelectedLayerId={handleSelectLayerId}
         onPresenterChanged={({ message }) => showToast(message, 'info')}
+        creditsRefreshKey={creditsRefreshKey}
       />
 
       <div className="editor-container">
@@ -1945,6 +2304,8 @@ function Create({ onBack, initialConfig = null }) {
                 onCommitLayerPosition={handleCommitLayerPosition}
                 onUpdateLayerSize={updateLayerSize}
                 updateClipContent={updateClipContent}
+                onFillShape={fillShapeWithImage}
+                onCanvasDrop={handleCanvasDrop}
                 editorView={editorView}
                 workspaceId={project.workspaceId}
                 projectId={project.id}
@@ -1953,7 +2314,23 @@ function Create({ onBack, initialConfig = null }) {
           </div>
 
           {/* Timeline Area - Always Visible */}
-          <div className="timeline-area">
+          <div
+            className="timeline-area"
+            style={{
+              height: timelineHeight,
+              minHeight: timelineHeight,
+              maxHeight: timelineHeight,
+            }}
+          >
+            <PanelResizeHandle
+              axis="y"
+              edge="top"
+              onResize={(delta) => {
+                setIsResizingLayout(true)
+                handleTimelineResize(delta)
+              }}
+              onResizeEnd={persistTimelineHeight}
+            />
             <TimelineEditor
               scenes={scenes}
               bgMusic={bgMusic}
@@ -1981,12 +2358,11 @@ function Create({ onBack, initialConfig = null }) {
               musicDuration={musicDuration || (totalDurationInFrames / 30)}
               onMusicDurationChange={handleMusicDurationChange}
               onPlayPause={() => {
-                if (playerRef.current) {
-                  if (isPlaying) {
-                    playerRef.current.pause()
-                  } else {
-                    playerRef.current.play()
-                  }
+                if (isPlaying) {
+                  playerRef.current?.pause()
+                } else {
+                  window.speechSynthesis?.cancel()
+                  playerRef.current?.play()
                 }
               }}
               onStop={() => {
@@ -2035,17 +2411,42 @@ function Create({ onBack, initialConfig = null }) {
           </button>
 
           {/* Properties Panel (Script, Duration, Audio, etc.) */}
-          <div style={{
-            width: isRightSidebarOpen ? `${propertiesPanelWidth}px` : '0px',
-            flexShrink: 0,
-            height: '100%',
-            overflow: 'hidden',
-            transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            borderLeft: isRightSidebarOpen ? '1px solid var(--border-color)' : 'none',
-            background: 'var(--bg-panel)',
-            zIndex: 40
-          }}>
-            <div className="scene-config-panel-scroll premium-scrollbar" style={{ width: `${propertiesPanelWidth}px`, height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
+          <div
+            className="properties-panel-shell"
+            style={{
+              width: isRightSidebarOpen ? `${propertiesPanelWidth}px` : '0px',
+              flexShrink: 0,
+              height: '100%',
+              overflow: 'hidden',
+              transition: isResizingLayout
+                ? 'none'
+                : 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              borderLeft: isRightSidebarOpen ? '1px solid var(--border-color)' : 'none',
+              background: 'var(--bg-panel)',
+              zIndex: 40,
+              position: 'relative',
+            }}
+          >
+            {isRightSidebarOpen ? (
+              <PanelResizeHandle
+                axis="x"
+                edge="start"
+                onResize={(delta) => {
+                  setIsResizingLayout(true)
+                  handlePropertiesResize(delta)
+                }}
+                onResizeEnd={persistPropertiesWidth}
+              />
+            ) : null}
+            <div
+              className="scene-config-panel-scroll premium-scrollbar"
+              style={{
+                width: `${propertiesPanelWidth}px`,
+                height: '100%',
+                overflowY: 'auto',
+                overflowX: 'hidden',
+              }}
+            >
               <SceneConfigurationPanel
                 activeScene={activeScene}
                 activeSceneId={activeSceneId}

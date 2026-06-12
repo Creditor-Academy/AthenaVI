@@ -123,18 +123,49 @@ export async function pollRenderUntilReady(workspaceService, workspaceId, projec
   throw new Error('Video render timed out. Try again in a few minutes.');
 }
 
-export function triggerFileDownload(url, filename) {
+/** Trigger a browser file save for a remote URL (e.g. presigned S3). */
+export async function triggerFileDownload(url, filename) {
+  const fullName = sanitizeFilename(filename).endsWith('.mp4')
+    ? sanitizeFilename(filename)
+    : `${sanitizeFilename(filename)}.mp4`;
+
   try {
     window.sessionStorage.setItem(
       'athenavi:lastDownload',
-      JSON.stringify({ url, filename })
+      JSON.stringify({ url, filename: fullName })
     );
   } catch {
     // ignore
   }
 
-  // Open in-app download modal (stays inside the editor workspace).
-  window.dispatchEvent(new CustomEvent('render-download-ready'));
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Download failed: ${response.status}`);
+    }
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = fullName;
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+    return;
+  } catch (err) {
+    console.warn('[Export] Blob download failed, falling back to direct link', err);
+  }
+
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fullName;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
 }
 
 function sanitizeFilename(name) {
@@ -220,6 +251,6 @@ export async function exportFullProjectVideo({
   }
 
   const safeName = sanitizeFilename(filename || projectState?.title || 'video');
-  triggerFileDownload(presignedUrl, `${safeName}.mp4`);
+  await triggerFileDownload(presignedUrl, `${safeName}.mp4`);
   return { render, presignedUrl };
 }

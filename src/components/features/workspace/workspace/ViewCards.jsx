@@ -2,14 +2,22 @@ import React from 'react';
 import { MdFolder, MdVideoLibrary, MdPerson, MdPeople } from 'react-icons/md';
 import ContextMenu from './ContextMenu.jsx';
 import UserIdentity from './UserIdentity.jsx';
+import ProjectSceneThumbnail from './ProjectSceneThumbnail.jsx';
+import WorkspaceCreditsBadge from './WorkspaceCreditsBadge.jsx';
 
-export const WorkspaceCard = ({ workspace, onClick, contextProps }) => {
+export const WorkspaceCard = ({ workspace, onClick, contextProps, onAllocateCredits, showAllocateCredits = false }) => {
     return (
         <div className="workspace-item-card" onClick={onClick}>
             <div className="card-thumb-container">
                 <div className="workspace-card-icon">
                     {workspace.type === 'personal' ? <MdPerson size={36} /> : <MdPeople size={36} />}
                 </div>
+                <WorkspaceCreditsBadge
+                    workspace={workspace}
+                    className="workspace-credits-badge--tile"
+                    clickable={showAllocateCredits && Boolean(onAllocateCredits)}
+                    onClick={onAllocateCredits}
+                />
                 <div className="project-overlay">
                     <button className="btn-edit-premium">Open Workspace</button>
                 </div>
@@ -49,7 +57,7 @@ export const VideoCard = ({ video, onClick, contextProps }) => {
     return (
         <div className="workspace-item-card" onClick={onClick}>
             <div className="card-thumb-container video-thumb">
-                <MdVideoLibrary size={48} className="video-icon" />
+                <ProjectSceneThumbnail video={video} />
                 <div className="project-overlay">
                     <button className="btn-edit-premium">Watch Video</button>
                 </div>

@@ -20,6 +20,7 @@ const CATEGORY_ICONS = {
   'Marketing': MarketingImg,
   'Education': EducationImg,
   'Business': BusinessImg,
+  'Pitch': BusinessImg,
   'Social Media': SocialImg,
   'Personal': PersonalImg,
 }
@@ -27,32 +28,35 @@ import TemplatePreview from '../../components/TemplatePreview.jsx'
 import TemplatesSkeleton from '../page-skeleton/TemplatesSkeleton'
 import './Templates.css'
 
-const CATEGORY_FILTERS = ['All Templates', 'Marketing', 'Education', 'Business', 'Social Media', 'Personal']
+const CATEGORY_FILTERS = ['All Templates', 'Marketing', 'Education', 'Business', 'Pitch', 'Social Media', 'Personal']
 
 const CATEGORY_MAPPING = {
   'All Templates': null,
   'Marketing': 'Marketing',
   'Education': 'Educational',
   'Business': 'Corporate',
+  'Pitch': 'Pitch',
   'Social Media': 'Social',
   'Personal': 'Personal'
 }
 
 // Load templates lazily from the JSON files in /public/templates
 const fetchAllTemplates = async () => {
-  const files = ['marketing', 'educational', 'corporate', 'social', 'personal']
+  const files = ['marketing', 'educational', 'corporate', 'social', 'personal', 'pitch_template']
   const results = []
   for (const file of files) {
     try {
       const res = await fetch(`/templates/${file}.json`)
       const data = await res.json()
       if (data?.scenes) {
+        const rawCategory = data.category || data.template?.category || ''
+        const category = file === 'pitch_template' ? 'Pitch' : rawCategory
         data.scenes.forEach(scene => {
           results.push({
             ...scene,
             name: scene.title || scene.id,
-            category: data.category,
-            tag: (data.category || '').toUpperCase(),
+            category,
+            tag: (category || '').toUpperCase(),
             thumb: scene.thumbnail || '',
             ratio: '16:9',
             duration: `${scene.duration || 8}s`,

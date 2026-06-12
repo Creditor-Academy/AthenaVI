@@ -22,8 +22,7 @@ export const mainDashboardSidebarGroups = [
     label: 'Videos',
     items: [
       { id: 'workspace', label: 'Workspace', Icon: Building2 },
-      { id: 'videos', label: 'My videos', Icon: Video },
-      { id: 'trash', label: 'Trash', Icon: Trash2 }
+      { id: 'videos', label: 'My videos', Icon: Video }
     ]
   },
   {

@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react'
+import React, { useRef, useState, useEffect, useLayoutEffect, useCallback } from 'react'
 import { MdPerson, MdPhotoSizeSelectActual, MdVideoLibrary, MdDragIndicator, MdOpenWith, MdHeight } from 'react-icons/md'
 import { getClipTextContent, isTextLayer, toFontSizeCss } from '../../../../utils/textClip'
 import {
@@ -13,7 +13,15 @@ import {
   getTextShapeInnerStyle,
 } from '../../../../utils/textEffects'
 import { getClipZIndex, isBackgroundClip, sortClipsForRender } from '../../../../utils/editorLayerUtils'
+import { resolveClipRect } from '../../../../utils/clipLayout'
 import { resolveClipMediaSrc, isVideoMedia } from '../../../../utils/heygenVideo'
+import {
+  canAcceptImageFill,
+  parseCanvasDragData,
+  resolveDropAssetId,
+  resolveDropImageSrc,
+} from '../../../../utils/editorDragDrop'
+import { clientToComposition } from '../../../../utils/editorPlacementUtils'
 import CanvasGuidesOverlay from './CanvasGuidesOverlay'
 import './TextSidebarPanel.css'
 
@@ -130,12 +138,14 @@ const SelectionOverlay = ({ clip, displayScale, onUpdatePosition, onUpdateSize, 
 
 /* ─── Clip wrappers ──────────────────────────────────────────────────── */
 
-const clipBase = (clip, isSelected) => ({
+const clipBase = (clip, isSelected) => {
+  const { position, size } = resolveClipRect(clip)
+  return {
   position: 'absolute',
-  left: clip.position?.x ?? 0,
-  top: clip.position?.y ?? 0,
-  width: typeof clip.size?.width === 'number' ? clip.size.width : (clip.size?.width || 'auto'),
-  height: typeof clip.size?.height === 'number' ? clip.size.height : (clip.size?.height || 'auto'),
+  left: position.x,
+  top: position.y,
+  width: typeof size.width === 'number' ? size.width : (size.width || 'auto'),
+  height: typeof size.height === 'number' ? size.height : (size.height || 'auto'),
   transform: `rotate(${clip.rotation ?? 0}deg) scale(${clip.scale ?? 1})`,
   transformOrigin: 'top left',
   opacity: clip.opacity ?? 1,
@@ -147,11 +157,13 @@ const clipBase = (clip, isSelected) => ({
   boxSizing: 'border-box',
   cursor: isSelected ? (isBackgroundClip(clip) ? 'default' : 'move') : 'pointer',
   transition: 'outline 0.1s',
-})
+}
+}
 
 const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, onUpdatePosition, onUpdateSize, onCommit, overlayMode = false }) => {
   const divRef = useRef(null)
   const s = clip.style || {}
+  const textLayout = resolveClipRect(clip)
   const { entrance, animState, progress: previewProgress } = useComputedEntranceState(clip)
 
   const handleBlur = () => {
@@ -178,7 +190,7 @@ const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, o
 
   const textStyle = {
     ...displayStyle,
-    fontSize: toFontSizeCss(s.fontSize, 24),
+    fontSize: toFontSizeCss(textLayout.fontSize ?? s.fontSize, 24),
     outline: 'none',
     cursor: isSelected ? 'text' : 'pointer',
     width: '100%',
@@ -191,6 +203,9 @@ const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, o
   }
 
   const isBlockAnim = entrance?.type === 'block'
+  const hasFill =
+    !!(s.backgroundColor && s.backgroundColor !== 'transparent') ||
+    !!(s.boxShadow && s.boxShadow !== 'none')
 
   return (
     <div
@@ -202,7 +217,9 @@ const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, o
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: s.textAlign === 'left' ? 'flex-start' : (s.textAlign === 'right' ? 'flex-end' : 'center'),
-        borderRadius: 4,
+        borderRadius: hasFill ? (s.borderRadius || '12px') : 4,
+        backgroundColor: hasFill ? (s.backgroundColor || 'transparent') : undefined,
+        boxShadow: hasFill ? (s.boxShadow || 'none') : undefined,
         overflow: entrance?.type && entrance.type !== 'none' ? 'visible' : 'hidden',
         userSelect: isSelected && !overlayMode ? 'text' : 'none',
         opacity: overlayMode ? 0 : previewVisible ? 1 : 0,
@@ -305,6 +322,7 @@ const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition,
     borderRadius: s.borderRadius || '12px',
     border: borderStyle,
     boxShadow: s.boxShadow || 'none',
+    clipPath: s.clipPath || undefined,
     background: overlayMode ? 'transparent' : (clip.src ? 'transparent' : (s.backgroundColor || s.background || 'rgba(0,0,0,0.04)')),
   })
 
@@ -330,7 +348,7 @@ const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition,
           alt=""
           style={{
             width: '100%', height: '100%',
-            objectFit: s.objectFit || 'cover',
+            objectFit: s.objectFit || (clip.role === 'icon' ? 'contain' : 'cover'),
             display: 'block',
             pointerEvents: 'none',
           }}
@@ -383,6 +401,7 @@ const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdateP
   const flipX = s.scaleX === -1 ? -1 : 1
   const flipY = s.scaleY === -1 ? -1 : 1
   const flipTransform = (flipX !== 1 || flipY !== 1) ? `scale(${flipX}, ${flipY})` : undefined
+  const isBg = isBackgroundClip(clip)
   const borderStyle = s.borderWidth
     ? `${s.borderWidth} ${s.borderStyle || 'solid'} ${s.borderColor || '#7c3aed'}`
     : (s.border || 'none')
@@ -391,12 +410,14 @@ const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdateP
     flipTransform,
     cssFilter,
     overlayMode,
-    borderRadius: s.borderRadius || '50%',
+    borderRadius: isBg ? '0' : (s.borderRadius || '50%'),
     border: borderStyle,
     boxShadow: s.boxShadow || 'none',
     overflow: 'hidden',
     background: overlayMode ? 'transparent' : (src ? 'transparent' : (s.backgroundColor || s.background || 'linear-gradient(135deg, #818cf8 0%, #a78bfa 100%)')),
   })
+
+  const avatarFit = s.objectFit || (isBg ? 'cover' : 'contain')
 
   return (
     <div
@@ -417,10 +438,10 @@ const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdateP
         isVideo ? (
           <PausedVideoPreview
             src={src}
-            style={{ width: '100%', height: '100%', objectFit: s.objectFit || 'cover', display: 'block', pointerEvents: 'none' }}
+            style={{ width: '100%', height: '100%', objectFit: avatarFit, display: 'block', pointerEvents: 'none' }}
           />
         ) : (
-          <img src={src} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: s.objectFit || 'contain', display: 'block', pointerEvents: 'none' }} />
+          <img src={src} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: avatarFit, display: 'block', pointerEvents: 'none' }} />
         )
         ) : null
       ) : !overlayMode ? (
@@ -445,14 +466,15 @@ const VideoClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePo
   const borderStyle = s.borderWidth
     ? `${s.borderWidth} ${s.borderStyle || 'solid'} ${s.borderColor || '#000'}`
     : (s.border || 'none')
-  const fitMode = s.objectFit || (clip.role === 'avatar' ? 'contain' : 'cover')
+  const isBg = isBackgroundClip(clip)
+  const fitMode = s.objectFit || (isBg ? 'cover' : (clip.role === 'avatar' ? 'contain' : 'cover'))
 
   const wrapperStyle = buildLiveAnimStyle(clipBase(clip, isSelected), clip, animState, {
     flipTransform,
     cssFilter,
     overlayMode,
     overflow: 'hidden',
-    borderRadius: s.borderRadius || (clip.role === 'avatar' ? '50%' : '16px'),
+    borderRadius: isBg ? '0' : (s.borderRadius || (clip.role === 'avatar' ? '50%' : '16px')),
     border: borderStyle,
     boxShadow: s.boxShadow || 'none',
     background: overlayMode ? 'transparent' : (src ? 'transparent' : (s.backgroundColor || s.background || 'rgba(0,0,0,0.04)')),
@@ -494,22 +516,104 @@ const VideoClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePo
   )
 }
 
-const ShapeClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition, onUpdateSize, onCommit, overlayMode = false }) => {
+const ShapeClip = ({
+  clip,
+  isSelected,
+  onSelect,
+  displayScale,
+  onUpdatePosition,
+  onUpdateSize,
+  onCommit,
+  onFillShape,
+  overlayMode = false,
+}) => {
+  const [isDropTarget, setIsDropTarget] = useState(false)
   const { animState } = useComputedEntranceState(clip)
+  const hasFill = !!clip.fillSrc
   const wrapperStyle = buildLiveAnimStyle(clipBase(clip, isSelected), clip, animState, {
     overlayMode,
-    background: overlayMode ? 'transparent' : (clip.style?.backgroundColor || clip.style?.background || 'rgba(0,0,0,0.06)'),
+    overflow: 'hidden',
+    background: overlayMode
+      ? 'transparent'
+      : hasFill
+        ? 'transparent'
+        : (clip.style?.backgroundColor || clip.style?.background || 'rgba(0,0,0,0.06)'),
     borderRadius: clip.style?.borderRadius || '0',
     border: clip.style?.border || 'none',
     boxShadow: clip.style?.boxShadow || 'none',
     clipPath: clip.style?.clipPath || undefined,
   })
 
+  const acceptFill = canAcceptImageFill(clip) && onFillShape
+
+  const handleDragOver = (e) => {
+    if (!acceptFill) return
+    const types = Array.from(e.dataTransfer?.types || [])
+    const isImageDrag = types.includes('application/json') || types.includes('Files')
+    if (!isImageDrag) return
+    e.preventDefault()
+    e.stopPropagation()
+    e.dataTransfer.dropEffect = 'copy'
+    setIsDropTarget(true)
+  }
+
+  const handleDragLeave = (e) => {
+    if (!acceptFill) return
+    e.preventDefault()
+    setIsDropTarget(false)
+  }
+
+  const handleDrop = (e) => {
+    if (!acceptFill) return
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDropTarget(false)
+
+    const data = parseCanvasDragData(e)
+    if (data?.type === 'image') {
+      const src = resolveDropImageSrc(data.content)
+      if (src) {
+        onFillShape(clip.id, src, resolveDropAssetId(data.content))
+        onSelect(clip.id, e)
+      }
+      return
+    }
+
+    const file = e.dataTransfer.files?.[0]
+    if (file?.type?.startsWith('image/')) {
+      onFillShape(clip.id, URL.createObjectURL(file))
+      onSelect(clip.id, e)
+    }
+  }
+
   return (
   <div
+    className={isDropTarget ? 'shape-clip shape-clip--drop-target' : 'shape-clip'}
     onClick={(e) => { e.stopPropagation(); onSelect(clip.id, e) }}
+    onDragOver={handleDragOver}
+    onDragLeave={handleDragLeave}
+    onDrop={handleDrop}
     style={wrapperStyle}
   >
+    {hasFill && (
+      <img
+        src={clip.fillSrc}
+        alt=""
+        draggable={false}
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: clip.fillObjectFit || 'cover',
+          display: 'block',
+          pointerEvents: 'none',
+        }}
+      />
+    )}
+    {isSelected && !overlayMode && !hasFill && clip.role === 'frame' && (
+      <div className="shape-clip-drop-hint" aria-hidden>
+        Drop image here
+      </div>
+    )}
     {isSelected && !overlayMode && (
       <SelectionOverlay
         clip={clip}
@@ -534,24 +638,51 @@ const LiveCanvasRenderer = ({
   onUpdateLayerPosition,
   onCommitLayerPosition,
   onUpdateLayerSize,
+  onFillShape,
+  onCanvasDrop,
   showGuides = false,
   showSafeZone = true,
   gridSize = 20,
   overlayMode = false,
+  scaleMode = 'contain',
+  compositionWidth = 1920,
+  compositionHeight = 1080,
 }) => {
   const containerRef = useRef(null)
-  const [displayScale, setDisplayScale] = useState(1)
+  const [displayScale, setDisplayScale] = useState(0.2)
+  const [displayOffset, setDisplayOffset] = useState({ x: 0, y: 0 })
 
-  useEffect(() => {
+  const updateDisplayScale = useCallback(() => {
     const el = containerRef.current
     if (!el) return
-    const ro = new ResizeObserver(([entry]) => {
-      const { width, height } = entry.contentRect
-      setDisplayScale(Math.min(width / 1920, height / 1080))
-    })
+    const { width, height } = el.getBoundingClientRect()
+    if (width > 0 && height > 0) {
+      const scaleX = width / compositionWidth
+      const scaleY = height / compositionHeight
+      const scale =
+        scaleMode === 'cover'
+          ? Math.max(scaleX, scaleY)
+          : Math.min(scaleX, scaleY)
+      setDisplayScale(scale)
+      if (scaleMode === 'cover') {
+        setDisplayOffset({
+          x: (width - compositionWidth * scale) / 2,
+          y: (height - compositionHeight * scale) / 2,
+        })
+      } else {
+        setDisplayOffset({ x: 0, y: 0 })
+      }
+    }
+  }, [scaleMode, compositionWidth, compositionHeight])
+
+  useLayoutEffect(() => {
+    updateDisplayScale()
+    const el = containerRef.current
+    if (!el) return undefined
+    const ro = new ResizeObserver(updateDisplayScale)
     ro.observe(el)
     return () => ro.disconnect()
-  }, [])
+  }, [updateDisplayScale])
 
   const clips = scene?.clips || []
 
@@ -593,6 +724,47 @@ const LiveCanvasRenderer = ({
     if (onUpdateLayerSize) onUpdateLayerSize(clipId, w, h)
   }, [onUpdateLayerSize])
 
+  const handleCompositionDragOver = useCallback((e) => {
+    const types = Array.from(e.dataTransfer?.types || [])
+    if (!types.includes('application/json') && !types.includes('Files')) return
+    e.preventDefault()
+    e.stopPropagation()
+    e.dataTransfer.dropEffect = 'copy'
+  }, [])
+
+  const handleCompositionDrop = useCallback((e) => {
+    if (!onCanvasDrop) return
+    e.preventDefault()
+    e.stopPropagation()
+
+    const { x, y } = clientToComposition(
+      e.clientX,
+      e.clientY,
+      containerRef.current,
+      displayScale,
+      displayOffset,
+      compositionWidth,
+      compositionHeight
+    )
+
+    const data = parseCanvasDragData(e)
+    if (data?.type) {
+      onCanvasDrop({ ...data, x, y })
+      return
+    }
+
+    const file = e.dataTransfer.files?.[0]
+    if (file?.type?.startsWith('image/')) {
+      onCanvasDrop({
+        type: 'image',
+        content: URL.createObjectURL(file),
+        x,
+        y,
+        isBlob: true,
+      })
+    }
+  }, [onCanvasDrop, displayScale, displayOffset, compositionWidth, compositionHeight])
+
   return (
     <div
       ref={containerRef}
@@ -607,22 +779,24 @@ const LiveCanvasRenderer = ({
         ...backgroundStyle,
       }}
     >
-      {/* Fixed 1920×1080 virtual canvas, scaled to fit */}
+      {/* Fixed composition virtual canvas, scaled to fit or cover */}
       <div
+        onDragOver={handleCompositionDragOver}
+        onDrop={handleCompositionDrop}
         style={{
-          width: 1920,
-          height: 1080,
+          width: compositionWidth,
+          height: compositionHeight,
           position: 'absolute',
           top: 0,
           left: 0,
-          transform: `scale(${displayScale})`,
+          transform: `translate(${displayOffset.x}px, ${displayOffset.y}px) scale(${displayScale})`,
           transformOrigin: 'top left',
         }}
       >
         {(showGuides || showSafeZone) && (
           <CanvasGuidesOverlay
-            width={1920}
-            height={1080}
+            width={compositionWidth}
+            height={compositionHeight}
             showGrid={showGuides}
             showSafeZone={showSafeZone}
             gridSize={gridSize}
@@ -649,7 +823,7 @@ const LiveCanvasRenderer = ({
           if (clip.type === 'image') return <ImageClip key={clip.id} {...sharedProps} />
           if (clip.type === 'avatar') return <AvatarClip key={clip.id} {...sharedProps} scene={scene} />
           if (clip.type === 'video') return <VideoClip key={clip.id} {...sharedProps} scene={scene} />
-          if (clip.type === 'shape') return <ShapeClip key={clip.id} {...sharedProps} />
+          if (clip.type === 'shape') return <ShapeClip key={clip.id} {...sharedProps} onFillShape={onFillShape} />
           return null
         })}
       </div>

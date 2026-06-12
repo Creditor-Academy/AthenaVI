@@ -34,6 +34,22 @@ const shiftHex = (hex, amount) => {
   return `#${[red, green, blue].map((channel) => channel.toString(16).padStart(2, '0')).join('')}`;
 };
 
+const getContrastColor = (hex) => {
+  const normalized = (hex || '').replace('#', '');
+  const safe = normalized.length === 3
+    ? normalized.split('').map((char) => `${char}${char}`).join('')
+    : normalized;
+
+  if (!/^[0-9A-Fa-f]{6}$/.test(safe)) return '#ffffff';
+
+  const red = parseInt(safe.slice(0, 2), 16);
+  const green = parseInt(safe.slice(2, 4), 16);
+  const blue = parseInt(safe.slice(4, 6), 16);
+
+  const yiq = ((red * 299) + (green * 587) + (blue * 114)) / 1000;
+  return yiq >= 128 ? '#0f172a' : '#ffffff';
+};
+
 export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (!context) {
@@ -118,12 +134,14 @@ export const ThemeProvider = ({ children }) => {
       document.documentElement.style.setProperty('--primary-hover', shiftHex(customPrimary, -18));
       document.documentElement.style.setProperty('--primary-light', shiftHex(customPrimary, 36));
       document.documentElement.style.setProperty('--primary-dark', shiftHex(customPrimary, -42));
+      document.documentElement.style.setProperty('--primary-contrast', getContrastColor(customPrimary));
     } else {
       document.documentElement.style.removeProperty('--primary');
       document.documentElement.style.removeProperty('--primary-rgb');
       document.documentElement.style.removeProperty('--primary-hover');
       document.documentElement.style.removeProperty('--primary-light');
       document.documentElement.style.removeProperty('--primary-dark');
+      document.documentElement.style.removeProperty('--primary-contrast');
     }
     
     // We don't save to localStorage here if we want an explicit "Apply" button
