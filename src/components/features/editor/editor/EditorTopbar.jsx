@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import {
     MdUndo,
@@ -12,51 +12,34 @@ import {
     MdFileDownload,
     MdCheckCircle,
     MdAutoAwesome,
-    MdKeyboard,
     MdPhotoLibrary,
     MdVideoLibrary,
-    MdCloudUpload,
     MdTextFields,
     MdInterests,
-    MdExpandMore,
     MdClose,
+    MdKeyboard,
+    MdMenuBook,
+    MdHelpOutline,
+    MdVisibility,
+    MdAdd,
 } from 'react-icons/md'
 
-import EditorSidebarAvatar from './EditorSidebarAvatar'
 import EditorSidebarImage from './EditorSidebarImage'
-import EditorSidebarUploads from './EditorSidebarUploads'
-import EditorSidebarTemplates from './EditorSidebarTemplates'
 import EditorSidebarText from './EditorSidebarText'
-import EditorSidebarLayers from './EditorSidebarLayers'
 import EditorSidebarVideo from './EditorSidebarVideo'
-import EditorSidebarVoice from './EditorSidebarVoice'
-import EditorSidebarStock from './EditorSidebarStock'
 import EditorSidebarGraphic from './EditorSidebarGraphic'
-import EditorSidebarMagic from './EditorSidebarMagic'
+import EditorGuideModal from './EditorGuideModal'
 import ProfileDropdown from '../../../ui/ProfileDropdown/ProfileDropdown'
 import EditorCreditsBar from './EditorCreditsBar'
 
-const TOOL_GROUPS = [
-    {
-        id: 'media',
-        tools: [
-            { id: 'image', icon: MdPhotoLibrary, label: 'Images' },
-            { id: 'video', icon: MdVideoLibrary, label: 'Videos' },
-            { id: 'uploads', icon: MdCloudUpload, label: 'Uploads' },
-        ],
-    },
-    {
-        id: 'elements',
-        tools: [
-            { id: 'text', icon: MdTextFields, label: 'Text' },
-            { id: 'graphic', icon: MdInterests, label: 'Graphic' },
-        ],
-    },
+const INSERT_ITEMS = [
+    { id: 'image', icon: MdPhotoLibrary, label: 'Images' },
+    { id: 'video', icon: MdVideoLibrary, label: 'Videos' },
+    { id: 'text', icon: MdTextFields, label: 'Text' },
+    { id: 'graphic', icon: MdInterests, label: 'Graphics' },
 ]
 
-const TOOL_LABELS = Object.fromEntries(
-    TOOL_GROUPS.flatMap((g) => g.tools.map((t) => [t.id, t.label]))
-)
+const INSERT_LABELS = Object.fromEntries(INSERT_ITEMS.map((t) => [t.id, t.label]))
 
 const EditorTopbar = ({
     onBack,
@@ -80,95 +63,78 @@ const EditorTopbar = ({
     addLayer,
     updateScene,
     activeScene,
-    handleAddTemplateScene,
-    setShowTemplateModal,
-    scenes = [],
-    autoCreateScene,
-    onGenerateStoryboard,
     workspaceId,
-    addAudioClip,
     onUploadError,
     setSelectedLayerId,
-    onPresenterChanged,
     creditsRefreshKey = 0,
+    editorView,
+    onEditorViewChange,
 }) => {
     const [saved, setSaved] = useState(false)
+    const [activeMenu, setActiveMenu] = useState(null)
+    const ribbonRef = useRef(null)
+    const menuCloseTimerRef = useRef(null)
+    const [insertModal, setInsertModal] = useState(null)
     const [showShortcuts, setShowShortcuts] = useState(false)
-    const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 })
-    const topbarRef = useRef(null)
-    const dropdownRef = useRef(null)
-    const triggerRefs = useRef({})
+    const [showGuide, setShowGuide] = useState(false)
 
-    const activeTool = selectedTool || null
+    useEffect(() => {
+        if (selectedTool && INSERT_LABELS[selectedTool]) {
+            setInsertModal(selectedTool)
+        }
+    }, [selectedTool])
 
-    const updateDropdownPosition = useCallback(() => {
-        if (!activeTool) return
-        const el = triggerRefs.current[activeTool]
-        if (!el) return
-        const rect = el.getBoundingClientRect()
-        const panelWidth =
-            activeTool === 'text' ? 352 : activeTool === 'graphic' ? 400 : 320
-        const margin = 12
-        let left = rect.left + rect.width / 2
-        left = Math.max(panelWidth / 2 + margin, Math.min(left, window.innerWidth - panelWidth / 2 - margin))
-        setDropdownPos({
-            top: rect.bottom + 8,
-            left,
-        })
-    }, [activeTool])
+    useEffect(() => {
+        if (!insertModal) return undefined
+        const previousOverflow = document.body.style.overflow
+        document.body.style.overflow = 'hidden'
+        return () => {
+            document.body.style.overflow = previousOverflow
+        }
+    }, [insertModal])
 
-    const toggleTool = useCallback(
+    useEffect(() => {
+        if (!activeMenu) return undefined
+
+        const onPointerDown = (event) => {
+            if (ribbonRef.current?.contains(event.target)) return
+            setActiveMenu(null)
+        }
+
+        const onKeyDown = (event) => {
+            if (event.key === 'Escape') setActiveMenu(null)
+        }
+
+        document.addEventListener('pointerdown', onPointerDown)
+        document.addEventListener('keydown', onKeyDown)
+        return () => {
+            document.removeEventListener('pointerdown', onPointerDown)
+            document.removeEventListener('keydown', onKeyDown)
+        }
+    }, [activeMenu])
+
+    const openInsertModal = useCallback(
         (toolId) => {
-            setSelectedTool?.(activeTool === toolId ? null : toolId)
+            setActiveMenu(null)
+            setInsertModal(toolId)
+            setSelectedTool?.(toolId)
         },
-        [activeTool, setSelectedTool]
+        [setSelectedTool]
     )
 
-    const closeDropdown = useCallback(() => {
+    const closeInsertModal = useCallback(() => {
+        setInsertModal(null)
         setSelectedTool?.(null)
     }, [setSelectedTool])
 
     const addLayerWithClose = useCallback(
         (...args) => {
             const id = addLayer?.(...args)
-            closeDropdown()
+            closeInsertModal()
             return id
         },
-        [addLayer, closeDropdown]
+        [addLayer, closeInsertModal]
     )
-
-    const runToolAction = useCallback(
-        (fn) =>
-            (...args) => {
-                const result = fn?.(...args)
-                closeDropdown()
-                return result
-            },
-        [closeDropdown]
-    )
-
-    useLayoutEffect(() => {
-        if (!activeTool) return
-        updateDropdownPosition()
-        window.addEventListener('resize', updateDropdownPosition)
-        window.addEventListener('scroll', updateDropdownPosition, true)
-        return () => {
-            window.removeEventListener('resize', updateDropdownPosition)
-            window.removeEventListener('scroll', updateDropdownPosition, true)
-        }
-    }, [activeTool, updateDropdownPosition])
-
-    useEffect(() => {
-        if (!activeTool) return undefined
-        const onPointerDown = (e) => {
-            const target = e.target
-            if (topbarRef.current?.contains(target)) return
-            if (dropdownRef.current?.contains(target)) return
-            closeDropdown()
-        }
-        document.addEventListener('mousedown', onPointerDown)
-        return () => document.removeEventListener('mousedown', onPointerDown)
-    }, [activeTool, closeDropdown])
 
     const handleSave = () => {
         onSave?.()
@@ -176,38 +142,29 @@ const EditorTopbar = ({
         setTimeout(() => setSaved(false), 2000)
     }
 
-    const renderToolPanel = () => {
-        if (!activeTool) return null
+    const patchView = (patch) => {
+        onEditorViewChange?.(patch)
+    }
 
-        switch (activeTool) {
-            case 'avatar':
+    const renderInsertPanel = () => {
+        if (!insertModal) return null
+        switch (insertModal) {
+            case 'image':
                 return (
-                    <EditorSidebarAvatar
-                        activeScene={activeScene}
-                        activeSceneId={activeSceneId}
-                        scenes={scenes}
-                        autoCreateScene={autoCreateScene}
-                        updateScene={updateScene}
-                        setShowTemplateModal={setShowTemplateModal}
+                    <EditorSidebarImage
                         addLayer={addLayerWithClose}
-                        onPresenterChanged={onPresenterChanged}
+                        workspaceId={workspaceId}
+                        onUploadError={onUploadError}
+                        onClose={closeInsertModal}
                     />
                 )
-            case 'image':
-                return <EditorSidebarImage addLayer={addLayerWithClose} />
-            case 'uploads':
+            case 'video':
                 return (
-                  <EditorSidebarUploads
-                    addLayer={addLayerWithClose}
-                    workspaceId={workspaceId}
-                    onUploadError={onUploadError}
-                  />
-                )
-            case 'templates':
-                return (
-                    <EditorSidebarTemplates
-                        handleAddTemplateScene={runToolAction(handleAddTemplateScene)}
-                        setShowTemplateModal={setShowTemplateModal}
+                    <EditorSidebarVideo
+                        addLayer={addLayerWithClose}
+                        workspaceId={workspaceId}
+                        onUploadError={onUploadError}
+                        onClose={closeInsertModal}
                     />
                 )
             case 'text':
@@ -215,29 +172,9 @@ const EditorTopbar = ({
                     <EditorSidebarText
                         addLayer={addLayer}
                         setSelectedLayerId={setSelectedLayerId}
-                        onClose={closeDropdown}
+                        onClose={closeInsertModal}
                     />
                 )
-            case 'layers':
-                return (
-                    <EditorSidebarLayers
-                        activeScene={activeScene}
-                        activeSceneId={activeSceneId}
-                        updateScene={updateScene}
-                    />
-                )
-            case 'video':
-                return <EditorSidebarVideo addLayer={addLayerWithClose} />
-            case 'mic':
-                return (
-                    <EditorSidebarVoice
-                        activeScene={activeScene}
-                        activeSceneId={activeSceneId}
-                        updateScene={updateScene}
-                    />
-                )
-            case 'stock':
-                return <EditorSidebarStock addLayer={addLayerWithClose} />
             case 'graphic':
                 return (
                     <EditorSidebarGraphic
@@ -247,28 +184,59 @@ const EditorTopbar = ({
                         updateScene={updateScene}
                     />
                 )
-            case 'magic':
-                return (
-                    <EditorSidebarMagic
-                        onGenerateStoryboard={runToolAction(onGenerateStoryboard)}
-                    />
-                )
             default:
-                return (
-                    <div className="topbar-dropdown-empty">
-                        <span>This tool panel is coming soon.</span>
-                    </div>
-                )
+                return null
         }
     }
 
+    const clearMenuCloseTimer = useCallback(() => {
+        if (menuCloseTimerRef.current) {
+            clearTimeout(menuCloseTimerRef.current)
+            menuCloseTimerRef.current = null
+        }
+    }, [])
+
+    const openMenu = useCallback(
+        (id) => {
+            clearMenuCloseTimer()
+            setActiveMenu(id)
+        },
+        [clearMenuCloseTimer]
+    )
+
+    const toggleMenu = useCallback((id) => {
+        clearMenuCloseTimer()
+        setActiveMenu((current) => (current === id ? null : id))
+    }, [clearMenuCloseTimer])
+
+    const scheduleMenuClose = useCallback(() => {
+        clearMenuCloseTimer()
+        menuCloseTimerRef.current = setTimeout(() => {
+            setActiveMenu(null)
+            menuCloseTimerRef.current = null
+        }, 160)
+    }, [clearMenuCloseTimer])
+
+    useEffect(
+        () => () => {
+            clearMenuCloseTimer()
+        },
+        [clearMenuCloseTimer]
+    )
+
+    const menuProps = (id) => ({
+        className: 'topbar-tool-trigger-wrap editor-ribbon-menu',
+        onMouseEnter: () => openMenu(id),
+        onMouseLeave: () => scheduleMenuClose(),
+    })
+
     return (
         <>
-            <div className="editor-topbar" ref={topbarRef}>
+            <div className="editor-topbar">
                 <div className="top-left">
                     <button
                         type="button"
-                        className="topbar-icon-action topbar-back-btn"
+                        className="topbar-icon-action topbar-back-btn topbar-back-btn--circle"
                         onClick={onBack}
                         title="Back to Dashboard"
                         aria-label="Back to Dashboard"
@@ -342,43 +310,175 @@ const EditorTopbar = ({
                 </div>
 
                 <div className="top-center">
-                    <nav className="topbar-tools-strip" aria-label="Editor tools">
-                        {TOOL_GROUPS.map((group, groupIndex) => (
-                            <div key={group.id} className="topbar-tool-group">
-                                {group.tools.map((tool) => {
-                                    const Icon = tool.icon
-                                    const isOpen = activeTool === tool.id
-                                    return (
-                                        <div
-                                            key={tool.id}
-                                            className="topbar-tool-trigger-wrap"
+                    <nav ref={ribbonRef} className="topbar-tools-strip" aria-label="Editor menus">
+                    <div {...menuProps('insert')}>
+                        <button
+                            type="button"
+                            className={`topbar-tool-trigger ${activeMenu === 'insert' ? 'active' : ''}`}
+                            aria-expanded={activeMenu === 'insert'}
+                            onClick={() => toggleMenu('insert')}
+                        >
+                            <MdAdd size={16} aria-hidden />
+                            <span>Insert</span>
+                        </button>
+                        <div
+                            className={`editor-ribbon__dropdown${activeMenu === 'insert' ? ' is-open' : ''}`}
+                            role="menu"
+                            aria-hidden={activeMenu !== 'insert'}
+                        >
+                            {INSERT_ITEMS.map((item) => {
+                                const Icon = item.icon
+                                return (
+                                    <button
+                                        key={item.id}
+                                        type="button"
+                                        className="editor-ribbon__dropdown-item"
+                                        role="menuitem"
+                                        onClick={() => openInsertModal(item.id)}
+                                    >
+                                        <Icon size={18} aria-hidden />
+                                        {item.label}
+                                    </button>
+                                )
+                            })}
+                        </div>
+                    </div>
+
+                    <div className="topbar-tool-group-divider" aria-hidden />
+
+                    <div {...menuProps('view')}>
+                        <button
+                            type="button"
+                            className={`topbar-tool-trigger ${activeMenu === 'view' ? 'active' : ''}`}
+                            aria-expanded={activeMenu === 'view'}
+                            onClick={() => toggleMenu('view')}
+                        >
+                            <MdVisibility size={16} aria-hidden />
+                            <span>View</span>
+                        </button>
+                        <div
+                            className={`editor-ribbon__dropdown editor-ribbon__dropdown--wide${
+                                activeMenu === 'view' ? ' is-open' : ''
+                            }`}
+                            role="menu"
+                            aria-hidden={activeMenu !== 'view'}
+                        >
+                                <label className="editor-ribbon__check">
+                                    <input
+                                        type="checkbox"
+                                        checked={!!editorView?.snapToGrid}
+                                        onChange={(e) => patchView({ snapToGrid: e.target.checked })}
+                                    />
+                                    Snap to grid
+                                </label>
+                                <label className="editor-ribbon__check">
+                                    <input
+                                        type="checkbox"
+                                        checked={!!editorView?.showGuides}
+                                        onChange={(e) => patchView({ showGuides: e.target.checked })}
+                                    />
+                                    Grid &amp; guides
+                                </label>
+                                <label className="editor-ribbon__check">
+                                    <input
+                                        type="checkbox"
+                                        checked={!!editorView?.showSafeZone}
+                                        onChange={(e) => patchView({ showSafeZone: e.target.checked })}
+                                    />
+                                    Safe zone
+                                </label>
+                                <label className="editor-ribbon__check">
+                                    <input
+                                        type="checkbox"
+                                        checked={!!editorView?.showPageGrid}
+                                        onChange={(e) => patchView({ showPageGrid: e.target.checked })}
+                                    />
+                                    Add grid to the page
+                                </label>
+                                <div className="editor-ribbon__divider" />
+                                <div className="editor-ribbon__scale">
+                                    <span className="editor-ribbon__scale-label">Scale</span>
+                                    <div className="editor-ribbon__scale-controls">
+                                        <button
+                                            type="button"
+                                            className="editor-ribbon__scale-btn"
+                                            title="Zoom out"
+                                            onClick={() => setZoomLevel(Math.max(25, zoomLevel - 10))}
                                         >
-                                            <button
-                                                ref={(el) => {
-                                                    triggerRefs.current[tool.id] = el
-                                                }}
-                                                type="button"
-                                                className={`topbar-tool-trigger ${isOpen ? 'active' : ''}`}
-                                                onClick={() => toggleTool(tool.id)}
-                                                aria-expanded={isOpen}
-                                                aria-haspopup="true"
-                                                title={tool.label}
-                                            >
-                                                <Icon size={15} />
-                                                <span>{tool.label}</span>
-                                                <MdExpandMore
-                                                    size={14}
-                                                    className={`topbar-tool-chevron ${isOpen ? 'open' : ''}`}
-                                                />
-                                            </button>
-                                        </div>
-                                    )
-                                })}
-                                {groupIndex < TOOL_GROUPS.length - 1 && (
-                                    <div className="topbar-tool-group-divider" aria-hidden />
-                                )}
-                            </div>
-                        ))}
+                                            <MdZoomOut size={16} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="editor-ribbon__scale-pill"
+                                            title="Reset to 100%"
+                                            onClick={() => setZoomLevel(100)}
+                                        >
+                                            {zoomLevel}%
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="editor-ribbon__scale-btn"
+                                            title="Zoom in"
+                                            onClick={() => setZoomLevel(Math.min(200, zoomLevel + 10))}
+                                        >
+                                            <MdZoomIn size={16} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="editor-ribbon__scale-btn"
+                                            title="Fit to screen"
+                                            onClick={() => setZoomLevel(100)}
+                                        >
+                                            <MdFitScreen size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                        </div>
+                    </div>
+
+                    <div className="topbar-tool-group-divider" aria-hidden />
+
+                    <div {...menuProps('help')}>
+                        <button
+                            type="button"
+                            className={`topbar-tool-trigger ${activeMenu === 'help' ? 'active' : ''}`}
+                            aria-expanded={activeMenu === 'help'}
+                            onClick={() => toggleMenu('help')}
+                        >
+                            <MdHelpOutline size={16} aria-hidden />
+                            <span>Help</span>
+                        </button>
+                        <div
+                            className={`editor-ribbon__dropdown${activeMenu === 'help' ? ' is-open' : ''}`}
+                            role="menu"
+                            aria-hidden={activeMenu !== 'help'}
+                        >
+                            <button
+                                type="button"
+                                className="editor-ribbon__dropdown-item"
+                                role="menuitem"
+                                onClick={() => {
+                                    setShowShortcuts(true)
+                                    setActiveMenu(null)
+                                }}
+                            >
+                                <MdKeyboard size={18} aria-hidden />
+                                Keyboard shortcuts
+                            </button>
+                            <button
+                                type="button"
+                                className="editor-ribbon__dropdown-item"
+                                role="menuitem"
+                                onClick={() => {
+                                    setShowGuide(true)
+                                    setActiveMenu(null)
+                                }}
+                            >
+                                <MdMenuBook size={18} aria-hidden />
+                                Guide
+                            </button>
+                        </div>
+                    </div>
                     </nav>
                 </div>
 
@@ -387,54 +487,11 @@ const EditorTopbar = ({
 
                     <div className="topbar-divider" />
 
-                    <div className="topbar-zoom-group">
-                        <button
-                            className="icon-btn"
-                            title="Zoom Out"
-                            onClick={() => setZoomLevel(Math.max(25, zoomLevel - 10))}
-                        >
-                            <MdZoomOut size={18} />
-                        </button>
-                        <div
-                            className="zoom-pill"
-                            onClick={() => setZoomLevel(100)}
-                            title="Reset to 100%"
-                        >
-                            {zoomLevel}%
-                        </div>
-                        <button
-                            className="icon-btn"
-                            title="Zoom In"
-                            onClick={() => setZoomLevel(Math.min(200, zoomLevel + 10))}
-                        >
-                            <MdZoomIn size={18} />
-                        </button>
-                        <button
-                            className="icon-btn"
-                            title="Fit to Screen"
-                            onClick={() => setZoomLevel(100)}
-                        >
-                            <MdFitScreen size={18} />
-                        </button>
-                    </div>
-
-                    <div className="topbar-divider" />
-
-                    <button
-                        className="icon-btn"
-                        title="Keyboard Shortcuts"
-                        onClick={() => setShowShortcuts(true)}
-                    >
-                        <MdKeyboard size={18} />
-                    </button>
-
-                    <div className="topbar-divider" />
-
                     <button
                         type="button"
                         className="topbar-icon-action topbar-preview-btn"
                         onClick={handlePreview}
-                        title="Preview Video (Space)"
+                        title="Preview Video"
                         aria-label="Preview video"
                     >
                         <MdPlayCircleOutline size={18} />
@@ -457,37 +514,34 @@ const EditorTopbar = ({
                 </div>
             </div>
 
-            {activeTool &&
+            {insertModal &&
                 createPortal(
                     <div
-                        ref={dropdownRef}
-                        className={`topbar-dropdown topbar-dropdown--portal${
-                            activeTool === 'text'
-                                ? ' topbar-dropdown--text'
-                                : activeTool === 'graphic'
-                                  ? ' topbar-dropdown--shapes'
-                                  : ''
-                        }`}
-                        role="dialog"
-                        aria-label={`${TOOL_LABELS[activeTool] || activeTool} panel`}
-                        style={{
-                            top: dropdownPos.top,
-                            left: dropdownPos.left,
-                        }}
+                        className="editor-insert-overlay"
+                        onClick={closeInsertModal}
+                        role="presentation"
                     >
-                        <div className="topbar-dropdown-header">
-                            <h3>{TOOL_LABELS[activeTool] || activeTool}</h3>
-                            <button
-                                type="button"
-                                className="topbar-dropdown-close"
-                                onClick={closeDropdown}
-                                aria-label="Close panel"
-                            >
-                                <MdClose size={16} />
-                            </button>
-                        </div>
-                        <div className="topbar-dropdown-body premium-scrollbar">
-                            {renderToolPanel()}
+                        <div
+                            className="editor-insert-modal"
+                            onClick={(e) => e.stopPropagation()}
+                            role="dialog"
+                            aria-modal="true"
+                            aria-label={`Insert ${INSERT_LABELS[insertModal]}`}
+                        >
+                            <header className="editor-insert-modal__header">
+                                <h2>Insert {INSERT_LABELS[insertModal]}</h2>
+                                <button
+                                    type="button"
+                                    className="editor-insert-modal__close"
+                                    onClick={closeInsertModal}
+                                    aria-label="Close"
+                                >
+                                    <MdClose size={20} />
+                                </button>
+                            </header>
+                            <div className="editor-insert-modal__body premium-scrollbar">
+                                {renderInsertPanel()}
+                            </div>
                         </div>
                     </div>,
                     document.body
@@ -515,11 +569,11 @@ const EditorTopbar = ({
                             {[
                                 { key: 'Space', action: 'Play / Pause' },
                                 { key: 'Esc', action: 'Close panel' },
-                                { key: 'Delete', action: 'Delete active scene' },
+                                { key: 'Delete', action: 'Delete selection' },
                                 { key: 'Ctrl + Z', action: 'Undo' },
                                 { key: 'Ctrl + Y', action: 'Redo' },
                                 { key: 'Ctrl + S', action: 'Save project' },
-                                { key: 'Ctrl + E', action: 'Download HeyGen video' },
+                                { key: 'Ctrl + E', action: 'Export video' },
                                 { key: '← →', action: 'Step frame' },
                             ].map(({ key, action }) => (
                                 <div className="shortcut-row" key={key}>
@@ -531,6 +585,8 @@ const EditorTopbar = ({
                     </div>
                 </div>
             )}
+
+            {showGuide && <EditorGuideModal onClose={() => setShowGuide(false)} />}
         </>
     )
 }

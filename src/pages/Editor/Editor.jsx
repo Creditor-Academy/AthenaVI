@@ -36,6 +36,7 @@ import {
 import {
   applyGeneratedHeygenToClips,
   ensureSceneIdentity,
+  findSceneAvatarClip,
   getCenteredAvatarPlacement,
   nextHeygenSceneId,
   pollUntilHeygenPlaybackReady,
@@ -63,7 +64,6 @@ import { prepareTemplateSceneForEditor } from '../../utils/templateSceneUtils'
 import { fetchTemplateAvatarLookSet, TEMPLATE_AVATAR_LOOK_COUNT } from '../../utils/templateAvatarPreview'
 import { saveVersionSnapshot, loadVersionSnapshot, listVersionSnapshots } from '../../utils/editorVersionHistory'
 import EditorToast from '../../components/features/editor/editor/EditorToast'
-import EditorViewControls from '../../components/features/editor/editor/EditorViewControls'
 import PanelResizeHandle from '../../components/features/editor/editor/PanelResizeHandle'
 import {
   readStoredPanelSize,
@@ -304,6 +304,7 @@ function Create({ onBack, initialConfig = null }) {
     snapToGrid: true,
     showGuides: false,
     showSafeZone: true,
+    showPageGrid: false,
     gridSize: 20,
   })
   const [toast, setToast] = useState(null)
@@ -910,6 +911,7 @@ function Create({ onBack, initialConfig = null }) {
 
   const playerRef = useRef(null)
   const speechSynthesisRef = useRef(null)
+  const lastSpeakSceneIdRef = useRef(null)
 
   const activeScene = project.scenes.find(s => s.id === activeSceneId)
   const selectedLayer = activeScene?.clips?.find((c) => c.id === selectedLayerId)
@@ -994,12 +996,14 @@ function Create({ onBack, initialConfig = null }) {
 
   // Text-to-speech function
   const speakText = (text, sceneId) => {
-    // Stop any ongoing speech
+    if (!text || text.trim() === '') return
+    if (sceneId && lastSpeakSceneIdRef.current === sceneId) return
+
     if (speechSynthesisRef.current) {
       window.speechSynthesis.cancel()
     }
 
-    if (!text || text.trim() === '') return
+    lastSpeakSceneIdRef.current = sceneId ?? null
 
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.rate = 0.9 // Slightly slower for natural speech
@@ -1024,6 +1028,12 @@ function Create({ onBack, initialConfig = null }) {
       speechSynthesisRef.current = null
     }
   }
+
+  useEffect(() => {
+    if (!isPlaying) {
+      lastSpeakSceneIdRef.current = null
+    }
+  }, [isPlaying])
 
   // Stop speech when component unmounts or preview closes
   useEffect(() => {
@@ -1057,33 +1067,6 @@ function Create({ onBack, initialConfig = null }) {
     }
     return { scene: scenes[scenes.length - 1] || scenes[0], frameInScene: 0 }
   }
-
-  // Handle player frame updates (fallback sync when Remotion onFrameUpdate is sparse)
-  useEffect(() => {
-    if (playerRef.current && isPlaying) {
-      const player = playerRef.current
-      const updateTime = () => {
-        try {
-          const frame = player.getCurrentFrame()
-          const time = timelineScope === 'single'
-            ? activeSceneStart + frame / 30
-            : frame / 30
-          setCurrentTime(time)
-          if (timelineScope !== 'single') {
-            const { scene } = getSceneForFrame(frame)
-            if (scene && scene.id !== activeSceneId) {
-              setActiveSceneId(scene.id)
-            }
-          }
-        } catch {
-          // Player might not be ready
-        }
-      }
-
-      const interval = setInterval(updateTime, 100)
-      return () => clearInterval(interval)
-    }
-  }, [isPlaying, scenes, activeSceneId, timelineScope, activeSceneStart])
 
   // Global Keyboard Shortcuts
   useEffect(() => {
@@ -1344,6 +1327,7 @@ function Create({ onBack, initialConfig = null }) {
   const handlePreview = () => {
     window.speechSynthesis?.cancel()
     setIsPlaying(false)
+    playerRef.current?.pause()
     setShowPreviewModal(true)
   }
 
@@ -1624,6 +1608,26 @@ function Create({ onBack, initialConfig = null }) {
       setIsRightSidebarOpen(true)
     }
   }, [getSceneStartTime, timelineScope, isRightSidebarOpen])
+
+  const handleSelectAvatarVideoFromTimeline = useCallback((sceneId) => {
+    const scene = projectRef.current?.scenes?.find((s) => s.id === sceneId)
+    setActiveSceneId(sceneId)
+
+    const avatarClip = scene ? findSceneAvatarClip(scene) : null
+
+    if (avatarClip) {
+      setSelectedLayerIds([avatarClip.id])
+      setSelectedLayerId(avatarClip.id)
+      setIsRightSidebarOpen(true)
+    } else {
+      setSelectedLayerIds([])
+      setSelectedLayerId(null)
+    }
+
+    const start = getSceneStartTime(sceneId)
+    setCurrentTime(start)
+    playerRef.current?.seekTo?.(start)
+  }, [getSceneStartTime])
 
   const handleQuickCreateGenerate = (payload) => {
     if (payload.isStoryboard) {
@@ -2223,17 +2227,12 @@ function Create({ onBack, initialConfig = null }) {
         addLayer={addLayer}
         updateScene={updateScene}
         activeScene={activeScene}
-        handleAddTemplateScene={handleAddTemplateScene}
-        setShowTemplateModal={setShowTemplateModal}
-        scenes={scenes}
-        autoCreateScene={autoCreateScene}
-        onGenerateStoryboard={handleGenerateStoryboard}
         workspaceId={project.workspaceId || project.createConfig?.workspaceId}
-        addAudioClip={addAudioClip}
         onUploadError={(msg) => showToast(msg, 'error')}
         setSelectedLayerId={handleSelectLayerId}
-        onPresenterChanged={({ message }) => showToast(message, 'info')}
         creditsRefreshKey={creditsRefreshKey}
+        editorView={editorView}
+        onEditorViewChange={(patch) => setEditorView((prev) => ({ ...prev, ...patch }))}
       />
 
       <div className="editor-container">
@@ -2246,7 +2245,9 @@ function Create({ onBack, initialConfig = null }) {
             scenes={scenes}
             timelineScope={timelineScope}
             setTimelineScope={setTimelineScope}
-            onSelectScene={(sceneId) => handleSelectScene(sceneId, { scope: 'single' })}
+            onSelectScene={(sceneId) =>
+              handleSelectScene(sceneId, { scope: 'single', openSidebar: true })
+            }
             onDeleteScene={deleteScene}
             onAddSceneAfter={addSceneAfter}
             updateScene={updateScene}
@@ -2263,12 +2264,6 @@ function Create({ onBack, initialConfig = null }) {
         {/* Main Content Area */}
         <div className="main-content">
           <div className="main-content-row" style={{ position: 'relative' }}>
-            <EditorViewControls
-              editorView={editorView}
-              onChange={(patch) => setEditorView((prev) => ({ ...prev, ...patch }))}
-              onRestoreVersion={handleRestoreVersion}
-              versionCount={versionSnapshots.length}
-            />
             <div className="editor-content">
               <VideoCanvas
                 ref={playerRef}
@@ -2311,6 +2306,7 @@ function Create({ onBack, initialConfig = null }) {
                 editorView={editorView}
                 workspaceId={project.workspaceId}
                 projectId={project.id}
+                previewOpen={showPreviewModal}
               />
             </div>
           </div>
@@ -2343,6 +2339,7 @@ function Create({ onBack, initialConfig = null }) {
               isPlaying={isPlaying}
               onSeek={handleSeek}
               onSelectScene={(sceneId) => handleSelectScene(sceneId, { openSidebar: true })}
+              onSelectAvatarVideo={handleSelectAvatarVideoFromTimeline}
               onSelectLayer={handleSelectLayer}
               onUpdateScene={updateScene}
               onAddScene={addScene}
@@ -2476,12 +2473,12 @@ function Create({ onBack, initialConfig = null }) {
       <PreviewModal
         showPreviewModal={showPreviewModal}
         setShowPreviewModal={setShowPreviewModal}
+        projectTitle={project.title}
         scenes={scenes}
         activeSceneId={activeSceneId}
         totalDurationInFrames={totalDurationInFrames}
         bgMusic={bgMusic}
         bgMusicVolume={bgMusicVolume}
-        setIsPlaying={setIsPlaying}
         getSceneForFrame={getSceneForFrame}
         setActiveSceneId={setActiveSceneId}
         workspaceId={project.workspaceId || project.createConfig?.workspaceId}

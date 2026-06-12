@@ -67,7 +67,7 @@ const CollapsibleGrid = ({
 /**
  * Canva-style Animate panel for image / video / shape layers (right sidebar).
  */
-const LayerAnimatePanel = ({ activeLayer, updateLayer, onClose }) => {
+const LayerAnimatePanel = ({ activeLayer, updateLayer, onClose, hideHeader = false }) => {
   const entrance = getEntranceAnimation(activeLayer);
   const activePresetId = getLayerAnimationPresetId(entrance?.type || '');
   const direction = entrance?.direction || ANIMATION_DIRECTION.LEFT;
@@ -97,18 +97,20 @@ const LayerAnimatePanel = ({ activeLayer, updateLayer, onClose }) => {
   };
 
   return (
-    <div className="layer-animate-panel">
-      <div className="layer-animate-panel__header">
-        <span className="layer-animate-panel__title">
-          <MdAnimation size={16} />
-          Animate
-        </span>
-        {onClose ? (
-          <button type="button" className="layer-animate-panel__close" onClick={onClose} aria-label="Close">
-            <MdClose size={18} />
-          </button>
-        ) : null}
-      </div>
+    <div className={`layer-animate-panel ${hideHeader ? 'layer-animate-panel--embedded' : ''}`}>
+      {!hideHeader ? (
+        <div className="layer-animate-panel__header">
+          <span className="layer-animate-panel__title">
+            <MdAnimation size={16} />
+            Animate
+          </span>
+          {onClose ? (
+            <button type="button" className="layer-animate-panel__close" onClick={onClose} aria-label="Close">
+              <MdClose size={18} />
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="layer-animate-direction">
         <span className="layer-animate-direction__label">Direction</span>

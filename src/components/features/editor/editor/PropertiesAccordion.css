@@ -1,0 +1,99 @@
+.scp-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.scp-accordion__item {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--bg-card);
+  overflow: hidden;
+}
+
+.scp-accordion__item--open {
+  box-shadow: 0 2px 10px rgba(var(--primary-rgb), 0.1);
+  border-color: color-mix(in srgb, var(--primary) 28%, var(--border-color));
+}
+
+.scp-accordion__trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.scp-accordion__trigger:hover {
+  background: color-mix(in srgb, var(--primary) 6%, var(--bg-surface));
+}
+
+.scp-accordion__item--open .scp-accordion__trigger {
+  background: color-mix(in srgb, var(--primary) 8%, var(--bg-card));
+}
+
+.scp-accordion__trigger-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.scp-accordion__icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--primary) 10%, var(--bg-surface));
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border-color));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.scp-accordion__title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-main);
+  letter-spacing: -0.15px;
+}
+
+.scp-accordion__item--open .scp-accordion__title {
+  color: var(--primary);
+}
+
+.scp-accordion__chevron {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.scp-accordion__item--open .scp-accordion__chevron {
+  color: var(--primary);
+}
+
+.scp-accordion__body {
+  padding: 0 12px 12px;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-panel, var(--bg-card));
+}
+
+.scp-accordion__body > .scp-card,
+.scp-accordion__body > .layer-transform-bar,
+.scp-accordion__body > .layer-animate-panel {
+  margin-top: 10px;
+}
+
+.scp-accordion__body .scp-card {
+  border: none;
+  padding: 0;
+  background: transparent;
+}

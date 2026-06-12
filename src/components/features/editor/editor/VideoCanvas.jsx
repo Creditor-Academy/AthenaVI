@@ -1,4 +1,4 @@
-import { useRef, useCallback, forwardRef, useImperativeHandle, useEffect, useState } from 'react'
+import { useRef, useCallback, forwardRef, useImperativeHandle, useEffect, useState, useMemo } from 'react'
 import { Player } from '@remotion/player'
 import VideoComposition from './VideoComposition'
 import LiveCanvasRenderer from './LiveCanvasRenderer'
@@ -42,16 +42,29 @@ const VideoCanvas = forwardRef(({
   editorView = {},
   workspaceId,
   projectId,
+  previewOpen = false,
 }, ref) => {
   const remotionPlayerRef = useRef(null)
   const [playbackReadyScenes, setPlaybackReadyScenes] = useState(null)
   const [isPreparingPlayback, setIsPreparingPlayback] = useState(false)
+  const currentTimeRef = useRef(currentTime)
+  const playbackSessionRef = useRef(0)
+  const playbackStartedSessionRef = useRef(-1)
+  const lastSyncedSceneIdRef = useRef(activeSceneId)
+  const lastSpokenSceneIdRef = useRef(null)
+  const wasPlayingRef = useRef(false)
+  const activeSceneIdRef = useRef(activeSceneId)
+  const playbackSyncRef = useRef({})
+
+  currentTimeRef.current = currentTime
+  activeSceneIdRef.current = activeSceneId
 
   const isSingleScene = timelineScope === 'single' && playbackScenes?.length === 1
   const durationInFrames = Math.max(playbackDurationInFrames ?? totalDurationInFrames, 1)
   const baseCompositionScenes = playbackScenes?.length ? playbackScenes : scenes
   const compositionScenes = playbackReadyScenes ?? baseCompositionScenes
-  const showRemotionPlayer = isPlaying || isPreparingPlayback
+  const editorPlaybackActive = isPlaying && !previewOpen
+  const showRemotionPlayer = editorPlaybackActive || isPreparingPlayback
 
   const activeScene = (scenes || []).find(s => s.id === activeSceneId)
   const isEditingLayer = !showRemotionPlayer && !!(selectedLayerId || selectedLayerIds.length)
@@ -66,21 +79,25 @@ const VideoCanvas = forwardRef(({
   const startRemotionPlayback = useCallback(() => {
     const node = remotionPlayerRef.current
     if (!node) return
+
+    const time = currentTimeRef.current
     if (isSingleScene) {
       const sceneEnd = playbackStartTime + durationInFrames / 30
-      if (currentTime < playbackStartTime || currentTime >= sceneEnd - 0.05) {
+      if (time < playbackStartTime || time >= sceneEnd - 0.05) {
         setCurrentTime(playbackStartTime)
         node.seekTo(0)
+      } else {
+        node.seekTo(toLocalFrame(time))
       }
     } else {
-      node.seekTo(toLocalFrame(currentTime))
+      node.seekTo(toLocalFrame(time))
     }
     unmuteRemotionPlayer(node)
     const result = node.play()
     if (result && typeof result.catch === 'function') {
       result.catch(() => {})
     }
-  }, [isSingleScene, playbackStartTime, durationInFrames, currentTime, setCurrentTime, toLocalFrame])
+  }, [isSingleScene, playbackStartTime, durationInFrames, setCurrentTime, toLocalFrame])
 
   const setPlayerRef = useCallback((node) => {
     remotionPlayerRef.current = node
@@ -122,13 +139,33 @@ const VideoCanvas = forwardRef(({
   }), [setIsPlaying, toLocalFrame])
 
   useEffect(() => {
-    if (!isPlaying) {
+    if (!previewOpen) return undefined
+    remotionPlayerRef.current?.pause()
+    window.speechSynthesis?.cancel()
+    return undefined
+  }, [previewOpen])
+
+  useEffect(() => {
+    if (!isPlaying || previewOpen) {
+      wasPlayingRef.current = false
       setPlaybackReadyScenes(null)
       setIsPreparingPlayback(false)
+      playbackStartedSessionRef.current = -1
+      lastSpokenSceneIdRef.current = null
       return undefined
     }
 
+    // Scene changes during playback must not re-prepare or restart Remotion audio.
+    if (wasPlayingRef.current) {
+      return undefined
+    }
+    wasPlayingRef.current = true
+
+    playbackSessionRef.current += 1
+    const session = playbackSessionRef.current
     window.speechSynthesis?.cancel()
+    lastSpokenSceneIdRef.current = null
+    lastSyncedSceneIdRef.current = activeSceneIdRef.current
 
     const needsResolve = baseCompositionScenes.some((s) => s.heygenVideoId)
     if (!needsResolve || !workspaceId || !projectId) {
@@ -147,14 +184,14 @@ const VideoCanvas = forwardRef(({
       heygenService
     )
       .then((withUrls) => {
-        if (!cancelled) {
+        if (!cancelled && session === playbackSessionRef.current) {
           setPlaybackReadyScenes(withUrls)
           setIsPreparingPlayback(false)
         }
       })
       .catch((err) => {
         console.warn('[VideoCanvas] Playback prepare failed:', err)
-        if (!cancelled) {
+        if (!cancelled && session === playbackSessionRef.current) {
           setPlaybackReadyScenes(baseCompositionScenes)
           setIsPreparingPlayback(false)
         }
@@ -163,18 +200,81 @@ const VideoCanvas = forwardRef(({
     return () => {
       cancelled = true
     }
-  }, [isPlaying, baseCompositionScenes, workspaceId, projectId])
+  }, [isPlaying, previewOpen, baseCompositionScenes, workspaceId, projectId])
 
   useEffect(() => {
-    if (!isPlaying || isPreparingPlayback) return undefined
+    if (!editorPlaybackActive || isPreparingPlayback || playbackReadyScenes === null) return undefined
+    if (playbackStartedSessionRef.current === playbackSessionRef.current) return undefined
+
+    playbackStartedSessionRef.current = playbackSessionRef.current
     const timer = setTimeout(startRemotionPlayback, 50)
     return () => clearTimeout(timer)
-  }, [isPlaying, isPreparingPlayback, playbackReadyScenes, startRemotionPlayback])
+  }, [editorPlaybackActive, isPreparingPlayback, playbackReadyScenes, startRemotionPlayback])
 
   useEffect(() => {
     if (showRemotionPlayer || !remotionPlayerRef.current) return
     remotionPlayerRef.current.seekTo(toLocalFrame(currentTime))
   }, [currentTime, showRemotionPlayer, toLocalFrame])
+
+  playbackSyncRef.current = {
+    isSingleScene,
+    playbackStartTime,
+    durationInFrames,
+    setCurrentTime,
+    setIsPlaying,
+    setActiveSceneId,
+    getSceneForFrame,
+    speakText,
+  }
+
+  useEffect(() => {
+    const player = remotionPlayerRef.current
+    if (!player || !editorPlaybackActive || isPreparingPlayback) return undefined
+
+    const onFrameUpdate = ({ detail: { frame } }) => {
+      const ctx = playbackSyncRef.current
+      if (ctx.isSingleScene) {
+        const globalTime = ctx.playbackStartTime + frame / 30
+        ctx.setCurrentTime(globalTime)
+        if (frame >= ctx.durationInFrames - 1) {
+          remotionPlayerRef.current?.pause()
+          ctx.setIsPlaying(false)
+        }
+        return
+      }
+
+      const time = frame / 30
+      ctx.setCurrentTime(time)
+      const { scene } = ctx.getSceneForFrame(frame)
+      if (!scene || scene.id === lastSyncedSceneIdRef.current) return
+
+      lastSyncedSceneIdRef.current = scene.id
+      ctx.setActiveSceneId(scene.id)
+
+      if (scene.script && !sceneHasHeygenPlayback(scene) && ctx.speakText) {
+        if (lastSpokenSceneIdRef.current !== scene.id) {
+          lastSpokenSceneIdRef.current = scene.id
+          window.speechSynthesis?.cancel()
+          ctx.speakText(scene.script, scene.id)
+        }
+      } else {
+        window.speechSynthesis?.cancel()
+      }
+    }
+
+    player.addEventListener('frameupdate', onFrameUpdate)
+    return () => player.removeEventListener('frameupdate', onFrameUpdate)
+  }, [editorPlaybackActive, isPreparingPlayback, playbackReadyScenes])
+
+  const playerInputProps = useMemo(
+    () => ({
+      scenes: compositionScenes,
+      bgMusic: isSingleScene ? null : bgMusic,
+      bgMusicVolume,
+      onAddScene,
+    }),
+    [compositionScenes, isSingleScene, bgMusic, bgMusicVolume, onAddScene]
+  )
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget && setSelectedLayerId) {
@@ -209,45 +309,11 @@ const VideoCanvas = forwardRef(({
               position: showRemotionPlayer ? 'relative' : 'absolute',
               inset: 0,
             }}
-            inputProps={{
-              scenes: compositionScenes,
-              bgMusic: isSingleScene ? null : bgMusic,
-              bgMusicVolume: bgMusicVolume,
-              onAddScene: onAddScene,
-            }}
+            inputProps={playerInputProps}
             showOutlines={false}
             showVolumeControls={false}
             numberOfSharedAudioTags={12}
             autoPlay={false}
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => {
-              setIsPlaying(false)
-              window.speechSynthesis?.cancel()
-            }}
-            onFrameUpdate={(frame) => {
-              if (!isPlaying) return
-
-              if (isSingleScene) {
-                const globalTime = playbackStartTime + frame / 30
-                setCurrentTime(globalTime)
-                if (frame >= durationInFrames - 1) {
-                  remotionPlayerRef.current?.pause()
-                  setIsPlaying(false)
-                }
-                return
-              }
-
-              const time = frame / 30
-              setCurrentTime(time)
-              const { scene } = getSceneForFrame(frame)
-              if (scene && scene.id !== activeSceneId) {
-                setActiveSceneId(scene.id)
-                window.speechSynthesis?.cancel()
-                if (scene.script && !sceneHasHeygenPlayback(scene) && speakText) {
-                  speakText(scene.script, scene.id)
-                }
-              }
-            }}
           />
 
           {isPreparingPlayback && (
@@ -288,6 +354,7 @@ const VideoCanvas = forwardRef(({
                 onFillShape={onFillShape}
                 onCanvasDrop={onCanvasDrop}
                 showGuides={editorView.showGuides}
+                showPageGrid={editorView.showPageGrid}
                 showSafeZone={editorView.showSafeZone}
                 gridSize={editorView.gridSize || 20}
               />
