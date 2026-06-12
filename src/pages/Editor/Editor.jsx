@@ -2243,7 +2243,9 @@ function Create({ onBack, initialConfig = null }) {
             scenes={scenes}
             timelineScope={timelineScope}
             setTimelineScope={setTimelineScope}
-            onSelectScene={(sceneId) => handleSelectScene(sceneId, { scope: 'single' })}
+            onSelectScene={(sceneId) =>
+              handleSelectScene(sceneId, { scope: 'single', openSidebar: true })
+            }
             onDeleteScene={deleteScene}
             onAddSceneAfter={addSceneAfter}
             updateScene={updateScene}

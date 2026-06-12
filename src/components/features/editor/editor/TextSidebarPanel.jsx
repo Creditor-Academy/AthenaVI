@@ -19,11 +19,14 @@ import {
   MdVisibilityOff,
   MdTextFields,
   MdAutoAwesome,
+  MdAnimation,
+  MdInterests,
 } from 'react-icons/md';
 import {
   FONT_FAMILIES,
   getClipTextContent,
   parseFontSize,
+  resolveFontFamilyValue,
 } from '../../../../utils/textClip';
 import {
   TEXT_EFFECT_OPTIONS,
@@ -330,10 +333,13 @@ const TextSidebarPanel = ({
 }) => {
   const isRight = variant === 'right';
   const bodyClass = isRight ? 'text-sidebar-panel__body' : 'text-sidebar-panel__scroll';
-  const [showMoreAnimations, setShowMoreAnimations] = useState(false);
   const textContent = getClipTextContent(activeLayer);
   const style = activeLayer.style || {};
   const fontSize = parseFontSize(style.fontSize, 32);
+  const resolvedFontFamily = useMemo(
+    () => resolveFontFamilyValue(style.fontFamily),
+    [style.fontFamily]
+  );
   const fontWeight = String(style.fontWeight || '700');
   const fontStyle = style.fontStyle || 'normal';
   const textDecoration = style.textDecoration || 'none';
@@ -413,7 +419,7 @@ const TextSidebarPanel = ({
     updateStyle({ textDecoration: has ? 'none' : tag });
   };
 
-  const effectsContent = (
+  const animationContent = (
     <>
       <CollapsibleEffectGrid
         title="Suggested"
@@ -454,90 +460,87 @@ const TextSidebarPanel = ({
       )}
 
       <CollapsibleEffectGrid
-        title="Effects"
-        options={TEXT_EFFECT_OPTIONS}
-        activeId={getTextEffectId(style)}
-        previewCount={EFFECTS_PREVIEW_COUNT}
+        title="Text animation"
+        options={TEXT_MOTION_PRESETS}
+        activeId={activeMotionId || 'none'}
+        previewCount={6}
         expandLabel="Show all"
-        onSelect={applyEffect}
-        renderPreview={(id) => <EffectPreview effectId={id} />}
+        onSelect={(id) => {
+          const preset = TEXT_MOTION_PRESETS.find((p) => p.id === id);
+          if (preset) applyMotion(preset);
+        }}
+        renderPreview={(id) => <MotionPreview presetId={id} />}
       />
 
-      <EffectGrid
-        title="Shape"
-        options={TEXT_SHAPE_OPTIONS}
-        activeId={getTextShapeId(style)}
-        onSelect={applyShape}
-        renderPreview={(id) =>
-          id === 'curve' ? (
-            <span className="text-fx-preview" style={{ fontSize: 14, transform: 'rotate(-8deg)' }}>
-              ABCD
-            </span>
-          ) : (
-            <span className="text-fx-preview text-fx-preview--none" style={{ fontSize: 10 }}>
-              —
-            </span>
-          )
-        }
+      <CollapsibleEffectGrid
+        title="General"
+        options={GENERAL_MOTION_PRESETS}
+        activeId={GENERAL_MOTION_PRESETS.find((p) => p.entrance === activeEntrance)?.id || ''}
+        previewCount={6}
+        expandLabel="Show all"
+        onSelect={(id) => {
+          const preset = GENERAL_MOTION_PRESETS.find((p) => p.id === id);
+          if (preset) applyMotion(preset);
+        }}
+        renderPreview={(id) => <MotionPreview presetId={id} />}
       />
-
-      <div className="text-sidebar-section">
-        <button
-          type="button"
-          className="text-sidebar-expand-btn text-sidebar-expand-btn--block"
-          onClick={() => setShowMoreAnimations((v) => !v)}
-        >
-          {showMoreAnimations ? 'Hide more animations' : 'More animations'}
-          {showMoreAnimations ? <MdExpandLess size={16} /> : <MdExpandMore size={16} />}
-        </button>
-      </div>
-
-      {showMoreAnimations ? (
-        <>
-          <CollapsibleEffectGrid
-            title="Text animation"
-            options={TEXT_MOTION_PRESETS}
-            activeId={activeMotionId || 'none'}
-            previewCount={6}
-            onSelect={(id) => {
-              const preset = TEXT_MOTION_PRESETS.find((p) => p.id === id);
-              if (preset) applyMotion(preset);
-            }}
-            renderPreview={(id) => <MotionPreview presetId={id} />}
-          />
-          <CollapsibleEffectGrid
-            title="General"
-            options={GENERAL_MOTION_PRESETS}
-            activeId={
-              GENERAL_MOTION_PRESETS.find((p) => p.entrance === activeEntrance)?.id || ''
-            }
-            previewCount={6}
-            onSelect={(id) => {
-              const preset = GENERAL_MOTION_PRESETS.find((p) => p.id === id);
-              if (preset) applyMotion(preset);
-            }}
-            renderPreview={(id) => <MotionPreview presetId={id} />}
-          />
-        </>
-      ) : null}
     </>
+  );
+
+  const effectContent = (
+    <CollapsibleEffectGrid
+      title="Presets"
+      options={TEXT_EFFECT_OPTIONS}
+      activeId={getTextEffectId(style)}
+      previewCount={EFFECTS_PREVIEW_COUNT}
+      expandLabel="Show all"
+      onSelect={applyEffect}
+      renderPreview={(id) => <EffectPreview effectId={id} />}
+    />
+  );
+
+  const shapeContent = (
+    <EffectGrid
+      title="Presets"
+      options={TEXT_SHAPE_OPTIONS}
+      activeId={getTextShapeId(style)}
+      onSelect={applyShape}
+      renderPreview={(id) =>
+        id === 'curve' ? (
+          <span className="text-fx-preview" style={{ fontSize: 14, transform: 'rotate(-8deg)' }}>
+            ABCD
+          </span>
+        ) : (
+          <span className="text-fx-preview text-fx-preview--none" style={{ fontSize: 10 }}>
+            —
+          </span>
+        )
+      }
+    />
   );
 
   const textToolbar = (
       <div className="text-sidebar-toolbar text-sidebar-toolbar--compact">
-        <div className="text-sidebar-toolbar__row">
+        <div className="text-sidebar-toolbar__row text-sidebar-toolbar__row--font">
+          <label className="text-sidebar-toolbar__font-label" htmlFor="text-font-family-select">
+            Font family
+          </label>
           <select
+            id="text-font-family-select"
             className="text-sidebar-toolbar__font"
-            value={style.fontFamily || FONT_FAMILIES[0].value}
+            value={resolvedFontFamily}
             onChange={(e) => updateStyle({ fontFamily: e.target.value })}
-            title="Font"
+            title="Font family"
+            style={{ fontFamily: resolvedFontFamily }}
           >
             {FONT_FAMILIES.map((f) => (
-              <option key={f.value} value={f.value}>
+              <option key={f.value} value={f.value} style={{ fontFamily: f.value }}>
                 {f.label}
               </option>
             ))}
           </select>
+        </div>
+        <div className="text-sidebar-toolbar__row">
           <div className="size-stepper">
             <button type="button" onClick={() => updateStyle({ fontSize: Math.max(8, fontSize - 2) })} aria-label="Smaller">−</button>
             <input
@@ -677,10 +680,22 @@ const TextSidebarPanel = ({
                 ),
               },
               {
-                id: 'effects',
-                title: 'Effects',
+                id: 'animation',
+                title: 'Animation',
+                icon: <MdAnimation size={14} />,
+                content: animationContent,
+              },
+              {
+                id: 'effect',
+                title: 'Effect',
                 icon: <MdAutoAwesome size={14} />,
-                content: effectsContent,
+                content: effectContent,
+              },
+              {
+                id: 'shape',
+                title: 'Shape',
+                icon: <MdInterests size={14} />,
+                content: shapeContent,
               },
               {
                 id: 'layer-order',
@@ -718,7 +733,20 @@ const TextSidebarPanel = ({
             <div className="text-sidebar-section" style={{ paddingTop: 8 }}>
               {textInput}
             </div>
-            {effectsContent}
+            <div className="text-sidebar-effects-groups">
+              <div className="text-sidebar-effects-groups__block">
+                <h4 className="text-sidebar-effects-groups__heading">Animation</h4>
+                {animationContent}
+              </div>
+              <div className="text-sidebar-effects-groups__block">
+                <h4 className="text-sidebar-effects-groups__heading">Effect</h4>
+                {effectContent}
+              </div>
+              <div className="text-sidebar-effects-groups__block">
+                <h4 className="text-sidebar-effects-groups__heading">Shape</h4>
+                {shapeContent}
+              </div>
+            </div>
             {isRight ? (
               <TextLayerFooter
                 activeLayer={activeLayer}
