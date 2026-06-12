@@ -112,6 +112,16 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
   const backgroundStyle = getSceneBackgroundStyle(scene)
   const hasBgClip = (scene.clips || []).some((c) => isBackgroundClip(c) && resolveClipMediaSrc(c, scene))
 
+  const heygenAudioClipId = React.useMemo(() => {
+    if (!audioEnabled) return null
+    const clips = scene.clips || []
+    const avatar = clips.find((c) => isAvatarClip(c) && clipHasHeygenAudio(c, scene))
+    if (avatar) return avatar.id
+    const bg = clips.find((c) => isBackgroundClip(c) && clipHasHeygenAudio(c, scene))
+    if (bg) return bg.id
+    return clips.find((c) => clipHasHeygenAudio(c, scene))?.id ?? null
+  }, [scene, audioEnabled])
+
   return (
     <>
       {!hasBgClip && <div style={backgroundStyle} />}
@@ -144,7 +154,7 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
                     scene={scene}
                     sceneStartFrame={sceneStartFrame}
                     fps={fps}
-                    audioEnabled={audioEnabled}
+                    audioEnabled={audioEnabled && heygenAudioClipId === clip.id}
                     style={{ width: '100%', height: '100%', objectFit: bgObjectFit }}
                   />
                 ) : (
@@ -301,7 +311,7 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
                     scene={scene}
                     sceneStartFrame={sceneStartFrame}
                     fps={fps}
-                    audioEnabled={audioEnabled}
+                    audioEnabled={audioEnabled && heygenAudioClipId === clip.id}
                     style={{
                       width: '100%',
                       height: '100%',

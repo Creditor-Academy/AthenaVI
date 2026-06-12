@@ -195,11 +195,16 @@
 }
 
 .scene-settings__cta--secondary {
-  background: var(--bg-surface);
-  color: var(--text-main);
-  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.1));
+  background: color-mix(in srgb, var(--primary) 8%, var(--bg-surface));
+  color: var(--primary);
+  border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border-color));
   box-shadow: none;
   margin-top: 6px;
+}
+
+.scene-settings__cta--secondary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--primary) 14%, var(--bg-surface));
+  border-color: var(--primary);
 }
 
 .scene-settings__status {

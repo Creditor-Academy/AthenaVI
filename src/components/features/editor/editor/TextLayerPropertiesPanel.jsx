@@ -15,6 +15,7 @@ import {
   TEXT_TRANSFORM_OPTIONS,
   getClipTextContent,
   parseFontSize,
+  resolveFontFamilyValue,
 } from '../../../../utils/textClip';
 
 const SectionHeader = ({ icon, label }) => (
@@ -69,7 +70,7 @@ const SliderRow = ({ label, value, min, max, step = 1, unit = '', onChange }) =>
   </div>
 );
 
-const SelectRow = ({ label, value, options, onChange }) => (
+const SelectRow = ({ label, value, options, onChange, selectStyle }) => (
   <Row label={label} column>
     <select
       value={value}
@@ -86,10 +87,17 @@ const SelectRow = ({ label, value, options, onChange }) => (
         color: 'var(--text-main, #1a1b1c)',
         cursor: 'pointer',
         outline: 'none',
+        ...selectStyle,
       }}
     >
       {options.map((o) => (
-        <option key={o.value ?? o} value={o.value ?? o}>{o.label ?? o}</option>
+        <option
+          key={o.value ?? o}
+          value={o.value ?? o}
+          style={selectStyle ? { fontFamily: o.value ?? o } : undefined}
+        >
+          {o.label ?? o}
+        </option>
       ))}
     </select>
   </Row>
@@ -251,9 +259,10 @@ const TextLayerPropertiesPanel = ({
       <Card>
         <SelectRow
           label="Font family"
-          value={activeLayer.style?.fontFamily || FONT_FAMILIES[0].value}
+          value={resolveFontFamilyValue(activeLayer.style?.fontFamily)}
           options={FONT_FAMILIES}
           onChange={(v) => updateStyle({ fontFamily: v })}
+          selectStyle={{ fontFamily: resolveFontFamilyValue(activeLayer.style?.fontFamily) }}
         />
 
         <Row label="Font size" column={false}>

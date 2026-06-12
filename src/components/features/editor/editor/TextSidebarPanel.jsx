@@ -3,6 +3,7 @@ import {
   MdSchedule,
   MdExpandMore,
   MdExpandLess,
+  MdOpenInFull,
   MdFormatBold,
   MdFormatItalic,
   MdFormatUnderlined,
@@ -17,11 +18,15 @@ import {
   MdVisibility,
   MdVisibilityOff,
   MdTextFields,
+  MdAutoAwesome,
+  MdAnimation,
+  MdInterests,
 } from 'react-icons/md';
 import {
   FONT_FAMILIES,
   getClipTextContent,
   parseFontSize,
+  resolveFontFamilyValue,
 } from '../../../../utils/textClip';
 import {
   TEXT_EFFECT_OPTIONS,
@@ -44,7 +49,9 @@ import {
   sortClipsByPaintOrder,
 } from '../../../../utils/editorLayerUtils';
 import LayerTransformBar from './LayerTransformBar';
+import PropertiesAccordion from './PropertiesAccordion';
 import './TextSidebarPanel.css';
+import './PropertiesAccordion.css';
 
 const EffectPreview = ({ effectId }) => {
   if (effectId === 'none') {
@@ -236,7 +243,7 @@ const EffectGrid = ({ title, options, activeId, onSelect, renderPreview }) => (
   />
 );
 
-const TextLayerFooter = ({ activeLayer, clips, onMoveLayerOrder, onToggleLayerLock, updateLayer }) => {
+const TextLayerFooter = ({ activeLayer, clips, onMoveLayerOrder, onToggleLayerLock, updateLayer, embedded = false }) => {
   const paintOrder = sortClipsByPaintOrder(clips);
   const layerIndex = getClipStackIndex(clips, activeLayer.id);
   const maxIndex = Math.max(0, paintOrder.length - 1);
@@ -244,13 +251,15 @@ const TextLayerFooter = ({ activeLayer, clips, onMoveLayerOrder, onToggleLayerLo
   const isBg = isBackgroundClip(activeLayer);
 
   return (
-    <div className="text-sidebar-footer">
-      <div className="text-sidebar-section__head">
-        <span className="text-sidebar-section__title">
-          <MdLayers size={14} style={{ marginRight: 6, verticalAlign: -2 }} />
-          Layer order
-        </span>
-      </div>
+    <div className={`text-sidebar-footer ${embedded ? 'text-sidebar-footer--embedded' : ''}`}>
+      {!embedded ? (
+        <div className="text-sidebar-section__head">
+          <span className="text-sidebar-section__title">
+            <MdLayers size={14} style={{ marginRight: 6, verticalAlign: -2 }} />
+            Layer order
+          </span>
+        </div>
+      ) : null}
       <div className="text-sidebar-footer__actions">
         <button
           type="button"
@@ -320,13 +329,17 @@ const TextSidebarPanel = ({
   clips = [],
   onMoveLayerOrder,
   onToggleLayerLock,
+  useAccordion = false,
 }) => {
   const isRight = variant === 'right';
   const bodyClass = isRight ? 'text-sidebar-panel__body' : 'text-sidebar-panel__scroll';
-  const [showMoreAnimations, setShowMoreAnimations] = useState(false);
   const textContent = getClipTextContent(activeLayer);
   const style = activeLayer.style || {};
   const fontSize = parseFontSize(style.fontSize, 32);
+  const resolvedFontFamily = useMemo(
+    () => resolveFontFamilyValue(style.fontFamily),
+    [style.fontFamily]
+  );
   const fontWeight = String(style.fontWeight || '700');
   const fontStyle = style.fontStyle || 'normal';
   const textDecoration = style.textDecoration || 'none';
@@ -406,41 +419,128 @@ const TextSidebarPanel = ({
     updateStyle({ textDecoration: has ? 'none' : tag });
   };
 
-  return (
-    <div className={`text-sidebar-panel ${isRight ? 'text-sidebar-panel--right' : ''}`}>
-      {isRight ? (
-        <div className="text-sidebar-panel__titlebar">
-          <span className="text-sidebar-panel__title">
-            <MdTextFields size={16} style={{ marginRight: 6, verticalAlign: -3 }} />
-            {layerSubtitle || 'Text'}
-          </span>
+  const animationContent = (
+    <>
+      <CollapsibleEffectGrid
+        title="Suggested"
+        options={SUGGESTED_TEXT_ANIMATIONS}
+        activeId={activeSuggestedId}
+        previewCount={SUGGESTED_PREVIEW_COUNT}
+        expandLabel="Show all"
+        onSelect={(id) => {
+          const preset = SUGGESTED_TEXT_ANIMATIONS.find((p) => p.id === id);
+          if (preset) applyMotion(preset);
+        }}
+        renderPreview={(id) => <SuggestedPreview presetId={id} />}
+      />
+
+      {(activeEntrance === 'typewriter' || activeEntrance === 'wordFade') && (
+        <div className="text-sidebar-section text-typewriter-speed">
+          <div className="text-typewriter-speed__row">
+            <span className="text-typewriter-speed__label">Speed</span>
+            <span className="text-typewriter-speed__value">{(entrance?.speed ?? 1).toFixed(1)}×</span>
+          </div>
+          <input
+            type="range"
+            className="text-typewriter-speed__slider"
+            min={0.25}
+            max={3}
+            step={0.25}
+            value={entrance?.speed ?? 1}
+            onChange={(e) => {
+              const next = setEntranceAnimation(activeLayer, {
+                speed: Number(e.target.value),
+                previewSeed: Date.now(),
+              });
+              updateLayer({ animations: next.animations });
+            }}
+            aria-label="Typewriter speed"
+          />
         </div>
-      ) : null}
-      {isRight ? (
-        <LayerTransformBar
-          clip={activeLayer}
-          onPositionChange={(x, y) =>
-            updateLayer({ position: { ...(activeLayer.position || {}), x, y } })
-          }
-          onSizeChange={(w, h) =>
-            updateLayer({ size: { ...(activeLayer.size || {}), width: w, height: h } })
-          }
-        />
-      ) : null}
+      )}
+
+      <CollapsibleEffectGrid
+        title="Text animation"
+        options={TEXT_MOTION_PRESETS}
+        activeId={activeMotionId || 'none'}
+        previewCount={6}
+        expandLabel="Show all"
+        onSelect={(id) => {
+          const preset = TEXT_MOTION_PRESETS.find((p) => p.id === id);
+          if (preset) applyMotion(preset);
+        }}
+        renderPreview={(id) => <MotionPreview presetId={id} />}
+      />
+
+      <CollapsibleEffectGrid
+        title="General"
+        options={GENERAL_MOTION_PRESETS}
+        activeId={GENERAL_MOTION_PRESETS.find((p) => p.entrance === activeEntrance)?.id || ''}
+        previewCount={6}
+        expandLabel="Show all"
+        onSelect={(id) => {
+          const preset = GENERAL_MOTION_PRESETS.find((p) => p.id === id);
+          if (preset) applyMotion(preset);
+        }}
+        renderPreview={(id) => <MotionPreview presetId={id} />}
+      />
+    </>
+  );
+
+  const effectContent = (
+    <CollapsibleEffectGrid
+      title="Presets"
+      options={TEXT_EFFECT_OPTIONS}
+      activeId={getTextEffectId(style)}
+      previewCount={EFFECTS_PREVIEW_COUNT}
+      expandLabel="Show all"
+      onSelect={applyEffect}
+      renderPreview={(id) => <EffectPreview effectId={id} />}
+    />
+  );
+
+  const shapeContent = (
+    <EffectGrid
+      title="Presets"
+      options={TEXT_SHAPE_OPTIONS}
+      activeId={getTextShapeId(style)}
+      onSelect={applyShape}
+      renderPreview={(id) =>
+        id === 'curve' ? (
+          <span className="text-fx-preview" style={{ fontSize: 14, transform: 'rotate(-8deg)' }}>
+            ABCD
+          </span>
+        ) : (
+          <span className="text-fx-preview text-fx-preview--none" style={{ fontSize: 10 }}>
+            —
+          </span>
+        )
+      }
+    />
+  );
+
+  const textToolbar = (
       <div className="text-sidebar-toolbar text-sidebar-toolbar--compact">
-        <div className="text-sidebar-toolbar__row">
+        <div className="text-sidebar-toolbar__row text-sidebar-toolbar__row--font">
+          <label className="text-sidebar-toolbar__font-label" htmlFor="text-font-family-select">
+            Font family
+          </label>
           <select
+            id="text-font-family-select"
             className="text-sidebar-toolbar__font"
-            value={style.fontFamily || FONT_FAMILIES[0].value}
+            value={resolvedFontFamily}
             onChange={(e) => updateStyle({ fontFamily: e.target.value })}
-            title="Font"
+            title="Font family"
+            style={{ fontFamily: resolvedFontFamily }}
           >
             {FONT_FAMILIES.map((f) => (
-              <option key={f.value} value={f.value}>
+              <option key={f.value} value={f.value} style={{ fontFamily: f.value }}>
                 {f.label}
               </option>
             ))}
           </select>
+        </div>
+        <div className="text-sidebar-toolbar__row">
           <div className="size-stepper">
             <button type="button" onClick={() => updateStyle({ fontSize: Math.max(8, fontSize - 2) })} aria-label="Smaller">−</button>
             <input
@@ -515,144 +615,150 @@ const TextSidebarPanel = ({
           </button>
         </div>
       </div>
+  );
 
-      <div className={bodyClass}>
-        <div className="text-sidebar-section" style={{ paddingTop: 8 }}>
-          <input
-            type="text"
-            value={textContent}
-            onChange={(e) => updateTextContent(e.target.value)}
-            placeholder="Edit text on canvas…"
-            style={{
-              width: '100%',
-              boxSizing: 'border-box',
-              background: 'var(--ts-surface)',
-              border: '1px solid var(--ts-border)',
-              borderRadius: 8,
-              padding: '8px 10px',
-              fontSize: 12,
-              color: 'var(--ts-text)',
-              outline: 'none',
-            }}
+  const textInput = (
+    <input
+      type="text"
+      value={textContent}
+      onChange={(e) => updateTextContent(e.target.value)}
+      placeholder="Edit text on canvas…"
+      style={{
+        width: '100%',
+        boxSizing: 'border-box',
+        background: 'var(--ts-surface)',
+        border: '1px solid var(--ts-border)',
+        borderRadius: 8,
+        padding: '8px 10px',
+        fontSize: 12,
+        color: 'var(--ts-text)',
+        outline: 'none',
+      }}
+    />
+  );
+
+  return (
+    <div className={`text-sidebar-panel ${isRight ? 'text-sidebar-panel--right' : ''}`}>
+      {isRight ? (
+        <div className="text-sidebar-panel__titlebar">
+          <span className="text-sidebar-panel__title">
+            <MdTextFields size={16} style={{ marginRight: 6, verticalAlign: -3 }} />
+            {layerSubtitle || 'Text'}
+          </span>
+        </div>
+      ) : null}
+
+      {isRight && useAccordion ? (
+        <div style={{ padding: '0 14px 8px' }}>
+          <PropertiesAccordion
+            sections={[
+              {
+                id: 'position',
+                title: 'Position',
+                icon: <MdOpenInFull size={14} />,
+                content: (
+                  <LayerTransformBar
+                    clip={activeLayer}
+                    onPositionChange={(x, y) =>
+                      updateLayer({ position: { ...(activeLayer.position || {}), x, y } })
+                    }
+                    onSizeChange={(w, h) =>
+                      updateLayer({ size: { ...(activeLayer.size || {}), width: w, height: h } })
+                    }
+                  />
+                ),
+              },
+              {
+                id: 'text',
+                title: 'Text',
+                icon: <MdTextFields size={14} />,
+                content: (
+                  <>
+                    {textToolbar}
+                    <div style={{ paddingTop: 8 }}>{textInput}</div>
+                  </>
+                ),
+              },
+              {
+                id: 'animation',
+                title: 'Animation',
+                icon: <MdAnimation size={14} />,
+                content: animationContent,
+              },
+              {
+                id: 'effect',
+                title: 'Effect',
+                icon: <MdAutoAwesome size={14} />,
+                content: effectContent,
+              },
+              {
+                id: 'shape',
+                title: 'Shape',
+                icon: <MdInterests size={14} />,
+                content: shapeContent,
+              },
+              {
+                id: 'layer-order',
+                title: 'Layer Order',
+                icon: <MdLayers size={14} />,
+                content: (
+                  <TextLayerFooter
+                    activeLayer={activeLayer}
+                    clips={clips}
+                    onMoveLayerOrder={onMoveLayerOrder}
+                    onToggleLayerLock={onToggleLayerLock}
+                    updateLayer={updateLayer}
+                    embedded
+                  />
+                ),
+              },
+            ]}
           />
         </div>
-
-        <CollapsibleEffectGrid
-          title="Suggested"
-          options={SUGGESTED_TEXT_ANIMATIONS}
-          activeId={activeSuggestedId}
-          previewCount={SUGGESTED_PREVIEW_COUNT}
-          expandLabel="Show all"
-          onSelect={(id) => {
-            const preset = SUGGESTED_TEXT_ANIMATIONS.find((p) => p.id === id);
-            if (preset) applyMotion(preset);
-          }}
-          renderPreview={(id) => <SuggestedPreview presetId={id} />}
-        />
-
-        {(activeEntrance === 'typewriter' || activeEntrance === 'wordFade') && (
-          <div className="text-sidebar-section text-typewriter-speed">
-            <div className="text-typewriter-speed__row">
-              <span className="text-typewriter-speed__label">Speed</span>
-              <span className="text-typewriter-speed__value">{(entrance?.speed ?? 1).toFixed(1)}×</span>
-            </div>
-            <input
-              type="range"
-              className="text-typewriter-speed__slider"
-              min={0.25}
-              max={3}
-              step={0.25}
-              value={entrance?.speed ?? 1}
-              onChange={(e) => {
-                const next = setEntranceAnimation(activeLayer, {
-                  speed: Number(e.target.value),
-                  previewSeed: Date.now(),
-                });
-                updateLayer({ animations: next.animations });
-              }}
-              aria-label="Typewriter speed"
-            />
-          </div>
-        )}
-
-        <CollapsibleEffectGrid
-          title="Effects"
-          options={TEXT_EFFECT_OPTIONS}
-          activeId={getTextEffectId(style)}
-          previewCount={EFFECTS_PREVIEW_COUNT}
-          expandLabel="Show all"
-          onSelect={applyEffect}
-          renderPreview={(id) => <EffectPreview effectId={id} />}
-        />
-
-        <EffectGrid
-          title="Shape"
-          options={TEXT_SHAPE_OPTIONS}
-          activeId={getTextShapeId(style)}
-          onSelect={applyShape}
-          renderPreview={(id) =>
-            id === 'curve' ? (
-              <span className="text-fx-preview" style={{ fontSize: 14, transform: 'rotate(-8deg)' }}>
-                ABCD
-              </span>
-            ) : (
-              <span className="text-fx-preview text-fx-preview--none" style={{ fontSize: 10 }}>
-                —
-              </span>
-            )
-          }
-        />
-
-        <div className="text-sidebar-section">
-          <button
-            type="button"
-            className="text-sidebar-expand-btn text-sidebar-expand-btn--block"
-            onClick={() => setShowMoreAnimations((v) => !v)}
-          >
-            {showMoreAnimations ? 'Hide more animations' : 'More animations'}
-            {showMoreAnimations ? <MdExpandLess size={16} /> : <MdExpandMore size={16} />}
-          </button>
-        </div>
-
-        {showMoreAnimations ? (
-          <>
-            <CollapsibleEffectGrid
-              title="Text animation"
-              options={TEXT_MOTION_PRESETS}
-              activeId={activeMotionId || 'none'}
-              previewCount={6}
-              onSelect={(id) => {
-                const preset = TEXT_MOTION_PRESETS.find((p) => p.id === id);
-                if (preset) applyMotion(preset);
-              }}
-              renderPreview={(id) => <MotionPreview presetId={id} />}
-            />
-            <CollapsibleEffectGrid
-              title="General"
-              options={GENERAL_MOTION_PRESETS}
-              activeId={
-                GENERAL_MOTION_PRESETS.find((p) => p.entrance === activeEntrance)?.id || ''
+      ) : (
+        <>
+          {isRight ? (
+            <LayerTransformBar
+              clip={activeLayer}
+              onPositionChange={(x, y) =>
+                updateLayer({ position: { ...(activeLayer.position || {}), x, y } })
               }
-              previewCount={6}
-              onSelect={(id) => {
-                const preset = GENERAL_MOTION_PRESETS.find((p) => p.id === id);
-                if (preset) applyMotion(preset);
-              }}
-              renderPreview={(id) => <MotionPreview presetId={id} />}
+              onSizeChange={(w, h) =>
+                updateLayer({ size: { ...(activeLayer.size || {}), width: w, height: h } })
+              }
             />
-          </>
-        ) : null}
-
-        {isRight ? (
-          <TextLayerFooter
-            activeLayer={activeLayer}
-            clips={clips}
-            onMoveLayerOrder={onMoveLayerOrder}
-            onToggleLayerLock={onToggleLayerLock}
-            updateLayer={updateLayer}
-          />
-        ) : null}
-      </div>
+          ) : null}
+          {textToolbar}
+          <div className={bodyClass}>
+            <div className="text-sidebar-section" style={{ paddingTop: 8 }}>
+              {textInput}
+            </div>
+            <div className="text-sidebar-effects-groups">
+              <div className="text-sidebar-effects-groups__block">
+                <h4 className="text-sidebar-effects-groups__heading">Animation</h4>
+                {animationContent}
+              </div>
+              <div className="text-sidebar-effects-groups__block">
+                <h4 className="text-sidebar-effects-groups__heading">Effect</h4>
+                {effectContent}
+              </div>
+              <div className="text-sidebar-effects-groups__block">
+                <h4 className="text-sidebar-effects-groups__heading">Shape</h4>
+                {shapeContent}
+              </div>
+            </div>
+            {isRight ? (
+              <TextLayerFooter
+                activeLayer={activeLayer}
+                clips={clips}
+                onMoveLayerOrder={onMoveLayerOrder}
+                onToggleLayerLock={onToggleLayerLock}
+                updateLayer={updateLayer}
+              />
+            ) : null}
+          </div>
+        </>
+      )}
     </div>
   );
 };

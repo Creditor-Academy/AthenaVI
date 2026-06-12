@@ -100,6 +100,32 @@ export function toFontSizeCss(value, fallback = 32) {
     : `${n}px`;
 }
 
+export function normalizeFontFamilyKey(fontFamily) {
+  if (!fontFamily) return '';
+  return String(fontFamily)
+    .split(',')[0]
+    .trim()
+    .replace(/^["']|["']$/g, '')
+    .toLowerCase();
+}
+
+/** Map stored font stacks (e.g. "Inter, sans-serif") to a FONT_FAMILIES option value. */
+export function resolveFontFamilyValue(stored, families = FONT_FAMILIES) {
+  if (!families.length) return stored || '';
+  if (!stored) return families[0].value;
+
+  const exact = families.find((family) => family.value === stored);
+  if (exact) return exact.value;
+
+  const storedKey = normalizeFontFamilyKey(stored);
+  const match = families.find(
+    (family) =>
+      normalizeFontFamilyKey(family.value) === storedKey ||
+      family.label.toLowerCase() === storedKey
+  );
+  return match?.value ?? families[0].value;
+}
+
 export const FONT_FAMILIES = [
   { label: 'Inter', value: 'Inter, system-ui, sans-serif' },
   { label: 'Arial', value: 'Arial, Helvetica, sans-serif' },
