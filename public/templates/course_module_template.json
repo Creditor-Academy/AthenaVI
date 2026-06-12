@@ -1,0 +1,5780 @@
+{
+  "category": "Course Module",
+  "template": {
+    "id": "course-module-academic-forge",
+    "name": "Course Module — Academic Forge Bundle",
+    "category": "Course Module",
+    "theme": {
+      "name": "Academic Forge",
+      "fonts": {
+        "display": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+        "serif": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+        "sans": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+        "accent": "\"Fraunces\", Georgia, serif"
+      }
+    },
+    "presenter": {
+      "name": "Instructor"
+    },
+    "totalSlides": 8,
+    "canvasSize": {
+      "width": 1280,
+      "height": 720
+    },
+    "colorPalette": {
+      "forest": "#1B3022",
+      "sage": "#416D54",
+      "sageLight": "#5C8A72",
+      "gold": "#E8B84A",
+      "terracotta": "#C45C26",
+      "terracottaDeep": "#9A3F18",
+      "cream": "#F9F8F6",
+      "warm": "#FFF4E6",
+      "blush": "#FDF0E8",
+      "ink": "#111827",
+      "slate": "#374151",
+      "muted": "#6B7280",
+      "white": "#ffffff",
+      "dark": "#0B1410",
+      "panelDark": "#1F2937",
+      "line": "#E5E7EB",
+      "overlay": "rgba(17, 24, 39, 0.55)",
+      "overlayLight": "rgba(249, 248, 246, 0.88)"
+    },
+    "typography": {
+      "org": {
+        "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+        "fontWeight": "600",
+        "fontSize": 12,
+        "letterSpacing": "0.2em",
+        "textTransform": "uppercase",
+        "color": "#416D54"
+      },
+      "display": {
+        "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+        "fontWeight": "700",
+        "color": "#111827",
+        "fontSize": 48
+      },
+      "displaySerif": {
+        "fontFamily": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+        "fontWeight": "700",
+        "color": "#1B3022",
+        "lineHeight": 1.08,
+        "fontSize": 40
+      },
+      "heading": {
+        "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+        "fontWeight": "700",
+        "color": "#1B3022",
+        "letterSpacing": "0.04em",
+        "fontSize": 32
+      },
+      "subheading": {
+        "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+        "fontWeight": "600",
+        "color": "#416D54",
+        "letterSpacing": "0.06em",
+        "textTransform": "uppercase",
+        "fontSize": 14
+      },
+      "body": {
+        "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+        "fontWeight": "400",
+        "color": "#374151",
+        "lineHeight": 1.75,
+        "fontSize": 17
+      },
+      "bodyOnDark": {
+        "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+        "fontWeight": "400",
+        "color": "#F9F8F6",
+        "lineHeight": 1.7,
+        "fontSize": 17
+      },
+      "label": {
+        "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+        "fontWeight": "600",
+        "fontSize": 12,
+        "letterSpacing": "0.14em",
+        "textTransform": "uppercase",
+        "color": "#6B7280"
+      },
+      "stat": {
+        "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+        "fontWeight": "800",
+        "color": "#1B3022",
+        "fontSize": 44
+      },
+      "cardTitle": {
+        "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+        "fontWeight": "700",
+        "fontSize": 20,
+        "color": "#111827"
+      },
+      "cardBody": {
+        "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+        "fontWeight": "400",
+        "fontSize": 15,
+        "color": "#374151",
+        "lineHeight": 1.6
+      },
+      "accent": {
+        "fontFamily": "\"Fraunces\", Georgia, serif",
+        "fontWeight": "500",
+        "fontStyle": "italic",
+        "color": "#C45C26",
+        "fontSize": 18
+      }
+    },
+    "backgroundPresets": [
+      {
+        "id": "bg-cream",
+        "name": "Warm Cream",
+        "type": "solid",
+        "value": "#F9F8F6"
+      },
+      {
+        "id": "bg-warm",
+        "name": "Soft Warm",
+        "type": "solid",
+        "value": "#FFF4E6"
+      },
+      {
+        "id": "bg-blush",
+        "name": "Blush",
+        "type": "solid",
+        "value": "#FDF0E8"
+      },
+      {
+        "id": "bg-sage-mist",
+        "name": "Sage Mist",
+        "type": "solid",
+        "value": "#EEF4F0"
+      },
+      {
+        "id": "bg-forest",
+        "name": "Forest",
+        "type": "solid",
+        "value": "#1B3022"
+      },
+      {
+        "id": "bg-sage",
+        "name": "Sage",
+        "type": "solid",
+        "value": "#416D54"
+      },
+      {
+        "id": "bg-dark",
+        "name": "Dark",
+        "type": "solid",
+        "value": "#0B1410"
+      },
+      {
+        "id": "bg-gradient-warm",
+        "name": "Warm Gradient",
+        "type": "gradient",
+        "value": "linear-gradient(145deg, #F9F8F6 0%, #FFF4E6 50%, #EEF4F0 100%)"
+      },
+      {
+        "id": "bg-gradient-forest",
+        "name": "Forest Gradient",
+        "type": "gradient",
+        "value": "linear-gradient(160deg, #1B3022 0%, #0B1410 100%)"
+      }
+    ],
+    "description": "Professional 8-slide training module with full-bleed backgrounds, forest and gold palette, Poppins and Source Serif typography, circular cover hero, framework cards, and knowledge-check closing."
+  },
+  "scenes": [
+    {
+      "id": "cm_scene_01",
+      "slideIndex": 1,
+      "title": "Module Cover",
+      "layoutType": "Cover",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Instructor"
+      },
+      "background": {
+        "type": "solid",
+        "value": "#F9F8F6",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "hero": {
+          "x": 102,
+          "y": 78,
+          "width": 360,
+          "height": 360
+        },
+        "copy": {
+          "x": 526,
+          "y": 74,
+          "width": 608,
+          "height": 572
+        },
+        "avatar": {
+          "x": 1078,
+          "y": 542,
+          "width": 88,
+          "height": 108
+        }
+      },
+      "description": "Full-bleed background with circular hero, gold arcs, and bold display typography.",
+      "flow": "Cover → Overview",
+      "duration": 10,
+      "tags": [
+        "course-module",
+        "training",
+        "cover",
+        "full-bleed"
+      ],
+      "clips": [
+        {
+          "id": "bg_cover",
+          "type": "image",
+          "assetKey": "course-cover-bg",
+          "role": "background",
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://images.pexels.com/photos/256541/pexels-photo-256541.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Cover Background",
+          "style": {
+            "objectFit": "cover"
+          },
+          "isBackground": true,
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#F9F8F6"
+          }
+        },
+        {
+          "id": "scrim_cover",
+          "type": "shape",
+          "role": "scrim",
+          "shapeKey": "course-scrim",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(249, 248, 246, 0.78)"
+          }
+        },
+        {
+          "id": "arc_gold",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-arc-gold",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 72,
+            "y": 48
+          },
+          "size": {
+            "width": 420,
+            "height": 420
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "transparent",
+            "borderRadius": "50%",
+            "border": "14px solid #E8B84A",
+            "opacity": 0.95
+          }
+        },
+        {
+          "id": "arc_terra",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-arc-terra",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 52,
+            "y": 28
+          },
+          "size": {
+            "width": 460,
+            "height": 460
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "transparent",
+            "borderRadius": "50%",
+            "border": "10px solid #C45C26",
+            "opacity": 0.85
+          }
+        },
+        {
+          "id": "ring_inner",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 126,
+            "y": 86
+          },
+          "size": {
+            "width": 344,
+            "height": 344
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F9F8F6",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "img_cover_hero_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "course-frame-round",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 126,
+            "y": 94
+          },
+          "size": {
+            "width": 328,
+            "height": 328
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#5C8A72",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "img_cover_hero",
+          "type": "image",
+          "assetKey": "course-hero-arch",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 126,
+            "y": 94
+          },
+          "size": {
+            "width": 328,
+            "height": 328
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://images.pexels.com/photos/323705/pexels-photo-323705.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Training hero",
+          "style": {
+            "borderRadius": "50%",
+            "objectFit": "cover"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#5C8A72"
+          }
+        },
+        {
+          "id": "dot_tl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 126,
+            "y": 74
+          },
+          "size": {
+            "width": 28,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#C45C26",
+            "borderRadius": "50%",
+            "opacity": 0.9
+          }
+        },
+        {
+          "id": "dot_tr",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1134,
+            "y": 74
+          },
+          "size": {
+            "width": 20,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#E8B84A",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "dot_bl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 150,
+            "y": 626
+          },
+          "size": {
+            "width": 16,
+            "height": 16
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#416D54",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "img_logo",
+          "type": "image",
+          "assetKey": "course-logo",
+          "role": "logo",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 526,
+            "y": 74
+          },
+          "size": {
+            "width": 200,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://placehold.co/320x64/1B3022/ffffff?text=YOUR+ACADEMY",
+          "placeholder": true,
+          "alt": "Academy logo",
+          "style": {
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 526,
+            "y": 130
+          },
+          "size": {
+            "width": 628,
+            "height": 150
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Training And\nDevelopment",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#111827",
+            "fontSize": 58,
+            "lineHeight": 1.05
+          }
+        },
+        {
+          "id": "pill_sub",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-pill",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 526,
+            "y": 294
+          },
+          "size": {
+            "width": 320,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "background": "linear-gradient(90deg, #C45C26 0%, #E8B84A 100%)",
+            "borderRadius": "100px"
+          }
+        },
+        {
+          "id": "t_pill",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 546,
+            "y": 306
+          },
+          "size": {
+            "width": 280,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Presentation — Module 01",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 16,
+            "color": "#ffffff"
+          }
+        },
+        {
+          "id": "t_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 526,
+            "y": 364
+          },
+          "size": {
+            "width": 612,
+            "height": 110
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "A complete training module designed for professional instruction. Replace this copy with your course promise, audience, and what learners will be able to do after finishing this lesson.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#374151",
+            "lineHeight": 1.75,
+            "fontSize": 17
+          }
+        },
+        {
+          "id": "t_body2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 526,
+            "y": 474
+          },
+          "size": {
+            "width": 612,
+            "height": 90
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Use this slide to set expectations, highlight prerequisites, and preview the skills covered in the next several scenes.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#6B7280",
+            "lineHeight": 1.75,
+            "fontSize": 16
+          }
+        },
+        {
+          "id": "t_presented",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 526,
+            "y": 574
+          },
+          "size": {
+            "width": 160,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Presented by",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 10,
+            "letterSpacing": "0.14em",
+            "textTransform": "uppercase",
+            "color": "#6B7280"
+          }
+        },
+        {
+          "id": "t_name",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 17,
+          "position": {
+            "x": 526,
+            "y": 598
+          },
+          "size": {
+            "width": 280,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Your Instructor",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "color": "#C45C26",
+            "letterSpacing": "0.02em",
+            "textTransform": "none",
+            "fontSize": 18
+          }
+        },
+        {
+          "id": "ico_globe_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-icon-badge",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1034,
+            "y": 594
+          },
+          "size": {
+            "width": 36,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#FFF4E6",
+            "borderRadius": "50%",
+            "boxShadow": "0 4px 14px rgba(17,24,39,0.1)"
+          }
+        },
+        {
+          "id": "ico_globe",
+          "type": "image",
+          "assetKey": "globe",
+          "role": "icon",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 1041,
+            "y": 601
+          },
+          "size": {
+            "width": 22,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/C45C26/globe.png",
+          "placeholder": true,
+          "alt": "Website",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_web",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 18,
+          "position": {
+            "x": 1074,
+            "y": 598
+          },
+          "size": {
+            "width": 80,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "yoursite.com",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "color": "#416D54",
+            "lineHeight": 1.75,
+            "fontSize": 12
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1078,
+            "y": 542
+          },
+          "size": {
+            "width": 88,
+            "height": 108
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #E8B84A",
+            "boxShadow": "0 12px 32px rgba(17, 24, 39, 0.2)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-cream",
+            "name": "Warm Cream",
+            "type": "solid",
+            "value": "#F9F8F6"
+          },
+          {
+            "id": "bg-warm",
+            "name": "Soft Warm",
+            "type": "solid",
+            "value": "#FFF4E6"
+          },
+          {
+            "id": "bg-blush",
+            "name": "Blush",
+            "type": "solid",
+            "value": "#FDF0E8"
+          },
+          {
+            "id": "bg-sage-mist",
+            "name": "Sage Mist",
+            "type": "solid",
+            "value": "#EEF4F0"
+          },
+          {
+            "id": "bg-forest",
+            "name": "Forest",
+            "type": "solid",
+            "value": "#1B3022"
+          },
+          {
+            "id": "bg-sage",
+            "name": "Sage",
+            "type": "solid",
+            "value": "#416D54"
+          },
+          {
+            "id": "bg-dark",
+            "name": "Dark",
+            "type": "solid",
+            "value": "#0B1410"
+          },
+          {
+            "id": "bg-gradient-warm",
+            "name": "Warm Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #F9F8F6 0%, #FFF4E6 50%, #EEF4F0 100%)"
+          },
+          {
+            "id": "bg-gradient-forest",
+            "name": "Forest Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #1B3022 0%, #0B1410 100%)"
+          }
+        ],
+        "hint": "Use preset colors, a custom swatch, or a full-bleed image. Delete a hero image to reveal the color panel behind it."
+      }
+    },
+    {
+      "id": "cm_scene_02",
+      "slideIndex": 2,
+      "title": "Training Overview",
+      "layoutType": "Split",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Instructor"
+      },
+      "background": {
+        "type": "solid",
+        "value": "#FFF4E6",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "text": {
+          "x": 546,
+          "y": 74,
+          "width": 588,
+          "height": 572
+        },
+        "avatar": {
+          "x": 1026,
+          "y": 70,
+          "width": 84,
+          "height": 102
+        }
+      },
+      "description": "Warm background image with objectives grid and white info cards.",
+      "flow": "Overview → Framework",
+      "duration": 10,
+      "tags": [
+        "course-module",
+        "training",
+        "objectives",
+        "overview"
+      ],
+      "clips": [
+        {
+          "id": "bg_overview",
+          "type": "image",
+          "assetKey": "course-soft-bg",
+          "role": "background",
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Soft Texture",
+          "style": {
+            "objectFit": "cover"
+          },
+          "isBackground": true,
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#FFF4E6"
+          }
+        },
+        {
+          "id": "scrim_overview",
+          "type": "shape",
+          "role": "scrim",
+          "shapeKey": "course-scrim",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(255, 244, 230, 0.9)"
+          }
+        },
+        {
+          "id": "panel_img",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 126,
+            "y": 74
+          },
+          "size": {
+            "width": 380,
+            "height": 572
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "24px",
+            "boxShadow": "0 20px 50px rgba(17,24,39,0.1)"
+          }
+        },
+        {
+          "id": "img_overview_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "course-frame-round",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 142,
+            "y": 90
+          },
+          "size": {
+            "width": 348,
+            "height": 260
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#5C8A72",
+            "borderRadius": "18px"
+          }
+        },
+        {
+          "id": "img_overview",
+          "type": "image",
+          "assetKey": "course-classroom",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 142,
+            "y": 90
+          },
+          "size": {
+            "width": 348,
+            "height": 260
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://images.pexels.com/photos/5212345/pexels-photo-5212345.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Classroom",
+          "style": {
+            "borderRadius": "18px",
+            "objectFit": "cover"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#5C8A72"
+          }
+        },
+        {
+          "id": "t_panel_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 154,
+            "y": 370
+          },
+          "size": {
+            "width": 324,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "What You'll Learn",
+          "style": {
+            "fontFamily": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+            "fontWeight": "700",
+            "color": "#1B3022",
+            "lineHeight": 1.08,
+            "fontSize": 32
+          }
+        },
+        {
+          "id": "t_panel_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 154,
+            "y": 422
+          },
+          "size": {
+            "width": 324,
+            "height": 120
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "This module helps participants understand a clear work process and apply it more confidently in everyday tasks. Learners will move from theory to practice with guided examples.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#374151",
+            "lineHeight": 1.75,
+            "fontSize": 16
+          }
+        },
+        {
+          "id": "t_panel_body2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 154,
+            "y": 542
+          },
+          "size": {
+            "width": 324,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "By the end of this section, everyone should know the outcomes, the tools required, and how success will be measured.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#6B7280",
+            "lineHeight": 1.75,
+            "fontSize": 15
+          }
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 546,
+            "y": 74
+          },
+          "size": {
+            "width": 608,
+            "height": 56
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Training Overview",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#111827",
+            "fontSize": 40
+          }
+        },
+        {
+          "id": "t_sub",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 546,
+            "y": 130
+          },
+          "size": {
+            "width": 608,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "FOUR LEARNING OUTCOMES",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "color": "#416D54",
+            "letterSpacing": "0.06em",
+            "textTransform": "uppercase",
+            "fontSize": 13
+          }
+        },
+        {
+          "id": "obj1_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-card-white",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 546,
+            "y": 174
+          },
+          "size": {
+            "width": 296,
+            "height": 176
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "16px",
+            "boxShadow": "0 14px 36px rgba(17,24,39,0.08)"
+          }
+        },
+        {
+          "id": "obj1_bar",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 546,
+            "y": 188
+          },
+          "size": {
+            "width": 6,
+            "height": 148
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#C45C26",
+            "borderRadius": "4px"
+          }
+        },
+        {
+          "id": "obj1_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 570,
+            "y": 192
+          },
+          "size": {
+            "width": 260,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Understand",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 21,
+            "color": "#111827"
+          }
+        },
+        {
+          "id": "obj1_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 570,
+            "y": 232
+          },
+          "size": {
+            "width": 260,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Grasp the core ideas, vocabulary, and context before moving into hands-on practice.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 15,
+            "color": "#374151",
+            "lineHeight": 1.6
+          }
+        },
+        {
+          "id": "obj2_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-card-white",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 858,
+            "y": 174
+          },
+          "size": {
+            "width": 296,
+            "height": 176
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "16px",
+            "boxShadow": "0 14px 36px rgba(17,24,39,0.08)"
+          }
+        },
+        {
+          "id": "obj2_bar",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 858,
+            "y": 188
+          },
+          "size": {
+            "width": 6,
+            "height": 148
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#1B3022",
+            "borderRadius": "4px"
+          }
+        },
+        {
+          "id": "obj2_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 882,
+            "y": 192
+          },
+          "size": {
+            "width": 260,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Apply",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 21,
+            "color": "#111827"
+          }
+        },
+        {
+          "id": "obj2_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 882,
+            "y": 232
+          },
+          "size": {
+            "width": 260,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Use the process in real tasks with confidence and consistent quality.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 15,
+            "color": "#374151",
+            "lineHeight": 1.6
+          }
+        },
+        {
+          "id": "obj3_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-card-white",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 546,
+            "y": 366
+          },
+          "size": {
+            "width": 296,
+            "height": 176
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "16px",
+            "boxShadow": "0 14px 36px rgba(17,24,39,0.08)"
+          }
+        },
+        {
+          "id": "obj3_bar",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 546,
+            "y": 380
+          },
+          "size": {
+            "width": 6,
+            "height": 148
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#416D54",
+            "borderRadius": "4px"
+          }
+        },
+        {
+          "id": "obj3_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 570,
+            "y": 384
+          },
+          "size": {
+            "width": 260,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Avoid Errors",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 21,
+            "color": "#111827"
+          }
+        },
+        {
+          "id": "obj3_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 570,
+            "y": 424
+          },
+          "size": {
+            "width": 260,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Spot common mistakes early and know how to correct them quickly.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 15,
+            "color": "#374151",
+            "lineHeight": 1.6
+          }
+        },
+        {
+          "id": "obj4_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-card-white",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 858,
+            "y": 366
+          },
+          "size": {
+            "width": 296,
+            "height": 176
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "16px",
+            "boxShadow": "0 14px 36px rgba(17,24,39,0.08)"
+          }
+        },
+        {
+          "id": "obj4_bar",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 858,
+            "y": 380
+          },
+          "size": {
+            "width": 6,
+            "height": 148
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#E8B84A",
+            "borderRadius": "4px"
+          }
+        },
+        {
+          "id": "obj4_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 882,
+            "y": 384
+          },
+          "size": {
+            "width": 260,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Build Confidence",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 21,
+            "color": "#111827"
+          }
+        },
+        {
+          "id": "obj4_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 882,
+            "y": 424
+          },
+          "size": {
+            "width": 260,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Practice until each step feels natural and repeatable on the job.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 15,
+            "color": "#374151",
+            "lineHeight": 1.6
+          }
+        },
+        {
+          "id": "slide_badge_02",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1106,
+            "y": 598
+          },
+          "size": {
+            "width": 48,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#1B3022",
+            "borderRadius": "50%",
+            "border": "3px solid #E8B84A"
+          }
+        },
+        {
+          "id": "slide_num_02",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1106,
+            "y": 608
+          },
+          "size": {
+            "width": 48,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "02",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "fontSize": 18,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1026,
+            "y": 70
+          },
+          "size": {
+            "width": 84,
+            "height": 102
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #ffffff",
+            "boxShadow": "0 12px 32px rgba(17, 24, 39, 0.2)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-cream",
+            "name": "Warm Cream",
+            "type": "solid",
+            "value": "#F9F8F6"
+          },
+          {
+            "id": "bg-warm",
+            "name": "Soft Warm",
+            "type": "solid",
+            "value": "#FFF4E6"
+          },
+          {
+            "id": "bg-blush",
+            "name": "Blush",
+            "type": "solid",
+            "value": "#FDF0E8"
+          },
+          {
+            "id": "bg-sage-mist",
+            "name": "Sage Mist",
+            "type": "solid",
+            "value": "#EEF4F0"
+          },
+          {
+            "id": "bg-forest",
+            "name": "Forest",
+            "type": "solid",
+            "value": "#1B3022"
+          },
+          {
+            "id": "bg-sage",
+            "name": "Sage",
+            "type": "solid",
+            "value": "#416D54"
+          },
+          {
+            "id": "bg-dark",
+            "name": "Dark",
+            "type": "solid",
+            "value": "#0B1410"
+          },
+          {
+            "id": "bg-gradient-warm",
+            "name": "Warm Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #F9F8F6 0%, #FFF4E6 50%, #EEF4F0 100%)"
+          },
+          {
+            "id": "bg-gradient-forest",
+            "name": "Forest Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #1B3022 0%, #0B1410 100%)"
+          }
+        ],
+        "hint": "Use preset colors, a custom swatch, or a full-bleed image. Delete a hero image to reveal the color panel behind it."
+      }
+    },
+    {
+      "id": "cm_scene_03",
+      "slideIndex": 3,
+      "title": "Core Framework",
+      "layoutType": "Grid",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Instructor"
+      },
+      "background": {
+        "type": "solid",
+        "value": "#F9F8F6",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "graphic": {
+          "x": 126,
+          "y": 114,
+          "width": 400,
+          "height": 400
+        },
+        "grid": {
+          "x": 566,
+          "y": 74,
+          "width": 568,
+          "height": 572
+        },
+        "avatar": {
+          "x": 1078,
+          "y": 542,
+          "width": 88,
+          "height": 108
+        }
+      },
+      "description": "Four-stage framework with diamond graphic and matching info cards.",
+      "flow": "Framework → Concept",
+      "duration": 10,
+      "tags": [
+        "course-module",
+        "training",
+        "framework",
+        "concepts"
+      ],
+      "clips": [
+        {
+          "id": "bg_framework",
+          "type": "image",
+          "assetKey": "course-soft-bg",
+          "role": "background",
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Soft Texture",
+          "style": {
+            "objectFit": "cover"
+          },
+          "isBackground": true,
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#F9F8F6"
+          }
+        },
+        {
+          "id": "scrim_fw",
+          "type": "shape",
+          "role": "scrim",
+          "shapeKey": "course-scrim",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(249, 248, 246, 0.92)"
+          }
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 126,
+            "y": 74
+          },
+          "size": {
+            "width": 520,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Core Learning Framework",
+          "style": {
+            "fontFamily": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+            "fontWeight": "700",
+            "color": "#1B3022",
+            "lineHeight": 1.08,
+            "fontSize": 38
+          }
+        },
+        {
+          "id": "t_sub",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 126,
+            "y": 126
+          },
+          "size": {
+            "width": 520,
+            "height": 72
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Explore the main stages of this module. Each stage builds on the previous one so learners always know where they are in the journey.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#374151",
+            "lineHeight": 1.75,
+            "fontSize": 17
+          }
+        },
+        {
+          "id": "d1_tile",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-diamond",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 186,
+            "y": 174
+          },
+          "size": {
+            "width": 120,
+            "height": 120
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#1B3022",
+            "borderRadius": "14px",
+            "transform": "rotate(45deg)"
+          }
+        },
+        {
+          "id": "d1_ico_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-icon-badge",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 228,
+            "y": 216
+          },
+          "size": {
+            "width": 36,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "transparent",
+            "borderRadius": "50%",
+            "boxShadow": "0 4px 14px rgba(17,24,39,0.1)"
+          }
+        },
+        {
+          "id": "d1_ico",
+          "type": "image",
+          "assetKey": "document",
+          "role": "icon",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 235,
+            "y": 223
+          },
+          "size": {
+            "width": 22,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/ffffff/create-new.png",
+          "placeholder": true,
+          "alt": "Document",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "d1_num",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 226,
+            "y": 302
+          },
+          "size": {
+            "width": 40,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "01",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#111827",
+            "fontSize": 14,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "d2_tile",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-diamond",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 334,
+            "y": 174
+          },
+          "size": {
+            "width": 120,
+            "height": 120
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#416D54",
+            "borderRadius": "14px",
+            "transform": "rotate(45deg)"
+          }
+        },
+        {
+          "id": "d2_ico_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-icon-badge",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 376,
+            "y": 216
+          },
+          "size": {
+            "width": 36,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "transparent",
+            "borderRadius": "50%",
+            "boxShadow": "0 4px 14px rgba(17,24,39,0.1)"
+          }
+        },
+        {
+          "id": "d2_ico",
+          "type": "image",
+          "assetKey": "folder",
+          "role": "icon",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 383,
+            "y": 223
+          },
+          "size": {
+            "width": 22,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/ffffff/folder-invoices.png",
+          "placeholder": true,
+          "alt": "Folder",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "d2_num",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 374,
+            "y": 302
+          },
+          "size": {
+            "width": 40,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "02",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#111827",
+            "fontSize": 14,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "d3_tile",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-diamond",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 186,
+            "y": 322
+          },
+          "size": {
+            "width": 120,
+            "height": 120
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#E8B84A",
+            "borderRadius": "14px",
+            "transform": "rotate(45deg)"
+          }
+        },
+        {
+          "id": "d3_ico_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-icon-badge",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 228,
+            "y": 364
+          },
+          "size": {
+            "width": 36,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "transparent",
+            "borderRadius": "50%",
+            "boxShadow": "0 4px 14px rgba(17,24,39,0.1)"
+          }
+        },
+        {
+          "id": "d3_ico",
+          "type": "image",
+          "assetKey": "monitor",
+          "role": "icon",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 235,
+            "y": 371
+          },
+          "size": {
+            "width": 22,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/ffffff/monitor.png",
+          "placeholder": true,
+          "alt": "Monitor",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "d3_num",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 226,
+            "y": 450
+          },
+          "size": {
+            "width": 40,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "03",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#111827",
+            "fontSize": 14,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "d4_tile",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-diamond",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 334,
+            "y": 322
+          },
+          "size": {
+            "width": 120,
+            "height": 120
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#C45C26",
+            "borderRadius": "14px",
+            "transform": "rotate(45deg)"
+          }
+        },
+        {
+          "id": "d4_ico_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-icon-badge",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 376,
+            "y": 364
+          },
+          "size": {
+            "width": 36,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "transparent",
+            "borderRadius": "50%",
+            "boxShadow": "0 4px 14px rgba(17,24,39,0.1)"
+          }
+        },
+        {
+          "id": "d4_ico",
+          "type": "image",
+          "assetKey": "steps",
+          "role": "icon",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 383,
+            "y": 371
+          },
+          "size": {
+            "width": 22,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/416D54/process.png",
+          "placeholder": true,
+          "alt": "Steps",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "d4_num",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 374,
+            "y": 450
+          },
+          "size": {
+            "width": 40,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "04",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#111827",
+            "fontSize": 14,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "fw1_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-card-white",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 566,
+            "y": 162
+          },
+          "size": {
+            "width": 296,
+            "height": 176
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "16px",
+            "boxShadow": "0 14px 36px rgba(17,24,39,0.08)"
+          }
+        },
+        {
+          "id": "fw1_bar",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 566,
+            "y": 176
+          },
+          "size": {
+            "width": 6,
+            "height": 148
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#1B3022",
+            "borderRadius": "4px"
+          }
+        },
+        {
+          "id": "fw1_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 590,
+            "y": 180
+          },
+          "size": {
+            "width": 260,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Gather Input",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 21,
+            "color": "#111827"
+          }
+        },
+        {
+          "id": "fw1_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 590,
+            "y": 220
+          },
+          "size": {
+            "width": 260,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Collect context, materials, and stakeholder needs before you begin the workflow.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 15,
+            "color": "#374151",
+            "lineHeight": 1.6
+          }
+        },
+        {
+          "id": "fw2_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-card-white",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 858,
+            "y": 162
+          },
+          "size": {
+            "width": 296,
+            "height": 176
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "16px",
+            "boxShadow": "0 14px 36px rgba(17,24,39,0.08)"
+          }
+        },
+        {
+          "id": "fw2_bar",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 878,
+            "y": 176
+          },
+          "size": {
+            "width": 6,
+            "height": 148
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#416D54",
+            "borderRadius": "4px"
+          }
+        },
+        {
+          "id": "fw2_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 894,
+            "y": 180
+          },
+          "size": {
+            "width": 260,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Sort Information",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 21,
+            "color": "#111827"
+          }
+        },
+        {
+          "id": "fw2_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 894,
+            "y": 220
+          },
+          "size": {
+            "width": 260,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Organize ideas into a clear sequence that everyone on the team can follow.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 15,
+            "color": "#374151",
+            "lineHeight": 1.6
+          }
+        },
+        {
+          "id": "fw3_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-card-white",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 566,
+            "y": 354
+          },
+          "size": {
+            "width": 296,
+            "height": 176
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "16px",
+            "boxShadow": "0 14px 36px rgba(17,24,39,0.08)"
+          }
+        },
+        {
+          "id": "fw3_bar",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 566,
+            "y": 368
+          },
+          "size": {
+            "width": 6,
+            "height": 148
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#E8B84A",
+            "borderRadius": "4px"
+          }
+        },
+        {
+          "id": "fw3_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 590,
+            "y": 372
+          },
+          "size": {
+            "width": 260,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Apply Steps",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 21,
+            "color": "#111827"
+          }
+        },
+        {
+          "id": "fw3_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 590,
+            "y": 412
+          },
+          "size": {
+            "width": 260,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Walk through the process with examples, checkpoints, and quality criteria.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 15,
+            "color": "#374151",
+            "lineHeight": 1.6
+          }
+        },
+        {
+          "id": "fw4_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-card-white",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 858,
+            "y": 354
+          },
+          "size": {
+            "width": 296,
+            "height": 176
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "16px",
+            "boxShadow": "0 14px 36px rgba(17,24,39,0.08)"
+          }
+        },
+        {
+          "id": "fw4_bar",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 878,
+            "y": 368
+          },
+          "size": {
+            "width": 6,
+            "height": 148
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#C45C26",
+            "borderRadius": "4px"
+          }
+        },
+        {
+          "id": "fw4_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 894,
+            "y": 372
+          },
+          "size": {
+            "width": 260,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Review Outcome",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 21,
+            "color": "#111827"
+          }
+        },
+        {
+          "id": "fw4_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 894,
+            "y": 412
+          },
+          "size": {
+            "width": 260,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Confirm understanding, capture lessons learned, and define next actions.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 15,
+            "color": "#374151",
+            "lineHeight": 1.6
+          }
+        },
+        {
+          "id": "slide_badge_03",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1106,
+            "y": 598
+          },
+          "size": {
+            "width": 48,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#1B3022",
+            "borderRadius": "50%",
+            "border": "3px solid #E8B84A"
+          }
+        },
+        {
+          "id": "slide_num_03",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1106,
+            "y": 608
+          },
+          "size": {
+            "width": 48,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "03",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "fontSize": 18,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1078,
+            "y": 542
+          },
+          "size": {
+            "width": 88,
+            "height": 108
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #ffffff",
+            "boxShadow": "0 12px 32px rgba(17, 24, 39, 0.2)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-cream",
+            "name": "Warm Cream",
+            "type": "solid",
+            "value": "#F9F8F6"
+          },
+          {
+            "id": "bg-warm",
+            "name": "Soft Warm",
+            "type": "solid",
+            "value": "#FFF4E6"
+          },
+          {
+            "id": "bg-blush",
+            "name": "Blush",
+            "type": "solid",
+            "value": "#FDF0E8"
+          },
+          {
+            "id": "bg-sage-mist",
+            "name": "Sage Mist",
+            "type": "solid",
+            "value": "#EEF4F0"
+          },
+          {
+            "id": "bg-forest",
+            "name": "Forest",
+            "type": "solid",
+            "value": "#1B3022"
+          },
+          {
+            "id": "bg-sage",
+            "name": "Sage",
+            "type": "solid",
+            "value": "#416D54"
+          },
+          {
+            "id": "bg-dark",
+            "name": "Dark",
+            "type": "solid",
+            "value": "#0B1410"
+          },
+          {
+            "id": "bg-gradient-warm",
+            "name": "Warm Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #F9F8F6 0%, #FFF4E6 50%, #EEF4F0 100%)"
+          },
+          {
+            "id": "bg-gradient-forest",
+            "name": "Forest Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #1B3022 0%, #0B1410 100%)"
+          }
+        ],
+        "hint": "Use preset colors, a custom swatch, or a full-bleed image. Delete a hero image to reveal the color panel behind it."
+      }
+    },
+    {
+      "id": "cm_scene_04",
+      "slideIndex": 4,
+      "title": "Concept 01",
+      "layoutType": "Split",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Instructor"
+      },
+      "background": {
+        "type": "solid",
+        "value": "#EEF4F0",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "header": {
+          "x": 126,
+          "y": 74,
+          "width": 560,
+          "height": 160
+        },
+        "image": {
+          "x": 126,
+          "y": 254,
+          "width": 1028,
+          "height": 280
+        },
+        "avatar": {
+          "x": 114,
+          "y": 542,
+          "width": 88,
+          "height": 108
+        }
+      },
+      "description": "Organic header panel with full-width hero image and lesson copy.",
+      "flow": "Concept → Process",
+      "duration": 10,
+      "tags": [
+        "course-module",
+        "training",
+        "concept",
+        "deep-dive"
+      ],
+      "clips": [
+        {
+          "id": "bg_c1",
+          "type": "image",
+          "assetKey": "course-nature",
+          "role": "background",
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://images.pexels.com/photos/957024/pexels-photo-957024.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Learning Scene",
+          "style": {
+            "objectFit": "cover"
+          },
+          "isBackground": true,
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#5C8A72"
+          }
+        },
+        {
+          "id": "scrim_c1",
+          "type": "shape",
+          "role": "scrim",
+          "shapeKey": "course-scrim",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(238, 244, 240, 0.88)"
+          }
+        },
+        {
+          "id": "organic_hdr",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-organic-header",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 86,
+            "y": 54
+          },
+          "size": {
+            "width": 560,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#1B3022",
+            "borderRadius": "0 0 55% 45% / 0 0 42% 38%"
+          }
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 142,
+            "y": 98
+          },
+          "size": {
+            "width": 480,
+            "height": 88
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Core Concept —\nDefine the Idea",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#ffffff",
+            "fontSize": 38,
+            "lineHeight": 1.1
+          }
+        },
+        {
+          "id": "t_num",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 1074,
+            "y": 102
+          },
+          "size": {
+            "width": 64,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "01",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#E8B84A",
+            "fontSize": 44
+          }
+        },
+        {
+          "id": "img_c1_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "course-frame-round",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 126,
+            "y": 250
+          },
+          "size": {
+            "width": 1028,
+            "height": 250
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#FFF4E6",
+            "borderRadius": "20px",
+            "boxShadow": "0 18px 44px rgba(17,24,39,0.12)"
+          }
+        },
+        {
+          "id": "img_c1",
+          "type": "image",
+          "assetKey": "course-whiteboard",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 126,
+            "y": 250
+          },
+          "size": {
+            "width": 1028,
+            "height": 250
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://images.pexels.com/photos/8199165/pexels-photo-8199165.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Lesson visual",
+          "style": {
+            "borderRadius": "20px",
+            "objectFit": "cover",
+            "boxShadow": "0 18px 44px rgba(17,24,39,0.12)"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#FFF4E6"
+          }
+        },
+        {
+          "id": "copy_panel",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 126,
+            "y": 514
+          },
+          "size": {
+            "width": 1028,
+            "height": 160
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "16px",
+            "boxShadow": "0 10px 28px rgba(17,24,39,0.06)"
+          }
+        },
+        {
+          "id": "t_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 150,
+            "y": 532
+          },
+          "size": {
+            "width": 980,
+            "height": 72
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Introduce the first concept in plain language. Explain what it is, when learners use it, and why it matters for their daily work. Connect the idea to a real task they already perform.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#374151",
+            "lineHeight": 1.75,
+            "fontSize": 17
+          }
+        },
+        {
+          "id": "t_body2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 150,
+            "y": 590
+          },
+          "size": {
+            "width": 980,
+            "height": 56
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Add a short example, a common mistake to avoid, and one sentence on how this concept supports the larger workflow taught in this module.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#6B7280",
+            "lineHeight": 1.75,
+            "fontSize": 16
+          }
+        },
+        {
+          "id": "slide_badge_04",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1106,
+            "y": 598
+          },
+          "size": {
+            "width": 48,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#1B3022",
+            "borderRadius": "50%",
+            "border": "3px solid #E8B84A"
+          }
+        },
+        {
+          "id": "slide_num_04",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1106,
+            "y": 608
+          },
+          "size": {
+            "width": 48,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "04",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "fontSize": 18,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 114,
+            "y": 542
+          },
+          "size": {
+            "width": 88,
+            "height": 108
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #ffffff",
+            "boxShadow": "0 12px 32px rgba(17, 24, 39, 0.2)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-cream",
+            "name": "Warm Cream",
+            "type": "solid",
+            "value": "#F9F8F6"
+          },
+          {
+            "id": "bg-warm",
+            "name": "Soft Warm",
+            "type": "solid",
+            "value": "#FFF4E6"
+          },
+          {
+            "id": "bg-blush",
+            "name": "Blush",
+            "type": "solid",
+            "value": "#FDF0E8"
+          },
+          {
+            "id": "bg-sage-mist",
+            "name": "Sage Mist",
+            "type": "solid",
+            "value": "#EEF4F0"
+          },
+          {
+            "id": "bg-forest",
+            "name": "Forest",
+            "type": "solid",
+            "value": "#1B3022"
+          },
+          {
+            "id": "bg-sage",
+            "name": "Sage",
+            "type": "solid",
+            "value": "#416D54"
+          },
+          {
+            "id": "bg-dark",
+            "name": "Dark",
+            "type": "solid",
+            "value": "#0B1410"
+          },
+          {
+            "id": "bg-gradient-warm",
+            "name": "Warm Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #F9F8F6 0%, #FFF4E6 50%, #EEF4F0 100%)"
+          },
+          {
+            "id": "bg-gradient-forest",
+            "name": "Forest Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #1B3022 0%, #0B1410 100%)"
+          }
+        ],
+        "hint": "Use preset colors, a custom swatch, or a full-bleed image. Delete a hero image to reveal the color panel behind it."
+      }
+    },
+    {
+      "id": "cm_scene_05",
+      "slideIndex": 5,
+      "title": "Process Steps",
+      "layoutType": "Grid",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Instructor"
+      },
+      "background": {
+        "type": "solid",
+        "value": "#FFF4E6",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "grid": {
+          "x": 126,
+          "y": 154,
+          "width": 1028,
+          "height": 400
+        },
+        "avatar": {
+          "x": 1078,
+          "y": 542,
+          "width": 88,
+          "height": 108
+        }
+      },
+      "description": "Three-step workflow on photographic background with elevated cards.",
+      "flow": "Process → Example",
+      "duration": 10,
+      "tags": [
+        "course-module",
+        "training",
+        "process",
+        "steps"
+      ],
+      "clips": [
+        {
+          "id": "bg_steps",
+          "type": "image",
+          "assetKey": "course-laptop",
+          "role": "background",
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://images.pexels.com/photos/414422/pexels-photo-414422.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Online Lesson",
+          "style": {
+            "objectFit": "cover"
+          },
+          "isBackground": true,
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#FFF4E6"
+          }
+        },
+        {
+          "id": "scrim_steps",
+          "type": "shape",
+          "role": "scrim",
+          "shapeKey": "course-scrim",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(255, 244, 230, 0.86)"
+          }
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 126,
+            "y": 74
+          },
+          "size": {
+            "width": 1028,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "How To Apply It",
+          "style": {
+            "fontFamily": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+            "fontWeight": "700",
+            "color": "#1B3022",
+            "lineHeight": 1.08,
+            "fontSize": 40
+          }
+        },
+        {
+          "id": "t_sub",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 126,
+            "y": 126
+          },
+          "size": {
+            "width": 1028,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "A repeatable three-step process learners can use on the job every time this task appears.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#374151",
+            "lineHeight": 1.75,
+            "fontSize": 17
+          }
+        },
+        {
+          "id": "step1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-card-white",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 126,
+            "y": 170
+          },
+          "size": {
+            "width": 332,
+            "height": 360
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(255,255,255,0.95)",
+            "borderRadius": "20px",
+            "boxShadow": "0 16px 40px rgba(17,24,39,0.1)",
+            "borderTop": "5px solid #1B3022"
+          }
+        },
+        {
+          "id": "num1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 150,
+            "y": 194
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#1B3022",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "numt1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 150,
+            "y": 202
+          },
+          "size": {
+            "width": 44,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "1",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "fontSize": 20,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "ico1_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 150,
+            "y": 254
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#FFF4E6",
+            "borderRadius": "50%",
+            "boxShadow": "0 4px 14px rgba(17,24,39,0.1)"
+          }
+        },
+        {
+          "id": "ico1",
+          "type": "image",
+          "assetKey": "steps",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 158,
+            "y": 262
+          },
+          "size": {
+            "width": 24,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/416D54/process.png",
+          "placeholder": true,
+          "alt": "Steps",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "ht1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 150,
+            "y": 310
+          },
+          "size": {
+            "width": 284,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Prepare",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 24,
+            "color": "#111827"
+          }
+        },
+        {
+          "id": "bt1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 150,
+            "y": 358
+          },
+          "size": {
+            "width": 284,
+            "height": 160
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Gather inputs, tools, and context. Confirm roles and success criteria before work begins.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 16,
+            "color": "#374151",
+            "lineHeight": 1.6
+          }
+        },
+        {
+          "id": "step2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-card-white",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 474,
+            "y": 170
+          },
+          "size": {
+            "width": 332,
+            "height": 360
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(255,255,255,0.95)",
+            "borderRadius": "20px",
+            "boxShadow": "0 16px 40px rgba(17,24,39,0.1)",
+            "borderTop": "5px solid #C45C26"
+          }
+        },
+        {
+          "id": "num2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 498,
+            "y": 194
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#C45C26",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "numt2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 498,
+            "y": 202
+          },
+          "size": {
+            "width": 44,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "2",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "fontSize": 20,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "ico2_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 498,
+            "y": 254
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#FFF4E6",
+            "borderRadius": "50%",
+            "boxShadow": "0 4px 14px rgba(17,24,39,0.1)"
+          }
+        },
+        {
+          "id": "ico2",
+          "type": "image",
+          "assetKey": "steps",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 506,
+            "y": 262
+          },
+          "size": {
+            "width": 24,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/416D54/process.png",
+          "placeholder": true,
+          "alt": "Steps",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "ht2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 498,
+            "y": 310
+          },
+          "size": {
+            "width": 284,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Execute",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 24,
+            "color": "#111827"
+          }
+        },
+        {
+          "id": "bt2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 17,
+          "position": {
+            "x": 498,
+            "y": 358
+          },
+          "size": {
+            "width": 284,
+            "height": 160
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Follow the standard process step by step. Pause at checkpoints to verify quality.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 16,
+            "color": "#374151",
+            "lineHeight": 1.6
+          }
+        },
+        {
+          "id": "step3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-card-white",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 822,
+            "y": 170
+          },
+          "size": {
+            "width": 332,
+            "height": 360
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(255,255,255,0.95)",
+            "borderRadius": "20px",
+            "boxShadow": "0 16px 40px rgba(17,24,39,0.1)",
+            "borderTop": "5px solid #416D54"
+          }
+        },
+        {
+          "id": "num3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 846,
+            "y": 194
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#416D54",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "numt3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 18,
+          "position": {
+            "x": 846,
+            "y": 202
+          },
+          "size": {
+            "width": 44,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "3",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "fontSize": 20,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "ico3_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 846,
+            "y": 254
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#FFF4E6",
+            "borderRadius": "50%",
+            "boxShadow": "0 4px 14px rgba(17,24,39,0.1)"
+          }
+        },
+        {
+          "id": "ico3",
+          "type": "image",
+          "assetKey": "steps",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 854,
+            "y": 262
+          },
+          "size": {
+            "width": 24,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/416D54/process.png",
+          "placeholder": true,
+          "alt": "Steps",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "ht3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 19,
+          "position": {
+            "x": 846,
+            "y": 310
+          },
+          "size": {
+            "width": 284,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Review",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 24,
+            "color": "#111827"
+          }
+        },
+        {
+          "id": "bt3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 20,
+          "position": {
+            "x": 846,
+            "y": 358
+          },
+          "size": {
+            "width": 284,
+            "height": 160
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Check outcomes against expectations and capture lessons learned for the next cycle.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 16,
+            "color": "#374151",
+            "lineHeight": 1.6
+          }
+        },
+        {
+          "id": "slide_badge_05",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1106,
+            "y": 598
+          },
+          "size": {
+            "width": 48,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#1B3022",
+            "borderRadius": "50%",
+            "border": "3px solid #E8B84A"
+          }
+        },
+        {
+          "id": "slide_num_05",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1106,
+            "y": 608
+          },
+          "size": {
+            "width": 48,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "05",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "fontSize": 18,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1078,
+            "y": 542
+          },
+          "size": {
+            "width": 88,
+            "height": 108
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #ffffff",
+            "boxShadow": "0 12px 32px rgba(17, 24, 39, 0.2)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-cream",
+            "name": "Warm Cream",
+            "type": "solid",
+            "value": "#F9F8F6"
+          },
+          {
+            "id": "bg-warm",
+            "name": "Soft Warm",
+            "type": "solid",
+            "value": "#FFF4E6"
+          },
+          {
+            "id": "bg-blush",
+            "name": "Blush",
+            "type": "solid",
+            "value": "#FDF0E8"
+          },
+          {
+            "id": "bg-sage-mist",
+            "name": "Sage Mist",
+            "type": "solid",
+            "value": "#EEF4F0"
+          },
+          {
+            "id": "bg-forest",
+            "name": "Forest",
+            "type": "solid",
+            "value": "#1B3022"
+          },
+          {
+            "id": "bg-sage",
+            "name": "Sage",
+            "type": "solid",
+            "value": "#416D54"
+          },
+          {
+            "id": "bg-dark",
+            "name": "Dark",
+            "type": "solid",
+            "value": "#0B1410"
+          },
+          {
+            "id": "bg-gradient-warm",
+            "name": "Warm Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #F9F8F6 0%, #FFF4E6 50%, #EEF4F0 100%)"
+          },
+          {
+            "id": "bg-gradient-forest",
+            "name": "Forest Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #1B3022 0%, #0B1410 100%)"
+          }
+        ],
+        "hint": "Use preset colors, a custom swatch, or a full-bleed image. Delete a hero image to reveal the color panel behind it."
+      }
+    },
+    {
+      "id": "cm_scene_06",
+      "slideIndex": 6,
+      "title": "Example",
+      "layoutType": "Split",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Instructor"
+      },
+      "background": {
+        "type": "solid",
+        "value": "#FDF0E8",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "image": {
+          "x": 126,
+          "y": 74,
+          "width": 500,
+          "height": 572
+        },
+        "text": {
+          "x": 646,
+          "y": 74,
+          "width": 508,
+          "height": 572
+        },
+        "avatar": {
+          "x": 1070,
+          "y": 534,
+          "width": 96,
+          "height": 116
+        }
+      },
+      "description": "Practical scenario with large workshop image and callout quote.",
+      "flow": "Example → Recap",
+      "duration": 10,
+      "tags": [
+        "course-module",
+        "training",
+        "example",
+        "scenario"
+      ],
+      "clips": [
+        {
+          "id": "bg_ex",
+          "type": "image",
+          "assetKey": "course-workshop",
+          "role": "background",
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://images.pexels.com/photos/7688336/pexels-photo-7688336.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Workshop",
+          "style": {
+            "objectFit": "cover"
+          },
+          "isBackground": true,
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#FDF0E8"
+          }
+        },
+        {
+          "id": "scrim_ex",
+          "type": "shape",
+          "role": "scrim",
+          "shapeKey": "course-scrim",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(253, 240, 232, 0.82)"
+          }
+        },
+        {
+          "id": "frame_l",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 126,
+            "y": 74
+          },
+          "size": {
+            "width": 500,
+            "height": 572
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "24px",
+            "boxShadow": "0 20px 50px rgba(17,24,39,0.1)"
+          }
+        },
+        {
+          "id": "img_ex_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "course-frame-round",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 138,
+            "y": 86
+          },
+          "size": {
+            "width": 476,
+            "height": 548
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#FFF4E6",
+            "borderRadius": "18px"
+          }
+        },
+        {
+          "id": "img_ex",
+          "type": "image",
+          "assetKey": "course-workshop",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 138,
+            "y": 86
+          },
+          "size": {
+            "width": 476,
+            "height": 548
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://images.pexels.com/photos/7688336/pexels-photo-7688336.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Workshop example",
+          "style": {
+            "borderRadius": "18px",
+            "objectFit": "cover"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#FFF4E6"
+          }
+        },
+        {
+          "id": "t_label",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 646,
+            "y": 82
+          },
+          "size": {
+            "width": 200,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "IN PRACTICE",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "color": "#C45C26",
+            "letterSpacing": "0.06em",
+            "textTransform": "uppercase",
+            "fontSize": 11
+          }
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 646,
+            "y": 110
+          },
+          "size": {
+            "width": 508,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "See It in Action",
+          "style": {
+            "fontFamily": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+            "fontWeight": "700",
+            "color": "#1B3022",
+            "lineHeight": 1.05,
+            "fontSize": 44
+          }
+        },
+        {
+          "id": "t_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 646,
+            "y": 222
+          },
+          "size": {
+            "width": 492,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Walk through a realistic scenario step by step. Show what good looks like, call out common mistakes, and explain how the process prevents rework and confusion across teams.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#374151",
+            "lineHeight": 1.75,
+            "fontSize": 17
+          }
+        },
+        {
+          "id": "t_body2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 646,
+            "y": 330
+          },
+          "size": {
+            "width": 492,
+            "height": 80
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Invite learners to picture themselves in this situation and identify which step they would take first when applying the process on the job.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#6B7280",
+            "lineHeight": 1.75,
+            "fontSize": 16
+          }
+        },
+        {
+          "id": "callout",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 646,
+            "y": 414
+          },
+          "size": {
+            "width": 508,
+            "height": 120
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "16px",
+            "borderLeft": "5px solid #E8B84A",
+            "boxShadow": "0 10px 28px rgba(17,24,39,0.06)"
+          }
+        },
+        {
+          "id": "t_callout",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 670,
+            "y": 438
+          },
+          "size": {
+            "width": 468,
+            "height": 80
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "\"When teams follow this sequence, handoffs are clearer and errors drop significantly.\"",
+          "style": {
+            "fontFamily": "\"Fraunces\", Georgia, serif",
+            "fontWeight": "500",
+            "fontStyle": "italic",
+            "color": "#1B3022",
+            "fontSize": 17
+          }
+        },
+        {
+          "id": "slide_badge_06",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1106,
+            "y": 598
+          },
+          "size": {
+            "width": 48,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#1B3022",
+            "borderRadius": "50%",
+            "border": "3px solid #E8B84A"
+          }
+        },
+        {
+          "id": "slide_num_06",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1106,
+            "y": 608
+          },
+          "size": {
+            "width": 48,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "06",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "fontSize": 18,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1070,
+            "y": 534
+          },
+          "size": {
+            "width": 96,
+            "height": 116
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #ffffff",
+            "boxShadow": "0 12px 32px rgba(17, 24, 39, 0.2)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-cream",
+            "name": "Warm Cream",
+            "type": "solid",
+            "value": "#F9F8F6"
+          },
+          {
+            "id": "bg-warm",
+            "name": "Soft Warm",
+            "type": "solid",
+            "value": "#FFF4E6"
+          },
+          {
+            "id": "bg-blush",
+            "name": "Blush",
+            "type": "solid",
+            "value": "#FDF0E8"
+          },
+          {
+            "id": "bg-sage-mist",
+            "name": "Sage Mist",
+            "type": "solid",
+            "value": "#EEF4F0"
+          },
+          {
+            "id": "bg-forest",
+            "name": "Forest",
+            "type": "solid",
+            "value": "#1B3022"
+          },
+          {
+            "id": "bg-sage",
+            "name": "Sage",
+            "type": "solid",
+            "value": "#416D54"
+          },
+          {
+            "id": "bg-dark",
+            "name": "Dark",
+            "type": "solid",
+            "value": "#0B1410"
+          },
+          {
+            "id": "bg-gradient-warm",
+            "name": "Warm Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #F9F8F6 0%, #FFF4E6 50%, #EEF4F0 100%)"
+          },
+          {
+            "id": "bg-gradient-forest",
+            "name": "Forest Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #1B3022 0%, #0B1410 100%)"
+          }
+        ],
+        "hint": "Use preset colors, a custom swatch, or a full-bleed image. Delete a hero image to reveal the color panel behind it."
+      }
+    },
+    {
+      "id": "cm_scene_07",
+      "slideIndex": 7,
+      "title": "Key Takeaways",
+      "layoutType": "Grid",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Instructor"
+      },
+      "background": {
+        "type": "gradient",
+        "value": "linear-gradient(145deg, #F9F8F6 0%, #FFF4E6 50%, #EEF4F0 100%)",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "grid": {
+          "x": 126,
+          "y": 146,
+          "width": 1028,
+          "height": 400
+        },
+        "avatar": {
+          "x": 114,
+          "y": 542,
+          "width": 88,
+          "height": 108
+        }
+      },
+      "description": "Recap pillars on photographic background with frosted cards.",
+      "flow": "Recap → Quiz",
+      "duration": 10,
+      "tags": [
+        "course-module",
+        "training",
+        "recap",
+        "takeaways"
+      ],
+      "clips": [
+        {
+          "id": "bg_recap",
+          "type": "image",
+          "assetKey": "course-recap-bg",
+          "role": "background",
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Recap Background",
+          "style": {
+            "objectFit": "cover"
+          },
+          "isBackground": true,
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#F9F8F6"
+          }
+        },
+        {
+          "id": "scrim_recap",
+          "type": "shape",
+          "role": "scrim",
+          "shapeKey": "course-scrim",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(249, 248, 246, 0.84)"
+          }
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 126,
+            "y": 74
+          },
+          "size": {
+            "width": 1028,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Key Takeaways",
+          "style": {
+            "fontFamily": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+            "fontWeight": "700",
+            "color": "#1B3022",
+            "lineHeight": 1.08,
+            "fontSize": 42
+          }
+        },
+        {
+          "id": "t_sub",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 126,
+            "y": 122
+          },
+          "size": {
+            "width": 1028,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Three essential points to remember before moving on to the knowledge check and next module.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#374151",
+            "lineHeight": 1.75,
+            "fontSize": 17
+          }
+        },
+        {
+          "id": "tk1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-card-white",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 126,
+            "y": 162
+          },
+          "size": {
+            "width": 332,
+            "height": 360
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(255,255,255,0.94)",
+            "borderRadius": "20px",
+            "boxShadow": "0 16px 40px rgba(17,24,39,0.08)",
+            "borderTop": "4px solid #C45C26"
+          }
+        },
+        {
+          "id": "tkico1_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 150,
+            "y": 186
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#FFF4E6",
+            "borderRadius": "50%",
+            "boxShadow": "0 4px 14px rgba(17,24,39,0.1)"
+          }
+        },
+        {
+          "id": "tkico1",
+          "type": "image",
+          "assetKey": "brain",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 159,
+            "y": 195
+          },
+          "size": {
+            "width": 26,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/C45C26/brain.png",
+          "placeholder": true,
+          "alt": "Learn",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "tkt1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 150,
+            "y": 246
+          },
+          "size": {
+            "width": 284,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Remember the why",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 22,
+            "color": "#111827"
+          }
+        },
+        {
+          "id": "tkb1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 150,
+            "y": 298
+          },
+          "size": {
+            "width": 284,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Connect each step back to the learner outcome and the business result you are trying to achieve.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 16,
+            "color": "#374151",
+            "lineHeight": 1.6
+          }
+        },
+        {
+          "id": "tk2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-card-white",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 474,
+            "y": 162
+          },
+          "size": {
+            "width": 332,
+            "height": 360
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(255,255,255,0.94)",
+            "borderRadius": "20px",
+            "boxShadow": "0 16px 40px rgba(17,24,39,0.08)",
+            "borderTop": "4px solid #1B3022"
+          }
+        },
+        {
+          "id": "tkico2_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 498,
+            "y": 186
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#FFF4E6",
+            "borderRadius": "50%",
+            "boxShadow": "0 4px 14px rgba(17,24,39,0.1)"
+          }
+        },
+        {
+          "id": "tkico2",
+          "type": "image",
+          "assetKey": "target",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 507,
+            "y": 195
+          },
+          "size": {
+            "width": 26,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/C45C26/bullseye.png",
+          "placeholder": true,
+          "alt": "Goal",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "tkt2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 498,
+            "y": 246
+          },
+          "size": {
+            "width": 284,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Follow the process",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 22,
+            "color": "#111827"
+          }
+        },
+        {
+          "id": "tkb2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 498,
+            "y": 298
+          },
+          "size": {
+            "width": 284,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Use the same sequence every time so quality stays predictable across the team.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 16,
+            "color": "#374151",
+            "lineHeight": 1.6
+          }
+        },
+        {
+          "id": "tk3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-card-white",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 822,
+            "y": 162
+          },
+          "size": {
+            "width": 332,
+            "height": 360
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(255,255,255,0.94)",
+            "borderRadius": "20px",
+            "boxShadow": "0 16px 40px rgba(17,24,39,0.08)",
+            "borderTop": "4px solid #416D54"
+          }
+        },
+        {
+          "id": "tkico3_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 846,
+            "y": 186
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#FFF4E6",
+            "borderRadius": "50%",
+            "boxShadow": "0 4px 14px rgba(17,24,39,0.1)"
+          }
+        },
+        {
+          "id": "tkico3",
+          "type": "image",
+          "assetKey": "book",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 855,
+            "y": 195
+          },
+          "size": {
+            "width": 26,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/1B3022/book.png",
+          "placeholder": true,
+          "alt": "Book",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "tkt3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 846,
+            "y": 246
+          },
+          "size": {
+            "width": 284,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Practice early",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 22,
+            "color": "#111827"
+          }
+        },
+        {
+          "id": "tkb3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 17,
+          "position": {
+            "x": 846,
+            "y": 298
+          },
+          "size": {
+            "width": 284,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Short exercises and real examples beat long theory when building lasting skills.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 16,
+            "color": "#374151",
+            "lineHeight": 1.6
+          }
+        },
+        {
+          "id": "slide_badge_07",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1106,
+            "y": 598
+          },
+          "size": {
+            "width": 48,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#1B3022",
+            "borderRadius": "50%",
+            "border": "3px solid #E8B84A"
+          }
+        },
+        {
+          "id": "slide_num_07",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1106,
+            "y": 608
+          },
+          "size": {
+            "width": 48,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "07",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "fontSize": 18,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 114,
+            "y": 542
+          },
+          "size": {
+            "width": 88,
+            "height": 108
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #ffffff",
+            "boxShadow": "0 12px 32px rgba(17, 24, 39, 0.2)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-cream",
+            "name": "Warm Cream",
+            "type": "solid",
+            "value": "#F9F8F6"
+          },
+          {
+            "id": "bg-warm",
+            "name": "Soft Warm",
+            "type": "solid",
+            "value": "#FFF4E6"
+          },
+          {
+            "id": "bg-blush",
+            "name": "Blush",
+            "type": "solid",
+            "value": "#FDF0E8"
+          },
+          {
+            "id": "bg-sage-mist",
+            "name": "Sage Mist",
+            "type": "solid",
+            "value": "#EEF4F0"
+          },
+          {
+            "id": "bg-forest",
+            "name": "Forest",
+            "type": "solid",
+            "value": "#1B3022"
+          },
+          {
+            "id": "bg-sage",
+            "name": "Sage",
+            "type": "solid",
+            "value": "#416D54"
+          },
+          {
+            "id": "bg-dark",
+            "name": "Dark",
+            "type": "solid",
+            "value": "#0B1410"
+          },
+          {
+            "id": "bg-gradient-warm",
+            "name": "Warm Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #F9F8F6 0%, #FFF4E6 50%, #EEF4F0 100%)"
+          },
+          {
+            "id": "bg-gradient-forest",
+            "name": "Forest Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #1B3022 0%, #0B1410 100%)"
+          }
+        ],
+        "hint": "Use preset colors, a custom swatch, or a full-bleed image. Delete a hero image to reveal the color panel behind it."
+      }
+    },
+    {
+      "id": "cm_scene_08",
+      "slideIndex": 8,
+      "title": "Knowledge Check",
+      "layoutType": "Promo",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Instructor"
+      },
+      "background": {
+        "type": "gradient",
+        "value": "linear-gradient(160deg, #1B3022 0%, #0B1410 100%)",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "cta": {
+          "x": 126,
+          "y": 74,
+          "width": 1028,
+          "height": 572
+        },
+        "avatar": {
+          "x": 1074,
+          "y": 538,
+          "width": 92,
+          "height": 112
+        }
+      },
+      "description": "Quiz on dark forest background with next-module CTA.",
+      "flow": "Quiz → End",
+      "duration": 10,
+      "tags": [
+        "course-module",
+        "training",
+        "quiz",
+        "closing"
+      ],
+      "clips": [
+        {
+          "id": "bg_quiz",
+          "type": "image",
+          "assetKey": "course-classroom",
+          "role": "background",
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://images.pexels.com/photos/5212345/pexels-photo-5212345.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Classroom",
+          "style": {
+            "objectFit": "cover"
+          },
+          "isBackground": true,
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#1B3022"
+          }
+        },
+        {
+          "id": "bg_dark",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "background": "linear-gradient(160deg, rgba(27,48,34,0.92) 0%, rgba(11,20,16,0.96) 100%)"
+          }
+        },
+        {
+          "id": "glow",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 280
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "background": "radial-gradient(ellipse at 75% 0%, rgba(232, 184, 74, 0.22) 0%, transparent 70%)"
+          }
+        },
+        {
+          "id": "quiz_ico_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-icon-badge",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 126,
+            "y": 74
+          },
+          "size": {
+            "width": 48,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#1F2937",
+            "borderRadius": "50%",
+            "boxShadow": "0 4px 14px rgba(17,24,39,0.1)"
+          }
+        },
+        {
+          "id": "quiz_ico",
+          "type": "image",
+          "assetKey": "quiz",
+          "role": "icon",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 136,
+            "y": 84
+          },
+          "size": {
+            "width": 28,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/E8B84A/quiz.png",
+          "placeholder": true,
+          "alt": "Quiz",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 186,
+            "y": 78
+          },
+          "size": {
+            "width": 400,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Knowledge Check",
+          "style": {
+            "fontFamily": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+            "fontWeight": "700",
+            "color": "#ffffff",
+            "lineHeight": 1.08,
+            "fontSize": 32
+          }
+        },
+        {
+          "id": "t_question",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 126,
+            "y": 138
+          },
+          "size": {
+            "width": 620,
+            "height": 72
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Which step comes first when applying this process in a real task?",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "color": "#ffffff",
+            "lineHeight": 1.7,
+            "fontSize": 20
+          }
+        },
+        {
+          "id": "opt0",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 126,
+            "y": 230
+          },
+          "size": {
+            "width": 300,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#C45C26",
+            "borderRadius": "100px",
+            "border": "none"
+          }
+        },
+        {
+          "id": "optt0",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 146,
+            "y": 240
+          },
+          "size": {
+            "width": 260,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "A  Prepare",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "color": "#ffffff",
+            "lineHeight": 1.7,
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "opt1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 126,
+            "y": 286
+          },
+          "size": {
+            "width": 300,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(255,255,255,0.08)",
+            "borderRadius": "100px",
+            "border": "1px solid rgba(255,255,255,0.18)"
+          }
+        },
+        {
+          "id": "optt1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 146,
+            "y": 296
+          },
+          "size": {
+            "width": 260,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "B  Execute",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "color": "#ffffff",
+            "lineHeight": 1.7,
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "opt2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 126,
+            "y": 342
+          },
+          "size": {
+            "width": 300,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(255,255,255,0.08)",
+            "borderRadius": "100px",
+            "border": "1px solid rgba(255,255,255,0.18)"
+          }
+        },
+        {
+          "id": "optt2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 146,
+            "y": 352
+          },
+          "size": {
+            "width": 260,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "C  Review",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "color": "#ffffff",
+            "lineHeight": 1.7,
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "cta_panel",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 786,
+            "y": 98
+          },
+          "size": {
+            "width": 368,
+            "height": 524
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(255,255,255,0.07)",
+            "borderRadius": "24px",
+            "border": "1px solid rgba(255,255,255,0.12)"
+          }
+        },
+        {
+          "id": "t_next_lbl",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 818,
+            "y": 130
+          },
+          "size": {
+            "width": 200,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "UP NEXT",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 12,
+            "letterSpacing": "0.14em",
+            "textTransform": "uppercase",
+            "color": "#E8B84A"
+          }
+        },
+        {
+          "id": "t_next_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 17,
+          "position": {
+            "x": 818,
+            "y": 162
+          },
+          "size": {
+            "width": 304,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Module 02:\nAdvanced Practice",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#ffffff",
+            "fontSize": 30,
+            "lineHeight": 1.12,
+            "textTransform": "none"
+          }
+        },
+        {
+          "id": "t_next_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 18,
+          "position": {
+            "x": 818,
+            "y": 274
+          },
+          "size": {
+            "width": 304,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Continue with applied exercises and a final skills check.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "rgba(249,248,246,0.85)",
+            "lineHeight": 1.7,
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "cta_btn",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 818,
+            "y": 394
+          },
+          "size": {
+            "width": 240,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "background": "linear-gradient(90deg, #C45C26 0%, #E8B84A 100%)",
+            "borderRadius": "100px"
+          }
+        },
+        {
+          "id": "t_btn",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 19,
+          "position": {
+            "x": 838,
+            "y": 406
+          },
+          "size": {
+            "width": 200,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "CONTINUE",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#ffffff",
+            "letterSpacing": "0.16em",
+            "fontSize": 13
+          }
+        },
+        {
+          "id": "cert_ico_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 818,
+            "y": 462
+          },
+          "size": {
+            "width": 36,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#1B3022",
+            "borderRadius": "50%",
+            "boxShadow": "0 4px 14px rgba(17,24,39,0.1)"
+          }
+        },
+        {
+          "id": "cert_ico",
+          "type": "image",
+          "assetKey": "certificate",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 825,
+            "y": 469
+          },
+          "size": {
+            "width": 22,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/E8B84A/certificate.png",
+          "placeholder": true,
+          "alt": "Certificate",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_cert",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 20,
+          "position": {
+            "x": 834,
+            "y": 470
+          },
+          "size": {
+            "width": 320,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Certificate on completion",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#F9F8F6",
+            "lineHeight": 1.7,
+            "fontSize": 12
+          }
+        },
+        {
+          "id": "slide_badge_08",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "course-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1106,
+            "y": 598
+          },
+          "size": {
+            "width": 48,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#1B3022",
+            "borderRadius": "50%",
+            "border": "3px solid #E8B84A"
+          }
+        },
+        {
+          "id": "slide_num_08",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1106,
+            "y": 608
+          },
+          "size": {
+            "width": 48,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "08",
+          "style": {
+            "fontFamily": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "fontSize": 18,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1074,
+            "y": 538
+          },
+          "size": {
+            "width": 92,
+            "height": 112
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #E8B84A",
+            "boxShadow": "0 12px 32px rgba(0, 0, 0, 0.45)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-cream",
+            "name": "Warm Cream",
+            "type": "solid",
+            "value": "#F9F8F6"
+          },
+          {
+            "id": "bg-warm",
+            "name": "Soft Warm",
+            "type": "solid",
+            "value": "#FFF4E6"
+          },
+          {
+            "id": "bg-blush",
+            "name": "Blush",
+            "type": "solid",
+            "value": "#FDF0E8"
+          },
+          {
+            "id": "bg-sage-mist",
+            "name": "Sage Mist",
+            "type": "solid",
+            "value": "#EEF4F0"
+          },
+          {
+            "id": "bg-forest",
+            "name": "Forest",
+            "type": "solid",
+            "value": "#1B3022"
+          },
+          {
+            "id": "bg-sage",
+            "name": "Sage",
+            "type": "solid",
+            "value": "#416D54"
+          },
+          {
+            "id": "bg-dark",
+            "name": "Dark",
+            "type": "solid",
+            "value": "#0B1410"
+          },
+          {
+            "id": "bg-gradient-warm",
+            "name": "Warm Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #F9F8F6 0%, #FFF4E6 50%, #EEF4F0 100%)"
+          },
+          {
+            "id": "bg-gradient-forest",
+            "name": "Forest Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #1B3022 0%, #0B1410 100%)"
+          }
+        ],
+        "hint": "Use preset colors, a custom swatch, or a full-bleed image. Delete a hero image to reveal the color panel behind it."
+      }
+    }
+  ]
+}

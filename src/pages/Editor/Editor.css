@@ -382,6 +382,36 @@
     border-color: var(--primary);
 }
 
+.shape-tool-results-hint {
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--text-muted);
+}
+
+.shape-tool-bg-custom {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 2px dashed var(--border-color);
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-muted);
+    overflow: hidden;
+}
+
+.shape-tool-bg-custom input[type="color"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
 .shape-tool-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);

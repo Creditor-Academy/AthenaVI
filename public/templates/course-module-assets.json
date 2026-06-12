@@ -1,0 +1,85 @@
+{
+  "theme": {
+    "name": "Academic Forge",
+    "fonts": {
+      "display": "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
+      "serif": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+      "sans": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+      "accent": "\"Fraunces\", Georgia, serif"
+    }
+  },
+  "presenter": {
+    "name": "Instructor"
+  },
+  "colors": {
+    "forest": "#1B3022",
+    "sage": "#416D54",
+    "sageLight": "#5C8A72",
+    "gold": "#E8B84A",
+    "terracotta": "#C45C26",
+    "terracottaDeep": "#9A3F18",
+    "cream": "#F9F8F6",
+    "warm": "#FFF4E6",
+    "blush": "#FDF0E8",
+    "ink": "#111827",
+    "slate": "#374151",
+    "muted": "#6B7280",
+    "white": "#ffffff",
+    "dark": "#0B1410",
+    "panelDark": "#1F2937",
+    "line": "#E5E7EB",
+    "overlay": "rgba(17, 24, 39, 0.55)",
+    "overlayLight": "rgba(249, 248, 246, 0.88)"
+  },
+  "backgrounds": [
+    { "id": "bg-cream", "name": "Warm Cream", "value": "#F9F8F6" },
+    { "id": "bg-warm", "name": "Soft Warm", "value": "#FFF4E6" },
+    { "id": "bg-blush", "name": "Blush", "value": "#FDF0E8" },
+    { "id": "bg-sage-mist", "name": "Sage Mist", "value": "#EEF4F0" },
+    { "id": "bg-forest", "name": "Forest", "value": "#1B3022" },
+    { "id": "bg-sage", "name": "Sage", "value": "#416D54" },
+    { "id": "bg-dark", "name": "Dark", "value": "#0B1410" },
+    { "id": "bg-gradient-warm", "name": "Warm Gradient", "value": "linear-gradient(145deg, #F9F8F6 0%, #FFF4E6 50%, #EEF4F0 100%)" },
+    { "id": "bg-gradient-forest", "name": "Forest Gradient", "value": "linear-gradient(160deg, #1B3022 0%, #0B1410 100%)" }
+  ],
+  "images": [
+    { "id": "course-cover-bg", "name": "Cover Background", "role": "background", "thumb": "https://images.pexels.com/photos/256541/pexels-photo-256541.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/256541/pexels-photo-256541.jpeg" },
+    { "id": "course-hero-arch", "name": "Architecture Hero", "role": "hero-image", "thumb": "https://images.pexels.com/photos/323705/pexels-photo-323705.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/323705/pexels-photo-323705.jpeg" },
+    { "id": "course-classroom", "name": "Classroom", "role": "hero-image", "thumb": "https://images.pexels.com/photos/5212345/pexels-photo-5212345.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/5212345/pexels-photo-5212345.jpeg" },
+    { "id": "course-team", "name": "Team Learning", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg" },
+    { "id": "course-tablet", "name": "Tablet Training", "role": "hero-image", "thumb": "https://images.pexels.com/photos/4145153/pexels-photo-4145153.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/4145153/pexels-photo-4145153.jpeg" },
+    { "id": "course-workshop", "name": "Workshop", "role": "hero-image", "thumb": "https://images.pexels.com/photos/7688336/pexels-photo-7688336.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/7688336/pexels-photo-7688336.jpeg" },
+    { "id": "course-laptop", "name": "Online Lesson", "role": "hero-image", "thumb": "https://images.pexels.com/photos/414422/pexels-photo-414422.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/414422/pexels-photo-414422.jpeg" },
+    { "id": "course-whiteboard", "name": "Whiteboard", "role": "hero-image", "thumb": "https://images.pexels.com/photos/8199165/pexels-photo-8199165.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/8199165/pexels-photo-8199165.jpeg" },
+    { "id": "course-discussion", "name": "Discussion", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg" },
+    { "id": "course-nature", "name": "Learning Scene", "role": "hero-image", "thumb": "https://images.pexels.com/photos/957024/pexels-photo-957024.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/957024/pexels-photo-957024.jpeg" },
+    { "id": "course-soft-bg", "name": "Soft Texture", "role": "background", "thumb": "https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg" },
+    { "id": "course-recap-bg", "name": "Recap Background", "role": "background", "thumb": "https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg" },
+    { "id": "course-logo", "name": "Org Logo", "role": "logo", "thumb": "https://placehold.co/200x48/1B3022/ffffff?text=ACADEMY", "src": "https://placehold.co/320x64/1B3022/ffffff?text=YOUR+ACADEMY" }
+  ],
+  "icons": [
+    { "id": "check", "name": "Check", "category": "course", "src": "https://img.icons8.com/ios-filled/96/416D54/checkmark.png" },
+    { "id": "book", "name": "Book", "category": "course", "src": "https://img.icons8.com/ios-filled/96/1B3022/book.png" },
+    { "id": "brain", "name": "Learn", "category": "course", "src": "https://img.icons8.com/ios-filled/96/C45C26/brain.png" },
+    { "id": "target", "name": "Goal", "category": "course", "src": "https://img.icons8.com/ios-filled/96/C45C26/bullseye.png" },
+    { "id": "steps", "name": "Steps", "category": "course", "src": "https://img.icons8.com/ios-filled/96/416D54/process.png" },
+    { "id": "folder", "name": "Folder", "category": "course", "src": "https://img.icons8.com/ios-filled/96/ffffff/folder-invoices.png" },
+    { "id": "document", "name": "Document", "category": "course", "src": "https://img.icons8.com/ios-filled/96/ffffff/create-new.png" },
+    { "id": "monitor", "name": "Monitor", "category": "course", "src": "https://img.icons8.com/ios-filled/96/ffffff/monitor.png" },
+    { "id": "quiz", "name": "Quiz", "category": "course", "src": "https://img.icons8.com/ios-filled/96/E8B84A/quiz.png" },
+    { "id": "certificate", "name": "Certificate", "category": "course", "src": "https://img.icons8.com/ios-filled/96/E8B84A/certificate.png" },
+    { "id": "globe", "name": "Website", "category": "course", "src": "https://img.icons8.com/ios-filled/96/C45C26/globe.png" }
+  ],
+  "shapes": [
+    { "id": "course-arc-gold", "name": "Gold Arc", "category": "course-module", "role": "decoration", "style": { "width": "420px", "height": "420px", "backgroundColor": "transparent", "borderRadius": "50%", "border": "14px solid #E8B84A" } },
+    { "id": "course-arc-terra", "name": "Terracotta Arc", "category": "course-module", "role": "decoration", "style": { "width": "460px", "height": "460px", "backgroundColor": "transparent", "borderRadius": "50%", "border": "10px solid #C45C26" } },
+    { "id": "course-organic-header", "name": "Organic Header", "category": "course-module", "role": "decoration", "style": { "width": "520px", "height": "200px", "backgroundColor": "#1B3022", "borderRadius": "0 0 48% 42% / 0 0 38% 32%" } },
+    { "id": "course-card-white", "name": "White Card", "category": "course-module", "role": "decoration", "style": { "width": "280px", "height": "150px", "backgroundColor": "#ffffff", "borderRadius": "16px", "boxShadow": "0 14px 36px rgba(17, 24, 39, 0.08)" } },
+    { "id": "course-pill", "name": "Gradient Pill", "category": "course-module", "role": "decoration", "style": { "width": "280px", "height": "44px", "background": "linear-gradient(90deg, #C45C26 0%, #E8B84A 100%)", "borderRadius": "100px" } },
+    { "id": "course-diamond", "name": "Framework Tile", "category": "course-module", "role": "decoration", "style": { "width": "140px", "height": "140px", "backgroundColor": "#416D54", "borderRadius": "12px", "transform": "rotate(45deg)" } },
+    { "id": "course-slide-badge", "name": "Slide Badge", "category": "course-module", "role": "decoration", "style": { "width": "48px", "height": "48px", "backgroundColor": "#1B3022", "borderRadius": "50%", "border": "3px solid #E8B84A" } },
+    { "id": "course-icon-badge", "name": "Icon Badge", "category": "course-module", "role": "decoration", "style": { "width": "40px", "height": "40px", "backgroundColor": "#ffffff", "borderRadius": "50%" } },
+    { "id": "course-frame-round", "name": "Round Frame", "category": "course-module", "role": "decoration", "style": { "width": "360px", "height": "360px", "backgroundColor": "#EEF4F0", "borderRadius": "50%" } },
+    { "id": "course-scrim", "name": "Image Scrim", "category": "course-module", "role": "decoration", "style": { "width": "1280px", "height": "720px", "backgroundColor": "rgba(249, 248, 246, 0.82)" } }
+  ]
+}

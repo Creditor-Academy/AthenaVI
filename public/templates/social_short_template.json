@@ -1,0 +1,6220 @@
+{
+  "category": "Social Short",
+  "template": {
+    "id": "social-short-neon-pulse",
+    "name": "Social Short — Neon Pulse Pro",
+    "category": "Social Short",
+    "theme": {
+      "name": "Neon Pulse Pro",
+      "fonts": {
+        "display": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+        "sans": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+        "accent": "\"DM Sans\", system-ui, sans-serif"
+      }
+    },
+    "presenter": {
+      "name": "Creator"
+    },
+    "totalSlides": 7,
+    "canvasSize": {
+      "width": 1280,
+      "height": 720
+    },
+    "aspectRatio": "16:9",
+    "targetDuration": {
+      "min": 15,
+      "max": 60
+    },
+    "colorPalette": {
+      "void": "#09090B",
+      "navy": "#0F172A",
+      "navyMid": "#1E1B4B",
+      "ink": "#FAFAFA",
+      "inkDark": "#1E1B4B",
+      "slate": "#A1A1AA",
+      "muted": "#71717A",
+      "pink": "#EC4899",
+      "pinkHot": "#F472B6",
+      "cyan": "#22D3EE",
+      "violet": "#8B5CF6",
+      "gold": "#FBBF24",
+      "white": "#FFFFFF",
+      "ice": "#F8FAFC",
+      "panel": "#18181B",
+      "line": "#27272A",
+      "lineLight": "rgba(255,255,255,0.12)",
+      "glowPink": "rgba(236,72,153,0.35)",
+      "glowCyan": "rgba(34,211,238,0.28)",
+      "glowGold": "rgba(251,191,36,0.3)"
+    },
+    "description": "Polished 16:9 short-form bundle with feature cards, title pills, framework panels, and Sales Demo–quality layouts."
+  },
+  "scenes": [
+    {
+      "id": "ss_scene_01",
+      "slideIndex": 1,
+      "title": "Scroll-Stopping Hook",
+      "layoutType": "Cover",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Creator"
+      },
+      "background": {
+        "type": "gradient",
+        "value": "linear-gradient(160deg, #0F172A 0%, #1E1B4B 55%, #312E81 100%)",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "copy": {
+          "x": 126,
+          "y": 74,
+          "width": 520,
+          "height": 572
+        },
+        "image": {
+          "x": 686,
+          "y": 74,
+          "width": 468,
+          "height": 572
+        },
+        "avatar": {
+          "x": 1074,
+          "y": 538,
+          "width": 92,
+          "height": 112
+        }
+      },
+      "description": "Professional overview split — title pill left, hero visual right.",
+      "flow": "Hook → Problem",
+      "duration": 8,
+      "tags": [
+        "social-short",
+        "reel",
+        "short-form",
+        "hook",
+        "opener"
+      ],
+      "clips": [
+        {
+          "id": "bg01",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "background": "linear-gradient(160deg, #0F172A 0%, #1E1B4B 55%, #312E81 100%)"
+          }
+        },
+        {
+          "id": "arc_tl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-arc-line",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": -40,
+            "y": -40
+          },
+          "size": {
+            "width": 200,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "border": "2px solid rgba(255,255,255,0.12)",
+            "borderRadius": "50%",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "arc_bl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-arc-line",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": -60,
+            "y": 580
+          },
+          "size": {
+            "width": 220,
+            "height": 220
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "border": "2px solid rgba(255,255,255,0.08)",
+            "borderRadius": "50%",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "dot_0_0_112",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 112,
+            "y": 68
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_0_1_112",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 125,
+            "y": 68
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_0_2_112",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 138,
+            "y": 68
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_0_3_112",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 151,
+            "y": 68
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_1_0_112",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 112,
+            "y": 81
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_1_1_112",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 125,
+            "y": 81
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_1_2_112",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 138,
+            "y": 81
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_1_3_112",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 151,
+            "y": 81
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_2_0_112",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 112,
+            "y": 94
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_2_1_112",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 125,
+            "y": 94
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_2_2_112",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 138,
+            "y": 94
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_2_3_112",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 151,
+            "y": 94
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_pink",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1130,
+            "y": 74
+          },
+          "size": {
+            "width": 18,
+            "height": 18
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#EC4899",
+            "borderRadius": "50%",
+            "opacity": 0.85
+          }
+        },
+        {
+          "id": "dot_cyan",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 158,
+            "y": 632
+          },
+          "size": {
+            "width": 14,
+            "height": 14
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#22D3EE",
+            "borderRadius": "50%",
+            "opacity": 0.7
+          }
+        },
+        {
+          "id": "dot_gold",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1058,
+            "y": 634
+          },
+          "size": {
+            "width": 12,
+            "height": 12
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FBBF24",
+            "borderRadius": "50%",
+            "opacity": 0.8
+          }
+        },
+        {
+          "id": "glow_tl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-glow-orb",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": -20,
+            "y": -30
+          },
+          "size": {
+            "width": 200,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "background": "radial-gradient(circle, rgba(236,72,153,0.35) 0%, transparent 70%)",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "glow_br",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-glow-orb",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1120,
+            "y": 540
+          },
+          "size": {
+            "width": 180,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "background": "radial-gradient(circle, rgba(34,211,238,0.28) 0%, transparent 70%)",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "accent_bar",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 126,
+            "y": 174
+          },
+          "size": {
+            "width": 6,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "background": "linear-gradient(180deg, #EC4899 0%, #22D3EE 100%)",
+            "borderRadius": "4px"
+          }
+        },
+        {
+          "id": "img_logo",
+          "type": "image",
+          "assetKey": "social-logo",
+          "role": "logo",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 146,
+            "y": 82
+          },
+          "size": {
+            "width": 160,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://placehold.co/240x72/EC4899/ffffff?text=YOUR+BRAND",
+          "placeholder": true,
+          "alt": "Brand",
+          "style": {
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "t_label",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 146,
+            "y": 130
+          },
+          "size": {
+            "width": 320,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "SHORT-FORM SERIES",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 12,
+            "letterSpacing": "0.16em",
+            "textTransform": "uppercase",
+            "color": "#22D3EE"
+          }
+        },
+        {
+          "id": "hook_pill_pill",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-title-pill",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 146,
+            "y": 158
+          },
+          "size": {
+            "width": 320,
+            "height": 72
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F8FAFC",
+            "borderRadius": "100px",
+            "boxShadow": "0 14px 36px rgba(15,23,42,0.16)"
+          }
+        },
+        {
+          "id": "hook_pill_ico_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-card-white",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 156,
+            "y": 168
+          },
+          "size": {
+            "width": 52,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "14px",
+            "border": "1px solid rgba(15,23,42,0.08)",
+            "boxShadow": "0 8px 20px rgba(15,23,42,0.1)"
+          }
+        },
+        {
+          "id": "hook_pill_ico",
+          "type": "image",
+          "assetKey": "bolt",
+          "role": "icon",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 166,
+            "y": 178
+          },
+          "size": {
+            "width": 32,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/EC4899/lightning-bolt.png",
+          "placeholder": true,
+          "alt": "Bolt",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "hook_pill_label",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 220,
+            "y": 176
+          },
+          "size": {
+            "width": 232,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "HOOK",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#1E1B4B",
+            "fontSize": 26,
+            "lineHeight": 1.08,
+            "letterSpacing": "0.04em",
+            "textTransform": "uppercase"
+          }
+        },
+        {
+          "id": "t_hook",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 146,
+            "y": 250
+          },
+          "size": {
+            "width": 484,
+            "height": 120
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "STOP\nSCROLLING",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#FFFFFF",
+            "lineHeight": 1.02,
+            "fontSize": 50,
+            "letterSpacing": "-0.03em"
+          }
+        },
+        {
+          "id": "t_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 146,
+            "y": 378
+          },
+          "size": {
+            "width": 484,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "3 things that changed how we grow on social — in under a minute.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "rgba(241,245,249,0.88)",
+            "lineHeight": 1.65,
+            "fontSize": 16
+          }
+        },
+        {
+          "id": "watch_pill_pill",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 146,
+            "y": 490
+          },
+          "size": {
+            "width": 200,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "WATCH THIS",
+            "borderRadius": "100px"
+          }
+        },
+        {
+          "id": "watch_pill_txt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 154,
+            "y": 495
+          },
+          "size": {
+            "width": 184,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": 32,
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 10,
+            "letterSpacing": "0.06em",
+            "textTransform": "none",
+            "color": "#EC4899",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "creator_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-card-white",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 146,
+            "y": 558
+          },
+          "size": {
+            "width": 300,
+            "height": 72
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F8FAFC",
+            "borderRadius": "16px",
+            "boxShadow": "0 12px 32px rgba(15,23,42,0.14)"
+          }
+        },
+        {
+          "id": "t_creator_lbl",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 166,
+            "y": 570
+          },
+          "size": {
+            "width": 120,
+            "height": 18
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "HOSTED BY",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 10,
+            "letterSpacing": "0.14em",
+            "textTransform": "uppercase",
+            "color": "#71717A"
+          }
+        },
+        {
+          "id": "t_creator",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 166,
+            "y": 590
+          },
+          "size": {
+            "width": 240,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Your Creator Name",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#1E1B4B",
+            "fontSize": 15,
+            "lineHeight": 1.08,
+            "textTransform": "none"
+          }
+        },
+        {
+          "id": "img_frame",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 678,
+            "y": 70
+          },
+          "size": {
+            "width": 484,
+            "height": 580
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(255,255,255,0.06)",
+            "borderRadius": "28px",
+            "border": "1px solid rgba(255,255,255,0.12)"
+          }
+        },
+        {
+          "id": "img_hook_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "social-card-dark",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 686,
+            "y": 78
+          },
+          "size": {
+            "width": 468,
+            "height": 564
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1E1B4B",
+            "borderRadius": "24px",
+            "boxShadow": "0 24px 56px rgba(0,0,0,0.35)"
+          }
+        },
+        {
+          "id": "img_hook",
+          "type": "image",
+          "assetKey": "social-creator",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 686,
+            "y": 78
+          },
+          "size": {
+            "width": 468,
+            "height": 564
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3762940/pexels-photo-3762940.jpeg?auto=compress&cs=tinysrgb&w=1080",
+          "placeholder": true,
+          "alt": "Creator moment",
+          "style": {
+            "borderRadius": "24px",
+            "objectFit": "cover",
+            "boxShadow": "0 24px 56px rgba(0,0,0,0.35)"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#1E1B4B"
+          }
+        },
+        {
+          "id": "hook_scrim",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 686,
+            "y": 78
+          },
+          "size": {
+            "width": 80,
+            "height": 564
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "background": "linear-gradient(90deg, #0F172A 0%, transparent 100%)"
+          }
+        },
+        {
+          "id": "float_heart_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-card-white",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 1102,
+            "y": 578
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#EC4899",
+            "borderRadius": "50%",
+            "border": "1px solid rgba(15,23,42,0.08)",
+            "boxShadow": "0 8px 20px rgba(15,23,42,0.1)"
+          }
+        },
+        {
+          "id": "float_heart",
+          "type": "image",
+          "assetKey": "heart",
+          "role": "icon",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 1110,
+            "y": 586
+          },
+          "size": {
+            "width": 24,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/EC4899/like.png",
+          "placeholder": true,
+          "alt": "Heart",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "slide_badge_01",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1110,
+            "y": 78
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#18181B",
+            "borderRadius": "50%",
+            "border": "2px solid #EC4899"
+          }
+        },
+        {
+          "id": "slide_num_01",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1110,
+            "y": 87
+          },
+          "size": {
+            "width": 44,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "01",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "900",
+            "color": "#F472B6",
+            "fontSize": 16,
+            "lineHeight": 1,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1074,
+            "y": 538
+          },
+          "size": {
+            "width": 92,
+            "height": 112
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #22D3EE",
+            "boxShadow": "0 10px 28px rgba(236,72,153,0.35)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-void",
+            "name": "Void",
+            "type": "solid",
+            "value": "#09090B"
+          },
+          {
+            "id": "bg-panel",
+            "name": "Panel",
+            "type": "solid",
+            "value": "#18181B"
+          },
+          {
+            "id": "bg-navy",
+            "name": "Navy",
+            "type": "solid",
+            "value": "#0F172A"
+          },
+          {
+            "id": "bg-gradient-neon",
+            "name": "Neon Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(165deg, #18181B 0%, #09090B 45%, #1e1033 100%)"
+          },
+          {
+            "id": "bg-gradient-navy",
+            "name": "Navy Pro",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #0F172A 0%, #1E1B4B 55%, #312E81 100%)"
+          },
+          {
+            "id": "bg-gradient-pink",
+            "name": "Pink Burst",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #831843 0%, #09090B 55%, #0c4a6e 100%)"
+          },
+          {
+            "id": "bg-gradient-cyan",
+            "name": "Cyan Pulse",
+            "type": "gradient",
+            "value": "linear-gradient(180deg, #0e7490 0%, #09090B 60%)"
+          }
+        ],
+        "hint": "Swap preset colors, custom swatches, or full-bleed photos. Delete a hero image to reveal the panel color behind it."
+      }
+    },
+    {
+      "id": "ss_scene_02",
+      "slideIndex": 2,
+      "title": "The Problem",
+      "layoutType": "Split",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Creator"
+      },
+      "background": {
+        "type": "gradient",
+        "value": "linear-gradient(160deg, #0F172A 0%, #1E1B4B 55%, #312E81 100%)",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "anchor": {
+          "x": 126,
+          "y": 114,
+          "width": 400,
+          "height": 340
+        },
+        "list": {
+          "x": 574,
+          "y": 98,
+          "width": 580,
+          "height": 548
+        },
+        "avatar": {
+          "x": 1078,
+          "y": 542,
+          "width": 88,
+          "height": 108
+        }
+      },
+      "description": "Anchor bubble left, framework pain list right — SWOT-style.",
+      "flow": "Problem → Insight",
+      "duration": 8,
+      "tags": [
+        "social-short",
+        "reel",
+        "short-form",
+        "problem",
+        "pain"
+      ],
+      "clips": [
+        {
+          "id": "bg02",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "background": "linear-gradient(165deg, #0F172A 0%, #1E1B4B 100%)"
+          }
+        },
+        {
+          "id": "arc_tl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-arc-line",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": -40,
+            "y": -40
+          },
+          "size": {
+            "width": 200,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "border": "2px solid rgba(255,255,255,0.12)",
+            "borderRadius": "50%",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "arc_bl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-arc-line",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": -60,
+            "y": 580
+          },
+          "size": {
+            "width": 220,
+            "height": 220
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "border": "2px solid rgba(255,255,255,0.08)",
+            "borderRadius": "50%",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "dot_pink",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1130,
+            "y": 74
+          },
+          "size": {
+            "width": 18,
+            "height": 18
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#EC4899",
+            "borderRadius": "50%",
+            "opacity": 0.85
+          }
+        },
+        {
+          "id": "dot_cyan",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 158,
+            "y": 632
+          },
+          "size": {
+            "width": 14,
+            "height": 14
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#22D3EE",
+            "borderRadius": "50%",
+            "opacity": 0.7
+          }
+        },
+        {
+          "id": "dot_gold",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1058,
+            "y": 634
+          },
+          "size": {
+            "width": 12,
+            "height": 12
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FBBF24",
+            "borderRadius": "50%",
+            "opacity": 0.8
+          }
+        },
+        {
+          "id": "glow02",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-glow-orb",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1034,
+            "y": 74
+          },
+          "size": {
+            "width": 140,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "background": "radial-gradient(circle, rgba(236,72,153,0.35) 0%, transparent 70%)",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "pain_icon_ring",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-card-white",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 134,
+            "y": 130
+          },
+          "size": {
+            "width": 140,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F8FAFC",
+            "borderRadius": "50%",
+            "border": "5px solid #EC4899",
+            "boxShadow": "0 16px 40px rgba(236,72,153,0.35)"
+          }
+        },
+        {
+          "id": "pain_icon_plate",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 155,
+            "y": 158
+          },
+          "size": {
+            "width": 98,
+            "height": 50
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FBBF24",
+            "borderRadius": "14px"
+          }
+        },
+        {
+          "id": "pain_icon_ico",
+          "type": "image",
+          "assetKey": "alert",
+          "role": "icon",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 187,
+            "y": 175
+          },
+          "size": {
+            "width": 34,
+            "height": 34
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/FBBF24/high-priority.png",
+          "placeholder": true,
+          "alt": "Alert",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "prob_bubble_bubble",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-anchor-bubble",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 294,
+            "y": 114
+          },
+          "size": {
+            "width": 240,
+            "height": 340
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F8FAFC",
+            "borderRadius": "36px 36px 36px 14px",
+            "boxShadow": "0 22px 52px rgba(15,23,42,0.2)"
+          }
+        },
+        {
+          "id": "prob_bubble_spark_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-card-white",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 318,
+            "y": 134
+          },
+          "size": {
+            "width": 36,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "14px",
+            "border": "1px solid rgba(15,23,42,0.08)",
+            "boxShadow": "0 8px 20px rgba(15,23,42,0.1)"
+          }
+        },
+        {
+          "id": "prob_bubble_spark",
+          "type": "image",
+          "assetKey": "sparkles",
+          "role": "icon",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 325,
+            "y": 141
+          },
+          "size": {
+            "width": 22,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/FBBF24/sparkling.png",
+          "placeholder": true,
+          "alt": "Sparkles",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "prob_bubble_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 318,
+            "y": 186
+          },
+          "size": {
+            "width": 192,
+            "height": 220
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "CONTENT\nGAPS",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#1E1B4B",
+            "lineHeight": 1.05,
+            "fontSize": 38,
+            "letterSpacing": "-0.02em"
+          }
+        },
+        {
+          "id": "prob_bubble_sub",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 318,
+            "y": 402
+          },
+          "size": {
+            "width": 192,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Sound familiar?",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#71717A",
+            "lineHeight": 1.65,
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "prob_bubble_edit_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 474,
+            "y": 394
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#8B5CF6",
+            "borderRadius": "14px",
+            "boxShadow": "0 8px 20px rgba(139,92,246,0.35)"
+          }
+        },
+        {
+          "id": "prob_bubble_edit",
+          "type": "image",
+          "assetKey": "edit",
+          "role": "icon",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 483,
+            "y": 403
+          },
+          "size": {
+            "width": 26,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/FFFFFF/pencil.png",
+          "placeholder": true,
+          "alt": "Edit",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "list_panel",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-navy-panel",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 574,
+            "y": 98
+          },
+          "size": {
+            "width": 580,
+            "height": 532
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(255,255,255,0.05)",
+            "borderRadius": "24px",
+            "border": "1px solid rgba(255,255,255,0.12)"
+          }
+        },
+        {
+          "id": "t_eye",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 598,
+            "y": 118
+          },
+          "size": {
+            "width": 200,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "PAIN POINTS",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 12,
+            "letterSpacing": "0.16em",
+            "textTransform": "uppercase",
+            "color": "#F472B6"
+          }
+        },
+        {
+          "id": "t_intro",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 598,
+            "y": 146
+          },
+          "size": {
+            "width": 532,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "If you are still doing this, you are leaving reach on the table.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "rgba(241,245,249,0.8)",
+            "lineHeight": 1.6,
+            "fontSize": 15
+          }
+        },
+        {
+          "id": "fw0_letter",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 598,
+            "y": 206
+          },
+          "size": {
+            "width": 48,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "P",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "900",
+            "color": "#FFFFFF",
+            "fontSize": 36,
+            "lineHeight": 1
+          }
+        },
+        {
+          "id": "fw0_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 650,
+            "y": 202
+          },
+          "size": {
+            "width": 472,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Pattern interrupt missing",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#FFFFFF",
+            "fontSize": 20,
+            "lineHeight": 1.08,
+            "textTransform": "none",
+            "letterSpacing": "0"
+          }
+        },
+        {
+          "id": "fw0_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 650,
+            "y": 234
+          },
+          "size": {
+            "width": 472,
+            "height": 68
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Posting without a hook in the first second loses the scroll before your message lands.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "rgba(241,245,249,0.82)",
+            "lineHeight": 1.55,
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "fw0_rule",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 650,
+            "y": 302
+          },
+          "size": {
+            "width": 472,
+            "height": 1
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(255,255,255,0.12)"
+          }
+        },
+        {
+          "id": "fw1_letter",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 598,
+            "y": 314
+          },
+          "size": {
+            "width": 48,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "W",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "900",
+            "color": "#FFFFFF",
+            "fontSize": 36,
+            "lineHeight": 1
+          }
+        },
+        {
+          "id": "fw1_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 650,
+            "y": 310
+          },
+          "size": {
+            "width": 472,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Weak opening CTA",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#FFFFFF",
+            "fontSize": 20,
+            "lineHeight": 1.08,
+            "textTransform": "none",
+            "letterSpacing": "0"
+          }
+        },
+        {
+          "id": "fw1_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 650,
+            "y": 342
+          },
+          "size": {
+            "width": 472,
+            "height": 68
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "No clear action in the opening beats — viewers bounce before the payoff arrives.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "rgba(241,245,249,0.82)",
+            "lineHeight": 1.55,
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "fw1_rule",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 650,
+            "y": 410
+          },
+          "size": {
+            "width": 472,
+            "height": 1
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(255,255,255,0.12)"
+          }
+        },
+        {
+          "id": "fw2_letter",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 598,
+            "y": 422
+          },
+          "size": {
+            "width": 48,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "R",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "900",
+            "color": "#FFFFFF",
+            "fontSize": 36,
+            "lineHeight": 1
+          }
+        },
+        {
+          "id": "fw2_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 650,
+            "y": 418
+          },
+          "size": {
+            "width": 472,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Repetitive layouts",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#FFFFFF",
+            "fontSize": 20,
+            "lineHeight": 1.08,
+            "textTransform": "none",
+            "letterSpacing": "0"
+          }
+        },
+        {
+          "id": "fw2_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 650,
+            "y": 450
+          },
+          "size": {
+            "width": 472,
+            "height": 68
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Recycling one template every time makes your feed feel predictable and easy to skip.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "rgba(241,245,249,0.82)",
+            "lineHeight": 1.55,
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "fw2_rule",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 650,
+            "y": 518
+          },
+          "size": {
+            "width": 472,
+            "height": 1
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(255,255,255,0.12)"
+          }
+        },
+        {
+          "id": "slide_badge_02",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1110,
+            "y": 78
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#18181B",
+            "borderRadius": "50%",
+            "border": "2px solid #EC4899"
+          }
+        },
+        {
+          "id": "slide_num_02",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1110,
+            "y": 87
+          },
+          "size": {
+            "width": 44,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "02",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "900",
+            "color": "#F472B6",
+            "fontSize": 16,
+            "lineHeight": 1,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1078,
+            "y": 542
+          },
+          "size": {
+            "width": 88,
+            "height": 108
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #EC4899",
+            "boxShadow": "0 10px 28px rgba(236,72,153,0.35)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-void",
+            "name": "Void",
+            "type": "solid",
+            "value": "#09090B"
+          },
+          {
+            "id": "bg-panel",
+            "name": "Panel",
+            "type": "solid",
+            "value": "#18181B"
+          },
+          {
+            "id": "bg-navy",
+            "name": "Navy",
+            "type": "solid",
+            "value": "#0F172A"
+          },
+          {
+            "id": "bg-gradient-neon",
+            "name": "Neon Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(165deg, #18181B 0%, #09090B 45%, #1e1033 100%)"
+          },
+          {
+            "id": "bg-gradient-navy",
+            "name": "Navy Pro",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #0F172A 0%, #1E1B4B 55%, #312E81 100%)"
+          },
+          {
+            "id": "bg-gradient-pink",
+            "name": "Pink Burst",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #831843 0%, #09090B 55%, #0c4a6e 100%)"
+          },
+          {
+            "id": "bg-gradient-cyan",
+            "name": "Cyan Pulse",
+            "type": "gradient",
+            "value": "linear-gradient(180deg, #0e7490 0%, #09090B 60%)"
+          }
+        ],
+        "hint": "Swap preset colors, custom swatches, or full-bleed photos. Delete a hero image to reveal the panel color behind it."
+      }
+    },
+    {
+      "id": "ss_scene_03",
+      "slideIndex": 3,
+      "title": "The Insight",
+      "layoutType": "Split",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Creator"
+      },
+      "background": {
+        "type": "gradient",
+        "value": "linear-gradient(160deg, #0F172A 0%, #1E1B4B 55%, #312E81 100%)",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "copy": {
+          "x": 126,
+          "y": 74,
+          "width": 500,
+          "height": 572
+        },
+        "image": {
+          "x": 662,
+          "y": 74,
+          "width": 492,
+          "height": 572
+        },
+        "avatar": {
+          "x": 114,
+          "y": 542,
+          "width": 88,
+          "height": 108
+        }
+      },
+      "description": "Title pill and copy left, analytics visual right.",
+      "flow": "Insight → Value",
+      "duration": 8,
+      "tags": [
+        "social-short",
+        "reel",
+        "short-form",
+        "insight",
+        "tip"
+      ],
+      "clips": [
+        {
+          "id": "bg03",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "background": "linear-gradient(155deg, #1E1B4B 0%, #0F172A 70%)"
+          }
+        },
+        {
+          "id": "arc_tl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-arc-line",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": -40,
+            "y": -40
+          },
+          "size": {
+            "width": 200,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "border": "2px solid rgba(255,255,255,0.12)",
+            "borderRadius": "50%",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "arc_bl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-arc-line",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": -60,
+            "y": 580
+          },
+          "size": {
+            "width": 220,
+            "height": 220
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "border": "2px solid rgba(255,255,255,0.08)",
+            "borderRadius": "50%",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "dot_pink",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1130,
+            "y": 74
+          },
+          "size": {
+            "width": 18,
+            "height": 18
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#EC4899",
+            "borderRadius": "50%",
+            "opacity": 0.85
+          }
+        },
+        {
+          "id": "dot_cyan",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 158,
+            "y": 632
+          },
+          "size": {
+            "width": 14,
+            "height": 14
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#22D3EE",
+            "borderRadius": "50%",
+            "opacity": 0.7
+          }
+        },
+        {
+          "id": "dot_gold",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1058,
+            "y": 634
+          },
+          "size": {
+            "width": 12,
+            "height": 12
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FBBF24",
+            "borderRadius": "50%",
+            "opacity": 0.8
+          }
+        },
+        {
+          "id": "glow03",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-glow-orb",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 622,
+            "y": 154
+          },
+          "size": {
+            "width": 180,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "background": "radial-gradient(circle, rgba(34,211,238,0.28) 0%, transparent 70%)",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "insight_pill_pill",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-title-pill",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 126,
+            "y": 94
+          },
+          "size": {
+            "width": 320,
+            "height": 72
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F8FAFC",
+            "borderRadius": "100px",
+            "boxShadow": "0 14px 36px rgba(15,23,42,0.16)"
+          }
+        },
+        {
+          "id": "insight_pill_ico_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-card-white",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 136,
+            "y": 104
+          },
+          "size": {
+            "width": 52,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "14px",
+            "border": "1px solid rgba(15,23,42,0.08)",
+            "boxShadow": "0 8px 20px rgba(15,23,42,0.1)"
+          }
+        },
+        {
+          "id": "insight_pill_ico",
+          "type": "image",
+          "assetKey": "fire",
+          "role": "icon",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 146,
+            "y": 114
+          },
+          "size": {
+            "width": 32,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/F472B6/fire-element.png",
+          "placeholder": true,
+          "alt": "Fire",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "insight_pill_label",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 200,
+            "y": 112
+          },
+          "size": {
+            "width": 232,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "INSIGHT",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#1E1B4B",
+            "fontSize": 26,
+            "lineHeight": 1.08,
+            "letterSpacing": "0.04em",
+            "textTransform": "uppercase"
+          }
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 126,
+            "y": 186
+          },
+          "size": {
+            "width": 480,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Here is what\nactually works",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#FFFFFF",
+            "fontSize": 36,
+            "lineHeight": 1.1
+          }
+        },
+        {
+          "id": "t_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 126,
+            "y": 298
+          },
+          "size": {
+            "width": 480,
+            "height": 160
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Lead with motion, one idea per beat, and a single action at the end. Short-form content wins when every frame earns the next second of attention.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "rgba(241,245,249,0.88)",
+            "lineHeight": 1.7,
+            "fontSize": 16
+          }
+        },
+        {
+          "id": "rule03",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 126,
+            "y": 474
+          },
+          "size": {
+            "width": 80,
+            "height": 4
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "background": "linear-gradient(90deg, #EC4899 0%, #22D3EE 100%)",
+            "borderRadius": "2px"
+          }
+        },
+        {
+          "id": "t_cap",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 126,
+            "y": 490
+          },
+          "size": {
+            "width": 480,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "One idea per scene · One action at the end",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 11,
+            "letterSpacing": "0.05em",
+            "textTransform": "none",
+            "color": "#22D3EE"
+          }
+        },
+        {
+          "id": "img_frame03",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 656,
+            "y": 70
+          },
+          "size": {
+            "width": 504,
+            "height": 580
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "borderRadius": "24px",
+            "border": "1px solid rgba(255,255,255,0.12)",
+            "backgroundColor": "rgba(255,255,255,0.04)"
+          }
+        },
+        {
+          "id": "img_insight_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "social-card-dark",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 662,
+            "y": 78
+          },
+          "size": {
+            "width": 492,
+            "height": 564
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1E1B4B",
+            "borderRadius": "20px",
+            "boxShadow": "0 20px 48px rgba(0,0,0,0.3)"
+          }
+        },
+        {
+          "id": "img_insight",
+          "type": "image",
+          "assetKey": "social-dashboard",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 662,
+            "y": 78
+          },
+          "size": {
+            "width": 492,
+            "height": 564
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/590022/pexels-photo-590022.jpeg?auto=compress&cs=tinysrgb&w=1080",
+          "placeholder": true,
+          "alt": "Analytics dashboard",
+          "style": {
+            "borderRadius": "20px",
+            "objectFit": "cover",
+            "boxShadow": "0 20px 48px rgba(0,0,0,0.3)"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#1E1B4B"
+          }
+        },
+        {
+          "id": "ico_chart_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-card-white",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 682,
+            "y": 94
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#8B5CF6",
+            "borderRadius": "14px",
+            "border": "1px solid rgba(15,23,42,0.08)",
+            "boxShadow": "0 8px 20px rgba(15,23,42,0.1)"
+          }
+        },
+        {
+          "id": "ico_chart",
+          "type": "image",
+          "assetKey": "chart",
+          "role": "icon",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 690,
+            "y": 102
+          },
+          "size": {
+            "width": 24,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/8B5CF6/combo-chart.png",
+          "placeholder": true,
+          "alt": "Chart",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "slide_badge_03",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1110,
+            "y": 78
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#18181B",
+            "borderRadius": "50%",
+            "border": "2px solid #EC4899"
+          }
+        },
+        {
+          "id": "slide_num_03",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1110,
+            "y": 87
+          },
+          "size": {
+            "width": 44,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "03",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "900",
+            "color": "#F472B6",
+            "fontSize": 16,
+            "lineHeight": 1,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 114,
+            "y": 542
+          },
+          "size": {
+            "width": 88,
+            "height": 108
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #EC4899",
+            "boxShadow": "0 10px 28px rgba(236,72,153,0.35)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-void",
+            "name": "Void",
+            "type": "solid",
+            "value": "#09090B"
+          },
+          {
+            "id": "bg-panel",
+            "name": "Panel",
+            "type": "solid",
+            "value": "#18181B"
+          },
+          {
+            "id": "bg-navy",
+            "name": "Navy",
+            "type": "solid",
+            "value": "#0F172A"
+          },
+          {
+            "id": "bg-gradient-neon",
+            "name": "Neon Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(165deg, #18181B 0%, #09090B 45%, #1e1033 100%)"
+          },
+          {
+            "id": "bg-gradient-navy",
+            "name": "Navy Pro",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #0F172A 0%, #1E1B4B 55%, #312E81 100%)"
+          },
+          {
+            "id": "bg-gradient-pink",
+            "name": "Pink Burst",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #831843 0%, #09090B 55%, #0c4a6e 100%)"
+          },
+          {
+            "id": "bg-gradient-cyan",
+            "name": "Cyan Pulse",
+            "type": "gradient",
+            "value": "linear-gradient(180deg, #0e7490 0%, #09090B 60%)"
+          }
+        ],
+        "hint": "Swap preset colors, custom swatches, or full-bleed photos. Delete a hero image to reveal the panel color behind it."
+      }
+    },
+    {
+      "id": "ss_scene_04",
+      "slideIndex": 4,
+      "title": "Value Stack",
+      "layoutType": "Grid",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Creator"
+      },
+      "background": {
+        "type": "gradient",
+        "value": "linear-gradient(160deg, #0F172A 0%, #1E1B4B 55%, #312E81 100%)",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "grid": {
+          "x": 126,
+          "y": 182,
+          "width": 1028,
+          "height": 400
+        },
+        "avatar": {
+          "x": 1078,
+          "y": 542,
+          "width": 88,
+          "height": 108
+        }
+      },
+      "description": "Three feature cards with thumbnails — polished reel structure.",
+      "flow": "Value → Proof",
+      "duration": 8,
+      "tags": [
+        "social-short",
+        "reel",
+        "short-form",
+        "value",
+        "tips"
+      ],
+      "clips": [
+        {
+          "id": "bg04",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "background": "linear-gradient(150deg, #0F172A 0%, #312E81 50%, #1E1B4B 100%)"
+          }
+        },
+        {
+          "id": "arc_tl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-arc-line",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": -40,
+            "y": -40
+          },
+          "size": {
+            "width": 200,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "border": "2px solid rgba(255,255,255,0.12)",
+            "borderRadius": "50%",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "arc_bl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-arc-line",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": -60,
+            "y": 580
+          },
+          "size": {
+            "width": 220,
+            "height": 220
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "border": "2px solid rgba(255,255,255,0.08)",
+            "borderRadius": "50%",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "dot_0_0_1064",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1064,
+            "y": 82
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_0_1_1064",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1077,
+            "y": 82
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_0_2_1064",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1090,
+            "y": 82
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_0_3_1064",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1103,
+            "y": 82
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_1_0_1064",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1064,
+            "y": 95
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_1_1_1064",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1077,
+            "y": 95
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_1_2_1064",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1090,
+            "y": 95
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_1_3_1064",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1103,
+            "y": 95
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_pink",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1130,
+            "y": 74
+          },
+          "size": {
+            "width": 18,
+            "height": 18
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#EC4899",
+            "borderRadius": "50%",
+            "opacity": 0.85
+          }
+        },
+        {
+          "id": "dot_cyan",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 158,
+            "y": 632
+          },
+          "size": {
+            "width": 14,
+            "height": 14
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#22D3EE",
+            "borderRadius": "50%",
+            "opacity": 0.7
+          }
+        },
+        {
+          "id": "dot_gold",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1058,
+            "y": 634
+          },
+          "size": {
+            "width": 12,
+            "height": 12
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FBBF24",
+            "borderRadius": "50%",
+            "opacity": 0.8
+          }
+        },
+        {
+          "id": "glow04",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-glow-orb",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 326,
+            "y": 114
+          },
+          "size": {
+            "width": 180,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "background": "radial-gradient(circle, rgba(251,191,36,0.3) 0%, transparent 70%)",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "t_eye",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 126,
+            "y": 82
+          },
+          "size": {
+            "width": 240,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "REEL STRUCTURE",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 12,
+            "letterSpacing": "0.16em",
+            "textTransform": "uppercase",
+            "color": "#F472B6"
+          }
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 126,
+            "y": 110
+          },
+          "size": {
+            "width": 1028,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Steal this 3-part reel structure",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#FFFFFF",
+            "lineHeight": 1.08,
+            "fontSize": 38
+          }
+        },
+        {
+          "id": "t_sub",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 126,
+            "y": 162
+          },
+          "size": {
+            "width": 640,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Three beats that keep viewers watching to the end.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "rgba(241,245,249,0.75)",
+            "lineHeight": 1.6,
+            "fontSize": 15
+          }
+        },
+        {
+          "id": "val0_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-card-white",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 126,
+            "y": 182
+          },
+          "size": {
+            "width": 332,
+            "height": 400
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F8FAFC",
+            "borderRadius": "22px",
+            "boxShadow": "0 18px 44px rgba(15,23,42,0.14)",
+            "borderTop": "5px solid #EC4899"
+          }
+        },
+        {
+          "id": "val0_num",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 146,
+            "y": 200
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#EC4899",
+            "borderRadius": "12px"
+          }
+        },
+        {
+          "id": "val0_numt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 146,
+            "y": 208
+          },
+          "size": {
+            "width": 40,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "01",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "900",
+            "color": "#FFFFFF",
+            "fontSize": 16,
+            "lineHeight": 1,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "val0_thumb_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "social-card-dark",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 142,
+            "y": 250
+          },
+          "size": {
+            "width": 300,
+            "height": 128
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#18181B",
+            "borderRadius": "14px"
+          }
+        },
+        {
+          "id": "val0_thumb",
+          "type": "image",
+          "assetKey": "social-step-hook",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 142,
+            "y": 250
+          },
+          "size": {
+            "width": 300,
+            "height": 128
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=1080",
+          "placeholder": true,
+          "alt": "Hook in 1 second",
+          "style": {
+            "borderRadius": "14px",
+            "objectFit": "cover"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#18181B"
+          }
+        },
+        {
+          "id": "val0_ico_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-card-white",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 402,
+            "y": 258
+          },
+          "size": {
+            "width": 36,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "14px",
+            "border": "1px solid rgba(15,23,42,0.08)",
+            "boxShadow": "0 8px 20px rgba(15,23,42,0.1)"
+          }
+        },
+        {
+          "id": "val0_ico",
+          "type": "image",
+          "assetKey": "bolt",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 409,
+            "y": 265
+          },
+          "size": {
+            "width": 22,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/EC4899/lightning-bolt.png",
+          "placeholder": true,
+          "alt": "Bolt",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "val0_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 146,
+            "y": 392
+          },
+          "size": {
+            "width": 292,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Hook in 1 second",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 19,
+            "color": "#1E1B4B"
+          }
+        },
+        {
+          "id": "val0_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 146,
+            "y": 434
+          },
+          "size": {
+            "width": 292,
+            "height": 184
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Open with motion, a question, or a bold claim — skip the logo intro.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 14,
+            "color": "#A1A1AA",
+            "lineHeight": 1.55
+          }
+        },
+        {
+          "id": "val1_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-card-white",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 474,
+            "y": 182
+          },
+          "size": {
+            "width": 332,
+            "height": 400
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F8FAFC",
+            "borderRadius": "22px",
+            "boxShadow": "0 18px 44px rgba(15,23,42,0.14)",
+            "borderTop": "5px solid #22D3EE"
+          }
+        },
+        {
+          "id": "val1_num",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 494,
+            "y": 200
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#22D3EE",
+            "borderRadius": "12px"
+          }
+        },
+        {
+          "id": "val1_numt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 494,
+            "y": 208
+          },
+          "size": {
+            "width": 40,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "02",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "900",
+            "color": "#FFFFFF",
+            "fontSize": 16,
+            "lineHeight": 1,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "val1_thumb_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "social-card-dark",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 490,
+            "y": 250
+          },
+          "size": {
+            "width": 300,
+            "height": 128
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#18181B",
+            "borderRadius": "14px"
+          }
+        },
+        {
+          "id": "val1_thumb",
+          "type": "image",
+          "assetKey": "social-step-cut",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 490,
+            "y": 250
+          },
+          "size": {
+            "width": 300,
+            "height": 128
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/7376/startup-photos.jpg?auto=compress&cs=tinysrgb&w=1080",
+          "placeholder": true,
+          "alt": "One idea per cut",
+          "style": {
+            "borderRadius": "14px",
+            "objectFit": "cover"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#18181B"
+          }
+        },
+        {
+          "id": "val1_ico_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-card-white",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 750,
+            "y": 258
+          },
+          "size": {
+            "width": 36,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "14px",
+            "border": "1px solid rgba(15,23,42,0.08)",
+            "boxShadow": "0 8px 20px rgba(15,23,42,0.1)"
+          }
+        },
+        {
+          "id": "val1_ico",
+          "type": "image",
+          "assetKey": "target",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 757,
+            "y": 265
+          },
+          "size": {
+            "width": 22,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/22D3EE/bullseye.png",
+          "placeholder": true,
+          "alt": "Target",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "val1_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 494,
+            "y": 392
+          },
+          "size": {
+            "width": 292,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "One idea per cut",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 19,
+            "color": "#1E1B4B"
+          }
+        },
+        {
+          "id": "val1_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 494,
+            "y": 434
+          },
+          "size": {
+            "width": 292,
+            "height": 184
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Each scene earns the next beat. Trim anything that does not move the story.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 14,
+            "color": "#A1A1AA",
+            "lineHeight": 1.55
+          }
+        },
+        {
+          "id": "val2_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-card-white",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 822,
+            "y": 182
+          },
+          "size": {
+            "width": 332,
+            "height": 400
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F8FAFC",
+            "borderRadius": "22px",
+            "boxShadow": "0 18px 44px rgba(15,23,42,0.14)",
+            "borderTop": "5px solid #8B5CF6"
+          }
+        },
+        {
+          "id": "val2_num",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 842,
+            "y": 200
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#8B5CF6",
+            "borderRadius": "12px"
+          }
+        },
+        {
+          "id": "val2_numt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 842,
+            "y": 208
+          },
+          "size": {
+            "width": 40,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "03",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "900",
+            "color": "#FFFFFF",
+            "fontSize": 16,
+            "lineHeight": 1,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "val2_thumb_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "social-card-dark",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 838,
+            "y": 250
+          },
+          "size": {
+            "width": 300,
+            "height": 128
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#18181B",
+            "borderRadius": "14px"
+          }
+        },
+        {
+          "id": "val2_thumb",
+          "type": "image",
+          "assetKey": "social-step-cta",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 838,
+            "y": 250
+          },
+          "size": {
+            "width": 300,
+            "height": 128
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/265087/pexels-photo-265087.jpeg?auto=compress&cs=tinysrgb&w=1080",
+          "placeholder": true,
+          "alt": "End with one action",
+          "style": {
+            "borderRadius": "14px",
+            "objectFit": "cover"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#18181B"
+          }
+        },
+        {
+          "id": "val2_ico_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-card-white",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 1098,
+            "y": 258
+          },
+          "size": {
+            "width": 36,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "14px",
+            "border": "1px solid rgba(15,23,42,0.08)",
+            "boxShadow": "0 8px 20px rgba(15,23,42,0.1)"
+          }
+        },
+        {
+          "id": "val2_ico",
+          "type": "image",
+          "assetKey": "share",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1105,
+            "y": 265
+          },
+          "size": {
+            "width": 22,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/8B5CF6/share.png",
+          "placeholder": true,
+          "alt": "Share",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "val2_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 842,
+            "y": 392
+          },
+          "size": {
+            "width": 292,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "End with one action",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 19,
+            "color": "#1E1B4B"
+          }
+        },
+        {
+          "id": "val2_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 842,
+            "y": 434
+          },
+          "size": {
+            "width": 292,
+            "height": 184
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Follow, save, comment, or click — one CTA repeated on the last frame.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 14,
+            "color": "#A1A1AA",
+            "lineHeight": 1.55
+          }
+        },
+        {
+          "id": "slide_badge_04",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1110,
+            "y": 78
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#18181B",
+            "borderRadius": "50%",
+            "border": "2px solid #EC4899"
+          }
+        },
+        {
+          "id": "slide_num_04",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1110,
+            "y": 87
+          },
+          "size": {
+            "width": 44,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "04",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "900",
+            "color": "#F472B6",
+            "fontSize": 16,
+            "lineHeight": 1,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1078,
+            "y": 542
+          },
+          "size": {
+            "width": 88,
+            "height": 108
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #EC4899",
+            "boxShadow": "0 10px 28px rgba(236,72,153,0.35)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-void",
+            "name": "Void",
+            "type": "solid",
+            "value": "#09090B"
+          },
+          {
+            "id": "bg-panel",
+            "name": "Panel",
+            "type": "solid",
+            "value": "#18181B"
+          },
+          {
+            "id": "bg-navy",
+            "name": "Navy",
+            "type": "solid",
+            "value": "#0F172A"
+          },
+          {
+            "id": "bg-gradient-neon",
+            "name": "Neon Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(165deg, #18181B 0%, #09090B 45%, #1e1033 100%)"
+          },
+          {
+            "id": "bg-gradient-navy",
+            "name": "Navy Pro",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #0F172A 0%, #1E1B4B 55%, #312E81 100%)"
+          },
+          {
+            "id": "bg-gradient-pink",
+            "name": "Pink Burst",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #831843 0%, #09090B 55%, #0c4a6e 100%)"
+          },
+          {
+            "id": "bg-gradient-cyan",
+            "name": "Cyan Pulse",
+            "type": "gradient",
+            "value": "linear-gradient(180deg, #0e7490 0%, #09090B 60%)"
+          }
+        ],
+        "hint": "Swap preset colors, custom swatches, or full-bleed photos. Delete a hero image to reveal the panel color behind it."
+      }
+    },
+    {
+      "id": "ss_scene_05",
+      "slideIndex": 5,
+      "title": "Social Proof",
+      "layoutType": "StatsHighlight",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Creator"
+      },
+      "background": {
+        "type": "gradient",
+        "value": "linear-gradient(160deg, #0F172A 0%, #1E1B4B 55%, #312E81 100%)",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "stat": {
+          "x": 126,
+          "y": 130,
+          "width": 480,
+          "height": 500
+        },
+        "image": {
+          "x": 642,
+          "y": 130,
+          "width": 512,
+          "height": 500
+        },
+        "avatar": {
+          "x": 1078,
+          "y": 542,
+          "width": 88,
+          "height": 108
+        }
+      },
+      "description": "Overview pill, elevated stat card, results visual.",
+      "flow": "Proof → Show",
+      "duration": 8,
+      "tags": [
+        "social-short",
+        "reel",
+        "short-form",
+        "proof",
+        "stats"
+      ],
+      "clips": [
+        {
+          "id": "bg05",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "background": "linear-gradient(160deg, #1E1B4B 0%, #0F172A 100%)"
+          }
+        },
+        {
+          "id": "arc_tl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-arc-line",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": -40,
+            "y": -40
+          },
+          "size": {
+            "width": 200,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "border": "2px solid rgba(255,255,255,0.12)",
+            "borderRadius": "50%",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "arc_bl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-arc-line",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": -60,
+            "y": 580
+          },
+          "size": {
+            "width": 220,
+            "height": 220
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "border": "2px solid rgba(255,255,255,0.08)",
+            "borderRadius": "50%",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "dot_0_0_110",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 110,
+            "y": 612
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_0_1_110",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 123,
+            "y": 612
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_0_2_110",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 136,
+            "y": 612
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_0_3_110",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 149,
+            "y": 612
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_1_0_110",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 110,
+            "y": 625
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_1_1_110",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 123,
+            "y": 625
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_1_2_110",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 136,
+            "y": 625
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_1_3_110",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 149,
+            "y": 625
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(34,211,238,0.4)",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "glow05",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-glow-orb",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 126,
+            "y": 114
+          },
+          "size": {
+            "width": 200,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "background": "radial-gradient(circle, rgba(34,211,238,0.28) 0%, transparent 70%)",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "proof_pill_pill",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-title-pill",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 126,
+            "y": 86
+          },
+          "size": {
+            "width": 280,
+            "height": 72
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F8FAFC",
+            "borderRadius": "100px",
+            "boxShadow": "0 14px 36px rgba(15,23,42,0.16)"
+          }
+        },
+        {
+          "id": "proof_pill_ico_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-card-white",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 136,
+            "y": 96
+          },
+          "size": {
+            "width": 52,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "14px",
+            "border": "1px solid rgba(15,23,42,0.08)",
+            "boxShadow": "0 8px 20px rgba(15,23,42,0.1)"
+          }
+        },
+        {
+          "id": "proof_pill_ico",
+          "type": "image",
+          "assetKey": "chart",
+          "role": "icon",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 146,
+            "y": 106
+          },
+          "size": {
+            "width": 32,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/8B5CF6/combo-chart.png",
+          "placeholder": true,
+          "alt": "Chart",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "proof_pill_label",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 200,
+            "y": 104
+          },
+          "size": {
+            "width": 192,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "PROOF",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#1E1B4B",
+            "fontSize": 26,
+            "lineHeight": 1.08,
+            "letterSpacing": "0.04em",
+            "textTransform": "uppercase"
+          }
+        },
+        {
+          "id": "stat_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-card-white",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 126,
+            "y": 174
+          },
+          "size": {
+            "width": 480,
+            "height": 456
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F8FAFC",
+            "borderRadius": "24px",
+            "boxShadow": "0 20px 48px rgba(15,23,42,0.18)"
+          }
+        },
+        {
+          "id": "stat_bar",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 126,
+            "y": 174
+          },
+          "size": {
+            "width": 480,
+            "height": 6
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "background": "linear-gradient(90deg, #EC4899 0%, #22D3EE 100%)",
+            "borderRadius": "24px 24px 0 0"
+          }
+        },
+        {
+          "id": "t_stat",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 150,
+            "y": 254
+          },
+          "size": {
+            "width": 432,
+            "height": 88
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "3.2×",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "900",
+            "color": "#8B5CF6",
+            "fontSize": 88,
+            "lineHeight": 1
+          }
+        },
+        {
+          "id": "t_label",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 158,
+            "y": 350
+          },
+          "size": {
+            "width": 416,
+            "height": 56
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Higher save rate vs. landscape reposts",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#1E1B4B",
+            "fontSize": 20,
+            "lineHeight": 1.2
+          }
+        },
+        {
+          "id": "t_sub",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 158,
+            "y": 414
+          },
+          "size": {
+            "width": 416,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Based on short-form tests across 12 campaigns",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#71717A",
+            "lineHeight": 1.65,
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "img_proof_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "social-card-dark",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 642,
+            "y": 174
+          },
+          "size": {
+            "width": 512,
+            "height": 456
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1E1B4B",
+            "borderRadius": "24px",
+            "boxShadow": "0 22px 52px rgba(0,0,0,0.28)"
+          }
+        },
+        {
+          "id": "img_proof",
+          "type": "image",
+          "assetKey": "social-lifestyle",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 642,
+            "y": 174
+          },
+          "size": {
+            "width": 512,
+            "height": 456
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3762800/pexels-photo-3762800.jpeg?auto=compress&cs=tinysrgb&w=1080",
+          "placeholder": true,
+          "alt": "Results moment",
+          "style": {
+            "borderRadius": "24px",
+            "objectFit": "cover",
+            "boxShadow": "0 22px 52px rgba(0,0,0,0.28)"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#1E1B4B"
+          }
+        },
+        {
+          "id": "proof_tag_pill",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 662,
+            "y": 594
+          },
+          "size": {
+            "width": 140,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "VERIFIED",
+            "borderRadius": "100px"
+          }
+        },
+        {
+          "id": "proof_tag_txt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 670,
+            "y": 599
+          },
+          "size": {
+            "width": 124,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": 28,
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 10,
+            "letterSpacing": "0.06em",
+            "textTransform": "none",
+            "color": "#FBBF24",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "slide_badge_05",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1110,
+            "y": 78
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#18181B",
+            "borderRadius": "50%",
+            "border": "2px solid #EC4899"
+          }
+        },
+        {
+          "id": "slide_num_05",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1110,
+            "y": 87
+          },
+          "size": {
+            "width": 44,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "05",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "900",
+            "color": "#F472B6",
+            "fontSize": 16,
+            "lineHeight": 1,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1078,
+            "y": 542
+          },
+          "size": {
+            "width": 88,
+            "height": 108
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #EC4899",
+            "boxShadow": "0 10px 28px rgba(236,72,153,0.35)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-void",
+            "name": "Void",
+            "type": "solid",
+            "value": "#09090B"
+          },
+          {
+            "id": "bg-panel",
+            "name": "Panel",
+            "type": "solid",
+            "value": "#18181B"
+          },
+          {
+            "id": "bg-navy",
+            "name": "Navy",
+            "type": "solid",
+            "value": "#0F172A"
+          },
+          {
+            "id": "bg-gradient-neon",
+            "name": "Neon Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(165deg, #18181B 0%, #09090B 45%, #1e1033 100%)"
+          },
+          {
+            "id": "bg-gradient-navy",
+            "name": "Navy Pro",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #0F172A 0%, #1E1B4B 55%, #312E81 100%)"
+          },
+          {
+            "id": "bg-gradient-pink",
+            "name": "Pink Burst",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #831843 0%, #09090B 55%, #0c4a6e 100%)"
+          },
+          {
+            "id": "bg-gradient-cyan",
+            "name": "Cyan Pulse",
+            "type": "gradient",
+            "value": "linear-gradient(180deg, #0e7490 0%, #09090B 60%)"
+          }
+        ],
+        "hint": "Swap preset colors, custom swatches, or full-bleed photos. Delete a hero image to reveal the panel color behind it."
+      }
+    },
+    {
+      "id": "ss_scene_06",
+      "slideIndex": 6,
+      "title": "Show the Proof",
+      "layoutType": "Split",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Creator"
+      },
+      "background": {
+        "type": "gradient",
+        "value": "linear-gradient(160deg, #0F172A 0%, #1E1B4B 55%, #312E81 100%)",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "image": {
+          "x": 126,
+          "y": 74,
+          "width": 600,
+          "height": 572
+        },
+        "copy": {
+          "x": 766,
+          "y": 74,
+          "width": 388,
+          "height": 572
+        },
+        "avatar": {
+          "x": 114,
+          "y": 542,
+          "width": 88,
+          "height": 108
+        }
+      },
+      "description": "Laptop workspace left, elevated copy panel right.",
+      "flow": "Show → CTA",
+      "duration": 8,
+      "tags": [
+        "social-short",
+        "reel",
+        "short-form",
+        "demo",
+        "visual"
+      ],
+      "clips": [
+        {
+          "id": "bg06",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "background": "linear-gradient(155deg, #0F172A 0%, #1E1B4B 100%)"
+          }
+        },
+        {
+          "id": "arc_tl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-arc-line",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": -40,
+            "y": -40
+          },
+          "size": {
+            "width": 200,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "border": "2px solid rgba(255,255,255,0.12)",
+            "borderRadius": "50%",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "arc_bl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-arc-line",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": -60,
+            "y": 580
+          },
+          "size": {
+            "width": 220,
+            "height": 220
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "border": "2px solid rgba(255,255,255,0.08)",
+            "borderRadius": "50%",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "img_frame06",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 120,
+            "y": 70
+          },
+          "size": {
+            "width": 612,
+            "height": 580
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "borderRadius": "26px",
+            "border": "1px solid rgba(255,255,255,0.12)"
+          }
+        },
+        {
+          "id": "img_show_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "social-card-dark",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 126,
+            "y": 78
+          },
+          "size": {
+            "width": 600,
+            "height": 564
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1E1B4B",
+            "borderRadius": "22px",
+            "boxShadow": "0 22px 52px rgba(0,0,0,0.32)"
+          }
+        },
+        {
+          "id": "img_show",
+          "type": "image",
+          "assetKey": "social-laptop",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 126,
+            "y": 78
+          },
+          "size": {
+            "width": 600,
+            "height": 564
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/4145153/pexels-photo-4145153.jpeg?auto=compress&cs=tinysrgb&w=1080",
+          "placeholder": true,
+          "alt": "Product demo on laptop",
+          "style": {
+            "borderRadius": "22px",
+            "objectFit": "cover",
+            "boxShadow": "0 22px 52px rgba(0,0,0,0.32)"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#1E1B4B"
+          }
+        },
+        {
+          "id": "play_overlay",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 390,
+            "y": 324
+          },
+          "size": {
+            "width": 72,
+            "height": 72
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(15,23,42,0.55)",
+            "borderRadius": "50%",
+            "border": "3px solid rgba(255,255,255,0.9)"
+          }
+        },
+        {
+          "id": "ico_play",
+          "type": "image",
+          "assetKey": "play",
+          "role": "icon",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 413,
+            "y": 347
+          },
+          "size": {
+            "width": 26,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/FFFFFF/circled-play.png",
+          "placeholder": true,
+          "alt": "Play",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "copy_panel06",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 766,
+            "y": 82
+          },
+          "size": {
+            "width": 388,
+            "height": 556
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(255,255,255,0.06)",
+            "borderRadius": "24px",
+            "border": "1px solid rgba(255,255,255,0.12)"
+          }
+        },
+        {
+          "id": "show_pill_pill",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-title-pill",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 786,
+            "y": 106
+          },
+          "size": {
+            "width": 348,
+            "height": 72
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F8FAFC",
+            "borderRadius": "100px",
+            "boxShadow": "0 14px 36px rgba(15,23,42,0.16)"
+          }
+        },
+        {
+          "id": "show_pill_ico_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-card-white",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 796,
+            "y": 116
+          },
+          "size": {
+            "width": 52,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "14px",
+            "border": "1px solid rgba(15,23,42,0.08)",
+            "boxShadow": "0 8px 20px rgba(15,23,42,0.1)"
+          }
+        },
+        {
+          "id": "show_pill_ico",
+          "type": "image",
+          "assetKey": "clipboard",
+          "role": "icon",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 806,
+            "y": 126
+          },
+          "size": {
+            "width": 32,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/8B5CF6/clipboard.png",
+          "placeholder": true,
+          "alt": "Clipboard",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "show_pill_label",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 860,
+            "y": 124
+          },
+          "size": {
+            "width": 260,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "VISUAL PROOF",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#1E1B4B",
+            "fontSize": 26,
+            "lineHeight": 1.08,
+            "letterSpacing": "0.04em",
+            "textTransform": "uppercase"
+          }
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 790,
+            "y": 198
+          },
+          "size": {
+            "width": 340,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Show the moment",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#FFFFFF",
+            "fontSize": 30,
+            "lineHeight": 1.08
+          }
+        },
+        {
+          "id": "t_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 790,
+            "y": 258
+          },
+          "size": {
+            "width": 340,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Swap this clip for your product demo, testimonial, or before/after — keep it under 4 seconds of visual proof.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "rgba(241,245,249,0.88)",
+            "lineHeight": 1.65,
+            "fontSize": 15
+          }
+        },
+        {
+          "id": "show_cta_pill",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 790,
+            "y": 414
+          },
+          "size": {
+            "width": 180,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "SEE IT WORK",
+            "borderRadius": "100px"
+          }
+        },
+        {
+          "id": "show_cta_txt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 798,
+            "y": 419
+          },
+          "size": {
+            "width": 164,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": 32,
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 10,
+            "letterSpacing": "0.06em",
+            "textTransform": "none",
+            "color": "#EC4899",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "t_play",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 790,
+            "y": 462
+          },
+          "size": {
+            "width": 340,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Replace with your clip or screen recording",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#A1A1AA",
+            "lineHeight": 1.65,
+            "fontSize": 13
+          }
+        },
+        {
+          "id": "slide_badge_06",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1110,
+            "y": 78
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#18181B",
+            "borderRadius": "50%",
+            "border": "2px solid #EC4899"
+          }
+        },
+        {
+          "id": "slide_num_06",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1110,
+            "y": 87
+          },
+          "size": {
+            "width": 44,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "06",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "900",
+            "color": "#F472B6",
+            "fontSize": 16,
+            "lineHeight": 1,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 114,
+            "y": 542
+          },
+          "size": {
+            "width": 88,
+            "height": 108
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #EC4899",
+            "boxShadow": "0 10px 28px rgba(236,72,153,0.35)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-void",
+            "name": "Void",
+            "type": "solid",
+            "value": "#09090B"
+          },
+          {
+            "id": "bg-panel",
+            "name": "Panel",
+            "type": "solid",
+            "value": "#18181B"
+          },
+          {
+            "id": "bg-navy",
+            "name": "Navy",
+            "type": "solid",
+            "value": "#0F172A"
+          },
+          {
+            "id": "bg-gradient-neon",
+            "name": "Neon Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(165deg, #18181B 0%, #09090B 45%, #1e1033 100%)"
+          },
+          {
+            "id": "bg-gradient-navy",
+            "name": "Navy Pro",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #0F172A 0%, #1E1B4B 55%, #312E81 100%)"
+          },
+          {
+            "id": "bg-gradient-pink",
+            "name": "Pink Burst",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #831843 0%, #09090B 55%, #0c4a6e 100%)"
+          },
+          {
+            "id": "bg-gradient-cyan",
+            "name": "Cyan Pulse",
+            "type": "gradient",
+            "value": "linear-gradient(180deg, #0e7490 0%, #09090B 60%)"
+          }
+        ],
+        "hint": "Swap preset colors, custom swatches, or full-bleed photos. Delete a hero image to reveal the panel color behind it."
+      }
+    },
+    {
+      "id": "ss_scene_07",
+      "slideIndex": 7,
+      "title": "Follow & CTA",
+      "layoutType": "Promo",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Creator"
+      },
+      "background": {
+        "type": "gradient",
+        "value": "linear-gradient(160deg, #0F172A 0%, #1E1B4B 55%, #312E81 100%)",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "copy": {
+          "x": 126,
+          "y": 74,
+          "width": 480,
+          "height": 572
+        },
+        "panel": {
+          "x": 642,
+          "y": 74,
+          "width": 512,
+          "height": 572
+        },
+        "avatar": {
+          "x": 1070,
+          "y": 534,
+          "width": 96,
+          "height": 116
+        }
+      },
+      "description": "Elevated closing copy left, community visual panel right.",
+      "flow": "CTA → End",
+      "duration": 8,
+      "tags": [
+        "social-short",
+        "reel",
+        "short-form",
+        "cta",
+        "closing"
+      ],
+      "clips": [
+        {
+          "id": "bg07",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "background": "linear-gradient(165deg, #0F172A 0%, #0c4a6e 45%, #1E1B4B 100%)"
+          }
+        },
+        {
+          "id": "arc_tl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-arc-line",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": -40,
+            "y": -40
+          },
+          "size": {
+            "width": 200,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "border": "2px solid rgba(255,255,255,0.12)",
+            "borderRadius": "50%",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "arc_bl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-arc-line",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": -60,
+            "y": 580
+          },
+          "size": {
+            "width": 220,
+            "height": 220
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "border": "2px solid rgba(255,255,255,0.08)",
+            "borderRadius": "50%",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "glow07",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-glow-orb",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 106,
+            "y": 154
+          },
+          "size": {
+            "width": 180,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "background": "radial-gradient(circle, rgba(236,72,153,0.35) 0%, transparent 70%)",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "glow07b",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-glow-orb",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 642,
+            "y": 274
+          },
+          "size": {
+            "width": 160,
+            "height": 160
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "background": "radial-gradient(circle, rgba(34,211,238,0.28) 0%, transparent 70%)",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "cta_pill_pill",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-title-pill",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 126,
+            "y": 90
+          },
+          "size": {
+            "width": 300,
+            "height": 72
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F8FAFC",
+            "borderRadius": "100px",
+            "boxShadow": "0 14px 36px rgba(15,23,42,0.16)"
+          }
+        },
+        {
+          "id": "cta_pill_ico_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-card-white",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 136,
+            "y": 100
+          },
+          "size": {
+            "width": 52,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "14px",
+            "border": "1px solid rgba(15,23,42,0.08)",
+            "boxShadow": "0 8px 20px rgba(15,23,42,0.1)"
+          }
+        },
+        {
+          "id": "cta_pill_ico",
+          "type": "image",
+          "assetKey": "heart",
+          "role": "icon",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 146,
+            "y": 110
+          },
+          "size": {
+            "width": 32,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/EC4899/like.png",
+          "placeholder": true,
+          "alt": "Heart",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "cta_pill_label",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 200,
+            "y": 108
+          },
+          "size": {
+            "width": 212,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "FOLLOW UP",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#1E1B4B",
+            "fontSize": 26,
+            "lineHeight": 1.08,
+            "letterSpacing": "0.04em",
+            "textTransform": "uppercase"
+          }
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 126,
+            "y": 182
+          },
+          "size": {
+            "width": 464,
+            "height": 96
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Follow for\npart 2",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#FFFFFF",
+            "lineHeight": 1.08,
+            "fontSize": 40
+          }
+        },
+        {
+          "id": "t_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 126,
+            "y": 286
+          },
+          "size": {
+            "width": 464,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Save this reel, share it with your team, and drop a comment if you want the full template pack.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "rgba(241,245,249,0.88)",
+            "lineHeight": 1.65,
+            "fontSize": 15
+          }
+        },
+        {
+          "id": "cta_btn",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-cta-btn",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 126,
+            "y": 402
+          },
+          "size": {
+            "width": 260,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#EC4899",
+            "borderRadius": "100px",
+            "boxShadow": "0 12px 36px rgba(236,72,153,0.35)"
+          }
+        },
+        {
+          "id": "t_btn",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 146,
+            "y": 416
+          },
+          "size": {
+            "width": 220,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "FOLLOW FOR MORE",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 12,
+            "letterSpacing": "0.14em",
+            "textTransform": "uppercase",
+            "color": "#FFFFFF",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "t_handle",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 126,
+            "y": 470
+          },
+          "size": {
+            "width": 240,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "@yourbrand",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#22D3EE",
+            "fontSize": 16,
+            "lineHeight": 1.08,
+            "textTransform": "none"
+          }
+        },
+        {
+          "id": "brand_logo",
+          "type": "image",
+          "assetKey": "social-logo",
+          "role": "logo",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 126,
+            "y": 610
+          },
+          "size": {
+            "width": 120,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://placehold.co/240x72/EC4899/ffffff?text=YOUR+BRAND",
+          "placeholder": true,
+          "alt": "Brand",
+          "style": {
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "brand_name",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 258,
+            "y": 616
+          },
+          "size": {
+            "width": 200,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Your Brand",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 12,
+            "letterSpacing": "0.04em",
+            "textTransform": "none",
+            "color": "rgba(255,255,255,0.7)"
+          }
+        },
+        {
+          "id": "cta_panel",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-card-white",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 642,
+            "y": 82
+          },
+          "size": {
+            "width": 512,
+            "height": 556
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F8FAFC",
+            "borderRadius": "24px",
+            "boxShadow": "0 22px 52px rgba(15,23,42,0.2)"
+          }
+        },
+        {
+          "id": "img_close_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "social-card-dark",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 658,
+            "y": 98
+          },
+          "size": {
+            "width": 480,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1E1B4B",
+            "borderRadius": "18px"
+          }
+        },
+        {
+          "id": "img_close",
+          "type": "image",
+          "assetKey": "social-team",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 658,
+            "y": 98
+          },
+          "size": {
+            "width": 480,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg?auto=compress&cs=tinysrgb&w=1080",
+          "placeholder": true,
+          "alt": "Community",
+          "style": {
+            "borderRadius": "18px",
+            "objectFit": "cover"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#1E1B4B"
+          }
+        },
+        {
+          "id": "t_panel",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 666,
+            "y": 314
+          },
+          "size": {
+            "width": 464,
+            "height": 80
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Save this video and share it with your team — comment if you want the full template pack.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#A1A1AA",
+            "lineHeight": 1.6,
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "save_pill",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 666,
+            "y": 410
+          },
+          "size": {
+            "width": 464,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FBBF24",
+            "borderRadius": "100px"
+          }
+        },
+        {
+          "id": "t_save",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 674,
+            "y": 420
+          },
+          "size": {
+            "width": 448,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "SAVE · SHARE · COMMENT",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 10,
+            "letterSpacing": "0.14em",
+            "textTransform": "uppercase",
+            "color": "#0F172A",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "ico_share_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-card-white",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 1098,
+            "y": 474
+          },
+          "size": {
+            "width": 36,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "14px",
+            "border": "1px solid rgba(15,23,42,0.08)",
+            "boxShadow": "0 8px 20px rgba(15,23,42,0.1)"
+          }
+        },
+        {
+          "id": "ico_share",
+          "type": "image",
+          "assetKey": "share",
+          "role": "icon",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 1105,
+            "y": 481
+          },
+          "size": {
+            "width": 22,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/8B5CF6/share.png",
+          "placeholder": true,
+          "alt": "Share",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "slide_badge_07",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "social-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1110,
+            "y": 78
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#18181B",
+            "borderRadius": "50%",
+            "border": "2px solid #EC4899"
+          }
+        },
+        {
+          "id": "slide_num_07",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1110,
+            "y": 87
+          },
+          "size": {
+            "width": 44,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "07",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "900",
+            "color": "#F472B6",
+            "fontSize": 16,
+            "lineHeight": 1,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1070,
+            "y": 534
+          },
+          "size": {
+            "width": 96,
+            "height": 116
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #22D3EE",
+            "boxShadow": "0 10px 28px rgba(34,211,238,0.28)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-void",
+            "name": "Void",
+            "type": "solid",
+            "value": "#09090B"
+          },
+          {
+            "id": "bg-panel",
+            "name": "Panel",
+            "type": "solid",
+            "value": "#18181B"
+          },
+          {
+            "id": "bg-navy",
+            "name": "Navy",
+            "type": "solid",
+            "value": "#0F172A"
+          },
+          {
+            "id": "bg-gradient-neon",
+            "name": "Neon Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(165deg, #18181B 0%, #09090B 45%, #1e1033 100%)"
+          },
+          {
+            "id": "bg-gradient-navy",
+            "name": "Navy Pro",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #0F172A 0%, #1E1B4B 55%, #312E81 100%)"
+          },
+          {
+            "id": "bg-gradient-pink",
+            "name": "Pink Burst",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #831843 0%, #09090B 55%, #0c4a6e 100%)"
+          },
+          {
+            "id": "bg-gradient-cyan",
+            "name": "Cyan Pulse",
+            "type": "gradient",
+            "value": "linear-gradient(180deg, #0e7490 0%, #09090B 60%)"
+          }
+        ],
+        "hint": "Swap preset colors, custom swatches, or full-bleed photos. Delete a hero image to reveal the panel color behind it."
+      }
+    }
+  ]
+}

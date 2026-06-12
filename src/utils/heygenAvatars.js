@@ -264,8 +264,24 @@ export function getLookId(look) {
   return null;
 }
 
+/** True when id is a HeyGen avatar group (ag_… or group UUID), not a look (lk_…). */
+export function isAvatarGroupId(id) {
+  if (!id) return false;
+  const value = String(id);
+  if (value.startsWith('lk_')) return false;
+  if (value.startsWith('group-') || value.startsWith('group-more-')) return false;
+  return true;
+}
+
 export function getGroupId(group) {
-  return group?.avatar_group_id ?? group?.group_id ?? group?.id ?? null;
+  const candidates = [group?.avatar_group_id, group?.group_id, group?.id];
+  for (const raw of candidates) {
+    if (!raw) continue;
+    const id = String(raw);
+    if (!isAvatarGroupId(id)) continue;
+    return id;
+  }
+  return null;
 }
 
 export function mapAvatarGroup(group) {

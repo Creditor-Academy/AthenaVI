@@ -20,6 +20,7 @@ import { getClipTextContent, isTextLayer } from '../../../../utils/textClip'
 import { pixelRectToPercent, resolveClipRect } from '../../../../utils/clipLayout'
 import { getClipZIndex, isBackgroundClip, sortClipsForRender } from '../../../../utils/editorLayerUtils'
 import { resolveClipMediaSrc, isVideoMedia, isAvatarClip, clipHasHeygenAudio } from '../../../../utils/heygenVideo'
+import { resolveAvatarDisplaySrc } from '../../../../utils/templateAvatarPreview'
 import {
   computeClipAnimationState,
   getAnimatedTextContent,
@@ -271,9 +272,10 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
         }
 
         if (clip.type === 'image' || clip.type === 'avatar' || clip.type === 'video') {
-          const src = resolveClipMediaSrc(clip, scene)
-          const isVideo = isVideoMedia(clip, src)
           const isAvatar = isAvatarClip(clip)
+          const playbackSrc = resolveClipMediaSrc(clip, scene)
+          const src = isAvatar ? (playbackSrc || resolveAvatarDisplaySrc(clip, scene)) : playbackSrc
+          const isVideo = isVideoMedia(clip, playbackSrc)
           const isBg = isBackgroundClip(clip)
           const w = typeof clip.size?.width === 'number' ? clip.size.width : 0
           const h = typeof clip.size?.height === 'number' ? clip.size.height : 0

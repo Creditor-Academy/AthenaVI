@@ -215,21 +215,25 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
 
   const filterGroupsWithSupportedLooks = async (groupList) => {
     const mapped = groupList.map(mapAvatarGroup).filter((g) => g.id);
-    const results = await Promise.all(
-      mapped.map(async (group) => {
-        try {
+    const supported = [];
+    const batchSize = 4;
+
+    for (let i = 0; i < mapped.length; i += batchSize) {
+      const batch = mapped.slice(i, i + batchSize);
+      const batchResults = await Promise.all(
+        batch.map(async (group) => {
           const responseData = await heygenService.getAvatarLooks({
             group_id: group.id,
-            limit: 20,
+            limit: 8,
           });
           const parsed = parseAvatarLooksResponse(responseData);
           return groupHasSupportedLooks(parsed) ? group : null;
-        } catch {
-          return null;
-        }
-      })
-    );
-    return results.filter(Boolean);
+        })
+      );
+      supported.push(...batchResults.filter(Boolean));
+    }
+
+    return supported;
   };
 
   const fetchGroups = async () => {
@@ -240,11 +244,7 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
         limit: 20,
       });
       const data = responseData?.data || responseData;
-      const groupList = extractHeygenList(responseData, [
-        'avatar_groups',
-        'groups',
-        'avatars',
-      ]);
+      const groupList = extractHeygenList(responseData, ['avatar_groups', 'groups']);
       const supportedGroups = await filterGroupsWithSupportedLooks(groupList);
       setGroups(supportedGroups);
       setGroupsHasMore(!!(data?.has_more ?? responseData?.has_more));
@@ -269,7 +269,7 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
         token: groupsNextToken,
       });
       const data = responseData?.data || responseData;
-      const groupList = extractHeygenList(responseData, ['avatar_groups', 'groups', 'avatars']);
+      const groupList = extractHeygenList(responseData, ['avatar_groups', 'groups']);
       const supportedGroups = await filterGroupsWithSupportedLooks(groupList);
       setGroups((prev) => {
         const seen = new Set(prev.map((g) => g.id));

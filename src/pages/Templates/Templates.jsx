@@ -12,37 +12,32 @@ import AllTemplateImg from '../../assets/Template Image/AllTemplate.png'
 import MarketingImg from '../../assets/Template Image/Marketing.png'
 import EducationImg from '../../assets/Template Image/Educational.png'
 import BusinessImg from '../../assets/Template Image/Coporate.png'
-import SocialImg from '../../assets/Template Image/Social.png'
-import PersonalImg from '../../assets/Template Image/Personal.png'
 
 const CATEGORY_ICONS = {
   'All Templates': AllTemplateImg,
-  'Marketing': MarketingImg,
-  'Education': EducationImg,
-  'Business': BusinessImg,
   'Pitch': BusinessImg,
-  'Social Media': SocialImg,
-  'Personal': PersonalImg,
+  'Product Launch': MarketingImg,
+  'Course Module': EducationImg,
+  'Sales Demo': BusinessImg,
+  'Social Short': MarketingImg,
 }
 import TemplatePreview from '../../components/TemplatePreview.jsx'
 import TemplatesSkeleton from '../page-skeleton/TemplatesSkeleton'
 import './Templates.css'
 
-const CATEGORY_FILTERS = ['All Templates', 'Marketing', 'Education', 'Business', 'Pitch', 'Social Media', 'Personal']
+const CATEGORY_FILTERS = ['All Templates', 'Pitch', 'Product Launch', 'Course Module', 'Sales Demo', 'Social Short']
 
 const CATEGORY_MAPPING = {
   'All Templates': null,
-  'Marketing': 'Marketing',
-  'Education': 'Educational',
-  'Business': 'Corporate',
   'Pitch': 'Pitch',
-  'Social Media': 'Social',
-  'Personal': 'Personal'
+  'Product Launch': 'Product Launch',
+  'Course Module': 'Course Module',
+  'Sales Demo': 'Sales Demo',
+  'Social Short': 'Social Short',
 }
 
-// Load templates lazily from the JSON files in /public/templates
 const fetchAllTemplates = async () => {
-  const files = ['marketing', 'educational', 'corporate', 'social', 'personal', 'pitch_template']
+  const files = ['pitch_template', 'product_launch_template', 'course_module_template', 'sales_demo_template', 'social_short_template']
   const results = []
   for (const file of files) {
     try {
@@ -50,15 +45,29 @@ const fetchAllTemplates = async () => {
       const data = await res.json()
       if (data?.scenes) {
         const rawCategory = data.category || data.template?.category || ''
-        const category = file === 'pitch_template' ? 'Pitch' : rawCategory
+        const category = file === 'pitch_template'
+          ? 'Pitch'
+          : file === 'product_launch_template'
+            ? 'Product Launch'
+            : file === 'course_module_template'
+              ? 'Course Module'
+              : file === 'sales_demo_template'
+                ? 'Sales Demo'
+                : file === 'social_short_template'
+                  ? 'Social Short'
+                  : rawCategory
+        const bundleMeta = data.template || {}
+        const bundlePortrait = bundleMeta.aspectRatio === '9:16'
+          || (bundleMeta.canvasSize?.height > bundleMeta.canvasSize?.width)
         data.scenes.forEach(scene => {
+          const scenePortrait = scene.canvasSize?.height > scene.canvasSize?.width
           results.push({
             ...scene,
             name: scene.title || scene.id,
             category,
             tag: (category || '').toUpperCase(),
             thumb: scene.thumbnail || '',
-            ratio: '16:9',
+            ratio: (bundlePortrait || scenePortrait) ? '9:16' : '16:9',
             duration: `${scene.duration || 8}s`,
           })
         })

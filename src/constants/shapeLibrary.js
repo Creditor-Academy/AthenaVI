@@ -27,6 +27,10 @@ export const SHAPE_CATEGORIES = [
   { id: 'speech', label: 'Bubbles' },
   { id: 'clouds', label: 'Clouds' },
   { id: 'pitch', label: 'Pitch' },
+  { id: 'product-launch', label: 'Launch' },
+  { id: 'course-module', label: 'Course' },
+  { id: 'sales-demo', label: 'Sales' },
+  { id: 'social-short', label: 'Social' },
 ];
 
 const SHAPES_GROUP = new Set(['basic', 'polygons', 'stars', 'shapes']);

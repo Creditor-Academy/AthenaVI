@@ -8,6 +8,7 @@ import StaticPreview from './StaticPreview'
 import TemplateGrid from '../../../TemplateGrid'
 import useTemplates from '../../../../hooks/useTemplates'
 import { predefinedAvatars } from '../../../../constants/editorData'
+import { fetchTemplateAvatarLookSet, TEMPLATE_AVATAR_LOOK_COUNT } from '../../../../utils/templateAvatarPreview'
 
 const placeholderAvatar = predefinedAvatars[0].image;
 
@@ -15,8 +16,6 @@ import AllTemplateImg from '../../../../assets/Template Image/AllTemplate.png'
 import MarketingImg from '../../../../assets/Template Image/Marketing.png'
 import EducationImg from '../../../../assets/Template Image/Educational.png'
 import BusinessImg from '../../../../assets/Template Image/Coporate.png'
-import SocialImg from '../../../../assets/Template Image/Social.png'
-import PersonalImg from '../../../../assets/Template Image/Personal.png'
 
 const categories = [
   {
@@ -25,35 +24,30 @@ const categories = [
     previews: [AllTemplateImg]
   },
   {
-    id: 'marketing',
-    label: 'Marketing',
-    previews: [MarketingImg]
-  },
-  {
-    id: 'educational',
-    label: 'Educational',
-    previews: [EducationImg]
-  },
-  {
-    id: 'corporate',
-    label: 'Corporate',
-    previews: [BusinessImg]
-  },
-  {
     id: 'pitch',
     label: 'Pitch',
     previews: [BusinessImg]
   },
   {
-    id: 'social',
-    label: 'Social',
-    previews: [SocialImg]
+    id: 'product launch',
+    label: 'Product Launch',
+    previews: [MarketingImg]
   },
   {
-    id: 'personal',
-    label: 'Personal',
-    previews: [PersonalImg]
-  }
+    id: 'course module',
+    label: 'Course Module',
+    previews: [EducationImg]
+  },
+  {
+    id: 'sales demo',
+    label: 'Sales Demo',
+    previews: [BusinessImg]
+  },
+  {
+    id: 'social short',
+    label: 'Social Short',
+    previews: [MarketingImg]
+  },
 ];
 
 const layoutTypes = ['All Layouts', 'Hero', 'Split', 'Centered', 'Grid', 'Story'];
@@ -64,6 +58,11 @@ const TemplateModal = ({ showTemplateModal, setShowTemplateModal, handleAddTempl
   const [activeLayout, setActiveLayout] = useState('All Layouts')
   
   const { templates, loading } = useTemplates(activeCategory)
+
+  useEffect(() => {
+    if (!showTemplateModal) return;
+    fetchTemplateAvatarLookSet(TEMPLATE_AVATAR_LOOK_COUNT).catch(() => {});
+  }, [showTemplateModal]);
 
   // Combined Filtering Logic
   const filteredTemplates = useMemo(() => {

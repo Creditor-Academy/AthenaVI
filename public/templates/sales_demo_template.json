@@ -1,0 +1,6609 @@
+{
+  "category": "Sales Demo",
+  "template": {
+    "id": "sales-demo-deal-room",
+    "name": "Sales Demo — Deal Room Bundle",
+    "category": "Sales Demo",
+    "theme": {
+      "name": "Deal Room",
+      "fonts": {
+        "display": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+        "serif": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+        "sans": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+        "accent": "Georgia, serif"
+      }
+    },
+    "presenter": {
+      "name": "Account Executive"
+    },
+    "totalSlides": 8,
+    "canvasSize": {
+      "width": 1280,
+      "height": 720
+    },
+    "colorPalette": {
+      "navy": "#0F172A",
+      "slate": "#334155",
+      "ice": "#F1F5F9",
+      "white": "#ffffff",
+      "cobalt": "#2563EB",
+      "cobaltLight": "#3B82F6",
+      "amber": "#F59E0B",
+      "beige": "#F5F0E8",
+      "beigeWarm": "#EDE6D8",
+      "mint": "#10B981",
+      "ink": "#111827",
+      "muted": "#64748B",
+      "line": "#E2E8F0",
+      "panelDark": "#1E293B",
+      "cream": "#FAFAF9"
+    },
+    "description": "Personalized 8-scene sales follow-up: cover, recap, challenges, solution, demo highlights, ROI proof, next steps, and booking CTA."
+  },
+  "scenes": [
+    {
+      "id": "sd_scene_01",
+      "slideIndex": 1,
+      "title": "Personal Cover",
+      "layoutType": "Cover",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Account Executive"
+      },
+      "background": {
+        "type": "gradient",
+        "value": "linear-gradient(145deg, #ffffff 0%, #F1F5F9 55%, #F5F0E8 100%)",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "copy": {
+          "x": 126,
+          "y": 74,
+          "width": 560,
+          "height": 572
+        },
+        "image": {
+          "x": 726,
+          "y": 74,
+          "width": 428,
+          "height": 572
+        },
+        "avatar": {
+          "x": 1074,
+          "y": 538,
+          "width": 92,
+          "height": 112
+        }
+      },
+      "description": "Personalized follow-up cover with prospect name and rep details.",
+      "flow": "Cover → Recap",
+      "duration": 10,
+      "tags": [
+        "sales-demo",
+        "follow-up",
+        "cover",
+        "personalized"
+      ],
+      "clips": [
+        {
+          "id": "bg_base",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "background": "linear-gradient(135deg, #ffffff 0%, #F1F5F9 60%, #F5F0E8 100%)"
+          }
+        },
+        {
+          "id": "img_cover_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 726,
+            "y": 80
+          },
+          "size": {
+            "width": 428,
+            "height": 560
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F1F5F9",
+            "borderRadius": "28px 12px 12px 28px",
+            "boxShadow": "0 22px 52px rgba(15,23,42,0.14)"
+          }
+        },
+        {
+          "id": "img_cover",
+          "type": "image",
+          "assetKey": "sales-handshake",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 726,
+            "y": 80
+          },
+          "size": {
+            "width": 428,
+            "height": 560
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://images.pexels.com/photos/3184296/pexels-photo-3184296.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Partnership moment",
+          "style": {
+            "borderRadius": "28px 12px 12px 28px",
+            "objectFit": "cover",
+            "boxShadow": "0 22px 52px rgba(15,23,42,0.14)"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#F1F5F9"
+          }
+        },
+        {
+          "id": "cover_scrim",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 726,
+            "y": 80
+          },
+          "size": {
+            "width": 72,
+            "height": 560
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "background": "linear-gradient(90deg, rgba(248,250,252,0.95) 0%, transparent 100%)"
+          }
+        },
+        {
+          "id": "accent_bar",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 126,
+            "y": 194
+          },
+          "size": {
+            "width": 6,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#2563EB",
+            "borderRadius": "4px"
+          }
+        },
+        {
+          "id": "img_logo",
+          "type": "image",
+          "assetKey": "sales-logo",
+          "role": "logo",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 126,
+            "y": 74
+          },
+          "size": {
+            "width": 200,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://placehold.co/320x64/0F172A/ffffff?text=YOUR+COMPANY",
+          "placeholder": true,
+          "alt": "Your logo",
+          "style": {
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "t_label",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 146,
+            "y": 130
+          },
+          "size": {
+            "width": 400,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "SALES FOLLOW-UP",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 11,
+            "letterSpacing": "0.2em",
+            "textTransform": "uppercase",
+            "color": "#2563EB"
+          }
+        },
+        {
+          "id": "t_company",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 146,
+            "y": 222
+          },
+          "size": {
+            "width": 520,
+            "height": 120
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Follow-Up for\n[Prospect Company]",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#0F172A",
+            "fontSize": 52,
+            "lineHeight": 1.05
+          }
+        },
+        {
+          "id": "t_sub",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 146,
+            "y": 354
+          },
+          "size": {
+            "width": 520,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Discovery Follow-Up · Prepared after our conversation",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "color": "#334155",
+            "letterSpacing": "0.04em",
+            "textTransform": "none",
+            "fontSize": 12
+          }
+        },
+        {
+          "id": "t_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 146,
+            "y": 398
+          },
+          "size": {
+            "width": 520,
+            "height": 110
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "A personalized recap of what we discussed, the challenges you shared, and the recommended path forward. Replace this with your prospect company name and meeting context.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#334155",
+            "lineHeight": 1.78,
+            "fontSize": 16
+          }
+        },
+        {
+          "id": "rep_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 146,
+            "y": 546
+          },
+          "size": {
+            "width": 340,
+            "height": 72
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "14px",
+            "boxShadow": "0 10px 28px rgba(15,23,42,0.08)"
+          }
+        },
+        {
+          "id": "t_rep_lbl",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 166,
+            "y": 558
+          },
+          "size": {
+            "width": 120,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "PREPARED BY",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 10,
+            "letterSpacing": "0.14em",
+            "textTransform": "uppercase",
+            "color": "#64748B"
+          }
+        },
+        {
+          "id": "t_rep_name",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 166,
+            "y": 582
+          },
+          "size": {
+            "width": 280,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Your Name · Account Executive",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#111827",
+            "letterSpacing": "0.02em",
+            "fontSize": 16,
+            "textTransform": "none"
+          }
+        },
+        {
+          "id": "slide_badge_01",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1110,
+            "y": 78
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#0F172A",
+            "borderRadius": "50%",
+            "border": "3px solid #2563EB"
+          }
+        },
+        {
+          "id": "slide_num_01",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1110,
+            "y": 87
+          },
+          "size": {
+            "width": 44,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "01",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "fontSize": 16,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1074,
+            "y": 538
+          },
+          "size": {
+            "width": 92,
+            "height": 112
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #2563EB",
+            "boxShadow": "0 12px 32px rgba(15, 23, 42, 0.18)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-white",
+            "name": "White",
+            "type": "solid",
+            "value": "#ffffff"
+          },
+          {
+            "id": "bg-ice",
+            "name": "Ice",
+            "type": "solid",
+            "value": "#F1F5F9"
+          },
+          {
+            "id": "bg-beige",
+            "name": "Warm Beige",
+            "type": "solid",
+            "value": "#F5F0E8"
+          },
+          {
+            "id": "bg-cream",
+            "name": "Cream",
+            "type": "solid",
+            "value": "#FAFAF9"
+          },
+          {
+            "id": "bg-navy",
+            "name": "Navy",
+            "type": "solid",
+            "value": "#0F172A"
+          },
+          {
+            "id": "bg-slate",
+            "name": "Slate Panel",
+            "type": "solid",
+            "value": "#334155"
+          },
+          {
+            "id": "bg-gradient-ice",
+            "name": "Ice Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #ffffff 0%, #F1F5F9 55%, #F5F0E8 100%)"
+          },
+          {
+            "id": "bg-gradient-navy",
+            "name": "Navy Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #0F172A 0%, #1E293B 100%)"
+          }
+        ],
+        "hint": "Swap preset colors, custom swatches, or full-bleed photos. Delete a hero image to reveal the panel color behind it."
+      }
+    },
+    {
+      "id": "sd_scene_02",
+      "slideIndex": 2,
+      "title": "Thanks & Recap",
+      "layoutType": "Split",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Account Executive"
+      },
+      "background": {
+        "type": "solid",
+        "value": "#FAFAF9",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "image": {
+          "x": 126,
+          "y": 74,
+          "width": 460,
+          "height": 572
+        },
+        "text": {
+          "x": 606,
+          "y": 74,
+          "width": 528,
+          "height": 572
+        },
+        "avatar": {
+          "x": 1078,
+          "y": 542,
+          "width": 88,
+          "height": 108
+        }
+      },
+      "description": "Thank-you message with meeting recap and supporting photo.",
+      "flow": "Recap → Challenges",
+      "duration": 10,
+      "tags": [
+        "sales-demo",
+        "follow-up",
+        "recap",
+        "thanks"
+      ],
+      "clips": [
+        {
+          "id": "bg02",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#FAFAF9"
+          }
+        },
+        {
+          "id": "blob_tl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-blob-beige",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": -60,
+            "y": -40
+          },
+          "size": {
+            "width": 220,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F5F0E8",
+            "borderRadius": "55% 45% 60% 40% / 50% 55% 45% 50%",
+            "opacity": 0.95
+          }
+        },
+        {
+          "id": "blob_br",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-blob-beige",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 1100,
+            "y": 560
+          },
+          "size": {
+            "width": 240,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#EDE6D8",
+            "borderRadius": "45% 55% 40% 60% / 55% 45% 55% 45%",
+            "opacity": 0.9
+          }
+        },
+        {
+          "id": "blob_tr",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-blob-beige",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 1160,
+            "y": -30
+          },
+          "size": {
+            "width": 160,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F5F0E8",
+            "borderRadius": "50%",
+            "opacity": 0.7
+          }
+        },
+        {
+          "id": "panel_l",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 126,
+            "y": 74
+          },
+          "size": {
+            "width": 460,
+            "height": 572
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "24px",
+            "boxShadow": "0 18px 44px rgba(15,23,42,0.08)"
+          }
+        },
+        {
+          "id": "img_meeting_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 138,
+            "y": 86
+          },
+          "size": {
+            "width": 436,
+            "height": 548
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F1F5F9",
+            "borderRadius": "18px"
+          }
+        },
+        {
+          "id": "img_meeting",
+          "type": "image",
+          "assetKey": "sales-meeting",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 138,
+            "y": 86
+          },
+          "size": {
+            "width": 436,
+            "height": 548
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Meeting",
+          "style": {
+            "borderRadius": "18px",
+            "objectFit": "cover"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#F1F5F9"
+          }
+        },
+        {
+          "id": "t_label",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 606,
+            "y": 82
+          },
+          "size": {
+            "width": 200,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "MEETING RECAP",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "color": "#2563EB",
+            "letterSpacing": "0.08em",
+            "textTransform": "uppercase",
+            "fontSize": 11
+          }
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 606,
+            "y": 114
+          },
+          "size": {
+            "width": 548,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Thanks for\nYour Time Today",
+          "style": {
+            "fontFamily": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+            "fontWeight": "700",
+            "color": "#0F172A",
+            "lineHeight": 1.08,
+            "fontSize": 44
+          }
+        },
+        {
+          "id": "t_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 606,
+            "y": 230
+          },
+          "size": {
+            "width": 532,
+            "height": 120
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Thank you for taking the time to walk through your goals, current workflow, and what success looks like for your team. This short video summarizes our conversation so everyone stays aligned.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#334155",
+            "lineHeight": 1.78,
+            "fontSize": 16
+          }
+        },
+        {
+          "id": "t_body2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 606,
+            "y": 358
+          },
+          "size": {
+            "width": 532,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "In the next few slides you will see the challenges we captured in your words, how our platform maps to each one, the parts of the demo that mattered most, and the concrete next steps we agreed to explore.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#64748B",
+            "lineHeight": 1.78,
+            "fontSize": 15
+          }
+        },
+        {
+          "id": "rule",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 606,
+            "y": 514
+          },
+          "size": {
+            "width": 120,
+            "height": 4
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#2563EB",
+            "borderRadius": "2px"
+          }
+        },
+        {
+          "id": "ico_handshake_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 606,
+            "y": 574
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F1F5F9",
+            "borderRadius": "50%",
+            "boxShadow": "0 6px 18px rgba(15,23,42,0.12)"
+          }
+        },
+        {
+          "id": "ico_handshake",
+          "type": "image",
+          "assetKey": "handshake",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 614,
+            "y": 582
+          },
+          "size": {
+            "width": 24,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/2563EB/handshake.png",
+          "placeholder": true,
+          "alt": "Handshake",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_foot",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 658,
+            "y": 582
+          },
+          "size": {
+            "width": 300,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Personalized for your team",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 11,
+            "letterSpacing": "0.14em",
+            "textTransform": "none",
+            "color": "#334155"
+          }
+        },
+        {
+          "id": "slide_badge_02",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1110,
+            "y": 78
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#0F172A",
+            "borderRadius": "50%",
+            "border": "3px solid #2563EB"
+          }
+        },
+        {
+          "id": "slide_num_02",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1110,
+            "y": 87
+          },
+          "size": {
+            "width": 44,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "02",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "fontSize": 16,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1078,
+            "y": 542
+          },
+          "size": {
+            "width": 88,
+            "height": 108
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #ffffff",
+            "boxShadow": "0 12px 32px rgba(15, 23, 42, 0.18)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-white",
+            "name": "White",
+            "type": "solid",
+            "value": "#ffffff"
+          },
+          {
+            "id": "bg-ice",
+            "name": "Ice",
+            "type": "solid",
+            "value": "#F1F5F9"
+          },
+          {
+            "id": "bg-beige",
+            "name": "Warm Beige",
+            "type": "solid",
+            "value": "#F5F0E8"
+          },
+          {
+            "id": "bg-cream",
+            "name": "Cream",
+            "type": "solid",
+            "value": "#FAFAF9"
+          },
+          {
+            "id": "bg-navy",
+            "name": "Navy",
+            "type": "solid",
+            "value": "#0F172A"
+          },
+          {
+            "id": "bg-slate",
+            "name": "Slate Panel",
+            "type": "solid",
+            "value": "#334155"
+          },
+          {
+            "id": "bg-gradient-ice",
+            "name": "Ice Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #ffffff 0%, #F1F5F9 55%, #F5F0E8 100%)"
+          },
+          {
+            "id": "bg-gradient-navy",
+            "name": "Navy Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #0F172A 0%, #1E293B 100%)"
+          }
+        ],
+        "hint": "Swap preset colors, custom swatches, or full-bleed photos. Delete a hero image to reveal the panel color behind it."
+      }
+    },
+    {
+      "id": "sd_scene_03",
+      "slideIndex": 3,
+      "title": "Your Challenges",
+      "layoutType": "Split",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Account Executive"
+      },
+      "background": {
+        "type": "solid",
+        "value": "#ffffff",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "icon": {
+          "x": 138,
+          "y": 126,
+          "width": 152,
+          "height": 152
+        },
+        "copy": {
+          "x": 310,
+          "y": 122,
+          "width": 832,
+          "height": 220
+        },
+        "images": {
+          "x": 126,
+          "y": 352,
+          "width": 1028,
+          "height": 248
+        },
+        "avatar": {
+          "x": 114,
+          "y": 542,
+          "width": 88,
+          "height": 108
+        }
+      },
+      "description": "Icon + narrative top, dual photo strip bottom — inspired by problem-statement decks.",
+      "flow": "Challenges → Solution",
+      "duration": 10,
+      "tags": [
+        "sales-demo",
+        "follow-up",
+        "challenges",
+        "pain-points"
+      ],
+      "clips": [
+        {
+          "id": "bg03",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff"
+          }
+        },
+        {
+          "id": "blob_tl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-blob-beige",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": -60,
+            "y": -40
+          },
+          "size": {
+            "width": 220,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F5F0E8",
+            "borderRadius": "55% 45% 60% 40% / 50% 55% 45% 50%",
+            "opacity": 0.95
+          }
+        },
+        {
+          "id": "blob_br",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-blob-beige",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 1100,
+            "y": 560
+          },
+          "size": {
+            "width": 240,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#EDE6D8",
+            "borderRadius": "45% 55% 40% 60% / 55% 45% 55% 45%",
+            "opacity": 0.9
+          }
+        },
+        {
+          "id": "blob_tr",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-blob-beige",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 1160,
+            "y": -30
+          },
+          "size": {
+            "width": 160,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F5F0E8",
+            "borderRadius": "50%",
+            "opacity": 0.7
+          }
+        },
+        {
+          "id": "dot_0_0",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 114,
+            "y": 70
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#3B82F6",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_0_1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 127,
+            "y": 70
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#3B82F6",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_0_2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 140,
+            "y": 70
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#3B82F6",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_0_3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 153,
+            "y": 70
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#3B82F6",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_0_4",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 166,
+            "y": 70
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#3B82F6",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_1_0",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 114,
+            "y": 83
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#3B82F6",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_1_1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 127,
+            "y": 83
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#3B82F6",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_1_2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 140,
+            "y": 83
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#3B82F6",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_1_3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 153,
+            "y": 83
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#3B82F6",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_1_4",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 166,
+            "y": 83
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#3B82F6",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_2_0",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 114,
+            "y": 96
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#3B82F6",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_2_1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 127,
+            "y": 96
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#3B82F6",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_2_2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 140,
+            "y": 96
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#3B82F6",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_2_3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 153,
+            "y": 96
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#3B82F6",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "dot_2_4",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-dot-grid",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 166,
+            "y": 96
+          },
+          "size": {
+            "width": 7,
+            "height": 7
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#3B82F6",
+            "borderRadius": "50%",
+            "opacity": 0.55
+          }
+        },
+        {
+          "id": "pain_ring",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 138,
+            "y": 126
+          },
+          "size": {
+            "width": 152,
+            "height": 152
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F1F5F9",
+            "borderRadius": "50%",
+            "border": "5px solid #0F172A",
+            "boxShadow": "0 14px 36px rgba(15,23,42,0.1)"
+          }
+        },
+        {
+          "id": "pain_plate",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 160,
+            "y": 153
+          },
+          "size": {
+            "width": 109,
+            "height": 58
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F59E0B",
+            "borderRadius": "16px"
+          }
+        },
+        {
+          "id": "pain_visor",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 160,
+            "y": 203
+          },
+          "size": {
+            "width": 109,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#0F172A",
+            "borderRadius": "0 0 14px 14px",
+            "opacity": 0.92
+          }
+        },
+        {
+          "id": "pain_ico_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 181,
+            "y": 159
+          },
+          "size": {
+            "width": 67,
+            "height": 67
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "transparent",
+            "borderRadius": "50%",
+            "boxShadow": "0 6px 18px rgba(15,23,42,0.12)"
+          }
+        },
+        {
+          "id": "pain_ico",
+          "type": "image",
+          "assetKey": "target",
+          "role": "icon",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 194,
+            "y": 172
+          },
+          "size": {
+            "width": 41,
+            "height": 41
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/2563EB/bullseye.png",
+          "placeholder": true,
+          "alt": "Target",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_eyebrow",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 310,
+            "y": 130
+          },
+          "size": {
+            "width": 400,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "WHAT WE HEARD ON THE CALL",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "color": "#2563EB",
+            "letterSpacing": "0.08em",
+            "textTransform": "uppercase",
+            "fontSize": 11
+          }
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 310,
+            "y": 156
+          },
+          "size": {
+            "width": 836,
+            "height": 56
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Your Challenges",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#111827",
+            "fontSize": 44
+          }
+        },
+        {
+          "id": "t_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 310,
+            "y": 222
+          },
+          "size": {
+            "width": 828,
+            "height": 112
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "During our call you highlighted friction in your current process — manual handoffs between teams, slow reporting cycles, and limited visibility for stakeholders who need a clear picture of pipeline health. These gaps create delays, rework, and missed opportunities every week.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#334155",
+            "lineHeight": 1.78,
+            "fontSize": 18
+          }
+        },
+        {
+          "id": "t_cap",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 310,
+            "y": 342
+          },
+          "size": {
+            "width": 828,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "The photos below reflect the day-to-day reality your team described: operational complexity on one side, and pressure to deliver accurate updates on the other.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#64748B",
+            "lineHeight": 1.78,
+            "fontSize": 15
+          }
+        },
+        {
+          "id": "img_ch_a_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 126,
+            "y": 352
+          },
+          "size": {
+            "width": 504,
+            "height": 248
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F5F0E8",
+            "borderRadius": "22px",
+            "boxShadow": "0 14px 36px rgba(15,23,42,0.12)"
+          }
+        },
+        {
+          "id": "img_ch_a",
+          "type": "image",
+          "assetKey": "sales-challenge-a",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 126,
+            "y": 352
+          },
+          "size": {
+            "width": 504,
+            "height": 248
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Challenge context",
+          "style": {
+            "borderRadius": "22px",
+            "objectFit": "cover",
+            "boxShadow": "0 14px 36px rgba(15,23,42,0.12)"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#F5F0E8"
+          }
+        },
+        {
+          "id": "img_ch_b_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 650,
+            "y": 352
+          },
+          "size": {
+            "width": 504,
+            "height": 248
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F5F0E8",
+            "borderRadius": "22px",
+            "boxShadow": "0 14px 36px rgba(15,23,42,0.12)"
+          }
+        },
+        {
+          "id": "img_ch_b",
+          "type": "image",
+          "assetKey": "sales-challenge-b",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 650,
+            "y": 352
+          },
+          "size": {
+            "width": 504,
+            "height": 248
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Team workflow",
+          "style": {
+            "borderRadius": "22px",
+            "objectFit": "cover",
+            "boxShadow": "0 14px 36px rgba(15,23,42,0.12)"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#F5F0E8"
+          }
+        },
+        {
+          "id": "slide_badge_03",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1110,
+            "y": 78
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#0F172A",
+            "borderRadius": "50%",
+            "border": "3px solid #2563EB"
+          }
+        },
+        {
+          "id": "slide_num_03",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1110,
+            "y": 87
+          },
+          "size": {
+            "width": 44,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "03",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "fontSize": 16,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 114,
+            "y": 542
+          },
+          "size": {
+            "width": 88,
+            "height": 108
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #ffffff",
+            "boxShadow": "0 12px 32px rgba(15, 23, 42, 0.18)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-white",
+            "name": "White",
+            "type": "solid",
+            "value": "#ffffff"
+          },
+          {
+            "id": "bg-ice",
+            "name": "Ice",
+            "type": "solid",
+            "value": "#F1F5F9"
+          },
+          {
+            "id": "bg-beige",
+            "name": "Warm Beige",
+            "type": "solid",
+            "value": "#F5F0E8"
+          },
+          {
+            "id": "bg-cream",
+            "name": "Cream",
+            "type": "solid",
+            "value": "#FAFAF9"
+          },
+          {
+            "id": "bg-navy",
+            "name": "Navy",
+            "type": "solid",
+            "value": "#0F172A"
+          },
+          {
+            "id": "bg-slate",
+            "name": "Slate Panel",
+            "type": "solid",
+            "value": "#334155"
+          },
+          {
+            "id": "bg-gradient-ice",
+            "name": "Ice Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #ffffff 0%, #F1F5F9 55%, #F5F0E8 100%)"
+          },
+          {
+            "id": "bg-gradient-navy",
+            "name": "Navy Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #0F172A 0%, #1E293B 100%)"
+          }
+        ],
+        "hint": "Swap preset colors, custom swatches, or full-bleed photos. Delete a hero image to reveal the panel color behind it."
+      }
+    },
+    {
+      "id": "sd_scene_04",
+      "slideIndex": 4,
+      "title": "Our Solution",
+      "layoutType": "Split",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Account Executive"
+      },
+      "background": {
+        "type": "solid",
+        "value": "#F1F5F9",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "copy": {
+          "x": 126,
+          "y": 74,
+          "width": 500,
+          "height": 572
+        },
+        "image": {
+          "x": 646,
+          "y": 74,
+          "width": 508,
+          "height": 572
+        },
+        "avatar": {
+          "x": 1070,
+          "y": 534,
+          "width": 96,
+          "height": 116
+        }
+      },
+      "description": "Navy solution panel with mapped bullets and product visual.",
+      "flow": "Solution → Demo",
+      "duration": 10,
+      "tags": [
+        "sales-demo",
+        "follow-up",
+        "solution",
+        "mapping"
+      ],
+      "clips": [
+        {
+          "id": "bg04",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F1F5F9"
+          }
+        },
+        {
+          "id": "panel_navy",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-navy-panel",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 126,
+            "y": 74
+          },
+          "size": {
+            "width": 500,
+            "height": 572
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#0F172A",
+            "borderRadius": "24px",
+            "boxShadow": "0 20px 50px rgba(15,23,42,0.2)"
+          }
+        },
+        {
+          "id": "t_label",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 158,
+            "y": 102
+          },
+          "size": {
+            "width": 200,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "OUR RESPONSE",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 11,
+            "letterSpacing": "0.14em",
+            "textTransform": "uppercase",
+            "color": "#3B82F6"
+          }
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 158,
+            "y": 130
+          },
+          "size": {
+            "width": 436,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "How We Address\nYour Priorities",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#ffffff",
+            "fontSize": 38,
+            "lineHeight": 1.1
+          }
+        },
+        {
+          "id": "t_intro",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 158,
+            "y": 242
+          },
+          "size": {
+            "width": 436,
+            "height": 64
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Based on what you shared, we mapped three solution areas that directly address your priorities. Each one connects to a capability we demonstrated live and can be rolled out in phases.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "rgba(241,245,249,0.9)",
+            "lineHeight": 1.7,
+            "fontSize": 15
+          }
+        },
+        {
+          "id": "sol0_row",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 158,
+            "y": 322
+          },
+          "size": {
+            "width": 436,
+            "height": 72
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(255,255,255,0.06)",
+            "borderRadius": "12px",
+            "border": "1px solid rgba(255,255,255,0.1)"
+          }
+        },
+        {
+          "id": "sol0_ico_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 172,
+            "y": 338
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#2563EB",
+            "borderRadius": "50%",
+            "boxShadow": "0 6px 18px rgba(15,23,42,0.12)"
+          }
+        },
+        {
+          "id": "sol0_ico",
+          "type": "image",
+          "assetKey": "check",
+          "role": "icon",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 180,
+            "y": 346
+          },
+          "size": {
+            "width": 24,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/10B981/checkmark.png",
+          "placeholder": true,
+          "alt": "Check",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "sol0_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 222,
+            "y": 336
+          },
+          "size": {
+            "width": 360,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Unified workflow",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#ffffff",
+            "letterSpacing": "0",
+            "fontSize": 16,
+            "textTransform": "none"
+          }
+        },
+        {
+          "id": "sol0_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 222,
+            "y": 362
+          },
+          "size": {
+            "width": 360,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "One place to plan, execute, and report — no more spreadsheet sprawl.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "rgba(241,245,249,0.82)",
+            "lineHeight": 1.5,
+            "fontSize": 13
+          }
+        },
+        {
+          "id": "sol1_row",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 158,
+            "y": 406
+          },
+          "size": {
+            "width": 436,
+            "height": 72
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(255,255,255,0.06)",
+            "borderRadius": "12px",
+            "border": "1px solid rgba(255,255,255,0.1)"
+          }
+        },
+        {
+          "id": "sol1_ico_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 172,
+            "y": 422
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#2563EB",
+            "borderRadius": "50%",
+            "boxShadow": "0 6px 18px rgba(15,23,42,0.12)"
+          }
+        },
+        {
+          "id": "sol1_ico",
+          "type": "image",
+          "assetKey": "check",
+          "role": "icon",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 180,
+            "y": 430
+          },
+          "size": {
+            "width": 24,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/10B981/checkmark.png",
+          "placeholder": true,
+          "alt": "Check",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "sol1_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 222,
+            "y": 420
+          },
+          "size": {
+            "width": 360,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Automated insights",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#ffffff",
+            "letterSpacing": "0",
+            "fontSize": 16,
+            "textTransform": "none"
+          }
+        },
+        {
+          "id": "sol1_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 222,
+            "y": 446
+          },
+          "size": {
+            "width": 360,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Dashboards that update without manual exports or status meetings.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "rgba(241,245,249,0.82)",
+            "lineHeight": 1.5,
+            "fontSize": 13
+          }
+        },
+        {
+          "id": "sol2_row",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 158,
+            "y": 490
+          },
+          "size": {
+            "width": 436,
+            "height": 72
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(255,255,255,0.06)",
+            "borderRadius": "12px",
+            "border": "1px solid rgba(255,255,255,0.1)"
+          }
+        },
+        {
+          "id": "sol2_ico_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 172,
+            "y": 506
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#2563EB",
+            "borderRadius": "50%",
+            "boxShadow": "0 6px 18px rgba(15,23,42,0.12)"
+          }
+        },
+        {
+          "id": "sol2_ico",
+          "type": "image",
+          "assetKey": "check",
+          "role": "icon",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 180,
+            "y": 514
+          },
+          "size": {
+            "width": 24,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/10B981/checkmark.png",
+          "placeholder": true,
+          "alt": "Check",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "sol2_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 222,
+            "y": 504
+          },
+          "size": {
+            "width": 360,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Secure collaboration",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#ffffff",
+            "letterSpacing": "0",
+            "fontSize": 16,
+            "textTransform": "none"
+          }
+        },
+        {
+          "id": "sol2_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 222,
+            "y": 530
+          },
+          "size": {
+            "width": 360,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Shareable views for leadership, ops, and customer-facing teams.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "rgba(241,245,249,0.82)",
+            "lineHeight": 1.5,
+            "fontSize": 13
+          }
+        },
+        {
+          "id": "cobalt_tag",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 158,
+            "y": 574
+          },
+          "size": {
+            "width": 140,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#2563EB",
+            "borderRadius": "100px"
+          }
+        },
+        {
+          "id": "t_tag",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 174,
+            "y": 582
+          },
+          "size": {
+            "width": 108,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "MAPPED LIVE",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 10,
+            "letterSpacing": "0.14em",
+            "textTransform": "uppercase",
+            "color": "#ffffff",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "img_solution_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 646,
+            "y": 74
+          },
+          "size": {
+            "width": 508,
+            "height": 572
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#1E293B",
+            "borderRadius": "24px",
+            "boxShadow": "0 18px 44px rgba(15,23,42,0.15)"
+          }
+        },
+        {
+          "id": "img_solution",
+          "type": "image",
+          "assetKey": "sales-dashboard",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 646,
+            "y": 74
+          },
+          "size": {
+            "width": 508,
+            "height": 572
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://images.pexels.com/photos/590022/pexels-photo-590022.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Solution dashboard",
+          "style": {
+            "borderRadius": "24px",
+            "objectFit": "cover",
+            "boxShadow": "0 18px 44px rgba(15,23,42,0.15)"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#1E293B"
+          }
+        },
+        {
+          "id": "slide_badge_04",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1110,
+            "y": 78
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#0F172A",
+            "borderRadius": "50%",
+            "border": "3px solid #2563EB"
+          }
+        },
+        {
+          "id": "slide_num_04",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1110,
+            "y": 87
+          },
+          "size": {
+            "width": 44,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "04",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "fontSize": 16,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1070,
+            "y": 534
+          },
+          "size": {
+            "width": 96,
+            "height": 116
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #ffffff",
+            "boxShadow": "0 12px 32px rgba(15, 23, 42, 0.18)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-white",
+            "name": "White",
+            "type": "solid",
+            "value": "#ffffff"
+          },
+          {
+            "id": "bg-ice",
+            "name": "Ice",
+            "type": "solid",
+            "value": "#F1F5F9"
+          },
+          {
+            "id": "bg-beige",
+            "name": "Warm Beige",
+            "type": "solid",
+            "value": "#F5F0E8"
+          },
+          {
+            "id": "bg-cream",
+            "name": "Cream",
+            "type": "solid",
+            "value": "#FAFAF9"
+          },
+          {
+            "id": "bg-navy",
+            "name": "Navy",
+            "type": "solid",
+            "value": "#0F172A"
+          },
+          {
+            "id": "bg-slate",
+            "name": "Slate Panel",
+            "type": "solid",
+            "value": "#334155"
+          },
+          {
+            "id": "bg-gradient-ice",
+            "name": "Ice Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #ffffff 0%, #F1F5F9 55%, #F5F0E8 100%)"
+          },
+          {
+            "id": "bg-gradient-navy",
+            "name": "Navy Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #0F172A 0%, #1E293B 100%)"
+          }
+        ],
+        "hint": "Swap preset colors, custom swatches, or full-bleed photos. Delete a hero image to reveal the panel color behind it."
+      }
+    },
+    {
+      "id": "sd_scene_05",
+      "slideIndex": 5,
+      "title": "Demo Highlights",
+      "layoutType": "Grid",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Account Executive"
+      },
+      "background": {
+        "type": "solid",
+        "value": "#F5F0E8",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "grid": {
+          "x": 126,
+          "y": 154,
+          "width": 1028,
+          "height": 400
+        },
+        "avatar": {
+          "x": 1026,
+          "y": 70,
+          "width": 84,
+          "height": 102
+        }
+      },
+      "description": "Three demo moments with screenshot frames and captions.",
+      "flow": "Demo → Proof",
+      "duration": 10,
+      "tags": [
+        "sales-demo",
+        "follow-up",
+        "demo",
+        "features"
+      ],
+      "clips": [
+        {
+          "id": "bg05",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F5F0E8"
+          }
+        },
+        {
+          "id": "blob_tl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-blob-beige",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": -60,
+            "y": -40
+          },
+          "size": {
+            "width": 220,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F5F0E8",
+            "borderRadius": "55% 45% 60% 40% / 50% 55% 45% 50%",
+            "opacity": 0.95
+          }
+        },
+        {
+          "id": "blob_br",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-blob-beige",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 1100,
+            "y": 560
+          },
+          "size": {
+            "width": 240,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#EDE6D8",
+            "borderRadius": "45% 55% 40% 60% / 55% 45% 55% 45%",
+            "opacity": 0.9
+          }
+        },
+        {
+          "id": "blob_tr",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-blob-beige",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 1160,
+            "y": -30
+          },
+          "size": {
+            "width": 160,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F5F0E8",
+            "borderRadius": "50%",
+            "opacity": 0.7
+          }
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 126,
+            "y": 74
+          },
+          "size": {
+            "width": 1028,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "What We Showed You",
+          "style": {
+            "fontFamily": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+            "fontWeight": "700",
+            "color": "#0F172A",
+            "lineHeight": 1.08,
+            "fontSize": 40
+          }
+        },
+        {
+          "id": "t_sub",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 126,
+            "y": 126
+          },
+          "size": {
+            "width": 1028,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Here are the three parts of the demo that resonated most with your team. Swap the screenshots for your actual product views and tailor each caption to what you walked through on the call.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#334155",
+            "lineHeight": 1.78,
+            "fontSize": 16
+          }
+        },
+        {
+          "id": "feat1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 126,
+            "y": 186
+          },
+          "size": {
+            "width": 332,
+            "height": 380
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "20px",
+            "boxShadow": "0 16px 40px rgba(15,23,42,0.08)",
+            "borderTop": "4px solid #2563EB"
+          }
+        },
+        {
+          "id": "num1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 146,
+            "y": 206
+          },
+          "size": {
+            "width": 36,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#2563EB",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "numt1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 146,
+            "y": 214
+          },
+          "size": {
+            "width": 36,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "01",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "fontSize": 16,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "img_feat1_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 142,
+            "y": 254
+          },
+          "size": {
+            "width": 300,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F1F5F9",
+            "borderRadius": "14px"
+          }
+        },
+        {
+          "id": "img_feat1",
+          "type": "image",
+          "assetKey": "sales-feature-a",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 142,
+            "y": 254
+          },
+          "size": {
+            "width": 300,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://images.pexels.com/photos/7376/startup-photos.jpg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Workflow Hub",
+          "style": {
+            "borderRadius": "14px",
+            "objectFit": "cover"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#F1F5F9"
+          }
+        },
+        {
+          "id": "ht1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 146,
+            "y": 410
+          },
+          "size": {
+            "width": 292,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Workflow Hub",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 20,
+            "color": "#111827"
+          }
+        },
+        {
+          "id": "bt1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 146,
+            "y": 450
+          },
+          "size": {
+            "width": 292,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "The unified workspace view we opened first — where your team plans, tracks, and shares updates without switching tools.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 14,
+            "color": "#334155",
+            "lineHeight": 1.65
+          }
+        },
+        {
+          "id": "feat2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 474,
+            "y": 186
+          },
+          "size": {
+            "width": 332,
+            "height": 380
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "20px",
+            "boxShadow": "0 16px 40px rgba(15,23,42,0.08)",
+            "borderTop": "4px solid #10B981"
+          }
+        },
+        {
+          "id": "num2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 494,
+            "y": 206
+          },
+          "size": {
+            "width": 36,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#10B981",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "numt2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 494,
+            "y": 214
+          },
+          "size": {
+            "width": 36,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "02",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "fontSize": 16,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "img_feat2_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 490,
+            "y": 254
+          },
+          "size": {
+            "width": 300,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F1F5F9",
+            "borderRadius": "14px"
+          }
+        },
+        {
+          "id": "img_feat2",
+          "type": "image",
+          "assetKey": "sales-feature-b",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 490,
+            "y": 254
+          },
+          "size": {
+            "width": 300,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://images.pexels.com/photos/265087/pexels-photo-265087.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Live Analytics",
+          "style": {
+            "borderRadius": "14px",
+            "objectFit": "cover"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#F1F5F9"
+          }
+        },
+        {
+          "id": "ht2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 17,
+          "position": {
+            "x": 494,
+            "y": 410
+          },
+          "size": {
+            "width": 292,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Live Analytics",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 20,
+            "color": "#111827"
+          }
+        },
+        {
+          "id": "bt2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 18,
+          "position": {
+            "x": 494,
+            "y": 450
+          },
+          "size": {
+            "width": 292,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "The reporting panel that updates automatically so leadership sees progress without waiting for manual exports.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 14,
+            "color": "#334155",
+            "lineHeight": 1.65
+          }
+        },
+        {
+          "id": "feat3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 822,
+            "y": 186
+          },
+          "size": {
+            "width": 332,
+            "height": 380
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "20px",
+            "boxShadow": "0 16px 40px rgba(15,23,42,0.08)",
+            "borderTop": "4px solid #F59E0B"
+          }
+        },
+        {
+          "id": "num3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 842,
+            "y": 206
+          },
+          "size": {
+            "width": 36,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F59E0B",
+            "borderRadius": "50%"
+          }
+        },
+        {
+          "id": "numt3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 20,
+          "position": {
+            "x": 842,
+            "y": 214
+          },
+          "size": {
+            "width": 36,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "03",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "fontSize": 16,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "img_feat3_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 838,
+            "y": 254
+          },
+          "size": {
+            "width": 300,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F1F5F9",
+            "borderRadius": "14px"
+          }
+        },
+        {
+          "id": "img_feat3",
+          "type": "image",
+          "assetKey": "sales-feature-c",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 838,
+            "y": 254
+          },
+          "size": {
+            "width": 300,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://images.pexels.com/photos/3861979/pexels-photo-3861979.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Team Handoffs",
+          "style": {
+            "borderRadius": "14px",
+            "objectFit": "cover"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#F1F5F9"
+          }
+        },
+        {
+          "id": "ht3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 21,
+          "position": {
+            "x": 842,
+            "y": 410
+          },
+          "size": {
+            "width": 292,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Team Handoffs",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 20,
+            "color": "#111827"
+          }
+        },
+        {
+          "id": "bt3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 22,
+          "position": {
+            "x": 842,
+            "y": 450
+          },
+          "size": {
+            "width": 292,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "The collaboration view that keeps marketing, sales, and success aligned on every active opportunity.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 14,
+            "color": "#334155",
+            "lineHeight": 1.65
+          }
+        },
+        {
+          "id": "slide_badge_05",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1110,
+            "y": 78
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#0F172A",
+            "borderRadius": "50%",
+            "border": "3px solid #2563EB"
+          }
+        },
+        {
+          "id": "slide_num_05",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1110,
+            "y": 87
+          },
+          "size": {
+            "width": 44,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "05",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "fontSize": 16,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1026,
+            "y": 70
+          },
+          "size": {
+            "width": 84,
+            "height": 102
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #ffffff",
+            "boxShadow": "0 12px 32px rgba(15, 23, 42, 0.18)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-white",
+            "name": "White",
+            "type": "solid",
+            "value": "#ffffff"
+          },
+          {
+            "id": "bg-ice",
+            "name": "Ice",
+            "type": "solid",
+            "value": "#F1F5F9"
+          },
+          {
+            "id": "bg-beige",
+            "name": "Warm Beige",
+            "type": "solid",
+            "value": "#F5F0E8"
+          },
+          {
+            "id": "bg-cream",
+            "name": "Cream",
+            "type": "solid",
+            "value": "#FAFAF9"
+          },
+          {
+            "id": "bg-navy",
+            "name": "Navy",
+            "type": "solid",
+            "value": "#0F172A"
+          },
+          {
+            "id": "bg-slate",
+            "name": "Slate Panel",
+            "type": "solid",
+            "value": "#334155"
+          },
+          {
+            "id": "bg-gradient-ice",
+            "name": "Ice Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #ffffff 0%, #F1F5F9 55%, #F5F0E8 100%)"
+          },
+          {
+            "id": "bg-gradient-navy",
+            "name": "Navy Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #0F172A 0%, #1E293B 100%)"
+          }
+        ],
+        "hint": "Swap preset colors, custom swatches, or full-bleed photos. Delete a hero image to reveal the panel color behind it."
+      }
+    },
+    {
+      "id": "sd_scene_06",
+      "slideIndex": 6,
+      "title": "ROI & Proof",
+      "layoutType": "StatsHighlight",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Account Executive"
+      },
+      "background": {
+        "type": "solid",
+        "value": "#ffffff",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "stats": {
+          "x": 126,
+          "y": 146,
+          "width": 1028,
+          "height": 160
+        },
+        "avatar": {
+          "x": 114,
+          "y": 542,
+          "width": 88,
+          "height": 108
+        }
+      },
+      "description": "Impact metrics with customer quote and proof image.",
+      "flow": "Proof → Next Steps",
+      "duration": 10,
+      "tags": [
+        "sales-demo",
+        "follow-up",
+        "roi",
+        "social-proof"
+      ],
+      "clips": [
+        {
+          "id": "bg06",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff"
+          }
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 126,
+            "y": 74
+          },
+          "size": {
+            "width": 560,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Results Teams Like Yours See",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#0F172A",
+            "fontSize": 40
+          }
+        },
+        {
+          "id": "t_sub",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 126,
+            "y": 126
+          },
+          "size": {
+            "width": 1028,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Teams in similar situations typically see measurable impact within the first quarter — faster cycle times, fewer status meetings, and clearer ownership across handoffs.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#334155",
+            "lineHeight": 1.78,
+            "fontSize": 16
+          }
+        },
+        {
+          "id": "stat0",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-stat-tile",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 126,
+            "y": 162
+          },
+          "size": {
+            "width": 260,
+            "height": 148
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "16px",
+            "boxShadow": "0 12px 32px rgba(15,23,42,0.08)",
+            "border": "1px solid #E2E8F0"
+          }
+        },
+        {
+          "id": "stat_accent0",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 126,
+            "y": 162
+          },
+          "size": {
+            "width": 260,
+            "height": 5
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#2563EB",
+            "borderRadius": "16px 16px 0 0"
+          }
+        },
+        {
+          "id": "sv0",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 150,
+            "y": 186
+          },
+          "size": {
+            "width": 212,
+            "height": 56
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "40%",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#2563EB",
+            "fontSize": 44
+          }
+        },
+        {
+          "id": "sl0",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 150,
+            "y": 254
+          },
+          "size": {
+            "width": 212,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Faster follow-up cycles",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 11,
+            "letterSpacing": "0.06em",
+            "textTransform": "none",
+            "color": "#334155"
+          }
+        },
+        {
+          "id": "stat1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-stat-tile",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 406,
+            "y": 162
+          },
+          "size": {
+            "width": 260,
+            "height": 148
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "16px",
+            "boxShadow": "0 12px 32px rgba(15,23,42,0.08)",
+            "border": "1px solid #E2E8F0"
+          }
+        },
+        {
+          "id": "stat_accent1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 406,
+            "y": 162
+          },
+          "size": {
+            "width": 260,
+            "height": 5
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#10B981",
+            "borderRadius": "16px 16px 0 0"
+          }
+        },
+        {
+          "id": "sv1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 430,
+            "y": 186
+          },
+          "size": {
+            "width": 212,
+            "height": 56
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "$120K",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#10B981",
+            "fontSize": 44
+          }
+        },
+        {
+          "id": "sl1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 430,
+            "y": 254
+          },
+          "size": {
+            "width": 212,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Avg. annual savings",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 11,
+            "letterSpacing": "0.06em",
+            "textTransform": "none",
+            "color": "#334155"
+          }
+        },
+        {
+          "id": "stat2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-stat-tile",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 686,
+            "y": 162
+          },
+          "size": {
+            "width": 260,
+            "height": 148
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "16px",
+            "boxShadow": "0 12px 32px rgba(15,23,42,0.08)",
+            "border": "1px solid #E2E8F0"
+          }
+        },
+        {
+          "id": "stat_accent2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 686,
+            "y": 162
+          },
+          "size": {
+            "width": 260,
+            "height": 5
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F59E0B",
+            "borderRadius": "16px 16px 0 0"
+          }
+        },
+        {
+          "id": "sv2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 710,
+            "y": 186
+          },
+          "size": {
+            "width": 212,
+            "height": 56
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "98%",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#F59E0B",
+            "fontSize": 44
+          }
+        },
+        {
+          "id": "sl2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 17,
+          "position": {
+            "x": 710,
+            "y": 254
+          },
+          "size": {
+            "width": 212,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Rep satisfaction",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 11,
+            "letterSpacing": "0.06em",
+            "textTransform": "none",
+            "color": "#334155"
+          }
+        },
+        {
+          "id": "quote_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-quote-bar",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 126,
+            "y": 334
+          },
+          "size": {
+            "width": 720,
+            "height": 172
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "16px",
+            "borderLeft": "5px solid #2563EB",
+            "boxShadow": "0 12px 32px rgba(15,23,42,0.08)"
+          }
+        },
+        {
+          "id": "t_quote",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 154,
+            "y": 358
+          },
+          "size": {
+            "width": 680,
+            "height": 96
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "\"We finally have one source of truth for customer conversations and follow-up. Our reps send personalized recap videos instead of long email threads.\"",
+          "style": {
+            "fontFamily": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+            "fontWeight": "500",
+            "fontStyle": "italic",
+            "color": "#0F172A",
+            "lineHeight": 1.45,
+            "fontSize": 21
+          }
+        },
+        {
+          "id": "t_author",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 154,
+            "y": 466
+          },
+          "size": {
+            "width": 400,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "— VP Sales, Enterprise SaaS",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "color": "#111827",
+            "lineHeight": 1.78,
+            "fontSize": 14,
+            "fontStyle": "normal"
+          }
+        },
+        {
+          "id": "img_proof_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 866,
+            "y": 334
+          },
+          "size": {
+            "width": 288,
+            "height": 172
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F1F5F9",
+            "borderRadius": "16px"
+          }
+        },
+        {
+          "id": "img_proof",
+          "type": "image",
+          "assetKey": "sales-testimonial",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 866,
+            "y": 334
+          },
+          "size": {
+            "width": 288,
+            "height": 172
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://images.pexels.com/photos/3182812/pexels-photo-3182812.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Customer moment",
+          "style": {
+            "borderRadius": "16px",
+            "objectFit": "cover"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#F1F5F9"
+          }
+        },
+        {
+          "id": "slide_badge_06",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1110,
+            "y": 78
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#0F172A",
+            "borderRadius": "50%",
+            "border": "3px solid #2563EB"
+          }
+        },
+        {
+          "id": "slide_num_06",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1110,
+            "y": 87
+          },
+          "size": {
+            "width": 44,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "06",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "fontSize": 16,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 114,
+            "y": 542
+          },
+          "size": {
+            "width": 88,
+            "height": 108
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #ffffff",
+            "boxShadow": "0 12px 32px rgba(15, 23, 42, 0.18)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-white",
+            "name": "White",
+            "type": "solid",
+            "value": "#ffffff"
+          },
+          {
+            "id": "bg-ice",
+            "name": "Ice",
+            "type": "solid",
+            "value": "#F1F5F9"
+          },
+          {
+            "id": "bg-beige",
+            "name": "Warm Beige",
+            "type": "solid",
+            "value": "#F5F0E8"
+          },
+          {
+            "id": "bg-cream",
+            "name": "Cream",
+            "type": "solid",
+            "value": "#FAFAF9"
+          },
+          {
+            "id": "bg-navy",
+            "name": "Navy",
+            "type": "solid",
+            "value": "#0F172A"
+          },
+          {
+            "id": "bg-slate",
+            "name": "Slate Panel",
+            "type": "solid",
+            "value": "#334155"
+          },
+          {
+            "id": "bg-gradient-ice",
+            "name": "Ice Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #ffffff 0%, #F1F5F9 55%, #F5F0E8 100%)"
+          },
+          {
+            "id": "bg-gradient-navy",
+            "name": "Navy Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #0F172A 0%, #1E293B 100%)"
+          }
+        ],
+        "hint": "Swap preset colors, custom swatches, or full-bleed photos. Delete a hero image to reveal the panel color behind it."
+      }
+    },
+    {
+      "id": "sd_scene_07",
+      "slideIndex": 7,
+      "title": "Next Steps",
+      "layoutType": "Split",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Account Executive"
+      },
+      "background": {
+        "type": "gradient",
+        "value": "linear-gradient(145deg, #ffffff 0%, #F1F5F9 55%, #F5F0E8 100%)",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "steps": {
+          "x": 126,
+          "y": 162,
+          "width": 588,
+          "height": 484
+        },
+        "panel": {
+          "x": 738,
+          "y": 162,
+          "width": 416,
+          "height": 484
+        },
+        "avatar": {
+          "x": 1078,
+          "y": 542,
+          "width": 88,
+          "height": 108
+        }
+      },
+      "description": "Mutual action plan with owners, timelines, and momentum summary.",
+      "flow": "Next Steps → CTA",
+      "duration": 10,
+      "tags": [
+        "sales-demo",
+        "follow-up",
+        "next-steps",
+        "map"
+      ],
+      "clips": [
+        {
+          "id": "bg07",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "background": "linear-gradient(145deg, #ffffff 0%, #F1F5F9 55%, #F5F0E8 100%)"
+          }
+        },
+        {
+          "id": "blob_tl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-blob-beige",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": -60,
+            "y": -40
+          },
+          "size": {
+            "width": 220,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F5F0E8",
+            "borderRadius": "55% 45% 60% 40% / 50% 55% 45% 50%",
+            "opacity": 0.95
+          }
+        },
+        {
+          "id": "blob_br",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-blob-beige",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 1100,
+            "y": 560
+          },
+          "size": {
+            "width": 240,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#EDE6D8",
+            "borderRadius": "45% 55% 40% 60% / 55% 45% 55% 45%",
+            "opacity": 0.9
+          }
+        },
+        {
+          "id": "blob_tr",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-blob-beige",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 1160,
+            "y": -30
+          },
+          "size": {
+            "width": 160,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F5F0E8",
+            "borderRadius": "50%",
+            "opacity": 0.7
+          }
+        },
+        {
+          "id": "t_label",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 126,
+            "y": 78
+          },
+          "size": {
+            "width": 220,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "MUTUAL ACTION PLAN",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "color": "#2563EB",
+            "letterSpacing": "0.08em",
+            "textTransform": "uppercase",
+            "fontSize": 11
+          }
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 126,
+            "y": 102
+          },
+          "size": {
+            "width": 588,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Recommended Next Steps",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#0F172A",
+            "fontSize": 40,
+            "lineHeight": 1.05
+          }
+        },
+        {
+          "id": "t_sub",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 126,
+            "y": 158
+          },
+          "size": {
+            "width": 588,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "To keep momentum from our conversation, here is a simple mutual action plan. Adjust owners and dates to match what you committed to on the call.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#334155",
+            "lineHeight": 1.55,
+            "fontSize": 15
+          }
+        },
+        {
+          "id": "step0_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 126,
+            "y": 214
+          },
+          "size": {
+            "width": 588,
+            "height": 116
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "16px",
+            "boxShadow": "0 12px 32px rgba(15,23,42,0.07)",
+            "border": "1px solid #E2E8F0",
+            "borderLeft": "5px solid #2563EB"
+          }
+        },
+        {
+          "id": "step0_num",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 144,
+            "y": 232
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#2563EB",
+            "borderRadius": "12px"
+          }
+        },
+        {
+          "id": "step0_numt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 144,
+            "y": 240
+          },
+          "size": {
+            "width": 44,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "01",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "fontSize": 15,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "step0_ico_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 200,
+            "y": 234
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F1F5F9",
+            "borderRadius": "50%",
+            "boxShadow": "0 6px 18px rgba(15,23,42,0.12)"
+          }
+        },
+        {
+          "id": "step0_ico",
+          "type": "image",
+          "assetKey": "video",
+          "role": "icon",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 208,
+            "y": 242
+          },
+          "size": {
+            "width": 24,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/2563EB/video-conference.png",
+          "placeholder": true,
+          "alt": "Video",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "step0_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 250,
+            "y": 232
+          },
+          "size": {
+            "width": 448,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Share this recap",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 20,
+            "color": "#111827"
+          }
+        },
+        {
+          "id": "step0_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 250,
+            "y": 262
+          },
+          "size": {
+            "width": 448,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Forward the video to stakeholders who were not on the call so everyone hears the same story.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 14,
+            "color": "#334155",
+            "lineHeight": 1.55
+          }
+        },
+        {
+          "id": "step0_own_pill",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 250,
+            "y": 296
+          },
+          "size": {
+            "width": 108,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(37,99,235,0.12)",
+            "borderRadius": "100px"
+          }
+        },
+        {
+          "id": "step0_own_txt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 260,
+            "y": 301
+          },
+          "size": {
+            "width": 88,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Your team",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 10,
+            "letterSpacing": "0.04em",
+            "textTransform": "none",
+            "color": "#2563EB",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "step0_when_pill",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 366,
+            "y": 296
+          },
+          "size": {
+            "width": 120,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(37,99,235,0.08)",
+            "borderRadius": "100px"
+          }
+        },
+        {
+          "id": "step0_when_txt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 376,
+            "y": 301
+          },
+          "size": {
+            "width": 100,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "This week",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 10,
+            "letterSpacing": "0.04em",
+            "textTransform": "none",
+            "color": "#2563EB",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "step1_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 126,
+            "y": 342
+          },
+          "size": {
+            "width": 588,
+            "height": 116
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "16px",
+            "boxShadow": "0 12px 32px rgba(15,23,42,0.07)",
+            "border": "1px solid #E2E8F0",
+            "borderLeft": "5px solid #10B981"
+          }
+        },
+        {
+          "id": "step1_num",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 144,
+            "y": 360
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#10B981",
+            "borderRadius": "12px"
+          }
+        },
+        {
+          "id": "step1_numt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 144,
+            "y": 368
+          },
+          "size": {
+            "width": 44,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "02",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "fontSize": 15,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "step1_ico_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 200,
+            "y": 362
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F1F5F9",
+            "borderRadius": "50%",
+            "boxShadow": "0 6px 18px rgba(15,23,42,0.12)"
+          }
+        },
+        {
+          "id": "step1_ico",
+          "type": "image",
+          "assetKey": "calendar",
+          "role": "icon",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 208,
+            "y": 370
+          },
+          "size": {
+            "width": 24,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/2563EB/calendar.png",
+          "placeholder": true,
+          "alt": "Calendar",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "step1_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 250,
+            "y": 360
+          },
+          "size": {
+            "width": 448,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Technical deep dive",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 20,
+            "color": "#111827"
+          }
+        },
+        {
+          "id": "step1_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 250,
+            "y": 390
+          },
+          "size": {
+            "width": 448,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Schedule a session with our solutions engineer to validate integrations and security requirements.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 14,
+            "color": "#334155",
+            "lineHeight": 1.55
+          }
+        },
+        {
+          "id": "step1_own_pill",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 250,
+            "y": 424
+          },
+          "size": {
+            "width": 108,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(16,185,129,0.14)",
+            "borderRadius": "100px"
+          }
+        },
+        {
+          "id": "step1_own_txt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 260,
+            "y": 429
+          },
+          "size": {
+            "width": 88,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Joint session",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 10,
+            "letterSpacing": "0.04em",
+            "textTransform": "none",
+            "color": "#10B981",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "step1_when_pill",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 366,
+            "y": 424
+          },
+          "size": {
+            "width": 120,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(16,185,129,0.08)",
+            "borderRadius": "100px"
+          }
+        },
+        {
+          "id": "step1_when_txt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 376,
+            "y": 429
+          },
+          "size": {
+            "width": 100,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Next 7 days",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 10,
+            "letterSpacing": "0.04em",
+            "textTransform": "none",
+            "color": "#10B981",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "step2_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 126,
+            "y": 470
+          },
+          "size": {
+            "width": 588,
+            "height": 116
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "16px",
+            "boxShadow": "0 12px 32px rgba(15,23,42,0.07)",
+            "border": "1px solid #E2E8F0",
+            "borderLeft": "5px solid #F59E0B"
+          }
+        },
+        {
+          "id": "step2_num",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 144,
+            "y": 488
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F59E0B",
+            "borderRadius": "12px"
+          }
+        },
+        {
+          "id": "step2_numt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 144,
+            "y": 496
+          },
+          "size": {
+            "width": 44,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "03",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "fontSize": 15,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "step2_ico_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 200,
+            "y": 490
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F1F5F9",
+            "borderRadius": "50%",
+            "boxShadow": "0 6px 18px rgba(15,23,42,0.12)"
+          }
+        },
+        {
+          "id": "step2_ico",
+          "type": "image",
+          "assetKey": "document",
+          "role": "icon",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 208,
+            "y": 498
+          },
+          "size": {
+            "width": 24,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/334155/create-new.png",
+          "placeholder": true,
+          "alt": "Document",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "step2_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 250,
+            "y": 488
+          },
+          "size": {
+            "width": 448,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Proposal & timeline",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 20,
+            "color": "#111827"
+          }
+        },
+        {
+          "id": "step2_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 250,
+            "y": 518
+          },
+          "size": {
+            "width": 448,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "We will send a scoped proposal with phased rollout options aligned to your fiscal calendar.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 14,
+            "color": "#334155",
+            "lineHeight": 1.55
+          }
+        },
+        {
+          "id": "step2_own_pill",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 250,
+            "y": 552
+          },
+          "size": {
+            "width": 108,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(245,158,11,0.16)",
+            "borderRadius": "100px"
+          }
+        },
+        {
+          "id": "step2_own_txt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 260,
+            "y": 557
+          },
+          "size": {
+            "width": 88,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Our team",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 10,
+            "letterSpacing": "0.04em",
+            "textTransform": "none",
+            "color": "#F59E0B",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "step2_when_pill",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 366,
+            "y": 552
+          },
+          "size": {
+            "width": 120,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(245,158,11,0.1)",
+            "borderRadius": "100px"
+          }
+        },
+        {
+          "id": "step2_when_txt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 376,
+            "y": 557
+          },
+          "size": {
+            "width": 100,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Within 5 days",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 10,
+            "letterSpacing": "0.04em",
+            "textTransform": "none",
+            "color": "#F59E0B",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "map_panel",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-navy-panel",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 738,
+            "y": 162
+          },
+          "size": {
+            "width": 416,
+            "height": 476
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#0F172A",
+            "borderRadius": "22px",
+            "boxShadow": "0 22px 52px rgba(15,23,42,0.22)"
+          }
+        },
+        {
+          "id": "map_glow",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 738,
+            "y": 162
+          },
+          "size": {
+            "width": 416,
+            "height": 120
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "background": "radial-gradient(ellipse at 90% 0%, rgba(37,99,235,0.35) 0%, transparent 70%)",
+            "borderRadius": "22px 22px 0 0"
+          }
+        },
+        {
+          "id": "map_ico_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 762,
+            "y": 186
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#1E293B",
+            "borderRadius": "50%",
+            "boxShadow": "0 6px 18px rgba(15,23,42,0.12)"
+          }
+        },
+        {
+          "id": "map_ico",
+          "type": "image",
+          "assetKey": "handshake",
+          "role": "icon",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 771,
+            "y": 195
+          },
+          "size": {
+            "width": 26,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/2563EB/handshake.png",
+          "placeholder": true,
+          "alt": "Handshake",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_map_lbl",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 818,
+            "y": 192
+          },
+          "size": {
+            "width": 320,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "KEEP MOMENTUM",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 10,
+            "letterSpacing": "0.14em",
+            "textTransform": "uppercase",
+            "color": "#3B82F6"
+          }
+        },
+        {
+          "id": "t_map_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 762,
+            "y": 222
+          },
+          "size": {
+            "width": 368,
+            "height": 72
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "3 commitments\nto move forward",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#ffffff",
+            "fontSize": 28,
+            "lineHeight": 1.12
+          }
+        },
+        {
+          "id": "chk0_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 762,
+            "y": 310
+          },
+          "size": {
+            "width": 28,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#2563EB",
+            "borderRadius": "50%",
+            "boxShadow": "0 6px 18px rgba(15,23,42,0.12)"
+          }
+        },
+        {
+          "id": "chk0",
+          "type": "image",
+          "assetKey": "check",
+          "role": "icon",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 768,
+            "y": 316
+          },
+          "size": {
+            "width": 16,
+            "height": 16
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/10B981/checkmark.png",
+          "placeholder": true,
+          "alt": "Check",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "chkt0",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 798,
+            "y": 314
+          },
+          "size": {
+            "width": 332,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Align stakeholders on the recap",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "rgba(241,245,249,0.92)",
+            "lineHeight": 1.4,
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "chk1_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 762,
+            "y": 354
+          },
+          "size": {
+            "width": 28,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#2563EB",
+            "borderRadius": "50%",
+            "boxShadow": "0 6px 18px rgba(15,23,42,0.12)"
+          }
+        },
+        {
+          "id": "chk1",
+          "type": "image",
+          "assetKey": "check",
+          "role": "icon",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 768,
+            "y": 360
+          },
+          "size": {
+            "width": 16,
+            "height": 16
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/10B981/checkmark.png",
+          "placeholder": true,
+          "alt": "Check",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "chkt1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 798,
+            "y": 358
+          },
+          "size": {
+            "width": 332,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Validate technical fit together",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "rgba(241,245,249,0.92)",
+            "lineHeight": 1.4,
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "chk2_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 762,
+            "y": 398
+          },
+          "size": {
+            "width": 28,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#2563EB",
+            "borderRadius": "50%",
+            "boxShadow": "0 6px 18px rgba(15,23,42,0.12)"
+          }
+        },
+        {
+          "id": "chk2",
+          "type": "image",
+          "assetKey": "check",
+          "role": "icon",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 768,
+            "y": 404
+          },
+          "size": {
+            "width": 16,
+            "height": 16
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/10B981/checkmark.png",
+          "placeholder": true,
+          "alt": "Check",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "chkt2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 17,
+          "position": {
+            "x": 798,
+            "y": 402
+          },
+          "size": {
+            "width": 332,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Review proposal and rollout plan",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "rgba(241,245,249,0.92)",
+            "lineHeight": 1.4,
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "img_map_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 762,
+            "y": 446
+          },
+          "size": {
+            "width": 368,
+            "height": 112
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#1E293B",
+            "borderRadius": "14px"
+          }
+        },
+        {
+          "id": "img_map",
+          "type": "image",
+          "assetKey": "sales-handshake",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 762,
+            "y": 446
+          },
+          "size": {
+            "width": 368,
+            "height": 112
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://images.pexels.com/photos/3184296/pexels-photo-3184296.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Partnership",
+          "style": {
+            "borderRadius": "14px",
+            "objectFit": "cover",
+            "opacity": 0.92
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#1E293B"
+          }
+        },
+        {
+          "id": "map_pill",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 762,
+            "y": 570
+          },
+          "size": {
+            "width": 368,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F59E0B",
+            "borderRadius": "100px"
+          }
+        },
+        {
+          "id": "t_map_pill",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 774,
+            "y": 578
+          },
+          "size": {
+            "width": 344,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "TARGET CLOSE · 2 WEEKS",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 10,
+            "letterSpacing": "0.12em",
+            "textTransform": "uppercase",
+            "color": "#0F172A",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "slide_badge_07",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1110,
+            "y": 78
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#0F172A",
+            "borderRadius": "50%",
+            "border": "3px solid #2563EB"
+          }
+        },
+        {
+          "id": "slide_num_07",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1110,
+            "y": 87
+          },
+          "size": {
+            "width": 44,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "07",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "fontSize": 16,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1078,
+            "y": 542
+          },
+          "size": {
+            "width": 88,
+            "height": 108
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #ffffff",
+            "boxShadow": "0 12px 32px rgba(15, 23, 42, 0.18)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-white",
+            "name": "White",
+            "type": "solid",
+            "value": "#ffffff"
+          },
+          {
+            "id": "bg-ice",
+            "name": "Ice",
+            "type": "solid",
+            "value": "#F1F5F9"
+          },
+          {
+            "id": "bg-beige",
+            "name": "Warm Beige",
+            "type": "solid",
+            "value": "#F5F0E8"
+          },
+          {
+            "id": "bg-cream",
+            "name": "Cream",
+            "type": "solid",
+            "value": "#FAFAF9"
+          },
+          {
+            "id": "bg-navy",
+            "name": "Navy",
+            "type": "solid",
+            "value": "#0F172A"
+          },
+          {
+            "id": "bg-slate",
+            "name": "Slate Panel",
+            "type": "solid",
+            "value": "#334155"
+          },
+          {
+            "id": "bg-gradient-ice",
+            "name": "Ice Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #ffffff 0%, #F1F5F9 55%, #F5F0E8 100%)"
+          },
+          {
+            "id": "bg-gradient-navy",
+            "name": "Navy Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #0F172A 0%, #1E293B 100%)"
+          }
+        ],
+        "hint": "Swap preset colors, custom swatches, or full-bleed photos. Delete a hero image to reveal the panel color behind it."
+      }
+    },
+    {
+      "id": "sd_scene_08",
+      "slideIndex": 8,
+      "title": "Book the Call",
+      "layoutType": "Promo",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Account Executive"
+      },
+      "background": {
+        "type": "gradient",
+        "value": "linear-gradient(160deg, #0F172A 0%, #1E293B 100%)",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "cta": {
+          "x": 126,
+          "y": 74,
+          "width": 1028,
+          "height": 572
+        },
+        "avatar": {
+          "x": 1070,
+          "y": 534,
+          "width": 96,
+          "height": 116
+        }
+      },
+      "description": "Dark closing slide with scheduling CTA and contact details.",
+      "flow": "CTA → End",
+      "duration": 10,
+      "tags": [
+        "sales-demo",
+        "follow-up",
+        "cta",
+        "closing"
+      ],
+      "clips": [
+        {
+          "id": "bg_dark",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "background": "linear-gradient(160deg, #0F172A 0%, #1E293B 100%)"
+          }
+        },
+        {
+          "id": "glow",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 260
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "background": "radial-gradient(ellipse at 80% 0%, rgba(37, 99, 235, 0.28) 0%, transparent 70%)"
+          }
+        },
+        {
+          "id": "ico_cal_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 126,
+            "y": 82
+          },
+          "size": {
+            "width": 48,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#1E293B",
+            "borderRadius": "50%",
+            "boxShadow": "0 6px 18px rgba(15,23,42,0.12)"
+          }
+        },
+        {
+          "id": "ico_cal",
+          "type": "image",
+          "assetKey": "calendar",
+          "role": "icon",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 136,
+            "y": 92
+          },
+          "size": {
+            "width": 28,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/2563EB/calendar.png",
+          "placeholder": true,
+          "alt": "Calendar",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 186,
+            "y": 86
+          },
+          "size": {
+            "width": 600,
+            "height": 108
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Let's Keep the\nMomentum Going",
+          "style": {
+            "fontFamily": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+            "fontWeight": "700",
+            "color": "#ffffff",
+            "lineHeight": 1.06,
+            "fontSize": 48
+          }
+        },
+        {
+          "id": "t_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 126,
+            "y": 202
+          },
+          "size": {
+            "width": 640,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "I am excited to continue the conversation and answer any questions from your broader team. Pick a time that works for you, or reply to this message and we will coordinate the next session.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "rgba(241,245,249,0.88)",
+            "lineHeight": 1.7,
+            "fontSize": 16
+          }
+        },
+        {
+          "id": "cta_btn",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 126,
+            "y": 322
+          },
+          "size": {
+            "width": 280,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#2563EB",
+            "borderRadius": "100px",
+            "boxShadow": "0 8px 24px rgba(37,99,235,0.45)"
+          }
+        },
+        {
+          "id": "t_btn",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 150,
+            "y": 336
+          },
+          "size": {
+            "width": 232,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "SCHEDULE A CALL",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#ffffff",
+            "letterSpacing": "0.14em",
+            "fontSize": 13,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "ico_email_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 126,
+            "y": 402
+          },
+          "size": {
+            "width": 36,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#1E293B",
+            "borderRadius": "50%",
+            "boxShadow": "0 6px 18px rgba(15,23,42,0.12)"
+          }
+        },
+        {
+          "id": "ico_email",
+          "type": "image",
+          "assetKey": "email",
+          "role": "icon",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 133,
+            "y": 409
+          },
+          "size": {
+            "width": 22,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/2563EB/new-post.png",
+          "placeholder": true,
+          "alt": "Email",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_email",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 174,
+            "y": 408
+          },
+          "size": {
+            "width": 360,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "you@company.com",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#F1F5F9",
+            "lineHeight": 1.7,
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "ico_phone_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 126,
+            "y": 450
+          },
+          "size": {
+            "width": 36,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#1E293B",
+            "borderRadius": "50%",
+            "boxShadow": "0 6px 18px rgba(15,23,42,0.12)"
+          }
+        },
+        {
+          "id": "ico_phone",
+          "type": "image",
+          "assetKey": "phone",
+          "role": "icon",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 133,
+            "y": 457
+          },
+          "size": {
+            "width": 22,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://img.icons8.com/ios-filled/96/2563EB/phone.png",
+          "placeholder": true,
+          "alt": "Phone",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_phone",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 174,
+            "y": 456
+          },
+          "size": {
+            "width": 360,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "+1 (555) 123-4567",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#F1F5F9",
+            "lineHeight": 1.7,
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "cta_panel",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 806,
+            "y": 98
+          },
+          "size": {
+            "width": 348,
+            "height": 524
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "rgba(255,255,255,0.06)",
+            "borderRadius": "24px",
+            "border": "1px solid rgba(255,255,255,0.12)"
+          }
+        },
+        {
+          "id": "img_close_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "sales-card-white",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 822,
+            "y": 114
+          },
+          "size": {
+            "width": 316,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#1E293B",
+            "borderRadius": "18px"
+          }
+        },
+        {
+          "id": "img_close",
+          "type": "image",
+          "assetKey": "sales-handshake",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 822,
+            "y": 114
+          },
+          "size": {
+            "width": 316,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "src": "https://images.pexels.com/photos/3184296/pexels-photo-3184296.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Partnership",
+          "style": {
+            "borderRadius": "18px",
+            "objectFit": "cover"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#1E293B"
+          }
+        },
+        {
+          "id": "t_panel",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 846,
+            "y": 334
+          },
+          "size": {
+            "width": 292,
+            "height": 80
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "Reply to this video with questions — I will respond within one business day.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "rgba(241,245,249,0.85)",
+            "lineHeight": 1.7,
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "amber_pill",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 846,
+            "y": 434
+          },
+          "size": {
+            "width": 200,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#F59E0B",
+            "borderRadius": "100px"
+          }
+        },
+        {
+          "id": "t_pill",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 862,
+            "y": 442
+          },
+          "size": {
+            "width": 168,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "BOOK NEXT MEETING",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 10,
+            "letterSpacing": "0.14em",
+            "textTransform": "uppercase",
+            "color": "#0F172A",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "slide_badge_08",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "sales-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1110,
+            "y": 78
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "style": {
+            "backgroundColor": "#0F172A",
+            "borderRadius": "50%",
+            "border": "3px solid #2563EB"
+          }
+        },
+        {
+          "id": "slide_num_08",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1110,
+            "y": 87
+          },
+          "size": {
+            "width": 44,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "content": "08",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "fontSize": 16,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1070,
+            "y": 534
+          },
+          "size": {
+            "width": 96,
+            "height": 116
+          },
+          "startTime": 0,
+          "endTime": 10,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #2563EB",
+            "boxShadow": "0 12px 32px rgba(0, 0, 0, 0.45)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-white",
+            "name": "White",
+            "type": "solid",
+            "value": "#ffffff"
+          },
+          {
+            "id": "bg-ice",
+            "name": "Ice",
+            "type": "solid",
+            "value": "#F1F5F9"
+          },
+          {
+            "id": "bg-beige",
+            "name": "Warm Beige",
+            "type": "solid",
+            "value": "#F5F0E8"
+          },
+          {
+            "id": "bg-cream",
+            "name": "Cream",
+            "type": "solid",
+            "value": "#FAFAF9"
+          },
+          {
+            "id": "bg-navy",
+            "name": "Navy",
+            "type": "solid",
+            "value": "#0F172A"
+          },
+          {
+            "id": "bg-slate",
+            "name": "Slate Panel",
+            "type": "solid",
+            "value": "#334155"
+          },
+          {
+            "id": "bg-gradient-ice",
+            "name": "Ice Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #ffffff 0%, #F1F5F9 55%, #F5F0E8 100%)"
+          },
+          {
+            "id": "bg-gradient-navy",
+            "name": "Navy Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #0F172A 0%, #1E293B 100%)"
+          }
+        ],
+        "hint": "Swap preset colors, custom swatches, or full-bleed photos. Delete a hero image to reveal the panel color behind it."
+      }
+    }
+  ]
+}
