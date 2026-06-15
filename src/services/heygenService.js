@@ -1,17 +1,75 @@
 import API_CONFIG, { buildUrl, getAuthHeaders } from '../config/api.js';
 import { InsufficientCreditsError } from './creditsService.js';
 
+const LOOKS_QUERY_KEYS = new Set([
+  'group_id',
+  'avatar_type',
+  'ownership',
+  'limit',
+  'token',
+]);
+
+function buildLooksQueryParams(params = {}) {
+  const pageParams = {};
+  for (const [key, value] of Object.entries(params)) {
+    if (!LOOKS_QUERY_KEYS.has(key)) continue;
+    if (value === undefined || value === null || value === '') continue;
+    pageParams[key] = value;
+  }
+  if (!pageParams.limit) pageParams.limit = 50;
+  return pageParams;
+}
+
+function emptyLooksPage() {
+  return {
+    data: [],
+    avatar_looks: [],
+    looks: [],
+    has_more: false,
+    token: null,
+  };
+}
+
+function extractLooksList(data) {
+  if (Array.isArray(data)) return data;
+  return data?.data || data?.looks || data?.avatar_looks || [];
+}
+
 class HeygenService {
   async getAvatarLooks(params = {}) {
-    try {
-      const mergedParams = { limit: 50, ...params };
-      if (mergedParams.next_token && !mergedParams.token) {
-        mergedParams.token = mergedParams.next_token;
-        delete mergedParams.next_token;
+    const { getAllPages = false, allowEmptyGroup = true, ...rawParams } = params;
+    const mergedParams = { limit: 50, ...rawParams };
+    if (mergedParams.next_token && !mergedParams.token) {
+      mergedParams.token = mergedParams.next_token;
+      delete mergedParams.next_token;
+    }
+
+    const fetchLooksPage = async (pageParams) => {
+      const queryParams = new URLSearchParams(buildLooksQueryParams(pageParams)).toString();
+      const endpoint = `${API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.LOOKS}${queryParams ? `?${queryParams}` : ''}`;
+
+      const response = await fetch(buildUrl(endpoint), {
+        method: 'GET',
+        headers: getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        if (
+          allowEmptyGroup &&
+          pageParams.group_id &&
+          (response.status === 400 || response.status === 404)
+        ) {
+          return emptyLooksPage();
+        }
+        throw new Error(`Failed to fetch avatar looks: ${response.status}`);
       }
 
-      // Automatically fetch all pages for a group_id
-      if (mergedParams.group_id && mergedParams.getAllPages !== false) {
+      const responseData = await response.json();
+      return responseData.data || responseData;
+    };
+
+    try {
+      if (mergedParams.group_id && getAllPages) {
         let allLooks = [];
         let hasMore = true;
         let currentToken = mergedParams.token || null;
@@ -20,67 +78,30 @@ class HeygenService {
         while (hasMore) {
           const pageParams = {
             group_id: mergedParams.group_id,
-            limit: limit,
+            limit,
           };
-          if (currentToken) {
-            pageParams.token = currentToken;
-          }
+          if (currentToken) pageParams.token = currentToken;
           if (mergedParams.avatar_type) pageParams.avatar_type = mergedParams.avatar_type;
           if (mergedParams.ownership) pageParams.ownership = mergedParams.ownership;
 
-          const queryParams = new URLSearchParams(pageParams).toString();
-          const endpoint = `${API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.LOOKS}${queryParams ? `?${queryParams}` : ''}`;
+          const data = await fetchLooksPage(pageParams);
+          allLooks = [...allLooks, ...extractLooksList(data)];
 
-          const response = await fetch(buildUrl(endpoint), {
-            method: 'GET',
-            headers: getAuthHeaders()
-          });
-
-          if (!response.ok) {
-            throw new Error(`Failed to fetch avatar looks: ${response.status}`);
-          }
-
-          const responseData = await response.json();
-          const data = responseData.data || responseData;
-
-          let lookList = [];
-          if (Array.isArray(data)) {
-            lookList = data;
-          } else {
-            lookList = data.data || data.looks || data.avatar_looks || [];
-          }
-
-          allLooks = [...allLooks, ...lookList];
-
-          hasMore = !!(data.has_more ?? responseData.has_more);
-          currentToken = data.token ?? responseData.token ?? data.next_token ?? responseData.next_token ?? null;
-
-          if (!currentToken) {
-            hasMore = false;
-          }
+          hasMore = !!(data?.has_more ?? data?.hasMore);
+          currentToken = data?.token ?? data?.next_token ?? null;
+          if (!currentToken) hasMore = false;
         }
 
         return {
           data: allLooks,
+          avatar_looks: allLooks,
           has_more: false,
-          token: null
+          token: null,
         };
       }
 
-      const queryParams = new URLSearchParams(mergedParams).toString();
-      const endpoint = `${API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.LOOKS}${queryParams ? `?${queryParams}` : ''}`;
-
-      const response = await fetch(buildUrl(endpoint), {
-        method: 'GET',
-        headers: getAuthHeaders()
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch avatar looks: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.data || data;
+      const pageParams = buildLooksQueryParams(mergedParams);
+      return fetchLooksPage(pageParams);
     } catch (error) {
       console.error('Error fetching avatar looks:', error);
       throw error;

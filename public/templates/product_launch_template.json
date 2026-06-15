@@ -1,0 +1,4211 @@
+{
+  "category": "Product Launch",
+  "template": {
+    "id": "product-launch-editorial",
+    "name": "Product Launch — Editorial Bundle",
+    "category": "Product Launch",
+    "theme": {
+      "name": "Editorial Launch",
+      "fonts": {
+        "display": "\"Playfair Display\", Georgia, serif",
+        "sans": "\"Segoe UI\", system-ui, sans-serif",
+        "accent": "Georgia, serif"
+      }
+    },
+    "presenter": {
+      "name": "Bundle Presenter",
+      "previewSrc": "https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=800",
+      "alternates": [
+        "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=800"
+      ]
+    },
+    "totalSlides": 8,
+    "canvasSize": {
+      "width": 1280,
+      "height": 720
+    },
+    "colorPalette": {
+      "ink": "#1c1917",
+      "cream": "#faf7f2",
+      "sand": "#f0ebe3",
+      "warmWhite": "#fffcf8",
+      "stone": "#78716c",
+      "muted": "#a8a29e",
+      "copper": "#b45309",
+      "copperLight": "#d97706",
+      "dark": "#0a0a0a",
+      "black": "#111111",
+      "white": "#ffffff",
+      "chartreuse": "#c8e64a",
+      "line": "#d6d3d1",
+      "overlay": "rgba(28, 25, 23, 0.52)",
+      "panelDark": "#292524"
+    },
+    "typography": {
+      "brand": {
+        "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+        "fontWeight": "600",
+        "fontSize": 11,
+        "letterSpacing": "0.28em",
+        "textTransform": "uppercase",
+        "color": "#b45309"
+      },
+      "display": {
+        "fontFamily": "\"Playfair Display\", Georgia, serif",
+        "fontWeight": "700",
+        "color": "#1c1917"
+      },
+      "displayOnDark": {
+        "fontFamily": "\"Playfair Display\", Georgia, serif",
+        "fontWeight": "700",
+        "color": "#faf7f2"
+      },
+      "displayHero": {
+        "fontFamily": "\"Playfair Display\", Georgia, serif",
+        "fontWeight": "700",
+        "color": "#faf7f2",
+        "lineHeight": 0.92
+      },
+      "heading": {
+        "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+        "fontWeight": "700",
+        "color": "#1c1917",
+        "letterSpacing": "0.06em"
+      },
+      "headingOnDark": {
+        "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+        "fontWeight": "700",
+        "color": "#faf7f2",
+        "letterSpacing": "0.08em",
+        "textTransform": "uppercase"
+      },
+      "body": {
+        "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+        "fontWeight": "400",
+        "color": "#78716c",
+        "lineHeight": 1.65
+      },
+      "bodyOnDark": {
+        "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+        "fontWeight": "400",
+        "color": "#a8a29e",
+        "lineHeight": 1.65
+      },
+      "quote": {
+        "fontFamily": "Georgia, serif",
+        "fontWeight": "400",
+        "fontStyle": "italic",
+        "color": "#1c1917",
+        "lineHeight": 1.55
+      },
+      "label": {
+        "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+        "fontWeight": "600",
+        "fontSize": 12,
+        "letterSpacing": "0.18em",
+        "textTransform": "uppercase",
+        "color": "#b45309"
+      },
+      "stat": {
+        "fontFamily": "\"Playfair Display\", Georgia, serif",
+        "fontWeight": "700",
+        "color": "#1c1917"
+      },
+      "accent": {
+        "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+        "fontWeight": "700",
+        "color": "#c8e64a"
+      }
+    },
+    "backgroundPresets": [
+      {
+        "id": "bg-cream",
+        "name": "Cream",
+        "type": "solid",
+        "value": "#faf7f2"
+      },
+      {
+        "id": "bg-sand",
+        "name": "Sand",
+        "type": "solid",
+        "value": "#f0ebe3"
+      },
+      {
+        "id": "bg-warm-white",
+        "name": "Warm White",
+        "type": "solid",
+        "value": "#fffcf8"
+      },
+      {
+        "id": "bg-stone-light",
+        "name": "Stone Mist",
+        "type": "solid",
+        "value": "#f5f5f4"
+      },
+      {
+        "id": "bg-ink",
+        "name": "Ink",
+        "type": "solid",
+        "value": "#1c1917"
+      },
+      {
+        "id": "bg-dark",
+        "name": "Black",
+        "type": "solid",
+        "value": "#0a0a0a"
+      },
+      {
+        "id": "bg-panel-dark",
+        "name": "Dark Panel",
+        "type": "solid",
+        "value": "#292524"
+      },
+      {
+        "id": "bg-gradient-warm",
+        "name": "Warm Gradient",
+        "type": "gradient",
+        "value": "linear-gradient(145deg, #faf7f2 0%, #f0ebe3 55%, #e7e5e4 100%)"
+      },
+      {
+        "id": "bg-gradient-dark",
+        "name": "Dark Gradient",
+        "type": "gradient",
+        "value": "linear-gradient(160deg, #1c1917 0%, #0a0a0a 100%)"
+      }
+    ],
+    "description": "Premium 8-slide product launch bundle with a unified editorial theme: cream and ink palette, Playfair display type, full-bleed cover imagery, rounded frames, and a dark closing CTA."
+  },
+  "scenes": [
+    {
+      "id": "pl_scene_01",
+      "slideIndex": 1,
+      "title": "Cover",
+      "layoutType": "Cover",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Bundle Presenter",
+        "previewSrc": "https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "alternates": [
+          "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=800",
+          "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=800"
+        ]
+      },
+      "background": {
+        "type": "solid",
+        "value": "#faf7f2",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "hero": {
+          "x": 0,
+          "y": 0,
+          "width": 1280,
+          "height": 720
+        },
+        "card": {
+          "x": 680,
+          "y": 200,
+          "width": 420,
+          "height": 300
+        },
+        "avatar": {
+          "x": 64,
+          "y": 584,
+          "width": 96,
+          "height": 116
+        }
+      },
+      "description": "Full-bleed cover image with editorial serif headline and cream content card.",
+      "flow": "Cover → Problem",
+      "duration": 8,
+      "tags": [
+        "product-launch",
+        "editorial",
+        "cover",
+        "full-bleed"
+      ],
+      "clips": [
+        {
+          "id": "bg_cover",
+          "type": "image",
+          "assetKey": "launch-cover-full",
+          "role": "background",
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg",
+          "placeholder": true,
+          "alt": "Lifestyle Cover",
+          "style": {
+            "objectFit": "cover"
+          },
+          "isBackground": true,
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#1c1917"
+          }
+        },
+        {
+          "id": "scrim_cover",
+          "type": "shape",
+          "role": "scrim",
+          "shapeKey": "launch-scrim",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(28, 25, 23, 0.52)"
+          }
+        },
+        {
+          "id": "t_brand",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 64,
+            "y": 48
+          },
+          "size": {
+            "width": 400,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "YOUR BRAND · PRODUCT LAUNCH",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 11,
+            "letterSpacing": "0.28em",
+            "textTransform": "uppercase",
+            "color": "#faf7f2"
+          }
+        },
+        {
+          "id": "t_line",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 64,
+            "y": 76
+          },
+          "size": {
+            "width": 520,
+            "height": 2
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "",
+          "style": {
+            "backgroundColor": "#faf7f2",
+            "opacity": 0.35
+          }
+        },
+        {
+          "id": "t_product",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 64,
+            "y": 120
+          },
+          "size": {
+            "width": 620,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "PRODUCT\nLAUNCH",
+          "style": {
+            "fontFamily": "\"Playfair Display\", Georgia, serif",
+            "fontWeight": "700",
+            "color": "#faf7f2",
+            "lineHeight": 0.92,
+            "fontSize": 108,
+            "letterSpacing": "-0.02em"
+          }
+        },
+        {
+          "id": "card_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "launch-cream-card",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 680,
+            "y": 200
+          },
+          "size": {
+            "width": 420,
+            "height": 300
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#faf7f2",
+            "borderRadius": "4px",
+            "boxShadow": "0 24px 60px rgba(10, 10, 10, 0.22)"
+          }
+        },
+        {
+          "id": "t_card_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 720,
+            "y": 240
+          },
+          "size": {
+            "width": 340,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "A refined launch story for your next release. Replace this copy with your product promise, audience, and launch date.",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#1c1917",
+            "lineHeight": 1.7,
+            "fontSize": 15
+          }
+        },
+        {
+          "id": "t_card_label",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 720,
+            "y": 440
+          },
+          "size": {
+            "width": 340,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "AVAILABLE NOW",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 12,
+            "letterSpacing": "0.18em",
+            "textTransform": "uppercase",
+            "color": "#b45309"
+          }
+        },
+        {
+          "id": "img_logo",
+          "type": "image",
+          "assetKey": "launch-logo",
+          "role": "logo",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 720,
+            "y": 500
+          },
+          "size": {
+            "width": 180,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://placehold.co/320x64/1c1917/faf7f2?text=YOUR+BRAND",
+          "placeholder": true,
+          "alt": "Brand logo",
+          "style": {
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 64,
+            "y": 584
+          },
+          "size": {
+            "width": 96,
+            "height": 116
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "2px solid rgba(255,255,255,0.9)",
+            "boxShadow": "0 10px 28px rgba(28, 25, 23, 0.2)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-cream",
+            "name": "Cream",
+            "type": "solid",
+            "value": "#faf7f2"
+          },
+          {
+            "id": "bg-sand",
+            "name": "Sand",
+            "type": "solid",
+            "value": "#f0ebe3"
+          },
+          {
+            "id": "bg-warm-white",
+            "name": "Warm White",
+            "type": "solid",
+            "value": "#fffcf8"
+          },
+          {
+            "id": "bg-stone-light",
+            "name": "Stone Mist",
+            "type": "solid",
+            "value": "#f5f5f4"
+          },
+          {
+            "id": "bg-ink",
+            "name": "Ink",
+            "type": "solid",
+            "value": "#1c1917"
+          },
+          {
+            "id": "bg-dark",
+            "name": "Black",
+            "type": "solid",
+            "value": "#0a0a0a"
+          },
+          {
+            "id": "bg-panel-dark",
+            "name": "Dark Panel",
+            "type": "solid",
+            "value": "#292524"
+          },
+          {
+            "id": "bg-gradient-warm",
+            "name": "Warm Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #faf7f2 0%, #f0ebe3 55%, #e7e5e4 100%)"
+          },
+          {
+            "id": "bg-gradient-dark",
+            "name": "Dark Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #1c1917 0%, #0a0a0a 100%)"
+          }
+        ],
+        "hint": "Use preset colors, a custom swatch, or a full-bleed image. Delete a hero image to reveal the color panel behind it."
+      }
+    },
+    {
+      "id": "pl_scene_02",
+      "slideIndex": 2,
+      "title": "The Problem",
+      "layoutType": "Split",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Bundle Presenter",
+        "previewSrc": "https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "alternates": [
+          "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=800",
+          "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=800"
+        ]
+      },
+      "background": {
+        "type": "solid",
+        "value": "#faf7f2",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "text": {
+          "x": 64,
+          "y": 100,
+          "width": 520,
+          "height": 520
+        },
+        "image": {
+          "x": 700,
+          "y": 80,
+          "width": 520,
+          "height": 560
+        },
+        "avatar": {
+          "x": 64,
+          "y": 570,
+          "width": 108,
+          "height": 130
+        }
+      },
+      "description": "Vision-style split with serif headline, rule lines, and portrait frame.",
+      "flow": "Problem → Comparison",
+      "duration": 8,
+      "tags": [
+        "product-launch",
+        "editorial",
+        "problem",
+        "vision"
+      ],
+      "clips": [
+        {
+          "id": "grid_hint",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#faf7f2"
+          }
+        },
+        {
+          "id": "line_top",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "launch-line-h",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 88
+          },
+          "size": {
+            "width": 420,
+            "height": 1
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#d6d3d1"
+          }
+        },
+        {
+          "id": "t_brand",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 64,
+            "y": 56
+          },
+          "size": {
+            "width": 300,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "YOUR BRAND",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 11,
+            "letterSpacing": "0.28em",
+            "textTransform": "uppercase",
+            "color": "#1c1917"
+          }
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 64,
+            "y": 140
+          },
+          "size": {
+            "width": 560,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "The Problem\nWe Solve",
+          "style": {
+            "fontFamily": "\"Playfair Display\", Georgia, serif",
+            "fontWeight": "700",
+            "color": "#1c1917",
+            "fontSize": 64,
+            "lineHeight": 1.05
+          }
+        },
+        {
+          "id": "line_mid",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "launch-line-h",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 64,
+            "y": 300
+          },
+          "size": {
+            "width": 200,
+            "height": 1
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#d6d3d1"
+          }
+        },
+        {
+          "id": "t_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 64,
+            "y": 330
+          },
+          "size": {
+            "width": 520,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Teams waste time on fragmented tools, slow launches, and messaging that never feels premium. Your product deserves a clearer story.",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#1c1917",
+            "lineHeight": 1.65,
+            "fontSize": 17
+          }
+        },
+        {
+          "id": "accent_line",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "launch-line-accent",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 64,
+            "y": 500
+          },
+          "size": {
+            "width": 4,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#b45309",
+            "borderRadius": "2px"
+          }
+        },
+        {
+          "id": "t_caption",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 64,
+            "y": 520
+          },
+          "size": {
+            "width": 400,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Replace with your customer pain points.",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 12,
+            "letterSpacing": "0.18em",
+            "textTransform": "uppercase",
+            "color": "#78716c"
+          }
+        },
+        {
+          "id": "frame_shadow",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "launch-frame-round",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 688,
+            "y": 72
+          },
+          "size": {
+            "width": 536,
+            "height": 576
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#f0ebe3",
+            "borderRadius": "28px"
+          }
+        },
+        {
+          "id": "img_portrait_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "launch-frame-soft",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 700,
+            "y": 80
+          },
+          "size": {
+            "width": 512,
+            "height": 560
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#f0ebe3",
+            "borderRadius": "28px"
+          }
+        },
+        {
+          "id": "img_portrait",
+          "type": "image",
+          "assetKey": "launch-portrait",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 700,
+            "y": 80
+          },
+          "size": {
+            "width": 512,
+            "height": 560
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg",
+          "placeholder": true,
+          "alt": "Brand portrait",
+          "style": {
+            "borderRadius": "28px",
+            "objectFit": "cover"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#f0ebe3"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 64,
+            "y": 570
+          },
+          "size": {
+            "width": 108,
+            "height": 130
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #faf7f2",
+            "boxShadow": "0 10px 28px rgba(28, 25, 23, 0.2)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-cream",
+            "name": "Cream",
+            "type": "solid",
+            "value": "#faf7f2"
+          },
+          {
+            "id": "bg-sand",
+            "name": "Sand",
+            "type": "solid",
+            "value": "#f0ebe3"
+          },
+          {
+            "id": "bg-warm-white",
+            "name": "Warm White",
+            "type": "solid",
+            "value": "#fffcf8"
+          },
+          {
+            "id": "bg-stone-light",
+            "name": "Stone Mist",
+            "type": "solid",
+            "value": "#f5f5f4"
+          },
+          {
+            "id": "bg-ink",
+            "name": "Ink",
+            "type": "solid",
+            "value": "#1c1917"
+          },
+          {
+            "id": "bg-dark",
+            "name": "Black",
+            "type": "solid",
+            "value": "#0a0a0a"
+          },
+          {
+            "id": "bg-panel-dark",
+            "name": "Dark Panel",
+            "type": "solid",
+            "value": "#292524"
+          },
+          {
+            "id": "bg-gradient-warm",
+            "name": "Warm Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #faf7f2 0%, #f0ebe3 55%, #e7e5e4 100%)"
+          },
+          {
+            "id": "bg-gradient-dark",
+            "name": "Dark Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #1c1917 0%, #0a0a0a 100%)"
+          }
+        ],
+        "hint": "Use preset colors, a custom swatch, or a full-bleed image. Delete a hero image to reveal the color panel behind it."
+      }
+    },
+    {
+      "id": "pl_scene_03",
+      "slideIndex": 3,
+      "title": "Before & After",
+      "layoutType": "Split",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Bundle Presenter",
+        "previewSrc": "https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "alternates": [
+          "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=800",
+          "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=800"
+        ]
+      },
+      "background": {
+        "type": "solid",
+        "value": "#f0ebe3",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "left": {
+          "x": 80,
+          "y": 160,
+          "width": 520,
+          "height": 420
+        },
+        "right": {
+          "x": 680,
+          "y": 160,
+          "width": 520,
+          "height": 420
+        },
+        "avatar": {
+          "x": 64,
+          "y": 590,
+          "width": 92,
+          "height": 110
+        }
+      },
+      "description": "Elegant before/after frames with copper labels on warm background.",
+      "flow": "Comparison → Reveal",
+      "duration": 8,
+      "tags": [
+        "product-launch",
+        "editorial",
+        "before-after",
+        "comparison"
+      ],
+      "clips": [
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 64,
+            "y": 56
+          },
+          "size": {
+            "width": 1152,
+            "height": 56
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "FROM CHAOS TO CLARITY",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#b45309",
+            "letterSpacing": "0.24em",
+            "fontSize": 14,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "t_sub",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 200,
+            "y": 88
+          },
+          "size": {
+            "width": 880,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Before & After",
+          "style": {
+            "fontFamily": "\"Playfair Display\", Georgia, serif",
+            "fontWeight": "700",
+            "color": "#1c1917",
+            "fontSize": 52,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "frame_l",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "launch-frame-soft",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 80,
+            "y": 160
+          },
+          "size": {
+            "width": 520,
+            "height": 420
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#fffcf8",
+            "borderRadius": "24px",
+            "boxShadow": "0 16px 40px rgba(28,25,23,0.08)"
+          }
+        },
+        {
+          "id": "frame_r",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "launch-frame-soft",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 680,
+            "y": 160
+          },
+          "size": {
+            "width": 520,
+            "height": 420
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#fffcf8",
+            "borderRadius": "24px",
+            "boxShadow": "0 16px 40px rgba(28,25,23,0.08)"
+          }
+        },
+        {
+          "id": "img_before_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "launch-frame-soft",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 100,
+            "y": 180
+          },
+          "size": {
+            "width": 480,
+            "height": 300
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#f0ebe3",
+            "borderRadius": "18px"
+          }
+        },
+        {
+          "id": "img_before",
+          "type": "image",
+          "assetKey": "launch-before",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 100,
+            "y": 180
+          },
+          "size": {
+            "width": 480,
+            "height": 300
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/6476589/pexels-photo-6476589.jpeg",
+          "placeholder": true,
+          "alt": "Before",
+          "style": {
+            "borderRadius": "18px",
+            "objectFit": "cover"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#f0ebe3"
+          }
+        },
+        {
+          "id": "img_after_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "launch-frame-soft",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 700,
+            "y": 180
+          },
+          "size": {
+            "width": 480,
+            "height": 300
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#f0ebe3",
+            "borderRadius": "18px"
+          }
+        },
+        {
+          "id": "img_after",
+          "type": "image",
+          "assetKey": "launch-after",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 700,
+            "y": 180
+          },
+          "size": {
+            "width": 480,
+            "height": 300
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/6476584/pexels-photo-6476584.jpeg",
+          "placeholder": true,
+          "alt": "After",
+          "style": {
+            "borderRadius": "18px",
+            "objectFit": "cover"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#f0ebe3"
+          }
+        },
+        {
+          "id": "pill_before",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "launch-pill",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 120,
+            "y": 140
+          },
+          "size": {
+            "width": 110,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#292524",
+            "borderRadius": "100px"
+          }
+        },
+        {
+          "id": "lbl_before",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 120,
+            "y": 146
+          },
+          "size": {
+            "width": 110,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "BEFORE",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 11,
+            "letterSpacing": "0.18em",
+            "textTransform": "uppercase",
+            "color": "#faf7f2",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "pill_after",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "launch-pill",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 720,
+            "y": 140
+          },
+          "size": {
+            "width": 100,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#b45309",
+            "borderRadius": "100px"
+          }
+        },
+        {
+          "id": "lbl_after",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 720,
+            "y": 146
+          },
+          "size": {
+            "width": 100,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "AFTER",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 11,
+            "letterSpacing": "0.18em",
+            "textTransform": "uppercase",
+            "color": "#faf7f2",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "t_before",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 100,
+            "y": 500
+          },
+          "size": {
+            "width": 480,
+            "height": 64
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Manual workflows, scattered assets, and inconsistent brand presentation.",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#78716c",
+            "lineHeight": 1.65,
+            "fontSize": 15,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "t_after",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 700,
+            "y": 500
+          },
+          "size": {
+            "width": 480,
+            "height": 64
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "One polished bundle, unified theme, and launch-ready scenes in minutes.",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#78716c",
+            "lineHeight": 1.65,
+            "fontSize": 15,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 64,
+            "y": 590
+          },
+          "size": {
+            "width": 92,
+            "height": 110
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #faf7f2",
+            "boxShadow": "0 10px 28px rgba(28, 25, 23, 0.2)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-cream",
+            "name": "Cream",
+            "type": "solid",
+            "value": "#faf7f2"
+          },
+          {
+            "id": "bg-sand",
+            "name": "Sand",
+            "type": "solid",
+            "value": "#f0ebe3"
+          },
+          {
+            "id": "bg-warm-white",
+            "name": "Warm White",
+            "type": "solid",
+            "value": "#fffcf8"
+          },
+          {
+            "id": "bg-stone-light",
+            "name": "Stone Mist",
+            "type": "solid",
+            "value": "#f5f5f4"
+          },
+          {
+            "id": "bg-ink",
+            "name": "Ink",
+            "type": "solid",
+            "value": "#1c1917"
+          },
+          {
+            "id": "bg-dark",
+            "name": "Black",
+            "type": "solid",
+            "value": "#0a0a0a"
+          },
+          {
+            "id": "bg-panel-dark",
+            "name": "Dark Panel",
+            "type": "solid",
+            "value": "#292524"
+          },
+          {
+            "id": "bg-gradient-warm",
+            "name": "Warm Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #faf7f2 0%, #f0ebe3 55%, #e7e5e4 100%)"
+          },
+          {
+            "id": "bg-gradient-dark",
+            "name": "Dark Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #1c1917 0%, #0a0a0a 100%)"
+          }
+        ],
+        "hint": "Use preset colors, a custom swatch, or a full-bleed image. Delete a hero image to reveal the color panel behind it."
+      }
+    },
+    {
+      "id": "pl_scene_04",
+      "slideIndex": 4,
+      "title": "Product Reveal",
+      "layoutType": "Grid",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Bundle Presenter",
+        "previewSrc": "https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "alternates": [
+          "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=800",
+          "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=800"
+        ]
+      },
+      "background": {
+        "type": "solid",
+        "value": "#fffcf8",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "images": {
+          "x": 640,
+          "y": 64,
+          "width": 600,
+          "height": 592
+        },
+        "copy": {
+          "x": 64,
+          "y": 420,
+          "width": 560,
+          "height": 220
+        },
+        "avatar": {
+          "x": 1168,
+          "y": 590,
+          "width": 92,
+          "height": 110
+        }
+      },
+      "description": "Asymmetric grid with rounded image frames and dark copy panel.",
+      "flow": "Reveal → Features",
+      "duration": 8,
+      "tags": [
+        "product-launch",
+        "editorial",
+        "reveal",
+        "product"
+      ],
+      "clips": [
+        {
+          "id": "t_brand_row",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 64,
+            "y": 48
+          },
+          "size": {
+            "width": 800,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "BRAND NAME    PRODUCT STORY    FLAVOR PROFILE",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 10,
+            "letterSpacing": "0.22em",
+            "textTransform": "uppercase",
+            "color": "#1c1917"
+          }
+        },
+        {
+          "id": "brand_line",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "launch-line-h",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 78
+          },
+          "size": {
+            "width": 1152,
+            "height": 1
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#d6d3d1"
+          }
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 64,
+            "y": 110
+          },
+          "size": {
+            "width": 520,
+            "height": 160
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "PRODUCT\nREVEAL",
+          "style": {
+            "fontFamily": "\"Playfair Display\", Georgia, serif",
+            "fontWeight": "700",
+            "color": "#1c1917",
+            "fontSize": 72,
+            "lineHeight": 0.95
+          }
+        },
+        {
+          "id": "img_h_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "launch-frame-soft",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 660,
+            "y": 90
+          },
+          "size": {
+            "width": 520,
+            "height": 280
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#f0ebe3",
+            "borderRadius": "24px"
+          }
+        },
+        {
+          "id": "img_h",
+          "type": "image",
+          "assetKey": "launch-detail-horizontal",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 660,
+            "y": 90
+          },
+          "size": {
+            "width": 520,
+            "height": 280
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/1457842/pexels-photo-1457842.jpeg",
+          "placeholder": true,
+          "alt": "Lifestyle shot",
+          "style": {
+            "borderRadius": "24px",
+            "objectFit": "cover"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#f0ebe3"
+          }
+        },
+        {
+          "id": "img_v_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "launch-frame-soft",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 916,
+            "y": 250
+          },
+          "size": {
+            "width": 300,
+            "height": 380
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#f0ebe3",
+            "borderRadius": "28px"
+          }
+        },
+        {
+          "id": "img_v",
+          "type": "image",
+          "assetKey": "launch-detail-vertical",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 916,
+            "y": 250
+          },
+          "size": {
+            "width": 300,
+            "height": 380
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/965989/pexels-photo-965989.jpeg",
+          "placeholder": true,
+          "alt": "Product detail",
+          "style": {
+            "borderRadius": "28px",
+            "objectFit": "cover"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#f0ebe3"
+          }
+        },
+        {
+          "id": "copy_panel",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "launch-dark-card",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 64,
+            "y": 420
+          },
+          "size": {
+            "width": 560,
+            "height": 220
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#292524",
+            "borderRadius": "24px"
+          }
+        },
+        {
+          "id": "t_copy",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 96,
+            "y": 450
+          },
+          "size": {
+            "width": 500,
+            "height": 160
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "This is where your product story lands. Describe the experience, the craft, and the outcome customers feel on day one.",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#faf7f2",
+            "lineHeight": 1.65,
+            "fontSize": 16
+          }
+        },
+        {
+          "id": "page_pill",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 64,
+            "y": 652
+          },
+          "size": {
+            "width": 100,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "transparent",
+            "border": "1px solid #1c1917",
+            "borderRadius": "100px"
+          }
+        },
+        {
+          "id": "t_page",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 76,
+            "y": 660
+          },
+          "size": {
+            "width": 80,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "04",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 11,
+            "letterSpacing": "0.18em",
+            "textTransform": "uppercase",
+            "color": "#1c1917"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1168,
+            "y": 590
+          },
+          "size": {
+            "width": 92,
+            "height": 110
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #faf7f2",
+            "boxShadow": "0 10px 28px rgba(28, 25, 23, 0.2)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-cream",
+            "name": "Cream",
+            "type": "solid",
+            "value": "#faf7f2"
+          },
+          {
+            "id": "bg-sand",
+            "name": "Sand",
+            "type": "solid",
+            "value": "#f0ebe3"
+          },
+          {
+            "id": "bg-warm-white",
+            "name": "Warm White",
+            "type": "solid",
+            "value": "#fffcf8"
+          },
+          {
+            "id": "bg-stone-light",
+            "name": "Stone Mist",
+            "type": "solid",
+            "value": "#f5f5f4"
+          },
+          {
+            "id": "bg-ink",
+            "name": "Ink",
+            "type": "solid",
+            "value": "#1c1917"
+          },
+          {
+            "id": "bg-dark",
+            "name": "Black",
+            "type": "solid",
+            "value": "#0a0a0a"
+          },
+          {
+            "id": "bg-panel-dark",
+            "name": "Dark Panel",
+            "type": "solid",
+            "value": "#292524"
+          },
+          {
+            "id": "bg-gradient-warm",
+            "name": "Warm Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #faf7f2 0%, #f0ebe3 55%, #e7e5e4 100%)"
+          },
+          {
+            "id": "bg-gradient-dark",
+            "name": "Dark Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #1c1917 0%, #0a0a0a 100%)"
+          }
+        ],
+        "hint": "Use preset colors, a custom swatch, or a full-bleed image. Delete a hero image to reveal the color panel behind it."
+      }
+    },
+    {
+      "id": "pl_scene_05",
+      "slideIndex": 5,
+      "title": "Key Features",
+      "layoutType": "Grid",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Bundle Presenter",
+        "previewSrc": "https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "alternates": [
+          "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=800",
+          "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=800"
+        ]
+      },
+      "background": {
+        "type": "gradient",
+        "value": "linear-gradient(145deg, #faf7f2 0%, #f0ebe3 55%, #e7e5e4 100%)",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "grid": {
+          "x": 64,
+          "y": 180,
+          "width": 1152,
+          "height": 440
+        },
+        "avatar": {
+          "x": 1172,
+          "y": 80,
+          "width": 88,
+          "height": 106
+        }
+      },
+      "description": "Three refined feature cards with serif numerals and copper accents.",
+      "flow": "Features → Benefits",
+      "duration": 8,
+      "tags": [
+        "product-launch",
+        "editorial",
+        "features",
+        "grid"
+      ],
+      "clips": [
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 64,
+            "y": 72
+          },
+          "size": {
+            "width": 700,
+            "height": 72
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "What Makes It Different",
+          "style": {
+            "fontFamily": "\"Playfair Display\", Georgia, serif",
+            "fontWeight": "700",
+            "color": "#1c1917",
+            "fontSize": 48
+          }
+        },
+        {
+          "id": "t_sub",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 64,
+            "y": 140
+          },
+          "size": {
+            "width": 640,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Three pillars that stay consistent across your entire launch bundle.",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#1c1917",
+            "lineHeight": 1.65,
+            "fontSize": 16
+          }
+        },
+        {
+          "id": "card1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "launch-feature-card",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 200
+          },
+          "size": {
+            "width": 340,
+            "height": 400
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#fffcf8",
+            "borderRadius": "20px",
+            "boxShadow": "0 12px 36px rgba(28,25,23,0.08)",
+            "border": "1px solid #d6d3d1"
+          }
+        },
+        {
+          "id": "num1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 92,
+            "y": 220
+          },
+          "size": {
+            "width": 120,
+            "height": 72
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "01",
+          "style": {
+            "fontFamily": "\"Playfair Display\", Georgia, serif",
+            "fontWeight": "700",
+            "color": "#b45309",
+            "fontSize": 56
+          }
+        },
+        {
+          "id": "ico1_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "launch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 92,
+            "y": 300
+          },
+          "size": {
+            "width": 48,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#faf7f2",
+            "borderRadius": "50%",
+            "border": "1px solid #d6d3d1"
+          }
+        },
+        {
+          "id": "ico1",
+          "type": "image",
+          "assetKey": "lightbulb",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 101,
+            "y": 309
+          },
+          "size": {
+            "width": 30,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/b45309/light-on.png",
+          "placeholder": true,
+          "alt": "Idea",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "h1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 92,
+            "y": 360
+          },
+          "size": {
+            "width": 280,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Clarity",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#1c1917",
+            "letterSpacing": "0.06em",
+            "fontSize": 22
+          }
+        },
+        {
+          "id": "b1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 92,
+            "y": 404
+          },
+          "size": {
+            "width": 280,
+            "height": 160
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Replace with a concise benefit statement that reinforces your product positioning.",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#78716c",
+            "lineHeight": 1.65,
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "bar1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 92,
+            "y": 560
+          },
+          "size": {
+            "width": 120,
+            "height": 4
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#b45309",
+            "borderRadius": "2px"
+          }
+        },
+        {
+          "id": "card2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "launch-feature-card",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 448,
+            "y": 200
+          },
+          "size": {
+            "width": 340,
+            "height": 400
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#fffcf8",
+            "borderRadius": "20px",
+            "boxShadow": "0 12px 36px rgba(28,25,23,0.08)",
+            "border": "1px solid #d6d3d1"
+          }
+        },
+        {
+          "id": "num2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 476,
+            "y": 220
+          },
+          "size": {
+            "width": 120,
+            "height": 72
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "02",
+          "style": {
+            "fontFamily": "\"Playfair Display\", Georgia, serif",
+            "fontWeight": "700",
+            "color": "#1c1917",
+            "fontSize": 56
+          }
+        },
+        {
+          "id": "ico2_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "launch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 476,
+            "y": 300
+          },
+          "size": {
+            "width": 48,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#faf7f2",
+            "borderRadius": "50%",
+            "border": "1px solid #d6d3d1"
+          }
+        },
+        {
+          "id": "ico2",
+          "type": "image",
+          "assetKey": "gears",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 485,
+            "y": 309
+          },
+          "size": {
+            "width": 30,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/b45309/gears.png",
+          "placeholder": true,
+          "alt": "Process",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "h2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 476,
+            "y": 360
+          },
+          "size": {
+            "width": 280,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Speed",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#1c1917",
+            "letterSpacing": "0.06em",
+            "fontSize": 22
+          }
+        },
+        {
+          "id": "b2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 17,
+          "position": {
+            "x": 476,
+            "y": 404
+          },
+          "size": {
+            "width": 280,
+            "height": 160
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Replace with a concise benefit statement that reinforces your product positioning.",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#78716c",
+            "lineHeight": 1.65,
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "bar2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 476,
+            "y": 560
+          },
+          "size": {
+            "width": 120,
+            "height": 4
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1c1917",
+            "borderRadius": "2px"
+          }
+        },
+        {
+          "id": "card3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "launch-feature-card",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 832,
+            "y": 200
+          },
+          "size": {
+            "width": 340,
+            "height": 400
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#fffcf8",
+            "borderRadius": "20px",
+            "boxShadow": "0 12px 36px rgba(28,25,23,0.08)",
+            "border": "1px solid #d6d3d1"
+          }
+        },
+        {
+          "id": "num3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 18,
+          "position": {
+            "x": 860,
+            "y": 220
+          },
+          "size": {
+            "width": 120,
+            "height": 72
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "03",
+          "style": {
+            "fontFamily": "\"Playfair Display\", Georgia, serif",
+            "fontWeight": "700",
+            "color": "#b45309",
+            "fontSize": 56
+          }
+        },
+        {
+          "id": "ico3_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "launch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 860,
+            "y": 300
+          },
+          "size": {
+            "width": 48,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#faf7f2",
+            "borderRadius": "50%",
+            "border": "1px solid #d6d3d1"
+          }
+        },
+        {
+          "id": "ico3",
+          "type": "image",
+          "assetKey": "diamond",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 869,
+            "y": 309
+          },
+          "size": {
+            "width": 30,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/b45309/diamond.png",
+          "placeholder": true,
+          "alt": "Premium",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "h3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 19,
+          "position": {
+            "x": 860,
+            "y": 360
+          },
+          "size": {
+            "width": 280,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Quality",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#1c1917",
+            "letterSpacing": "0.06em",
+            "fontSize": 22
+          }
+        },
+        {
+          "id": "b3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 20,
+          "position": {
+            "x": 860,
+            "y": 404
+          },
+          "size": {
+            "width": 280,
+            "height": 160
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Replace with a concise benefit statement that reinforces your product positioning.",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#78716c",
+            "lineHeight": 1.65,
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "bar3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 860,
+            "y": 560
+          },
+          "size": {
+            "width": 120,
+            "height": 4
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#b45309",
+            "borderRadius": "2px"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1172,
+            "y": 80
+          },
+          "size": {
+            "width": 88,
+            "height": 106
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #faf7f2",
+            "boxShadow": "0 10px 28px rgba(28, 25, 23, 0.2)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-cream",
+            "name": "Cream",
+            "type": "solid",
+            "value": "#faf7f2"
+          },
+          {
+            "id": "bg-sand",
+            "name": "Sand",
+            "type": "solid",
+            "value": "#f0ebe3"
+          },
+          {
+            "id": "bg-warm-white",
+            "name": "Warm White",
+            "type": "solid",
+            "value": "#fffcf8"
+          },
+          {
+            "id": "bg-stone-light",
+            "name": "Stone Mist",
+            "type": "solid",
+            "value": "#f5f5f4"
+          },
+          {
+            "id": "bg-ink",
+            "name": "Ink",
+            "type": "solid",
+            "value": "#1c1917"
+          },
+          {
+            "id": "bg-dark",
+            "name": "Black",
+            "type": "solid",
+            "value": "#0a0a0a"
+          },
+          {
+            "id": "bg-panel-dark",
+            "name": "Dark Panel",
+            "type": "solid",
+            "value": "#292524"
+          },
+          {
+            "id": "bg-gradient-warm",
+            "name": "Warm Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #faf7f2 0%, #f0ebe3 55%, #e7e5e4 100%)"
+          },
+          {
+            "id": "bg-gradient-dark",
+            "name": "Dark Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #1c1917 0%, #0a0a0a 100%)"
+          }
+        ],
+        "hint": "Use preset colors, a custom swatch, or a full-bleed image. Delete a hero image to reveal the color panel behind it."
+      }
+    },
+    {
+      "id": "pl_scene_06",
+      "slideIndex": 6,
+      "title": "Why Choose Us",
+      "layoutType": "ListRight",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Bundle Presenter",
+        "previewSrc": "https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "alternates": [
+          "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=800",
+          "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=800"
+        ]
+      },
+      "background": {
+        "type": "solid",
+        "value": "#f5f5f4",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "list": {
+          "x": 64,
+          "y": 120,
+          "width": 620,
+          "height": 480
+        },
+        "image": {
+          "x": 760,
+          "y": 100,
+          "width": 460,
+          "height": 520
+        },
+        "avatar": {
+          "x": 64,
+          "y": 570,
+          "width": 108,
+          "height": 130
+        }
+      },
+      "description": "Editorial benefit list with portrait frame and copper accents.",
+      "flow": "Benefits → Proof",
+      "duration": 8,
+      "tags": [
+        "product-launch",
+        "editorial",
+        "why-us",
+        "benefits"
+      ],
+      "clips": [
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 64,
+            "y": 88
+          },
+          "size": {
+            "width": 560,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Why Choose\nThis Product",
+          "style": {
+            "fontFamily": "\"Playfair Display\", Georgia, serif",
+            "fontWeight": "700",
+            "color": "#1c1917",
+            "fontSize": 54,
+            "lineHeight": 1.02
+          }
+        },
+        {
+          "id": "line_title",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "launch-line-h",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 200
+          },
+          "size": {
+            "width": 180,
+            "height": 1
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#d6d3d1"
+          }
+        },
+        {
+          "id": "row0",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 200
+          },
+          "size": {
+            "width": 600,
+            "height": 88
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "transparent",
+            "borderRadius": "12px",
+            "border": "none"
+          }
+        },
+        {
+          "id": "bh0",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 88,
+            "y": 214
+          },
+          "size": {
+            "width": 520,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Premium Presentation",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#1c1917",
+            "letterSpacing": "0.06em",
+            "fontSize": 18
+          }
+        },
+        {
+          "id": "bb0",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 88,
+            "y": 244
+          },
+          "size": {
+            "width": 520,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Every scene shares the same palette, type, and spacing.",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#78716c",
+            "lineHeight": 1.65,
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "row1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 310
+          },
+          "size": {
+            "width": 600,
+            "height": 88
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#fffcf8",
+            "borderRadius": "12px",
+            "border": "1px solid #d6d3d1"
+          }
+        },
+        {
+          "id": "bh1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 88,
+            "y": 324
+          },
+          "size": {
+            "width": 520,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Flexible Backgrounds",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#1c1917",
+            "letterSpacing": "0.06em",
+            "fontSize": 18
+          }
+        },
+        {
+          "id": "bb1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 88,
+            "y": 354
+          },
+          "size": {
+            "width": 520,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Swap full-bleed images for solid colors in one click.",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#78716c",
+            "lineHeight": 1.65,
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "row2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 420
+          },
+          "size": {
+            "width": 600,
+            "height": 88
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "transparent",
+            "borderRadius": "12px",
+            "border": "none"
+          }
+        },
+        {
+          "id": "bh2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 88,
+            "y": 434
+          },
+          "size": {
+            "width": 520,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Launch-Ready Structure",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#1c1917",
+            "letterSpacing": "0.06em",
+            "fontSize": 18
+          }
+        },
+        {
+          "id": "bb2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 88,
+            "y": 464
+          },
+          "size": {
+            "width": 520,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Cover, problem, reveal, proof, and CTA already mapped.",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#78716c",
+            "lineHeight": 1.65,
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "frame_r",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 748,
+            "y": 88
+          },
+          "size": {
+            "width": 484,
+            "height": 544
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#f0ebe3",
+            "borderRadius": "28px"
+          }
+        },
+        {
+          "id": "img_why_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "launch-frame-soft",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 760,
+            "y": 100
+          },
+          "size": {
+            "width": 460,
+            "height": 520
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#f0ebe3",
+            "borderRadius": "28px"
+          }
+        },
+        {
+          "id": "img_why",
+          "type": "image",
+          "assetKey": "launch-hero-product",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 756,
+            "y": 100
+          },
+          "size": {
+            "width": 460,
+            "height": 520
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3945313/pexels-photo-3945313.jpeg",
+          "placeholder": true,
+          "alt": "Product flat lay",
+          "style": {
+            "borderRadius": "28px",
+            "objectFit": "cover"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#f0ebe3"
+          }
+        },
+        {
+          "id": "copper_tag",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 800,
+            "y": 140
+          },
+          "size": {
+            "width": 140,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#b45309",
+            "borderRadius": "100px"
+          }
+        },
+        {
+          "id": "tag",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 20,
+          "position": {
+            "x": 812,
+            "y": 148
+          },
+          "size": {
+            "width": 116,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "WHY US",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 10,
+            "letterSpacing": "0.18em",
+            "textTransform": "uppercase",
+            "color": "#faf7f2",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 64,
+            "y": 570
+          },
+          "size": {
+            "width": 108,
+            "height": 130
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #faf7f2",
+            "boxShadow": "0 10px 28px rgba(28, 25, 23, 0.2)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-cream",
+            "name": "Cream",
+            "type": "solid",
+            "value": "#faf7f2"
+          },
+          {
+            "id": "bg-sand",
+            "name": "Sand",
+            "type": "solid",
+            "value": "#f0ebe3"
+          },
+          {
+            "id": "bg-warm-white",
+            "name": "Warm White",
+            "type": "solid",
+            "value": "#fffcf8"
+          },
+          {
+            "id": "bg-stone-light",
+            "name": "Stone Mist",
+            "type": "solid",
+            "value": "#f5f5f4"
+          },
+          {
+            "id": "bg-ink",
+            "name": "Ink",
+            "type": "solid",
+            "value": "#1c1917"
+          },
+          {
+            "id": "bg-dark",
+            "name": "Black",
+            "type": "solid",
+            "value": "#0a0a0a"
+          },
+          {
+            "id": "bg-panel-dark",
+            "name": "Dark Panel",
+            "type": "solid",
+            "value": "#292524"
+          },
+          {
+            "id": "bg-gradient-warm",
+            "name": "Warm Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #faf7f2 0%, #f0ebe3 55%, #e7e5e4 100%)"
+          },
+          {
+            "id": "bg-gradient-dark",
+            "name": "Dark Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #1c1917 0%, #0a0a0a 100%)"
+          }
+        ],
+        "hint": "Use preset colors, a custom swatch, or a full-bleed image. Delete a hero image to reveal the color panel behind it."
+      }
+    },
+    {
+      "id": "pl_scene_07",
+      "slideIndex": 7,
+      "title": "Social Proof",
+      "layoutType": "StatsHighlight",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Bundle Presenter",
+        "previewSrc": "https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "alternates": [
+          "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=800",
+          "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=800"
+        ]
+      },
+      "background": {
+        "type": "solid",
+        "value": "#faf7f2",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "stats": {
+          "x": 64,
+          "y": 160,
+          "width": 1152,
+          "height": 180
+        },
+        "avatar": {
+          "x": 64,
+          "y": 590,
+          "width": 92,
+          "height": 110
+        }
+      },
+      "description": "Metrics row with editorial testimonial and team image.",
+      "flow": "Proof → CTA",
+      "duration": 8,
+      "tags": [
+        "product-launch",
+        "editorial",
+        "social-proof",
+        "stats"
+      ],
+      "clips": [
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 64,
+            "y": 72
+          },
+          "size": {
+            "width": 500,
+            "height": 64
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Trusted at Launch",
+          "style": {
+            "fontFamily": "\"Playfair Display\", Georgia, serif",
+            "fontWeight": "700",
+            "color": "#1c1917",
+            "fontSize": 48
+          }
+        },
+        {
+          "id": "t_sub",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 64,
+            "y": 132
+          },
+          "size": {
+            "width": 560,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Social proof that matches the same premium visual system.",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#1c1917",
+            "lineHeight": 1.65,
+            "fontSize": 15
+          }
+        },
+        {
+          "id": "stat0",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 100,
+            "y": 180
+          },
+          "size": {
+            "width": 280,
+            "height": 150
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#fffcf8",
+            "borderRadius": "18px",
+            "border": "1px solid #d6d3d1"
+          }
+        },
+        {
+          "id": "sv0",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 124,
+            "y": 206
+          },
+          "size": {
+            "width": 232,
+            "height": 64
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "10K+",
+          "style": {
+            "fontFamily": "\"Playfair Display\", Georgia, serif",
+            "fontWeight": "700",
+            "color": "#b45309",
+            "fontSize": 48
+          }
+        },
+        {
+          "id": "sl0",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 124,
+            "y": 278
+          },
+          "size": {
+            "width": 232,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Early adopters",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 11,
+            "letterSpacing": "0.14em",
+            "textTransform": "uppercase",
+            "color": "#78716c"
+          }
+        },
+        {
+          "id": "stat1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 430,
+            "y": 180
+          },
+          "size": {
+            "width": 280,
+            "height": 150
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#fffcf8",
+            "borderRadius": "18px",
+            "border": "1px solid #d6d3d1"
+          }
+        },
+        {
+          "id": "sv1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 454,
+            "y": 206
+          },
+          "size": {
+            "width": 232,
+            "height": 64
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "4.9",
+          "style": {
+            "fontFamily": "\"Playfair Display\", Georgia, serif",
+            "fontWeight": "700",
+            "color": "#b45309",
+            "fontSize": 48
+          }
+        },
+        {
+          "id": "sl1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 454,
+            "y": 278
+          },
+          "size": {
+            "width": 232,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Average rating",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 11,
+            "letterSpacing": "0.14em",
+            "textTransform": "uppercase",
+            "color": "#78716c"
+          }
+        },
+        {
+          "id": "stat2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 760,
+            "y": 180
+          },
+          "size": {
+            "width": 280,
+            "height": 150
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#fffcf8",
+            "borderRadius": "18px",
+            "border": "1px solid #d6d3d1"
+          }
+        },
+        {
+          "id": "sv2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 784,
+            "y": 206
+          },
+          "size": {
+            "width": 232,
+            "height": 64
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "98%",
+          "style": {
+            "fontFamily": "\"Playfair Display\", Georgia, serif",
+            "fontWeight": "700",
+            "color": "#b45309",
+            "fontSize": 48
+          }
+        },
+        {
+          "id": "sl2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 17,
+          "position": {
+            "x": 784,
+            "y": 278
+          },
+          "size": {
+            "width": 232,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Would recommend",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 11,
+            "letterSpacing": "0.14em",
+            "textTransform": "uppercase",
+            "color": "#78716c"
+          }
+        },
+        {
+          "id": "quote_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 64,
+            "y": 380
+          },
+          "size": {
+            "width": 820,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#fffcf8",
+            "borderRadius": "20px",
+            "borderLeft": "5px solid #b45309"
+          }
+        },
+        {
+          "id": "t_quote",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 100,
+            "y": 420
+          },
+          "size": {
+            "width": 740,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "\"This bundle finally made our launch video feel as considered as the product itself — cohesive, polished, and fast to customize.\"",
+          "style": {
+            "fontFamily": "Georgia, serif",
+            "fontWeight": "400",
+            "fontStyle": "italic",
+            "color": "#1c1917",
+            "lineHeight": 1.55,
+            "fontSize": 24
+          }
+        },
+        {
+          "id": "t_author",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 100,
+            "y": 540
+          },
+          "size": {
+            "width": 400,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "— Customer Name, Company",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "color": "#1c1917",
+            "lineHeight": 1.65,
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "img_team_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "launch-frame-soft",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 916,
+            "y": 380
+          },
+          "size": {
+            "width": 300,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#f0ebe3",
+            "borderRadius": "20px"
+          }
+        },
+        {
+          "id": "img_team",
+          "type": "image",
+          "assetKey": "launch-team",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 916,
+            "y": 380
+          },
+          "size": {
+            "width": 300,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg",
+          "placeholder": true,
+          "alt": "Customer moment",
+          "style": {
+            "borderRadius": "20px",
+            "objectFit": "cover"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#f0ebe3"
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 64,
+            "y": 590
+          },
+          "size": {
+            "width": 92,
+            "height": 110
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #faf7f2",
+            "boxShadow": "0 10px 28px rgba(28, 25, 23, 0.2)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-cream",
+            "name": "Cream",
+            "type": "solid",
+            "value": "#faf7f2"
+          },
+          {
+            "id": "bg-sand",
+            "name": "Sand",
+            "type": "solid",
+            "value": "#f0ebe3"
+          },
+          {
+            "id": "bg-warm-white",
+            "name": "Warm White",
+            "type": "solid",
+            "value": "#fffcf8"
+          },
+          {
+            "id": "bg-stone-light",
+            "name": "Stone Mist",
+            "type": "solid",
+            "value": "#f5f5f4"
+          },
+          {
+            "id": "bg-ink",
+            "name": "Ink",
+            "type": "solid",
+            "value": "#1c1917"
+          },
+          {
+            "id": "bg-dark",
+            "name": "Black",
+            "type": "solid",
+            "value": "#0a0a0a"
+          },
+          {
+            "id": "bg-panel-dark",
+            "name": "Dark Panel",
+            "type": "solid",
+            "value": "#292524"
+          },
+          {
+            "id": "bg-gradient-warm",
+            "name": "Warm Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #faf7f2 0%, #f0ebe3 55%, #e7e5e4 100%)"
+          },
+          {
+            "id": "bg-gradient-dark",
+            "name": "Dark Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #1c1917 0%, #0a0a0a 100%)"
+          }
+        ],
+        "hint": "Use preset colors, a custom swatch, or a full-bleed image. Delete a hero image to reveal the color panel behind it."
+      }
+    },
+    {
+      "id": "pl_scene_08",
+      "slideIndex": 8,
+      "title": "Launch CTA",
+      "layoutType": "Promo",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Bundle Presenter",
+        "previewSrc": "https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "alternates": [
+          "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=800",
+          "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=800"
+        ]
+      },
+      "background": {
+        "type": "solid",
+        "value": "#0a0a0a",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "hero": {
+          "x": 64,
+          "y": 120,
+          "width": 420,
+          "height": 480
+        },
+        "cta": {
+          "x": 520,
+          "y": 100,
+          "width": 700,
+          "height": 520
+        },
+        "avatar": {
+          "x": 1160,
+          "y": 580,
+          "width": 100,
+          "height": 120
+        }
+      },
+      "description": "Dark closing slide with accent typography and contact details.",
+      "flow": "CTA → End",
+      "duration": 8,
+      "tags": [
+        "product-launch",
+        "editorial",
+        "cta",
+        "closing"
+      ],
+      "clips": [
+        {
+          "id": "bg_dark",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#0a0a0a"
+          }
+        },
+        {
+          "id": "glow",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 0,
+            "y": 520
+          },
+          "size": {
+            "width": 1280,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "background": "radial-gradient(ellipse at 30% 0%, rgba(200, 230, 74, 0.18) 0%, transparent 70%)"
+          }
+        },
+        {
+          "id": "img_close_color",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "launch-frame-soft",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 64,
+            "y": 140
+          },
+          "size": {
+            "width": 360,
+            "height": 420
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#292524",
+            "borderRadius": "24px"
+          }
+        },
+        {
+          "id": "img_close",
+          "type": "image",
+          "assetKey": "launch-closing-product",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 64,
+            "y": 140
+          },
+          "size": {
+            "width": 360,
+            "height": 420
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/4041392/pexels-photo-4041392.jpeg",
+          "placeholder": true,
+          "alt": "Closing product shot",
+          "style": {
+            "borderRadius": "24px",
+            "objectFit": "cover"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#292524"
+          }
+        },
+        {
+          "id": "accent_oval",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 120,
+            "y": 500
+          },
+          "size": {
+            "width": 260,
+            "height": 56
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#c8e64a",
+            "borderRadius": "100px",
+            "opacity": 0.9
+          }
+        },
+        {
+          "id": "t_thanks",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 516,
+            "y": 120
+          },
+          "size": {
+            "width": 700,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "READY TO\nLAUNCH",
+          "style": {
+            "fontFamily": "\"Playfair Display\", Georgia, serif",
+            "fontWeight": "700",
+            "color": "#faf7f2",
+            "fontSize": 72,
+            "lineHeight": 0.95
+          }
+        },
+        {
+          "id": "t_thanks_accent",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 516,
+            "y": 290
+          },
+          "size": {
+            "width": 700,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "WITH CONFIDENCE",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#c8e64a",
+            "letterSpacing": "0.08em",
+            "textTransform": "uppercase",
+            "fontSize": 28
+          }
+        },
+        {
+          "id": "accent_rule",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "launch-line-accent",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 520,
+            "y": 370
+          },
+          "size": {
+            "width": 4,
+            "height": 88
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#c8e64a",
+            "borderRadius": "2px"
+          }
+        },
+        {
+          "id": "t_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 548,
+            "y": 390
+          },
+          "size": {
+            "width": 620,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Built for clarity, consistency, and a premium first impression — so your team can launch with purpose and move forward.",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#a8a29e",
+            "lineHeight": 1.65,
+            "fontSize": 15
+          }
+        },
+        {
+          "id": "cta_btn",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 520,
+            "y": 520
+          },
+          "size": {
+            "width": 280,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#c8e64a",
+            "borderRadius": "100px"
+          }
+        },
+        {
+          "id": "t_btn",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 548,
+            "y": 532
+          },
+          "size": {
+            "width": 240,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "GET STARTED",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#0a0a0a",
+            "letterSpacing": "0.16em",
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "ico_web_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "launch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 520,
+            "y": 600
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#292524",
+            "borderRadius": "50%",
+            "border": "1px solid #d6d3d1"
+          }
+        },
+        {
+          "id": "ico_web",
+          "type": "image",
+          "assetKey": "website",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 527,
+            "y": 607
+          },
+          "size": {
+            "width": 26,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/c8e64a/domain.png",
+          "placeholder": true,
+          "alt": "Website",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_web",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 572,
+            "y": 606
+          },
+          "size": {
+            "width": 320,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "www.yourproduct.com",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#faf7f2",
+            "lineHeight": 1.65,
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "ico_email_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "launch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 520,
+            "y": 644
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#292524",
+            "borderRadius": "50%",
+            "border": "1px solid #d6d3d1"
+          }
+        },
+        {
+          "id": "ico_email",
+          "type": "image",
+          "assetKey": "email",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 527,
+            "y": 657
+          },
+          "size": {
+            "width": 26,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/c8e64a/new-post.png",
+          "placeholder": true,
+          "alt": "Email",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          }
+        },
+        {
+          "id": "t_email",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 17,
+          "position": {
+            "x": 572,
+            "y": 656
+          },
+          "size": {
+            "width": 320,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "hello@yourproduct.com",
+          "style": {
+            "fontFamily": "\"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#faf7f2",
+            "lineHeight": 1.65,
+            "fontSize": 14
+          }
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1160,
+            "y": 580
+          },
+          "size": {
+            "width": 100,
+            "height": 120
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #c8e64a",
+            "boxShadow": "0 10px 28px rgba(0, 0, 0, 0.45)"
+          }
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-cream",
+            "name": "Cream",
+            "type": "solid",
+            "value": "#faf7f2"
+          },
+          {
+            "id": "bg-sand",
+            "name": "Sand",
+            "type": "solid",
+            "value": "#f0ebe3"
+          },
+          {
+            "id": "bg-warm-white",
+            "name": "Warm White",
+            "type": "solid",
+            "value": "#fffcf8"
+          },
+          {
+            "id": "bg-stone-light",
+            "name": "Stone Mist",
+            "type": "solid",
+            "value": "#f5f5f4"
+          },
+          {
+            "id": "bg-ink",
+            "name": "Ink",
+            "type": "solid",
+            "value": "#1c1917"
+          },
+          {
+            "id": "bg-dark",
+            "name": "Black",
+            "type": "solid",
+            "value": "#0a0a0a"
+          },
+          {
+            "id": "bg-panel-dark",
+            "name": "Dark Panel",
+            "type": "solid",
+            "value": "#292524"
+          },
+          {
+            "id": "bg-gradient-warm",
+            "name": "Warm Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #faf7f2 0%, #f0ebe3 55%, #e7e5e4 100%)"
+          },
+          {
+            "id": "bg-gradient-dark",
+            "name": "Dark Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #1c1917 0%, #0a0a0a 100%)"
+          }
+        ],
+        "hint": "Use preset colors, a custom swatch, or a full-bleed image. Delete a hero image to reveal the color panel behind it."
+      }
+    }
+  ]
+}

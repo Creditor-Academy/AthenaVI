@@ -1,0 +1,81 @@
+{
+  "theme": {
+    "name": "Deal Room",
+    "fonts": {
+      "display": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+      "serif": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+      "sans": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+      "accent": "Georgia, serif"
+    }
+  },
+  "presenter": {
+    "name": "Account Executive"
+  },
+  "colors": {
+    "navy": "#0F172A",
+    "slate": "#334155",
+    "ice": "#F1F5F9",
+    "white": "#ffffff",
+    "cobalt": "#2563EB",
+    "cobaltLight": "#3B82F6",
+    "amber": "#F59E0B",
+    "beige": "#F5F0E8",
+    "beigeWarm": "#EDE6D8",
+    "mint": "#10B981",
+    "ink": "#111827",
+    "muted": "#64748B",
+    "line": "#E2E8F0",
+    "panelDark": "#1E293B",
+    "cream": "#FAFAF9"
+  },
+  "backgrounds": [
+    { "id": "bg-white", "name": "White", "value": "#ffffff" },
+    { "id": "bg-ice", "name": "Ice", "value": "#F1F5F9" },
+    { "id": "bg-beige", "name": "Warm Beige", "value": "#F5F0E8" },
+    { "id": "bg-cream", "name": "Cream", "value": "#FAFAF9" },
+    { "id": "bg-navy", "name": "Navy", "value": "#0F172A" },
+    { "id": "bg-slate", "name": "Slate Panel", "value": "#334155" },
+    { "id": "bg-gradient-ice", "name": "Ice Gradient", "value": "linear-gradient(145deg, #ffffff 0%, #F1F5F9 55%, #F5F0E8 100%)" },
+    { "id": "bg-gradient-navy", "name": "Navy Gradient", "value": "linear-gradient(160deg, #0F172A 0%, #1E293B 100%)" }
+  ],
+  "images": [
+    { "id": "sales-cover-bg", "name": "Cover Background", "role": "background", "thumb": "https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg" },
+    { "id": "sales-meeting", "name": "Team Meeting", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg" },
+    { "id": "sales-handshake", "name": "Handshake", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3184296/pexels-photo-3184296.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3184296/pexels-photo-3184296.jpeg" },
+    { "id": "sales-video-call", "name": "Video Call", "role": "hero-image", "thumb": "https://images.pexels.com/photos/7688336/pexels-photo-7688336.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/7688336/pexels-photo-7688336.jpeg" },
+    { "id": "sales-laptop-demo", "name": "Product Demo", "role": "hero-image", "thumb": "https://images.pexels.com/photos/4145153/pexels-photo-4145153.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/4145153/pexels-photo-4145153.jpeg" },
+    { "id": "sales-dashboard", "name": "Dashboard", "role": "hero-image", "thumb": "https://images.pexels.com/photos/590022/pexels-photo-590022.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/590022/pexels-photo-590022.jpeg" },
+    { "id": "sales-office", "name": "Modern Office", "role": "hero-image", "thumb": "https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg" },
+    { "id": "sales-challenge-a", "name": "Challenge Visual A", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg" },
+    { "id": "sales-challenge-b", "name": "Challenge Visual B", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg" },
+    { "id": "sales-feature-a", "name": "Feature Screenshot A", "role": "hero-image", "thumb": "https://images.pexels.com/photos/7376/startup-photos.jpg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/7376/startup-photos.jpg" },
+    { "id": "sales-feature-b", "name": "Feature Screenshot B", "role": "hero-image", "thumb": "https://images.pexels.com/photos/265087/pexels-photo-265087.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/265087/pexels-photo-265087.jpeg" },
+    { "id": "sales-feature-c", "name": "Feature Screenshot C", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3861979/pexels-photo-3861979.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3861979/pexels-photo-3861979.jpeg" },
+    { "id": "sales-testimonial", "name": "Customer Moment", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3182812/pexels-photo-3182812.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3182812/pexels-photo-3182812.jpeg" },
+    { "id": "sales-logo", "name": "Company Logo", "role": "logo", "thumb": "https://placehold.co/200x48/0F172A/ffffff?text=ACME", "src": "https://placehold.co/320x64/0F172A/ffffff?text=YOUR+COMPANY" }
+  ],
+  "icons": [
+    { "id": "calendar", "name": "Calendar", "category": "sales", "src": "https://img.icons8.com/ios-filled/96/2563EB/calendar.png" },
+    { "id": "email", "name": "Email", "category": "sales", "src": "https://img.icons8.com/ios-filled/96/2563EB/new-post.png" },
+    { "id": "phone", "name": "Phone", "category": "sales", "src": "https://img.icons8.com/ios-filled/96/2563EB/phone.png" },
+    { "id": "check", "name": "Check", "category": "sales", "src": "https://img.icons8.com/ios-filled/96/10B981/checkmark.png" },
+    { "id": "chart", "name": "Chart", "category": "sales", "src": "https://img.icons8.com/ios-filled/96/2563EB/combo-chart.png" },
+    { "id": "clock", "name": "Clock", "category": "sales", "src": "https://img.icons8.com/ios-filled/96/F59E0B/clock.png" },
+    { "id": "target", "name": "Target", "category": "sales", "src": "https://img.icons8.com/ios-filled/96/2563EB/bullseye.png" },
+    { "id": "handshake", "name": "Handshake", "category": "sales", "src": "https://img.icons8.com/ios-filled/96/2563EB/handshake.png" },
+    { "id": "video", "name": "Video", "category": "sales", "src": "https://img.icons8.com/ios-filled/96/2563EB/video-conference.png" },
+    { "id": "document", "name": "Document", "category": "sales", "src": "https://img.icons8.com/ios-filled/96/334155/create-new.png" },
+    { "id": "alert", "name": "Pain Point", "category": "sales", "src": "https://img.icons8.com/ios-filled/96/F59E0B/high-priority.png" },
+    { "id": "lightning", "name": "Speed", "category": "sales", "src": "https://img.icons8.com/ios-filled/96/2563EB/lightning-bolt.png" }
+  ],
+  "shapes": [
+    { "id": "sales-card-white", "name": "White Card", "category": "sales-demo", "role": "decoration", "style": { "width": "280px", "height": "150px", "backgroundColor": "#ffffff", "borderRadius": "16px", "boxShadow": "0 14px 36px rgba(15, 23, 42, 0.08)" } },
+    { "id": "sales-cobalt-pill", "name": "Cobalt Pill", "category": "sales-demo", "role": "decoration", "style": { "width": "240px", "height": "44px", "backgroundColor": "#2563EB", "borderRadius": "100px" } },
+    { "id": "sales-quote-bar", "name": "Quote Bar", "category": "sales-demo", "role": "decoration", "style": { "width": "520px", "height": "120px", "backgroundColor": "#ffffff", "borderRadius": "12px", "borderLeft": "5px solid #2563EB" } },
+    { "id": "sales-stat-tile", "name": "Stat Tile", "category": "sales-demo", "role": "decoration", "style": { "width": "240px", "height": "140px", "backgroundColor": "#ffffff", "borderRadius": "16px", "border": "1px solid #E2E8F0" } },
+    { "id": "sales-blob-beige", "name": "Beige Blob", "category": "sales-demo", "role": "decoration", "style": { "width": "200px", "height": "200px", "backgroundColor": "#F5F0E8", "borderRadius": "50%" } },
+    { "id": "sales-navy-panel", "name": "Navy Panel", "category": "sales-demo", "role": "decoration", "style": { "width": "480px", "height": "420px", "backgroundColor": "#0F172A", "borderRadius": "20px" } },
+    { "id": "sales-slide-badge", "name": "Slide Badge", "category": "sales-demo", "role": "decoration", "style": { "width": "48px", "height": "48px", "backgroundColor": "#0F172A", "borderRadius": "50%", "border": "3px solid #2563EB" } },
+    { "id": "sales-step-line", "name": "Timeline Line", "category": "sales-demo", "role": "decoration", "style": { "width": "4px", "height": "280px", "backgroundColor": "#2563EB", "borderRadius": "4px" } }
+  ]
+}

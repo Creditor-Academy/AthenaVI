@@ -1,0 +1,87 @@
+{
+  "theme": {
+    "name": "Editorial Launch",
+    "fonts": {
+      "display": "\"Playfair Display\", Georgia, serif",
+      "sans": "\"Segoe UI\", system-ui, sans-serif",
+      "accent": "Georgia, serif"
+    }
+  },
+  "presenter": {
+    "name": "Bundle Presenter",
+    "previewSrc": "https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "alternates": [
+      "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=800",
+      "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=800"
+    ]
+  },
+  "colors": {
+    "ink": "#1c1917",
+    "cream": "#faf7f2",
+    "sand": "#f0ebe3",
+    "warmWhite": "#fffcf8",
+    "stone": "#78716c",
+    "muted": "#a8a29e",
+    "copper": "#b45309",
+    "copperLight": "#d97706",
+    "dark": "#0a0a0a",
+    "black": "#111111",
+    "white": "#ffffff",
+    "chartreuse": "#c8e64a",
+    "line": "#d6d3d1",
+    "overlay": "rgba(28, 25, 23, 0.52)",
+    "panelDark": "#292524"
+  },
+  "backgrounds": [
+    { "id": "bg-cream", "name": "Cream", "value": "#faf7f2" },
+    { "id": "bg-sand", "name": "Sand", "value": "#f0ebe3" },
+    { "id": "bg-warm-white", "name": "Warm White", "value": "#fffcf8" },
+    { "id": "bg-stone-light", "name": "Stone Mist", "value": "#f5f5f4" },
+    { "id": "bg-ink", "name": "Ink", "value": "#1c1917" },
+    { "id": "bg-dark", "name": "Black", "value": "#0a0a0a" },
+    { "id": "bg-panel-dark", "name": "Dark Panel", "value": "#292524" },
+    { "id": "bg-gradient-warm", "name": "Warm Gradient", "value": "linear-gradient(145deg, #faf7f2 0%, #f0ebe3 55%, #e7e5e4 100%)" },
+    { "id": "bg-gradient-dark", "name": "Dark Gradient", "value": "linear-gradient(160deg, #1c1917 0%, #0a0a0a 100%)" }
+  ],
+  "images": [
+    { "id": "launch-cover-full", "name": "Lifestyle Cover", "role": "background", "thumb": "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg" },
+    { "id": "launch-hero-product", "name": "Product Flat Lay", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3945313/pexels-photo-3945313.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3945313/pexels-photo-3945313.jpeg" },
+    { "id": "launch-detail-vertical", "name": "Product Detail", "role": "hero-image", "thumb": "https://images.pexels.com/photos/965989/pexels-photo-965989.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/965989/pexels-photo-965989.jpeg" },
+    { "id": "launch-detail-horizontal", "name": "Lifestyle Shot", "role": "hero-image", "thumb": "https://images.pexels.com/photos/1457842/pexels-photo-1457842.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/1457842/pexels-photo-1457842.jpeg" },
+    { "id": "launch-before", "name": "Before State", "role": "hero-image", "thumb": "https://images.pexels.com/photos/6476589/pexels-photo-6476589.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/6476589/pexels-photo-6476589.jpeg" },
+    { "id": "launch-after", "name": "After State", "role": "hero-image", "thumb": "https://images.pexels.com/photos/6476584/pexels-photo-6476584.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/6476584/pexels-photo-6476584.jpeg" },
+    { "id": "launch-portrait", "name": "Brand Portrait", "role": "hero-image", "thumb": "https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg" },
+    { "id": "launch-team", "name": "Customer Moment", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg" },
+    { "id": "launch-product-shot", "name": "Product Screen", "role": "hero-image", "thumb": "https://placehold.co/400x280/292524/faf7f2?text=Product", "src": "https://placehold.co/560x360/292524/faf7f2?text=Your+Product+Here" },
+    { "id": "launch-logo", "name": "Brand Logo", "role": "logo", "thumb": "https://placehold.co/200x48/1c1917/faf7f2?text=BRAND", "src": "https://placehold.co/320x64/1c1917/faf7f2?text=YOUR+BRAND" },
+    { "id": "launch-closing-product", "name": "Closing Product", "role": "hero-image", "thumb": "https://images.pexels.com/photos/4041392/pexels-photo-4041392.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/4041392/pexels-photo-4041392.jpeg" }
+  ],
+  "icons": [
+    { "id": "lightbulb", "name": "Idea", "category": "product", "src": "https://img.icons8.com/ios-filled/96/b45309/light-on.png" },
+    { "id": "gears", "name": "Process", "category": "product", "src": "https://img.icons8.com/ios-filled/96/b45309/gears.png" },
+    { "id": "diamond", "name": "Premium", "category": "product", "src": "https://img.icons8.com/ios-filled/96/b45309/diamond.png" },
+    { "id": "target", "name": "Focus", "category": "product", "src": "https://img.icons8.com/ios-filled/96/b45309/bullseye.png" },
+    { "id": "chart", "name": "Growth", "category": "product", "src": "https://img.icons8.com/ios-filled/96/b45309/combo-chart.png" },
+    { "id": "handshake", "name": "Trust", "category": "product", "src": "https://img.icons8.com/ios-filled/96/b45309/handshake.png" },
+    { "id": "rocket", "name": "Launch", "category": "product", "src": "https://img.icons8.com/ios-filled/96/b45309/rocket.png" },
+    { "id": "check", "name": "Check", "category": "product", "src": "https://img.icons8.com/ios-filled/96/b45309/checkmark.png" },
+    { "id": "star", "name": "Rating", "category": "product", "src": "https://img.icons8.com/ios-filled/96/b45309/star.png" },
+    { "id": "phone", "name": "Phone", "category": "communication", "src": "https://img.icons8.com/ios-filled/96/c8e64a/phone.png" },
+    { "id": "email", "name": "Email", "category": "communication", "src": "https://img.icons8.com/ios-filled/96/c8e64a/new-post.png" },
+    { "id": "website", "name": "Website", "category": "communication", "src": "https://img.icons8.com/ios-filled/96/c8e64a/domain.png" }
+  ],
+  "shapes": [
+    { "id": "launch-scrim", "name": "Image Scrim", "category": "product-launch", "role": "decoration", "style": { "width": "1280px", "height": "720px", "backgroundColor": "rgba(28, 25, 23, 0.5)" } },
+    { "id": "launch-cream-card", "name": "Cream Card", "category": "product-launch", "role": "decoration", "style": { "width": "420px", "height": "280px", "backgroundColor": "#faf7f2", "borderRadius": "4px" } },
+    { "id": "launch-dark-card", "name": "Dark Card", "category": "product-launch", "role": "decoration", "style": { "width": "520px", "height": "200px", "backgroundColor": "#292524", "borderRadius": "24px" } },
+    { "id": "launch-frame-round", "name": "Rounded Frame", "category": "product-launch", "role": "decoration", "style": { "width": "360px", "height": "440px", "backgroundColor": "#fffcf8", "borderRadius": "28px", "boxShadow": "0 20px 50px rgba(28, 25, 23, 0.14)" } },
+    { "id": "launch-frame-soft", "name": "Soft Frame", "category": "product-launch", "role": "decoration", "style": { "width": "440px", "height": "280px", "backgroundColor": "#fffcf8", "borderRadius": "24px", "boxShadow": "0 16px 40px rgba(28, 25, 23, 0.1)" } },
+    { "id": "launch-line-h", "name": "Editorial Line", "category": "product-launch", "role": "decoration", "style": { "width": "480px", "height": "1px", "backgroundColor": "#d6d3d1" } },
+    { "id": "launch-line-accent", "name": "Copper Line", "category": "product-launch", "role": "decoration", "style": { "width": "4px", "height": "120px", "backgroundColor": "#b45309", "borderRadius": "2px" } },
+    { "id": "launch-pill", "name": "Label Pill", "category": "product-launch", "role": "decoration", "style": { "width": "120px", "height": "36px", "backgroundColor": "#b45309", "borderRadius": "100px" } },
+    { "id": "launch-feature-card", "name": "Feature Card", "category": "product-launch", "role": "decoration", "style": { "width": "340px", "height": "400px", "backgroundColor": "#fffcf8", "borderRadius": "20px", "boxShadow": "0 12px 36px rgba(28, 25, 23, 0.08)", "border": "1px solid #e7e5e4" } },
+    { "id": "launch-icon-badge", "name": "Copper Badge", "category": "product-launch", "role": "decoration", "style": { "width": "52px", "height": "52px", "backgroundColor": "#faf7f2", "borderRadius": "50%", "border": "1px solid #e7e5e4" } },
+    { "id": "launch-chartreuse-dot", "name": "Accent Dot", "category": "product-launch", "role": "decoration", "style": { "width": "48px", "height": "48px", "backgroundColor": "#c8e64a", "borderRadius": "50%" } },
+    { "id": "launch-cta-panel", "name": "CTA Panel", "category": "product-launch", "role": "decoration", "style": { "width": "480px", "height": "520px", "backgroundColor": "#292524", "borderRadius": "28px" } }
+  ]
+}

@@ -20,6 +20,7 @@ import { getClipTextContent, isTextLayer } from '../../../../utils/textClip'
 import { pixelRectToPercent, resolveClipRect } from '../../../../utils/clipLayout'
 import { getClipZIndex, isBackgroundClip, sortClipsForRender } from '../../../../utils/editorLayerUtils'
 import { resolveClipMediaSrc, isVideoMedia, isAvatarClip, clipHasHeygenAudio } from '../../../../utils/heygenVideo'
+import { resolveAvatarDisplaySrc } from '../../../../utils/templateAvatarPreview'
 import {
   computeClipAnimationState,
   getAnimatedTextContent,
@@ -112,6 +113,16 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
   const backgroundStyle = getSceneBackgroundStyle(scene)
   const hasBgClip = (scene.clips || []).some((c) => isBackgroundClip(c) && resolveClipMediaSrc(c, scene))
 
+  const heygenAudioClipId = React.useMemo(() => {
+    if (!audioEnabled) return null
+    const clips = scene.clips || []
+    const avatar = clips.find((c) => isAvatarClip(c) && clipHasHeygenAudio(c, scene))
+    if (avatar) return avatar.id
+    const bg = clips.find((c) => isBackgroundClip(c) && clipHasHeygenAudio(c, scene))
+    if (bg) return bg.id
+    return clips.find((c) => clipHasHeygenAudio(c, scene))?.id ?? null
+  }, [scene, audioEnabled])
+
   return (
     <>
       {!hasBgClip && <div style={backgroundStyle} />}
@@ -144,7 +155,7 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
                     scene={scene}
                     sceneStartFrame={sceneStartFrame}
                     fps={fps}
-                    audioEnabled={audioEnabled}
+                    audioEnabled={audioEnabled && heygenAudioClipId === clip.id}
                     style={{ width: '100%', height: '100%', objectFit: bgObjectFit }}
                   />
                 ) : (
@@ -271,9 +282,10 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
         }
 
         if (clip.type === 'image' || clip.type === 'avatar' || clip.type === 'video') {
-          const src = resolveClipMediaSrc(clip, scene)
-          const isVideo = isVideoMedia(clip, src)
           const isAvatar = isAvatarClip(clip)
+          const playbackSrc = resolveClipMediaSrc(clip, scene)
+          const src = isAvatar ? (playbackSrc || resolveAvatarDisplaySrc(clip, scene)) : playbackSrc
+          const isVideo = isVideoMedia(clip, playbackSrc)
           const isBg = isBackgroundClip(clip)
           const w = typeof clip.size?.width === 'number' ? clip.size.width : 0
           const h = typeof clip.size?.height === 'number' ? clip.size.height : 0
@@ -301,7 +313,7 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
                     scene={scene}
                     sceneStartFrame={sceneStartFrame}
                     fps={fps}
-                    audioEnabled={audioEnabled}
+                    audioEnabled={audioEnabled && heygenAudioClipId === clip.id}
                     style={{
                       width: '100%',
                       height: '100%',

@@ -79,7 +79,7 @@ const EditorSidebarAvatar = ({
           limit: 20,
         });
         const data = responseData?.data || responseData;
-        const groupList = extractHeygenList(responseData, ['avatar_groups', 'groups', 'avatars']);
+        const groupList = extractHeygenList(responseData, ['avatar_groups', 'groups']);
         setGroups(groupList.map(mapAvatarGroup).filter((g) => g.id));
         setGroupsHasMore(!!(data?.has_more ?? responseData?.has_more));
         setGroupsNextToken(data?.token ?? responseData?.token ?? data?.next_token ?? responseData?.next_token ?? null);
@@ -105,7 +105,7 @@ const EditorSidebarAvatar = ({
         token: groupsNextToken,
       });
       const data = responseData?.data || responseData;
-      const groupList = extractHeygenList(responseData, ['avatar_groups', 'groups', 'avatars']);
+      const groupList = extractHeygenList(responseData, ['avatar_groups', 'groups']);
       const mapped = groupList.map(mapAvatarGroup).filter((g) => g.id);
       setGroups((prev) => {
         const seen = new Set(prev.map((g) => g.id));

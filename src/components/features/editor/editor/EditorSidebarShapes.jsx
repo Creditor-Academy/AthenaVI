@@ -2,6 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { MdSearch } from 'react-icons/md';
 import { SHAPE_CATEGORIES, SHAPE_LIBRARY, shapeMatchesCategory } from '../../../../constants/shapeLibrary';
 import { loadPitchAssets, pitchShapesAsLibrary } from '../../../../constants/pitchAssetLibrary';
+import { loadProductLaunchAssets, productLaunchShapesAsLibrary } from '../../../../constants/productLaunchAssetLibrary';
+import { loadCourseModuleAssets, courseModuleShapesAsLibrary } from '../../../../constants/courseModuleAssetLibrary';
+import { loadSalesDemoAssets, salesDemoShapesAsLibrary } from '../../../../constants/salesDemoAssetLibrary';
+import { loadSocialShortAssets, socialShortShapesAsLibrary } from '../../../../constants/socialShortAssetLibrary';
 
 const ShapePreview = ({ style }) => {
   const isLine = style.height === '0px' || style.borderTop;
@@ -35,6 +39,14 @@ const EditorSidebarShapes = ({ addLayer, activeSceneId, updateScene }) => {
   const [category, setCategory] = useState('shapes');
   const [pitchShapes, setPitchShapes] = useState([]);
   const [pitchBackgrounds, setPitchBackgrounds] = useState([]);
+  const [launchShapes, setLaunchShapes] = useState([]);
+  const [launchBackgrounds, setLaunchBackgrounds] = useState([]);
+  const [courseShapes, setCourseShapes] = useState([]);
+  const [courseBackgrounds, setCourseBackgrounds] = useState([]);
+  const [salesShapes, setSalesShapes] = useState([]);
+  const [salesBackgrounds, setSalesBackgrounds] = useState([]);
+  const [socialShapes, setSocialShapes] = useState([]);
+  const [socialBackgrounds, setSocialBackgrounds] = useState([]);
 
   useEffect(() => {
     loadPitchAssets()
@@ -46,9 +58,61 @@ const EditorSidebarShapes = ({ addLayer, activeSceneId, updateScene }) => {
         setPitchShapes([]);
         setPitchBackgrounds([]);
       });
+    loadProductLaunchAssets()
+      .then((assets) => {
+        setLaunchShapes(productLaunchShapesAsLibrary(assets));
+        setLaunchBackgrounds(assets.backgrounds || []);
+      })
+      .catch(() => {
+        setLaunchShapes([]);
+        setLaunchBackgrounds([]);
+      });
+    loadCourseModuleAssets()
+      .then((assets) => {
+        setCourseShapes(courseModuleShapesAsLibrary(assets));
+        setCourseBackgrounds(assets.backgrounds || []);
+      })
+      .catch(() => {
+        setCourseShapes([]);
+        setCourseBackgrounds([]);
+      });
+    loadSalesDemoAssets()
+      .then((assets) => {
+        setSalesShapes(salesDemoShapesAsLibrary(assets));
+        setSalesBackgrounds(assets.backgrounds || []);
+      })
+      .catch(() => {
+        setSalesShapes([]);
+        setSalesBackgrounds([]);
+      });
+    loadSocialShortAssets()
+      .then((assets) => {
+        setSocialShapes(socialShortShapesAsLibrary(assets));
+        setSocialBackgrounds(assets.backgrounds || []);
+      })
+      .catch(() => {
+        setSocialShapes([]);
+        setSocialBackgrounds([]);
+      });
   }, []);
 
-  const allShapes = useMemo(() => [...SHAPE_LIBRARY, ...pitchShapes], [pitchShapes]);
+  const allShapes = useMemo(
+    () => [...SHAPE_LIBRARY, ...pitchShapes, ...launchShapes, ...courseShapes, ...salesShapes, ...socialShapes],
+    [pitchShapes, launchShapes, courseShapes, salesShapes, socialShapes]
+  );
+
+  const bundleBackgrounds = {
+    pitch: pitchBackgrounds,
+    'product-launch': launchBackgrounds,
+    'course-module': courseBackgrounds,
+    'sales-demo': salesBackgrounds,
+    'social-short': socialBackgrounds,
+  };
+  const activeBackgrounds = bundleBackgrounds[category] || [];
+  const showSceneBackgrounds =
+    Boolean(bundleBackgrounds[category]?.length) &&
+    updateScene &&
+    activeSceneId;
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -91,20 +155,50 @@ const EditorSidebarShapes = ({ addLayer, activeSceneId, updateScene }) => {
         ))}
       </div>
 
-      {category === 'pitch' && pitchBackgrounds.length > 0 && updateScene && activeSceneId && (
+      {showSceneBackgrounds && (
         <div className="shape-tool-backgrounds">
           <p className="shape-tool-results-label">Scene backgrounds</p>
+          <p className="shape-tool-results-hint">Use a color instead of a hero image, or pick any custom color.</p>
           <div className="shape-tool-bg-row">
-            {pitchBackgrounds.map((bg) => (
-              <button
-                key={bg.id}
-                type="button"
-                className="shape-tool-bg-swatch"
-                title={bg.name}
-                style={{ backgroundColor: bg.value }}
-                onClick={() => updateScene(activeSceneId, { background: { type: 'solid', value: bg.value } })}
+            {activeBackgrounds.map((bg) => {
+              const isGradient = bg.value.includes('gradient');
+              return (
+                <button
+                  key={bg.id}
+                  type="button"
+                  className="shape-tool-bg-swatch"
+                  title={bg.name}
+                  style={isGradient ? { backgroundImage: bg.value } : { backgroundColor: bg.value }}
+                  onClick={() =>
+                    updateScene(activeSceneId, {
+                      background: {
+                        type: isGradient ? 'gradient' : 'solid',
+                        value: bg.value,
+                        editable: true,
+                        modes: ['solid', 'gradient', 'image'],
+                      },
+                    })
+                  }
+                />
+              );
+            })}
+            <label className="shape-tool-bg-custom" title="Custom color">
+              <span aria-hidden>+</span>
+              <input
+                type="color"
+                aria-label="Custom scene background color"
+                onChange={(e) =>
+                  updateScene(activeSceneId, {
+                    background: {
+                      type: 'solid',
+                      value: e.target.value,
+                      editable: true,
+                      modes: ['solid', 'gradient', 'image'],
+                    },
+                  })
+                }
               />
-            ))}
+            </label>
           </div>
         </div>
       )}

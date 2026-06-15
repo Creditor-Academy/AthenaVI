@@ -1,19 +1,12 @@
 import {
   MdSettings,
   MdContentCopy,
-  MdRecordVoiceOver,
-  MdEdit,
-  MdPersonAdd,
-  MdSmartDisplay,
-  MdRefresh,
-  MdCheckCircle,
-  MdWarning,
-  MdMonitor,
   MdGridView,
   MdSchedule,
   MdSwapHoriz,
   MdSpeed,
 } from 'react-icons/md';
+import AvatarVoiceoverSection from './AvatarVoiceoverSection';
 import projectTemplate from '../../../../constants/projectTemplate.json';
 import { buildSceneDurationPatch, estimateHeygenSceneDuration } from '../../../../utils/sceneDuration';
 import { normalizeClipsToScene } from '../../../../utils/editorLayerUtils';
@@ -23,7 +16,6 @@ import {
   getSceneTransitionCatalogValue,
   normalizeSceneTransition,
 } from '../../../../utils/sceneTransitionUtils';
-import { sceneNeedsHeygenRegeneration } from '../../../../utils/heygenVideo';
 import './SceneSettingsPanel.css';
 
 const DURATION_PRESETS = [5, 8, 10, 15, 30];
@@ -34,11 +26,6 @@ const ENTRANCE_SPEED_OPTS = [
   { value: 'normal', label: 'Normal' },
   { value: 'fast', label: 'Fast' },
 ];
-
-const displayName = (name, emptyLabel = 'Not selected') => {
-  const trimmed = (name || '').trim();
-  return trimmed || emptyLabel;
-};
 
 const Stepper = ({ value, min, max, step, unit, onChange }) => (
   <div className="scene-settings__stepper">
@@ -75,17 +62,6 @@ const SceneSettingsPanel = ({
   onOpenQuickCreate,
   onDuplicateScene,
 }) => {
-  const isGenerating = activeScene.heygenStatus === 'processing';
-  const isGenerated = activeScene.heygenStatus === 'completed';
-  const needsRegeneration = sceneNeedsHeygenRegeneration(activeScene);
-  const isFailed = activeScene.heygenStatus === 'failed';
-  const canGenerate = activeScene.avatarType && activeScene.voiceId && activeScene.script;
-  const hasVoiceover = !!(
-    activeScene.avatarType ||
-    activeScene.voiceId ||
-    (activeScene.script || '').trim()
-  );
-
   const transition = normalizeSceneTransition(activeScene.transition);
   const catalogValue = getSceneTransitionCatalogValue(activeScene);
 
@@ -118,136 +94,13 @@ const SceneSettingsPanel = ({
         ) : null}
       </div>
 
-      {/* Voiceover */}
-      <div className="scene-settings__block">
-        <div className="scene-settings__block-head">
-          <span className="scene-settings__block-title">
-            <MdRecordVoiceOver size={14} />
-            AI voiceover
-          </span>
-          {hasVoiceover ? (
-            <button type="button" className="scene-settings__ghost-btn" onClick={onOpenQuickCreate}>
-              <MdEdit size={13} />
-              {isGenerated || needsRegeneration ? 'Change' : 'Edit'}
-            </button>
-          ) : null}
-        </div>
-        <div className="scene-settings__block-body">
-          {hasVoiceover ? (
-            <>
-              <div className="scene-settings__voice-row">
-                <div>
-                  <div className="scene-settings__voice-label">
-                    <span className={`scene-settings__dot ${activeScene.avatarType ? 'scene-settings__dot--on' : 'scene-settings__dot--off'}`} />
-                    Avatar
-                  </div>
-                  <div className="scene-settings__voice-value">{displayName(activeScene.avatarName)}</div>
-                </div>
-                {activeScene.avatarType && applyGlobalSetting ? (
-                  <button type="button" className="scene-settings__apply-btn" onClick={() => applyGlobalSetting('avatar')}>
-                    All scenes
-                  </button>
-                ) : null}
-              </div>
-              <div className="scene-settings__voice-row">
-                <div>
-                  <div className="scene-settings__voice-label">
-                    <span className={`scene-settings__dot ${activeScene.voiceId ? 'scene-settings__dot--on' : 'scene-settings__dot--off'}`} />
-                    Voice
-                  </div>
-                  <div className="scene-settings__voice-value">{displayName(activeScene.voiceName)}</div>
-                </div>
-                {activeScene.voiceId && applyGlobalSetting ? (
-                  <button type="button" className="scene-settings__apply-btn" onClick={() => applyGlobalSetting('voice')}>
-                    All scenes
-                  </button>
-                ) : null}
-              </div>
-              <div>
-                <div className="scene-settings__voice-label">
-                  <span className={`scene-settings__dot ${(activeScene.script || '').trim() ? 'scene-settings__dot--on' : 'scene-settings__dot--off'}`} />
-                  Script
-                </div>
-                <p className="scene-settings__script">{(activeScene.script || '').trim()}</p>
-                <span className="scene-settings__meta">{(activeScene.script || '').length} characters</span>
-              </div>
-            </>
-          ) : (
-            <div className="scene-settings__empty">
-              <p>No presenter or script on this scene yet.</p>
-              <button type="button" className="scene-settings__cta" onClick={onOpenQuickCreate}>
-                <MdPersonAdd size={16} />
-                Set up presenter
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Generate */}
-      <div className="scene-settings__block">
-        <div className="scene-settings__block-body">
-          <button
-            type="button"
-            className="scene-settings__cta"
-            disabled={isGenerating || (!canGenerate && !isGenerating)}
-            onClick={() => generateSceneVideo(activeSceneId)}
-          >
-            {isGenerating ? (
-              <>
-                <span className="scene-settings__spin" />
-                Generating…
-              </>
-            ) : isGenerated || needsRegeneration ? (
-              <>
-                <MdRefresh size={16} />
-                {needsRegeneration ? 'Generate with new presenter' : 'Regenerate video'}
-              </>
-            ) : (
-              <>
-                <MdSmartDisplay size={16} />
-                Generate scene video
-              </>
-            )}
-          </button>
-          {isGenerating && (
-            <p className="scene-settings__status">HeyGen is processing. This may take a minute.</p>
-          )}
-          {needsRegeneration && (
-            <p className="scene-settings__status">
-              Presenter updated — generate again to replace the previous avatar video.
-            </p>
-          )}
-          {isGenerated && !needsRegeneration && (
-            <>
-              <p className="scene-settings__status scene-settings__status--ok">
-                <MdCheckCircle size={14} />
-                Video ready — use Change above or the Avatar tool, then regenerate for a new look.
-              </p>
-              <button
-                type="button"
-                className="scene-settings__cta scene-settings__cta--secondary"
-                onClick={() => {
-                  const url =
-                    activeScene.generatedVideoUrl ||
-                    activeScene.clips?.find((c) => c.role === 'avatar' || c.type === 'video')?.src;
-                  if (url) window.dispatchEvent(new CustomEvent('open-generated-video', { detail: { url } }));
-                  else alert('Video URL not found. It might still be processing.');
-                }}
-              >
-                <MdMonitor size={14} />
-                View video
-              </button>
-            </>
-          )}
-          {isFailed && (
-            <p className="scene-settings__status scene-settings__status--err">
-              <MdWarning size={14} />
-              Generation failed — try again
-            </p>
-          )}
-        </div>
-      </div>
+      <AvatarVoiceoverSection
+        activeScene={activeScene}
+        activeSceneId={activeSceneId}
+        generateSceneVideo={generateSceneVideo}
+        applyGlobalSetting={applyGlobalSetting}
+        onOpenQuickCreate={onOpenQuickCreate}
+      />
 
       {/* Composition */}
       <div className="scene-settings__block">
