@@ -61,6 +61,7 @@ import {
 import { getDefaultClipPlacement } from '../../utils/editorPlacementUtils'
 import { normalizeSceneClips } from '../../utils/clipLayout'
 import { prepareTemplateSceneForEditor } from '../../utils/templateSceneUtils'
+import { fetchTemplateAvatarLookSet, TEMPLATE_AVATAR_LOOK_COUNT } from '../../utils/templateAvatarPreview'
 import { saveVersionSnapshot, loadVersionSnapshot, listVersionSnapshots } from '../../utils/editorVersionHistory'
 import EditorToast from '../../components/features/editor/editor/EditorToast'
 import PanelResizeHandle from '../../components/features/editor/editor/PanelResizeHandle'
@@ -1171,9 +1172,10 @@ function Create({ onBack, initialConfig = null }) {
     setShowTemplateModal(true)
   }
 
-  const handleAddTemplateScene = (template) => {
+  const handleAddTemplateScene = async (template) => {
     const insertAfter = insertAfterIndexRef.current
     insertAfterIndexRef.current = null
+    const avatarLookSet = await fetchTemplateAvatarLookSet(TEMPLATE_AVATAR_LOOK_COUNT)
 
     let nextActiveSceneId = null
     setProject(prev => {
@@ -1190,7 +1192,7 @@ function Create({ onBack, initialConfig = null }) {
 
       nextActiveSceneId = newSceneId
 
-      const prepared = prepareTemplateSceneForEditor(template, prev.resolution)
+      const prepared = prepareTemplateSceneForEditor(template, prev.resolution, { avatarLookSet })
       const newScene = {
         ...prepared,
         id: newSceneId,

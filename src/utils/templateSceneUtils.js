@@ -1,5 +1,11 @@
 import { normalizeClipStack, normalizeClipsToScene } from './editorLayerUtils';
 import { normalizeSceneClips, COMPOSITION_W, COMPOSITION_H } from './clipLayout';
+import {
+  applyAvatarPreviewToClips,
+  DARK_SCENE_AVATAR_STYLE,
+  DEFAULT_AVATAR_PREVIEW_STYLE,
+  resolveTemplateAvatarLook,
+} from './templateAvatarPreview';
 
 /** Template zone rects in JSON are authored on a 1280×720 reference frame. */
 const ZONE_REF_W = 1280;
@@ -147,15 +153,31 @@ export function stripGenerationArtifacts(scene) {
  */
 export function prepareTemplateSceneForEditor(
   template,
-  resolution = { width: COMPOSITION_W, height: COMPOSITION_H }
+  resolution = { width: COMPOSITION_W, height: COMPOSITION_H },
+  options = {}
 ) {
   const duration = template?.duration || 8;
   const base = stripGenerationArtifacts(template);
+  const sceneLookIndex = Math.max(0, (template?.slideIndex ?? 1) - 1);
+  const isDarkScene =
+    template?.background?.value === '#0a0a0a' ||
+    String(template?.tags || []).includes('closing') ||
+    (template?.title || '').toLowerCase().includes('cta');
 
   let clips = supplementClipsFromZones(
     template,
     JSON.parse(JSON.stringify(template?.clips || []))
   );
+
+  const avatarLook = resolveTemplateAvatarLook(template, sceneLookIndex, options);
+  if (avatarLook?.id) {
+    clips = applyAvatarPreviewToClips(
+      clips,
+      avatarLook,
+      isDarkScene ? DARK_SCENE_AVATAR_STYLE : DEFAULT_AVATAR_PREVIEW_STYLE,
+      sceneLookIndex
+    );
+  }
 
   clips = scaleClipsToComposition(clips, template, resolution);
 
@@ -172,6 +194,8 @@ export function prepareTemplateSceneForEditor(
   return {
     ...base,
     duration,
+    templateLookIndex: sceneLookIndex,
+    presenter: avatarLook,
     clips,
   };
 }

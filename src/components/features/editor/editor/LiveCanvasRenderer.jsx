@@ -15,6 +15,7 @@ import {
 import { getClipZIndex, isBackgroundClip, sortClipsForRender } from '../../../../utils/editorLayerUtils'
 import { resolveClipRect } from '../../../../utils/clipLayout'
 import { resolveClipMediaSrc, isVideoMedia } from '../../../../utils/heygenVideo'
+import { resolveAvatarDisplaySrc } from '../../../../utils/templateAvatarPreview'
 import {
   canAcceptImageFill,
   parseCanvasDragData,
@@ -392,8 +393,9 @@ const PausedVideoPreview = ({ src, style }) => {
 }
 
 const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePosition, onUpdateSize, onCommit, overlayMode = false }) => {
-  const src = resolveClipMediaSrc(clip, scene)
-  const isVideo = isVideoMedia(clip, src)
+  const playbackSrc = resolveClipMediaSrc(clip, scene)
+  const displaySrc = playbackSrc || resolveAvatarDisplaySrc(clip, scene)
+  const isVideo = isVideoMedia(clip, playbackSrc)
   const s  = clip.style || {}
   const cf = clip.cssFilters || {}
   const { animState } = useComputedEntranceState(clip)
@@ -414,10 +416,10 @@ const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdateP
     border: borderStyle,
     boxShadow: s.boxShadow || 'none',
     overflow: 'hidden',
-    background: overlayMode ? 'transparent' : (src ? 'transparent' : (s.backgroundColor || s.background || 'linear-gradient(135deg, #818cf8 0%, #a78bfa 100%)')),
+    background: overlayMode ? 'transparent' : (displaySrc ? 'transparent' : (s.backgroundColor || s.background || '#f5f5f4')),
   })
 
-  const avatarFit = s.objectFit || (isBg ? 'cover' : 'contain')
+  const avatarFit = s.objectFit || (isBg ? 'cover' : 'cover')
 
   return (
     <div
@@ -433,20 +435,20 @@ const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdateP
           onCommit={onCommit}
         />
       )}
-      {src ? (
+      {displaySrc ? (
         !overlayMode ? (
-        isVideo ? (
+        isVideo && playbackSrc ? (
           <PausedVideoPreview
-            src={src}
+            src={playbackSrc}
             style={{ width: '100%', height: '100%', objectFit: avatarFit, display: 'block', pointerEvents: 'none' }}
           />
         ) : (
-          <img src={src} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: avatarFit, display: 'block', pointerEvents: 'none' }} />
+          <img src={displaySrc} alt="Presenter" style={{ width: '100%', height: '100%', objectFit: avatarFit, display: 'block', pointerEvents: 'none' }} />
         )
         ) : null
       ) : !overlayMode ? (
-        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <MdPerson size={Math.min(48, (clip.size?.width || 120) / 2.5)} style={{ color: 'rgba(255,255,255,0.8)', pointerEvents: 'none' }} />
+        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f4' }}>
+          <MdPerson size={Math.min(48, (clip.size?.width || 120) / 2.5)} style={{ color: '#a8a29e', pointerEvents: 'none' }} />
         </div>
       ) : null}
     </div>

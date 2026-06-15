@@ -1,45 +1,71 @@
 const TEMPLATE_SOURCES = [
-  { file: 'corporate', category: 'Corporate' },
   { file: 'pitch_template', category: 'Pitch' },
-  { file: 'educational', category: 'Training' },
-  { file: 'marketing', category: 'Marketing' },
-  { file: 'social', category: 'Social' },
-  { file: 'personal', category: 'Minimal' }
+  { file: 'product_launch_template', category: 'Product Launch' },
+  { file: 'course_module_template', category: 'Course Module' },
+  { file: 'sales_demo_template', category: 'Sales Demo' },
+  { file: 'social_short_template', category: 'Social Short' },
 ];
 
-const DEFAULT_THUMBNAIL =
-  'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=1200&q=80';
+/** Maps bundle categories to CreateVideoModal filter chips */
+const BUNDLE_CATEGORY_FILTER = {
+  Pitch: 'Corporate',
+  'Product Launch': 'Marketing',
+  'Course Module': 'Training',
+  'Sales Demo': 'Corporate',
+  'Social Short': 'Social',
+};
 
-/**
- * Load editor template scenes from public JSON files (same source as TemplateModal).
- */
-export async function fetchEditorTemplateScenes() {
-  const batches = await Promise.all(
-    TEMPLATE_SOURCES.map(async ({ file, category }) => {
-      try {
-        const response = await fetch(`/templates/${file}.json`);
-        if (!response.ok) return [];
-        const data = await response.json();
-        return (data.scenes || []).map((scene) => normalizeEditorTemplateItem(scene, category));
-      } catch {
-        return [];
-      }
-    })
-  );
-
-  return batches.flat();
+function parseAspectRatio(aspectRatio) {
+  if (!aspectRatio || aspectRatio === 'custom') return null;
+  const parts = String(aspectRatio).split(':').map(Number);
+  if (parts.length !== 2 || !parts[0] || !parts[1]) return null;
+  return parts[0] / parts[1];
 }
 
-function normalizeEditorTemplateItem(scene, category) {
-  const tags = Array.isArray(scene.tags) ? scene.tags : [];
+export function sceneAspectRatio(scene) {
+  const width = scene?.canvasSize?.width ?? 1280;
+  const height = scene?.canvasSize?.height ?? 720;
+  return width / height;
+}
+
+export function sceneMatchesAspectRatio(scene, aspectRatio) {
+  const target = parseAspectRatio(aspectRatio);
+  if (!target) return true;
+  return Math.abs(sceneAspectRatio(scene) - target) < 0.08;
+}
+
+function sceneToPickerItem(scene, { file, category }) {
+  const filterCategory = BUNDLE_CATEGORY_FILTER[category] || category;
+  const badge = scene.slideIndex != null ? String(scene.slideIndex).padStart(2, '0') : '01';
+
   return {
     id: scene.id,
-    name: scene.title || 'Untitled Template',
-    tags: [category, ...tags],
-    category,
-    badge: tags[0] ? String(tags[0]).toUpperCase() : 'TEMPLATE',
-    badgeType: 'interactive',
-    thumbnail: DEFAULT_THUMBNAIL,
-    scene
+    name: scene.title || scene.name || 'Untitled Scene',
+    scene,
+    category: filterCategory,
+    bundleCategory: category,
+    bundleFile: file,
+    tags: [...new Set([...(scene.tags || []), category, filterCategory])],
+    badge,
+    badgeType: 'new',
   };
 }
+
+export async function fetchEditorTemplateScenes() {
+  const results = [];
+  for (const source of TEMPLATE_SOURCES) {
+    try {
+      const res = await fetch(`/templates/${source.file}.json`);
+      if (!res.ok) continue;
+      const data = await res.json();
+      (data.scenes || []).forEach((scene) => {
+        results.push(sceneToPickerItem(scene, source));
+      });
+    } catch {
+      /* skip missing bundle */
+    }
+  }
+  return results;
+}
+
+export default fetchEditorTemplateScenes;
