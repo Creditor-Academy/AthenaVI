@@ -59,6 +59,7 @@ import {
   resolveDropImageSrc,
 } from '../../utils/editorDragDrop'
 import { getDefaultClipPlacement } from '../../utils/editorPlacementUtils'
+import { rehydrateSceneAssetUrls } from '../../utils/assetClipUtils'
 import { normalizeSceneClips } from '../../utils/clipLayout'
 import { prepareTemplateSceneForEditor } from '../../utils/templateSceneUtils'
 import { fetchTemplateAvatarLookSet, TEMPLATE_AVATAR_LOOK_COUNT } from '../../utils/templateAvatarPreview'
@@ -192,7 +193,9 @@ function buildInitialProject(initialConfig) {
   const pendingCreateScene = initialConfig?.template?.scene;
   const initialScenes = (() => {
     if (Array.isArray(initialConfig?.template?.scenes) && initialConfig.template.scenes.length > 0) {
-      return initialConfig.template.scenes;
+      return initialConfig.template.scenes.map((scene) =>
+        prepareTemplateSceneForEditor(scene, resolvedResolution)
+      );
     }
     if (pendingCreateScene) {
       return [prepareTemplateSceneForEditor(pendingCreateScene, resolvedResolution)];
@@ -455,8 +458,9 @@ function Create({ onBack, initialConfig = null }) {
             workspaceId,
             projectId
           )
-          const hydrated = { ...localProject, scenes: scenesWithVideo }
-          applyHydratedScenes(scenesWithVideo)
+          const scenesWithAssets = await rehydrateSceneAssetUrls(scenesWithVideo, workspaceId)
+          const hydrated = { ...localProject, scenes: scenesWithAssets }
+          applyHydratedScenes(scenesWithAssets)
           saveProjectRef.current?.(false, hydrated)
           return
         }
@@ -479,8 +483,9 @@ function Create({ onBack, initialConfig = null }) {
               workspaceId,
               projectId
             )
-            const hydrated = { ...localProject, scenes: scenesWithVideo }
-            applyHydratedScenes(scenesWithVideo)
+            const scenesWithAssets = await rehydrateSceneAssetUrls(scenesWithVideo, workspaceId)
+            const hydrated = { ...localProject, scenes: scenesWithAssets }
+            applyHydratedScenes(scenesWithAssets)
             saveProjectRef.current?.(false, hydrated)
             return
           }
@@ -490,8 +495,9 @@ function Create({ onBack, initialConfig = null }) {
             workspaceId,
             projectId
           )
+          const scenesWithAssets = await rehydrateSceneAssetUrls(scenesWithVideo, workspaceId)
 
-          applyHydratedScenes(scenesWithVideo, {
+          applyHydratedScenes(scenesWithAssets, {
             resolution: mapped.resolution || localProject.resolution,
             meta: mapped.meta || localProject.meta,
             updatedAt: fetchedProject.updatedAt || new Date().toISOString(),
@@ -722,11 +728,15 @@ function Create({ onBack, initialConfig = null }) {
     const newClip = {
       id: `clip_${Date.now()}`,
       type: type === 'image' ? 'image' : type === 'video' ? 'video' : type === 'avatar' ? 'avatar' : type === 'shape' ? 'shape' : type === 'audio' ? 'audio' : type === 'icon' ? 'image' : 'text',
-      src: (type === 'image' || type === 'video' || type === 'avatar' || type === 'audio' || type === 'icon') ? mediaSrc : null,
+      src: (type === 'image' || type === 'video' || type === 'avatar' || type === 'audio' || type === 'icon') ? (mediaSrc || null) : null,
       content: type === 'text'
         ? { text: typeof content === 'string' ? content : '' }
-        : assetId
-          ? { assetId, mediaType: type, url: mediaSrc }
+        : assetId || mediaSrc
+          ? {
+              ...(assetId ? { assetId } : {}),
+              mediaType: type,
+              ...(mediaSrc ? { url: mediaSrc } : {}),
+            }
           : null,
       layer: targetScene.clips.length,
       startTime: 0.0,
@@ -1218,6 +1228,73 @@ function Create({ onBack, initialConfig = null }) {
         scenes: newScenes,
       };
     });
+
+    if (nextActiveSceneId) setActiveSceneId(nextActiveSceneId)
+  }
+
+  const handleApplyTemplateBundle = async (bundle) => {
+    if (!bundle?.scenes?.length) return
+
+    const insertAfter = insertAfterIndexRef.current
+    insertAfterIndexRef.current = null
+    const avatarLookSet = await fetchTemplateAvatarLookSet(TEMPLATE_AVATAR_LOOK_COUNT)
+
+    let nextActiveSceneId = null
+    setProject((prev) => {
+      const maybeDefault = prev.scenes?.length === 1 ? prev.scenes[0] : null
+      const isDefaultSingleScene =
+        !!maybeDefault &&
+        (maybeDefault.id === 'lt_001' || maybeDefault.title === 'Intro' || maybeDefault.title === 'Hero Scene') &&
+        ((maybeDefault.clips?.length ?? 0) === 0)
+
+      const preparedScenes = bundle.scenes.map((template, idx) => {
+        const prepared = prepareTemplateSceneForEditor(template, prev.resolution, { avatarLookSet })
+        const newSceneId = isDefaultSingleScene && idx === 0
+          ? maybeDefault.id
+          : `scene_${Date.now()}_${idx}_${Math.random().toString(36).substr(2, 5)}`
+
+        if (idx === 0) nextActiveSceneId = newSceneId
+
+        return ensureSceneIdentity(
+          {
+            ...prepared,
+            id: newSceneId,
+            sceneId: newSceneId,
+            order: isDefaultSingleScene ? idx : prev.scenes.length + idx,
+          },
+          isDefaultSingleScene ? idx : prev.scenes.length + idx
+        )
+      })
+
+      let newScenes
+      if (isDefaultSingleScene) {
+        newScenes = preparedScenes.map((scene, idx) => ({ ...scene, order: idx }))
+      } else if (insertAfter != null && insertAfter >= 0 && insertAfter < prev.scenes.length) {
+        newScenes = [
+          ...prev.scenes.slice(0, insertAfter + 1),
+          ...preparedScenes.map((scene, idx) => ({
+            ...scene,
+            order: insertAfter + 1 + idx,
+          })),
+          ...prev.scenes.slice(insertAfter + 1),
+        ]
+      } else {
+        const baseOrder = prev.scenes.length
+        newScenes = [
+          ...prev.scenes,
+          ...preparedScenes.map((scene, idx) => ({
+            ...scene,
+            order: baseOrder + idx,
+          })),
+        ]
+      }
+
+      return {
+        ...prev,
+        updatedAt: new Date().toISOString(),
+        scenes: newScenes,
+      }
+    })
 
     if (nextActiveSceneId) setActiveSceneId(nextActiveSceneId)
   }
@@ -2489,6 +2566,7 @@ function Create({ onBack, initialConfig = null }) {
         showTemplateModal={showTemplateModal}
         setShowTemplateModal={setShowTemplateModal}
         handleAddTemplateScene={handleAddTemplateScene}
+        handleApplyTemplateBundle={handleApplyTemplateBundle}
       />
     </div>
   )

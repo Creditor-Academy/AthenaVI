@@ -1,75 +1,31 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { Image, Music2, Type, LayoutGrid } from 'lucide-react'
 import {
   MdCloudUpload,
   MdImage,
   MdSearch,
-  MdFolder,
   MdPlayCircleFilled,
   MdMusicNote,
   MdGridView,
   MdViewList,
   MdClose,
-  MdDeleteOutline
+  MdDeleteOutline,
+  MdVideocam,
 } from 'react-icons/md'
+import assetService from '../../services/assetService'
+import workspaceService from '../../services/workspaceService'
 import './Library.css'
-
-/* ── Assets API Docs Component ── */
-function AssetsApiDocs() {
-  const box = {
-    background: '#FFFFFF', padding: '16px', borderRadius: '12px', boxShadow: '0 6px 18px rgba(16,24,40,0.04)',
-    border: '1px solid #F1F5F9', marginTop: '20px', fontSize: '13px', color: '#111827'
-  }
-
-  return (
-    <div style={box}>
-      <h3 style={{ margin: 0, marginBottom: 8 }}>Assets API</h3>
-      <div style={{ color: '#6B7280', marginBottom: 12 }}>Base path: <strong>/api/assets</strong></div>
-
-      <section style={{ marginBottom: 12 }}>
-        <div style={{ fontWeight: 700 }}>Upload asset</div>
-        <div style={{ color: '#6B7280', marginBottom: 6 }}><strong>POST</strong> /api/assets/:workspaceId/upload</div>
-        <div>multipart/form-data with a single file field <code>file</code>. Allowed MIME: image/jpeg, image/png, image/webp, video/mp4, audio/mp3. Max size 50 MB.</div>
-        <div style={{ color: '#6B7280', marginTop: 6 }}>Responses: <strong>201</strong> (created) with asset metadata, <strong>400</strong> for invalid type or limit exceeded.</div>
-      </section>
-
-      <section style={{ marginBottom: 12 }}>
-        <div style={{ fontWeight: 700 }}>List assets</div>
-        <div style={{ color: '#6B7280', marginBottom: 6 }}><strong>GET</strong> /api/assets/:workspaceId</div>
-        <div>Optional query: <code>take</code> (1–100, default 20), <code>skip</code> (offset, default 0). PRIVATE workspaces return only current user's uploads; TEAM returns all workspace assets.</div>
-        <div style={{ color: '#6B7280', marginTop: 6 }}>Response: <strong>200</strong> with <code>{'{ "assets": [...] }'}</code>.</div>
-      </section>
-
-      <section style={{ marginBottom: 12 }}>
-        <div style={{ fontWeight: 700 }}>Rename asset</div>
-        <div style={{ color: '#6B7280', marginBottom: 6 }}><strong>PATCH</strong> /api/assets/:workspaceId/:assetId/rename</div>
-        <div>Body JSON: <code>{'{ "name": "new-name.webp" }'}</code>. Name length 1–255 characters (trimmed).</div>
-        <div style={{ color: '#6B7280', marginTop: 6 }}>Response: <strong>200</strong> with updated asset metadata.</div>
-      </section>
-
-      <section>
-        <div style={{ fontWeight: 700 }}>Delete asset</div>
-        <div style={{ color: '#6B7280', marginBottom: 6 }}><strong>DELETE</strong> /api/assets/:workspaceId/:assetId</div>
-        <div>Removes object from storage and decrements the owner&apos;s storageUsed. Response: <strong>200</strong> with deleted asset metadata.</div>
-      </section>
-
-      <div style={{ marginTop: 12, color: '#6B7280', fontSize: 12 }}>
-        All routes require <code>Authorization: Bearer &lt;access_token&gt;</code> and <code>checkWorkspaceAccess</code>. PRIVATE workspaces: owner only. TEAM workspaces: any member.
-      </div>
-
-      {/* Assets API docs (dashboard) */}
-      <div style={{ maxWidth: 1300, margin: '22px auto', padding: '0 16px' }}>
-        <AssetsApiDocs />
-      </div>
-    </div>
-  )
-}
 
 const CATEGORY_CARDS = [
   { id: 'media', label: 'Media', Icon: Image },
   { id: 'music', label: 'Music', Icon: Music2 },
   { id: 'fonts', label: 'Fonts', Icon: Type },
-  { id: 'templates', label: 'Templates', Icon: LayoutGrid }
+  { id: 'templates', label: 'Templates', Icon: LayoutGrid },
+]
+
+const mediaTabs = [
+  { id: 'images', label: 'Photos' },
+  { id: 'videos', label: 'Videos' },
 ]
 
 function Library() {
@@ -80,29 +36,66 @@ function Library() {
   const fileInputRef = useRef(null)
   const searchRef = useRef(null)
   const [uploadType, setUploadType] = useState('images')
-  // default to media so Photos/Videos are selected on first open
   const [selectedCategory, setSelectedCategory] = useState('media')
 
-  const mediaTabs = [
-    { id: 'images', label: 'Photos' },
-    { id: 'videos', label: 'Videos' }
-  ]
+  const [workspaces, setWorkspaces] = useState([])
+  const [workspaceId, setWorkspaceId] = useState('')
+  const [workspaceLoading, setWorkspaceLoading] = useState(true)
 
-  const [assets, setAssets] = useState({
-    images: [
-      { id: 1, name: 'instructor_profile_01.png', size: '2.4 MB', type: 'PNG', thumb: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200', owner: 'me', modified: '12 Apr' },
-      { id: 2, name: 'modern_office_backdrop.jpg', size: '1.8 MB', type: 'JPG', thumb: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=200', owner: 'me', modified: '11 Apr' },
-      { id: 3, name: 'project_folder', size: '--', type: 'FOLDER', isFolder: true, icon: <MdFolder />, owner: 'me', modified: '30 May' }
-    ],
-    videos: [
-      { id: 4, name: 'intro_animation_hq.mp4', size: '12.4 MB', type: 'MP4', thumb: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&q=80&w=200', owner: 'me', modified: '18 May' }
-    ],
-    music: [
-      { id: 5, name: 'uplifting_background.mp3', size: '4.1 MB', type: 'MP3', icon: <MdMusicNote /> }
-    ],
-    fonts: [],
-    templates: []
-  })
+  const [assets, setAssets] = useState([])
+  const [assetsLoading, setAssetsLoading] = useState(false)
+  const [assetsError, setAssetsError] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const [deletingId, setDeletingId] = useState(null)
+
+  const loadWorkspaces = useCallback(async () => {
+    setWorkspaceLoading(true)
+    try {
+      const list = await workspaceService.listWorkspaces()
+      setWorkspaces(list || [])
+      if (list?.length) {
+        setWorkspaceId((prev) => {
+          if (prev && list.some((ws) => String(ws.id) === String(prev))) return prev
+          const personal = list.find((ws) => String(ws.type || ws.workspaceType).toUpperCase() === 'PRIVATE')
+          return personal?.id || list[0].id
+        })
+      }
+    } catch {
+      setWorkspaces([])
+    } finally {
+      setWorkspaceLoading(false)
+    }
+  }, [])
+
+  const refreshAssets = useCallback(async () => {
+    if (!workspaceId) {
+      setAssets([])
+      return
+    }
+    setAssetsLoading(true)
+    setAssetsError('')
+    try {
+      const list = await assetService.listAssets(workspaceId, { take: 100, source: 'all' })
+      setAssets(list.map(assetService.normalizeAsset).filter(Boolean))
+    } catch (err) {
+      setAssets([])
+      setAssetsError(err?.message || 'Failed to load assets')
+    } finally {
+      setAssetsLoading(false)
+    }
+  }, [workspaceId])
+
+  useEffect(() => {
+    loadWorkspaces()
+  }, [loadWorkspaces])
+
+  useEffect(() => {
+    refreshAssets()
+  }, [refreshAssets])
+
+  useEffect(() => {
+    if (searchRef?.current) searchRef.current.focus()
+  }, [])
 
   const handleCategoryClick = (cat) => {
     setSelectedCategory(cat.id)
@@ -121,32 +114,124 @@ function Library() {
     return mediaTabs
   }
 
-  const currentAssetList = () => {
-    const t = activeTab
-    if (t === 'fonts' || t === 'templates') return assets[t] || []
-    return assets[t] || []
+  const filteredAssets = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    return assets.filter((asset) => {
+      const tab = assetService.toLibraryTab(asset.mediaType)
+      if (tab !== activeTab) return false
+      if (!q) return true
+      return (
+        asset.name.toLowerCase().includes(q) ||
+        String(asset.id).toLowerCase().includes(q)
+      )
+    })
+  }, [assets, activeTab, searchQuery])
+
+  const handleDeleteAsset = async (assetId) => {
+    if (!workspaceId || !assetId) return
+    setDeletingId(assetId)
+    try {
+      await assetService.deleteAsset(workspaceId, assetId)
+      setAssets((prev) => prev.filter((asset) => asset.id !== assetId))
+    } catch (err) {
+      setAssetsError(err?.message || 'Failed to delete asset')
+    } finally {
+      setDeletingId(null)
+    }
   }
 
-  const handleDeleteAsset = (assetId) => {
-    setAssets((prev) => ({
-      ...prev,
-      [activeTab]: (prev[activeTab] || []).filter((asset) => asset.id !== assetId)
-    }))
+  const handleFileInputChange = async (e) => {
+    const files = Array.from(e.target.files || [])
+    e.target.value = ''
+    if (!files.length) return
+
+    if (!workspaceId) {
+      setAssetsError('Select a workspace before uploading.')
+      return
+    }
+
+    setUploading(true)
+    setAssetsError('')
+    try {
+      for (const file of files) {
+        const uploaded = await assetService.uploadAsset(workspaceId, file)
+        const normalized = assetService.normalizeAsset(uploaded)
+        if (!normalized) continue
+        setAssets((prev) => {
+          const without = prev.filter((item) => item.id !== normalized.id)
+          return [normalized, ...without]
+        })
+      }
+    } catch (err) {
+      setAssetsError(err?.message || 'Upload failed')
+    } finally {
+      setUploading(false)
+    }
   }
 
-  const isCurrentTabEmpty = currentAssetList().length === 0
+  const openUploadPicker = (type) => {
+    setUploadType(type)
+    setShowUploadModal(false)
+    requestAnimationFrame(() => fileInputRef.current?.click())
+  }
 
-  useEffect(() => {
-    // focus the search input when the library opens
-    if (searchRef && searchRef.current) searchRef.current.focus()
-  }, [])
+  const isUnsupportedCategory = selectedCategory === 'fonts' || selectedCategory === 'templates'
+  const isCurrentTabEmpty = !assetsLoading && filteredAssets.length === 0
+
+  const assetIcon = (asset) => {
+    if (asset.mediaType === 'video') return <MdVideocam />
+    if (asset.mediaType === 'audio') return <MdMusicNote />
+    return <MdImage />
+  }
+
+  const selectedWorkspace = workspaces.find((ws) => String(ws.id) === String(workspaceId))
 
   return (
     <div className="library-page">
       <div className="library-shell">
         <header className="library-page-header">
-          <h1 className="library-page-title">Library</h1>
+          <div className="library-page-header-row">
+            <h1 className="library-page-title">Library</h1>
+            {workspaces.length > 0 ? (
+              <label className="library-workspace-select">
+                <span className="visually-hidden">Workspace</span>
+                <select
+                  value={workspaceId}
+                  onChange={(e) => setWorkspaceId(e.target.value)}
+                  disabled={workspaceLoading}
+                >
+                  {workspaces.map((ws) => (
+                    <option key={ws.id} value={ws.id}>
+                      {ws.name || 'Workspace'}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+          </div>
+          {selectedWorkspace ? (
+            <p className="library-page-subtitle">
+              {uploading
+                ? 'Uploading…'
+                : assetsLoading
+                  ? 'Loading workspace assets…'
+                  : `${assets.length} asset${assets.length === 1 ? '' : 's'} in ${selectedWorkspace.name || 'workspace'}`}
+            </p>
+          ) : !workspaceLoading ? (
+            <p className="library-page-subtitle library-page-subtitle--muted">
+              Create a workspace to upload and manage assets.
+            </p>
+          ) : null}
         </header>
+
+        {assetsError ? (
+          <div className="library-status-banner library-status-banner--error" role="alert">
+            {assetsError}
+            <button type="button" onClick={() => setAssetsError('')} aria-label="Dismiss">
+              <MdClose />
+            </button>
+          </div>
+        ) : null}
 
         <div className="library-category-row">
           {CATEGORY_CARDS.map((cat) => {
@@ -199,8 +284,13 @@ function Library() {
                       style={{ padding: '8px 12px 8px 36px', borderRadius: 999, border: '1px solid #E5E7EB', width: 220 }}
                     />
                   </div>
-                  <button type="button" className="btn-upload-primary" onClick={() => setShowUploadModal(true)}>
-                    <MdCloudUpload /> Upload
+                  <button
+                    type="button"
+                    className="btn-upload-primary"
+                    onClick={() => setShowUploadModal(true)}
+                    disabled={!workspaceId || uploading || isUnsupportedCategory}
+                  >
+                    <MdCloudUpload /> {uploading ? 'Uploading…' : 'Upload'}
                   </button>
                   <div className="view-toggle">
                     <button
@@ -229,28 +319,31 @@ function Library() {
               style={{ display: 'none' }}
               ref={fileInputRef}
               multiple
-              accept={
-                uploadType === 'images'
-                  ? 'image/*'
-                  : uploadType === 'videos'
-                    ? 'video/*'
-                    : uploadType === 'music'
-                      ? 'audio/*'
-                      : '*'
-              }
+              accept={assetService.acceptForTab(uploadType)}
+              onChange={handleFileInputChange}
             />
 
             <div className="assets-scroller">
-              {isCurrentTabEmpty ? (
+              {isUnsupportedCategory ? (
                 <div className="library-empty-state">
-                  <p className="library-empty-title">Library is empty</p>
+                  <p className="library-empty-title">Coming soon</p>
+                  <p className="library-empty-copy">Fonts and templates are not available in the asset library yet.</p>
+                </div>
+              ) : assetsLoading && filteredAssets.length === 0 ? (
+                <div className="library-empty-state">
+                  <p className="library-empty-title">Loading assets…</p>
+                </div>
+              ) : isCurrentTabEmpty ? (
+                <div className="library-empty-state">
+                  <p className="library-empty-title">No {activeTab === 'images' ? 'photos' : activeTab} yet</p>
                   <button
                     type="button"
                     className="library-empty-add-btn"
                     onClick={() => setShowUploadModal(true)}
+                    disabled={!workspaceId || uploading}
                   >
                     <span className="library-empty-plus" aria-hidden>+</span>
-                    <span>Add assets</span>
+                    <span>Upload assets</span>
                   </button>
                 </div>
               ) : (
@@ -258,54 +351,81 @@ function Library() {
                   {activeView === 'list' && (
                     <div className="list-header">
                       <div className="col name">Name</div>
-                      <div className="col owner">Owner</div>
+                      <div className="col owner">Source</div>
                       <div className="col modified">Date modified</div>
                       <div className="col size">Size</div>
                       <div className="col actions" />
                     </div>
                   )}
 
-                  {currentAssetList().map((asset) => (
-                    <div key={asset.id} className={`asset-card ${activeView} ${asset.isFolder ? 'asset-folder' : ''}`}>
+                  {filteredAssets.map((asset) => (
+                    <div key={asset.id} className={`asset-card ${activeView}`}>
                       {activeView === 'grid' ? (
                         <>
                           <div className="asset-preview">
-                            {asset.thumb ? (
-                              <img src={asset.thumb} alt={asset.name} />
+                            {asset.mediaType === 'video' ? (
+                              <video src={asset.url} muted playsInline />
+                            ) : asset.mediaType === 'audio' ? (
+                              <div className="asset-preview-icon">{assetIcon(asset)}</div>
+                            ) : asset.url ? (
+                              <img src={asset.url} alt={asset.name} />
                             ) : (
-                              <div className="asset-preview-icon">{asset.icon}</div>
+                              <div className="asset-preview-icon">{assetIcon(asset)}</div>
                             )}
+                            {asset.source === 'stock' ? (
+                              <span className="asset-source-badge">Stock</span>
+                            ) : null}
+                            <button
+                              type="button"
+                              className="asset-delete-btn asset-delete-btn--grid"
+                              aria-label={`Delete ${asset.name}`}
+                              disabled={deletingId === asset.id}
+                              onClick={() => handleDeleteAsset(asset.id)}
+                            >
+                              <MdDeleteOutline />
+                            </button>
                           </div>
 
                           <div style={{ padding: '12px' }}>
-                            <div className="asset-name" title={asset.name} style={{ fontSize: 14, fontWeight: 700 }}>{asset.name}</div>
+                            <div className="asset-name" title={asset.name} style={{ fontSize: 14, fontWeight: 700 }}>
+                              {asset.name}
+                            </div>
                             <div className="asset-meta" style={{ marginTop: 8 }}>
-                              <span>{asset.owner || ''}</span>
+                              <span>{asset.source === 'stock' ? 'Stock' : 'Upload'}</span>
                               <span>{asset.modified || ''}</span>
-                              <span>{asset.size || ''}</span>
+                              <span>{asset.sizeLabel || ''}</span>
                             </div>
                           </div>
                         </>
                       ) : (
                         <>
                           <div className="col name" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                            <div style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, background: 'var(--bg-surface)' }}>
-                              {asset.isFolder ? (asset.icon || <MdFolder />) : (asset.thumb ? <img src={asset.thumb} alt={asset.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div className="asset-preview-icon">{asset.icon}</div>)}
+                            <div style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, background: 'var(--bg-surface)', overflow: 'hidden' }}>
+                              {asset.mediaType === 'video' && asset.url ? (
+                                <video src={asset.url} muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              ) : asset.url && asset.mediaType === 'image' ? (
+                                <img src={asset.url} alt={asset.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              ) : (
+                                <div className="asset-preview-icon">{assetIcon(asset)}</div>
+                              )}
                             </div>
                             <div style={{ minWidth: 0 }}>
                               <div className="asset-name" title={asset.name}>{asset.name}</div>
                             </div>
                           </div>
 
-                          <div className="col owner" style={{ color: 'var(--text-muted)', fontSize: 13 }}>{asset.owner || ''}</div>
+                          <div className="col owner" style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+                            {asset.source === 'stock' ? 'Stock' : 'Upload'}
+                          </div>
                           <div className="col modified" style={{ color: 'var(--text-muted)', fontSize: 13 }}>{asset.modified || ''}</div>
-                          <div className="col size" style={{ color: 'var(--text-muted)', fontSize: 13 }}>{asset.size || ''}</div>
+                          <div className="col size" style={{ color: 'var(--text-muted)', fontSize: 13 }}>{asset.sizeLabel || ''}</div>
 
                           <div className="col actions">
                             <button
                               type="button"
                               className="asset-delete-btn asset-delete-btn--list"
                               aria-label={`Delete ${asset.name}`}
+                              disabled={deletingId === asset.id}
                               onClick={() => handleDeleteAsset(asset.id)}
                             >
                               <MdDeleteOutline />
@@ -316,16 +436,17 @@ function Library() {
                     </div>
                   ))}
 
-                  {activeView === 'grid' && (
+                  {activeView === 'grid' && workspaceId && !isUnsupportedCategory ? (
                     <button
                       type="button"
                       className="upload-placeholder"
                       onClick={() => setShowUploadModal(true)}
+                      disabled={uploading}
                     >
                       <MdCloudUpload className="upload-placeholder-icon" />
-                      <div className="upload-placeholder-text">Drop files here</div>
+                      <div className="upload-placeholder-text">{uploading ? 'Uploading…' : 'Drop files here'}</div>
                     </button>
-                  )}
+                  ) : null}
                 </div>
               )}
             </div>
@@ -334,25 +455,22 @@ function Library() {
       </div>
 
       {showUploadModal && (
-        <div className="upload-modal-overlay" role="presentation">
-          <div className="upload-modal">
+        <div className="upload-modal-overlay" role="presentation" onClick={() => setShowUploadModal(false)}>
+          <div className="upload-modal" onClick={(e) => e.stopPropagation()}>
             <div className="upload-modal-header">
-              <h3>Select Upload Type</h3>
+              <h3>Upload asset</h3>
               <button type="button" className="close-modal" onClick={() => setShowUploadModal(false)} aria-label="Close">
                 <MdClose />
               </button>
             </div>
+            <p className="upload-modal-hint">JPEG, PNG, WebP, MP4, or MP3 · max 50 MB</p>
             <div className="upload-options">
               {selectedCategory !== 'music' && (
                 <>
                   <button
                     type="button"
                     className="upload-option"
-                    onClick={() => {
-                      setUploadType('images')
-                      fileInputRef.current?.click()
-                      setShowUploadModal(false)
-                    }}
+                    onClick={() => openUploadPicker('images')}
                   >
                     <div className="option-icon image">
                       <MdImage />
@@ -362,11 +480,7 @@ function Library() {
                   <button
                     type="button"
                     className="upload-option"
-                    onClick={() => {
-                      setUploadType('videos')
-                      fileInputRef.current?.click()
-                      setShowUploadModal(false)
-                    }}
+                    onClick={() => openUploadPicker('videos')}
                   >
                     <div className="option-icon video">
                       <MdPlayCircleFilled />
@@ -379,11 +493,7 @@ function Library() {
                 <button
                   type="button"
                   className="upload-option"
-                  onClick={() => {
-                    setUploadType('music')
-                    fileInputRef.current?.click()
-                    setShowUploadModal(false)
-                  }}
+                  onClick={() => openUploadPicker('music')}
                 >
                   <div className="option-icon music">
                     <MdMusicNote />

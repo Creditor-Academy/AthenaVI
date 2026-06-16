@@ -3,6 +3,7 @@ import Home from '../Home/Home.jsx'
 import Videos from '../Videos/Videos.jsx'
 import Avatars from '../Avatars/Avatars.jsx'
 import CreateAvatar from '../Avatars/CreateAvatar.jsx'
+import CreateAvatarLook from '../Avatars/CreateAvatarLook.jsx'
 import Voices from '../Voices/Voices.jsx'
 import CreateVoice from '../Voices/CreateVoice.jsx'
 import Library from '../Library/Library.jsx'
@@ -68,6 +69,7 @@ function Dashboard({ onCreate, initialSection }) {
   const [topbarMobileOpen, setTopbarMobileOpen] = useState(false)
   const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false)
   const [lastVoiceCreated, setLastVoiceCreated] = useState(false)
+  const [avatarLookContext, setAvatarLookContext] = useState(null)
   const [adminTab, setAdminTab] = useState(() => {
     const saved = localStorage.getItem('adminPortalTab')
     const valid = ['users', 'workspaces', 'reports']
@@ -201,6 +203,12 @@ function Dashboard({ onCreate, initialSection }) {
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
 
+  useEffect(() => {
+    if (section === 'create-avatar-look' && !avatarLookContext) {
+      goToSection('avatars')
+    }
+  }, [section, avatarLookContext, goToSection])
+
   // Eagerly fetch and sync user profile on dashboard mount
   useEffect(() => {
     const syncProfile = async () => {
@@ -300,14 +308,29 @@ function Dashboard({ onCreate, initialSection }) {
             <Avatars 
               onCreate={handleOpenCreateVideoModal} 
               onEdit={handleEditVideo}              goToSection={goToSection} 
-              onCreateAvatar={() => goToSection('create-avatar')} 
+              onCreateAvatar={() => goToSection('create-avatar')}
+              onCreateLooks={(ctx) => {
+                setAvatarLookContext(ctx)
+                goToSection('create-avatar-look')
+              }}
             />
           )}
           {section === 'create-avatar' && (
-            <CreateAvatar 
-              onBack={(success) => {
-                goToSection('avatars');
-              }} 
+            <CreateAvatar
+              onBack={() => goToSection('avatars')}
+              onCreateLooks={(ctx) => {
+                setAvatarLookContext(ctx)
+                goToSection('create-avatar-look')
+              }}
+            />
+          )}
+          {section === 'create-avatar-look' && avatarLookContext && (
+            <CreateAvatarLook
+              context={avatarLookContext}
+              onBack={() => {
+                setAvatarLookContext(null)
+                goToSection('avatars')
+              }}
             />
           )}
           {section === 'voices' && (

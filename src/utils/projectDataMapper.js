@@ -443,6 +443,7 @@ function elementToClip(element) {
 
   if (typeof content === 'object' && content !== null) {
     if (content.src && !isEphemeralUrl(content.src)) src = content.src;
+    else if (content.url && !isEphemeralUrl(content.url)) src = content.url;
     else if (content.previewSrc) src = content.previewSrc;
   } else if (typeof content === 'string') {
     src = content;

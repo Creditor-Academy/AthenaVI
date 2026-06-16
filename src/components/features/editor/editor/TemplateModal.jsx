@@ -1,16 +1,10 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import {
-  MdClose, MdSearch, MdAutoAwesome, MdFilterList,
-  MdDashboard, MdViewQuilt, MdCenterFocusStrong, MdGridOn, MdDynamicFeed,
-  MdLayers, MdTimer, MdLabel, MdPlayCircleOutline
+  MdClose, MdSearch, MdAutoAwesome,
 } from 'react-icons/md'
-import StaticPreview from './StaticPreview'
-import TemplateGrid from '../../../TemplateGrid'
-import useTemplates from '../../../../hooks/useTemplates'
-import { predefinedAvatars } from '../../../../constants/editorData'
+import TemplateBundlePicker from './TemplateBundlePicker'
+import useTemplateBundles from '../../../../hooks/useTemplateBundles'
 import { fetchTemplateAvatarLookSet, TEMPLATE_AVATAR_LOOK_COUNT } from '../../../../utils/templateAvatarPreview'
-
-const placeholderAvatar = predefinedAvatars[0].image;
 
 import AllTemplateImg from '../../../../assets/Template Image/AllTemplate.png'
 import MarketingImg from '../../../../assets/Template Image/Marketing.png'
@@ -48,31 +42,31 @@ const categories = [
     label: 'Social Short',
     previews: [MarketingImg]
   },
+  {
+    id: 'podcast',
+    label: 'Podcast',
+    previews: [MarketingImg]
+  },
 ];
 
 const layoutTypes = ['All Layouts', 'Hero', 'Split', 'Centered', 'Grid', 'Story'];
 
-const TemplateModal = ({ showTemplateModal, setShowTemplateModal, handleAddTemplateScene }) => {
+const TemplateModal = ({
+  showTemplateModal,
+  setShowTemplateModal,
+  handleAddTemplateScene,
+  handleApplyTemplateBundle,
+}) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState('All')
   const [activeLayout, setActiveLayout] = useState('All Layouts')
   
-  const { templates, loading } = useTemplates(activeCategory)
+  const { bundles, loading } = useTemplateBundles(activeCategory)
 
   useEffect(() => {
     if (!showTemplateModal) return;
     fetchTemplateAvatarLookSet(TEMPLATE_AVATAR_LOOK_COUNT).catch(() => {});
   }, [showTemplateModal]);
-
-  // Combined Filtering Logic
-  const filteredTemplates = useMemo(() => {
-    return templates.filter(template => {
-      const matchesSearch = (template.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (template.tags || []).some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
-      const matchesLayout = activeLayout === 'All Layouts' || template.layoutType === activeLayout;
-      return matchesSearch && matchesLayout;
-    });
-  }, [templates, searchQuery, activeLayout]);
 
   if (!showTemplateModal) return null
 
@@ -108,8 +102,11 @@ const TemplateModal = ({ showTemplateModal, setShowTemplateModal, handleAddTempl
           {/* Header */}
           <header className="template-header">
             <div className="header-text">
-              <h2>Choose a template to start your scene</h2>
-              <p>Professional layouts tailored for your {activeCategory === 'All' ? 'needs' : activeCategory}.</p>
+              <h2>Choose a template group</h2>
+              <p>
+                Pick a bundle to apply all scenes, or open it and add individual layouts
+                {activeCategory === 'All' ? '' : ` for ${activeCategory}`}.
+              </p>
             </div>
             <button className="close-btn" onClick={() => setShowTemplateModal(false)}>
               <MdClose size={24} />
@@ -142,13 +139,19 @@ const TemplateModal = ({ showTemplateModal, setShowTemplateModal, handleAddTempl
 
           {/* Templates Grid Area */}
           <div className="templates-grid-area premium-scrollbar">
-            <TemplateGrid 
-              templates={filteredTemplates} 
+            <TemplateBundlePicker
+              bundles={bundles}
               loading={loading}
-              onSelect={(template) => {
-                handleAddTemplateScene(template);
+              searchQuery={searchQuery}
+              activeLayout={activeLayout}
+              onSelectScene={(scene) => {
+                handleAddTemplateScene(scene);
                 setShowTemplateModal(false);
-              }} 
+              }}
+              onApplyBundle={(bundle) => {
+                handleApplyTemplateBundle?.(bundle);
+                setShowTemplateModal(false);
+              }}
             />
           </div>
         </main>
@@ -472,6 +475,10 @@ const TemplateModal = ({ showTemplateModal, setShowTemplateModal, handleAddTempl
         }
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes bundle-shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
 
         @media (max-width: 992px) {
           .template-sidebar { width: 240px; }

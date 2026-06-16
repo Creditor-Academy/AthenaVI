@@ -10,9 +10,10 @@ import {
   MdContentCopy,
   MdBookmarkBorder
 } from 'react-icons/md'
+import TemplateScenePreview from '../../components/features/editor/editor/TemplateScenePreview'
 import './TemplateDetails.css'
 
-const slideData = [
+const fallbackSlideData = [
   {
     id: 1,
     title: 'Intro & Hook',
@@ -51,7 +52,6 @@ const slideData = [
 ]
 
 function TemplateDetails({ template, onBack, onUse }) {
-  // If no template is passed, use a default one for demonstration
   const activeTemplate = template || {
     name: 'Corporate Onboarding Pro',
     category: 'Business',
@@ -62,6 +62,10 @@ function TemplateDetails({ template, onBack, onUse }) {
     description: 'A premium, high-fidelity template designed for onboarding and corporate communications. This layout maximizes clarity and professional branding.',
     thumb: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&q=80&w=1200'
   }
+
+  const slideData = activeTemplate.sceneList?.length
+    ? activeTemplate.sceneList
+    : fallbackSlideData
 
   return (
     <div className="template-details-page">
@@ -77,7 +81,15 @@ function TemplateDetails({ template, onBack, onUse }) {
 
       <section className="template-feature-head">
         <div className="feature-preview-container">
-          <img src={activeTemplate.thumb} alt="Feature" className="feature-img" />
+          {activeTemplate.coverScene || activeTemplate.selectedScene ? (
+            <div className="feature-preview-canvas">
+              <TemplateScenePreview template={activeTemplate.selectedScene || activeTemplate.coverScene} />
+            </div>
+          ) : activeTemplate.thumb ? (
+            <img src={activeTemplate.thumb} alt="Feature" className="feature-img" />
+          ) : (
+            <div className="feature-preview-canvas feature-preview-canvas--empty" />
+          )}
           <div className="feature-play-overlay">
             <MdPlayCircleFilled size={72} />
           </div>
@@ -122,9 +134,17 @@ function TemplateDetails({ template, onBack, onUse }) {
 
         <div className="slides-list">
           {slideData.map((slide, index) => (
-            <div key={slide.id} className="slide-item-entry">
+            <div key={slide.id || index} className="slide-item-entry">
               <div className="slide-thumb-box">
-                <img src={slide.thumb} alt={`Slide ${index + 1}`} className="slide-thumb" />
+                {slide.scene ? (
+                  <div className="slide-thumb-canvas">
+                    <TemplateScenePreview template={slide.scene} compact />
+                  </div>
+                ) : slide.thumb ? (
+                  <img src={slide.thumb} alt={`Slide ${index + 1}`} className="slide-thumb" />
+                ) : (
+                  <div className="slide-thumb-canvas" />
+                )}
               </div>
               <div className="slide-content-entry">
                 <span className="slide-num">Slide {index + 1}</span>

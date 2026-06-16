@@ -40,6 +40,11 @@ const EditorSidebarUploads = ({ addLayer, workspaceId, onUploadError }) => {
     setUploading(true);
     try {
       for (const file of files) {
+        const validationError = assetService.validateUploadFile(file);
+        if (validationError) {
+          onUploadError?.(validationError);
+          continue;
+        }
         const uploaded = await assetService.uploadAsset(workspaceId, file);
         const normalized = assetService.normalizeAsset(uploaded);
         if (!normalized?.url) continue;
@@ -68,7 +73,7 @@ const EditorSidebarUploads = ({ addLayer, workspaceId, onUploadError }) => {
   const openFilePicker = () => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'image/*,video/*,audio/*';
+    input.accept = 'image/jpeg,image/png,image/webp,video/mp4,audio/mpeg,audio/mp3,.mp3';
     input.multiple = true;
     input.onchange = (e) => handleFiles(Array.from(e.target.files || []));
     input.click();

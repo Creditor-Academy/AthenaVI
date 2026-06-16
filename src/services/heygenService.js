@@ -167,6 +167,36 @@ class HeygenService {
     }
   }
 
+  /**
+   * Add a new prompt look to an existing personal avatar group.
+   * Uses avatar_group_id + reference_image_url; avatar_id (look) is optional when available.
+   */
+  async createAvatarLook({ name, prompt, avatarGroupId, avatarId, referenceImageUrl }) {
+    if (!avatarGroupId) {
+      throw new Error('Avatar group id is required to create a look');
+    }
+    if (!referenceImageUrl) {
+      throw new Error('Reference avatar image is required to create a look');
+    }
+    if (!name?.trim()) {
+      throw new Error('Look name is required');
+    }
+    if (!prompt?.trim()) {
+      throw new Error('Prompt is required to generate a look');
+    }
+
+    const payload = {
+      type: 'prompt',
+      name: name.trim(),
+      prompt: prompt.trim(),
+      avatar_group_id: String(avatarGroupId),
+      reference_image_url: String(referenceImageUrl),
+    };
+    if (avatarId) payload.avatar_id = String(avatarId);
+
+    return this.createAvatar(payload);
+  }
+
   async getAvatarConsent(groupId, rerouteUrl = '') {
     try {
       const endpoint = `${API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.CREATE}/${groupId}/consent`;

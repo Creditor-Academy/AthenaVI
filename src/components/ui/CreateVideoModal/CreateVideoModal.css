@@ -313,6 +313,23 @@
   -ms-overflow-style: none;
 }
 
+.create-video-bundle-picker {
+  overflow-y: auto;
+  max-height: min(58vh, 620px);
+  padding-right: 2px;
+}
+
+.create-video-selection-note {
+  margin: 16px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--primary) 8%, var(--bg-surface));
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border-color));
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .create-video-template-skeleton {
   border-radius: 12px;
   height: 170px;

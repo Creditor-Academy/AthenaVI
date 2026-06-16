@@ -252,7 +252,16 @@ export function resolveClipMediaSrc(clip, scene) {
     return scenePlayback || clip?.src || null
   }
 
-  return clip?.src || null
+  const content = typeof clip?.content === 'object' && clip.content ? clip.content : null
+  const candidates = [clip?.src, content?.url, content?.src, clip?.fillSrc]
+
+  for (const raw of candidates) {
+    if (!raw || typeof raw !== 'string') continue
+    if (raw.startsWith('blob:')) return raw
+    if (/^https?:\/\//i.test(raw)) return raw
+  }
+
+  return clip?.src || content?.url || content?.src || null
 }
 
 function looksLikeVideoUrl(src) {

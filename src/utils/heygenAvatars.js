@@ -225,6 +225,71 @@ export function mergeAvatarLooksPages(prev, nextPage) {
   };
 }
 
+/** Preview URL from a HeyGen look row. */
+export function getLookPreviewUrl(look) {
+  return (
+    look?.preview_image_url ??
+    look?.thumbnail_url ??
+    look?.normal_image_url ??
+    look?.image_url ??
+    null
+  );
+}
+
+/** Training / generation status when HeyGen exposes it. */
+export function getLookTrainingStatus(look) {
+  return look?.status ?? look?.training_status ?? look?.generation_status ?? null;
+}
+
+/** True when the look has a usable preview (poll until this is true). */
+export function isLookReadyForUse(look) {
+  if (!look) return false;
+  const status = String(getLookTrainingStatus(look) || '').toLowerCase();
+  if (status === 'failed' || status === 'error') return false;
+  const preview = getLookPreviewUrl(look);
+  if (!preview) return false;
+  if (status === 'processing' || status === 'pending' || status === 'pending_consent') {
+    return false;
+  }
+  return true;
+}
+
+export function mapLookTile(look, fallbackName = 'Look', fallbackImage = null) {
+  const id = getLookId(look);
+  const image = getLookPreviewUrl(look) || fallbackImage;
+  return {
+    id,
+    name: look?.avatar_name ?? look?.name ?? fallbackName,
+    image,
+    status: getLookTrainingStatus(look),
+    ready: isLookReadyForUse(look),
+  };
+}
+
+export const LOOK_POLL_INTERVAL_MS = 10_000;
+export const LOOK_MAX_WAIT_MS = 5 * 60_000;
+export const LOOK_TYPICAL_WAIT_LABEL = '2–5 minutes';
+
+/** Wrap user look prompt so HeyGen keeps identity tied to the reference avatar. */
+export function buildPersonalAvatarLookPrompt(userPrompt, avatarName = 'your avatar') {
+  const trimmed = String(userPrompt || '').trim();
+  if (!trimmed) return '';
+
+  const name = String(avatarName || 'your avatar').trim() || 'your avatar';
+  const hasReferencePhrase = /reference avatar|same (person|identity|likeness|face)|identical to/i.test(trimmed);
+
+  if (hasReferencePhrase) {
+    return `${trimmed}. Same person as the reference avatar (${name}) — preserve facial identity and likeness.`;
+  }
+
+  return [
+    `Create a new look for the same person as the reference avatar (${name}).`,
+    'The face, identity, and likeness must remain the same as the reference avatar.',
+    trimmed,
+    'Same person as the reference avatar — identical facial features and identity.',
+  ].join(' ');
+}
+
 const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/300x400?text=Avatar';
 
 export function extractHeygenList(response, keys = []) {
@@ -387,4 +452,23 @@ export function buildHeygenAvatarContent(scene, clip = {}) {
   }
 
   return content;
+}
+
+export function parseAvatarCreateResponse(response, fallbackName = '') {
+  const group = response?.avatar_group || response?.avatarGroup;
+  const item = response?.avatar_item || response?.avatarItem;
+  const groupId = getGroupId(group) || response?.avatar_group_id || null;
+  const lookId = getLookId(item) || getLookId(response) || null;
+
+  return {
+    groupId,
+    lookId,
+    name: group?.name || item?.name || response?.name || fallbackName,
+    previewImage:
+      item?.preview_image_url ||
+      item?.thumbnail_url ||
+      group?.preview_image_url ||
+      group?.thumbnail_url ||
+      null,
+  };
 }

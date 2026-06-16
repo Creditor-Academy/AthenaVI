@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Play, Video, X } from 'lucide-react'
+import { Play, Video, X, Sparkles } from 'lucide-react'
 import heygenService from '../../services/heygenService'
 import {
   extractHeygenList,
@@ -8,7 +8,7 @@ import {
   getLookId,
 } from '../../utils/heygenAvatars'
 
-function AvatarPersona({ selectedAvatar, closeDetails, onCreate }) {
+function AvatarPersona({ selectedAvatar, closeDetails, onCreate, onCreateLooks, isPrivate }) {
   const [activeLooks, setActiveLooks] = useState([])
   const [selectedLook, setSelectedLook] = useState(null)
   const [loadingLooks, setLoadingLooks] = useState(false)
@@ -68,6 +68,16 @@ function AvatarPersona({ selectedAvatar, closeDetails, onCreate }) {
       }
     }
   }, [selectedAvatar]);
+
+  const handleCreateLook = () => {
+    if (!onCreateLooks || !selectedAvatar?.id) return
+    onCreateLooks({
+      groupId: selectedAvatar.id,
+      lookId: selectedLook?.id || activeLooks[0]?.id || null,
+      name: selectedAvatar.name,
+      previewImage: selectedLook?.image || selectedAvatar.image,
+    })
+  }
 
   const handleCreateVideo = () => {
     console.log('Creating video from', selectedLook?.name || selectedAvatar.name)
@@ -162,6 +172,12 @@ function AvatarPersona({ selectedAvatar, closeDetails, onCreate }) {
           </div>
 
           <div className="hero-actions">
+            {isPrivate && onCreateLooks ? (
+              <button type="button" className="btn-action-secondary" onClick={handleCreateLook}>
+                <Sparkles size={20} />
+                <span>Create look</span>
+              </button>
+            ) : null}
             <button className="btn-action-primary" onClick={handleCreateVideo}>
               <Video size={22} />
               <span>Start Video with this Avatar</span>

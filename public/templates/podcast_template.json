@@ -1,0 +1,5982 @@
+{
+  "category": "Podcast",
+  "template": {
+    "id": "podcast-champagne-studio",
+    "name": "Podcast — Champagne Studio",
+    "category": "Podcast",
+    "theme": {
+      "name": "Champagne Studio",
+      "fonts": {
+        "display": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+        "serif": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+        "sans": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+        "accent": "\"Source Serif 4\", Georgia, serif"
+      }
+    },
+    "presenter": {
+      "name": "Your Host"
+    },
+    "totalSlides": 8,
+    "canvasSize": {
+      "width": 1280,
+      "height": 720
+    },
+    "aspectRatio": "16:9",
+    "colorPalette": {
+      "espresso": "#1C1917",
+      "charcoal": "#292524",
+      "navy": "#1E293B",
+      "slate": "#44403C",
+      "cream": "#FAF8F5",
+      "linen": "#F3EDE4",
+      "sand": "#E8DFD4",
+      "wheat": "#DDD0C0",
+      "champagne": "#D4B896",
+      "champagneLight": "#E8D5C0",
+      "copper": "#A66B47",
+      "copperSoft": "#C4896A",
+      "sage": "#6B7F73",
+      "ink": "#1C1917",
+      "inkSoft": "#44403C",
+      "muted": "#78716C",
+      "line": "#E7E5E4",
+      "white": "#FFFFFF",
+      "panelDark": "#1E293B",
+      "ice": "#F8FAFC"
+    },
+    "description": "Editorial 8-scene podcast bundle: warm linen covers, navy editorial panels, refined typography, clean photo framing, and entrance animations on every layer."
+  },
+  "scenes": [
+    {
+      "id": "podcast_01",
+      "slideIndex": 1,
+      "title": "Welcome to the Show",
+      "layoutType": "Cover",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Your Host"
+      },
+      "background": {
+        "type": "gradient",
+        "value": "linear-gradient(145deg, #FFFFFF 0%, #FAF8F5 50%, #F3EDE4 100%)",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "copy": {
+          "x": 126,
+          "y": 74,
+          "width": 520,
+          "height": 572
+        },
+        "image": {
+          "x": 682,
+          "y": 74,
+          "width": 472,
+          "height": 572
+        },
+        "avatar": {
+          "x": 1074,
+          "y": 538,
+          "width": 92,
+          "height": 112
+        }
+      },
+      "description": "Elegant cover with show title, hook, and studio portrait.",
+      "flow": "Cover → Listen",
+      "duration": 8,
+      "tags": [
+        "podcast",
+        "cover"
+      ],
+      "clips": [
+        {
+          "id": "bg01",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "background": "linear-gradient(145deg, #FFFFFF 0%, #FAF8F5 55%, #F3EDE4 100%)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 1.1,
+              "delay": 0
+            }
+          ]
+        },
+        {
+          "id": "blob_tl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-blob-warm",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": -50,
+            "y": -30
+          },
+          "size": {
+            "width": 200,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#E8DFD4",
+            "borderRadius": "55% 45% 60% 40% / 50% 55% 45% 50%",
+            "opacity": 0.7
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.8,
+              "delay": 0.06
+            }
+          ]
+        },
+        {
+          "id": "blob_br",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-blob-warm",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 1110,
+            "y": 570
+          },
+          "size": {
+            "width": 220,
+            "height": 190
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#DDD0C0",
+            "borderRadius": "45% 55% 40% 60% / 55% 45% 55% 45%",
+            "opacity": 0.65
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.8,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "accent_bar",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 126,
+            "y": 182
+          },
+          "size": {
+            "width": 5,
+            "height": 72
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#A66B47",
+            "borderRadius": "3px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.22000000000000003
+            }
+          ]
+        },
+        {
+          "id": "img_logo",
+          "type": "image",
+          "assetKey": "podcast-logo",
+          "role": "logo",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 126,
+            "y": 74
+          },
+          "size": {
+            "width": 190,
+            "height": 42
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://placehold.co/320x64/1C1917/FAF8F5?text=YOUR+SHOW",
+          "placeholder": true,
+          "alt": "Show logo",
+          "style": {
+            "objectFit": "contain"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.7,
+              "delay": 0.22
+            }
+          ]
+        },
+        {
+          "id": "t_label",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 142,
+            "y": 130
+          },
+          "size": {
+            "width": 280,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "PODCAST EPISODE",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 11,
+            "letterSpacing": "0.2em",
+            "textTransform": "uppercase",
+            "color": "#A66B47"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.34
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 126,
+            "y": 182
+          },
+          "size": {
+            "width": 500,
+            "height": 130
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Welcome to\nThe Show",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#1C1917",
+            "fontSize": 50,
+            "lineHeight": 1.06
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.85,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "t_sub",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 126,
+            "y": 322
+          },
+          "size": {
+            "width": 496,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Episode 01 · Recorded in Studio",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "color": "#44403C",
+            "letterSpacing": "0.06em",
+            "textTransform": "none",
+            "fontSize": 12
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.44000000000000006
+            }
+          ]
+        },
+        {
+          "id": "t_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 126,
+            "y": 362
+          },
+          "size": {
+            "width": 492,
+            "height": 120
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "A polished introduction to your show — who you are, what listeners can expect, and why this conversation matters. Replace with your episode hook.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#78716C",
+            "lineHeight": 1.75,
+            "fontSize": 16
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.49000000000000005
+            }
+          ]
+        },
+        {
+          "id": "host_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-card",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 126,
+            "y": 554
+          },
+          "size": {
+            "width": 340,
+            "height": 76
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "14px",
+            "boxShadow": "0 10px 28px rgba(28,25,23,0.07)",
+            "border": "1px solid #E7E5E4"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.26
+            }
+          ]
+        },
+        {
+          "id": "ico_host_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 142,
+            "y": 568
+          },
+          "size": {
+            "width": 48,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F3EDE4",
+            "borderRadius": "50%",
+            "boxShadow": "0 6px 18px rgba(28,25,23,0.08)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.30000000000000004
+            }
+          ]
+        },
+        {
+          "id": "ico_host",
+          "type": "image",
+          "assetKey": "mic",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 152,
+            "y": 578
+          },
+          "size": {
+            "width": 28,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/A66B47/microphone.png",
+          "placeholder": true,
+          "alt": "Microphone",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "pop",
+              "duration": 0.55,
+              "delay": 0.43
+            }
+          ]
+        },
+        {
+          "id": "t_host_lbl",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 202,
+            "y": 568
+          },
+          "size": {
+            "width": 100,
+            "height": 18
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "HOSTED BY",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 10,
+            "letterSpacing": "0.14em",
+            "textTransform": "uppercase",
+            "color": "#78716C"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "t_host",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 202,
+            "y": 590
+          },
+          "size": {
+            "width": 240,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Your Host",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#1C1917",
+            "fontSize": 17,
+            "textTransform": "none",
+            "letterSpacing": "0"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.5900000000000001
+            }
+          ]
+        },
+        {
+          "id": "img_cover_fill",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "podcast-card",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 682,
+            "y": 82
+          },
+          "size": {
+            "width": 472,
+            "height": 556
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#E8DFD4",
+            "borderRadius": "22px 22px 22px 8px",
+            "boxShadow": "0 24px 56px rgba(28,25,23,0.14)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideUp",
+              "duration": 0.8,
+              "delay": 0.42000000000000004
+            }
+          ]
+        },
+        {
+          "id": "img_cover",
+          "type": "image",
+          "assetKey": "podcast-cover",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 682,
+            "y": 82
+          },
+          "size": {
+            "width": 472,
+            "height": 556
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/6957912/pexels-photo-6957912.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Podcast studio",
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "22px 22px 22px 8px",
+            "boxShadow": "0 24px 56px rgba(28,25,23,0.14)",
+            "objectPosition": "center 30%"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#E8DFD4"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "kenBurns",
+              "duration": 7.5,
+              "delay": 0.04
+            }
+          ]
+        },
+        {
+          "id": "slide_badge_01",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1110,
+            "y": 78
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1C1917",
+            "borderRadius": "50%",
+            "border": "2px solid #D4B896"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.42000000000000004
+            }
+          ]
+        },
+        {
+          "id": "slide_num_01",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1110,
+            "y": 87
+          },
+          "size": {
+            "width": 44,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "01",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#FAF8F5",
+            "fontSize": 14,
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.6400000000000001
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1074,
+            "y": 538
+          },
+          "size": {
+            "width": 92,
+            "height": 112
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #D4B896",
+            "boxShadow": "0 12px 32px rgba(28,25,23,0.16)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.75,
+              "delay": 0.48
+            }
+          ]
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-cream",
+            "name": "Studio Cream",
+            "type": "solid",
+            "value": "#FAF8F5"
+          },
+          {
+            "id": "bg-linen",
+            "name": "Warm Linen",
+            "type": "solid",
+            "value": "#F3EDE4"
+          },
+          {
+            "id": "bg-white",
+            "name": "Clean White",
+            "type": "solid",
+            "value": "#FFFFFF"
+          },
+          {
+            "id": "bg-espresso",
+            "name": "Espresso",
+            "type": "solid",
+            "value": "#1C1917"
+          },
+          {
+            "id": "bg-navy",
+            "name": "Studio Navy",
+            "type": "solid",
+            "value": "#1E293B"
+          },
+          {
+            "id": "bg-gradient-linen",
+            "name": "Linen Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #FFFFFF 0%, #FAF8F5 50%, #F3EDE4 100%)"
+          },
+          {
+            "id": "bg-gradient-navy",
+            "name": "Navy Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(165deg, #1C1917 0%, #1E293B 100%)"
+          },
+          {
+            "id": "bg-gradient-warm",
+            "name": "Warm Fade",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #F3EDE4 0%, #FAF8F5 60%, #FFFFFF 100%)"
+          }
+        ],
+        "hint": "Swap linen presets, custom swatches, or full-bleed photos. Delete a hero image to reveal the panel color behind it."
+      }
+    },
+    {
+      "id": "podcast_02",
+      "slideIndex": 2,
+      "title": "The Art of Listening",
+      "layoutType": "Split",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Your Host"
+      },
+      "background": {
+        "type": "solid",
+        "value": "#FAF8F5",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "image": {
+          "x": 126,
+          "y": 74,
+          "width": 480,
+          "height": 572
+        },
+        "text": {
+          "x": 646,
+          "y": 74,
+          "width": 508,
+          "height": 572
+        },
+        "avatar": {
+          "x": 1078,
+          "y": 542,
+          "width": 88,
+          "height": 108
+        }
+      },
+      "description": "Photo panel left, narrative copy right.",
+      "flow": "Listen → Connect",
+      "duration": 8,
+      "tags": [
+        "podcast",
+        "story"
+      ],
+      "clips": [
+        {
+          "id": "bg02",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FAF8F5"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 1.1,
+              "delay": 0
+            }
+          ]
+        },
+        {
+          "id": "blob_tl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-blob-warm",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": -50,
+            "y": -30
+          },
+          "size": {
+            "width": 200,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#E8DFD4",
+            "borderRadius": "55% 45% 60% 40% / 50% 55% 45% 50%",
+            "opacity": 0.7
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.8,
+              "delay": 0.06
+            }
+          ]
+        },
+        {
+          "id": "blob_br",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-blob-warm",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 1110,
+            "y": 570
+          },
+          "size": {
+            "width": 220,
+            "height": 190
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#DDD0C0",
+            "borderRadius": "45% 55% 40% 60% / 55% 45% 55% 45%",
+            "opacity": 0.65
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.8,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "photo_panel",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-card",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 126,
+            "y": 74
+          },
+          "size": {
+            "width": 480,
+            "height": 572
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "24px",
+            "boxShadow": "0 18px 44px rgba(28,25,23,0.08)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideUp",
+              "duration": 0.8,
+              "delay": 0.22
+            }
+          ]
+        },
+        {
+          "id": "img_studio_fill",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "podcast-card",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 140,
+            "y": 88
+          },
+          "size": {
+            "width": 452,
+            "height": 544
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F3EDE4",
+            "borderRadius": "18px",
+            "boxShadow": "0 22px 52px rgba(28,25,23,0.12)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideUp",
+              "duration": 0.8,
+              "delay": 0.27
+            }
+          ]
+        },
+        {
+          "id": "img_studio",
+          "type": "image",
+          "assetKey": "podcast-studio",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 140,
+            "y": 88
+          },
+          "size": {
+            "width": 452,
+            "height": 544
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3945681/pexels-photo-3945681.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Recording studio",
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "18px",
+            "boxShadow": "0 22px 52px rgba(28,25,23,0.12)"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#F3EDE4"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "kenBurns",
+              "duration": 7.5,
+              "delay": 0.04
+            }
+          ]
+        },
+        {
+          "id": "t_label",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 646,
+            "y": 86
+          },
+          "size": {
+            "width": 220,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "CHAPTER ONE",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 11,
+            "letterSpacing": "0.2em",
+            "textTransform": "uppercase",
+            "color": "#A66B47"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.34
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 646,
+            "y": 118
+          },
+          "size": {
+            "width": 500,
+            "height": 110
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "The Art of\nListening",
+          "style": {
+            "fontFamily": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+            "fontWeight": "600",
+            "color": "#1C1917",
+            "fontSize": 42,
+            "lineHeight": 1.12
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.85,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "t_intro",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 646,
+            "y": 242
+          },
+          "size": {
+            "width": 496,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Great podcasts are built on presence, not production tricks. When hosts sound grounded and curious, audiences lean in — even through a screen or earbuds.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#78716C",
+            "lineHeight": 1.75,
+            "fontSize": 16
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.44000000000000006
+            }
+          ]
+        },
+        {
+          "id": "t_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 646,
+            "y": 354
+          },
+          "size": {
+            "width": 496,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "This episode explores the craft behind compelling audio: pacing, authenticity, and the small details that make a conversation feel alive.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#44403C",
+            "lineHeight": 1.75,
+            "fontSize": 15
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.49000000000000005
+            }
+          ]
+        },
+        {
+          "id": "rule02",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 646,
+            "y": 514
+          },
+          "size": {
+            "width": 88,
+            "height": 3
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#D4B896",
+            "borderRadius": "2px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.30000000000000004
+            }
+          ]
+        },
+        {
+          "id": "ico_wave_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 646,
+            "y": 578
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F3EDE4",
+            "borderRadius": "50%",
+            "boxShadow": "0 6px 18px rgba(28,25,23,0.08)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.34
+            }
+          ]
+        },
+        {
+          "id": "ico_wave",
+          "type": "image",
+          "assetKey": "wave",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 655,
+            "y": 587
+          },
+          "size": {
+            "width": 26,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/1E293B/audio-wave.png",
+          "placeholder": true,
+          "alt": "Waveform",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "pop",
+              "duration": 0.55,
+              "delay": 0.48000000000000004
+            }
+          ]
+        },
+        {
+          "id": "t_foot",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 698,
+            "y": 584
+          },
+          "size": {
+            "width": 280,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Crafted for curious listeners",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 11,
+            "letterSpacing": "0.14em",
+            "textTransform": "none",
+            "color": "#78716C"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "slide_badge_02",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1110,
+            "y": 78
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1C1917",
+            "borderRadius": "50%",
+            "border": "2px solid #D4B896"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.42000000000000004
+            }
+          ]
+        },
+        {
+          "id": "slide_num_02",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1110,
+            "y": 87
+          },
+          "size": {
+            "width": 44,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "02",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#FAF8F5",
+            "fontSize": 14,
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.5900000000000001
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1078,
+            "y": 542
+          },
+          "size": {
+            "width": 88,
+            "height": 108
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #FFFFFF",
+            "boxShadow": "0 12px 32px rgba(28,25,23,0.16)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.75,
+              "delay": 0.48
+            }
+          ]
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-cream",
+            "name": "Studio Cream",
+            "type": "solid",
+            "value": "#FAF8F5"
+          },
+          {
+            "id": "bg-linen",
+            "name": "Warm Linen",
+            "type": "solid",
+            "value": "#F3EDE4"
+          },
+          {
+            "id": "bg-white",
+            "name": "Clean White",
+            "type": "solid",
+            "value": "#FFFFFF"
+          },
+          {
+            "id": "bg-espresso",
+            "name": "Espresso",
+            "type": "solid",
+            "value": "#1C1917"
+          },
+          {
+            "id": "bg-navy",
+            "name": "Studio Navy",
+            "type": "solid",
+            "value": "#1E293B"
+          },
+          {
+            "id": "bg-gradient-linen",
+            "name": "Linen Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #FFFFFF 0%, #FAF8F5 50%, #F3EDE4 100%)"
+          },
+          {
+            "id": "bg-gradient-navy",
+            "name": "Navy Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(165deg, #1C1917 0%, #1E293B 100%)"
+          },
+          {
+            "id": "bg-gradient-warm",
+            "name": "Warm Fade",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #F3EDE4 0%, #FAF8F5 60%, #FFFFFF 100%)"
+          }
+        ],
+        "hint": "Swap linen presets, custom swatches, or full-bleed photos. Delete a hero image to reveal the panel color behind it."
+      }
+    },
+    {
+      "id": "podcast_03",
+      "slideIndex": 3,
+      "title": "Why Podcasts Connect",
+      "layoutType": "Editorial",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Your Host"
+      },
+      "background": {
+        "type": "solid",
+        "value": "#FFFFFF",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "copy": {
+          "x": 126,
+          "y": 74,
+          "width": 535,
+          "height": 572
+        },
+        "image": {
+          "x": 613,
+          "y": 98,
+          "width": 541,
+          "height": 524
+        },
+        "avatar": {
+          "x": 1070,
+          "y": 534,
+          "width": 96,
+          "height": 116
+        }
+      },
+      "description": "Navy copy panel with overlapping hero image.",
+      "flow": "Connect → Guest",
+      "duration": 8,
+      "tags": [
+        "podcast",
+        "editorial"
+      ],
+      "clips": [
+        {
+          "id": "bg03",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 1.1,
+              "delay": 0
+            }
+          ]
+        },
+        {
+          "id": "navy_panel",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-navy-panel",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 114,
+            "y": 66
+          },
+          "size": {
+            "width": 559,
+            "height": 588
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1E293B",
+            "borderRadius": "24px",
+            "boxShadow": "0 24px 56px rgba(28,25,23,0.18)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideUp",
+              "duration": 0.8,
+              "delay": 0.12
+            }
+          ]
+        },
+        {
+          "id": "t_label",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 154,
+            "y": 102
+          },
+          "size": {
+            "width": 200,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "THE IDEA",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 11,
+            "letterSpacing": "0.2em",
+            "textTransform": "uppercase",
+            "color": "#D4B896"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.34
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 154,
+            "y": 130
+          },
+          "size": {
+            "width": 479,
+            "height": 120
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Why Podcasts\nConnect",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#FAF8F5",
+            "fontSize": 44,
+            "lineHeight": 1.08
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.85,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "t_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 154,
+            "y": 262
+          },
+          "size": {
+            "width": 471,
+            "height": 160
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Podcasts create intimacy at scale. One voice in your ear can feel like a friend, a mentor, or a guide through ideas worth your time.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#E8D5C0",
+            "lineHeight": 1.7,
+            "fontSize": 16
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.44000000000000006
+            }
+          ]
+        },
+        {
+          "id": "champagne_rule",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 154,
+            "y": 442
+          },
+          "size": {
+            "width": 64,
+            "height": 3
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#D4B896",
+            "borderRadius": "2px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.18000000000000002
+            }
+          ]
+        },
+        {
+          "id": "pill_ep03_pill",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 154,
+            "y": 462
+          },
+          "size": {
+            "width": 120,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1C1917",
+            "borderRadius": "100px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.22000000000000003
+            }
+          ]
+        },
+        {
+          "id": "pill_ep03_txt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 166,
+            "y": 468
+          },
+          "size": {
+            "width": 96,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Ep. 01",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 10,
+            "letterSpacing": "0.04em",
+            "textTransform": "none",
+            "color": "#E8D5C0",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.49000000000000005
+            }
+          ]
+        },
+        {
+          "id": "img_headphones_fill",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "podcast-card",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 613,
+            "y": 106
+          },
+          "size": {
+            "width": 541,
+            "height": 508
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#E8DFD4",
+            "borderRadius": "20px",
+            "boxShadow": "0 28px 60px rgba(0,0,0,0.32)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideUp",
+              "duration": 0.8,
+              "delay": 0.27
+            }
+          ]
+        },
+        {
+          "id": "img_headphones",
+          "type": "image",
+          "assetKey": "podcast-headphones",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 613,
+            "y": 106
+          },
+          "size": {
+            "width": 541,
+            "height": 508
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3771836/pexels-photo-3771836.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Headphones detail",
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "20px",
+            "boxShadow": "0 28px 60px rgba(0,0,0,0.32)"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#E8DFD4"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "kenBurns",
+              "duration": 7.5,
+              "delay": 0.04
+            }
+          ]
+        },
+        {
+          "id": "slide_badge_03",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1110,
+            "y": 78
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1C1917",
+            "borderRadius": "50%",
+            "border": "2px solid #D4B896"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.30000000000000004
+            }
+          ]
+        },
+        {
+          "id": "slide_num_03",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1110,
+            "y": 87
+          },
+          "size": {
+            "width": 44,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "03",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#FAF8F5",
+            "fontSize": 14,
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1070,
+            "y": 534
+          },
+          "size": {
+            "width": 96,
+            "height": 116
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #FFFFFF",
+            "boxShadow": "0 12px 32px rgba(28,25,23,0.16)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.75,
+              "delay": 0.48
+            }
+          ]
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-cream",
+            "name": "Studio Cream",
+            "type": "solid",
+            "value": "#FAF8F5"
+          },
+          {
+            "id": "bg-linen",
+            "name": "Warm Linen",
+            "type": "solid",
+            "value": "#F3EDE4"
+          },
+          {
+            "id": "bg-white",
+            "name": "Clean White",
+            "type": "solid",
+            "value": "#FFFFFF"
+          },
+          {
+            "id": "bg-espresso",
+            "name": "Espresso",
+            "type": "solid",
+            "value": "#1C1917"
+          },
+          {
+            "id": "bg-navy",
+            "name": "Studio Navy",
+            "type": "solid",
+            "value": "#1E293B"
+          },
+          {
+            "id": "bg-gradient-linen",
+            "name": "Linen Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #FFFFFF 0%, #FAF8F5 50%, #F3EDE4 100%)"
+          },
+          {
+            "id": "bg-gradient-navy",
+            "name": "Navy Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(165deg, #1C1917 0%, #1E293B 100%)"
+          },
+          {
+            "id": "bg-gradient-warm",
+            "name": "Warm Fade",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #F3EDE4 0%, #FAF8F5 60%, #FFFFFF 100%)"
+          }
+        ],
+        "hint": "Swap linen presets, custom swatches, or full-bleed photos. Delete a hero image to reveal the panel color behind it."
+      }
+    },
+    {
+      "id": "podcast_04",
+      "slideIndex": 4,
+      "title": "Guest Spotlight",
+      "layoutType": "Quote",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Your Host"
+      },
+      "background": {
+        "type": "gradient",
+        "value": "linear-gradient(160deg, #F3EDE4 0%, #FAF8F5 60%, #FFFFFF 100%)",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "portrait": {
+          "x": 126,
+          "y": 122,
+          "width": 280,
+          "height": 280
+        },
+        "quote": {
+          "x": 454,
+          "y": 106,
+          "width": 700,
+          "height": 508
+        },
+        "avatar": {
+          "x": 1078,
+          "y": 542,
+          "width": 88,
+          "height": 108
+        }
+      },
+      "description": "Circular guest portrait with elegant quote card.",
+      "flow": "Guest → Segments",
+      "duration": 8,
+      "tags": [
+        "podcast",
+        "guest",
+        "quote"
+      ],
+      "clips": [
+        {
+          "id": "bg04",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "background": "linear-gradient(160deg, #F3EDE4 0%, #FAF8F5 100%)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 1.1,
+              "delay": 0
+            }
+          ]
+        },
+        {
+          "id": "blob_tl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-blob-warm",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": -50,
+            "y": -30
+          },
+          "size": {
+            "width": 200,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#E8DFD4",
+            "borderRadius": "55% 45% 60% 40% / 50% 55% 45% 50%",
+            "opacity": 0.7
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.8,
+              "delay": 0.06
+            }
+          ]
+        },
+        {
+          "id": "blob_br",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-blob-warm",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 1110,
+            "y": 570
+          },
+          "size": {
+            "width": 220,
+            "height": 190
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#DDD0C0",
+            "borderRadius": "45% 55% 40% 60% / 55% 45% 55% 45%",
+            "opacity": 0.65
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.8,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "ring_outer",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 134,
+            "y": 130
+          },
+          "size": {
+            "width": 264,
+            "height": 264
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "transparent",
+            "border": "3px solid #D4B896",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.22000000000000003
+            }
+          ]
+        },
+        {
+          "id": "img_guest_ring_fill",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "podcast-card",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 146,
+            "y": 142
+          },
+          "size": {
+            "width": 240,
+            "height": 240
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#DDD0C0",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.26
+            }
+          ]
+        },
+        {
+          "id": "img_guest_ring",
+          "type": "image",
+          "assetKey": "podcast-guest",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 146,
+            "y": 142
+          },
+          "size": {
+            "width": 240,
+            "height": 240
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Guest portrait",
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#DDD0C0"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.85,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "quote_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-quote-bar",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 454,
+            "y": 114
+          },
+          "size": {
+            "width": 700,
+            "height": 492
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "20px",
+            "boxShadow": "0 18px 44px rgba(28,25,23,0.08)",
+            "border": "1px solid #E7E5E4",
+            "borderLeft": "4px solid #A66B47"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideUp",
+              "duration": 0.8,
+              "delay": 0.37
+            }
+          ]
+        },
+        {
+          "id": "ico_quote_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 482,
+            "y": 138
+          },
+          "size": {
+            "width": 52,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F3EDE4",
+            "borderRadius": "50%",
+            "boxShadow": "0 6px 18px rgba(28,25,23,0.08)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "ico_quote",
+          "type": "image",
+          "assetKey": "quote",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 492,
+            "y": 148
+          },
+          "size": {
+            "width": 32,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/A66B47/quote-left.png",
+          "placeholder": true,
+          "alt": "Quote",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "pop",
+              "duration": 0.55,
+              "delay": 0.53
+            }
+          ]
+        },
+        {
+          "id": "t_label",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 546,
+            "y": 142
+          },
+          "size": {
+            "width": 180,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "GUEST INSIGHT",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 11,
+            "letterSpacing": "0.2em",
+            "textTransform": "uppercase",
+            "color": "#A66B47"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.34
+            }
+          ]
+        },
+        {
+          "id": "t_quote",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 482,
+            "y": 202
+          },
+          "size": {
+            "width": 656,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "\"The shows I keep coming back to feel unscripted but intentional — like the host is thinking with me, not at me.\"",
+          "style": {
+            "fontFamily": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+            "fontWeight": "500",
+            "fontStyle": "italic",
+            "color": "#1C1917",
+            "lineHeight": 1.5,
+            "fontSize": 26,
+            "role": "slide-title"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "wordFade",
+              "duration": 1.1,
+              "delay": 0.32
+            }
+          ]
+        },
+        {
+          "id": "t_attr",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 482,
+            "y": 398
+          },
+          "size": {
+            "width": 360,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "— Guest Name, Title & Company",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#A66B47",
+            "fontSize": 15,
+            "textTransform": "none",
+            "fontStyle": "normal"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.39
+            }
+          ]
+        },
+        {
+          "id": "pill_guest_pill",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 482,
+            "y": 446
+          },
+          "size": {
+            "width": 148,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F3EDE4",
+            "borderRadius": "100px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.46
+            }
+          ]
+        },
+        {
+          "id": "pill_guest_txt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 494,
+            "y": 452
+          },
+          "size": {
+            "width": 124,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Featured guest",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 10,
+            "letterSpacing": "0.04em",
+            "textTransform": "none",
+            "color": "#44403C",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.44000000000000006
+            }
+          ]
+        },
+        {
+          "id": "slide_badge_04",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1110,
+            "y": 78
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1C1917",
+            "borderRadius": "50%",
+            "border": "2px solid #D4B896"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        },
+        {
+          "id": "slide_num_04",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1110,
+            "y": 87
+          },
+          "size": {
+            "width": 44,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "04",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#FAF8F5",
+            "fontSize": 14,
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.49000000000000005
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1078,
+            "y": 542
+          },
+          "size": {
+            "width": 88,
+            "height": 108
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #FFFFFF",
+            "boxShadow": "0 12px 32px rgba(28,25,23,0.16)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.75,
+              "delay": 0.48
+            }
+          ]
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-cream",
+            "name": "Studio Cream",
+            "type": "solid",
+            "value": "#FAF8F5"
+          },
+          {
+            "id": "bg-linen",
+            "name": "Warm Linen",
+            "type": "solid",
+            "value": "#F3EDE4"
+          },
+          {
+            "id": "bg-white",
+            "name": "Clean White",
+            "type": "solid",
+            "value": "#FFFFFF"
+          },
+          {
+            "id": "bg-espresso",
+            "name": "Espresso",
+            "type": "solid",
+            "value": "#1C1917"
+          },
+          {
+            "id": "bg-navy",
+            "name": "Studio Navy",
+            "type": "solid",
+            "value": "#1E293B"
+          },
+          {
+            "id": "bg-gradient-linen",
+            "name": "Linen Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #FFFFFF 0%, #FAF8F5 50%, #F3EDE4 100%)"
+          },
+          {
+            "id": "bg-gradient-navy",
+            "name": "Navy Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(165deg, #1C1917 0%, #1E293B 100%)"
+          },
+          {
+            "id": "bg-gradient-warm",
+            "name": "Warm Fade",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #F3EDE4 0%, #FAF8F5 60%, #FFFFFF 100%)"
+          }
+        ],
+        "hint": "Swap linen presets, custom swatches, or full-bleed photos. Delete a hero image to reveal the panel color behind it."
+      }
+    },
+    {
+      "id": "podcast_05",
+      "slideIndex": 5,
+      "title": "Episode Segments",
+      "layoutType": "Grid",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Your Host"
+      },
+      "background": {
+        "type": "solid",
+        "value": "#FFFFFF",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "grid": {
+          "x": 126,
+          "y": 222,
+          "width": 1028,
+          "height": 360
+        },
+        "avatar": {
+          "x": 114,
+          "y": 542,
+          "width": 88,
+          "height": 108
+        }
+      },
+      "description": "Three segment cards with clean photo thumbs.",
+      "flow": "Segments → Roadmap",
+      "duration": 8,
+      "tags": [
+        "podcast",
+        "segments"
+      ],
+      "clips": [
+        {
+          "id": "bg05",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 1.1,
+              "delay": 0
+            }
+          ]
+        },
+        {
+          "id": "t_label",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 126,
+            "y": 82
+          },
+          "size": {
+            "width": 200,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "STRUCTURE",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 11,
+            "letterSpacing": "0.2em",
+            "textTransform": "uppercase",
+            "color": "#A66B47"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.34
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 126,
+            "y": 110
+          },
+          "size": {
+            "width": 640,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Episode Segments",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#1C1917",
+            "fontSize": 40,
+            "lineHeight": 1.06
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.85,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "t_intro",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 126,
+            "y": 170
+          },
+          "size": {
+            "width": 760,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Three beats that structure this episode. Swap photos for your own studio shots, guest clips, or behind-the-scenes moments.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#78716C",
+            "lineHeight": 1.75,
+            "fontSize": 15
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.44000000000000006
+            }
+          ]
+        },
+        {
+          "id": "seg1_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-stat-tile",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 126,
+            "y": 234
+          },
+          "size": {
+            "width": 332,
+            "height": 352
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FAF8F5",
+            "borderRadius": "18px",
+            "border": "1px solid #E7E5E4",
+            "boxShadow": "0 12px 32px rgba(28,25,23,0.05)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.14
+            }
+          ]
+        },
+        {
+          "id": "seg1_accent",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 126,
+            "y": 234
+          },
+          "size": {
+            "width": 332,
+            "height": 5
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#A66B47",
+            "borderRadius": "18px 18px 0 0"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.18000000000000002
+            }
+          ]
+        },
+        {
+          "id": "seg1_img_fill",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "podcast-card",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 142,
+            "y": 254
+          },
+          "size": {
+            "width": 300,
+            "height": 168
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F3EDE4",
+            "borderRadius": "14px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.22000000000000003
+            }
+          ]
+        },
+        {
+          "id": "seg1_img",
+          "type": "image",
+          "assetKey": "podcast-mic",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 142,
+            "y": 254
+          },
+          "size": {
+            "width": 300,
+            "height": 168
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3945682/pexels-photo-3945682.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Cold Open",
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "14px"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#F3EDE4"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.85,
+              "delay": 0.32
+            }
+          ]
+        },
+        {
+          "id": "seg1_num",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 146,
+            "y": 438
+          },
+          "size": {
+            "width": 48,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "01",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#A66B47",
+            "fontSize": 28
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.49000000000000005
+            }
+          ]
+        },
+        {
+          "id": "seg1_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 146,
+            "y": 478
+          },
+          "size": {
+            "width": 292,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Cold Open",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 19,
+            "color": "#1C1917"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "seg1_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 146,
+            "y": 510
+          },
+          "size": {
+            "width": 292,
+            "height": 64
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Set the tone in the first sixty seconds — hook, context, and a reason to stay.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 13,
+            "color": "#78716C",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.5900000000000001
+            }
+          ]
+        },
+        {
+          "id": "seg2_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-stat-tile",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 474,
+            "y": 234
+          },
+          "size": {
+            "width": 332,
+            "height": 352
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FAF8F5",
+            "borderRadius": "18px",
+            "border": "1px solid #E7E5E4",
+            "boxShadow": "0 12px 32px rgba(28,25,23,0.05)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.30000000000000004
+            }
+          ]
+        },
+        {
+          "id": "seg2_accent",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 474,
+            "y": 234
+          },
+          "size": {
+            "width": 332,
+            "height": 5
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#D4B896",
+            "borderRadius": "18px 18px 0 0"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.34
+            }
+          ]
+        },
+        {
+          "id": "seg2_img_fill",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "podcast-card",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 490,
+            "y": 254
+          },
+          "size": {
+            "width": 300,
+            "height": 168
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F3EDE4",
+            "borderRadius": "14px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "seg2_img",
+          "type": "image",
+          "assetKey": "podcast-interview",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 490,
+            "y": 254
+          },
+          "size": {
+            "width": 300,
+            "height": 168
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/7688336/pexels-photo-7688336.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Main Conversation",
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "14px"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#F3EDE4"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.85,
+              "delay": 0.56
+            }
+          ]
+        },
+        {
+          "id": "seg2_num",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 494,
+            "y": 438
+          },
+          "size": {
+            "width": 48,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "02",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#D4B896",
+            "fontSize": 28
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.6400000000000001
+            }
+          ]
+        },
+        {
+          "id": "seg2_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 494,
+            "y": 478
+          },
+          "size": {
+            "width": 292,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Main Conversation",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 19,
+            "color": "#1C1917"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.6900000000000001
+            }
+          ]
+        },
+        {
+          "id": "seg2_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 494,
+            "y": 510
+          },
+          "size": {
+            "width": 292,
+            "height": 64
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "The heart of the episode where ideas unfold naturally between host and guest.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 13,
+            "color": "#78716C",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.74
+            }
+          ]
+        },
+        {
+          "id": "seg3_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-stat-tile",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 822,
+            "y": 234
+          },
+          "size": {
+            "width": 332,
+            "height": 352
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FAF8F5",
+            "borderRadius": "18px",
+            "border": "1px solid #E7E5E4",
+            "boxShadow": "0 12px 32px rgba(28,25,23,0.05)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.46
+            }
+          ]
+        },
+        {
+          "id": "seg3_accent",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 822,
+            "y": 234
+          },
+          "size": {
+            "width": 332,
+            "height": 5
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#6B7F73",
+            "borderRadius": "18px 18px 0 0"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        },
+        {
+          "id": "seg3_img_fill",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "podcast-card",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 838,
+            "y": 254
+          },
+          "size": {
+            "width": 300,
+            "height": 168
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F3EDE4",
+            "borderRadius": "14px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "seg3_img",
+          "type": "image",
+          "assetKey": "podcast-audience",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 838,
+            "y": 254
+          },
+          "size": {
+            "width": 300,
+            "height": 168
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/2774556/pexels-photo-2774556.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Closing Beat",
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "14px"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#F3EDE4"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.85,
+              "delay": 0.7999999999999999
+            }
+          ]
+        },
+        {
+          "id": "seg3_num",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 842,
+            "y": 438
+          },
+          "size": {
+            "width": 48,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "03",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#6B7F73",
+            "fontSize": 28
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.79
+            }
+          ]
+        },
+        {
+          "id": "seg3_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 842,
+            "y": 478
+          },
+          "size": {
+            "width": 292,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Closing Beat",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 19,
+            "color": "#1C1917"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.8400000000000001
+            }
+          ]
+        },
+        {
+          "id": "seg3_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 17,
+          "position": {
+            "x": 842,
+            "y": 510
+          },
+          "size": {
+            "width": 292,
+            "height": 64
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Land the takeaway, tease what is next, and invite listeners to engage.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 13,
+            "color": "#78716C",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.8900000000000001
+            }
+          ]
+        },
+        {
+          "id": "slide_badge_05",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1110,
+            "y": 78
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1C1917",
+            "borderRadius": "50%",
+            "border": "2px solid #D4B896"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.62
+            }
+          ]
+        },
+        {
+          "id": "slide_num_05",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1110,
+            "y": 87
+          },
+          "size": {
+            "width": 44,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "05",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#FAF8F5",
+            "fontSize": 14,
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.9400000000000002
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 114,
+            "y": 542
+          },
+          "size": {
+            "width": 88,
+            "height": 108
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #FFFFFF",
+            "boxShadow": "0 12px 32px rgba(28,25,23,0.16)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.75,
+              "delay": 0.48
+            }
+          ]
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-cream",
+            "name": "Studio Cream",
+            "type": "solid",
+            "value": "#FAF8F5"
+          },
+          {
+            "id": "bg-linen",
+            "name": "Warm Linen",
+            "type": "solid",
+            "value": "#F3EDE4"
+          },
+          {
+            "id": "bg-white",
+            "name": "Clean White",
+            "type": "solid",
+            "value": "#FFFFFF"
+          },
+          {
+            "id": "bg-espresso",
+            "name": "Espresso",
+            "type": "solid",
+            "value": "#1C1917"
+          },
+          {
+            "id": "bg-navy",
+            "name": "Studio Navy",
+            "type": "solid",
+            "value": "#1E293B"
+          },
+          {
+            "id": "bg-gradient-linen",
+            "name": "Linen Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #FFFFFF 0%, #FAF8F5 50%, #F3EDE4 100%)"
+          },
+          {
+            "id": "bg-gradient-navy",
+            "name": "Navy Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(165deg, #1C1917 0%, #1E293B 100%)"
+          },
+          {
+            "id": "bg-gradient-warm",
+            "name": "Warm Fade",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #F3EDE4 0%, #FAF8F5 60%, #FFFFFF 100%)"
+          }
+        ],
+        "hint": "Swap linen presets, custom swatches, or full-bleed photos. Delete a hero image to reveal the panel color behind it."
+      }
+    },
+    {
+      "id": "podcast_06",
+      "slideIndex": 6,
+      "title": "The Road Ahead",
+      "layoutType": "Editorial",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Your Host"
+      },
+      "background": {
+        "type": "solid",
+        "value": "#F3EDE4",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "image": {
+          "x": 126,
+          "y": 90,
+          "width": 360,
+          "height": 540
+        },
+        "content": {
+          "x": 530,
+          "y": 74,
+          "width": 624,
+          "height": 572
+        },
+        "avatar": {
+          "x": 1078,
+          "y": 542,
+          "width": 88,
+          "height": 108
+        }
+      },
+      "description": "Portrait with three milestone cards.",
+      "flow": "Roadmap → Partner",
+      "duration": 8,
+      "tags": [
+        "podcast",
+        "roadmap"
+      ],
+      "clips": [
+        {
+          "id": "bg06",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F3EDE4"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 1.1,
+              "delay": 0
+            }
+          ]
+        },
+        {
+          "id": "blob_tl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-blob-warm",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": -50,
+            "y": -30
+          },
+          "size": {
+            "width": 200,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#E8DFD4",
+            "borderRadius": "55% 45% 60% 40% / 50% 55% 45% 50%",
+            "opacity": 0.7
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.8,
+              "delay": 0.06
+            }
+          ]
+        },
+        {
+          "id": "blob_br",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-blob-warm",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 1110,
+            "y": 570
+          },
+          "size": {
+            "width": 220,
+            "height": 190
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#DDD0C0",
+            "borderRadius": "45% 55% 40% 60% / 55% 45% 55% 45%",
+            "opacity": 0.65
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.8,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "img_host_road_fill",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "podcast-card",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 126,
+            "y": 94
+          },
+          "size": {
+            "width": 360,
+            "height": 532
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#E8DFD4",
+            "borderRadius": "20px 20px 20px 6px",
+            "boxShadow": "0 22px 52px rgba(28,25,23,0.12)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.22000000000000003
+            }
+          ]
+        },
+        {
+          "id": "img_host_road",
+          "type": "image",
+          "assetKey": "podcast-host",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 126,
+            "y": 94
+          },
+          "size": {
+            "width": 360,
+            "height": 532
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Host portrait",
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "20px 20px 20px 6px",
+            "boxShadow": "0 22px 52px rgba(28,25,23,0.12)"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#E8DFD4"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "kenBurns",
+              "duration": 7.5,
+              "delay": 0.04
+            }
+          ]
+        },
+        {
+          "id": "t_label",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 530,
+            "y": 86
+          },
+          "size": {
+            "width": 180,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "WHAT IS NEXT",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 11,
+            "letterSpacing": "0.2em",
+            "textTransform": "uppercase",
+            "color": "#A66B47"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.34
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 530,
+            "y": 114
+          },
+          "size": {
+            "width": 624,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "The Road\nAhead",
+          "style": {
+            "fontFamily": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+            "fontWeight": "600",
+            "color": "#1C1917",
+            "fontSize": 38,
+            "lineHeight": 1.12
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.85,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "t_intro",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 530,
+            "y": 226
+          },
+          "size": {
+            "width": 616,
+            "height": 72
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Where the show is headed — live events, new formats, and collaborations that expand what listeners can expect.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#78716C",
+            "lineHeight": 1.75,
+            "fontSize": 15
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.44000000000000006
+            }
+          ]
+        },
+        {
+          "id": "goal_a_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-card",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 530,
+            "y": 314
+          },
+          "size": {
+            "width": 195,
+            "height": 132
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "16px",
+            "boxShadow": "0 14px 36px rgba(28,25,23,0.07)",
+            "border": "1px solid #E7E5E4"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.26
+            }
+          ]
+        },
+        {
+          "id": "goal_a_bar",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 530,
+            "y": 328
+          },
+          "size": {
+            "width": 5,
+            "height": 104
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#A66B47",
+            "borderRadius": "4px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.30000000000000004
+            }
+          ]
+        },
+        {
+          "id": "goal_a_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 552,
+            "y": 332
+          },
+          "size": {
+            "width": 161,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Live Events",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 19,
+            "color": "#1C1917"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.49000000000000005
+            }
+          ]
+        },
+        {
+          "id": "goal_a_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 552,
+            "y": 368
+          },
+          "size": {
+            "width": 161,
+            "height": 62
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Record in front of audiences and build community in person.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 14,
+            "color": "#78716C",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "goal_b_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-card",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 737,
+            "y": 314
+          },
+          "size": {
+            "width": 195,
+            "height": 132
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "16px",
+            "boxShadow": "0 14px 36px rgba(28,25,23,0.07)",
+            "border": "1px solid #E7E5E4"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.34
+            }
+          ]
+        },
+        {
+          "id": "goal_b_bar",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 737,
+            "y": 328
+          },
+          "size": {
+            "width": 5,
+            "height": 104
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#D4B896",
+            "borderRadius": "4px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "goal_b_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 759,
+            "y": 332
+          },
+          "size": {
+            "width": 161,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "New Formats",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 19,
+            "color": "#1C1917"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.5900000000000001
+            }
+          ]
+        },
+        {
+          "id": "goal_b_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 759,
+            "y": 368
+          },
+          "size": {
+            "width": 161,
+            "height": 62
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Video clips, newsletters, and bonus episodes for subscribers.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 14,
+            "color": "#78716C",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.6400000000000001
+            }
+          ]
+        },
+        {
+          "id": "goal_c_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-card",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 944,
+            "y": 314
+          },
+          "size": {
+            "width": 195,
+            "height": 132
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "16px",
+            "boxShadow": "0 14px 36px rgba(28,25,23,0.07)",
+            "border": "1px solid #E7E5E4"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.42000000000000004
+            }
+          ]
+        },
+        {
+          "id": "goal_c_bar",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 944,
+            "y": 328
+          },
+          "size": {
+            "width": 5,
+            "height": 104
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#6B7F73",
+            "borderRadius": "4px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.46
+            }
+          ]
+        },
+        {
+          "id": "goal_c_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 966,
+            "y": 332
+          },
+          "size": {
+            "width": 161,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Collabs",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 19,
+            "color": "#1C1917"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.6900000000000001
+            }
+          ]
+        },
+        {
+          "id": "goal_c_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 966,
+            "y": 368
+          },
+          "size": {
+            "width": 161,
+            "height": 62
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Cross-promote with aligned shows and expert guests.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "fontSize": 14,
+            "color": "#78716C",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.74
+            }
+          ]
+        },
+        {
+          "id": "slide_badge_06",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1110,
+            "y": 78
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1C1917",
+            "borderRadius": "50%",
+            "border": "2px solid #D4B896"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        },
+        {
+          "id": "slide_num_06",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1110,
+            "y": 87
+          },
+          "size": {
+            "width": 44,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "06",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#FAF8F5",
+            "fontSize": 14,
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.79
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1078,
+            "y": 542
+          },
+          "size": {
+            "width": 88,
+            "height": 108
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #FFFFFF",
+            "boxShadow": "0 12px 32px rgba(28,25,23,0.16)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.75,
+              "delay": 0.48
+            }
+          ]
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-cream",
+            "name": "Studio Cream",
+            "type": "solid",
+            "value": "#FAF8F5"
+          },
+          {
+            "id": "bg-linen",
+            "name": "Warm Linen",
+            "type": "solid",
+            "value": "#F3EDE4"
+          },
+          {
+            "id": "bg-white",
+            "name": "Clean White",
+            "type": "solid",
+            "value": "#FFFFFF"
+          },
+          {
+            "id": "bg-espresso",
+            "name": "Espresso",
+            "type": "solid",
+            "value": "#1C1917"
+          },
+          {
+            "id": "bg-navy",
+            "name": "Studio Navy",
+            "type": "solid",
+            "value": "#1E293B"
+          },
+          {
+            "id": "bg-gradient-linen",
+            "name": "Linen Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #FFFFFF 0%, #FAF8F5 50%, #F3EDE4 100%)"
+          },
+          {
+            "id": "bg-gradient-navy",
+            "name": "Navy Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(165deg, #1C1917 0%, #1E293B 100%)"
+          },
+          {
+            "id": "bg-gradient-warm",
+            "name": "Warm Fade",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #F3EDE4 0%, #FAF8F5 60%, #FFFFFF 100%)"
+          }
+        ],
+        "hint": "Swap linen presets, custom swatches, or full-bleed photos. Delete a hero image to reveal the panel color behind it."
+      }
+    },
+    {
+      "id": "podcast_07",
+      "slideIndex": 7,
+      "title": "Partner Message",
+      "layoutType": "Promo",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Your Host"
+      },
+      "background": {
+        "type": "solid",
+        "value": "#FAF8F5",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "copy": {
+          "x": 126,
+          "y": 74,
+          "width": 580,
+          "height": 572
+        },
+        "cta": {
+          "x": 738,
+          "y": 90,
+          "width": 416,
+          "height": 540
+        },
+        "avatar": {
+          "x": 1070,
+          "y": 534,
+          "width": 96,
+          "height": 116
+        }
+      },
+      "description": "Clean sponsor copy with navy CTA card — no loud gradients.",
+      "flow": "Partner → Outro",
+      "duration": 8,
+      "tags": [
+        "podcast",
+        "sponsor"
+      ],
+      "clips": [
+        {
+          "id": "bg07",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FAF8F5"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 1.1,
+              "delay": 0
+            }
+          ]
+        },
+        {
+          "id": "img_logo07",
+          "type": "image",
+          "assetKey": "podcast-logo",
+          "role": "logo",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 126,
+            "y": 82
+          },
+          "size": {
+            "width": 170,
+            "height": 38
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://placehold.co/320x64/1C1917/FAF8F5?text=YOUR+SHOW",
+          "placeholder": true,
+          "alt": "Show logo",
+          "style": {
+            "objectFit": "contain"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.7,
+              "delay": 0.22
+            }
+          ]
+        },
+        {
+          "id": "t_label",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 126,
+            "y": 130
+          },
+          "size": {
+            "width": 160,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "PARTNER",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 11,
+            "letterSpacing": "0.2em",
+            "textTransform": "uppercase",
+            "color": "#A66B47"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.34
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 126,
+            "y": 158
+          },
+          "size": {
+            "width": 556,
+            "height": 72
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "This Episode Is\nBrought To You By",
+          "style": {
+            "fontFamily": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+            "fontWeight": "600",
+            "color": "#1C1917",
+            "fontSize": 36,
+            "lineHeight": 1.12
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.85,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "t_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 126,
+            "y": 242
+          },
+          "size": {
+            "width": 548,
+            "height": 150
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "A brief, honest mention of the partner who makes this episode possible. Keep the tone natural — your audience trusts recommendations that sound like you.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#78716C",
+            "lineHeight": 1.75,
+            "fontSize": 15
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.44000000000000006
+            }
+          ]
+        },
+        {
+          "id": "ico_star07_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 126,
+            "y": 574
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F3EDE4",
+            "borderRadius": "50%",
+            "boxShadow": "0 6px 18px rgba(28,25,23,0.08)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.14
+            }
+          ]
+        },
+        {
+          "id": "ico_star07",
+          "type": "image",
+          "assetKey": "star",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 135,
+            "y": 583
+          },
+          "size": {
+            "width": 26,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/D4B896/star.png",
+          "placeholder": true,
+          "alt": "Star",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "pop",
+              "duration": 0.55,
+              "delay": 0.22999999999999998
+            }
+          ]
+        },
+        {
+          "id": "t_trust",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 182,
+            "y": 580
+          },
+          "size": {
+            "width": 320,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Trusted recommendations only",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 11,
+            "letterSpacing": "0.14em",
+            "textTransform": "none",
+            "color": "#78716C"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.49000000000000005
+            }
+          ]
+        },
+        {
+          "id": "cta_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-card-dark",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 738,
+            "y": 94
+          },
+          "size": {
+            "width": 416,
+            "height": 532
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1E293B",
+            "borderRadius": "22px",
+            "boxShadow": "0 22px 52px rgba(28,25,23,0.2)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideUp",
+              "duration": 0.8,
+              "delay": 0.22
+            }
+          ]
+        },
+        {
+          "id": "img_cta_fill",
+          "type": "shape",
+          "role": "hero-color-fallback",
+          "shapeKey": "podcast-card",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 758,
+            "y": 114
+          },
+          "size": {
+            "width": 376,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1C1917",
+            "borderRadius": "14px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.26
+            }
+          ]
+        },
+        {
+          "id": "img_cta",
+          "type": "image",
+          "assetKey": "podcast-desk",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 758,
+            "y": 114
+          },
+          "size": {
+            "width": 376,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3945680/pexels-photo-3945680.jpeg?auto=compress&cs=tinysrgb&w=1280",
+          "placeholder": true,
+          "alt": "Producer desk",
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "14px"
+          },
+          "swappableBackground": {
+            "enabled": true,
+            "defaultMode": "image",
+            "colorValue": "#1C1917"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.85,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "t_code",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 766,
+            "y": 274
+          },
+          "size": {
+            "width": 360,
+            "height": 64
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Use code\nSTUDIO20",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#FAF8F5",
+            "fontSize": 28,
+            "lineHeight": 1.25,
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "t_link",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 766,
+            "y": 350
+          },
+          "size": {
+            "width": 360,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "partner.com/show",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#E8D5C0",
+            "lineHeight": 1.7,
+            "fontSize": 14,
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.5900000000000001
+            }
+          ]
+        },
+        {
+          "id": "cta_btn",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 774,
+            "y": 394
+          },
+          "size": {
+            "width": 344,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#D4B896",
+            "borderRadius": "100px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.34
+            }
+          ]
+        },
+        {
+          "id": "t_cta",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 17,
+          "position": {
+            "x": 794,
+            "y": 404
+          },
+          "size": {
+            "width": 304,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Claim offer",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 11,
+            "letterSpacing": "0.14em",
+            "textTransform": "none",
+            "color": "#1C1917",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.6400000000000001
+            }
+          ]
+        },
+        {
+          "id": "slide_badge_07",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1110,
+            "y": 78
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1C1917",
+            "borderRadius": "50%",
+            "border": "2px solid #D4B896"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "slide_num_07",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1110,
+            "y": 87
+          },
+          "size": {
+            "width": 44,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "07",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#FAF8F5",
+            "fontSize": 14,
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.6900000000000001
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1070,
+            "y": 534
+          },
+          "size": {
+            "width": 96,
+            "height": 116
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #D4B896",
+            "boxShadow": "0 14px 36px rgba(0,0,0,0.4)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.75,
+              "delay": 0.48
+            }
+          ]
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-cream",
+            "name": "Studio Cream",
+            "type": "solid",
+            "value": "#FAF8F5"
+          },
+          {
+            "id": "bg-linen",
+            "name": "Warm Linen",
+            "type": "solid",
+            "value": "#F3EDE4"
+          },
+          {
+            "id": "bg-white",
+            "name": "Clean White",
+            "type": "solid",
+            "value": "#FFFFFF"
+          },
+          {
+            "id": "bg-espresso",
+            "name": "Espresso",
+            "type": "solid",
+            "value": "#1C1917"
+          },
+          {
+            "id": "bg-navy",
+            "name": "Studio Navy",
+            "type": "solid",
+            "value": "#1E293B"
+          },
+          {
+            "id": "bg-gradient-linen",
+            "name": "Linen Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #FFFFFF 0%, #FAF8F5 50%, #F3EDE4 100%)"
+          },
+          {
+            "id": "bg-gradient-navy",
+            "name": "Navy Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(165deg, #1C1917 0%, #1E293B 100%)"
+          },
+          {
+            "id": "bg-gradient-warm",
+            "name": "Warm Fade",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #F3EDE4 0%, #FAF8F5 60%, #FFFFFF 100%)"
+          }
+        ],
+        "hint": "Swap linen presets, custom swatches, or full-bleed photos. Delete a hero image to reveal the panel color behind it."
+      }
+    },
+    {
+      "id": "podcast_08",
+      "slideIndex": 8,
+      "title": "Thank You for Listening",
+      "layoutType": "Outro",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "presenter": {
+        "name": "Your Host"
+      },
+      "background": {
+        "type": "gradient",
+        "value": "linear-gradient(165deg, #1C1917 0%, #1E293B 100%)",
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ]
+      },
+      "zones": {
+        "content": {
+          "x": 126,
+          "y": 74,
+          "width": 1028,
+          "height": 572
+        },
+        "avatar": {
+          "x": 1074,
+          "y": 538,
+          "width": 92,
+          "height": 112
+        }
+      },
+      "description": "Refined closing with subscribe pills and social links.",
+      "flow": "Outro → End",
+      "duration": 8,
+      "tags": [
+        "podcast",
+        "outro"
+      ],
+      "clips": [
+        {
+          "id": "bg08",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 0,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "width": 1280,
+            "height": 720
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "background": "linear-gradient(165deg, #1C1917 0%, #1E293B 100%)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 1.1,
+              "delay": 0
+            }
+          ]
+        },
+        {
+          "id": "accent_strip",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 0,
+            "y": 714
+          },
+          "size": {
+            "width": 1280,
+            "height": 6
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#D4B896"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideUp",
+              "duration": 0.8,
+              "delay": 0.12
+            }
+          ]
+        },
+        {
+          "id": "img_logo08",
+          "type": "image",
+          "assetKey": "podcast-logo",
+          "role": "logo",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 126,
+            "y": 90
+          },
+          "size": {
+            "width": 180,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://placehold.co/320x64/1C1917/FAF8F5?text=YOUR+SHOW",
+          "placeholder": true,
+          "alt": "Show logo",
+          "style": {
+            "objectFit": "contain",
+            "filter": "brightness(1.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.7,
+              "delay": 0.22
+            }
+          ]
+        },
+        {
+          "id": "t_thanks",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 126,
+            "y": 154
+          },
+          "size": {
+            "width": 720,
+            "height": 68
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Thank You for Listening",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#FAF8F5",
+            "fontSize": 46,
+            "lineHeight": 1.08
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.85,
+              "delay": 0.22
+            }
+          ]
+        },
+        {
+          "id": "t_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 126,
+            "y": 234
+          },
+          "size": {
+            "width": 680,
+            "height": 56
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Thank you for listening. Subscribe wherever you get podcasts, leave a review, and share this episode with someone who would enjoy it.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "#E8D5C0",
+            "lineHeight": 1.7,
+            "fontSize": 17
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.39
+            }
+          ]
+        },
+        {
+          "id": "t_next",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 126,
+            "y": 306
+          },
+          "size": {
+            "width": 480,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Next up: [Episode Title]",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "color": "#D4B896",
+            "fontSize": 19,
+            "textTransform": "none"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.44000000000000006
+            }
+          ]
+        },
+        {
+          "id": "pill_spotify_pill",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 126,
+            "y": 362
+          },
+          "size": {
+            "width": 118,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(255,255,255,0.1)",
+            "borderRadius": "100px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.18000000000000002
+            }
+          ]
+        },
+        {
+          "id": "pill_spotify_txt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 138,
+            "y": 368
+          },
+          "size": {
+            "width": 94,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Spotify",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 10,
+            "letterSpacing": "0.04em",
+            "textTransform": "none",
+            "color": "#FAF8F5",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.49000000000000005
+            }
+          ]
+        },
+        {
+          "id": "pill_apple_pill",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 256,
+            "y": 362
+          },
+          "size": {
+            "width": 118,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(255,255,255,0.1)",
+            "borderRadius": "100px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.22000000000000003
+            }
+          ]
+        },
+        {
+          "id": "pill_apple_txt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 268,
+            "y": 368
+          },
+          "size": {
+            "width": 94,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Apple",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 10,
+            "letterSpacing": "0.04em",
+            "textTransform": "none",
+            "color": "#FAF8F5",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "pill_youtube_pill",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 6,
+          "position": {
+            "x": 386,
+            "y": 362
+          },
+          "size": {
+            "width": 118,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(255,255,255,0.1)",
+            "borderRadius": "100px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.26
+            }
+          ]
+        },
+        {
+          "id": "pill_youtube_txt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 7,
+          "position": {
+            "x": 398,
+            "y": 368
+          },
+          "size": {
+            "width": 94,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "YouTube",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 10,
+            "letterSpacing": "0.04em",
+            "textTransform": "none",
+            "color": "#FAF8F5",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.5900000000000001
+            }
+          ]
+        },
+        {
+          "id": "t_social",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 126,
+            "y": 410
+          },
+          "size": {
+            "width": 600,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "@yourshow  ·  yourshow.com  ·  New episodes weekly",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "400",
+            "color": "rgba(232,213,192,0.75)",
+            "lineHeight": 1.7,
+            "fontSize": 14
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.6400000000000001
+            }
+          ]
+        },
+        {
+          "id": "follow_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 126,
+            "y": 474
+          },
+          "size": {
+            "width": 440,
+            "height": 88
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(255,255,255,0.06)",
+            "borderRadius": "16px",
+            "border": "1px solid rgba(232,213,192,0.2)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideUp",
+              "duration": 0.8,
+              "delay": 0.32
+            }
+          ]
+        },
+        {
+          "id": "ico_podcast08_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 146,
+            "y": 492
+          },
+          "size": {
+            "width": 52,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1C1917",
+            "borderRadius": "50%",
+            "boxShadow": "0 6px 18px rgba(28,25,23,0.08)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.34
+            }
+          ]
+        },
+        {
+          "id": "ico_podcast08",
+          "type": "image",
+          "assetKey": "podcast",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 156,
+            "y": 502
+          },
+          "size": {
+            "width": 32,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/A66B47/podcast.png",
+          "placeholder": true,
+          "alt": "Podcast",
+          "style": {
+            "objectFit": "contain",
+            "backgroundColor": "transparent"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "pop",
+              "duration": 0.55,
+              "delay": 0.48000000000000004
+            }
+          ]
+        },
+        {
+          "id": "t_follow",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 210,
+            "y": 496
+          },
+          "size": {
+            "width": 330,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Follow for bonus clips & BTS",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "color": "#FAF8F5",
+            "fontSize": 16,
+            "textTransform": "none"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.6900000000000001
+            }
+          ]
+        },
+        {
+          "id": "t_follow_sub",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 210,
+            "y": 524
+          },
+          "size": {
+            "width": 330,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Subscribe on your favorite platform",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "600",
+            "fontSize": 11,
+            "letterSpacing": "0.14em",
+            "textTransform": "none",
+            "color": "#E8D5C0"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.74
+            }
+          ]
+        },
+        {
+          "id": "slide_badge_08",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "podcast-slide-badge",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 1110,
+            "y": 78
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1C1917",
+            "borderRadius": "50%",
+            "border": "2px solid #D4B896"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.7,
+              "delay": 0.42000000000000004
+            }
+          ]
+        },
+        {
+          "id": "slide_num_08",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 1110,
+            "y": 87
+          },
+          "size": {
+            "width": 44,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "08",
+          "style": {
+            "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "color": "#FAF8F5",
+            "fontSize": 14,
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.65,
+              "delay": 0.79
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1074,
+            "y": 538
+          },
+          "size": {
+            "width": 92,
+            "height": 112
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "objectFit": "cover",
+            "borderRadius": "50%",
+            "border": "3px solid #D4B896",
+            "boxShadow": "0 12px 32px rgba(28,25,23,0.16)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.75,
+              "delay": 0.48
+            }
+          ]
+        }
+      ],
+      "backgroundConfig": {
+        "editable": true,
+        "modes": [
+          "solid",
+          "gradient",
+          "image"
+        ],
+        "presets": [
+          {
+            "id": "bg-cream",
+            "name": "Studio Cream",
+            "type": "solid",
+            "value": "#FAF8F5"
+          },
+          {
+            "id": "bg-linen",
+            "name": "Warm Linen",
+            "type": "solid",
+            "value": "#F3EDE4"
+          },
+          {
+            "id": "bg-white",
+            "name": "Clean White",
+            "type": "solid",
+            "value": "#FFFFFF"
+          },
+          {
+            "id": "bg-espresso",
+            "name": "Espresso",
+            "type": "solid",
+            "value": "#1C1917"
+          },
+          {
+            "id": "bg-navy",
+            "name": "Studio Navy",
+            "type": "solid",
+            "value": "#1E293B"
+          },
+          {
+            "id": "bg-gradient-linen",
+            "name": "Linen Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(145deg, #FFFFFF 0%, #FAF8F5 50%, #F3EDE4 100%)"
+          },
+          {
+            "id": "bg-gradient-navy",
+            "name": "Navy Gradient",
+            "type": "gradient",
+            "value": "linear-gradient(165deg, #1C1917 0%, #1E293B 100%)"
+          },
+          {
+            "id": "bg-gradient-warm",
+            "name": "Warm Fade",
+            "type": "gradient",
+            "value": "linear-gradient(160deg, #F3EDE4 0%, #FAF8F5 60%, #FFFFFF 100%)"
+          }
+        ],
+        "hint": "Swap linen presets, custom swatches, or full-bleed photos. Delete a hero image to reveal the panel color behind it."
+      }
+    }
+  ]
+}
