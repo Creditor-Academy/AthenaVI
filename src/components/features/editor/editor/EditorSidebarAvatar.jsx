@@ -5,16 +5,26 @@ import heygenService from '../../../../services/heygenService';
 import {
   AVATAR_IV_ENGINE,
   AVATAR_V_ENGINE,
+  LEGACY_V2_ENGINE,
   extractHeygenList,
-  formatAvatarTypeLabel,
+  formatLookBadgeLabel,
   LOOK_ENGINE_FILTERS,
-  looksForEngineFilter,
+  getGeneratableLooks,
+  getGeneratableLookCount,
   mapAvatarGroup,
   mapAvatarLook,
   mergeAvatarLooksPages,
   normalizeAvatarEngine,
   parseAvatarLooksResponse,
   resolveAvatarEngine,
+  resolveVideoAvatarEngine,
+  finalizeVideoCreatePayload,
+  resolveGroupGeneratableLooks,
+  mapResolvedLooks,
+  fetchMappedGroupLooks,
+  getLooksApiGroupId,
+  isDeclaredSingleLookGroup,
+  isSingleAppearanceGroup,
 } from '../../../../utils/heygenAvatars';
 import { invalidateHeygenSceneVideo } from '../../../../utils/heygenVideo';
 
@@ -124,15 +134,24 @@ const EditorSidebarAvatar = ({
     }
   };
 
-  const applyLooksDisplay = useCallback((pageData, filter, groupName) => {
-    const rawList = looksForEngineFilter(pageData, filter);
-    const mapped = rawList.map((look) => mapAvatarLook(look, groupName)).filter((l) => l.id);
+  const applyLooksDisplay = useCallback((pageData, filter, group) => {
+    const groupName = group?.name || 'Look';
+    let rawList = resolveGroupGeneratableLooks(pageData, group);
+    if (filter !== LOOK_ENGINE_FILTERS.ALL) {
+      const filtered = getGeneratableLooks(
+        { ...pageData, allLooks: rawList, lookCount: rawList.length },
+        filter
+      );
+      if (filtered.length > 0) rawList = filtered;
+    }
+    const mapped = rawList.map((look) => mapAvatarLook(look, groupName, pageData)).filter((l) => l.id);
     setLooks(mapped);
     if (mapped.length === 0) {
       const filterLabels = {
         [LOOK_ENGINE_FILTERS.ALL]: 'any',
         [LOOK_ENGINE_FILTERS.AVATAR_IV]: 'Avatar IV',
         [LOOK_ENGINE_FILTERS.AVATAR_V]: 'Avatar V',
+        [LOOK_ENGINE_FILTERS.LEGACY_V2]: 'Expressive',
         [LOOK_ENGINE_FILTERS.UNKNOWN]: 'unspecified-engine',
       };
       setLooksError(`No ${filterLabels[filter] || ''} looks for this character.`);
@@ -144,7 +163,7 @@ const EditorSidebarAvatar = ({
   const handleLookEngineFilter = (filter) => {
     setLookEngineFilter(filter);
     if (looksPageData && selectedGroup) {
-      applyLooksDisplay(looksPageData, filter, selectedGroup.name);
+      applyLooksDisplay(looksPageData, filter, selectedGroup);
     }
   };
 
@@ -152,25 +171,59 @@ const EditorSidebarAvatar = ({
     setLoadingLooks(true);
     setLooksError('');
     setSelectedGroup(group);
-    setPickerView('looks');
+
+    const prefetchMapped = mapResolvedLooks(null, group, group.name);
+    if (prefetchMapped.length >= 1) {
+      applyLookToScene(prefetchMapped[0]);
+    }
+
     try {
-      const responseData = await heygenService.getAvatarLooks({
-        group_id: group.id,
-        limit: 20,
-      });
-      const parsed = parseAvatarLooksResponse(responseData);
+      const { parsed, mappedLooks } = await fetchMappedGroupLooks(heygenService, group, { limit: 20 });
+
+      if (mappedLooks.length === 0) {
+        setLooks([]);
+        setLooksPageData(null);
+        setLooksError('No supported looks for this character.');
+        setLooksHasMore(false);
+        setLooksNextToken(null);
+        setPickerView('groups');
+        return;
+      }
+
       setLooksPageData(parsed);
       setLookEngineFilter(LOOK_ENGINE_FILTERS.ALL);
-      applyLooksDisplay(parsed, LOOK_ENGINE_FILTERS.ALL, group.name);
-      setLooksHasMore(parsed.hasMore);
-      setLooksNextToken(parsed.nextToken);
+      setLooks(mappedLooks);
+      setLooksHasMore(!!parsed?.hasMore);
+      setLooksNextToken(parsed?.nextToken ?? null);
+      setLooksError('');
+
+      if (mappedLooks.length === 1 || isSingleAppearanceGroup(parsed, group) || isDeclaredSingleLookGroup(group)) {
+        applyLookToScene(mappedLooks[0]);
+        setPickerView('groups');
+        return;
+      }
+
+      setPickerView('looks');
+      applyLooksDisplay(parsed, LOOK_ENGINE_FILTERS.ALL, group);
     } catch (err) {
       console.error('Failed to load looks:', err);
-      setLooks([]);
-      setLooksPageData(null);
-      setLooksError('Could not load looks.');
-      setLooksHasMore(false);
-      setLooksNextToken(null);
+      const fallbackMapped = mapResolvedLooks(null, group, group.name);
+      if (fallbackMapped.length >= 1) {
+        setLooks(fallbackMapped);
+        applyLookToScene(fallbackMapped[0]);
+        setLooksPageData(null);
+        setPickerView('groups');
+        setLooksError('');
+        setLooksHasMore(false);
+        setLooksNextToken(null);
+      } else {
+        setLooks([]);
+        setLooksPageData(null);
+        setLooksError('Could not load looks.');
+        setLooksHasMore(false);
+        setLooksNextToken(null);
+        setPickerView('groups');
+      }
     } finally {
       setLoadingLooks(false);
     }
@@ -181,14 +234,14 @@ const EditorSidebarAvatar = ({
     setLoadingMoreLooks(true);
     try {
       const responseData = await heygenService.getAvatarLooks({
-        group_id: selectedGroup.id,
+        group_id: getLooksApiGroupId(selectedGroup) || selectedGroup.id,
         limit: 20,
         token: looksNextToken,
       });
       const nextParsed = parseAvatarLooksResponse(responseData);
       const merged = mergeAvatarLooksPages(looksPageData, nextParsed);
       setLooksPageData(merged);
-      applyLooksDisplay(merged, lookEngineFilter, selectedGroup.name);
+      applyLooksDisplay(merged, lookEngineFilter, selectedGroup);
       setLooksHasMore(merged.hasMore);
       setLooksNextToken(merged.nextToken);
     } catch (err) {
@@ -222,17 +275,14 @@ const EditorSidebarAvatar = ({
         }
 
         const basePresenter = targetScene?.presenter || {};
-        const preferredFromFilter =
-          lookEngineFilter === LOOK_ENGINE_FILTERS.AVATAR_IV
-            ? AVATAR_IV_ENGINE
-            : lookEngineFilter === LOOK_ENGINE_FILTERS.AVATAR_V
-              ? AVATAR_V_ENGINE
-              : avatarEngine;
-        const resolvedEngine = resolveAvatarEngine(
-          { avatar_type: look.avatarType, supportedEngines: look.supportedEngines },
-          preferredFromFilter
-        );
         const avatarKind = look.avatarType || basePresenter.avatarType || 'studio_avatar';
+        const resolvedEngine = finalizeVideoCreatePayload({
+          avatarId: look.id,
+          avatarType: avatarKind,
+          avatarEngine: look.generatableEngine || avatarEngine,
+          isLegacyV2: look.isLegacyV2,
+          supportedEngines: look.supportedEngines,
+        });
         setAvatarEngine(resolvedEngine);
 
         updateScene(sceneId, {
@@ -243,6 +293,7 @@ const EditorSidebarAvatar = ({
           avatarName: look.name,
           avatarGroupId: selectedGroup?.id,
           avatarEngine: resolvedEngine,
+          isLegacyV2: look.isLegacyV2,
           presenter: {
             ...basePresenter,
             avatarId: look.id,
@@ -255,9 +306,11 @@ const EditorSidebarAvatar = ({
             voiceName: basePresenter.voiceName ?? targetScene?.voiceName,
             script: basePresenter.script ?? targetScene?.script ?? '',
             supportedEngines: look.supportedEngines,
+            isLegacyV2: look.isLegacyV2,
             engineUnknown: look.engineUnknown,
           },
           supportedEngines: look.supportedEngines,
+          isLegacyV2: look.isLegacyV2,
           engineUnknown: look.engineUnknown,
           clips: updatedClips,
           ...(hadGeneratedVideo ? invalidateHeygenSceneVideo() : {}),
@@ -537,9 +590,12 @@ const EditorSidebarAvatar = ({
             <>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
                 {[
-                  { id: LOOK_ENGINE_FILTERS.ALL, label: 'All', count: looksPageData.engineCounts.totalLooks },
+                  { id: LOOK_ENGINE_FILTERS.ALL, label: 'All', count: getGeneratableLookCount(looksPageData) },
                   { id: LOOK_ENGINE_FILTERS.AVATAR_IV, label: 'Avatar IV', count: looksPageData.engineCounts.avatar_iv },
                   { id: LOOK_ENGINE_FILTERS.AVATAR_V, label: 'Avatar V', count: looksPageData.engineCounts.avatar_v },
+                  ...(looksPageData.engineCounts.legacy_v2 > 0
+                    ? [{ id: LOOK_ENGINE_FILTERS.LEGACY_V2, label: 'Expressive', count: looksPageData.engineCounts.legacy_v2 }]
+                    : []),
                   ...(looksPageData.engineCounts.unknown > 0
                     ? [{ id: LOOK_ENGINE_FILTERS.UNKNOWN, label: 'Other', count: looksPageData.engineCounts.unknown }]
                     : []),
@@ -593,7 +649,7 @@ const EditorSidebarAvatar = ({
                 <>
                   {filteredItems.map((item) => {
                     const isActive = pickerView === 'looks' && activeScene?.avatarType === item.id;
-                    const typeLabel = pickerView === 'looks' ? formatAvatarTypeLabel(item.avatarType) : '';
+                    const typeLabel = pickerView === 'looks' ? formatLookBadgeLabel(item) : '';
                     
                     return (
                       <div
@@ -677,7 +733,7 @@ const EditorSidebarAvatar = ({
                 </>
               ) : filteredItems.map((item) => {
                 const isActive = pickerView === 'looks' && activeScene?.avatarType === item.id;
-                const typeLabel = pickerView === 'looks' ? formatAvatarTypeLabel(item.avatarType) : '';
+                const typeLabel = pickerView === 'looks' ? formatLookBadgeLabel(item) : '';
                 
                 return (
                   <div

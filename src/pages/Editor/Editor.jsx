@@ -26,6 +26,8 @@ import {
   canUseExpressiveness,
   getSceneLookEngineContext,
   resolveAvatarEngine,
+  resolveVideoAvatarEngine,
+  finalizeVideoCreatePayload,
 } from '../../utils/heygenAvatars'
 import { buildClipTextContent } from '../../utils/textClip'
 import {
@@ -1471,16 +1473,30 @@ function Create({ onBack, initialConfig = null }) {
       });
 
       const aspectRatioStr = project.resolution?.width > project.resolution?.height ? '16:9' : '9:16';
-      
+      const lookContext = {
+        ...getSceneLookEngineContext(scene),
+        avatar_type: avatarKind,
+        supportedEngines:
+          overrides?.supportedEngines ?? getSceneLookEngineContext(scene).supportedEngines,
+        isLegacyV2: overrides?.isLegacyV2 ?? getSceneLookEngineContext(scene).isLegacyV2,
+      };
+
       const payload = {
         sceneId: stableSceneId,
         avatarId: avatarLookId,
-        avatarEngine:
-          overrides?.avatarEngine ||
-          scene?.presenter?.avatarEngine ||
-          scene?.avatarEngine ||
-          resolveAvatarEngine(getSceneLookEngineContext(scene)),
+        avatarEngine: finalizeVideoCreatePayload({
+          avatarId: avatarLookId,
+          avatarType: avatarKind,
+          avatarEngine:
+            overrides?.avatarEngine ||
+            scene?.presenter?.avatarEngine ||
+            scene?.avatarEngine,
+          isLegacyV2: lookContext.isLegacyV2,
+          supportedEngines: lookContext.supportedEngines,
+        }),
         avatarType: avatarKind,
+        supportedEngines: lookContext.supportedEngines,
+        isLegacyV2: lookContext.isLegacyV2,
         title: `${project.title} - ${scene?.title || 'Scene'}`,
         resolution: project.resolution?.height >= 1080 ? '1080p' : '720p',
         aspectRatio: overrides?.aspectRatio || aspectRatioStr,
@@ -1494,12 +1510,7 @@ function Create({ onBack, initialConfig = null }) {
 
       if (
         canUseExpressiveness(
-          {
-            ...getSceneLookEngineContext(scene),
-            avatar_type: avatarKind,
-            supportedEngines:
-              overrides?.supportedEngines ?? getSceneLookEngineContext(scene).supportedEngines,
-          },
+          lookContext,
           payload.avatarEngine
         )
       ) {
@@ -1834,10 +1845,12 @@ function Create({ onBack, initialConfig = null }) {
             voiceName: payload.voiceName,
             script: paraText,
             supportedEngines: payload.supportedEngines,
+            isLegacyV2: payload.isLegacyV2,
             engineUnknown: payload.engineUnknown,
             ...(payload.expressiveness ? { expressiveness: payload.expressiveness } : {}),
           },
           supportedEngines: payload.supportedEngines,
+          isLegacyV2: payload.isLegacyV2,
           engineUnknown: payload.engineUnknown,
           clips: clips
         };
@@ -1969,10 +1982,12 @@ function Create({ onBack, initialConfig = null }) {
             voiceName: payload.voiceName,
             script: payload.script,
             supportedEngines: payload.supportedEngines,
+            isLegacyV2: payload.isLegacyV2,
             engineUnknown: payload.engineUnknown,
             ...(payload.expressiveness ? { expressiveness: payload.expressiveness } : {}),
           },
           supportedEngines: payload.supportedEngines,
+          isLegacyV2: payload.isLegacyV2,
           engineUnknown: payload.engineUnknown,
           duration: durationPatch.duration,
           durationFromScript: true,

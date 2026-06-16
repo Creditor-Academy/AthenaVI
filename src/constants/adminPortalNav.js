@@ -1,4 +1,4 @@
-import { Users, Building2, BarChart3 } from 'lucide-react'
+import { Users, Building2, BarChart3, Video } from 'lucide-react'
 
 export const adminPortalSidebarGroups = [
   {
@@ -6,6 +6,7 @@ export const adminPortalSidebarGroups = [
       { id: 'users', label: 'Users', Icon: Users },
       { id: 'workspaces', label: 'Workspaces', Icon: Building2 },
       { id: 'reports', label: 'Usage Reports', Icon: BarChart3 },
+      { id: 'heygen', label: 'HeyGen Account', Icon: Video },
     ],
   },
 ]

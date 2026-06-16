@@ -17,6 +17,7 @@ import RenameModal from '../../components/features/workspace/workspace/RenameMod
 import ItemDetailsModal from '../../components/features/workspace/workspace/ItemDetailsModal.jsx';
 import MoveProjectModal from '../../components/features/workspace/workspace/MoveProjectModal.jsx';
 import AllocateCreditsModal from '../../components/features/workspace/workspace/AllocateCreditsModal.jsx';
+import WorkspaceCreditsDashboard from '../../components/features/workspace/workspace/WorkspaceCreditsDashboard.jsx';
 import TeamWorkspaceSkeleton from '../page-skeleton/TeamWorkspaceSkeleton';
 
 import { extractUserId, normalizeWorkspace, normalizeFolder, normalizeVideo, workspaceCanEdit, workspaceCanManageContributors } from './workspaceUtils.js';
@@ -63,6 +64,9 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
   const [activeRootTab, setActiveRootTab] = useState(
     () => sessionStorage.getItem('workspaceActiveRootTab') || 'my-workspaces'
   );
+
+  // Tab inside an individual workspace (Folders | Credits)
+  const [wsActiveTab, setWsActiveTab] = useState('folders');
 
   // ------------------------------------------------------------------
   // Modal / panel state
@@ -266,6 +270,11 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
   useEffect(() => {
     sessionStorage.setItem('workspaceActiveRootTab', activeRootTab);
   }, [activeRootTab]);
+
+  // Reset workspace sub-tab when the active workspace changes
+  useEffect(() => {
+    setWsActiveTab('folders');
+  }, [activeWorkspace?.id]);
 
   // Restore view/sort preferences
   useEffect(() => {
@@ -611,6 +620,8 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
 
     const canEdit = workspaceCanEdit(workspace);
     const role = String(workspace.userRole || 'MEMBER').toUpperCase();
+    // Only TEAM workspaces have a credits pool; personal workspaces don't show the tab
+    const showCreditsTab = workspace.type === 'workspace';
 
     return (
       <div>
@@ -629,44 +640,79 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           </div>
         )}
 
-        <WorkspaceSection
-          title="Folders"
-          count={(workspace.folders || []).length}
-          viewMode={viewMode}
-          listClassName="folder-list-view"
-          emptyMessage="No folders yet"
-          emptyIcon={MdFolderOpen}
-          emptyActionLabel="Create Folder"
-          onEmptyAction={
-            canEdit
-              ? () => { setSelectedWorkspaceForFolder(workspace); setIsCreateFolderOpen(true); }
-              : null
-          }
-          showCreateButton={canEdit}
-          createButtonLabel="Create Folder"
-          onCreateClick={() => { setSelectedWorkspaceForFolder(workspace); setIsCreateFolderOpen(true); }}
-        >
-          {viewMode === 'list' && (
-            <div className="list-header folder-list-header">
-              <div className="col" />
-              <div className="col">Name</div>
-              <div className="col">Owner</div>
-              <div className="col">Date created</div>
-              <div className="col">Modified by</div>
-              <div className="col">Modified at</div>
-              <div className="col">Size</div>
-              <div className="col" />
+        {/* ---- Folders / Credits tab bar ---- */}
+        {showCreditsTab && (
+          <div className="workspace-root-tabs-wrapper" style={{ marginBottom: 24 }}>
+            <div className="workspace-root-tabs">
+              <button
+                className={`workspace-root-tab ${wsActiveTab === 'folders' ? 'active' : ''}`}
+                onClick={() => setWsActiveTab('folders')}
+                type="button"
+              >
+                <MdFolderOpen size={16} /> Folders
+                <span className="tab-count-badge">{(workspace.folders || []).length}</span>
+              </button>
+              <button
+                className={`workspace-root-tab ${wsActiveTab === 'credits' ? 'active' : ''}`}
+                onClick={() => setWsActiveTab('credits')}
+                type="button"
+              >
+                Credits &amp; Usage
+              </button>
             </div>
-          )}
-          {renderFolderItems(workspace.folders || [], workspace)}
-        </WorkspaceSection>
+          </div>
+        )}
+
+        {/* ---- Folders tab ---- */}
+        {(wsActiveTab === 'folders' || !showCreditsTab) && (
+          <WorkspaceSection
+            title="Folders"
+            count={(workspace.folders || []).length}
+            viewMode={viewMode}
+            listClassName="folder-list-view"
+            emptyMessage="No folders yet"
+            emptyIcon={MdFolderOpen}
+            emptyActionLabel="Create Folder"
+            onEmptyAction={
+              canEdit
+                ? () => { setSelectedWorkspaceForFolder(workspace); setIsCreateFolderOpen(true); }
+                : null
+            }
+            showCreateButton={canEdit}
+            createButtonLabel="Create Folder"
+            onCreateClick={() => { setSelectedWorkspaceForFolder(workspace); setIsCreateFolderOpen(true); }}
+          >
+            {viewMode === 'list' && (
+              <div className="list-header folder-list-header">
+                <div className="col" />
+                <div className="col">Name</div>
+                <div className="col">Owner</div>
+                <div className="col">Date created</div>
+                <div className="col">Modified by</div>
+                <div className="col">Modified at</div>
+                <div className="col">Size</div>
+                <div className="col" />
+              </div>
+            )}
+            {renderFolderItems(workspace.folders || [], workspace)}
+          </WorkspaceSection>
+        )}
+
+        {/* ---- Credits tab ---- */}
+        {wsActiveTab === 'credits' && showCreditsTab && (
+          <WorkspaceCreditsDashboard
+            workspaceId={workspace.id}
+            userRole={workspace.userRole || 'MEMBER'}
+            workspaceCredits={workspace.workspaceCredits}
+          />
+        )}
 
         {workspace.type === 'workspace' && String(workspace.userRole || '').toUpperCase() !== 'OWNER' && (
           <button
             type="button"
             className="btn-secondary add-btn-small"
             onClick={() => handleLeaveSharedWorkspace(workspace)}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 16 }}
           >
             <MdExitToApp size={16} /> Leave Workspace
           </button>

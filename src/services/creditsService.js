@@ -64,7 +64,8 @@ class CreditsService {
   }
 
   normalizeHistory(data) {
-    const history = data?.history || data;
+    // backend wraps transactions under { history: { transactions, pagination } }
+    const history = data?.history ?? data;
     const transactions = history?.transactions || history?.items || [];
     const pagination = history?.pagination || {
       total: transactions.length,
@@ -118,7 +119,11 @@ class CreditsService {
   async getUsageByMember(workspaceId, { page = 1, limit = 20 } = {}) {
     const query = this.buildQuery({ page, limit });
     const data = await this.request(`${API_CONFIG.ENDPOINTS.CREDITS.USAGE_BY_MEMBER(workspaceId)}${query}`);
-    return this.normalizeHistory(data);
+    // backend returns { members: [...], pagination: {...} } — not a history shape
+    return {
+      members: data?.members || [],
+      pagination: data?.pagination || { total: 0, page: 1, limit: 20, totalPages: 0 },
+    };
   }
 
   async getWorkspaceEstimate(workspaceId, params = {}) {
