@@ -1,8 +1,8 @@
 import heygenService from '../services/heygenService';
 import {
   extractHeygenList,
-  getIvOrVLooks,
-  hasIvOrVEngineSupport,
+  getGeneratableLooks,
+  isGeneratableLook,
   LOOK_ENGINE_FILTERS,
   mapAvatarGroup,
   mapAvatarLook,
@@ -48,10 +48,10 @@ function withTimeout(promise, ms) {
   ]);
 }
 
-function collectIvOrVLook(rawLook, groupName, groupId, seenIds, collected) {
-  if (!hasIvOrVEngineSupport(rawLook)) return;
-  const mapped = mapAvatarLook(rawLook, groupName);
-  if (!mapped.id || mapped.engineUnknown) return;
+function collectGeneratableLook(rawLook, groupName, groupId, parsed, seenIds, collected) {
+  if (!isGeneratableLook(rawLook, parsed)) return;
+  const mapped = mapAvatarLook(rawLook, groupName, parsed);
+  if (!mapped.id) return;
   if (!mapped.image || String(mapped.image).includes('placeholder')) return;
   if (seenIds.has(mapped.id)) return;
   seenIds.add(mapped.id);
@@ -60,7 +60,7 @@ function collectIvOrVLook(rawLook, groupName, groupId, seenIds, collected) {
     image: mapped.image,
     name: mapped.name,
     groupId: mapped.groupId || groupId,
-    engine: resolveAvatarEngine(rawLook),
+    engine: mapped.generatableEngine || resolveAvatarEngine(rawLook, null, parsed),
   });
 }
 
@@ -83,8 +83,8 @@ async function loadHeygenLookSet(minCount) {
           limit: LOOKS_PER_GROUP,
         });
         const parsed = parseAvatarLooksResponse(looksRes);
-        getIvOrVLooks(parsed, LOOK_ENGINE_FILTERS.ALL).forEach((look) =>
-          collectIvOrVLook(look, group.name, group.id, seenIds, collected)
+        getGeneratableLooks(parsed, LOOK_ENGINE_FILTERS.ALL).forEach((look) =>
+          collectGeneratableLook(look, group.name, group.id, parsed, seenIds, collected)
         );
       } catch {
         /* try next group */

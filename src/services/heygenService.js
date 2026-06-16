@@ -1,5 +1,10 @@
 import API_CONFIG, { buildUrl, getAuthHeaders } from '../config/api.js';
 import { InsufficientCreditsError } from './creditsService.js';
+import {
+  AVATAR_IV_ENGINE,
+  isLegacyV2Look,
+  finalizeVideoCreatePayload,
+} from '../utils/heygenAvatars.js';
 
 const LOOKS_QUERY_KEYS = new Set([
   'group_id',
@@ -65,7 +70,29 @@ class HeygenService {
       }
 
       const responseData = await response.json();
-      return responseData.data || responseData;
+      const payload = responseData.data ?? responseData;
+      if (Array.isArray(payload)) {
+        return {
+          looks: payload,
+          avatar_looks: payload,
+          lookCount: payload.length,
+          has_more: responseData.has_more ?? responseData.hasMore ?? false,
+          token: responseData.token ?? responseData.next_token ?? null,
+        };
+      }
+      if (payload && typeof payload === 'object') {
+        const looks = payload.looks ?? payload.avatar_looks;
+        const lookCount =
+          payload.lookCount ??
+          payload.look_count ??
+          responseData.lookCount ??
+          responseData.look_count ??
+          (Array.isArray(looks) ? looks.length : undefined);
+        if (lookCount != null && payload.lookCount == null) {
+          return { ...payload, lookCount };
+        }
+      }
+      return payload;
     };
 
     try {
@@ -343,7 +370,6 @@ class HeygenService {
       const {
         sceneId,
         avatarId,
-        avatarEngine = 'avatar_iv',
         avatarType,
         title,
         resolution = '1080p',
@@ -358,12 +384,24 @@ class HeygenService {
           locale: 'en-US'
         },
         removeBackground = false,
-        outputFormat = 'mp4'
+        outputFormat = 'mp4',
+        supportedEngines,
+        isLegacyV2,
       } = input;
+
+      const avatarKind = avatarType || 'studio_avatar';
+      const avatarEngine = finalizeVideoCreatePayload({
+        avatarId,
+        avatarType: avatarKind,
+        avatarEngine: input.avatarEngine,
+        isLegacyV2,
+        supportedEngines,
+      });
 
       const payload = {
         sceneId,
         avatarId,
+        avatarType: avatarKind,
         avatarEngine,
         title,
         resolution,
@@ -373,13 +411,26 @@ class HeygenService {
         script,
         voiceSettings,
         removeBackground,
-        outputFormat
+        outputFormat,
       };
 
-      if (avatarType) payload.avatarType = avatarType;
-      // Expressiveness is only supported for avatar_iv + photo_avatar.
-      if (avatarEngine === 'avatar_iv' && avatarType === 'photo_avatar' && expressiveness) {
+      // Expressiveness: photo_avatar + Avatar IV only (backend shouldIncludeExpressiveness).
+      if (
+        avatarEngine === AVATAR_IV_ENGINE &&
+        avatarKind === 'photo_avatar' &&
+        expressiveness &&
+        !isLegacyV2Look({ id: avatarId, isLegacyV2 })
+      ) {
         payload.expressiveness = expressiveness;
+      }
+
+      if (import.meta.env?.DEV) {
+        console.log('[HeyGen] create video', {
+          avatarId,
+          avatarType: avatarKind,
+          avatarEngine,
+          isLegacyV2: isLegacyV2Look({ id: avatarId, isLegacyV2 }),
+        });
       }
 
       const endpoint = API_CONFIG.ENDPOINTS.HEYGEN.VIDEOS.CREATE(workspaceId, projectId);

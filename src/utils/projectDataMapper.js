@@ -2,8 +2,10 @@ import heygenService from '../services/heygenService';
 import {
   buildHeygenAvatarContent,
   canUseExpressiveness,
+  finalizeVideoCreatePayload,
   getSceneAvatarKind,
   getSceneAvatarLookId,
+  isLegacyV2Look,
 } from './heygenAvatars';
 import { getClipTextContent, isTextLayer, parseCssPx, parseFontSize } from './textClip';
 import {
@@ -290,7 +292,16 @@ function buildPresenter(scene) {
 
   const base = scene.presenter || {};
   const avatarKind = getSceneAvatarKind(scene);
-  const avatarEngine = scene.avatarEngine || base.avatarEngine || 'avatar_iv';
+  const supportedEngines = scene.supportedEngines ?? base.supportedEngines;
+  const isLegacyV2 =
+    scene.isLegacyV2 ?? base.isLegacyV2 ?? isLegacyV2Look({ id: avatarId });
+  const avatarEngine = finalizeVideoCreatePayload({
+    avatarId,
+    avatarType: avatarKind,
+    avatarEngine: scene.avatarEngine || base.avatarEngine,
+    isLegacyV2,
+    supportedEngines,
+  });
   const presenter = {
     avatarId: avatarId || base.avatarId,
     avatarLookId: avatarId || base.avatarLookId || base.avatarId,
@@ -303,9 +314,9 @@ function buildPresenter(scene) {
     script: scene.script ?? base.script ?? '',
   };
 
-  const supportedEngines = scene.supportedEngines ?? base.supportedEngines;
   if (Array.isArray(supportedEngines)) {
     presenter.supportedEngines = supportedEngines;
+    presenter.isLegacyV2 = isLegacyV2;
     presenter.engineUnknown =
       scene.engineUnknown ?? base.engineUnknown ?? supportedEngines.length === 0;
   }
@@ -527,6 +538,16 @@ export function sceneFromBackend(scene) {
   const lookId = presenter.avatarId || avatarContent.avatarId;
   const heygenVideoId =
     generation.heygenVideoId || avatarContent.heygenVideoId || scene.heygenVideoId;
+  const avatarKind = presenter.avatarType || scene.avatarKind || 'studio_avatar';
+  const isLegacyV2 =
+    presenter.isLegacyV2 ?? scene.isLegacyV2 ?? isLegacyV2Look({ id: lookId });
+  const avatarEngine = finalizeVideoCreatePayload({
+    avatarId: lookId,
+    avatarType: avatarKind,
+    avatarEngine: presenter.avatarEngine || scene.avatarEngine,
+    isLegacyV2,
+    supportedEngines: presenter.supportedEngines ?? scene.supportedEngines,
+  });
 
   return {
     ...scene,
@@ -538,9 +559,10 @@ export function sceneFromBackend(scene) {
     avatar: presenter.avatarPreviewSrc || scene.avatar || avatarContent.previewSrc,
     avatarLookId: lookId,
     avatarType: lookId || scene.avatarType,
-    avatarKind: presenter.avatarType || scene.avatarKind,
+    avatarKind,
     avatarName: presenter.avatarName || scene.avatarName,
-    avatarEngine: presenter.avatarEngine || scene.avatarEngine || 'avatar_iv',
+    avatarEngine,
+    isLegacyV2,
     avatarGroupId: presenter.avatarGroupId || scene.avatarGroupId,
     expressiveness: presenter.expressiveness || scene.expressiveness,
     voiceId: presenter.voiceId || avatarContent.voiceId || scene.voiceId,
@@ -549,7 +571,11 @@ export function sceneFromBackend(scene) {
     script: presenter.script ?? avatarContent.script ?? scene.script ?? '',
     heygenVideoId,
     heygenStatus: generation.status || scene.heygenStatus,
-    presenter,
+    presenter: {
+      ...presenter,
+      avatarEngine,
+      isLegacyV2,
+    },
     generation,
     clips: normalizeSceneClips((scene.elements || scene.clips || []).map(elementToClip)),
   };
