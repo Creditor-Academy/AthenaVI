@@ -2,17 +2,20 @@
 
 export const AVATAR_IV_ENGINE = 'avatar_iv';
 export const AVATAR_V_ENGINE = 'avatar_v';
+export const LEGACY_V2_ENGINE = 'legacy_v2';
 
 export const LOOK_ENGINE_FILTERS = {
   ALL: 'all',
   AVATAR_IV: 'avatar_iv',
   AVATAR_V: 'avatar_v',
+  LEGACY_V2: 'legacy_v2',
   UNKNOWN: 'unknown',
 };
 
 export function normalizeAvatarEngine(engine) {
   if (!engine) return AVATAR_IV_ENGINE;
   const value = String(engine).toLowerCase();
+  if (value === LEGACY_V2_ENGINE) return LEGACY_V2_ENGINE;
   return value === AVATAR_V_ENGINE ? AVATAR_V_ENGINE : AVATAR_IV_ENGINE;
 }
 
@@ -39,34 +42,77 @@ export function hasIvOrVEngineSupport(look) {
   );
 }
 
-/** Looks safe to show in quick-create / generation flows (IV or V only). */
-export function getIvOrVLooks(parsed, filter = LOOK_ENGINE_FILTERS.ALL) {
+export function lookInEngineBucket(look, bucketKey, parsed) {
+  const bucket = parsed?.engineBuckets?.[bucketKey];
+  if (!Array.isArray(bucket)) return false;
+  const id = getLookId(look) || look?.id;
+  if (!id) return false;
+  return bucket.some((item) => (getLookId(item) || item?.id) === id);
+}
+
+/** Expressive studio looks routed to HeyGen v2 (empty supported_api_engines). */
+export function isLegacyV2Look(look, parsed = null) {
+  if (!look) return false;
+  if (look.isLegacyV2 || look.generatableEngine === LEGACY_V2_ENGINE) return true;
+  if (parsed && lookInEngineBucket(look, 'legacy_v2', parsed)) return true;
+  const id = String(getLookId(look) || look?.id || '');
+  if (/_expressive/i.test(id)) return true;
+  return /_expressive\d*_public$/i.test(id);
+}
+
+export function isGeneratableLook(look, parsed = null) {
+  if (!look) return false;
+  if (isLegacyV2Look(look, parsed)) return true;
+  return hasIvOrVEngineSupport(look);
+}
+
+/** Looks available for video generation (IV, V, and expressive legacy_v2). */
+export function getGeneratableLooks(parsed, filter = LOOK_ENGINE_FILTERS.ALL) {
   if (!parsed) return [];
 
+  if (filter === LOOK_ENGINE_FILTERS.LEGACY_V2) {
+    return looksForEngineFilter(parsed, LOOK_ENGINE_FILTERS.LEGACY_V2);
+  }
   if (filter === LOOK_ENGINE_FILTERS.AVATAR_IV) {
     return looksForEngineFilter(parsed, LOOK_ENGINE_FILTERS.AVATAR_IV).filter(hasIvOrVEngineSupport);
   }
   if (filter === LOOK_ENGINE_FILTERS.AVATAR_V) {
     return looksForEngineFilter(parsed, LOOK_ENGINE_FILTERS.AVATAR_V).filter(hasIvOrVEngineSupport);
   }
+  if (filter === LOOK_ENGINE_FILTERS.UNKNOWN) {
+    return looksForEngineFilter(parsed, LOOK_ENGINE_FILTERS.UNKNOWN);
+  }
 
   const seen = new Set();
   const merged = [];
-  const ivLooks = looksForEngineFilter(parsed, LOOK_ENGINE_FILTERS.AVATAR_IV);
-  const vLooks = looksForEngineFilter(parsed, LOOK_ENGINE_FILTERS.AVATAR_V);
-
-  [...ivLooks, ...vLooks].forEach((look) => {
+  [
+    ...looksForEngineFilter(parsed, LOOK_ENGINE_FILTERS.AVATAR_IV),
+    ...looksForEngineFilter(parsed, LOOK_ENGINE_FILTERS.AVATAR_V),
+    ...looksForEngineFilter(parsed, LOOK_ENGINE_FILTERS.LEGACY_V2),
+  ].forEach((look) => {
     const id = getLookId(look) || look?.id;
-    if (!id || seen.has(id) || !hasIvOrVEngineSupport(look)) return;
+    if (!id || seen.has(id) || !isGeneratableLook(look, parsed)) return;
     seen.add(id);
     merged.push(look);
   });
-
   return merged;
 }
 
+/** @deprecated Use getGeneratableLooks — kept for existing imports. */
+export function getIvOrVLooks(parsed, filter = LOOK_ENGINE_FILTERS.ALL) {
+  return getGeneratableLooks(parsed, filter);
+}
+
 export function groupHasSupportedLooks(parsed) {
-  return getIvOrVLooks(parsed, LOOK_ENGINE_FILTERS.ALL).length > 0;
+  return getGeneratableLooks(parsed, LOOK_ENGINE_FILTERS.ALL).length > 0;
+}
+
+export function getGeneratableLookCount(parsed) {
+  if (!parsed) return 0;
+  const declared = getParsedLookCount(parsed);
+  if (declared > 0) return declared;
+  const counts = parsed.engineCounts ?? {};
+  return (counts.avatar_iv ?? 0) + (counts.avatar_v ?? 0) + (counts.legacy_v2 ?? 0);
 }
 
 export function supportsAvatarEngine(item, engine) {
@@ -78,9 +124,11 @@ export function supportsAvatarEngine(item, engine) {
 
 /** Expressiveness only when Avatar IV is confirmed on the look (not unknown-engine fallback). */
 export function canUseExpressiveness(look, resolvedEngine = null) {
+  if (isLegacyV2Look(look)) return false;
   const engine = resolvedEngine
     ? normalizeAvatarEngine(resolvedEngine)
     : resolveAvatarEngine(look);
+  if (engine === LEGACY_V2_ENGINE) return false;
   const kind = look?.avatar_type ?? look?.avatarType ?? look?.avatarKind;
   if (engine !== AVATAR_IV_ENGINE || kind !== 'photo_avatar') return false;
   return supportsAvatarEngine(look, AVATAR_IV_ENGINE);
@@ -89,10 +137,15 @@ export function canUseExpressiveness(look, resolvedEngine = null) {
 /** Look engine fields saved on scene.presenter for regenerate / expressiveness guards. */
 export function getSceneLookEngineContext(scene) {
   const presenter = scene?.presenter || {};
+  const lookId = getSceneAvatarLookId(scene);
   const supportedEngines = presenter.supportedEngines ?? scene?.supportedEngines ?? [];
+  const isLegacyV2 =
+    presenter.isLegacyV2 ?? scene?.isLegacyV2 ?? isLegacyV2Look({ id: lookId });
   return {
+    id: lookId,
     avatar_type: getSceneAvatarKind(scene),
     supportedEngines: Array.isArray(supportedEngines) ? supportedEngines : [],
+    isLegacyV2,
     engineUnknown:
       presenter.engineUnknown ??
       scene?.engineUnknown ??
@@ -101,56 +154,189 @@ export function getSceneLookEngineContext(scene) {
 }
 
 /** Best engine for video create — respects look metadata and user preference. */
-export function resolveAvatarEngine(look, preferredEngine = null) {
+export function resolveAvatarEngine(look, preferredEngine = null, parsed = null) {
+  return resolveVideoAvatarEngine({
+    avatarLookId: getLookId(look) || look?.id,
+    avatarType: look?.avatar_type ?? look?.avatarType,
+    avatarEngine: preferredEngine,
+    supportedEngines: look?.supportedEngines ?? getLookSupportedEngines(look),
+    isLegacyV2: look?.isLegacyV2 ?? isLegacyV2Look(look, parsed),
+    parsed,
+  });
+}
+
+/**
+ * Engine for video create + persisted presenter (API only accepts avatar_iv | avatar_v).
+ * Expressive looks: send avatar_iv — backend resolveVideoPlanForLook routes to HeyGen v2.
+ * Avatar V only for photo_avatar looks that explicitly list avatar_v in supported_api_engines.
+ */
+export function resolveVideoAvatarEngine(context = {}) {
+  const lookId = context.avatarLookId || context.avatarId || context.id;
+  const avatarType = context.avatarType ?? context.avatar_type ?? null;
+
+  const look = {
+    id: lookId,
+    avatar_type: avatarType,
+    supportedEngines: context.supportedEngines,
+    supported_api_engines: context.supportedEngines,
+    isLegacyV2: context.isLegacyV2,
+  };
+
+  if (isLegacyV2Look(look, context.parsed)) {
+    return AVATAR_IV_ENGINE;
+  }
+
+  if (!avatarType || avatarType === 'studio_avatar') {
+    return AVATAR_IV_ENGINE;
+  }
+
   const engines = getLookSupportedEngines(look);
-  const preferred = preferredEngine ? normalizeAvatarEngine(preferredEngine) : null;
 
-  if (preferred && engines.includes(preferred)) return preferred;
-  if (engines.includes(AVATAR_IV_ENGINE)) return AVATAR_IV_ENGINE;
-  if (engines.includes(AVATAR_V_ENGINE)) return AVATAR_V_ENGINE;
+  if (engines.length === 0) {
+    return AVATAR_IV_ENGINE;
+  }
 
-  const kind = look?.avatar_type ?? look?.avatarType ?? look?.avatarKind;
-  if (kind === 'photo_avatar') return AVATAR_IV_ENGINE;
-  return AVATAR_V_ENGINE;
+  if (engines.includes(AVATAR_IV_ENGINE)) {
+    return AVATAR_IV_ENGINE;
+  }
+
+  if (engines.includes(AVATAR_V_ENGINE)) {
+    return AVATAR_V_ENGINE;
+  }
+
+  return AVATAR_IV_ENGINE;
+}
+
+/**
+ * Engine stored on scene.presenter — API only allows avatar_iv | avatar_v.
+ * Expressive routing is preserved via isLegacyV2; backend picks HeyGen v2 from avatarId.
+ */
+export function persistPresenterAvatarEngine(
+  engine,
+  { avatarId, avatarType, isLegacyV2 } = {}
+) {
+  const kind = avatarType || 'studio_avatar';
+
+  if (isLegacyV2Look({ id: avatarId, isLegacyV2 }) || engine === LEGACY_V2_ENGINE) {
+    return AVATAR_IV_ENGINE;
+  }
+
+  const normalized = normalizeAvatarEngine(engine);
+  if (normalized === AVATAR_V_ENGINE && kind === 'studio_avatar') {
+    return AVATAR_IV_ENGINE;
+  }
+
+  return normalized === AVATAR_V_ENGINE ? AVATAR_V_ENGINE : AVATAR_IV_ENGINE;
+}
+
+/** Sanitize engine before POST .../heygen/videos — never send avatar_v for studio/expressive. */
+export function finalizeVideoCreatePayload({
+  avatarId,
+  avatarType,
+  avatarEngine,
+  isLegacyV2,
+  supportedEngines,
+}) {
+  return persistPresenterAvatarEngine(
+    resolveVideoAvatarEngine({
+      avatarLookId: avatarId,
+      avatarId,
+      avatarType: avatarType || 'studio_avatar',
+      avatarEngine,
+      isLegacyV2,
+      supportedEngines,
+    }),
+    { avatarId, avatarType: avatarType || 'studio_avatar', isLegacyV2 }
+  );
 }
 
 export function parseAvatarLooksResponse(responseData) {
-  const data = responseData?.data ?? responseData ?? {};
-  const allLooks = extractHeygenList(responseData, ['avatar_looks', 'looks', 'avatars']);
-  const engineBuckets = data.engineBuckets ?? {};
+  const root = responseData ?? {};
+  const nested = root?.data && !Array.isArray(root.data) ? root.data : null;
+  const data = nested ?? root;
+
+  let allLooks = extractHeygenList(responseData, ['avatar_looks', 'looks', 'avatars']);
+  if (allLooks.length === 0) {
+    allLooks = extractHeygenList(data, ['avatar_looks', 'looks', 'avatars']);
+  }
+  if (allLooks.length === 0) {
+    const singleLook = data.look ?? root.look ?? data.avatar_look ?? root.avatar_look;
+    if (singleLook && typeof singleLook === 'object') {
+      allLooks = [singleLook];
+    }
+  }
+
+  const engineBuckets = data.engineBuckets ?? root.engineBuckets ?? {};
 
   const bucketIv = Array.isArray(engineBuckets.avatar_iv) ? engineBuckets.avatar_iv : [];
   const bucketV = Array.isArray(engineBuckets.avatar_v) ? engineBuckets.avatar_v : [];
+  const bucketLegacyV2 = Array.isArray(engineBuckets.legacy_v2) ? engineBuckets.legacy_v2 : [];
   const bucketUnknown = Array.isArray(engineBuckets.unknown) ? engineBuckets.unknown : [];
 
-  const engineCounts = data.engineCounts ?? {};
+  const engineCounts = data.engineCounts ?? root.engineCounts ?? {};
   const ivCount =
     engineCounts.avatar_iv ??
     (bucketIv.length || allLooks.filter((l) => supportsAvatarEngine(l, AVATAR_IV_ENGINE)).length);
   const vCount =
     engineCounts.avatar_v ??
     (bucketV.length || allLooks.filter((l) => supportsAvatarEngine(l, AVATAR_V_ENGINE)).length);
+  const legacyV2Count =
+    engineCounts.legacy_v2 ??
+    (bucketLegacyV2.length || allLooks.filter((l) => isLegacyV2Look(l)).length);
   const unknownCount =
     engineCounts.unknown ??
     (bucketUnknown.length || allLooks.filter(isUnknownEngineLook).length);
 
+  const totalLooks =
+    data.lookCount ??
+    data.look_count ??
+    root.lookCount ??
+    root.look_count ??
+    engineCounts.totalLooks ??
+    engineCounts.total_looks ??
+    allLooks.length;
+
   return {
     allLooks,
+    lookCount: Number(totalLooks) || allLooks.length,
     engineBuckets: {
       avatar_iv: bucketIv,
       avatar_v: bucketV,
+      legacy_v2: bucketLegacyV2,
       unknown: bucketUnknown,
     },
     engineCounts: {
       avatar_iv: ivCount,
       avatar_v: vCount,
+      legacy_v2: legacyV2Count,
       unknown: unknownCount,
-      totalLooks: engineCounts.totalLooks ?? allLooks.length,
+      totalLooks: Number(totalLooks) || allLooks.length,
     },
-    hasMore: !!(data?.has_more ?? responseData?.has_more),
+    hasMore: !!(data?.has_more ?? root?.has_more ?? data?.hasMore ?? root?.hasMore),
     nextToken:
-      data?.token ?? responseData?.token ?? data?.next_token ?? responseData?.next_token ?? null,
+      data?.token ??
+      root?.token ??
+      data?.next_token ??
+      root?.next_token ??
+      null,
   };
+}
+
+export function getParsedLookCount(parsed) {
+  if (!parsed) return 0;
+  const declared =
+    parsed.lookCount ??
+    parsed.engineCounts?.totalLooks ??
+    parsed.engineCounts?.total_looks;
+  const n = Number(declared);
+  if (Number.isFinite(n) && n > 0) return n;
+  return parsed.allLooks?.length ?? 0;
+}
+
+export function isSingleAppearanceGroup(parsed, mappedGroup = null) {
+  if (parsed) return getParsedLookCount(parsed) === 1;
+  const embedded = mappedGroup?.embeddedLooks || [];
+  return embedded.length === 1;
 }
 
 export function looksForEngineFilter(parsed, filter) {
@@ -165,6 +351,11 @@ export function looksForEngineFilter(parsed, filter) {
     return engineBuckets.avatar_v?.length
       ? engineBuckets.avatar_v
       : allLooks.filter((l) => supportsAvatarEngine(l, AVATAR_V_ENGINE));
+  }
+  if (filter === LOOK_ENGINE_FILTERS.LEGACY_V2) {
+    return engineBuckets.legacy_v2?.length
+      ? engineBuckets.legacy_v2
+      : allLooks.filter((l) => isLegacyV2Look(l, parsed));
   }
   if (filter === LOOK_ENGINE_FILTERS.UNKNOWN) {
     return engineBuckets.unknown?.length
@@ -203,6 +394,7 @@ export function mergeAvatarLooksPages(prev, nextPage) {
   const engineBuckets = {
     avatar_iv: mergeBucket('avatar_iv'),
     avatar_v: mergeBucket('avatar_v'),
+    legacy_v2: mergeBucket('legacy_v2'),
     unknown: mergeBucket('unknown'),
   };
 
@@ -216,6 +408,9 @@ export function mergeAvatarLooksPages(prev, nextPage) {
       avatar_v:
         engineBuckets.avatar_v.length ||
         mergedLooks.filter((l) => supportsAvatarEngine(l, AVATAR_V_ENGINE)).length,
+      legacy_v2:
+        engineBuckets.legacy_v2.length ||
+        mergedLooks.filter((l) => isLegacyV2Look(l)).length,
       unknown:
         engineBuckets.unknown.length || mergedLooks.filter(isUnknownEngineLook).length,
       totalLooks: mergedLooks.length,
@@ -251,41 +446,116 @@ export function filterAvatarLooksByEngine(looks, engine) {
   return (looks || []).filter((look) => supportsAvatarEngine(look, normalized));
 }
 
-/** Look row id (lk_…) — never use group id (ag_…) for video create. */
+export function getLookDefaultVoiceId(look) {
+  const raw =
+    look?.default_voice_id ??
+    look?.defaultVoiceId ??
+    look?.voice_id ??
+    look?.voiceId ??
+    null;
+  return raw ? String(raw) : null;
+}
+
+export function getLookDefaultVoiceName(look) {
+  const raw =
+    look?.default_voice_name ??
+    look?.defaultVoiceName ??
+    look?.voice_name ??
+    look?.voiceName ??
+    null;
+  return raw ? String(raw).trim() : null;
+}
+
 export function getLookId(look) {
-  const candidates = [look?.id, look?.look_id, look?.avatar_look_id, look?.avatar_id];
-  for (const raw of candidates) {
+  if (!look) return null;
+
+  const explicitLookFields = [
+    look?.look_id,
+    look?.lookId,
+    look?.avatar_look_id,
+    look?.avatarLookId,
+  ];
+  for (const raw of explicitLookFields) {
     if (!raw) continue;
     const id = String(raw);
-    if (id.startsWith('ag_')) continue;
-    if (/^[0-9a-fA-F]{32}$/.test(id)) continue;
-    if (id.startsWith('lk_') || id.length > 0) return id;
+    if (id.startsWith('ag_') || id.startsWith('agt_')) continue;
+    return id;
   }
+
+  // On look records, `id` is the generatable look id (uuid, lk_, or named public id).
+  if (look?.id != null && look?.id !== '') {
+    const id = String(look.id);
+    if (!id.startsWith('ag_') && !id.startsWith('agt_')) return id;
+  }
+
+  const secondaryFields = [look?.avatar_id, look?.avatarId];
+  for (const raw of secondaryFields) {
+    if (!raw) continue;
+    const id = String(raw);
+    if (id.startsWith('ag_') || id.startsWith('agt_')) continue;
+    if (isAvatarGroupId(id)) continue;
+    return id;
+  }
+
   return null;
 }
 
-/** True when id is a HeyGen avatar group (ag_… or group UUID), not a look (lk_…). */
+/** True when id is a HeyGen avatar group id — not a look id (lk_…, named look, etc.). */
 export function isAvatarGroupId(id) {
   if (!id) return false;
   const value = String(id);
   if (value.startsWith('lk_')) return false;
-  if (value.startsWith('group-') || value.startsWith('group-more-')) return false;
-  return true;
+  if (value.startsWith('ag_') || value.startsWith('agt_')) return true;
+  if (value.startsWith('group-') || value.startsWith('group-more-')) return true;
+  if (/^[0-9a-fA-F]{32}$/.test(value)) return true;
+  if (/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/i.test(value)) {
+    return true;
+  }
+  return false;
 }
 
-export function getGroupId(group) {
-  const candidates = [group?.avatar_group_id, group?.group_id, group?.id];
+export function getLooksApiGroupId(mappedGroup) {
+  const source = mappedGroup?.sourceGroup ?? mappedGroup;
+  const candidates = [
+    source?.avatar_group_id,
+    source?.group_id,
+    mappedGroup?.id,
+    source?.id,
+  ];
   for (const raw of candidates) {
     if (!raw) continue;
     const id = String(raw);
-    if (!isAvatarGroupId(id)) continue;
-    return id;
+    if (id.startsWith('ag_') || id.startsWith('agt_')) return id;
+    if (isAvatarGroupId(id)) return id;
+  }
+  for (const raw of candidates) {
+    if (!raw) continue;
+    return String(raw);
   }
   return null;
 }
 
+export function isDeclaredSingleLookGroup(mappedGroup) {
+  const source = mappedGroup?.sourceGroup ?? mappedGroup;
+  const declared = Number(
+    source?.look_count ??
+      source?.lookCount ??
+      source?.num_looks ??
+      mappedGroup?.lookCount
+  );
+  if (declared === 1) return true;
+  const embedded = mappedGroup?.embeddedLooks ?? extractHeygenList(source, ['avatar_looks', 'looks']);
+  return embedded.length === 1;
+}
+
+export function getGroupId(group) {
+  return getLooksApiGroupId(group?.sourceGroup ? group : { sourceGroup: group, id: group?.id });
+}
+
 export function mapAvatarGroup(group) {
   const id = getGroupId(group);
+  const embeddedLooks = extractHeygenList(group, ['avatar_looks', 'looks']);
+  const lookCount = Number(group?.look_count ?? group?.lookCount ?? group?.num_looks) || embeddedLooks.length || 0;
   return {
     id,
     name: group?.name ?? group?.group_name ?? 'AI Presenter',
@@ -296,12 +566,218 @@ export function mapAvatarGroup(group) {
       group?.image_url ??
       PLACEHOLDER_IMAGE,
     subtitle: group?.description ?? group?.style ?? '',
+    embeddedLooks,
+    lookCount: lookCount || undefined,
+    sourceGroup: group,
   };
 }
 
-export function mapAvatarLook(look, fallbackName = 'Look') {
+/** Build a generatable look from group metadata when no separate looks are listed. */
+export function buildLookFromGroup(group, mappedGroup = null) {
+  const source = group?.sourceGroup ?? group;
+  const name = mappedGroup?.name ?? source?.name ?? source?.group_name ?? 'AI Presenter';
+  const image =
+    mappedGroup?.image ??
+    source?.preview_image_url ??
+    source?.thumbnail_url ??
+    source?.normal_image_url ??
+    source?.image_url ??
+    PLACEHOLDER_IMAGE;
+
+  const embedded = extractHeygenList(source, ['avatar_looks', 'looks']);
+  if (embedded.length === 1) return embedded[0];
+  for (const item of embedded) {
+    if (getLookId(item) || item?.id || item?.look_id) return item;
+  }
+
+  const idCandidates = [
+    source?.default_look_id,
+    source?.defaultLookId,
+    source?.look_id,
+    source?.lookId,
+    source?.preview_avatar_id,
+    source?.previewAvatarId,
+    source?.avatar_id,
+    source?.avatarId,
+  ];
+
+  for (const raw of idCandidates) {
+    if (!raw) continue;
+    const id = String(raw);
+    if (id.startsWith('ag_') || id.startsWith('agt_')) continue;
+    if (isAvatarGroupId(id) && !id.includes('_')) continue;
+
+    return {
+      id,
+      avatar_name: name,
+      name,
+      preview_image_url: image,
+      thumbnail_url: image,
+      avatar_type: source?.avatar_type ?? source?.avatarType ?? 'studio_avatar',
+      supported_api_engines: source?.supported_api_engines ?? source?.supportedApiEngines ?? [],
+      default_voice_id: source?.default_voice_id ?? source?.defaultVoiceId,
+      default_voice_name: source?.default_voice_name ?? source?.defaultVoiceName,
+    };
+  }
+
+  if (isDeclaredSingleLookGroup(mappedGroup ?? { sourceGroup: source, embeddedLooks: embedded })) {
+    const singleIdCandidates = [
+      source?.preview_avatar_id,
+      source?.previewAvatarId,
+      source?.avatar_id,
+      source?.avatarId,
+      source?.default_look_id,
+      source?.defaultLookId,
+      source?.look_id,
+      source?.lookId,
+      source?.id,
+    ];
+    for (const raw of singleIdCandidates) {
+      if (!raw) continue;
+      const id = String(raw);
+      if (id.startsWith('ag_') || id.startsWith('agt_')) continue;
+      if (isAvatarGroupId(id) && !id.includes('_') && !id.startsWith('lk_')) continue;
+      return {
+        id,
+        avatar_name: name,
+        name,
+        preview_image_url: image,
+        thumbnail_url: image,
+        avatar_type: source?.avatar_type ?? source?.avatarType ?? 'studio_avatar',
+        supported_api_engines: source?.supported_api_engines ?? source?.supportedApiEngines ?? [],
+        default_voice_id: source?.default_voice_id ?? source?.defaultVoiceId,
+        default_voice_name: source?.default_voice_name ?? source?.defaultVoiceName,
+      };
+    }
+  }
+
+  return null;
+}
+
+/** Resolve all generatable looks for a group, including single-appearance fallbacks. */
+export function resolveGroupGeneratableLooks(parsed, mappedGroup) {
+  const allLooks = parsed?.allLooks ?? [];
+  const lookCount = getParsedLookCount(parsed);
+
+  // Backend lookCount: 1 + data.looks — always trust the single record.
+  if (lookCount === 1 && allLooks.length > 0) {
+    return [allLooks[0]];
+  }
+  if (lookCount === 1 && allLooks.length === 0 && mappedGroup) {
+    const fallback = buildLookFromGroup(mappedGroup);
+    if (fallback) return [fallback];
+  }
+  if (allLooks.length === 1) {
+    return [allLooks[0]];
+  }
+
+  let looks = getGeneratableLooks(parsed, LOOK_ENGINE_FILTERS.ALL);
+  if (looks.length > 0) return looks;
+
+  const fromAll = allLooks.filter((look) => {
+    const id = getLookId(look) || look?.id || look?.look_id;
+    return id && (isGeneratableLook(look, parsed) || isLegacyV2Look(look, parsed) || isUnknownEngineLook(look));
+  });
+  if (fromAll.length > 0) return fromAll;
+
+  if (!parsed && mappedGroup) {
+    const embeddedOnly = mappedGroup.embeddedLooks || [];
+    if (embeddedOnly.length === 1) return embeddedOnly;
+    if (isDeclaredSingleLookGroup(mappedGroup)) {
+      const fallback = buildLookFromGroup(mappedGroup);
+      if (fallback) return [fallback];
+    }
+  }
+
+  const embedded = mappedGroup?.embeddedLooks || [];
+  if (embedded.length > 0) {
+    const usable = embedded.filter(
+      (look) =>
+        (getLookId(look) || look?.id || look?.look_id) &&
+        (isGeneratableLook(look, parsed) || isLegacyV2Look(look, parsed) || isUnknownEngineLook(look))
+    );
+    if (usable.length > 0) return usable;
+  }
+
+  const fallback = buildLookFromGroup(mappedGroup);
+  if (fallback) {
+    const allowSynthetic =
+      !parsed ||
+      lookCount === 1 ||
+      allLooks.length <= 1 ||
+      isDeclaredSingleLookGroup(mappedGroup);
+    if (allowSynthetic) return [fallback];
+  }
+  return [];
+}
+
+/** Fetch + normalize looks for a mapped presenter group (tries API variants, then card fallback). */
+export async function fetchMappedGroupLooks(heygenService, mappedGroup, options = {}) {
+  const groupId = getLooksApiGroupId(mappedGroup);
+  if (!groupId) {
+    return {
+      parsed: null,
+      mappedLooks: mapResolvedLooks(null, mappedGroup, mappedGroup?.name),
+      groupId: null,
+    };
+  }
+
+  const attempts = [
+    { group_id: groupId, limit: options.limit ?? 20 },
+    { group_id: groupId, ownership: 'public', limit: options.limit ?? 20 },
+  ];
+
+  let lastResponse = null;
+  for (const params of attempts) {
+    try {
+      const responseData = await heygenService.getAvatarLooks(params);
+      lastResponse = responseData;
+      const parsed = parseAvatarLooksResponse(responseData);
+      const mappedLooks = mapResolvedLooks(parsed, mappedGroup, mappedGroup?.name);
+      if (mappedLooks.length > 0) {
+        return { parsed, mappedLooks, groupId, responseData };
+      }
+      if ((parsed.allLooks?.length ?? 0) > 0) {
+        const remapped = parsed.allLooks
+          .map((look) => mapAvatarLook(look, mappedGroup?.name, parsed))
+          .filter((look) => look.id);
+        if (remapped.length > 0) {
+          return { parsed, mappedLooks: remapped, groupId, responseData };
+        }
+      }
+    } catch (err) {
+      lastResponse = err;
+    }
+  }
+
+  const fallbackLooks = mapResolvedLooks(null, mappedGroup, mappedGroup?.name);
+  return {
+    parsed: lastResponse && typeof lastResponse === 'object' ? parseAvatarLooksResponse(lastResponse) : null,
+    mappedLooks: fallbackLooks,
+    groupId,
+    responseData: typeof lastResponse === 'object' ? lastResponse : null,
+  };
+}
+
+export function mapResolvedLooks(parsed, mappedGroup, groupName = 'Look') {
+  const rawList = resolveGroupGeneratableLooks(parsed, mappedGroup);
+  return rawList
+    .map((look) => mapAvatarLook(look, groupName, parsed))
+    .filter((look) => look.id);
+}
+
+export function mapAvatarLook(look, fallbackName = 'Look', parsed = null) {
   const id = getLookId(look);
   const supportedEngines = getLookSupportedEngines(look);
+  const isLegacyV2 = isLegacyV2Look(look, parsed);
+  const generatableEngine = resolveVideoAvatarEngine({
+    avatarLookId: id,
+    avatarType: look?.avatar_type ?? look?.avatarType,
+    supportedEngines,
+    isLegacyV2,
+    parsed,
+  });
+
   return {
     id,
     groupId: look?.avatar_group_id ?? look?.group_id ?? null,
@@ -314,8 +790,17 @@ export function mapAvatarLook(look, fallbackName = 'Look') {
       PLACEHOLDER_IMAGE,
     avatarType: look?.avatar_type ?? look?.avatarType ?? null,
     supportedEngines,
-    engineUnknown: supportedEngines.length === 0,
+    isLegacyV2,
+    generatableEngine,
+    engineUnknown: supportedEngines.length === 0 && !isLegacyV2,
+    defaultVoiceId: getLookDefaultVoiceId(look),
+    defaultVoiceName: getLookDefaultVoiceName(look),
   };
+}
+
+export function formatLookBadgeLabel(look) {
+  if (look?.isLegacyV2) return 'Expressive';
+  return formatAvatarTypeLabel(look?.avatarType);
 }
 
 export function formatAvatarTypeLabel(type) {
