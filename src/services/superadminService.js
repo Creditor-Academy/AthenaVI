@@ -88,6 +88,10 @@ const superadminService = {
       `/api/superadmin/reports/credits/usage${toQuery({ from, to, workspaceId, userId })}`
     )
   },
+
+  getHeygenAccount() {
+    return superadminRequest('/api/superadmin/heygen/account')
+  },
 }
 
 export { SuperadminApiError }

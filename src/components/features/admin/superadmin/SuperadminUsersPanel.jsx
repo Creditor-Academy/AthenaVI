@@ -9,6 +9,69 @@ import {
   txTypeLabel,
 } from './superadminUtils'
 import '../../../../pages/AdminPortal/SuperadminPortal.css'
+import '../../../../pages/page-skeleton/skeleton.css'
+
+/* ─── skeleton pieces ─────────────────────────────────────── */
+
+function Sk({ w, h = 14, radius = 6, style }) {
+  return (
+    <div
+      className="ps-block ps-block--line"
+      style={{ width: w, height: h, borderRadius: radius, flexShrink: 0, ...style }}
+    />
+  )
+}
+
+function UserListSkeleton() {
+  return (
+    <ul className="sa-list" aria-hidden="true">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <li key={i} style={{ padding: '10px 12px', borderBottom: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <Sk w="70%" h={11} />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Sk w="45%" h={9} />
+            <Sk w={52} h={9} />
+          </div>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function UserDetailSkeleton() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* hero row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <Sk w={180} h={22} radius={8} />
+          <Sk w={220} h={13} />
+          <Sk w={120} h={11} />
+        </div>
+        <div className="ps-block" style={{ width: 130, height: 68, borderRadius: 10 }} />
+      </div>
+      {/* action cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div className="ps-block" style={{ height: 140, borderRadius: 10 }} />
+        <div className="ps-block" style={{ height: 140, borderRadius: 10 }} />
+      </div>
+      {/* history header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Sk w={110} h={14} />
+        <Sk w={110} h={32} radius={8} />
+      </div>
+      {/* table rows */}
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} style={{ display: 'flex', gap: 12, padding: '8px 0', borderBottom: '1px solid var(--border-color)' }}>
+          <Sk w="22%" h={11} />
+          <Sk w="18%" h={11} />
+          <Sk w="14%" h={11} />
+          <Sk w="30%" h={11} />
+        </div>
+      ))}
+    </div>
+  )
+}
 
 const PAGE_SIZE = 20
 
@@ -223,7 +286,7 @@ function SuperadminUsersPanel() {
             </span>
           </div>
           {listLoading ? (
-            <div className="sa-loading"><span className="sa-spinner" /> Loading…</div>
+            <UserListSkeleton />
           ) : users.length === 0 ? (
             <div className="sa-empty">No users found.</div>
           ) : (
@@ -290,7 +353,7 @@ function SuperadminUsersPanel() {
                 Select a user from the list.
               </div>
             ) : detailLoading && !detail ? (
-              <div className="sa-loading"><span className="sa-spinner" /> Loading user…</div>
+              <UserDetailSkeleton />
             ) : detailError ? (
               <div className="sa-alert sa-alert--error">{detailError}</div>
             ) : (
