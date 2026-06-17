@@ -79,6 +79,7 @@ function CreditActionCard({ mode, onSubmit, loading, disabled }) {
   const isGrant = mode === 'grant'
   const [amount, setAmount] = useState('')
   const [reason, setReason] = useState('')
+  const [showReason, setShowReason] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -88,48 +89,60 @@ function CreditActionCard({ mode, onSubmit, loading, disabled }) {
     if (ok) {
       setAmount('')
       setReason('')
+      setShowReason(false)
     }
   }
 
   return (
     <div className={`sa-action-card sa-action-card--${mode}`}>
       <div className="sa-action-card-head">
-        <span>{isGrant ? 'Grant credits' : 'Revoke credits'}</span>
+        <span className={`sa-action-card-dot sa-action-card-dot--${mode}`} aria-hidden="true" />
+        <span>{isGrant ? 'Grant' : 'Revoke'}</span>
       </div>
       <form className="sa-action-form" onSubmit={handleSubmit}>
-        <div className="sa-field">
-          <label htmlFor={`${mode}-amount`}>Amount (AC)</label>
+        <div className="sa-field sa-field--inline">
           <input
             id={`${mode}-amount`}
-            className="sa-input"
+            className="sa-input sa-input--amount"
             type="number"
             min="1"
             step="1"
-            placeholder="e.g. 1000"
+            placeholder="Amount (AC)"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             disabled={loading || disabled}
             required
+            aria-label="Amount in AC"
           />
+          <button
+            type="submit"
+            className={`sa-btn sa-btn--sm ${isGrant ? 'sa-btn--primary' : 'sa-btn--danger'}`}
+            disabled={loading || disabled || !amount}
+          >
+            {loading ? '…' : isGrant ? 'Grant' : 'Revoke'}
+          </button>
         </div>
-        <div className="sa-field">
-          <label htmlFor={`${mode}-reason`}>Reason (optional)</label>
+        <button
+          type="button"
+          className="sa-reason-toggle"
+          onClick={() => setShowReason((v) => !v)}
+          disabled={loading || disabled}
+          aria-expanded={showReason}
+        >
+          {showReason ? '− Hide reason' : '+ Add reason'}
+        </button>
+        {showReason && (
           <textarea
             id={`${mode}-reason`}
-            placeholder="Support adjustment, promo, correction…"
+            className="sa-reason-input"
+            placeholder="e.g. Support adjustment, promo…"
             maxLength={500}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             disabled={loading || disabled}
+            rows={2}
           />
-        </div>
-        <button
-          type="submit"
-          className={`sa-btn sa-btn--sm ${isGrant ? 'sa-btn--primary' : 'sa-btn--danger'}`}
-          disabled={loading || disabled}
-        >
-          {loading ? 'Processing…' : isGrant ? 'Grant' : 'Revoke'}
-        </button>
+        )}
       </form>
     </div>
   )
@@ -155,6 +168,7 @@ function SuperadminUsersPanel() {
   const [actionLoading, setActionLoading] = useState(false)
   const [actionMessage, setActionMessage] = useState('')
   const [actionError, setActionError] = useState('')
+  const [activeTab, setActiveTab] = useState('profile')
 
   const loadUsers = useCallback(async () => {
     setListLoading(true)
@@ -258,21 +272,7 @@ function SuperadminUsersPanel() {
       <div className="sa-panel-header">
         <div>
           <h2 className="sa-panel-title">Users & credits</h2>
-          <p className="sa-panel-desc">
-            Search accounts, view balances, grant or revoke personal credits, and audit the full ledger.
-          </p>
         </div>
-        <label className="sa-search-field">
-          <Search className="sa-search-field-icon" size={15} strokeWidth={2} aria-hidden />
-          <input
-            className="sa-input"
-            type="search"
-            placeholder="Search by email…"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            aria-label="Search users by email"
-          />
-        </label>
       </div>
 
       {listError && <div className="sa-alert sa-alert--error">{listError}</div>}
@@ -280,10 +280,18 @@ function SuperadminUsersPanel() {
       <div className="sa-split">
         <div className="sa-card sa-card--flush sa-card--list">
           <div className="sa-card-header">
-            <h3>All users</h3>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              {pagination.total ?? 0} total
-            </span>
+            <h3>All users <span className="sa-card-header-count">{pagination.total ?? 0}</span></h3>
+          </div>
+          <div className="sa-list-search">
+            <Search className="sa-search-field-icon" size={13} strokeWidth={2} aria-hidden />
+            <input
+              className="sa-input sa-input--list-search"
+              type="search"
+              placeholder="Search by email…"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              aria-label="Search users by email"
+            />
           </div>
           {listLoading ? (
             <UserListSkeleton />
@@ -303,15 +311,18 @@ function SuperadminUsersPanel() {
                         onClick={() => {
                           setSelectedId(user.id)
                           setHistoryPage(1)
+                          setActiveTab('profile')
                         }}
                       >
-                        <span className="sa-list-item-email" title={user.email}>{user.email}</span>
-                        <span className="sa-list-item-meta">
+                        <span className="sa-list-item-top">
                           <span className="sa-list-item-name">{user.name || 'No name'}</span>
-                          <span className="sa-list-item-credits">{formatAc(user.credits)}</span>
                           {user.isPlatformSuperadmin && (
                             <span className="sa-badge sa-badge--admin">Admin</span>
                           )}
+                        </span>
+                        <span className="sa-list-item-bottom">
+                          <span className="sa-list-item-email" title={user.email}>{user.email}</span>
+                          <span className="sa-list-item-credits">{formatAc(user.credits)}</span>
                         </span>
                       </button>
                     </li>
@@ -345,132 +356,196 @@ function SuperadminUsersPanel() {
           )}
         </div>
 
-        <div className="sa-card sa-card--detail">
-          <div className="sa-card-body sa-scroll">
-            {!selectedId ? (
-              <div className="sa-empty">
-                <User className="sa-empty-icon" size={32} />
-                Select a user from the list.
+        <div className="sa-card sa-card--detail sa-card--flush">
+          {!selectedId ? (
+            <div className="sa-empty sa-empty--fill">
+              <User className="sa-empty-icon" size={32} />
+              Select a user from the list.
+            </div>
+          ) : detailLoading && !detail ? (
+            <div className="sa-card-body sa-scroll"><UserDetailSkeleton /></div>
+          ) : detailError ? (
+            <div className="sa-card-body"><div className="sa-alert sa-alert--error">{detailError}</div></div>
+          ) : (
+            <>
+              {/* Always-visible user header */}
+              <div className="sa-detail-header">
+                <div className="sa-detail-hero-info">
+                  <h3 className="sa-detail-name">{detail?.name || selectedListUser?.name || 'User'}</h3>
+                  <p className="sa-detail-email">{detail?.email || selectedListUser?.email}</p>
+                </div>
+                <div className="sa-stat-pill">
+                  <span className="sa-stat-pill-label">Balance</span>
+                  <span className="sa-stat-pill-value">{formatAc(detail?.personalCredits)}</span>
+                </div>
               </div>
-            ) : detailLoading && !detail ? (
-              <UserDetailSkeleton />
-            ) : detailError ? (
-              <div className="sa-alert sa-alert--error">{detailError}</div>
-            ) : (
-              <>
-                <div className="sa-detail-hero">
-                  <div>
-                    <h3 className="sa-detail-name">{detail?.name || selectedListUser?.name || 'User'}</h3>
-                    <p className="sa-detail-email">{detail?.email || selectedListUser?.email}</p>
-                    {selectedListUser?.createdAt && (
-                      <p className="sa-panel-desc" style={{ marginTop: 8 }}>
-                        Joined {formatShortDate(selectedListUser.createdAt)}
-                      </p>
-                    )}
-                  </div>
-                  <div className="sa-stat-pill">
-                    <span className="sa-stat-pill-label">Personal balance</span>
-                    <span className="sa-stat-pill-value">{formatAc(detail?.personalCredits)}</span>
-                  </div>
-                </div>
 
-                {actionMessage && <div className="sa-alert sa-alert--success">{actionMessage}</div>}
-                {actionError && <div className="sa-alert sa-alert--error">{actionError}</div>}
-
-                <div className="sa-action-row">
-                  <CreditActionCard
-                    mode="grant"
-                    loading={actionLoading}
-                    onSubmit={(p) => handleCreditAction('grant', p)}
-                  />
-                  <CreditActionCard
-                    mode="revoke"
-                    loading={actionLoading}
-                    disabled={!detail?.personalCredits}
-                    onSubmit={(p) => handleCreditAction('revoke', p)}
-                  />
-                </div>
-
-                <div className="sa-card-header" style={{ padding: '0 0 12px', border: 'none' }}>
-                  <h3>Credit history</h3>
-                  <select
-                    className="sa-select"
-                    value={historyType}
-                    onChange={(e) => {
-                      setHistoryType(e.target.value)
-                      setHistoryPage(1)
-                    }}
-                    aria-label="Filter transaction type"
+              {/* Tab bar */}
+              <div className="sa-tab-bar" role="tablist">
+                {[
+                  { id: 'profile', label: 'Profile' },
+                  { id: 'credits', label: 'Credits' },
+                  { id: 'history', label: 'History' },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === tab.id}
+                    className={`sa-tab ${activeTab === tab.id ? 'sa-tab--active' : ''}`}
+                    onClick={() => setActiveTab(tab.id)}
                   >
-                    <option value="">All types</option>
-                    <option value="platform_grant">Platform grant</option>
-                    <option value="platform_revoke">Platform revoke</option>
-                    <option value="usage">Usage</option>
-                    <option value="allocation">Allocation</option>
-                    <option value="deallocation">Deallocation</option>
-                    <option value="refund">Refund</option>
-                  </select>
-                </div>
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
 
-                {history.length === 0 ? (
-                  <div className="sa-empty" style={{ padding: '24px' }}>No transactions yet.</div>
-                ) : (
-                  <div className="sa-table-wrap sa-scroll">
-                    <table className="sa-table">
-                      <thead>
-                        <tr>
-                          <th>Date</th>
-                          <th>Type</th>
-                          <th>Amount</th>
-                          <th>Reference</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {history.map((tx) => (
-                          <tr key={tx.id}>
-                            <td>{formatDate(tx.createdAt)}</td>
-                            <td>
-                              <span className="sa-badge sa-badge--type">{txTypeLabel(tx.type)}</span>
-                            </td>
-                            <td className={txAmountClass(tx.amount)}>
-                              {tx.amount > 0 ? '+' : ''}{formatAc(tx.amount)}
-                            </td>
-                            <td style={{ color: 'var(--text-muted)', maxWidth: 200 }}>
-                              {tx.reference || tx.metadata?.reason || '—'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+              {/* Tab content */}
+              <div className="sa-tab-content sa-scroll">
 
-                {historyPagination.totalPages > 1 && (
-                  <div className="sa-pagination" style={{ marginTop: 12, border: '1px solid var(--border-color)', borderRadius: 8 }}>
-                    <span>Page {historyPagination.page} of {historyPagination.totalPages}</span>
-                    <div className="sa-toolbar">
-                      <button
-                        type="button"
-                        className="sa-btn sa-btn--sm sa-btn--ghost"
-                        disabled={historyPage <= 1}
-                        onClick={() => setHistoryPage((p) => p - 1)}
-                      >
-                        <ChevronLeft size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        className="sa-btn sa-btn--sm sa-btn--ghost"
-                        disabled={historyPage >= historyPagination.totalPages}
-                        onClick={() => setHistoryPage((p) => p + 1)}
-                      >
-                        <ChevronRight size={14} />
-                      </button>
+                {activeTab === 'profile' && (
+                  <div className="sa-tab-pane">
+                    {/* Avatar + identity block */}
+                    <div className="sa-profile-identity">
+                      <div className="sa-profile-avatar">
+                        {(detail?.name || selectedListUser?.name || '?')[0].toUpperCase()}
+                      </div>
+                      <div className="sa-profile-identity-info">
+                        <span className="sa-profile-display-name">
+                          {detail?.name || selectedListUser?.name || 'Unknown user'}
+                        </span>
+                        <span className="sa-profile-display-email">
+                          {detail?.email || selectedListUser?.email}
+                        </span>
+                        {selectedListUser?.isPlatformSuperadmin && (
+                          <span className="sa-badge sa-badge--admin" style={{ marginTop: 4, width: 'fit-content' }}>Superadmin</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Stats row */}
+                    <div className="sa-profile-stats">
+                      <div className="sa-profile-stat">
+                        <span>Balance</span>
+                        <strong style={{ color: 'var(--primary)' }}>{formatAc(detail?.personalCredits)}</strong>
+                      </div>
+                      <div className="sa-profile-stat-divider" />
+                      <div className="sa-profile-stat">
+                        <span>Member since</span>
+                        <strong>{selectedListUser?.createdAt ? formatShortDate(selectedListUser.createdAt) : '—'}</strong>
+                      </div>
+                      <div className="sa-profile-stat-divider" />
+                      <div className="sa-profile-stat">
+                        <span>Role</span>
+                        <strong>{selectedListUser?.isPlatformSuperadmin ? 'Superadmin' : 'User'}</strong>
+                      </div>
+                    </div>
+
+                    {/* Detail rows */}
+                    <div className="sa-profile-grid">
+                      <div className="sa-profile-item">
+                        <span>Full name</span>
+                        <strong>{detail?.name || '—'}</strong>
+                      </div>
+                      <div className="sa-profile-item">
+                        <span>Email address</span>
+                        <strong style={{ wordBreak: 'break-all' }}>{detail?.email || '—'}</strong>
+                      </div>
+                      <div className="sa-profile-item">
+                        <span>Joined</span>
+                        <strong>{selectedListUser?.createdAt ? formatDate(selectedListUser.createdAt) : '—'}</strong>
+                      </div>
+                      <div className="sa-profile-item">
+                        <span>User ID</span>
+                        <strong style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--text-muted)', wordBreak: 'break-all' }}>{detail?.userId || selectedListUser?.id || '—'}</strong>
+                      </div>
                     </div>
                   </div>
                 )}
-              </>
-            )}
-          </div>
+
+                {activeTab === 'credits' && (
+                  <div className="sa-tab-pane">
+                    {actionMessage && <div className="sa-alert sa-alert--success">{actionMessage}</div>}
+                    {actionError && <div className="sa-alert sa-alert--error">{actionError}</div>}
+                    <div className="sa-action-row">
+                      <CreditActionCard mode="grant" loading={actionLoading} onSubmit={(p) => handleCreditAction('grant', p)} />
+                      <CreditActionCard mode="revoke" loading={actionLoading} disabled={!detail?.personalCredits} onSubmit={(p) => handleCreditAction('revoke', p)} />
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'history' && (
+                  <div className="sa-tab-pane">
+                    <div className="sa-history-toolbar">
+                      <span className="sa-section-label" style={{ margin: 0 }}>
+                        Transactions
+                        {history.length > 0 && (
+                          <span className="sa-card-header-count" style={{ marginLeft: 8 }}>{history.length}</span>
+                        )}
+                      </span>
+                      <select className="sa-select" value={historyType} onChange={(e) => { setHistoryType(e.target.value); setHistoryPage(1) }} aria-label="Filter transaction type">
+                        <option value="">All types</option>
+                        <option value="platform_grant">Platform grant</option>
+                        <option value="platform_revoke">Platform revoke</option>
+                        <option value="usage">Usage</option>
+                        <option value="allocation">Allocation</option>
+                        <option value="deallocation">Deallocation</option>
+                        <option value="refund">Refund</option>
+                      </select>
+                    </div>
+
+                    {history.length === 0 ? (
+                      <div className="sa-empty" style={{ padding: '40px 0' }}>No transactions yet.</div>
+                    ) : (
+                      <div className="sa-tx-feed">
+                        {history.map((tx) => {
+                          const isPos = tx.amount > 0
+                          const typeColors = {
+                            platform_grant:  { bg: '#22c55e', label: 'Grant' },
+                            platform_revoke: { bg: '#ef4444', label: 'Revoke' },
+                            usage:           { bg: '#f59e0b', label: 'Usage' },
+                            allocation:      { bg: '#38bdf8', label: 'Allocation' },
+                            deallocation:    { bg: '#a78bfa', label: 'Dealloc' },
+                            refund:          { bg: '#34d399', label: 'Refund' },
+                          }
+                          const tc = typeColors[tx.type] || { bg: 'var(--text-muted)', label: txTypeLabel(tx.type) }
+                          return (
+                            <div key={tx.id} className="sa-tx-row">
+                              <div className="sa-tx-dot" style={{ background: `color-mix(in srgb, ${tc.bg} 20%, var(--bg-card))`, borderColor: `color-mix(in srgb, ${tc.bg} 35%, var(--border-color))` }}>
+                                <span style={{ width: 7, height: 7, borderRadius: '50%', background: tc.bg, flexShrink: 0 }} />
+                              </div>
+                              <div className="sa-tx-body">
+                                <div className="sa-tx-top">
+                                  <span className="sa-tx-type" style={{ color: tc.bg }}>{tc.label}</span>
+                                  <span className="sa-tx-ref">{tx.reference || tx.metadata?.reason || '—'}</span>
+                                </div>
+                                <div className="sa-tx-bottom">
+                                  <span className="sa-tx-date">{formatDate(tx.createdAt)}</span>
+                                </div>
+                              </div>
+                              <span className={`sa-tx-amount ${isPos ? 'sa-amount--positive' : 'sa-amount--negative'}`}>
+                                {isPos ? '+' : ''}{formatAc(tx.amount)}
+                              </span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+
+                    {historyPagination.totalPages > 1 && (
+                      <div className="sa-pagination" style={{ marginTop: 12, border: '1px solid var(--border-color)', borderRadius: 8 }}>
+                        <span>Page {historyPagination.page} of {historyPagination.totalPages}</span>
+                        <div className="sa-toolbar">
+                          <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost" disabled={historyPage <= 1} onClick={() => setHistoryPage((p) => p - 1)}><ChevronLeft size={14} /></button>
+                          <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost" disabled={historyPage >= historyPagination.totalPages} onClick={() => setHistoryPage((p) => p + 1)}><ChevronRight size={14} /></button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
