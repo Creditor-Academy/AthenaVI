@@ -24,18 +24,20 @@ const CATEGORY_ICONS = {
   'Pitch': BusinessImg,
   'Product Launch': MarketingImg,
   'Course Module': EducationImg,
+  'Course Explanation': EducationImg,
   'Sales Demo': BusinessImg,
   'Social Short': MarketingImg,
   'Podcast': MarketingImg,
 }
 
-const CATEGORY_FILTERS = ['All Templates', 'Pitch', 'Product Launch', 'Course Module', 'Sales Demo', 'Social Short', 'Podcast']
+const CATEGORY_FILTERS = ['All Templates', 'Pitch', 'Product Launch', 'Course Module', 'Course Explanation', 'Sales Demo', 'Social Short', 'Podcast']
 
 const CATEGORY_MAPPING = {
   'All Templates': null,
   'Pitch': 'Pitch',
   'Product Launch': 'Product Launch',
   'Course Module': 'Course Module',
+  'Course Explanation': 'Course Explanation',
   'Sales Demo': 'Sales Demo',
   'Social Short': 'Social Short',
   'Podcast': 'Podcast',

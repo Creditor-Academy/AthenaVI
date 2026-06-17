@@ -187,7 +187,7 @@ const TemplateBundlePicker = ({
     return (
       <div style={bundleGridStyle}>
         {filteredBundles.map((bundle) => (
-          <BundleCard key={bundle.id} bundle={bundle} onOpen={setActiveBundle} />
+          <BundleCard key={bundle.file || bundle.id} bundle={bundle} onOpen={setActiveBundle} />
         ))}
       </div>
     );

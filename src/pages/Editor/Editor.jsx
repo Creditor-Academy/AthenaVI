@@ -46,7 +46,7 @@ import {
   nextHeygenSceneId,
   pollUntilHeygenPlaybackReady,
 } from '../../utils/heygenVideo'
-import { exportFullProjectVideo } from '../../utils/projectRender'
+import { downloadFinalRenderStream, exportFullProjectVideo } from '../../utils/projectRender'
 import {
   applyDurationToSceneClips,
   buildSceneDurationPatch,
@@ -360,6 +360,8 @@ function Create({ onBack, initialConfig = null }) {
   const [musicDuration, setMusicDuration] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [exportReady, setExportReady] = useState(null) // { renderId, filename, workspaceId, projectId }
+  const [isDownloadingExport, setIsDownloadingExport] = useState(false)
   const [creditsRefreshKey, setCreditsRefreshKey] = useState(0)
   const bumpCreditsRefresh = useCallback(() => {
     setCreditsRefreshKey((key) => key + 1)
@@ -1598,6 +1600,7 @@ function Create({ onBack, initialConfig = null }) {
     setExportStatus('Saving project…')
     setExportError('')
     setIsExporting(true)
+    setExportReady(null)
 
     try {
       const result = await exportFullProjectVideo({
@@ -1606,6 +1609,8 @@ function Create({ onBack, initialConfig = null }) {
         projectId,
         projectState: projectRef.current,
         filename,
+        autoDownload: false,
+        forceRebuild: false,
         onStatus: setExportStatus,
       })
       if (result?.projectState?.scenes) {
@@ -1616,7 +1621,13 @@ function Create({ onBack, initialConfig = null }) {
         }))
       }
       setExportPhase('success')
-      showToast('Download started', 'success')
+      setExportReady({
+        workspaceId,
+        projectId,
+        renderId: result?.renderId,
+        filename: result?.filename || `${projectRef.current?.title || filename || 'video'}.mp4`,
+      })
+      showToast('Render ready', 'success')
       bumpCreditsRefresh()
     } catch (err) {
       console.error('[Export] Full render download failed:', err)
@@ -1627,12 +1638,39 @@ function Create({ onBack, initialConfig = null }) {
     }
   }
 
+  const handleDownloadExport = async () => {
+    const info = exportReady
+    if (!info?.workspaceId || !info?.projectId || !info?.renderId) {
+      showToast('Missing render info. Export again.', 'error')
+      return
+    }
+    if (isDownloadingExport) return
+
+    setIsDownloadingExport(true)
+    try {
+      await downloadFinalRenderStream({
+        workspaceService,
+        workspaceId: info.workspaceId,
+        projectId: info.projectId,
+        renderId: info.renderId,
+        filename: info.filename,
+      })
+      showToast('Download started', 'success')
+    } catch (e) {
+      showToast(e?.message || 'Download failed', 'error')
+    } finally {
+      setIsDownloadingExport(false)
+    }
+  }
+
   const handleCloseExportModal = () => {
     if (isExporting) return
     setShowExportModal(false)
     setExportPhase('configure')
     setExportStatus('')
     setExportError('')
+    setExportReady(null)
+    setIsDownloadingExport(false)
   }
 
   const handlePreview = () => {
@@ -2652,6 +2690,9 @@ function Create({ onBack, initialConfig = null }) {
         statusMessage={exportStatus}
         errorMessage={exportError}
         onStartExport={handleStartExport}
+        onDownload={exportPhase === 'success' ? handleDownloadExport : undefined}
+        readyFilename={exportReady?.filename || ''}
+        downloading={isDownloadingExport}
       />
       <EditorTopbar
         onBack={onBack}

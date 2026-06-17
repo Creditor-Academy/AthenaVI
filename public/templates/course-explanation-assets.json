@@ -1,0 +1,82 @@
+{
+  "theme": {
+    "name": "Clear Classroom",
+    "fonts": {
+      "display": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+      "serif": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+      "sans": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+      "accent": "\"Source Serif 4\", Georgia, serif"
+    }
+  },
+  "presenter": {
+    "name": "Instructor"
+  },
+  "colors": {
+    "navy": "#1E3A5F",
+    "navyDeep": "#0F2744",
+    "sky": "#3B82F6",
+    "skyLight": "#DBEAFE",
+    "skyPale": "#EFF6FF",
+    "mint": "#10B981",
+    "mintLight": "#D1FAE5",
+    "indigo": "#6366F1",
+    "violet": "#8B5CF6",
+    "cream": "#F8FAFC",
+    "ice": "#F1F5F9",
+    "white": "#FFFFFF",
+    "ink": "#0F172A",
+    "slate": "#334155",
+    "muted": "#64748B",
+    "line": "#E2E8F0",
+    "panelDark": "#1E3A5F",
+    "accent": "#0EA5E9"
+  },
+  "backgrounds": [
+    { "id": "bg-cream", "name": "Classroom Cream", "value": "#F8FAFC" },
+    { "id": "bg-ice", "name": "Soft Ice", "value": "#F1F5F9" },
+    { "id": "bg-white", "name": "Clean White", "value": "#FFFFFF" },
+    { "id": "bg-sky-pale", "name": "Sky Pale", "value": "#EFF6FF" },
+    { "id": "bg-mint-pale", "name": "Mint Pale", "value": "#ECFDF5" },
+    { "id": "bg-navy", "name": "Classroom Navy", "value": "#1E3A5F" },
+    { "id": "bg-gradient-sky", "name": "Sky Gradient", "value": "linear-gradient(145deg, #FFFFFF 0%, #EFF6FF 55%, #DBEAFE 100%)" },
+    { "id": "bg-gradient-navy", "name": "Navy Gradient", "value": "linear-gradient(165deg, #0F2744 0%, #1E3A5F 55%, #1E40AF 100%)" },
+    { "id": "bg-gradient-mint", "name": "Mint Gradient", "value": "linear-gradient(160deg, #ECFDF5 0%, #F8FAFC 60%, #EFF6FF 100%)" }
+  ],
+  "images": [
+    { "id": "ce-cover", "name": "Lesson Cover", "role": "hero-image", "thumb": "https://images.pexels.com/photos/5212345/pexels-photo-5212345.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/5212345/pexels-photo-5212345.jpeg" },
+    { "id": "ce-classroom", "name": "Modern Classroom", "role": "hero-image", "thumb": "https://images.pexels.com/photos/8199165/pexels-photo-8199165.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/8199165/pexels-photo-8199165.jpeg" },
+    { "id": "ce-whiteboard", "name": "Whiteboard", "role": "hero-image", "thumb": "https://images.pexels.com/photos/4145153/pexels-photo-4145153.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/4145153/pexels-photo-4145153.jpeg" },
+    { "id": "ce-laptop", "name": "Online Learning", "role": "hero-image", "thumb": "https://images.pexels.com/photos/414422/pexels-photo-414422.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/414422/pexels-photo-414422.jpeg" },
+    { "id": "ce-study", "name": "Study Session", "role": "hero-image", "thumb": "https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg" },
+    { "id": "ce-team", "name": "Team Learning", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg" },
+    { "id": "ce-books", "name": "Books & Notes", "role": "hero-image", "thumb": "https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg" },
+    { "id": "ce-diagram", "name": "Concept Diagram", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg" },
+    { "id": "ce-example-a", "name": "Example A", "role": "hero-image", "thumb": "https://images.pexels.com/photos/7688336/pexels-photo-7688336.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/7688336/pexels-photo-7688336.jpeg" },
+    { "id": "ce-example-b", "name": "Example B", "role": "hero-image", "thumb": "https://images.pexels.com/photos/256541/pexels-photo-256541.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/256541/pexels-photo-256541.jpeg" },
+    { "id": "ce-example-c", "name": "Example C", "role": "hero-image", "thumb": "https://images.pexels.com/photos/957024/pexels-photo-957024.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/957024/pexels-photo-957024.jpeg" },
+    { "id": "ce-logo", "name": "Academy Logo", "role": "logo", "thumb": "https://placehold.co/200x48/1E3A5F/ffffff?text=ACADEMY", "src": "https://placehold.co/320x64/1E3A5F/ffffff?text=YOUR+ACADEMY" }
+  ],
+  "icons": [
+    { "id": "check", "name": "Check", "category": "course", "src": "https://img.icons8.com/ios-filled/96/10B981/checkmark.png" },
+    { "id": "book", "name": "Book", "category": "course", "src": "https://img.icons8.com/ios-filled/96/1E3A5F/book.png" },
+    { "id": "brain", "name": "Learn", "category": "course", "src": "https://img.icons8.com/ios-filled/96/3B82F6/brain.png" },
+    { "id": "bulb", "name": "Idea", "category": "course", "src": "https://img.icons8.com/ios-filled/96/6366F1/idea.png" },
+    { "id": "steps", "name": "Steps", "category": "course", "src": "https://img.icons8.com/ios-filled/96/3B82F6/process.png" },
+    { "id": "quote", "name": "Quote", "category": "course", "src": "https://img.icons8.com/ios-filled/96/3B82F6/quote-left.png" },
+    { "id": "chart", "name": "Chart", "category": "course", "src": "https://img.icons8.com/ios-filled/96/10B981/combo-chart.png" },
+    { "id": "target", "name": "Target", "category": "course", "src": "https://img.icons8.com/ios-filled/96/6366F1/bullseye.png" },
+    { "id": "play", "name": "Play", "category": "course", "src": "https://img.icons8.com/ios-filled/96/FFFFFF/circled-play.png" },
+    { "id": "arrow", "name": "Arrow", "category": "course", "src": "https://img.icons8.com/ios-filled/96/FFFFFF/circled-chevron-right.png" },
+    { "id": "globe", "name": "Website", "category": "course", "src": "https://img.icons8.com/ios-filled/96/3B82F6/globe.png" }
+  ],
+  "shapes": [
+    { "id": "ce-card", "name": "Classroom Card", "category": "course-explanation", "role": "decoration", "style": { "backgroundColor": "#FFFFFF", "borderRadius": "20px", "boxShadow": "0 18px 44px rgba(15,23,42,0.08)", "border": "1px solid #E2E8F0" } },
+    { "id": "ce-card-dark", "name": "Navy Card", "category": "course-explanation", "role": "decoration", "style": { "backgroundColor": "#1E3A5F", "borderRadius": "22px", "boxShadow": "0 22px 52px rgba(15,39,68,0.22)" } },
+    { "id": "ce-slide-badge", "name": "Slide Badge", "category": "course-explanation", "role": "decoration", "style": { "width": "44px", "height": "44px", "backgroundColor": "#1E3A5F", "borderRadius": "50%", "border": "2px solid #3B82F6" } },
+    { "id": "ce-blob-sky", "name": "Sky Blob", "category": "course-explanation", "role": "decoration", "style": { "backgroundColor": "#DBEAFE", "borderRadius": "50%", "opacity": "0.55" } },
+    { "id": "ce-quote-bar", "name": "Quote Card", "category": "course-explanation", "role": "decoration", "style": { "backgroundColor": "#FFFFFF", "borderRadius": "18px", "borderLeft": "4px solid #3B82F6", "boxShadow": "0 14px 36px rgba(15,23,42,0.06)" } },
+    { "id": "ce-stat-tile", "name": "Stat Tile", "category": "course-explanation", "role": "decoration", "style": { "backgroundColor": "#FFFFFF", "borderRadius": "16px", "border": "1px solid #E2E8F0", "boxShadow": "0 12px 32px rgba(15,23,42,0.06)" } },
+    { "id": "ce-icon-badge", "name": "Icon Badge", "category": "course-explanation", "role": "decoration", "style": { "width": "52px", "height": "52px", "backgroundColor": "#EFF6FF", "borderRadius": "50%" } },
+    { "id": "ce-navy-panel", "name": "Navy Panel", "category": "course-explanation", "role": "decoration", "style": { "backgroundColor": "#1E3A5F", "borderRadius": "24px" } }
+  ]
+}

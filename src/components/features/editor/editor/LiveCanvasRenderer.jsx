@@ -27,6 +27,7 @@ import { getClipTransformCenter } from '../../../../utils/canvasTransformUtils'
 import CanvasGuidesOverlay from './CanvasGuidesOverlay'
 import SelectionOverlay from './SelectionOverlay'
 import SelectionQuickToolbar from './SelectionQuickToolbar'
+import { PreviewModeProvider } from '../../../../contexts/PreviewModeContext'
 import { measureTextContentSize } from '../../../../utils/canvasTransformUtils'
 import './TextSidebarPanel.css'
 import './SelectionQuickToolbar.css'
@@ -820,6 +821,7 @@ const LiveCanvasRenderer = ({
   showSafeZone = true,
   gridSize = 20,
   overlayMode = false,
+  staticPreview = false,
   scaleMode = 'contain',
   compositionWidth = 1920,
   compositionHeight = 1080,
@@ -975,6 +977,7 @@ const LiveCanvasRenderer = ({
   }, [onCanvasDrop, displayScale, displayOffset, compositionWidth, compositionHeight])
 
   return (
+    <PreviewModeProvider staticEntrance={staticPreview}>
     <div
       ref={containerRef}
       onClick={() => onDeselect && onDeselect()}
@@ -1059,6 +1062,7 @@ const LiveCanvasRenderer = ({
         </div>
       )}
     </div>
+    </PreviewModeProvider>
   )
 }
 

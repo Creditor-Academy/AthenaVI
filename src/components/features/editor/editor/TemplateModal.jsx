@@ -13,12 +13,13 @@ const TemplateModal = ({
   handleApplyTemplateBundle,
   handleAddBlankScene,
 }) => {
-  const { bundles, loading } = useTemplateBundles('All')
+  const { bundles, loading, refetch } = useTemplateBundles('All')
 
   useEffect(() => {
     if (!showTemplateModal) return;
+    refetch();
     fetchTemplateAvatarLookSet(TEMPLATE_AVATAR_LOOK_COUNT).catch(() => {});
-  }, [showTemplateModal]);
+  }, [showTemplateModal, refetch]);
 
   if (!showTemplateModal) return null
 

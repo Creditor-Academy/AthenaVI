@@ -21,7 +21,7 @@ function normalizeBundle(data, source) {
 
   return {
     id: meta.id || source.file,
-    name: source.label || meta.name || source.category,
+    name: meta.name || source.label || source.category,
     label: source.label,
     category,
     file: source.file,
@@ -50,15 +50,25 @@ export async function fetchTemplateBundle(file) {
 }
 
 export async function fetchTemplateBundles() {
+  const seenFiles = new Set();
   const bundles = await Promise.all(
     TEMPLATE_BUNDLE_SOURCES.map(async (source) => {
+      if (seenFiles.has(source.file)) return null;
+      seenFiles.add(source.file);
       try {
-        const res = await fetch(`/templates/${source.file}.json`);
-        if (!res.ok) return null;
+        const res = await fetch(`/templates/${source.file}.json`, { cache: 'no-store' });
+        if (!res.ok) {
+          console.warn(`[templates] Failed to load ${source.file}.json (${res.status})`);
+          return null;
+        }
         const data = await res.json();
-        if (!data?.scenes?.length) return null;
+        if (!data?.scenes?.length) {
+          console.warn(`[templates] ${source.file}.json has no scenes`);
+          return null;
+        }
         return normalizeBundle(data, source);
-      } catch {
+      } catch (err) {
+        console.warn(`[templates] Error loading ${source.file}.json`, err);
         return null;
       }
     })

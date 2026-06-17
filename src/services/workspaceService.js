@@ -789,6 +789,25 @@ class WorkspaceService {
     }
   }
 
+  async streamRender(workspaceId, projectId, renderId) {
+    try {
+      const response = await fetch(
+        buildUrl(`/api/workspaces/${workspaceId}/projects/${projectId}/renders/${renderId}/stream`),
+        {
+          method: 'GET',
+          headers: getAuthHeaders(),
+          cache: 'no-store',
+        }
+      );
+
+      // Caller handles non-OK to support reading JSON error bodies.
+      return response;
+    } catch (error) {
+      console.error('Error in streamRender:', error);
+      throw error;
+    }
+  }
+
   // --- Speech generation (voice-only narration) ---
 
   async createSpeechGeneration(workspaceId, projectId, payload) {

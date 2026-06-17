@@ -89,7 +89,7 @@ const TemplateScenePreview = ({ template, className = '' }) => {
     >
       {scene ? (
         <div style={{ position: 'absolute', inset: 0 }}>
-          <LiveCanvasRenderer scene={scene} overlayMode={false} />
+          <LiveCanvasRenderer scene={scene} overlayMode={false} staticPreview />
         </div>
       ) : null}
     </div>
