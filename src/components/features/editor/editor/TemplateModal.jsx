@@ -1,67 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import {
-  MdClose, MdSearch, MdAutoAwesome,
+  MdClose, MdAdd,
 } from 'react-icons/md'
 import TemplateBundlePicker from './TemplateBundlePicker'
 import useTemplateBundles from '../../../../hooks/useTemplateBundles'
 import { fetchTemplateAvatarLookSet, TEMPLATE_AVATAR_LOOK_COUNT } from '../../../../utils/templateAvatarPreview'
-
-import AllTemplateImg from '../../../../assets/Template Image/AllTemplate.png'
-import MarketingImg from '../../../../assets/Template Image/Marketing.png'
-import EducationImg from '../../../../assets/Template Image/Educational.png'
-import BusinessImg from '../../../../assets/Template Image/Coporate.png'
-
-const categories = [
-  {
-    id: 'All',
-    label: 'All Templates',
-    previews: [AllTemplateImg]
-  },
-  {
-    id: 'pitch',
-    label: 'Pitch',
-    previews: [BusinessImg]
-  },
-  {
-    id: 'product launch',
-    label: 'Product Launch',
-    previews: [MarketingImg]
-  },
-  {
-    id: 'course module',
-    label: 'Course Module',
-    previews: [EducationImg]
-  },
-  {
-    id: 'sales demo',
-    label: 'Sales Demo',
-    previews: [BusinessImg]
-  },
-  {
-    id: 'social short',
-    label: 'Social Short',
-    previews: [MarketingImg]
-  },
-  {
-    id: 'podcast',
-    label: 'Podcast',
-    previews: [MarketingImg]
-  },
-];
-
-const layoutTypes = ['All Layouts', 'Hero', 'Split', 'Centered', 'Grid', 'Story'];
 
 const TemplateModal = ({
   showTemplateModal,
   setShowTemplateModal,
   handleAddTemplateScene,
   handleApplyTemplateBundle,
+  handleAddBlankScene,
 }) => {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [activeCategory, setActiveCategory] = useState('All')
-  const [activeLayout, setActiveLayout] = useState('All Layouts')
-  
-  const { bundles, loading } = useTemplateBundles(activeCategory)
+  const { bundles, loading } = useTemplateBundles('All')
 
   useEffect(() => {
     if (!showTemplateModal) return;
@@ -72,89 +24,44 @@ const TemplateModal = ({
 
   return (
     <div className="modal-overlay template-selector-overlay">
-      <div className="template-modal-modern">
-        {/* Sidebar */}
-        <aside className="template-sidebar">
-          <div className="sidebar-header">
-            <MdAutoAwesome className="logo-icon" />
-            <span>Categories</span>
+      <div className="template-modal-clean">
+        <header className="template-clean__header">
+          <div className="template-clean__title">
+            <h2>Choose a template</h2>
+            <p>Start from a bundle, or add a blank scene.</p>
           </div>
-          <nav className="sidebar-nav">
-            {categories.map(cat => (
-              <button
-                key={cat.id}
-                className={`nav-item ${activeCategory === cat.label || activeCategory === cat.id ? 'active' : ''}`}
-                onClick={() => setActiveCategory(cat.id)}
-              >
-                <span className="nav-label-text">{cat.label}</span>
-                <div className="mini-previews">
-                  {cat.previews.map((src, i) => (
-                    <div key={i} className="mini-img" style={{ backgroundImage: `url(${src})`, zIndex: cat.previews.length - i }} />
-                  ))}
-                </div>
-              </button>
-            ))}
-          </nav>
-        </aside>
-
-        {/* Main Content */}
-        <main className="template-main">
-          {/* Header */}
-          <header className="template-header">
-            <div className="header-text">
-              <h2>Choose a template group</h2>
-              <p>
-                Pick a bundle to apply all scenes, or open it and add individual layouts
-                {activeCategory === 'All' ? '' : ` for ${activeCategory}`}.
-              </p>
-            </div>
-            <button className="close-btn" onClick={() => setShowTemplateModal(false)}>
-              <MdClose size={24} />
+          <div className="template-clean__actions">
+            <button
+              type="button"
+              className="template-clean__blank-btn"
+              onClick={() => handleAddBlankScene?.()}
+              title="Add blank scene"
+            >
+              <MdAdd size={18} />
+              Blank scene
             </button>
-          </header>
-
-          {/* Filters Bar */}
-          <div className="filters-bar">
-            <div className="search-box">
-              <MdSearch className="search-icon" />
-              <input
-                type="text"
-                placeholder="Search templates or tags..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <div className="layout-filters">
-              {layoutTypes.map(layout => (
-                <button
-                  key={layout}
-                  className={`layout-pill ${activeLayout === layout ? 'active' : ''}`}
-                  onClick={() => setActiveLayout(layout)}
-                >
-                  {layout}
-                </button>
-              ))}
-            </div>
+            <button className="close-btn" onClick={() => setShowTemplateModal(false)} aria-label="Close">
+              <MdClose size={22} />
+            </button>
           </div>
+        </header>
 
-          {/* Templates Grid Area */}
-          <div className="templates-grid-area premium-scrollbar">
-            <TemplateBundlePicker
-              bundles={bundles}
-              loading={loading}
-              searchQuery={searchQuery}
-              activeLayout={activeLayout}
-              onSelectScene={(scene) => {
-                handleAddTemplateScene(scene);
-                setShowTemplateModal(false);
-              }}
-              onApplyBundle={(bundle) => {
-                handleApplyTemplateBundle?.(bundle);
-                setShowTemplateModal(false);
-              }}
-            />
-          </div>
-        </main>
+        <div className="template-clean__body premium-scrollbar">
+          <TemplateBundlePicker
+            bundles={bundles}
+            loading={loading}
+            searchQuery=""
+            activeLayout="All Layouts"
+            onSelectScene={(scene) => {
+              handleAddTemplateScene(scene)
+              setShowTemplateModal(false)
+            }}
+            onApplyBundle={(bundle) => {
+              handleApplyTemplateBundle?.(bundle)
+              setShowTemplateModal(false)
+            }}
+          />
+        </div>
       </div>
 
       <style>{`
@@ -169,188 +76,79 @@ const TemplateModal = ({
           z-index: 2000;
         }
 
-        .template-modal-modern {
-          width: 90vw;
-          height: 85vh;
-          max-width: 1200px;
+        .template-modal-clean {
+          width: min(1120px, 92vw);
+          height: min(84vh, 760px);
           background: #ffffff;
-          border-radius: 20px;
-          display: flex;
+          border-radius: 18px;
           overflow: hidden;
+          display: flex;
+          flex-direction: column;
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+          border: 1px solid rgba(255,255,255,0.2);
         }
 
-        /* Sidebar */
-        .template-sidebar {
-          width: 300px;
-          background: #fcfcfd;
-          border-right: 1px solid #e6e8eaff;
-          padding: 28px 0;
+        .template-clean__header {
           display: flex;
-          flex-direction: column;
-          flex-shrink: 0;
-          position: relative;
-        }
-
-        .template-sidebar::after {
-          content: "";
-          position: absolute;
-          top: 0;
-          right: 0;
-          width: 1px;
-          height: 100%;
-          background: linear-gradient(
-            to bottom,
-            transparent,
-            rgba(0,0,0,0.08),
-            transparent
-          );
-}
-
-        .sidebar-header {
-          padding: 0 28px 24px;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          font-weight: 700;
-          color: #0f172a;
-          font-size: 18px;
-        }
-
-        .logo-icon { color: #3b82f6; font-size: 22px; }
-
-        .sidebar-nav { 
-          display: flex; 
-          flex-direction: column; 
-          gap: 6px; 
-          padding: 0 16px; 
-        }
-
-        .nav-item {
-          display: flex;
-          flex-direction: row;
           align-items: center;
           justify-content: space-between;
-          padding: 16px 24px;
-          border: none;
-          background: transparent;
-          color: #475569;
-          font-weight: 600;
-          border-radius: 14px;
-          cursor: pointer;
-          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-          text-align: left;
-          width: 280px;
-          font-size: 15px;
-          gap: 20px;
-        }
-
-        .nav-label-text {
-          flex: 1;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .mini-previews {
-          display: flex;
-          align-items: center;
-          position: relative;
-          height: 42px;
-          width: 72px;
-          flex-shrink: 0;
-        }
-
-       .mini-img {
-          width: 60px;
-          height: 42px;
-          background-size: cover;
-          background-position: center;
-          border-radius: 6px;
-          border: none;           
-          box-shadow: none;
-          background-color: transparent;
-        }
-
-        .mini-previews .mini-img:nth-child(2) {
-          right: 18px;
-          opacity: 0.6;
-          transform: scale(0.92);
-        }
-
-        .nav-item:hover { background: #f1f5f9; color: #0f172a; }
-        .nav-item.active { 
-          background: #3b82f6; 
-          color: #ffffff; 
-          box-shadow: 0 10px 20px -8px rgba(59, 130, 246, 0.4);
-        }
-
-        .nav-item.active .mini-img { border-color: rgba(255,255,255,0.5); }
-
-        /* Main Area */
-        .template-main { flex: 1; display: flex; flex-direction: column; background: #fff; min-width: 0; }
-
-        .template-header {
-          padding: 24px 32px;
-          border-bottom: 1px solid #f1f5f9;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .header-text h2 { margin: 0; font-size: 22px; color: #0f172a; font-weight: 700; }
-        .header-text p { margin: 4px 0 0; color: #64748b; font-size: 14px; }
-
-        .close-btn { background: transparent; border: none; cursor: pointer; color: #94a3b8; }
-        .close-btn:hover { color: #0f172a; }
-
-        /* Filters Bar */
-        .filters-bar {
-          padding: 16px 32px;
-          background: #fff;
-          border-bottom: 1px solid #f1f5f9;
-          display: flex;
-          flex-direction: column;
           gap: 16px;
+          padding: 18px 20px;
+          border-bottom: 1px solid #eef2f7;
+          background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
         }
 
-        .search-box {
-          position: relative;
-          width: 100%;
+        .template-clean__title h2 {
+          margin: 0;
+          font-size: 18px;
+          font-weight: 800;
+          color: #0f172a;
+          letter-spacing: -0.02em;
         }
 
-        .search-box input {
-          width: 100%;
-          padding: 10px 10px 10px 40px;
-          border: 1px solid #e2e8f0;
-          border-radius: 10px;
-          background: #f8fafc;
-          font-size: 14px;
-        }
-
-        .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
-
-        .layout-filters { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
-        .layout-filters::-webkit-scrollbar { display: none; }
-
-        .layout-pill {
-          padding: 6px 16px;
-          border: 1px solid #e2e8f0;
-          border-radius: 100px;
-          background: #fff;
+        .template-clean__title p {
+          margin: 4px 0 0;
           font-size: 13px;
-          font-weight: 500;
           color: #64748b;
-          cursor: pointer;
-          white-space: nowrap;
-          transition: all 0.2s;
         }
 
-        .layout-pill:hover { border-color: #3b82f6; color: #3b82f6; }
-        .layout-pill.active { background: #1e293b; color: #fff; border-color: #1e293b; }
+        .template-clean__actions {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          flex-shrink: 0;
+        }
 
-        /* Grid Area */
-        .templates-grid-area { flex: 1; overflow-y: auto; padding: 24px 32px; background: #fafafa; }
+        .template-clean__blank-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 12px;
+          border-radius: 12px;
+          border: 1px solid #e2e8f0;
+          background: #ffffff;
+          color: #0f172a;
+          cursor: pointer;
+          font-weight: 800;
+          font-size: 13px;
+          transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+        }
+
+        .template-clean__blank-btn:hover {
+          transform: translateY(-1px);
+          border-color: #cbd5e1;
+          box-shadow: 0 10px 20px -14px rgba(0, 0, 0, 0.18);
+        }
+
+        .close-btn { background: transparent; border: none; cursor: pointer; color: #94a3b8; padding: 6px; border-radius: 10px; }
+        .close-btn:hover { color: #0f172a; background: rgba(15, 23, 42, 0.06); }
+
+        .template-clean__body {
+          flex: 1;
+          overflow-y: auto;
+          padding: 18px 20px;
+          background: #fafafa;
+        }
 
         .templates-grid {
           display: grid;
@@ -480,11 +278,11 @@ const TemplateModal = ({
           100% { background-position: -200% 0; }
         }
 
-        @media (max-width: 992px) {
-          .template-sidebar { width: 240px; }
-          .nav-item { padding: 12px 16px; font-size: 13px; }
-          .template-modal-modern { width: 98vw; height: 95vh; }
-          .mini-previews { width: 40px; transform: scale(0.85); transform-origin: right; }
+        @media (max-width: 720px) {
+          .template-modal-clean { width: 96vw; height: 92vh; border-radius: 16px; }
+          .template-clean__header { padding: 14px 14px; }
+          .template-clean__body { padding: 14px 14px; }
+          .template-clean__title p { display: none; }
         }
       `}</style>
     </div>

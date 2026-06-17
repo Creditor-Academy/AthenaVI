@@ -1354,6 +1354,62 @@ function Create({ onBack, initialConfig = null }) {
     setShowTemplateModal(true)
   }
 
+  const handleAddBlankScene = () => {
+    const insertAfter = insertAfterIndexRef.current
+    insertAfterIndexRef.current = null
+
+    let nextActiveSceneId = null
+    setProject((prev) => {
+      const maybeDefault = prev.scenes?.length === 1 ? prev.scenes[0] : null
+      const isDefaultSingleScene =
+        !!maybeDefault &&
+        (maybeDefault.id === 'lt_001' || maybeDefault.title === 'Intro' || maybeDefault.title === 'Hero Scene') &&
+        ((maybeDefault.clips?.length ?? 0) === 0)
+
+      const newSceneId = isDefaultSingleScene
+        ? maybeDefault.id
+        : `scene_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`
+
+      nextActiveSceneId = newSceneId
+
+      const baseOrder = isDefaultSingleScene ? 0 : prev.scenes.length
+      const blank = ensureSceneIdentity(
+        {
+          id: newSceneId,
+          sceneId: newSceneId,
+          title: 'Blank Scene',
+          duration: 8,
+          background: { value: '#ffffff' },
+          clips: [],
+          order: baseOrder,
+        },
+        baseOrder
+      )
+
+      let newScenes
+      if (isDefaultSingleScene) {
+        newScenes = [blank]
+      } else if (insertAfter != null && insertAfter >= 0 && insertAfter < prev.scenes.length) {
+        newScenes = [
+          ...prev.scenes.slice(0, insertAfter + 1),
+          blank,
+          ...prev.scenes.slice(insertAfter + 1),
+        ].map((s, idx) => ensureSceneIdentity({ ...s, order: idx }, idx))
+      } else {
+        newScenes = [...prev.scenes, blank].map((s, idx) => ensureSceneIdentity({ ...s, order: idx }, idx))
+      }
+
+      return {
+        ...prev,
+        updatedAt: new Date().toISOString(),
+        scenes: newScenes,
+      }
+    })
+
+    if (nextActiveSceneId) setActiveSceneId(nextActiveSceneId)
+    setShowTemplateModal(false)
+  }
+
   const handleAddTemplateScene = async (template) => {
     const insertAfter = insertAfterIndexRef.current
     insertAfterIndexRef.current = null
@@ -2895,6 +2951,7 @@ function Create({ onBack, initialConfig = null }) {
         setShowTemplateModal={setShowTemplateModal}
         handleAddTemplateScene={handleAddTemplateScene}
         handleApplyTemplateBundle={handleApplyTemplateBundle}
+        handleAddBlankScene={handleAddBlankScene}
       />
     </div>
   )
