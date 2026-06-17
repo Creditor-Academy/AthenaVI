@@ -1375,7 +1375,7 @@ function Create({ onBack, initialConfig = null }) {
     setIsExporting(true)
 
     try {
-      await exportFullProjectVideo({
+      const result = await exportFullProjectVideo({
         workspaceService,
         workspaceId,
         projectId,
@@ -1383,6 +1383,13 @@ function Create({ onBack, initialConfig = null }) {
         filename,
         onStatus: setExportStatus,
       })
+      if (result?.projectState?.scenes) {
+        setProject((prev) => ({
+          ...prev,
+          scenes: result.projectState.scenes,
+          updatedAt: new Date().toISOString(),
+        }))
+      }
       setExportPhase('success')
       showToast('Download started', 'success')
       bumpCreditsRefresh()

@@ -886,7 +886,10 @@ export function getSceneAvatarLookId(scene) {
 
   const candidates = [
     scene.avatarLookId,
+    scene.presenter?.avatarLookId,
+    scene.presenter?.lookId,
     scene.presenter?.avatarId,
+    scene.presenter?.id,
     scene.avatarType,
   ];
 
