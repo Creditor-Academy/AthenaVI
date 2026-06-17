@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react'
-import { ArrowLeft, Video, Image, Terminal, Upload, Loader2, X, Users } from 'lucide-react'
+import { ArrowLeft, Video, Image, Terminal, Upload, Loader2, X, Users, Sparkles, CheckCircle2 } from 'lucide-react'
 import heygenService from '../../services/heygenService'
+import { parseAvatarCreateResponse } from '../../utils/heygenAvatars'
 import './Avatars.css'
 
-function CreateAvatar({ onBack }) {
+function CreateAvatar({ onBack, onCreateLooks }) {
   const [creationType, setCreationType] = useState('digital_twin')
   const [creationName, setCreationName] = useState('')
   const [creationPrompt, setCreationPrompt] = useState('')
@@ -12,6 +13,7 @@ function CreateAvatar({ onBack }) {
   const [previewUrl, setPreviewUrl] = useState(null)
   const [selectedFile, setSelectedFile] = useState(null)
   const [showHelpModal, setShowHelpModal] = useState(false)
+  const [creationSuccess, setCreationSuccess] = useState(null)
   const fileInputRef = useRef(null)
 
   const handleFileChange = (e) => {
@@ -37,6 +39,21 @@ function CreateAvatar({ onBack }) {
       reader.onload = () => resolve(reader.result);
       reader.onerror = (error) => reject(error);
     });
+  };
+
+  const finishWithSuccess = (response) => {
+    const created = parseAvatarCreateResponse(response, creationName);
+    if (!created.groupId) {
+      setCreationStatus('Persona created, but we could not read the avatar id. Check My Avatars.');
+      setTimeout(() => {
+        setIsCreating(false);
+        onBack?.(true);
+      }, 2500);
+      return;
+    }
+    setCreationSuccess(created);
+    setIsCreating(false);
+    setCreationStatus('');
   };
 
   const handleCreateAvatar = async () => {
@@ -83,9 +100,8 @@ function CreateAvatar({ onBack }) {
       console.log('Athena VI: Initiating avatar creation...', creationType);
       
       const response = await heygenService.createAvatar(payload);
-      
-      // On success, if it's a digital_twin, we might need consent
-      const groupId = response?.avatar_group_id || response?.data?.avatar_group_id || response?.id;
+      const created = parseAvatarCreateResponse(response, creationName);
+      const groupId = created.groupId;
       
       if (groupId && (creationType === 'digital_twin' || creationType === 'photo')) {
         setCreationStatus('Verifying ownership...');
@@ -93,26 +109,18 @@ function CreateAvatar({ onBack }) {
           const consentRes = await heygenService.getAvatarConsent(groupId, window.location.href);
           if (consentRes && (consentRes.consent_url || consentRes.url)) {
             const url = consentRes.consent_url || consentRes.url;
-            setCreationStatus('Redirecting to consent portal...');
-            // Give user a moment to read the status
-            setTimeout(() => {
-              window.open(url, '_blank');
-              setIsCreating(false);
-              onBack(true);
-            }, 1500);
+            setCreationStatus('Complete consent in the new tab, then create looks here.');
+            window.open(url, '_blank');
+            finishWithSuccess(response);
             return;
           }
         } catch (consentErr) {
           console.warn('Consent fetch failed or not required', consentErr);
-          // If consent fails but creation succeeded, we still proceed
         }
       }
 
       setCreationStatus('Persona created successfully!');
-      setTimeout(() => {
-        setIsCreating(false);
-        onBack(true);
-      }, 2000);
+      finishWithSuccess(response);
 
     } catch (err) {
       console.error('Avatar creation failed:', err);
@@ -140,7 +148,40 @@ function CreateAvatar({ onBack }) {
 
         <div className="creation-content-wrapper">
           <div className="creation-form-card standalone">
-            {isCreating ? (
+            {creationSuccess ? (
+              <div className="creation-success-panel">
+                <div className="creation-success-icon">
+                  <CheckCircle2 size={52} />
+                </div>
+                <h3>{creationSuccess.name || creationName} is ready</h3>
+                <p>
+                  Your avatar was created. Generate additional outfits and styles as looks —
+                  we&apos;ll use avatar id <code>{creationSuccess.groupId}</code> so they stay on your character.
+                </p>
+                {creationSuccess.previewImage ? (
+                  <img
+                    src={creationSuccess.previewImage}
+                    alt={creationSuccess.name}
+                    className="creation-success-preview"
+                  />
+                ) : null}
+                <div className="creation-success-actions">
+                  {onCreateLooks ? (
+                    <button
+                      type="button"
+                      className="submit-creation-btn-premium"
+                      onClick={() => onCreateLooks(creationSuccess)}
+                    >
+                      <Sparkles size={18} />
+                      <span>Create looks</span>
+                    </button>
+                  ) : null}
+                  <button type="button" className="creation-secondary-btn" onClick={() => onBack?.(true)}>
+                    Back to My Avatars
+                  </button>
+                </div>
+              </div>
+            ) : isCreating ? (
               <div className="creation-loading">
                 <Loader2 size={60} className="spin-animation" />
                 <h3>{creationStatus}</h3>

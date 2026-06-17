@@ -14,6 +14,7 @@ import {
     MdAutoAwesome,
     MdPhotoLibrary,
     MdVideoLibrary,
+    MdCloudUpload,
     MdTextFields,
     MdInterests,
     MdClose,
@@ -27,6 +28,7 @@ import {
 import EditorSidebarImage from './EditorSidebarImage'
 import EditorSidebarText from './EditorSidebarText'
 import EditorSidebarVideo from './EditorSidebarVideo'
+import EditorSidebarUpload from './EditorSidebarUpload'
 import EditorSidebarGraphic from './EditorSidebarGraphic'
 import EditorGuideModal from './EditorGuideModal'
 import ProfileDropdown from '../../../ui/ProfileDropdown/ProfileDropdown'
@@ -35,6 +37,7 @@ import EditorCreditsBar from './EditorCreditsBar'
 const INSERT_ITEMS = [
     { id: 'image', icon: MdPhotoLibrary, label: 'Images' },
     { id: 'video', icon: MdVideoLibrary, label: 'Videos' },
+    { id: 'upload', icon: MdCloudUpload, label: 'Upload' },
     { id: 'text', icon: MdTextFields, label: 'Text' },
     { id: 'graphic', icon: MdInterests, label: 'Graphics' },
 ]
@@ -161,6 +164,15 @@ const EditorTopbar = ({
             case 'video':
                 return (
                     <EditorSidebarVideo
+                        addLayer={addLayerWithClose}
+                        workspaceId={workspaceId}
+                        onUploadError={onUploadError}
+                        onClose={closeInsertModal}
+                    />
+                )
+            case 'upload':
+                return (
+                    <EditorSidebarUpload
                         addLayer={addLayerWithClose}
                         workspaceId={workspaceId}
                         onUploadError={onUploadError}
@@ -522,7 +534,13 @@ const EditorTopbar = ({
                         role="presentation"
                     >
                         <div
-                            className="editor-insert-modal"
+                            className={`editor-insert-modal${
+                                insertModal === 'image' || insertModal === 'video'
+                                    ? ' editor-insert-modal--wide'
+                                    : insertModal === 'upload'
+                                      ? ' editor-insert-modal--upload'
+                                      : ''
+                            }`}
                             onClick={(e) => e.stopPropagation()}
                             role="dialog"
                             aria-modal="true"
@@ -539,7 +557,15 @@ const EditorTopbar = ({
                                     <MdClose size={20} />
                                 </button>
                             </header>
-                            <div className="editor-insert-modal__body premium-scrollbar">
+                            <div
+                                className={`editor-insert-modal__body premium-scrollbar${
+                                    insertModal === 'image' || insertModal === 'video'
+                                        ? ' editor-insert-modal__body--stock'
+                                        : insertModal === 'upload'
+                                          ? ' editor-insert-modal__body--upload'
+                                          : ''
+                                }`}
+                            >
                                 {renderInsertPanel()}
                             </div>
                         </div>

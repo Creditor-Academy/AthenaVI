@@ -1,22 +1,9 @@
 import { useState, useEffect } from 'react';
-
-const BUNDLE_FILES = ['pitch_template', 'product_launch_template', 'course_module_template', 'sales_demo_template', 'social_short_template'];
-
-const CATEGORY_FILE_MAP = {
-  pitch: 'pitch_template',
-  'product launch': 'product_launch_template',
-  product_launch: 'product_launch_template',
-  'course module': 'course_module_template',
-  course_module: 'course_module_template',
-  'sales demo': 'sales_demo_template',
-  sales_demo: 'sales_demo_template',
-  'social short': 'social_short_template',
-  social_short: 'social_short_template',
-};
+import { TEMPLATE_BUNDLE_FILES, CATEGORY_FILE_MAP } from '../constants/templateRegistry';
 
 /**
- * useTemplates Hook
- * Fetches template bundle scenes from JSON (Pitch, Product Launch, Course Module, Sales Demo, Social Short).
+ * @deprecated Prefer useTemplateBundles for grouped template UX.
+ * Fetches flat scene lists from template JSON bundles.
  */
 const useTemplates = (category) => {
   const [templates, setTemplates] = useState([]);
@@ -49,7 +36,7 @@ const useTemplates = (category) => {
         const categoryFile = CATEGORY_FILE_MAP[cat] || cat;
 
         if (cat === 'all') {
-          const responses = await Promise.all(BUNDLE_FILES.map(fetchTemplateFile));
+          const responses = await Promise.all(TEMPLATE_BUNDLE_FILES.map(fetchTemplateFile));
           const allScenes = responses.flatMap((data) => data.scenes || []);
           setTemplates(allScenes);
         } else {

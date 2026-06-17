@@ -309,6 +309,7 @@ const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition,
   const flipY = s.scaleY === -1 ? -1 : 1
   const flipTransform = (flipX !== 1 || flipY !== 1) ? `scale(${flipX}, ${flipY})` : undefined
   const cssFilter = buildCssFilter(cf)
+  const src = resolveClipMediaSrc(clip)
 
   // Border: handle borderWidth/borderColor from panel OR legacy border string
   const borderStyle = s.borderWidth
@@ -324,7 +325,7 @@ const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition,
     border: borderStyle,
     boxShadow: s.boxShadow || 'none',
     clipPath: s.clipPath || undefined,
-    background: overlayMode ? 'transparent' : (clip.src ? 'transparent' : (s.backgroundColor || s.background || 'rgba(0,0,0,0.04)')),
+    background: overlayMode ? 'transparent' : (src ? 'transparent' : (s.backgroundColor || s.background || 'rgba(0,0,0,0.04)')),
   })
 
   return (
@@ -342,10 +343,10 @@ const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition,
           onCommit={onCommit}
         />
       )}
-      {clip.src ? (
+      {src ? (
         !overlayMode ? (
         <img
-          src={clip.src}
+          src={src}
           alt=""
           style={{
             width: '100%', height: '100%',

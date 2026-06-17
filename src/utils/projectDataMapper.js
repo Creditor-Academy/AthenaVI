@@ -285,10 +285,16 @@ function clipToElement(clip, scene, cIdx) {
 
 function buildPresenter(scene) {
   const avatarId = getSceneAvatarLookId(scene);
-  const hasPresenterData =
-    avatarId || scene.voiceId || scene.script || scene.avatarName || scene.presenter;
+  const heygenVideoId =
+    scene.heygenVideoId ||
+    scene.generation?.heygenVideoId;
+  const hasScript = typeof scene.script === 'string' && scene.script.trim();
+  const hasVoice = !!scene.voiceId;
 
-  if (!hasPresenterData) return undefined;
+  // Only send presenter when lip-sync export is configured or a HeyGen video exists.
+  if (!heygenVideoId && !(avatarId && hasScript && hasVoice)) {
+    return undefined;
+  }
 
   const base = scene.presenter || {};
   const avatarKind = getSceneAvatarKind(scene);
@@ -361,9 +367,9 @@ function buildGeneration(scene) {
     scene.generation?.heygenVideoId ||
     avatarContent.heygenVideoId;
 
-  if (!heygenVideoId && !scene.heygenStatus && !scene.generation) return undefined;
+  if (!heygenVideoId) return undefined;
 
-  const status = scene.heygenStatus || scene.generation?.status || 'pending';
+  const status = scene.heygenStatus || scene.generation?.status || 'completed';
   return {
     status: status === 'completed' || status === 'success' ? 'completed' : status,
     heygenVideoId: heygenVideoId || undefined,
@@ -454,6 +460,7 @@ function elementToClip(element) {
 
   if (typeof content === 'object' && content !== null) {
     if (content.src && !isEphemeralUrl(content.src)) src = content.src;
+    else if (content.url && !isEphemeralUrl(content.url)) src = content.url;
     else if (content.previewSrc) src = content.previewSrc;
   } else if (typeof content === 'string') {
     src = content;

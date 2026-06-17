@@ -7,7 +7,7 @@ import './Avatars.css'
 
 // All avatars are fetched dynamically via HeyGen API
 
-function Avatars({ onCreate, onCreateAvatar }) {
+function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
   const [avatars, setAvatars] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -283,6 +283,15 @@ function Avatars({ onCreate, onCreateAvatar }) {
             selectedAvatar={selectedAvatar}
             closeDetails={closeDetails}
             onCreate={() => handleCreateVideo(selectedAvatar)}
+            isPrivate={ownership === 'private'}
+            onCreateLooks={
+              ownership === 'private' && onCreateLooks
+                ? (ctx) => {
+                    onCreateLooks(ctx)
+                    closeDetails()
+                  }
+                : undefined
+            }
           />
         )}
       </main>

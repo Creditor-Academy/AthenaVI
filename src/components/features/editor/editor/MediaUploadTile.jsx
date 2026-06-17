@@ -6,7 +6,7 @@ const MediaUploadTile = ({
   addLayer,
   workspaceId,
   onUploadError,
-  accept = 'image/*,video/*',
+  accept = 'image/jpeg,image/png,image/webp,video/mp4,audio/mpeg,audio/mp3,.mp3',
   label = 'Upload',
   onComplete,
 }) => {
@@ -28,6 +28,11 @@ const MediaUploadTile = ({
     setUploading(true)
     try {
       for (const file of files) {
+        const validationError = assetService.validateUploadFile(file)
+        if (validationError) {
+          onUploadError?.(validationError)
+          continue
+        }
         const uploaded = await assetService.uploadAsset(workspaceId, file)
         const normalized = assetService.normalizeAsset(uploaded)
         if (!normalized?.url) continue

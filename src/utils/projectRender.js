@@ -1,5 +1,7 @@
 import { getSceneAvatarLookId } from './heygenAvatars';
 import { isAvatarClip } from './heygenVideo';
+import { prepareScenesForBackendExport } from './persistExternalAssets';
+import { rehydrateSceneAssetUrls } from './assetClipUtils';
 import { toBackendProjectData } from './projectDataMapper';
 
 const COMPLETE_STATUSES = new Set(['completed', 'complete', 'ready', 'success', 'done']);
@@ -201,8 +203,24 @@ export async function exportFullProjectVideo({
     throw new Error(blockers.join(' '));
   }
 
+  onStatus?.('Preparing workspace assets…');
+  const { scenes: scenesForExport, uploadCount } = await prepareScenesForBackendExport(
+    projectState.scenes,
+    workspaceId,
+    { onProgress: onStatus }
+  );
+
+  let hydratedScenes = scenesForExport;
+  if (uploadCount > 0) {
+    onStatus?.('Waiting for uploaded assets to sync…');
+    await sleep(2000);
+    hydratedScenes = await rehydrateSceneAssetUrls(scenesForExport, workspaceId);
+  }
+
+  const exportState = { ...projectState, scenes: hydratedScenes };
+
   onStatus?.('Saving project…');
-  const payload = toBackendProjectData(projectState);
+  const payload = toBackendProjectData(exportState);
   await workspaceService.saveProjectState(workspaceId, projectId, payload);
 
   onStatus?.('Starting full video render…');
@@ -252,5 +270,5 @@ export async function exportFullProjectVideo({
 
   const safeName = sanitizeFilename(filename || projectState?.title || 'video');
   await triggerFileDownload(presignedUrl, `${safeName}.mp4`);
-  return { render, presignedUrl };
+  return { render, presignedUrl, projectState: exportState };
 }
