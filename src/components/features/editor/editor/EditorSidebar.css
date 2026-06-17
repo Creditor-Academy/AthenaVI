@@ -104,6 +104,28 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* Firefox */
+}
+
+.scenes-sidebar__list::-webkit-scrollbar {
+  width: 0px;
+}
+
+.scenes-sidebar--scroll-active .scenes-sidebar__list,
+.scenes-sidebar__list--scroll-active {
+  scrollbar-width: thin;
+}
+
+.scenes-sidebar--scroll-active .scenes-sidebar__list::-webkit-scrollbar,
+.scenes-sidebar__list--scroll-active::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scenes-sidebar--scroll-active .scenes-sidebar__list::-webkit-scrollbar-thumb,
+.scenes-sidebar__list--scroll-active::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text-muted) 40%, var(--border-color));
+  border-radius: 999px;
 }
 
 .scenes-sidebar__footer {

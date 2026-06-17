@@ -125,6 +125,22 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
 
   return (
     <>
+      {audioEnabled &&
+        (scene.clips || [])
+          .filter((clip) => clip?.type === 'audio' && clip?.src)
+          .map((clip) => {
+            const clipStartSec = clip.startTime || 0
+            const clipEndSec = clip.endTime ?? scene.duration ?? 5
+            const clipStart = Math.floor(clipStartSec * fps)
+            const clipDuration = Math.max(1, Math.floor((clipEndSec - clipStartSec) * fps))
+            const globalFrom = sceneStartFrame + clipStart
+            const volume = typeof clip.volume === 'number' ? clip.volume : 1
+            return (
+              <Sequence key={clip.id || `${scene.id}-audio`} from={globalFrom} durationInFrames={clipDuration} layout="none">
+                <Audio src={clip.src} volume={volume} placeholder={null} />
+              </Sequence>
+            )
+          })}
       {!hasBgClip && <div style={backgroundStyle} />}
       {sortClipsForRender(scene.clips || []).map((clip) => {
         const clipStart = (clip.startTime || 0) * fps
@@ -340,6 +356,10 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
               )}
             </div>
           )
+        }
+
+        if (clip.type === 'audio') {
+          return null
         }
 
         if (clip.type === 'shape') {

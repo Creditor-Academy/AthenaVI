@@ -789,6 +789,81 @@ class WorkspaceService {
     }
   }
 
+  // --- Speech generation (voice-only narration) ---
+
+  async createSpeechGeneration(workspaceId, projectId, payload) {
+    const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/projects/${projectId}/speech`), {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Failed to generate speech: ${response.status}`);
+    }
+
+    const data = await response.json().catch(() => ({}));
+    return data.data || data;
+  }
+
+  async getSpeechGeneration(workspaceId, projectId, speechId) {
+    const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/projects/${projectId}/speech/${speechId}`), {
+      method: 'GET',
+      headers: getAuthHeaders(),
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Failed to fetch speech: ${response.status}`);
+    }
+
+    const data = await response.json().catch(() => ({}));
+    return data.data || data;
+  }
+
+  async downloadSpeech(workspaceId, projectId, speechId, expiresIn = 300) {
+    const response = await fetch(
+      buildUrl(`/api/workspaces/${workspaceId}/projects/${projectId}/speech/${speechId}/download?expiresIn=${expiresIn}`),
+      {
+        method: 'GET',
+        headers: getAuthHeaders(),
+        cache: 'no-store',
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Failed to download speech: ${response.status}`);
+    }
+
+    const data = await response.json().catch(() => ({}));
+    return data.data || data;
+  }
+
+  /**
+   * Authenticated speech stream -> blob url.
+   * Note: blob urls are session-only; do not persist them to backend JSON.
+   */
+  async getSpeechStreamBlobUrl(workspaceId, projectId, speechId) {
+    const response = await fetch(
+      buildUrl(`/api/workspaces/${workspaceId}/projects/${projectId}/speech/${speechId}/stream`),
+      {
+        method: 'GET',
+        headers: getAuthHeaders(),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      throw new Error(errorText || `Failed to stream speech: ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
+  }
+
   async getInvitations() {
     // NOTE: The API has no "list my received invitations" endpoint.
     // Invitations are only accepted via the email link (POST /api/workspaces/invitations/accept).
