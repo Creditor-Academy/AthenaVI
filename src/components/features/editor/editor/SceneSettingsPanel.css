@@ -371,3 +371,29 @@
   color: var(--primary);
   border-color: var(--primary);
 }
+
+.scene-settings__summary-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.scene-settings__summary-card {
+  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
+  border-radius: 10px;
+  background: var(--bg-card);
+  padding: 8px 10px;
+  min-width: 0;
+}
+
+.scene-settings__apply-btn--inline {
+  margin-top: 7px;
+  width: 100%;
+}
+
+.scene-settings__script-wrap {
+  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
+  border-radius: 10px;
+  background: var(--bg-card);
+  padding: 10px;
+}
