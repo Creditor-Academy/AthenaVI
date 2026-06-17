@@ -35,6 +35,14 @@ const VideoCanvas = forwardRef(({
   onUpdateLayerPosition,
   onCommitLayerPosition,
   onUpdateLayerSize,
+  onUpdateLayerRotation,
+  onUpdateLayerStyle,
+  onUpdateLayer,
+  onDuplicateLayer,
+  onDeleteLayer,
+  onMoveLayerOrder,
+  onToggleLayerLock,
+  onOpenLayerCrop,
   onAddScene,
   updateClipContent,
   onFillShape,
@@ -351,6 +359,24 @@ const VideoCanvas = forwardRef(({
                 onUpdateLayerSize={(clipId, w, h) =>
                   onUpdateLayerSize && onUpdateLayerSize(clipId, w, h)
                 }
+                onUpdateLayerRotation={(clipId, deg) =>
+                  onUpdateLayerRotation && onUpdateLayerRotation(clipId, deg)
+                }
+                onUpdateLayerStyle={(clipId, updates) =>
+                  onUpdateLayerStyle && onUpdateLayerStyle(clipId, updates)
+                }
+                onUpdateLayer={(clipId, updates) =>
+                  onUpdateLayer && onUpdateLayer(clipId, updates)
+                }
+                onDuplicateLayer={(clipId) =>
+                  onDuplicateLayer && onDuplicateLayer(clipId)
+                }
+                onDeleteLayer={(clipId) =>
+                  onDeleteLayer && onDeleteLayer(clipId)
+                }
+                onMoveLayerOrder={onMoveLayerOrder}
+                onToggleLayerLock={onToggleLayerLock}
+                onOpenLayerCrop={onOpenLayerCrop}
                 onFillShape={onFillShape}
                 onCanvasDrop={onCanvasDrop}
                 showGuides={editorView.showGuides}

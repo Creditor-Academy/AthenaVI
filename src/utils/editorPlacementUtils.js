@@ -79,6 +79,24 @@ export function getDefaultClipPlacement(type, content, meta = {}) {
   return clampPlacement(x, y, width, height);
 }
 
+/** Map composition pixels to screen/client coordinates. */
+export function compositionToClient(
+  x,
+  y,
+  containerEl,
+  displayScale,
+  displayOffset
+) {
+  if (!containerEl || !displayScale) {
+    return { x: 0, y: 0 };
+  }
+  const rect = containerEl.getBoundingClientRect();
+  return {
+    x: rect.left + (displayOffset?.x ?? 0) + x * displayScale,
+    y: rect.top + (displayOffset?.y ?? 0) + y * displayScale,
+  };
+}
+
 /** Map a screen point to composition pixels (accounts for canvas scale + offset). */
 export function clientToComposition(
   clientX,
