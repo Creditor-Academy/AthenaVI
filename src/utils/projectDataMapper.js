@@ -1,4 +1,5 @@
 import heygenService from '../services/heygenService';
+import workspaceService from '../services/workspaceService';
 import {
   buildHeygenAvatarContent,
   canUseExpressiveness,
@@ -646,4 +647,74 @@ export async function rehydrateSceneVideos(scenes, workspaceId, projectId) {
       }
     })
   );
+}
+
+function resolveSceneSpeechGenerationId(scene) {
+  if (!scene) return null
+  return (
+    scene?.speechGenerationId ||
+    scene?.generation?.speechGenerationId ||
+    scene?.presenter?.speechGenerationId ||
+    null
+  )
+}
+
+function applySpeechUrlToScene(scene, url) {
+  if (!scene) return scene
+  const clips = Array.isArray(scene.clips) ? scene.clips : []
+  const cleaned = clips.map((c) => ({ ...c }))
+  const idx = cleaned.findIndex((c) => c.type === 'audio' && (c.role === 'narration' || c.role === 'voiceover'))
+  const duration = scene.duration || 8
+  const audioClip = {
+    id: idx >= 0 ? cleaned[idx].id : `audio_${Date.now()}`,
+    type: 'audio',
+    role: 'narration',
+    src: url,
+    startTime: 0,
+    endTime: duration,
+    volume: typeof scene?.voiceoverVolume === 'number' ? scene.voiceoverVolume : 1,
+  }
+  if (idx >= 0) {
+    cleaned[idx] = { ...cleaned[idx], ...audioClip }
+  } else {
+    cleaned.push(audioClip)
+  }
+
+  return {
+    ...scene,
+    speechPlaybackUrl: url,
+    clips: cleaned,
+  }
+}
+
+/**
+ * Rehydrate voice-only narration by speechGenerationId.
+ * Uses /download to obtain a fresh presigned URL (do not persist presigned URLs in project JSON).
+ */
+export async function rehydrateSceneSpeech(scenes, workspaceId, projectId) {
+  if (!workspaceId || !projectId || !scenes?.length) return scenes
+
+  return Promise.all(
+    scenes.map(async (scene) => {
+      const speechId = resolveSceneSpeechGenerationId(scene)
+      if (!speechId) return scene
+
+      const existing = scene?.speechPlaybackUrl
+      if (existing && !isEphemeralUrl(existing) && !existing.startsWith('blob:')) {
+        return applySpeechUrlToScene(scene, existing)
+      }
+
+      try {
+        const download = await workspaceService.downloadSpeech(workspaceId, projectId, speechId)
+        const presignedUrl = download?.presignedUrl || download?.url
+        if (presignedUrl && typeof presignedUrl === 'string') {
+          return applySpeechUrlToScene(scene, presignedUrl)
+        }
+      } catch (err) {
+        console.warn('[ProjectData] Failed to rehydrate speech for scene', scene.sceneId || scene.id, speechId, err)
+      }
+
+      return scene
+    })
+  )
 }
