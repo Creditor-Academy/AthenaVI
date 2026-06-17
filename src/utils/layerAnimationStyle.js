@@ -56,6 +56,7 @@ export function buildLiveAnimStyle(baseStyle, clip, animState, extras = {}) {
       ...layoutExtras,
       opacity: clip.opacity ?? 1,
       transform: parts.length ? parts.join(' ') : baseStyle.transform,
+      transformOrigin: 'center center',
       filter: filterParts.length ? filterParts.join(' ') : undefined,
     };
   }
@@ -79,6 +80,6 @@ export function buildLiveAnimStyle(baseStyle, clip, animState, extras = {}) {
     opacity: animState.opacity ?? clip.opacity ?? 1,
     transform: parts.join(' '),
     filter: filterParts.length ? filterParts.join(' ') : undefined,
-    transformOrigin: 'center center',
+      transformOrigin: 'center center',
   };
 }
