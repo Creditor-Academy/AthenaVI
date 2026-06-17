@@ -13,6 +13,8 @@ import PreviewModal from '../../components/features/editor/editor/PreviewModal'
 import ExportModal from '../../components/features/editor/editor/ExportModal'
 import GeneratedVideoModal from '../../components/features/editor/editor/GeneratedVideoModal'
 import QuickCreateModal from '../../components/features/editor/editor/QuickCreateModal'
+import PresenterModeModal from '../../components/features/editor/editor/PresenterModeModal'
+import VoiceOnlySpeechModal from '../../components/features/editor/editor/VoiceOnlySpeechModal'
 import heygenService from '../../services/heygenService'
 import creditsService, { isInsufficientCreditsError } from '../../services/creditsService.js'
 import { extractCreditsUsed } from '../../utils/creditTransactions.js'
@@ -33,6 +35,7 @@ import { buildClipTextContent } from '../../utils/textClip'
 import {
   fromBackendProjectData,
   rehydrateSceneVideos,
+  rehydrateSceneSpeech,
   toBackendProjectData,
 } from '../../utils/projectDataMapper'
 import {
@@ -94,6 +97,77 @@ const PROJECT_DRAFT_KEY = 'athenavi_project'
 
 function countSceneClips(scenes = []) {
   return scenes.reduce((total, scene) => total + (scene.clips?.length ?? 0), 0)
+}
+
+function isEphemeralUrl(url) {
+  if (!url || typeof url !== 'string') return false
+  return url.startsWith('blob:') || url.includes('X-Amz-')
+}
+
+async function getAudioDurationSeconds(src, { timeoutMs = 12000 } = {}) {
+  if (!src || typeof src !== 'string') return null
+
+  return await new Promise((resolve) => {
+    const audio = new Audio()
+    audio.preload = 'metadata'
+    audio.crossOrigin = 'anonymous'
+
+    const cleanup = () => {
+      audio.onloadedmetadata = null
+      audio.onerror = null
+      audio.src = ''
+    }
+
+    const timer = setTimeout(() => {
+      cleanup()
+      resolve(null)
+    }, timeoutMs)
+
+    audio.onloadedmetadata = () => {
+      clearTimeout(timer)
+      const d = audio.duration
+      cleanup()
+      resolve(Number.isFinite(d) && d > 0 ? d : null)
+    }
+
+    audio.onerror = () => {
+      clearTimeout(timer)
+      cleanup()
+      resolve(null)
+    }
+
+    audio.src = src
+  })
+}
+
+function stripEphemeralMediaFromDraft(projectState) {
+  if (!projectState || typeof projectState !== 'object') return projectState
+  const scenes = Array.isArray(projectState.scenes) ? projectState.scenes : []
+  return {
+    ...projectState,
+    scenes: scenes.map((scene) => {
+      const nextScene = { ...scene }
+      if (isEphemeralUrl(nextScene.generatedVideoUrl)) delete nextScene.generatedVideoUrl
+      if (isEphemeralUrl(nextScene.playbackUrl)) delete nextScene.playbackUrl
+      if (isEphemeralUrl(nextScene.speechPlaybackUrl)) delete nextScene.speechPlaybackUrl
+      if (Array.isArray(nextScene.clips)) {
+        nextScene.clips = nextScene.clips.map((clip) => {
+          const nextClip = { ...clip }
+          if (isEphemeralUrl(nextClip.src)) delete nextClip.src
+          if (isEphemeralUrl(nextClip.fillSrc)) delete nextClip.fillSrc
+          if (nextClip.content && typeof nextClip.content === 'object') {
+            const nextContent = { ...nextClip.content }
+            if (isEphemeralUrl(nextContent.src)) delete nextContent.src
+            if (isEphemeralUrl(nextContent.url)) delete nextContent.url
+            if (isEphemeralUrl(nextContent.previewSrc)) delete nextContent.previewSrc
+            nextClip.content = nextContent
+          }
+          return nextClip
+        })
+      }
+      return nextScene
+    }),
+  }
 }
 
 function normalizeBootScenes(scenes = [], resolution) {
@@ -295,6 +369,8 @@ function Create({ onBack, initialConfig = null }) {
   const [generatedVideoUrl, setGeneratedVideoUrl] = useState(null)
   const [generationCreditsUsed, setGenerationCreditsUsed] = useState(null)
   const [generatingSceneId, setGeneratingSceneId] = useState(null)
+  const [showPresenterModeModal, setShowPresenterModeModal] = useState(false)
+  const [showVoiceOnlySpeechModal, setShowVoiceOnlySpeechModal] = useState(false)
   const [showQuickCreateModal, setShowQuickCreateModal] = useState(() => {
     const initial = buildInitialProject(initialConfig)
     if (initialConfig?.template?.scene) return true
@@ -460,7 +536,8 @@ function Create({ onBack, initialConfig = null }) {
             workspaceId,
             projectId
           )
-          const scenesWithAssets = await rehydrateSceneAssetUrls(scenesWithVideo, workspaceId)
+          const scenesWithSpeech = await rehydrateSceneSpeech(scenesWithVideo, workspaceId, projectId)
+          const scenesWithAssets = await rehydrateSceneAssetUrls(scenesWithSpeech, workspaceId)
           const hydrated = { ...localProject, scenes: scenesWithAssets }
           applyHydratedScenes(scenesWithAssets)
           saveProjectRef.current?.(false, hydrated)
@@ -485,7 +562,8 @@ function Create({ onBack, initialConfig = null }) {
               workspaceId,
               projectId
             )
-            const scenesWithAssets = await rehydrateSceneAssetUrls(scenesWithVideo, workspaceId)
+            const scenesWithSpeech = await rehydrateSceneSpeech(scenesWithVideo, workspaceId, projectId)
+            const scenesWithAssets = await rehydrateSceneAssetUrls(scenesWithSpeech, workspaceId)
             const hydrated = { ...localProject, scenes: scenesWithAssets }
             applyHydratedScenes(scenesWithAssets)
             saveProjectRef.current?.(false, hydrated)
@@ -497,7 +575,8 @@ function Create({ onBack, initialConfig = null }) {
             workspaceId,
             projectId
           )
-          const scenesWithAssets = await rehydrateSceneAssetUrls(scenesWithVideo, workspaceId)
+          const scenesWithSpeech = await rehydrateSceneSpeech(scenesWithVideo, workspaceId, projectId)
+          const scenesWithAssets = await rehydrateSceneAssetUrls(scenesWithSpeech, workspaceId)
 
           applyHydratedScenes(scenesWithAssets, {
             resolution: mapped.resolution || localProject.resolution,
@@ -520,7 +599,12 @@ function Create({ onBack, initialConfig = null }) {
     const { workspaceId, projectId } = resolveProjectIds(projectState)
 
     try {
-      localStorage.setItem(PROJECT_DRAFT_KEY, JSON.stringify({ ...projectState, id: projectId || projectState.id, workspaceId: workspaceId || projectState.workspaceId }))
+      const draft = stripEphemeralMediaFromDraft({
+        ...projectState,
+        id: projectId || projectState.id,
+        workspaceId: workspaceId || projectState.workspaceId,
+      })
+      localStorage.setItem(PROJECT_DRAFT_KEY, JSON.stringify(draft))
     } catch (e) {
       console.warn('Failed to save to localStorage', e)
     }
@@ -540,11 +624,15 @@ function Create({ onBack, initialConfig = null }) {
     try {
       setIsSaving(true)
 
-      const payload = toBackendProjectData({
+      // Backend must not persist ephemeral URLs (blob:, presigned X-Amz-...).
+      // Persist ids (e.g. speechGenerationId) and rehydrate URLs on load.
+      const persistableState = stripEphemeralMediaFromDraft({
         ...projectState,
         id: projectId,
         workspaceId,
       })
+
+      const payload = toBackendProjectData(persistableState)
 
       await workspaceService.saveProjectState(workspaceId, projectId, payload)
 
@@ -572,10 +660,12 @@ function Create({ onBack, initialConfig = null }) {
 
     const timer = setTimeout(() => {
       try {
-        localStorage.setItem(
-          PROJECT_DRAFT_KEY,
-          JSON.stringify({ ...project, id: projectId, workspaceId: workspaceId || project.workspaceId })
-        )
+        const draft = stripEphemeralMediaFromDraft({
+          ...project,
+          id: projectId,
+          workspaceId: workspaceId || project.workspaceId,
+        })
+        localStorage.setItem(PROJECT_DRAFT_KEY, JSON.stringify(draft))
       } catch (e) {
         console.warn('Failed to persist project draft', e)
       }
@@ -2025,6 +2115,109 @@ function Create({ onBack, initialConfig = null }) {
     }, 500);
   };
 
+  const handleGenerateVoiceOnlySpeech = async ({ voiceId, script, speed, locale, inputType }) => {
+    const workspaceId = project.workspaceId || project.createConfig?.workspaceId
+    const projectId = project.id || project.createConfig?.videoId
+    if (!workspaceId || !projectId || !activeSceneId) {
+      showToast('Missing workspace / project / scene id', 'error')
+      return
+    }
+
+    const scene = projectRef.current.scenes.find((s) => s.id === activeSceneId)
+    if (!scene) return
+
+    const sceneId = scene.sceneId || scene.id || activeSceneId
+    const payload = {
+      sceneId,
+      voiceId,
+      script,
+      inputType: inputType || 'text',
+      speed: typeof speed === 'number' ? speed : (scene.voiceSettings?.speed || 1),
+      locale: locale || scene.voiceSettings?.locale || 'en-US',
+    }
+
+    const created = await workspaceService.createSpeechGeneration(workspaceId, projectId, payload)
+    const speechGeneration =
+      created?.speechGeneration ||
+      created?.data?.speechGeneration ||
+      created?.data ||
+      created
+    const speechId = speechGeneration?.id || speechGeneration?._id
+    if (!speechId) throw new Error('Speech generation id missing')
+
+    const download = await workspaceService.downloadSpeech(workspaceId, projectId, speechId)
+    const presignedUrl = download?.presignedUrl || download?.url
+    if (!presignedUrl) throw new Error('Speech download URL missing')
+
+    const speechDurationSecRaw = await getAudioDurationSeconds(presignedUrl)
+    // Small guard: keep at least 1s and round to 2 decimals for stable UX.
+    const speechDurationSec = speechDurationSecRaw ? Math.max(1, Math.round(speechDurationSecRaw * 100) / 100) : null
+
+    let voiceName = null
+    try {
+      const voiceRes = await heygenService.getVoiceStatus(voiceId)
+      voiceName = voiceRes?.data?.name || voiceRes?.name || voiceRes?.voice_name || null
+    } catch {
+      voiceName = null
+    }
+
+    setProject((prev) => {
+      const nextScenes = (prev.scenes || []).map((s) => {
+        if (s.id !== activeSceneId) return s
+
+        const duration = speechDurationSec || s.duration || 8
+        const clips = (s.clips || [])
+          // remove avatar layers for voice-only mode
+          .filter((c) => !(c.role === 'avatar' || c.type === 'avatar' || (c.type === 'video' && c.role === 'avatar')))
+
+        const existingAudioIndex = clips.findIndex((c) => c.type === 'audio' && (c.role === 'narration' || c.role === 'voiceover'))
+        const audioClip = {
+          id: existingAudioIndex >= 0 ? clips[existingAudioIndex].id : `audio_${Date.now()}`,
+          type: 'audio',
+          role: 'narration',
+          src: presignedUrl,
+          startTime: 0,
+          endTime: duration,
+          volume: 1,
+        }
+
+        const nextClips = [...clips]
+        if (existingAudioIndex >= 0) nextClips[existingAudioIndex] = { ...nextClips[existingAudioIndex], ...audioClip }
+        else nextClips.push(audioClip)
+
+        return {
+          ...s,
+          // voice-only presenter fields
+          voiceId,
+          voiceName: voiceName || s.voiceName,
+          voiceSettings: { ...(s.voiceSettings || {}), speed: payload.speed, locale: payload.locale },
+          script,
+          duration,
+          avatarType: undefined,
+          avatarLookId: undefined,
+          avatarName: undefined,
+          heygenVideoId: undefined,
+          heygenStatus: undefined,
+          generatedVideoUrl: undefined,
+          playbackUrl: undefined,
+          speechPlaybackUrl: presignedUrl,
+          generation: {
+            ...(s.generation || {}),
+            speechGenerationId: speechId,
+            status: 'completed',
+          },
+          clips: nextClips,
+        }
+      })
+
+      const next = { ...prev, updatedAt: new Date().toISOString(), scenes: nextScenes }
+      setTimeout(() => saveProject(false, next), 150)
+      return next
+    }, { history: true })
+
+    showToast('Narration ready', 'success')
+  }
+
   const handleUseGeneratedVideo = () => {
     if (!generatingSceneId || !generatedVideoUrl) return;
 
@@ -2279,6 +2472,27 @@ function Create({ onBack, initialConfig = null }) {
         isOpen={showQuickCreateModal && !isProjectLoading}
         onClose={() => setShowQuickCreateModal(false)}
         onGenerate={handleQuickCreateGenerate}
+      />
+      <PresenterModeModal
+        isOpen={showPresenterModeModal && !isProjectLoading}
+        onClose={() => setShowPresenterModeModal(false)}
+        onChooseAvatar={() => {
+          setShowPresenterModeModal(false)
+          setShowVoiceOnlySpeechModal(false)
+          setShowQuickCreateModal(true)
+        }}
+        onChooseVoiceOnly={() => {
+          setShowPresenterModeModal(false)
+          setShowQuickCreateModal(false)
+          setShowVoiceOnlySpeechModal(true)
+        }}
+      />
+      <VoiceOnlySpeechModal
+        isOpen={showVoiceOnlySpeechModal && !isProjectLoading}
+        onClose={() => setShowVoiceOnlySpeechModal(false)}
+        initialScript={activeScene?.script || ''}
+        initialVoiceId={activeScene?.voiceId || ''}
+        onGenerate={handleGenerateVoiceOnlySpeech}
       />
       <GeneratedVideoModal 
         isOpen={showGeneratedVideoModal} 
@@ -2553,7 +2767,11 @@ function Create({ onBack, initialConfig = null }) {
                 generateSceneVideo={generateSceneVideo}
                 setActiveTab={setSelectedTool}
                 applyGlobalSetting={applyGlobalSetting}
-                onOpenQuickCreate={() => setShowQuickCreateModal(true)}
+                onOpenQuickCreate={() => {
+                  setShowQuickCreateModal(false)
+                  setShowVoiceOnlySpeechModal(false)
+                  setShowPresenterModeModal(true)
+                }}
                 onMoveLayerOrder={moveLayerOrder}
                 onToggleLayerLock={toggleLayerLock}
                 onDuplicateScene={() => {
