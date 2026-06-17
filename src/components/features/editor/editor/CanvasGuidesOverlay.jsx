@@ -11,7 +11,7 @@ const CanvasGuidesOverlay = ({
       position: 'absolute',
       inset: 0,
       pointerEvents: 'none',
-      zIndex: 2,
+      zIndex: 2147483647,
     }}
   >
     {showGrid && (
@@ -38,8 +38,9 @@ const CanvasGuidesOverlay = ({
           top: '5%',
           width: '90%',
           height: '90%',
-          border: '1px dashed rgba(99,102,241,0.45)',
+          border: '1px dashed rgba(239,68,68,0.85)',
           boxSizing: 'border-box',
+          zIndex: 2147483647,
         }}
       />
     )}

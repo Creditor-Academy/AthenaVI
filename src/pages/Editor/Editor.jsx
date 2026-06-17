@@ -727,6 +727,15 @@ function Create({ onBack, initialConfig = null }) {
     const mediaSrc = isMediaObject ? (content.url || content.src) : content
     const assetId = isMediaObject ? content.assetId : meta?.assetId
 
+    const textStyleFromMeta = meta?.style || {}
+    const rawInsertedFontSize = textStyleFromMeta.fontSize
+    const insertedFontSizeNum = rawInsertedFontSize == null
+      ? 48
+      : Number.parseFloat(String(rawInsertedFontSize))
+    const doubledInsertedFontSize = Number.isFinite(insertedFontSizeNum)
+      ? insertedFontSizeNum * 2
+      : 96
+
     const newClip = {
       id: `clip_${Date.now()}`,
       type: type === 'image' ? 'image' : type === 'video' ? 'video' : type === 'avatar' ? 'avatar' : type === 'shape' ? 'shape' : type === 'audio' ? 'audio' : type === 'icon' ? 'image' : 'text',
@@ -750,12 +759,13 @@ function Create({ onBack, initialConfig = null }) {
       opacity: 1.0,
       style: type === 'text'
         ? {
-            fontSize: 48,
+            fontSize: doubledInsertedFontSize,
             fontWeight: '700',
             color: '#1a1b1c',
             textAlign: 'left',
             fontFamily: 'Inter, system-ui, sans-serif',
-            ...(meta?.style || {}),
+            ...textStyleFromMeta,
+            fontSize: doubledInsertedFontSize,
           }
         : type === 'shape'
           ? content?.style
@@ -816,6 +826,76 @@ function Create({ onBack, initialConfig = null }) {
         }
       })
     }))
+  }
+
+  const updateLayerRotation = (layerId, rotation) => {
+    if (!activeSceneId) return
+    const normalized = ((rotation % 360) + 360) % 360
+    setProject(prev => ({
+      ...prev,
+      updatedAt: new Date().toISOString(),
+      scenes: prev.scenes.map(s => {
+        if (s.id !== activeSceneId) return s
+        return {
+          ...s,
+          clips: s.clips.map(c =>
+            c.id === layerId ? { ...c, rotation: normalized, _userPlaced: true } : c
+          )
+        }
+      })
+    }))
+  }
+
+  const updateLayerStyleFromCanvas = (layerId, styleUpdates) => {
+    if (!activeSceneId) return
+    setProject(prev => ({
+      ...prev,
+      updatedAt: new Date().toISOString(),
+      scenes: prev.scenes.map(s => {
+        if (s.id !== activeSceneId) return s
+        return {
+          ...s,
+          clips: s.clips.map(c =>
+            c.id === layerId
+              ? { ...c, style: { ...(c.style || {}), ...styleUpdates }, _userPlaced: true }
+              : c
+          )
+        }
+      })
+    }), { history: true })
+  }
+
+  const updateLayerFromCanvas = (layerId, updates) => {
+    if (!activeSceneId) return
+    setProject(prev => ({
+      ...prev,
+      updatedAt: new Date().toISOString(),
+      scenes: prev.scenes.map(s => {
+        if (s.id !== activeSceneId) return s
+        return {
+          ...s,
+          clips: s.clips.map(c =>
+            c.id === layerId ? { ...c, ...updates, _userPlaced: true } : c
+          )
+        }
+      })
+    }), { history: true })
+  }
+
+  const duplicateLayerFromCanvas = (layerId) => {
+    if (!activeSceneId) return
+    setSelectedLayerIds([layerId])
+    setSelectedLayerId(layerId)
+    duplicateSelectedLayers()
+  }
+
+  const deleteLayerFromCanvas = (layerId) => {
+    if (!activeSceneId) return
+    deleteLayer(activeSceneId, layerId)
+  }
+
+  const handleOpenLayerCrop = () => {
+    setIsRightSidebarOpen(true)
   }
 
   // Update a specific layer's position within the active scene (with optional snap)
@@ -2399,6 +2479,14 @@ function Create({ onBack, initialConfig = null }) {
                 onUpdateLayerPosition={updateLayerPosition}
                 onCommitLayerPosition={handleCommitLayerPosition}
                 onUpdateLayerSize={updateLayerSize}
+                onUpdateLayerRotation={updateLayerRotation}
+                onUpdateLayerStyle={updateLayerStyleFromCanvas}
+                onUpdateLayer={updateLayerFromCanvas}
+                onDuplicateLayer={duplicateLayerFromCanvas}
+                onDeleteLayer={deleteLayerFromCanvas}
+                onMoveLayerOrder={moveLayerOrder}
+                onToggleLayerLock={toggleLayerLock}
+                onOpenLayerCrop={handleOpenLayerCrop}
                 updateClipContent={updateClipContent}
                 onFillShape={fillShapeWithImage}
                 onCanvasDrop={handleCanvasDrop}
