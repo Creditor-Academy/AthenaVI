@@ -6207,6 +6207,7 @@ kbd.shortcut-key {
     cursor: pointer;
     transition: all 0.2s ease;
     margin-bottom: 2px;
+    flex-shrink: 0;
 }
 
 .scene-list-card--active {

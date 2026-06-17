@@ -45,7 +45,7 @@ const AvatarVoiceoverSection = ({
         <div className="scene-settings__block-head" style={{ padding: '8px 0 6px' }}>
           <span className="scene-settings__block-title">
             <MdRecordVoiceOver size={14} />
-            AI voiceover
+            Presenter & Voice
           </span>
           {hasVoiceover ? (
             <button type="button" className="scene-settings__ghost-btn" onClick={onOpenQuickCreate}>
@@ -57,38 +57,36 @@ const AvatarVoiceoverSection = ({
         <div className="scene-settings__block-body" style={{ padding: 0 }}>
           {hasVoiceover ? (
             <>
-              <div className="scene-settings__voice-row">
-                <div>
+              <div className="scene-settings__summary-grid">
+                <div className="scene-settings__summary-card">
                   <div className="scene-settings__voice-label">
                     <span className={`scene-settings__dot ${activeScene.avatarType ? 'scene-settings__dot--on' : 'scene-settings__dot--off'}`} />
-                    Avatar
+                    Presenter
                   </div>
                   <div className="scene-settings__voice-value">{displayName(activeScene.avatarName)}</div>
+                  {activeScene.avatarType && applyGlobalSetting ? (
+                    <button type="button" className="scene-settings__apply-btn scene-settings__apply-btn--inline" onClick={() => applyGlobalSetting('avatar')}>
+                      Apply to all scenes
+                    </button>
+                  ) : null}
                 </div>
-                {activeScene.avatarType && applyGlobalSetting ? (
-                  <button type="button" className="scene-settings__apply-btn" onClick={() => applyGlobalSetting('avatar')}>
-                    All scenes
-                  </button>
-                ) : null}
-              </div>
-              <div className="scene-settings__voice-row">
-                <div>
+                <div className="scene-settings__summary-card">
                   <div className="scene-settings__voice-label">
                     <span className={`scene-settings__dot ${activeScene.voiceId ? 'scene-settings__dot--on' : 'scene-settings__dot--off'}`} />
                     Voice
                   </div>
                   <div className="scene-settings__voice-value">{displayName(activeScene.voiceName)}</div>
+                  {activeScene.voiceId && applyGlobalSetting ? (
+                    <button type="button" className="scene-settings__apply-btn scene-settings__apply-btn--inline" onClick={() => applyGlobalSetting('voice')}>
+                      Apply to all scenes
+                    </button>
+                  ) : null}
                 </div>
-                {activeScene.voiceId && applyGlobalSetting ? (
-                  <button type="button" className="scene-settings__apply-btn" onClick={() => applyGlobalSetting('voice')}>
-                    All scenes
-                  </button>
-                ) : null}
               </div>
-              <div>
+              <div className="scene-settings__script-wrap">
                 <div className="scene-settings__voice-label">
                   <span className={`scene-settings__dot ${(activeScene.script || '').trim() ? 'scene-settings__dot--on' : 'scene-settings__dot--off'}`} />
-                  Script
+                  Narration Script
                 </div>
                 <p className="scene-settings__script">{(activeScene.script || '').trim()}</p>
                 <span className="scene-settings__meta">{(activeScene.script || '').length} characters</span>

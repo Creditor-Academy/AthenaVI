@@ -849,7 +849,6 @@ function Create({ onBack, initialConfig = null }) {
       opacity: 1.0,
       style: type === 'text'
         ? {
-            fontSize: doubledInsertedFontSize,
             fontWeight: '700',
             color: '#1a1b1c',
             textAlign: 'left',
