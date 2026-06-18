@@ -1,7 +1,7 @@
 import { MdHelpOutline } from 'react-icons/md'
 import { adminPortalSidebarGroups } from '../../../constants/adminPortalNav'
 
-function AdminPortalSidebar({ activeTab, onTabChange, onCloseMobile }) {
+function AdminPortalSidebar({ activeTab, onTabChange, onNavigateHelp, onCloseMobile }) {
   const handleTab = (tabId) => {
     onTabChange?.(tabId)
     onCloseMobile?.()
@@ -35,17 +35,18 @@ function AdminPortalSidebar({ activeTab, onTabChange, onCloseMobile }) {
       </div>
 
       <div className="dashboard-sidebar-footer">
-        <a
-          href="/support"
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          type="button"
           className="dashboard-nav-item dashboard-sidebar-help"
-          onClick={() => onCloseMobile?.()}
+          onClick={() => {
+            onNavigateHelp?.()
+            onCloseMobile?.()
+          }}
           aria-label="Help"
         >
           <MdHelpOutline className="dashboard-nav-item-icon dashboard-sidebar-help-icon" size={18} aria-hidden />
           <span className="dashboard-nav-item-label">Help</span>
-        </a>
+        </button>
       </div>
     </aside>
   )

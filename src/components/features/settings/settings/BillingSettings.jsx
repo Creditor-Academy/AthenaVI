@@ -6,8 +6,10 @@ import {
   MdRefresh,
   MdSwapHoriz,
   MdAccountBalanceWallet,
+  MdStorage,
 } from 'react-icons/md'
 import creditsService from '../../../../services/creditsService.js'
+import storageService from '../../../../services/storageService.js'
 import workspaceService from '../../../../services/workspaceService.js'
 import { readRole } from '../../../../pages/TeamWorkspace/workspaceUtils.js'
 import {
@@ -16,6 +18,10 @@ import {
   isTeamWorkspaceType,
   sumUsageCredits,
 } from '../../../../utils/creditTransactions.js'
+import { formatBytes } from '../../../../utils/formatSize.js'
+import { formatStorageTransactionType } from '../../../../utils/storageQuota.js'
+import StorageUsageBar from '../../../ui/StorageUsageBar/StorageUsageBar.jsx'
+import '../../../ui/StorageUsageBar/StorageUsageBar.css'
 
 function BillingSettings() {
   const [workspaces, setWorkspaces] = useState([])
@@ -33,6 +39,13 @@ function BillingSettings() {
   const [error, setError] = useState('')
   const [actionMessage, setActionMessage] = useState('')
 
+  const [personalStorage, setPersonalStorage] = useState(null)
+  const [workspaceStorage, setWorkspaceStorage] = useState(null)
+  const [storageHistory, setStorageHistory] = useState([])
+  const [storageHistoryPage, setStorageHistoryPage] = useState(1)
+  const [storageHistoryPagination, setStorageHistoryPagination] = useState({ totalPages: 1, total: 0 })
+  const [storageHistoryLoading, setStorageHistoryLoading] = useState(false)
+
   const selectedWorkspace = useMemo(
     () => workspaces.find((ws) => String(ws.id) === String(selectedWorkspaceId)),
     [workspaces, selectedWorkspaceId]
@@ -46,6 +59,40 @@ function BillingSettings() {
   const isTeamWorkspace = isTeamWorkspaceType(workspaceType || selectedWorkspace?.type)
   const canAllocate = isTeamWorkspace && workspaceRole === 'OWNER'
   const balancesReady = personalCredits != null
+
+  const loadStorageHistory = useCallback(async (page = 1) => {
+    setStorageHistoryLoading(true)
+    try {
+      const result = await storageService.getPersonalHistory({ page, limit: 10 })
+      setStorageHistory(result.transactions)
+      setStorageHistoryPagination(result.pagination)
+      setStorageHistoryPage(page)
+    } finally {
+      setStorageHistoryLoading(false)
+    }
+  }, [])
+
+  const loadStorageContext = useCallback(async (workspaceId) => {
+    const [personal, historyResult] = await Promise.all([
+      storageService.getPersonalQuota(),
+      storageService.getPersonalHistory({ page: 1, limit: 10 }),
+    ])
+    setPersonalStorage(personal)
+    setStorageHistory(historyResult.transactions)
+    setStorageHistoryPagination(historyResult.pagination)
+    setStorageHistoryPage(1)
+
+    if (workspaceId) {
+      try {
+        const wsStorage = await storageService.getWorkspaceStorage(workspaceId)
+        setWorkspaceStorage(wsStorage)
+      } catch {
+        setWorkspaceStorage(null)
+      }
+    } else {
+      setWorkspaceStorage(null)
+    }
+  }, [])
 
   const loadHistory = useCallback(async (workspaceId, page = 1, typeHint = '') => {
     setHistoryLoading(true)
@@ -78,7 +125,7 @@ function BillingSettings() {
       setPersonalCredits(personal.personalCredits)
       setWorkspaceCredits(null)
       setWorkspaceType('')
-      await loadHistory(null, 1)
+      await Promise.all([loadHistory(null, 1), loadStorageContext(null)])
       return
     }
 
@@ -86,8 +133,11 @@ function BillingSettings() {
     setPersonalCredits(data.personalCredits)
     setWorkspaceCredits(data.workspaceCredits)
     setWorkspaceType(data.workspaceType)
-    await loadHistory(workspaceId, 1, data.workspaceType)
-  }, [loadHistory])
+    await Promise.all([
+      loadHistory(workspaceId, 1, data.workspaceType),
+      loadStorageContext(workspaceId),
+    ])
+  }, [loadHistory, loadStorageContext])
 
   const refreshAll = useCallback(async () => {
     setLoading(true)
@@ -109,14 +159,16 @@ function BillingSettings() {
       setLoading(true)
       setError('')
       try {
-        const [workspaceList, personal] = await Promise.all([
+        const [workspaceList, personal, storage] = await Promise.all([
           workspaceService.listWorkspaces(),
           creditsService.getPersonalBalance(),
+          storageService.getPersonalQuota(),
         ])
         if (cancelled) return
 
         setWorkspaces(workspaceList)
         setPersonalCredits(personal.personalCredits)
+        setPersonalStorage(storage)
 
         const defaultWorkspace =
           workspaceList.find((ws) => String(ws.type || '').toUpperCase() === 'PRIVATE') ||
@@ -130,9 +182,12 @@ function BillingSettings() {
           setWorkspaceCredits(data.workspaceCredits)
           setWorkspaceType(data.workspaceType)
           setPersonalCredits(data.personalCredits)
-          await loadHistory(workspaceId, 1, data.workspaceType)
+          await Promise.all([
+            loadHistory(workspaceId, 1, data.workspaceType),
+            loadStorageContext(workspaceId),
+          ])
         } else {
-          await loadHistory(null, 1)
+          await Promise.all([loadHistory(null, 1), loadStorageContext(null)])
         }
       } catch (err) {
         if (!cancelled) {
@@ -147,7 +202,7 @@ function BillingSettings() {
     return () => {
       cancelled = true
     }
-  }, [loadHistory])
+  }, [loadHistory, loadStorageContext])
 
   const handleWorkspaceChange = async (workspaceId) => {
     setSelectedWorkspaceId(workspaceId)
@@ -205,7 +260,7 @@ function BillingSettings() {
       <header className="settings-section-header billing-header-row">
         <div>
           <h3>Billing</h3>
-          <p>View balances, transfer credits to team workspaces, and review usage history.</p>
+          <p>View balances, storage quota, transfer credits, and review history.</p>
         </div>
         <button type="button" className="billing-refresh-btn" onClick={refreshAll} disabled={loading || actionLoading}>
           <MdRefresh size={16} />
@@ -265,6 +320,36 @@ function BillingSettings() {
               <span className="billing-stat-hint">Usage charges in the history below</span>
             </div>
           </article>
+        </div>
+
+        <div className="billing-allocate-card" style={{ marginTop: 8 }}>
+          <div className="billing-allocate-header">
+            <MdStorage size={20} />
+            <div>
+              <h4>Storage quota</h4>
+              <p>
+                {personalStorage?.tier?.label
+                  ? `${personalStorage.tier.label} plan`
+                  : 'Your account storage allocation'}
+              </p>
+            </div>
+          </div>
+          <StorageUsageBar
+            loading={loading && !personalStorage}
+            usedBytes={personalStorage?.usedBytes}
+            limitBytes={personalStorage?.limitBytes}
+            percentUsed={personalStorage?.percentUsed}
+            label="Personal quota"
+          />
+          {workspaceStorage?.footprint ? (
+            <p className="billing-stat-hint" style={{ marginTop: 12 }}>
+              {selectedWorkspace?.name || 'Workspace'} footprint:{' '}
+              {formatBytes(workspaceStorage.footprint.totalBytes)}
+              {workspaceStorage.owner?.name
+                ? ` · counts against ${workspaceStorage.owner.name}'s quota`
+                : ''}
+            </p>
+          ) : null}
         </div>
 
         {canAllocate && (
@@ -362,6 +447,70 @@ function BillingSettings() {
                 className="btn-premium btn-premium-ghost"
                 disabled={historyPage >= historyPagination.totalPages || historyLoading}
                 onClick={() => loadHistory(selectedWorkspaceId || null, historyPage + 1, workspaceType)}
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="billing-invoices">
+          <div className="billing-invoices-header">
+            <h4>
+              <MdStorage size={18} style={{ verticalAlign: 'text-bottom', marginRight: 6 }} />
+              Storage history
+            </h4>
+          </div>
+
+          {storageHistoryLoading ? (
+            <p className="billing-empty-text">Loading storage history…</p>
+          ) : storageHistory.length === 0 ? (
+            <p className="billing-empty-text">No storage transactions yet.</p>
+          ) : (
+            <div className="billing-history-table-wrap">
+              <table className="billing-history-table">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Tier</th>
+                    <th>Date</th>
+                    <th style={{ textAlign: 'right' }}>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {storageHistory.map((tx) => (
+                    <tr key={tx.id}>
+                      <td>{formatStorageTransactionType(tx.type)}</td>
+                      <td>{tx.tierId || '—'}</td>
+                      <td>{formatDate(tx.createdAt)}</td>
+                      <td style={{ textAlign: 'right', fontWeight: 600 }}>
+                        {formatBytes(tx.amountBytes)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {storageHistoryPagination.totalPages > 1 && (
+            <div className="billing-history-pagination">
+              <button
+                type="button"
+                className="btn-premium btn-premium-ghost"
+                disabled={storageHistoryPage <= 1 || storageHistoryLoading}
+                onClick={() => loadStorageHistory(storageHistoryPage - 1)}
+              >
+                Previous
+              </button>
+              <span>
+                Page {storageHistoryPage} of {storageHistoryPagination.totalPages}
+              </span>
+              <button
+                type="button"
+                className="btn-premium btn-premium-ghost"
+                disabled={storageHistoryPage >= storageHistoryPagination.totalPages || storageHistoryLoading}
+                onClick={() => loadStorageHistory(storageHistoryPage + 1)}
               >
                 Next
               </button>

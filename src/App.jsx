@@ -23,7 +23,6 @@ import UseCases from './pages/UseCases/UseCases.jsx'
 import InviteAcceptance from './pages/InviteAcceptance/InviteAcceptance.jsx'
 import AIAvatarsVideos from './pages/AIAvatarsVideos/AIAvatarsVideos.jsx'
 import AIVideos from './pages/AIVideos/AIVideos.jsx'
-import Help from './pages/UserHelp/Help.jsx'
 import NotFound from './pages/NotFound/NotFound.jsx'
 import RenderDownload from './pages/Download/RenderDownload.jsx'
 import { persistWorkspaceFolderNavigation } from './utils/navigateToWorkspaceFolder.js'
@@ -224,6 +223,7 @@ function App() {
       '/dashboard/create-voice': 'dashboard',
       '/dashboard/brandkits': 'dashboard',
       '/dashboard/credits': 'dashboard',
+      '/dashboard/help': 'dashboard',
       '/profile': 'dashboard',
       '/create': 'create',
       '/products': 'products',
@@ -242,7 +242,7 @@ function App() {
       '/settings': 'settings',
       '/ai-videos': 'ai-videos',
       '/ai-avatars-videos': 'ai-avatars-videos',
-      '/support': 'help',
+      '/support': 'dashboard',
       '/download': 'download',
     }
     
@@ -333,7 +333,7 @@ function App() {
       'settings': '/settings',
       'ai-videos': '/ai-videos',
       'ai-avatars-videos': '/ai-avatars-videos',
-      'help': '/support',
+      'help': '/dashboard/help',
       'download': '/download',
     }
     
@@ -401,7 +401,7 @@ function App() {
         '/settings': 'settings',
         '/ai-videos': 'ai-videos',
         '/ai-avatars-videos': 'ai-avatars-videos',
-        '/support': 'help',
+        '/support': 'dashboard',
         '/download': 'download',
       }
       
@@ -617,6 +617,9 @@ function App() {
                 if (currentPath.endsWith('/') && currentPath.length > 1) {
                   currentPath = currentPath.slice(0, -1)
                 }
+              }
+              if (currentPath === '/support') {
+                return 'help'
               }
               if (currentPath.startsWith('/dashboard/')) {
                 return currentPath.replace('/dashboard/', '') || 'home'
@@ -1053,10 +1056,6 @@ function App() {
         </>
       )}
 
-      {view === 'help' && (
-        <Help />
-      )}
-
       {view === 'learning-development' && (
         <>
           <LearningDevelopment 
@@ -1082,7 +1081,7 @@ function App() {
         <NotFound setView={setView} />
       )}
 
-      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings', 'help', 'not-found'].includes(view) && (
+      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings', 'not-found'].includes(view) && (
         <>
           <Landing 
             onLoginClick={handleLoginClick}

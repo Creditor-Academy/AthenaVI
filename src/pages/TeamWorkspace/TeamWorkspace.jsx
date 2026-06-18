@@ -18,6 +18,8 @@ import ItemDetailsModal from '../../components/features/workspace/workspace/Item
 import MoveProjectModal from '../../components/features/workspace/workspace/MoveProjectModal.jsx';
 import AllocateCreditsModal from '../../components/features/workspace/workspace/AllocateCreditsModal.jsx';
 import WorkspaceCreditsDashboard from '../../components/features/workspace/workspace/WorkspaceCreditsDashboard.jsx';
+import WorkspaceStorageSummary from '../../components/features/workspace/workspace/WorkspaceStorageSummary.jsx';
+import WorkspaceVideoLibrary from '../../components/features/workspace/workspace/WorkspaceVideoLibrary.jsx';
 import TeamWorkspaceSkeleton from '../page-skeleton/TeamWorkspaceSkeleton';
 
 import { extractUserId, normalizeWorkspace, normalizeFolder, normalizeVideo, workspaceCanEdit, workspaceCanManageContributors } from './workspaceUtils.js';
@@ -622,6 +624,9 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
     const role = String(workspace.userRole || 'MEMBER').toUpperCase();
     // Only TEAM workspaces have a credits pool; personal workspaces don't show the tab
     const showCreditsTab = workspace.type === 'workspace';
+    const isWorkspaceOwner =
+      String(workspace.ownerId || '') === String(currentUserId) ||
+      String(workspace.userRole || '').toUpperCase() === 'OWNER';
 
     return (
       <div>
@@ -640,18 +645,20 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           </div>
         )}
 
-        {/* ---- Folders / Credits tab bar ---- */}
-        {showCreditsTab && (
-          <div className="workspace-root-tabs-wrapper" style={{ marginBottom: 24 }}>
-            <div className="workspace-root-tabs">
-              <button
-                className={`workspace-root-tab ${wsActiveTab === 'folders' ? 'active' : ''}`}
-                onClick={() => setWsActiveTab('folders')}
-                type="button"
-              >
-                <MdFolderOpen size={16} /> Folders
-                <span className="tab-count-badge">{(workspace.folders || []).length}</span>
-              </button>
+        <WorkspaceStorageSummary workspaceId={workspace.id} />
+
+        {/* ---- Folders / Credits / Exports tab bar ---- */}
+        <div className="workspace-root-tabs-wrapper" style={{ marginBottom: 24 }}>
+          <div className="workspace-root-tabs">
+            <button
+              className={`workspace-root-tab ${wsActiveTab === 'folders' ? 'active' : ''}`}
+              onClick={() => setWsActiveTab('folders')}
+              type="button"
+            >
+              <MdFolderOpen size={16} /> Folders
+              <span className="tab-count-badge">{(workspace.folders || []).length}</span>
+            </button>
+            {showCreditsTab ? (
               <button
                 className={`workspace-root-tab ${wsActiveTab === 'credits' ? 'active' : ''}`}
                 onClick={() => setWsActiveTab('credits')}
@@ -659,12 +666,20 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
               >
                 Credits &amp; Usage
               </button>
-            </div>
+            ) : null}
+            <button
+              className={`workspace-root-tab ${wsActiveTab === 'exports' ? 'active' : ''}`}
+              onClick={() => setWsActiveTab('exports')}
+              type="button"
+            >
+              <MdVideoLibrary size={16} />
+              {isWorkspaceOwner ? 'My Videos' : 'Team Videos'}
+            </button>
           </div>
-        )}
+        </div>
 
         {/* ---- Folders tab ---- */}
-        {(wsActiveTab === 'folders' || !showCreditsTab) && (
+        {wsActiveTab === 'folders' && (
           <WorkspaceSection
             title="Folders"
             count={(workspace.folders || []).length}
@@ -696,6 +711,15 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
             )}
             {renderFolderItems(workspace.folders || [], workspace)}
           </WorkspaceSection>
+        )}
+
+        {/* ---- Exports tab ---- */}
+        {wsActiveTab === 'exports' && (
+          <WorkspaceVideoLibrary
+            workspaceId={workspace.id}
+            isOwner={isWorkspaceOwner}
+            onOpenProject={(project) => onEdit?.(project)}
+          />
         )}
 
         {/* ---- Credits tab ---- */}

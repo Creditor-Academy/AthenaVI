@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { MdAudiotrack, MdCloudUpload, MdDeleteOutline, MdImage, MdVideocam } from 'react-icons/md';
-import assetService from '../../../../services/assetService';
+import assetService, { isAssetInUseError, formatAssetInUseMessage } from '../../../../services/assetService';
+import workspaceService from '../../../../services/workspaceService';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { extractUserId } from '../../../../pages/TeamWorkspace/workspaceUtils';
+import { canManageAsset } from '../../../../utils/assetPermissions';
+import { assertUploadFits, dispatchStorageRefresh, formatStorageLimitMessage, isStorageLimitError } from '../../../../utils/storageQuota';
 import { setCanvasDragData } from '../../../../utils/editorDragDrop';
 
 const SOURCE_TABS = [
@@ -10,8 +15,11 @@ const SOURCE_TABS = [
 ];
 
 const EditorSidebarUpload = ({ addLayer, workspaceId, onUploadError, onClose }) => {
+  const { user } = useAuth();
+  const currentUserId = extractUserId(user);
   const inputRef = useRef(null);
   const [assets, setAssets] = useState([]);
+  const [workspaceMeta, setWorkspaceMeta] = useState(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
@@ -28,7 +36,7 @@ const EditorSidebarUpload = ({ addLayer, workspaceId, onUploadError, onClose }) 
         take: 100,
         source: sourceFilter,
       });
-      setAssets(list.map(assetService.normalizeAsset).filter(Boolean));
+      setAssets(list.map((item) => assetService.normalizeAsset(item)).filter(Boolean));
     } catch {
       setAssets([]);
     } finally {
@@ -39,6 +47,27 @@ const EditorSidebarUpload = ({ addLayer, workspaceId, onUploadError, onClose }) 
   useEffect(() => {
     refreshAssets();
   }, [refreshAssets]);
+
+  useEffect(() => {
+    if (!workspaceId) {
+      setWorkspaceMeta(null);
+      return;
+    }
+    let cancelled = false;
+    workspaceService
+      .getWorkspace(workspaceId)
+      .then((ws) => {
+        if (!cancelled) setWorkspaceMeta(ws);
+      })
+      .catch(() => {
+        if (!cancelled) setWorkspaceMeta(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [workspaceId]);
+
+  const assetCanManage = (asset) => canManageAsset(asset, workspaceMeta, currentUserId);
 
   const handleFiles = async (files) => {
     if (!files?.length) return;
@@ -60,6 +89,7 @@ const EditorSidebarUpload = ({ addLayer, workspaceId, onUploadError, onClose }) 
           onUploadError?.(validationError);
           continue;
         }
+        await assertUploadFits(workspaceId, file.size);
         const uploaded = await assetService.uploadAsset(workspaceId, file);
         let normalized = assetService.normalizeAsset(uploaded);
         if (!normalized?.url && normalized?.id) {
@@ -77,9 +107,12 @@ const EditorSidebarUpload = ({ addLayer, workspaceId, onUploadError, onClose }) 
         });
       }
       await refreshAssets();
+      dispatchStorageRefresh();
       onClose?.();
     } catch (err) {
-      onUploadError?.(err?.message || 'Upload failed');
+      onUploadError?.(
+        isStorageLimitError(err) ? formatStorageLimitMessage(err) : err?.message || 'Upload failed'
+      );
     } finally {
       setUploading(false);
     }
@@ -93,8 +126,13 @@ const EditorSidebarUpload = ({ addLayer, workspaceId, onUploadError, onClose }) 
     try {
       await assetService.deleteAsset(workspaceId, assetId);
       setAssets((prev) => prev.filter((asset) => asset.id !== assetId));
+      dispatchStorageRefresh();
     } catch (err) {
-      onUploadError?.(err?.message || 'Failed to delete asset');
+      onUploadError?.(
+        isAssetInUseError(err)
+          ? formatAssetInUseMessage(err)
+          : err?.message || 'Failed to delete asset'
+      );
     } finally {
       setDeletingId(null);
     }
@@ -202,6 +240,7 @@ const EditorSidebarUpload = ({ addLayer, workspaceId, onUploadError, onClose }) 
                 {asset.source === 'stock' ? (
                   <span className="upload-insert-panel__badge">Stock</span>
                 ) : null}
+                {assetCanManage(asset) ? (
                 <span
                   className="upload-insert-panel__delete"
                   role="button"
@@ -214,6 +253,7 @@ const EditorSidebarUpload = ({ addLayer, workspaceId, onUploadError, onClose }) 
                 >
                   <MdDeleteOutline size={16} />
                 </span>
+                ) : null}
                 <span className="upload-insert-panel__asset-label">
                   {mediaIcon(asset.mediaType)}
                   <span>{asset.name}</span>

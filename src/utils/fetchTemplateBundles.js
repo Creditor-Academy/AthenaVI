@@ -99,4 +99,29 @@ export function flattenBundleScenes(bundles = []) {
   );
 }
 
+export function bundleToDetailsTemplate(bundle) {
+  const sceneCount = bundle.scenes?.length || bundle.totalSlides || 0;
+  const totalDuration = (bundle.scenes || []).reduce((sum, scene) => sum + (scene.duration || 8), 0);
+  return {
+    ...bundle,
+    name: bundle.name,
+    category: bundle.category,
+    tag: (bundle.category || '').toUpperCase(),
+    duration: `${totalDuration}s`,
+    scenes: sceneCount,
+    ratio: bundle.aspectRatio || '16:9',
+    description: bundle.description,
+    thumb: bundle.coverScene?.thumbnail || '',
+    sceneList: (bundle.scenes || []).map((scene) => ({
+      id: scene.id,
+      title: scene.title,
+      description: scene.description,
+      tags: scene.tags || [],
+      scene,
+    })),
+    bundleScenes: bundle.scenes || [],
+    coverScene: bundle.coverScene || bundle.scenes?.[0] || null,
+  };
+}
+
 export default fetchTemplateBundles;

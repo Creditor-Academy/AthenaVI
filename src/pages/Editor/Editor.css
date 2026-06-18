@@ -166,6 +166,40 @@
     color: #b45309;
 }
 
+.editor-storage-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 34px;
+    padding: 0 10px 0 8px;
+    border-radius: 999px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-surface);
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+}
+
+.editor-topbar .editor-storage-pill {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(255, 255, 255, 0.35);
+    color: var(--text-main);
+}
+
+.editor-storage-pill svg {
+    color: #6366f1;
+    flex-shrink: 0;
+}
+
+.editor-storage-pill__label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
 /* Ribbon menus — Insert / View / Help (inside topbar-tools-strip) */
 .editor-ribbon-menu {
     position: relative;

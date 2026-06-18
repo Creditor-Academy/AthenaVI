@@ -37,6 +37,11 @@
   border-bottom: 1px solid var(--border-color);
 }
 
+.library-storage-bar {
+  margin-bottom: 16px;
+  max-width: 420px;
+}
+
 .library-page-header-row {
   display: flex;
   align-items: center;

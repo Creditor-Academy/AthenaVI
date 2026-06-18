@@ -11,6 +11,7 @@ import Templates from '../Templates/Templates.jsx'
 import TemplateDetails from '../TemplateDetails/TemplateDetails.jsx'
 import Profile from '../Profile/Profile.jsx'
 import Settings from '../Settings/Settings.jsx'
+import Help from '../UserHelp/Help.jsx'
 import BrandKits from '../BrandKits/BrandKits.jsx'
 import TeamWorkspace from '../TeamWorkspace/TeamWorkspace.jsx'
 import AdminPortal from '../AdminPortal/AdminPortal.jsx'
@@ -27,6 +28,7 @@ import { X } from 'lucide-react'
 import userService from '../../services/userService.js'
 import CreditsQuickModal from '../../components/ui/CreditsQuickModal/CreditsQuickModal.jsx'
 import { useAuth } from '../../contexts/AuthContext'
+import { bundleToDetailsTemplate } from '../../utils/fetchTemplateBundles.js'
 import './Dashboard.css'
 
 
@@ -52,6 +54,9 @@ function Dashboard({ onCreate, initialSection }) {
     }
     if (currentPath.startsWith('/dashboard/')) {
       return currentPath.replace('/dashboard/', '') || 'home'
+    }
+    if (currentPath === '/support') {
+      return 'help'
     }
     return 'home'
   })
@@ -90,6 +95,7 @@ function Dashboard({ onCreate, initialSection }) {
     'voices',
     'admin-portal',
     'settings',
+    'help',
   ]
 
   const isAdminPortal = section === 'admin-portal'
@@ -191,6 +197,8 @@ function Dashboard({ onCreate, initialSection }) {
       }
       if (currentPath === '/profile') {
         setSection('profile')
+      } else if (currentPath === '/support') {
+        setSection('help')
       } else if (currentPath.startsWith('/dashboard/')) {
         const newSection = currentPath.replace('/dashboard/', '') || 'home'
         setSection(newSection)
@@ -265,6 +273,7 @@ function Dashboard({ onCreate, initialSection }) {
           <AdminPortalSidebar
             activeTab={adminTab}
             onTabChange={handleAdminTabChange}
+            onNavigateHelp={() => goToSection('help')}
             onCloseMobile={() => setSidebarMobileOpen(false)}
           />
         ) : (
@@ -301,6 +310,11 @@ function Dashboard({ onCreate, initialSection }) {
               onCreate={handleOpenCreateVideoModal}
               onEdit={handleEditVideo}
               onShowAIAssistant={() => setShowAIAssistant(true)}
+              onBrowseTemplates={() => goToSection('templates')}
+              onSelectTemplate={(bundle) => {
+                setSelectedTemplateForDetails(bundleToDetailsTemplate(bundle))
+                goToSection('template-details')
+              }}
             />
           )}
           {section === 'videos' && <Videos onCreate={handleOpenCreateVideoModal} onEdit={handleEditVideo} />}
@@ -378,6 +392,9 @@ function Dashboard({ onCreate, initialSection }) {
           {section === 'credits' && <Settings onBack={() => goToSection('home')} initialTab="billing" />}
           {section === 'profile' && <Profile onBack={() => goToSection('home')} />}
           {section === 'settings' && <Settings onBack={() => goToSection('home')} />}
+          {section === 'help' && (
+            <Help embedded onOpenBilling={() => goToSection('credits')} />
+          )}
         </main>
       </div>
 

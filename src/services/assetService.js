@@ -1,4 +1,45 @@
-import { buildUrl, getAuthHeaders } from '../config/api';
+import API_CONFIG, { buildUrl, getAuthHeaders } from '../config/api';
+import { StorageLimitError } from '../utils/storageQuota';
+
+export class AssetInUseError extends Error {
+  constructor(message, data = {}) {
+    super(message || 'This asset is used in one or more projects and cannot be deleted.');
+    this.name = 'AssetInUseError';
+    this.code = 'ASSET_IN_USE';
+    this.status = 409;
+    this.data = data;
+  }
+}
+
+export function isAssetInUseError(error) {
+  return error?.code === 'ASSET_IN_USE' || error instanceof AssetInUseError;
+}
+
+export class AssetPermissionError extends Error {
+  constructor(message, data = {}) {
+    super(message || 'You do not have permission to modify this asset.');
+    this.name = 'AssetPermissionError';
+    this.code = 'ASSET_PERMISSION_DENIED';
+    this.status = 403;
+    this.data = data;
+  }
+}
+
+export function formatAssetInUseMessage(error) {
+  const data = error?.data || {};
+  const count =
+    data.projectCount ??
+    data.referenceCount ??
+    data.referencesCount ??
+    (Array.isArray(data.projects) ? data.projects.length : null) ??
+    (Array.isArray(data.references) ? data.references.length : null);
+
+  if (count != null && Number(count) > 0) {
+    const n = Number(count);
+    return `Used in ${n} project${n === 1 ? '' : 's'}. Remove it from projects first.`;
+  }
+  return error?.message || 'This asset is used in one or more projects and cannot be deleted.';
+}
 
 const ALLOWED_MIME_TYPES = new Set([
   'image/jpeg',
@@ -12,6 +53,14 @@ const ALLOWED_MIME_TYPES = new Set([
 const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
 
 class AssetService {
+  constructor() {
+    this.normalizeAsset = this.normalizeAsset.bind(this);
+  }
+
+  async readErrorPayload(response) {
+    return response.json().catch(() => ({}));
+  }
+
   validateUploadFile(file) {
     if (!file) return 'No file selected';
     if (file.size > MAX_UPLOAD_BYTES) return 'File exceeds the 50 MB limit';
@@ -29,7 +78,7 @@ class AssetService {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch(buildUrl(`/api/assets/${workspaceId}/upload`), {
+    const response = await fetch(buildUrl(API_CONFIG.ENDPOINTS.ASSETS.UPLOAD(workspaceId)), {
       method: 'POST',
       headers: {
         Authorization: getAuthHeaders().Authorization || '',
@@ -38,7 +87,10 @@ class AssetService {
     });
 
     if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
+      const err = await this.readErrorPayload(response);
+      if (response.status === 400) {
+        throw new StorageLimitError(err.message || 'Storage limit exceeded', err);
+      }
       throw new Error(err.message || `Upload failed: ${response.status}`);
     }
 
@@ -53,7 +105,7 @@ class AssetService {
     });
     if (source && source !== 'all') params.set('source', source);
 
-    const response = await fetch(buildUrl(`/api/assets/${workspaceId}?${params}`), {
+    const response = await fetch(buildUrl(`${API_CONFIG.ENDPOINTS.ASSETS.LIST(workspaceId)}?${params}`), {
       method: 'GET',
       headers: getAuthHeaders(),
       cache: 'no-store',
@@ -73,7 +125,7 @@ class AssetService {
     if (!trimmed) throw new Error('Name is required');
 
     const response = await fetch(
-      buildUrl(`/api/assets/${workspaceId}/${assetId}/rename`),
+      buildUrl(API_CONFIG.ENDPOINTS.ASSETS.RENAME(workspaceId, assetId)),
       {
         method: 'PATCH',
         headers: {
@@ -85,7 +137,10 @@ class AssetService {
     );
 
     if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
+      const err = await this.readErrorPayload(response);
+      if (response.status === 403) {
+        throw new AssetPermissionError(err.message, err);
+      }
       throw new Error(err.message || `Failed to rename asset: ${response.status}`);
     }
 
@@ -94,13 +149,19 @@ class AssetService {
   }
 
   async deleteAsset(workspaceId, assetId) {
-    const response = await fetch(buildUrl(`/api/assets/${workspaceId}/${assetId}`), {
+    const response = await fetch(buildUrl(API_CONFIG.ENDPOINTS.ASSETS.DELETE(workspaceId, assetId)), {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
+      const err = await this.readErrorPayload(response);
+      if (response.status === 409) {
+        throw new AssetInUseError(formatAssetInUseMessage({ message: err.message, data: err }), err);
+      }
+      if (response.status === 403) {
+        throw new AssetPermissionError(err.message, err);
+      }
       throw new Error(err.message || `Failed to delete asset: ${response.status}`);
     }
 
@@ -173,7 +234,14 @@ class AssetService {
       sizeLabel: this.formatFileSize(sizeBytes),
       modified: this.formatModifiedDate(asset.updatedAt || asset.createdAt),
       source,
-      owner: asset.uploadedByName || asset.ownerName || asset.uploaderName || '',
+      owner:
+        asset.uploader?.name ||
+        asset.uploadedByName ||
+        asset.ownerName ||
+        asset.uploaderName ||
+        '',
+      uploader: asset.uploader || null,
+      uploadedBy: asset.uploadedBy || asset.uploader?.id || null,
       raw: asset,
     };
   }

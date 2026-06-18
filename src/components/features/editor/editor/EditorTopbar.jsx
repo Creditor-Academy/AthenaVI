@@ -33,6 +33,7 @@ import EditorSidebarGraphic from './EditorSidebarGraphic'
 import EditorGuideModal from './EditorGuideModal'
 import ProfileDropdown from '../../../ui/ProfileDropdown/ProfileDropdown'
 import EditorCreditsBar from './EditorCreditsBar'
+import EditorStorageBar from './EditorStorageBar'
 
 const INSERT_ITEMS = [
     { id: 'image', icon: MdPhotoLibrary, label: 'Images' },
@@ -495,6 +496,7 @@ const EditorTopbar = ({
                 </div>
 
                 <div className="top-right">
+                    <EditorStorageBar workspaceId={workspaceId} />
                     <EditorCreditsBar workspaceId={workspaceId} refreshKey={creditsRefreshKey} />
 
                     <div className="topbar-divider" />

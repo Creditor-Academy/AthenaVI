@@ -34,7 +34,7 @@ const shiftHex = (hex, amount) => {
   return `#${[red, green, blue].map((channel) => channel.toString(16).padStart(2, '0')).join('')}`;
 };
 
-const getContrastColor = (hex) => {
+export const getContrastColor = (hex) => {
   const normalized = (hex || '').replace('#', '');
   const safe = normalized.length === 3
     ? normalized.split('').map((char) => `${char}${char}`).join('')
