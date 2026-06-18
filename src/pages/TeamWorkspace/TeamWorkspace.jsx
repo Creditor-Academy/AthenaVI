@@ -67,9 +67,6 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
     () => sessionStorage.getItem('workspaceActiveRootTab') || 'my-workspaces'
   );
 
-  // Tab inside an individual workspace (Folders | Credits)
-  const [wsActiveTab, setWsActiveTab] = useState('folders');
-
   // ------------------------------------------------------------------
   // Modal / panel state
   // ------------------------------------------------------------------
@@ -86,6 +83,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
   const [moveTargetVideo, setMoveTargetVideo] = useState(null);
   const [moveTargetWorkspace, setMoveTargetWorkspace] = useState(null);
   const [allocateCreditsWorkspace, setAllocateCreditsWorkspace] = useState(null);
+  const [creditsUsageWorkspace, setCreditsUsageWorkspace] = useState(null);
   const [personalCredits, setPersonalCredits] = useState(null);
 
   // ------------------------------------------------------------------
@@ -273,11 +271,6 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
     sessionStorage.setItem('workspaceActiveRootTab', activeRootTab);
   }, [activeRootTab]);
 
-  // Reset workspace sub-tab when the active workspace changes
-  useEffect(() => {
-    setWsActiveTab('folders');
-  }, [activeWorkspace?.id]);
-
   // Restore view/sort preferences
   useEffect(() => {
     const savedView = localStorage.getItem('workspaceViewMode');
@@ -450,6 +443,10 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
     setAllocateCreditsWorkspace(workspace);
   }, []);
 
+  const handleOpenCreditsUsage = useCallback((workspace) => {
+    setCreditsUsageWorkspace(workspace);
+  }, []);
+
   const renderWorkspaceItems = (items, { allowAllocate = false } = {}) => {
     const sorted = sortItems(items);
     const Component = viewMode === 'tile' ? WorkspaceCard : WorkspaceRow;
@@ -466,14 +463,14 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
             String(workspace.userRole).toUpperCase() === 'OWNER'
               ? () => renameItem('workspace', workspace.id)
               : null,
-          onManageWorkspace:
-            workspace.type === 'workspace' && String(workspace.userRole).toUpperCase() === 'OWNER'
+          onMembers:
+            workspace.type === 'workspace' && workspaceCanManageContributors(workspace)
               ? () => handleManageWorkspace(workspace)
               : null,
-          onTransferCredits:
-            allowAllocate && isOwnedTeamWorkspace(workspace)
-              ? () => handleOpenAllocateCredits(workspace)
-              : null,
+          showCreditsTransfer: allowAllocate && isOwnedTeamWorkspace(workspace),
+          onCreditsTransfer: () => handleOpenAllocateCredits(workspace),
+          showCreditsUsage: workspace.type === 'workspace',
+          onCreditsUsage: () => handleOpenCreditsUsage(workspace),
           onDelete:
             workspace.type === 'personal'
               ? null
@@ -922,6 +919,12 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
             )
           )
         }}
+      />
+
+      <WorkspaceCreditsUsageModal
+        isOpen={!!creditsUsageWorkspace}
+        workspace={creditsUsageWorkspace}
+        onClose={() => setCreditsUsageWorkspace(null)}
       />
 
       {/* Panels */}
