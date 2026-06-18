@@ -1,5 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MdViewModule, MdViewList, MdSort, MdAdd, MdKeyboardArrowDown, MdMail, MdMonetizationOn, MdArrowBack } from 'react-icons/md';
+import {
+    MdViewModule,
+    MdViewList,
+    MdSort,
+    MdKeyboardArrowDown,
+    MdMail,
+    MdMonetizationOn,
+    MdArrowBack,
+    MdMovieCreation,
+} from 'react-icons/md';
 
 const WorkspaceHeader = ({
     viewMode,
@@ -32,10 +41,10 @@ const WorkspaceHeader = ({
         { value: 'name_asc', label: 'Name (A-Z)' },
         { value: 'name_desc', label: 'Name (Z-A)' },
         { value: 'date_created', label: 'Date Created' },
-        { value: 'last_modified', label: 'Last Modified' }
+        { value: 'last_modified', label: 'Last Modified' },
     ];
 
-    const currentSortLabel = sortOptions.find(opt => opt.value === sortBy)?.label || 'Sort By';
+    const currentSortLabel = sortOptions.find((opt) => opt.value === sortBy)?.label || 'Sort By';
 
     return (
         <div className="workspace-header-container">
@@ -53,48 +62,79 @@ const WorkspaceHeader = ({
                 )}
                 <h2>Workspaces</h2>
             </div>
+
             <div className="workspace-header-actions">
-                <div className="workspace-header-credits" title="Total credits available">
-                    <MdMonetizationOn className="workspace-header-credits__icon" size={16} aria-hidden />
-                    <span className="workspace-header-credits__label">Credits:</span>
-                    <span className="workspace-header-credits__amount">
-                        {creditsLoading ? '—' : Number(totalCredits).toLocaleString()}
+                <div
+                    className="workspace-header-control workspace-header-control--primary"
+                    title="Total credits available"
+                    role="status"
+                    aria-label="Total credits available"
+                >
+                    <span className="workspace-header-control__icon" aria-hidden>
+                        <MdMonetizationOn size={16} />
+                    </span>
+                    <span className="workspace-header-control__body">
+                        <span className="workspace-header-control__label">Credits</span>
+                        <span className="workspace-header-control__value">
+                            {creditsLoading ? '—' : Number(totalCredits).toLocaleString()}
+                        </span>
                     </span>
                 </div>
 
-                <div className="view-toggle">
+                <div className="view-toggle" role="group" aria-label="View mode">
                     <button
+                        type="button"
                         className={`view-toggle-btn ${viewMode === 'tile' ? 'active' : ''}`}
                         onClick={() => onViewChange('tile')}
                         title="Grid View"
+                        aria-label="Grid view"
+                        aria-pressed={viewMode === 'tile'}
                     >
                         <MdViewModule size={18} />
                     </button>
                     <button
+                        type="button"
                         className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
                         onClick={() => onViewChange('list')}
                         title="List View"
+                        aria-label="List view"
+                        aria-pressed={viewMode === 'list'}
                     >
                         <MdViewList size={18} />
                     </button>
                 </div>
 
-                <div className="custom-sort-dropdown" ref={sortRef}>
+                <div className="workspace-header-control workspace-header-control--dropdown" ref={sortRef}>
                     <button
-                        className="sort-dropdown-btn"
-                        onClick={() => setIsSortOpen(!isSortOpen)}
+                        type="button"
+                        className={`workspace-header-control__trigger ${isSortOpen ? 'is-open' : ''}`}
+                        onClick={() => setIsSortOpen((prev) => !prev)}
+                        aria-expanded={isSortOpen}
+                        aria-haspopup="listbox"
                     >
-                        <MdSort size={18} className="sort-icon" />
-                        <span className="sort-label">{currentSortLabel}</span>
-                        <MdKeyboardArrowDown size={18} className={`sort-arrow ${isSortOpen ? 'open' : ''}`} />
+                        <span className="workspace-header-control__icon" aria-hidden>
+                            <MdSort size={16} />
+                        </span>
+                        <span className="workspace-header-control__body">
+                            <span className="workspace-header-control__label">Sort</span>
+                            <span className="workspace-header-control__value">{currentSortLabel}</span>
+                        </span>
+                        <MdKeyboardArrowDown
+                            size={18}
+                            aria-hidden
+                            className={`workspace-header-control__chevron ${isSortOpen ? 'open' : ''}`}
+                        />
                     </button>
 
-                    {isSortOpen && (
-                        <div className="sort-dropdown-menu fade-in-fast">
-                            {sortOptions.map(option => (
+                    {isSortOpen ? (
+                        <div className="workspace-header-dropdown fade-in-fast" role="listbox" aria-label="Sort options">
+                            {sortOptions.map((option) => (
                                 <button
                                     key={option.value}
-                                    className={`sort-menu-item ${sortBy === option.value ? 'active' : ''}`}
+                                    type="button"
+                                    role="option"
+                                    aria-selected={sortBy === option.value}
+                                    className={`workspace-header-dropdown__item ${sortBy === option.value ? 'active' : ''}`}
                                     onClick={() => {
                                         onSortChange(option.value);
                                         setIsSortOpen(false);
@@ -104,20 +144,46 @@ const WorkspaceHeader = ({
                                 </button>
                             ))}
                         </div>
-                    )}
+                    ) : null}
                 </div>
 
-                {onInviteClick && (
-                    <button className="invite-icon-btn" onClick={onInviteClick} title="Invitations">
-                        <MdMail size={18} />
-                        {invitationCount > 0 && (
-                            <span className="invite-badge">{invitationCount}</span>
-                        )}
+                {onInviteClick ? (
+                    <button
+                        type="button"
+                        className="workspace-header-control workspace-header-control--interactive"
+                        onClick={onInviteClick}
+                        title="Invitations"
+                        aria-label={`Invitations${invitationCount > 0 ? `, ${invitationCount} pending` : ''}`}
+                    >
+                        <span className="workspace-header-control__icon" aria-hidden>
+                            <MdMail size={16} />
+                        </span>
+                        <span className="workspace-header-control__body">
+                            <span className="workspace-header-control__label">Invites</span>
+                            <span className="workspace-header-control__value">
+                                {invitationCount > 0 ? `${invitationCount} new` : 'Inbox'}
+                            </span>
+                        </span>
+                        {invitationCount > 0 ? (
+                            <span className="workspace-header-control__badge" aria-hidden>
+                                {invitationCount}
+                            </span>
+                        ) : null}
                     </button>
-                )}
+                ) : null}
 
-                <button className="btn-primary" onClick={onCreateClick}>
-                    <MdAdd size={18} /> Video
+                <button
+                    type="button"
+                    className="workspace-header-control workspace-header-control--primary workspace-header-control--interactive"
+                    onClick={onCreateClick}
+                >
+                    <span className="workspace-header-control__icon" aria-hidden>
+                        <MdMovieCreation size={16} />
+                    </span>
+                    <span className="workspace-header-control__body">
+                        <span className="workspace-header-control__label">Create</span>
+                        <span className="workspace-header-control__value">New Video</span>
+                    </span>
                 </button>
             </div>
         </div>

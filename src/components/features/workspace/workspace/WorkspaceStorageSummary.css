@@ -13,6 +13,18 @@
   margin-bottom: 14px;
 }
 
+.workspace-storage-details__header-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, color-mix(in srgb, #3b82f6 14%, #fff), color-mix(in srgb, #6366f1 10%, #fff));
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
 .workspace-storage-summary__header h4 {
   margin: 0 0 4px;
   font-size: 15px;
