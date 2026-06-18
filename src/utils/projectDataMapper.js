@@ -253,7 +253,7 @@ function textClipToElement(clip, cIdx) {
     placement: readClipPlacement(clip),
     content: buildTextContent(clip),
     style: normalizeTextStyle(clip.style),
-    animations: mapAnimationsForBackend(clip.animations),
+    animations: mapAnimationsForBackend(clip.animations, durationInFrames / FPS),
   };
 
   if (clip.role) element.role = clip.role;
@@ -284,7 +284,7 @@ function clipToElement(clip, scene, cIdx) {
     timing: { startFrame, durationInFrames },
     placement: readClipPlacement(clip),
     content,
-    animations: mapAnimationsForBackend(clip.animations),
+    animations: mapAnimationsForBackend(clip.animations, durationInFrames / FPS),
   };
 
   if (clip.role) element.role = clip.role;
@@ -521,7 +521,7 @@ function elementToClip(element) {
   }
   if (element.effects) clip.effects = { ...element.effects };
   if (element.animations) {
-    clip.animations = mapAnimationsFromBackend(element.animations);
+    clip.animations = mapAnimationsFromBackend(element.animations, durationInFrames / FPS);
   }
   if (element.visible !== undefined) clip.visible = element.visible;
   if (element.isBackground) clip.isBackground = true;

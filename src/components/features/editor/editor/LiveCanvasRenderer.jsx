@@ -122,7 +122,7 @@ const clipBase = (clip, isSelected) => {
   transform: `rotate(${clip.rotation ?? 0}deg) scale(${clip.scale ?? 1})`,
   transformOrigin: 'center center',
   opacity: clip.opacity ?? 1,
-  zIndex: getClipZIndex(clip, isSelected),
+  zIndex: getClipZIndex(clip),
   outline: isSelected
     ? (isBackgroundClip(clip) ? '2px dashed rgba(26,115,232,0.6)' : 'none')
     : '2px solid transparent',

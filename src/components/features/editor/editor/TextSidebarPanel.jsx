@@ -1,8 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, Fragment } from 'react';
 import {
   MdSchedule,
-  MdExpandMore,
-  MdExpandLess,
   MdOpenInFull,
   MdFormatBold,
   MdFormatItalic,
@@ -41,7 +39,11 @@ import {
 import {
   getEntranceAnimation,
   setEntranceAnimation,
+  getExitAnimation,
+  setExitAnimation,
 } from '../../../../utils/clipAnimations';
+import { durationForExit, entranceTypeToExitType, inferAnimationScope } from '../../../../utils/layerAnimatePresets';
+import AnimationScopeControls, { ANIMATION_APPLY_SCOPE } from './AnimationScopeControls';
 import {
   getClipStackIndex,
   isBackgroundClip,
@@ -178,54 +180,50 @@ const MotionPreview = ({ presetId }) => {
   }
 };
 
-const SUGGESTED_PREVIEW_COUNT = 3;
-const EFFECTS_PREVIEW_COUNT = 3;
+const TEXT_ANIM_GRID_COLS = 3;
+
+function shouldShowApplyPanelAfterIndex(index, expandedIndex, visibleLength, cols = TEXT_ANIM_GRID_COLS) {
+  if (expandedIndex < 0) return false;
+  const expandedRow = Math.floor(expandedIndex / cols);
+  const currentRow = Math.floor(index / cols);
+  if (currentRow !== expandedRow) return false;
+  return (index + 1) % cols === 0 || index === visibleLength - 1;
+}
 
 const CollapsibleEffectGrid = ({
   title,
   options,
   activeId,
+  expandedId,
   onSelect,
   renderPreview,
-  previewCount = 3,
-  expandLabel = 'Show all',
-  collapseLabel = 'Show less',
+  applyPanel = null,
 }) => {
-  const [expanded, setExpanded] = useState(false);
-  const hasMore = options.length > previewCount;
-  const visible = expanded || !hasMore ? options : options.slice(0, previewCount);
-  const hiddenCount = options.length - previewCount;
+  const expandedIndex = expandedId ? options.findIndex((o) => o.id === expandedId) : -1;
 
   return (
     <div className="text-sidebar-section">
       <div className="text-sidebar-section__head">
         <span className="text-sidebar-section__title">{title}</span>
-        {hasMore ? (
-          <button
-            type="button"
-            className="text-sidebar-expand-btn"
-            onClick={() => setExpanded((v) => !v)}
-            aria-expanded={expanded}
-          >
-            {expanded ? collapseLabel : `${expandLabel} (${hiddenCount})`}
-            {expanded ? <MdExpandLess size={16} /> : <MdExpandMore size={16} />}
-          </button>
-        ) : null}
       </div>
       <div className="text-sidebar-grid">
-        {visible.map((opt) => (
-          <button
-            key={opt.id}
-            type="button"
-            className={`text-sidebar-card ${activeId === opt.id ? 'text-sidebar-card--active' : ''}`}
-            onClick={() => onSelect(opt.id)}
-            title={opt.label}
-          >
-            <div className="text-sidebar-card__preview">
-              {renderPreview(opt.id)}
-            </div>
-            <span className="text-sidebar-card__label">{opt.label}</span>
-          </button>
+        {options.map((opt, index) => (
+          <Fragment key={opt.id}>
+            <button
+              type="button"
+              className={`text-sidebar-card ${activeId === opt.id ? 'text-sidebar-card--active' : ''} ${expandedId === opt.id ? 'text-sidebar-card--expanded' : ''}`}
+              onClick={() => onSelect(opt.id)}
+              title={opt.label}
+            >
+              <div className="text-sidebar-card__preview">
+                {renderPreview(opt.id)}
+              </div>
+              <span className="text-sidebar-card__label">{opt.label}</span>
+            </button>
+            {applyPanel && shouldShowApplyPanelAfterIndex(index, expandedIndex, options.length) ? (
+              <div className="text-sidebar-apply-inline">{applyPanel}</div>
+            ) : null}
+          </Fragment>
         ))}
       </div>
     </div>
@@ -239,7 +237,6 @@ const EffectGrid = ({ title, options, activeId, onSelect, renderPreview }) => (
     activeId={activeId}
     onSelect={onSelect}
     renderPreview={renderPreview}
-    previewCount={options.length}
   />
 );
 
@@ -345,6 +342,15 @@ const TextSidebarPanel = ({
   const textDecoration = style.textDecoration || 'none';
   const entrance = getEntranceAnimation(activeLayer);
   const activeEntrance = entrance?.type || 'none';
+  const exit = getExitAnimation(activeLayer);
+  const activeExit = exit?.type || 'none';
+
+  const [selectedMotionPreset, setSelectedMotionPreset] = useState(null);
+  const [applyScope, setApplyScope] = useState(ANIMATION_APPLY_SCOPE.ENTRANCE);
+
+  useEffect(() => {
+    setSelectedMotionPreset(null);
+  }, [activeLayer?.id]);
 
   const activeSuggestedId = useMemo(
     () => getSuggestedAnimationId(activeEntrance),
@@ -384,7 +390,15 @@ const TextSidebarPanel = ({
     });
   };
 
-  const applyMotion = (preset) => {
+  const applyMotionWithScope = (preset, scope, layer = activeLayer) => {
+    if (!preset || preset.entrance === 'none') {
+      let next = setEntranceAnimation(layer, { type: 'none' });
+      next = setExitAnimation(next, { type: 'none' });
+      updateLayer({ animations: next.animations });
+      setSelectedMotionPreset(null);
+      return;
+    }
+
     const durationByType = {
       typewriter: 1.4,
       ascend: 0.85,
@@ -394,15 +408,77 @@ const TextSidebarPanel = ({
       burst: 0.65,
       none: 0.6,
     };
-    const next = setEntranceAnimation(activeLayer, {
-      type: preset.entrance,
-      duration: durationByType[preset.entrance] ?? 0.75,
-      delay: 0,
-      speed: preset.entrance === 'typewriter' || preset.entrance === 'wordFade' ? 1 : undefined,
-      previewSeed: Date.now(),
-    });
+    const exitType = entranceTypeToExitType(preset.entrance);
+    let next = layer;
+
+    if (scope === ANIMATION_APPLY_SCOPE.ENTRANCE || scope === ANIMATION_APPLY_SCOPE.BOTH) {
+      next = setEntranceAnimation(next, {
+        type: preset.entrance,
+        duration: entrance?.duration ?? durationByType[preset.entrance] ?? 0.75,
+        delay: entrance?.delay ?? 0,
+        speed: preset.entrance === 'typewriter' || preset.entrance === 'wordFade' ? (entrance?.speed ?? 1) : undefined,
+        previewSeed: Date.now(),
+      });
+    }
+
+    if (scope === ANIMATION_APPLY_SCOPE.EXIT || scope === ANIMATION_APPLY_SCOPE.BOTH) {
+      next = setExitAnimation(next, {
+        type: exitType,
+        duration: exit?.duration ?? durationForExit(exitType),
+        delay: exit?.delay ?? 0,
+        previewSeed: Date.now(),
+      });
+    }
+
+    if (scope === ANIMATION_APPLY_SCOPE.ENTRANCE) {
+      next = setExitAnimation(next, { type: 'none' });
+    } else if (scope === ANIMATION_APPLY_SCOPE.EXIT) {
+      next = setEntranceAnimation(next, { type: 'none' });
+    }
+
     updateLayer({ animations: next.animations });
   };
+
+  const handleMotionPresetClick = (preset) => {
+    if (!preset) return;
+    if (preset.entrance === 'none') {
+      applyMotionWithScope(preset, ANIMATION_APPLY_SCOPE.ENTRANCE);
+      return;
+    }
+    if (selectedMotionPreset?.id === preset.id) {
+      setSelectedMotionPreset(null);
+      return;
+    }
+    setSelectedMotionPreset(preset);
+    const scope = inferAnimationScope(preset, entrance, exit);
+    setApplyScope(scope);
+    applyMotionWithScope(preset, scope);
+  };
+
+  const handleScopeChange = (scope) => {
+    setApplyScope(scope);
+    if (!selectedMotionPreset) return;
+    applyMotionWithScope(selectedMotionPreset, scope);
+  };
+
+  const patchEntrance = (patch) => {
+    const next = setEntranceAnimation(activeLayer, { ...patch, previewSeed: Date.now() });
+    updateLayer({ animations: next.animations });
+  };
+
+  const patchExit = (patch) => {
+    const next = setExitAnimation(activeLayer, { ...patch, previewSeed: Date.now() });
+    updateLayer({ animations: next.animations });
+  };
+
+  const clearAnimations = () => {
+    let next = setEntranceAnimation(activeLayer, { type: 'none' });
+    next = setExitAnimation(next, { type: 'none' });
+    updateLayer({ animations: next.animations });
+    setSelectedMotionPreset(null);
+  };
+
+  const selectedMotionId = selectedMotionPreset?.id || activeSuggestedId || activeMotionId || '';
 
   const toggleBold = () => {
     updateStyle({
@@ -419,81 +495,77 @@ const TextSidebarPanel = ({
     updateStyle({ textDecoration: has ? 'none' : tag });
   };
 
-  const animationContent = (
-    <>
-      <CollapsibleEffectGrid
-        title="Suggested"
-        options={SUGGESTED_TEXT_ANIMATIONS}
-        activeId={activeSuggestedId}
-        previewCount={SUGGESTED_PREVIEW_COUNT}
-        expandLabel="Show all"
-        onSelect={(id) => {
-          const preset = SUGGESTED_TEXT_ANIMATIONS.find((p) => p.id === id);
-          if (preset) applyMotion(preset);
-        }}
-        renderPreview={(id) => <SuggestedPreview presetId={id} />}
+  const animationContent = (() => {
+    const applyPanel = selectedMotionPreset ? (
+      <AnimationScopeControls
+        presetLabel={selectedMotionPreset.label}
+        activeScope={applyScope}
+        onScopeChange={handleScopeChange}
+        entrance={entrance}
+        exit={exit}
+        onPatchEntrance={patchEntrance}
+        onPatchExit={patchExit}
+        onClear={clearAnimations}
+        showTypewriterSpeed={
+          selectedMotionPreset.entrance === 'typewriter' ||
+          selectedMotionPreset.entrance === 'wordFade'
+        }
+        inline
       />
+    ) : null;
 
-      {(activeEntrance === 'typewriter' || activeEntrance === 'wordFade') && (
-        <div className="text-sidebar-section text-typewriter-speed">
-          <div className="text-typewriter-speed__row">
-            <span className="text-typewriter-speed__label">Speed</span>
-            <span className="text-typewriter-speed__value">{(entrance?.speed ?? 1).toFixed(1)}×</span>
-          </div>
-          <input
-            type="range"
-            className="text-typewriter-speed__slider"
-            min={0.25}
-            max={3}
-            step={0.25}
-            value={entrance?.speed ?? 1}
-            onChange={(e) => {
-              const next = setEntranceAnimation(activeLayer, {
-                speed: Number(e.target.value),
-                previewSeed: Date.now(),
-              });
-              updateLayer({ animations: next.animations });
-            }}
-            aria-label="Typewriter speed"
-          />
-        </div>
-      )}
+    const applyPanelFor = (options) =>
+      selectedMotionPreset && options.some((o) => o.id === selectedMotionPreset.id) ? applyPanel : null;
 
-      <CollapsibleEffectGrid
-        title="Text animation"
-        options={TEXT_MOTION_PRESETS}
-        activeId={activeMotionId || 'none'}
-        previewCount={6}
-        expandLabel="Show all"
-        onSelect={(id) => {
-          const preset = TEXT_MOTION_PRESETS.find((p) => p.id === id);
-          if (preset) applyMotion(preset);
-        }}
-        renderPreview={(id) => <MotionPreview presetId={id} />}
-      />
+    return (
+      <>
+        <CollapsibleEffectGrid
+          title="Suggested"
+          options={SUGGESTED_TEXT_ANIMATIONS}
+          activeId={selectedMotionId || activeSuggestedId}
+          expandedId={selectedMotionPreset?.id}
+          applyPanel={applyPanelFor(SUGGESTED_TEXT_ANIMATIONS)}
+          onSelect={(id) => {
+            const preset = SUGGESTED_TEXT_ANIMATIONS.find((p) => p.id === id);
+            handleMotionPresetClick(preset);
+          }}
+          renderPreview={(id) => <SuggestedPreview presetId={id} />}
+        />
 
-      <CollapsibleEffectGrid
-        title="General"
-        options={GENERAL_MOTION_PRESETS}
-        activeId={GENERAL_MOTION_PRESETS.find((p) => p.entrance === activeEntrance)?.id || ''}
-        previewCount={6}
-        expandLabel="Show all"
-        onSelect={(id) => {
-          const preset = GENERAL_MOTION_PRESETS.find((p) => p.id === id);
-          if (preset) applyMotion(preset);
-        }}
-        renderPreview={(id) => <MotionPreview presetId={id} />}
-      />
-    </>
-  );
+        <CollapsibleEffectGrid
+          title="Text animation"
+          options={TEXT_MOTION_PRESETS}
+          activeId={selectedMotionId || activeMotionId || 'none'}
+          expandedId={selectedMotionPreset?.id}
+          applyPanel={applyPanelFor(TEXT_MOTION_PRESETS)}
+          onSelect={(id) => {
+            const preset = TEXT_MOTION_PRESETS.find((p) => p.id === id);
+            if (preset) handleMotionPresetClick(preset);
+          }}
+          renderPreview={(id) => <MotionPreview presetId={id} />}
+        />
+
+        <CollapsibleEffectGrid
+          title="General"
+          options={GENERAL_MOTION_PRESETS}
+          activeId={selectedMotionId || GENERAL_MOTION_PRESETS.find((p) => p.entrance === activeEntrance)?.id || ''}
+          expandedId={selectedMotionPreset?.id}
+          applyPanel={applyPanelFor(GENERAL_MOTION_PRESETS)}
+          onSelect={(id) => {
+            const preset = GENERAL_MOTION_PRESETS.find((p) => p.id === id);
+            if (preset) handleMotionPresetClick(preset);
+          }}
+          renderPreview={(id) => <MotionPreview presetId={id} />}
+        />
+      </>
+    );
+  })();
 
   const effectContent = (
     <CollapsibleEffectGrid
       title="Presets"
       options={TEXT_EFFECT_OPTIONS}
       activeId={getTextEffectId(style)}
-      previewCount={EFFECTS_PREVIEW_COUNT}
-      expandLabel="Show all"
       onSelect={applyEffect}
       renderPreview={(id) => <EffectPreview effectId={id} />}
     />

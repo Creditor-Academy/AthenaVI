@@ -392,6 +392,10 @@
   gap: 8px;
 }
 
+.text-sidebar-apply-inline {
+  grid-column: 1 / -1;
+}
+
 .text-sidebar-card {
   display: flex;
   flex-direction: column;
@@ -424,6 +428,11 @@
 .text-sidebar-card--active .text-sidebar-card__preview {
   border-color: var(--ts-accent);
   background: var(--ts-accent-dim);
+}
+
+.text-sidebar-card--expanded .text-sidebar-card__preview {
+  border-color: var(--ts-accent);
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.3);
 }
 
 .text-sidebar-card__label {

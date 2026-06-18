@@ -2835,7 +2835,7 @@ function Create({ onBack, initialConfig = null }) {
               currentTime={currentTime}
               isPlaying={isPlaying}
               onSeek={handleSeek}
-              onSelectScene={(sceneId) => handleSelectScene(sceneId, { openSidebar: true })}
+              onSelectScene={handleSelectScene}
               onSelectAvatarVideo={handleSelectAvatarVideoFromTimeline}
               onSelectLayer={handleSelectLayer}
               onUpdateScene={updateScene}
@@ -2873,6 +2873,7 @@ function Create({ onBack, initialConfig = null }) {
               }}
               totalDuration={(totalDurationInFrames || 0) / 30}
               timelineScope={timelineScope}
+              setTimelineScope={setTimelineScope}
             />
           </div>
         </div>
