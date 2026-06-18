@@ -183,7 +183,7 @@ function AllocateCreditsModal({ isOpen, workspace, onClose, onSuccess }) {
                   <MdMonetizationOn size={20} />
                 </div>
                 <div>
-                  <h2>Transfer credits</h2>
+                  <h2>Transfer credit</h2>
                   <p className="astryd-subtitle">
                     Move credits between your personal balance and <strong>{workspaceName}</strong>
                   </p>

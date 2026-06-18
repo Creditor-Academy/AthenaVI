@@ -784,3 +784,38 @@
   background: color-mix(in srgb, var(--text-muted) 12%, transparent);
   color: var(--text-muted);
 }
+
+/* Fixed-height usage modal — body scrolls, shell does not resize */
+.workspace-credits-usage-modal {
+  width: min(920px, 96vw) !important;
+  max-width: min(920px, 96vw) !important;
+  height: min(720px, 85vh);
+  max-height: min(720px, 85vh);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.workspace-credits-usage-modal__header {
+  flex-shrink: 0;
+}
+
+.workspace-credits-usage-modal__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
+  padding-top: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--primary) 72%, transparent) transparent;
+}
+
+.workspace-credits-usage-modal__body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.workspace-credits-usage-modal__body::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--primary) 72%, transparent);
+  border-radius: 999px;
+}

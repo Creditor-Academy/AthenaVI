@@ -5,7 +5,7 @@ import {
   MdAdd,
   MdPerson,
   MdMail,
-  MdSettings,
+  MdPeople,
   MdMoreVert,
   MdCancel
 } from 'react-icons/md';
@@ -85,11 +85,11 @@ const ContributorsPanel = ({
             <div className="astryd-header">
               <div className="astryd-title-group">
                 <div className="astryd-icon-container">
-                  <MdSettings size={20} />
+                  <MdPeople size={20} />
                 </div>
                 <div>
-                  <h2>Manage Workspace</h2>
-                  <p className="astryd-subtitle">Workspace Contributors</p>
+                  <h2>Members</h2>
+                  <p className="astryd-subtitle">Workspace members &amp; invites</p>
                 </div>
               </div>
               <button className="astryd-close-btn" onClick={onClose} title="Close">

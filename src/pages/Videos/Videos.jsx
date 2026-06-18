@@ -1,38 +1,62 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   MdAdd,
-  MdDownload,
-  MdFolder,
+  MdApps,
   MdGridView,
-  MdPlayArrow,
-  MdRefresh,
-  MdSearch,
+  MdPeople,
+  MdPerson,
   MdVideoLibrary,
   MdViewList,
+  MdWorkspaces,
   MdClose,
   MdCheckCircle,
   MdCancel,
 } from 'react-icons/md'
+import { useAuth } from '../../contexts/AuthContext'
 import videoLibraryService from '../../services/videoLibraryService'
-import { formatBytes } from '../../utils/formatSize'
+import workspaceService from '../../services/workspaceService'
+import { extractUserId, normalizeWorkspace } from '../TeamWorkspace/workspaceUtils'
+import '../../components/features/workspace/workspace/WorkspaceStyles.css'
 import VideosSkeleton from '../page-skeleton/VideosSkeleton'
+import ExportVideoCard from './ExportVideoCard.jsx'
+import ExportVideoRow from './ExportVideoRow.jsx'
+import VideosToolbar from './VideosToolbar.jsx'
+import {
+  applyVideoFilters,
+  getVideoEmptyHint,
+  getVideoEmptyTitle,
+  getVideoSectionSubtitle,
+  groupVideos,
+  sortVideos,
+  VIDEO_FILTER_OPTIONS,
+  VIDEO_GROUP_OPTIONS,
+  VIDEO_SECTION_TABS,
+  VIDEO_SORT_OPTIONS,
+} from './videosUtils'
 import './Videos.css'
 
 const PAGE_SIZE = 20
 
-function formatCompletedDate(iso) {
-  if (!iso) return 'Recently'
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return 'Recently'
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+const TAB_ICONS = {
+  all: MdApps,
+  personal: MdPerson,
+  'my-workspace': MdWorkspaces,
+  'shared-with-me': MdPeople,
 }
 
 function Videos({ onCreate, onEdit }) {
+  const { user: authUser } = useAuth()
+  const currentUserId = extractUserId(authUser)
   const [videos, setVideos] = useState([])
+  const [workspaceMap, setWorkspaceMap] = useState(() => new Map())
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [viewMode, setViewMode] = useState('grid')
+  const [activeSection, setActiveSection] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [filterBy, setFilterBy] = useState('all')
+  const [sortBy, setSortBy] = useState('completed_desc')
+  const [groupBy, setGroupBy] = useState('none')
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1 })
   const [previewVideo, setPreviewVideo] = useState(null)
   const [previewUrl, setPreviewUrl] = useState('')
@@ -80,15 +104,45 @@ function Videos({ onCreate, onEdit }) {
     fetchVideos({ page: 1 })
   }, [fetchVideos])
 
-  const filteredVideos = videos.filter((video) => {
-    const q = searchQuery.trim().toLowerCase()
-    if (!q) return true
-    return (
-      video.title.toLowerCase().includes(q) ||
-      video.workspaceName.toLowerCase().includes(q) ||
-      (video.triggeredBy?.name || '').toLowerCase().includes(q)
-    )
-  })
+  useEffect(() => {
+    let cancelled = false
+
+    const loadWorkspaces = async () => {
+      try {
+        const rawWorkspaces = await workspaceService.listWorkspaces()
+        if (cancelled) return
+        const mapped = (rawWorkspaces || []).map((ws) =>
+          normalizeWorkspace(ws, currentUserId, authUser)
+        )
+        setWorkspaceMap(new Map(mapped.map((ws) => [ws.id, ws])))
+      } catch (error) {
+        console.warn('Failed to load workspaces for video filters:', error)
+      }
+    }
+
+    loadWorkspaces()
+    return () => {
+      cancelled = true
+    }
+  }, [currentUserId, authUser])
+
+  const filteredVideos = useMemo(() => {
+    const filtered = applyVideoFilters(videos, {
+      searchQuery,
+      filterBy,
+      currentUserId,
+      workspaceMap,
+      activeSection,
+    });
+    return sortVideos(filtered, sortBy);
+  }, [videos, workspaceMap, currentUserId, activeSection, searchQuery, filterBy, sortBy]);
+
+  const videoGroups = useMemo(
+    () => groupVideos(filteredVideos, groupBy),
+    [filteredVideos, groupBy]
+  );
+
+  const hasSearch = Boolean(searchQuery.trim()) || filterBy !== 'all';
 
   const openPreview = async (video) => {
     setPreviewVideo(video)
@@ -129,6 +183,41 @@ function Videos({ onCreate, onEdit }) {
 
   const hasMore = pagination.page < pagination.totalPages
 
+  const renderVideoCollection = (collection) => (
+    <div
+      className={`items-container videos-export-items ${
+        viewMode === 'grid' ? 'tile-view' : 'list-view export-list-view'
+      }`}
+    >
+      {viewMode === 'list' ? (
+        <div className="list-header export-list-header">
+          <div className="col" />
+          <div className="col">Name</div>
+          <div className="col">Workspace</div>
+          <div className="col">Completed</div>
+          <div className="col">Size</div>
+          <div className="col">Rendered by</div>
+          <div className="col" />
+        </div>
+      ) : null}
+
+      {collection.map((video) => {
+        const handlers = {
+          onPreview: () => openPreview(video),
+          onDownload: () => handleDownload(video),
+          onOpenProject: onEdit ? () => handleOpenProject(video) : null,
+          downloading: actionId === video.id,
+        };
+
+        return viewMode === 'grid' ? (
+          <ExportVideoCard key={video.id} video={video} {...handlers} />
+        ) : (
+          <ExportVideoRow key={video.id} video={video} {...handlers} />
+        );
+      })}
+    </div>
+  );
+
   return (
     <div className="videos-page">
       <div className="videos-shell">
@@ -136,18 +225,10 @@ function Videos({ onCreate, onEdit }) {
           <div className="videos-title-section">
             <h1 className="videos-page-title">My Videos</h1>
             <p className="videos-page-subtitle">
-              Completed final exports from workspaces you own. Team member renders count toward your storage.
+              {getVideoSectionSubtitle(activeSection)}
             </p>
           </div>
           <div className="videos-actions">
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => fetchVideos({ page: 1 })}
-              disabled={loading}
-            >
-              <MdRefresh size={18} />
-            </button>
             <div className="view-toggle">
               <button
                 className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
@@ -173,75 +254,77 @@ function Videos({ onCreate, onEdit }) {
           </div>
         </header>
 
-        <div className="videos-search-bar">
-          <MdSearch size={22} color="var(--text-muted)" />
-          <input
-            type="text"
-            placeholder="Search exports or workspaces…"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            aria-label="Search videos"
-          />
+        <div className="videos-tab-switch" role="tablist" aria-label="Video sections">
+          {VIDEO_SECTION_TABS.map((tab) => {
+            const Icon = TAB_ICONS[tab.id]
+            const isActive = activeSection === tab.id
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                className={`videos-tab-btn ${isActive ? 'active' : ''}`}
+                onClick={() => setActiveSection(tab.id)}
+              >
+                <span className="videos-tab-icon" aria-hidden>
+                  <Icon size={18} />
+                </span>
+                <span>{tab.label}</span>
+              </button>
+            )
+          })}
         </div>
+
+        <VideosToolbar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          filterBy={filterBy}
+          onFilterChange={setFilterBy}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          groupBy={groupBy}
+          onGroupChange={setGroupBy}
+          filterOptions={VIDEO_FILTER_OPTIONS}
+          sortOptions={VIDEO_SORT_OPTIONS}
+          groupOptions={VIDEO_GROUP_OPTIONS}
+        />
 
         <main className="videos-main">
           {loading && videos.length === 0 ? (
             <VideosSkeleton />
           ) : filteredVideos.length === 0 ? (
-            <div className="empty-videos">
-              <MdVideoLibrary className="empty-videos-icon" />
-              <h3 style={{ color: 'var(--text-main)', marginBottom: '8px' }}>No completed exports yet</h3>
-              <p>Finish a render from the editor, or adjust your search.</p>
+            <div className="videos-empty-state">
+              <div className="videos-empty-state__card">
+                <span className="videos-empty-state__icon-wrap" aria-hidden>
+                  <MdVideoLibrary size={28} />
+                </span>
+                <p className="videos-empty-state__eyebrow">
+                  {hasSearch ? 'No results' : 'Nothing here yet'}
+                </p>
+                <h3 className="videos-empty-state__title">
+                  {getVideoEmptyTitle(activeSection, hasSearch)}
+                </h3>
+                <p className="videos-empty-state__description">
+                  {getVideoEmptyHint(activeSection, hasSearch)}
+                </p>
+                {!hasSearch && onCreate ? (
+                  <button type="button" className="videos-empty-state__cta" onClick={onCreate}>
+                    <MdAdd size={16} aria-hidden />
+                    Create Video
+                  </button>
+                ) : null}
+              </div>
             </div>
           ) : (
-            <div className={viewMode === 'grid' ? 'videos-grid' : 'videos-list'}>
-              {filteredVideos.map((video) => (
-                <article className={`video-card export-card ${viewMode === 'list' ? 'list-view' : ''}`} key={video.id}>
-                  <button
-                    type="button"
-                    className="video-thumb export-thumb"
-                    onClick={() => openPreview(video)}
-                    aria-label={`Play ${video.title}`}
-                  >
-                    <span className="export-play-btn">
-                      <MdPlayArrow size={32} />
-                    </span>
-                    <div className="video-badge completed">EXPORT</div>
-                  </button>
-                  <div className="video-info">
-                    <h4 className="video-title" title={video.title}>{video.title}</h4>
-                    <p className="video-meta">
-                      {formatCompletedDate(video.completedAt)}
-                      {video.fileSizeBytes ? ` · ${formatBytes(video.fileSizeBytes)}` : ''}
-                    </p>
-                    {video.triggeredBy?.name ? (
-                      <p className="video-meta">Rendered by {video.triggeredBy.name}</p>
-                    ) : null}
-                    <div className="workspace-badge" title={`In workspace: ${video.workspaceName}`}>
-                      <MdFolder size={12} style={{ marginRight: '4px' }} />
-                      {video.workspaceName || 'Workspace'}
-                    </div>
-                    <div className="export-card-actions">
-                      <button
-                        type="button"
-                        className="btn-secondary export-action-btn"
-                        disabled={actionId === video.id}
-                        onClick={() => handleDownload(video)}
-                      >
-                        <MdDownload size={14} /> Download
-                      </button>
-                      {onEdit ? (
-                        <button
-                          type="button"
-                          className="btn-secondary export-action-btn"
-                          onClick={() => handleOpenProject(video)}
-                        >
-                          Open project
-                        </button>
-                      ) : null}
-                    </div>
-                  </div>
-                </article>
+            <div className="videos-groups">
+              {videoGroups.map((group) => (
+                <section key={group.key} className="videos-group">
+                  {group.label ? (
+                    <h3 className="videos-group__heading">{group.label}</h3>
+                  ) : null}
+                  {renderVideoCollection(group.videos)}
+                </section>
               ))}
             </div>
           )}
