@@ -2,6 +2,9 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import {
   MdMail,
   MdFolderOpen,
+  MdCreateNewFolder,
+  MdWorkspaces,
+  MdMovieCreation,
   MdVideoLibrary,
   MdInfo,
   MdExitToApp
@@ -17,9 +20,8 @@ import RenameModal from '../../components/features/workspace/workspace/RenameMod
 import ItemDetailsModal from '../../components/features/workspace/workspace/ItemDetailsModal.jsx';
 import MoveProjectModal from '../../components/features/workspace/workspace/MoveProjectModal.jsx';
 import AllocateCreditsModal from '../../components/features/workspace/workspace/AllocateCreditsModal.jsx';
-import WorkspaceCreditsDashboard from '../../components/features/workspace/workspace/WorkspaceCreditsDashboard.jsx';
-import WorkspaceStorageSummary from '../../components/features/workspace/workspace/WorkspaceStorageSummary.jsx';
-import WorkspaceVideoLibrary from '../../components/features/workspace/workspace/WorkspaceVideoLibrary.jsx';
+import WorkspaceCreditsUsageModal from '../../components/features/workspace/workspace/WorkspaceCreditsUsageModal.jsx';
+import WorkspaceStorageBreadcrumb from '../../components/features/workspace/workspace/WorkspaceStorageBreadcrumb.jsx';
 import TeamWorkspaceSkeleton from '../page-skeleton/TeamWorkspaceSkeleton';
 
 import { extractUserId, normalizeWorkspace, normalizeFolder, normalizeVideo, workspaceCanEdit, workspaceCanManageContributors } from './workspaceUtils.js';
@@ -566,12 +568,14 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           count={myWorkspaces.length}
           viewMode={viewMode}
           emptyMessage="You do not have any custom workspaces yet."
-          emptyActionLabel="New Workspace"
-          emptyActionClass="btn-primary add-btn-small"
+          emptyActionLabel="Create your first workspace"
+          emptyActionIcon={MdWorkspaces}
+          emptyActionClass="workspace-create-action-btn"
           onEmptyAction={() => setIsCreateWorkspaceOpen(true)}
           showCreateButton={true}
           createButtonLabel="New Workspace"
-          createButtonClass="btn-primary add-btn-small"
+          createButtonIcon={MdWorkspaces}
+          createButtonClass="workspace-create-action-btn"
           onCreateClick={() => setIsCreateWorkspaceOpen(true)}
         >
           {viewMode === 'list' && (
@@ -619,20 +623,18 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
 
     const canEdit = workspaceCanEdit(workspace);
     const role = String(workspace.userRole || 'MEMBER').toUpperCase();
-    // Only TEAM workspaces have a credits pool; personal workspaces don't show the tab
-    const showCreditsTab = workspace.type === 'workspace';
-    const isWorkspaceOwner =
-      String(workspace.ownerId || '') === String(currentUserId) ||
-      String(workspace.userRole || '').toUpperCase() === 'OWNER';
 
     return (
       <div>
-        <div className="workspace-breadcrumbs">
-          <span className="breadcrumb-link" onClick={() => setCurrentLevel({ type: 'root', id: null })}>
-            Workspaces
-          </span>
-          <span className="breadcrumb-separator">&gt;</span>
-          <span>{workspace.name}</span>
+        <div className="workspace-breadcrumbs workspace-breadcrumbs--with-storage">
+          <div className="workspace-breadcrumbs__trail">
+            <span className="breadcrumb-link" onClick={() => setCurrentLevel({ type: 'root', id: null })}>
+              Workspaces
+            </span>
+            <span className="breadcrumb-separator">&gt;</span>
+            <span>{workspace.name}</span>
+          </div>
+          <WorkspaceStorageBreadcrumb workspaceId={workspace.id} />
         </div>
 
         {!canEdit && (
@@ -642,91 +644,41 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           </div>
         )}
 
-        <WorkspaceStorageSummary workspaceId={workspace.id} />
-
-        {/* ---- Folders / Credits / Exports tab bar ---- */}
-        <div className="workspace-root-tabs-wrapper" style={{ marginBottom: 24 }}>
-          <div className="workspace-root-tabs">
-            <button
-              className={`workspace-root-tab ${wsActiveTab === 'folders' ? 'active' : ''}`}
-              onClick={() => setWsActiveTab('folders')}
-              type="button"
-            >
-              <MdFolderOpen size={16} /> Folders
-              <span className="tab-count-badge">{(workspace.folders || []).length}</span>
-            </button>
-            {showCreditsTab ? (
-              <button
-                className={`workspace-root-tab ${wsActiveTab === 'credits' ? 'active' : ''}`}
-                onClick={() => setWsActiveTab('credits')}
-                type="button"
-              >
-                Credits &amp; Usage
-              </button>
-            ) : null}
-            <button
-              className={`workspace-root-tab ${wsActiveTab === 'exports' ? 'active' : ''}`}
-              onClick={() => setWsActiveTab('exports')}
-              type="button"
-            >
-              <MdVideoLibrary size={16} />
-              {isWorkspaceOwner ? 'My Videos' : 'Team Videos'}
-            </button>
-          </div>
-        </div>
-
-        {/* ---- Folders tab ---- */}
-        {wsActiveTab === 'folders' && (
-          <WorkspaceSection
-            title="Folders"
-            count={(workspace.folders || []).length}
-            viewMode={viewMode}
-            listClassName="folder-list-view"
-            emptyMessage="No folders yet"
-            emptyIcon={MdFolderOpen}
-            emptyActionLabel="Create Folder"
-            onEmptyAction={
-              canEdit
-                ? () => { setSelectedWorkspaceForFolder(workspace); setIsCreateFolderOpen(true); }
-                : null
-            }
-            showCreateButton={canEdit}
-            createButtonLabel="Create Folder"
-            onCreateClick={() => { setSelectedWorkspaceForFolder(workspace); setIsCreateFolderOpen(true); }}
-          >
-            {viewMode === 'list' && (
-              <div className="list-header folder-list-header">
-                <div className="col" />
-                <div className="col">Name</div>
-                <div className="col">Owner</div>
-                <div className="col">Date created</div>
-                <div className="col">Modified by</div>
-                <div className="col">Modified at</div>
-                <div className="col">Size</div>
-                <div className="col" />
-              </div>
-            )}
-            {renderFolderItems(workspace.folders || [], workspace)}
-          </WorkspaceSection>
-        )}
-
-        {/* ---- Exports tab ---- */}
-        {wsActiveTab === 'exports' && (
-          <WorkspaceVideoLibrary
-            workspaceId={workspace.id}
-            isOwner={isWorkspaceOwner}
-            onOpenProject={(project) => onEdit?.(project)}
-          />
-        )}
-
-        {/* ---- Credits tab ---- */}
-        {wsActiveTab === 'credits' && showCreditsTab && (
-          <WorkspaceCreditsDashboard
-            workspaceId={workspace.id}
-            userRole={workspace.userRole || 'MEMBER'}
-            workspaceCredits={workspace.workspaceCredits}
-          />
-        )}
+        <WorkspaceSection
+          title="Folders"
+          count={(workspace.folders || []).length}
+          viewMode={viewMode}
+          listClassName="folder-list-view"
+          emptyMessage="No folders yet"
+          emptyIcon={MdFolderOpen}
+          emptyActionLabel="Create your first folder"
+          emptyActionIcon={MdCreateNewFolder}
+          emptyActionClass="workspace-create-action-btn"
+          onEmptyAction={
+            canEdit
+              ? () => { setSelectedWorkspaceForFolder(workspace); setIsCreateFolderOpen(true); }
+              : null
+          }
+          showCreateButton={canEdit}
+          createButtonLabel="New Folder"
+          createButtonIcon={MdCreateNewFolder}
+          createButtonClass="workspace-create-action-btn"
+          onCreateClick={() => { setSelectedWorkspaceForFolder(workspace); setIsCreateFolderOpen(true); }}
+        >
+          {viewMode === 'list' && (
+            <div className="list-header folder-list-header">
+              <div className="col" />
+              <div className="col">Name</div>
+              <div className="col">Owner</div>
+              <div className="col">Date created</div>
+              <div className="col">Modified by</div>
+              <div className="col">Modified at</div>
+              <div className="col">Size</div>
+              <div className="col" />
+            </div>
+          )}
+          {renderFolderItems(workspace.folders || [], workspace)}
+        </WorkspaceSection>
 
         {workspace.type === 'workspace' && String(workspace.userRole || '').toUpperCase() !== 'OWNER' && (
           <button
@@ -759,19 +711,22 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
 
     return (
       <div>
-        <div className="workspace-breadcrumbs">
-          <span className="breadcrumb-link" onClick={() => setCurrentLevel({ type: 'root', id: null })}>
-            Workspaces
-          </span>
-          <span className="breadcrumb-separator">&gt;</span>
-          <span
-            className="breadcrumb-link"
-            onClick={() => setCurrentLevel({ type: 'workspace', id: workspace.id, ws: workspace })}
-          >
-            {workspace.name}
-          </span>
-          <span className="breadcrumb-separator">&gt;</span>
-          <span>{folder.name}</span>
+        <div className="workspace-breadcrumbs workspace-breadcrumbs--with-storage">
+          <div className="workspace-breadcrumbs__trail">
+            <span className="breadcrumb-link" onClick={() => setCurrentLevel({ type: 'root', id: null })}>
+              Workspaces
+            </span>
+            <span className="breadcrumb-separator">&gt;</span>
+            <span
+              className="breadcrumb-link"
+              onClick={() => setCurrentLevel({ type: 'workspace', id: workspace.id, ws: workspace })}
+            >
+              {workspace.name}
+            </span>
+            <span className="breadcrumb-separator">&gt;</span>
+            <span>{folder.name}</span>
+          </div>
+          <WorkspaceStorageBreadcrumb workspaceId={workspace.id} />
         </div>
 
         {!canEdit && (
@@ -788,16 +743,18 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           listClassName="project-list-view"
           emptyMessage="No videos yet"
           emptyIcon={MdVideoLibrary}
-          emptyActionLabel="Create Video"
+          emptyActionLabel="Create your first video"
+          emptyActionIcon={MdMovieCreation}
+          emptyActionClass="workspace-create-action-btn"
           onEmptyAction={
             canEdit
               ? () => openCreateVideoModal({ initialWorkspaceId: workspace.id, initialFolderId: folder.id })
               : null
           }
           showCreateButton={canEdit}
-          createButtonLabel="Create Video"
-          createButtonClass="btn-primary add-btn-small"
-          emptyActionClass="btn-primary add-btn-small"
+          createButtonLabel="New Video"
+          createButtonIcon={MdMovieCreation}
+          createButtonClass="workspace-create-action-btn"
           onCreateClick={() => openCreateVideoModal({ initialWorkspaceId: workspace.id, initialFolderId: folder.id })}
         >
           {viewMode === 'list' && (

@@ -1,8 +1,6 @@
 import { MdHelpOutline } from 'react-icons/md'
 import { mainDashboardSidebarGroups } from '../../../constants/dashboardNav'
-import useStorageQuota from '../../../hooks/useStorageQuota.js'
-import StorageUsageBar from '../../ui/StorageUsageBar/StorageUsageBar.jsx'
-import '../../ui/StorageUsageBar/StorageUsageBar.css'
+import DashboardSidebarStorage from './DashboardSidebarStorage.jsx'
 
 function DashboardSidebar({
   section,
@@ -11,7 +9,6 @@ function DashboardSidebar({
   onOpenAI,
   onCloseMobile,
 }) {
-  const { quota, loading } = useStorageQuota()
   const handleItem = (item) => {
     if (item.id === '__translate__') {
       onOpenTranslate?.();
@@ -26,8 +23,6 @@ function DashboardSidebar({
     onNavigate(item.id);
     onCloseMobile?.();
   };
-
-  const tierLabel = quota?.tier?.label;
 
   return (
     <aside className="dashboard-sidebar-nav" aria-label="Dashboard navigation">
@@ -60,25 +55,12 @@ function DashboardSidebar({
       </div>
 
       <div className="dashboard-sidebar-footer">
-        <div className="dashboard-sidebar-storage" aria-label="Storage usage">
-          <StorageUsageBar
-            loading={loading}
-            usedBytes={quota?.usedBytes}
-            limitBytes={quota?.limitBytes}
-            percentUsed={quota?.percentUsed}
-            label={tierLabel ? `Storage · ${tierLabel}` : 'Storage used'}
-          />
-          <button
-            type="button"
-            className="dashboard-storage-upgrade-btn"
-            onClick={() => {
-              onNavigate('credits');
-              onCloseMobile?.();
-            }}
-          >
-            Get more storage (contact admin)
-          </button>
-        </div>
+        <DashboardSidebarStorage
+          onUpgrade={() => {
+            onNavigate('credits');
+            onCloseMobile?.();
+          }}
+        />
 
         <button
           type="button"
