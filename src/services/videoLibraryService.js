@@ -36,6 +36,12 @@ class VideoLibraryService {
       downloadPath: item.downloadPath || null,
       workspace: item.workspace || null,
       workspaceName: item.workspace?.name || item.workspaceName || '',
+      workspaceType: item.workspaceType || item.workspace?.type || null,
+      membershipRole:
+        item.membershipRole ||
+        item.workspace?.userRole ||
+        item.workspace?.role ||
+        null,
       raw: item,
     };
   }
