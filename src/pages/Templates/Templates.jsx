@@ -15,7 +15,7 @@ import MarketingImg from '../../assets/Template Image/Marketing.png'
 import EducationImg from '../../assets/Template Image/Educational.png'
 import BusinessImg from '../../assets/Template Image/Coporate.png'
 import TemplateScenePreview from '../../components/features/editor/editor/TemplateScenePreview'
-import { fetchTemplateBundles } from '../../utils/fetchTemplateBundles'
+import { fetchTemplateBundles, bundleToDetailsTemplate } from '../../utils/fetchTemplateBundles'
 import TemplatesSkeleton from '../page-skeleton/TemplatesSkeleton'
 import './Templates.css'
 
@@ -24,46 +24,23 @@ const CATEGORY_ICONS = {
   'Pitch': BusinessImg,
   'Product Launch': MarketingImg,
   'Course Module': EducationImg,
+  'Course Explanation': EducationImg,
   'Sales Demo': BusinessImg,
   'Social Short': MarketingImg,
   'Podcast': MarketingImg,
 }
 
-const CATEGORY_FILTERS = ['All Templates', 'Pitch', 'Product Launch', 'Course Module', 'Sales Demo', 'Social Short', 'Podcast']
+const CATEGORY_FILTERS = ['All Templates', 'Pitch', 'Product Launch', 'Course Module', 'Course Explanation', 'Sales Demo', 'Social Short', 'Podcast']
 
 const CATEGORY_MAPPING = {
   'All Templates': null,
   'Pitch': 'Pitch',
   'Product Launch': 'Product Launch',
   'Course Module': 'Course Module',
+  'Course Explanation': 'Course Explanation',
   'Sales Demo': 'Sales Demo',
   'Social Short': 'Social Short',
   'Podcast': 'Podcast',
-}
-
-function bundleToDetailsTemplate(bundle) {
-  const sceneCount = bundle.scenes?.length || bundle.totalSlides || 0
-  const totalDuration = (bundle.scenes || []).reduce((sum, scene) => sum + (scene.duration || 8), 0)
-  return {
-    ...bundle,
-    name: bundle.name,
-    category: bundle.category,
-    tag: (bundle.category || '').toUpperCase(),
-    duration: `${totalDuration}s`,
-    scenes: sceneCount,
-    ratio: bundle.aspectRatio || '16:9',
-    description: bundle.description,
-    thumb: bundle.coverScene?.thumbnail || '',
-    sceneList: (bundle.scenes || []).map((scene) => ({
-      id: scene.id,
-      title: scene.title,
-      description: scene.description,
-      tags: scene.tags || [],
-      scene,
-    })),
-    bundleScenes: bundle.scenes || [],
-    coverScene: bundle.coverScene || bundle.scenes?.[0] || null,
-  }
 }
 
 function Templates({ onSelect }) {

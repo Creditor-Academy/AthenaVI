@@ -11,9 +11,17 @@ import {
   MdClose,
   MdDeleteOutline,
   MdVideocam,
+  MdDriveFileRenameOutline,
 } from 'react-icons/md'
-import assetService from '../../services/assetService'
+import assetService, { isAssetInUseError, formatAssetInUseMessage } from '../../services/assetService'
 import workspaceService from '../../services/workspaceService'
+import { useAuth } from '../../contexts/AuthContext'
+import { extractUserId } from '../TeamWorkspace/workspaceUtils'
+import { canManageAsset, shouldShowUploader } from '../../utils/assetPermissions'
+import { assertUploadFits, dispatchStorageRefresh, formatStorageLimitMessage, isStorageLimitError } from '../../utils/storageQuota'
+import { useWorkspaceStorage } from '../../hooks/useStorageQuota'
+import StorageUsageBar from '../../components/ui/StorageUsageBar/StorageUsageBar'
+import '../../components/ui/StorageUsageBar/StorageUsageBar.css'
 import './Library.css'
 
 const CATEGORY_CARDS = [
@@ -29,6 +37,8 @@ const mediaTabs = [
 ]
 
 function Library() {
+  const { user } = useAuth()
+  const currentUserId = extractUserId(user)
   const [activeView, setActiveView] = useState('grid')
   const [activeTab, setActiveTab] = useState('images')
   const [searchQuery, setSearchQuery] = useState('')
@@ -47,6 +57,9 @@ function Library() {
   const [assetsError, setAssetsError] = useState('')
   const [uploading, setUploading] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
+  const [renamingId, setRenamingId] = useState(null)
+
+  const { storage: workspaceStorage, loading: storageLoading } = useWorkspaceStorage(workspaceId)
 
   const loadWorkspaces = useCallback(async () => {
     setWorkspaceLoading(true)
@@ -76,7 +89,7 @@ function Library() {
     setAssetsError('')
     try {
       const list = await assetService.listAssets(workspaceId, { take: 100, source: 'all' })
-      setAssets(list.map(assetService.normalizeAsset).filter(Boolean))
+      setAssets(list.map((item) => assetService.normalizeAsset(item)).filter(Boolean))
     } catch (err) {
       setAssets([])
       setAssetsError(err?.message || 'Failed to load assets')
@@ -133,10 +146,39 @@ function Library() {
     try {
       await assetService.deleteAsset(workspaceId, assetId)
       setAssets((prev) => prev.filter((asset) => asset.id !== assetId))
+      dispatchStorageRefresh()
     } catch (err) {
-      setAssetsError(err?.message || 'Failed to delete asset')
+      setAssetsError(
+        isAssetInUseError(err)
+          ? formatAssetInUseMessage(err)
+          : err?.message || 'Failed to delete asset'
+      )
     } finally {
       setDeletingId(null)
+    }
+  }
+
+  const handleRenameAsset = async (asset) => {
+    if (!workspaceId || !asset?.id || renamingId) return
+    const nextName = window.prompt('Rename asset', asset.name)
+    if (nextName == null) return
+    const trimmed = nextName.trim()
+    if (!trimmed || trimmed === asset.name) return
+
+    setRenamingId(asset.id)
+    setAssetsError('')
+    try {
+      const updated = await assetService.renameAsset(workspaceId, asset.id, trimmed)
+      const normalized = assetService.normalizeAsset(updated)
+      if (normalized) {
+        setAssets((prev) =>
+          prev.map((item) => (item.id === normalized.id ? normalized : item))
+        )
+      }
+    } catch (err) {
+      setAssetsError(err?.message || 'Failed to rename asset')
+    } finally {
+      setRenamingId(null)
     }
   }
 
@@ -154,6 +196,7 @@ function Library() {
     setAssetsError('')
     try {
       for (const file of files) {
+        await assertUploadFits(workspaceId, file.size)
         const uploaded = await assetService.uploadAsset(workspaceId, file)
         const normalized = assetService.normalizeAsset(uploaded)
         if (!normalized) continue
@@ -162,8 +205,11 @@ function Library() {
           return [normalized, ...without]
         })
       }
+      dispatchStorageRefresh()
     } catch (err) {
-      setAssetsError(err?.message || 'Upload failed')
+      setAssetsError(
+        isStorageLimitError(err) ? formatStorageLimitMessage(err) : err?.message || 'Upload failed'
+      )
     } finally {
       setUploading(false)
     }
@@ -185,6 +231,12 @@ function Library() {
   }
 
   const selectedWorkspace = workspaces.find((ws) => String(ws.id) === String(workspaceId))
+  const showUploaderColumn = shouldShowUploader(selectedWorkspace)
+
+  const assetCanManage = useCallback(
+    (asset) => canManageAsset(asset, selectedWorkspace, currentUserId),
+    [selectedWorkspace, currentUserId]
+  )
 
   return (
     <div className="library-page">
@@ -223,6 +275,22 @@ function Library() {
             </p>
           ) : null}
         </header>
+
+        {workspaceId && workspaceStorage?.quota ? (
+          <div className="library-storage-bar">
+            <StorageUsageBar
+              loading={storageLoading}
+              usedBytes={workspaceStorage.quota.usedBytes}
+              limitBytes={workspaceStorage.quota.limitBytes}
+              label={
+                workspaceStorage.owner?.name
+                  ? `Owner storage · ${workspaceStorage.owner.name}`
+                  : 'Owner storage quota'
+              }
+              compact
+            />
+          </div>
+        ) : null}
 
         {assetsError ? (
           <div className="library-status-banner library-status-banner--error" role="alert">
@@ -351,7 +419,7 @@ function Library() {
                   {activeView === 'list' && (
                     <div className="list-header">
                       <div className="col name">Name</div>
-                      <div className="col owner">Source</div>
+                      <div className="col owner">{showUploaderColumn ? 'Uploader' : 'Source'}</div>
                       <div className="col modified">Date modified</div>
                       <div className="col size">Size</div>
                       <div className="col actions" />
@@ -375,6 +443,17 @@ function Library() {
                             {asset.source === 'stock' ? (
                               <span className="asset-source-badge">Stock</span>
                             ) : null}
+                            {assetCanManage(asset) ? (
+                              <>
+                            <button
+                              type="button"
+                              className="asset-delete-btn asset-delete-btn--grid asset-action-btn--rename"
+                              aria-label={`Rename ${asset.name}`}
+                              disabled={renamingId === asset.id}
+                              onClick={() => handleRenameAsset(asset)}
+                            >
+                              <MdDriveFileRenameOutline />
+                            </button>
                             <button
                               type="button"
                               className="asset-delete-btn asset-delete-btn--grid"
@@ -384,6 +463,8 @@ function Library() {
                             >
                               <MdDeleteOutline />
                             </button>
+                              </>
+                            ) : null}
                           </div>
 
                           <div style={{ padding: '12px' }}>
@@ -391,7 +472,13 @@ function Library() {
                               {asset.name}
                             </div>
                             <div className="asset-meta" style={{ marginTop: 8 }}>
-                              <span>{asset.source === 'stock' ? 'Stock' : 'Upload'}</span>
+                              <span>
+                                {asset.source === 'stock'
+                                  ? 'Stock'
+                                  : showUploaderColumn && asset.owner
+                                    ? asset.owner
+                                    : 'Upload'}
+                              </span>
                               <span>{asset.modified || ''}</span>
                               <span>{asset.sizeLabel || ''}</span>
                             </div>
@@ -415,12 +502,27 @@ function Library() {
                           </div>
 
                           <div className="col owner" style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-                            {asset.source === 'stock' ? 'Stock' : 'Upload'}
+                            {asset.source === 'stock'
+                              ? 'Stock'
+                              : showUploaderColumn && asset.owner
+                                ? asset.owner
+                                : 'Upload'}
                           </div>
                           <div className="col modified" style={{ color: 'var(--text-muted)', fontSize: 13 }}>{asset.modified || ''}</div>
                           <div className="col size" style={{ color: 'var(--text-muted)', fontSize: 13 }}>{asset.sizeLabel || ''}</div>
 
                           <div className="col actions">
+                            {assetCanManage(asset) ? (
+                              <>
+                            <button
+                              type="button"
+                              className="asset-delete-btn asset-delete-btn--list"
+                              aria-label={`Rename ${asset.name}`}
+                              disabled={renamingId === asset.id}
+                              onClick={() => handleRenameAsset(asset)}
+                            >
+                              <MdDriveFileRenameOutline />
+                            </button>
                             <button
                               type="button"
                               className="asset-delete-btn asset-delete-btn--list"
@@ -430,6 +532,8 @@ function Library() {
                             >
                               <MdDeleteOutline />
                             </button>
+                              </>
+                            ) : null}
                           </div>
                         </>
                       )}

@@ -46,7 +46,7 @@ import {
   nextHeygenSceneId,
   pollUntilHeygenPlaybackReady,
 } from '../../utils/heygenVideo'
-import { exportFullProjectVideo } from '../../utils/projectRender'
+import { downloadFinalRenderStream, exportFullProjectVideo } from '../../utils/projectRender'
 import {
   applyDurationToSceneClips,
   buildSceneDurationPatch,
@@ -360,6 +360,8 @@ function Create({ onBack, initialConfig = null }) {
   const [musicDuration, setMusicDuration] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [exportReady, setExportReady] = useState(null) // { renderId, filename, workspaceId, projectId }
+  const [isDownloadingExport, setIsDownloadingExport] = useState(false)
   const [creditsRefreshKey, setCreditsRefreshKey] = useState(0)
   const bumpCreditsRefresh = useCallback(() => {
     setCreditsRefreshKey((key) => key + 1)
@@ -1353,6 +1355,62 @@ function Create({ onBack, initialConfig = null }) {
     setShowTemplateModal(true)
   }
 
+  const handleAddBlankScene = () => {
+    const insertAfter = insertAfterIndexRef.current
+    insertAfterIndexRef.current = null
+
+    let nextActiveSceneId = null
+    setProject((prev) => {
+      const maybeDefault = prev.scenes?.length === 1 ? prev.scenes[0] : null
+      const isDefaultSingleScene =
+        !!maybeDefault &&
+        (maybeDefault.id === 'lt_001' || maybeDefault.title === 'Intro' || maybeDefault.title === 'Hero Scene') &&
+        ((maybeDefault.clips?.length ?? 0) === 0)
+
+      const newSceneId = isDefaultSingleScene
+        ? maybeDefault.id
+        : `scene_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`
+
+      nextActiveSceneId = newSceneId
+
+      const baseOrder = isDefaultSingleScene ? 0 : prev.scenes.length
+      const blank = ensureSceneIdentity(
+        {
+          id: newSceneId,
+          sceneId: newSceneId,
+          title: 'Blank Scene',
+          duration: 8,
+          background: { value: '#ffffff' },
+          clips: [],
+          order: baseOrder,
+        },
+        baseOrder
+      )
+
+      let newScenes
+      if (isDefaultSingleScene) {
+        newScenes = [blank]
+      } else if (insertAfter != null && insertAfter >= 0 && insertAfter < prev.scenes.length) {
+        newScenes = [
+          ...prev.scenes.slice(0, insertAfter + 1),
+          blank,
+          ...prev.scenes.slice(insertAfter + 1),
+        ].map((s, idx) => ensureSceneIdentity({ ...s, order: idx }, idx))
+      } else {
+        newScenes = [...prev.scenes, blank].map((s, idx) => ensureSceneIdentity({ ...s, order: idx }, idx))
+      }
+
+      return {
+        ...prev,
+        updatedAt: new Date().toISOString(),
+        scenes: newScenes,
+      }
+    })
+
+    if (nextActiveSceneId) setActiveSceneId(nextActiveSceneId)
+    setShowTemplateModal(false)
+  }
+
   const handleAddTemplateScene = async (template) => {
     const insertAfter = insertAfterIndexRef.current
     insertAfterIndexRef.current = null
@@ -1542,6 +1600,7 @@ function Create({ onBack, initialConfig = null }) {
     setExportStatus('Saving project…')
     setExportError('')
     setIsExporting(true)
+    setExportReady(null)
 
     try {
       const result = await exportFullProjectVideo({
@@ -1550,6 +1609,8 @@ function Create({ onBack, initialConfig = null }) {
         projectId,
         projectState: projectRef.current,
         filename,
+        autoDownload: false,
+        forceRebuild: false,
         onStatus: setExportStatus,
       })
       if (result?.projectState?.scenes) {
@@ -1560,7 +1621,13 @@ function Create({ onBack, initialConfig = null }) {
         }))
       }
       setExportPhase('success')
-      showToast('Download started', 'success')
+      setExportReady({
+        workspaceId,
+        projectId,
+        renderId: result?.renderId,
+        filename: result?.filename || `${projectRef.current?.title || filename || 'video'}.mp4`,
+      })
+      showToast('Render ready', 'success')
       bumpCreditsRefresh()
     } catch (err) {
       console.error('[Export] Full render download failed:', err)
@@ -1571,12 +1638,39 @@ function Create({ onBack, initialConfig = null }) {
     }
   }
 
+  const handleDownloadExport = async () => {
+    const info = exportReady
+    if (!info?.workspaceId || !info?.projectId || !info?.renderId) {
+      showToast('Missing render info. Export again.', 'error')
+      return
+    }
+    if (isDownloadingExport) return
+
+    setIsDownloadingExport(true)
+    try {
+      await downloadFinalRenderStream({
+        workspaceService,
+        workspaceId: info.workspaceId,
+        projectId: info.projectId,
+        renderId: info.renderId,
+        filename: info.filename,
+      })
+      showToast('Download started', 'success')
+    } catch (e) {
+      showToast(e?.message || 'Download failed', 'error')
+    } finally {
+      setIsDownloadingExport(false)
+    }
+  }
+
   const handleCloseExportModal = () => {
     if (isExporting) return
     setShowExportModal(false)
     setExportPhase('configure')
     setExportStatus('')
     setExportError('')
+    setExportReady(null)
+    setIsDownloadingExport(false)
   }
 
   const handlePreview = () => {
@@ -2596,6 +2690,9 @@ function Create({ onBack, initialConfig = null }) {
         statusMessage={exportStatus}
         errorMessage={exportError}
         onStartExport={handleStartExport}
+        onDownload={exportPhase === 'success' ? handleDownloadExport : undefined}
+        readyFilename={exportReady?.filename || ''}
+        downloading={isDownloadingExport}
       />
       <EditorTopbar
         onBack={onBack}
@@ -2894,6 +2991,7 @@ function Create({ onBack, initialConfig = null }) {
         setShowTemplateModal={setShowTemplateModal}
         handleAddTemplateScene={handleAddTemplateScene}
         handleApplyTemplateBundle={handleApplyTemplateBundle}
+        handleAddBlankScene={handleAddBlankScene}
       />
     </div>
   )

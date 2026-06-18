@@ -41,6 +41,27 @@ const API_CONFIG = {
       }
     },
     
+    // Storage API
+    STORAGE: {
+      ME: '/api/user/storage',
+      ME_HISTORY: '/api/user/storage/history',
+      WORKSPACE: (workspaceId) => `/api/workspaces/${workspaceId}/storage`,
+    },
+
+    // Assets API
+    ASSETS: {
+      LIST: (workspaceId) => `/api/assets/${workspaceId}`,
+      UPLOAD: (workspaceId) => `/api/assets/${workspaceId}/upload`,
+      RENAME: (workspaceId, assetId) => `/api/assets/${workspaceId}/${assetId}/rename`,
+      DELETE: (workspaceId, assetId) => `/api/assets/${workspaceId}/${assetId}`,
+    },
+
+    // Video library (completed final renders)
+    VIDEO_LIBRARY: {
+      USER: '/api/user/videos',
+      WORKSPACE: (workspaceId) => `/api/workspaces/${workspaceId}/videos`,
+    },
+
     // Credits API
     CREDITS: {
       ME: '/api/credits/me',

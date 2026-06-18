@@ -700,6 +700,14 @@
   box-shadow: var(--shadow);
 }
 
+.dashboard-sidebar-storage .storage-usage-bar {
+  margin-bottom: 8px;
+}
+
+.dashboard-sidebar-storage .dashboard-storage-upgrade-btn {
+  margin-top: 4px;
+}
+
 .dashboard-storage-label {
   font-size: 9px;
   font-weight: 600;

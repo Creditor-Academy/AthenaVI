@@ -19,6 +19,12 @@ export const TEMPLATE_BUNDLE_SOURCES = [
     filterCategory: 'Training',
   },
   {
+    file: 'course_explanation_template',
+    category: 'Course Explanation',
+    label: 'Course Explanation — Clear Classroom',
+    filterCategory: 'Training',
+  },
+  {
     file: 'sales_demo_template',
     category: 'Sales Demo',
     label: 'Sales Demo',
@@ -38,7 +44,7 @@ export const TEMPLATE_BUNDLE_SOURCES = [
   },
 ];
 
-export const TEMPLATE_BUNDLE_FILES = TEMPLATE_BUNDLE_SOURCES.map((source) => source.file);
+export const TEMPLATE_BUNDLE_FILES = [...new Set(TEMPLATE_BUNDLE_SOURCES.map((source) => source.file))];
 
 export const CATEGORY_FILE_MAP = Object.fromEntries(
   TEMPLATE_BUNDLE_SOURCES.flatMap((source) => {

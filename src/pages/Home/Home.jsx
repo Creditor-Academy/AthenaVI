@@ -1,21 +1,26 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import {
     MdVideoLibrary,
     MdCollectionsBookmark,
-    MdCheckCircle,
     MdAccessTime,
     MdAdd,
-    MdTrendingUp,
     MdExplore,
     MdAutoAwesome,
     MdPlayArrow,
-    MdLanguage
+    MdLanguage,
+    MdLayers,
+    MdAccountBalanceWallet,
 } from 'react-icons/md'
 import './Home.css'
 import workspaceService from '../../services/workspaceService.js'
+import videoLibraryService from '../../services/videoLibraryService.js'
+import creditsService from '../../services/creditsService.js'
+import { fetchTemplateBundles } from '../../utils/fetchTemplateBundles.js'
+import TemplateScenePreview from '../../components/features/editor/editor/TemplateScenePreview'
+import ProjectSceneThumbnail from '../../components/features/workspace/workspace/ProjectSceneThumbnail.jsx'
 
-function Home({ onCreate, onEdit, onShowAIAssistant }) {
+function Home({ onCreate, onEdit, onShowAIAssistant, onBrowseTemplates, onSelectTemplate }) {
     const { user } = useAuth();
     const firstName = user?.name ? user.name.split(' ')[0] : (user?.email ? user.email.split('@')[0] : 'User');
 
@@ -23,53 +28,139 @@ function Home({ onCreate, onEdit, onShowAIAssistant }) {
     const [recentProjects, setRecentProjects] = useState([])
     const [recentLoading, setRecentLoading] = useState(false)
     const [recentLoaded, setRecentLoaded] = useState(false)
+    const [templateBundles, setTemplateBundles] = useState([])
+    const [templatesLoading, setTemplatesLoading] = useState(true)
+    const [summaryLoading, setSummaryLoading] = useState(true)
+    const [summary, setSummary] = useState({
+        projectCount: 0,
+        exportCount: 0,
+        workspaceCount: 0,
+        credits: null,
+    })
 
-    // Fetch real projects only when the Recent tab is first opened
+    useEffect(() => {
+        fetchTemplateBundles()
+            .then((data) => setTemplateBundles(data))
+            .catch((err) => console.warn('[Home] Failed to fetch templates:', err))
+            .finally(() => setTemplatesLoading(false))
+    }, [])
+
+    useEffect(() => {
+        let cancelled = false
+        setSummaryLoading(true)
+
+        async function loadSummary() {
+            try {
+                const workspaces = await workspaceService.listWorkspaces()
+                const workspaceIds = workspaces.map((ws) => ws.id || ws._id).filter(Boolean)
+
+                const [projectLists, videosResult, creditsResult] = await Promise.all([
+                    Promise.all(
+                        workspaceIds.map((id) =>
+                            workspaceService.listProjects(id).catch(() => [])
+                        )
+                    ),
+                    videoLibraryService.listUserVideos({ take: 1, skip: 0, status: 'completed' }).catch(() => ({
+                        videos: [],
+                        pagination: { total: 0 },
+                    })),
+                    creditsService.getPersonalBalance().catch(() => null),
+                ])
+
+                if (cancelled) return
+
+                const projectCount = projectLists.reduce((sum, list) => sum + list.length, 0)
+                const exportCount = videosResult.pagination?.total ?? videosResult.videos?.length ?? 0
+
+                setSummary({
+                    projectCount,
+                    exportCount,
+                    workspaceCount: workspaces.length,
+                    credits: creditsResult?.personalCredits ?? null,
+                })
+            } catch (err) {
+                console.warn('[Home] Failed to load dashboard summary:', err)
+            } finally {
+                if (!cancelled) setSummaryLoading(false)
+            }
+        }
+
+        loadSummary()
+        return () => { cancelled = true }
+    }, [])
+
     useEffect(() => {
         if (activeTab !== 'recent' || recentLoaded) return
+        let cancelled = false
         setRecentLoading(true)
-        workspaceService.listAllVideosAcrossWorkspaces()
-            .then(videos => {
-                const sorted = [...videos].sort((a, b) => {
+
+        async function loadRecentProjects() {
+            try {
+                const workspaces = await workspaceService.listWorkspaces()
+                const projectLists = await Promise.all(
+                    workspaces.map(async (ws) => {
+                        const workspaceId = ws.id || ws._id
+                        const projects = await workspaceService.listProjects(workspaceId).catch(() => [])
+                        return (projects || []).map((p) => ({
+                            ...p,
+                            id: p.id || p._id,
+                            workspaceId,
+                            workspaceName: ws.name,
+                            folderId: p.folderId || p.folder?.id || p.folder?._id || null,
+                            title: p.name || p.title,
+                            name: p.name || p.title,
+                            updatedAt: p.updatedAt || p.lastModifiedAt || p.modifiedAt || p.createdAt,
+                        }))
+                    })
+                )
+
+                if (cancelled) return
+
+                const sorted = projectLists.flat().sort((a, b) => {
                     const da = new Date(a.updatedAt || a.createdAt || 0)
                     const db = new Date(b.updatedAt || b.createdAt || 0)
                     return db - da
                 })
                 setRecentProjects(sorted.slice(0, 12))
-            })
-            .catch(err => console.warn('[Home] Failed to fetch recent projects:', err))
-            .finally(() => { setRecentLoading(false); setRecentLoaded(true) })
+            } catch (err) {
+                console.warn('[Home] Failed to fetch recent projects:', err)
+            } finally {
+                if (!cancelled) {
+                    setRecentLoading(false)
+                    setRecentLoaded(true)
+                }
+            }
+        }
+
+        loadRecentProjects()
+        return () => { cancelled = true }
     }, [activeTab, recentLoaded])
 
-    const stats = [
-        {
-            label: 'Total Videos',
-            value: '24',
-            trend: '+2 this week',
-            icon: <MdVideoLibrary />,
-            trendDir: 'up',
-            trendIcon: <MdTrendingUp className="stat-trend-icon" />,
-            progress: 78
-        },
-        {
-            label: 'Draft Projects',
-            value: '12',
-            trend: '3 action needed',
-            icon: <MdCollectionsBookmark />,
-            trendDir: 'neutral',
-            trendIcon: <MdAccessTime className="stat-trend-icon" />,
-            progress: 54
-        },
-        {
-            label: 'Published',
-            value: '12',
-            trend: '+12% engagement',
-            icon: <MdCheckCircle />,
-            trendDir: 'up',
-            trendIcon: <MdTrendingUp className="stat-trend-icon" />,
-            progress: 86
-        }
-    ]
+    const stats = useMemo(() => {
+        const workspaceLabel = summary.workspaceCount === 1 ? '1 workspace' : `${summary.workspaceCount} workspaces`
+        return [
+            {
+                label: 'Video Projects',
+                value: summaryLoading ? '—' : String(summary.projectCount),
+                subtitle: summaryLoading ? 'Loading…' : `Across ${workspaceLabel}`,
+                icon: <MdCollectionsBookmark />,
+            },
+            {
+                label: 'Completed Exports',
+                value: summaryLoading ? '—' : String(summary.exportCount),
+                subtitle: summaryLoading ? 'Loading…' : 'Final MP4 renders',
+                icon: <MdVideoLibrary />,
+            },
+            {
+                label: 'Credits Available',
+                value: summaryLoading || summary.credits == null
+                    ? '—'
+                    : Number(summary.credits).toLocaleString(),
+                subtitle: summaryLoading ? 'Loading…' : 'For exports & AI generation',
+                icon: <MdAccountBalanceWallet />,
+            },
+        ]
+    }, [summary, summaryLoading])
 
     const formatDate = (iso) => {
         if (!iso) return 'Unknown date'
@@ -85,20 +176,7 @@ function Home({ onCreate, onEdit, onShowAIAssistant }) {
         return new Date(iso).toLocaleDateString()
     }
 
-    const templates = [
-        { title: 'Educational Lecture', meta: 'Academic style', thumb: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80&w=400' },
-        { title: 'Corporate Onboarding', meta: 'Professional', thumb: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&q=80&w=400' },
-        { title: 'Software Tutorial', meta: 'Dynamic', thumb: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=400' },
-        { title: 'Product Reveal', meta: 'High Energy', thumb: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=400' },
-        { title: 'Marketing Promo', meta: 'Vibrant', thumb: 'https://images.unsplash.com/photo-1557838923-2985c318be48?auto=format&fit=crop&q=80&w=400' },
-        { title: 'Weekly Update', meta: 'Clean & Simple', thumb: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=400' }
-    ]
-
-    const trending = [
-        { id: 101, title: 'AI in 2024: A comprehensive guide', views: '2.4k', thumb: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&q=80&w=400' },
-        { id: 102, title: 'How to build engaging courses', views: '1.8k', thumb: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=400' },
-        { id: 103, title: 'Mastering Video Edits', views: '1.2k', thumb: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&q=80&w=400' }
-    ]
+    const featuredTemplates = templateBundles.slice(0, 6)
 
     return (
         <div className="home-container">
@@ -122,26 +200,20 @@ function Home({ onCreate, onEdit, onShowAIAssistant }) {
                         </button>
                     </div>
                 </div>
-                {/* Decorative Elements */}
                 <div className="hero-decoration hero-circle-1"></div>
                 <div className="hero-decoration hero-circle-2"></div>
                 <div className="hero-decoration hero-circle-3"></div>
             </div>
 
             <div className="home-billing-stats">
-                {stats.map((stat, i) => (
-                    <div key={i} className="home-billing-stat-card">
+                {stats.map((stat) => (
+                    <div key={stat.label} className="home-billing-stat-card">
                         <div className="home-billing-stat-top">
                             <span className="home-billing-stat-label">{stat.label}</span>
                             <span className="home-billing-stat-icon">{stat.icon}</span>
                         </div>
                         <div className="home-billing-stat-value">{stat.value}</div>
-                        <div className={`home-billing-stat-trend ${stat.trendDir}`}>
-                                {stat.trendIcon} {stat.trend}
-                        </div>
-                        <div className="home-billing-stat-meter" aria-hidden>
-                            <span style={{ width: `${stat.progress}%` }} />
-                        </div>
+                        <div className="home-billing-stat-subtitle">{stat.subtitle}</div>
                     </div>
                 ))}
             </div>
@@ -160,12 +232,6 @@ function Home({ onCreate, onEdit, onShowAIAssistant }) {
                     >
                         <MdAccessTime size={18} /> My Recent
                     </button>
-                    <button
-                        className={`home-tab ${activeTab === 'trending' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('trending')}
-                    >
-                        <MdTrendingUp size={18} /> Trending
-                    </button>
                 </div>
             </div>
 
@@ -174,30 +240,93 @@ function Home({ onCreate, onEdit, onShowAIAssistant }) {
                     <div className="tab-pane fade-in">
                         <div className="section-header">
                             <h2>Top Templates for You</h2>
-                            <div className="view-all">Browse all</div>
+                            {onBrowseTemplates && (
+                                <button type="button" className="view-all view-all--btn" onClick={onBrowseTemplates}>
+                                    Browse all
+                                </button>
+                            )}
                         </div>
-                        <div className="projects-grid-override">
-                            {templates.map((template, i) => (
-                                <div key={i} className="project-card">
-                                    <div className="project-thumb-container">
-                                        <img src={template.thumb} alt={template.title} className="project-thumb" />
-                                        <div className="project-overlay">
-                                            <button className="btn-edit-premium" onClick={onCreate}>
-                                                <MdAutoAwesome size={18} /> Use Template
-                                            </button>
+
+                        {templatesLoading && (
+                            <div className="projects-grid-override">
+                                {[1, 2, 3, 4, 5, 6].map((i) => (
+                                    <div key={i} className="project-card project-card--skeleton">
+                                        <div className="project-thumb-container skeleton-thumb" />
+                                        <div className="project-content">
+                                            <div className="skeleton-line skeleton-title" />
+                                            <div className="skeleton-line skeleton-meta" />
                                         </div>
                                     </div>
-                                    <div className="project-content">
-                                        <div className="project-info">
-                                            <h3>{template.title}</h3>
-                                            <div className="project-meta">
-                                                {template.meta}
+                                ))}
+                            </div>
+                        )}
+
+                        {!templatesLoading && featuredTemplates.length === 0 && (
+                            <div className="empty-recent">
+                                <MdExplore size={48} className="empty-recent-icon" />
+                                <h3>No templates available</h3>
+                                <p>Check back soon or start from a blank project.</p>
+                                <button className="btn-create-hero" style={{ marginTop: '1rem' }} onClick={onCreate}>
+                                    <MdAdd size={18} /> Create New Video
+                                </button>
+                            </div>
+                        )}
+
+                        {!templatesLoading && featuredTemplates.length > 0 && (
+                            <div className="projects-grid-override">
+                                {featuredTemplates.map((bundle) => {
+                                    const sceneCount = bundle.scenes?.length || 0
+                                    return (
+                                        <div
+                                            key={bundle.id}
+                                            className="project-card home-template-card"
+                                            onClick={() => onSelectTemplate?.(bundle)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                    e.preventDefault()
+                                                    onSelectTemplate?.(bundle)
+                                                }
+                                            }}
+                                            role="button"
+                                            tabIndex={0}
+                                        >
+                                            <div className="project-thumb-container home-template-thumb">
+                                                {bundle.coverScene ? (
+                                                    <div className="home-template-preview">
+                                                        <TemplateScenePreview template={bundle.coverScene} compact={true} />
+                                                    </div>
+                                                ) : (
+                                                    <div className="project-thumb-placeholder">
+                                                        <MdLayers size={36} />
+                                                    </div>
+                                                )}
+                                                <span className="home-template-badge">{bundle.category}</span>
+                                                <div className="project-overlay">
+                                                    <button
+                                                        type="button"
+                                                        className="btn-edit-premium"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            onSelectTemplate?.(bundle)
+                                                        }}
+                                                    >
+                                                        <MdAutoAwesome size={18} /> Use Template
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="project-content">
+                                                <div className="project-info">
+                                                    <h3>{bundle.name}</h3>
+                                                    <div className="project-meta">
+                                                        {sceneCount} scene{sceneCount !== 1 ? 's' : ''} · {bundle.aspectRatio || '16:9'}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                                    )
+                                })}
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -236,15 +365,9 @@ function Home({ onCreate, onEdit, onShowAIAssistant }) {
                         {!recentLoading && recentProjects.length > 0 && (
                             <div className="projects-grid-override">
                                 {recentProjects.map(project => (
-                                    <div key={project.id || project._id} className="project-card">
-                                        <div className="project-thumb-container">
-                                            {project.thumbnailUrl ? (
-                                                <img src={project.thumbnailUrl} alt={project.title || project.name} className="project-thumb" />
-                                            ) : (
-                                                <div className="project-thumb-placeholder">
-                                                    <MdVideoLibrary size={36} />
-                                                </div>
-                                            )}
+                                    <div key={`${project.workspaceId}-${project.id}`} className="project-card">
+                                        <div className="project-thumb-container home-recent-thumb">
+                                            <ProjectSceneThumbnail video={project} />
                                             <div className="project-overlay">
                                                 <button
                                                     className="btn-edit-premium"
@@ -269,43 +392,7 @@ function Home({ onCreate, onEdit, onShowAIAssistant }) {
                         )}
                     </div>
                 )}
-
-                {activeTab === 'trending' && (
-                    <div className="tab-pane fade-in">
-                        <div className="section-header">
-                            <h2>Trending Top Videos</h2>
-                            <div className="view-all">Discover more</div>
-                        </div>
-                        <div className="projects-grid-override">
-                            {trending.map((trend, i) => (
-                                <div key={i} className="project-card trend-card">
-                                    <div className="project-thumb-container">
-                                        <div className="trend-badge">
-                                            <MdTrendingUp size={14} /> Trending
-                                        </div>
-                                        <img src={trend.thumb} alt={trend.title} className="project-thumb" />
-                                        <div className="project-overlay">
-                                            <button className="btn-edit-premium">
-                                                <MdPlayArrow size={18} /> Watch
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="project-content">
-                                        <div className="project-info">
-                                            <h3>{trend.title}</h3>
-                                            <div className="project-meta">
-                                                <MdVideoLibrary size={13} /> {trend.views} views this week
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
             </div>
-
-
         </div>
     )
 }

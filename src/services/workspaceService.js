@@ -1,4 +1,5 @@
 import { buildUrl, getAuthHeaders } from '../config/api.js';
+import videoLibraryService from './videoLibraryService.js';
 
 class WorkspaceService {
   constructor() {
@@ -453,29 +454,24 @@ class WorkspaceService {
 
   // --- Video Management ---
 
-  // Aggregate all videos across all workspaces
+  // Aggregate completed exports for the current user (owner dashboard)
   async listAllVideosAcrossWorkspaces() {
     try {
-      const workspaces = await this.listWorkspaces();
-      const allVideos = [];
-
-      for (const workspace of workspaces) {
-        try {
-          // Use the new projects endpoint
-          const projects = await this.listProjects(workspace.id);
-          projects.forEach(p => allVideos.push({
-            ...p,
-            workspaceName: workspace.name,
-            workspaceId: workspace.id,
-            folderId: p.folderId || (p.folder && (p.folder.id || p.folder._id)),
-            folderName: p.folder?.name
-          }));
-        } catch (err) {
-          console.warn(`Failed to fetch projects for workspace ${workspace.id}`, err);
-        }
-      }
-
-      return allVideos;
+      const { videos } = await videoLibraryService.listUserVideos({
+        take: 100,
+        skip: 0,
+        status: 'completed',
+      });
+      return videos.map((video) => ({
+        id: video.projectId,
+        title: video.title,
+        workspaceId: video.workspaceId,
+        workspaceName: video.workspaceName,
+        folderId: video.folderId,
+        status: video.status,
+        updatedAt: video.completedAt,
+        renderId: video.id,
+      }));
     } catch (error) {
       console.error('Error in listAllVideosAcrossWorkspaces:', error);
       throw error;
@@ -785,6 +781,25 @@ class WorkspaceService {
       return data.data || data; // Contains { presignedUrl, expiresInSeconds, render }
     } catch (error) {
       console.error('Error in downloadRender:', error);
+      throw error;
+    }
+  }
+
+  async streamRender(workspaceId, projectId, renderId) {
+    try {
+      const response = await fetch(
+        buildUrl(`/api/workspaces/${workspaceId}/projects/${projectId}/renders/${renderId}/stream`),
+        {
+          method: 'GET',
+          headers: getAuthHeaders(),
+          cache: 'no-store',
+        }
+      );
+
+      // Caller handles non-OK to support reading JSON error bodies.
+      return response;
+    } catch (error) {
+      console.error('Error in streamRender:', error);
       throw error;
     }
   }

@@ -83,14 +83,36 @@ export function normalizeTextStyle(style = {}) {
   return normalized;
 }
 
+/** Map editor/template background types to the backend V2 shape (`color` | `gradient`). */
+function normalizeBackgroundType(type, value) {
+  const raw = String(value || '');
+  if (raw.includes('gradient(')) return 'gradient';
+  if (!type || type === 'solid') return 'color';
+  if (type === 'gradient' || type === 'color') return type;
+  return 'color';
+}
+
 function normalizeBackground(background) {
   if (!background) return { type: 'color', value: '#ffffff' };
   if (typeof background === 'string') return { type: 'color', value: background };
   if (typeof background === 'object') {
-    if (background.type && background.value != null) return background;
-    if (background.value) return { type: background.type || 'color', value: background.value };
+    const value = background.value;
+    if (value == null) return { type: 'color', value: '#ffffff' };
+    const type = normalizeBackgroundType(background.type, value);
+    return { type, value: String(value) };
   }
   return { type: 'color', value: '#ffffff' };
+}
+
+function resolveVideoBackgroundColor(projectState) {
+  if (projectState.videoSettings?.backgroundColor) {
+    return projectState.videoSettings.backgroundColor;
+  }
+  const firstBg = normalizeBackground(projectState.scenes?.[0]?.background);
+  if (firstBg.type === 'color' && /^#[0-9a-f]{3,8}$/i.test(firstBg.value)) {
+    return firstBg.value;
+  }
+  return '#ffffff';
 }
 
 function sanitizeStyle(style = {}, type = 'text') {
@@ -392,7 +414,7 @@ export function toBackendProjectData(projectState) {
       width: projectState.resolution?.width || 1920,
       height: projectState.resolution?.height || 1080,
       fps: FPS,
-      backgroundColor: projectState.videoSettings?.backgroundColor || '#000000',
+      backgroundColor: resolveVideoBackgroundColor(projectState),
     },
     scenes: (projectState.scenes || []).map((scene, idx) => {
       const sceneId = scene.sceneId || scene.id || `scene_${idx}`;

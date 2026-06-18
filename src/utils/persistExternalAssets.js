@@ -1,4 +1,5 @@
 import assetService from '../services/assetService';
+import { dispatchStorageRefresh } from './storageQuota';
 import { isAvatarClip } from './heygenVideo';
 
 const UPLOAD_MEDIA_TYPES = new Set(['image', 'video', 'icon']);
@@ -271,6 +272,10 @@ export async function persistExternalSceneAssets(scenes = [], workspaceId, { onP
     }
 
     nextScenes.push({ ...scene, clips: nextClips });
+  }
+
+  if (uploadCount > 0) {
+    dispatchStorageRefresh();
   }
 
   return { scenes: nextScenes, uploadCount };

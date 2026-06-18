@@ -15,7 +15,7 @@ export function isRenderComplete(render) {
   if (!render) return false;
   const status = getRenderStatus(render);
   if (COMPLETE_STATUSES.has(status)) return true;
-  return !!(render.outputUrl || render.downloadUrl || render.videoUrl || render.s3Key || render.outputKey);
+  return false;
 }
 
 export function isRenderFailed(render) {
@@ -163,7 +163,7 @@ export async function triggerFileDownload(url, filename) {
   const link = document.createElement('a');
   link.href = url;
   link.download = fullName;
-  link.target = '_blank';
+  link.target = '_self';
   link.rel = 'noopener noreferrer';
   document.body.appendChild(link);
   link.click();
@@ -178,6 +178,35 @@ function sanitizeFilename(name) {
     .slice(0, 120) || 'video';
 }
 
+export async function downloadFinalRenderStream({
+  workspaceService,
+  workspaceId,
+  projectId,
+  renderId,
+  filename,
+}) {
+  const safeName = sanitizeFilename(filename || 'video');
+  const finalName = safeName.toLowerCase().endsWith('.mp4') ? safeName : `${safeName}.mp4`;
+
+  const res = await workspaceService.streamRender(workspaceId, projectId, renderId);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `Download failed (${res.status})`);
+  }
+
+  const blob = await res.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = objectUrl;
+  anchor.download = finalName;
+  anchor.rel = 'noopener noreferrer';
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 2000);
+  return { filename: finalName };
+}
+
 /**
  * Save project state, render the full composed video on the server, poll until ready,
  * then download the final MP4 (all scenes, layers, text, images — not HeyGen-only).
@@ -188,6 +217,8 @@ export async function exportFullProjectVideo({
   projectId,
   projectState,
   filename,
+  autoDownload = true,
+  forceRebuild = false,
   onStatus,
 }) {
   if (!workspaceId || !projectId) {
@@ -224,7 +255,7 @@ export async function exportFullProjectVideo({
   await workspaceService.saveProjectState(workspaceId, projectId, payload);
 
   onStatus?.('Starting full video render…');
-  const created = await workspaceService.createRender(workspaceId, projectId, { forceRebuild: true });
+  const created = await workspaceService.createRender(workspaceId, projectId, { forceRebuild: !!forceRebuild });
   const renderId = created?.id || created?._id;
   if (!renderId) {
     throw new Error('Render could not be started');
@@ -238,37 +269,35 @@ export async function exportFullProjectVideo({
   }
 
   onStatus?.('Preparing download…');
-  let presignedUrl = null;
   const resolvedRenderId = render.id || renderId;
 
-  for (let attempt = 0; attempt < 8; attempt += 1) {
+  let suggestedFilename = sanitizeFilename(filename || projectState?.title || 'video');
+  // Optional: read backend-provided filename (sanitized based on Project.name).
+  for (let attempt = 0; attempt < 6; attempt += 1) {
     try {
-      const download = await workspaceService.downloadRender(workspaceId, projectId, resolvedRenderId);
-      presignedUrl =
-        download?.presignedUrl ||
-        download?.url ||
-        download?.render?.presignedUrl ||
-        download?.render?.outputUrl;
-      if (presignedUrl) break;
+      const downloadMeta = await workspaceService.downloadRender(workspaceId, projectId, resolvedRenderId);
+      const apiName = downloadMeta?.filename || downloadMeta?.data?.filename;
+      if (apiName) {
+        suggestedFilename = apiName;
+      }
+      break;
     } catch (err) {
-      const retryable = err?.message?.includes('409') || err?.message?.toLowerCase().includes('not ready');
-      if (!retryable || attempt === 7) throw err;
-      await sleep(2000);
+      const msg = String(err?.message || '').toLowerCase();
+      const retryable = msg.includes('409') || msg.includes('not ready');
+      if (!retryable || attempt === 5) break;
+      await sleep(1500);
     }
   }
 
-  presignedUrl =
-    presignedUrl ||
-    render?.presignedUrl ||
-    render?.outputUrl ||
-    render?.downloadUrl ||
-    render?.videoUrl;
-
-  if (!presignedUrl) {
-    throw new Error('No download URL returned for the rendered video');
+  if (autoDownload) {
+    await downloadFinalRenderStream({
+      workspaceService,
+      workspaceId,
+      projectId,
+      renderId: resolvedRenderId,
+      filename: suggestedFilename,
+    });
   }
 
-  const safeName = sanitizeFilename(filename || projectState?.title || 'video');
-  await triggerFileDownload(presignedUrl, `${safeName}.mp4`);
-  return { render, presignedUrl, projectState: exportState };
+  return { render, renderId: resolvedRenderId, filename: suggestedFilename, projectState: exportState };
 }
