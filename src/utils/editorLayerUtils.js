@@ -74,10 +74,10 @@ export function minMovableStackIndex(clips = []) {
   return countBackgroundClips(clips);
 }
 
-export function getClipZIndex(clip, isSelected = false) {
-  if (isBackgroundClip(clip)) return isSelected ? 5 : 1;
+export function getClipZIndex(clip) {
+  if (isBackgroundClip(clip)) return 1;
   const layer = clip.layer ?? 0;
-  return isSelected ? 200 + layer : 10 + layer;
+  return 10 + layer;
 }
 
 /** Ensure background / full-bleed images sit at the back of the stack. */

@@ -25,6 +25,7 @@ import {
   computeClipAnimationState,
   getAnimatedTextContent,
   getEntranceAnimation,
+  getExitAnimation,
 } from '../../../../utils/clipAnimations'
 import {
   buildTextDisplayStyle,
@@ -187,9 +188,10 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
         }
 
         const frameInClip = frameInScene - clipStart
-        const hasCustomAnim = !!getEntranceAnimation(clip)
+        const clipDurationSec = (clip.endTime || scene.duration || 5) - (clip.startTime || 0)
+        const hasCustomAnim = !!getEntranceAnimation(clip) || !!getExitAnimation(clip)
         const animState = hasCustomAnim
-          ? computeClipAnimationState(frameInClip, fps, clip)
+          ? computeClipAnimationState(frameInClip, fps, clip, clipDurationSec)
           : null
 
         let opacity
@@ -232,7 +234,7 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
           height: rect.height,
           transform: `translate(${translateX}px, ${translateY}px) rotate(${(clip.rotation ?? 0) + animRotation}deg) scale(${scale * (isText ? 1 : (clip.scale || 1))})`,
           transformOrigin: 'center center',
-          zIndex: getClipZIndex(clip, false),
+          zIndex: getClipZIndex(clip),
           opacity,
           filter: blurPx > 0 ? `blur(${blurPx}px)` : undefined,
           display: 'flex',

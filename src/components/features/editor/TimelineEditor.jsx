@@ -23,9 +23,19 @@ import {
     MdSmartDisplay,
     MdPerson,
     MdClose,
+    MdZoomOutMap,
+    MdViewTimeline,
 } from 'react-icons/md'
 import { getClipTextContent } from '../../../utils/textClip'
 import { isAvatarClip, findSceneAvatarClip } from '../../../utils/heygenVideo'
+import {
+    computeFitZoom,
+    buildRulerTicks,
+    formatRulerLabel,
+    DEFAULT_ZOOM,
+    MIN_ZOOM,
+    MAX_ZOOM,
+} from '../../../utils/timelineScaleUtils'
 
 const TimelineEditor = ({
     scenes,
@@ -51,6 +61,7 @@ const TimelineEditor = ({
     selectedLayerId = null,
     selectedLayerIds = [],
     timelineScope = 'all',
+    setTimelineScope,
     onUndo,
     onRedo,
     canUndo = false,
@@ -59,7 +70,9 @@ const TimelineEditor = ({
     onCopyLayer,
     onMoveLayerOrder,
 }) => {
-    const [zoom, setZoom] = useState(60)
+    const [zoom, setZoom] = useState(DEFAULT_ZOOM)
+    const [zoomMode, setZoomMode] = useState('auto')
+    const [viewportWidth, setViewportWidth] = useState(0)
     const [draggedSceneId, setDraggedSceneId] = useState(null)
     const [dragOverSceneId, setDragOverSceneId] = useState(null)
     const scrollContainerRef = useRef(null)
@@ -97,6 +110,19 @@ const TimelineEditor = ({
             : currentTime;
     }, [timelineScope, activeScene, currentTime, activeSceneStart]);
 
+    const rulerTicks = useMemo(
+        () => buildRulerTicks(effectiveTotalDuration, zoom),
+        [effectiveTotalDuration, zoom],
+    )
+
+    const canvasWidth = useMemo(() => {
+        const contentWidth = Math.max(effectiveTotalDuration, 1) * zoom + 16
+        if (zoomMode === 'manual' && viewportWidth && contentWidth > viewportWidth) {
+            return contentWidth + 500
+        }
+        return Math.max(viewportWidth || contentWidth, contentWidth)
+    }, [effectiveTotalDuration, zoom, zoomMode, viewportWidth])
+
     // Calculate global tracks
     const globalTracks = useMemo(() => {
         const allClips = scopedScenes.reduce((acc, scene, sIdx) => {
@@ -131,6 +157,64 @@ const TimelineEditor = ({
     useEffect(() => {
         stateRef.current = { zoom, activeSceneStart, activeScene, totalDuration: effectiveTotalDuration, scenes, globalTracks, timelineScope }
     })
+
+    useEffect(() => {
+        const el = scrollContainerRef.current
+        if (!el) return undefined
+
+        const updateWidth = () => setViewportWidth(el.clientWidth)
+        updateWidth()
+
+        const observer = new ResizeObserver(() => updateWidth())
+        observer.observe(el)
+        return () => observer.disconnect()
+    }, [])
+
+    useEffect(() => {
+        setZoomMode('auto')
+    }, [timelineScope])
+
+    useEffect(() => {
+        if (zoomMode !== 'auto') return
+        const width = viewportWidth || scrollContainerRef.current?.clientWidth
+        if (!width || !effectiveTotalDuration) return
+
+        if (timelineScope === 'single') {
+            setZoom(computeFitZoom(effectiveTotalDuration, width))
+            return
+        }
+
+        const naturalWidth = effectiveTotalDuration * DEFAULT_ZOOM
+        if (naturalWidth > width) {
+            setZoom(computeFitZoom(effectiveTotalDuration, width))
+        } else {
+            setZoom(DEFAULT_ZOOM)
+        }
+    }, [zoomMode, timelineScope, effectiveTotalDuration, viewportWidth, activeSceneId])
+
+    const handleManualZoomOut = () => {
+        setZoomMode('manual')
+        setZoom((z) => Math.max(MIN_ZOOM, z - 10))
+    }
+
+    const handleManualZoomIn = () => {
+        setZoomMode('manual')
+        setZoom((z) => Math.min(MAX_ZOOM, z + 10))
+    }
+
+    const handleFitTimeline = () => {
+        setZoomMode('auto')
+    }
+
+    const handleFullTimeline = () => {
+        setTimelineScope?.('all')
+        setZoomMode('auto')
+    }
+
+    const handleSceneBarClick = (sceneId) => {
+        setZoomMode('auto')
+        onSelectScene?.(sceneId, { scope: 'single' })
+    }
 
     // Auto-scroll during playback
     useEffect(() => {
@@ -887,8 +971,30 @@ const TimelineEditor = ({
                 </div>
 
                 <div className="toolbar-section">
-                    <button className="toolbar-btn" title="Zoom Out" onClick={() => setZoom(z => Math.max(10, z - 10))}><MdZoomOut /></button>
-                    <button className="toolbar-btn" title="Zoom In" onClick={() => setZoom(z => Math.min(200, z + 10))}><MdZoomIn /></button>
+                    {timelineScope === 'single' && (
+                      <>
+                        <button
+                          className="toolbar-btn"
+                          title="Full timeline"
+                          onClick={handleFullTimeline}
+                          style={{ display: 'flex', alignItems: 'center', gap: '4px', paddingInline: '10px' }}
+                        >
+                          <MdViewTimeline size={18} />
+                          <span style={{ fontSize: '12px', fontWeight: 600 }}>Full timeline</span>
+                        </button>
+                        <div style={{ width: '1px', height: '20px', background: 'var(--border-color)', margin: '0 8px' }} />
+                      </>
+                    )}
+                    <button className="toolbar-btn" title="Zoom Out" onClick={handleManualZoomOut}><MdZoomOut /></button>
+                    <button className="toolbar-btn" title="Zoom In" onClick={handleManualZoomIn}><MdZoomIn /></button>
+                    <button
+                      className="toolbar-btn"
+                      title="Fit timeline"
+                      onClick={handleFitTimeline}
+                      style={zoomMode === 'manual' ? { color: 'var(--primary)' } : undefined}
+                    >
+                      <MdZoomOutMap size={18} />
+                    </button>
                     <div style={{ width: '1px', height: '20px', background: 'var(--border-color)', margin: '0 8px' }}></div>
                     <button className="toolbar-btn" onClick={onAddScene} title="Add Scene"><MdAdd size={20} /></button>
                     <button className="toolbar-btn" title="Delete" onClick={() => onDeleteScene(activeSceneId)}><MdDelete size={18} /></button>
@@ -949,25 +1055,23 @@ const TimelineEditor = ({
                     <div
                         className="timeline-canvas"
                         style={{
-                            width: `${Math.max(effectiveTotalDuration, 60) * zoom + 500}px`,
+                            width: `${canvasWidth}px`,
                             minHeight: timelineCanvasHeight,
                             height: timelineCanvasHeight,
                         }}
                     >
                     <div className="timeline-ruler">
-                        {Array.from({ length: Math.ceil(effectiveTotalDuration) * 2 + 10 }).map((_, i) => {
-                            const time = i * 0.5;
-                            const isMajor = i % 2 === 0;
-                            return (
-                                <div 
-                                    key={i} 
-                                    className={`ruler-tick ${isMajor ? 'major' : ''}`} 
-                                    style={{ left: `${time * zoom}px` }}
-                                >
-                                    {isMajor && <span className="ruler-label">{time.toFixed(1)}s</span>}
-                                </div>
-                            )
-                        })}
+                        {rulerTicks.map((tick) => (
+                            <div
+                                key={`${tick.time}-${tick.isMajor ? 'major' : 'minor'}`}
+                                className={`ruler-tick ${tick.isMajor ? 'major' : ''}`}
+                                style={{ left: `${tick.time * zoom}px` }}
+                            >
+                                {tick.isMajor && (
+                                    <span className="ruler-label">{formatRulerLabel(tick.time)}</span>
+                                )}
+                            </div>
+                        ))}
                     </div>
 
                     <div className="timeline-tracks">
@@ -1065,8 +1169,7 @@ const TimelineEditor = ({
                                                 onDrop={(e) => onDrop(e, scene.id)}
                                                 onClick={(e) => {
                                                   e.stopPropagation();
-                                                  if (onSelectAvatarVideo) onSelectAvatarVideo(scene.id);
-                                                  else onSelectScene?.(scene.id);
+                                                  handleSceneBarClick(scene.id);
                                                 }}
                                                 style={{ left: prevDuration * zoom, width: (scene.duration || 8) * zoom }}
                                             >
