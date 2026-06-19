@@ -81,6 +81,8 @@ function VideosToolbar({
   filterOptions,
   sortOptions,
   groupOptions,
+  searchPlaceholder = 'Search exports, workspaces, or people…',
+  searchAriaLabel = 'Search videos',
 }) {
   return (
     <div className="videos-toolbar">
@@ -88,10 +90,10 @@ function VideosToolbar({
         <MdSearch size={20} className="videos-search-bar__icon" aria-hidden />
         <input
           type="search"
-          placeholder="Search exports, workspaces, or people…"
+          placeholder={searchPlaceholder}
           value={searchQuery}
           onChange={(event) => onSearchChange(event.target.value)}
-          aria-label="Search videos"
+          aria-label={searchAriaLabel}
         />
       </label>
 

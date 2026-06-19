@@ -92,6 +92,8 @@ function Dashboard({ onCreate, initialSection }) {
     'library',
     'brandkits',
     'avatars',
+    'create-avatar',
+    'create-avatar-look',
     'voices',
     'admin-portal',
     'settings',

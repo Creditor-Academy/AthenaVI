@@ -12,7 +12,7 @@
 }
 
 .anim-scope-controls__label {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text-muted, #64748b);
   margin-bottom: 8px;
 }
@@ -35,7 +35,7 @@
   border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.12));
   background: var(--bg-surface, #f8fafc);
   color: var(--text-main, #1a1b1c);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s, color 0.15s;
@@ -66,13 +66,13 @@
 }
 
 .anim-scope-slider__label {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text-muted, #64748b);
   font-weight: 600;
 }
 
 .anim-scope-slider__value {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-main, #1a1b1c);
 }
@@ -91,7 +91,7 @@
   border-radius: 8px;
   background: transparent;
   color: var(--text-muted, #64748b);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
 }

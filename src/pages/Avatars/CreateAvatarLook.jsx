@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
+import { MdArrowBack } from 'react-icons/md';
 import heygenService from '../../services/heygenService';
 import {
   buildPersonalAvatarLookPrompt,
@@ -10,6 +11,8 @@ import {
   mapLookTile,
   parseAvatarCreateResponse,
 } from '../../utils/heygenAvatars';
+import '../../components/features/workspace/workspace/WorkspaceStyles.css';
+import '../Videos/Videos.css';
 import './Avatars.css';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -237,37 +240,58 @@ function CreateAvatarLook({ context, onBack }) {
 
   if (!avatarGroupId) {
     return (
-      <div className="workspace-main">
-        <div className="grid-container">
-          <button type="button" className="back-btn-sleek" onClick={onBack}>
-            <ArrowLeft size={18} />
-            <span>Back to Avatars</span>
-          </button>
-          <p className="creation-error-inline">No avatar selected for look creation.</p>
+      <div className="videos-page avatars-page create-avatar-page">
+        <div className="videos-shell">
+          <header className="videos-page-header create-avatar-page-header">
+            <div className="videos-title-section create-avatar-title-section">
+              <div className="create-avatar-title-row">
+                <button type="button" className="workspace-back-btn" onClick={onBack} aria-label="Back to Avatars">
+                  <MdArrowBack size={20} />
+                </button>
+                <div>
+                  <h1 className="videos-page-title">Create looks</h1>
+                  <p className="videos-page-subtitle">No avatar selected for look creation.</p>
+                </div>
+              </div>
+            </div>
+          </header>
+          <main className="videos-main create-avatar-main">
+            <p className="creation-error-inline">No avatar selected for look creation.</p>
+          </main>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="workspace-main">
-      <div className="grid-container">
-        <header className="avatars-header">
-          <div className="header-info">
-            <button type="button" className="back-btn-sleek" onClick={onBack} disabled={isProcessing}>
-              <ArrowLeft size={18} />
-              <span>Back to Avatars</span>
-            </button>
-            <h1>Create looks for {avatarName}</h1>
-            <p>
-              Describe a new outfit or scene. We use your reference avatar image and personal avatar id so the
-              generated look stays the same person — typically ready in {LOOK_TYPICAL_WAIT_LABEL}.
-            </p>
+    <div className="videos-page avatars-page create-avatar-page">
+      <div className="videos-shell">
+        <header className="videos-page-header create-avatar-page-header">
+          <div className="videos-title-section create-avatar-title-section">
+            <div className="create-avatar-title-row">
+              <button
+                type="button"
+                className="workspace-back-btn"
+                onClick={onBack}
+                disabled={isProcessing}
+                aria-label="Back to Avatars"
+              >
+                <MdArrowBack size={20} />
+              </button>
+              <div>
+                <h1 className="videos-page-title">Create looks for {avatarName}</h1>
+                <p className="videos-page-subtitle">
+                  Describe a new outfit or scene. We use your reference avatar image and personal avatar id so the
+                  generated look stays the same person — typically ready in {LOOK_TYPICAL_WAIT_LABEL}.
+                </p>
+              </div>
+            </div>
           </div>
         </header>
 
-        <div className="creation-content-wrapper avatar-look-layout">
-          <div className="creation-form-card standalone">
+        <main className="videos-main create-avatar-main">
+          <div className="creation-content-wrapper avatar-look-layout">
+            <div className="creation-form-card standalone">
             {isProcessing ? (
               <div className="look-processing-panel">
                 <div className="look-processing-panel__visual">
@@ -443,6 +467,7 @@ function CreateAvatarLook({ context, onBack }) {
             )}
           </aside>
         </div>
+        </main>
       </div>
     </div>
   );

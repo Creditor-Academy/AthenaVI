@@ -1184,6 +1184,7 @@
   .team-workspace-container,
   .admin-main-wrapper,
   .avatars-page,
+  .create-avatar-page,
   .grid-container
 ) {
   background: transparent;
@@ -1200,6 +1201,7 @@
 .content.content--workspace-consistent .athena-trash-view,
 .content.content--workspace-consistent .admin-portal-container,
 .content.content--workspace-consistent .avatars-page,
+.content.content--workspace-consistent .create-avatar-page,
 .content.content--workspace-consistent .grid-container {
   min-height: 100%;
 }
@@ -1251,7 +1253,8 @@
   .workspace-header,
   .admin-top-header,
   .trash-header-new,
-  .avatars-header
+  .avatars-header,
+  .create-avatar-page-header
 ) {
   margin-bottom: 24px;
 }

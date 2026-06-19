@@ -181,6 +181,13 @@
   color: #0f172a;
   margin: 0 0 8px;
   line-height: 1.1;
+  min-height: 1.1em;
+  display: flex;
+  align-items: center;
+}
+
+.home-billing-stat-value .loading-dots {
+  min-height: 1.1em;
 }
 
 .home-billing-stat-subtitle {

@@ -2059,7 +2059,7 @@ kbd.shortcut-key {
     transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 600;
     backdrop-filter: blur(8px);
 }
@@ -2090,7 +2090,7 @@ kbd.shortcut-key {
 }
 
 .tool-sidebar-item-label {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
     opacity: 0;
     transform: translateX(-10px);
@@ -2524,7 +2524,7 @@ kbd.shortcut-key {
 .property-title {
     color: var(--text-main);
     font-weight: 500;
-    font-size: 13px;
+    font-size: 15px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -2537,7 +2537,7 @@ kbd.shortcut-key {
 
 .property-label {
     color: var(--text-muted);
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 500;
 }
 
@@ -2547,7 +2547,7 @@ kbd.shortcut-key {
     border-radius: 8px;
     padding: 8px 12px;
     color: var(--text-main);
-    font-size: 14px;
+    font-size: 16px;
     transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -5495,6 +5495,12 @@ kbd.shortcut-key {
 }
 
 /* Scene configuration panel (right sidebar) */
+.scene-config-panel-scroll,
+.scenes-sidebar,
+.tool-panel-beside {
+    font-size: 15px;
+}
+
 .scene-config-panel,
 .scene-config-panel-scroll {
     width: 100%;
@@ -5548,14 +5554,14 @@ kbd.shortcut-key {
 }
 
 .scp-panel-header__title {
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--text-main);
     letter-spacing: -0.2px;
 }
 
 .scp-panel-header__subtitle {
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 500;
     color: var(--text-muted);
     text-transform: uppercase;
@@ -5583,7 +5589,7 @@ kbd.shortcut-key {
 }
 
 .scp-section-header__label {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--text-main);
     letter-spacing: -0.15px;
@@ -5591,7 +5597,7 @@ kbd.shortcut-key {
 
 .scp-btn {
     padding: 5px 10px;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
     border-radius: 6px;
     cursor: pointer;
@@ -5682,7 +5688,7 @@ kbd.shortcut-key {
 }
 
 .scp-value-badge {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--text-muted);
     flex-shrink: 0;
@@ -5727,7 +5733,7 @@ kbd.shortcut-key {
     border: 1px solid var(--border-color);
     background: var(--bg-surface);
     color: var(--text-main);
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
     display: inline-flex;
     align-items: center;
@@ -5766,13 +5772,13 @@ kbd.shortcut-key {
 }
 
 .scp-voiceover-row__label {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--text-main);
 }
 
 .scp-voiceover-row__value {
-    font-size: 10px;
+    font-size: 12px;
     color: var(--text-muted);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -5815,7 +5821,7 @@ kbd.shortcut-key {
     align-items: center;
     gap: 4px;
     padding: 4px 8px !important;
-    font-size: 11px !important;
+    font-size: 13px !important;
 }
 
 .scp-voiceover-empty {
@@ -5825,7 +5831,7 @@ kbd.shortcut-key {
 
 .scp-voiceover-empty p {
     margin: 0 0 12px;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--text-muted);
     line-height: 1.5;
 }
@@ -5849,7 +5855,7 @@ kbd.shortcut-key {
 
 .scp-summary-field__action {
     flex-shrink: 0;
-    font-size: 10px !important;
+    font-size: 12px !important;
     padding: 4px 8px !important;
     white-space: nowrap;
 }
@@ -5862,7 +5868,7 @@ kbd.shortcut-key {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--text-muted);
     text-transform: uppercase;
@@ -5871,7 +5877,7 @@ kbd.shortcut-key {
 }
 
 .scp-summary-field__value {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
     color: var(--text-main);
     word-break: break-all;
@@ -5880,7 +5886,7 @@ kbd.shortcut-key {
 
 .scp-summary-field--script .scp-summary-field__script {
     margin: 0;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 400;
     color: var(--text-main);
     line-height: 1.55;
@@ -5894,7 +5900,7 @@ kbd.shortcut-key {
 .scp-summary-field__meta {
     display: block;
     margin-top: 6px;
-    font-size: 10px;
+    font-size: 12px;
     color: var(--text-muted);
 }
 
@@ -5939,7 +5945,7 @@ kbd.shortcut-key {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 22px;
     border-radius: 8px;
     transition: all 0.2s;
 }
@@ -5960,7 +5966,7 @@ kbd.shortcut-key {
 }
 
 .nav-label {
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 600;
 }
 
@@ -5984,7 +5990,7 @@ kbd.shortcut-key {
 
 .panel-title-new {
     color: var(--text-main);
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 700;
     margin: 0;
 }
@@ -5994,7 +6000,7 @@ kbd.shortcut-key {
     border: none;
     color: var(--text-muted);
     cursor: pointer;
-    font-size: 14px;
+    font-size: 16px;
     width: 24px;
     height: 24px;
     border-radius: 50%;
@@ -6033,18 +6039,18 @@ kbd.shortcut-key {
     border: none;
     color: var(--text-main);
     padding: 0 12px;
-    font-size: 14px;
+    font-size: 16px;
     outline: none;
 }
 
 .search-plus, .search-mic {
     color: var(--text-muted);
-    font-size: 20px;
+    font-size: 22px;
 }
 
 .elements-section-title {
     color: var(--text-main);
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 700;
     margin-bottom: 12px;
     text-transform: uppercase;
@@ -6057,7 +6063,7 @@ kbd.shortcut-key {
     border: 1px solid var(--border-color);
     color: var(--text-main);
     border-radius: 20px;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
     white-space: nowrap;
     cursor: pointer;
@@ -6080,7 +6086,7 @@ kbd.shortcut-key {
 
 .elements-category-item span {
     color: var(--text-muted);
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
 }
 
@@ -6114,19 +6120,19 @@ kbd.shortcut-key {
 }
 
 .text-preset-btn.heading {
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 900;
     height: 64px;
 }
 
 .text-preset-btn.subheading {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
     height: 54px;
 }
 
 .text-preset-btn.body {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 500;
     height: 48px;
 }
@@ -6152,7 +6158,7 @@ kbd.shortcut-key {
 
 /* Fix label colors */
 .property-section[class*="accent-"] .section-label span { color: var(--text-main) !important; font-weight: 700; }
-.property-section[class*="accent-"] .row-label { color: var(--text-muted) !important; font-size: 12px; font-weight: 600; }
+.property-section[class*="accent-"] .row-label { color: var(--text-muted) !important; font-size: 14px; font-weight: 600; }
 .property-section[class*="accent-"] .text-hint { color: var(--text-muted) !important; opacity: 0.8; }
 
 /* Input Styles */
@@ -6224,7 +6230,7 @@ kbd.shortcut-key {
     border-radius: 6px;
     background: rgba(0, 0, 0, 0.55);
     color: rgba(255, 255, 255, 0.92);
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     line-height: 1.15;
     overflow: hidden;
@@ -6263,7 +6269,7 @@ kbd.shortcut-key {
     z-index: 3;
     background: rgba(0, 0, 0, 0.6);
     color: white;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 700;
     padding: 2px 6px;
     border-radius: 4px;
@@ -6277,7 +6283,7 @@ kbd.shortcut-key {
     z-index: 3;
     background: rgba(0, 0, 0, 0.6);
     color: white;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 600;
     padding: 2px 6px;
     border-radius: 4px;
@@ -6316,7 +6322,7 @@ kbd.shortcut-key {
 }
 
 .scene-list-card__title {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 700;
     color: var(--text-main);
     overflow: hidden;
