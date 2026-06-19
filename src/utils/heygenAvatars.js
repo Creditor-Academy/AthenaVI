@@ -942,6 +942,36 @@ export function buildHeygenAvatarContent(scene, clip = {}) {
   return content;
 }
 
+/** Consent / training status from a HeyGen avatar group row. */
+export function getAvatarConsentStatus(group) {
+  return group?.consent_status ?? group?.consentStatus ?? null;
+}
+
+export function getAvatarTrainingStatus(group) {
+  return group?.status ?? group?.training_status ?? null;
+}
+
+export function isConsentApproved(group) {
+  const status = String(getAvatarConsentStatus(group) || '').toLowerCase();
+  return status === 'approved' || status === 'complete' || status === 'completed';
+}
+
+export function isAvatarPendingConsent(group) {
+  const training = String(getAvatarTrainingStatus(group) || '').toLowerCase();
+  const consent = String(getAvatarConsentStatus(group) || '').toLowerCase();
+  return training === 'pending_consent' || consent === 'pending';
+}
+
+export function needsAvatarConsent(group) {
+  if (!group) return false;
+  if (isConsentApproved(group)) return false;
+  return isAvatarPendingConsent(group);
+}
+
+export function getConsentUrlFromResponse(response) {
+  return response?.url ?? response?.consent_url ?? response?.consentUrl ?? null;
+}
+
 export function parseAvatarCreateResponse(response, fallbackName = '') {
   const group = response?.avatar_group || response?.avatarGroup;
   const item = response?.avatar_item || response?.avatarItem;
@@ -958,5 +988,8 @@ export function parseAvatarCreateResponse(response, fallbackName = '') {
       group?.preview_image_url ||
       group?.thumbnail_url ||
       null,
+    consentStatus: getAvatarConsentStatus(group),
+    trainingStatus: getAvatarTrainingStatus(group),
+    consentUrl: getConsentUrlFromResponse(response),
   };
 }

@@ -2,6 +2,11 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MdAdd, MdMic, MdSearch, MdStar, MdAutoAwesome, MdCloudUpload, MdChevronLeft } from 'react-icons/md';
 import { Loader2 } from 'lucide-react';
 import heygenService from '../../../../services/heygenService';
+import { AvatarConsentModal } from '../../../ui/AvatarConsentStep/AvatarConsentStep';
+import {
+  getConsentUrlFromResponse,
+  parseAvatarCreateResponse,
+} from '../../../../utils/heygenAvatars';
 import {
   AVATAR_IV_ENGINE,
   AVATAR_V_ENGINE,
@@ -45,6 +50,7 @@ const EditorSidebarAvatar = ({
   );
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
+  const [consentModal, setConsentModal] = useState(null);
   const fileInputRef = useRef(null);
   const [pickerView, setPickerView] = useState('groups');
   const [groups, setGroups] = useState([]);
@@ -373,26 +379,35 @@ const EditorSidebarAvatar = ({
       payload.append('file', file);
 
       const response = await heygenService.createAvatar(payload);
-      
-      const groupId = response?.avatar_group_id || response?.data?.avatar_group_id || response?.id;
-      
-      if (groupId) {
-        setUploadStatus('Verifying ownership...');
+      const created = parseAvatarCreateResponse(response, file.name.split('.')[0] || 'Custom Persona');
+      const groupId = created.groupId;
+
+      if (groupId && type === 'digital_twin') {
+        setUploadStatus('Setting up consent verification...');
         try {
-          const consentRes = await heygenService.getAvatarConsent(groupId, window.location.href);
-          if (consentRes && (consentRes.consent_url || consentRes.url)) {
-            const url = consentRes.consent_url || consentRes.url;
-            setUploadStatus('Redirecting to consent portal...');
-            setTimeout(() => {
-              window.open(url, '_blank');
-              setIsUploading(false);
-              setUploadStatus('');
-              // Optionally refresh list
-            }, 1500);
-            return;
-          }
+          const consentRes = await heygenService.getAvatarConsent(groupId);
+          const url = getConsentUrlFromResponse(consentRes);
+          const group = consentRes?.avatar_group ?? consentRes?.avatarGroup;
+          setIsUploading(false);
+          setUploadStatus('');
+          setConsentModal({
+            groupId,
+            avatarName: created.name,
+            consentUrl: url,
+            consentStatus: group?.consent_status ?? 'pending',
+          });
+          return;
         } catch (consentErr) {
           console.warn('Consent fetch failed or not required', consentErr);
+          setIsUploading(false);
+          setUploadStatus('');
+          setConsentModal({
+            groupId,
+            avatarName: created.name,
+            consentUrl: '',
+            consentStatus: 'pending',
+          });
+          return;
         }
       }
 
@@ -418,6 +433,7 @@ const EditorSidebarAvatar = ({
   );
 
   return (
+    <>
     <div className="tool-panel-content elements-ui" style={{ padding: '0px', display: 'flex', flexDirection: 'column', height: '100%' }}>
       
       {/* Premium Header area with Gradient */}
@@ -887,6 +903,17 @@ const EditorSidebarAvatar = ({
         </>
       </div>
     </div>
+
+    <AvatarConsentModal
+      isOpen={Boolean(consentModal)}
+      groupId={consentModal?.groupId}
+      avatarName={consentModal?.avatarName}
+      consentUrl={consentModal?.consentUrl}
+      consentStatus={consentModal?.consentStatus}
+      onClose={() => setConsentModal(null)}
+      onComplete={() => setConsentModal(null)}
+    />
+    </>
   );
 };
 

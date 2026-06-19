@@ -1,19 +1,46 @@
 import { useState, useEffect } from 'react'
-import { Play, Video, X, Sparkles } from 'lucide-react'
+import { Play, Video, X, Sparkles, ShieldCheck } from 'lucide-react'
 import heygenService from '../../services/heygenService'
+import AvatarConsentStep, { avatarNeedsConsentFlow } from '../../components/ui/AvatarConsentStep/AvatarConsentStep'
 import {
   extractHeygenList,
   filterAvatarIvLooks,
   formatAvatarTypeLabel,
+  getConsentUrlFromResponse,
   getLookId,
 } from '../../utils/heygenAvatars'
 
-function AvatarPersona({ selectedAvatar, closeDetails, onCreate, onCreateLooks, isPrivate }) {
+function AvatarPersona({ selectedAvatar, closeDetails, onCreate, onCreateLooks, isPrivate, onCompleteConsent }) {
   const [activeLooks, setActiveLooks] = useState([])
   const [selectedLook, setSelectedLook] = useState(null)
   const [loadingLooks, setLoadingLooks] = useState(false)
   const [debugLooksInfo, setDebugLooksInfo] = useState('')
   const [isPreviewing, setIsPreviewing] = useState(false)
+  const [showConsentPanel, setShowConsentPanel] = useState(false)
+  const [consentUrl, setConsentUrl] = useState('')
+
+  const needsConsent = isPrivate && avatarNeedsConsentFlow(selectedAvatar)
+
+  useEffect(() => {
+    if (!needsConsent || !selectedAvatar?.id) {
+      setConsentUrl('')
+      return undefined
+    }
+
+    let cancelled = false
+    heygenService
+      .getAvatarConsent(selectedAvatar.id)
+      .then((res) => {
+        if (!cancelled) setConsentUrl(getConsentUrlFromResponse(res) || '')
+      })
+      .catch(() => {
+        if (!cancelled) setConsentUrl('')
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [needsConsent, selectedAvatar?.id])
 
   // Fetch looks when a group is selected
   useEffect(() => {
@@ -155,6 +182,39 @@ function AvatarPersona({ selectedAvatar, closeDetails, onCreate, onCreateLooks, 
           <div className="hero-badge">{selectedAvatar.category} Model</div>
 
           <p className="hero-bio">{selectedAvatar.description}</p>
+
+          {needsConsent ? (
+            <div className="avatars-persona-consent">
+              <div className="avatars-persona-consent__header">
+                <ShieldCheck size={18} />
+                <span>Consent required before this Digital Twin can be used</span>
+              </div>
+              {showConsentPanel ? (
+                <AvatarConsentStep
+                  groupId={selectedAvatar.id}
+                  avatarName={selectedAvatar.name}
+                  consentUrl={consentUrl}
+                  consentStatus={selectedAvatar.consentStatus}
+                  onComplete={() => setShowConsentPanel(false)}
+                />
+              ) : (
+                <button
+                  type="button"
+                  className="btn-action-secondary avatars-persona-consent__btn"
+                  onClick={() => {
+                    if (onCompleteConsent) {
+                      onCompleteConsent(selectedAvatar);
+                    } else {
+                      setShowConsentPanel(true);
+                    }
+                  }}
+                >
+                  <ShieldCheck size={18} />
+                  <span>Complete consent</span>
+                </button>
+              )}
+            </div>
+          ) : null}
 
           <div className="hero-specs">
             <div className="spec-tile">
