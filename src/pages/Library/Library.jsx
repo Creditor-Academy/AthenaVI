@@ -12,6 +12,7 @@ import {
   MdDeleteOutline,
   MdVideocam,
   MdDriveFileRenameOutline,
+  MdStorage,
 } from 'react-icons/md'
 import assetService, { isAssetInUseError, formatAssetInUseMessage } from '../../services/assetService'
 import workspaceService from '../../services/workspaceService'
@@ -22,7 +23,11 @@ import { assertUploadFits, dispatchStorageRefresh, formatStorageLimitMessage, is
 import { useWorkspaceStorage } from '../../hooks/useStorageQuota'
 import StorageUsageBar from '../../components/ui/StorageUsageBar/StorageUsageBar'
 import '../../components/ui/StorageUsageBar/StorageUsageBar.css'
+import { formatBytes } from '../../utils/formatSize'
+import LibraryComingSoon from './LibraryComingSoon'
 import './Library.css'
+
+const MASONRY_SKELETON_HEIGHTS = [168, 224, 192, 256, 180, 240, 200, 272, 176, 208, 232, 188]
 
 const CATEGORY_CARDS = [
   { id: 'media', label: 'Media', Icon: Image },
@@ -238,28 +243,141 @@ function Library() {
     [selectedWorkspace, currentUserId]
   )
 
+  const storageUsedBytes = Number(workspaceStorage?.quota?.usedBytes) || 0
+  const storageLimitBytes = Number(workspaceStorage?.quota?.limitBytes) || 0
+  const storagePercent =
+    storageLimitBytes > 0
+      ? Math.min(100, Math.round((storageUsedBytes / storageLimitBytes) * 100))
+      : 0
+
+  const renderMasonrySkeleton = () => (
+    <div className="assets-masonry" aria-busy="true" aria-label="Loading assets">
+      {MASONRY_SKELETON_HEIGHTS.map((height, index) => (
+        <div
+          key={`skeleton-${index}`}
+          className="library-masonry-skeleton"
+          style={{ height }}
+          aria-hidden
+        />
+      ))}
+    </div>
+  )
+
+  const renderGridAsset = (asset) => (
+    <div key={asset.id} className="asset-card grid masonry-card">
+      <div className="asset-preview">
+        {asset.mediaType === 'video' ? (
+          <video src={asset.url} muted playsInline />
+        ) : asset.mediaType === 'audio' ? (
+          <div className="asset-preview-icon asset-preview-icon--audio">{assetIcon(asset)}</div>
+        ) : asset.url ? (
+          <img src={asset.url} alt={asset.name} loading="lazy" />
+        ) : (
+          <div className="asset-preview-icon">{assetIcon(asset)}</div>
+        )}
+
+        {asset.source === 'stock' ? (
+          <span className="asset-source-badge">Stock</span>
+        ) : null}
+
+        <div className="masonry-card-overlay">
+          <div className="asset-name" title={asset.name}>
+            {asset.name}
+          </div>
+          <div className="asset-meta">
+            {asset.source === 'stock' ? <span>Stock</span> : null}
+            {showUploaderColumn && asset.owner ? <span>{asset.owner}</span> : null}
+            {asset.modified ? <span>{asset.modified}</span> : null}
+            {asset.sizeLabel ? <span>{asset.sizeLabel}</span> : null}
+          </div>
+        </div>
+
+        {assetCanManage(asset) ? (
+          <div className="masonry-card-actions">
+            <button
+              type="button"
+              className="asset-delete-btn asset-delete-btn--grid asset-action-btn--rename"
+              aria-label={`Rename ${asset.name}`}
+              disabled={renamingId === asset.id}
+              onClick={() => handleRenameAsset(asset)}
+            >
+              <MdDriveFileRenameOutline />
+            </button>
+            <button
+              type="button"
+              className="asset-delete-btn asset-delete-btn--grid"
+              aria-label={`Delete ${asset.name}`}
+              disabled={deletingId === asset.id}
+              onClick={() => handleDeleteAsset(asset.id)}
+            >
+              <MdDeleteOutline />
+            </button>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
+
   return (
     <div className="library-page">
       <div className="library-shell">
         <header className="library-page-header">
           <div className="library-page-header-row">
             <h1 className="library-page-title">Library</h1>
-            {workspaces.length > 0 ? (
-              <label className="library-workspace-select">
-                <span className="visually-hidden">Workspace</span>
-                <select
-                  value={workspaceId}
-                  onChange={(e) => setWorkspaceId(e.target.value)}
-                  disabled={workspaceLoading}
+            <div className="library-header-actions">
+              {workspaces.length > 0 ? (
+                <label className="library-workspace-select">
+                  <span className="visually-hidden">Workspace</span>
+                  <select
+                    value={workspaceId}
+                    onChange={(e) => setWorkspaceId(e.target.value)}
+                    disabled={workspaceLoading}
+                  >
+                    {workspaces.map((ws) => (
+                      <option key={ws.id} value={ws.id}>
+                        {ws.name || 'Workspace'}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+              {workspaceId ? (
+                <div
+                  className="library-storage-compact"
+                  title={
+                    workspaceStorage?.owner?.name
+                      ? `${selectedWorkspace?.name || 'Workspace'} · counts against ${workspaceStorage.owner.name}'s quota`
+                      : selectedWorkspace?.name || 'Workspace storage'
+                  }
                 >
-                  {workspaces.map((ws) => (
-                    <option key={ws.id} value={ws.id}>
-                      {ws.name || 'Workspace'}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
+                  <MdStorage size={16} aria-hidden />
+                  <div className="library-storage-compact__body">
+                    <div className="library-storage-compact__row">
+                      <span className="library-storage-compact__label">Storage</span>
+                      <span className="library-storage-compact__percent">
+                        {storageLoading ? '…' : `${storagePercent}%`}
+                      </span>
+                    </div>
+                    <StorageUsageBar
+                      loading={storageLoading}
+                      usedBytes={storageUsedBytes}
+                      limitBytes={storageLimitBytes}
+                      percentUsed={storagePercent}
+                      label="Storage used"
+                      compact
+                      className="library-storage-compact__bar"
+                    />
+                    <span className="library-storage-compact__detail">
+                      {storageLoading
+                        ? 'Loading…'
+                        : storageLimitBytes > 0
+                          ? `${formatBytes(storageUsedBytes)} of ${formatBytes(storageLimitBytes)}`
+                          : 'Quota unavailable'}
+                    </span>
+                  </div>
+                </div>
+              ) : null}
+            </div>
           </div>
           {selectedWorkspace ? (
             <p className="library-page-subtitle">
@@ -275,22 +393,6 @@ function Library() {
             </p>
           ) : null}
         </header>
-
-        {workspaceId && workspaceStorage?.quota ? (
-          <div className="library-storage-bar">
-            <StorageUsageBar
-              loading={storageLoading}
-              usedBytes={workspaceStorage.quota.usedBytes}
-              limitBytes={workspaceStorage.quota.limitBytes}
-              label={
-                workspaceStorage.owner?.name
-                  ? `Owner storage · ${workspaceStorage.owner.name}`
-                  : 'Owner storage quota'
-              }
-              compact
-            />
-          </div>
-        ) : null}
 
         {assetsError ? (
           <div className="library-status-banner library-status-banner--error" role="alert">
@@ -321,67 +423,69 @@ function Library() {
           })}
         </div>
 
-        {selectedCategory && (
-          <div className="library-browse">
-            <div className="library-filters-bar">
-              <div className="filters-top-row">
-                <div className="asset-type-tabs">
-                  {visibleTabs().map((tab) => (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      className={`type-tab ${activeTab === tab.id ? 'active' : ''}`}
-                      onClick={() => setActiveTab(tab.id)}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
+        {selectedCategory && !isUnsupportedCategory ? (
+          <div className="library-filters-bar">
+            <div className="filters-top-row">
+              <div className="asset-type-tabs">
+                {visibleTabs().map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    className={`type-tab ${activeTab === tab.id ? 'active' : ''}`}
+                    onClick={() => setActiveTab(tab.id)}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
 
-                <div className="filters-right-actions">
-                  <div className="library-search" style={{ marginRight: 12, position: 'relative', display: 'flex', alignItems: 'center' }}>
-                    <MdSearch style={{ position: 'absolute', left: 12, color: '#9CA3AF' }} />
-                    <input
-                      ref={searchRef}
-                      type="text"
-                      className="library-search-input"
-                      placeholder="Search assets..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      aria-label="Search assets"
-                      style={{ padding: '8px 12px 8px 36px', borderRadius: 999, border: '1px solid #E5E7EB', width: 220 }}
-                    />
-                  </div>
+              <div className="filters-right-actions">
+                <div className="library-search" style={{ marginRight: 12, position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <MdSearch style={{ position: 'absolute', left: 12, color: '#9CA3AF' }} />
+                  <input
+                    ref={searchRef}
+                    type="text"
+                    className="library-search-input"
+                    placeholder="Search assets..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    aria-label="Search assets"
+                    style={{ padding: '8px 12px 8px 36px', borderRadius: 999, border: '1px solid #E5E7EB', width: 220 }}
+                  />
+                </div>
+                <button
+                  type="button"
+                  className="btn-upload-primary"
+                  onClick={() => setShowUploadModal(true)}
+                  disabled={!workspaceId || uploading || isUnsupportedCategory}
+                >
+                  <MdCloudUpload /> {uploading ? 'Uploading…' : 'Upload'}
+                </button>
+                <div className="view-toggle">
                   <button
                     type="button"
-                    className="btn-upload-primary"
-                    onClick={() => setShowUploadModal(true)}
-                    disabled={!workspaceId || uploading || isUnsupportedCategory}
+                    className={`view-toggle-btn ${activeView === 'grid' ? 'active' : ''}`}
+                    onClick={() => setActiveView('grid')}
+                    aria-label="Grid view"
                   >
-                    <MdCloudUpload /> {uploading ? 'Uploading…' : 'Upload'}
+                    <MdGridView />
                   </button>
-                  <div className="view-toggle">
-                    <button
-                      type="button"
-                      className={`view-toggle-btn ${activeView === 'grid' ? 'active' : ''}`}
-                      onClick={() => setActiveView('grid')}
-                      aria-label="Grid view"
-                    >
-                      <MdGridView />
-                    </button>
-                    <button
-                      type="button"
-                      className={`view-toggle-btn ${activeView === 'list' ? 'active' : ''}`}
-                      onClick={() => setActiveView('list')}
-                      aria-label="List view"
-                    >
-                      <MdViewList />
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    className={`view-toggle-btn ${activeView === 'list' ? 'active' : ''}`}
+                    onClick={() => setActiveView('list')}
+                    aria-label="List view"
+                  >
+                    <MdViewList />
+                  </button>
                 </div>
               </div>
             </div>
+          </div>
+        ) : null}
 
+        {selectedCategory && (
+          <div className="library-browse">
             <input
               type="file"
               style={{ display: 'none' }}
@@ -393,14 +497,12 @@ function Library() {
 
             <div className="assets-scroller">
               {isUnsupportedCategory ? (
-                <div className="library-empty-state">
-                  <p className="library-empty-title">Coming soon</p>
-                  <p className="library-empty-copy">Fonts and templates are not available in the asset library yet.</p>
-                </div>
+                <LibraryComingSoon
+                  category={selectedCategory}
+                  onBrowseMedia={() => handleCategoryClick(CATEGORY_CARDS[0])}
+                />
               ) : assetsLoading && filteredAssets.length === 0 ? (
-                <div className="library-empty-state">
-                  <p className="library-empty-title">Loading assets…</p>
-                </div>
+                renderMasonrySkeleton()
               ) : isCurrentTabEmpty ? (
                 <div className="library-empty-state">
                   <p className="library-empty-title">No {activeTab === 'images' ? 'photos' : activeTab} yet</p>
@@ -415,7 +517,14 @@ function Library() {
                   </button>
                 </div>
               ) : (
-                <div className={activeView === 'grid' ? 'assets-grid' : 'assets-list'}>
+                <div
+                  className={
+                    activeView === 'grid'
+                      ? `assets-masonry${assetsLoading ? ' assets-masonry--refreshing' : ''}`
+                      : 'assets-list'
+                  }
+                  aria-busy={assetsLoading || undefined}
+                >
                   {activeView === 'list' && (
                     <div className="list-header">
                       <div className="col name">Name</div>
@@ -426,65 +535,11 @@ function Library() {
                     </div>
                   )}
 
-                  {filteredAssets.map((asset) => (
-                    <div key={asset.id} className={`asset-card ${activeView}`}>
-                      {activeView === 'grid' ? (
-                        <>
-                          <div className="asset-preview">
-                            {asset.mediaType === 'video' ? (
-                              <video src={asset.url} muted playsInline />
-                            ) : asset.mediaType === 'audio' ? (
-                              <div className="asset-preview-icon">{assetIcon(asset)}</div>
-                            ) : asset.url ? (
-                              <img src={asset.url} alt={asset.name} />
-                            ) : (
-                              <div className="asset-preview-icon">{assetIcon(asset)}</div>
-                            )}
-                            {asset.source === 'stock' ? (
-                              <span className="asset-source-badge">Stock</span>
-                            ) : null}
-                            {assetCanManage(asset) ? (
-                              <>
-                            <button
-                              type="button"
-                              className="asset-delete-btn asset-delete-btn--grid asset-action-btn--rename"
-                              aria-label={`Rename ${asset.name}`}
-                              disabled={renamingId === asset.id}
-                              onClick={() => handleRenameAsset(asset)}
-                            >
-                              <MdDriveFileRenameOutline />
-                            </button>
-                            <button
-                              type="button"
-                              className="asset-delete-btn asset-delete-btn--grid"
-                              aria-label={`Delete ${asset.name}`}
-                              disabled={deletingId === asset.id}
-                              onClick={() => handleDeleteAsset(asset.id)}
-                            >
-                              <MdDeleteOutline />
-                            </button>
-                              </>
-                            ) : null}
-                          </div>
-
-                          <div style={{ padding: '12px' }}>
-                            <div className="asset-name" title={asset.name} style={{ fontSize: 14, fontWeight: 700 }}>
-                              {asset.name}
-                            </div>
-                            <div className="asset-meta" style={{ marginTop: 8 }}>
-                              <span>
-                                {asset.source === 'stock'
-                                  ? 'Stock'
-                                  : showUploaderColumn && asset.owner
-                                    ? asset.owner
-                                    : 'Upload'}
-                              </span>
-                              <span>{asset.modified || ''}</span>
-                              <span>{asset.sizeLabel || ''}</span>
-                            </div>
-                          </div>
-                        </>
-                      ) : (
+                  {filteredAssets.map((asset) =>
+                    activeView === 'grid' ? (
+                      renderGridAsset(asset)
+                    ) : (
+                      <div key={asset.id} className={`asset-card ${activeView}`}>
                         <>
                           <div className="col name" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                             <div style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, background: 'var(--bg-surface)', overflow: 'hidden' }}>
@@ -506,7 +561,7 @@ function Library() {
                               ? 'Stock'
                               : showUploaderColumn && asset.owner
                                 ? asset.owner
-                                : 'Upload'}
+                                : '—'}
                           </div>
                           <div className="col modified" style={{ color: 'var(--text-muted)', fontSize: 13 }}>{asset.modified || ''}</div>
                           <div className="col size" style={{ color: 'var(--text-muted)', fontSize: 13 }}>{asset.sizeLabel || ''}</div>
@@ -514,41 +569,41 @@ function Library() {
                           <div className="col actions">
                             {assetCanManage(asset) ? (
                               <>
-                            <button
-                              type="button"
-                              className="asset-delete-btn asset-delete-btn--list"
-                              aria-label={`Rename ${asset.name}`}
-                              disabled={renamingId === asset.id}
-                              onClick={() => handleRenameAsset(asset)}
-                            >
-                              <MdDriveFileRenameOutline />
-                            </button>
-                            <button
-                              type="button"
-                              className="asset-delete-btn asset-delete-btn--list"
-                              aria-label={`Delete ${asset.name}`}
-                              disabled={deletingId === asset.id}
-                              onClick={() => handleDeleteAsset(asset.id)}
-                            >
-                              <MdDeleteOutline />
-                            </button>
+                                <button
+                                  type="button"
+                                  className="asset-delete-btn asset-delete-btn--list"
+                                  aria-label={`Rename ${asset.name}`}
+                                  disabled={renamingId === asset.id}
+                                  onClick={() => handleRenameAsset(asset)}
+                                >
+                                  <MdDriveFileRenameOutline />
+                                </button>
+                                <button
+                                  type="button"
+                                  className="asset-delete-btn asset-delete-btn--list"
+                                  aria-label={`Delete ${asset.name}`}
+                                  disabled={deletingId === asset.id}
+                                  onClick={() => handleDeleteAsset(asset.id)}
+                                >
+                                  <MdDeleteOutline />
+                                </button>
                               </>
                             ) : null}
                           </div>
                         </>
-                      )}
-                    </div>
-                  ))}
+                      </div>
+                    )
+                  )}
 
-                  {activeView === 'grid' && workspaceId && !isUnsupportedCategory ? (
+                  {activeView === 'grid' && !assetsLoading && workspaceId && !isUnsupportedCategory ? (
                     <button
                       type="button"
-                      className="upload-placeholder"
+                      className="upload-placeholder masonry-upload-tile"
                       onClick={() => setShowUploadModal(true)}
                       disabled={uploading}
                     >
                       <MdCloudUpload className="upload-placeholder-icon" />
-                      <div className="upload-placeholder-text">{uploading ? 'Uploading…' : 'Drop files here'}</div>
+                      <div className="upload-placeholder-text">{uploading ? 'Uploading…' : 'Upload more'}</div>
                     </button>
                   ) : null}
                 </div>
