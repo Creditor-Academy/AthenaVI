@@ -1,6 +1,20 @@
-import { MdPerson } from 'react-icons/md';
+import { MdPerson, MdVerifiedUser } from 'react-icons/md';
+import { avatarNeedsConsentFlow } from '../../components/ui/AvatarConsentStep/AvatarConsentStep';
 
-function AvatarLibraryCard({ avatar, onOpen }) {
+function getStatusBadge(avatar) {
+  if (avatarNeedsConsentFlow(avatar)) {
+    return { label: 'Consent required', className: 'avatars-status-badge--consent' };
+  }
+  if (avatar.trainingStatus === 'processing') {
+    return { label: 'Processing', className: 'avatars-status-badge--processing' };
+  }
+  return null;
+}
+
+function AvatarLibraryCard({ avatar, onOpen, onCompleteConsent }) {
+  const statusBadge = getStatusBadge(avatar);
+  const needsConsent = avatarNeedsConsentFlow(avatar);
+
   return (
     <article className="workspace-item-card avatars-library-card">
       <button
@@ -12,6 +26,9 @@ function AvatarLibraryCard({ avatar, onOpen }) {
         <div className="card-thumb-container avatars-library-card__thumb">
           <img src={avatar.image} alt="" loading="lazy" />
           <span className="avatars-library-badge">{avatar.category || 'Avatar'}</span>
+          {statusBadge ? (
+            <span className={`avatars-status-badge ${statusBadge.className}`}>{statusBadge.label}</span>
+          ) : null}
           <div className="avatars-library-overlay" aria-hidden>
             <span className="btn-edit-premium">View Persona</span>
           </div>
@@ -33,6 +50,17 @@ function AvatarLibraryCard({ avatar, onOpen }) {
         </div>
 
         <div className="avatars-library-card__actions">
+          {needsConsent && onCompleteConsent ? (
+            <button
+              type="button"
+              className="avatars-consent-cta"
+              title="Complete consent"
+              aria-label={`Complete consent for ${avatar.name}`}
+              onClick={(event) => onCompleteConsent(avatar, event)}
+            >
+              <MdVerifiedUser size={18} />
+            </button>
+          ) : null}
           <button
             type="button"
             className="context-menu-btn"

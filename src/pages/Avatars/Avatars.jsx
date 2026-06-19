@@ -9,6 +9,8 @@ import {
   MdViewList,
 } from 'react-icons/md';
 import heygenService from '../../services/heygenService';
+import { AvatarConsentModal } from '../../components/ui/AvatarConsentStep/AvatarConsentStep';
+import { getConsentUrlFromResponse } from '../../utils/heygenAvatars';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
 import AvatarsSkeleton from '../page-skeleton/AvatarsSkeleton';
 import VideosToolbar from '../Videos/VideosToolbar.jsx';
@@ -57,6 +59,8 @@ function mapAvatarList(avatarList, ownership) {
     style: av.style || 'Modern',
     rating: 4.9,
     rawLooks: av.avatar_looks || [],
+    consentStatus: av.consent_status ?? av.consentStatus ?? null,
+    trainingStatus: av.status ?? av.training_status ?? null,
   }));
 }
 
@@ -84,6 +88,8 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
   const [filterBy, setFilterBy] = useState('all');
   const [sortBy, setSortBy] = useState('name_asc');
   const [groupBy, setGroupBy] = useState('none');
+  const [consentBanner, setConsentBanner] = useState('');
+  const [consentModal, setConsentModal] = useState(null);
   const fetchRequestRef = useRef(0);
 
   const fetchAvatars = useCallback(async ({ ownership, token, append = false } = {}) => {
@@ -145,6 +151,48 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
     fetchAvatars({ ownership: activeSection });
   }, [activeSection, fetchAvatars]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const consentDone = params.get('consent');
+    const groupId = params.get('groupId');
+    if (consentDone !== 'done' || !groupId) return;
+
+    setConsentBanner("Thanks — we're verifying your consent. Refresh if your avatar doesn't update yet.");
+    setActiveSection('private');
+    fetchAvatars({ ownership: 'private' });
+
+    const openConsent = async () => {
+      try {
+        const consentRes = await heygenService.getAvatarConsent(groupId);
+        setConsentModal({
+          groupId,
+          avatarName: 'Your Digital Twin',
+          consentUrl: getConsentUrlFromResponse(consentRes),
+          consentStatus: consentRes?.avatar_group?.consent_status ?? 'pending',
+        });
+      } catch (error) {
+        console.warn('Could not reopen consent flow after redirect', error);
+        setConsentModal({
+          groupId,
+          avatarName: 'Your Digital Twin',
+          consentUrl: '',
+          consentStatus: 'pending',
+        });
+      }
+    };
+
+    openConsent();
+
+    params.delete('consent');
+    params.delete('groupId');
+    const nextSearch = params.toString();
+    window.history.replaceState(
+      null,
+      '',
+      `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ''}${window.location.hash}`
+    );
+  }, [fetchAvatars]);
+
   const filteredAvatars = useMemo(() => {
     const filtered = applyAvatarFilters(avatars, { searchQuery, filterBy });
     return sortAvatars(filtered, sortBy);
@@ -176,6 +224,37 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
     fetchAvatars({ ownership: activeSection, token: nextToken, append: true });
   };
 
+  const openConsentForAvatar = async (avatar, event) => {
+    event?.stopPropagation?.();
+    if (!avatar?.id) return;
+    try {
+      const consentRes = await heygenService.getAvatarConsent(avatar.id);
+      setConsentModal({
+        groupId: avatar.id,
+        avatarName: avatar.name,
+        consentUrl: getConsentUrlFromResponse(consentRes),
+        consentStatus: consentRes?.avatar_group?.consent_status ?? avatar.consentStatus ?? 'pending',
+      });
+    } catch (error) {
+      console.error('Failed to open consent flow:', error);
+      setConsentModal({
+        groupId: avatar.id,
+        avatarName: avatar.name,
+        consentUrl: '',
+        consentStatus: avatar.consentStatus ?? 'pending',
+      });
+    }
+  };
+
+  const handleConsentRefresh = () => {
+    fetchAvatars({ ownership: activeSection });
+  };
+
+  const handleConsentComplete = () => {
+    setConsentBanner('Consent approved — your Digital Twin will finish processing shortly.');
+    fetchAvatars({ ownership: activeSection });
+  };
+
   const renderAvatarCollection = (collection) => (
     <div
       className={`items-container videos-export-items avatars-library-items ${
@@ -200,9 +279,19 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
 
       {collection.map((avatar) =>
         viewMode === 'grid' ? (
-          <AvatarLibraryCard key={avatar.id} avatar={avatar} onOpen={openAvatarDetails} />
+          <AvatarLibraryCard
+            key={avatar.id}
+            avatar={avatar}
+            onOpen={openAvatarDetails}
+            onCompleteConsent={openConsentForAvatar}
+          />
         ) : (
-          <AvatarLibraryRow key={avatar.id} avatar={avatar} onOpen={openAvatarDetails} />
+          <AvatarLibraryRow
+            key={avatar.id}
+            avatar={avatar}
+            onOpen={openAvatarDetails}
+            onCompleteConsent={openConsentForAvatar}
+          />
         )
       )}
     </div>
@@ -224,6 +313,7 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
                 }
               : undefined
           }
+          onCompleteConsent={openConsentForAvatar}
         />
       </div>
     );
@@ -313,6 +403,11 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
         />
 
         <main className="videos-main">
+          {consentBanner ? (
+            <div className="avatars-consent-banner" role="status">
+              {consentBanner}
+            </div>
+          ) : null}
           {loading ? (
             <AvatarsSkeleton />
           ) : filteredAvatars.length === 0 && !showCreateCard ? (
@@ -369,6 +464,17 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
           ) : null}
         </main>
       </div>
+
+      <AvatarConsentModal
+        isOpen={Boolean(consentModal)}
+        groupId={consentModal?.groupId}
+        avatarName={consentModal?.avatarName}
+        consentUrl={consentModal?.consentUrl}
+        consentStatus={consentModal?.consentStatus}
+        onClose={() => setConsentModal(null)}
+        onComplete={handleConsentComplete}
+        onRefresh={handleConsentRefresh}
+      />
     </div>
   );
 }

@@ -224,13 +224,56 @@ class HeygenService {
     return this.createAvatar(payload);
   }
 
-  async getAvatarConsent(groupId, rerouteUrl = '') {
+  buildConsentRerouteUrl(groupId) {
+    if (typeof window === 'undefined' || !groupId) return '';
+    const params = new URLSearchParams({ consent: 'done', groupId: String(groupId) });
+    return `${window.location.origin}/avatars?${params.toString()}`;
+  }
+
+  async getAvatarGroup(groupId) {
+    if (!groupId) return null;
+
+    try {
+      const endpoint = `${API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.CREATE}/${groupId}`;
+      const response = await fetch(buildUrl(endpoint), {
+        method: 'GET',
+        headers: getAuthHeaders(),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.data || data;
+      }
+    } catch (error) {
+      console.warn('heygenService.getAvatarGroup direct fetch failed, falling back to list', error);
+    }
+
+    try {
+      const listRes = await this.getAvatarGroups({ ownership: 'private', limit: 100 });
+      const data = listRes?.data ?? listRes;
+      const groups = Array.isArray(data)
+        ? data
+        : data?.avatar_groups ?? listRes?.avatar_groups ?? [];
+      return (
+        groups.find(
+          (group) => String(group?.id || group?.avatar_group_id) === String(groupId)
+        ) ?? null
+      );
+    } catch (error) {
+      console.error('Error in heygenService.getAvatarGroup fallback:', error);
+      return null;
+    }
+  }
+
+  async getAvatarConsent(groupId, rerouteUrl) {
     try {
       const endpoint = `${API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.CREATE}/${groupId}/consent`;
       const response = await fetch(buildUrl(endpoint), {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ reroute_url: rerouteUrl })
+        body: JSON.stringify({
+          reroute_url: rerouteUrl || this.buildConsentRerouteUrl(groupId),
+        }),
       });
       
       if (!response.ok) {

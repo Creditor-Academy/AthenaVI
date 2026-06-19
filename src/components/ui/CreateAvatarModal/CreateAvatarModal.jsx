@@ -1,10 +1,52 @@
 import { useEffect, useRef, useState } from 'react';
-import { Video, Image, Terminal, Upload, Loader2, X, Users, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Video, Image, Terminal, Upload, Loader2, X, Users, Sparkles, CheckCircle2, CheckCircle } from 'lucide-react';
 import { MdClose } from 'react-icons/md';
 import heygenService from '../../../services/heygenService';
-import { parseAvatarCreateResponse } from '../../../utils/heygenAvatars';
+import {
+  getConsentUrlFromResponse,
+  isConsentApproved,
+  parseAvatarCreateResponse,
+} from '../../../utils/heygenAvatars';
+import AvatarConsentStep from '../AvatarConsentStep/AvatarConsentStep';
+import '../AvatarConsentStep/AvatarConsentStep.css';
 import '../../../pages/Avatars/Avatars.css';
 import './CreateAvatarModal.css';
+
+const DIGITAL_TWIN_STEPS = [
+  { number: 1, label: 'Training video' },
+  { number: 2, label: 'Consent video' },
+  { number: 3, label: 'Ready' },
+];
+
+function getDigitalTwinActiveStep({ creationSuccess, consentStep, isCreating }) {
+  if (creationSuccess) return 3;
+  if (consentStep) return 2;
+  if (isCreating) return 2;
+  return 1;
+}
+
+function DigitalTwinStepIndicator({ activeStep }) {
+  return (
+    <nav className="create-avatar-steps" aria-label="Digital Twin creation progress">
+      {DIGITAL_TWIN_STEPS.map((step) => {
+        const isCompleted = step.number < activeStep;
+        const isActive = step.number === activeStep;
+
+        return (
+          <div
+            key={step.number}
+            className={`create-avatar-step ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}
+          >
+            <span className="create-avatar-step-number">
+              {isCompleted ? <CheckCircle size={14} /> : step.number}
+            </span>
+            <span className="create-avatar-step-label">{step.label}</span>
+          </div>
+        );
+      })}
+    </nav>
+  );
+}
 
 function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompleted }) {
   const creationType = typeOption?.id || 'digital_twin';
@@ -16,6 +58,7 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
   const [selectedFile, setSelectedFile] = useState(null);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [creationSuccess, setCreationSuccess] = useState(null);
+  const [consentStep, setConsentStep] = useState(null);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -29,6 +72,7 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
     setSelectedFile(null);
     setShowHelpModal(false);
     setCreationSuccess(null);
+    setConsentStep(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
 
     return undefined;
@@ -61,7 +105,7 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const finishWithSuccess = (response) => {
+  const finishWithSuccess = (response, consentMeta = null) => {
     const created = parseAvatarCreateResponse(response, creationName);
     if (!created.groupId) {
       setCreationStatus('Persona created, but we could not read the avatar id. Check My Avatars.');
@@ -72,9 +116,30 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
       }, 2500);
       return;
     }
-    setCreationSuccess(created);
+
+    const merged = {
+      ...created,
+      consentUrl: consentMeta?.consentUrl ?? created.consentUrl ?? null,
+      consentStatus: consentMeta?.consentStatus ?? created.consentStatus ?? null,
+      trainingStatus: consentMeta?.trainingStatus ?? created.trainingStatus ?? null,
+    };
+
+    if (creationType === 'digital_twin' && !isConsentApproved(merged)) {
+      setConsentStep(merged);
+      setIsCreating(false);
+      setCreationStatus('');
+      return;
+    }
+
+    setCreationSuccess(merged);
     setIsCreating(false);
     setCreationStatus('');
+  };
+
+  const handleConsentComplete = () => {
+    if (!consentStep) return;
+    setCreationSuccess({ ...consentStep, consentStatus: 'approved' });
+    setConsentStep(null);
   };
 
   const handleCreateAvatar = async () => {
@@ -118,19 +183,25 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
       const created = parseAvatarCreateResponse(response, creationName);
       const groupId = created.groupId;
 
-      if (groupId && (creationType === 'digital_twin' || creationType === 'photo')) {
-        setCreationStatus('Verifying ownership...');
+      if (groupId && creationType === 'digital_twin') {
+        setCreationStatus('Setting up consent verification...');
         try {
-          const consentRes = await heygenService.getAvatarConsent(groupId, window.location.href);
-          if (consentRes && (consentRes.consent_url || consentRes.url)) {
-            const url = consentRes.consent_url || consentRes.url;
-            setCreationStatus('Complete consent in the new tab, then create looks here.');
-            window.open(url, '_blank');
-            finishWithSuccess(response);
-            return;
-          }
+          const consentRes = await heygenService.getAvatarConsent(groupId);
+          const url = getConsentUrlFromResponse(consentRes);
+          const group = consentRes?.avatar_group ?? consentRes?.avatarGroup;
+          finishWithSuccess(response, {
+            consentUrl: url,
+            consentStatus: group?.consent_status ?? created.consentStatus ?? 'pending',
+            trainingStatus: group?.status ?? created.trainingStatus ?? 'pending_consent',
+          });
+          return;
         } catch (consentErr) {
           console.warn('Consent fetch failed or not required', consentErr);
+          finishWithSuccess(response, {
+            consentStatus: created.consentStatus ?? 'pending',
+            trainingStatus: created.trainingStatus ?? 'pending_consent',
+          });
+          return;
         }
       }
 
@@ -148,15 +219,18 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
 
   if (!isOpen || !typeOption) return null;
 
+  const isDigitalTwin = creationType === 'digital_twin';
+  const digitalTwinActiveStep = getDigitalTwinActiveStep({ creationSuccess, consentStep, isCreating });
+
   const handleOverlayClick = () => {
-    if (!isCreating) onClose?.();
+    if (!isCreating && !consentStep) onClose?.();
   };
 
   return (
     <>
       <div className="create-avatar-modal-overlay" role="presentation" onClick={handleOverlayClick}>
         <div
-          className="create-avatar-modal"
+          className={`create-avatar-modal ${isDigitalTwin && consentStep ? 'create-avatar-modal--wide' : ''}`}
           role="dialog"
           aria-modal="true"
           aria-label={`Create ${typeOption.title}`}
@@ -178,6 +252,10 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
             </button>
           </header>
 
+          {isDigitalTwin ? (
+            <DigitalTwinStepIndicator activeStep={digitalTwinActiveStep} />
+          ) : null}
+
           <div className="create-avatar-modal-body">
             {creationSuccess ? (
               <div className="creation-success-panel">
@@ -186,8 +264,9 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
                 </div>
                 <h3>{creationSuccess.name || creationName} is ready</h3>
                 <p>
-                  Your avatar was created. Generate additional outfits and styles as looks —
-                  we&apos;ll use avatar id <code>{creationSuccess.groupId}</code> so they stay on your character.
+                  Your avatar was created and consent is approved. Generate additional outfits and
+                  styles as looks — we&apos;ll use avatar id{' '}
+                  <code>{creationSuccess.groupId}</code> so they stay on your character.
                 </p>
                 {creationSuccess.previewImage ? (
                   <img
@@ -219,14 +298,38 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
                   </button>
                 </div>
               </div>
+            ) : consentStep ? (
+              <>
+                <p className="create-avatar-step-hint">
+                  Step 2 of 3 — Record or upload your consent video on HeyGen&apos;s portal. The
+                  person in the consent video must match your training footage.
+                </p>
+                <AvatarConsentStep
+                  groupId={consentStep.groupId}
+                  avatarName={consentStep.name || creationName}
+                  consentUrl={consentStep.consentUrl}
+                  consentStatus={consentStep.consentStatus}
+                  onComplete={handleConsentComplete}
+                />
+              </>
             ) : isCreating ? (
               <div className="creation-loading">
                 <Loader2 size={60} className="spin-animation" />
                 <h3>{creationStatus}</h3>
-                <p>We are orchestrating your digital persona. This won&apos;t take long.</p>
+                <p>
+                  {isDigitalTwin
+                    ? 'Uploading your training video, then we\'ll guide you through consent.'
+                    : 'We are orchestrating your digital persona. This won\'t take long.'}
+                </p>
               </div>
             ) : (
               <div className="form-main-inputs">
+                {isDigitalTwin ? (
+                  <p className="create-avatar-step-hint">
+                    Step 1 of 3 — Upload your training footage. You&apos;ll record a short consent
+                    video in the next step before your Digital Twin can be used.
+                  </p>
+                ) : null}
                 <div className="input-group">
                   <label className="section-label">Avatar Identity Name</label>
                   <div className="input-with-counter">
@@ -320,16 +423,20 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
             )}
           </div>
 
-          {!creationSuccess && !isCreating ? (
+          {!creationSuccess && !isCreating && !consentStep ? (
             <footer className="create-avatar-modal-footer">
-              <p className="create-avatar-modal-footer__note">Processing typically takes 5–10 minutes.</p>
+              <p className="create-avatar-modal-footer__note">
+                {isDigitalTwin
+                  ? 'Training takes 5–10 minutes after consent is approved.'
+                  : 'Processing typically takes 5–10 minutes.'}
+              </p>
               <button
                 type="button"
                 className="create-avatar-modal-btn create-avatar-modal-btn-primary"
                 onClick={handleCreateAvatar}
               >
                 <Terminal size={18} />
-                <span>Build My AI Avatar</span>
+                <span>{isDigitalTwin ? 'Upload & continue to consent' : 'Build My AI Avatar'}</span>
               </button>
             </footer>
           ) : null}

@@ -1,6 +1,20 @@
-import { MdPerson } from 'react-icons/md';
+import { MdPerson, MdVerifiedUser } from 'react-icons/md';
+import { avatarNeedsConsentFlow } from '../../components/ui/AvatarConsentStep/AvatarConsentStep';
 
-function AvatarLibraryRow({ avatar, onOpen }) {
+function getStatusBadge(avatar) {
+  if (avatarNeedsConsentFlow(avatar)) {
+    return { label: 'Consent required', className: 'avatars-status-badge--consent' };
+  }
+  if (avatar.trainingStatus === 'processing') {
+    return { label: 'Processing', className: 'avatars-status-badge--processing' };
+  }
+  return null;
+}
+
+function AvatarLibraryRow({ avatar, onOpen, onCompleteConsent }) {
+  const statusBadge = getStatusBadge(avatar);
+  const needsConsent = avatarNeedsConsentFlow(avatar);
+
   return (
     <article
       className="workspace-item-row export-item-row avatars-library-row"
@@ -20,6 +34,11 @@ function AvatarLibraryRow({ avatar, onOpen }) {
 
       <div className="col col-name">
         <h4 title={avatar.name}>{avatar.name}</h4>
+        {statusBadge ? (
+          <span className={`avatars-status-badge avatars-status-badge--inline ${statusBadge.className}`}>
+            {statusBadge.label}
+          </span>
+        ) : null}
       </div>
 
       <div className="col col-workspace" title={avatar.role}>
@@ -35,6 +54,17 @@ function AvatarLibraryRow({ avatar, onOpen }) {
       </div>
 
       <div className="row-actions avatars-library-row__actions">
+        {needsConsent && onCompleteConsent ? (
+          <button
+            type="button"
+            className="avatars-consent-cta"
+            title="Complete consent"
+            aria-label={`Complete consent for ${avatar.name}`}
+            onClick={(event) => onCompleteConsent(avatar, event)}
+          >
+            <MdVerifiedUser size={18} />
+          </button>
+        ) : null}
         <button
           type="button"
           className="context-menu-btn"
