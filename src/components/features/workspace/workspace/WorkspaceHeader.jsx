@@ -9,6 +9,7 @@ import {
     MdArrowBack,
     MdMovieCreation,
 } from 'react-icons/md';
+import LoadingDots from '../../../ui/LoadingDots/LoadingDots.jsx';
 
 const WorkspaceHeader = ({
     viewMode,
@@ -69,6 +70,7 @@ const WorkspaceHeader = ({
                     title="Total credits available"
                     role="status"
                     aria-label="Total credits available"
+                    aria-busy={creditsLoading}
                 >
                     <span className="workspace-header-control__icon" aria-hidden>
                         <MdMonetizationOn size={16} />
@@ -76,7 +78,11 @@ const WorkspaceHeader = ({
                     <span className="workspace-header-control__body">
                         <span className="workspace-header-control__label">Credits</span>
                         <span className="workspace-header-control__value">
-                            {creditsLoading ? '—' : Number(totalCredits).toLocaleString()}
+                            {creditsLoading ? (
+                                <LoadingDots size="sm" variant="onPrimary" />
+                            ) : (
+                                Number(totalCredits).toLocaleString()
+                            )}
                         </span>
                     </span>
                 </div>

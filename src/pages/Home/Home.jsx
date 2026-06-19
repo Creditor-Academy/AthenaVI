@@ -19,6 +19,7 @@ import creditsService from '../../services/creditsService.js'
 import { fetchTemplateBundles } from '../../utils/fetchTemplateBundles.js'
 import TemplateScenePreview from '../../components/features/editor/editor/TemplateScenePreview'
 import ProjectSceneThumbnail from '../../components/features/workspace/workspace/ProjectSceneThumbnail.jsx'
+import LoadingDots from '../../components/ui/LoadingDots/LoadingDots.jsx'
 
 function Home({ onCreate, onEdit, onShowAIAssistant, onBrowseTemplates, onSelectTemplate }) {
     const { user } = useAuth();
@@ -141,21 +142,22 @@ function Home({ onCreate, onEdit, onShowAIAssistant, onBrowseTemplates, onSelect
         return [
             {
                 label: 'Video Projects',
-                value: summaryLoading ? '—' : String(summary.projectCount),
+                value: String(summary.projectCount),
+                isLoading: summaryLoading,
                 subtitle: summaryLoading ? 'Loading…' : `Across ${workspaceLabel}`,
                 icon: <MdCollectionsBookmark />,
             },
             {
                 label: 'Completed Exports',
-                value: summaryLoading ? '—' : String(summary.exportCount),
+                value: String(summary.exportCount),
+                isLoading: summaryLoading,
                 subtitle: summaryLoading ? 'Loading…' : 'Final MP4 renders',
                 icon: <MdVideoLibrary />,
             },
             {
                 label: 'Credits Available',
-                value: summaryLoading || summary.credits == null
-                    ? '—'
-                    : Number(summary.credits).toLocaleString(),
+                value: Number(summary.credits).toLocaleString(),
+                isLoading: summaryLoading || summary.credits == null,
                 subtitle: summaryLoading ? 'Loading…' : 'For exports & AI generation',
                 icon: <MdAccountBalanceWallet />,
             },
@@ -212,7 +214,9 @@ function Home({ onCreate, onEdit, onShowAIAssistant, onBrowseTemplates, onSelect
                             <span className="home-billing-stat-label">{stat.label}</span>
                             <span className="home-billing-stat-icon">{stat.icon}</span>
                         </div>
-                        <div className="home-billing-stat-value">{stat.value}</div>
+                        <div className="home-billing-stat-value" aria-busy={stat.isLoading}>
+                            {stat.isLoading ? <LoadingDots size="lg" /> : stat.value}
+                        </div>
                         <div className="home-billing-stat-subtitle">{stat.subtitle}</div>
                     </div>
                 ))}
