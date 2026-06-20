@@ -14,29 +14,56 @@ import {
   MdTune,
   MdPlayArrow,
   MdPause,
+  MdFormatColorFill,
+  MdLayersClear,
+  MdCheck,
+  MdMic,
+  MdInfoOutline,
 } from 'react-icons/md';
 import { Loader2 } from 'lucide-react';
 import heygenService from '../../../../services/heygenService';
 import {
   AVATAR_IV_ENGINE,
   AVATAR_V_ENGINE,
+  LEGACY_V2_ENGINE,
   extractHeygenList,
-  formatAvatarTypeLabel,
+  formatLookBadgeLabel,
   LOOK_ENGINE_FILTERS,
-  getIvOrVLooks,
-  groupHasSupportedLooks,
+  getGeneratableLooks,
+  getGeneratableLookCount,
   mapAvatarGroup,
   mapAvatarLook,
   mergeAvatarLooksPages,
   normalizeAvatarEngine,
   parseAvatarLooksResponse,
+  resolveGroupGeneratableLooks,
+  mapResolvedLooks,
+  fetchMappedGroupLooks,
+  getLooksApiGroupId,
+  isDeclaredSingleLookGroup,
+  isSingleAppearanceGroup,
+  finalizeVideoCreatePayload,
   canUseExpressiveness,
   resolveAvatarEngine,
+  supportsTransparentWebm,
 } from '../../../../utils/heygenAvatars';
 import './QuickCreateModal.css';
 
 const VOICE_PREVIEW_SAMPLE =
   'Hello! This is a quick preview of how this voice sounds for your video narration.';
+
+const AVATAR_DISPLAY_PAGE = 10;
+const TOTAL_STEPS = 5;
+const GENERATING_STEP = 6;
+const STEP_LABELS = ['Presenter', 'Look', 'Voice', 'Script', 'Settings'];
+
+const mapVoiceFromApi = (voice) => ({
+  id: voice.voice_id || voice.voiceId || voice.id,
+  name: voice.name || voice.voice_name || voice.display_name || 'AI Voice',
+  gender: voice.gender || 'Unknown',
+  language: voice.language || voice.language_code || voice.language_name || 'English (US)',
+  previewUrl: voice.preview_audio_url || voice.preview_url || voice.preview_audio || null,
+});
 
 const BACKGROUND_COLOR_PALETTE = [
   {
@@ -118,7 +145,6 @@ const BACKGROUND_COLOR_PALETTE = [
 
 const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
   const [step, setStep] = useState(1);
-  const [avatarPhase, setAvatarPhase] = useState('groups');
   const [avatarEngine, setAvatarEngine] = useState(() => normalizeAvatarEngine('avatar_iv'));
   const [groups, setGroups] = useState([]);
   const [groupsHasMore, setGroupsHasMore] = useState(false);
@@ -134,7 +160,7 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
   const [selectedVoice, setSelectedVoice] = useState(null);
   const [script, setScript] = useState('');
 
-  const [removeBackground, setRemoveBackground] = useState(false);
+  const [backgroundMode, setBackgroundMode] = useState('solid');
   const [backgroundColor, setBackgroundColor] = useState('#F0F0F0');
   const [aspectRatio, setAspectRatio] = useState('16:9');
   const [expressiveness, setExpressiveness] = useState('medium');
@@ -146,10 +172,12 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
   const [looksPageData, setLooksPageData] = useState(null);
   const [loadingVoices, setLoadingVoices] = useState(false);
   const [voiceSearch, setVoiceSearch] = useState('');
+  const [avatarSearch, setAvatarSearch] = useState('');
   const [skipVoice, setSkipVoice] = useState(false);
   const [activeColorCategory, setActiveColorCategory] = useState('neutrals');
   const [previewingVoiceId, setPreviewingVoiceId] = useState(null);
   const [previewLoadingVoiceId, setPreviewLoadingVoiceId] = useState(null);
+  const [looksDisplayLimit, setLooksDisplayLimit] = useState(AVATAR_DISPLAY_PAGE);
   const previewAudioRef = useRef(null);
 
   const stopVoicePreview = useCallback(() => {
@@ -162,7 +190,6 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
   }, []);
 
   const resetAvatarPicker = useCallback(() => {
-    setAvatarPhase('groups');
     setSelectedGroup(null);
     setSelectedAvatar(null);
     setLooks([]);
@@ -171,6 +198,8 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     setLooksNextToken(null);
     setLooksPageData(null);
     setLookEngineFilter(LOOK_ENGINE_FILTERS.ALL);
+    setLooksDisplayLimit(AVATAR_DISPLAY_PAGE);
+    setAvatarSearch('');
   }, []);
 
   useEffect(() => {
@@ -180,30 +209,114 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
       setSkipVoice(false);
       setSelectedVoice(null);
       setVoiceSearch('');
+      setAvatarSearch('');
       setActiveColorCategory('neutrals');
+      setLooksDisplayLimit(AVATAR_DISPLAY_PAGE);
+      setBackgroundMode('solid');
       resetAvatarPicker();
       return;
     }
-    if (step === 1 && avatarPhase === 'groups' && groups.length === 0) {
+    if (step === 1 && groups.length === 0) {
       fetchGroups();
     }
-  }, [isOpen, step, avatarPhase, groups.length, resetAvatarPicker, stopVoicePreview]);
+  }, [isOpen, step, groups.length, resetAvatarPicker, stopVoicePreview]);
 
   useEffect(() => {
-    if (isOpen && step === 2 && voices.length === 0) {
+    if (isOpen && step === 3 && voices.length === 0) {
       fetchVoices();
     }
   }, [isOpen, step, voices.length]);
 
   useEffect(() => {
+    if (!isOpen || step !== 2 || !selectedGroup) return;
+    loadLooksForGroup(selectedGroup);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, step, selectedGroup?.id]);
+
+  useEffect(() => {
+    if (!selectedAvatar?.id) return;
+    stopVoicePreview();
+    setSelectedVoice(null);
+    setSkipVoice(false);
+  }, [selectedAvatar?.id, stopVoicePreview]);
+
+  useEffect(() => {
+    if (!selectedAvatar?.id) return;
+    if (backgroundMode === 'transparent' && !supportsTransparentWebm(selectedAvatar)) {
+      setBackgroundMode('solid');
+    }
+  }, [selectedAvatar, backgroundMode]);
+
+  const applyAvatarDefaultVoice = useCallback(async () => {
+    const defaultVoiceId = selectedAvatar?.defaultVoiceId;
+    if (!defaultVoiceId) return;
+
+    const fromList = voices.find((voice) => voice.id === defaultVoiceId);
+    if (fromList) {
+      setSelectedVoice(fromList);
+      setSkipVoice(false);
+      return;
+    }
+
+    try {
+      const detail = await heygenService.getVoiceStatus(defaultVoiceId);
+      const data = detail?.data ?? detail ?? {};
+      const mapped = mapVoiceFromApi({
+        ...data,
+        voice_id: defaultVoiceId,
+        id: defaultVoiceId,
+        name: data.name || data.voice_name || selectedAvatar.defaultVoiceName,
+        voice_name: data.voice_name || selectedAvatar.defaultVoiceName,
+      });
+      if (!mapped.id) return;
+
+      setVoices((prev) =>
+        prev.some((voice) => voice.id === mapped.id) ? prev : [mapped, ...prev]
+      );
+      setSelectedVoice(mapped);
+      setSkipVoice(false);
+    } catch (err) {
+      console.warn('Could not load default voice for presenter:', err);
+      const fallback = mapVoiceFromApi({
+        voice_id: defaultVoiceId,
+        id: defaultVoiceId,
+        name: selectedAvatar.defaultVoiceName || 'Default voice',
+      });
+      setVoices((prev) =>
+        prev.some((voice) => voice.id === fallback.id) ? prev : [fallback, ...prev]
+      );
+      setSelectedVoice(fallback);
+      setSkipVoice(false);
+    }
+  }, [selectedAvatar, voices]);
+
+  useEffect(() => {
+    if (!isOpen || step !== 3) return;
+    if (!selectedAvatar?.defaultVoiceId) return;
+    if (skipVoice || selectedVoice) return;
+    if (loadingVoices) return;
+
+    applyAvatarDefaultVoice();
+  }, [
+    isOpen,
+    step,
+    selectedAvatar?.id,
+    selectedAvatar?.defaultVoiceId,
+    skipVoice,
+    selectedVoice,
+    loadingVoices,
+    applyAvatarDefaultVoice,
+  ]);
+
+  useEffect(() => {
     const handleVideoGenerated = () => {
-      if (step === 5) {
+      if (step === GENERATING_STEP) {
         onClose();
         setTimeout(() => setStep(1), 500);
       }
     };
     const handleGenerationFailed = () => {
-      if (step === 5) setStep(4);
+      if (step === GENERATING_STEP) setStep(TOTAL_STEPS);
     };
     window.addEventListener('open-generated-video', handleVideoGenerated);
     window.addEventListener('generation-failed', handleGenerationFailed);
@@ -213,27 +326,22 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     };
   }, [step, onClose]);
 
-  const filterGroupsWithSupportedLooks = async (groupList) => {
-    const mapped = groupList.map(mapAvatarGroup).filter((g) => g.id);
-    const supported = [];
-    const batchSize = 4;
+  const mapGroupList = (responseData) =>
+    extractHeygenList(responseData, ['avatar_groups', 'groups'])
+      .map(mapAvatarGroup)
+      .filter((group) => group.id);
 
-    for (let i = 0; i < mapped.length; i += batchSize) {
-      const batch = mapped.slice(i, i + batchSize);
-      const batchResults = await Promise.all(
-        batch.map(async (group) => {
-          const responseData = await heygenService.getAvatarLooks({
-            group_id: group.id,
-            limit: 8,
-          });
-          const parsed = parseAvatarLooksResponse(responseData);
-          return groupHasSupportedLooks(parsed) ? group : null;
-        })
-      );
-      supported.push(...batchResults.filter(Boolean));
-    }
-
-    return supported;
+  const extractGroupsPagination = (responseData) => {
+    const data = responseData?.data ?? responseData ?? {};
+    return {
+      hasMore: !!(data?.has_more ?? responseData?.has_more ?? data?.hasMore ?? responseData?.hasMore),
+      nextToken:
+        data?.token ??
+        responseData?.token ??
+        data?.next_token ??
+        responseData?.next_token ??
+        null,
+    };
   };
 
   const fetchGroups = async () => {
@@ -241,14 +349,12 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     try {
       const responseData = await heygenService.getAvatarGroups({
         ownership: 'public',
-        limit: 20,
+        limit: AVATAR_DISPLAY_PAGE,
       });
-      const data = responseData?.data || responseData;
-      const groupList = extractHeygenList(responseData, ['avatar_groups', 'groups']);
-      const supportedGroups = await filterGroupsWithSupportedLooks(groupList);
-      setGroups(supportedGroups);
-      setGroupsHasMore(!!(data?.has_more ?? responseData?.has_more));
-      setGroupsNextToken(data?.token ?? responseData?.token ?? data?.next_token ?? responseData?.next_token ?? null);
+      const pagination = extractGroupsPagination(responseData);
+      setGroups(mapGroupList(responseData));
+      setGroupsHasMore(pagination.hasMore);
+      setGroupsNextToken(pagination.nextToken);
     } catch (err) {
       console.error('Failed to load avatar groups:', err);
       setGroups([]);
@@ -265,20 +371,21 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     try {
       const responseData = await heygenService.getAvatarGroups({
         ownership: 'public',
-        limit: 20,
+        limit: AVATAR_DISPLAY_PAGE,
         token: groupsNextToken,
       });
-      const data = responseData?.data || responseData;
-      const groupList = extractHeygenList(responseData, ['avatar_groups', 'groups']);
-      const supportedGroups = await filterGroupsWithSupportedLooks(groupList);
+      const pagination = extractGroupsPagination(responseData);
+      const mapped = mapGroupList(responseData);
       setGroups((prev) => {
-        const seen = new Set(prev.map((g) => g.id));
+        const seen = new Set(prev.map((group) => group.id));
         const next = [...prev];
-        supportedGroups.forEach((g) => { if (!seen.has(g.id)) next.push(g); });
+        mapped.forEach((group) => {
+          if (!seen.has(group.id)) next.push(group);
+        });
         return next;
       });
-      setGroupsHasMore(!!(data?.has_more ?? responseData?.has_more));
-      setGroupsNextToken(data?.token ?? responseData?.token ?? data?.next_token ?? responseData?.next_token ?? null);
+      setGroupsHasMore(pagination.hasMore);
+      setGroupsNextToken(pagination.nextToken);
     } catch (err) {
       console.error('Failed to load more avatar groups:', err);
       setGroupsHasMore(false);
@@ -288,17 +395,28 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     }
   };
 
-  const applyLooksDisplay = useCallback((pageData, filter, groupName) => {
-    const rawList = getIvOrVLooks(pageData, filter);
+  const applyLooksDisplay = useCallback((pageData, filter, group) => {
+    const groupName = group?.name || 'Look';
+    let rawList = resolveGroupGeneratableLooks(pageData, group);
+
+    if (filter !== LOOK_ENGINE_FILTERS.ALL) {
+      const filtered = getGeneratableLooks(
+        { ...pageData, allLooks: rawList, lookCount: rawList.length },
+        filter
+      );
+      if (filtered.length > 0) rawList = filtered;
+    }
+
     const mapped = rawList
-      .map((look) => mapAvatarLook(look, groupName))
-      .filter((l) => l.id && !l.engineUnknown);
+      .map((look) => mapAvatarLook(look, groupName, pageData))
+      .filter((l) => l.id);
     setLooks(mapped);
     if (mapped.length === 0) {
       const filterLabels = {
         [LOOK_ENGINE_FILTERS.ALL]: 'supported',
         [LOOK_ENGINE_FILTERS.AVATAR_IV]: 'Avatar IV',
         [LOOK_ENGINE_FILTERS.AVATAR_V]: 'Avatar V',
+        [LOOK_ENGINE_FILTERS.LEGACY_V2]: 'Expressive',
       };
       setLooksError(`No ${filterLabels[filter] || 'supported'} looks for this character. Try another character or engine.`);
     } else {
@@ -309,34 +427,107 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
   const handleLookEngineFilter = (filter) => {
     setLookEngineFilter(filter);
     if (looksPageData && selectedGroup) {
-      applyLooksDisplay(looksPageData, filter, selectedGroup.name);
+      applyLooksDisplay(looksPageData, filter, selectedGroup);
     }
   };
 
-  const fetchLooksForGroup = async (group) => {
-    setLoadingLooks(true);
-    setLooksError('');
+  const applyLookSelection = useCallback((mappedLook, group, pageData = looksPageData) => {
+    setSelectedGroup(group);
+    setSelectedAvatar(mappedLook);
+    setAvatarEngine(
+      mappedLook.generatableEngine ||
+        finalizeVideoCreatePayload({
+          avatarId: mappedLook.id,
+          avatarType: mappedLook.avatarType,
+          avatarEngine: mappedLook.generatableEngine,
+          isLegacyV2: mappedLook.isLegacyV2,
+          supportedEngines: mappedLook.supportedEngines,
+        })
+    );
+  }, [looksPageData]);
+
+  const applySingleLookSelection = useCallback(
+    (mappedLook, group, pageData = looksPageData) => {
+      setLooks([mappedLook]);
+      applyLookSelection(mappedLook, group, pageData);
+      setLooksError('');
+    },
+    [applyLookSelection, looksPageData]
+  );
+
+  const selectPresenterGroup = (group) => {
     setSelectedGroup(group);
     setSelectedAvatar(null);
-    setAvatarPhase('looks');
+    setLooks([]);
+    setLooksPageData(null);
+    setLooksError('');
+    setLooksHasMore(false);
+    setLooksNextToken(null);
+    setLookEngineFilter(LOOK_ENGINE_FILTERS.ALL);
+    setLooksDisplayLimit(AVATAR_DISPLAY_PAGE);
+  };
+
+  const loadLooksForGroup = async (group) => {
+    const groupId = getLooksApiGroupId(group);
+    if (!groupId) {
+      setLooksError('Could not resolve presenter id for looks.');
+      setLooks([]);
+      setSelectedAvatar(null);
+      return;
+    }
+
+    setLoadingLooks(true);
+    setLooksError('');
+    setLooksDisplayLimit(AVATAR_DISPLAY_PAGE);
+
+    const prefetchMapped = mapResolvedLooks(null, group, group.name);
+    if (prefetchMapped.length >= 1) {
+      applySingleLookSelection(prefetchMapped[0], group, null);
+    }
+
     try {
-      const responseData = await heygenService.getAvatarLooks({
-        group_id: group.id,
+      const { parsed, mappedLooks } = await fetchMappedGroupLooks(heygenService, group, {
         limit: 20,
       });
-      const parsed = parseAvatarLooksResponse(responseData);
+
+      if (mappedLooks.length === 0) {
+        setLooks([]);
+        setLooksPageData(null);
+        setLooksError('No supported looks for this character. Go back and try another presenter.');
+        setLooksHasMore(false);
+        setLooksNextToken(null);
+        setSelectedAvatar(null);
+        return;
+      }
+
       setLooksPageData(parsed);
       setLookEngineFilter(LOOK_ENGINE_FILTERS.ALL);
-      applyLooksDisplay(parsed, LOOK_ENGINE_FILTERS.ALL, group.name);
-      setLooksHasMore(parsed.hasMore);
-      setLooksNextToken(parsed.nextToken);
+      setLooks(mappedLooks);
+      setLooksHasMore(!!parsed?.hasMore);
+      setLooksNextToken(parsed?.nextToken ?? null);
+      setLooksError('');
+
+      if (mappedLooks.length === 1 || isSingleAppearanceGroup(parsed, group) || isDeclaredSingleLookGroup(group)) {
+        applyLookSelection(mappedLooks[0], group, parsed);
+      }
     } catch (err) {
       console.error('Failed to load avatar looks:', err);
-      setLooks([]);
-      setLooksPageData(null);
-      setLooksError('Could not load looks. Please try again.');
-      setLooksHasMore(false);
-      setLooksNextToken(null);
+      const fallbackMapped = mapResolvedLooks(null, group, group.name);
+      if (fallbackMapped.length >= 1) {
+        setLooks(fallbackMapped);
+        applyLookSelection(fallbackMapped[0], group, null);
+        setLooksPageData(null);
+        setLooksHasMore(false);
+        setLooksNextToken(null);
+        setLooksError('');
+      } else {
+        setLooks([]);
+        setLooksPageData(null);
+        setLooksError('Could not load looks. Please try again.');
+        setLooksHasMore(false);
+        setLooksNextToken(null);
+        setSelectedAvatar(null);
+      }
     } finally {
       setLoadingLooks(false);
     }
@@ -348,13 +539,14 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     try {
       const responseData = await heygenService.getAvatarLooks({
         group_id: selectedGroup.id,
+        ownership: 'public',
         limit: 20,
         token: looksNextToken,
       });
       const nextParsed = parseAvatarLooksResponse(responseData);
       const merged = mergeAvatarLooksPages(looksPageData, nextParsed);
       setLooksPageData(merged);
-      applyLooksDisplay(merged, lookEngineFilter, selectedGroup.name);
+      applyLooksDisplay(merged, lookEngineFilter, selectedGroup);
       setLooksHasMore(merged.hasMore);
       setLooksNextToken(merged.nextToken);
     } catch (err) {
@@ -366,22 +558,35 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     }
   };
 
+  const handleLoadMoreGroups = async () => {
+    if (loadingMoreGroups) return;
+    await loadMoreGroups();
+  };
+
+  const handleLoadMoreLooks = async () => {
+    if (loadingMoreLooks) return;
+
+    if (looksDisplayLimit < looks.length) {
+      setLooksDisplayLimit((prev) => prev + AVATAR_DISPLAY_PAGE);
+      return;
+    }
+
+    if (!looksHasMore || !looksNextToken) return;
+
+    await loadMoreLooks();
+    setLooksDisplayLimit((prev) => prev + AVATAR_DISPLAY_PAGE);
+  };
+
   const fetchVoices = async () => {
     setLoadingVoices(true);
     try {
       const responseData = await heygenService.getVoices({
         type: 'public',
-        limit: 50,
+        limit: 100,
       });
       const voiceList = extractHeygenList(responseData, ['voices']);
-      const mappedVoices = voiceList.map((v) => ({
-        id: v.voice_id || v.voiceId || v.id,
-        name: v.name || v.voice_name || 'AI Voice',
-        gender: v.gender || 'Unknown',
-        language: v.language || v.language_code || 'English (US)',
-        previewUrl: v.preview_audio_url || v.preview_url || v.preview_audio || null,
-      }));
-      setVoices(mappedVoices.filter((v) => v.id));
+      const mappedVoices = voiceList.map(mapVoiceFromApi).filter((voice) => voice.id);
+      setVoices(mappedVoices);
     } catch (err) {
       console.error('Failed to load voices:', err);
     } finally {
@@ -396,25 +601,38 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     );
   }, [voices, voiceSearch]);
 
+  const filteredGroups = useMemo(() => {
+    const query = avatarSearch.trim().toLowerCase();
+    if (!query) return groups;
+    return groups.filter((group) => group.name.toLowerCase().includes(query));
+  }, [groups, avatarSearch]);
+
+  const filteredLooks = useMemo(() => {
+    const query = avatarSearch.trim().toLowerCase();
+    if (!query) return looks.slice(0, looksDisplayLimit);
+    return looks.filter((look) => look.name.toLowerCase().includes(query));
+  }, [looks, looksDisplayLimit, avatarSearch]);
+
   const buildGeneratePayload = () => {
-    const preferredFromFilter =
-      lookEngineFilter === LOOK_ENGINE_FILTERS.AVATAR_IV
-        ? AVATAR_IV_ENGINE
-        : lookEngineFilter === LOOK_ENGINE_FILTERS.AVATAR_V
-          ? AVATAR_V_ENGINE
-          : avatarEngine;
-    const resolvedEngine = resolveAvatarEngine(
-      {
-        avatar_type: selectedAvatar.avatarType,
-        supportedEngines: selectedAvatar.supportedEngines,
-      },
-      preferredFromFilter
-    );
     const avatarKind = selectedAvatar.avatarType || 'studio_avatar';
-    const includeExpressiveness = canUseExpressiveness(selectedAvatar, resolvedEngine);
+    const resolvedEngine = finalizeVideoCreatePayload({
+      avatarId: selectedAvatar.id,
+      avatarType: avatarKind,
+      avatarEngine: selectedAvatar.generatableEngine || avatarEngine,
+      isLegacyV2: selectedAvatar.isLegacyV2,
+      supportedEngines: selectedAvatar.supportedEngines,
+    });
+    const includeExpressiveness = canUseExpressiveness(
+      {
+        id: selectedAvatar.id,
+        avatar_type: avatarKind,
+        supportedEngines: selectedAvatar.supportedEngines,
+        isLegacyV2: selectedAvatar.isLegacyV2,
+      },
+      resolvedEngine
+    );
 
     return {
-      avatarType: selectedAvatar.id,
       avatarLookId: selectedAvatar.id,
       avatarGroupId: selectedGroup?.id,
       avatarImage: selectedAvatar.image,
@@ -422,12 +640,14 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
       avatarTypeLabel: avatarKind,
       avatarEngine: resolvedEngine,
       supportedEngines: selectedAvatar.supportedEngines,
+      isLegacyV2: selectedAvatar.isLegacyV2,
       engineUnknown: selectedAvatar.engineUnknown,
       voiceId: skipVoice ? null : selectedVoice?.id,
       voiceName: skipVoice ? null : selectedVoice?.name,
       skipVoice,
       script,
-      removeBackground,
+      outputFormat: backgroundMode === 'transparent' ? 'webm' : 'mp4',
+      removeBackground: false,
       backgroundColor,
       aspectRatio,
       ...(includeExpressiveness ? { expressiveness } : {}),
@@ -451,7 +671,7 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
       onClose();
       return;
     }
-    setStep(5);
+    setStep(GENERATING_STEP);
     onGenerate(payload);
   };
 
@@ -521,23 +741,12 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
   );
 
   const handleBack = () => {
-    if (step === 1 && avatarPhase === 'looks') {
-      setAvatarPhase('groups');
-      setSelectedAvatar(null);
-      setLooks([]);
-      setLooksPageData(null);
-      setLookEngineFilter(LOOK_ENGINE_FILTERS.ALL);
-      setLooksError('');
-      return;
-    }
     if (step > 1) setStep(step - 1);
   };
 
   const handleNext = () => {
-    if (step < 4) setStep(step + 1);
+    if (step < TOTAL_STEPS) setStep(step + 1);
   };
-
-  const stepLabels = ['Presenter', 'Voice', 'Script', 'Settings'];
 
   const expressivenessOptions = [
     { id: 'low', label: 'Low', hint: 'Formal, subtle delivery' },
@@ -548,25 +757,27 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
   const showExpressiveness =
     selectedAvatar && canUseExpressiveness(selectedAvatar, avatarEngine);
 
+  const canUseTransparent = supportsTransparentWebm(selectedAvatar);
+
   if (!isOpen) return null;
 
   const renderHeader = () => {
     const titles = [
       {
-        title:
-          avatarPhase === 'looks'
-            ? selectedGroup?.name || 'Choose a look'
-            : 'Choose your presenter',
-        subtitle:
-          avatarPhase === 'looks'
-            ? 'Only Avatar IV and Avatar V looks are shown for reliable generation.'
-            : 'Select a character, then pick a supported look.',
+        title: 'Choose your presenter',
+        subtitle: 'Pick the character you want for this video.',
+      },
+      {
+        title: selectedGroup?.name ? `Choose a look for ${selectedGroup.name}` : 'Choose avatar look',
+        subtitle: 'Select the appearance your presenter will use in the video.',
       },
       {
         title: 'Select a voice',
         subtitle: skipVoice
           ? 'Voice skipped — you can add one later before generating video.'
-          : 'Pick a voice for narration, or skip and configure later.',
+          : selectedVoice
+            ? `Default voice for ${selectedAvatar?.name || 'this presenter'} is pre-selected. Change it below if you like.`
+            : 'Pick a voice for narration, or skip and configure later.',
       },
       { title: 'Write your script', subtitle: 'Enter what your presenter should say.' },
       { title: 'Video settings', subtitle: 'Background, format, and delivery options.' },
@@ -579,21 +790,24 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
       <div className="qc-header">
         <div className="qc-header-top">
           <div className="qc-brand">
-            <span className="qc-brand-icon" aria-hidden>
-              <MdAutoAwesome size={18} />
+            <span className="qc-brand-title">Quick Create</span>
+            <span className="qc-brand-step">
+              Step {Math.min(step, TOTAL_STEPS)} of {TOTAL_STEPS}
             </span>
-            <div>
-              <span className="qc-brand-title">Quick Create</span>
-              <span className="qc-brand-step">Step {Math.min(step, 4)} of 4</span>
-            </div>
           </div>
-          <button type="button" className="qc-close-btn" onClick={onClose} disabled={step === 5} aria-label="Close">
+          <button
+            type="button"
+            className="qc-close-btn"
+            onClick={onClose}
+            disabled={step === GENERATING_STEP}
+            aria-label="Close"
+          >
             <MdClose size={20} />
           </button>
         </div>
 
-        <div className="qc-step-nav" aria-hidden={step === 5}>
-          {stepLabels.map((label, index) => {
+        <div className="qc-step-nav" aria-hidden={step === GENERATING_STEP}>
+          {STEP_LABELS.map((label, index) => {
             const stepNum = index + 1;
             const isActive = step === stepNum;
             const isDone = step > stepNum;
@@ -611,31 +825,22 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
 
         {(current.title || current.subtitle) && (
           <div className="qc-title-area">
-            {step === 1 && avatarPhase === 'looks' && (
-              <button
-                type="button"
-                className="qc-breadcrumb-back"
-                onClick={() => {
-                  setAvatarPhase('groups');
-                  setSelectedAvatar(null);
-                  setLooks([]);
-                  setLooksPageData(null);
-                  setLookEngineFilter(LOOK_ENGINE_FILTERS.ALL);
-                  setLooksError('');
-                }}
-              >
-                <MdChevronLeft size={16} /> All characters
-              </button>
-            )}
             {current.title && <h2 className="qc-title">{current.title}</h2>}
             {current.subtitle && <p className="qc-subtitle">{current.subtitle}</p>}
 
-            {step === 1 && avatarPhase === 'looks' && looksPageData && (
+            {step === 2 && looksPageData && (
               <div className="qc-engine-filters">
                 {[
-                  { id: LOOK_ENGINE_FILTERS.ALL, label: 'All supported', count: looksPageData.engineCounts.avatar_iv + looksPageData.engineCounts.avatar_v },
+                  {
+                    id: LOOK_ENGINE_FILTERS.ALL,
+                    label: 'All supported',
+                    count: getGeneratableLookCount(looksPageData),
+                  },
                   { id: LOOK_ENGINE_FILTERS.AVATAR_IV, label: 'Avatar IV', count: looksPageData.engineCounts.avatar_iv },
                   { id: LOOK_ENGINE_FILTERS.AVATAR_V, label: 'Avatar V', count: looksPageData.engineCounts.avatar_v },
+                  ...(looksPageData.engineCounts.legacy_v2 > 0
+                    ? [{ id: LOOK_ENGINE_FILTERS.LEGACY_V2, label: 'Expressive', count: looksPageData.engineCounts.legacy_v2 }]
+                    : []),
                 ].map((chip) => (
                   <button
                     key={chip.id}
@@ -654,50 +859,104 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     );
   };
 
-  const renderAvatarStep = () => {
-    if (avatarPhase === 'groups') {
-      if (loadingGroups) {
-        return (
-          <div className="qc-loading">
-            <Loader2 className="qc-spinner" size={32} />
-            <p>Loading compatible presenters…</p>
-          </div>
-        );
-      }
-      if (groups.length === 0) {
-        return (
-          <div className="qc-loading">
-            <p>No Avatar IV or V presenters available. Check your HeyGen connection.</p>
-          </div>
-        );
-      }
+  const renderAvatarSearchBar = (placeholder) => (
+    <div className="qc-avatar-toolbar">
+      <div className="qc-search-box">
+        <MdSearch size={18} />
+        <input
+          type="search"
+          placeholder={placeholder}
+          value={avatarSearch}
+          onChange={(e) => setAvatarSearch(e.target.value)}
+          aria-label={placeholder}
+        />
+      </div>
+    </div>
+  );
+
+  const renderPresenterStep = () => {
+    if (loadingGroups) {
       return (
-        <div className="qc-avatar-grid premium-scrollbar">
-          {groups.map((group) => (
-            <div
-              key={group.id}
-              className={`qc-avatar-card ${selectedGroup?.id === group.id ? 'selected' : ''}`}
-              onClick={() => fetchLooksForGroup(group)}
-            >
-              <div className="qc-avatar-img-wrap">
-                <img src={group.image} alt={group.name} />
+        <div className="qc-loading">
+          <Loader2 className="qc-spinner" size={32} />
+          <p>Loading presenters…</p>
+        </div>
+      );
+    }
+    if (groups.length === 0) {
+      return (
+        <div className="qc-loading">
+          <p>No presenters available. Check your HeyGen connection.</p>
+        </div>
+      );
+    }
+    const showMoreGroups =
+      !avatarSearch.trim() && groupsHasMore && !!groupsNextToken;
+
+    return (
+      <>
+        {renderAvatarSearchBar('Search presenters by name...')}
+        {filteredGroups.length === 0 ? (
+          <div className="qc-loading">
+            <p>No presenters match &ldquo;{avatarSearch.trim()}&rdquo;.</p>
+          </div>
+        ) : (
+          <div className="qc-avatar-grid premium-scrollbar">
+            {filteredGroups.map((group) => (
+              <div
+                key={group.id}
+                className={`qc-avatar-card ${selectedGroup?.id === group.id ? 'selected' : ''}`}
+                onClick={() => selectPresenterGroup(group)}
+              >
+                <div className="qc-avatar-img-wrap">
+                  <img src={group.image} alt={group.name} />
+                  {selectedGroup?.id === group.id && (
+                    <div className="qc-avatar-check">✓</div>
+                  )}
+                </div>
+                <div className="qc-avatar-info">
+                  <h4 className={selectedGroup?.id === group.id ? 'text-primary' : ''}>
+                    {group.name}
+                  </h4>
+                  <p>
+                    {selectedGroup?.id === group.id
+                      ? 'Selected'
+                      : group.subtitle || 'Select presenter'}
+                  </p>
+                </div>
               </div>
-              <div className="qc-avatar-info">
-                <h4>{group.name}</h4>
-                <p>{group.subtitle || 'View looks'}</p>
-              </div>
-            </div>
-          ))}
-          {groupsHasMore && (
-            <button
-              type="button"
-              className="qc-load-more-btn"
-              onClick={loadMoreGroups}
-              disabled={loadingMoreGroups}
-            >
-              {loadingMoreGroups ? 'Loading…' : 'Load more characters'}
-            </button>
-          )}
+            ))}
+            {showMoreGroups && (
+              <button
+                type="button"
+                className="qc-avatar-card qc-load-more-tile"
+                onClick={handleLoadMoreGroups}
+                disabled={loadingMoreGroups}
+              >
+                <div className="qc-load-more-tile-body">
+                  {loadingMoreGroups ? (
+                    <Loader2 className="qc-spinner qc-load-more-spinner" size={22} />
+                  ) : (
+                    <span className="qc-load-more-plus" aria-hidden>+</span>
+                  )}
+                </div>
+                <div className="qc-avatar-info">
+                  <h4>{loadingMoreGroups ? 'Loading…' : 'Load more'}</h4>
+                  <p>More characters</p>
+                </div>
+              </button>
+            )}
+          </div>
+        )}
+      </>
+    );
+  };
+
+  const renderLookStep = () => {
+    if (!selectedGroup) {
+      return (
+        <div className="qc-loading">
+          <p>Select a presenter first, then choose a look.</p>
         </div>
       );
     }
@@ -706,7 +965,7 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
       return (
         <div className="qc-loading">
           <Loader2 className="qc-spinner" size={32} />
-          <p>Loading looks...</p>
+          <p>Loading looks…</p>
         </div>
       );
     }
@@ -719,56 +978,67 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
       );
     }
 
-    return (
-      <div className="qc-avatar-grid premium-scrollbar">
-        {looks.map((look) => {
-          const isSelected = selectedAvatar?.id === look.id;
-          const typeLabel = formatAvatarTypeLabel(look.avatarType);
-          return (
-            <div
-              key={look.id}
-              className={`qc-avatar-card ${isSelected ? 'selected' : ''}`}
-              onClick={() => {
-                setSelectedAvatar(look);
-                const preferred =
-                  lookEngineFilter === LOOK_ENGINE_FILTERS.AVATAR_IV
-                    ? AVATAR_IV_ENGINE
-                    : lookEngineFilter === LOOK_ENGINE_FILTERS.AVATAR_V
-                      ? AVATAR_V_ENGINE
-                      : avatarEngine;
-                setAvatarEngine(
-                  resolveAvatarEngine(
-                    { avatar_type: look.avatarType, supportedEngines: look.supportedEngines },
-                    preferred
-                  )
-                );
-              }}
-            >
-              <div className="qc-avatar-img-wrap">
-                <img src={look.image} alt={look.name} />
-                {typeLabel && <span className="qc-avatar-type-badge">{typeLabel}</span>}
-                {isSelected && <div className="qc-avatar-check">✓</div>}
-              </div>
-              <div className="qc-avatar-info">
-                <h4 className={isSelected ? 'text-primary' : ''}>
-                  {look.name} {isSelected && '(Active)'}
-                </h4>
-              </div>
-            </div>
-          );
-        })}
+    const showMoreLooks =
+      !avatarSearch.trim() &&
+      (looksDisplayLimit < looks.length || (looksHasMore && !!looksNextToken));
 
-        {looksHasMore && (
-          <button
-            type="button"
-            className="qc-load-more-btn"
-            onClick={() => loadMoreLooks()}
-            disabled={loadingMoreLooks}
-          >
-            {loadingMoreLooks ? 'Loading…' : 'Load more looks'}
-          </button>
+    return (
+      <>
+        {renderAvatarSearchBar('Search looks by name...')}
+        {filteredLooks.length === 0 ? (
+          <div className="qc-loading">
+            <p>No looks match &ldquo;{avatarSearch.trim()}&rdquo;.</p>
+          </div>
+        ) : (
+          <div className="qc-avatar-grid premium-scrollbar">
+            {filteredLooks.map((look) => {
+              const isSelected = selectedAvatar?.id === look.id;
+              const typeLabel = formatLookBadgeLabel(look);
+              return (
+                <div
+                  key={look.id}
+                  className={`qc-avatar-card ${isSelected ? 'selected' : ''}`}
+                  onClick={() => {
+                    applyLookSelection(look, selectedGroup, looksPageData);
+                  }}
+                >
+                  <div className="qc-avatar-img-wrap">
+                    <img src={look.image} alt={look.name} />
+                    {typeLabel && <span className="qc-avatar-type-badge">{typeLabel}</span>}
+                    {isSelected && <div className="qc-avatar-check">✓</div>}
+                  </div>
+                  <div className="qc-avatar-info">
+                    <h4 className={isSelected ? 'text-primary' : ''}>
+                      {look.name} {isSelected && '(Selected)'}
+                    </h4>
+                  </div>
+                </div>
+              );
+            })}
+
+            {showMoreLooks && (
+              <button
+                type="button"
+                className="qc-avatar-card qc-load-more-tile"
+                onClick={handleLoadMoreLooks}
+                disabled={loadingMoreLooks}
+              >
+                <div className="qc-load-more-tile-body">
+                  {loadingMoreLooks ? (
+                    <Loader2 className="qc-spinner qc-load-more-spinner" size={22} />
+                  ) : (
+                    <span className="qc-load-more-plus" aria-hidden>+</span>
+                  )}
+                </div>
+                <div className="qc-avatar-info">
+                  <h4>{loadingMoreLooks ? 'Loading…' : 'Load more'}</h4>
+                  <p>More looks</p>
+                </div>
+              </button>
+            )}
+          </div>
         )}
-      </div>
+      </>
     );
   };
 
@@ -778,9 +1048,15 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
         {renderHeader()}
 
         <div className="qc-content">
-          {step === 1 && <div className="qc-step-pane">{renderAvatarStep()}</div>}
+          {step === 1 && (
+            <div className="qc-step-pane qc-avatar-step-wrap">{renderPresenterStep()}</div>
+          )}
 
           {step === 2 && (
+            <div className="qc-step-pane qc-avatar-step-wrap">{renderLookStep()}</div>
+          )}
+
+          {step === 3 && (
             <div className="qc-step-pane">
               <button
                 type="button"
@@ -861,7 +1137,7 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
             </div>
           )}
 
-          {step === 3 && (
+          {step === 4 && (
             <div className="qc-step-pane">
               <div className="qc-script-container">
                 <div className="qc-script-header">
@@ -882,171 +1158,268 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
             </div>
           )}
 
-          {step === 4 && (
+          {step === 5 && (
             <div className="qc-step-pane qc-settings-pane">
-              <div className="qc-settings-summary">
-                {selectedAvatar?.image && (
-                  <img
-                    src={selectedAvatar.image}
-                    alt=""
-                    className="qc-settings-summary-thumb"
-                  />
-                )}
-                <div className="qc-settings-summary-copy">
-                  <strong>{selectedAvatar?.name || 'Presenter'}</strong>
-                  <span>
-                    {skipVoice ? 'Voice skipped' : selectedVoice?.name || 'No voice'}
-                    {' · '}
-                    {script.trim().length} characters
+              <div className="qc-settings-hero">
+                <div className="qc-settings-hero-main">
+                  {selectedAvatar?.image ? (
+                    <img
+                      src={selectedAvatar.image}
+                      alt=""
+                      className="qc-settings-hero-avatar"
+                    />
+                  ) : (
+                    <div className="qc-settings-hero-avatar qc-settings-hero-avatar--placeholder" aria-hidden />
+                  )}
+                  <div className="qc-settings-hero-copy">
+                    <span className="qc-settings-hero-eyebrow">Review settings</span>
+                    <strong>{selectedAvatar?.name || 'Presenter'}</strong>
+                    <div className="qc-settings-hero-meta">
+                      {!skipVoice && selectedVoice?.name ? (
+                        <span>
+                          <MdMic size={14} aria-hidden />
+                          {selectedVoice.name}
+                        </span>
+                      ) : (
+                        <span className="qc-settings-hero-meta-muted">Voice skipped</span>
+                      )}
+                      <span className="qc-settings-hero-meta-sep" aria-hidden>
+                        ·
+                      </span>
+                      <span>{script.trim().length.toLocaleString()} characters</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="qc-settings-hero-chips" aria-label="Current settings">
+                  <span className="qc-settings-chip">
+                    {backgroundMode === 'transparent' ? 'Transparent WebM' : 'Solid backdrop'}
                   </span>
+                  <span className="qc-settings-chip">{aspectRatio === '16:9' ? 'Landscape' : 'Portrait'}</span>
+                  {showExpressiveness ? (
+                    <span className="qc-settings-chip qc-settings-chip--capitalize">{expressiveness}</span>
+                  ) : null}
                 </div>
               </div>
 
-              <div className="qc-settings-stack premium-scrollbar">
-                <section className="qc-settings-card">
+              <div className="qc-settings-scroll premium-scrollbar">
+                <div className="qc-settings-grid">
+                <section className="qc-settings-card qc-settings-card--background">
                   <header className="qc-settings-card-head">
-                    <span className="qc-settings-card-icon" aria-hidden>
+                    <span className="qc-settings-card-icon qc-settings-card-icon--layers" aria-hidden>
                       <MdLayers size={17} />
                     </span>
                     <div>
                       <h3>Background</h3>
-                      <p>Transparent cutout or a solid backdrop behind your presenter.</p>
+                      <p>Choose a solid color or export with alpha transparency.</p>
                     </div>
                   </header>
 
-                  <div className="qc-settings-row">
-                    <div className="qc-settings-row-copy">
-                      <strong>Remove background</strong>
-                      <span>Export presenter without a backdrop</span>
+                  <div className="qc-settings-card-body">
+                    <div className="qc-background-mode" role="radiogroup" aria-label="Presenter background mode">
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={backgroundMode === 'solid'}
+                        className={`qc-option-card ${backgroundMode === 'solid' ? 'active' : ''}`}
+                        onClick={() => setBackgroundMode('solid')}
+                      >
+                        <span className="qc-option-card-top">
+                          <span className="qc-option-card-icon" aria-hidden>
+                            <MdFormatColorFill size={18} />
+                          </span>
+                          {backgroundMode === 'solid' ? (
+                            <span className="qc-option-card-check" aria-hidden>
+                              <MdCheck size={14} />
+                            </span>
+                          ) : null}
+                        </span>
+                        <strong>Solid backdrop</strong>
+                        <span>MP4 with a color behind the presenter</span>
+                      </button>
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={backgroundMode === 'transparent'}
+                        className={`qc-option-card ${backgroundMode === 'transparent' ? 'active' : ''}`}
+                        onClick={() => canUseTransparent && setBackgroundMode('transparent')}
+                        disabled={!canUseTransparent}
+                        title={
+                          canUseTransparent
+                            ? 'Export transparent WebM'
+                            : 'Transparent WebM is not supported for this look'
+                        }
+                      >
+                        <span className="qc-option-card-top">
+                          <span className="qc-option-card-icon" aria-hidden>
+                            <MdLayersClear size={18} />
+                          </span>
+                          {backgroundMode === 'transparent' ? (
+                            <span className="qc-option-card-check" aria-hidden>
+                              <MdCheck size={14} />
+                            </span>
+                          ) : null}
+                        </span>
+                        <strong>Transparent (WebM)</strong>
+                        <span>Alpha channel layers over your scene</span>
+                      </button>
                     </div>
-                    <label className="qc-switch">
-                      <input
-                        type="checkbox"
-                        checked={removeBackground}
-                        onChange={(e) => setRemoveBackground(e.target.checked)}
-                      />
-                      <span className="qc-slider" />
-                    </label>
-                  </div>
 
-                  {!removeBackground && (
-                    <div className="qc-settings-subsection">
-                      <span className="qc-settings-subtitle">
-                        <MdPalette size={14} />
-                        Color palette
-                      </span>
-                      <div className="qc-color-categories">
-                        {BACKGROUND_COLOR_PALETTE.map((category) => (
-                          <button
-                            key={category.id}
-                            type="button"
-                            className={`qc-color-category-chip ${activeColorCategory === category.id ? 'active' : ''}`}
-                            onClick={() => setActiveColorCategory(category.id)}
-                          >
-                            {category.label}
-                          </button>
-                        ))}
-                      </div>
-                      <div className="qc-color-swatches">
-                        {activePaletteCategory.colors.map((preset) => (
-                          <button
-                            key={`${activePaletteCategory.id}-${preset.label}`}
-                            type="button"
-                            className={`qc-swatch-btn ${backgroundColor.toLowerCase() === preset.color.toLowerCase() ? 'active' : ''}`}
-                            style={{ backgroundColor: preset.color }}
-                            title={preset.label}
-                            aria-label={preset.label}
-                            onClick={() => setBackgroundColor(preset.color)}
+                    {!canUseTransparent ? (
+                      <p className="qc-settings-callout">
+                        <MdInfoOutline size={16} aria-hidden />
+                        Transparent WebM isn&apos;t supported for expressive (legacy v2) looks.
+                      </p>
+                    ) : null}
+
+                    {backgroundMode === 'solid' ? (
+                      <div className="qc-settings-subsection">
+                        <span className="qc-settings-subtitle">
+                          <MdPalette size={14} />
+                          Color palette
+                        </span>
+                        <div className="qc-color-categories">
+                          {BACKGROUND_COLOR_PALETTE.map((category) => (
+                            <button
+                              key={category.id}
+                              type="button"
+                              className={`qc-color-category-chip ${activeColorCategory === category.id ? 'active' : ''}`}
+                              onClick={() => setActiveColorCategory(category.id)}
+                            >
+                              {category.label}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="qc-color-swatches">
+                          {activePaletteCategory.colors.map((preset) => (
+                            <button
+                              key={`${activePaletteCategory.id}-${preset.label}`}
+                              type="button"
+                              className={`qc-swatch-btn ${backgroundColor.toLowerCase() === preset.color.toLowerCase() ? 'active' : ''}`}
+                              style={{ backgroundColor: preset.color }}
+                              title={preset.label}
+                              aria-label={preset.label}
+                              onClick={() => setBackgroundColor(preset.color)}
+                            />
+                          ))}
+                        </div>
+                        <label className="qc-color-input-wrapper">
+                          <div
+                            className="qc-color-preview"
+                            style={{ backgroundColor }}
+                            aria-hidden
                           />
-                        ))}
+                          <input
+                            type="text"
+                            value={backgroundColor}
+                            onChange={(e) => setBackgroundColor(e.target.value)}
+                            aria-label="Custom background color"
+                            placeholder="#ffffff"
+                          />
+                          <span className="qc-color-input-label">Custom</span>
+                        </label>
                       </div>
-                      <div className="qc-color-input-wrapper">
-                        <div
-                          className="qc-color-preview"
-                          style={{ backgroundColor }}
-                          aria-hidden
-                        />
-                        <input
-                          type="text"
-                          value={backgroundColor}
-                          onChange={(e) => setBackgroundColor(e.target.value)}
-                          aria-label="Custom background color"
-                          placeholder="#ffffff"
-                        />
-                      </div>
-                    </div>
-                  )}
+                    ) : (
+                      <p className="qc-settings-callout qc-settings-callout--success">
+                        <MdInfoOutline size={16} aria-hidden />
+                        HeyGen removes the backdrop automatically. Your scene background shows through the presenter clip.
+                      </p>
+                    )}
+                  </div>
                 </section>
 
-                <section className="qc-settings-card">
+                <section className="qc-settings-card qc-settings-card--format">
                   <header className="qc-settings-card-head">
-                    <span className="qc-settings-card-icon" aria-hidden>
+                    <span className="qc-settings-card-icon qc-settings-card-icon--format" aria-hidden>
                       <MdMonitor size={17} />
                     </span>
                     <div>
                       <h3>Video format</h3>
-                      <p>Choose the aspect ratio for your generated scene.</p>
+                      <p>Pick the aspect ratio that fits your channel.</p>
                     </div>
                   </header>
 
-                  <div className="qc-format-options">
-                    <button
-                      type="button"
-                      className={`qc-format-option ${aspectRatio === '16:9' ? 'active' : ''}`}
-                      onClick={() => setAspectRatio('16:9')}
-                    >
-                      <span className="qc-format-option-icon qc-format-option-icon--landscape" aria-hidden>
-                        <MdMonitor size={20} />
-                      </span>
-                      <strong>16:9 Landscape</strong>
-                      <span>YouTube, web, presentations</span>
-                    </button>
-                    <button
-                      type="button"
-                      className={`qc-format-option ${aspectRatio === '9:16' ? 'active' : ''}`}
-                      onClick={() => setAspectRatio('9:16')}
-                    >
-                      <span className="qc-format-option-icon qc-format-option-icon--portrait" aria-hidden>
-                        <MdPhoneAndroid size={20} />
-                      </span>
-                      <strong>9:16 Portrait</strong>
-                      <span>Reels, TikTok, Stories</span>
-                    </button>
+                  <div className="qc-settings-card-body">
+                    <div className="qc-format-options">
+                      <button
+                        type="button"
+                        className={`qc-option-card qc-option-card--format ${aspectRatio === '16:9' ? 'active' : ''}`}
+                        onClick={() => setAspectRatio('16:9')}
+                      >
+                        <span className="qc-option-card-top">
+                          <span className="qc-format-frame qc-format-frame--landscape" aria-hidden>
+                            <MdMonitor size={18} />
+                          </span>
+                          {aspectRatio === '16:9' ? (
+                            <span className="qc-option-card-check" aria-hidden>
+                              <MdCheck size={14} />
+                            </span>
+                          ) : null}
+                        </span>
+                        <strong>16:9 Landscape</strong>
+                        <span>YouTube, web, presentations</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={`qc-option-card qc-option-card--format ${aspectRatio === '9:16' ? 'active' : ''}`}
+                        onClick={() => setAspectRatio('9:16')}
+                      >
+                        <span className="qc-option-card-top">
+                          <span className="qc-format-frame qc-format-frame--portrait" aria-hidden>
+                            <MdPhoneAndroid size={18} />
+                          </span>
+                          {aspectRatio === '9:16' ? (
+                            <span className="qc-option-card-check" aria-hidden>
+                              <MdCheck size={14} />
+                            </span>
+                          ) : null}
+                        </span>
+                        <strong>9:16 Portrait</strong>
+                        <span>Reels, TikTok, Stories</span>
+                      </button>
+                    </div>
                   </div>
                 </section>
 
                 {showExpressiveness && (
-                  <section className="qc-settings-card">
+                  <section className="qc-settings-card qc-settings-card--express">
                     <header className="qc-settings-card-head">
-                      <span className="qc-settings-card-icon" aria-hidden>
+                      <span className="qc-settings-card-icon qc-settings-card-icon--express" aria-hidden>
                         <MdTune size={17} />
                       </span>
                       <div>
                         <h3>Expressiveness</h3>
-                        <p>How animated the presenter should appear on camera.</p>
+                        <p>Control how animated the presenter appears on camera.</p>
                       </div>
                     </header>
 
-                    <div className="qc-express-options">
-                      {expressivenessOptions.map((option) => (
-                        <button
-                          key={option.id}
-                          type="button"
-                          className={`qc-express-option ${expressiveness === option.id ? 'active' : ''}`}
-                          onClick={() => setExpressiveness(option.id)}
-                        >
-                          <strong>{option.label}</strong>
-                          <span>{option.hint}</span>
-                        </button>
-                      ))}
+                    <div className="qc-settings-card-body">
+                      <div className="qc-express-options">
+                        {expressivenessOptions.map((option) => (
+                          <button
+                            key={option.id}
+                            type="button"
+                            className={`qc-option-card qc-option-card--express ${expressiveness === option.id ? 'active' : ''}`}
+                            onClick={() => setExpressiveness(option.id)}
+                          >
+                            <span className="qc-express-bars" aria-hidden>
+                              <span className="on" />
+                              <span className={option.id === 'medium' || option.id === 'high' ? 'on' : ''} />
+                              <span className={option.id === 'high' ? 'on' : ''} />
+                            </span>
+                            <strong>{option.label}</strong>
+                            <span>{option.hint}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </section>
                 )}
+                </div>
               </div>
             </div>
           )}
 
-          {step === 5 && (
+          {step === GENERATING_STEP && (
             <div
               className="qc-step-pane"
               style={{
@@ -1086,9 +1459,9 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
           )}
         </div>
 
-        {step !== 5 && (
+        {step !== GENERATING_STEP && (
           <div className="qc-footer">
-            {step === 1 && avatarPhase === 'groups' ? (
+            {step === 1 && !selectedGroup ? (
               <button type="button" className="qc-btn-secondary" onClick={onClose}>
                 Cancel
               </button>
@@ -1099,23 +1472,23 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
             )}
 
             <div className="qc-footer-right">
-              {step === 2 && (
+              {step === 3 && (
                 <div className="qc-selected-info">
                   <span>VOICE</span>
                   <strong>{skipVoice ? 'Skipped' : selectedVoice?.name || 'Not selected'}</strong>
                 </div>
               )}
 
-              {step < 4 ? (
+              {step < TOTAL_STEPS ? (
                 <button
                   type="button"
                   className="qc-btn-primary"
                   onClick={handleNext}
                   disabled={
-                    (step === 1 &&
-                      (avatarPhase !== 'looks' || !selectedAvatar?.id)) ||
-                    (step === 2 && !canProceedFromVoice) ||
-                    (step === 3 && !script.trim())
+                    (step === 1 && !selectedGroup?.id) ||
+                    (step === 2 && !selectedAvatar?.id) ||
+                    (step === 3 && !canProceedFromVoice) ||
+                    (step === 4 && !script.trim())
                   }
                 >
                   Continue{' '}

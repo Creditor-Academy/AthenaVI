@@ -28,6 +28,7 @@ import {
   MdLockOpen,
   MdLayers,
   MdAnimation,
+  MdLink,
 } from 'react-icons/md';
 import { isTextLayer } from '../../../../utils/textClip';
 import TextSidebarPanel from './TextSidebarPanel';
@@ -39,9 +40,32 @@ import { resolveClipMediaSrc, isAvatarClip, isVideoMedia } from '../../../../uti
 import SceneSettingsPanel from './SceneSettingsPanel';
 import PropertiesAccordion from './PropertiesAccordion';
 import AvatarVoiceoverSection from './AvatarVoiceoverSection';
+import {
+  buildRegularPolygonClipPath,
+  getPolygonSideLabel,
+  isPolygonMaskStyle,
+} from '../../../../utils/shapeClipPath';
+import {
+  colorToHex,
+  getShadowGeometry,
+  replaceBoxShadowColor,
+  splitBoxShadow,
+} from '../../../../utils/boxShadowUtils';
+import {
+  buildLayerBorderPatch,
+  parseLayerBorder,
+} from '../../../../utils/layerBorderUtils';
 import './TextSidebarPanel.css';
 import './SceneSettingsPanel.css';
 import './PropertiesAccordion.css';
+
+const PANEL_GROUP = {
+  LAYOUT: 'Layout',
+  CONTENT: 'Content',
+  APPEARANCE: 'Appearance',
+  MOTION: 'Motion',
+  ARRANGE: 'Arrange',
+};
 
 /* ── Tiny helpers ─────────────────────────────────────────────────────────── */
 
@@ -154,6 +178,311 @@ const ToggleSwitch = ({ checked, onChange, accent = 'var(--primary)' }) => (
   </label>
 );
 
+const SHADOW_PRESETS = [
+  { value: '0 8px 32px rgba(0,0,0,0.25)', label: 'Soft' },
+  { value: '0 4px 20px rgba(124,58,237,0.5)', label: 'Glow' },
+  { value: '0 0 0 4px rgba(124,58,237,0.3)', label: 'Ring' },
+  { value: '0 20px 60px rgba(0,0,0,0.4)', label: 'Deep' },
+  { value: '0 0 30px rgba(255,255,255,0.6)', label: 'Light' },
+];
+
+const DEFAULT_IMAGE_SHADOW = SHADOW_PRESETS[0].value;
+const DEFAULT_MEDIA_SHADOW = '0 8px 32px rgba(0,0,0,0.3)';
+const OPACITY_PRESETS = [0, 25, 50, 75, 100];
+
+const AVATAR_MASK_SHAPES = [
+  { label: 'Triangle', sides: 3 },
+  { label: 'Square', sides: 4 },
+  { label: 'Pentagon', sides: 5 },
+  { label: 'Hexagon', sides: 6 },
+  { label: 'Heptagon', sides: 7 },
+  { label: 'Octagon', sides: 8 },
+  { label: 'Circle', circle: true },
+];
+
+const MaskShapeGraphic = ({ sides, circle }) => {
+  const size = 28;
+  const cx = size / 2;
+  const cy = size / 2;
+  const radius = 11;
+
+  if (circle) {
+    return (
+      <svg className="scp-mask-shape-graphic" viewBox={`0 0 ${size} ${size}`} aria-hidden>
+        <circle cx={cx} cy={cy} r={radius} className="scp-mask-shape-graphic__fill" />
+      </svg>
+    );
+  }
+
+  const points = [];
+  for (let i = 0; i < sides; i += 1) {
+    const angle = -Math.PI / 2 + (i * 2 * Math.PI) / sides;
+    points.push(`${cx + radius * Math.cos(angle)},${cy + radius * Math.sin(angle)}`);
+  }
+
+  return (
+    <svg className="scp-mask-shape-graphic" viewBox={`0 0 ${size} ${size}`} aria-hidden>
+      <polygon points={points.join(' ')} className="scp-mask-shape-graphic__fill" />
+    </svg>
+  );
+};
+
+const PropertyBar = ({
+  value,
+  min,
+  max,
+  step = 1,
+  onChange,
+  variant = 'default',
+  fillColor,
+  ariaLabel,
+  disabled = false,
+}) => {
+  const pct = max === min ? 0 : ((Number(value) - min) / (max - min)) * 100;
+
+  return (
+    <div className={`scp-property-bar scp-property-bar--${variant}${disabled ? ' scp-property-bar--disabled' : ''}`}>
+      <div className="scp-property-bar__track" aria-hidden />
+      <div
+        className="scp-property-bar__fill"
+        style={{
+          width: `${pct}%`,
+          ...(variant === 'border' && fillColor ? { background: fillColor } : {}),
+        }}
+        aria-hidden
+      />
+      <input
+        type="range"
+        className="scp-property-bar__input"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(Number(e.target.value))}
+        aria-label={ariaLabel}
+      />
+    </div>
+  );
+};
+
+const TransparencyControls = ({ activeLayer, updateLayer, bare = false }) => {
+  const opacityPct = Math.round((activeLayer.opacity ?? 1) * 100);
+
+  const content = (
+    <>
+      <div className={bare ? 'scp-shape-style__head' : 'scp-effect-block__head'}>
+        <span className={bare ? 'scp-shape-style__label' : 'scp-effect-block__label'}>Transparency</span>
+        <span className="scp-value-badge">{opacityPct}%</span>
+      </div>
+      <PropertyBar
+        variant="transparency"
+        value={opacityPct}
+        min={0}
+        max={100}
+        step={1}
+        onChange={(v) => updateLayer({ opacity: v / 100 })}
+        ariaLabel="Layer transparency"
+      />
+      <div className="scene-settings__chips scp-shape-style__chips">
+        {OPACITY_PRESETS.map((pct) => (
+          <button
+            key={pct}
+            type="button"
+            className={`scene-settings__chip${
+              opacityPct === pct ? ' scene-settings__chip--active' : ''
+            }`}
+            onClick={() => updateLayer({ opacity: pct / 100 })}
+          >
+            {pct === 0 ? 'Transparent' : `${pct}%`}
+          </button>
+        ))}
+      </div>
+    </>
+  );
+
+  if (bare) return content;
+  return <div className="scp-effect-block">{content}</div>;
+};
+
+const RadiusChips = ({ activeLayer, updateStyle, options = [0, 8, 16, 24, 48] }) => {
+  const current = parseInt(activeLayer.style?.borderRadius || 0, 10) || 0;
+  return (
+    <div className="scp-effect-block">
+      <div className="scp-effect-block__label">Corner radius</div>
+      <div className="scene-settings__chips">
+        {options.map((r) => (
+          <button
+            key={r}
+            type="button"
+            className={`scene-settings__chip${current === r ? ' scene-settings__chip--active' : ''}`}
+            onClick={() => updateStyle({ borderRadius: `${r}px` })}
+          >
+            {r}px
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const BorderControls = ({
+  activeLayer,
+  onBorderChange,
+  defaultColor = '#94a3b8',
+  bare = false,
+}) => {
+  const parsed = parseLayerBorder(activeLayer.style || {}, defaultColor);
+  const { width: borderWidth, color: borderColor } = parsed;
+
+  const setWidth = (next) => {
+    onBorderChange({ width: next, color: borderColor });
+  };
+
+  const setColor = (color) => {
+    onBorderChange({
+      width: borderWidth > 0 ? borderWidth : 2,
+      color,
+    });
+  };
+
+  const content = (
+    <>
+      <div className={bare ? 'scp-shape-style__head' : 'scp-effect-block__head'}>
+        <span className={bare ? 'scp-shape-style__label' : 'scp-effect-block__label'}>Border</span>
+        <div className="scp-property-bar__meta">
+          <label className="scp-property-bar__color-swatch" title="Border color">
+            <span
+              className="scp-property-bar__color-preview"
+              style={{
+                background: 'var(--bg-card, #fff)',
+                border: `${Math.max(2, borderWidth || 2)}px solid ${borderColor}`,
+              }}
+              aria-hidden
+            />
+            <input
+              type="color"
+              value={borderColor}
+              onChange={(e) => setColor(e.target.value)}
+              className="scp-property-bar__color-input"
+              aria-label="Border color"
+            />
+          </label>
+          <span className="scp-value-badge">{borderWidth}px</span>
+        </div>
+      </div>
+      <PropertyBar
+        variant="border"
+        value={borderWidth}
+        min={0}
+        max={20}
+        step={1}
+        fillColor={borderColor}
+        onChange={setWidth}
+        ariaLabel="Border width"
+      />
+    </>
+  );
+
+  if (bare) return content;
+  return <div className="scp-effect-block">{content}</div>;
+};
+
+const ShadowControls = ({ activeLayer, updateStyle, defaultShadow = DEFAULT_IMAGE_SHADOW, bare = false }) => {
+  const current = activeLayer.style?.boxShadow || 'none';
+  const enabled = !!(current && current !== 'none');
+  const currentGeometry = getShadowGeometry(current);
+  const shadowColor = colorToHex(
+    activeLayer.style?.shadowColor || splitBoxShadow(current)?.color,
+    '#000000'
+  );
+
+  const applyShadow = (boxShadow) => {
+    const split = splitBoxShadow(boxShadow);
+    updateStyle({
+      boxShadow,
+      ...(split ? { shadowColor: colorToHex(split.color, shadowColor) } : {}),
+    });
+  };
+
+  const applyPreset = (presetValue) => {
+    applyShadow(presetValue);
+  };
+
+  const applyShadowColor = (hexColor) => {
+    if (!enabled) return;
+    applyShadow(replaceBoxShadowColor(current, hexColor));
+  };
+
+  const previewShadow = (presetValue) => {
+    if (!enabled) return presetValue;
+    const geometry = getShadowGeometry(presetValue);
+    if (geometry !== currentGeometry) return presetValue;
+    return replaceBoxShadowColor(presetValue, shadowColor);
+  };
+
+  const content = (
+    <>
+      <div className={bare ? 'scp-shape-style__head' : 'scp-effect-block__head'}>
+        <span className={bare ? 'scp-shape-style__label' : 'scp-effect-block__label'}>Shadow</span>
+        <ToggleSwitch
+          checked={enabled}
+          onChange={(on) => applyShadow(on ? current !== 'none' ? current : defaultShadow : 'none')}
+        />
+      </div>
+      {enabled ? (
+        <>
+          <div className={`scp-shadow-presets${bare ? ' scp-shadow-presets--compact' : ''}`}>
+            {SHADOW_PRESETS.map((preset) => (
+              <button
+                key={preset.value}
+                type="button"
+                className={`scp-shadow-preset${
+                  currentGeometry === getShadowGeometry(preset.value) ? ' scp-shadow-preset--active' : ''
+                }`}
+                onClick={() => applyPreset(preset.value)}
+                title={preset.label}
+              >
+                <span className="scp-shadow-preset__thumb">
+                  <span
+                    className="scp-shadow-preset__box"
+                    style={{ boxShadow: previewShadow(preset.value) }}
+                  />
+                </span>
+                <span className="scp-shadow-preset__label">{preset.label}</span>
+              </button>
+            ))}
+          </div>
+          <div className={bare ? 'scp-shape-style__inline-row' : 'scp-shadow-color-row'}>
+            <span className={bare ? 'scp-shape-style__label' : 'scp-effect-block__label'}>Color</span>
+            <label className="scp-border-control__color scp-shadow-color-picker" title="Shadow color">
+              <span
+                className="scp-shadow-color-swatch"
+                style={{ boxShadow: current }}
+                aria-hidden
+              />
+              <input
+                type="color"
+                value={shadowColor}
+                onChange={(e) => applyShadowColor(e.target.value)}
+                className="scp-border-control__color-input"
+                aria-label="Shadow color"
+              />
+            </label>
+          </div>
+        </>
+      ) : (
+        <p className={bare ? 'scp-shape-style__hint' : 'scp-effect-block__hint'}>
+          Turn on shadow to choose a preset and color.
+        </p>
+      )}
+    </>
+  );
+
+  if (bare) return content;
+  return <div className="scp-effect-block">{content}</div>;
+};
+
 /* ══════════════════════════════════════════════════════════════════════════
    LAYER PROPERTIES PANEL
 ══════════════════════════════════════════════════════════════════════════ */
@@ -257,104 +586,139 @@ const SceneBackgroundBanner = ({ isBackground, canBeSceneBackground, hasBackgrou
   );
 };
 
-const ImageBorderFrameContent = ({ activeLayer, updateStyle }) => (
+const ImageBorderFrameContent = ({ activeLayer, updateStyle, updateLayer }) => (
   <>
-    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-      {[0, 8, 16, 24, 48].map((r) => (
-        <button
-          key={r}
-          type="button"
-          onClick={() => updateStyle({ borderRadius: `${r}px` })}
-          style={{
-            padding: '6px 10px',
-            borderRadius: 8,
-            border: `1px solid ${parseInt(activeLayer.style?.borderRadius || 0) === r ? 'var(--primary)' : 'var(--border-subtle, rgba(0,0,0,0.1))'}`,
-            background: parseInt(activeLayer.style?.borderRadius || 0) === r ? 'rgba(124,58,237,0.08)' : 'white',
-            fontSize: 10,
-            fontWeight: 700,
-            cursor: 'pointer',
-          }}
-        >
-          {r}px
-        </button>
-      ))}
-    </div>
-    <Row label="Border" column>
-      <div style={{ display: 'flex', gap: 6, width: '100%', alignItems: 'center', flexWrap: 'wrap' }}>
-        <input
-          type="number" min={0} max={20}
-          value={parseInt(activeLayer.style?.borderWidth || 0)}
-          onChange={(e) => updateStyle({ borderWidth: `${e.target.value}px`, borderStyle: 'solid' })}
-          style={{
-            width: 48, textAlign: 'center', border: '1px solid var(--border-subtle, rgba(0,0,0,0.1))',
-            borderRadius: 7, padding: '4px 6px', fontSize: 11, fontWeight: 600,
-            background: 'white', color: 'var(--text-main)',
-          }}
-        />
-        <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>px</span>
-        <input
-          type="color"
-          value={activeLayer.style?.borderColor || '#000000'}
-          onChange={(e) => updateStyle({ borderColor: e.target.value, borderStyle: 'solid' })}
-          style={{ width: 30, height: 28, border: 'none', borderRadius: 6, cursor: 'pointer', padding: 2, background: 'none', flex: 1 }}
-        />
-      </div>
-    </Row>
-    <Row label="Shadow">
-      <ToggleSwitch
-        checked={!!(activeLayer.style?.boxShadow && activeLayer.style.boxShadow !== 'none')}
-        onChange={(v) => updateStyle({ boxShadow: v ? '0 8px 32px rgba(0,0,0,0.25)' : 'none' })}
-      />
-    </Row>
+    <RadiusChips activeLayer={activeLayer} updateStyle={updateStyle} />
+    <TransparencyControls activeLayer={activeLayer} updateLayer={updateLayer} />
+    <BorderControls
+      activeLayer={activeLayer}
+      defaultColor="#000000"
+      onBorderChange={(patch) =>
+        updateLayer({ style: buildLayerBorderPatch(activeLayer.style || {}, patch, '#000000') })
+      }
+    />
+    <ShadowControls activeLayer={activeLayer} updateStyle={updateStyle} defaultShadow={DEFAULT_IMAGE_SHADOW} />
   </>
 );
 
-const MediaBorderShadowContent = ({ activeLayer, updateStyle }) => (
+const MediaBorderShadowContent = ({ activeLayer, updateStyle, updateLayer }) => (
   <>
-    <Row label="Border">
-      <div style={{ display: 'flex', gap: 6, flex: 1, alignItems: 'center' }}>
-        <input
-          type="number" min={0} max={20}
-          value={parseInt(activeLayer.style?.borderWidth || 0)}
-          onChange={(e) => updateStyle({ borderWidth: `${e.target.value}px`, borderStyle: 'solid' })}
-          style={{
-            width: 44, textAlign: 'center',
-            border: '1px solid var(--border-subtle, rgba(0,0,0,0.1))',
-            borderRadius: 7, padding: '4px 4px', fontSize: 11, fontWeight: 600,
-            background: 'white', color: 'var(--text-main)',
-          }}
-        />
-        <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>px</span>
-        <input
-          type="color"
-          value={activeLayer.style?.borderColor || '#94a3b8'}
-          onChange={(e) => updateStyle({ borderColor: e.target.value, borderStyle: 'solid' })}
-          style={{ width: 30, height: 28, border: 'none', borderRadius: 6, cursor: 'pointer', padding: 2, background: 'none', flex: 1 }}
-        />
-      </div>
-    </Row>
-    <Row label="Shadow">
-      <ToggleSwitch
-        checked={!!(activeLayer.style?.boxShadow && activeLayer.style.boxShadow !== 'none')}
-        onChange={(v) => updateStyle({ boxShadow: v ? '0 8px 32px rgba(0,0,0,0.3)' : 'none' })}
-      />
-    </Row>
-    {activeLayer.style?.boxShadow && activeLayer.style.boxShadow !== 'none' && (
-      <SelectRow
-        label="Shadow Preset"
-        value={activeLayer.style.boxShadow}
-        options={[
-          { value: '0 8px 32px rgba(0,0,0,0.3)', label: 'Soft Dark' },
-          { value: '0 4px 20px rgba(124,58,237,0.5)', label: 'Purple Glow' },
-          { value: '0 0 0 4px rgba(124,58,237,0.3)', label: 'Ring' },
-          { value: '0 20px 60px rgba(0,0,0,0.4)', label: 'Deep Drop' },
-          { value: '0 0 30px rgba(255,255,255,0.6)', label: 'White Glow' },
-        ]}
-        onChange={(v) => updateStyle({ boxShadow: v })}
-      />
-    )}
+    <TransparencyControls activeLayer={activeLayer} updateLayer={updateLayer} />
+    <BorderControls
+      activeLayer={activeLayer}
+      onBorderChange={(patch) =>
+        updateLayer({ style: buildLayerBorderPatch(activeLayer.style || {}, patch) })
+      }
+    />
+    <ShadowControls activeLayer={activeLayer} updateStyle={updateStyle} defaultShadow={DEFAULT_MEDIA_SHADOW} />
   </>
 );
+
+const ShapeAndEffectsContent = ({
+  activeLayer,
+  updateLayer,
+}) => {
+  const style = activeLayer.style || {};
+  const polygonSides = Number(style.polygonSides) || 0;
+  const polygonMode = isPolygonMaskStyle(style);
+  const currentRadius = style.borderRadius ?? '50%';
+  const isCircle = !polygonMode && String(currentRadius).replace(/\s/g, '') === '50%';
+  const cornerRadiusPx = Math.max(0, parseInt(currentRadius, 10) || 0);
+  const cornerRadiusLocked = polygonMode || isCircle;
+
+  const applyPolygonShape = (sides) => {
+    const count = Math.max(3, Math.min(10, Math.round(sides)));
+    const clipPath = buildRegularPolygonClipPath(count);
+    updateLayer({
+      style: {
+        ...style,
+        borderRadius: '0px',
+        clipPath,
+        WebkitClipPath: clipPath,
+        polygonSides: count,
+      },
+    });
+  };
+
+  const applyCircle = () => {
+    const { clipPath, WebkitClipPath, polygonSides: _sides, ...rest } = style;
+    updateLayer({ style: { ...rest, borderRadius: '50%' } });
+  };
+
+  const applyCornerRadius = (px) => {
+    const { clipPath, WebkitClipPath, polygonSides: _sides, ...rest } = style;
+    updateLayer({ style: { ...rest, borderRadius: `${px}px` } });
+  };
+
+  const updateStyle = (updates) => updateLayer({ style: { ...style, ...updates } });
+
+  const isShapeActive = (shape) => {
+    if (shape.circle) return isCircle;
+    return polygonMode && polygonSides === shape.sides;
+  };
+
+  return (
+    <div className="scp-shape-style">
+      <section className="scp-shape-style__section">
+        <div className="scp-shape-style__label">Mask shape</div>
+        <div className="scp-mask-shape-chips">
+          {AVATAR_MASK_SHAPES.map((shape) => (
+            <button
+              key={shape.circle ? 'circle' : shape.sides}
+              type="button"
+              className={`scp-mask-shape-chip${
+                isShapeActive(shape) ? ' scp-mask-shape-chip--active' : ''
+              }`}
+              title={shape.label}
+              aria-label={shape.label}
+              onClick={() => (shape.circle ? applyCircle() : applyPolygonShape(shape.sides))}
+            >
+              <MaskShapeGraphic sides={shape.sides} circle={shape.circle} />
+            </button>
+          ))}
+        </div>
+        <div className="scp-shape-style__head">
+          <span className="scp-shape-style__label">Corner radius</span>
+          <span className="scp-value-badge">
+            {cornerRadiusLocked ? 'Off' : `${cornerRadiusPx}px`}
+          </span>
+        </div>
+        <PropertyBar
+          variant="radius"
+          value={cornerRadiusLocked ? 0 : cornerRadiusPx}
+          min={0}
+          max={48}
+          step={1}
+          onChange={applyCornerRadius}
+          ariaLabel="Corner radius"
+        />
+      </section>
+
+      <section className="scp-shape-style__section">
+        <TransparencyControls activeLayer={activeLayer} updateLayer={updateLayer} bare />
+      </section>
+
+      <section className="scp-shape-style__section">
+        <BorderControls
+          activeLayer={activeLayer}
+          bare
+          onBorderChange={(patch) =>
+            updateLayer({ style: buildLayerBorderPatch(style, patch) })
+          }
+        />
+      </section>
+
+      <section className="scp-shape-style__section scp-shape-style__section--last">
+        <ShadowControls
+          activeLayer={activeLayer}
+          updateStyle={updateStyle}
+          defaultShadow={DEFAULT_MEDIA_SHADOW}
+          bare
+        />
+      </section>
+    </div>
+  );
+};
 
 const LayerPanel = ({
   activeLayer,
@@ -443,17 +807,11 @@ const LayerPanel = ({
   const isAvatar = isAvatarLayer;
   const mediaSrc = isMedia ? (resolveClipMediaSrc(activeLayer, activeScene) || activeLayer.src) : null;
   const isVideoSrc = isMedia && isVideoMedia(activeLayer, mediaSrc);
-  const shapePresets = [
-    { label: 'Circle', value: '50%' },
-    { label: 'Rounded', value: '24px' },
-    { label: 'Square', value: '0px' },
-    { label: 'Squircle', value: '30%' },
-  ];
-  const currentRadius = activeLayer.style?.borderRadius || (isAvatar ? '50%' : '0px');
 
   const positionSection = {
     id: 'position',
     title: 'Position',
+    group: PANEL_GROUP.LAYOUT,
     icon: <MdOpenInFull size={14} />,
     content: (
       <>
@@ -480,6 +838,7 @@ const LayerPanel = ({
   const animationSection = (isImage || isMedia || isShape) ? {
     id: 'animation',
     title: 'Animation',
+    group: PANEL_GROUP.MOTION,
     icon: <MdAnimation size={14} />,
     content: <LayerAnimatePanel activeLayer={activeLayer} updateLayer={updateLayer} hideHeader />,
   } : null;
@@ -487,6 +846,7 @@ const LayerPanel = ({
   const layerOrderSection = {
     id: 'layer-order',
     title: 'Layer Order',
+    group: PANEL_GROUP.ARRANGE,
     icon: <MdLayers size={14} />,
     content: (
       <LayerOrderContent
@@ -505,10 +865,10 @@ const LayerPanel = ({
   if (isImage) {
     accordionSections = [
       positionSection,
-      animationSection,
       {
         id: 'fit-adjust',
         title: 'Fit & Adjust',
+        group: PANEL_GROUP.APPEARANCE,
         icon: <MdCropFree size={14} />,
         content: (
           <LayerFitFlipAdjustments
@@ -523,6 +883,7 @@ const LayerPanel = ({
             onUpdateStyle={updateStyle}
             onUpdateFilter={updateFilter}
             onOpacityChange={(v) => updateLayer({ opacity: v })}
+            hideOpacity
             extraEffects={(
               <>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -547,9 +908,11 @@ const LayerPanel = ({
       {
         id: 'border-frame',
         title: 'Border & Frame',
+        group: PANEL_GROUP.APPEARANCE,
         icon: <MdBorderStyle size={14} />,
-        content: <ImageBorderFrameContent activeLayer={activeLayer} updateStyle={updateStyle} />,
+        content: <ImageBorderFrameContent activeLayer={activeLayer} updateStyle={updateStyle} updateLayer={updateLayer} />,
       },
+      animationSection,
       layerOrderSection,
     ].filter(Boolean);
   } else if (isMedia && isAvatar) {
@@ -558,6 +921,7 @@ const LayerPanel = ({
       {
         id: 'avatar',
         title: 'Avatar',
+        group: PANEL_GROUP.CONTENT,
         icon: <MdPerson size={14} />,
         content: (
           <AvatarVoiceoverSection
@@ -572,31 +936,20 @@ const LayerPanel = ({
       },
       {
         id: 'shape',
-        title: 'Shape',
+        title: 'Shape & Style',
+        group: PANEL_GROUP.APPEARANCE,
         icon: <MdRoundedCorner size={14} />,
         content: (
-          <>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 5 }}>
-              {shapePresets.map(({ label, value }) => (
-                <button key={value} type="button" onClick={() => updateStyle({ borderRadius: value })} style={{
-                  padding: '7px 6px', borderRadius: 8, cursor: 'pointer',
-                  background: currentRadius === value ? 'var(--primary)' : 'white',
-                  color: currentRadius === value ? '#fff' : 'var(--text-muted)',
-                  border: currentRadius === value ? '1px solid var(--primary)' : '1px solid var(--border-color)',
-                  fontSize: 11, fontWeight: 700, transition: 'all 0.15s',
-                }}>
-                  {label}
-                </button>
-              ))}
-            </div>
-            <SliderRow label="Custom" value={parseInt(currentRadius) || 0} min={0} max={500} unit="px" onChange={(v) => updateStyle({ borderRadius: `${v}px` })} />
-          </>
+          <ShapeAndEffectsContent
+            activeLayer={activeLayer}
+            updateLayer={updateLayer}
+          />
         ),
       },
-      animationSection,
       {
-        id: 'fit-adjustment',
-        title: 'Fit & Adjustment',
+        id: 'fit-adjust',
+        title: 'Fit & Adjust',
+        group: PANEL_GROUP.APPEARANCE,
         icon: <MdCropFree size={14} />,
         content: (
           <LayerFitFlipAdjustments
@@ -611,6 +964,7 @@ const LayerPanel = ({
             onUpdateStyle={updateStyle}
             onUpdateFilter={updateFilter}
             onOpacityChange={(v) => updateLayer({ opacity: v })}
+            hideOpacity
             extraEffects={(
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>Grayscale</span>
@@ -620,22 +974,17 @@ const LayerPanel = ({
           />
         ),
       },
-      {
-        id: 'border-shadow',
-        title: 'Border & Shadow',
-        icon: <MdBorderStyle size={14} />,
-        content: <MediaBorderShadowContent activeLayer={activeLayer} updateStyle={updateStyle} />,
-      },
+      animationSection,
       layerOrderSection,
     ].filter(Boolean);
   } else if (isMedia) {
     accordionSections = [
       positionSection,
-      animationSection,
       {
-        id: 'fit-adjust',
-        title: 'Fit & Adjust',
-        icon: <MdCropFree size={14} />,
+        id: 'source',
+        title: 'Source',
+        group: PANEL_GROUP.CONTENT,
+        icon: <MdLink size={14} />,
         content: (
           <>
             <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>URL / Blob</span>
@@ -648,37 +997,48 @@ const LayerPanel = ({
                 width: '100%', boxSizing: 'border-box', fontFamily: 'monospace',
                 background: 'white', border: '1px solid var(--border-subtle, rgba(0,0,0,0.1))',
                 borderRadius: 8, padding: '7px 10px', fontSize: 10,
-                color: 'var(--text-main)', outline: 'none', wordBreak: 'break-all', marginBottom: 10,
+                color: 'var(--text-main)', outline: 'none', wordBreak: 'break-all',
               }}
-            />
-            <LayerFitFlipAdjustments
-              clip={activeLayer}
-              src={mediaSrc}
-              isVideo={isVideoSrc}
-              style={activeLayer.style || {}}
-              cssFilters={cf}
-              opacity={activeLayer.opacity ?? 1}
-              variant="rect"
-              caption={`Media · ${activeLayer.style?.objectFit || 'cover'} · ${Math.round((activeLayer.opacity ?? 1) * 100)}%`}
-              onUpdateStyle={updateStyle}
-              onUpdateFilter={updateFilter}
-              onOpacityChange={(v) => updateLayer({ opacity: v })}
-              extraEffects={(
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>Grayscale</span>
-                  <ToggleSwitch checked={cf.grayscale > 0} onChange={(v) => updateFilter('grayscale', v ? 1 : 0)} />
-                </div>
-              )}
             />
           </>
         ),
       },
       {
-        id: 'border-frame',
-        title: 'Border & Frame',
-        icon: <MdBorderStyle size={14} />,
-        content: <MediaBorderShadowContent activeLayer={activeLayer} updateStyle={updateStyle} />,
+        id: 'fit-adjust',
+        title: 'Fit & Adjust',
+        group: PANEL_GROUP.APPEARANCE,
+        icon: <MdCropFree size={14} />,
+        content: (
+          <LayerFitFlipAdjustments
+            clip={activeLayer}
+            src={mediaSrc}
+            isVideo={isVideoSrc}
+            style={activeLayer.style || {}}
+            cssFilters={cf}
+            opacity={activeLayer.opacity ?? 1}
+            variant="rect"
+            caption={`Media · ${activeLayer.style?.objectFit || 'cover'} · ${Math.round((activeLayer.opacity ?? 1) * 100)}%`}
+            onUpdateStyle={updateStyle}
+            onUpdateFilter={updateFilter}
+            onOpacityChange={(v) => updateLayer({ opacity: v })}
+            hideOpacity
+            extraEffects={(
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>Grayscale</span>
+                <ToggleSwitch checked={cf.grayscale > 0} onChange={(v) => updateFilter('grayscale', v ? 1 : 0)} />
+              </div>
+            )}
+          />
+        ),
       },
+      {
+        id: 'border-frame',
+        title: 'Border & Style',
+        group: PANEL_GROUP.APPEARANCE,
+        icon: <MdBorderStyle size={14} />,
+        content: <MediaBorderShadowContent activeLayer={activeLayer} updateStyle={updateStyle} updateLayer={updateLayer} />,
+      },
+      animationSection,
       layerOrderSection,
     ].filter(Boolean);
   } else if (isShape) {
@@ -816,7 +1176,10 @@ const LayerPanel = ({
         />
       </div>
       <div style={{ padding: '0 14px' }}>
-        <PropertiesAccordion sections={accordionSections} />
+        <PropertiesAccordion
+          sections={accordionSections}
+          defaultExpandedIds={isAvatar ? ['position', 'avatar'] : ['position']}
+        />
       </div>
     </div>
   );

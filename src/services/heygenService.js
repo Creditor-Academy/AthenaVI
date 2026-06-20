@@ -1,5 +1,10 @@
 import API_CONFIG, { buildUrl, getAuthHeaders } from '../config/api.js';
 import { InsufficientCreditsError } from './creditsService.js';
+import {
+  AVATAR_IV_ENGINE,
+  isLegacyV2Look,
+  finalizeVideoCreatePayload,
+} from '../utils/heygenAvatars.js';
 
 const LOOKS_QUERY_KEYS = new Set([
   'group_id',
@@ -65,7 +70,29 @@ class HeygenService {
       }
 
       const responseData = await response.json();
-      return responseData.data || responseData;
+      const payload = responseData.data ?? responseData;
+      if (Array.isArray(payload)) {
+        return {
+          looks: payload,
+          avatar_looks: payload,
+          lookCount: payload.length,
+          has_more: responseData.has_more ?? responseData.hasMore ?? false,
+          token: responseData.token ?? responseData.next_token ?? null,
+        };
+      }
+      if (payload && typeof payload === 'object') {
+        const looks = payload.looks ?? payload.avatar_looks;
+        const lookCount =
+          payload.lookCount ??
+          payload.look_count ??
+          responseData.lookCount ??
+          responseData.look_count ??
+          (Array.isArray(looks) ? looks.length : undefined);
+        if (lookCount != null && payload.lookCount == null) {
+          return { ...payload, lookCount };
+        }
+      }
+      return payload;
     };
 
     try {
@@ -167,13 +194,86 @@ class HeygenService {
     }
   }
 
-  async getAvatarConsent(groupId, rerouteUrl = '') {
+  /**
+   * Add a new prompt look to an existing personal avatar group.
+   * Uses avatar_group_id + reference_image_url; avatar_id (look) is optional when available.
+   */
+  async createAvatarLook({ name, prompt, avatarGroupId, avatarId, referenceImageUrl }) {
+    if (!avatarGroupId) {
+      throw new Error('Avatar group id is required to create a look');
+    }
+    if (!referenceImageUrl) {
+      throw new Error('Reference avatar image is required to create a look');
+    }
+    if (!name?.trim()) {
+      throw new Error('Look name is required');
+    }
+    if (!prompt?.trim()) {
+      throw new Error('Prompt is required to generate a look');
+    }
+
+    const payload = {
+      type: 'prompt',
+      name: name.trim(),
+      prompt: prompt.trim(),
+      avatar_group_id: String(avatarGroupId),
+      reference_image_url: String(referenceImageUrl),
+    };
+    if (avatarId) payload.avatar_id = String(avatarId);
+
+    return this.createAvatar(payload);
+  }
+
+  buildConsentRerouteUrl(groupId) {
+    if (typeof window === 'undefined' || !groupId) return '';
+    const params = new URLSearchParams({ consent: 'done', groupId: String(groupId) });
+    return `${window.location.origin}/avatars?${params.toString()}`;
+  }
+
+  async getAvatarGroup(groupId) {
+    if (!groupId) return null;
+
+    try {
+      const endpoint = `${API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.CREATE}/${groupId}`;
+      const response = await fetch(buildUrl(endpoint), {
+        method: 'GET',
+        headers: getAuthHeaders(),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.data || data;
+      }
+    } catch (error) {
+      console.warn('heygenService.getAvatarGroup direct fetch failed, falling back to list', error);
+    }
+
+    try {
+      const listRes = await this.getAvatarGroups({ ownership: 'private', limit: 100 });
+      const data = listRes?.data ?? listRes;
+      const groups = Array.isArray(data)
+        ? data
+        : data?.avatar_groups ?? listRes?.avatar_groups ?? [];
+      return (
+        groups.find(
+          (group) => String(group?.id || group?.avatar_group_id) === String(groupId)
+        ) ?? null
+      );
+    } catch (error) {
+      console.error('Error in heygenService.getAvatarGroup fallback:', error);
+      return null;
+    }
+  }
+
+  async getAvatarConsent(groupId, rerouteUrl) {
     try {
       const endpoint = `${API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.CREATE}/${groupId}/consent`;
       const response = await fetch(buildUrl(endpoint), {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ reroute_url: rerouteUrl })
+        body: JSON.stringify({
+          reroute_url: rerouteUrl || this.buildConsentRerouteUrl(groupId),
+        }),
       });
       
       if (!response.ok) {
@@ -343,7 +443,6 @@ class HeygenService {
       const {
         sceneId,
         avatarId,
-        avatarEngine = 'avatar_iv',
         avatarType,
         title,
         resolution = '1080p',
@@ -358,12 +457,24 @@ class HeygenService {
           locale: 'en-US'
         },
         removeBackground = false,
-        outputFormat = 'mp4'
+        outputFormat = 'mp4',
+        supportedEngines,
+        isLegacyV2,
       } = input;
+
+      const avatarKind = avatarType || 'studio_avatar';
+      const avatarEngine = finalizeVideoCreatePayload({
+        avatarId,
+        avatarType: avatarKind,
+        avatarEngine: input.avatarEngine,
+        isLegacyV2,
+        supportedEngines,
+      });
 
       const payload = {
         sceneId,
         avatarId,
+        avatarType: avatarKind,
         avatarEngine,
         title,
         resolution,
@@ -373,13 +484,26 @@ class HeygenService {
         script,
         voiceSettings,
         removeBackground,
-        outputFormat
+        outputFormat,
       };
 
-      if (avatarType) payload.avatarType = avatarType;
-      // Expressiveness is only supported for avatar_iv + photo_avatar.
-      if (avatarEngine === 'avatar_iv' && avatarType === 'photo_avatar' && expressiveness) {
+      // Expressiveness: photo_avatar + Avatar IV only (backend shouldIncludeExpressiveness).
+      if (
+        avatarEngine === AVATAR_IV_ENGINE &&
+        avatarKind === 'photo_avatar' &&
+        expressiveness &&
+        !isLegacyV2Look({ id: avatarId, isLegacyV2 })
+      ) {
         payload.expressiveness = expressiveness;
+      }
+
+      if (import.meta.env?.DEV) {
+        console.log('[HeyGen] create video', {
+          avatarId,
+          avatarType: avatarKind,
+          avatarEngine,
+          isLegacyV2: isLegacyV2Look({ id: avatarId, isLegacyV2 }),
+        });
       }
 
       const endpoint = API_CONFIG.ENDPOINTS.HEYGEN.VIDEOS.CREATE(workspaceId, projectId);

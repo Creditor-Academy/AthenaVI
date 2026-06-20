@@ -53,6 +53,7 @@ const LayerAdjustmentsCompact = ({
   showInlinePreview = true,
   previewSrc = null,
   previewObjectFit = 'cover',
+  hideOpacity = false,
 }) => {
   const cf = cssFilters;
   const opacityPct = Math.round((opacity ?? 1) * 100);
@@ -69,34 +70,36 @@ const LayerAdjustmentsCompact = ({
       {showInlinePreview ? (
         <p className="adj-compact-hint">Changes apply to the preview above and the canvas.</p>
       ) : null}
-      <div className="adj-compact-block">
-        <span className="adj-compact-block__title">
-          <MdOpacity size={14} />
-          Opacity
-        </span>
-        <div className="adj-compact-chips">
-          {OPACITY_PRESETS.map((pct) => (
-            <button
-              key={pct}
-              type="button"
-              className={`adj-compact-chip ${opacityPct === pct ? 'adj-compact-chip--active' : ''}`}
-              onClick={() => onOpacityChange(pct / 100)}
-            >
-              {pct}%
-            </button>
-          ))}
+      {!hideOpacity ? (
+        <div className="adj-compact-block">
+          <span className="adj-compact-block__title">
+            <MdOpacity size={14} />
+            Opacity
+          </span>
+          <div className="adj-compact-chips">
+            {OPACITY_PRESETS.map((pct) => (
+              <button
+                key={pct}
+                type="button"
+                className={`adj-compact-chip ${opacityPct === pct ? 'adj-compact-chip--active' : ''}`}
+                onClick={() => onOpacityChange(pct / 100)}
+              >
+                {pct}%
+              </button>
+            ))}
+          </div>
+          <Stepper
+            label="Fine"
+            icon={null}
+            value={opacityPct}
+            min={0}
+            max={100}
+            step={5}
+            unit="%"
+            onChange={(v) => onOpacityChange(v / 100)}
+          />
         </div>
-        <Stepper
-          label="Fine"
-          icon={null}
-          value={opacityPct}
-          min={0}
-          max={100}
-          step={5}
-          unit="%"
-          onChange={(v) => onOpacityChange(v / 100)}
-        />
-      </div>
+      ) : null}
 
       <div className="adj-compact-block">
         <span className="adj-compact-block__title">

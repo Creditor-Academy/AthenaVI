@@ -33,7 +33,7 @@ const WorkspaceCreditsBadge = ({
           event.stopPropagation();
           onClick(workspace);
         }}
-        title="Transfer credits"
+        title="Transfer credit"
       >
         {content}
       </button>

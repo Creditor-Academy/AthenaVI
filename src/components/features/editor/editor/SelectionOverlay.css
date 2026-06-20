@@ -1,0 +1,130 @@
+.sel-overlay {
+  overflow: visible;
+}
+
+.sel-handle {
+  position: absolute;
+  z-index: 60;
+  touch-action: none;
+  box-sizing: border-box;
+}
+
+.sel-handle--corner {
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border: 2px solid #1a73e8;
+  border-radius: 2px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.sel-handle--corner::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+  background: #1a73e8;
+  border-radius: 50%;
+}
+
+.sel-handle--edge {
+  background: #fff;
+  border: 2px solid #1a73e8;
+  border-radius: 3px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.sel-handle--edge-h {
+  width: 22px;
+  height: 8px;
+}
+
+.sel-handle--edge-v {
+  width: 8px;
+  height: 22px;
+}
+
+.sel-overlay__move {
+  position: absolute;
+  inset: 0;
+  cursor: move;
+  z-index: 40;
+  touch-action: none;
+}
+
+.sel-overlay__border {
+  position: absolute;
+  inset: 0;
+  border: 2px solid #1a73e8;
+  pointer-events: none;
+  z-index: 35;
+  box-sizing: border-box;
+}
+
+.sel-overlay__rotate-line {
+  position: absolute;
+  left: 50%;
+  top: -28px;
+  width: 2px;
+  height: 20px;
+  margin-left: -1px;
+  background: #1a73e8;
+  pointer-events: none;
+  z-index: 55;
+}
+
+.sel-overlay__rotate-handle {
+  position: absolute;
+  left: 50%;
+  top: -44px;
+  width: 18px;
+  height: 18px;
+  margin-left: -9px;
+  background: #fff;
+  border: 2px solid #1a73e8;
+  border-radius: 50%;
+  cursor: grab;
+  z-index: 60;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  touch-action: none;
+}
+
+.sel-overlay__rotate-handle:active {
+  cursor: grabbing;
+}
+
+.sel-overlay__angle-badge {
+  position: fixed;
+  padding: 4px 10px;
+  background: rgba(15, 23, 42, 0.92);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 10000;
+  transform: translate(-50%, -100%);
+  white-space: nowrap;
+  font-family: Inter, system-ui, sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.sel-overlay__dimension-badge {
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 3px 8px;
+  background: rgba(15, 23, 42, 0.88);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 55;
+  white-space: nowrap;
+  font-family: Inter, system-ui, sans-serif;
+}

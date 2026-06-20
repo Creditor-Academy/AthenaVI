@@ -1,293 +1,482 @@
-import { useState, useEffect, useRef } from 'react'
-import { Search, ChevronRight, Plus, Users } from 'lucide-react'
-import heygenService from '../../services/heygenService'
-import AvatarPersona from './AvatarPersona'
-import AvatarsSkeleton from '../page-skeleton/AvatarsSkeleton'
-import './Avatars.css'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  MdAdd,
+  MdFace,
+  MdGridView,
+  MdLock,
+  MdPeople,
+  MdPublic,
+  MdViewList,
+} from 'react-icons/md';
+import heygenService from '../../services/heygenService';
+import { AvatarConsentModal } from '../../components/ui/AvatarConsentStep/AvatarConsentStep';
+import { getConsentUrlFromResponse } from '../../utils/heygenAvatars';
+import '../../components/features/workspace/workspace/WorkspaceStyles.css';
+import AvatarsSkeleton from '../page-skeleton/AvatarsSkeleton';
+import VideosToolbar from '../Videos/VideosToolbar.jsx';
+import '../Videos/Videos.css';
+import AvatarCreationCard from './AvatarCreationCard.jsx';
+import AvatarLibraryCard from './AvatarLibraryCard.jsx';
+import AvatarLibraryRow from './AvatarLibraryRow.jsx';
+import AvatarPersona from './AvatarPersona';
+import {
+  applyAvatarFilters,
+  AVATAR_FILTER_OPTIONS,
+  AVATAR_GROUP_OPTIONS,
+  AVATAR_SECTION_TABS,
+  AVATAR_SORT_OPTIONS,
+  getAvatarEmptyHint,
+  getAvatarEmptyTitle,
+  getAvatarSectionSubtitle,
+  groupAvatars,
+  sortAvatars,
+} from './avatarsUtils';
+import './Avatars.css';
 
-// All avatars are fetched dynamically via HeyGen API
+const TAB_ICONS = {
+  public: MdPublic,
+  private: MdLock,
+  workspace: MdPeople,
+};
 
-function Avatars({ onCreate, onCreateAvatar }) {
-  const [avatars, setAvatars] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [loadingMore, setLoadingMore] = useState(false)
-  const [hasMore, setHasMore] = useState(false)
-  const [nextToken, setNextToken] = useState(null)
-  const [selectedAvatar, setSelectedAvatar] = useState(null)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [ownership, setOwnership] = useState('public')
-  const fileInputRef = useRef(null)
+const PAGE_LIMIT = 20;
 
-  useEffect(() => {
-    const fetchAvatars = async () => {
-      try {
-        setLoading(true)
-        const responseData = await heygenService.getAvatarGroups({ ownership, limit: 20 })
+function mapAvatarList(avatarList, ownership) {
+  return (avatarList || []).map((av, idx) => ({
+    id: av.avatar_group_id || av.id || `group-${idx}`,
+    name: av.name || av.group_name || 'AI Presenter',
+    role: av.role || 'Virtual Presenter',
+    description: av.description || 'High-fidelity Athena VI avatar.',
+    image:
+      av.preview_image_url ||
+      av.thumbnail_url ||
+      av.normal_image_url ||
+      av.image_url ||
+      'https://via.placeholder.com/300x400?text=Avatar',
+    preview: av.preview_video_url || null,
+    category: av.category || (ownership === 'public' ? 'Professional' : 'All'),
+    gender: av.gender || 'Unknown',
+    style: av.style || 'Modern',
+    rating: 4.9,
+    rawLooks: av.avatar_looks || [],
+    consentStatus: av.consent_status ?? av.consentStatus ?? null,
+    trainingStatus: av.status ?? av.training_status ?? null,
+  }));
+}
 
-        // Comprehensive mapping to handle different API versions and response shapes
-        let avatarList = [];
-        const data = responseData?.data || responseData;
-        
-        if (Array.isArray(data)) {
-          avatarList = data;
-        } else if (data?.avatar_groups) {
-          avatarList = data.avatar_groups;
-        } else if (data?.avatar_looks) {
-          avatarList = data.avatar_looks;
-        } else if (data?.avatars) {
-          avatarList = data.avatars;
-        } else if (responseData?.avatar_looks) {
-          avatarList = responseData.avatar_looks;
-        } else if (responseData?.avatar_groups) {
-          avatarList = responseData.avatar_groups;
-        }
-        
-        console.log(`Athena VI: Mapping ${avatarList.length} avatars for ownership: ${ownership}`, { raw: responseData });
+function extractAvatarList(responseData) {
+  const data = responseData?.data || responseData;
+  if (Array.isArray(data)) return data;
+  if (data?.avatar_groups) return data.avatar_groups;
+  if (data?.avatar_looks) return data.avatar_looks;
+  if (data?.avatars) return data.avatars;
+  if (responseData?.avatar_looks) return responseData.avatar_looks;
+  if (responseData?.avatar_groups) return responseData.avatar_groups;
+  return [];
+}
 
-        const mappedAvatars = avatarList.map((av, idx) => ({
-          id: av.avatar_group_id || av.id || `group-${idx}`,
-          name: av.name || av.group_name || 'AI Presenter',
-          role: av.role || 'Virtual Presenter',
-          description: av.description || 'High-fidelity Athena VI avatar.',
-          image: av.preview_image_url || av.thumbnail_url || av.normal_image_url || av.image_url || 'https://via.placeholder.com/300x400?text=Avatar',
-          preview: av.preview_video_url || null,
-          category: av.category || (ownership === 'public' ? 'Professional' : 'All'),
-          gender: av.gender || 'Unknown',
-          style: av.style || 'Modern',
-          rating: 4.9,
-          rawLooks: av.avatar_looks || []
-        }))
+function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
+  const [avatars, setAvatars] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [nextToken, setNextToken] = useState(null);
+  const [selectedAvatar, setSelectedAvatar] = useState(null);
+  const [viewMode, setViewMode] = useState('grid');
+  const [activeSection, setActiveSection] = useState('public');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterBy, setFilterBy] = useState('all');
+  const [sortBy, setSortBy] = useState('name_asc');
+  const [groupBy, setGroupBy] = useState('none');
+  const [consentBanner, setConsentBanner] = useState('');
+  const [consentModal, setConsentModal] = useState(null);
+  const fetchRequestRef = useRef(0);
 
-        if (mappedAvatars.length === 0) {
-          console.warn('API returned empty avatars');
-          setAvatars([]);
-        } else {
-          setAvatars(mappedAvatars);
-        }
+  const fetchAvatars = useCallback(async ({ ownership, token, append = false } = {}) => {
+    const requestId = append ? fetchRequestRef.current : ++fetchRequestRef.current;
 
-        setHasMore(!!(data?.has_more ?? responseData?.has_more))
-        setNextToken(data?.token ?? responseData?.token ?? data?.next_token ?? responseData?.next_token ?? null)
-      } catch (error) {
-        console.error('Failed to fetch avatars:', error)
-        setAvatars([])
-        setHasMore(false)
-        setNextToken(null)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchAvatars()
-  }, [ownership])
+    if (append) setLoadingMore(true);
+    else setLoading(true);
 
-  const loadMoreAvatars = async () => {
-    if (!hasMore || !nextToken || loadingMore) return
     try {
-      setLoadingMore(true)
       const responseData = await heygenService.getAvatarGroups({
         ownership,
-        limit: 20,
-        token: nextToken,
-      })
-      const data = responseData?.data || responseData
-      const avatarList =
-        Array.isArray(data) ? data :
-        data?.avatar_groups ? data.avatar_groups :
-        data?.avatars ? data.avatars :
-        responseData?.avatar_groups ? responseData.avatar_groups :
-        []
+        limit: PAGE_LIMIT,
+        ...(token ? { token } : {}),
+      });
 
-      const mapped = avatarList.map((av, idx) => ({
-        id: av.avatar_group_id || av.id || `group-more-${idx}`,
-        name: av.name || av.group_name || 'AI Presenter',
-        role: av.role || 'Virtual Presenter',
-        description: av.description || 'High-fidelity Athena VI avatar.',
-        image: av.preview_image_url || av.thumbnail_url || av.normal_image_url || av.image_url || 'https://via.placeholder.com/300x400?text=Avatar',
-        preview: av.preview_video_url || null,
-        category: av.category || (ownership === 'public' ? 'Professional' : 'All'),
-        gender: av.gender || 'Unknown',
-        style: av.style || 'Modern',
-        rating: 4.9,
-        rawLooks: av.avatar_looks || [],
-      }))
+      if (requestId !== fetchRequestRef.current) return;
+
+      const avatarList = extractAvatarList(responseData);
+      const data = responseData?.data || responseData;
+      const mappedAvatars = mapAvatarList(avatarList, ownership);
 
       setAvatars((prev) => {
-        const seen = new Set(prev.map((a) => a.id))
-        const next = [...prev]
-        mapped.forEach((a) => { if (a?.id && !seen.has(a.id)) next.push(a) })
-        return next
-      })
+        if (!append) return mappedAvatars;
+        const seen = new Set(prev.map((avatar) => avatar.id));
+        const next = [...prev];
+        mappedAvatars.forEach((avatar) => {
+          if (avatar?.id && !seen.has(avatar.id)) next.push(avatar);
+        });
+        return next;
+      });
 
-      setHasMore(!!(data?.has_more ?? responseData?.has_more))
-      setNextToken(data?.token ?? responseData?.token ?? data?.next_token ?? responseData?.next_token ?? null)
+      setHasMore(!!(data?.has_more ?? responseData?.has_more));
+      setNextToken(
+        data?.token ??
+          responseData?.token ??
+          data?.next_token ??
+          responseData?.next_token ??
+          null
+      );
     } catch (error) {
-      console.error('Failed to load more avatars:', error)
-      setHasMore(false)
-      setNextToken(null)
+      if (requestId !== fetchRequestRef.current) return;
+      console.error('Failed to fetch avatars:', error);
+      if (!append) setAvatars([]);
+      setHasMore(false);
+      setNextToken(null);
     } finally {
-      setLoadingMore(false)
+      if (requestId !== fetchRequestRef.current) return;
+      setLoading(false);
+      setLoadingMore(false);
     }
-  }
+  }, []);
 
-  const filteredAvatars = (avatars || []).filter(avatar => {
-    if (!avatar) return false;
-    const nameStr = avatar.name || '';
-    const roleStr = avatar.role || '';
-    const searchStr = (searchQuery || '').toLowerCase();
+  useEffect(() => {
+    setSearchQuery('');
+    setFilterBy('all');
+    setAvatars([]);
+    setHasMore(false);
+    setNextToken(null);
+    fetchAvatars({ ownership: activeSection });
+  }, [activeSection, fetchAvatars]);
 
-    const matchesSearch = nameStr.toLowerCase().includes(searchStr) ||
-      roleStr.toLowerCase().includes(searchStr);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const consentDone = params.get('consent');
+    const groupId = params.get('groupId');
+    if (consentDone !== 'done' || !groupId) return;
 
-    return matchesSearch;
-  })
+    setConsentBanner("Thanks — we're verifying your consent. Refresh if your avatar doesn't update yet.");
+    setActiveSection('private');
+    fetchAvatars({ ownership: 'private' });
 
-  const currentIndex = avatars.findIndex(a => a.id === selectedAvatar?.id)
+    const openConsent = async () => {
+      try {
+        const consentRes = await heygenService.getAvatarConsent(groupId);
+        setConsentModal({
+          groupId,
+          avatarName: 'Your Digital Twin',
+          consentUrl: getConsentUrlFromResponse(consentRes),
+          consentStatus: consentRes?.avatar_group?.consent_status ?? 'pending',
+        });
+      } catch (error) {
+        console.warn('Could not reopen consent flow after redirect', error);
+        setConsentModal({
+          groupId,
+          avatarName: 'Your Digital Twin',
+          consentUrl: '',
+          consentStatus: 'pending',
+        });
+      }
+    };
 
-  const handleSelectPersona = (avatar) => {
-    setSelectedAvatar(avatar)
-  }
+    openConsent();
+
+    params.delete('consent');
+    params.delete('groupId');
+    const nextSearch = params.toString();
+    window.history.replaceState(
+      null,
+      '',
+      `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ''}${window.location.hash}`
+    );
+  }, [fetchAvatars]);
+
+  const filteredAvatars = useMemo(() => {
+    const filtered = applyAvatarFilters(avatars, { searchQuery, filterBy });
+    return sortAvatars(filtered, sortBy);
+  }, [avatars, searchQuery, filterBy, sortBy]);
+
+  const avatarGroups = useMemo(
+    () => groupAvatars(filteredAvatars, groupBy),
+    [filteredAvatars, groupBy]
+  );
+
+  const hasSearch = Boolean(searchQuery.trim()) || filterBy !== 'all';
+  const showCreateCard = activeSection === 'private' && onCreateAvatar && !hasSearch;
 
   const openAvatarDetails = (avatar) => {
-    setSelectedAvatar(avatar)
-  }
+    setSelectedAvatar(avatar);
+  };
 
   const closeDetails = () => {
-    setSelectedAvatar(null)
-  }
+    setSelectedAvatar(null);
+  };
 
-  const handleCreateVideo = (avatar) => {
-    console.log('Creating video from', avatar.name)
-    if (onCreate) {
-      onCreate()
+  const handleCreateVideo = () => {
+    if (onCreate) onCreate();
+    closeDetails();
+  };
+
+  const loadMoreAvatars = () => {
+    if (!hasMore || !nextToken || loadingMore) return;
+    fetchAvatars({ ownership: activeSection, token: nextToken, append: true });
+  };
+
+  const openConsentForAvatar = async (avatar, event) => {
+    event?.stopPropagation?.();
+    if (!avatar?.id) return;
+    try {
+      const consentRes = await heygenService.getAvatarConsent(avatar.id);
+      setConsentModal({
+        groupId: avatar.id,
+        avatarName: avatar.name,
+        consentUrl: getConsentUrlFromResponse(consentRes),
+        consentStatus: consentRes?.avatar_group?.consent_status ?? avatar.consentStatus ?? 'pending',
+      });
+    } catch (error) {
+      console.error('Failed to open consent flow:', error);
+      setConsentModal({
+        groupId: avatar.id,
+        avatarName: avatar.name,
+        consentUrl: '',
+        consentStatus: avatar.consentStatus ?? 'pending',
+      });
     }
-    closeDetails()
+  };
+
+  const handleConsentRefresh = () => {
+    fetchAvatars({ ownership: activeSection });
+  };
+
+  const handleConsentComplete = () => {
+    setConsentBanner('Consent approved — your Digital Twin will finish processing shortly.');
+    fetchAvatars({ ownership: activeSection });
+  };
+
+  const renderAvatarCollection = (collection) => (
+    <div
+      className={`items-container videos-export-items avatars-library-items ${
+        viewMode === 'grid' ? 'tile-view' : 'list-view export-list-view'
+      }`}
+    >
+      {viewMode === 'list' ? (
+        <div className="list-header export-list-header">
+          <div className="col" />
+          <div className="col">Name</div>
+          <div className="col">Role</div>
+          <div className="col">Gender</div>
+          <div className="col">Style</div>
+          <div className="col">Looks</div>
+          <div className="col" />
+        </div>
+      ) : null}
+
+      {showCreateCard && viewMode === 'grid' ? (
+        <AvatarCreationCard onClick={onCreateAvatar} />
+      ) : null}
+
+      {collection.map((avatar) =>
+        viewMode === 'grid' ? (
+          <AvatarLibraryCard
+            key={avatar.id}
+            avatar={avatar}
+            onOpen={openAvatarDetails}
+            onCompleteConsent={openConsentForAvatar}
+          />
+        ) : (
+          <AvatarLibraryRow
+            key={avatar.id}
+            avatar={avatar}
+            onOpen={openAvatarDetails}
+            onCompleteConsent={openConsentForAvatar}
+          />
+        )
+      )}
+    </div>
+  );
+
+  if (selectedAvatar) {
+    return (
+      <div className="avatars-persona-shell">
+        <AvatarPersona
+          selectedAvatar={selectedAvatar}
+          closeDetails={closeDetails}
+          onCreate={handleCreateVideo}
+          isPrivate={activeSection === 'private'}
+          onCreateLooks={
+            activeSection === 'private' && onCreateLooks
+              ? (ctx) => {
+                  onCreateLooks(ctx);
+                  closeDetails();
+                }
+              : undefined
+          }
+          onCompleteConsent={openConsentForAvatar}
+        />
+      </div>
+    );
   }
 
   return (
-    <div className={`avatars-workspace ${selectedAvatar ? 'details-active' : ''}`}>
-      {/* Removed workspace-sidebar as requested by user - it felt 'weird' */}
+    <div className="videos-page avatars-page">
+      <div className="videos-shell">
+        <header className="videos-page-header">
+          <div className="videos-title-section">
+            <h1 className="videos-page-title">Avatars</h1>
+            <p className="videos-page-subtitle">{getAvatarSectionSubtitle(activeSection)}</p>
+          </div>
+          <div className="videos-actions">
+            <div className="view-toggle">
+              <button
+                className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                onClick={() => setViewMode('grid')}
+                title="Grid view"
+                type="button"
+              >
+                <MdGridView />
+              </button>
+              <button
+                className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+                onClick={() => setViewMode('list')}
+                title="List view"
+                type="button"
+              >
+                <MdViewList />
+              </button>
+            </div>
+            {activeSection === 'private' && onCreateAvatar ? (
+              <button
+                type="button"
+                className="btn-primary videos-create-btn"
+                onClick={onCreateAvatar}
+              >
+                <MdAdd size={18} />
+                Create Avatar
+              </button>
+            ) : onCreate ? (
+              <button type="button" className="btn-primary videos-create-btn" onClick={onCreate}>
+                <MdAdd size={18} />
+                Create Video
+              </button>
+            ) : null}
+          </div>
+        </header>
 
-      {/* Main Content Area */}
-      <main className="workspace-main">
-        {!selectedAvatar ? (
-          loading ? (
+        <div className="videos-tab-switch" role="tablist" aria-label="Avatar sections">
+          {AVATAR_SECTION_TABS.map((tab) => {
+            const Icon = TAB_ICONS[tab.id];
+            const isActive = activeSection === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                className={`videos-tab-btn ${isActive ? 'active' : ''}`}
+                onClick={() => setActiveSection(tab.id)}
+              >
+                <span className="videos-tab-icon" aria-hidden>
+                  <Icon size={18} />
+                </span>
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <VideosToolbar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          filterBy={filterBy}
+          onFilterChange={setFilterBy}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          groupBy={groupBy}
+          onGroupChange={setGroupBy}
+          filterOptions={AVATAR_FILTER_OPTIONS}
+          sortOptions={AVATAR_SORT_OPTIONS}
+          groupOptions={AVATAR_GROUP_OPTIONS}
+          searchPlaceholder="Search avatars by name or role…"
+          searchAriaLabel="Search avatars"
+        />
+
+        <main className="videos-main">
+          {consentBanner ? (
+            <div className="avatars-consent-banner" role="status">
+              {consentBanner}
+            </div>
+          ) : null}
+          {loading ? (
             <AvatarsSkeleton />
+          ) : filteredAvatars.length === 0 && !showCreateCard ? (
+            <div className="videos-empty-state">
+              <div className="videos-empty-state__card">
+                <span className="videos-empty-state__icon-wrap" aria-hidden>
+                  <MdFace size={28} />
+                </span>
+                <p className="videos-empty-state__eyebrow">
+                  {hasSearch ? 'No results' : 'Nothing here yet'}
+                </p>
+                <h3 className="videos-empty-state__title">
+                  {getAvatarEmptyTitle(activeSection, hasSearch)}
+                </h3>
+                <p className="videos-empty-state__description">
+                  {getAvatarEmptyHint(activeSection, hasSearch)}
+                </p>
+                {!hasSearch && activeSection === 'private' && onCreateAvatar ? (
+                  <button
+                    type="button"
+                    className="videos-empty-state__cta"
+                    onClick={onCreateAvatar}
+                  >
+                    <MdAdd size={16} aria-hidden />
+                    Create Avatar
+                  </button>
+                ) : null}
+              </div>
+            </div>
           ) : (
-          <div className="grid-container">
-            <header className="avatars-header">
-              <div className="header-info">
-                <h1>Avatars</h1>
-                <p>Choose an avatar for your next video project.</p>
-              </div>
-              <div className="header-actions">
-                <div className="ownership-segmented-control">
-                  <button
-                    className={`segmented-btn ${ownership === 'public' ? 'active' : ''}`}
-                    onClick={() => setOwnership('public')}
-                  >
-                    Public Library
-                  </button>
-                  <button
-                    className={`segmented-btn ${ownership === 'private' ? 'active' : ''}`}
-                    onClick={() => setOwnership('private')}
-                  >
-                    My Avatars
-                  </button>
-                  <button
-                    className={`segmented-btn ${ownership === 'workspace' ? 'active' : ''}`}
-                    onClick={() => setOwnership('workspace')}
-                  >
-                    Team Shared
-                  </button>
-                </div>
-
-                <div className="search-section">
-                  <div className="search-bar">
-                    <Search size={18} />
-                    <input
-                      type="text"
-                      placeholder="Search neural units..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-            </header>
-
-            <div className="avatars-grid">
-              {ownership === 'private' && (
-                <div className="avatar-card creation-card" onClick={() => onCreateAvatar && onCreateAvatar()}>
-                  <div className="open-creation-btn">
-                    <div className="creation-icon-wrapper">
-                      <Plus size={32} />
-                    </div>
-                    <span>Create New Custom Avatar</span>
-                  </div>
-                </div>
-              )}
-              
-              {filteredAvatars.map(avatar => (
-                <div key={avatar.id} className="avatar-card" onClick={() => openAvatarDetails(avatar)}>
-                  <div className="avatar-image-container">
-                    <img src={avatar.image} alt={avatar.name} />
-                    <div className="avatar-overlay">
-                      {/* Overlay now only for hover effect */}
-                    </div>
-                  </div>
-                  <div className="avatar-info">
-                    <div className="avatar-info-content">
-                      <h3>{avatar.name}</h3>
-                      <p>{avatar.role}</p>
-                    </div>
-                    <div className="workspace-action-badge">
-                      <span>View Persona</span>
-                    </div>
-                  </div>
-                </div>
+            <div className="videos-groups">
+              {avatarGroups.map((group) => (
+                <section key={group.key} className="videos-group">
+                  {group.label ? (
+                    <h3 className="videos-group__heading">{group.label}</h3>
+                  ) : null}
+                  {renderAvatarCollection(group.avatars)}
+                </section>
               ))}
             </div>
+          )}
 
-            {hasMore && !loading && !selectedAvatar && (
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '18px 0 6px' }}>
-                <button
-                  type="button"
-                  onClick={loadMoreAvatars}
-                  disabled={loadingMore}
-                  style={{
-                    padding: '10px 16px',
-                    borderRadius: 12,
-                    border: '1px solid rgba(0,0,0,0.12)',
-                    background: '#fff',
-                    cursor: loadingMore ? 'not-allowed' : 'pointer',
-                    fontWeight: 700,
-                  }}
-                >
-                  {loadingMore ? 'Loading…' : 'Load more'}
-                </button>
-              </div>
-            )}
+          {hasMore && !loading ? (
+            <div className="videos-load-more">
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={loadingMore}
+                onClick={loadMoreAvatars}
+              >
+                {loadingMore ? 'Loading…' : 'Load more'}
+              </button>
+            </div>
+          ) : null}
+        </main>
+      </div>
 
-            {filteredAvatars.length === 0 && !loading && ownership === 'workspace' && (
-              <div className="empty-state-container">
-                <div className="empty-state-visual">
-                  <Users size={64} />
-                </div>
-                <h2>Your Team Library is Empty</h2>
-                <p>Start collaborating by creating and sharing avatars with your workspace members.</p>
-              </div>
-            )}
-          </div>
-          )
-        ) : (
-          <AvatarPersona
-            selectedAvatar={selectedAvatar}
-            closeDetails={closeDetails}
-            onCreate={() => handleCreateVideo(selectedAvatar)}
-          />
-        )}
-      </main>
+      <AvatarConsentModal
+        isOpen={Boolean(consentModal)}
+        groupId={consentModal?.groupId}
+        avatarName={consentModal?.avatarName}
+        consentUrl={consentModal?.consentUrl}
+        consentStatus={consentModal?.consentStatus}
+        onClose={() => setConsentModal(null)}
+        onComplete={handleConsentComplete}
+        onRefresh={handleConsentRefresh}
+      />
     </div>
-  )
+  );
 }
 
-export default Avatars
+export default Avatars;

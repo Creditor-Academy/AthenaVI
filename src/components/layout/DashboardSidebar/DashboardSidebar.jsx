@@ -1,14 +1,6 @@
 import { MdHelpOutline } from 'react-icons/md'
 import { mainDashboardSidebarGroups } from '../../../constants/dashboardNav'
-
-const STORAGE_USED_GB = 0.82
-const STORAGE_LIMIT_GB = 2.0
-
-function isNavActive(section, itemId) {
-  if (itemId === '__translate__' || itemId === '__ai__') return false
-  if (itemId === 'templates' && section === 'template-details') return true
-  return section === itemId
-}
+import DashboardSidebarStorage from './DashboardSidebarStorage.jsx'
 
 function DashboardSidebar({
   section,
@@ -19,20 +11,18 @@ function DashboardSidebar({
 }) {
   const handleItem = (item) => {
     if (item.id === '__translate__') {
-      onOpenTranslate?.()
-      onCloseMobile?.()
-      return
+      onOpenTranslate?.();
+      onCloseMobile?.();
+      return;
     }
     if (item.id === '__ai__') {
-      onOpenAI?.()
-      onCloseMobile?.()
-      return
+      onOpenAI?.();
+      onCloseMobile?.();
+      return;
     }
-    onNavigate(item.id)
-    onCloseMobile?.()
-  }
-
-  const storagePct = Math.round((STORAGE_USED_GB / STORAGE_LIMIT_GB) * 100)
+    onNavigate(item.id);
+    onCloseMobile?.();
+  };
 
   return (
     <aside className="dashboard-sidebar-nav" aria-label="Dashboard navigation">
@@ -43,8 +33,8 @@ function DashboardSidebar({
               <div className="dashboard-sidebar-section-label">{group.label}</div>
             )}
             {group.items.map((item) => {
-              const Icon = item.Icon
-              const active = isNavActive(section, item.id)
+              const Icon = item.Icon;
+              const active = isNavActive(section, item.id);
               return (
                 <button
                   key={item.id}
@@ -58,55 +48,41 @@ function DashboardSidebar({
                     <span className="dashboard-nav-item-badge">{item.badge}</span>
                   )}
                 </button>
-              )
+              );
             })}
           </div>
         ))}
       </div>
 
       <div className="dashboard-sidebar-footer">
-        <div className="dashboard-sidebar-storage" aria-label="Storage usage">
-          <div className="dashboard-storage-label">
-            <span>Storage used</span>
-            <span>{storagePct}%</span>
-          </div>
-          <div className="dashboard-storage-bar">
-            <div
-              className="dashboard-storage-progress"
-              style={{ width: `${storagePct}%` }}
-            />
-          </div>
-          <div className="dashboard-storage-text">
-            {STORAGE_USED_GB} GB of {STORAGE_LIMIT_GB} GB used
-          </div>
-          <button
-            type="button"
-            className="dashboard-storage-upgrade-btn"
-            onClick={() => {
-              onNavigate('credits')
-              onCloseMobile?.()
-            }}
-          >
-            Get more storage
-          </button>
-        </div>
+        <DashboardSidebarStorage
+          onUpgrade={() => {
+            onNavigate('credits');
+            onCloseMobile?.();
+          }}
+        />
 
-        <a
-          href="/support"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="dashboard-nav-item dashboard-sidebar-help"
+        <button
+          type="button"
+          className={`dashboard-nav-item dashboard-sidebar-help ${section === 'help' ? 'dashboard-nav-item--active' : ''}`}
           onClick={() => {
+            onNavigate('help')
             onCloseMobile?.()
           }}
           aria-label="Help"
         >
           <MdHelpOutline className="dashboard-nav-item-icon dashboard-sidebar-help-icon" size={18} aria-hidden />
           <span className="dashboard-nav-item-label">Help</span>
-        </a>
+        </button>
       </div>
     </aside>
-  )
+  );
 }
 
-export default DashboardSidebar
+function isNavActive(section, itemId) {
+  if (itemId === '__translate__' || itemId === '__ai__') return false;
+  if (itemId === 'templates' && section === 'template-details') return true;
+  return section === itemId;
+}
+
+export default DashboardSidebar;

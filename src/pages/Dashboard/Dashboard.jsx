@@ -3,6 +3,7 @@ import Home from '../Home/Home.jsx'
 import Videos from '../Videos/Videos.jsx'
 import Avatars from '../Avatars/Avatars.jsx'
 import CreateAvatar from '../Avatars/CreateAvatar.jsx'
+import CreateAvatarLook from '../Avatars/CreateAvatarLook.jsx'
 import Voices from '../Voices/Voices.jsx'
 import CreateVoice from '../Voices/CreateVoice.jsx'
 import Library from '../Library/Library.jsx'
@@ -10,6 +11,7 @@ import Templates from '../Templates/Templates.jsx'
 import TemplateDetails from '../TemplateDetails/TemplateDetails.jsx'
 import Profile from '../Profile/Profile.jsx'
 import Settings from '../Settings/Settings.jsx'
+import Help from '../UserHelp/Help.jsx'
 import BrandKits from '../BrandKits/BrandKits.jsx'
 import TeamWorkspace from '../TeamWorkspace/TeamWorkspace.jsx'
 import AdminPortal from '../AdminPortal/AdminPortal.jsx'
@@ -26,6 +28,7 @@ import { X } from 'lucide-react'
 import userService from '../../services/userService.js'
 import CreditsQuickModal from '../../components/ui/CreditsQuickModal/CreditsQuickModal.jsx'
 import { useAuth } from '../../contexts/AuthContext'
+import { bundleToDetailsTemplate } from '../../utils/fetchTemplateBundles.js'
 import './Dashboard.css'
 
 
@@ -52,6 +55,9 @@ function Dashboard({ onCreate, initialSection }) {
     if (currentPath.startsWith('/dashboard/')) {
       return currentPath.replace('/dashboard/', '') || 'home'
     }
+    if (currentPath === '/support') {
+      return 'help'
+    }
     return 'home'
   })
   const [selectedVoice, setSelectedVoice] = useState(null)
@@ -68,6 +74,7 @@ function Dashboard({ onCreate, initialSection }) {
   const [topbarMobileOpen, setTopbarMobileOpen] = useState(false)
   const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false)
   const [lastVoiceCreated, setLastVoiceCreated] = useState(false)
+  const [avatarLookContext, setAvatarLookContext] = useState(null)
   const [adminTab, setAdminTab] = useState(() => {
     const saved = localStorage.getItem('adminPortalTab')
     const valid = ['users', 'workspaces', 'reports', 'heygen']
@@ -85,9 +92,12 @@ function Dashboard({ onCreate, initialSection }) {
     'library',
     'brandkits',
     'avatars',
+    'create-avatar',
+    'create-avatar-look',
     'voices',
     'admin-portal',
     'settings',
+    'help',
   ]
 
   const isAdminPortal = section === 'admin-portal'
@@ -189,6 +199,8 @@ function Dashboard({ onCreate, initialSection }) {
       }
       if (currentPath === '/profile') {
         setSection('profile')
+      } else if (currentPath === '/support') {
+        setSection('help')
       } else if (currentPath.startsWith('/dashboard/')) {
         const newSection = currentPath.replace('/dashboard/', '') || 'home'
         setSection(newSection)
@@ -200,6 +212,12 @@ function Dashboard({ onCreate, initialSection }) {
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
+
+  useEffect(() => {
+    if (section === 'create-avatar-look' && !avatarLookContext) {
+      goToSection('avatars')
+    }
+  }, [section, avatarLookContext, goToSection])
 
   // Eagerly fetch and sync user profile on dashboard mount
   useEffect(() => {
@@ -257,6 +275,7 @@ function Dashboard({ onCreate, initialSection }) {
           <AdminPortalSidebar
             activeTab={adminTab}
             onTabChange={handleAdminTabChange}
+            onNavigateHelp={() => goToSection('help')}
             onCloseMobile={() => setSidebarMobileOpen(false)}
           />
         ) : (
@@ -293,6 +312,11 @@ function Dashboard({ onCreate, initialSection }) {
               onCreate={handleOpenCreateVideoModal}
               onEdit={handleEditVideo}
               onShowAIAssistant={() => setShowAIAssistant(true)}
+              onBrowseTemplates={() => goToSection('templates')}
+              onSelectTemplate={(bundle) => {
+                setSelectedTemplateForDetails(bundleToDetailsTemplate(bundle))
+                goToSection('template-details')
+              }}
             />
           )}
           {section === 'videos' && <Videos onCreate={handleOpenCreateVideoModal} onEdit={handleEditVideo} />}
@@ -300,14 +324,29 @@ function Dashboard({ onCreate, initialSection }) {
             <Avatars 
               onCreate={handleOpenCreateVideoModal} 
               onEdit={handleEditVideo}              goToSection={goToSection} 
-              onCreateAvatar={() => goToSection('create-avatar')} 
+              onCreateAvatar={() => goToSection('create-avatar')}
+              onCreateLooks={(ctx) => {
+                setAvatarLookContext(ctx)
+                goToSection('create-avatar-look')
+              }}
             />
           )}
           {section === 'create-avatar' && (
-            <CreateAvatar 
-              onBack={(success) => {
-                goToSection('avatars');
-              }} 
+            <CreateAvatar
+              onBack={() => goToSection('avatars')}
+              onCreateLooks={(ctx) => {
+                setAvatarLookContext(ctx)
+                goToSection('create-avatar-look')
+              }}
+            />
+          )}
+          {section === 'create-avatar-look' && avatarLookContext && (
+            <CreateAvatarLook
+              context={avatarLookContext}
+              onBack={() => {
+                setAvatarLookContext(null)
+                goToSection('avatars')
+              }}
             />
           )}
           {section === 'voices' && (
@@ -355,6 +394,9 @@ function Dashboard({ onCreate, initialSection }) {
           {section === 'credits' && <Settings onBack={() => goToSection('home')} initialTab="billing" />}
           {section === 'profile' && <Profile onBack={() => goToSection('home')} />}
           {section === 'settings' && <Settings onBack={() => goToSection('home')} />}
+          {section === 'help' && (
+            <Help embedded onOpenBilling={() => goToSection('credits')} />
+          )}
         </main>
       </div>
 

@@ -1,20 +1,32 @@
-import { useState } from 'react';
-import { MdAnimation, MdClose, MdArrowBack, MdArrowForward } from 'react-icons/md';
+import { useState, useEffect, Fragment } from 'react';
+import { MdAnimation, MdClose } from 'react-icons/md';
 import {
   getEntranceAnimation,
   setEntranceAnimation,
+  getExitAnimation,
+  setExitAnimation,
 } from '../../../../utils/clipAnimations';
 import {
-  PRIMARY_LAYER_ANIMATIONS,
-  ADDON_LAYER_ANIMATIONS,
-  ANIMATION_DIRECTION,
-  findLayerAnimationPreset,
-  getLayerAnimationPresetId,
+  ALL_MEDIA_ANIMATION_PRESETS,
+  findMediaAnimationPreset,
+  getActiveMediaPresetId,
+  inferAnimationScope,
+  entranceTypeToExitType,
   durationForEntrance,
+  durationForExit,
 } from '../../../../utils/layerAnimatePresets';
+import AnimationScopeControls, { ANIMATION_APPLY_SCOPE } from './AnimationScopeControls';
 import './LayerAnimatePanel.css';
 
-const PRIMARY_PREVIEW = 6;
+const GRID_COLS = 3;
+
+function shouldShowApplyPanelAfterIndex(index, expandedIndex, visibleLength, cols = GRID_COLS) {
+  if (expandedIndex < 0) return false;
+  const expandedRow = Math.floor(expandedIndex / cols);
+  const currentRow = Math.floor(index / cols);
+  if (currentRow !== expandedRow) return false;
+  return (index + 1) % cols === 0 || index === visibleLength - 1;
+}
 
 const AnimatePreview = ({ presetId }) => (
   <span className={`layer-animate-preview layer-animate-preview--${presetId}`} aria-hidden />
@@ -24,40 +36,33 @@ const CollapsibleGrid = ({
   title,
   options,
   activeId,
+  expandedId,
   onSelect,
-  previewCount = PRIMARY_PREVIEW,
+  applyPanel = null,
 }) => {
-  const [expanded, setExpanded] = useState(false);
-  const hasMore = options.length > previewCount;
-  const visible = expanded || !hasMore ? options : options.slice(0, previewCount);
-  const hiddenCount = options.length - previewCount;
+  const expandedIndex = expandedId ? options.findIndex((o) => o.id === expandedId) : -1;
 
   return (
     <div className="layer-animate-section">
       <div className="layer-animate-section__head">
         <span className="layer-animate-section__title">{title}</span>
-        {hasMore ? (
-          <button
-            type="button"
-            className="layer-animate-expand"
-            onClick={() => setExpanded((v) => !v)}
-          >
-            {expanded ? 'Show less' : `Show all (${hiddenCount})`}
-          </button>
-        ) : null}
       </div>
       <div className="layer-animate-grid">
-        {visible.map((opt) => (
-          <button
-            key={opt.id}
-            type="button"
-            className={`layer-animate-card ${activeId === opt.id ? 'layer-animate-card--active' : ''}`}
-            onClick={() => onSelect(opt.id)}
-            title={opt.label}
-          >
-            <AnimatePreview presetId={opt.id} />
-            <span className="layer-animate-card__label">{opt.label}</span>
-          </button>
+        {options.map((opt, index) => (
+          <Fragment key={opt.id}>
+            <button
+              type="button"
+              className={`layer-animate-card ${activeId === opt.id ? 'layer-animate-card--active' : ''} ${expandedId === opt.id ? 'layer-animate-card--expanded' : ''}`}
+              onClick={() => onSelect(opt.id)}
+              title={opt.label}
+            >
+              <AnimatePreview presetId={opt.id} />
+              <span className="layer-animate-card__label">{opt.label}</span>
+            </button>
+            {applyPanel && shouldShowApplyPanelAfterIndex(index, expandedIndex, options.length) ? (
+              <div className="layer-animate-apply-inline">{applyPanel}</div>
+            ) : null}
+          </Fragment>
         ))}
       </div>
     </div>
@@ -69,32 +74,100 @@ const CollapsibleGrid = ({
  */
 const LayerAnimatePanel = ({ activeLayer, updateLayer, onClose, hideHeader = false }) => {
   const entrance = getEntranceAnimation(activeLayer);
-  const activePresetId = getLayerAnimationPresetId(entrance?.type || '');
-  const direction = entrance?.direction || ANIMATION_DIRECTION.LEFT;
+  const exit = getExitAnimation(activeLayer);
+  const activePresetId = getActiveMediaPresetId(entrance, exit);
 
-  const applyPreset = (presetId) => {
-    const preset = findLayerAnimationPreset(presetId);
-    if (!preset) return;
-    const next = setEntranceAnimation(activeLayer, {
-      type: preset.entrance,
-      duration: durationForEntrance(preset.entrance),
-      delay: entrance?.delay ?? 0,
-      direction,
-      previewSeed: Date.now(),
-    });
+  const [expandedPresetId, setExpandedPresetId] = useState(null);
+  const [applyScope, setApplyScope] = useState(ANIMATION_APPLY_SCOPE.ENTRANCE);
+
+  const expandedPreset = expandedPresetId ? findMediaAnimationPreset(expandedPresetId) : null;
+
+  useEffect(() => {
+    setExpandedPresetId(null);
+  }, [activeLayer?.id]);
+
+  const applyScopeToLayer = (preset, scope, layer = activeLayer) => {
+    if (!preset) return layer;
+    const exitType = entranceTypeToExitType(preset.entrance);
+    let next = layer;
+
+    if (scope === ANIMATION_APPLY_SCOPE.ENTRANCE || scope === ANIMATION_APPLY_SCOPE.BOTH) {
+      next = setEntranceAnimation(next, {
+        type: preset.entrance,
+        duration: entrance?.duration ?? durationForEntrance(preset.entrance),
+        delay: entrance?.delay ?? 0,
+        previewSeed: Date.now(),
+      });
+    }
+
+    if (scope === ANIMATION_APPLY_SCOPE.EXIT || scope === ANIMATION_APPLY_SCOPE.BOTH) {
+      next = setExitAnimation(next, {
+        type: exitType,
+        duration: exit?.duration ?? durationForExit(exitType),
+        delay: exit?.delay ?? 0,
+        previewSeed: Date.now(),
+      });
+    }
+
+    if (scope === ANIMATION_APPLY_SCOPE.ENTRANCE) {
+      next = setExitAnimation(next, { type: 'none' });
+    } else if (scope === ANIMATION_APPLY_SCOPE.EXIT) {
+      next = setEntranceAnimation(next, { type: 'none' });
+    }
+
+    return next;
+  };
+
+  const handlePresetClick = (presetId) => {
+    if (expandedPresetId === presetId) {
+      setExpandedPresetId(null);
+      return;
+    }
+    const preset = findMediaAnimationPreset(presetId);
+    setExpandedPresetId(presetId);
+    const scope = inferAnimationScope(preset, entrance, exit);
+    setApplyScope(scope);
+    const next = applyScopeToLayer(preset, scope);
     updateLayer({ animations: next.animations });
   };
 
-  const clearAnimation = () => {
-    const next = setEntranceAnimation(activeLayer, { type: 'none' });
+  const handleScopeChange = (scope) => {
+    setApplyScope(scope);
+    if (!expandedPreset) return;
+    const next = applyScopeToLayer(expandedPreset, scope);
     updateLayer({ animations: next.animations });
   };
 
-  const setDirection = (dir) => {
-    if (!entrance || entrance.type === 'none') return;
-    const next = setEntranceAnimation(activeLayer, { direction: dir, previewSeed: Date.now() });
+  const patchEntrance = (patch) => {
+    const next = setEntranceAnimation(activeLayer, { ...patch, previewSeed: Date.now() });
     updateLayer({ animations: next.animations });
   };
+
+  const patchExit = (patch) => {
+    const next = setExitAnimation(activeLayer, { ...patch, previewSeed: Date.now() });
+    updateLayer({ animations: next.animations });
+  };
+
+  const clearAnimations = () => {
+    let next = setEntranceAnimation(activeLayer, { type: 'none' });
+    next = setExitAnimation(next, { type: 'none' });
+    updateLayer({ animations: next.animations });
+    setExpandedPresetId(null);
+  };
+
+  const applyPanel = expandedPreset ? (
+    <AnimationScopeControls
+      presetLabel={expandedPreset.label}
+      activeScope={applyScope}
+      onScopeChange={handleScopeChange}
+      entrance={entrance}
+      exit={exit}
+      onPatchEntrance={patchEntrance}
+      onPatchExit={patchExit}
+      onClear={clearAnimations}
+      inline
+    />
+  ) : null;
 
   return (
     <div className={`layer-animate-panel ${hideHeader ? 'layer-animate-panel--embedded' : ''}`}>
@@ -112,49 +185,14 @@ const LayerAnimatePanel = ({ activeLayer, updateLayer, onClose, hideHeader = fal
         </div>
       ) : null}
 
-      <div className="layer-animate-direction">
-        <span className="layer-animate-direction__label">Direction</span>
-        <div className="layer-animate-direction__btns">
-          <button
-            type="button"
-            className={`layer-animate-dir-btn ${direction === ANIMATION_DIRECTION.LEFT ? 'layer-animate-dir-btn--active' : ''}`}
-            onClick={() => setDirection(ANIMATION_DIRECTION.LEFT)}
-            title="From left"
-          >
-            <MdArrowBack size={18} />
-          </button>
-          <button
-            type="button"
-            className={`layer-animate-dir-btn ${direction === ANIMATION_DIRECTION.RIGHT ? 'layer-animate-dir-btn--active' : ''}`}
-            onClick={() => setDirection(ANIMATION_DIRECTION.RIGHT)}
-            title="From right"
-          >
-            <MdArrowForward size={18} />
-          </button>
-        </div>
-      </div>
-
       <CollapsibleGrid
-        title="Entrance"
-        options={PRIMARY_LAYER_ANIMATIONS}
+        title="Animations"
+        options={ALL_MEDIA_ANIMATION_PRESETS}
         activeId={activePresetId}
-        onSelect={applyPreset}
-        previewCount={6}
+        expandedId={expandedPresetId}
+        onSelect={handlePresetClick}
+        applyPanel={applyPanel}
       />
-
-      <CollapsibleGrid
-        title="Add-on effects"
-        options={ADDON_LAYER_ANIMATIONS}
-        activeId={activePresetId}
-        onSelect={applyPreset}
-        previewCount={3}
-      />
-
-      {activePresetId ? (
-        <button type="button" className="layer-animate-clear" onClick={clearAnimation}>
-          Remove animation
-        </button>
-      ) : null}
     </div>
   );
 };

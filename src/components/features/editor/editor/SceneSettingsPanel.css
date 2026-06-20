@@ -33,14 +33,14 @@
 }
 
 .scene-settings__title {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 800;
   color: var(--text-main);
   letter-spacing: -0.02em;
 }
 
 .scene-settings__subtitle {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-muted);
   margin-top: 1px;
@@ -51,7 +51,7 @@
   background: var(--bg-card);
   border-radius: 8px;
   padding: 6px 10px;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--text-muted);
   cursor: pointer;
@@ -85,7 +85,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -116,7 +116,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -124,7 +124,7 @@
 }
 
 .scene-settings__voice-value {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-main);
   margin-top: 4px;
@@ -146,7 +146,7 @@
 }
 
 .scene-settings__script {
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.45;
   color: var(--text-main);
   margin: 6px 0 4px;
@@ -155,7 +155,7 @@
 }
 
 .scene-settings__meta {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--text-muted);
   font-weight: 600;
 }
@@ -167,7 +167,7 @@
 
 .scene-settings__empty p {
   margin: 0 0 10px;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text-muted);
 }
 
@@ -178,7 +178,7 @@
   border-radius: 10px;
   background: var(--primary);
   color: #fff;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   display: inline-flex;
@@ -209,7 +209,7 @@
 
 .scene-settings__status {
   text-align: center;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text-muted);
   margin-top: 8px;
 }
@@ -233,7 +233,7 @@
 }
 
 .scene-settings__field-label {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -252,7 +252,7 @@
   border-radius: 8px;
   border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.1));
   background: white;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--text-main);
   cursor: pointer;
@@ -278,7 +278,7 @@
   border-radius: 8px;
   border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.1));
   background: white;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
   line-height: 1;
@@ -288,7 +288,7 @@
 .scene-settings__stepper-val {
   min-width: 52px;
   text-align: center;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text-main);
 }
@@ -306,7 +306,7 @@
   border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.1));
   border-radius: 8px;
   padding: 8px 10px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   background: white;
   color: var(--text-main);
@@ -316,7 +316,7 @@
 
 .scene-settings__hint {
   margin: 0;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.4;
   color: var(--text-muted);
   font-weight: 600;
@@ -340,7 +340,7 @@
 .scene-settings__ghost-btn {
   border: none;
   background: transparent;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--primary);
   cursor: pointer;
@@ -360,7 +360,7 @@
   background: white;
   border-radius: 6px;
   padding: 4px 8px;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--text-muted);
   cursor: pointer;
@@ -370,4 +370,30 @@
 .scene-settings__apply-btn:hover {
   color: var(--primary);
   border-color: var(--primary);
+}
+
+.scene-settings__summary-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.scene-settings__summary-card {
+  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
+  border-radius: 10px;
+  background: var(--bg-card);
+  padding: 8px 10px;
+  min-width: 0;
+}
+
+.scene-settings__apply-btn--inline {
+  margin-top: 7px;
+  width: 100%;
+}
+
+.scene-settings__script-wrap {
+  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
+  border-radius: 10px;
+  background: var(--bg-card);
+  padding: 10px;
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   MdAdd,
   MdClose,
@@ -71,6 +71,8 @@ const EditorSidebar = ({
 }) => {
   const [transitionPickerSceneId, setTransitionPickerSceneId] = useState(null);
   const [showAllSequences, setShowAllSequences] = useState(false);
+  const [scrollActive, setScrollActive] = useState(false);
+  const sidebarRef = useRef(null);
 
   const pickerScene = scenes.find((s) => s.id === transitionPickerSceneId);
 
@@ -91,9 +93,29 @@ const EditorSidebar = ({
     setTransitionPickerSceneId(null);
   };
 
+  const sidebarClassName = useMemo(() => {
+    const base = 'scenes-sidebar';
+    return scrollActive ? `${base} scenes-sidebar--scroll-active` : base;
+  }, [scrollActive]);
+
   return (
     <div className="tools-panel-new" style={{ display: 'flex', height: '100%', borderRight: '1px solid var(--border-color)' }}>
-      <div className="scenes-sidebar">
+      <div
+        ref={sidebarRef}
+        className={sidebarClassName}
+        tabIndex={0}
+        onMouseDown={() => setScrollActive(true)}
+        onFocus={() => setScrollActive(true)}
+        onBlurCapture={() => {
+          window.requestAnimationFrame(() => {
+            const root = sidebarRef.current;
+            if (!root) return;
+            if (!root.contains(document.activeElement)) {
+              setScrollActive(false);
+            }
+          });
+        }}
+      >
         <div className="scenes-sidebar__header">
           <span className="scenes-sidebar__title">
             <MdGridView size={17} />
@@ -128,7 +150,9 @@ const EditorSidebar = ({
         <div className="scenes-sidebar__viewport">
           <div className={`scenes-sidebar__track scenes-sidebar__track--${trackMode}`}>
             <div className="scenes-sidebar__pane">
-              <div className="scenes-sidebar__list premium-scrollbar">
+              <div
+                className={`scenes-sidebar__list premium-scrollbar${scrollActive ? ' scenes-sidebar__list--scroll-active' : ''}`}
+              >
                 {scenes.map((scene, index) => {
                   const isActive = activeSceneId === scene.id;
                   return (

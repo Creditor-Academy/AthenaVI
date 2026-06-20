@@ -21,10 +21,12 @@ import { pixelRectToPercent, resolveClipRect } from '../../../../utils/clipLayou
 import { getClipZIndex, isBackgroundClip, sortClipsForRender } from '../../../../utils/editorLayerUtils'
 import { resolveClipMediaSrc, isVideoMedia, isAvatarClip, clipHasHeygenAudio } from '../../../../utils/heygenVideo'
 import { resolveAvatarDisplaySrc } from '../../../../utils/templateAvatarPreview'
+import { formatLayerBorderCss } from '../../../../utils/layerBorderUtils'
 import {
   computeClipAnimationState,
   getAnimatedTextContent,
   getEntranceAnimation,
+  getExitAnimation,
 } from '../../../../utils/clipAnimations'
 import {
   buildTextDisplayStyle,
@@ -125,6 +127,22 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
 
   return (
     <>
+      {audioEnabled &&
+        (scene.clips || [])
+          .filter((clip) => clip?.type === 'audio' && clip?.src)
+          .map((clip) => {
+            const clipStartSec = clip.startTime || 0
+            const clipEndSec = clip.endTime ?? scene.duration ?? 5
+            const clipStart = Math.floor(clipStartSec * fps)
+            const clipDuration = Math.max(1, Math.floor((clipEndSec - clipStartSec) * fps))
+            const globalFrom = sceneStartFrame + clipStart
+            const volume = typeof clip.volume === 'number' ? clip.volume : 1
+            return (
+              <Sequence key={clip.id || `${scene.id}-audio`} from={globalFrom} durationInFrames={clipDuration} layout="none">
+                <Audio src={clip.src} volume={volume} placeholder={null} />
+              </Sequence>
+            )
+          })}
       {!hasBgClip && <div style={backgroundStyle} />}
       {sortClipsForRender(scene.clips || []).map((clip) => {
         const clipStart = (clip.startTime || 0) * fps
@@ -171,9 +189,10 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
         }
 
         const frameInClip = frameInScene - clipStart
-        const hasCustomAnim = !!getEntranceAnimation(clip)
+        const clipDurationSec = (clip.endTime || scene.duration || 5) - (clip.startTime || 0)
+        const hasCustomAnim = !!getEntranceAnimation(clip) || !!getExitAnimation(clip)
         const animState = hasCustomAnim
-          ? computeClipAnimationState(frameInClip, fps, clip)
+          ? computeClipAnimationState(frameInClip, fps, clip, clipDurationSec)
           : null
 
         let opacity
@@ -214,15 +233,15 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
           top: rect.top,
           width: rect.width,
           height: rect.height,
-          transform: `translate(${translateX}px, ${translateY}px) rotate(${(clip.rotation ?? 0) + animRotation}deg) scale(${scale * (clip.scale || 1)})`,
-          transformOrigin: 'top left',
-          zIndex: getClipZIndex(clip, false),
+          transform: `translate(${translateX}px, ${translateY}px) rotate(${(clip.rotation ?? 0) + animRotation}deg) scale(${scale * (isText ? 1 : (clip.scale || 1))})`,
+          transformOrigin: 'center center',
+          zIndex: getClipZIndex(clip),
           opacity,
           filter: blurPx > 0 ? `blur(${blurPx}px)` : undefined,
           display: 'flex',
           flexDirection: 'column',
           alignItems: clip.style?.textAlign === 'left' ? 'flex-start' : (clip.style?.textAlign === 'right' ? 'flex-end' : 'center'),
-          justifyContent: 'center',
+          justifyContent: 'flex-start',
           pointerEvents: 'none',
           overflow: isText ? 'hidden' : undefined,
           boxSizing: 'border-box',
@@ -298,7 +317,7 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
           return (
             <div key={clip.id} style={{
               ...style,
-              border: clip.style?.border || 'none',
+              border: formatLayerBorderCss(clip.style || {}),
               borderRadius: avatarRound ? '50%' : borderRadius,
               background: src ? 'transparent' : 'rgba(0,0,0,0.03)',
               overflow: 'hidden',
@@ -342,6 +361,10 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
           )
         }
 
+        if (clip.type === 'audio') {
+          return null
+        }
+
         if (clip.type === 'shape') {
           const shapeStyle = clip.style || {}
           const hasFill = !!clip.fillSrc
@@ -351,7 +374,7 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
               style={{
                 ...style,
                 overflow: 'hidden',
-                border: shapeStyle.border || 'none',
+                border: formatLayerBorderCss(shapeStyle),
                 borderRadius: shapeStyle.borderRadius || '0',
                 background: hasFill
                   ? 'transparent'

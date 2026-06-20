@@ -1,19 +1,9 @@
-const TEMPLATE_SOURCES = [
-  { file: 'pitch_template', category: 'Pitch' },
-  { file: 'product_launch_template', category: 'Product Launch' },
-  { file: 'course_module_template', category: 'Course Module' },
-  { file: 'sales_demo_template', category: 'Sales Demo' },
-  { file: 'social_short_template', category: 'Social Short' },
-];
+import {
+  TEMPLATE_BUNDLE_SOURCES,
+  BUNDLE_CATEGORY_FILTER,
+} from '../constants/templateRegistry';
 
-/** Maps bundle categories to CreateVideoModal filter chips */
-const BUNDLE_CATEGORY_FILTER = {
-  Pitch: 'Corporate',
-  'Product Launch': 'Marketing',
-  'Course Module': 'Training',
-  'Sales Demo': 'Corporate',
-  'Social Short': 'Social',
-};
+export { BUNDLE_CATEGORY_FILTER };
 
 function parseAspectRatio(aspectRatio) {
   if (!aspectRatio || aspectRatio === 'custom') return null;
@@ -53,7 +43,7 @@ function sceneToPickerItem(scene, { file, category }) {
 
 export async function fetchEditorTemplateScenes() {
   const results = [];
-  for (const source of TEMPLATE_SOURCES) {
+  for (const source of TEMPLATE_BUNDLE_SOURCES) {
     try {
       const res = await fetch(`/templates/${source.file}.json`);
       if (!res.ok) continue;
@@ -66,6 +56,11 @@ export async function fetchEditorTemplateScenes() {
     }
   }
   return results;
+}
+
+export async function fetchEditorTemplateBundles() {
+  const { default: fetchTemplateBundles } = await import('./fetchTemplateBundles');
+  return fetchTemplateBundles();
 }
 
 export default fetchEditorTemplateScenes;

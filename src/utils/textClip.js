@@ -58,6 +58,17 @@ export function resolveTextClipRect(clip) {
   const style = clip?.style || {};
   const fontSize = parseFontSize(style.fontSize, 32);
 
+  if (clip._userPlaced && clip?.size?.width && clip?.size?.height) {
+    return {
+      position: pos,
+      size: {
+        width: Math.max(40, Number(clip.size.width)),
+        height: Math.max(20, Number(clip.size.height)),
+      },
+      fontSize,
+    };
+  }
+
   let width = parseCssPx(clip?.size?.width);
   let height = parseCssPx(clip?.size?.height);
   const styleWidth = parseCssPx(style.width);
@@ -72,19 +83,19 @@ export function resolveTextClipRect(clip) {
   const text = getClipTextContent(clip);
   const lineCount = Math.max(1, text.split('\n').length);
   const lineHeight = typeof style.lineHeight === 'number' ? style.lineHeight : parseFloat(style.lineHeight) || 1.2;
-  const minHeight = Math.ceil(fontSize * lineHeight * lineCount + 32);
+  const minHeight = Math.ceil(fontSize * lineHeight * lineCount + (clip._userPlaced ? 8 : 4));
 
-  if (!width || width < 120) {
-    width = styleWidth || styleMaxWidth || Math.min(720, Math.max(360, text.length * fontSize * 0.22));
+  if (!width || width < 80) {
+    width = styleWidth || styleMaxWidth || Math.min(720, Math.max(120, text.length * fontSize * 0.22));
   }
-  if (!height || height < 60) {
-    height = Math.min(600, Math.max(minHeight, fontSize * 2.5));
+  if (!height || (!clip._userPlaced && height < minHeight)) {
+    height = Math.min(600, Math.max(minHeight, fontSize * lineHeight + 8));
   }
 
   width = Math.min(width, COMPOSITION_W - Math.max(0, pos.x));
   height = Math.min(height, COMPOSITION_H - Math.max(0, pos.y));
-  width = Math.max(120, width);
-  height = Math.max(48, height);
+  width = Math.max(40, width);
+  height = Math.max(20, height);
 
   return {
     position: pos,

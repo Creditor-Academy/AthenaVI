@@ -47,7 +47,7 @@
 }
 
 .lm-preview__caption {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-muted, #64748b);
   text-align: center;
@@ -60,7 +60,7 @@
 }
 
 .lm-fit-adj__label {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -83,7 +83,7 @@
   border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.1));
   background: white;
   color: var(--text-muted, #64748b);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s, color 0.15s;
@@ -111,7 +111,7 @@
   border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.1));
   background: white;
   color: var(--text-muted, #64748b);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   min-height: 40px;

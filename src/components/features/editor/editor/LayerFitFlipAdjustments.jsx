@@ -7,6 +7,7 @@ import {
   MdPhotoSizeSelectActual,
 } from 'react-icons/md';
 import { buildCssFilterString } from '../../../../utils/cssFilterUtils';
+import { formatLayerBorderCss } from '../../../../utils/layerBorderUtils';
 import { useComputedEntranceState } from '../../../../hooks/useComputedEntranceState';
 import LayerAdjustmentsCompact from './LayerAdjustmentsCompact';
 import './LayerFitFlipAdjustments.css';
@@ -24,8 +25,7 @@ const LayerMediaPreview = ({
   scaleX,
   scaleY,
   borderRadius,
-  borderWidth,
-  borderColor,
+  borderCss = 'none',
   boxShadow,
   cssFilters,
   opacity,
@@ -65,9 +65,7 @@ const LayerMediaPreview = ({
         className={frameClass}
         style={{
           borderRadius: variant === 'circle' ? '50%' : borderRadius || '12px',
-          border: borderWidth
-            ? `${borderWidth} solid ${borderColor || 'var(--border-color, #e2e8f0)'}`
-            : '1px solid var(--border-subtle, rgba(0,0,0,0.08))',
+          border: borderCss,
           boxShadow: boxShadow && boxShadow !== 'none' ? boxShadow : undefined,
           filter: previewBlur,
           opacity: previewOpacity,
@@ -126,11 +124,13 @@ const LayerFitFlipAdjustments = ({
   onUpdateFilter,
   onOpacityChange,
   extraEffects,
+  hideOpacity = false,
 }) => {
   const { animState } = useComputedEntranceState(clip);
   const objectFit = style.objectFit || (variant === 'circle' ? 'contain' : 'cover');
   const scaleX = style.scaleX;
   const scaleY = style.scaleY;
+  const borderCss = formatLayerBorderCss(style);
 
   return (
     <div className="lm-fit-adj">
@@ -141,8 +141,7 @@ const LayerFitFlipAdjustments = ({
         scaleX={scaleX}
         scaleY={scaleY}
         borderRadius={style.borderRadius}
-        borderWidth={style.borderWidth}
-        borderColor={style.borderColor}
+        borderCss={borderCss}
         boxShadow={style.boxShadow}
         cssFilters={cssFilters}
         opacity={opacity}
@@ -202,6 +201,7 @@ const LayerFitFlipAdjustments = ({
         showInlinePreview={false}
         previewSrc={src}
         previewObjectFit={objectFit}
+        hideOpacity={hideOpacity}
       />
 
       {extraEffects ? <div className="lm-fit-adj__extras">{extraEffects}</div> : null}

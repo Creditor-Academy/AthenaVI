@@ -1,9 +1,12 @@
 import heygenService from '../services/heygenService';
+import workspaceService from '../services/workspaceService';
 import {
   buildHeygenAvatarContent,
   canUseExpressiveness,
+  finalizeVideoCreatePayload,
   getSceneAvatarKind,
   getSceneAvatarLookId,
+  isLegacyV2Look,
 } from './heygenAvatars';
 import { getClipTextContent, isTextLayer, parseCssPx, parseFontSize } from './textClip';
 import {
@@ -80,14 +83,36 @@ export function normalizeTextStyle(style = {}) {
   return normalized;
 }
 
+/** Map editor/template background types to the backend V2 shape (`color` | `gradient`). */
+function normalizeBackgroundType(type, value) {
+  const raw = String(value || '');
+  if (raw.includes('gradient(')) return 'gradient';
+  if (!type || type === 'solid') return 'color';
+  if (type === 'gradient' || type === 'color') return type;
+  return 'color';
+}
+
 function normalizeBackground(background) {
   if (!background) return { type: 'color', value: '#ffffff' };
   if (typeof background === 'string') return { type: 'color', value: background };
   if (typeof background === 'object') {
-    if (background.type && background.value != null) return background;
-    if (background.value) return { type: background.type || 'color', value: background.value };
+    const value = background.value;
+    if (value == null) return { type: 'color', value: '#ffffff' };
+    const type = normalizeBackgroundType(background.type, value);
+    return { type, value: String(value) };
   }
   return { type: 'color', value: '#ffffff' };
+}
+
+function resolveVideoBackgroundColor(projectState) {
+  if (projectState.videoSettings?.backgroundColor) {
+    return projectState.videoSettings.backgroundColor;
+  }
+  const firstBg = normalizeBackground(projectState.scenes?.[0]?.background);
+  if (firstBg.type === 'color' && /^#[0-9a-f]{3,8}$/i.test(firstBg.value)) {
+    return firstBg.value;
+  }
+  return '#ffffff';
 }
 
 function sanitizeStyle(style = {}, type = 'text') {
@@ -228,7 +253,7 @@ function textClipToElement(clip, cIdx) {
     placement: readClipPlacement(clip),
     content: buildTextContent(clip),
     style: normalizeTextStyle(clip.style),
-    animations: mapAnimationsForBackend(clip.animations),
+    animations: mapAnimationsForBackend(clip.animations, durationInFrames / FPS),
   };
 
   if (clip.role) element.role = clip.role;
@@ -259,7 +284,7 @@ function clipToElement(clip, scene, cIdx) {
     timing: { startFrame, durationInFrames },
     placement: readClipPlacement(clip),
     content,
-    animations: mapAnimationsForBackend(clip.animations),
+    animations: mapAnimationsForBackend(clip.animations, durationInFrames / FPS),
   };
 
   if (clip.role) element.role = clip.role;
@@ -283,14 +308,29 @@ function clipToElement(clip, scene, cIdx) {
 
 function buildPresenter(scene) {
   const avatarId = getSceneAvatarLookId(scene);
-  const hasPresenterData =
-    avatarId || scene.voiceId || scene.script || scene.avatarName || scene.presenter;
+  const heygenVideoId =
+    scene.heygenVideoId ||
+    scene.generation?.heygenVideoId;
+  const hasScript = typeof scene.script === 'string' && scene.script.trim();
+  const hasVoice = !!scene.voiceId;
 
-  if (!hasPresenterData) return undefined;
+  // Only send presenter when lip-sync export is configured or a HeyGen video exists.
+  if (!heygenVideoId && !(avatarId && hasScript && hasVoice)) {
+    return undefined;
+  }
 
   const base = scene.presenter || {};
   const avatarKind = getSceneAvatarKind(scene);
-  const avatarEngine = scene.avatarEngine || base.avatarEngine || 'avatar_iv';
+  const supportedEngines = scene.supportedEngines ?? base.supportedEngines;
+  const isLegacyV2 =
+    scene.isLegacyV2 ?? base.isLegacyV2 ?? isLegacyV2Look({ id: avatarId });
+  const avatarEngine = finalizeVideoCreatePayload({
+    avatarId,
+    avatarType: avatarKind,
+    avatarEngine: scene.avatarEngine || base.avatarEngine,
+    isLegacyV2,
+    supportedEngines,
+  });
   const presenter = {
     avatarId: avatarId || base.avatarId,
     avatarLookId: avatarId || base.avatarLookId || base.avatarId,
@@ -303,9 +343,9 @@ function buildPresenter(scene) {
     script: scene.script ?? base.script ?? '',
   };
 
-  const supportedEngines = scene.supportedEngines ?? base.supportedEngines;
   if (Array.isArray(supportedEngines)) {
     presenter.supportedEngines = supportedEngines;
+    presenter.isLegacyV2 = isLegacyV2;
     presenter.engineUnknown =
       scene.engineUnknown ?? base.engineUnknown ?? supportedEngines.length === 0;
   }
@@ -337,6 +377,8 @@ function buildPresenter(scene) {
     };
   }
 
+  presenter.outputFormat = scene.outputFormat ?? base.outputFormat ?? 'mp4';
+
   return presenter;
 }
 
@@ -350,9 +392,9 @@ function buildGeneration(scene) {
     scene.generation?.heygenVideoId ||
     avatarContent.heygenVideoId;
 
-  if (!heygenVideoId && !scene.heygenStatus && !scene.generation) return undefined;
+  if (!heygenVideoId) return undefined;
 
-  const status = scene.heygenStatus || scene.generation?.status || 'pending';
+  const status = scene.heygenStatus || scene.generation?.status || 'completed';
   return {
     status: status === 'completed' || status === 'success' ? 'completed' : status,
     heygenVideoId: heygenVideoId || undefined,
@@ -374,7 +416,7 @@ export function toBackendProjectData(projectState) {
       width: projectState.resolution?.width || 1920,
       height: projectState.resolution?.height || 1080,
       fps: FPS,
-      backgroundColor: projectState.videoSettings?.backgroundColor || '#000000',
+      backgroundColor: resolveVideoBackgroundColor(projectState),
     },
     scenes: (projectState.scenes || []).map((scene, idx) => {
       const sceneId = scene.sceneId || scene.id || `scene_${idx}`;
@@ -443,6 +485,7 @@ function elementToClip(element) {
 
   if (typeof content === 'object' && content !== null) {
     if (content.src && !isEphemeralUrl(content.src)) src = content.src;
+    else if (content.url && !isEphemeralUrl(content.url)) src = content.url;
     else if (content.previewSrc) src = content.previewSrc;
   } else if (typeof content === 'string') {
     src = content;
@@ -480,7 +523,7 @@ function elementToClip(element) {
   }
   if (element.effects) clip.effects = { ...element.effects };
   if (element.animations) {
-    clip.animations = mapAnimationsFromBackend(element.animations);
+    clip.animations = mapAnimationsFromBackend(element.animations, durationInFrames / FPS);
   }
   if (element.visible !== undefined) clip.visible = element.visible;
   if (element.isBackground) clip.isBackground = true;
@@ -527,6 +570,17 @@ export function sceneFromBackend(scene) {
   const lookId = presenter.avatarId || avatarContent.avatarId;
   const heygenVideoId =
     generation.heygenVideoId || avatarContent.heygenVideoId || scene.heygenVideoId;
+  const avatarKind = presenter.avatarType || scene.avatarKind || 'studio_avatar';
+  const isLegacyV2 =
+    presenter.isLegacyV2 ?? scene.isLegacyV2 ?? isLegacyV2Look({ id: lookId });
+  const avatarEngine = finalizeVideoCreatePayload({
+    avatarId: lookId,
+    avatarType: avatarKind,
+    avatarEngine: presenter.avatarEngine || scene.avatarEngine,
+    isLegacyV2,
+    supportedEngines: presenter.supportedEngines ?? scene.supportedEngines,
+  });
+  const outputFormat = presenter.outputFormat ?? scene.outputFormat ?? 'mp4';
 
   return {
     ...scene,
@@ -538,18 +592,25 @@ export function sceneFromBackend(scene) {
     avatar: presenter.avatarPreviewSrc || scene.avatar || avatarContent.previewSrc,
     avatarLookId: lookId,
     avatarType: lookId || scene.avatarType,
-    avatarKind: presenter.avatarType || scene.avatarKind,
+    avatarKind,
     avatarName: presenter.avatarName || scene.avatarName,
-    avatarEngine: presenter.avatarEngine || scene.avatarEngine || 'avatar_iv',
+    avatarEngine,
+    isLegacyV2,
     avatarGroupId: presenter.avatarGroupId || scene.avatarGroupId,
     expressiveness: presenter.expressiveness || scene.expressiveness,
     voiceId: presenter.voiceId || avatarContent.voiceId || scene.voiceId,
     voiceName: presenter.voiceName || scene.voiceName,
     voiceSettings: presenter.voiceSettings || scene.voiceSettings,
     script: presenter.script ?? avatarContent.script ?? scene.script ?? '',
+    outputFormat,
     heygenVideoId,
     heygenStatus: generation.status || scene.heygenStatus,
-    presenter,
+    presenter: {
+      ...presenter,
+      avatarEngine,
+      isLegacyV2,
+      outputFormat,
+    },
     generation,
     clips: normalizeSceneClips((scene.elements || scene.clips || []).map(elementToClip)),
   };
@@ -613,4 +674,74 @@ export async function rehydrateSceneVideos(scenes, workspaceId, projectId) {
       }
     })
   );
+}
+
+function resolveSceneSpeechGenerationId(scene) {
+  if (!scene) return null
+  return (
+    scene?.speechGenerationId ||
+    scene?.generation?.speechGenerationId ||
+    scene?.presenter?.speechGenerationId ||
+    null
+  )
+}
+
+function applySpeechUrlToScene(scene, url) {
+  if (!scene) return scene
+  const clips = Array.isArray(scene.clips) ? scene.clips : []
+  const cleaned = clips.map((c) => ({ ...c }))
+  const idx = cleaned.findIndex((c) => c.type === 'audio' && (c.role === 'narration' || c.role === 'voiceover'))
+  const duration = scene.duration || 8
+  const audioClip = {
+    id: idx >= 0 ? cleaned[idx].id : `audio_${Date.now()}`,
+    type: 'audio',
+    role: 'narration',
+    src: url,
+    startTime: 0,
+    endTime: duration,
+    volume: typeof scene?.voiceoverVolume === 'number' ? scene.voiceoverVolume : 1,
+  }
+  if (idx >= 0) {
+    cleaned[idx] = { ...cleaned[idx], ...audioClip }
+  } else {
+    cleaned.push(audioClip)
+  }
+
+  return {
+    ...scene,
+    speechPlaybackUrl: url,
+    clips: cleaned,
+  }
+}
+
+/**
+ * Rehydrate voice-only narration by speechGenerationId.
+ * Uses /download to obtain a fresh presigned URL (do not persist presigned URLs in project JSON).
+ */
+export async function rehydrateSceneSpeech(scenes, workspaceId, projectId) {
+  if (!workspaceId || !projectId || !scenes?.length) return scenes
+
+  return Promise.all(
+    scenes.map(async (scene) => {
+      const speechId = resolveSceneSpeechGenerationId(scene)
+      if (!speechId) return scene
+
+      const existing = scene?.speechPlaybackUrl
+      if (existing && !isEphemeralUrl(existing) && !existing.startsWith('blob:')) {
+        return applySpeechUrlToScene(scene, existing)
+      }
+
+      try {
+        const download = await workspaceService.downloadSpeech(workspaceId, projectId, speechId)
+        const presignedUrl = download?.presignedUrl || download?.url
+        if (presignedUrl && typeof presignedUrl === 'string') {
+          return applySpeechUrlToScene(scene, presignedUrl)
+        }
+      } catch (err) {
+        console.warn('[ProjectData] Failed to rehydrate speech for scene', scene.sceneId || scene.id, speechId, err)
+      }
+
+      return scene
+    })
+  )
 }

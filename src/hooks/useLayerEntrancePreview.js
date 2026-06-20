@@ -1,13 +1,19 @@
 import { useState, useEffect } from 'react';
 import { getEntranceAnimation } from '../utils/clipAnimations';
+import { usePreviewMode } from '../contexts/PreviewModeContext';
 
 /** Drives live canvas preview while the timeline is paused. */
 export function useLayerEntrancePreview(clip) {
+  const { staticEntrance } = usePreviewMode();
   const [progress, setProgress] = useState(null);
   const entrance = getEntranceAnimation(clip);
   const animKey = JSON.stringify(clip?.animations ?? []);
 
   useEffect(() => {
+    if (staticEntrance) {
+      setProgress(1);
+      return undefined;
+    }
     const ent = getEntranceAnimation(clip);
     if (!ent || ent.type === 'none') {
       setProgress(null);
@@ -33,7 +39,11 @@ export function useLayerEntrancePreview(clip) {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [animKey]);
+  }, [animKey, staticEntrance]);
+
+  if (staticEntrance) {
+    return { entrance, progress: 1 };
+  }
 
   return { entrance, progress };
 }

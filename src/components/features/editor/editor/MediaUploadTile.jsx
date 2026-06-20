@@ -1,12 +1,13 @@
 import { useRef, useState } from 'react'
 import { MdCloudUpload } from 'react-icons/md'
 import assetService from '../../../../services/assetService'
+import { assertUploadFits, dispatchStorageRefresh } from '../../../../utils/storageQuota'
 
 const MediaUploadTile = ({
   addLayer,
   workspaceId,
   onUploadError,
-  accept = 'image/*,video/*',
+  accept = 'image/jpeg,image/png,image/webp,video/mp4,audio/mpeg,audio/mp3,.mp3',
   label = 'Upload',
   onComplete,
 }) => {
@@ -28,6 +29,12 @@ const MediaUploadTile = ({
     setUploading(true)
     try {
       for (const file of files) {
+        const validationError = assetService.validateUploadFile(file)
+        if (validationError) {
+          onUploadError?.(validationError)
+          continue
+        }
+        await assertUploadFits(workspaceId, file.size)
         const uploaded = await assetService.uploadAsset(workspaceId, file)
         const normalized = assetService.normalizeAsset(uploaded)
         if (!normalized?.url) continue
@@ -36,6 +43,7 @@ const MediaUploadTile = ({
           assetId: normalized.id,
         })
       }
+      dispatchStorageRefresh()
       onComplete?.()
     } catch (err) {
       console.error('[Upload] Failed', err)

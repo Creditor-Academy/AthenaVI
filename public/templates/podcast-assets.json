@@ -1,0 +1,82 @@
+{
+  "theme": {
+    "name": "Champagne Studio",
+    "fonts": {
+      "display": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+      "serif": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+      "sans": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+      "accent": "\"Source Serif 4\", Georgia, serif"
+    }
+  },
+  "presenter": {
+    "name": "Your Host"
+  },
+  "colors": {
+    "espresso": "#1C1917",
+    "charcoal": "#292524",
+    "navy": "#1E293B",
+    "slate": "#44403C",
+    "cream": "#FAF8F5",
+    "linen": "#F3EDE4",
+    "sand": "#E8DFD4",
+    "wheat": "#DDD0C0",
+    "champagne": "#D4B896",
+    "champagneLight": "#E8D5C0",
+    "copper": "#A66B47",
+    "copperSoft": "#C4896A",
+    "sage": "#6B7F73",
+    "ink": "#1C1917",
+    "inkSoft": "#44403C",
+    "muted": "#78716C",
+    "line": "#E7E5E4",
+    "white": "#FFFFFF",
+    "panelDark": "#1E293B",
+    "ice": "#F8FAFC"
+  },
+  "backgrounds": [
+    { "id": "bg-cream", "name": "Studio Cream", "value": "#FAF8F5" },
+    { "id": "bg-linen", "name": "Warm Linen", "value": "#F3EDE4" },
+    { "id": "bg-white", "name": "Clean White", "value": "#FFFFFF" },
+    { "id": "bg-espresso", "name": "Espresso", "value": "#1C1917" },
+    { "id": "bg-navy", "name": "Studio Navy", "value": "#1E293B" },
+    { "id": "bg-gradient-linen", "name": "Linen Gradient", "value": "linear-gradient(145deg, #FFFFFF 0%, #FAF8F5 50%, #F3EDE4 100%)" },
+    { "id": "bg-gradient-navy", "name": "Navy Gradient", "value": "linear-gradient(165deg, #1C1917 0%, #1E293B 100%)" },
+    { "id": "bg-gradient-warm", "name": "Warm Fade", "value": "linear-gradient(160deg, #F3EDE4 0%, #FAF8F5 60%, #FFFFFF 100%)" }
+  ],
+  "images": [
+    { "id": "podcast-cover", "name": "Studio Cover", "role": "hero-image", "thumb": "https://images.pexels.com/photos/6957912/pexels-photo-6957912.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/6957912/pexels-photo-6957912.jpeg" },
+    { "id": "podcast-studio", "name": "Recording Booth", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3945681/pexels-photo-3945681.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3945681/pexels-photo-3945681.jpeg" },
+    { "id": "podcast-interview", "name": "Interview Setup", "role": "hero-image", "thumb": "https://images.pexels.com/photos/7688336/pexels-photo-7688336.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/7688336/pexels-photo-7688336.jpeg" },
+    { "id": "podcast-host", "name": "Host Portrait", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg" },
+    { "id": "podcast-guest", "name": "Guest Portrait", "role": "hero-image", "thumb": "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg" },
+    { "id": "podcast-headphones", "name": "Headphones Detail", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3771836/pexels-photo-3771836.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3771836/pexels-photo-3771836.jpeg" },
+    { "id": "podcast-mic", "name": "Microphone", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3945682/pexels-photo-3945682.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3945682/pexels-photo-3945682.jpeg" },
+    { "id": "podcast-conversation", "name": "Conversation", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg" },
+    { "id": "podcast-audience", "name": "Live Audience", "role": "hero-image", "thumb": "https://images.pexels.com/photos/2774556/pexels-photo-2774556.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/2774556/pexels-photo-2774556.jpeg" },
+    { "id": "podcast-desk", "name": "Producer Desk", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3945680/pexels-photo-3945680.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3945680/pexels-photo-3945680.jpeg" },
+    { "id": "podcast-logo", "name": "Show Logo", "role": "logo", "thumb": "https://placehold.co/200x48/1C1917/FAF8F5?text=Your+Show", "src": "https://placehold.co/320x64/1C1917/FAF8F5?text=YOUR+SHOW" }
+  ],
+  "icons": [
+    { "id": "mic", "name": "Microphone", "category": "media", "src": "https://img.icons8.com/ios-filled/96/A66B47/microphone.png" },
+    { "id": "headphones", "name": "Headphones", "category": "media", "src": "https://img.icons8.com/ios-filled/96/1E293B/headphones.png" },
+    { "id": "quote", "name": "Quote", "category": "media", "src": "https://img.icons8.com/ios-filled/96/A66B47/quote-left.png" },
+    { "id": "play", "name": "Play", "category": "media", "src": "https://img.icons8.com/ios-filled/96/1E293B/circled-play.png" },
+    { "id": "star", "name": "Star", "category": "media", "src": "https://img.icons8.com/ios-filled/96/D4B896/star.png" },
+    { "id": "check", "name": "Check", "category": "media", "src": "https://img.icons8.com/ios-filled/96/A66B47/checkmark.png" },
+    { "id": "wave", "name": "Waveform", "category": "media", "src": "https://img.icons8.com/ios-filled/96/1E293B/audio-wave.png" },
+    { "id": "podcast", "name": "Podcast", "category": "media", "src": "https://img.icons8.com/ios-filled/96/A66B47/podcast.png" },
+    { "id": "share", "name": "Share", "category": "media", "src": "https://img.icons8.com/ios-filled/96/1E293B/share.png" },
+    { "id": "calendar", "name": "Calendar", "category": "media", "src": "https://img.icons8.com/ios-filled/96/A66B47/calendar.png" },
+    { "id": "arrow", "name": "Arrow", "category": "media", "src": "https://img.icons8.com/ios-filled/96/FAF8F5/circled-chevron-right.png" }
+  ],
+  "shapes": [
+    { "id": "podcast-card", "name": "Studio Card", "category": "podcast", "role": "decoration", "style": { "backgroundColor": "#FFFFFF", "borderRadius": "20px", "boxShadow": "0 18px 44px rgba(28,25,23,0.08)", "border": "1px solid #E7E5E4" } },
+    { "id": "podcast-card-dark", "name": "Dark Card", "category": "podcast", "role": "decoration", "style": { "backgroundColor": "#1E293B", "borderRadius": "20px", "boxShadow": "0 20px 48px rgba(0,0,0,0.28)" } },
+    { "id": "podcast-slide-badge", "name": "Slide Badge", "category": "podcast", "role": "decoration", "style": { "width": "44px", "height": "44px", "backgroundColor": "#1C1917", "borderRadius": "50%", "border": "2px solid #D4B896" } },
+    { "id": "podcast-blob-warm", "name": "Warm Blob", "category": "podcast", "role": "decoration", "style": { "backgroundColor": "#E8DFD4", "borderRadius": "50%", "opacity": "0.55" } },
+    { "id": "podcast-quote-bar", "name": "Quote Card", "category": "podcast", "role": "decoration", "style": { "backgroundColor": "#FFFFFF", "borderRadius": "16px", "borderLeft": "4px solid #A66B47", "boxShadow": "0 14px 36px rgba(28,25,23,0.06)" } },
+    { "id": "podcast-stat-tile", "name": "Stat Tile", "category": "podcast", "role": "decoration", "style": { "backgroundColor": "#FFFFFF", "borderRadius": "16px", "border": "1px solid #E7E5E4", "boxShadow": "0 12px 32px rgba(28,25,23,0.06)" } },
+    { "id": "podcast-icon-badge", "name": "Icon Badge", "category": "podcast", "role": "decoration", "style": { "width": "52px", "height": "52px", "backgroundColor": "#F3EDE4", "borderRadius": "50%" } },
+    { "id": "podcast-navy-panel", "name": "Navy Panel", "category": "podcast", "role": "decoration", "style": { "backgroundColor": "#1E293B", "borderRadius": "24px" } }
+  ]
+}

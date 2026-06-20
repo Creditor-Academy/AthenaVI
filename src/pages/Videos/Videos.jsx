@@ -1,138 +1,222 @@
-import { useState, useRef, useEffect } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  MdMoreVert,
-  MdEdit,
-  MdDelete,
   MdAdd,
+  MdApps,
   MdGridView,
-  MdViewList,
-  MdPlayArrow,
-  MdFolder,
-  MdClose,
-  MdSearch,
+  MdPeople,
+  MdPerson,
   MdVideoLibrary,
+  MdViewList,
+  MdWorkspaces,
+  MdClose,
   MdCheckCircle,
   MdCancel,
-  MdWarning
 } from 'react-icons/md'
+import { useAuth } from '../../contexts/AuthContext'
+import videoLibraryService from '../../services/videoLibraryService'
 import workspaceService from '../../services/workspaceService'
+import { extractUserId, normalizeWorkspace } from '../TeamWorkspace/workspaceUtils'
+import '../../components/features/workspace/workspace/WorkspaceStyles.css'
 import VideosSkeleton from '../page-skeleton/VideosSkeleton'
+import ExportVideoCard from './ExportVideoCard.jsx'
+import ExportVideoRow from './ExportVideoRow.jsx'
+import VideosToolbar from './VideosToolbar.jsx'
+import {
+  applyVideoFilters,
+  getVideoEmptyHint,
+  getVideoEmptyTitle,
+  getVideoSectionSubtitle,
+  groupVideos,
+  sortVideos,
+  VIDEO_FILTER_OPTIONS,
+  VIDEO_GROUP_OPTIONS,
+  VIDEO_SECTION_TABS,
+  VIDEO_SORT_OPTIONS,
+} from './videosUtils'
 import './Videos.css'
 
-const thumbnailUrl = 'https://media.istockphoto.com/id/1475888355/video/timelapse-of-the-creation-of-an-online-avatar-start-to-finish.jpg?s=640x640&k=20&c=pFzBOkU7LjC1DF0DeNCAUhS8MCiNwSDwkqI9v9C7IgQ='
+const PAGE_SIZE = 20
+
+const TAB_ICONS = {
+  all: MdApps,
+  personal: MdPerson,
+  'my-workspace': MdWorkspaces,
+  'shared-with-me': MdPeople,
+}
 
 function Videos({ onCreate, onEdit }) {
+  const { user: authUser } = useAuth()
+  const currentUserId = extractUserId(authUser)
   const [videos, setVideos] = useState([])
+  const [workspaceMap, setWorkspaceMap] = useState(() => new Map())
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [viewMode, setViewMode] = useState('grid')
+  const [activeSection, setActiveSection] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
-  const [cardMenu, setCardMenu] = useState(null)
-  const [renameDialog, setRenameDialog] = useState(null) // { videoId, workspaceId, title }
-  const [newName, setNewName] = useState('')
+  const [filterBy, setFilterBy] = useState('all')
+  const [sortBy, setSortBy] = useState('completed_desc')
+  const [groupBy, setGroupBy] = useState('none')
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1 })
+  const [previewVideo, setPreviewVideo] = useState(null)
+  const [previewUrl, setPreviewUrl] = useState('')
+  const [previewLoading, setPreviewLoading] = useState(false)
+  const [actionId, setActionId] = useState(null)
   const [toast, setToast] = useState(null)
-  const [confirmDialog, setConfirmDialog] = useState(null)
-  const menuRefs = useRef({})
   const toastTimeoutRef = useRef(null)
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type })
-    if (toastTimeoutRef.current) {
-      clearTimeout(toastTimeoutRef.current)
-    }
-    toastTimeoutRef.current = setTimeout(() => {
-      setToast(null)
-    }, 2800)
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
+    toastTimeoutRef.current = setTimeout(() => setToast(null), 2800)
   }
-
-  const openConfirmDialog = (message, onConfirm) => {
-    setConfirmDialog({ message, onConfirm })
-  }
-
-  useEffect(() => {
-    fetchVideos()
-  }, [])
 
   useEffect(() => {
     return () => {
-      if (toastTimeoutRef.current) {
-        clearTimeout(toastTimeoutRef.current)
-      }
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
     }
   }, [])
 
-  const fetchVideos = async () => {
+  const fetchVideos = useCallback(async ({ page = 1, append = false } = {}) => {
+    if (append) setLoadingMore(true)
+    else setLoading(true)
+
     try {
-      setLoading(true)
-      const data = await workspaceService.listAllVideosAcrossWorkspaces()
-      // Ensure we always set an array to prevent runtime errors
-      setVideos(Array.isArray(data) ? data : [])
+      const skip = (page - 1) * PAGE_SIZE
+      const result = await videoLibraryService.listUserVideos({
+        take: PAGE_SIZE,
+        skip,
+        status: 'completed',
+      })
+      setVideos((prev) => (append ? [...prev, ...result.videos] : result.videos))
+      setPagination(result.pagination)
     } catch (error) {
       console.error('Failed to fetch videos:', error)
+      showToast(error.message || 'Failed to load videos', 'error')
+      if (!append) setVideos([])
     } finally {
       setLoading(false)
+      setLoadingMore(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (cardMenu) {
-        const ref = menuRefs.current[cardMenu]
-        if (ref && !ref.contains(event.target)) {
-          setCardMenu(null)
-        }
+    fetchVideos({ page: 1 })
+  }, [fetchVideos])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadWorkspaces = async () => {
+      try {
+        const rawWorkspaces = await workspaceService.listWorkspaces()
+        if (cancelled) return
+        const mapped = (rawWorkspaces || []).map((ws) =>
+          normalizeWorkspace(ws, currentUserId, authUser)
+        )
+        setWorkspaceMap(new Map(mapped.map((ws) => [ws.id, ws])))
+      } catch (error) {
+        console.warn('Failed to load workspaces for video filters:', error)
       }
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [cardMenu])
 
-  const isRenameNameDuplicate = renameDialog
-    ? videos.some((video) => {
-        if (String(video.id) !== String(renameDialog.videoId)) {
-          const sameFolder =
-            String(video.workspaceId) === String(renameDialog.workspaceId) &&
-            String(video.folderId || '') === String(renameDialog.folderId || '');
-          const sameName =
-            String(video.title || video.name || '').trim().toLowerCase() === newName.trim().toLowerCase();
-          return sameFolder && sameName;
-        }
-        return false;
-      })
-    : false
+    loadWorkspaces()
+    return () => {
+      cancelled = true
+    }
+  }, [currentUserId, authUser])
 
-  const handleRename = async () => {
-    if (!newName.trim() || !renameDialog || isRenameNameDuplicate) return
+  const filteredVideos = useMemo(() => {
+    const filtered = applyVideoFilters(videos, {
+      searchQuery,
+      filterBy,
+      currentUserId,
+      workspaceMap,
+      activeSection,
+    });
+    return sortVideos(filtered, sortBy);
+  }, [videos, workspaceMap, currentUserId, activeSection, searchQuery, filterBy, sortBy]);
+
+  const videoGroups = useMemo(
+    () => groupVideos(filteredVideos, groupBy),
+    [filteredVideos, groupBy]
+  );
+
+  const hasSearch = Boolean(searchQuery.trim()) || filterBy !== 'all';
+
+  const openPreview = async (video) => {
+    setPreviewVideo(video)
+    setPreviewUrl('')
+    setPreviewLoading(true)
     try {
-      await workspaceService.updateProject(renameDialog.workspaceId, renameDialog.videoId, { name: newName.trim() })
-      setRenameDialog(null)
-      setNewName('')
-      await fetchVideos()
-      showToast('Project renamed successfully', 'success')
-    } catch (error) {
-      console.error('Failed to rename project:', error)
-      showToast('Failed to rename project. Please try again.', 'error')
+      const url = await videoLibraryService.fetchPresignedDownloadUrl(video)
+      setPreviewUrl(url || '')
+    } catch (err) {
+      showToast(err.message || 'Failed to load preview', 'error')
+      setPreviewVideo(null)
+    } finally {
+      setPreviewLoading(false)
     }
   }
 
-  const handleDelete = (workspaceId, videoId) => {
-    openConfirmDialog('Are you sure you want to delete this project?', async () => {
-      try {
-        await workspaceService.deleteProject(workspaceId, videoId)
-        await fetchVideos()
-        showToast('Project deleted successfully', 'success')
-      } catch (error) {
-        console.error('Failed to delete project:', error)
-        showToast('Failed to delete project. Please try again.', 'error')
-      }
+  const handleDownload = async (video) => {
+    setActionId(video.id)
+    try {
+      await videoLibraryService.downloadVideoFile(video, video.title)
+      showToast('Download started', 'success')
+    } catch (err) {
+      showToast(err.message || 'Download failed', 'error')
+    } finally {
+      setActionId(null)
+    }
+  }
+
+  const handleOpenProject = (video) => {
+    if (!onEdit) return
+    onEdit({
+      id: video.projectId,
+      workspaceId: video.workspaceId,
+      folderId: video.folderId,
+      title: video.title,
     })
   }
 
-  const filteredVideos = (Array.isArray(videos) ? videos : []).filter(v => {
-    const q = (searchQuery || '').toLowerCase()
-    const title = (v?.title || '').toLowerCase()
-    const workspace = (v?.workspaceName || '').toLowerCase()
-    return title.includes(q) || workspace.includes(q)
-  })
+  const hasMore = pagination.page < pagination.totalPages
+
+  const renderVideoCollection = (collection) => (
+    <div
+      className={`items-container videos-export-items ${
+        viewMode === 'grid' ? 'tile-view' : 'list-view export-list-view'
+      }`}
+    >
+      {viewMode === 'list' ? (
+        <div className="list-header export-list-header">
+          <div className="col" />
+          <div className="col">Name</div>
+          <div className="col">Workspace</div>
+          <div className="col">Completed</div>
+          <div className="col">Size</div>
+          <div className="col">Rendered by</div>
+          <div className="col" />
+        </div>
+      ) : null}
+
+      {collection.map((video) => {
+        const handlers = {
+          onPreview: () => openPreview(video),
+          onDownload: () => handleDownload(video),
+          onOpenProject: onEdit ? () => handleOpenProject(video) : null,
+          downloading: actionId === video.id,
+        };
+
+        return viewMode === 'grid' ? (
+          <ExportVideoCard key={video.id} video={video} {...handlers} />
+        ) : (
+          <ExportVideoRow key={video.id} video={video} {...handlers} />
+        );
+      })}
+    </div>
+  );
 
   return (
     <div className="videos-page">
@@ -140,7 +224,9 @@ function Videos({ onCreate, onEdit }) {
         <header className="videos-page-header">
           <div className="videos-title-section">
             <h1 className="videos-page-title">My Videos</h1>
-            <p className="videos-page-subtitle">Manage all your videos across different workspaces</p>
+            <p className="videos-page-subtitle">
+              {getVideoSectionSubtitle(activeSection)}
+            </p>
           </div>
           <div className="videos-actions">
             <div className="view-toggle">
@@ -148,6 +234,7 @@ function Videos({ onCreate, onEdit }) {
                 className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
                 onClick={() => setViewMode('grid')}
                 title="Grid view"
+                type="button"
               >
                 <MdGridView />
               </button>
@@ -155,6 +242,7 @@ function Videos({ onCreate, onEdit }) {
                 className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
                 onClick={() => setViewMode('list')}
                 title="List view"
+                type="button"
               >
                 <MdViewList />
               </button>
@@ -166,204 +254,118 @@ function Videos({ onCreate, onEdit }) {
           </div>
         </header>
 
-        <div className="videos-search-bar" style={{
-          display: 'flex',
-          alignItems: 'center',
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '12px',
-          padding: '8px 16px',
-          marginBottom: '24px',
-          gap: '12px'
-        }}>
-          <MdSearch size={22} color="var(--text-muted)" />
-          <input 
-            type="text" 
-            placeholder="Search videos or workspaces..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--text-main)',
-              fontSize: '15px',
-              width: '100%',
-              outline: 'none'
-            }}
-          />
+        <div className="videos-tab-switch" role="tablist" aria-label="Video sections">
+          {VIDEO_SECTION_TABS.map((tab) => {
+            const Icon = TAB_ICONS[tab.id]
+            const isActive = activeSection === tab.id
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                className={`videos-tab-btn ${isActive ? 'active' : ''}`}
+                onClick={() => setActiveSection(tab.id)}
+              >
+                <span className="videos-tab-icon" aria-hidden>
+                  <Icon size={18} />
+                </span>
+                <span>{tab.label}</span>
+              </button>
+            )
+          })}
         </div>
 
+        <VideosToolbar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          filterBy={filterBy}
+          onFilterChange={setFilterBy}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          groupBy={groupBy}
+          onGroupChange={setGroupBy}
+          filterOptions={VIDEO_FILTER_OPTIONS}
+          sortOptions={VIDEO_SORT_OPTIONS}
+          groupOptions={VIDEO_GROUP_OPTIONS}
+        />
+
         <main className="videos-main">
-          {loading ? (
+          {loading && videos.length === 0 ? (
             <VideosSkeleton />
           ) : filteredVideos.length === 0 ? (
-            <div className="empty-videos">
-              <MdVideoLibrary className="empty-videos-icon" />
-              <h3 style={{ color: 'var(--text-main)', marginBottom: '8px' }}>No videos found</h3>
-              <p>Try Adjusting your search or create a new video</p>
+            <div className="videos-empty-state">
+              <div className="videos-empty-state__card">
+                <span className="videos-empty-state__icon-wrap" aria-hidden>
+                  <MdVideoLibrary size={28} />
+                </span>
+                <p className="videos-empty-state__eyebrow">
+                  {hasSearch ? 'No results' : 'Nothing here yet'}
+                </p>
+                <h3 className="videos-empty-state__title">
+                  {getVideoEmptyTitle(activeSection, hasSearch)}
+                </h3>
+                <p className="videos-empty-state__description">
+                  {getVideoEmptyHint(activeSection, hasSearch)}
+                </p>
+                {!hasSearch && onCreate ? (
+                  <button type="button" className="videos-empty-state__cta" onClick={onCreate}>
+                    <MdAdd size={16} aria-hidden />
+                    Create Video
+                  </button>
+                ) : null}
+              </div>
             </div>
           ) : (
-            <div className={viewMode === 'grid' ? 'videos-grid' : 'videos-list'}>
-              {filteredVideos.map((video) => (
-                <div 
-                  className={`video-card ${viewMode === 'list' ? 'list-view' : ''}`} 
-                  key={video.id}
-                  ref={el => menuRefs.current[`video-${video.id}`] = el}
-                  onClick={() => onEdit && onEdit(video)}
-                >
-                  <div className="video-thumb">
-                    <img
-                      src={video.thumbnail || thumbnailUrl}
-                      alt={video.title}
-                      className="video-thumb-image"
-                    />
-                    <div className="video-thumb-overlay">
-                      <div className={`video-badge ${video.status || 'draft'}`}>
-                        {video.status?.toUpperCase() || 'DRAFT'}
-                      </div>
-                      <button
-                        className="video-menu-btn"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setCardMenu(cardMenu === `video-${video.id}` ? null : `video-${video.id}`)
-                        }}
-                      >
-                        <MdMoreVert />
-                      </button>
-                      {cardMenu === `video-${video.id}` && (
-                        <div className="video-menu" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            className="video-menu-item"
-                            onClick={() => {
-                              setRenameDialog({
-                                videoId: video.id,
-                                workspaceId: video.workspaceId,
-                                folderId: video.folderId,
-                                title: video.title
-                              })
-                              setNewName(video.title)
-                              setCardMenu(null)
-                            }}
-                          >
-                            <MdEdit className="video-menu-icon" />
-                            Rename
-                          </button>
-                          <button
-                            className="video-menu-item delete"
-                            onClick={() => handleDelete(video.workspaceId, video.id)}
-                          >
-                            <MdDelete className="video-menu-icon" />
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    <div style={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '50%',
-                      background: 'rgba(255, 255, 255, 0.9)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#1e293b',
-                      fontSize: '24px',
-                      cursor: 'pointer',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                    }}>
-                      <MdEdit />
-                    </div>
-                    {video.duration && (
-                      <div className="video-duration">
-                        {video.duration}
-                      </div>
-                    )}
-                  </div>
-                  <div className="video-info">
-                    <h4 className="video-title" title={video.title}>{video.title}</h4>
-                    <p className="video-meta">Updated {video.updatedAt || video.updated || 'recently'}</p>
-                    <div className="workspace-badge" title={`In workspace: ${video.workspaceName}`}>
-                      <MdFolder size={12} style={{ marginRight: '4px' }} />
-                      {video.workspaceName}
-                    </div>
-                  </div>
-                </div>
+            <div className="videos-groups">
+              {videoGroups.map((group) => (
+                <section key={group.key} className="videos-group">
+                  {group.label ? (
+                    <h3 className="videos-group__heading">{group.label}</h3>
+                  ) : null}
+                  {renderVideoCollection(group.videos)}
+                </section>
               ))}
             </div>
           )}
+
+          {hasMore && !loading ? (
+            <div className="videos-load-more">
+              <button
+                type="button"
+                className="btn-secondary"
+                disabled={loadingMore}
+                onClick={() => fetchVideos({ page: pagination.page + 1, append: true })}
+              >
+                {loadingMore ? 'Loading…' : 'Load more'}
+              </button>
+            </div>
+          ) : null}
         </main>
       </div>
 
-      {renameDialog && (
-        <div className="rename-dialog-overlay" onClick={() => setRenameDialog(null)}>
-          <div className="rename-dialog" onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: '20px' }}>Rename Video</h3>
-              <button 
-                onClick={() => setRenameDialog(null)}
-                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
-              >
-                <MdClose size={24} />
+      {previewVideo ? (
+        <div className="videos-preview-modal" role="dialog" aria-modal="true">
+          <div className="videos-preview-backdrop" onClick={() => setPreviewVideo(null)} />
+          <div className="videos-preview-panel">
+            <header className="videos-preview-header">
+              <h3>{previewVideo.title}</h3>
+              <button type="button" onClick={() => setPreviewVideo(null)} aria-label="Close">
+                <MdClose size={22} />
               </button>
-            </div>
-            <input
-              type="text"
-              className="rename-input"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleRename()
-                if (e.key === 'Escape') setRenameDialog(null)
-              }}
-              autoFocus
-            />
-            {isRenameNameDuplicate && (
-              <p style={{ margin: '8px 0 0', color: '#dc2626', fontSize: '13px', fontWeight: 600 }}>
-                A project with this name already exists in this folder
-              </p>
+            </header>
+            {previewLoading ? (
+              <p className="videos-preview-status">Loading preview…</p>
+            ) : previewUrl ? (
+              <video src={previewUrl} controls autoPlay className="videos-preview-player" />
+            ) : (
+              <p className="videos-preview-status">Preview unavailable.</p>
             )}
-            <div className="rename-dialog-actions">
-              <button className="btn-secondary" onClick={() => setRenameDialog(null)}>Cancel</button>
-              <button className="btn-primary" onClick={handleRename} disabled={isRenameNameDuplicate}>Rename</button>
-            </div>
           </div>
         </div>
-      )}
+      ) : null}
 
-      {confirmDialog && (
-        <div className="confirm-dialog-overlay" onClick={() => setConfirmDialog(null)}>
-          <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
-            <div className="confirm-dialog-icon-wrap">
-              <MdWarning className="confirm-dialog-icon" />
-            </div>
-            <h3 className="confirm-dialog-title">Please confirm</h3>
-            <p className="confirm-dialog-message">{confirmDialog.message}</p>
-            <div className="confirm-dialog-actions">
-              <button className="btn-secondary" onClick={() => setConfirmDialog(null)}>
-                Cancel
-              </button>
-              <button
-                className="btn-primary"
-                onClick={async () => {
-                  const onConfirm = confirmDialog.onConfirm
-                  setConfirmDialog(null)
-                  if (onConfirm) {
-                    await onConfirm()
-                  }
-                }}
-              >
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {toast && (
+      {toast ? (
         <div className={`videos-toast videos-toast--${toast.type}`}>
           {toast.type === 'success' ? (
             <MdCheckCircle className="videos-toast-icon" />
@@ -372,7 +374,7 @@ function Videos({ onCreate, onEdit }) {
           )}
           <span>{toast.message}</span>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

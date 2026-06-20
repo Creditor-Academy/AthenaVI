@@ -13,6 +13,8 @@ import PreviewModal from '../../components/features/editor/editor/PreviewModal'
 import ExportModal from '../../components/features/editor/editor/ExportModal'
 import GeneratedVideoModal from '../../components/features/editor/editor/GeneratedVideoModal'
 import QuickCreateModal from '../../components/features/editor/editor/QuickCreateModal'
+import PresenterModeModal from '../../components/features/editor/editor/PresenterModeModal'
+import VoiceOnlySpeechModal from '../../components/features/editor/editor/VoiceOnlySpeechModal'
 import heygenService from '../../services/heygenService'
 import creditsService, { isInsufficientCreditsError } from '../../services/creditsService.js'
 import { extractCreditsUsed } from '../../utils/creditTransactions.js'
@@ -26,11 +28,14 @@ import {
   canUseExpressiveness,
   getSceneLookEngineContext,
   resolveAvatarEngine,
+  resolveVideoAvatarEngine,
+  finalizeVideoCreatePayload,
 } from '../../utils/heygenAvatars'
 import { buildClipTextContent } from '../../utils/textClip'
 import {
   fromBackendProjectData,
   rehydrateSceneVideos,
+  rehydrateSceneSpeech,
   toBackendProjectData,
 } from '../../utils/projectDataMapper'
 import {
@@ -41,7 +46,7 @@ import {
   nextHeygenSceneId,
   pollUntilHeygenPlaybackReady,
 } from '../../utils/heygenVideo'
-import { exportFullProjectVideo } from '../../utils/projectRender'
+import { downloadFinalRenderStream, exportFullProjectVideo } from '../../utils/projectRender'
 import {
   applyDurationToSceneClips,
   buildSceneDurationPatch,
@@ -59,6 +64,7 @@ import {
   resolveDropImageSrc,
 } from '../../utils/editorDragDrop'
 import { getDefaultClipPlacement } from '../../utils/editorPlacementUtils'
+import { rehydrateSceneAssetUrls } from '../../utils/assetClipUtils'
 import { normalizeSceneClips } from '../../utils/clipLayout'
 import { prepareTemplateSceneForEditor } from '../../utils/templateSceneUtils'
 import { fetchTemplateAvatarLookSet, TEMPLATE_AVATAR_LOOK_COUNT } from '../../utils/templateAvatarPreview'
@@ -91,6 +97,77 @@ const PROJECT_DRAFT_KEY = 'athenavi_project'
 
 function countSceneClips(scenes = []) {
   return scenes.reduce((total, scene) => total + (scene.clips?.length ?? 0), 0)
+}
+
+function isEphemeralUrl(url) {
+  if (!url || typeof url !== 'string') return false
+  return url.startsWith('blob:') || url.includes('X-Amz-')
+}
+
+async function getAudioDurationSeconds(src, { timeoutMs = 12000 } = {}) {
+  if (!src || typeof src !== 'string') return null
+
+  return await new Promise((resolve) => {
+    const audio = new Audio()
+    audio.preload = 'metadata'
+    audio.crossOrigin = 'anonymous'
+
+    const cleanup = () => {
+      audio.onloadedmetadata = null
+      audio.onerror = null
+      audio.src = ''
+    }
+
+    const timer = setTimeout(() => {
+      cleanup()
+      resolve(null)
+    }, timeoutMs)
+
+    audio.onloadedmetadata = () => {
+      clearTimeout(timer)
+      const d = audio.duration
+      cleanup()
+      resolve(Number.isFinite(d) && d > 0 ? d : null)
+    }
+
+    audio.onerror = () => {
+      clearTimeout(timer)
+      cleanup()
+      resolve(null)
+    }
+
+    audio.src = src
+  })
+}
+
+function stripEphemeralMediaFromDraft(projectState) {
+  if (!projectState || typeof projectState !== 'object') return projectState
+  const scenes = Array.isArray(projectState.scenes) ? projectState.scenes : []
+  return {
+    ...projectState,
+    scenes: scenes.map((scene) => {
+      const nextScene = { ...scene }
+      if (isEphemeralUrl(nextScene.generatedVideoUrl)) delete nextScene.generatedVideoUrl
+      if (isEphemeralUrl(nextScene.playbackUrl)) delete nextScene.playbackUrl
+      if (isEphemeralUrl(nextScene.speechPlaybackUrl)) delete nextScene.speechPlaybackUrl
+      if (Array.isArray(nextScene.clips)) {
+        nextScene.clips = nextScene.clips.map((clip) => {
+          const nextClip = { ...clip }
+          if (isEphemeralUrl(nextClip.src)) delete nextClip.src
+          if (isEphemeralUrl(nextClip.fillSrc)) delete nextClip.fillSrc
+          if (nextClip.content && typeof nextClip.content === 'object') {
+            const nextContent = { ...nextClip.content }
+            if (isEphemeralUrl(nextContent.src)) delete nextContent.src
+            if (isEphemeralUrl(nextContent.url)) delete nextContent.url
+            if (isEphemeralUrl(nextContent.previewSrc)) delete nextContent.previewSrc
+            nextClip.content = nextContent
+          }
+          return nextClip
+        })
+      }
+      return nextScene
+    }),
+  }
 }
 
 function normalizeBootScenes(scenes = [], resolution) {
@@ -192,7 +269,9 @@ function buildInitialProject(initialConfig) {
   const pendingCreateScene = initialConfig?.template?.scene;
   const initialScenes = (() => {
     if (Array.isArray(initialConfig?.template?.scenes) && initialConfig.template.scenes.length > 0) {
-      return initialConfig.template.scenes;
+      return initialConfig.template.scenes.map((scene) =>
+        prepareTemplateSceneForEditor(scene, resolvedResolution)
+      );
     }
     if (pendingCreateScene) {
       return [prepareTemplateSceneForEditor(pendingCreateScene, resolvedResolution)];
@@ -281,6 +360,8 @@ function Create({ onBack, initialConfig = null }) {
   const [musicDuration, setMusicDuration] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [exportReady, setExportReady] = useState(null) // { renderId, filename, workspaceId, projectId }
+  const [isDownloadingExport, setIsDownloadingExport] = useState(false)
   const [creditsRefreshKey, setCreditsRefreshKey] = useState(0)
   const bumpCreditsRefresh = useCallback(() => {
     setCreditsRefreshKey((key) => key + 1)
@@ -290,6 +371,8 @@ function Create({ onBack, initialConfig = null }) {
   const [generatedVideoUrl, setGeneratedVideoUrl] = useState(null)
   const [generationCreditsUsed, setGenerationCreditsUsed] = useState(null)
   const [generatingSceneId, setGeneratingSceneId] = useState(null)
+  const [showPresenterModeModal, setShowPresenterModeModal] = useState(false)
+  const [showVoiceOnlySpeechModal, setShowVoiceOnlySpeechModal] = useState(false)
   const [showQuickCreateModal, setShowQuickCreateModal] = useState(() => {
     const initial = buildInitialProject(initialConfig)
     if (initialConfig?.template?.scene) return true
@@ -455,8 +538,10 @@ function Create({ onBack, initialConfig = null }) {
             workspaceId,
             projectId
           )
-          const hydrated = { ...localProject, scenes: scenesWithVideo }
-          applyHydratedScenes(scenesWithVideo)
+          const scenesWithSpeech = await rehydrateSceneSpeech(scenesWithVideo, workspaceId, projectId)
+          const scenesWithAssets = await rehydrateSceneAssetUrls(scenesWithSpeech, workspaceId)
+          const hydrated = { ...localProject, scenes: scenesWithAssets }
+          applyHydratedScenes(scenesWithAssets)
           saveProjectRef.current?.(false, hydrated)
           return
         }
@@ -479,8 +564,10 @@ function Create({ onBack, initialConfig = null }) {
               workspaceId,
               projectId
             )
-            const hydrated = { ...localProject, scenes: scenesWithVideo }
-            applyHydratedScenes(scenesWithVideo)
+            const scenesWithSpeech = await rehydrateSceneSpeech(scenesWithVideo, workspaceId, projectId)
+            const scenesWithAssets = await rehydrateSceneAssetUrls(scenesWithSpeech, workspaceId)
+            const hydrated = { ...localProject, scenes: scenesWithAssets }
+            applyHydratedScenes(scenesWithAssets)
             saveProjectRef.current?.(false, hydrated)
             return
           }
@@ -490,8 +577,10 @@ function Create({ onBack, initialConfig = null }) {
             workspaceId,
             projectId
           )
+          const scenesWithSpeech = await rehydrateSceneSpeech(scenesWithVideo, workspaceId, projectId)
+          const scenesWithAssets = await rehydrateSceneAssetUrls(scenesWithSpeech, workspaceId)
 
-          applyHydratedScenes(scenesWithVideo, {
+          applyHydratedScenes(scenesWithAssets, {
             resolution: mapped.resolution || localProject.resolution,
             meta: mapped.meta || localProject.meta,
             updatedAt: fetchedProject.updatedAt || new Date().toISOString(),
@@ -512,7 +601,12 @@ function Create({ onBack, initialConfig = null }) {
     const { workspaceId, projectId } = resolveProjectIds(projectState)
 
     try {
-      localStorage.setItem(PROJECT_DRAFT_KEY, JSON.stringify({ ...projectState, id: projectId || projectState.id, workspaceId: workspaceId || projectState.workspaceId }))
+      const draft = stripEphemeralMediaFromDraft({
+        ...projectState,
+        id: projectId || projectState.id,
+        workspaceId: workspaceId || projectState.workspaceId,
+      })
+      localStorage.setItem(PROJECT_DRAFT_KEY, JSON.stringify(draft))
     } catch (e) {
       console.warn('Failed to save to localStorage', e)
     }
@@ -532,11 +626,15 @@ function Create({ onBack, initialConfig = null }) {
     try {
       setIsSaving(true)
 
-      const payload = toBackendProjectData({
+      // Backend must not persist ephemeral URLs (blob:, presigned X-Amz-...).
+      // Persist ids (e.g. speechGenerationId) and rehydrate URLs on load.
+      const persistableState = stripEphemeralMediaFromDraft({
         ...projectState,
         id: projectId,
         workspaceId,
       })
+
+      const payload = toBackendProjectData(persistableState)
 
       await workspaceService.saveProjectState(workspaceId, projectId, payload)
 
@@ -564,10 +662,12 @@ function Create({ onBack, initialConfig = null }) {
 
     const timer = setTimeout(() => {
       try {
-        localStorage.setItem(
-          PROJECT_DRAFT_KEY,
-          JSON.stringify({ ...project, id: projectId, workspaceId: workspaceId || project.workspaceId })
-        )
+        const draft = stripEphemeralMediaFromDraft({
+          ...project,
+          id: projectId,
+          workspaceId: workspaceId || project.workspaceId,
+        })
+        localStorage.setItem(PROJECT_DRAFT_KEY, JSON.stringify(draft))
       } catch (e) {
         console.warn('Failed to persist project draft', e)
       }
@@ -719,14 +819,27 @@ function Create({ onBack, initialConfig = null }) {
     const mediaSrc = isMediaObject ? (content.url || content.src) : content
     const assetId = isMediaObject ? content.assetId : meta?.assetId
 
+    const textStyleFromMeta = meta?.style || {}
+    const rawInsertedFontSize = textStyleFromMeta.fontSize
+    const insertedFontSizeNum = rawInsertedFontSize == null
+      ? 48
+      : Number.parseFloat(String(rawInsertedFontSize))
+    const doubledInsertedFontSize = Number.isFinite(insertedFontSizeNum)
+      ? insertedFontSizeNum * 2
+      : 96
+
     const newClip = {
       id: `clip_${Date.now()}`,
       type: type === 'image' ? 'image' : type === 'video' ? 'video' : type === 'avatar' ? 'avatar' : type === 'shape' ? 'shape' : type === 'audio' ? 'audio' : type === 'icon' ? 'image' : 'text',
-      src: (type === 'image' || type === 'video' || type === 'avatar' || type === 'audio' || type === 'icon') ? mediaSrc : null,
+      src: (type === 'image' || type === 'video' || type === 'avatar' || type === 'audio' || type === 'icon') ? (mediaSrc || null) : null,
       content: type === 'text'
         ? { text: typeof content === 'string' ? content : '' }
-        : assetId
-          ? { assetId, mediaType: type, url: mediaSrc }
+        : assetId || mediaSrc
+          ? {
+              ...(assetId ? { assetId } : {}),
+              mediaType: type,
+              ...(mediaSrc ? { url: mediaSrc } : {}),
+            }
           : null,
       layer: targetScene.clips.length,
       startTime: 0.0,
@@ -738,12 +851,12 @@ function Create({ onBack, initialConfig = null }) {
       opacity: 1.0,
       style: type === 'text'
         ? {
-            fontSize: 48,
             fontWeight: '700',
             color: '#1a1b1c',
             textAlign: 'left',
             fontFamily: 'Inter, system-ui, sans-serif',
-            ...(meta?.style || {}),
+            ...textStyleFromMeta,
+            fontSize: doubledInsertedFontSize,
           }
         : type === 'shape'
           ? content?.style
@@ -804,6 +917,76 @@ function Create({ onBack, initialConfig = null }) {
         }
       })
     }))
+  }
+
+  const updateLayerRotation = (layerId, rotation) => {
+    if (!activeSceneId) return
+    const normalized = ((rotation % 360) + 360) % 360
+    setProject(prev => ({
+      ...prev,
+      updatedAt: new Date().toISOString(),
+      scenes: prev.scenes.map(s => {
+        if (s.id !== activeSceneId) return s
+        return {
+          ...s,
+          clips: s.clips.map(c =>
+            c.id === layerId ? { ...c, rotation: normalized, _userPlaced: true } : c
+          )
+        }
+      })
+    }))
+  }
+
+  const updateLayerStyleFromCanvas = (layerId, styleUpdates) => {
+    if (!activeSceneId) return
+    setProject(prev => ({
+      ...prev,
+      updatedAt: new Date().toISOString(),
+      scenes: prev.scenes.map(s => {
+        if (s.id !== activeSceneId) return s
+        return {
+          ...s,
+          clips: s.clips.map(c =>
+            c.id === layerId
+              ? { ...c, style: { ...(c.style || {}), ...styleUpdates }, _userPlaced: true }
+              : c
+          )
+        }
+      })
+    }), { history: true })
+  }
+
+  const updateLayerFromCanvas = (layerId, updates) => {
+    if (!activeSceneId) return
+    setProject(prev => ({
+      ...prev,
+      updatedAt: new Date().toISOString(),
+      scenes: prev.scenes.map(s => {
+        if (s.id !== activeSceneId) return s
+        return {
+          ...s,
+          clips: s.clips.map(c =>
+            c.id === layerId ? { ...c, ...updates, _userPlaced: true } : c
+          )
+        }
+      })
+    }), { history: true })
+  }
+
+  const duplicateLayerFromCanvas = (layerId) => {
+    if (!activeSceneId) return
+    setSelectedLayerIds([layerId])
+    setSelectedLayerId(layerId)
+    duplicateSelectedLayers()
+  }
+
+  const deleteLayerFromCanvas = (layerId) => {
+    if (!activeSceneId) return
+    deleteLayer(activeSceneId, layerId)
+  }
+
+  const handleOpenLayerCrop = () => {
+    setIsRightSidebarOpen(true)
   }
 
   // Update a specific layer's position within the active scene (with optional snap)
@@ -1172,6 +1355,62 @@ function Create({ onBack, initialConfig = null }) {
     setShowTemplateModal(true)
   }
 
+  const handleAddBlankScene = () => {
+    const insertAfter = insertAfterIndexRef.current
+    insertAfterIndexRef.current = null
+
+    let nextActiveSceneId = null
+    setProject((prev) => {
+      const maybeDefault = prev.scenes?.length === 1 ? prev.scenes[0] : null
+      const isDefaultSingleScene =
+        !!maybeDefault &&
+        (maybeDefault.id === 'lt_001' || maybeDefault.title === 'Intro' || maybeDefault.title === 'Hero Scene') &&
+        ((maybeDefault.clips?.length ?? 0) === 0)
+
+      const newSceneId = isDefaultSingleScene
+        ? maybeDefault.id
+        : `scene_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`
+
+      nextActiveSceneId = newSceneId
+
+      const baseOrder = isDefaultSingleScene ? 0 : prev.scenes.length
+      const blank = ensureSceneIdentity(
+        {
+          id: newSceneId,
+          sceneId: newSceneId,
+          title: 'Blank Scene',
+          duration: 8,
+          background: { value: '#ffffff' },
+          clips: [],
+          order: baseOrder,
+        },
+        baseOrder
+      )
+
+      let newScenes
+      if (isDefaultSingleScene) {
+        newScenes = [blank]
+      } else if (insertAfter != null && insertAfter >= 0 && insertAfter < prev.scenes.length) {
+        newScenes = [
+          ...prev.scenes.slice(0, insertAfter + 1),
+          blank,
+          ...prev.scenes.slice(insertAfter + 1),
+        ].map((s, idx) => ensureSceneIdentity({ ...s, order: idx }, idx))
+      } else {
+        newScenes = [...prev.scenes, blank].map((s, idx) => ensureSceneIdentity({ ...s, order: idx }, idx))
+      }
+
+      return {
+        ...prev,
+        updatedAt: new Date().toISOString(),
+        scenes: newScenes,
+      }
+    })
+
+    if (nextActiveSceneId) setActiveSceneId(nextActiveSceneId)
+    setShowTemplateModal(false)
+  }
+
   const handleAddTemplateScene = async (template) => {
     const insertAfter = insertAfterIndexRef.current
     insertAfterIndexRef.current = null
@@ -1218,6 +1457,73 @@ function Create({ onBack, initialConfig = null }) {
         scenes: newScenes,
       };
     });
+
+    if (nextActiveSceneId) setActiveSceneId(nextActiveSceneId)
+  }
+
+  const handleApplyTemplateBundle = async (bundle) => {
+    if (!bundle?.scenes?.length) return
+
+    const insertAfter = insertAfterIndexRef.current
+    insertAfterIndexRef.current = null
+    const avatarLookSet = await fetchTemplateAvatarLookSet(TEMPLATE_AVATAR_LOOK_COUNT)
+
+    let nextActiveSceneId = null
+    setProject((prev) => {
+      const maybeDefault = prev.scenes?.length === 1 ? prev.scenes[0] : null
+      const isDefaultSingleScene =
+        !!maybeDefault &&
+        (maybeDefault.id === 'lt_001' || maybeDefault.title === 'Intro' || maybeDefault.title === 'Hero Scene') &&
+        ((maybeDefault.clips?.length ?? 0) === 0)
+
+      const preparedScenes = bundle.scenes.map((template, idx) => {
+        const prepared = prepareTemplateSceneForEditor(template, prev.resolution, { avatarLookSet })
+        const newSceneId = isDefaultSingleScene && idx === 0
+          ? maybeDefault.id
+          : `scene_${Date.now()}_${idx}_${Math.random().toString(36).substr(2, 5)}`
+
+        if (idx === 0) nextActiveSceneId = newSceneId
+
+        return ensureSceneIdentity(
+          {
+            ...prepared,
+            id: newSceneId,
+            sceneId: newSceneId,
+            order: isDefaultSingleScene ? idx : prev.scenes.length + idx,
+          },
+          isDefaultSingleScene ? idx : prev.scenes.length + idx
+        )
+      })
+
+      let newScenes
+      if (isDefaultSingleScene) {
+        newScenes = preparedScenes.map((scene, idx) => ({ ...scene, order: idx }))
+      } else if (insertAfter != null && insertAfter >= 0 && insertAfter < prev.scenes.length) {
+        newScenes = [
+          ...prev.scenes.slice(0, insertAfter + 1),
+          ...preparedScenes.map((scene, idx) => ({
+            ...scene,
+            order: insertAfter + 1 + idx,
+          })),
+          ...prev.scenes.slice(insertAfter + 1),
+        ]
+      } else {
+        const baseOrder = prev.scenes.length
+        newScenes = [
+          ...prev.scenes,
+          ...preparedScenes.map((scene, idx) => ({
+            ...scene,
+            order: baseOrder + idx,
+          })),
+        ]
+      }
+
+      return {
+        ...prev,
+        updatedAt: new Date().toISOString(),
+        scenes: newScenes,
+      }
+    })
 
     if (nextActiveSceneId) setActiveSceneId(nextActiveSceneId)
   }
@@ -1294,18 +1600,34 @@ function Create({ onBack, initialConfig = null }) {
     setExportStatus('Saving project…')
     setExportError('')
     setIsExporting(true)
+    setExportReady(null)
 
     try {
-      await exportFullProjectVideo({
+      const result = await exportFullProjectVideo({
         workspaceService,
         workspaceId,
         projectId,
         projectState: projectRef.current,
         filename,
+        autoDownload: false,
+        forceRebuild: false,
         onStatus: setExportStatus,
       })
+      if (result?.projectState?.scenes) {
+        setProject((prev) => ({
+          ...prev,
+          scenes: result.projectState.scenes,
+          updatedAt: new Date().toISOString(),
+        }))
+      }
       setExportPhase('success')
-      showToast('Download started', 'success')
+      setExportReady({
+        workspaceId,
+        projectId,
+        renderId: result?.renderId,
+        filename: result?.filename || `${projectRef.current?.title || filename || 'video'}.mp4`,
+      })
+      showToast('Render ready', 'success')
       bumpCreditsRefresh()
     } catch (err) {
       console.error('[Export] Full render download failed:', err)
@@ -1316,12 +1638,39 @@ function Create({ onBack, initialConfig = null }) {
     }
   }
 
+  const handleDownloadExport = async () => {
+    const info = exportReady
+    if (!info?.workspaceId || !info?.projectId || !info?.renderId) {
+      showToast('Missing render info. Export again.', 'error')
+      return
+    }
+    if (isDownloadingExport) return
+
+    setIsDownloadingExport(true)
+    try {
+      await downloadFinalRenderStream({
+        workspaceService,
+        workspaceId: info.workspaceId,
+        projectId: info.projectId,
+        renderId: info.renderId,
+        filename: info.filename,
+      })
+      showToast('Download started', 'success')
+    } catch (e) {
+      showToast(e?.message || 'Download failed', 'error')
+    } finally {
+      setIsDownloadingExport(false)
+    }
+  }
+
   const handleCloseExportModal = () => {
     if (isExporting) return
     setShowExportModal(false)
     setExportPhase('configure')
     setExportStatus('')
     setExportError('')
+    setExportReady(null)
+    setIsDownloadingExport(false)
   }
 
   const handlePreview = () => {
@@ -1394,16 +1743,40 @@ function Create({ onBack, initialConfig = null }) {
       });
 
       const aspectRatioStr = project.resolution?.width > project.resolution?.height ? '16:9' : '9:16';
-      
+      const lookContext = {
+        ...getSceneLookEngineContext(scene),
+        avatar_type: avatarKind,
+        supportedEngines:
+          overrides?.supportedEngines ?? getSceneLookEngineContext(scene).supportedEngines,
+        isLegacyV2: overrides?.isLegacyV2 ?? getSceneLookEngineContext(scene).isLegacyV2,
+      };
+
+      const outputFormat =
+        overrides?.outputFormat ??
+        scene?.outputFormat ??
+        scene?.presenter?.outputFormat ??
+        'mp4';
+      const removeBackground =
+        outputFormat === 'webm'
+          ? false
+          : overrides?.removeBackground ?? (scene?.removeBackground || false);
+
       const payload = {
         sceneId: stableSceneId,
         avatarId: avatarLookId,
-        avatarEngine:
-          overrides?.avatarEngine ||
-          scene?.presenter?.avatarEngine ||
-          scene?.avatarEngine ||
-          resolveAvatarEngine(getSceneLookEngineContext(scene)),
+        avatarEngine: finalizeVideoCreatePayload({
+          avatarId: avatarLookId,
+          avatarType: avatarKind,
+          avatarEngine:
+            overrides?.avatarEngine ||
+            scene?.presenter?.avatarEngine ||
+            scene?.avatarEngine,
+          isLegacyV2: lookContext.isLegacyV2,
+          supportedEngines: lookContext.supportedEngines,
+        }),
         avatarType: avatarKind,
+        supportedEngines: lookContext.supportedEngines,
+        isLegacyV2: lookContext.isLegacyV2,
         title: `${project.title} - ${scene?.title || 'Scene'}`,
         resolution: project.resolution?.height >= 1080 ? '1080p' : '720p',
         aspectRatio: overrides?.aspectRatio || aspectRatioStr,
@@ -1411,18 +1784,13 @@ function Create({ onBack, initialConfig = null }) {
         voiceId: voiceId,
         script: script,
         voiceSettings,
-        removeBackground: overrides?.removeBackground ?? (scene?.removeBackground || false),
-        outputFormat: scene?.outputFormat || 'mp4'
+        removeBackground,
+        outputFormat,
       };
 
       if (
         canUseExpressiveness(
-          {
-            ...getSceneLookEngineContext(scene),
-            avatar_type: avatarKind,
-            supportedEngines:
-              overrides?.supportedEngines ?? getSceneLookEngineContext(scene).supportedEngines,
-          },
+          lookContext,
           payload.avatarEngine
         )
       ) {
@@ -1746,6 +2114,8 @@ function Create({ onBack, initialConfig = null }) {
           voiceId: payload.voiceId,
           voiceName: payload.voiceName,
           script: paraText,
+          outputFormat: payload.outputFormat || 'mp4',
+          removeBackground: payload.removeBackground ?? false,
           presenter: {
             avatarId: payload.avatarLookId || payload.avatarType,
             avatarLookId: payload.avatarLookId || payload.avatarType,
@@ -1757,10 +2127,13 @@ function Create({ onBack, initialConfig = null }) {
             voiceName: payload.voiceName,
             script: paraText,
             supportedEngines: payload.supportedEngines,
+            isLegacyV2: payload.isLegacyV2,
             engineUnknown: payload.engineUnknown,
             ...(payload.expressiveness ? { expressiveness: payload.expressiveness } : {}),
+            outputFormat: payload.outputFormat || 'mp4',
           },
           supportedEngines: payload.supportedEngines,
+          isLegacyV2: payload.isLegacyV2,
           engineUnknown: payload.engineUnknown,
           clips: clips
         };
@@ -1880,7 +2253,8 @@ function Create({ onBack, initialConfig = null }) {
           script: payload.script,
           expressiveness: payload.expressiveness,
           backgroundColor: payload.backgroundColor,
-          removeBackground: payload.removeBackground,
+          outputFormat: payload.outputFormat || 'mp4',
+          removeBackground: payload.removeBackground ?? false,
           presenter: {
             avatarId: payload.avatarLookId || payload.avatarType,
             avatarLookId: payload.avatarLookId || payload.avatarType,
@@ -1892,10 +2266,13 @@ function Create({ onBack, initialConfig = null }) {
             voiceName: payload.voiceName,
             script: payload.script,
             supportedEngines: payload.supportedEngines,
+            isLegacyV2: payload.isLegacyV2,
             engineUnknown: payload.engineUnknown,
             ...(payload.expressiveness ? { expressiveness: payload.expressiveness } : {}),
+            outputFormat: payload.outputFormat || 'mp4',
           },
           supportedEngines: payload.supportedEngines,
+          isLegacyV2: payload.isLegacyV2,
           engineUnknown: payload.engineUnknown,
           duration: durationPatch.duration,
           durationFromScript: true,
@@ -1925,6 +2302,109 @@ function Create({ onBack, initialConfig = null }) {
       generateSceneVideo(targetSceneId, payload);
     }, 500);
   };
+
+  const handleGenerateVoiceOnlySpeech = async ({ voiceId, script, speed, locale, inputType }) => {
+    const workspaceId = project.workspaceId || project.createConfig?.workspaceId
+    const projectId = project.id || project.createConfig?.videoId
+    if (!workspaceId || !projectId || !activeSceneId) {
+      showToast('Missing workspace / project / scene id', 'error')
+      return
+    }
+
+    const scene = projectRef.current.scenes.find((s) => s.id === activeSceneId)
+    if (!scene) return
+
+    const sceneId = scene.sceneId || scene.id || activeSceneId
+    const payload = {
+      sceneId,
+      voiceId,
+      script,
+      inputType: inputType || 'text',
+      speed: typeof speed === 'number' ? speed : (scene.voiceSettings?.speed || 1),
+      locale: locale || scene.voiceSettings?.locale || 'en-US',
+    }
+
+    const created = await workspaceService.createSpeechGeneration(workspaceId, projectId, payload)
+    const speechGeneration =
+      created?.speechGeneration ||
+      created?.data?.speechGeneration ||
+      created?.data ||
+      created
+    const speechId = speechGeneration?.id || speechGeneration?._id
+    if (!speechId) throw new Error('Speech generation id missing')
+
+    const download = await workspaceService.downloadSpeech(workspaceId, projectId, speechId)
+    const presignedUrl = download?.presignedUrl || download?.url
+    if (!presignedUrl) throw new Error('Speech download URL missing')
+
+    const speechDurationSecRaw = await getAudioDurationSeconds(presignedUrl)
+    // Small guard: keep at least 1s and round to 2 decimals for stable UX.
+    const speechDurationSec = speechDurationSecRaw ? Math.max(1, Math.round(speechDurationSecRaw * 100) / 100) : null
+
+    let voiceName = null
+    try {
+      const voiceRes = await heygenService.getVoiceStatus(voiceId)
+      voiceName = voiceRes?.data?.name || voiceRes?.name || voiceRes?.voice_name || null
+    } catch {
+      voiceName = null
+    }
+
+    setProject((prev) => {
+      const nextScenes = (prev.scenes || []).map((s) => {
+        if (s.id !== activeSceneId) return s
+
+        const duration = speechDurationSec || s.duration || 8
+        const clips = (s.clips || [])
+          // remove avatar layers for voice-only mode
+          .filter((c) => !(c.role === 'avatar' || c.type === 'avatar' || (c.type === 'video' && c.role === 'avatar')))
+
+        const existingAudioIndex = clips.findIndex((c) => c.type === 'audio' && (c.role === 'narration' || c.role === 'voiceover'))
+        const audioClip = {
+          id: existingAudioIndex >= 0 ? clips[existingAudioIndex].id : `audio_${Date.now()}`,
+          type: 'audio',
+          role: 'narration',
+          src: presignedUrl,
+          startTime: 0,
+          endTime: duration,
+          volume: 1,
+        }
+
+        const nextClips = [...clips]
+        if (existingAudioIndex >= 0) nextClips[existingAudioIndex] = { ...nextClips[existingAudioIndex], ...audioClip }
+        else nextClips.push(audioClip)
+
+        return {
+          ...s,
+          // voice-only presenter fields
+          voiceId,
+          voiceName: voiceName || s.voiceName,
+          voiceSettings: { ...(s.voiceSettings || {}), speed: payload.speed, locale: payload.locale },
+          script,
+          duration,
+          avatarType: undefined,
+          avatarLookId: undefined,
+          avatarName: undefined,
+          heygenVideoId: undefined,
+          heygenStatus: undefined,
+          generatedVideoUrl: undefined,
+          playbackUrl: undefined,
+          speechPlaybackUrl: presignedUrl,
+          generation: {
+            ...(s.generation || {}),
+            speechGenerationId: speechId,
+            status: 'completed',
+          },
+          clips: nextClips,
+        }
+      })
+
+      const next = { ...prev, updatedAt: new Date().toISOString(), scenes: nextScenes }
+      setTimeout(() => saveProject(false, next), 150)
+      return next
+    }, { history: true })
+
+    showToast('Narration ready', 'success')
+  }
 
   const handleUseGeneratedVideo = () => {
     if (!generatingSceneId || !generatedVideoUrl) return;
@@ -2181,6 +2661,27 @@ function Create({ onBack, initialConfig = null }) {
         onClose={() => setShowQuickCreateModal(false)}
         onGenerate={handleQuickCreateGenerate}
       />
+      <PresenterModeModal
+        isOpen={showPresenterModeModal && !isProjectLoading}
+        onClose={() => setShowPresenterModeModal(false)}
+        onChooseAvatar={() => {
+          setShowPresenterModeModal(false)
+          setShowVoiceOnlySpeechModal(false)
+          setShowQuickCreateModal(true)
+        }}
+        onChooseVoiceOnly={() => {
+          setShowPresenterModeModal(false)
+          setShowQuickCreateModal(false)
+          setShowVoiceOnlySpeechModal(true)
+        }}
+      />
+      <VoiceOnlySpeechModal
+        isOpen={showVoiceOnlySpeechModal && !isProjectLoading}
+        onClose={() => setShowVoiceOnlySpeechModal(false)}
+        initialScript={activeScene?.script || ''}
+        initialVoiceId={activeScene?.voiceId || ''}
+        onGenerate={handleGenerateVoiceOnlySpeech}
+      />
       <GeneratedVideoModal 
         isOpen={showGeneratedVideoModal} 
         onClose={() => {
@@ -2204,6 +2705,9 @@ function Create({ onBack, initialConfig = null }) {
         statusMessage={exportStatus}
         errorMessage={exportError}
         onStartExport={handleStartExport}
+        onDownload={exportPhase === 'success' ? handleDownloadExport : undefined}
+        readyFilename={exportReady?.filename || ''}
+        downloading={isDownloadingExport}
       />
       <EditorTopbar
         onBack={onBack}
@@ -2300,6 +2804,14 @@ function Create({ onBack, initialConfig = null }) {
                 onUpdateLayerPosition={updateLayerPosition}
                 onCommitLayerPosition={handleCommitLayerPosition}
                 onUpdateLayerSize={updateLayerSize}
+                onUpdateLayerRotation={updateLayerRotation}
+                onUpdateLayerStyle={updateLayerStyleFromCanvas}
+                onUpdateLayer={updateLayerFromCanvas}
+                onDuplicateLayer={duplicateLayerFromCanvas}
+                onDeleteLayer={deleteLayerFromCanvas}
+                onMoveLayerOrder={moveLayerOrder}
+                onToggleLayerLock={toggleLayerLock}
+                onOpenLayerCrop={handleOpenLayerCrop}
                 updateClipContent={updateClipContent}
                 onFillShape={fillShapeWithImage}
                 onCanvasDrop={handleCanvasDrop}
@@ -2338,7 +2850,7 @@ function Create({ onBack, initialConfig = null }) {
               currentTime={currentTime}
               isPlaying={isPlaying}
               onSeek={handleSeek}
-              onSelectScene={(sceneId) => handleSelectScene(sceneId, { openSidebar: true })}
+              onSelectScene={handleSelectScene}
               onSelectAvatarVideo={handleSelectAvatarVideoFromTimeline}
               onSelectLayer={handleSelectLayer}
               onUpdateScene={updateScene}
@@ -2376,6 +2888,7 @@ function Create({ onBack, initialConfig = null }) {
               }}
               totalDuration={(totalDurationInFrames || 0) / 30}
               timelineScope={timelineScope}
+              setTimelineScope={setTimelineScope}
             />
           </div>
         </div>
@@ -2454,7 +2967,11 @@ function Create({ onBack, initialConfig = null }) {
                 generateSceneVideo={generateSceneVideo}
                 setActiveTab={setSelectedTool}
                 applyGlobalSetting={applyGlobalSetting}
-                onOpenQuickCreate={() => setShowQuickCreateModal(true)}
+                onOpenQuickCreate={() => {
+                  setShowQuickCreateModal(false)
+                  setShowVoiceOnlySpeechModal(false)
+                  setShowPresenterModeModal(true)
+                }}
                 onMoveLayerOrder={moveLayerOrder}
                 onToggleLayerLock={toggleLayerLock}
                 onDuplicateScene={() => {
@@ -2489,6 +3006,8 @@ function Create({ onBack, initialConfig = null }) {
         showTemplateModal={showTemplateModal}
         setShowTemplateModal={setShowTemplateModal}
         handleAddTemplateScene={handleAddTemplateScene}
+        handleApplyTemplateBundle={handleApplyTemplateBundle}
+        handleAddBlankScene={handleAddBlankScene}
       />
     </div>
   )

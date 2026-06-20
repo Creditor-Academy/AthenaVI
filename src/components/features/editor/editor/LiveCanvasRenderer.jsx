@@ -16,15 +16,22 @@ import { getClipZIndex, isBackgroundClip, sortClipsForRender } from '../../../..
 import { resolveClipRect } from '../../../../utils/clipLayout'
 import { resolveClipMediaSrc, isVideoMedia } from '../../../../utils/heygenVideo'
 import { resolveAvatarDisplaySrc } from '../../../../utils/templateAvatarPreview'
+import { formatLayerBorderCss } from '../../../../utils/layerBorderUtils'
 import {
   canAcceptImageFill,
   parseCanvasDragData,
   resolveDropAssetId,
   resolveDropImageSrc,
 } from '../../../../utils/editorDragDrop'
-import { clientToComposition } from '../../../../utils/editorPlacementUtils'
+import { clientToComposition, compositionToClient } from '../../../../utils/editorPlacementUtils'
+import { getClipTransformCenter } from '../../../../utils/canvasTransformUtils'
 import CanvasGuidesOverlay from './CanvasGuidesOverlay'
+import SelectionOverlay from './SelectionOverlay'
+import SelectionQuickToolbar from './SelectionQuickToolbar'
+import { PreviewModeProvider } from '../../../../contexts/PreviewModeContext'
+import { measureTextContentSize } from '../../../../utils/canvasTransformUtils'
 import './TextSidebarPanel.css'
+import './SelectionQuickToolbar.css'
 
 /**
  * COORDINATE SYSTEM
@@ -34,110 +41,76 @@ import './TextSidebarPanel.css'
  * Mouse events are divided by displayScale to convert back to virtual space.
  */
 
-/* ─── Tiny transform-handle dot ─────────────────────────────────────── */
-const ResizeHandle = ({ cursor, style, onMouseDown }) => (
-  <div
-    onMouseDown={onMouseDown}
-    style={{
-      position: 'absolute',
-      width: 12, height: 12,
-      background: '#1a73e8',
-      border: '2px solid white',
-      borderRadius: 3,
-      zIndex: 50,
-      cursor,
-      boxShadow: '0 1px 4px rgba(0,0,0,0.35)',
-      ...style,
-    }}
-  />
+/* ─── Shared selection chrome for selected clips ─────────────────────── */
+const ClipSelectionChrome = ({
+  clip,
+  clipType,
+  displayScale,
+  onUpdatePosition,
+  onUpdateSize,
+  onUpdateTextFontSize,
+  onUpdateRotation,
+  onCommit,
+  getRotationPivotClient,
+  toolbarProps,
+}) => (
+  <>
+    {toolbarProps && (
+      <SelectionQuickToolbar clip={clip} {...toolbarProps} />
+    )}
+    <SelectionOverlay
+      clip={clip}
+      clipType={clipType}
+      displayScale={displayScale}
+      onUpdatePosition={onUpdatePosition}
+      onUpdateSize={onUpdateSize}
+      onUpdateTextFontSize={onUpdateTextFontSize}
+      onUpdateRotation={onUpdateRotation}
+      onCommit={onCommit}
+      getRotationPivotClient={getRotationPivotClient}
+    />
+  </>
 )
 
-/* ─── Selection overlay (resize handles) drawn around every selected clip ─ */
-const SelectionOverlay = ({ clip, displayScale, onUpdatePosition, onUpdateSize, onCommit }) => {
-  const dragRef = useRef(null)
+/* ─── Outer transform shell + inner visual clip ─────────────────────── */
+const clipInnerShell = (style = {}) => ({
+  position: 'absolute',
+  inset: 0,
+  width: '100%',
+  height: '100%',
+  overflow: 'hidden',
+  boxSizing: 'border-box',
+  ...style,
+})
 
-  const startDrag = useCallback((e) => {
-    e.stopPropagation()
-    const startX = e.clientX
-    const startY = e.clientY
-    const origX = clip.position?.x ?? 0
-    const origY = clip.position?.y ?? 0
-
-    const onMove = (mv) => {
-      const dx = (mv.clientX - startX) / displayScale
-      const dy = (mv.clientY - startY) / displayScale
-      onUpdatePosition(Math.round(origX + dx), Math.round(origY + dy))
-    }
-    const onUp = () => {
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('mouseup', onUp)
-      onCommit?.()
-    }
-    window.addEventListener('mousemove', onMove)
-    window.addEventListener('mouseup', onUp)
-  }, [clip, displayScale, onUpdatePosition, onCommit])
-
-  const startResize = useCallback((corner, e) => {
-    e.stopPropagation()
-    e.preventDefault()
-    const startX = e.clientX
-    const startY = e.clientY
-    const origW = clip.size?.width ?? 200
-    const origH = clip.size?.height ?? 120
-    const origX = clip.position?.x ?? 0
-    const origY = clip.position?.y ?? 0
-
-    const onMove = (mv) => {
-      const dx = (mv.clientX - startX) / displayScale
-      const dy = (mv.clientY - startY) / displayScale
-      let newW = origW, newH = origH, newX = origX, newY = origY
-
-      if (corner.includes('right'))  newW = Math.max(40, origW + dx)
-      if (corner.includes('left'))   { newW = Math.max(40, origW - dx); newX = origX + (origW - newW) }
-      if (corner.includes('bottom')) newH = Math.max(24, origH + dy)
-      if (corner.includes('top'))    { newH = Math.max(24, origH - dy); newY = origY + (origH - newH) }
-
-      onUpdateSize(Math.round(newW), Math.round(newH))
-      if (corner.includes('left') || corner.includes('top')) {
-        onUpdatePosition(Math.round(newX), Math.round(newY))
-      }
-    }
-    const onUp = () => {
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('mouseup', onUp)
-      onCommit?.()
-    }
-    window.addEventListener('mousemove', onMove)
-    window.addEventListener('mouseup', onUp)
-  }, [clip, displayScale, onUpdatePosition, onUpdateSize, onCommit])
-
-  return (
-    <>
-      {/* Drag-to-move overlay (fill the element) */}
-      <div
-        ref={dragRef}
-        onMouseDown={startDrag}
-        style={{
-          position: 'absolute', inset: 0,
-          cursor: 'move',
-          zIndex: 40,
-        }}
-      />
-      {/* Corner handles */}
-      <ResizeHandle cursor="nw-resize" style={{ top: -6, left: -6 }}   onMouseDown={(e) => startResize('top-left', e)} />
-      <ResizeHandle cursor="ne-resize" style={{ top: -6, right: -6 }}  onMouseDown={(e) => startResize('top-right', e)} />
-      <ResizeHandle cursor="sw-resize" style={{ bottom: -6, left: -6 }} onMouseDown={(e) => startResize('bottom-left', e)} />
-      <ResizeHandle cursor="se-resize" style={{ bottom: -6, right: -6 }} onMouseDown={(e) => startResize('bottom-right', e)} />
-      {/* Edge handles */}
-      <ResizeHandle cursor="n-resize" style={{ top: -6, left: 'calc(50% - 6px)' }}   onMouseDown={(e) => startResize('top', e)} />
-      <ResizeHandle cursor="s-resize" style={{ bottom: -6, left: 'calc(50% - 6px)' }} onMouseDown={(e) => startResize('bottom', e)} />
-      <ResizeHandle cursor="w-resize" style={{ left: -6, top: 'calc(50% - 6px)' }}   onMouseDown={(e) => startResize('left', e)} />
-      <ResizeHandle cursor="e-resize" style={{ right: -6, top: 'calc(50% - 6px)' }}  onMouseDown={(e) => startResize('right', e)} />
-    </>
-  )
-}
-
-/* ─── Clip wrappers ──────────────────────────────────────────────────── */
+const ClipTransformShell = ({
+  clip,
+  onSelect,
+  outerStyle,
+  innerStyle,
+  selectionChrome,
+  children,
+  className,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  clickOnly = false,
+}) => (
+  <div
+    className={className}
+    onMouseDown={clickOnly ? undefined : (e) => { e.stopPropagation(); onSelect(clip.id, e) }}
+    onClick={(e) => { e.stopPropagation(); onSelect(clip.id, e) }}
+    onDragOver={onDragOver}
+    onDragLeave={onDragLeave}
+    onDrop={onDrop}
+    style={{ ...outerStyle, overflow: 'visible' }}
+  >
+    {selectionChrome}
+    <div style={clipInnerShell(innerStyle)}>
+      {children}
+    </div>
+  </div>
+)
 
 const clipBase = (clip, isSelected) => {
   const { position, size } = resolveClipRect(clip)
@@ -148,11 +121,11 @@ const clipBase = (clip, isSelected) => {
   width: typeof size.width === 'number' ? size.width : (size.width || 'auto'),
   height: typeof size.height === 'number' ? size.height : (size.height || 'auto'),
   transform: `rotate(${clip.rotation ?? 0}deg) scale(${clip.scale ?? 1})`,
-  transformOrigin: 'top left',
+  transformOrigin: 'center center',
   opacity: clip.opacity ?? 1,
-  zIndex: getClipZIndex(clip, isSelected),
+  zIndex: getClipZIndex(clip),
   outline: isSelected
-    ? (isBackgroundClip(clip) ? '2px dashed rgba(26,115,232,0.6)' : '2px solid #1a73e8')
+    ? (isBackgroundClip(clip) ? '2px dashed rgba(26,115,232,0.6)' : 'none')
     : '2px solid transparent',
   outlineOffset: isSelected && isBackgroundClip(clip) ? -2 : 1,
   boxSizing: 'border-box',
@@ -161,16 +134,63 @@ const clipBase = (clip, isSelected) => {
 }
 }
 
-const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, onUpdatePosition, onUpdateSize, onCommit, overlayMode = false }) => {
+const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, onUpdatePosition, onUpdateSize, onUpdateRotation, onCommit, getRotationPivotClient, toolbarProps, overlayMode = false }) => {
   const divRef = useRef(null)
+  const measureRaf = useRef(null)
   const s = clip.style || {}
   const textLayout = resolveClipRect(clip)
   const { entrance, animState, progress: previewProgress } = useComputedEntranceState(clip)
+
+  const syncTextSize = useCallback(() => {
+    if (!divRef.current || overlayMode) return
+    const hasFill =
+      !!(s.backgroundColor && s.backgroundColor !== 'transparent') ||
+      !!(s.boxShadow && s.boxShadow !== 'none')
+    const measured = measureTextContentSize(divRef.current, {
+      paddingX: hasFill ? 24 : 8,
+      paddingY: hasFill ? 20 : 4,
+    })
+    if (!measured) return
+    const currentW = clip.size?.width ?? textLayout.size.width
+    const width = clip._userPlaced ? currentW : Math.max(currentW, measured.width)
+    const height = measured.height
+    const curH = clip.size?.height ?? textLayout.size.height
+    const curW = clip.size?.width ?? textLayout.size.width
+    if (Math.abs(height - curH) > 2 || (!clip._userPlaced && Math.abs(width - curW) > 2)) {
+      onUpdateSize(clip.id, Math.round(width), Math.round(height))
+    }
+  }, [clip.id, clip.size?.width, clip.size?.height, clip._userPlaced, s.backgroundColor, s.boxShadow, textLayout.size.width, textLayout.size.height, overlayMode, onUpdateSize])
+
+  useLayoutEffect(() => {
+    if (!isSelected && !clip._userPlaced) {
+      syncTextSize()
+    }
+  }, [isSelected, clip._userPlaced, syncTextSize])
+
+  useEffect(() => {
+    if (!divRef.current || overlayMode) return undefined
+    const el = divRef.current
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(measureRaf.current)
+      measureRaf.current = requestAnimationFrame(syncTextSize)
+    })
+    ro.observe(el)
+    return () => {
+      ro.disconnect()
+      cancelAnimationFrame(measureRaf.current)
+    }
+  }, [syncTextSize, overlayMode])
 
   const handleBlur = () => {
     if (divRef.current && onContentChange) {
       onContentChange(clip.id, divRef.current.innerText)
     }
+    syncTextSize()
+  }
+
+  const handleInput = () => {
+    cancelAnimationFrame(measureRaf.current)
+    measureRaf.current = requestAnimationFrame(syncTextSize)
   }
 
   const displayStyle = buildTextDisplayStyle(s, clip.opacity ?? 1)
@@ -185,8 +205,7 @@ const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, o
   const previewVisible = animState ? animState.visible : true
   const transformParts = [
     animState ? `translate(${animState.translateX}px, ${animState.translateY}px)` : '',
-    `rotate(${clip.rotation ?? 0}deg)`,
-    animState ? `scale(${animState.scale * (clip.scale || 1)})` : `scale(${clip.scale || 1})`,
+    animState ? `scale(${animState.scale})` : '',
   ].filter(Boolean).join(' ')
 
   const textStyle = {
@@ -209,33 +228,40 @@ const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, o
     !!(s.boxShadow && s.boxShadow !== 'none')
 
   return (
-    <div
-      onMouseDown={(e) => { e.stopPropagation(); onSelect(clip.id, e) }}
-      onClick={(e) => { e.stopPropagation(); onSelect(clip.id, e) }}
-      style={{
+    <ClipTransformShell
+      clip={clip}
+      onSelect={onSelect}
+      outerStyle={{
         ...clipBase(clip, isSelected),
+        transform: `rotate(${clip.rotation ?? 0}deg)`,
+        userSelect: isSelected && !overlayMode ? 'text' : 'none',
+        opacity: overlayMode ? 0 : previewVisible ? 1 : 0,
+      }}
+      innerStyle={{
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         alignItems: s.textAlign === 'left' ? 'flex-start' : (s.textAlign === 'right' ? 'flex-end' : 'center'),
         borderRadius: hasFill ? (s.borderRadius || '12px') : 4,
         backgroundColor: hasFill ? (s.backgroundColor || 'transparent') : undefined,
         boxShadow: hasFill ? (s.boxShadow || 'none') : undefined,
-        overflow: entrance?.type && entrance.type !== 'none' ? 'visible' : 'hidden',
-        userSelect: isSelected && !overlayMode ? 'text' : 'none',
-        opacity: overlayMode ? 0 : previewVisible ? 1 : 0,
       }}
-    >
-      {isSelected && !overlayMode && (
-        <SelectionOverlay
+      selectionChrome={isSelected && !overlayMode ? (
+        <ClipSelectionChrome
           clip={clip}
+          clipType="text"
           displayScale={displayScale}
           onUpdatePosition={(x, y) => onUpdatePosition(clip.id, x, y)}
           onUpdateSize={(w, h) => onUpdateSize(clip.id, w, h)}
+          onUpdateTextFontSize={(fontSize) => toolbarProps?.onUpdateStyle?.({ fontSize })}
+          onUpdateRotation={(deg) => onUpdateRotation?.(clip.id, deg)}
           onCommit={onCommit}
+          getRotationPivotClient={getRotationPivotClient}
+          toolbarProps={toolbarProps}
         />
-      )}
-      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', ...shapeWrap }}>
+      ) : null}
+    >
+      <div style={{ width: '100%', flex: '1 1 auto', minHeight: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'stretch', ...shapeWrap }}>
         {isBlockAnim ? (
           <div
             className="text-live-block-wrap"
@@ -250,6 +276,7 @@ const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, o
               contentEditable={isSelected && !overlayMode && clip.editable !== false}
               suppressContentEditableWarning
               onBlur={handleBlur}
+              onInput={handleInput}
               onClick={(e) => isSelected && e.stopPropagation()}
               className="text-live-block-inner"
               style={textStyle}
@@ -263,6 +290,7 @@ const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, o
             contentEditable={isSelected && !overlayMode && clip.editable !== false}
             suppressContentEditableWarning
             onBlur={handleBlur}
+            onInput={handleInput}
             onClick={(e) => isSelected && e.stopPropagation()}
             style={textStyle}
           >
@@ -283,7 +311,7 @@ const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, o
           </div>
         )}
       </div>
-    </div>
+    </ClipTransformShell>
   )
 }
 
@@ -301,7 +329,7 @@ const buildCssFilter = (cf = {}) => {
   return parts.length > 0 ? parts.join(' ') : undefined
 }
 
-const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition, onUpdateSize, onCommit, overlayMode = false }) => {
+const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition, onUpdateSize, onUpdateRotation, onCommit, getRotationPivotClient, toolbarProps, overlayMode = false }) => {
   const s   = clip.style || {}
   const cf  = clip.cssFilters || {}
   const { animState } = useComputedEntranceState(clip)
@@ -309,13 +337,12 @@ const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition,
   const flipY = s.scaleY === -1 ? -1 : 1
   const flipTransform = (flipX !== 1 || flipY !== 1) ? `scale(${flipX}, ${flipY})` : undefined
   const cssFilter = buildCssFilter(cf)
+  const src = resolveClipMediaSrc(clip)
 
-  // Border: handle borderWidth/borderColor from panel OR legacy border string
-  const borderStyle = s.borderWidth
-    ? `${s.borderWidth} ${s.borderStyle || 'solid'} ${s.borderColor || '#000'}`
-    : (s.border || 'none')
+  // Border: panel fields or legacy `border` shorthand from templates
+  const borderStyle = formatLayerBorderCss(s)
 
-  const wrapperStyle = buildLiveAnimStyle(clipBase(clip, isSelected), clip, animState, {
+  const animatedOuter = buildLiveAnimStyle(clipBase(clip, isSelected), clip, animState, {
     flipTransform,
     cssFilter,
     overlayMode,
@@ -324,14 +351,36 @@ const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition,
     border: borderStyle,
     boxShadow: s.boxShadow || 'none',
     clipPath: s.clipPath || undefined,
-    background: overlayMode ? 'transparent' : (clip.src ? 'transparent' : (s.backgroundColor || s.background || 'rgba(0,0,0,0.04)')),
+    background: overlayMode ? 'transparent' : (src ? 'transparent' : (s.backgroundColor || s.background || 'rgba(0,0,0,0.04)')),
   })
 
+  const selectionChrome = isSelected && !overlayMode ? (
+    <ClipSelectionChrome
+      clip={clip}
+      clipType="media"
+      displayScale={displayScale}
+      onUpdatePosition={(x, y) => onUpdatePosition(clip.id, x, y)}
+      onUpdateSize={(w, h) => onUpdateSize(clip.id, w, h)}
+      onUpdateRotation={(deg) => onUpdateRotation?.(clip.id, deg)}
+      onCommit={onCommit}
+      getRotationPivotClient={getRotationPivotClient}
+      toolbarProps={toolbarProps}
+    />
+  ) : null
+
   return (
-    <div
-      onMouseDown={(e) => { e.stopPropagation(); onSelect(clip.id, e) }}
-      onClick={(e) => { e.stopPropagation(); onSelect(clip.id, e) }}
-      style={wrapperStyle}
+    <ClipTransformShell
+      clip={clip}
+      onSelect={onSelect}
+      outerStyle={animatedOuter}
+      innerStyle={{
+        borderRadius: s.borderRadius || '12px',
+        border: borderStyle,
+        boxShadow: s.boxShadow || 'none',
+        clipPath: s.clipPath || undefined,
+        background: overlayMode ? 'transparent' : (clip.src ? 'transparent' : (s.backgroundColor || s.background || 'rgba(0,0,0,0.04)')),
+      }}
+      selectionChrome={selectionChrome}
     >
       {isSelected && !overlayMode && (
         <SelectionOverlay
@@ -342,10 +391,10 @@ const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition,
           onCommit={onCommit}
         />
       )}
-      {clip.src ? (
+      {src ? (
         !overlayMode ? (
         <img
-          src={clip.src}
+          src={src}
           alt=""
           style={{
             width: '100%', height: '100%',
@@ -361,7 +410,7 @@ const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition,
           <span style={{ fontSize: 11, color: 'rgba(99,102,241,0.5)', fontWeight: 700, letterSpacing: '0.05em', pointerEvents: 'none' }}>ADD IMAGE</span>
         </div>
       ) : null}
-    </div>
+    </ClipTransformShell>
   )
 }
 
@@ -392,7 +441,7 @@ const PausedVideoPreview = ({ src, style }) => {
   )
 }
 
-const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePosition, onUpdateSize, onCommit, overlayMode = false }) => {
+const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePosition, onUpdateSize, onUpdateRotation, onCommit, getRotationPivotClient, toolbarProps, overlayMode = false }) => {
   const playbackSrc = resolveClipMediaSrc(clip, scene)
   const displaySrc = playbackSrc || resolveAvatarDisplaySrc(clip, scene)
   const isVideo = isVideoMedia(clip, playbackSrc)
@@ -404,60 +453,106 @@ const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdateP
   const flipY = s.scaleY === -1 ? -1 : 1
   const flipTransform = (flipX !== 1 || flipY !== 1) ? `scale(${flipX}, ${flipY})` : undefined
   const isBg = isBackgroundClip(clip)
-  const borderStyle = s.borderWidth
-    ? `${s.borderWidth} ${s.borderStyle || 'solid'} ${s.borderColor || '#7c3aed'}`
-    : (s.border || 'none')
+  const borderStyle = formatLayerBorderCss(s, '#7c3aed')
 
-  const wrapperStyle = buildLiveAnimStyle(clipBase(clip, isSelected), clip, animState, {
+  const animatedOuter = buildLiveAnimStyle(clipBase(clip, isSelected), clip, animState, {
     flipTransform,
     cssFilter,
     overlayMode,
-    borderRadius: isBg ? '0' : (s.borderRadius || '50%'),
-    border: borderStyle,
-    boxShadow: s.boxShadow || 'none',
-    overflow: 'hidden',
-    background: overlayMode ? 'transparent' : (displaySrc ? 'transparent' : (s.backgroundColor || s.background || '#f5f5f4')),
   })
 
   const avatarFit = s.objectFit || (isBg ? 'cover' : 'cover')
+  const avatarMaskStyle = {
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+    overflow: 'hidden',
+    borderRadius: 'inherit',
+    clipPath: s.clipPath || undefined,
+    WebkitClipPath: s.clipPath || undefined,
+    isolation: 'isolate',
+    transform: 'translateZ(0)',
+  }
+  const selectionChrome = isSelected && !overlayMode ? (
+    <ClipSelectionChrome
+      clip={clip}
+      clipType="media"
+      displayScale={displayScale}
+      onUpdatePosition={(x, y) => onUpdatePosition(clip.id, x, y)}
+      onUpdateSize={(w, h) => onUpdateSize(clip.id, w, h)}
+      onUpdateRotation={(deg) => onUpdateRotation?.(clip.id, deg)}
+      onCommit={onCommit}
+      getRotationPivotClient={getRotationPivotClient}
+      toolbarProps={toolbarProps}
+    />
+  ) : null
 
   return (
-    <div
-      onClick={(e) => { e.stopPropagation(); onSelect(clip.id, e) }}
-      style={wrapperStyle}
+    <ClipTransformShell
+      clip={clip}
+      onSelect={onSelect}
+      clickOnly
+      outerStyle={animatedOuter}
+      innerStyle={{
+        borderRadius: isBg ? '0' : (s.borderRadius || '50%'),
+        border: borderStyle,
+        boxShadow: s.boxShadow || 'none',
+        background: overlayMode ? 'transparent' : (displaySrc ? 'transparent' : (s.backgroundColor || s.background || '#f5f5f4')),
+      }}
+      selectionChrome={selectionChrome}
     >
-      {isSelected && !overlayMode && (
-        <SelectionOverlay
-          clip={clip}
-          displayScale={displayScale}
-          onUpdatePosition={(x, y) => onUpdatePosition(clip.id, x, y)}
-          onUpdateSize={(w, h) => onUpdateSize(clip.id, w, h)}
-          onCommit={onCommit}
-        />
-      )}
       {displaySrc ? (
         !overlayMode ? (
-        isVideo && playbackSrc ? (
-          <PausedVideoPreview
-            src={playbackSrc}
-            style={{ width: '100%', height: '100%', objectFit: avatarFit, display: 'block', pointerEvents: 'none' }}
-          />
-        ) : (
-          <img src={displaySrc} alt="Presenter" style={{ width: '100%', height: '100%', objectFit: avatarFit, display: 'block', pointerEvents: 'none' }} />
-        )
+        <div style={avatarMaskStyle}>
+          {isVideo && playbackSrc ? (
+            <PausedVideoPreview
+              src={playbackSrc}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: avatarFit,
+                display: 'block',
+                pointerEvents: 'none',
+                borderRadius: 'inherit',
+                clipPath: 'inherit',
+                WebkitClipPath: 'inherit',
+              }}
+            />
+          ) : (
+            <img
+              src={displaySrc}
+              alt="Presenter"
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: avatarFit,
+                display: 'block',
+                pointerEvents: 'none',
+                borderRadius: 'inherit',
+                clipPath: 'inherit',
+                WebkitClipPath: 'inherit',
+              }}
+            />
+          )}
+        </div>
         ) : null
       ) : !overlayMode ? (
         <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f4' }}>
           <MdPerson size={Math.min(48, (clip.size?.width || 120) / 2.5)} style={{ color: '#a8a29e', pointerEvents: 'none' }} />
         </div>
       ) : null}
-    </div>
+    </ClipTransformShell>
   )
 }
 
-const VideoClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePosition, onUpdateSize, onCommit, overlayMode = false }) => {
+const VideoClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePosition, onUpdateSize, onUpdateRotation, onCommit, getRotationPivotClient, toolbarProps, overlayMode = false }) => {
   const src = resolveClipMediaSrc(clip, scene)
   const isVideo = isVideoMedia(clip, src)
+  const isAvatarLike = clip.role === 'avatar' || clip.type === 'avatar'
   const s  = clip.style || {}
   const cf = clip.cssFilters || {}
   const { animState } = useComputedEntranceState(clip)
@@ -465,41 +560,96 @@ const VideoClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePo
   const flipX = s.scaleX === -1 ? -1 : 1
   const flipY = s.scaleY === -1 ? -1 : 1
   const flipTransform = (flipX !== 1 || flipY !== 1) ? `scale(${flipX}, ${flipY})` : undefined
-  const borderStyle = s.borderWidth
-    ? `${s.borderWidth} ${s.borderStyle || 'solid'} ${s.borderColor || '#000'}`
-    : (s.border || 'none')
+  const borderStyle = formatLayerBorderCss(s)
   const isBg = isBackgroundClip(clip)
-  const fitMode = s.objectFit || (isBg ? 'cover' : (clip.role === 'avatar' ? 'contain' : 'cover'))
+  const fitMode = s.objectFit || (isBg ? 'cover' : (isAvatarLike ? 'cover' : 'cover'))
+  const avatarMaskStyle = isAvatarLike
+    ? {
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+        borderRadius: 'inherit',
+        clipPath: s.clipPath || undefined,
+        WebkitClipPath: s.clipPath || undefined,
+        isolation: 'isolate',
+        transform: 'translateZ(0)',
+      }
+    : null
 
-  const wrapperStyle = buildLiveAnimStyle(clipBase(clip, isSelected), clip, animState, {
+  const animatedOuter = buildLiveAnimStyle(clipBase(clip, isSelected), clip, animState, {
     flipTransform,
     cssFilter,
     overlayMode,
-    overflow: 'hidden',
-    borderRadius: isBg ? '0' : (s.borderRadius || (clip.role === 'avatar' ? '50%' : '16px')),
-    border: borderStyle,
-    boxShadow: s.boxShadow || 'none',
-    background: overlayMode ? 'transparent' : (src ? 'transparent' : (s.backgroundColor || s.background || 'rgba(0,0,0,0.04)')),
   })
 
+  const selectionChrome = isSelected && !overlayMode ? (
+    <ClipSelectionChrome
+      clip={clip}
+      clipType="media"
+      displayScale={displayScale}
+      onUpdatePosition={(x, y) => onUpdatePosition(clip.id, x, y)}
+      onUpdateSize={(w, h) => onUpdateSize(clip.id, w, h)}
+      onUpdateRotation={(deg) => onUpdateRotation?.(clip.id, deg)}
+      onCommit={onCommit}
+      getRotationPivotClient={getRotationPivotClient}
+      toolbarProps={toolbarProps}
+    />
+  ) : null
+
   return (
-    <div
-      onMouseDown={(e) => { e.stopPropagation(); onSelect(clip.id, e) }}
-      onClick={(e) => { e.stopPropagation(); onSelect(clip.id, e) }}
-      style={wrapperStyle}
+    <ClipTransformShell
+      clip={clip}
+      onSelect={onSelect}
+      outerStyle={animatedOuter}
+      innerStyle={{
+        borderRadius: isBg ? '0' : (s.borderRadius || (clip.role === 'avatar' ? '50%' : '16px')),
+        border: borderStyle,
+        boxShadow: s.boxShadow || 'none',
+        background: overlayMode ? 'transparent' : (src ? 'transparent' : (s.backgroundColor || s.background || 'rgba(0,0,0,0.04)')),
+      }}
+      selectionChrome={selectionChrome}
     >
-      {isSelected && !overlayMode && (
-        <SelectionOverlay
-          clip={clip}
-          displayScale={displayScale}
-          onUpdatePosition={(x, y) => onUpdatePosition(clip.id, x, y)}
-          onUpdateSize={(w, h) => onUpdateSize(clip.id, w, h)}
-          onCommit={onCommit}
-        />
-      )}
       {src ? (
         !overlayMode ? (
-        isVideo ? (
+        avatarMaskStyle ? (
+          <div style={avatarMaskStyle}>
+            {isVideo ? (
+              <PausedVideoPreview
+                src={src}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: fitMode,
+                  display: 'block',
+                  pointerEvents: 'none',
+                  borderRadius: 'inherit',
+                  clipPath: 'inherit',
+                  WebkitClipPath: 'inherit',
+                }}
+              />
+            ) : (
+              <img
+                src={src}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: fitMode,
+                  display: 'block',
+                  pointerEvents: 'none',
+                  borderRadius: 'inherit',
+                  clipPath: 'inherit',
+                  WebkitClipPath: 'inherit',
+                }}
+                alt=""
+              />
+            )}
+          </div>
+        ) : isVideo ? (
           <PausedVideoPreview
             src={src}
             style={{ width: '100%', height: '100%', objectFit: fitMode, display: 'block', pointerEvents: 'none' }}
@@ -514,7 +664,7 @@ const VideoClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePo
           <span style={{ fontSize: 11, color: 'rgba(99,102,241,0.5)', fontWeight: 700, letterSpacing: '0.05em', pointerEvents: 'none' }}>ADD VIDEO</span>
         </div>
       ) : null}
-    </div>
+    </ClipTransformShell>
   )
 }
 
@@ -525,25 +675,18 @@ const ShapeClip = ({
   displayScale,
   onUpdatePosition,
   onUpdateSize,
+  onUpdateRotation,
   onCommit,
   onFillShape,
+  getRotationPivotClient,
+  toolbarProps,
   overlayMode = false,
 }) => {
   const [isDropTarget, setIsDropTarget] = useState(false)
   const { animState } = useComputedEntranceState(clip)
   const hasFill = !!clip.fillSrc
-  const wrapperStyle = buildLiveAnimStyle(clipBase(clip, isSelected), clip, animState, {
+  const animatedOuter = buildLiveAnimStyle(clipBase(clip, isSelected), clip, animState, {
     overlayMode,
-    overflow: 'hidden',
-    background: overlayMode
-      ? 'transparent'
-      : hasFill
-        ? 'transparent'
-        : (clip.style?.backgroundColor || clip.style?.background || 'rgba(0,0,0,0.06)'),
-    borderRadius: clip.style?.borderRadius || '0',
-    border: clip.style?.border || 'none',
-    boxShadow: clip.style?.boxShadow || 'none',
-    clipPath: clip.style?.clipPath || undefined,
   })
 
   const acceptFill = canAcceptImageFill(clip) && onFillShape
@@ -588,44 +731,62 @@ const ShapeClip = ({
     }
   }
 
+  const selectionChrome = isSelected && !overlayMode ? (
+    <ClipSelectionChrome
+      clip={clip}
+      clipType="shape"
+      displayScale={displayScale}
+      onUpdatePosition={(x, y) => onUpdatePosition(clip.id, x, y)}
+      onUpdateSize={(w, h) => onUpdateSize(clip.id, w, h)}
+      onUpdateRotation={(deg) => onUpdateRotation?.(clip.id, deg)}
+      onCommit={onCommit}
+      getRotationPivotClient={getRotationPivotClient}
+      toolbarProps={toolbarProps}
+    />
+  ) : null
+
   return (
-  <div
-    className={isDropTarget ? 'shape-clip shape-clip--drop-target' : 'shape-clip'}
-    onClick={(e) => { e.stopPropagation(); onSelect(clip.id, e) }}
-    onDragOver={handleDragOver}
-    onDragLeave={handleDragLeave}
-    onDrop={handleDrop}
-    style={wrapperStyle}
-  >
-    {hasFill && (
-      <img
-        src={clip.fillSrc}
-        alt=""
-        draggable={false}
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: clip.fillObjectFit || 'cover',
-          display: 'block',
-          pointerEvents: 'none',
-        }}
-      />
-    )}
-    {isSelected && !overlayMode && !hasFill && clip.role === 'frame' && (
-      <div className="shape-clip-drop-hint" aria-hidden>
-        Drop image here
-      </div>
-    )}
-    {isSelected && !overlayMode && (
-      <SelectionOverlay
-        clip={clip}
-        displayScale={displayScale}
-        onUpdatePosition={(x, y) => onUpdatePosition(clip.id, x, y)}
-        onUpdateSize={(w, h) => onUpdateSize(clip.id, w, h)}
-        onCommit={onCommit}
-      />
-    )}
-  </div>
+    <ClipTransformShell
+      clip={clip}
+      onSelect={onSelect}
+      className={isDropTarget ? 'shape-clip shape-clip--drop-target' : 'shape-clip'}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      outerStyle={animatedOuter}
+      innerStyle={{
+        background: overlayMode
+          ? 'transparent'
+          : hasFill
+            ? 'transparent'
+            : (clip.style?.backgroundColor || clip.style?.background || 'rgba(0,0,0,0.06)'),
+        borderRadius: clip.style?.borderRadius || '0',
+        border: formatLayerBorderCss(clip.style || {}),
+        boxShadow: clip.style?.boxShadow || 'none',
+        clipPath: clip.style?.clipPath || undefined,
+      }}
+      selectionChrome={selectionChrome}
+    >
+      {hasFill && (
+        <img
+          src={clip.fillSrc}
+          alt=""
+          draggable={false}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: clip.fillObjectFit || 'cover',
+            display: 'block',
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+      {isSelected && !overlayMode && !hasFill && clip.role === 'frame' && (
+        <div className="shape-clip-drop-hint" aria-hidden>
+          Drop image here
+        </div>
+      )}
+    </ClipTransformShell>
   )
 }
 
@@ -640,6 +801,14 @@ const LiveCanvasRenderer = ({
   onUpdateLayerPosition,
   onCommitLayerPosition,
   onUpdateLayerSize,
+  onUpdateLayerRotation,
+  onUpdateLayerStyle,
+  onUpdateLayer,
+  onDuplicateLayer,
+  onDeleteLayer,
+  onMoveLayerOrder,
+  onToggleLayerLock,
+  onOpenLayerCrop,
   onFillShape,
   onCanvasDrop,
   showGuides = false,
@@ -647,6 +816,7 @@ const LiveCanvasRenderer = ({
   showSafeZone = true,
   gridSize = 20,
   overlayMode = false,
+  staticPreview = false,
   scaleMode = 'contain',
   compositionWidth = 1920,
   compositionHeight = 1080,
@@ -727,6 +897,39 @@ const LiveCanvasRenderer = ({
     if (onUpdateLayerSize) onUpdateLayerSize(clipId, w, h)
   }, [onUpdateLayerSize])
 
+  const handleUpdateRotation = useCallback((clipId, rotation) => {
+    if (onUpdateLayerRotation) onUpdateLayerRotation(clipId, rotation)
+  }, [onUpdateLayerRotation])
+
+  const handleGetRotationPivotClient = useCallback((clip) => {
+    const layout = resolveClipRect(clip)
+    const center = getClipTransformCenter(clip, layout)
+    const el = containerRef.current
+    if (!el) return null
+    return compositionToClient(center.x, center.y, el, displayScale, displayOffset)
+  }, [displayScale, displayOffset])
+
+  const buildToolbarProps = useCallback((clip) => {
+    if (!clip || clip.locked || clip.isBackground || isBackgroundClip(clip)) return null
+    return {
+      onUpdateStyle: (styleUpdates) => onUpdateLayerStyle?.(clip.id, styleUpdates),
+      onUpdateLayer: (updates) => onUpdateLayer?.(clip.id, updates),
+      onDuplicate: () => onDuplicateLayer?.(clip.id),
+      onDelete: () => onDeleteLayer?.(clip.id),
+      onMoveLayerOrder: (dir) => onMoveLayerOrder?.(clip.id, dir),
+      onToggleLock: (locked) => onToggleLayerLock?.(clip.id, locked),
+      onOpenCrop: () => onOpenLayerCrop?.(clip.id),
+    }
+  }, [
+    onUpdateLayerStyle,
+    onUpdateLayer,
+    onDuplicateLayer,
+    onDeleteLayer,
+    onMoveLayerOrder,
+    onToggleLayerLock,
+    onOpenLayerCrop,
+  ])
+
   const handleCompositionDragOver = useCallback((e) => {
     const types = Array.from(e.dataTransfer?.types || [])
     if (!types.includes('application/json') && !types.includes('Files')) return
@@ -769,6 +972,7 @@ const LiveCanvasRenderer = ({
   }, [onCanvasDrop, displayScale, displayOffset, compositionWidth, compositionHeight])
 
   return (
+    <PreviewModeProvider staticEntrance={staticPreview}>
     <div
       ref={containerRef}
       onClick={() => onDeselect && onDeselect()}
@@ -809,6 +1013,8 @@ const LiveCanvasRenderer = ({
         {sortClipsForRender(clips).map(clip => {
           const isSelected = selectedIds.includes(clip.id) || selectedId === clip.id
           const isLocked = !!clip.locked
+          const selectionCount = selectedIds.length || (selectedId ? 1 : 0)
+          const isSingleSelection = selectionCount <= 1
           const sharedProps = {
             clip,
             isSelected,
@@ -816,7 +1022,10 @@ const LiveCanvasRenderer = ({
             displayScale,
             onUpdatePosition: clip.isBackground || isLocked || isBackgroundClip(clip) ? () => {} : handleUpdatePosition,
             onUpdateSize: clip.isBackground || isLocked || isBackgroundClip(clip) ? () => {} : handleUpdateSize,
+            onUpdateRotation: clip.isBackground || isLocked || isBackgroundClip(clip) ? undefined : handleUpdateRotation,
             onCommit: onCommitLayerPosition,
+            getRotationPivotClient: handleGetRotationPivotClient,
+            toolbarProps: isSelected && !overlayMode && isSingleSelection ? buildToolbarProps(clip) : null,
             overlayMode,
           }
 
@@ -848,6 +1057,7 @@ const LiveCanvasRenderer = ({
         </div>
       )}
     </div>
+    </PreviewModeProvider>
   )
 }
 

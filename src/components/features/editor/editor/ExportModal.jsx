@@ -29,7 +29,10 @@ const ExportModal = ({
   phase = 'configure',
   statusMessage = '',
   errorMessage = '',
+  readyFilename = '',
+  downloading = false,
   onStartExport,
+  onDownload,
 }) => {
   const [filename, setFilename] = useState(projectTitle)
   const [resolution, setResolution] = useState('1920x1080')
@@ -187,10 +190,21 @@ const ExportModal = ({
         {isSuccess && (
           <div className="export-modal-result export-modal-result--success">
             <MdCheckCircle size={48} />
-            <p>Your video has been saved to your downloads folder.</p>
-            <button type="button" className="btn-primary" onClick={onClose}>
-              Done
-            </button>
+            <p>Your render is complete. Download the MP4 to save it locally.</p>
+            <div className="modal-actions">
+              <button type="button" className="btn-secondary" onClick={onClose}>
+                Close
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={onDownload}
+                disabled={downloading || !onDownload}
+                title={readyFilename ? `Download ${readyFilename}` : 'Download MP4'}
+              >
+                {downloading ? 'Downloading…' : 'Download MP4'}
+              </button>
+            </div>
           </div>
         )}
 

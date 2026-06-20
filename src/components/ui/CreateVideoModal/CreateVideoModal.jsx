@@ -11,10 +11,10 @@ import {
 import workspaceService from '../../../services/workspaceService.js';
 import { useAuth } from '../../../contexts/AuthContext';
 import {
-  fetchEditorTemplateScenes,
+  fetchEditorTemplateBundles,
   sceneMatchesAspectRatio,
 } from '../../../utils/fetchEditorTemplates.js';
-import TemplateScenePreview from '../../features/editor/editor/TemplateScenePreview';
+import TemplateBundlePicker from '../../features/editor/editor/TemplateBundlePicker';
 import './CreateVideoModal.css';
 
 const WIZARD_STEPS = [
@@ -170,7 +170,7 @@ const CreateVideoModal = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTemplateId, setSelectedTemplateId] = useState(null);
   const [templatesLoading, setTemplatesLoading] = useState(false);
-  const [templateItems, setTemplateItems] = useState([]);
+  const [templateBundles, setTemplateBundles] = useState([]);
 
   const [workspaceOptions, setWorkspaceOptions] = useState([]);
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
@@ -212,29 +212,53 @@ const CreateVideoModal = ({
   );
 
   const selectedTemplate = useMemo(() => {
-    if (selectedTemplateId === 'blank') return null;
-    const item = templateItems.find((template) => String(template.id) === String(selectedTemplateId));
-    return item?.scene || null;
-  }, [selectedTemplateId, templateItems]);
+    if (selectedTemplateId === 'blank' || !selectedTemplateId) return null;
+
+    if (String(selectedTemplateId).startsWith('bundle:')) {
+      const bundleId = String(selectedTemplateId).replace('bundle:', '');
+      const bundle = templateBundles.find((item) => String(item.id) === bundleId);
+      return bundle ? { scenes: bundle.scenes, bundle } : null;
+    }
+
+    if (String(selectedTemplateId).startsWith('scene:')) {
+      const sceneId = String(selectedTemplateId).replace('scene:', '');
+      for (const bundle of templateBundles) {
+        const scene = (bundle.scenes || []).find((item) => String(item.id) === sceneId);
+        if (scene) return { scene, bundle };
+      }
+      return null;
+    }
+
+    for (const bundle of templateBundles) {
+      const scene = (bundle.scenes || []).find((item) => String(item.id) === String(selectedTemplateId));
+      if (scene) return { scene, bundle };
+    }
+    return null;
+  }, [selectedTemplateId, templateBundles]);
 
   const aspectRatio = useMemo(
     () => canvasToAspectRatio(canvasSize, customCanvas),
     [canvasSize, customCanvas]
   );
 
-  const filteredTemplates = useMemo(() => {
+  const filteredBundles = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    return templateItems.filter((item) => {
-      const name = (item.name || item.scene?.title || '').toLowerCase();
+    return templateBundles.filter((bundle) => {
       const matchesSearch =
-        name.includes(query) ||
-        (item.tags || []).some((tag) => String(tag).toLowerCase().includes(query)) ||
-        (item.bundleCategory || '').toLowerCase().includes(query);
-      const matchesFilter = selectedFilter === 'All' || item.category === selectedFilter;
-      const matchesRatio = sceneMatchesAspectRatio(item.scene, aspectRatio);
+        !query ||
+        (bundle.name || '').toLowerCase().includes(query) ||
+        (bundle.category || '').toLowerCase().includes(query) ||
+        (bundle.description || '').toLowerCase().includes(query) ||
+        (bundle.scenes || []).some(
+          (scene) =>
+            (scene.title || '').toLowerCase().includes(query) ||
+            (scene.tags || []).some((tag) => String(tag).toLowerCase().includes(query))
+        );
+      const matchesFilter = selectedFilter === 'All' || bundle.filterCategory === selectedFilter;
+      const matchesRatio = (bundle.scenes || []).some((scene) => sceneMatchesAspectRatio(scene, aspectRatio));
       return matchesSearch && matchesFilter && matchesRatio;
     });
-  }, [templateItems, searchQuery, selectedFilter, aspectRatio]);
+  }, [templateBundles, searchQuery, selectedFilter, aspectRatio]);
 
   const hasDirtyData = useMemo(() => {
     return Boolean(
@@ -361,7 +385,7 @@ const CreateVideoModal = ({
   useEffect(() => {
     if (!isOpen) return;
     if (!aspectRatio) {
-      setTemplateItems([]);
+      setTemplateBundles([]);
       return;
     }
     loadTemplates();
@@ -468,10 +492,10 @@ const CreateVideoModal = ({
   async function loadTemplates() {
     setTemplatesLoading(true);
     try {
-      const scenes = await fetchEditorTemplateScenes();
-      setTemplateItems(scenes);
+      const bundles = await fetchEditorTemplateBundles();
+      setTemplateBundles(bundles);
     } catch {
-      setTemplateItems([]);
+      setTemplateBundles([]);
     } finally {
       setTemplatesLoading(false);
     }
@@ -492,9 +516,19 @@ const CreateVideoModal = ({
     if (!videoTitle.trim()) {
       if (templateId === 'blank') {
         setVideoTitle('Untitled Project');
-      } else {
-        const picked = templateItems.find((item) => String(item.id) === String(templateId));
-        if (picked?.name) setVideoTitle(picked.name);
+      } else if (String(templateId).startsWith('bundle:')) {
+        const bundleId = String(templateId).replace('bundle:', '');
+        const bundle = templateBundles.find((item) => String(item.id) === bundleId);
+        if (bundle?.name) setVideoTitle(bundle.name);
+      } else if (String(templateId).startsWith('scene:')) {
+        const sceneId = String(templateId).replace('scene:', '');
+        for (const bundle of templateBundles) {
+          const scene = (bundle.scenes || []).find((item) => String(item.id) === sceneId);
+          if (scene?.title) {
+            setVideoTitle(scene.title);
+            break;
+          }
+        }
       }
     }
   };
@@ -634,10 +668,11 @@ const CreateVideoModal = ({
         showToast('Project created successfully', 'success');
         onCreateVideo({
           template: selectedTemplate
-            ? {
-                scenes: [],
-                scene: selectedTemplate
-              }
+            ? selectedTemplate.scenes?.length
+              ? { scenes: selectedTemplate.scenes }
+              : selectedTemplate.scene
+                ? { scene: selectedTemplate.scene }
+                : null
             : null,
           pageSize: canvasSize,
           canvasSize: aspectRatio,
@@ -699,7 +734,7 @@ const CreateVideoModal = ({
             {step === 2 && (
               <>
                 <h2>Start with a template</h2>
-                <p>Templates are filtered by selected canvas size</p>
+                <p>Choose a template group, apply all scenes, or pick a single layout</p>
               </>
             )}
             {step === 3 && (
@@ -785,16 +820,17 @@ const CreateVideoModal = ({
 
                 {templatesLoading ? (
                   <div className="create-video-template-grid">
-                    {Array.from({ length: 6 }).map((_, index) => (
+                    {Array.from({ length: 4 }).map((_, index) => (
                       <div key={index} className="create-video-template-skeleton" />
                     ))}
                   </div>
                 ) : (
-                  <div className="create-video-template-grid" role="listbox" aria-label="Template options">
+                  <div className="create-video-bundle-picker">
                     <button
                       type="button"
                       className={`create-video-template-card blank ${selectedTemplateId === 'blank' ? 'selected' : ''}`}
                       onClick={() => handleSelectTemplate('blank')}
+                      style={{ marginBottom: 16, maxWidth: 220 }}
                     >
                       <div className="create-video-thumb-wrap blank">
                         <span className="create-video-blank-plus">
@@ -804,25 +840,24 @@ const CreateVideoModal = ({
                       <span className="create-video-template-name">Start from Blank</span>
                     </button>
 
-                    {filteredTemplates.map((template) => (
-                      <button
-                        key={template.id}
-                        type="button"
-                        className={`create-video-template-card ${selectedTemplateId === template.id ? 'selected' : ''}`}
-                        onClick={() => handleSelectTemplate(template.id)}
-                      >
-                        <div className="create-video-thumb-wrap">
-                          {template.scene ? (
-                            <TemplateScenePreview template={template.scene} />
-                          ) : (
-                            <img src={template.thumbnail} alt={template.name} />
-                          )}
-                          <span className={`create-video-template-badge ${template.badgeType || 'new'}`}>{template.badge || '01'}</span>
-                          <span className="create-video-template-overlay" />
-                        </div>
-                        <span className="create-video-template-name">{template.name}</span>
-                      </button>
-                    ))}
+                    <TemplateBundlePicker
+                      bundles={filteredBundles}
+                      loading={false}
+                      searchQuery={searchQuery}
+                      activeLayout="All Layouts"
+                      onSelectScene={(scene) => handleSelectTemplate(`scene:${scene.id}`)}
+                      onApplyBundle={(bundle) => handleSelectTemplate(`bundle:${bundle.id}`)}
+                      emptyMessage="No template groups match your canvas size or filters."
+                    />
+
+                    {selectedTemplateId && selectedTemplateId !== 'blank' ? (
+                      <p className="create-video-selection-note">
+                        Selected:{' '}
+                        {String(selectedTemplateId).startsWith('bundle:')
+                          ? `${selectedTemplate?.bundle?.name || 'Template bundle'} (all scenes)`
+                          : selectedTemplate?.scene?.title || 'Scene'}
+                      </p>
+                    ) : null}
                   </div>
                 )}
               </>

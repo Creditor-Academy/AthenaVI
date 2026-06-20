@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { MdCloudUpload } from 'react-icons/md';
 import { predefinedMedia, predefinedVideos } from '../../../../constants/editorData';
 import assetService from '../../../../services/assetService';
+import { assertUploadFits, dispatchStorageRefresh } from '../../../../utils/storageQuota';
 import { setCanvasDragData } from '../../../../utils/editorDragDrop';
 
 const EditorSidebarUploads = ({ addLayer, workspaceId, onUploadError }) => {
@@ -14,7 +15,7 @@ const EditorSidebarUploads = ({ addLayer, workspaceId, onUploadError }) => {
     setLoading(true);
     try {
       const list = await assetService.listAssets(workspaceId);
-      setAssets(list.map(assetService.normalizeAsset).filter(Boolean));
+      setAssets(list.map((item) => assetService.normalizeAsset(item)).filter(Boolean));
     } catch (err) {
       console.warn('[Uploads] Failed to list workspace assets', err);
     } finally {
@@ -40,6 +41,12 @@ const EditorSidebarUploads = ({ addLayer, workspaceId, onUploadError }) => {
     setUploading(true);
     try {
       for (const file of files) {
+        const validationError = assetService.validateUploadFile(file);
+        if (validationError) {
+          onUploadError?.(validationError);
+          continue;
+        }
+        await assertUploadFits(workspaceId, file.size);
         const uploaded = await assetService.uploadAsset(workspaceId, file);
         const normalized = assetService.normalizeAsset(uploaded);
         if (!normalized?.url) continue;
@@ -49,6 +56,7 @@ const EditorSidebarUploads = ({ addLayer, workspaceId, onUploadError }) => {
         });
       }
       await refreshAssets();
+      dispatchStorageRefresh();
     } catch (err) {
       console.error('[Uploads] Upload failed', err);
       onUploadError?.(err?.message || 'Upload failed');
@@ -68,7 +76,7 @@ const EditorSidebarUploads = ({ addLayer, workspaceId, onUploadError }) => {
   const openFilePicker = () => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'image/*,video/*,audio/*';
+    input.accept = 'image/jpeg,image/png,image/webp,video/mp4,audio/mpeg,audio/mp3,.mp3';
     input.multiple = true;
     input.onchange = (e) => handleFiles(Array.from(e.target.files || []));
     input.click();

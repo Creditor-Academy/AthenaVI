@@ -90,6 +90,76 @@ export function setEntranceAnimation(clip, patch) {
   return { ...clip, animations: list };
 }
 
+const BASE_EXIT = [
+  { value: 'none', label: 'None' },
+  { value: 'fadeOut', label: 'Fade Out' },
+  { value: 'slideUp', label: 'Slide Up' },
+  { value: 'slideDown', label: 'Slide Down' },
+  { value: 'slideLeft', label: 'Slide Left' },
+  { value: 'slideRight', label: 'Slide Right' },
+  { value: 'zoomOut', label: 'Zoom Out' },
+  { value: 'zoomIn', label: 'Zoom In' },
+  { value: 'pop', label: 'Pop' },
+  { value: 'blurOut', label: 'Blur Out' },
+];
+
+export function getClipVisibleDurationSec(clip, sceneDurationSec) {
+  const start = clip?.startTime ?? 0;
+  const end = clip?.endTime ?? sceneDurationSec ?? clip?.duration ?? 5;
+  return Math.max(0.1, end - start);
+}
+
+export function getExitAnimation(clip) {
+  const list = clip?.animations;
+  if (!Array.isArray(list)) return null;
+  return list.find((a) => a?.phase === ANIMATION_PHASE.EXIT) || null;
+}
+
+export function setExitAnimation(clip, patch) {
+  const list = Array.isArray(clip?.animations) ? [...clip.animations] : [];
+  const idx = list.findIndex((a) => a?.phase === ANIMATION_PHASE.EXIT);
+  const prev = idx >= 0 ? list[idx] : {};
+  const nextType = patch.type ?? prev.type ?? 'fadeOut';
+  const next = {
+    phase: ANIMATION_PHASE.EXIT,
+    type: nextType,
+    duration: patch.duration ?? prev.duration ?? 0.6,
+    delay: patch.delay ?? prev.delay ?? 0,
+    ...(prev.direction ? { direction: prev.direction } : {}),
+    ...(patch.direction != null ? { direction: patch.direction } : {}),
+    ...(patch.previewSeed != null ? { previewSeed: patch.previewSeed } : {}),
+  };
+  if (next.type === 'none') {
+    const filtered = list.filter((a) => a?.phase !== ANIMATION_PHASE.EXIT);
+    return { ...clip, animations: filtered };
+  }
+  if (idx >= 0) list[idx] = next;
+  else list.push(next);
+  return { ...clip, animations: list };
+}
+
+export function getExitAnimationOptionsForClip(clip) {
+  const type = clip?.type || 'image';
+  const role = clip?.role || '';
+
+  if (type === 'text' || role.includes('text') || role === 'main-text' || role === 'subtitle-text') {
+    return [
+      ...BASE_EXIT,
+      { value: 'ascend', label: 'Ascend' },
+      { value: 'shift', label: 'Shift' },
+      { value: 'merge', label: 'Merge' },
+      { value: 'burst', label: 'Burst' },
+    ];
+  }
+  if (type === 'image' || type === 'video' || type === 'avatar' || role === 'avatar') {
+    return [...BASE_EXIT, { value: 'kenBurns', label: 'Ken Burns' }];
+  }
+  if (type === 'shape') {
+    return BASE_EXIT.filter((o) => o.value !== 'blurOut');
+  }
+  return BASE_EXIT;
+}
+
 function clamp01(n) {
   return Math.min(1, Math.max(0, n));
 }
@@ -98,13 +168,174 @@ function easeOutCubic(t) {
   return 1 - (1 - t) ** 3;
 }
 
+function easeInCubic(t) {
+  return t ** 3;
+}
+
+export function computeExitAnimationState(t, exit, clip) {
+  const baseOpacity = clip.opacity ?? 1;
+  const eased = easeInCubic(clamp01(t));
+  const rem = 1 - eased;
+  const type = exit?.type || 'fadeOut';
+  const slidePx = 48;
+  const dir = exit?.direction === 'right' ? -1 : 1;
+
+  let opacity = baseOpacity * rem;
+  let scale = 1;
+  let translateX = 0;
+  let translateY = 0;
+  let blur = 0;
+  let rotation = 0;
+  let blockReveal = null;
+
+  switch (type) {
+    case 'fadeOut':
+      opacity = baseOpacity * rem;
+      break;
+    case 'slideUp':
+      opacity = baseOpacity * rem;
+      translateY = -eased * slidePx;
+      break;
+    case 'slideDown':
+      opacity = baseOpacity * rem;
+      translateY = eased * slidePx;
+      break;
+    case 'slideLeft':
+      opacity = baseOpacity * rem;
+      translateX = -eased * slidePx * dir;
+      break;
+    case 'slideRight':
+      opacity = baseOpacity * rem;
+      translateX = eased * slidePx * dir;
+      break;
+    case 'wipe':
+      opacity = baseOpacity * rem;
+      translateX = -eased * slidePx * 1.2 * dir;
+      break;
+    case 'succession':
+      opacity = baseOpacity * rem;
+      scale = 1 - eased * 0.12;
+      translateY = -eased * 28;
+      break;
+    case 'breathe':
+      opacity = baseOpacity * rem;
+      scale = 1 - eased * 0.08;
+      break;
+    case 'baseline':
+      opacity = baseOpacity * rem;
+      translateY = -eased * 44;
+      break;
+    case 'drift':
+      opacity = baseOpacity * rem;
+      translateX = eased * slidePx * 0.7 * dir;
+      translateY = -eased * 14;
+      break;
+    case 'tectonic':
+      opacity = baseOpacity * rem;
+      scale = 1 - eased * 0.1;
+      translateX = -eased * slidePx * 0.55 * dir;
+      break;
+    case 'tumble':
+      opacity = baseOpacity * rem;
+      scale = 1 - eased * 0.28;
+      rotation = eased * -28 * dir;
+      break;
+    case 'neon':
+      opacity = baseOpacity * rem;
+      blur = eased * 5;
+      scale = 1 - eased * 0.03;
+      break;
+    case 'scrapbook':
+      opacity = baseOpacity * rem;
+      rotation = eased * 10 * dir;
+      scale = 1 - eased * 0.06;
+      break;
+    case 'stomp':
+      opacity = baseOpacity * rem;
+      scale = eased < 0.45 ? 1 + eased * 0.2 : 1.04 - (eased - 0.45) * 0.08;
+      break;
+    case 'rotate':
+      opacity = baseOpacity * rem;
+      rotation = eased * 180 * dir;
+      break;
+    case 'flicker':
+      opacity =
+        baseOpacity *
+        rem *
+        (eased < 0.12 ? 1 - eased / 0.12 : 0.55 + 0.45 * Math.abs(Math.sin(eased * 20 * Math.PI)));
+      break;
+    case 'pulse':
+      opacity = baseOpacity * rem;
+      scale = eased > 0.4 ? 1 - eased * 0.07 : 1 - eased * 0.06;
+      break;
+    case 'wiggle':
+      opacity = baseOpacity * rem;
+      translateX = Math.sin(eased * Math.PI * 6) * eased * 18 * dir;
+      break;
+    case 'zoomOut':
+      opacity = baseOpacity * rem;
+      scale = 1 - eased * 0.15;
+      break;
+    case 'zoomIn':
+      opacity = baseOpacity * rem;
+      scale = 1 + eased * 0.12;
+      break;
+    case 'pop':
+      opacity = baseOpacity * rem;
+      scale = eased < 0.6 ? 1.05 - (eased / 0.6) * 0.35 : 0.7 + (eased - 0.6) * 0.35;
+      break;
+    case 'blurOut':
+      opacity = baseOpacity * rem;
+      blur = eased * 8;
+      break;
+    case 'kenBurns':
+      opacity = baseOpacity * rem;
+      scale = 1 + eased * 0.08;
+      break;
+    case 'ascend':
+      opacity = baseOpacity * rem;
+      translateY = -eased * 56;
+      break;
+    case 'shift':
+      opacity = baseOpacity * rem;
+      translateX = eased * -40;
+      break;
+    case 'merge':
+      opacity = baseOpacity * rem;
+      scale = 1 - eased * 0.45;
+      break;
+    case 'block':
+      opacity = baseOpacity * rem;
+      blockReveal = rem;
+      break;
+    case 'burst':
+      opacity = baseOpacity * rem;
+      scale = eased < 0.55 ? 1.15 - (eased / 0.55) * 0.75 : 0.4 + (eased - 0.55) * 0.27;
+      break;
+    default:
+      opacity = baseOpacity * rem;
+  }
+
+  return {
+    opacity,
+    scale,
+    translateX,
+    translateY,
+    blur,
+    rotation,
+    typewriterChars: null,
+    blockReveal,
+    visible: opacity > 0.01,
+  };
+}
+
 /**
  * @param {number} frameInClip - frames since clip start (0-based)
  * @param {number} fps
  * @param {object} clip
  * @returns {{ opacity: number, scale: number, translateX: number, translateY: number, blur: number, typewriterChars: number|null }}
  */
-export function computeClipAnimationState(frameInClip, fps, clip) {
+export function computeEntranceAnimationState(frameInClip, fps, clip) {
   const entrance = getEntranceAnimation(clip);
   const baseOpacity = clip.opacity ?? 1;
 
@@ -321,6 +552,28 @@ export function computeClipAnimationState(frameInClip, fps, clip) {
     blockReveal,
     visible: opacity > 0.01 || (typewriterChars != null && typewriterChars > 0),
   };
+}
+
+/**
+ * Combined entrance + exit animation state for a clip at a given frame.
+ */
+export function computeClipAnimationState(frameInClip, fps, clip, clipDurationSec) {
+  const durationSec = clipDurationSec ?? getClipVisibleDurationSec(clip);
+  const durationFrames = Math.max(1, Math.round(durationSec * fps));
+  const exit = getExitAnimation(clip);
+
+  if (exit && exit.type !== 'none') {
+    const exitDelayFrames = Math.round((exit.delay || 0) * fps);
+    const exitDurationFrames = Math.max(1, Math.round((exit.duration || 0.6) * fps));
+    const exitStartFrame = Math.max(0, durationFrames - exitDurationFrames - exitDelayFrames);
+
+    if (frameInClip >= exitStartFrame) {
+      const t = clamp01((frameInClip - exitStartFrame) / exitDurationFrames);
+      return computeExitAnimationState(t, exit, clip);
+    }
+  }
+
+  return computeEntranceAnimationState(frameInClip, fps, clip);
 }
 
 export function getAnimatedTextContent(clip, typewriterChars, getClipTextContent) {
