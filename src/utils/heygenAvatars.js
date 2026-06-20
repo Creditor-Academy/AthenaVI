@@ -60,6 +60,15 @@ export function isLegacyV2Look(look, parsed = null) {
   return /_expressive\d*_public$/i.test(id);
 }
 
+/** True when HeyGen transparent WebM (alpha) is allowed for this look. */
+export function supportsTransparentWebm(look) {
+  if (!look) return false;
+  if (look.usesLegacyV2Video === true) return false;
+  if (String(look.videoApi || '').toLowerCase() === 'v2') return false;
+  if (isLegacyV2Look(look)) return false;
+  return true;
+}
+
 export function isGeneratableLook(look, parsed = null) {
   if (!look) return false;
   if (isLegacyV2Look(look, parsed)) return true;
@@ -835,6 +844,9 @@ export function mapAvatarLook(look, fallbackName = 'Look', parsed = null) {
   const id = getLookId(look);
   const supportedEngines = getLookSupportedEngines(look);
   const isLegacyV2 = isLegacyV2Look(look, parsed);
+  const usesLegacyV2Video =
+    look?.usesLegacyV2Video ?? look?.uses_legacy_v2_video ?? false;
+  const videoApi = look?.videoApi ?? look?.video_api ?? null;
   const generatableEngine = resolveVideoAvatarEngine({
     avatarLookId: id,
     avatarType: look?.avatar_type ?? look?.avatarType,
@@ -856,6 +868,8 @@ export function mapAvatarLook(look, fallbackName = 'Look', parsed = null) {
     avatarType: look?.avatar_type ?? look?.avatarType ?? null,
     supportedEngines,
     isLegacyV2,
+    usesLegacyV2Video,
+    videoApi,
     generatableEngine,
     engineUnknown: supportedEngines.length === 0 && !isLegacyV2,
     defaultVoiceId: getLookDefaultVoiceId(look),

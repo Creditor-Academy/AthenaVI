@@ -16,6 +16,7 @@ import { getClipZIndex, isBackgroundClip, sortClipsForRender } from '../../../..
 import { resolveClipRect } from '../../../../utils/clipLayout'
 import { resolveClipMediaSrc, isVideoMedia } from '../../../../utils/heygenVideo'
 import { resolveAvatarDisplaySrc } from '../../../../utils/templateAvatarPreview'
+import { formatLayerBorderCss } from '../../../../utils/layerBorderUtils'
 import {
   canAcceptImageFill,
   parseCanvasDragData,
@@ -338,10 +339,8 @@ const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition,
   const cssFilter = buildCssFilter(cf)
   const src = resolveClipMediaSrc(clip)
 
-  // Border: handle borderWidth/borderColor from panel OR legacy border string
-  const borderStyle = s.borderWidth
-    ? `${s.borderWidth} ${s.borderStyle || 'solid'} ${s.borderColor || '#000'}`
-    : (s.border || 'none')
+  // Border: panel fields or legacy `border` shorthand from templates
+  const borderStyle = formatLayerBorderCss(s)
 
   const animatedOuter = buildLiveAnimStyle(clipBase(clip, isSelected), clip, animState, {
     flipTransform,
@@ -454,9 +453,7 @@ const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdateP
   const flipY = s.scaleY === -1 ? -1 : 1
   const flipTransform = (flipX !== 1 || flipY !== 1) ? `scale(${flipX}, ${flipY})` : undefined
   const isBg = isBackgroundClip(clip)
-  const borderStyle = s.borderWidth
-    ? `${s.borderWidth} ${s.borderStyle || 'solid'} ${s.borderColor || '#7c3aed'}`
-    : (s.border || 'none')
+  const borderStyle = formatLayerBorderCss(s, '#7c3aed')
 
   const animatedOuter = buildLiveAnimStyle(clipBase(clip, isSelected), clip, animState, {
     flipTransform,
@@ -563,9 +560,7 @@ const VideoClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePo
   const flipX = s.scaleX === -1 ? -1 : 1
   const flipY = s.scaleY === -1 ? -1 : 1
   const flipTransform = (flipX !== 1 || flipY !== 1) ? `scale(${flipX}, ${flipY})` : undefined
-  const borderStyle = s.borderWidth
-    ? `${s.borderWidth} ${s.borderStyle || 'solid'} ${s.borderColor || '#000'}`
-    : (s.border || 'none')
+  const borderStyle = formatLayerBorderCss(s)
   const isBg = isBackgroundClip(clip)
   const fitMode = s.objectFit || (isBg ? 'cover' : (isAvatarLike ? 'cover' : 'cover'))
   const avatarMaskStyle = isAvatarLike
@@ -766,7 +761,7 @@ const ShapeClip = ({
             ? 'transparent'
             : (clip.style?.backgroundColor || clip.style?.background || 'rgba(0,0,0,0.06)'),
         borderRadius: clip.style?.borderRadius || '0',
-        border: clip.style?.border || 'none',
+        border: formatLayerBorderCss(clip.style || {}),
         boxShadow: clip.style?.boxShadow || 'none',
         clipPath: clip.style?.clipPath || undefined,
       }}

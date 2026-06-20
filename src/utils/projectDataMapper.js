@@ -377,6 +377,8 @@ function buildPresenter(scene) {
     };
   }
 
+  presenter.outputFormat = scene.outputFormat ?? base.outputFormat ?? 'mp4';
+
   return presenter;
 }
 
@@ -578,6 +580,7 @@ export function sceneFromBackend(scene) {
     isLegacyV2,
     supportedEngines: presenter.supportedEngines ?? scene.supportedEngines,
   });
+  const outputFormat = presenter.outputFormat ?? scene.outputFormat ?? 'mp4';
 
   return {
     ...scene,
@@ -599,12 +602,14 @@ export function sceneFromBackend(scene) {
     voiceName: presenter.voiceName || scene.voiceName,
     voiceSettings: presenter.voiceSettings || scene.voiceSettings,
     script: presenter.script ?? avatarContent.script ?? scene.script ?? '',
+    outputFormat,
     heygenVideoId,
     heygenStatus: generation.status || scene.heygenStatus,
     presenter: {
       ...presenter,
       avatarEngine,
       isLegacyV2,
+      outputFormat,
     },
     generation,
     clips: normalizeSceneClips((scene.elements || scene.clips || []).map(elementToClip)),
