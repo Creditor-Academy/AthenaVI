@@ -5760,6 +5760,410 @@ kbd.shortcut-key {
     color: var(--primary);
 }
 
+/* Border & shadow property controls */
+.scp-effect-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-surface, #f8fafc);
+}
+
+.scp-effect-block + .scp-effect-block {
+    margin-top: 8px;
+}
+
+.scp-effect-block__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.scp-effect-block__label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+}
+
+.scp-effect-block__hint {
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.scp-border-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+}
+
+.scp-border-control__stepper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+    padding: 4px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card, #fff);
+}
+
+.scp-border-control__step-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-main);
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.scp-border-control__step-btn:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--primary) 10%, var(--bg-surface));
+    color: var(--primary);
+}
+
+.scp-border-control__step-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.scp-border-control__value {
+    flex: 1;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-main);
+    font-variant-numeric: tabular-nums;
+}
+
+.scp-border-control__color {
+    position: relative;
+    width: 44px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card, #fff);
+    cursor: pointer;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.scp-border-control__color:hover {
+    border-color: color-mix(in srgb, var(--primary) 40%, var(--border-color));
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.scp-border-control__preview {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+.scp-border-control__color-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+}
+
+.scp-shadow-presets {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+}
+
+.scp-shadow-preset {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 6px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border-color);
+    background: var(--bg-card, #fff);
+    cursor: pointer;
+    transition:
+        border-color 0.15s ease,
+        background 0.15s ease,
+        box-shadow 0.15s ease,
+        transform 0.15s ease;
+}
+
+.scp-shadow-preset:hover {
+    border-color: color-mix(in srgb, var(--primary) 35%, var(--border-color));
+    transform: translateY(-1px);
+}
+
+.scp-shadow-preset--active {
+    border-color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 8%, var(--bg-card));
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+.scp-shadow-preset__thumb {
+    width: 100%;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background:
+        linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
+        linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
+        linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+    background-size: 10px 10px;
+    background-position: 0 0, 0 5px, 5px -5px, -5px 0;
+    background-color: #f8fafc;
+}
+
+.scp-shadow-preset__box {
+    width: 22px;
+    height: 14px;
+    border-radius: 4px;
+    background: #fff;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.scp-shadow-preset__label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.2;
+}
+
+.scp-shadow-preset--active .scp-shadow-preset__label {
+    color: var(--primary);
+}
+
+.scp-shadow-color-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.scp-shadow-color-picker {
+    width: 52px;
+    height: 40px;
+}
+
+.scp-shadow-color-swatch {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: #fff;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    pointer-events: none;
+}
+
+.scp-property-bar {
+    position: relative;
+    height: 28px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.scp-property-bar__track {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.scp-property-bar__fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    background: color-mix(in srgb, var(--primary) 55%, #64748b);
+    opacity: 0.85;
+    pointer-events: none;
+    transition: width 0.1s ease, background 0.15s ease;
+}
+
+.scp-property-bar__input {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 28px;
+    margin: 0;
+    cursor: pointer;
+    appearance: none;
+    background: transparent;
+}
+
+.scp-property-bar__input::-webkit-slider-runnable-track {
+    height: 28px;
+    background: transparent;
+}
+
+.scp-property-bar__input::-webkit-slider-thumb {
+    appearance: none;
+    width: 14px;
+    height: 24px;
+    margin-top: 2px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.18);
+}
+
+.scp-property-bar__input::-moz-range-track {
+    height: 28px;
+    background: transparent;
+    border: none;
+}
+
+.scp-property-bar__input::-moz-range-thumb {
+    width: 14px;
+    height: 24px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.18);
+}
+
+.scp-property-bar--transparency .scp-property-bar__track {
+    background-color: #fff;
+    background-image:
+        linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
+        linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
+        linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+    background-size: 12px 12px;
+    background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+}
+
+.scp-property-bar--sides .scp-property-bar__track {
+    background-color: #f1f5f9;
+    background-image: repeating-linear-gradient(
+        to right,
+        transparent 0,
+        transparent calc(14.2857% - 1px),
+        color-mix(in srgb, var(--border-color) 80%, transparent) calc(14.2857% - 1px),
+        color-mix(in srgb, var(--border-color) 80%, transparent) 14.2857%
+    );
+}
+
+.scp-property-bar--sides .scp-property-bar__fill {
+    background: color-mix(in srgb, var(--primary) 45%, #94a3b8);
+}
+
+.scp-property-bar--border .scp-property-bar__track {
+    background: #fff;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border-color) 70%, transparent);
+}
+
+.scp-property-bar--border .scp-property-bar__fill {
+    opacity: 0.92;
+}
+
+.scp-property-bar--radius .scp-property-bar__track {
+    background-color: #fff;
+    background-image:
+        linear-gradient(135deg, transparent 42%, color-mix(in srgb, var(--border-color) 55%, transparent) 42%, color-mix(in srgb, var(--border-color) 55%, transparent) 58%, transparent 58%);
+    background-size: 16px 16px;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border-color) 70%, transparent);
+}
+
+.scp-property-bar--radius .scp-property-bar__fill {
+    background: color-mix(in srgb, var(--primary) 40%, #cbd5e1);
+    border-radius: 0 6px 6px 0;
+}
+
+.scp-property-bar--disabled {
+    opacity: 0.55;
+}
+
+.scp-property-bar--disabled .scp-property-bar__input {
+    cursor: not-allowed;
+}
+
+.scp-property-bar__meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.scp-property-bar__color-swatch {
+    position: relative;
+    width: 32px;
+    height: 26px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card, #fff);
+    cursor: pointer;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.scp-property-bar__color-swatch:hover {
+    border-color: color-mix(in srgb, var(--primary) 40%, var(--border-color));
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.scp-property-bar__color-preview {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+.scp-property-bar__color-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+}
+
+/* Legacy alias */
+.scp-transparency-bar {
+    position: relative;
+    height: 28px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
 .scp-voiceover-row {
     display: flex;
     align-items: center;

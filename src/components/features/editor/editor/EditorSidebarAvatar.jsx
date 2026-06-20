@@ -30,6 +30,7 @@ import {
   getLooksApiGroupId,
   isDeclaredSingleLookGroup,
   isSingleAppearanceGroup,
+  supportsTransparentWebm,
 } from '../../../../utils/heygenAvatars';
 import { invalidateHeygenSceneVideo } from '../../../../utils/heygenVideo';
 
@@ -289,6 +290,11 @@ const EditorSidebarAvatar = ({
           isLegacyV2: look.isLegacyV2,
           supportedEngines: look.supportedEngines,
         });
+        const nextOutputFormat =
+          (targetScene?.outputFormat === 'webm' || basePresenter.outputFormat === 'webm') &&
+          !supportsTransparentWebm(look)
+            ? 'mp4'
+            : targetScene?.outputFormat ?? basePresenter.outputFormat ?? 'mp4';
         setAvatarEngine(resolvedEngine);
 
         updateScene(sceneId, {
@@ -300,6 +306,7 @@ const EditorSidebarAvatar = ({
           avatarGroupId: selectedGroup?.id,
           avatarEngine: resolvedEngine,
           isLegacyV2: look.isLegacyV2,
+          outputFormat: nextOutputFormat,
           presenter: {
             ...basePresenter,
             avatarId: look.id,
@@ -314,6 +321,7 @@ const EditorSidebarAvatar = ({
             supportedEngines: look.supportedEngines,
             isLegacyV2: look.isLegacyV2,
             engineUnknown: look.engineUnknown,
+            outputFormat: nextOutputFormat,
           },
           supportedEngines: look.supportedEngines,
           isLegacyV2: look.isLegacyV2,

@@ -1751,6 +1751,16 @@ function Create({ onBack, initialConfig = null }) {
         isLegacyV2: overrides?.isLegacyV2 ?? getSceneLookEngineContext(scene).isLegacyV2,
       };
 
+      const outputFormat =
+        overrides?.outputFormat ??
+        scene?.outputFormat ??
+        scene?.presenter?.outputFormat ??
+        'mp4';
+      const removeBackground =
+        outputFormat === 'webm'
+          ? false
+          : overrides?.removeBackground ?? (scene?.removeBackground || false);
+
       const payload = {
         sceneId: stableSceneId,
         avatarId: avatarLookId,
@@ -1774,8 +1784,8 @@ function Create({ onBack, initialConfig = null }) {
         voiceId: voiceId,
         script: script,
         voiceSettings,
-        removeBackground: overrides?.removeBackground ?? (scene?.removeBackground || false),
-        outputFormat: scene?.outputFormat || 'mp4'
+        removeBackground,
+        outputFormat,
       };
 
       if (
@@ -2104,6 +2114,8 @@ function Create({ onBack, initialConfig = null }) {
           voiceId: payload.voiceId,
           voiceName: payload.voiceName,
           script: paraText,
+          outputFormat: payload.outputFormat || 'mp4',
+          removeBackground: payload.removeBackground ?? false,
           presenter: {
             avatarId: payload.avatarLookId || payload.avatarType,
             avatarLookId: payload.avatarLookId || payload.avatarType,
@@ -2118,6 +2130,7 @@ function Create({ onBack, initialConfig = null }) {
             isLegacyV2: payload.isLegacyV2,
             engineUnknown: payload.engineUnknown,
             ...(payload.expressiveness ? { expressiveness: payload.expressiveness } : {}),
+            outputFormat: payload.outputFormat || 'mp4',
           },
           supportedEngines: payload.supportedEngines,
           isLegacyV2: payload.isLegacyV2,
@@ -2240,7 +2253,8 @@ function Create({ onBack, initialConfig = null }) {
           script: payload.script,
           expressiveness: payload.expressiveness,
           backgroundColor: payload.backgroundColor,
-          removeBackground: payload.removeBackground,
+          outputFormat: payload.outputFormat || 'mp4',
+          removeBackground: payload.removeBackground ?? false,
           presenter: {
             avatarId: payload.avatarLookId || payload.avatarType,
             avatarLookId: payload.avatarLookId || payload.avatarType,
@@ -2255,6 +2269,7 @@ function Create({ onBack, initialConfig = null }) {
             isLegacyV2: payload.isLegacyV2,
             engineUnknown: payload.engineUnknown,
             ...(payload.expressiveness ? { expressiveness: payload.expressiveness } : {}),
+            outputFormat: payload.outputFormat || 'mp4',
           },
           supportedEngines: payload.supportedEngines,
           isLegacyV2: payload.isLegacyV2,

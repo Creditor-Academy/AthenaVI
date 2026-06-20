@@ -26,6 +26,7 @@ import {
   parseFontSize,
   resolveFontFamilyValue,
 } from '../../../../utils/textClip';
+import { buildLayerBorderPatch, parseLayerBorder } from '../../../../utils/layerBorderUtils';
 import './SelectionQuickToolbar.css';
 
 const ToolbarBtn = ({ icon, title, active, onClick, danger }) => (
@@ -83,6 +84,12 @@ const SelectionQuickToolbar = ({
   const isShape = clip.type === 'shape';
   const isLocked = !!clip.locked;
   const style = clip.style || {};
+  const shapeBorder = parseLayerBorder(style, '#1a1b1c');
+  const applyShapeBorder = (patch) => {
+    onUpdateLayer?.({
+      style: buildLayerBorderPatch(style, patch, '#1a1b1c'),
+    });
+  };
   const mediaLeftLayout = isMedia && !isText && !isShape;
 
   const fontSize = parseFontSize(style.fontSize, 24);
@@ -326,14 +333,17 @@ const SelectionQuickToolbar = ({
             <MdBorderColor size={14} style={{ pointerEvents: 'none' }} />
             <input
               type="color"
-              value={style.borderColor?.startsWith('#') ? style.borderColor : '#1a1b1c'}
-              onChange={(e) => onUpdateStyle?.({ borderColor: e.target.value, borderWidth: style.borderWidth || '2px' })}
+              value={shapeBorder.color?.startsWith('#') ? shapeBorder.color : '#1a1b1c'}
+              onChange={(e) => applyShapeBorder({
+                color: e.target.value,
+                width: shapeBorder.width > 0 ? shapeBorder.width : 2,
+              })}
             />
           </label>
           <select
             className="sq-toolbar__select sq-toolbar__select--narrow"
-            value={parseInt(style.borderWidth, 10) || 0}
-            onChange={(e) => onUpdateStyle?.({ borderWidth: `${e.target.value}px` })}
+            value={shapeBorder.width}
+            onChange={(e) => applyShapeBorder({ width: Number(e.target.value) })}
             title="Border width"
           >
             {[0, 1, 2, 4, 6, 8].map((n) => (

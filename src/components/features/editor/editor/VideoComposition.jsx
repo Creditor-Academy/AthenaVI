@@ -21,6 +21,7 @@ import { pixelRectToPercent, resolveClipRect } from '../../../../utils/clipLayou
 import { getClipZIndex, isBackgroundClip, sortClipsForRender } from '../../../../utils/editorLayerUtils'
 import { resolveClipMediaSrc, isVideoMedia, isAvatarClip, clipHasHeygenAudio } from '../../../../utils/heygenVideo'
 import { resolveAvatarDisplaySrc } from '../../../../utils/templateAvatarPreview'
+import { formatLayerBorderCss } from '../../../../utils/layerBorderUtils'
 import {
   computeClipAnimationState,
   getAnimatedTextContent,
@@ -316,7 +317,7 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
           return (
             <div key={clip.id} style={{
               ...style,
-              border: clip.style?.border || 'none',
+              border: formatLayerBorderCss(clip.style || {}),
               borderRadius: avatarRound ? '50%' : borderRadius,
               background: src ? 'transparent' : 'rgba(0,0,0,0.03)',
               overflow: 'hidden',
@@ -373,7 +374,7 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
               style={{
                 ...style,
                 overflow: 'hidden',
-                border: shapeStyle.border || 'none',
+                border: formatLayerBorderCss(shapeStyle),
                 borderRadius: shapeStyle.borderRadius || '0',
                 background: hasFill
                   ? 'transparent'

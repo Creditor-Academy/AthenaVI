@@ -55,6 +55,14 @@ import PropertiesAccordion from './PropertiesAccordion';
 import './TextSidebarPanel.css';
 import './PropertiesAccordion.css';
 
+const PANEL_GROUP = {
+  LAYOUT: 'Layout',
+  CONTENT: 'Content',
+  APPEARANCE: 'Appearance',
+  MOTION: 'Motion',
+  ARRANGE: 'Arrange',
+};
+
 const EffectPreview = ({ effectId }) => {
   if (effectId === 'none') {
     return <span className="text-fx-preview text-fx-preview--none">—</span>;
@@ -723,10 +731,12 @@ const TextSidebarPanel = ({
       {isRight && useAccordion ? (
         <div style={{ padding: '0 14px 8px' }}>
           <PropertiesAccordion
+            defaultExpandedIds={['position', 'text']}
             sections={[
               {
                 id: 'position',
                 title: 'Position',
+                group: PANEL_GROUP.LAYOUT,
                 icon: <MdOpenInFull size={14} />,
                 content: (
                   <LayerTransformBar
@@ -743,6 +753,7 @@ const TextSidebarPanel = ({
               {
                 id: 'text',
                 title: 'Text',
+                group: PANEL_GROUP.CONTENT,
                 icon: <MdTextFields size={14} />,
                 content: (
                   <>
@@ -752,26 +763,34 @@ const TextSidebarPanel = ({
                 ),
               },
               {
+                id: 'style',
+                title: 'Style',
+                group: PANEL_GROUP.APPEARANCE,
+                icon: <MdAutoAwesome size={14} />,
+                content: (
+                  <>
+                    <div className="scp-subsection">
+                      <h4 className="scp-subsection__title">Text effect</h4>
+                      {effectContent}
+                    </div>
+                    <div className="scp-subsection">
+                      <h4 className="scp-subsection__title">Text shape</h4>
+                      {shapeContent}
+                    </div>
+                  </>
+                ),
+              },
+              {
                 id: 'animation',
                 title: 'Animation',
+                group: PANEL_GROUP.MOTION,
                 icon: <MdAnimation size={14} />,
                 content: animationContent,
               },
               {
-                id: 'effect',
-                title: 'Effect',
-                icon: <MdAutoAwesome size={14} />,
-                content: effectContent,
-              },
-              {
-                id: 'shape',
-                title: 'Shape',
-                icon: <MdInterests size={14} />,
-                content: shapeContent,
-              },
-              {
                 id: 'layer-order',
                 title: 'Layer Order',
+                group: PANEL_GROUP.ARRANGE,
                 icon: <MdLayers size={14} />,
                 content: (
                   <TextLayerFooter

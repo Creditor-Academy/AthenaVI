@@ -14,6 +14,11 @@ import {
   MdTune,
   MdPlayArrow,
   MdPause,
+  MdFormatColorFill,
+  MdLayersClear,
+  MdCheck,
+  MdMic,
+  MdInfoOutline,
 } from 'react-icons/md';
 import { Loader2 } from 'lucide-react';
 import heygenService from '../../../../services/heygenService';
@@ -40,6 +45,7 @@ import {
   finalizeVideoCreatePayload,
   canUseExpressiveness,
   resolveAvatarEngine,
+  supportsTransparentWebm,
 } from '../../../../utils/heygenAvatars';
 import './QuickCreateModal.css';
 
@@ -154,7 +160,7 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
   const [selectedVoice, setSelectedVoice] = useState(null);
   const [script, setScript] = useState('');
 
-  const [removeBackground, setRemoveBackground] = useState(false);
+  const [backgroundMode, setBackgroundMode] = useState('solid');
   const [backgroundColor, setBackgroundColor] = useState('#F0F0F0');
   const [aspectRatio, setAspectRatio] = useState('16:9');
   const [expressiveness, setExpressiveness] = useState('medium');
@@ -206,6 +212,7 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
       setAvatarSearch('');
       setActiveColorCategory('neutrals');
       setLooksDisplayLimit(AVATAR_DISPLAY_PAGE);
+      setBackgroundMode('solid');
       resetAvatarPicker();
       return;
     }
@@ -232,6 +239,13 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     setSelectedVoice(null);
     setSkipVoice(false);
   }, [selectedAvatar?.id, stopVoicePreview]);
+
+  useEffect(() => {
+    if (!selectedAvatar?.id) return;
+    if (backgroundMode === 'transparent' && !supportsTransparentWebm(selectedAvatar)) {
+      setBackgroundMode('solid');
+    }
+  }, [selectedAvatar, backgroundMode]);
 
   const applyAvatarDefaultVoice = useCallback(async () => {
     const defaultVoiceId = selectedAvatar?.defaultVoiceId;
@@ -632,7 +646,8 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
       voiceName: skipVoice ? null : selectedVoice?.name,
       skipVoice,
       script,
-      removeBackground,
+      outputFormat: backgroundMode === 'transparent' ? 'webm' : 'mp4',
+      removeBackground: false,
       backgroundColor,
       aspectRatio,
       ...(includeExpressiveness ? { expressiveness } : {}),
@@ -741,6 +756,8 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
 
   const showExpressiveness =
     selectedAvatar && canUseExpressiveness(selectedAvatar, avatarEngine);
+
+  const canUseTransparent = supportsTransparentWebm(selectedAvatar);
 
   if (!isOpen) return null;
 
@@ -1143,164 +1160,261 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
 
           {step === 5 && (
             <div className="qc-step-pane qc-settings-pane">
-              <div className="qc-settings-summary">
-                {selectedAvatar?.image && (
-                  <img
-                    src={selectedAvatar.image}
-                    alt=""
-                    className="qc-settings-summary-thumb"
-                  />
-                )}
-                <div className="qc-settings-summary-copy">
-                  <strong>{selectedAvatar?.name || 'Presenter'}</strong>
-                  <span>
-                    {skipVoice ? 'Voice skipped' : selectedVoice?.name || 'No voice'}
-                    {' · '}
-                    {script.trim().length} characters
+              <div className="qc-settings-hero">
+                <div className="qc-settings-hero-main">
+                  {selectedAvatar?.image ? (
+                    <img
+                      src={selectedAvatar.image}
+                      alt=""
+                      className="qc-settings-hero-avatar"
+                    />
+                  ) : (
+                    <div className="qc-settings-hero-avatar qc-settings-hero-avatar--placeholder" aria-hidden />
+                  )}
+                  <div className="qc-settings-hero-copy">
+                    <span className="qc-settings-hero-eyebrow">Review settings</span>
+                    <strong>{selectedAvatar?.name || 'Presenter'}</strong>
+                    <div className="qc-settings-hero-meta">
+                      {!skipVoice && selectedVoice?.name ? (
+                        <span>
+                          <MdMic size={14} aria-hidden />
+                          {selectedVoice.name}
+                        </span>
+                      ) : (
+                        <span className="qc-settings-hero-meta-muted">Voice skipped</span>
+                      )}
+                      <span className="qc-settings-hero-meta-sep" aria-hidden>
+                        ·
+                      </span>
+                      <span>{script.trim().length.toLocaleString()} characters</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="qc-settings-hero-chips" aria-label="Current settings">
+                  <span className="qc-settings-chip">
+                    {backgroundMode === 'transparent' ? 'Transparent WebM' : 'Solid backdrop'}
                   </span>
+                  <span className="qc-settings-chip">{aspectRatio === '16:9' ? 'Landscape' : 'Portrait'}</span>
+                  {showExpressiveness ? (
+                    <span className="qc-settings-chip qc-settings-chip--capitalize">{expressiveness}</span>
+                  ) : null}
                 </div>
               </div>
 
-              <div className="qc-settings-grid premium-scrollbar">
+              <div className="qc-settings-scroll premium-scrollbar">
+                <div className="qc-settings-grid">
                 <section className="qc-settings-card qc-settings-card--background">
                   <header className="qc-settings-card-head">
-                    <span className="qc-settings-card-icon" aria-hidden>
+                    <span className="qc-settings-card-icon qc-settings-card-icon--layers" aria-hidden>
                       <MdLayers size={17} />
                     </span>
                     <div>
                       <h3>Background</h3>
-                      <p>Transparent cutout or a solid backdrop behind your presenter.</p>
+                      <p>Choose a solid color or export with alpha transparency.</p>
                     </div>
                   </header>
 
-                  <div className="qc-settings-row">
-                    <div className="qc-settings-row-copy">
-                      <strong>Remove background</strong>
-                      <span>Export presenter without a backdrop</span>
+                  <div className="qc-settings-card-body">
+                    <div className="qc-background-mode" role="radiogroup" aria-label="Presenter background mode">
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={backgroundMode === 'solid'}
+                        className={`qc-option-card ${backgroundMode === 'solid' ? 'active' : ''}`}
+                        onClick={() => setBackgroundMode('solid')}
+                      >
+                        <span className="qc-option-card-top">
+                          <span className="qc-option-card-icon" aria-hidden>
+                            <MdFormatColorFill size={18} />
+                          </span>
+                          {backgroundMode === 'solid' ? (
+                            <span className="qc-option-card-check" aria-hidden>
+                              <MdCheck size={14} />
+                            </span>
+                          ) : null}
+                        </span>
+                        <strong>Solid backdrop</strong>
+                        <span>MP4 with a color behind the presenter</span>
+                      </button>
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={backgroundMode === 'transparent'}
+                        className={`qc-option-card ${backgroundMode === 'transparent' ? 'active' : ''}`}
+                        onClick={() => canUseTransparent && setBackgroundMode('transparent')}
+                        disabled={!canUseTransparent}
+                        title={
+                          canUseTransparent
+                            ? 'Export transparent WebM'
+                            : 'Transparent WebM is not supported for this look'
+                        }
+                      >
+                        <span className="qc-option-card-top">
+                          <span className="qc-option-card-icon" aria-hidden>
+                            <MdLayersClear size={18} />
+                          </span>
+                          {backgroundMode === 'transparent' ? (
+                            <span className="qc-option-card-check" aria-hidden>
+                              <MdCheck size={14} />
+                            </span>
+                          ) : null}
+                        </span>
+                        <strong>Transparent (WebM)</strong>
+                        <span>Alpha channel layers over your scene</span>
+                      </button>
                     </div>
-                    <label className="qc-switch">
-                      <input
-                        type="checkbox"
-                        checked={removeBackground}
-                        onChange={(e) => setRemoveBackground(e.target.checked)}
-                      />
-                      <span className="qc-slider" />
-                    </label>
-                  </div>
 
-                  {!removeBackground && (
-                    <div className="qc-settings-subsection">
-                      <span className="qc-settings-subtitle">
-                        <MdPalette size={14} />
-                        Color palette
-                      </span>
-                      <div className="qc-color-categories">
-                        {BACKGROUND_COLOR_PALETTE.map((category) => (
-                          <button
-                            key={category.id}
-                            type="button"
-                            className={`qc-color-category-chip ${activeColorCategory === category.id ? 'active' : ''}`}
-                            onClick={() => setActiveColorCategory(category.id)}
-                          >
-                            {category.label}
-                          </button>
-                        ))}
-                      </div>
-                      <div className="qc-color-swatches">
-                        {activePaletteCategory.colors.map((preset) => (
-                          <button
-                            key={`${activePaletteCategory.id}-${preset.label}`}
-                            type="button"
-                            className={`qc-swatch-btn ${backgroundColor.toLowerCase() === preset.color.toLowerCase() ? 'active' : ''}`}
-                            style={{ backgroundColor: preset.color }}
-                            title={preset.label}
-                            aria-label={preset.label}
-                            onClick={() => setBackgroundColor(preset.color)}
+                    {!canUseTransparent ? (
+                      <p className="qc-settings-callout">
+                        <MdInfoOutline size={16} aria-hidden />
+                        Transparent WebM isn&apos;t supported for expressive (legacy v2) looks.
+                      </p>
+                    ) : null}
+
+                    {backgroundMode === 'solid' ? (
+                      <div className="qc-settings-subsection">
+                        <span className="qc-settings-subtitle">
+                          <MdPalette size={14} />
+                          Color palette
+                        </span>
+                        <div className="qc-color-categories">
+                          {BACKGROUND_COLOR_PALETTE.map((category) => (
+                            <button
+                              key={category.id}
+                              type="button"
+                              className={`qc-color-category-chip ${activeColorCategory === category.id ? 'active' : ''}`}
+                              onClick={() => setActiveColorCategory(category.id)}
+                            >
+                              {category.label}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="qc-color-swatches">
+                          {activePaletteCategory.colors.map((preset) => (
+                            <button
+                              key={`${activePaletteCategory.id}-${preset.label}`}
+                              type="button"
+                              className={`qc-swatch-btn ${backgroundColor.toLowerCase() === preset.color.toLowerCase() ? 'active' : ''}`}
+                              style={{ backgroundColor: preset.color }}
+                              title={preset.label}
+                              aria-label={preset.label}
+                              onClick={() => setBackgroundColor(preset.color)}
+                            />
+                          ))}
+                        </div>
+                        <label className="qc-color-input-wrapper">
+                          <div
+                            className="qc-color-preview"
+                            style={{ backgroundColor }}
+                            aria-hidden
                           />
-                        ))}
+                          <input
+                            type="text"
+                            value={backgroundColor}
+                            onChange={(e) => setBackgroundColor(e.target.value)}
+                            aria-label="Custom background color"
+                            placeholder="#ffffff"
+                          />
+                          <span className="qc-color-input-label">Custom</span>
+                        </label>
                       </div>
-                      <div className="qc-color-input-wrapper">
-                        <div
-                          className="qc-color-preview"
-                          style={{ backgroundColor }}
-                          aria-hidden
-                        />
-                        <input
-                          type="text"
-                          value={backgroundColor}
-                          onChange={(e) => setBackgroundColor(e.target.value)}
-                          aria-label="Custom background color"
-                          placeholder="#ffffff"
-                        />
-                      </div>
-                    </div>
-                  )}
+                    ) : (
+                      <p className="qc-settings-callout qc-settings-callout--success">
+                        <MdInfoOutline size={16} aria-hidden />
+                        HeyGen removes the backdrop automatically. Your scene background shows through the presenter clip.
+                      </p>
+                    )}
+                  </div>
                 </section>
 
                 <section className="qc-settings-card qc-settings-card--format">
                   <header className="qc-settings-card-head">
-                    <span className="qc-settings-card-icon" aria-hidden>
+                    <span className="qc-settings-card-icon qc-settings-card-icon--format" aria-hidden>
                       <MdMonitor size={17} />
                     </span>
                     <div>
                       <h3>Video format</h3>
-                      <p>Aspect ratio for your scene.</p>
+                      <p>Pick the aspect ratio that fits your channel.</p>
                     </div>
                   </header>
 
-                  <div className="qc-format-options qc-format-options--stacked">
-                    <button
-                      type="button"
-                      className={`qc-format-option ${aspectRatio === '16:9' ? 'active' : ''}`}
-                      onClick={() => setAspectRatio('16:9')}
-                    >
-                      <span className="qc-format-option-icon qc-format-option-icon--landscape" aria-hidden>
-                        <MdMonitor size={20} />
-                      </span>
-                      <strong>16:9 Landscape</strong>
-                      <span>YouTube, web, presentations</span>
-                    </button>
-                    <button
-                      type="button"
-                      className={`qc-format-option ${aspectRatio === '9:16' ? 'active' : ''}`}
-                      onClick={() => setAspectRatio('9:16')}
-                    >
-                      <span className="qc-format-option-icon qc-format-option-icon--portrait" aria-hidden>
-                        <MdPhoneAndroid size={20} />
-                      </span>
-                      <strong>9:16 Portrait</strong>
-                      <span>Reels, TikTok, Stories</span>
-                    </button>
+                  <div className="qc-settings-card-body">
+                    <div className="qc-format-options">
+                      <button
+                        type="button"
+                        className={`qc-option-card qc-option-card--format ${aspectRatio === '16:9' ? 'active' : ''}`}
+                        onClick={() => setAspectRatio('16:9')}
+                      >
+                        <span className="qc-option-card-top">
+                          <span className="qc-format-frame qc-format-frame--landscape" aria-hidden>
+                            <MdMonitor size={18} />
+                          </span>
+                          {aspectRatio === '16:9' ? (
+                            <span className="qc-option-card-check" aria-hidden>
+                              <MdCheck size={14} />
+                            </span>
+                          ) : null}
+                        </span>
+                        <strong>16:9 Landscape</strong>
+                        <span>YouTube, web, presentations</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={`qc-option-card qc-option-card--format ${aspectRatio === '9:16' ? 'active' : ''}`}
+                        onClick={() => setAspectRatio('9:16')}
+                      >
+                        <span className="qc-option-card-top">
+                          <span className="qc-format-frame qc-format-frame--portrait" aria-hidden>
+                            <MdPhoneAndroid size={18} />
+                          </span>
+                          {aspectRatio === '9:16' ? (
+                            <span className="qc-option-card-check" aria-hidden>
+                              <MdCheck size={14} />
+                            </span>
+                          ) : null}
+                        </span>
+                        <strong>9:16 Portrait</strong>
+                        <span>Reels, TikTok, Stories</span>
+                      </button>
+                    </div>
                   </div>
                 </section>
 
                 {showExpressiveness && (
                   <section className="qc-settings-card qc-settings-card--express">
                     <header className="qc-settings-card-head">
-                      <span className="qc-settings-card-icon" aria-hidden>
+                      <span className="qc-settings-card-icon qc-settings-card-icon--express" aria-hidden>
                         <MdTune size={17} />
                       </span>
                       <div>
                         <h3>Expressiveness</h3>
-                        <p>How animated the presenter should appear on camera.</p>
+                        <p>Control how animated the presenter appears on camera.</p>
                       </div>
                     </header>
 
-                    <div className="qc-express-options">
-                      {expressivenessOptions.map((option) => (
-                        <button
-                          key={option.id}
-                          type="button"
-                          className={`qc-express-option ${expressiveness === option.id ? 'active' : ''}`}
-                          onClick={() => setExpressiveness(option.id)}
-                        >
-                          <strong>{option.label}</strong>
-                          <span>{option.hint}</span>
-                        </button>
-                      ))}
+                    <div className="qc-settings-card-body">
+                      <div className="qc-express-options">
+                        {expressivenessOptions.map((option) => (
+                          <button
+                            key={option.id}
+                            type="button"
+                            className={`qc-option-card qc-option-card--express ${expressiveness === option.id ? 'active' : ''}`}
+                            onClick={() => setExpressiveness(option.id)}
+                          >
+                            <span className="qc-express-bars" aria-hidden>
+                              <span className="on" />
+                              <span className={option.id === 'medium' || option.id === 'high' ? 'on' : ''} />
+                              <span className={option.id === 'high' ? 'on' : ''} />
+                            </span>
+                            <strong>{option.label}</strong>
+                            <span>{option.hint}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </section>
                 )}
+                </div>
               </div>
             </div>
           )}
