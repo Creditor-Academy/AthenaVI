@@ -12,6 +12,7 @@ import {
   MdPerson,
   MdGroups,
   MdAccessTime,
+  MdOutlineAdd,
 } from 'react-icons/md'
 import creditsService from '../../../../services/creditsService.js'
 import storageService from '../../../../services/storageService.js'
@@ -32,7 +33,9 @@ import { formatStorageTransactionType } from '../../../../utils/storageQuota.js'
 import StorageUsageBar from '../../../ui/StorageUsageBar/StorageUsageBar.jsx'
 import '../../../ui/StorageUsageBar/StorageUsageBar.css'
 import LoadingDots from '../../../ui/LoadingDots/LoadingDots.jsx'
+import StorageRequestModal from './StorageRequestModal.jsx'
 import './BillingSettings.css'
+import './StorageRequestModal.css'
 
 function getCreditTxBadgeVariant(type) {
   const key = String(type || '').toLowerCase()
@@ -95,6 +98,7 @@ function BillingSettings() {
   const [error, setError] = useState('')
   const [actionMessage, setActionMessage] = useState('')
   const [historyTab, setHistoryTab] = useState('credits')
+  const [showStorageRequestModal, setShowStorageRequestModal] = useState(false)
 
   const [personalStorage, setPersonalStorage] = useState(null)
   const [workspaceStorage, setWorkspaceStorage] = useState(null)
@@ -641,8 +645,27 @@ function BillingSettings() {
                   : ''}
               </p>
             ) : null}
+            <div className="billing-storage-actions">
+              <button
+                type="button"
+                className="billing-storage-request-btn"
+                onClick={() => setShowStorageRequestModal(true)}
+                disabled={loading || workspaceSwitching}
+              >
+                <MdOutlineAdd size={16} aria-hidden />
+                Request more storage
+              </button>
+            </div>
           </div>
         </div>
+
+        <StorageRequestModal
+          isOpen={showStorageRequestModal}
+          onClose={() => setShowStorageRequestModal(false)}
+          personalStorage={personalStorage}
+          selectedWorkspace={selectedWorkspace}
+          workspaceStorage={workspaceStorage}
+        />
 
         {canAllocate && (
           <div className="billing-panel">

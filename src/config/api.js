@@ -45,6 +45,7 @@ const API_CONFIG = {
     STORAGE: {
       ME: '/api/user/storage',
       ME_HISTORY: '/api/user/storage/history',
+      REQUEST: '/api/user/storage/request',
       WORKSPACE: (workspaceId) => `/api/workspaces/${workspaceId}/storage`,
     },
 
