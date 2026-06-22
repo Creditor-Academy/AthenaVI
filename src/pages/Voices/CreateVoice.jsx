@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { ArrowLeft, Mic, Terminal, Upload, Loader2, X, Music, CheckCircle } from 'lucide-react'
 import { MdPlayArrow } from 'react-icons/md'
 import heygenService from '../../services/heygenService'
+import { getSanitizedErrorMessage } from '../../utils/userFacingMessage'
 import './Voices.css'
 
 function CreateVoice({ onBack }) {
@@ -133,7 +134,7 @@ function CreateVoice({ onBack }) {
         }, 2000);
       } catch (err) {
         console.error('Clone voice failed:', err);
-        setCreationStatus(`Error: ${err.message || 'Cloning failed'}`);
+        setCreationStatus(`Error: ${getSanitizedErrorMessage(err, 'Cloning failed')}`);
         setTimeout(() => {
           setIsCreating(false);
           setCreationStatus('');
@@ -160,7 +161,7 @@ function CreateVoice({ onBack }) {
         setCreationStatus('');
       } catch (err) {
         console.error('Create voice failed:', err);
-        setCreationStatus(`Error: ${err.message || 'Creation failed'}`);
+        setCreationStatus(`Error: ${getSanitizedErrorMessage(err, 'Creation failed')}`);
         setTimeout(() => {
           setIsCreating(false);
           setCreationStatus('');
@@ -417,7 +418,7 @@ function CreateVoice({ onBack }) {
                                   }, 1500);
                                 } catch (err) {
                                   console.error('Failed to select voice:', err);
-                                  setCreationStatus(`Error: ${err.message || 'Selection failed'}`);
+                                  setCreationStatus(`Error: ${getSanitizedErrorMessage(err, 'Selection failed')}`);
                                   setTimeout(() => {
                                     setIsCreating(false);
                                     setCreationStatus('');

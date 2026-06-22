@@ -32,6 +32,7 @@ import {
   isSingleAppearanceGroup,
   supportsTransparentWebm,
 } from '../../../../utils/heygenAvatars';
+import { getSanitizedErrorMessage } from '../../../../utils/userFacingMessage';
 import { invalidateHeygenSceneVideo } from '../../../../utils/heygenVideo';
 
 const EditorSidebarAvatar = ({
@@ -427,7 +428,7 @@ const EditorSidebarAvatar = ({
       
     } catch (error) {
       console.error('Avatar creation failed:', error);
-      setUploadStatus(`Error: ${error.message || 'Creation failed'}`);
+      setUploadStatus(`Error: ${getSanitizedErrorMessage(error, 'Creation failed')}`);
       setTimeout(() => {
         setIsUploading(false);
         setUploadStatus('');

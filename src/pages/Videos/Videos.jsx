@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { sanitizeUserFacingMessage } from '../../utils/userFacingMessage'
 import {
   MdAdd,
   MdApps,
@@ -66,7 +67,7 @@ function Videos({ onCreate, onEdit }) {
   const toastTimeoutRef = useRef(null)
 
   const showToast = (message, type = 'success') => {
-    setToast({ message, type })
+    setToast({ message: sanitizeUserFacingMessage(message), type })
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
     toastTimeoutRef.current = setTimeout(() => setToast(null), 2800)
   }

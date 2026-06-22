@@ -1,3 +1,5 @@
+import { sanitizeUserFacingMessage } from '../../../../utils/userFacingMessage';
+
 const TYPE_STYLES = {
   success: { bg: '#ecfdf5', border: '#10b981', color: '#065f46' },
   error: { bg: '#fef2f2', border: '#ef4444', color: '#991b1b' },
@@ -35,7 +37,7 @@ const EditorToast = ({ toast, onDismiss }) => {
         fontWeight: 600,
       }}
     >
-      <span>{toast.message}</span>
+      <span>{sanitizeUserFacingMessage(toast.message)}</span>
       <button
         type="button"
         onClick={onDismiss}

@@ -135,7 +135,7 @@ function AvatarConsentStep({
           {userName}
         </span>
       )}
-      . I consent to HeyGen and Athena VI using footage of me to create and use my Digital Twin
+      . I consent to Virtual Instructor using footage of me to create and use my Digital Twin
       avatar. The passcode shown on the consent page must be read clearly:{' '}
       <span className="avatar-consent-script-passcode">— — — — — — —</span>.
     </>

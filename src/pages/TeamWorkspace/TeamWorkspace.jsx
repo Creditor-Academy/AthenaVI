@@ -10,6 +10,7 @@ import {
   MdExitToApp
 } from 'react-icons/md';
 import { useAuth } from '../../contexts/AuthContext';
+import { sanitizeUserFacingMessage } from '../../utils/userFacingMessage';
 import WorkspaceHeader from '../../components/features/workspace/workspace/WorkspaceHeader.jsx';
 import WorkspaceSection from '../../components/features/workspace/workspace/WorkspaceSection.jsx';
 import { WorkspaceCard, FolderCard, VideoCard } from '../../components/features/workspace/workspace/ViewCards.jsx';
@@ -96,7 +97,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
   const toastTimeoutRef = useRef(null);
 
   const showToast = useCallback((message, type = 'success') => {
-    setToast({ message, type });
+    setToast({ message: sanitizeUserFacingMessage(message), type });
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
     toastTimeoutRef.current = setTimeout(() => setToast(null), 2800);
   }, []);

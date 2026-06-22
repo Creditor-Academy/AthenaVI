@@ -1,7 +1,7 @@
 export const helpCategories = [
   { id: 'start', label: 'Getting Started', subtitle: 'Dashboard layout, first project, and where things live in AthenaVI.' },
   { id: 'workspace', label: 'Workspaces & Projects', subtitle: 'Personal vs team workspaces, folders, credits, exports, and collaboration.' },
-  { id: 'editor', label: 'Editor & Export', subtitle: 'Scenes, inserts, HeyGen presenters, saving, and final MP4 renders.' },
+  { id: 'editor', label: 'Editor & Export', subtitle: 'Scenes, inserts, AI presenters, saving, and final MP4 renders.' },
   { id: 'assets', label: 'Library & Assets', subtitle: 'Uploads, stock media, storage quota, and workspace asset rules.' },
   { id: 'presenters', label: 'Avatars & Voices', subtitle: 'AI presenters, voice design, cloning, and narration.' },
   { id: 'billing', label: 'Credits & Storage', subtitle: 'Credit pools, transfers, storage footprint, and billing settings.' },
@@ -101,12 +101,12 @@ Add layers with **Insert** — images, video, text, graphics, or uploads. Drag i
 Supported types: JPEG, PNG, WebP, MP4, MP3 (max **50 MB** per file). The editor stores **asset IDs** in project JSON — not raw S3 URLs — so assets stay linked after save.`,
     },
     {
-      title: 'AI presenters (HeyGen)',
+      title: 'AI presenters',
       readTime: '5 min',
       tag: 'Intermediate',
-      body: `Configure a presenter per scene: pick an avatar look, voice, and script. Scene-level HeyGen clips are generated per project.
+      body: `Configure a presenter per scene: pick an avatar look, voice, and script. Scene-level avatar clips are generated per project.
 
-HeyGen scene MP4s count toward the **workspace owner's storage** footprint. Lip-sync export may wait for HeyGen clips to finish before the final render starts.`,
+Avatar scene MP4s count toward the **workspace owner's storage** footprint. Lip-sync export may wait for avatar clips to finish before the final render starts.`,
     },
     {
       title: 'Export a final MP4',
@@ -149,7 +149,7 @@ If an asset is referenced in a project, delete is blocked until you remove it fr
       body: `Storage is billed to the **workspace owner**. It includes:
 
 • Uploaded **assets**
-• **HeyGen** scene MP4s
+• **Avatar scene** MP4s
 • **Completed final renders**
 
 Open a workspace to see owner quota and footprint breakdown. Extra storage is granted by an administrator — there is no self-serve purchase yet.`,
@@ -172,7 +172,7 @@ Open a workspace to see owner quota and footprint breakdown. Extra storage is gr
       title: 'Voices page',
       readTime: '3 min',
       tag: 'Beginner',
-      body: `**Voices** holds narration voices for scripts and HeyGen. Design a voice, clone from audio (where enabled), or pick from available presets.`,
+      body: `**Voices** holds narration voices for scripts and presenters. Design a voice, clone from audio (where enabled), or pick from available presets.`,
     },
     {
       title: 'Credits for generation',
@@ -230,7 +230,7 @@ export const helpFaqs = [
   },
   {
     q: 'Why did my upload fail with a storage error?',
-    a: 'The workspace owner exceeded their quota. Storage includes assets, HeyGen scene files, and completed renders. Ask an administrator for more storage or delete unused assets and old exports.',
+    a: 'The workspace owner exceeded their quota. Storage includes assets, avatar scene files, and completed renders. Ask an administrator for more storage or delete unused assets and old exports.',
   },
   {
     q: 'Why can’t I delete an asset?',
