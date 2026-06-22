@@ -9,6 +9,7 @@ import {
 } from 'react-icons/md'
 import { Loader2 } from 'lucide-react'
 import heygenService from '../../../../services/heygenService'
+import { getSanitizedErrorMessage } from '../../../../utils/userFacingMessage'
 import './VoiceOnlySpeechModal.css'
 
 const mapVoiceFromApi = (voice) => ({
@@ -178,7 +179,7 @@ export default function VoiceOnlySpeechModal({
       })
       handleClose()
     } catch (err) {
-      setError(err?.message || 'Speech generation failed.')
+      setError(getSanitizedErrorMessage(err, 'Speech generation failed.'))
     } finally {
       setSubmitting(false)
     }

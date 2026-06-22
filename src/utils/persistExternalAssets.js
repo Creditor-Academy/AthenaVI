@@ -290,7 +290,7 @@ export function getUnresolvedExportMediaIssues(scenes = []) {
     for (const clip of scene.clips || []) {
       if (isAvatarClip(clip) && clip.type !== 'image') {
         if (!sceneHeygenVideoId(scene)) {
-          issues.push(`${label}: avatar layer is missing a generated HeyGen video`);
+          issues.push(`${label}: avatar layer is missing a generated avatar video`);
         }
         continue;
       }

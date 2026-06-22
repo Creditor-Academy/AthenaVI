@@ -886,7 +886,7 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     if (groups.length === 0) {
       return (
         <div className="qc-loading">
-          <p>No presenters available. Check your HeyGen connection.</p>
+          <p>No presenters available. Check your connection and try again.</p>
         </div>
       );
     }
@@ -1321,7 +1321,7 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
                     ) : (
                       <p className="qc-settings-callout qc-settings-callout--success">
                         <MdInfoOutline size={16} aria-hidden />
-                        HeyGen removes the backdrop automatically. Your scene background shows through the presenter clip.
+                        The backdrop is removed automatically. Your scene background shows through the presenter clip.
                       </p>
                     )}
                   </div>

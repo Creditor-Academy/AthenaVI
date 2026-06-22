@@ -7,6 +7,7 @@ import {
   isConsentApproved,
   parseAvatarCreateResponse,
 } from '../../../utils/heygenAvatars';
+import { getSanitizedErrorMessage } from '../../../utils/userFacingMessage';
 import AvatarConsentStep from '../AvatarConsentStep/AvatarConsentStep';
 import '../AvatarConsentStep/AvatarConsentStep.css';
 import '../../../pages/Avatars/Avatars.css';
@@ -209,7 +210,7 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
       finishWithSuccess(response);
     } catch (err) {
       console.error('Avatar creation failed:', err);
-      setCreationStatus(`Error: ${err.message || 'Creation failed'}`);
+      setCreationStatus(`Error: ${getSanitizedErrorMessage(err, 'Creation failed')}`);
       setTimeout(() => {
         setIsCreating(false);
         setCreationStatus('');
@@ -301,7 +302,7 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
             ) : consentStep ? (
               <>
                 <p className="create-avatar-step-hint">
-                  Step 2 of 3 — Record or upload your consent video on HeyGen&apos;s portal. The
+                  Step 2 of 3 — Record or upload your consent video on the consent portal. The
                   person in the consent video must match your training footage.
                 </p>
                 <AvatarConsentStep

@@ -11,7 +11,7 @@ export function getAvatarSectionSubtitle(tabId) {
     case 'workspace':
       return 'Avatars shared with your team workspaces.';
     default:
-      return 'Browse the public HeyGen avatar library.';
+      return 'Browse the public avatar library.';
   }
 }
 

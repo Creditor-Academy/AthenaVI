@@ -11,7 +11,7 @@ function WorkspaceStorageDetails({ storage, loading, error, variant = 'default' 
     if (!fp) return [];
     return [
       { label: 'Assets', bytes: fp.assetBytes },
-      { label: 'HeyGen', bytes: fp.heygenBytes },
+      { label: 'Avatar videos', bytes: fp.heygenBytes },
       { label: 'Renders', bytes: fp.renderBytes },
       { label: 'Total footprint', bytes: fp.totalBytes, emphasis: true },
     ];

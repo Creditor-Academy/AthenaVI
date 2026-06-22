@@ -5,6 +5,18 @@ import {
   isLegacyV2Look,
   finalizeVideoCreatePayload,
 } from '../utils/heygenAvatars.js';
+import { sanitizeUserFacingMessage } from '../utils/userFacingMessage.js';
+
+function userError(message) {
+  return new Error(sanitizeUserFacingMessage(message));
+}
+
+function sanitizeThrownError(error) {
+  if (error?.message) {
+    error.message = sanitizeUserFacingMessage(error.message);
+  }
+  return error;
+}
 
 const LOOKS_QUERY_KEYS = new Set([
   'group_id',
@@ -66,7 +78,7 @@ class HeygenService {
         ) {
           return emptyLooksPage();
         }
-        throw new Error(`Failed to fetch avatar looks: ${response.status}`);
+        throw userError(`Failed to fetch avatar looks: ${response.status}`);
       }
 
       const responseData = await response.json();
@@ -131,7 +143,7 @@ class HeygenService {
       return fetchLooksPage(pageParams);
     } catch (error) {
       console.error('Error fetching avatar looks:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -152,14 +164,14 @@ class HeygenService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch avatar groups: ${response.status}`);
+        throw userError(`Failed to fetch avatar groups: ${response.status}`);
       }
 
       const data = await response.json();
       return data.data || data;
     } catch (error) {
       console.error('Error in heygenService.getAvatarGroups:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -183,14 +195,14 @@ class HeygenService {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Athena VI API Error:', errorText);
-        throw new Error(`Failed to create avatar: ${response.status} - ${errorText}`);
+        throw userError(`Failed to create avatar: ${response.status} - ${errorText}`);
       }
       
       const data = await response.json();
       return data.data || data;
     } catch (error) {
       console.error('Error in heygenService.createAvatar:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -200,16 +212,16 @@ class HeygenService {
    */
   async createAvatarLook({ name, prompt, avatarGroupId, avatarId, referenceImageUrl }) {
     if (!avatarGroupId) {
-      throw new Error('Avatar group id is required to create a look');
+      throw userError('Avatar group id is required to create a look');
     }
     if (!referenceImageUrl) {
-      throw new Error('Reference avatar image is required to create a look');
+      throw userError('Reference avatar image is required to create a look');
     }
     if (!name?.trim()) {
-      throw new Error('Look name is required');
+      throw userError('Look name is required');
     }
     if (!prompt?.trim()) {
-      throw new Error('Prompt is required to generate a look');
+      throw userError('Prompt is required to generate a look');
     }
 
     const payload = {
@@ -278,14 +290,14 @@ class HeygenService {
       
       if (!response.ok) {
         const errText = await response.text();
-        throw new Error(`Failed to get avatar consent: ${response.status} - ${errText}`);
+        throw userError(`Failed to get avatar consent: ${response.status} - ${errText}`);
       }
       
       const data = await response.json();
       return data.data || data;
     } catch (error) {
       console.error('Error in heygenService.getAvatarConsent:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -302,14 +314,14 @@ class HeygenService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch voices: ${response.status}`);
+        throw userError(`Failed to fetch voices: ${response.status}`);
       }
 
       const data = await response.json();
       return data.data || data;
     } catch (error) {
       console.error('Error in heygenService.getVoices:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -324,14 +336,14 @@ class HeygenService {
 
       if (!response.ok) {
         const errText = await response.text();
-        throw new Error(`Failed to design voice: ${response.status} - ${errText}`);
+        throw userError(`Failed to design voice: ${response.status} - ${errText}`);
       }
 
       const data = await response.json();
       return data.data || data;
     } catch (error) {
       console.error('Error in heygenService.designVoice:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -353,14 +365,14 @@ class HeygenService {
           errorData = { message: await response.text() };
         }
         console.error('Athena VI: Clone Voice API Error:', errorData);
-        throw new Error(errorData.message || errorData.error || `Failed to clone voice: ${response.status}`);
+        throw userError(errorData.message || errorData.error || `Failed to clone voice: ${response.status}`);
       }
 
       const data = await response.json();
       return data.data || data;
     } catch (error) {
       console.error('Error in heygenService.cloneVoice:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -383,14 +395,14 @@ class HeygenService {
 
       if (!response.ok) {
         const errText = await response.text();
-        throw new Error(`Failed to select voice: ${response.status} - ${errText}`);
+        throw userError(`Failed to select voice: ${response.status} - ${errText}`);
       }
 
       const data = await response.json();
       return data.data || data;
     } catch (error) {
       console.error('Error in heygenService.selectVoice:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -403,14 +415,14 @@ class HeygenService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch voice status: ${response.status}`);
+        throw userError(`Failed to fetch voice status: ${response.status}`);
       }
 
       const data = await response.json();
       return data.data || data;
     } catch (error) {
       console.error('Error in heygenService.getVoiceStatus:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -425,14 +437,14 @@ class HeygenService {
 
       if (!response.ok) {
         const errText = await response.text();
-        throw new Error(`Failed to preview speech: ${response.status} - ${errText}`);
+        throw userError(`Failed to preview speech: ${response.status} - ${errText}`);
       }
 
       const data = await response.json();
       return data.data || data;
     } catch (error) {
       console.error('Error in heygenService.previewSpeech:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -516,21 +528,21 @@ class HeygenService {
       if (response.status === 402) {
         const payload = await response.json().catch(() => ({}));
         throw new InsufficientCreditsError(
-          payload.message || 'Insufficient workspace credits for video generation',
+          sanitizeUserFacingMessage(payload.message || 'Insufficient workspace credits for video generation'),
           payload
         );
       }
 
       if (!response.ok) {
         const errText = await response.text();
-        throw new Error(`Failed to generate video: ${response.status} - ${errText}`);
+        throw userError(`Failed to generate video: ${response.status} - ${errText}`);
       }
 
       const data = await response.json();
       return data.data?.heygenVideo || data.heygenVideo || data;
     } catch (error) {
       console.error('Error in heygenService.generateVideo:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -543,14 +555,14 @@ class HeygenService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to list HeyGen videos: ${response.status}`);
+        throw userError(`Failed to list avatar videos: ${response.status}`);
       }
 
       const data = await response.json();
       return data.data?.heygenVideos || data.heygenVideos || [];
     } catch (error) {
       console.error('Error in heygenService.listVideos:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -572,14 +584,14 @@ class HeygenService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch HeyGen video: ${response.status}`);
+        throw userError(`Failed to fetch avatar video: ${response.status}`);
       }
 
       const data = await response.json();
       return data.data?.heygenVideo || data.heygenVideo;
     } catch (error) {
       console.error('Error in heygenService.getVideo:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -592,14 +604,14 @@ class HeygenService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to get download URL: ${response.status}`);
+        throw userError(`Failed to get download URL: ${response.status}`);
       }
 
       const data = await response.json();
       return data.data || data; // Contains presignedUrl
     } catch (error) {
       console.error('Error in heygenService.downloadVideo:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -617,14 +629,14 @@ class HeygenService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch video stream: ${response.status}`);
+        throw userError(`Failed to fetch video stream: ${response.status}`);
       }
 
       const blob = await response.blob();
       return URL.createObjectURL(blob);
     } catch (error) {
       console.error('Error in heygenService.getVideoBlobUrl:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -637,14 +649,14 @@ class HeygenService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to get S3 location: ${response.status}`);
+        throw userError(`Failed to get S3 location: ${response.status}`);
       }
 
       const data = await response.json();
       return data.data || data;
     } catch (error) {
       console.error('Error in heygenService.getS3Location:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 }

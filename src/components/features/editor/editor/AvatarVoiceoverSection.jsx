@@ -130,7 +130,7 @@ const AvatarVoiceoverSection = ({
             )}
           </button>
           {isGenerating && (
-            <p className="scene-settings__status">HeyGen is processing. This may take a minute.</p>
+            <p className="scene-settings__status">Avatar video is processing. This may take a minute.</p>
           )}
           {needsRegeneration && (
             <p className="scene-settings__status">

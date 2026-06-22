@@ -1,8 +1,9 @@
-import { Users, Building2, BarChart3, Video } from 'lucide-react'
+import { LayoutDashboard, Users, Building2, BarChart3, Video } from 'lucide-react'
 
 export const adminPortalSidebarGroups = [
   {
     items: [
+      { id: 'overview', label: 'Dashboard', Icon: LayoutDashboard },
       { id: 'users', label: 'Users', Icon: Users },
       { id: 'workspaces', label: 'Workspaces', Icon: Building2 },
       { id: 'reports', label: 'Usage Reports', Icon: BarChart3 },

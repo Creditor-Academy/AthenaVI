@@ -77,8 +77,8 @@ function Dashboard({ onCreate, initialSection }) {
   const [avatarLookContext, setAvatarLookContext] = useState(null)
   const [adminTab, setAdminTab] = useState(() => {
     const saved = localStorage.getItem('adminPortalTab')
-    const valid = ['users', 'workspaces', 'reports', 'heygen']
-    return valid.includes(saved) ? saved : 'users'
+    const valid = ['overview', 'users', 'workspaces', 'reports', 'heygen']
+    return valid.includes(saved) ? saved : 'overview'
   })
 
   const cartCount = 2

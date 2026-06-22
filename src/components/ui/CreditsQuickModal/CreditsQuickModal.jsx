@@ -11,6 +11,7 @@ import {
 import creditsService from '../../../services/creditsService.js'
 import workspaceService from '../../../services/workspaceService.js'
 import { isTeamWorkspaceType } from '../../../utils/creditTransactions.js'
+import { getSanitizedErrorMessage } from '../../../utils/userFacingMessage.js'
 import './CreditsQuickModal.css'
 
 const NUMBER_LOCALE = 'en-US'
@@ -44,7 +45,7 @@ const USAGE_ITEMS = [
     pool: 'workspace',
     icon: MdMovie,
     title: 'Workspace pool',
-    label: 'HeyGen scene videos, Remotion export',
+    label: 'Avatar scene videos, Remotion export',
   },
 ]
 
@@ -97,7 +98,7 @@ function CreditsQuickModal({ onClose, onManageBilling }) {
         setWorkspaceBalances(balances)
       } catch (err) {
         if (!cancelled) {
-          setError(err.message || 'Failed to load credits')
+          setError(getSanitizedErrorMessage(err, 'Failed to load credits'))
         }
       } finally {
         if (!cancelled) setLoading(false)

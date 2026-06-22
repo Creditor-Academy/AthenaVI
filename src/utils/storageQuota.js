@@ -1,4 +1,4 @@
-import storageService from '../services/storageService.js';
+import { sanitizeUserFacingMessage } from './userFacingMessage.js';
 import { formatBytes } from './formatSize.js';
 
 export const STORAGE_REFRESH_EVENT = 'storage-quota-refresh';
@@ -39,9 +39,10 @@ export class StorageLimitError extends Error {
 }
 
 export function formatStorageLimitMessage(error, { settingsPath = 'credits' } = {}) {
-  const base =
+  const base = sanitizeUserFacingMessage(
     error?.message ||
-    'Storage limit exceeded. Workspace assets, HeyGen scene videos, and completed renders count toward your quota.';
+      'Storage limit exceeded. Workspace assets, avatar scene videos, and completed renders count toward your quota.'
+  );
   return `${base} Contact your administrator to request more storage, or open Billing in Settings to review usage.`;
 }
 

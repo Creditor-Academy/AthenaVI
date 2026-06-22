@@ -34,7 +34,7 @@ export async function pollUntilHeygenPlaybackReady(
     })
 
     if (isHeygenVideoFailed(videoData)) {
-      throw new Error('HeyGen generation failed')
+      throw new Error('Avatar video generation failed')
     }
 
     if (isHeygenVideoPlaybackReady(videoData)) {
@@ -45,7 +45,7 @@ export async function pollUntilHeygenPlaybackReady(
     await sleep(intervalMs)
   }
 
-  throw new Error('HeyGen generation timed out')
+  throw new Error('Avatar video generation timed out')
 }
 
 function isNonDefaultAvatarPlacement(clip, resolution) {
