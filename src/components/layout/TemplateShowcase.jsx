@@ -1,6 +1,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { MdPlayArrow, MdOutlineTimer, MdTransform } from 'react-icons/md'
+import { TemplateDomeShowcase } from '../ui/DomeGallery'
 import introThumb from '../../assets/IntroSequence.png'
 import demoThumb from '../../assets/ProductDemo.png'
 import strategyThumb from '../../assets/StrategicOverview.png'
@@ -48,6 +49,35 @@ const styles = `
   font-size: 18px;
   color: #64748b;
   line-height: 1.6;
+}
+
+.template-dome-wrap {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto 48px;
+  min-height: 480px;
+}
+
+.template-grid-section-title {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto 24px;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .template-grid {
@@ -288,6 +318,12 @@ const templates = [
   }
 ]
 
+const domeImages = templates.map((tpl) => ({
+  id: tpl.id,
+  src: tpl.thumb,
+  alt: tpl.title,
+}))
+
 const TemplateShowcase = () => {
   return (
     <>
@@ -308,7 +344,18 @@ const TemplateShowcase = () => {
           </p>
         </motion.div>
 
-        <div className="template-grid">
+        <motion.div
+          className="template-dome-wrap"
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.1 }}
+          viewport={{ once: true }}
+        >
+          <TemplateDomeShowcase images={domeImages} overlayBlurColor="#f9fafb" autoRotate interactive={false} />
+        </motion.div>
+
+        <h3 className="template-grid-section-title">Browse all scene layouts</h3>
+        <div className="template-grid" aria-label="Template layout cards">
           {templates.map((tpl, index) => (
             <motion.div
               key={tpl.id}

@@ -160,7 +160,7 @@
 .create-avatar-modal-body .form-main-inputs {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
 }
 
 .create-avatar-modal-footer {
@@ -255,6 +255,533 @@
 .create-avatar-modal .preview-container {
   height: 180px;
   border-radius: 10px;
+}
+
+.digital-twin-recording-guide {
+  margin-top: 4px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-surface, #f8fafc);
+}
+
+.digital-twin-recording-guide__toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  font-family: inherit;
+}
+
+.digital-twin-recording-guide__toggle span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.digital-twin-recording-guide__toggle svg {
+  color: var(--primary, #1a73e8);
+}
+
+.digital-twin-recording-guide__body {
+  padding: 0 14px 14px;
+  border-top: 1px solid var(--border-color);
+}
+
+.digital-twin-recording-guide__columns {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 16px;
+  padding-top: 14px;
+}
+
+.digital-twin-recording-guide__tips h4,
+.digital-twin-recording-guide__script-header h4 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.digital-twin-recording-guide__tips h4:not(:first-child) {
+  margin-top: 16px;
+}
+
+.digital-twin-recording-guide__tips ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.digital-twin-recording-guide__tips li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.digital-twin-recording-guide__tips li svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--primary, #1a73e8);
+}
+
+.digital-twin-recording-guide__script-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.digital-twin-recording-guide__copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-main);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.digital-twin-recording-guide__copy:hover {
+  background: var(--bg-hover, #f1f3f4);
+}
+
+.digital-twin-recording-guide__copy-feedback {
+  display: block;
+  font-size: 11px;
+  color: var(--primary, #1a73e8);
+  margin-bottom: 6px;
+}
+
+.digital-twin-recording-guide__script-scroll {
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 4px;
+}
+
+.digital-twin-recording-guide__script-part {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+
+.digital-twin-recording-guide__script-part header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+
+.digital-twin-recording-guide__script-part header strong {
+  font-size: 12px;
+  color: var(--text-main);
+}
+
+.digital-twin-recording-guide__script-part header span {
+  font-size: 11px;
+  color: var(--primary, #1a73e8);
+  font-style: italic;
+}
+
+.digital-twin-recording-guide__script-part p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-main);
+}
+
+.digital-twin-recording-guide__script-note {
+  margin: 10px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+@media (max-width: 720px) {
+  .digital-twin-recording-guide__columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+.create-avatar-step-hint--compact {
+  padding: 8px 10px;
+  font-size: 12px;
+  margin-bottom: 0;
+}
+
+.digital-twin-video-input {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.digital-twin-video-input__tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.digital-twin-video-input__tab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.digital-twin-video-input__tab.active {
+  color: var(--primary, #1a73e8);
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border-color));
+  background: color-mix(in srgb, var(--primary) 8%, var(--bg-card));
+}
+
+.digital-twin-video-input__record-layout {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.digital-twin-video-input__camera,
+.digital-twin-video-input__upload {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: #0f172a;
+  overflow: hidden;
+}
+
+.digital-twin-video-input__upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 200px;
+  padding: 20px;
+  cursor: pointer;
+  color: var(--text-muted);
+  background: var(--bg-surface);
+  text-align: center;
+}
+
+.digital-twin-video-input__upload strong {
+  color: var(--text-main);
+  font-size: 14px;
+}
+
+.digital-twin-video-input__upload span {
+  font-size: 12px;
+}
+
+.digital-twin-video-input__upload.has-preview {
+  padding: 0;
+  cursor: default;
+  background: #0f172a;
+}
+
+.digital-twin-video-input__video {
+  width: 100%;
+  display: block;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  background: #000;
+}
+
+.digital-twin-video-input__record-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(15, 23, 42, 0.92);
+}
+
+.digital-twin-video-input__timer {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e2e8f0;
+  font-variant-numeric: tabular-nums;
+}
+
+.digital-twin-video-input__timer.recording {
+  color: #f87171;
+}
+
+.digital-twin-video-input__start,
+.digital-twin-video-input__stop {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: none;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.digital-twin-video-input__start {
+  background: #ef4444;
+  color: #fff;
+}
+
+.digital-twin-video-input__stop {
+  background: #fff;
+  color: #0f172a;
+}
+
+.digital-twin-video-input__rec-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.digital-twin-video-input__error {
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #fecaca;
+  background: rgba(127, 29, 29, 0.45);
+}
+
+.digital-twin-video-input__prompter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-surface);
+  min-height: 0;
+}
+
+.digital-twin-video-input__prompter-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.digital-twin-video-input__prompter-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.digital-twin-video-input__prompter-actions button {
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.digital-twin-video-input__prompter-actions button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.digital-twin-video-input__prompter-direction {
+  margin: 0;
+  font-size: 11px;
+  color: var(--primary, #1a73e8);
+  font-style: italic;
+}
+
+.digital-twin-video-input__prompter-text {
+  margin: 0;
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-main);
+  overflow-y: auto;
+  max-height: 140px;
+}
+
+.digital-twin-video-input__upload-script {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--primary) 6%, var(--bg-surface));
+}
+
+.digital-twin-video-input__upload-script-copy {
+  flex: 1;
+  min-width: 180px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.digital-twin-video-input__script-btn--pdf {
+  flex-shrink: 0;
+  font-size: 12px;
+  padding: 8px 12px;
+}
+
+.digital-twin-video-input__script-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.digital-twin-video-input__script-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.digital-twin-video-input__script-btn:hover {
+  background: var(--bg-hover, #f1f3f4);
+}
+
+.digital-twin-video-input__script-feedback {
+  font-size: 11px;
+  color: var(--primary, #1a73e8);
+}
+
+.digital-twin-video-input__copy {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+}
+
+.digital-twin-video-input__playback {
+  display: flex;
+  flex-direction: column;
+}
+
+.digital-twin-video-input__retake {
+  margin: 0;
+  padding: 10px 12px;
+  border: none;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.digital-twin-video-input__guide-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px dashed var(--border-color);
+  border-radius: 8px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.digital-twin-video-input__guide-toggle span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.digital-twin-video-input__tips {
+  margin: 0;
+  padding: 0 4px 4px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.digital-twin-video-input__tips li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.digital-twin-video-input__tips li svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--primary, #1a73e8);
+}
+
+@media (max-width: 720px) {
+  .digital-twin-video-input__record-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .digital-twin-video-input__prompter-text {
+    max-height: 100px;
+  }
 }
 
 @media (max-width: 640px) {

@@ -6,11 +6,13 @@ import {
   getCachedTemplateAvatarLookSet,
   TEMPLATE_AVATAR_LOOK_COUNT,
 } from '../../../../utils/templateAvatarPreview';
+import './TemplateScenePreview.css';
 
 /**
  * WYSIWYG template thumbnail — lazy canvas; HeyGen avatars only when loaded.
+ * @param {boolean} [compact] - Fill parent container (library cards) instead of self-sized aspect box.
  */
-const TemplateScenePreview = ({ template, className = '' }) => {
+const TemplateScenePreview = ({ template, className = '', compact = false }) => {
   const rootRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
   const [avatarLookSet, setAvatarLookSet] = useState(
@@ -76,20 +78,31 @@ const TemplateScenePreview = ({ template, className = '' }) => {
   return (
     <div
       ref={rootRef}
-      className={`template-scene-preview ${className}`.trim()}
-      style={{
-        width: '100%',
-        aspectRatio,
-        position: 'relative',
-        overflow: 'hidden',
-        borderRadius: 8,
-        background: 'linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%)',
-        pointerEvents: 'none',
-      }}
+      className={`template-scene-preview ${compact ? 'template-scene-preview--fill' : ''} ${className}`.trim()}
+      style={
+        compact
+          ? undefined
+          : {
+              width: '100%',
+              aspectRatio,
+              position: 'relative',
+              overflow: 'hidden',
+              borderRadius: 8,
+              background: 'linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%)',
+              pointerEvents: 'none',
+            }
+      }
     >
       {scene ? (
-        <div style={{ position: 'absolute', inset: 0 }}>
-          <LiveCanvasRenderer scene={scene} overlayMode={false} staticPreview />
+        <div className="template-scene-preview__canvas">
+          <LiveCanvasRenderer
+            scene={scene}
+            overlayMode={false}
+            staticPreview
+            scaleMode="contain"
+            compositionWidth={previewResolution?.width ?? 1920}
+            compositionHeight={previewResolution?.height ?? 1080}
+          />
         </div>
       ) : null}
     </div>
