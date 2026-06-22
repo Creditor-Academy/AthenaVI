@@ -9,6 +9,7 @@ import {
 } from '../../../utils/heygenAvatars';
 import { getSanitizedErrorMessage } from '../../../utils/userFacingMessage';
 import AvatarConsentStep from '../AvatarConsentStep/AvatarConsentStep';
+import DigitalTwinVideoInput from './DigitalTwinVideoInput';
 import '../AvatarConsentStep/AvatarConsentStep.css';
 import '../../../pages/Avatars/Avatars.css';
 import './CreateAvatarModal.css';
@@ -100,10 +101,18 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
   };
 
   const clearPreview = (event) => {
-    event.stopPropagation();
+    event?.stopPropagation?.();
     setPreviewUrl(null);
     setSelectedFile(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleVideoReady = ({ file, previewUrl: url }) => {
+    if (previewUrl && previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setSelectedFile(file);
+    setPreviewUrl(url);
   };
 
   const finishWithSuccess = (response, consentMeta = null) => {
@@ -231,7 +240,7 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
     <>
       <div className="create-avatar-modal-overlay" role="presentation" onClick={handleOverlayClick}>
         <div
-          className={`create-avatar-modal ${isDigitalTwin && consentStep ? 'create-avatar-modal--wide' : ''}`}
+          className={`create-avatar-modal ${isDigitalTwin ? 'create-avatar-modal--wide' : ''}`}
           role="dialog"
           aria-modal="true"
           aria-label={`Create ${typeOption.title}`}
@@ -326,9 +335,8 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
             ) : (
               <div className="form-main-inputs">
                 {isDigitalTwin ? (
-                  <p className="create-avatar-step-hint">
-                    Step 1 of 3 — Upload your training footage. You&apos;ll record a short consent
-                    video in the next step before your Digital Twin can be used.
+                  <p className="create-avatar-step-hint create-avatar-step-hint--compact">
+                    Step 1 — Record or upload training footage (2–5 min). Consent video is next.
                   </p>
                 ) : null}
                 <div className="input-group">
@@ -354,14 +362,22 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
                       onChange={(event) => setCreationPrompt(event.target.value)}
                     />
                   </div>
+                ) : creationType === 'digital_twin' ? (
+                  <div className="input-group">
+                    <label className="section-label">Training video</label>
+                    <DigitalTwinVideoInput
+                      speakerName={creationName}
+                      previewUrl={previewUrl}
+                      onVideoReady={handleVideoReady}
+                      onClear={clearPreview}
+                    />
+                  </div>
                 ) : (
                   <div className="input-group">
                     <div className="label-with-help">
-                      <label className="section-label">
-                        {creationType === 'digital_twin' ? 'High Fidelity Video Input' : 'Portrait Image Input'}
-                      </label>
+                      <label className="section-label">Portrait Image Input</label>
                       <button type="button" className="context-help-link" onClick={() => setShowHelpModal(true)}>
-                        {creationType === 'digital_twin' ? 'What makes a good video?' : 'What makes a good photo?'}
+                        What makes a good photo?
                       </button>
                     </div>
 
@@ -374,11 +390,7 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
                           <button type="button" className="clear-preview-btn" onClick={clearPreview}>
                             <X size={16} />
                           </button>
-                          {creationType === 'digital_twin' ? (
-                            <video src={previewUrl} className="file-preview-media" autoPlay muted loop />
-                          ) : (
-                            <img src={previewUrl} className="file-preview-media" alt="Preview" />
-                          )}
+                          <img src={previewUrl} className="file-preview-media" alt="Preview" />
                           <div className="preview-overlay">
                             <Upload size={20} />
                             <span>Change File</span>
@@ -391,21 +403,11 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
                           </div>
                           <div className="drop-zone-text">
                             <strong>Click or drag to upload</strong>
-                            <p>{creationType === 'digital_twin' ? '2-5 minutes recommended' : 'Portrait photo'}</p>
+                            <p>Portrait photo</p>
                             <div className="format-pills">
-                              {creationType === 'digital_twin' ? (
-                                <>
-                                  <span>.mp4</span>
-                                  <span>.mov</span>
-                                  <span>Max 2 GB</span>
-                                </>
-                              ) : (
-                                <>
-                                  <span>.jpg</span>
-                                  <span>.png</span>
-                                  <span>Max 10 MB</span>
-                                </>
-                              )}
+                              <span>.jpg</span>
+                              <span>.png</span>
+                              <span>Max 10 MB</span>
                             </div>
                           </div>
                         </>
@@ -414,7 +416,7 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
                         type="file"
                         ref={fileInputRef}
                         style={{ display: 'none' }}
-                        accept={creationType === 'digital_twin' ? 'video/*' : 'image/*'}
+                        accept="image/*"
                         onChange={handleFileChange}
                       />
                     </div>
