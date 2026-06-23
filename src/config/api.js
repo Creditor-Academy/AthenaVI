@@ -82,12 +82,14 @@ const API_CONFIG = {
       AVATARS: {
         GROUPS: '/api/heygen/avatars/groups',
         LOOKS: '/api/heygen/avatars/looks',
-        CREATE: '/api/heygen/avatars'
+        CREATE: '/api/heygen/avatars',
+        UPLOAD: '/api/heygen/avatars/upload',
       },
       VOICES: {
         LIST: '/api/heygen/voices',
         DESIGN: '/api/heygen/voices',
         CLONE: '/api/heygen/voices/clone',
+        UPLOAD: '/api/heygen/voices/upload',
         SELECT: '/api/heygen/voices/select',
         PREVIEW: '/api/heygen/voices/preview-speech',
         STATUS: '/api/heygen/voices' // Path will be /api/heygen/voices/:voiceId

@@ -15,9 +15,9 @@ const HomeSkeleton = () => {
       </div>
 
       <div className="home-billing-stats ps-grid ps-grid--3">
-        <div className="ps-block" style={{ height: 112 }} />
-        <div className="ps-block" style={{ height: 112 }} />
-        <div className="ps-block" style={{ height: 112 }} />
+        <div className="ps-block home-billing-stat-card" style={{ height: 152 }} />
+        <div className="ps-block home-billing-stat-card" style={{ height: 152 }} />
+        <div className="ps-block home-billing-stat-card" style={{ height: 152 }} />
       </div>
 
       <div className="home-tabs-wrapper ps-chip-row">

@@ -82,15 +82,6 @@ function CreateVoice({ onBack }) {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const convertFileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-    });
-  };
-
   const handleCreateVoice = async () => {
     if (creationType === 'clone') {
       if (!creationName || creationName.trim().length === 0) {
@@ -104,29 +95,14 @@ function CreateVoice({ onBack }) {
       }
 
       setIsCreating(true);
-      setCreationStatus('Analyzing voice patterns...');
+      setCreationStatus('Uploading audio sample...');
 
       try {
-        const base64Data = await convertFileToBase64(selectedFile);
-        const base64Content = base64Data.split(',')[1];
-        
-        // Strip codec info from media type if present (e.g., audio/webm;codecs=opus -> audio/webm)
-        const mediaType = selectedFile.type.split(';')[0];
-        
-        const payload = {
-          voice_name: creationName,
-          voiceName: creationName, // Some backends might expect camelCase
-          audio: {
-            type: 'base64',
-            data: base64Content,
-            media_type: mediaType
-          },
-          remove_background_noise: true,
-          removeBackgroundNoise: true
-        };
-        
-        console.log('Athena VI: Preparing Clone Payload...', payload);
-        await heygenService.cloneVoice(payload);
+        await heygenService.cloneVoiceFromFile({
+          voiceName: creationName,
+          file: selectedFile,
+          removeBackgroundNoise: true,
+        });
         setCreationStatus('Voice cloned successfully!');
         setTimeout(() => {
           setIsCreating(false);

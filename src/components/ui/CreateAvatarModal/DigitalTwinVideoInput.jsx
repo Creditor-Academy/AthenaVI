@@ -320,7 +320,7 @@ function DigitalTwinVideoInput({ speakerName = '', previewUrl, onVideoReady, onC
               <>
                 <Upload size={24} />
                 <strong>Click to upload training video</strong>
-                <span>2–5 min · .mp4 or .mov · max 2 GB</span>
+                <span>2–5 min · .mp4, .mov, or .webm · max 900 MB</span>
               </>
             )}
             <input
