@@ -7,6 +7,7 @@ import {
   isConsentApproved,
   parseAvatarCreateResponse,
 } from '../../../utils/heygenAvatars';
+import { WORKSPACE_ASSET_MAX_BYTES } from '../../../utils/heygenAssetUpload';
 import { getSanitizedErrorMessage } from '../../../utils/userFacingMessage';
 import AvatarConsentStep from '../AvatarConsentStep/AvatarConsentStep';
 import DigitalTwinVideoInput from './DigitalTwinVideoInput';
@@ -165,6 +166,15 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
 
     if (creationType !== 'prompt' && !selectedFile) {
       alert('Please select a file (image or video) for your avatar.');
+      return;
+    }
+
+    if (
+      creationType !== 'prompt' &&
+      selectedFile.size > WORKSPACE_ASSET_MAX_BYTES &&
+      !(await heygenService.isHeygenUploadRouteAvailable('avatar'))
+    ) {
+      setCreationStatus(heygenService.formatLargeUploadBlockedMessage(selectedFile.size));
       return;
     }
 
