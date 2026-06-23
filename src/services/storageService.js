@@ -111,6 +111,15 @@ class StorageService {
       footprint,
     };
   }
+
+  /** Submit a storage upgrade request — notifies platform superadmin by email. */
+  async requestMoreStorage(payload = {}) {
+    const data = await this.request(API_CONFIG.ENDPOINTS.STORAGE.REQUEST, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return data;
+  }
 }
 
 const storageService = new StorageService();
