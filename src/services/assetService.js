@@ -46,8 +46,11 @@ const ALLOWED_MIME_TYPES = new Set([
   'image/png',
   'image/webp',
   'video/mp4',
+  'video/webm',
   'audio/mpeg',
   'audio/mp3',
+  'audio/wav',
+  'audio/webm',
 ]);
 
 const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
@@ -66,7 +69,7 @@ class AssetService {
     if (file.size > MAX_UPLOAD_BYTES) return 'File exceeds the 50 MB limit';
     const mime = file.type || '';
     if (!ALLOWED_MIME_TYPES.has(mime)) {
-      return 'File type not allowed. Use JPEG, PNG, WebP, MP4, or MP3.';
+      return 'File type not allowed. Use JPEG, PNG, WebP, MP4, WebM, MP3, WAV, or WebM audio.';
     }
     return null;
   }

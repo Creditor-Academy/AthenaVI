@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { FiArrowRight, FiLayers, FiEdit3, FiCpu, FiDownload, FiPlay, FiImage } from 'react-icons/fi'
+import LoadingDots from '../ui/LoadingDots/LoadingDots.jsx'
 
 /* ── Template data ── */
 const TEMPLATES = [
@@ -304,6 +305,14 @@ const css = `
   }
   .ts-panel-sub {
     font-size: 16px;
+
+  .ts-loading {
+    margin-top: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+  }
     color: #6B7280;
     line-height: 1.6;
     margin-bottom: 40px;
@@ -878,6 +887,9 @@ function TemplatesSection({ onNavigateToSolution }) {
           <p className="ts-subtitle">
             Choose a template, customize it, and generate professional videos in minutes.
           </p>
+          <div className="ts-loading">
+            <LoadingDots size="sm" />
+          </div>
         </motion.div>
 
         {/* 2-Column Layout */}

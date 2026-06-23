@@ -6,6 +6,15 @@ import {
   finalizeVideoCreatePayload,
 } from '../utils/heygenAvatars.js';
 import { sanitizeUserFacingMessage } from '../utils/userFacingMessage.js';
+import {
+  buildHeygenUrlAsset,
+  HEYGEN_SOURCE_MAX_BYTES,
+} from '../utils/heygenAssetUpload.js';
+
+function authOnlyHeaders() {
+  const token = localStorage.getItem('accessToken');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 function userError(message) {
   return new Error(sanitizeUserFacingMessage(message));
@@ -179,17 +188,15 @@ class HeygenService {
     try {
       const endpoint = API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.CREATE;
       const isFormData = payload instanceof FormData;
-      
-      const headers = getAuthHeaders();
-      if (isFormData) {
-        // Remove Content-Type so browser sets it with boundary
-        delete headers['Content-Type'];
+      const headers = authOnlyHeaders();
+      if (!isFormData) {
+        headers['Content-Type'] = 'application/json';
       }
 
       const response = await fetch(buildUrl(endpoint), {
         method: 'POST',
-        headers: headers,
-        body: isFormData ? payload : JSON.stringify(payload)
+        headers,
+        body: isFormData ? payload : JSON.stringify(payload),
       });
       
       if (!response.ok) {
@@ -204,6 +211,88 @@ class HeygenService {
       console.error('Error in heygenService.createAvatar:', error);
       throw sanitizeThrownError(error);
     }
+  }
+
+  /**
+   * Upload avatar / voice source via multipart (never base64 in JSON).
+   */
+  async uploadHeygenSourceFile(file, kind = 'avatar') {
+    if (!file) {
+      throw userError('A file is required for upload.');
+    }
+    if (file.size > HEYGEN_SOURCE_MAX_BYTES) {
+      throw userError('File exceeds the 900 MB upload limit.');
+    }
+
+    const endpoint =
+      kind === 'voice'
+        ? API_CONFIG.ENDPOINTS.HEYGEN.VOICES.UPLOAD
+        : API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.UPLOAD;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(buildUrl(endpoint), {
+      method: 'POST',
+      headers: authOnlyHeaders(),
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Athena VI upload error:', errorText);
+      throw userError(`Failed to upload file: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    const payload = data.data || data;
+    const url = payload.url;
+    if (!url) {
+      throw userError('Upload succeeded but no file URL was returned.');
+    }
+    return url;
+  }
+
+  /**
+   * Two-step avatar create: multipart upload → small JSON body with file URL.
+   */
+  async createAvatarFromFile({ type, name, file, ...extra }) {
+    if (!file) {
+      throw userError('A file is required to create this avatar.');
+    }
+    if (!type || !name) {
+      throw userError('Avatar type and name are required.');
+    }
+
+    const url = await this.uploadHeygenSourceFile(file, 'avatar');
+    return this.createAvatar({
+      type,
+      name,
+      file: buildHeygenUrlAsset(url),
+      ...extra,
+    });
+  }
+
+  /**
+   * Clone voice using a hosted audio URL instead of base64 in the JSON body.
+   */
+  async cloneVoiceFromFile({ voiceName, file, language, removeBackgroundNoise = true }) {
+    if (!voiceName?.trim()) {
+      throw userError('A voice name is required.');
+    }
+    if (!file) {
+      throw userError('An audio sample is required to clone a voice.');
+    }
+
+    const url = await this.uploadHeygenSourceFile(file, 'voice');
+    return this.cloneVoice({
+      voice_name: voiceName.trim(),
+      voiceName: voiceName.trim(),
+      audio: buildHeygenUrlAsset(url),
+      remove_background_noise: removeBackgroundNoise,
+      removeBackgroundNoise,
+      ...(language ? { language } : {}),
+    });
   }
 
   /**

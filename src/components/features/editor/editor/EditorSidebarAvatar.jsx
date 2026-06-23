@@ -380,14 +380,13 @@ const EditorSidebarAvatar = ({
     try {
       const type = file.type.startsWith('video/') ? 'digital_twin' : 'photo';
       
-      setUploadStatus(`Creating ${type.replace('_', ' ')}...`);
+      setUploadStatus(`Uploading ${type.replace('_', ' ')}...`);
       
-      const payload = new FormData();
-      payload.append('type', type);
-      payload.append('name', file.name.split('.')[0] || 'Custom Persona');
-      payload.append('file', file);
-
-      const response = await heygenService.createAvatar(payload);
+      const response = await heygenService.createAvatarFromFile({
+        type,
+        name: file.name.split('.')[0] || 'Custom Persona',
+        file,
+      });
       const created = parseAvatarCreateResponse(response, file.name.split('.')[0] || 'Custom Persona');
       const groupId = created.groupId;
 

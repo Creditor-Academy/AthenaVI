@@ -172,24 +172,24 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
     setCreationStatus('Preparing asset upload...');
 
     try {
-      let payload;
+      let response;
 
       if (creationType === 'prompt') {
-        payload = {
+        response = await heygenService.createAvatar({
           type: 'prompt',
           name: creationName,
           prompt: creationPrompt,
-        };
+        });
       } else {
-        payload = new FormData();
-        payload.append('type', creationType);
-        payload.append('name', creationName);
-        payload.append('file', selectedFile);
+        setCreationStatus('Uploading training file...');
+        response = await heygenService.createAvatarFromFile({
+          type: creationType,
+          name: creationName,
+          file: selectedFile,
+        });
       }
 
       setCreationStatus(`Creating ${creationType.replace('_', ' ')}...`);
-
-      const response = await heygenService.createAvatar(payload);
       const created = parseAvatarCreateResponse(response, creationName);
       const groupId = created.groupId;
 
@@ -470,7 +470,7 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
                         <strong>Resolution:</strong> 1080p or 4K recommended.
                       </li>
                       <li>
-                        <strong>Format:</strong> .mp4 or .mov (Max 2GB).
+                        <strong>Format:</strong> .mp4, .mov, or .webm (max 900 MB).
                       </li>
                     </ul>
                   </div>

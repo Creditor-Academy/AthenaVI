@@ -308,9 +308,10 @@ function Dashboard({ onCreate, initialSection }) {
           className={`content ${!noPaddingSections.includes(section) ? 'with-padding' : ''} ${section === 'home' ? 'content--home' : ''} ${workspaceConsistentSections.includes(section) ? 'content--workspace-consistent' : ''} ${isAdminPortal ? 'content--superadmin' : ''}`}
         >
           {section === 'home' && (
-            <Home 
+            <Home
               onCreate={handleOpenCreateVideoModal}
               onEdit={handleEditVideo}
+              onNavigate={goToSection}
               onShowAIAssistant={() => setShowAIAssistant(true)}
               onBrowseTemplates={() => goToSection('templates')}
               onSelectTemplate={(bundle) => {
