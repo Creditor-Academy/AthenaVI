@@ -1,90 +1,159 @@
-import { useState, useRef, useEffect } from 'react'
-import { MdMoreVert, MdPlayArrow, MdCheckCircle, MdSearch, MdGraphicEq, MdEdit, MdDelete, MdShare, MdContentCopy, MdClose } from 'react-icons/md'
-import { Loader2, AlertCircle } from 'lucide-react'
-import heygenService from '../../services/heygenService'
-import VoicesSkeleton from '../page-skeleton/VoicesSkeleton'
-import './Voices.css'
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  MdAdd,
+  MdClose,
+  MdGraphicEq,
+  MdGridView,
+  MdLock,
+  MdPublic,
+  MdViewList,
+} from 'react-icons/md';
+import { Loader2 } from 'lucide-react';
+import heygenService from '../../services/heygenService';
+import '../../components/features/workspace/workspace/WorkspaceStyles.css';
+import VoicesSkeleton from '../page-skeleton/VoicesSkeleton';
+import VideosToolbar from '../Videos/VideosToolbar.jsx';
+import '../Videos/Videos.css';
+import VoiceCreationCard from './VoiceCreationCard.jsx';
+import VoiceLibraryCard from './VoiceLibraryCard.jsx';
+import VoiceLibraryRow from './VoiceLibraryRow.jsx';
+import {
+  applyVoiceFilters,
+  getVoiceEmptyHint,
+  getVoiceEmptyTitle,
+  getVoiceSectionSubtitle,
+  groupVoices,
+  sortVoices,
+  VOICE_FILTER_OPTIONS,
+  VOICE_GROUP_OPTIONS,
+  VOICE_SECTION_TABS,
+  VOICE_SORT_OPTIONS,
+} from './voicesUtils';
+import { extractVoiceImageFromRow, fetchVoiceAvatarImageMap, resolveVoiceImage } from './voiceAvatarImages';
+import './Voices.css';
+
+const TAB_ICONS = {
+  public: MdPublic,
+  private: MdLock,
+};
+
+function mapVoiceList(voiceList) {
+  return (voiceList || []).map((voice, idx) => ({
+    id: voice.voice_id || voice.id || `voice-${idx}`,
+    name: voice.name || voice.voice_name || 'Voice',
+    language: voice.language || voice.locale || 'English',
+    gender: voice.gender || '',
+    status: voice.status || null,
+    previewUrl: voice.preview_audio_url || null,
+    image: extractVoiceImageFromRow(voice),
+    raw: voice,
+  }));
+}
+
+function extractVoiceList(result) {
+  if (Array.isArray(result)) return result;
+  if (result && Array.isArray(result.voices)) return result.voices;
+  if (result?.data && Array.isArray(result.data.voices)) return result.data.voices;
+  if (result?.data && Array.isArray(result.data)) return result.data;
+  if (result && Array.isArray(result.list)) return result.list;
+  return [];
+}
 
 function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
-  const [voices, setVoices] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [filterType, setFilterType] = useState(initialFilter)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [openMenuId, setOpenMenuId] = useState(null)
-  
-  // Test Voice State
-  const [selectedVoiceForTest, setSelectedVoiceForTest] = useState(null)
-  const [speechText, setSpeechText] = useState('')
-  const [isSynthesizing, setIsSynthesizing] = useState(false)
-  
-  const menuRefs = useRef({})
+  const [voices, setVoices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [viewMode, setViewMode] = useState('grid');
+  const [activeSection, setActiveSection] = useState(initialFilter);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterBy, setFilterBy] = useState('all');
+  const [sortBy, setSortBy] = useState('name_asc');
+  const [groupBy, setGroupBy] = useState('none');
+  const [selectedVoiceForTest, setSelectedVoiceForTest] = useState(null);
+  const [speechText, setSpeechText] = useState('');
+  const [isSynthesizing, setIsSynthesizing] = useState(false);
+  const [voiceImageMap, setVoiceImageMap] = useState(() => new Map());
 
-  const fetchVoices = async () => {
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadVoiceImages = async () => {
+      try {
+        const publicMap = await fetchVoiceAvatarImageMap(heygenService, { ownership: 'public' });
+        let merged = new Map(publicMap);
+
+        if (activeSection === 'private') {
+          const privateMap = await fetchVoiceAvatarImageMap(heygenService, {
+            ownership: 'private',
+            maxPages: 2,
+          });
+          merged = new Map([...publicMap, ...privateMap]);
+        }
+
+        if (!cancelled) setVoiceImageMap(merged);
+      } catch (err) {
+        console.warn('Failed to load voice avatar images:', err);
+      }
+    };
+
+    loadVoiceImages();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeSection]);
+
+  const voicesWithImages = useMemo(
+    () =>
+      voices.map((voice) => ({
+        ...voice,
+        image: resolveVoiceImage(voice, voiceImageMap),
+      })),
+    [voices, voiceImageMap]
+  );
+
+  const fetchVoices = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const result = await heygenService.getVoices({ type: filterType });
-      
-      let voiceList = [];
-      if (Array.isArray(result)) {
-        voiceList = result;
-      } else if (result && Array.isArray(result.voices)) {
-        voiceList = result.voices;
-      } else if (result && result.data && Array.isArray(result.data.voices)) {
-        voiceList = result.data.voices;
-      } else if (result && result.data && Array.isArray(result.data)) {
-        voiceList = result.data;
-      } else if (result && Array.isArray(result.list)) {
-        voiceList = result.list;
-      }
-      
-      setVoices(voiceList);
+      const result = await heygenService.getVoices({ type: activeSection });
+      const voiceList = extractVoiceList(result);
+      setVoices(mapVoiceList(voiceList));
     } catch (err) {
       console.error('Failed to fetch voices:', err);
-      setError('Failed to sync with neural voice database.');
+      setVoices([]);
+      setError('Failed to load voices. Please try again.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeSection]);
 
   useEffect(() => {
+    setSearchQuery('');
+    setFilterBy('all');
     fetchVoices();
-  }, [filterType]);
+  }, [activeSection, fetchVoices]);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (openMenuId && menuRefs.current[openMenuId] && !menuRefs.current[openMenuId].contains(event.target)) {
-        setOpenMenuId(null);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [openMenuId]);
-
-  // Polling logic for processing voices
-  useEffect(() => {
-    const processingVoices = voices.filter(v => v.status === 'processing');
+    const processingVoices = voices.filter((v) => v.status === 'processing');
     if (processingVoices.length === 0) return;
 
     const intervalId = setInterval(async () => {
       const results = await Promise.all(
         processingVoices.map(async (v) => {
           try {
-            const id = v.voice_id || v.id;
-            const updated = await heygenService.getVoiceStatus(id);
+            const updated = await heygenService.getVoiceStatus(v.id);
             return { id: v.id, status: updated.status };
-          } catch (e) {
+          } catch {
             return null;
           }
         })
       );
 
-      const changes = results.filter(r => r && r.status !== 'processing');
+      const changes = results.filter((r) => r && r.status !== 'processing');
       if (changes.length > 0) {
-        setVoices(current => 
-          current.map(v => {
-            const change = changes.find(c => c.id === v.id);
+        setVoices((current) =>
+          current.map((v) => {
+            const change = changes.find((c) => c.id === v.id);
             return change ? { ...v, status: change.status } : v;
           })
         );
@@ -94,234 +163,265 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
     return () => clearInterval(intervalId);
   }, [voices]);
 
-  const handleCreateVoice = () => {
-    if (onCreateVoice) onCreateVoice();
-  }
+  const filteredVoices = useMemo(() => {
+    const filtered = applyVoiceFilters(voicesWithImages, { searchQuery, filterBy });
+    return sortVoices(filtered, sortBy);
+  }, [voicesWithImages, searchQuery, filterBy, sortBy]);
+
+  const voiceGroups = useMemo(
+    () => groupVoices(filteredVoices, groupBy),
+    [filteredVoices, groupBy]
+  );
+
+  const hasSearch = Boolean(searchQuery.trim()) || filterBy !== 'all';
+  const showCreateCard = activeSection === 'private' && onCreateVoice && !hasSearch;
+
+  const openVoice = (voice) => {
+    onVoiceClick?.(voice.raw || voice);
+  };
+
+  const handlePreview = (voice) => {
+    const url = voice.previewUrl || voice.raw?.preview_audio_url;
+    if (url) {
+      const audio = new Audio(url);
+      audio.play();
+    }
+  };
 
   const handleSpeechSynthesis = async () => {
-    if (!speechText || !selectedVoiceForTest) return;
+    if (!speechText.trim() || !selectedVoiceForTest) return;
     setIsSynthesizing(true);
     try {
       const res = await heygenService.previewSpeech({
         text: speechText,
-        voice_id: selectedVoiceForTest.voice_id || selectedVoiceForTest.id
+        voice_id: selectedVoiceForTest.id,
       });
-      if (res && res.preview_audio_url) {
+      if (res?.preview_audio_url) {
         const audio = new Audio(res.preview_audio_url);
         audio.play();
-      } else {
-        alert('Synthesis complete, but no audio URL was returned.');
       }
     } catch (err) {
       console.error('Synthesis failed:', err);
-      alert('Failed to generate speech preview.');
     } finally {
       setIsSynthesizing(false);
     }
-  }
+  };
 
-  const filteredVoices = voices.filter(v => 
-    v.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    v.language?.toLowerCase().includes(searchQuery.toLowerCase())
+  const renderVoiceCollection = (collection) => (
+    <div
+      className={`items-container videos-export-items voices-library-items ${
+        viewMode === 'grid' ? 'tile-view' : 'list-view export-list-view'
+      }`}
+    >
+      {viewMode === 'list' ? (
+        <div className="list-header export-list-header">
+          <div className="col" />
+          <div className="col">Name</div>
+          <div className="col">Language</div>
+          <div className="col">Gender</div>
+          <div className="col">Status</div>
+          <div className="col" />
+          <div className="col" />
+        </div>
+      ) : null}
+
+      {showCreateCard && viewMode === 'grid' ? (
+        <VoiceCreationCard onClick={onCreateVoice} />
+      ) : null}
+
+      {collection.map((voice) =>
+        viewMode === 'grid' ? (
+          <VoiceLibraryCard
+            key={voice.id}
+            voice={voice}
+            onOpen={openVoice}
+            onPreview={handlePreview}
+            onTest={setSelectedVoiceForTest}
+          />
+        ) : (
+          <VoiceLibraryRow
+            key={voice.id}
+            voice={voice}
+            onOpen={openVoice}
+            onPreview={handlePreview}
+            onTest={setSelectedVoiceForTest}
+          />
+        )
+      )}
+    </div>
   );
 
   return (
-    <div className="voices-container">
-      <header className="voices-header">
-        <div className="voices-title-section">
-          <h1 className="voices-title">Neural Voice Laboratory</h1>
-          <button className="new-voice-btn" onClick={handleCreateVoice}>
-            <MdPlayArrow size={20} />
-            Initialize New Identity
-          </button>
-        </div>
-
-        <div className="voices-controls">
-          <div className="ownership-segmented-control">
-            <button
-              className={`segmented-btn ${filterType === 'public' ? 'active' : ''}`}
-              onClick={() => setFilterType('public')}
-            >
-              Public Library
-            </button>
-            <button
-              className={`segmented-btn ${filterType === 'private' ? 'active' : ''}`}
-              onClick={() => setFilterType('private')}
-            >
-              My Custom Voices
-            </button>
+    <div className="videos-page voices-page">
+      <div className="videos-shell">
+        <header className="videos-page-header">
+          <div className="videos-title-section">
+            <h1 className="videos-page-title">Voices</h1>
+            <p className="videos-page-subtitle">{getVoiceSectionSubtitle(activeSection)}</p>
           </div>
-
-          <div className="search-section">
-            <div className="search-bar">
-              <MdSearch size={20} />
-              <input
-                type="text"
-                placeholder="Search neural patterns..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {loading ? (
-        <VoicesSkeleton />
-      ) : error ? (
-        <div className="empty-state">
-          <AlertCircle size={48} color="#ef4444" />
-          <h3 className="empty-state-title">System Link Interrupted</h3>
-          <p className="empty-state-text">{error}</p>
-          <button className="new-voice-btn" onClick={fetchVoices}>Reconnect Database</button>
-        </div>
-      ) : filteredVoices.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-icon">
-            <MdGraphicEq size={64} style={{ opacity: 0.15, marginBottom: '20px' }} />
-          </div>
-          <h3 className="empty-state-title">No Neural Identities Found</h3>
-          <p className="empty-state-text">
-            {searchQuery 
-              ? `Search for "${searchQuery}" yielded no matches.` 
-              : filterType === 'private' 
-                ? "Your custom neural vault is currently empty." 
-                : "The global neural library is unreachable."}
-          </p>
-          {filterType === 'private' && !searchQuery && (
-            <button className="new-voice-btn" onClick={handleCreateVoice}>Initialize First Clone</button>
-          )}
-        </div>
-      ) : (
-        <div className="voices-grid">
-          {filteredVoices.map((voice) => {
-            const vId = voice.voice_id || voice.id;
-            return (
-              <div 
-                key={vId} 
-                className="voice-card"
-                onClick={() => onVoiceClick && onVoiceClick(voice)}
+          <div className="videos-actions">
+            <div className="view-toggle">
+              <button
+                className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                onClick={() => setViewMode('grid')}
+                title="Grid view"
+                type="button"
               >
-                <div className="voice-card-header">
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <span className="voice-language-badge">
-                      {voice.language || 'English'}
-                    </span>
-                    {voice.gender && (
-                      <span className="voice-language-badge" style={{ background: 'rgba(var(--primary-rgb), 0.1)', color: 'var(--primary)' }}>
-                        {voice.gender}
-                      </span>
-                    )}
-                  </div>
-                  
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    {voice.status && (
-                      <div className={`voice-status-badge ${voice.status}`}>
-                        {voice.status === 'processing' && <Loader2 size={10} className="spin-animation" style={{ marginRight: '6px' }} />}
-                        {voice.status}
-                      </div>
-                    )}
-                    
-                    <div style={{ position: 'relative' }} ref={el => menuRefs.current[vId] = el}>
-                      <button 
-                        className="voice-menu-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOpenMenuId(openMenuId === vId ? null : vId);
-                        }}
-                      >
-                        <MdMoreVert size={20} />
-                      </button>
-                      
-                      {openMenuId === vId && (
-                        <div className="voice-menu">
-                          <button className="voice-menu-item" onClick={(e) => { e.stopPropagation(); setOpenMenuId(null); }}>
-                            <MdShare className="voice-menu-item-icon" />
-                            Share Pattern
-                          </button>
-                          <button className="voice-menu-item" onClick={(e) => { e.stopPropagation(); setOpenMenuId(null); }}>
-                            <MdContentCopy className="voice-menu-item-icon" />
-                            Copy Neural ID
-                          </button>
-                          <button className="voice-menu-item" onClick={(e) => { e.stopPropagation(); setOpenMenuId(null); }}>
-                            <MdEdit className="voice-menu-item-icon" />
-                            Rename
-                          </button>
-                          <button className="voice-menu-item delete" onClick={(e) => { e.stopPropagation(); setOpenMenuId(null); }}>
-                            <MdDelete className="voice-menu-item-icon" />
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <MdGridView />
+              </button>
+              <button
+                className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+                onClick={() => setViewMode('list')}
+                title="List view"
+                type="button"
+              >
+                <MdViewList />
+              </button>
+            </div>
+            {activeSection === 'private' && onCreateVoice ? (
+              <button
+                type="button"
+                className="btn-primary videos-create-btn"
+                onClick={onCreateVoice}
+              >
+                <MdAdd size={18} />
+                Create Voice
+              </button>
+            ) : null}
+          </div>
+        </header>
 
-                <div className="voice-card-body">
-                  <h3 className="voice-name">{voice.name}</h3>
-                  <p className="voice-updated">
-                    Neural optimization: <strong>Active</strong>
-                  </p>
-                </div>
-
-                <div className="voice-info-box">
-                  <div className="voice-info-icon">
-                    <MdGraphicEq size={18} />
-                  </div>
-                  <p className="voice-info-text">
-                    Optimized for <strong>Natural Flow</strong> and <strong>Semantic Depth</strong> in {voice.language || 'English'}.
-                  </p>
-                </div>
-
-                <div className="voice-card-actions">
-                  <button 
-                    className="voice-action-btn voice-sample-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (voice.preview_audio_url) {
-                        const audio = new Audio(voice.preview_audio_url);
-                        audio.play();
-                      }
-                    }}
-                  >
-                    <MdPlayArrow size={18} />
-                    Preview
-                  </button>
-                  <button 
-                    className="voice-action-btn voice-test-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedVoiceForTest(voice);
-                    }}
-                  >
-                    <MdGraphicEq size={18} />
-                    Test Voice
-                  </button>
-                </div>
-              </div>
+        <div className="videos-tab-switch" role="tablist" aria-label="Voice sections">
+          {VOICE_SECTION_TABS.map((tab) => {
+            const Icon = TAB_ICONS[tab.id];
+            const isActive = activeSection === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                className={`videos-tab-btn ${isActive ? 'active' : ''}`}
+                onClick={() => setActiveSection(tab.id)}
+              >
+                <span className="videos-tab-icon" aria-hidden>
+                  <Icon size={18} />
+                </span>
+                <span>{tab.label}</span>
+              </button>
             );
           })}
         </div>
-      )}
 
-      {/* Synthesis Modal (Test Voice) */}
-      {selectedVoiceForTest && (
-        <div className="voice-modal-overlay" onClick={() => setSelectedVoiceForTest(null)}>
-          <div className="voice-modal-card" onClick={e => e.stopPropagation()}>
+        <VideosToolbar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          filterBy={filterBy}
+          onFilterChange={setFilterBy}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          groupBy={groupBy}
+          onGroupChange={setGroupBy}
+          filterOptions={VOICE_FILTER_OPTIONS}
+          sortOptions={VOICE_SORT_OPTIONS}
+          groupOptions={VOICE_GROUP_OPTIONS}
+          searchPlaceholder="Search voices by name or language…"
+          searchAriaLabel="Search voices"
+        />
+
+        <main className="videos-main">
+          {loading ? (
+            <VoicesSkeleton />
+          ) : error ? (
+            <div className="videos-empty-state">
+              <div className="videos-empty-state__card">
+                <span className="videos-empty-state__icon-wrap" aria-hidden>
+                  <MdGraphicEq size={28} />
+                </span>
+                <p className="videos-empty-state__eyebrow">Could not load</p>
+                <h3 className="videos-empty-state__title">Failed to load voices</h3>
+                <p className="videos-empty-state__description">{error}</p>
+                <button type="button" className="videos-empty-state__cta" onClick={fetchVoices}>
+                  Try again
+                </button>
+              </div>
+            </div>
+          ) : filteredVoices.length === 0 && !showCreateCard ? (
+            <div className="videos-empty-state">
+              <div className="videos-empty-state__card">
+                <span className="videos-empty-state__icon-wrap" aria-hidden>
+                  <MdGraphicEq size={28} />
+                </span>
+                <p className="videos-empty-state__eyebrow">
+                  {hasSearch ? 'No results' : 'Nothing here yet'}
+                </p>
+                <h3 className="videos-empty-state__title">
+                  {getVoiceEmptyTitle(activeSection, hasSearch)}
+                </h3>
+                <p className="videos-empty-state__description">
+                  {getVoiceEmptyHint(activeSection, hasSearch)}
+                </p>
+                {!hasSearch && activeSection === 'private' && onCreateVoice ? (
+                  <button
+                    type="button"
+                    className="videos-empty-state__cta"
+                    onClick={onCreateVoice}
+                  >
+                    <MdAdd size={16} aria-hidden />
+                    Create Voice
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          ) : (
+            <div className="videos-groups">
+              {voiceGroups.map((group) => (
+                <section key={group.key} className="videos-group">
+                  {group.label ? (
+                    <h3 className="videos-group__heading">{group.label}</h3>
+                  ) : null}
+                  {renderVoiceCollection(group.voices)}
+                </section>
+              ))}
+            </div>
+          )}
+        </main>
+      </div>
+
+      {selectedVoiceForTest ? (
+        <div
+          className="voice-modal-overlay"
+          onClick={() => setSelectedVoiceForTest(null)}
+          role="presentation"
+        >
+          <div
+            className="voice-modal-card"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-labelledby="voice-test-title"
+          >
             <header className="voice-modal-header">
               <div>
-                <h3>Test Neural Voice</h3>
-                <p>Generating preview for: <strong>{selectedVoiceForTest.name}</strong></p>
+                <h3 id="voice-test-title">Test Voice</h3>
+                <p>
+                  Preview speech for: <strong>{selectedVoiceForTest.name}</strong>
+                </p>
               </div>
-              <button className="voice-modal-close" onClick={() => setSelectedVoiceForTest(null)}>
+              <button
+                type="button"
+                className="voice-modal-close"
+                onClick={() => setSelectedVoiceForTest(null)}
+                aria-label="Close"
+              >
                 <MdClose size={24} />
               </button>
             </header>
-            
+
             <div className="voice-modal-body">
               <div className="input-group">
-                <label>Input Speech Text</label>
-                <textarea 
+                <label htmlFor="voice-test-text">Speech text</label>
+                <textarea
+                  id="voice-test-text"
                   placeholder="Type a sentence to hear how this voice sounds..."
                   value={speechText}
                   onChange={(e) => setSpeechText(e.target.value)}
@@ -329,8 +429,9 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
                 />
                 <span className="char-counter">{speechText.length}/500</span>
               </div>
-              
-              <button 
+
+              <button
+                type="button"
                 className={`voice-modal-submit ${isSynthesizing ? 'loading' : ''}`}
                 onClick={handleSpeechSynthesis}
                 disabled={isSynthesizing || !speechText.trim()}
@@ -338,21 +439,21 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
                 {isSynthesizing ? (
                   <>
                     <Loader2 size={20} className="spin-animation" />
-                    Synthesizing Neural Flow...
+                    Generating preview…
                   </>
                 ) : (
                   <>
                     <MdGraphicEq size={20} />
-                    Generate & Play Preview
+                    Generate &amp; Play Preview
                   </>
                 )}
               </button>
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
-  )
+  );
 }
 
-export default Voices
+export default Voices;

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import workspaceService from '../../services/workspaceService.js';
 import { formatFolderSize } from '../../utils/formatSize.js';
 import { buildWorkspaceUserLookup, getAuthDisplayName } from '../../utils/workspaceUsers.js';
@@ -40,6 +40,7 @@ export function useWorkspaceActions({
   loadWorkspaces,
   loadContributorsForWorkspace
 }) {
+  const [inviteSending, setInviteSending] = useState(false);
 
   // ------------------------------------------------------------------
   // Create workspace
@@ -455,41 +456,53 @@ export function useWorkspaceActions({
   }, [setInviteInputs]);
 
   const handleSendInvites = useCallback(async () => {
-    if (!contributorsPanel.workspace) return;
+    if (!contributorsPanel.workspace || inviteSending) return;
     const validInputs = inviteInputs.filter((input) => input.email.trim());
     if (validInputs.length === 0) {
       showToast('Please enter at least one email address', 'error');
       return;
     }
 
+    setInviteSending(true);
     let successCount = 0;
     let failCount = 0;
     let lastError = null;
 
-    for (const input of validInputs) {
-      try {
-        await workspaceService.inviteMember(contributorsPanel.workspace.id, {
-          email: input.email.trim(),
-          role: input.role
-        });
-        successCount++;
-      } catch (err) {
-        failCount++;
-        lastError = err;
+    try {
+      for (const input of validInputs) {
+        try {
+          await workspaceService.inviteMember(contributorsPanel.workspace.id, {
+            email: input.email.trim(),
+            role: input.role,
+          });
+          successCount++;
+        } catch (err) {
+          failCount++;
+          lastError = err;
+        }
       }
-    }
 
-    if (successCount > 0) {
-      showToast(`Successfully invited ${successCount} member(s)`, 'success');
+      if (successCount > 0) {
+        showToast(`Successfully invited ${successCount} member(s)`, 'success');
+        setInviteInputs([{ email: '', role: 'MEMBER' }]);
+        setShowAddContributors(false);
+        await loadContributorsForWorkspace(contributorsPanel.workspace);
+      }
+      if (failCount > 0) {
+        showToast(`Failed to invite ${failCount} member(s): ${lastError?.message || 'Error'}`, 'error');
+      }
+    } finally {
+      setInviteSending(false);
     }
-    if (failCount > 0) {
-      showToast(`Failed to invite ${failCount} member(s): ${lastError?.message || 'Error'}`, 'error');
-    }
-
-    setInviteInputs([{ email: '', role: 'MEMBER' }]);
-    setShowAddContributors(false);
-    await loadContributorsForWorkspace(contributorsPanel.workspace);
-  }, [contributorsPanel, inviteInputs, showToast, setInviteInputs, setShowAddContributors, loadContributorsForWorkspace]);
+  }, [
+    contributorsPanel,
+    inviteInputs,
+    inviteSending,
+    showToast,
+    setInviteInputs,
+    setShowAddContributors,
+    loadContributorsForWorkspace,
+  ]);
 
   const handleChangeMemberRole = useCallback(async (memberId, role) => {
     if (!contributorsPanel.workspace) return;
@@ -580,6 +593,7 @@ export function useWorkspaceActions({
     handleUpdateInviteInput,
     handleRemoveInviteInput,
     handleSendInvites,
+    inviteSending,
     handleChangeMemberRole,
     handleRemoveMember,
     handleMoveProject
