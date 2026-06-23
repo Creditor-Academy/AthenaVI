@@ -379,13 +379,16 @@ const EditorSidebarAvatar = ({
 
     try {
       const type = file.type.startsWith('video/') ? 'digital_twin' : 'photo';
-      
+
       setUploadStatus(`Uploading ${type.replace('_', ' ')}...`);
-      
+
       const response = await heygenService.createAvatarFromFile({
         type,
         name: file.name.split('.')[0] || 'Custom Persona',
         file,
+        onUploadProgress: ({ percent }) => {
+          setUploadStatus(`Uploading ${type.replace('_', ' ')}… ${percent}%`);
+        },
       });
       const created = parseAvatarCreateResponse(response, file.name.split('.')[0] || 'Custom Persona');
       const groupId = created.groupId;

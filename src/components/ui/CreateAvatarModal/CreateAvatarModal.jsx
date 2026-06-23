@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Video, Image, Terminal, Upload, Loader2, X, Users, Sparkles, CheckCircle2, CheckCircle } from 'lucide-react';
 import { MdClose } from 'react-icons/md';
 import heygenService from '../../../services/heygenService';
+import creditsService, { isInsufficientCreditsError } from '../../../services/creditsService';
 import {
   getConsentUrlFromResponse,
   isConsentApproved,
@@ -62,6 +63,8 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [creationSuccess, setCreationSuccess] = useState(null);
   const [consentStep, setConsentStep] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(null);
+  const [creditEstimate, setCreditEstimate] = useState(null);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -76,9 +79,32 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
     setShowHelpModal(false);
     setCreationSuccess(null);
     setConsentStep(null);
+    setUploadProgress(null);
+    setCreditEstimate(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
 
     return undefined;
+  }, [isOpen, creationType]);
+
+  useEffect(() => {
+    if (!isOpen || creationType === 'prompt') {
+      setCreditEstimate(null);
+      return undefined;
+    }
+
+    let cancelled = false;
+    creditsService
+      .getPersonalEstimate({ feature: 'avatar_create' })
+      .then((estimate) => {
+        if (!cancelled) setCreditEstimate(estimate);
+      })
+      .catch(() => {
+        if (!cancelled) setCreditEstimate(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen, creationType]);
 
   useEffect(() => {
@@ -180,6 +206,7 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
 
     setIsCreating(true);
     setCreationStatus('Preparing asset upload...');
+    setUploadProgress(null);
 
     try {
       let response;
@@ -196,6 +223,10 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
           type: creationType,
           name: creationName,
           file: selectedFile,
+          onUploadProgress: ({ percent }) => {
+            setUploadProgress(percent);
+            setCreationStatus(`Uploading training file… ${percent}%`);
+          },
         });
       }
 
@@ -229,13 +260,23 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
       finishWithSuccess(response);
     } catch (err) {
       console.error('Avatar creation failed:', err);
-      setCreationStatus(`Error: ${getSanitizedErrorMessage(err, 'Creation failed')}`);
+      const fallback = isInsufficientCreditsError(err)
+        ? 'Insufficient credits to create this avatar.'
+        : 'Creation failed';
+      setCreationStatus(`Error: ${getSanitizedErrorMessage(err, fallback)}`);
       setTimeout(() => {
         setIsCreating(false);
         setCreationStatus('');
+        setUploadProgress(null);
       }, 4000);
     }
   };
+
+  const estimatedCredits =
+    creditEstimate?.estimatedCredits ??
+    creditEstimate?.credits ??
+    creditEstimate?.cost ??
+    null;
 
   if (!isOpen || !typeOption) return null;
 
@@ -336,6 +377,11 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
               <div className="creation-loading">
                 <Loader2 size={60} className="spin-animation" />
                 <h3>{creationStatus}</h3>
+                {uploadProgress != null && uploadProgress < 100 ? (
+                  <div className="progress-bar-bg" style={{ width: 'min(280px, 80%)', margin: '12px auto 0' }}>
+                    <div className="progress-bar-fill" style={{ width: `${uploadProgress}%` }} />
+                  </div>
+                ) : null}
                 <p>
                   {isDigitalTwin
                     ? 'Uploading your training video, then we\'ll guide you through consent.'
@@ -439,6 +485,9 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
           {!creationSuccess && !isCreating && !consentStep ? (
             <footer className="create-avatar-modal-footer">
               <p className="create-avatar-modal-footer__note">
+                {estimatedCredits != null
+                  ? `Estimated cost: ${estimatedCredits} credit${Number(estimatedCredits) === 1 ? '' : 's'}. `
+                  : ''}
                 {isDigitalTwin
                   ? 'Training takes 5–10 minutes after consent is approved.'
                   : 'Processing typically takes 5–10 minutes.'}

@@ -2,6 +2,7 @@ import assetService from '../services/assetService';
 import workspaceService from '../services/workspaceService';
 
 export const HEYGEN_SOURCE_MAX_BYTES = 900 * 1024 * 1024;
+export const HEYGEN_VOICE_MAX_BYTES = 100 * 1024 * 1024;
 export const WORKSPACE_ASSET_MAX_BYTES = 50 * 1024 * 1024;
 
 const UPLOADABLE_MIMES = new Set([
@@ -57,4 +58,50 @@ export async function uploadFileAsHeygenUrl(file, workspaceId) {
 
 export function buildHeygenUrlAsset(url) {
   return { type: 'url', url };
+}
+
+/**
+ * Multipart upload with upload progress (fetch cannot report upload %).
+ * @param {{ url: string, formData: FormData, headers?: Record<string, string>, onProgress?: (p: { loaded: number, total: number, percent: number }) => void }} opts
+ */
+export function uploadFormDataWithProgress({ url, formData, headers = {}, onProgress }) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', url);
+
+    Object.entries(headers).forEach(([key, value]) => {
+      if (value != null && value !== '') xhr.setRequestHeader(key, value);
+    });
+
+    xhr.upload.onprogress = (event) => {
+      if (!onProgress || !event.lengthComputable) return;
+      onProgress({
+        loaded: event.loaded,
+        total: event.total,
+        percent: Math.min(100, Math.round((event.loaded / event.total) * 100)),
+      });
+    };
+
+    xhr.onload = () => {
+      const body = xhr.responseText || '';
+      let json;
+      try {
+        json = body ? JSON.parse(body) : {};
+      } catch {
+        reject(new Error(body || `Upload failed: ${xhr.status}`));
+        return;
+      }
+
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve({ status: xhr.status, data: json });
+        return;
+      }
+
+      const message = json?.message || json?.error || `Upload failed: ${xhr.status}`;
+      reject(Object.assign(new Error(message), { status: xhr.status, data: json }));
+    };
+
+    xhr.onerror = () => reject(new Error('Upload failed due to a network error.'));
+    xhr.send(formData);
+  });
 }
