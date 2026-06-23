@@ -209,6 +209,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
     handleUpdateInviteInput,
     handleRemoveInviteInput,
     handleSendInvites,
+    inviteSending,
     handleChangeMemberRole,
     handleRemoveMember,
     handleMoveProject: handleMoveProjectAction
@@ -910,6 +911,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
         onUpdateInput={handleUpdateInviteInput}
         onRemoveInput={handleRemoveInviteInput}
         onSendInvites={handleSendInvites}
+        inviteSending={inviteSending}
         onChangeMemberRole={handleChangeMemberRole}
         onRemoveMember={handleRemoveMember}
         loadContributors={loadContributorsForWorkspace}

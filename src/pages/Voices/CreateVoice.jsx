@@ -1,8 +1,11 @@
 import { useState, useRef } from 'react'
-import { ArrowLeft, Mic, Terminal, Upload, Loader2, X, Music, CheckCircle } from 'lucide-react'
-import { MdPlayArrow } from 'react-icons/md'
+import { Mic, Terminal, Loader2, X, Music, CheckCircle } from 'lucide-react'
+import { MdArrowBack, MdPlayArrow } from 'react-icons/md'
 import heygenService from '../../services/heygenService'
 import { getSanitizedErrorMessage } from '../../utils/userFacingMessage'
+import '../../components/features/workspace/workspace/WorkspaceStyles.css'
+import '../Videos/Videos.css'
+import '../Avatars/Avatars.css'
 import './Voices.css'
 
 function CreateVoice({ onBack }) {
@@ -147,21 +150,32 @@ function CreateVoice({ onBack }) {
   };
 
   return (
-    <div className="workspace-main">
-      <div className="grid-container">
-        <header className="avatars-header">
-          <div className="header-info">
-            <button className="back-btn-sleek" onClick={() => onBack(false)}>
-              <ArrowLeft size={18} />
-              <span>Back to Voices</span>
-            </button>
-            <h1>Neural Voice Laboratory</h1>
-            <p>Generate or replicate perfect neural voice patterns.</p>
+    <div className="videos-page voices-page create-voice-page">
+      <div className="videos-shell">
+        <header className="videos-page-header create-avatar-page-header">
+          <div className="videos-title-section create-avatar-title-section">
+            <div className="create-avatar-title-row">
+              <button
+                type="button"
+                className="workspace-back-btn"
+                onClick={() => onBack(false)}
+                aria-label="Back to Voices"
+              >
+                <MdArrowBack size={20} />
+              </button>
+              <div>
+                <h1 className="videos-page-title">Create Voice</h1>
+                <p className="videos-page-subtitle">
+                  Clone from audio or design a new voice from a text description.
+                </p>
+              </div>
+            </div>
           </div>
         </header>
 
-        <div className="creation-content-wrapper">
-          <div className="creation-form-card standalone">
+        <main className="videos-main create-avatar-main">
+          <div className="creation-content-wrapper">
+            <div className="creation-form-card standalone">
             {isCreating ? (
               <div className="creation-loading">
                 <Loader2 size={60} className="spin-animation" />
@@ -345,34 +359,32 @@ function CreateVoice({ onBack }) {
                 </div>
 
                 {suggestedVoices.length > 0 && (
-                  <div className="suggested-voices-container" style={{ marginTop: '32px', borderTop: '1px solid var(--border-color)', paddingTop: '32px' }}>
+                  <div style={{ marginTop: '32px', borderTop: '1px solid var(--border-color)', paddingTop: '32px' }}>
                     <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <CheckCircle size={20} style={{ color: 'var(--primary)' }} />
-                      Suggested Neural Matches
+                      Suggested Matches
                     </h3>
-                    <div className="voices-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+                    <div className="voices-suggested-grid">
                       {suggestedVoices.map((voice) => (
-                        <div 
-                          key={voice.voice_id} 
-                          className="voice-card" 
-                          style={{ padding: '16px', gap: '12px' }}
-                        >
-                          <div className="voice-card-header">
-                            <span className="voice-language-badge" style={{ fontSize: '10px' }}>{voice.language}</span>
-                            <span className="voice-language-badge" style={{ fontSize: '10px', background: 'rgba(var(--primary-rgb), 0.1)', color: 'var(--primary)' }}>{voice.gender}</span>
+                        <div key={voice.voice_id} className="voices-suggested-card">
+                          <div className="voices-suggested-card__badges">
+                            <span className="voices-suggested-badge">{voice.language}</span>
+                            {voice.gender ? (
+                              <span className="voices-suggested-badge">{voice.gender}</span>
+                            ) : null}
                           </div>
-                          <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>{voice.name}</h4>
-                          <div className="voice-card-actions" style={{ marginTop: '8px' }}>
-                            <button 
-                              className="voice-action-btn voice-sample-btn" 
-                              style={{ padding: '8px' }}
+                          <h4>{voice.name}</h4>
+                          <div className="voices-suggested-actions">
+                            <button
+                              type="button"
+                              className="voices-suggested-btn"
                               onClick={() => voice.preview_audio_url && new Audio(voice.preview_audio_url).play()}
                             >
                               <MdPlayArrow size={16} /> Preview
                             </button>
-                            <button 
-                              className="voice-action-btn voice-test-btn"
-                              style={{ padding: '8px' }}
+                            <button
+                              type="button"
+                              className="voices-suggested-btn voices-suggested-btn--primary"
                               onClick={async () => {
                                 setCreationStatus('Finalizing selection...');
                                 setIsCreating(true);
@@ -414,6 +426,7 @@ function CreateVoice({ onBack }) {
             )}
           </div>
         </div>
+        </main>
       </div>
     </div>
   )
