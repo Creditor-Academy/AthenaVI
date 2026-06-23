@@ -39,6 +39,37 @@ class StorageService {
     return query ? `?${query}` : '';
   }
 
+  normalizeUpgradeRequest(row) {
+    if (!row) return null;
+    const requestedAdditionalBytes = Number(row.requestedAdditionalBytes ?? 0);
+    const requestedAdditionalGb =
+      row.requestedAdditionalGb != null
+        ? Number(row.requestedAdditionalGb)
+        : requestedAdditionalBytes > 0
+          ? Math.round((requestedAdditionalBytes / 1024 ** 3) * 10) / 10
+          : null;
+
+    return {
+      requestId: row.requestId || row.id || null,
+      status: row.status || null,
+      requestedAdditionalGb,
+      requestedAdditionalBytes,
+      reason: row.reason || '',
+      urgency: row.urgency || null,
+      currentUsedBytes: row.currentUsedBytes != null ? Number(row.currentUsedBytes) : null,
+      currentLimitBytes: row.currentLimitBytes != null ? Number(row.currentLimitBytes) : null,
+      tierId: row.tierId || null,
+      tierLabel: row.tierLabel || null,
+      workspaceId: row.workspaceId || null,
+      workspaceName: row.workspaceName || null,
+      workspaceFootprintBytes:
+        row.workspaceFootprintBytes != null ? Number(row.workspaceFootprintBytes) : null,
+      submittedAt: row.submittedAt || null,
+      reviewedAt: row.reviewedAt || null,
+      reviewNote: row.reviewNote || null,
+    };
+  }
+
   normalizeQuota(data) {
     const limitBytes = Number(data?.limitBytes ?? 0);
     const usedBytes = Number(data?.usedBytes ?? 0);
@@ -53,6 +84,8 @@ class StorageService {
           ? Math.min(100, (usedBytes / limitBytes) * 100)
           : 0;
 
+    const activeUpgradeRequest = this.normalizeUpgradeRequest(data?.activeUpgradeRequest);
+
     return {
       userId: data?.userId,
       limitBytes,
@@ -60,6 +93,7 @@ class StorageService {
       availableBytes,
       percentUsed,
       tier: data?.tier || null,
+      activeUpgradeRequest,
     };
   }
 
@@ -75,6 +109,17 @@ class StorageService {
     return { transactions, pagination };
   }
 
+  normalizeUpgradeRequests(data) {
+    const requests = (data?.requests || []).map((row) => this.normalizeUpgradeRequest(row));
+    const pagination = data?.pagination || {
+      total: requests.length,
+      page: 1,
+      limit: requests.length || 20,
+      totalPages: 1,
+    };
+    return { requests, pagination };
+  }
+
   async getPersonalQuota() {
     const data = await this.request(API_CONFIG.ENDPOINTS.STORAGE.ME);
     return this.normalizeQuota(data);
@@ -84,6 +129,12 @@ class StorageService {
     const query = this.buildQuery({ page, limit, type });
     const data = await this.request(`${API_CONFIG.ENDPOINTS.STORAGE.ME_HISTORY}${query}`);
     return this.normalizeHistory(data);
+  }
+
+  async getUpgradeRequests({ page = 1, limit = 20, status } = {}) {
+    const query = this.buildQuery({ page, limit, status });
+    const data = await this.request(`${API_CONFIG.ENDPOINTS.STORAGE.REQUESTS}${query}`);
+    return this.normalizeUpgradeRequests(data);
   }
 
   async getWorkspaceStorage(workspaceId) {
@@ -118,7 +169,12 @@ class StorageService {
       method: 'POST',
       body: JSON.stringify(payload),
     });
-    return data;
+    return {
+      ...this.normalizeUpgradeRequest(data),
+      requestId: data?.requestId || data?.id,
+      submittedAt: data?.submittedAt || null,
+      status: data?.status || 'pending',
+    };
   }
 }
 

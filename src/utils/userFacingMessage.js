@@ -8,9 +8,21 @@ export function sanitizeUserFacingMessage(message) {
 
   let text = String(message);
 
+  // Preserve API paths before branding replacement (e.g. /api/heygen/avatars/upload).
+  const pathSlots = [];
+  text = text.replace(/\/api\/heygen\/[a-z0-9/_-]*/gi, (path) => {
+    const slot = `__API_PATH_${pathSlots.length}__`;
+    pathSlots.push(path);
+    return slot;
+  });
+
   text = text.replace(/\bHeyGen's\b/gi, 'The service');
   text = text.replace(/\bHeyGen\b/gi, 'avatar video');
   text = text.replace(/\bheygen\b/g, 'avatar video');
+
+  pathSlots.forEach((path, index) => {
+    text = text.replace(`__API_PATH_${index}__`, path);
+  });
 
   // Tidy common phrasing after replacement
   text = text.replace(/\bavatar video API\b/gi, 'avatar video service');

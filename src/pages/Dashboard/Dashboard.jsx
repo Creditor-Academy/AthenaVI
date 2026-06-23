@@ -24,9 +24,10 @@ import AIVideoAssistant from '../../components/ui/AIVideoAssistant/AIVideoAssist
 import ImportPowerPointModal from '../../components/ui/ImportPowerPointModal/ImportPowerPointModal.jsx'
 import TranslateVideoModal from '../../components/ui/TranslateVideoModal/TranslateVideoModal.jsx'
 import CreateVideoModal from '../../components/ui/CreateVideoModal/CreateVideoModal.jsx'
-import { X } from 'lucide-react'
-import userService from '../../services/userService.js'
+import NotificationsQuickModal from '../../components/ui/NotificationsQuickModal/NotificationsQuickModal.jsx'
 import CreditsQuickModal from '../../components/ui/CreditsQuickModal/CreditsQuickModal.jsx'
+import { useInboxUnreadCount } from '../../hooks/useInboxUnreadCount.js'
+import userService from '../../services/userService.js'
 import { useAuth } from '../../contexts/AuthContext'
 import { bundleToDetailsTemplate } from '../../utils/fetchTemplateBundles.js'
 import './Dashboard.css'
@@ -82,7 +83,8 @@ function Dashboard({ onCreate, initialSection }) {
   })
 
   const cartCount = 2
-  const notificationCount = 9
+  const { unreadCount: notificationCount, refresh: refreshInboxUnread, setUnreadCount: setInboxUnreadCount } =
+    useInboxUnreadCount()
 
   const noPaddingSections = ['templates', 'template-details']
   const workspaceConsistentSections = [
@@ -447,29 +449,13 @@ function Dashboard({ onCreate, initialSection }) {
 
       {/* Notifications Modal Overlay */}
       {showNotificationsModal && (
-        <div className="quick-access-modal-overlay" onClick={() => setShowNotificationsModal(false)}>
-          <div className="quick-access-modal notifications-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header-sleek">
-              <h4>Notifications</h4>
-              <button className="close-mini-btn" onClick={() => setShowNotificationsModal(false)}><X size={18} /></button>
-            </div>
-            <div className="notifications-list-mini">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="notification-item-mini">
-                  <div className="notif-dot"></div>
-                  <div className="notif-content-mini">
-                    <h6>Video Generated Successfully</h6>
-                    <p>Your video "Project Athena" is ready for review.</p>
-                    <span>2 hours ago</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="modal-footer-sleek">
-              <button className="btn-link-action" onClick={() => { setShowNotificationsModal(false); handleNavigationWithModal('profile'); }}>View All History</button>
-            </div>
-          </div>
-        </div>
+        <NotificationsQuickModal
+          onClose={() => {
+            setShowNotificationsModal(false)
+            refreshInboxUnread()
+          }}
+          onUnreadCountChange={setInboxUnreadCount}
+        />
       )}
 
       {showCreditsModal && (

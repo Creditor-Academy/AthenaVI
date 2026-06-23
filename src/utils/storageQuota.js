@@ -28,6 +28,32 @@ export function formatStorageTransactionType(type) {
   return labels[type] || type || '—';
 }
 
+export function formatStorageUpgradeStatus(status) {
+  const labels = {
+    pending: 'Pending review',
+    approved: 'Approved',
+    rejected: 'Rejected',
+  };
+  return labels[String(status || '').toLowerCase()] || status || '—';
+}
+
+export function formatStorageUpgradeUrgency(urgency) {
+  const labels = {
+    flexible: 'Flexible',
+    week: 'Within 1 week',
+    urgent: 'Urgent',
+  };
+  return labels[String(urgency || '').toLowerCase()] || urgency || '—';
+}
+
+export function getStorageUpgradeStatusVariant(status) {
+  const key = String(status || '').toLowerCase();
+  if (key === 'pending') return 'pending';
+  if (key === 'approved') return 'approved';
+  if (key === 'rejected') return 'rejected';
+  return 'neutral';
+}
+
 export class StorageLimitError extends Error {
   constructor(message, data = {}) {
     super(message || 'Storage limit exceeded');

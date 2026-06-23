@@ -13,6 +13,7 @@ import {
   MdGroups,
   MdAccessTime,
   MdOutlineAdd,
+  MdPendingActions,
 } from 'react-icons/md'
 import creditsService from '../../../../services/creditsService.js'
 import storageService from '../../../../services/storageService.js'
@@ -29,7 +30,7 @@ import {
   sumUsageCredits,
 } from '../../../../utils/creditTransactions.js'
 import { formatBytes } from '../../../../utils/formatSize.js'
-import { formatStorageTransactionType } from '../../../../utils/storageQuota.js'
+import { formatStorageTransactionType, formatStorageUpgradeStatus, formatStorageUpgradeUrgency, getStorageUpgradeStatusVariant } from '../../../../utils/storageQuota.js'
 import StorageUsageBar from '../../../ui/StorageUsageBar/StorageUsageBar.jsx'
 import '../../../ui/StorageUsageBar/StorageUsageBar.css'
 import LoadingDots from '../../../ui/LoadingDots/LoadingDots.jsx'
@@ -106,6 +107,13 @@ function BillingSettings() {
   const [storageHistoryPage, setStorageHistoryPage] = useState(1)
   const [storageHistoryPagination, setStorageHistoryPagination] = useState({ totalPages: 1, total: 0 })
   const [storageHistoryLoading, setStorageHistoryLoading] = useState(false)
+  const [upgradeRequests, setUpgradeRequests] = useState([])
+  const [upgradeRequestsPage, setUpgradeRequestsPage] = useState(1)
+  const [upgradeRequestsPagination, setUpgradeRequestsPagination] = useState({ totalPages: 1, total: 0 })
+  const [upgradeRequestsLoading, setUpgradeRequestsLoading] = useState(false)
+
+  const activeUpgradeRequest = personalStorage?.activeUpgradeRequest ?? null
+  const hasPendingUpgradeRequest = String(activeUpgradeRequest?.status || '').toLowerCase() === 'pending'
 
   const workspacesRef = useRef(workspaces)
   useEffect(() => {
@@ -165,15 +173,38 @@ function BillingSettings() {
     }
   }, [])
 
+  const loadUpgradeRequests = useCallback(async (page = 1) => {
+    setUpgradeRequestsLoading(true)
+    try {
+      const result = await storageService.getUpgradeRequests({ page, limit: 10 })
+      setUpgradeRequests(result.requests)
+      setUpgradeRequestsPagination(result.pagination)
+      setUpgradeRequestsPage(page)
+    } catch {
+      setUpgradeRequests([])
+      setUpgradeRequestsPagination({ totalPages: 1, total: 0 })
+      setUpgradeRequestsPage(1)
+    } finally {
+      setUpgradeRequestsLoading(false)
+    }
+  }, [])
+
   const loadStorageContext = useCallback(async (workspaceId) => {
-    const [personal, historyResult] = await Promise.all([
+    const [personal, historyResult, requestsResult] = await Promise.all([
       storageService.getPersonalQuota(),
       storageService.getPersonalHistory({ page: 1, limit: 10 }),
+      storageService.getUpgradeRequests({ page: 1, limit: 10 }).catch(() => ({
+        requests: [],
+        pagination: { totalPages: 1, total: 0, page: 1, limit: 10 },
+      })),
     ])
     setPersonalStorage(personal)
     setStorageHistory(historyResult.transactions)
     setStorageHistoryPagination(historyResult.pagination)
     setStorageHistoryPage(1)
+    setUpgradeRequests(requestsResult.requests)
+    setUpgradeRequestsPagination(requestsResult.pagination)
+    setUpgradeRequestsPage(1)
 
     if (workspaceId) {
       try {
@@ -431,6 +462,95 @@ function BillingSettings() {
     )
   }
 
+  const renderUpgradeRequests = () => {
+    if (upgradeRequestsLoading) {
+      return <p className="billing-loading-row">Loading upgrade requests…</p>
+    }
+
+    if (upgradeRequests.length === 0) {
+      return (
+        <div className="billing-empty-state">
+          <span className="billing-empty-state-icon" aria-hidden><MdPendingActions /></span>
+          <p>No storage upgrade requests yet.</p>
+        </div>
+      )
+    }
+
+    return (
+      <>
+        <div className="billing-history-table-wrap">
+          <table className="billing-history-table">
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th>Requested</th>
+                <th>Submitted</th>
+                <th>Workspace</th>
+              </tr>
+            </thead>
+            <tbody>
+              {upgradeRequests.map((req) => (
+                <tr key={req.requestId}>
+                  <td>
+                    <span
+                      className={`billing-tx-badge billing-tx-badge--${getStorageUpgradeStatusVariant(req.status)}`}
+                    >
+                      {formatStorageUpgradeStatus(req.status)}
+                    </span>
+                    {req.reviewNote && (
+                      <span className="billing-upgrade-review-note">{req.reviewNote}</span>
+                    )}
+                  </td>
+                  <td>
+                    <span className="billing-upgrade-amount">
+                      +{req.requestedAdditionalGb ?? '—'} GB
+                    </span>
+                    <span className="billing-upgrade-urgency">
+                      {formatStorageUpgradeUrgency(req.urgency)}
+                    </span>
+                  </td>
+                  <td className="billing-date-cell">
+                    {formatDate(req.submittedAt)}
+                    {req.reviewedAt && (
+                      <span className="billing-upgrade-reviewed">
+                        Reviewed {formatDate(req.reviewedAt)}
+                      </span>
+                    )}
+                  </td>
+                  <td>{req.workspaceName || '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {upgradeRequestsPagination.totalPages > 1 && (
+          <div className="billing-history-pagination">
+            <button
+              type="button"
+              className="btn-premium btn-premium-ghost"
+              disabled={upgradeRequestsPage <= 1 || upgradeRequestsLoading}
+              onClick={() => loadUpgradeRequests(upgradeRequestsPage - 1)}
+            >
+              Previous
+            </button>
+            <span>Page {upgradeRequestsPage} of {upgradeRequestsPagination.totalPages}</span>
+            <button
+              type="button"
+              className="btn-premium btn-premium-ghost"
+              disabled={
+                upgradeRequestsPage >= upgradeRequestsPagination.totalPages || upgradeRequestsLoading
+              }
+              onClick={() => loadUpgradeRequests(upgradeRequestsPage + 1)}
+            >
+              Next
+            </button>
+          </div>
+        )}
+      </>
+    )
+  }
+
   const renderStorageHistory = () => {
     if (storageHistoryLoading) {
       return <p className="billing-loading-row">Loading storage history…</p>
@@ -645,12 +765,32 @@ function BillingSettings() {
                   : ''}
               </p>
             ) : null}
+            {hasPendingUpgradeRequest && activeUpgradeRequest && (
+              <div className="billing-upgrade-active" role="status">
+                <MdPendingActions size={18} aria-hidden />
+                <div>
+                  <strong>Upgrade request pending</strong>
+                  <p>
+                    You requested <strong>+{activeUpgradeRequest.requestedAdditionalGb} GB</strong>
+                    {activeUpgradeRequest.submittedAt
+                      ? ` on ${formatDate(activeUpgradeRequest.submittedAt)}`
+                      : ''}
+                    . An administrator will review it — you&apos;ll be contacted by email.
+                  </p>
+                </div>
+              </div>
+            )}
             <div className="billing-storage-actions">
               <button
                 type="button"
                 className="billing-storage-request-btn"
                 onClick={() => setShowStorageRequestModal(true)}
-                disabled={loading || workspaceSwitching}
+                disabled={loading || workspaceSwitching || hasPendingUpgradeRequest}
+                title={
+                  hasPendingUpgradeRequest
+                    ? 'You already have a pending storage upgrade request'
+                    : undefined
+                }
               >
                 <MdOutlineAdd size={16} aria-hidden />
                 Request more storage
@@ -665,6 +805,13 @@ function BillingSettings() {
           personalStorage={personalStorage}
           selectedWorkspace={selectedWorkspace}
           workspaceStorage={workspaceStorage}
+          activeUpgradeRequest={activeUpgradeRequest}
+          onSubmitted={async () => {
+            const personal = await storageService.getPersonalQuota()
+            setPersonalStorage(personal)
+            await loadUpgradeRequests(1)
+            setHistoryTab('requests')
+          }}
         />
 
         {canAllocate && (
@@ -740,15 +887,30 @@ function BillingSettings() {
               onClick={() => setHistoryTab('storage')}
             >
               <MdStorage size={16} aria-hidden />
-              Storage history
+              Storage ledger
               <span className="billing-history-tab-count">
                 {storageHistoryPagination.total || storageHistory.length}
+              </span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={historyTab === 'requests'}
+              className={`billing-history-tab ${historyTab === 'requests' ? 'active' : ''}`}
+              onClick={() => setHistoryTab('requests')}
+            >
+              <MdPendingActions size={16} aria-hidden />
+              Upgrade requests
+              <span className="billing-history-tab-count">
+                {upgradeRequestsPagination.total || upgradeRequests.length}
               </span>
             </button>
           </div>
 
           <div role="tabpanel">
-            {historyTab === 'credits' ? renderCreditHistory() : renderStorageHistory()}
+            {historyTab === 'credits' && renderCreditHistory()}
+            {historyTab === 'storage' && renderStorageHistory()}
+            {historyTab === 'requests' && renderUpgradeRequests()}
           </div>
         </div>
       </div>

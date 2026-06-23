@@ -8,7 +8,10 @@ import {
 import { sanitizeUserFacingMessage } from '../utils/userFacingMessage.js';
 import {
   buildHeygenUrlAsset,
+  canUploadFileAsHeygenUrl,
   HEYGEN_SOURCE_MAX_BYTES,
+  uploadFileAsHeygenUrl,
+  WORKSPACE_ASSET_MAX_BYTES,
 } from '../utils/heygenAssetUpload.js';
 
 function authOnlyHeaders() {
@@ -25,6 +28,14 @@ function sanitizeThrownError(error) {
     error.message = sanitizeUserFacingMessage(error.message);
   }
   return error;
+}
+
+const MISSING_ROUTE_STATUSES = new Set([404, 405, 501]);
+let avatarUploadRouteAvailable = null;
+let voiceUploadRouteAvailable = null;
+
+function isHeygenUploadRouteMissing(status) {
+  return MISSING_ROUTE_STATUSES.has(status);
 }
 
 const LOOKS_QUERY_KEYS = new Set([
@@ -214,7 +225,48 @@ class HeygenService {
   }
 
   /**
+   * Probe whether the dedicated HeyGen multipart upload route is deployed.
+   * Cached for the session — 404/405/501 means not available.
+   */
+  async isHeygenUploadRouteAvailable(kind = 'avatar') {
+    const cache = kind === 'voice' ? voiceUploadRouteAvailable : avatarUploadRouteAvailable;
+    if (cache != null) return cache;
+
+    const endpoint =
+      kind === 'voice'
+        ? API_CONFIG.ENDPOINTS.HEYGEN.VOICES.UPLOAD
+        : API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.UPLOAD;
+
+    let available = false;
+    try {
+      const response = await fetch(buildUrl(endpoint), {
+        method: 'POST',
+        headers: authOnlyHeaders(),
+      });
+      available = !isHeygenUploadRouteMissing(response.status);
+    } catch {
+      available = false;
+    }
+
+    if (kind === 'voice') voiceUploadRouteAvailable = available;
+    else avatarUploadRouteAvailable = available;
+    return available;
+  }
+
+  formatLargeUploadBlockedMessage(fileSizeBytes) {
+    const sizeMb = Math.max(1, Math.round(fileSizeBytes / (1024 * 1024)));
+    const limitMb = Math.round(WORKSPACE_ASSET_MAX_BYTES / (1024 * 1024));
+    return (
+      `Your file is about ${sizeMb} MB, but large uploads are not enabled on the server yet ` +
+      `(only files up to ${limitMb} MB work without it). ` +
+      'Use a shorter training video under 50 MB, or ask your administrator to enable avatar file uploads.'
+    );
+  }
+
+  /**
    * Upload avatar / voice source via multipart (never base64 in JSON).
+   * Prefers POST /api/heygen/avatars|voices/upload; falls back to workspace
+   * asset upload for files ≤ 50 MB when the HeyGen upload route is not deployed.
    */
   async uploadHeygenSourceFile(file, kind = 'avatar') {
     if (!file) {
@@ -238,19 +290,37 @@ class HeygenService {
       body: formData,
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Athena VI upload error:', errorText);
-      throw userError(`Failed to upload file: ${response.status} - ${errorText}`);
+    if (response.ok) {
+      const data = await response.json();
+      const payload = data.data || data;
+      const url = payload.url;
+      if (!url) {
+        throw userError('Upload succeeded but no file URL was returned.');
+      }
+      return url;
     }
 
-    const data = await response.json();
-    const payload = data.data || data;
-    const url = payload.url;
-    if (!url) {
-      throw userError('Upload succeeded but no file URL was returned.');
+    const missingHeygenUpload = isHeygenUploadRouteMissing(response.status);
+    if (missingHeygenUpload) {
+      if (kind === 'voice') voiceUploadRouteAvailable = false;
+      else avatarUploadRouteAvailable = false;
     }
-    return url;
+
+    if (missingHeygenUpload && canUploadFileAsHeygenUrl(file)) {
+      console.warn(
+        `HeyGen ${kind} upload route unavailable (${response.status}); using workspace asset upload.`
+      );
+      const { url } = await uploadFileAsHeygenUrl(file);
+      return url;
+    }
+
+    if (missingHeygenUpload) {
+      throw userError(this.formatLargeUploadBlockedMessage(file.size));
+    }
+
+    const errorText = await response.text();
+    console.error('Athena VI upload error:', errorText);
+    throw userError(`Failed to upload file: ${response.status}`);
   }
 
   /**

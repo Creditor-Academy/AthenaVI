@@ -91,6 +91,33 @@
   max-width: 360px;
 }
 
+.storage-request-pending {
+  padding: 8px 24px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+}
+
+.storage-request-pending svg {
+  color: #d97706;
+}
+
+.storage-request-pending h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: var(--text-main);
+}
+
+.storage-request-pending p {
+  margin: 0 0 8px;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  max-width: 360px;
+}
+
 .billing-storage-actions {
   display: flex;
   justify-content: flex-end;

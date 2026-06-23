@@ -38,6 +38,14 @@ const API_CONFIG = {
       USER_SETTINGS: {
         APPEARANCE: '/api/user/settings/appearance',
         NOTIFICATIONS: '/api/user/settings/notifications'
+      },
+      INBOX: {
+        LIST: '/api/user/inbox',
+        UNREAD_COUNT: '/api/user/inbox/unread-count',
+        ONE: (notificationId) => `/api/user/inbox/${notificationId}`,
+        MARK_READ: (notificationId) => `/api/user/inbox/${notificationId}/read`,
+        MARK_BULK_READ: '/api/user/inbox/read',
+        MARK_ALL_READ: '/api/user/inbox/read-all',
       }
     },
     
@@ -46,6 +54,7 @@ const API_CONFIG = {
       ME: '/api/user/storage',
       ME_HISTORY: '/api/user/storage/history',
       REQUEST: '/api/user/storage/request',
+      REQUESTS: '/api/user/storage/requests',
       WORKSPACE: (workspaceId) => `/api/workspaces/${workspaceId}/storage`,
     },
 

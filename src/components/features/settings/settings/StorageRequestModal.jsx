@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { MdClose, MdStorage, MdCheckCircle, MdSend } from 'react-icons/md'
 import storageService from '../../../../services/storageService.js'
 import { formatBytes } from '../../../../utils/formatSize.js'
+import { formatStorageUpgradeStatus, formatStorageUpgradeUrgency } from '../../../../utils/storageQuota.js'
 import '../../workspace/workspace/PremiumModal.css'
 import './StorageRequestModal.css'
 
@@ -30,9 +31,11 @@ function gbToBytes(gb) {
 function StorageRequestModal({
   isOpen,
   onClose,
+  onSubmitted,
   personalStorage,
   selectedWorkspace,
   workspaceStorage,
+  activeUpgradeRequest,
 }) {
   const [amountPreset, setAmountPreset] = useState('10')
   const [customGb, setCustomGb] = useState('')
@@ -41,6 +44,9 @@ function StorageRequestModal({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+
+  const pendingRequest =
+    activeUpgradeRequest?.status?.toLowerCase() === 'pending' ? activeUpgradeRequest : null
 
   useEffect(() => {
     if (!isOpen) return
@@ -75,7 +81,7 @@ function StorageRequestModal({
 
     setLoading(true)
     try {
-      await storageService.requestMoreStorage({
+      const result = await storageService.requestMoreStorage({
         requestedAdditionalGb: requestedGb,
         requestedAdditionalBytes: gbToBytes(requestedGb),
         reason: trimmedReason,
@@ -89,6 +95,7 @@ function StorageRequestModal({
         workspaceFootprintBytes: workspaceStorage?.footprint?.totalBytes ?? null,
       })
       setSuccess(true)
+      await onSubmitted?.(result)
     } catch (err) {
       setError(err.message || 'Failed to send storage request.')
     } finally {
@@ -150,10 +157,24 @@ function StorageRequestModal({
               <h3>Request sent</h3>
               <p>
                 We notified the administrator about your request for{' '}
-                <strong>{requestedGb} GB</strong> of additional storage. You will be contacted by email.
+                <strong>{requestedGb} GB</strong> of additional storage. Track status under
+                {' '}<strong>Upgrade requests</strong> in Billing.
               </p>
               <button type="button" className="astryd-btn-primary" onClick={onClose}>
                 Done
+              </button>
+            </div>
+          ) : pendingRequest ? (
+            <div className="storage-request-pending">
+              <MdCheckCircle size={36} aria-hidden />
+              <h3>Request already pending</h3>
+              <p>
+                You requested <strong>+{pendingRequest.requestedAdditionalGb} GB</strong>
+                {' '}({formatStorageUpgradeUrgency(pendingRequest.urgency)}). Status:{' '}
+                <strong>{formatStorageUpgradeStatus(pendingRequest.status)}</strong>.
+              </p>
+              <button type="button" className="astryd-btn-primary" onClick={onClose}>
+                Close
               </button>
             </div>
           ) : (
