@@ -1,3 +1,11 @@
+export const INBOX_CATEGORIES = [
+  { id: '', label: 'All' },
+  { id: 'videos', label: 'Videos' },
+  { id: 'credits', label: 'Credits' },
+  { id: 'storage', label: 'Storage' },
+  { id: 'workspace', label: 'Workspace' },
+];
+
 export function formatInboxRelativeTime(iso) {
   if (!iso) return '';
   const diff = Date.now() - new Date(iso).getTime();
@@ -10,6 +18,17 @@ export function formatInboxRelativeTime(iso) {
   const days = Math.floor(hrs / 24);
   if (days < 7) return `${days}d ago`;
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+export function formatInboxCategory(category) {
+  const labels = {
+    videos: 'Videos',
+    credits: 'Credits',
+    storage: 'Storage',
+    workspace: 'Workspace',
+    platform: 'Platform',
+  };
+  return labels[String(category || '').toLowerCase()] || category || '';
 }
 
 /** Navigate to a notification action URL (same-origin path or full URL). */
@@ -36,4 +55,9 @@ export function openNotificationActionUrl(actionUrl) {
 
 export function isInboxNotificationUnread(notification) {
   return notification?.readAt == null;
+}
+
+export function decrementUnreadCount(setter) {
+  if (typeof setter !== 'function') return;
+  setter((prev) => Math.max(0, (typeof prev === 'number' ? prev : 0) - 1));
 }

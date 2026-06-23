@@ -5,6 +5,7 @@ const POLL_INTERVAL_MS = 60_000;
 
 export function useInboxUnreadCount({ enabled = true, poll = true } = {}) {
   const [unreadCount, setUnreadCount] = useState(0);
+  const [byCategory, setByCategory] = useState({});
   const [loading, setLoading] = useState(Boolean(enabled));
 
   const refresh = useCallback(async () => {
@@ -13,6 +14,7 @@ export function useInboxUnreadCount({ enabled = true, poll = true } = {}) {
       const data = await inboxService.getUnreadCount();
       const count = Number(data.unreadCount ?? 0);
       setUnreadCount(count);
+      setByCategory(data.byCategory || {});
       return count;
     } catch {
       return null;
@@ -30,7 +32,7 @@ export function useInboxUnreadCount({ enabled = true, poll = true } = {}) {
     return () => window.clearInterval(id);
   }, [enabled, poll, refresh]);
 
-  return { unreadCount, loading, refresh, setUnreadCount };
+  return { unreadCount, byCategory, loading, refresh, setUnreadCount };
 }
 
 export default useInboxUnreadCount;
