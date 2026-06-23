@@ -1,8 +1,10 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Mic, Terminal, Loader2, X, Music, CheckCircle } from 'lucide-react'
 import { MdArrowBack, MdPlayArrow } from 'react-icons/md'
 import heygenService from '../../services/heygenService'
+import creditsService, { isInsufficientCreditsError } from '../../services/creditsService'
 import { getSanitizedErrorMessage } from '../../utils/userFacingMessage'
+import { HEYGEN_VOICE_MAX_BYTES } from '../../utils/heygenAssetUpload'
 import '../../components/features/workspace/workspace/WorkspaceStyles.css'
 import '../Videos/Videos.css'
 import '../Avatars/Avatars.css'
@@ -20,9 +22,18 @@ function CreateVoice({ onBack }) {
   const [suggestedVoices, setSuggestedVoices] = useState([])
   const [isRecording, setIsRecording] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
+  const [uploadProgress, setUploadProgress] = useState(null)
+  const [creditEstimate, setCreditEstimate] = useState(null)
   const [mediaRecorder, setMediaRecorder] = useState(null)
   const timerRef = useRef(null)
   const fileInputRef = useRef(null)
+
+  useEffect(() => {
+    creditsService
+      .getPersonalEstimate({ feature: 'voice_clone' })
+      .then(setCreditEstimate)
+      .catch(() => setCreditEstimate(null))
+  }, [])
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -97,26 +108,45 @@ function CreateVoice({ onBack }) {
         return;
       }
 
+      if (selectedFile.size > HEYGEN_VOICE_MAX_BYTES) {
+        alert('Audio sample must be under 100 MB.');
+        return;
+      }
+
       setIsCreating(true);
       setCreationStatus('Uploading audio sample...');
+      setUploadProgress(null);
 
       try {
         await heygenService.cloneVoiceFromFile({
           voiceName: creationName,
           file: selectedFile,
           removeBackgroundNoise: true,
+          onUploadProgress: ({ percent }) => {
+            setUploadProgress(percent);
+            setCreationStatus(`Uploading audio sample… ${percent}%`);
+          },
+          onCloneStatus: () => {
+            setCreationStatus('Processing voice clone…');
+            setUploadProgress(null);
+          },
         });
         setCreationStatus('Voice cloned successfully!');
         setTimeout(() => {
           setIsCreating(false);
+          setUploadProgress(null);
           onBack(true);
         }, 2000);
       } catch (err) {
         console.error('Clone voice failed:', err);
-        setCreationStatus(`Error: ${getSanitizedErrorMessage(err, 'Cloning failed')}`);
+        const fallback = isInsufficientCreditsError(err)
+          ? 'Insufficient credits to clone this voice.'
+          : 'Cloning failed';
+        setCreationStatus(`Error: ${getSanitizedErrorMessage(err, fallback)}`);
         setTimeout(() => {
           setIsCreating(false);
           setCreationStatus('');
+          setUploadProgress(null);
         }, 4000);
       }
     } else {
@@ -180,6 +210,11 @@ function CreateVoice({ onBack }) {
               <div className="creation-loading">
                 <Loader2 size={60} className="spin-animation" />
                 <h3>{creationStatus}</h3>
+                {uploadProgress != null && uploadProgress < 100 ? (
+                  <div className="progress-bar-bg" style={{ width: 'min(280px, 80%)', margin: '12px auto 0' }}>
+                    <div className="progress-bar-fill" style={{ width: `${uploadProgress}%` }} />
+                  </div>
+                ) : null}
                 <p>We are orchestrating your neural voice model. This won't take long.</p>
               </div>
             ) : (
@@ -295,7 +330,7 @@ function CreateVoice({ onBack }) {
                                 <div className="format-pills">
                                   <span>.mp3</span>
                                   <span>.wav</span>
-                                  <span>Max 50 MB</span>
+                                  <span>Max 100 MB</span>
                                 </div>
                               </div>
                             </>
@@ -355,7 +390,26 @@ function CreateVoice({ onBack }) {
                     <Terminal size={18} />
                     <span>{suggestedVoices.length > 0 ? 'Regenerate Suggestions' : 'Synthesize Neural Voice'}</span>
                   </button>
-                  <p className="cta-note">Audio processing typically takes 1–3 minutes.</p>
+                  <p className="cta-note">
+                    {creditEstimate?.estimatedCredits != null ||
+                    creditEstimate?.credits != null ||
+                    creditEstimate?.cost != null
+                      ? `Estimated cost: ${
+                          creditEstimate.estimatedCredits ??
+                          creditEstimate.credits ??
+                          creditEstimate.cost
+                        } credit${
+                          Number(
+                            creditEstimate.estimatedCredits ??
+                              creditEstimate.credits ??
+                              creditEstimate.cost
+                          ) === 1
+                            ? ''
+                            : 's'
+                        }. `
+                      : ''}
+                    Audio processing typically takes 1–3 minutes.
+                  </p>
                 </div>
 
                 {suggestedVoices.length > 0 && (

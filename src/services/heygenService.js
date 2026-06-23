@@ -10,7 +10,9 @@ import {
   buildHeygenUrlAsset,
   canUploadFileAsHeygenUrl,
   HEYGEN_SOURCE_MAX_BYTES,
+  HEYGEN_VOICE_MAX_BYTES,
   uploadFileAsHeygenUrl,
+  uploadFormDataWithProgress,
   WORKSPACE_ASSET_MAX_BYTES,
 } from '../utils/heygenAssetUpload.js';
 
@@ -36,6 +38,54 @@ let voiceUploadRouteAvailable = null;
 
 function isHeygenUploadRouteMissing(status) {
   return MISSING_ROUTE_STATUSES.has(status);
+}
+
+function extractVoiceId(result) {
+  if (!result || typeof result !== 'object') return null;
+  return (
+    result.voice_id ||
+    result.voiceId ||
+    result.voice_clone_id ||
+    result.id ||
+    result.data?.voice_id ||
+    result.data?.voiceId ||
+    null
+  );
+}
+
+async function throwIfHeygenResponseFailed(response, fallbackLabel = 'Request') {
+  if (response.ok) return;
+
+  const errorText = await response.text();
+  let errorData = {};
+  try {
+    errorData = errorText ? JSON.parse(errorText) : {};
+  } catch {
+    errorData = { message: errorText };
+  }
+
+  const message =
+    errorData.message ||
+    errorData.error ||
+    (Array.isArray(errorData.errors) && errorData.errors.length
+      ? errorData.errors.join(' ')
+      : `${fallbackLabel} failed: ${response.status}`);
+
+  if (response.status === 413) {
+    throw userError(
+      'File is too large to send inside JSON. Upload the file first, then create with file.type "url".'
+    );
+  }
+
+  if (response.status === 402) {
+    throw new InsufficientCreditsError(sanitizeUserFacingMessage(message), errorData);
+  }
+
+  if (response.status === 403) {
+    throw userError(message || 'You do not have permission for this action. Try signing in again.');
+  }
+
+  throw userError(`${fallbackLabel} failed: ${response.status} - ${message}`);
 }
 
 const LOOKS_QUERY_KEYS = new Set([
@@ -197,25 +247,27 @@ class HeygenService {
 
   async createAvatar(payload) {
     try {
-      const endpoint = API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.CREATE;
-      const isFormData = payload instanceof FormData;
-      const headers = authOnlyHeaders();
-      if (!isFormData) {
-        headers['Content-Type'] = 'application/json';
+      const fileField = payload?.file;
+      if (fileField?.type === 'base64' || fileField?.data) {
+        throw userError(
+          'Do not send training media as base64 in JSON. Upload via POST /api/heygen/avatars/upload first, then use file.type "url".'
+        );
       }
+
+      const endpoint = API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.CREATE;
+      const headers = {
+        ...authOnlyHeaders(),
+        'Content-Type': 'application/json',
+      };
 
       const response = await fetch(buildUrl(endpoint), {
         method: 'POST',
         headers,
-        body: isFormData ? payload : JSON.stringify(payload),
+        body: JSON.stringify(payload),
       });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Athena VI API Error:', errorText);
-        throw userError(`Failed to create avatar: ${response.status} - ${errorText}`);
-      }
-      
+
+      await throwIfHeygenResponseFailed(response, 'Failed to create avatar');
+
       const data = await response.json();
       return data.data || data;
     } catch (error) {
@@ -259,7 +311,7 @@ class HeygenService {
     return (
       `Your file is about ${sizeMb} MB, but large uploads are not enabled on the server yet ` +
       `(only files up to ${limitMb} MB work without it). ` +
-      'Use a shorter training video under 50 MB, or ask your administrator to enable avatar file uploads.'
+      'Use POST /api/heygen/avatars/upload for training videos, or ask your administrator to enable file uploads.'
     );
   }
 
@@ -268,12 +320,15 @@ class HeygenService {
    * Prefers POST /api/heygen/avatars|voices/upload; falls back to workspace
    * asset upload for files ≤ 50 MB when the HeyGen upload route is not deployed.
    */
-  async uploadHeygenSourceFile(file, kind = 'avatar') {
+  async uploadHeygenSourceFile(file, kind = 'avatar', { onProgress } = {}) {
     if (!file) {
       throw userError('A file is required for upload.');
     }
-    if (file.size > HEYGEN_SOURCE_MAX_BYTES) {
-      throw userError('File exceeds the 900 MB upload limit.');
+
+    const maxBytes = kind === 'voice' ? HEYGEN_VOICE_MAX_BYTES : HEYGEN_SOURCE_MAX_BYTES;
+    if (file.size > maxBytes) {
+      const limitMb = Math.round(maxBytes / (1024 * 1024));
+      throw userError(`File exceeds the ${limitMb} MB upload limit.`);
     }
 
     const endpoint =
@@ -284,15 +339,37 @@ class HeygenService {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch(buildUrl(endpoint), {
-      method: 'POST',
-      headers: authOnlyHeaders(),
-      body: formData,
-    });
+    const uploadUrl = buildUrl(endpoint);
+    const headers = authOnlyHeaders();
+
+    let response;
+    let responseJson;
+
+    if (onProgress) {
+      try {
+        const xhrResult = await uploadFormDataWithProgress({
+          url: uploadUrl,
+          formData,
+          headers,
+          onProgress,
+        });
+        response = { ok: true, status: xhrResult.status };
+        responseJson = xhrResult.data;
+      } catch (xhrError) {
+        response = { ok: false, status: xhrError.status || 0 };
+        responseJson = xhrError.data || { message: xhrError.message };
+      }
+    } else {
+      response = await fetch(uploadUrl, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+      responseJson = await response.json().catch(() => ({}));
+    }
 
     if (response.ok) {
-      const data = await response.json();
-      const payload = data.data || data;
+      const payload = responseJson.data || responseJson;
       const url = payload.url;
       if (!url) {
         throw userError('Upload succeeded but no file URL was returned.');
@@ -300,7 +377,8 @@ class HeygenService {
       return url;
     }
 
-    const missingHeygenUpload = isHeygenUploadRouteMissing(response.status);
+    const status = response.status;
+    const missingHeygenUpload = isHeygenUploadRouteMissing(status);
     if (missingHeygenUpload) {
       if (kind === 'voice') voiceUploadRouteAvailable = false;
       else avatarUploadRouteAvailable = false;
@@ -308,7 +386,7 @@ class HeygenService {
 
     if (missingHeygenUpload && canUploadFileAsHeygenUrl(file)) {
       console.warn(
-        `HeyGen ${kind} upload route unavailable (${response.status}); using workspace asset upload.`
+        `HeyGen ${kind} upload route unavailable (${status}); using workspace asset upload.`
       );
       const { url } = await uploadFileAsHeygenUrl(file);
       return url;
@@ -318,15 +396,16 @@ class HeygenService {
       throw userError(this.formatLargeUploadBlockedMessage(file.size));
     }
 
-    const errorText = await response.text();
+    const errorText = responseJson?.message || JSON.stringify(responseJson);
     console.error('Athena VI upload error:', errorText);
-    throw userError(`Failed to upload file: ${response.status}`);
+    throw userError(`Failed to upload file: ${status}`);
   }
 
   /**
-   * Two-step avatar create: multipart upload → small JSON body with file URL.
+   * Avatar create from a local file: multipart upload → small JSON with file URL.
+   * Never embeds base64 in the create request.
    */
-  async createAvatarFromFile({ type, name, file, ...extra }) {
+  async createAvatarFromFile({ type, name, file, onUploadProgress, ...extra }) {
     if (!file) {
       throw userError('A file is required to create this avatar.');
     }
@@ -334,7 +413,10 @@ class HeygenService {
       throw userError('Avatar type and name are required.');
     }
 
-    const url = await this.uploadHeygenSourceFile(file, 'avatar');
+    const url = await this.uploadHeygenSourceFile(file, 'avatar', {
+      onProgress: onUploadProgress,
+    });
+
     return this.createAvatar({
       type,
       name,
@@ -344,9 +426,18 @@ class HeygenService {
   }
 
   /**
-   * Clone voice using a hosted audio URL instead of base64 in the JSON body.
+   * Clone voice from a local file: multipart upload → small JSON with audio URL.
+   * Never embeds base64 in the clone request.
    */
-  async cloneVoiceFromFile({ voiceName, file, language, removeBackgroundNoise = true }) {
+  async cloneVoiceFromFile({
+    voiceName,
+    file,
+    language,
+    removeBackgroundNoise = true,
+    onUploadProgress,
+    pollUntilReady = true,
+    onCloneStatus,
+  }) {
     if (!voiceName?.trim()) {
       throw userError('A voice name is required.');
     }
@@ -354,8 +445,11 @@ class HeygenService {
       throw userError('An audio sample is required to clone a voice.');
     }
 
-    const url = await this.uploadHeygenSourceFile(file, 'voice');
-    return this.cloneVoice({
+    const url = await this.uploadHeygenSourceFile(file, 'voice', {
+      onProgress: onUploadProgress,
+    });
+
+    const cloneResult = await this.cloneVoice({
       voice_name: voiceName.trim(),
       voiceName: voiceName.trim(),
       audio: buildHeygenUrlAsset(url),
@@ -363,6 +457,49 @@ class HeygenService {
       removeBackgroundNoise,
       ...(language ? { language } : {}),
     });
+
+    const voiceId = extractVoiceId(cloneResult);
+    if (pollUntilReady && voiceId) {
+      return this.pollVoiceCloneUntilReady(voiceId, { onProgress: onCloneStatus });
+    }
+    return cloneResult;
+  }
+
+  async pollVoiceCloneUntilReady(
+    voiceId,
+    { intervalMs = 5000, timeoutMs = 180000, onProgress } = {}
+  ) {
+    if (!voiceId) {
+      throw userError('Voice id is required to check clone status.');
+    }
+
+    const deadline = Date.now() + timeoutMs;
+    let lastStatus = null;
+
+    while (Date.now() < deadline) {
+      const result = await this.getVoiceStatus(voiceId);
+      const status = String(result?.status || result?.data?.status || '').toLowerCase();
+      lastStatus = status;
+      onProgress?.(result, status);
+
+      if (['completed', 'ready', 'success', 'active'].includes(status)) {
+        return result;
+      }
+      if (['failed', 'error', 'rejected'].includes(status)) {
+        throw userError(result?.message || 'Voice clone failed. Try a clearer MP3 or WAV sample.');
+      }
+      if (status && status !== 'processing' && status !== 'pending') {
+        return result;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    }
+
+    throw userError(
+      lastStatus === 'processing' || lastStatus === 'pending'
+        ? 'Voice clone is still processing. Check My Voices in a few minutes.'
+        : 'Timed out waiting for voice clone to finish.'
+    );
   }
 
   /**
@@ -508,24 +645,22 @@ class HeygenService {
 
   async cloneVoice(payload) {
     try {
+      const audioField = payload?.audio;
+      if (audioField?.type === 'base64' || audioField?.data) {
+        throw userError(
+          'Do not send clone audio as base64 in JSON. Upload via POST /api/heygen/voices/upload first, then use audio.type "url".'
+        );
+      }
+
       const endpoint = API_CONFIG.ENDPOINTS.HEYGEN.VOICES.CLONE;
       console.log('Athena VI: Calling cloneVoice API...', endpoint, payload);
       const response = await fetch(buildUrl(endpoint), {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        let errorData;
-        try {
-          errorData = await response.json();
-        } catch {
-          errorData = { message: await response.text() };
-        }
-        console.error('Athena VI: Clone Voice API Error:', errorData);
-        throw userError(errorData.message || errorData.error || `Failed to clone voice: ${response.status}`);
-      }
+      await throwIfHeygenResponseFailed(response, 'Failed to clone voice');
 
       const data = await response.json();
       return data.data || data;
