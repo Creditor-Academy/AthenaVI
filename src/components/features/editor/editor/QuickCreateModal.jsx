@@ -143,8 +143,17 @@ const BACKGROUND_COLOR_PALETTE = [
   },
 ];
 
-const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
+const QuickCreateModal = ({
+  isOpen,
+  onClose,
+  onGenerate,
+  initialOwnership = null,
+  initialGroupId = null,
+  initialLookId = null,
+}) => {
   const [step, setStep] = useState(1);
+  const [ownershipTab, setOwnershipTab] = useState(() => initialOwnership || 'public');
+  const ownershipForTab = ownershipTab === 'private' ? 'private' : 'public';
   const [avatarEngine, setAvatarEngine] = useState(() => normalizeAvatarEngine('avatar_iv'));
   const [groups, setGroups] = useState([]);
   const [groupsHasMore, setGroupsHasMore] = useState(false);
@@ -179,6 +188,7 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
   const [previewLoadingVoiceId, setPreviewLoadingVoiceId] = useState(null);
   const [looksDisplayLimit, setLooksDisplayLimit] = useState(AVATAR_DISPLAY_PAGE);
   const previewAudioRef = useRef(null);
+  const bootstrapRef = useRef(false);
 
   const stopVoicePreview = useCallback(() => {
     if (previewAudioRef.current) {
@@ -206,6 +216,7 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     if (!isOpen) {
       stopVoicePreview();
       setStep(1);
+      setOwnershipTab(initialOwnership || 'public');
       setSkipVoice(false);
       setSelectedVoice(null);
       setVoiceSearch('');
@@ -219,7 +230,7 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     if (step === 1 && groups.length === 0) {
       fetchGroups();
     }
-  }, [isOpen, step, groups.length, resetAvatarPicker, stopVoicePreview]);
+  }, [isOpen, step, groups.length, ownershipForTab, resetAvatarPicker, stopVoicePreview, initialOwnership]);
 
   useEffect(() => {
     if (isOpen && step === 3 && voices.length === 0) {
@@ -348,7 +359,7 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     setLoadingGroups(true);
     try {
       const responseData = await heygenService.getAvatarGroups({
-        ownership: 'public',
+        ownership: ownershipForTab,
         limit: AVATAR_DISPLAY_PAGE,
       });
       const pagination = extractGroupsPagination(responseData);
@@ -370,7 +381,7 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     setLoadingMoreGroups(true);
     try {
       const responseData = await heygenService.getAvatarGroups({
-        ownership: 'public',
+        ownership: ownershipForTab,
         limit: AVATAR_DISPLAY_PAGE,
         token: groupsNextToken,
       });
@@ -446,6 +457,50 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     );
   }, [looksPageData]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      bootstrapRef.current = false;
+      return;
+    }
+    if (bootstrapRef.current || !initialGroupId) return;
+
+    bootstrapRef.current = true;
+    const ownership = initialOwnership || 'private';
+    setOwnershipTab(ownership);
+
+    (async () => {
+      setLoadingGroups(true);
+      try {
+        const responseData = await heygenService.getAvatarGroups({
+          ownership,
+          limit: 50,
+        });
+        const mapped = mapGroupList(responseData);
+        setGroups(mapped);
+        const group = mapped.find((g) => String(g.id) === String(initialGroupId));
+        if (!group) return;
+
+        setSelectedGroup(group);
+        const { parsed, mappedLooks } = await fetchMappedGroupLooks(heygenService, group, {
+          ownership,
+          limit: 20,
+        });
+        const look =
+          mappedLooks.find((l) => String(l.id) === String(initialLookId)) || mappedLooks[0];
+        if (!look) return;
+
+        setLooksPageData(parsed);
+        setLooks(mappedLooks);
+        applyLookSelection(look, group, parsed);
+        setStep(4);
+      } catch (err) {
+        console.error('Failed to bootstrap quick create from avatar:', err);
+      } finally {
+        setLoadingGroups(false);
+      }
+    })();
+  }, [isOpen, initialGroupId, initialLookId, initialOwnership, applyLookSelection]);
+
   const applySingleLookSelection = useCallback(
     (mappedLook, group, pageData = looksPageData) => {
       setLooks([mappedLook]);
@@ -488,6 +543,7 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     try {
       const { parsed, mappedLooks } = await fetchMappedGroupLooks(heygenService, group, {
         limit: 20,
+        ownership: ownershipForTab,
       });
 
       if (mappedLooks.length === 0) {
@@ -539,7 +595,7 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
     try {
       const responseData = await heygenService.getAvatarLooks({
         group_id: selectedGroup.id,
-        ownership: 'public',
+        ownership: ownershipForTab,
         limit: 20,
         token: looksNextToken,
       });
@@ -895,6 +951,40 @@ const QuickCreateModal = ({ isOpen, onClose, onGenerate }) => {
 
     return (
       <>
+        <div className="qc-ownership-tabs" role="tablist" aria-label="Presenter library">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={ownershipTab === 'public'}
+            className={`qc-ownership-tab${ownershipTab === 'public' ? ' active' : ''}`}
+            onClick={() => {
+              if (ownershipTab === 'public') return;
+              setOwnershipTab('public');
+              setGroups([]);
+              setGroupsHasMore(false);
+              setGroupsNextToken(null);
+              resetAvatarPicker();
+            }}
+          >
+            Studio
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={ownershipTab === 'private'}
+            className={`qc-ownership-tab${ownershipTab === 'private' ? ' active' : ''}`}
+            onClick={() => {
+              if (ownershipTab === 'private') return;
+              setOwnershipTab('private');
+              setGroups([]);
+              setGroupsHasMore(false);
+              setGroupsNextToken(null);
+              resetAvatarPicker();
+            }}
+          >
+            My Avatars
+          </button>
+        </div>
         {renderAvatarSearchBar('Search presenters by name...')}
         {filteredGroups.length === 0 ? (
           <div className="qc-loading">

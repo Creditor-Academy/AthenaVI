@@ -1,6 +1,6 @@
 const SIDE_LABELS = {
   3: 'Triangle',
-  4: 'Square',
+  4: 'Diamond',
   5: 'Pentagon',
   6: 'Hexagon',
   7: 'Heptagon',

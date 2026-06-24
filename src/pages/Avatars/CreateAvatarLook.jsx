@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, Upload, Video } from 'lucide-react';
 import { MdArrowBack } from 'react-icons/md';
 import heygenService from '../../services/heygenService';
 import {
+  buildAvatarPresenterSeed,
   buildPersonalAvatarLookPrompt,
   extractHeygenList,
   LOOK_MAX_WAIT_MS,
@@ -11,11 +12,14 @@ import {
   mapLookTile,
   parseAvatarCreateResponse,
 } from '../../utils/heygenAvatars';
+import { HEYGEN_SOURCE_MAX_BYTES } from '../../utils/heygenAssetUpload';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
 import '../Videos/Videos.css';
 import './Avatars.css';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const REFERENCE_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 function formatElapsed(seconds) {
   const mins = Math.floor(seconds / 60);
@@ -24,9 +28,14 @@ function formatElapsed(seconds) {
   return `${mins}m ${secs.toString().padStart(2, '0')}s`;
 }
 
-function CreateAvatarLook({ context, onBack }) {
+function CreateAvatarLook({ context, onBack, onUseInVideo }) {
   const [lookName, setLookName] = useState('');
   const [lookPrompt, setLookPrompt] = useState('');
+  const [referenceMode, setReferenceMode] = useState('preview');
+  const [customFile, setCustomFile] = useState(null);
+  const [customPreviewUrl, setCustomPreviewUrl] = useState(null);
+  const [uploadedReferenceUrl, setUploadedReferenceUrl] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
@@ -35,13 +44,93 @@ function CreateAvatarLook({ context, onBack }) {
   const [elapsedSec, setElapsedSec] = useState(0);
   const [processingPhase, setProcessingPhase] = useState('submitting');
   const pollAbortRef = useRef(false);
+  const fileInputRef = useRef(null);
 
   const avatarGroupId = context?.groupId;
   const referenceImage = context?.previewImage || null;
   const avatarName = context?.name || 'Your avatar';
 
+  const displayReferenceImage =
+    referenceMode === 'custom' && (customPreviewUrl || uploadedReferenceUrl)
+      ? customPreviewUrl || uploadedReferenceUrl
+      : referenceImage;
+
+  const handleReferenceFileChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!REFERENCE_IMAGE_TYPES.includes(file.type)) {
+      setError('Use a JPEG, PNG, or WebP image for the reference.');
+      return;
+    }
+    if (file.size > HEYGEN_SOURCE_MAX_BYTES) {
+      setError('Reference image is too large. Use a smaller file.');
+      return;
+    }
+
+    setError('');
+    setCustomFile(file);
+    setUploadedReferenceUrl(null);
+    setCustomPreviewUrl(URL.createObjectURL(file));
+    setReferenceMode('custom');
+  };
+
+  const clearCustomReference = () => {
+    setCustomFile(null);
+    setUploadedReferenceUrl(null);
+    if (customPreviewUrl) URL.revokeObjectURL(customPreviewUrl);
+    setCustomPreviewUrl(null);
+    setReferenceMode('preview');
+    setUploadProgress(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const resolveReferenceImageUrl = async () => {
+    if (referenceMode === 'preview') {
+      if (!referenceImage) {
+        throw new Error('Reference avatar image is not available yet. Open your avatar once its preview has loaded.');
+      }
+      return referenceImage;
+    }
+
+    if (uploadedReferenceUrl) return uploadedReferenceUrl;
+    if (!customFile) {
+      throw new Error('Upload a reference image or switch back to avatar preview.');
+    }
+
+    setUploadProgress(0);
+    const result = await heygenService.uploadHeygenSourceFile(customFile, 'avatar', {
+      onProgress: ({ percent }) => setUploadProgress(percent),
+    });
+    const url = result?.url || result?.file_url || result?.data?.url;
+    if (!url) {
+      throw new Error('Upload succeeded but no image URL was returned.');
+    }
+    setUploadedReferenceUrl(url);
+    setUploadProgress(null);
+    return url;
+  };
+
+  const handleUseLookInVideo = (look) => {
+    if (!onUseInVideo || !look?.ready) return;
+    const seed = buildAvatarPresenterSeed(
+      {
+        id: avatarGroupId,
+        name: avatarName,
+        image: referenceImage,
+        previewImage: referenceImage,
+      },
+      look
+    );
+    onUseInVideo(seed);
+  };
+
   const fetchLooksFromApi = useCallback(async () => {
-    const res = await heygenService.getAvatarLooks({ group_id: avatarGroupId, limit: 50 });
+    const res = await heygenService.getAvatarLooks({
+      group_id: avatarGroupId,
+      ownership: 'private',
+      limit: 50,
+    });
     const lookList = extractHeygenList(res, ['avatar_looks', 'looks', 'avatars']);
     return lookList
       .map((look) => mapLookTile(look, avatarName, referenceImage))
@@ -130,15 +219,11 @@ function CreateAvatarLook({ context, onBack }) {
       return;
     }
 
-    if (!referenceImage) {
-      setError('Reference avatar image is not available yet. Open your avatar from My Avatars once its preview has loaded.');
-      return;
-    }
-
     if (!lookName.trim()) {
       setError('Give this look a name.');
       return;
     }
+
     if (!lookPrompt.trim()) {
       setError('Describe the outfit, setting, or style for this look.');
       return;
@@ -152,10 +237,21 @@ function CreateAvatarLook({ context, onBack }) {
     setError('');
     setProcessingPhase('submitting');
     setStatus('Submitting your look…');
+
+    let resolvedReferenceUrl;
+    try {
+      resolvedReferenceUrl = await resolveReferenceImageUrl();
+    } catch (uploadErr) {
+      setError(uploadErr?.message || 'Failed to upload reference image');
+      setIsProcessing(false);
+      setUploadProgress(null);
+      return;
+    }
+
     setPendingLook({
       id: null,
       name: savedName,
-      image: referenceImage,
+      image: resolvedReferenceUrl,
       processing: true,
     });
 
@@ -165,7 +261,7 @@ function CreateAvatarLook({ context, onBack }) {
         prompt: fullPrompt,
         avatarGroupId,
         avatarId: context?.lookId || undefined,
-        referenceImageUrl: referenceImage,
+        referenceImageUrl: resolvedReferenceUrl,
       });
 
       const created = parseAvatarCreateResponse(response, savedName);
@@ -357,24 +453,84 @@ function CreateAvatarLook({ context, onBack }) {
               </div>
             ) : (
               <div className="form-body">
+                <div className="avatar-look-reference-mode">
+                  <label className="avatar-look-reference-mode__option">
+                    <input
+                      type="radio"
+                      name="referenceMode"
+                      value="preview"
+                      checked={referenceMode === 'preview'}
+                      onChange={() => {
+                        setReferenceMode('preview');
+                        setError('');
+                      }}
+                    />
+                    <span>Use avatar preview</span>
+                  </label>
+                  <label className="avatar-look-reference-mode__option">
+                    <input
+                      type="radio"
+                      name="referenceMode"
+                      value="custom"
+                      checked={referenceMode === 'custom'}
+                      onChange={() => setReferenceMode('custom')}
+                    />
+                    <span>Upload custom reference</span>
+                  </label>
+                </div>
+
                 <div className="avatar-look-reference">
                   <div className="avatar-look-reference__media">
-                    {referenceImage ? (
-                      <img src={referenceImage} alt={`${avatarName} reference`} />
+                    {displayReferenceImage ? (
+                      <img src={displayReferenceImage} alt={`${avatarName} reference`} />
                     ) : (
                       <div className="avatar-look-reference__placeholder">
                         <Sparkles size={28} />
                       </div>
                     )}
-                    <span className="avatar-look-reference__tag">Reference avatar</span>
+                    <span className="avatar-look-reference__tag">
+                      {referenceMode === 'custom' ? 'Custom reference' : 'Reference avatar'}
+                    </span>
                   </div>
                   <div className="avatar-look-reference__copy">
                     <span className="avatar-look-context__badge">Personal avatar</span>
                     <strong>{avatarName}</strong>
                     <p>
-                      New looks use this reference image plus your avatar group id. The prompt automatically
+                      New looks use your reference image plus avatar group id. The prompt automatically
                       asks for the <strong>same person as the reference avatar</strong>.
                     </p>
+                    {referenceMode === 'custom' ? (
+                      <div className="avatar-look-reference-upload">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept={REFERENCE_IMAGE_TYPES.join(',')}
+                          className="avatar-look-reference-upload__input"
+                          onChange={handleReferenceFileChange}
+                        />
+                        <button
+                          type="button"
+                          className="btn-action-secondary avatar-look-reference-upload__btn"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <Upload size={16} />
+                          <span>{customFile ? 'Change image' : 'Choose image'}</span>
+                        </button>
+                        {customFile ? (
+                          <button
+                            type="button"
+                            className="avatar-look-reference-upload__clear"
+                            onClick={clearCustomReference}
+                          >
+                            Use avatar preview instead
+                          </button>
+                        ) : null}
+                        {uploadProgress != null ? (
+                          <p className="avatar-look-reference-upload__progress">Uploading… {uploadProgress}%</p>
+                        ) : null}
+                        <p className="avatar-look-reference-upload__hint">JPEG, PNG, or WebP</p>
+                      </div>
+                    ) : null}
                     <div className="avatar-look-reference__ids">
                       <span>Avatar id · {avatarGroupId}</span>
                     </div>
@@ -456,6 +612,16 @@ function CreateAvatarLook({ context, onBack }) {
                       ) : null}
                     </div>
                     <span className="avatar-look-tile__label">{look.name}</span>
+                    {look.ready && onUseInVideo ? (
+                      <button
+                        type="button"
+                        className="avatar-look-tile__use-btn"
+                        onClick={() => handleUseLookInVideo(look)}
+                      >
+                        <Video size={14} />
+                        Use in video
+                      </button>
+                    ) : null}
                   </div>
                 ))}
               </div>

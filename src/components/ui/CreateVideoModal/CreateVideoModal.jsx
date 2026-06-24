@@ -157,7 +157,8 @@ const CreateVideoModal = ({
   onClose,
   onCreateVideo,
   initialWorkspaceId = '',
-  initialFolderId = ''
+  initialFolderId = '',
+  presenterSeed = null,
 }) => {
   const { user: authUser } = useAuth();
   const currentUserId = extractUserId(authUser);
@@ -683,7 +684,8 @@ const CreateVideoModal = ({
           folderId,
           tags: videoTags,
           name: payload.title,
-          videoId: eventVideo.id
+          videoId: eventVideo.id,
+          ...(presenterSeed ? { presenterSeed } : {}),
         });
       }
     } catch (error) {
@@ -747,6 +749,15 @@ const CreateVideoModal = ({
           </header>
 
           <div className="create-video-wizard-body">
+            {presenterSeed?.avatarName ? (
+              <div className="create-video-presenter-banner" role="status">
+                Using <strong>{presenterSeed.avatarName}</strong>
+                {presenterSeed.lookName && presenterSeed.lookName !== presenterSeed.avatarName
+                  ? <> — {presenterSeed.lookName}</>
+                  : null}
+                {' '}as your presenter
+              </div>
+            ) : null}
             {step === 1 && (
               <div>
                 <div className="create-video-page-size-grid" role="radiogroup" aria-label="Choose canvas size">

@@ -23,6 +23,7 @@ import avatar1 from '../../assets/Avatarr1.png'
 import projectTemplate from '../../constants/projectTemplate.json'
 import workspaceService from '../../services/workspaceService'
 import {
+  applyPresenterSeedToScene,
   buildHeygenAvatarContent,
   getSceneAvatarKind,
   getSceneAvatarLookId,
@@ -284,16 +285,41 @@ function buildInitialProject(initialConfig) {
   })();
 
   const projectId = initialConfig?.videoId || initialConfig?.videoData?.id || initialConfig?.videoData?._id
+  let resolvedScenes = initialScenes.length > 0
+    ? normalizeBootScenes(
+        initialScenes.map((scene, idx) => ensureSceneIdentity(scene, idx)),
+        resolvedResolution
+      )
+    : [];
+
+  if (initialConfig?.presenterSeed) {
+    if (resolvedScenes.length === 0) {
+      const sceneKey = `scene_${Date.now()}`;
+      resolvedScenes = normalizeBootScenes(
+        [
+          ensureSceneIdentity({
+            id: sceneKey,
+            sceneId: sceneKey,
+            title: 'Intro',
+            duration: 8,
+            clips: [],
+          }, 0),
+        ],
+        resolvedResolution
+      );
+    }
+    resolvedScenes = resolvedScenes.map((scene, idx) =>
+      idx === 0
+        ? applyPresenterSeedToScene(scene, initialConfig.presenterSeed, resolvedResolution)
+        : scene
+    );
+  }
+
   const base = {
     ...projectTemplate.project,
     title: resolvedTitle,
     resolution: resolvedResolution,
-    scenes: initialScenes.length > 0
-      ? normalizeBootScenes(
-          initialScenes.map((scene, idx) => ensureSceneIdentity(scene, idx)),
-          resolvedResolution
-        )
-      : [],
+    scenes: resolvedScenes,
     updatedAt: new Date().toISOString(),
     id: projectId,
     workspaceId: initialConfig?.workspaceId || initialConfig?.videoData?.workspaceId,
@@ -334,6 +360,13 @@ function Create({ onBack, initialConfig = null }) {
   const [timelineScope, setTimelineScope] = useState('all')
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(1)
+
+  const pausePlayback = useCallback(() => {
+    if (!isPlaying) return
+    playerRef.current?.pause()
+    setIsPlaying(false)
+    window.speechSynthesis?.cancel()
+  }, [isPlaying])
   const [zoomLevel, setZoomLevel] = useState(100)
   const [showPreviewModal, setShowPreviewModal] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
@@ -904,6 +937,7 @@ function Create({ onBack, initialConfig = null }) {
 
   // Update a specific layer's size within the active scene
   const updateLayerSize = (layerId, width, height) => {
+    pausePlayback()
     if (!activeSceneId) return
     setProject(prev => ({
       ...prev,
@@ -921,6 +955,7 @@ function Create({ onBack, initialConfig = null }) {
   }
 
   const updateLayerRotation = (layerId, rotation) => {
+    pausePlayback()
     if (!activeSceneId) return
     const normalized = ((rotation % 360) + 360) % 360
     setProject(prev => ({
@@ -992,6 +1027,7 @@ function Create({ onBack, initialConfig = null }) {
 
   // Update a specific layer's position within the active scene (with optional snap)
   const updateLayerPosition = (layerId, x, y, options) => {
+    pausePlayback()
     uxUpdateLayerPosition(layerId, x, y, options)
   }
 
@@ -1162,12 +1198,14 @@ function Create({ onBack, initialConfig = null }) {
   }
 
   const handleSelectLayer = (layerId, sceneId, event) => {
+    pausePlayback()
     if (sceneId) setActiveSceneId(sceneId)
     selectLayer(layerId, sceneId, { additive: event?.shiftKey })
     if (layerId) setIsRightSidebarOpen(true)
   }
 
   const handleSelectLayerId = (layerId) => {
+    pausePlayback()
     if (layerId) {
       setSelectedLayerIds([layerId])
       setSelectedLayerId(layerId)
@@ -1946,6 +1984,7 @@ function Create({ onBack, initialConfig = null }) {
   }
 
   const handleSeek = (time) => {
+    pausePlayback()
     setCurrentTime(time)
     if (playerRef.current?.seekTo) {
       playerRef.current.seekTo(time)
@@ -1958,6 +1997,7 @@ function Create({ onBack, initialConfig = null }) {
   }
 
   const handleSelectScene = useCallback((sceneId, options = {}) => {
+    pausePlayback()
     setActiveSceneId(sceneId)
     setSelectedLayerIds([])
     setSelectedLayerId(null)
@@ -1976,9 +2016,10 @@ function Create({ onBack, initialConfig = null }) {
     if (options.openSidebar && !isRightSidebarOpen) {
       setIsRightSidebarOpen(true)
     }
-  }, [getSceneStartTime, timelineScope, isRightSidebarOpen])
+  }, [getSceneStartTime, timelineScope, isRightSidebarOpen, pausePlayback])
 
   const handleSelectAvatarVideoFromTimeline = useCallback((sceneId) => {
+    pausePlayback()
     const scene = projectRef.current?.scenes?.find((s) => s.id === sceneId)
     setActiveSceneId(sceneId)
 
@@ -1996,7 +2037,7 @@ function Create({ onBack, initialConfig = null }) {
     const start = getSceneStartTime(sceneId)
     setCurrentTime(start)
     playerRef.current?.seekTo?.(start)
-  }, [getSceneStartTime])
+  }, [getSceneStartTime, pausePlayback])
 
   const handleQuickCreateGenerate = (payload) => {
     if (payload.isStoryboard) {
@@ -2661,6 +2702,9 @@ function Create({ onBack, initialConfig = null }) {
         isOpen={showQuickCreateModal && !isProjectLoading}
         onClose={() => setShowQuickCreateModal(false)}
         onGenerate={handleQuickCreateGenerate}
+        initialOwnership={initialConfig?.presenterSeed ? 'private' : null}
+        initialGroupId={initialConfig?.presenterSeed?.avatarGroupId ?? null}
+        initialLookId={initialConfig?.presenterSeed?.avatarLookId ?? null}
       />
       <PresenterModeModal
         isOpen={showPresenterModeModal && !isProjectLoading}
@@ -2850,6 +2894,7 @@ function Create({ onBack, initialConfig = null }) {
               selectedLayerIds={selectedLayerIds}
               currentTime={currentTime}
               isPlaying={isPlaying}
+              onPausePlayback={pausePlayback}
               onSeek={handleSeek}
               onSelectScene={handleSelectScene}
               onSelectAvatarVideo={handleSelectAvatarVideoFromTimeline}

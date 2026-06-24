@@ -330,6 +330,22 @@ const VideoCanvas = forwardRef(({
             </div>
           )}
 
+          {editorPlaybackActive && (
+            <div
+              className="canvas-pause-to-edit-overlay"
+              role="button"
+              tabIndex={0}
+              aria-label="Pause playback to edit"
+              title="Click to pause and edit"
+              onMouseDown={(e) => {
+                e.preventDefault()
+                remotionPlayerRef.current?.pause()
+                setIsPlaying(false)
+                window.speechSynthesis?.cancel()
+              }}
+            />
+          )}
+
           {!showRemotionPlayer && (
             <div
               onClick={handleOverlayClick}
