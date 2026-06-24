@@ -172,7 +172,7 @@ const styles = `
 
 .video-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 32px;
   margin-bottom: 120px;
 }
@@ -625,6 +625,7 @@ const styles = `
 }
 
 @media (max-width: 1024px) {
+  .video-grid { grid-template-columns: repeat(2, 1fr); }
   .hiw-steps-row { grid-template-columns: repeat(2, 1fr); gap: 48px 32px; }
   .hiw-track-line { display: none; }
 }

@@ -1193,3 +1193,39 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Inline user detail drawer ─────────────────────────────── */
+.sa-drawer {
+  border-top: none;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-hover, rgba(59, 130, 246, 0.03));
+}
+
+.sa-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sa-drawer-header .sa-detail-hero-info {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.sa-drawer .sa-tab-bar {
+  padding: 0 20px;
+}
+
+.sa-drawer .sa-tab-content {
+  padding: 0;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.sa-drawer .sa-tab-pane {
+  padding: 20px;
+}

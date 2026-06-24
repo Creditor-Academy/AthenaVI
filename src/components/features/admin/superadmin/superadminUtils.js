@@ -61,3 +61,13 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-
 export function isValidUuid(value) {
   return UUID_RE.test(String(value || '').trim())
 }
+
+export function formatBytes(bytes) {
+  const n = Number(bytes)
+  if (!Number.isFinite(n) || n < 0) return '—'
+  if (n === 0) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  const i = Math.min(Math.floor(Math.log(n) / Math.log(1024)), units.length - 1)
+  const val = n / Math.pow(1024, i)
+  return `${i === 0 ? val : val.toFixed(2)} ${units[i]}`
+}
