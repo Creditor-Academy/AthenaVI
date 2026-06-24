@@ -139,7 +139,7 @@ function Login({ onSuccess, onForgotPassword }) {
       </div>
 
       <button type="submit" className="auth-submit-btn" disabled={loading}>
-        {loading ? 'Signing In...' : 'Sign In'}
+        {loading ? 'Logging in...' : 'Log in'}
       </button>
 
       <div className="auth-divider">
