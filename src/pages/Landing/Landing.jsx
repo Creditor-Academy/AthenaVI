@@ -83,7 +83,7 @@ function Landing({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToC
         <UnifiedVideoSection />
         <ProductsSection />
         <WebsiteTemplateDomeSection onLoginClick={onLoginClick} />
-        <TemplatesSection onNavigateToSolution={onNavigateToSolution} />
+        <TemplatesSection onNavigateToSolution={onLoginClick} />
         <PlatformFeatures />
         <UseCases />
         <ReadySection />

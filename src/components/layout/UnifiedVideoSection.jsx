@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FiFolderPlus, FiFileText, FiUser, FiPlay, FiArrowUpRight, FiCheckCircle, FiArrowRight } from 'react-icons/fi';
+import { FiFolderPlus, FiFileText, FiUser, FiPlay, FiCheckCircle } from 'react-icons/fi';
 import CustomizeAi from '../../assets/CustomizeAi.jpg';
 import AIvideo from '../../assets/AIvideo.jpg';
 import Voice from '../../assets/Voice.jpg';
+import PersonalAvatar from '../../assets/Personal Avatar.mp4';
 
 /* ── Step data from HowItWorks ── */
 const steps = [
@@ -171,7 +172,7 @@ const styles = `
 
 .video-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 32px;
   margin-bottom: 120px;
 }
@@ -400,7 +401,7 @@ const styles = `
 }
 .hiw-heading {
     font-family: 'Georgia', 'Times New Roman', serif;
-    font-size: 55px;
+    font-size: clamp(32px, 4.5vw, 52px);
     font-weight: 400;
     color: #0f172a;
     line-height: 1.2;
@@ -414,133 +415,270 @@ const styles = `
     background-clip: text;
 }
 
+/* ── Timeline Flow (no cards) ── */
 .hiw-timeline {
+    max-width: 1100px;
+    margin: 0 auto;
+    position: relative;
+    padding: 0 12px;
+}
+
+.hiw-track-line {
+    position: absolute;
+    top: 36px;
+    left: 12.5%;
+    right: 12.5%;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        #3b82f6 0%,
+        #6366f1 35%,
+        rgba(99, 102, 241, 0.35) 70%,
+        rgba(203, 213, 225, 0.6) 100%
+    );
+    z-index: 0;
+    transform-origin: left center;
+    transform: scaleX(0);
+    transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
+}
+.hiw-timeline.visible .hiw-track-line {
+    transform: scaleX(1);
+}
+
+.hiw-steps-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 0;
-    max-width: 1200px;
-    margin: 80px auto 0;
-    position: relative;
-}
-.hiw-timeline::before {
-    content: '';
-    position: absolute;
-    top: 38px;
-    left: calc(12.5% + 40px);
-    right: calc(12.5% + 40px);
-    height: 2px;
-    background: linear-gradient(90deg, transparent, #3b82f6, #8b5cf6, #3b82f6, transparent);
-    z-index: 0;
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform 1.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.hiw-timeline.visible::before { transform: scaleX(1); }
-
-.hiw-step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 0 20px;
+    gap: 28px;
     position: relative;
     z-index: 1;
-    opacity: 0;
-    transform: translateY(30px);
-    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.hiw-timeline.visible .hiw-step { opacity: 1; transform: translateY(0); }
 
-.hiw-icon-wrap {
-    width: 80px;
-    height: 80px;
-    border-radius: 24px;
-    background: #ffffff;
-    border: 1px solid rgba(15, 23, 42, 0.08);
+.hiw-step {
+    text-align: center;
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hiw-timeline.visible .hiw-step {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.hiw-node {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    margin: 0 auto 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 28px;
-    box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.05);
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    z-index: 2;
-    color: #1e40af;
-    position: relative;
-}
-.hiw-step:hover .hiw-icon-wrap {
-    transform: translateY(-5px) rotate(8deg);
-    background: #1e40af;
-    color: #ffffff;
-    box-shadow: 0 20px 40px -10px rgba(30, 64, 175, 0.3);
-    border-color: transparent;
-}
-.hiw-icon-wrap svg { width: 32px; height: 32px; stroke-width: 1.5; }
-
-.hiw-card {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    border-radius: 24px;
-    padding: 32px 24px;
-    width: 100%;
-    max-width: 280px;
-    transition: all 0.4s ease;
-}
-.hiw-step:hover .hiw-card {
-    transform: translateY(-8px);
     background: #ffffff;
-    box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.08);
-    border-color: rgba(59, 130, 246, 0.15);
+    border: 2px solid rgba(15, 23, 42, 0.08);
+    color: #64748b;
+    position: relative;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.35s ease,
+                border-color 0.35s ease,
+                color 0.35s ease;
 }
-.hiw-card h3 { 
-  font-family: 'Inter', sans-serif;
-  font-size: 19px; 
-  font-weight: 700; 
-  color: #0f172a; 
-  margin: 0 0 14px; 
-  letter-spacing: -0.5px;
-}
-.hiw-card p { 
-  font-family: 'Inter', sans-serif;
-  font-size: 15px; 
-  line-height: 1.6; 
-  color: #475569; 
-  margin: 0; 
-  font-weight: 400;
+.hiw-step:hover .hiw-node {
+    transform: translateY(-4px) scale(1.05);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #3b82f6;
+    box-shadow: 0 12px 28px rgba(59, 130, 246, 0.15);
 }
 
-.hiw-demo-wrap {
-    max-width: 1000px;
-    margin: 100px auto 0;
-    opacity: 0;
-    transform: translateY(40px);
-    transition: opacity 0.8s ease 0.3s, transform 0.8s ease 0.3s;
+.hiw-node-first {
+    background: linear-gradient(145deg, #1e40af 0%, #3b82f6 100%);
+    border: none;
+    color: #ffffff;
+    box-shadow: 0 10px 28px rgba(59, 130, 246, 0.35);
 }
-.hiw-demo-wrap.visible { opacity: 1; transform: translateY(0); }
+.hiw-step:hover .hiw-node-first {
+    border: none;
+    color: #ffffff;
+    box-shadow: 0 16px 36px rgba(59, 130, 246, 0.45);
+}
 
-.hiw-demo {
-    border-radius: 24px;
-    border: 1px solid #e2e8f0;
-    background: #fff;
-    box-shadow: 0 32px 80px rgba(0,0,0,0.06);
-    overflow: hidden;
+.hiw-step-num {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #3b82f6;
+    margin-bottom: 10px;
+}
+
+.hiw-step-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 19px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 10px;
+    letter-spacing: -0.4px;
+    line-height: 1.3;
+}
+
+.hiw-step-desc {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 1.65;
+    color: #64748b;
+    margin: 0 auto;
+    max-width: 220px;
+    font-weight: 400;
+}
+
+/* ── Video Player Container ── */
+.vp-wrapper {
+  margin-top: 80px;
+  display: flex;
+  justify-content: center;
+}
+
+.vp-browser {
+  width: 100%;
+  max-width: 900px;
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  box-shadow:
+    0 0 0 1px rgba(15, 23, 42, 0.1),
+    0 8px 24px rgba(15, 23, 42, 0.12),
+    0 32px 64px rgba(15, 23, 42, 0.14);
+  background: #0f172a;
+  line-height: 0;
+}
+
+/* The video fills the container fully */
+.vp-video {
+  width: 100%;
+  height: auto;
+  display: block;
+  max-height: 500px;
+  object-fit: cover;
+}
+
+/* Bottom overlay HUD — sits over the video */
+.vp-hud {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px 20px 16px;
+  background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Tab pills inside the HUD */
+.vp-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+.vp-tab {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.55);
+  padding: 6px 14px;
+  border-radius: 100px;
+  border: 1px solid rgba(255,255,255,0.15);
+  cursor: default;
+  user-select: none;
+  white-space: nowrap;
+  transition: color 0.2s, background 0.2s, border-color 0.2s;
+}
+.vp-tab.active {
+  color: #ffffff;
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.4);
+}
+
+/* Mute button in HUD */
+.vp-mute-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.12);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  backdrop-filter: blur(8px);
+  transition: background 0.2s, border-color 0.2s;
+}
+.vp-mute-btn:hover {
+  background: rgba(255,255,255,0.25);
+  border-color: rgba(255,255,255,0.5);
 }
 
 @media (max-width: 1024px) {
-  .hiw-timeline { grid-template-columns: repeat(2, 1fr); gap: 40px 20px; }
-  .hiw-timeline::before { display: none; }
+  .video-grid { grid-template-columns: repeat(2, 1fr); }
+  .hiw-steps-row { grid-template-columns: repeat(2, 1fr); gap: 48px 32px; }
+  .hiw-track-line { display: none; }
 }
 
 @media (max-width: 768px) {
   .unified-section { padding: 80px 20px; }
   .video-grid { grid-template-columns: 1fr; }
-  .hiw-timeline { grid-template-columns: 1fr; }
+
+  .hiw-timeline { padding-left: 8px; }
+  .hiw-steps-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding-left: 56px;
+  }
+
+  .hiw-step {
+    text-align: left;
+    position: relative;
+    padding-bottom: 40px;
+  }
+  .hiw-step:last-child { padding-bottom: 0; }
+
+  .hiw-step::before {
+    content: '';
+    position: absolute;
+    left: -33px;
+    top: 36px;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, #3b82f6, rgba(203, 213, 225, 0.5));
+  }
+  .hiw-step:last-child::before { display: none; }
+
+  .hiw-node {
+    position: absolute;
+    left: -56px;
+    top: 0;
+    width: 56px;
+    height: 56px;
+    margin: 0;
+  }
+
+  .hiw-step-desc {
+    max-width: none;
+  }
+
+  .vp-tabs { gap: 4px; }
+  .vp-tab { padding: 5px 10px; font-size: 10px; }
 }
 `;
 
 const UnifiedVideoSection = () => {
   const [tlRef, tlVisible] = useReveal(0.1);
-  const [demoRef, demoVisible] = useReveal(0.1);
   const [gridRef, gridVisible] = useReveal(0.05);
 
   return (
@@ -611,7 +749,7 @@ const UnifiedVideoSection = () => {
             ))}
           </div>
 
-          {/* Part 2: How It Works (from HowItWorks) */}
+          {/* Part 2: How It Works */}
           <div className="hiw-header">
             <div className="hiw-badge">AI Video Workflow</div>
             <h2 className="hiw-heading">
@@ -620,38 +758,39 @@ const UnifiedVideoSection = () => {
           </div>
 
           <div ref={tlRef} className={`hiw-timeline${tlVisible ? ' visible' : ''}`}>
-            {steps.map((step, i) => {
-              const { Icon } = step;
-              return (
-                <div className="hiw-step" key={i}>
-                  <div className="hiw-icon-wrap">
-                    <Icon />
+            <div className="hiw-track-line" aria-hidden="true" />
+            <div className="hiw-steps-row">
+              {steps.map((step, i) => {
+                const { Icon } = step;
+                return (
+                  <div
+                    key={i}
+                    className="hiw-step"
+                    style={{ transitionDelay: `${i * 120}ms` }}
+                  >
+                    <div className={`hiw-node${i === 0 ? ' hiw-node-first' : ''}`}>
+                      <Icon size={22} strokeWidth={1.75} />
+                    </div>
+                    <span className="hiw-step-num">Step {i + 1}</span>
+                    <h3 className="hiw-step-title">{step.title}</h3>
+                    <p className="hiw-step-desc">{step.description}</p>
                   </div>
-                  <div className="hiw-card">
-                    <h3>{step.title}</h3>
-                    <p>{step.description}</p>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
 
-          {/* Demo Preview */}
-          <div ref={demoRef} className={`hiw-demo-wrap${demoVisible ? ' visible' : ''}`}>
-            <div className="hiw-demo">
-              <div style={{ padding: '20px', borderBottom: '1px solid #eee', display: 'flex', gap: '8px' }}>
-                <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#f87171' }} />
-                <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#fbbf24' }} />
-                <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#34d399' }} />
-              </div>
-              <div style={{ padding: '40px', background: '#f8faff', minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ textAlign: 'center' }}>
-                    <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: 'linear-gradient(135deg, #3b82f6, #6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                        <FiPlay color="white" size={32} />
-                    </div>
-                    <span style={{ fontSize: '14px', color: '#94a3b8', fontFamily: 'monospace' }}>AI_EDITOR_PREVIEW</span>
-                </div>
-              </div>
+          {/* Part 3: Video Player */}
+          <div className="vp-wrapper">
+            <div className="vp-browser">
+              <video
+                className="vp-video"
+                src={PersonalAvatar}
+                autoPlay
+                loop
+                muted
+                playsInline
+              />
             </div>
           </div>
 

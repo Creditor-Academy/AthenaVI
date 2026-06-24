@@ -92,6 +92,26 @@ const superadminService = {
   getHeygenAccount() {
     return superadminRequest('/api/superadmin/heygen/account')
   },
+
+  getUserStorage(userId) {
+    return superadminRequest(`/api/superadmin/users/${userId}/storage`)
+  },
+
+  grantUserStorage(userId, { additionalBytes, tierId, reason }) {
+    return superadminRequest(`/api/superadmin/users/${userId}/storage/grant`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ additionalBytes, tierId, reason }),
+    })
+  },
+
+  revokeUserStorage(userId, { amountBytes, reason }) {
+    return superadminRequest(`/api/superadmin/users/${userId}/storage/revoke`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amountBytes, reason }),
+    })
+  },
 }
 
 export { SuperadminApiError }
