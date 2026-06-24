@@ -336,7 +336,7 @@ function CreateAvatarLook({ context, onBack, onUseInVideo }) {
 
   if (!avatarGroupId) {
     return (
-      <div className="videos-page avatars-page create-avatar-page">
+      <div className="videos-page avatars-page create-avatar-page create-avatar-look-page">
         <div className="videos-shell">
           <header className="videos-page-header create-avatar-page-header">
             <div className="videos-title-section create-avatar-title-section">
@@ -360,7 +360,7 @@ function CreateAvatarLook({ context, onBack, onUseInVideo }) {
   }
 
   return (
-    <div className="videos-page avatars-page create-avatar-page">
+    <div className="videos-page avatars-page create-avatar-page create-avatar-look-page">
       <div className="videos-shell">
         <header className="videos-page-header create-avatar-page-header">
           <div className="videos-title-section create-avatar-title-section">
@@ -386,9 +386,9 @@ function CreateAvatarLook({ context, onBack, onUseInVideo }) {
         </header>
 
         <main className="videos-main create-avatar-main">
-          <div className="creation-content-wrapper avatar-look-layout">
-            <div className="creation-form-card standalone">
-            {isProcessing ? (
+          <div className="creation-content-wrapper avatar-look-layout avatar-look-workspace">
+            <div className="creation-form-card standalone avatar-look-main-panel">
+              {isProcessing ? (
               <div className="look-processing-panel">
                 <div className="look-processing-panel__visual">
                   <div className="look-processing-panel__frame">
@@ -451,133 +451,145 @@ function CreateAvatarLook({ context, onBack, onUseInVideo }) {
                   </div>
                 </div>
               </div>
-            ) : (
-              <div className="form-body">
-                <div className="avatar-look-reference-mode">
-                  <label className="avatar-look-reference-mode__option">
-                    <input
-                      type="radio"
-                      name="referenceMode"
-                      value="preview"
-                      checked={referenceMode === 'preview'}
-                      onChange={() => {
-                        setReferenceMode('preview');
-                        setError('');
-                      }}
-                    />
-                    <span>Use avatar preview</span>
-                  </label>
-                  <label className="avatar-look-reference-mode__option">
-                    <input
-                      type="radio"
-                      name="referenceMode"
-                      value="custom"
-                      checked={referenceMode === 'custom'}
-                      onChange={() => setReferenceMode('custom')}
-                    />
-                    <span>Upload custom reference</span>
-                  </label>
-                </div>
-
-                <div className="avatar-look-reference">
-                  <div className="avatar-look-reference__media">
-                    {displayReferenceImage ? (
-                      <img src={displayReferenceImage} alt={`${avatarName} reference`} />
-                    ) : (
-                      <div className="avatar-look-reference__placeholder">
-                        <Sparkles size={28} />
+              ) : (
+                <div className="form-body">
+                  <section className="avatar-look-section">
+                    <div className="avatar-look-section__head">
+                      <span className="section-label">Reference image</span>
+                      <div className="avatar-look-reference-mode">
+                        <label className="avatar-look-reference-mode__option">
+                          <input
+                            type="radio"
+                            name="referenceMode"
+                            value="preview"
+                            checked={referenceMode === 'preview'}
+                            onChange={() => {
+                              setReferenceMode('preview');
+                              setError('');
+                            }}
+                          />
+                          <span>Avatar preview</span>
+                        </label>
+                        <label className="avatar-look-reference-mode__option">
+                          <input
+                            type="radio"
+                            name="referenceMode"
+                            value="custom"
+                            checked={referenceMode === 'custom'}
+                            onChange={() => setReferenceMode('custom')}
+                          />
+                          <span>Custom upload</span>
+                        </label>
                       </div>
-                    )}
-                    <span className="avatar-look-reference__tag">
-                      {referenceMode === 'custom' ? 'Custom reference' : 'Reference avatar'}
-                    </span>
-                  </div>
-                  <div className="avatar-look-reference__copy">
-                    <span className="avatar-look-context__badge">Personal avatar</span>
-                    <strong>{avatarName}</strong>
-                    <p>
-                      New looks use your reference image plus avatar group id. The prompt automatically
-                      asks for the <strong>same person as the reference avatar</strong>.
-                    </p>
-                    {referenceMode === 'custom' ? (
-                      <div className="avatar-look-reference-upload">
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept={REFERENCE_IMAGE_TYPES.join(',')}
-                          className="avatar-look-reference-upload__input"
-                          onChange={handleReferenceFileChange}
-                        />
-                        <button
-                          type="button"
-                          className="btn-action-secondary avatar-look-reference-upload__btn"
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          <Upload size={16} />
-                          <span>{customFile ? 'Change image' : 'Choose image'}</span>
-                        </button>
-                        {customFile ? (
-                          <button
-                            type="button"
-                            className="avatar-look-reference-upload__clear"
-                            onClick={clearCustomReference}
-                          >
-                            Use avatar preview instead
-                          </button>
-                        ) : null}
-                        {uploadProgress != null ? (
-                          <p className="avatar-look-reference-upload__progress">Uploading… {uploadProgress}%</p>
-                        ) : null}
-                        <p className="avatar-look-reference-upload__hint">JPEG, PNG, or WebP</p>
-                      </div>
-                    ) : null}
-                    <div className="avatar-look-reference__ids">
-                      <span>Avatar id · {avatarGroupId}</span>
                     </div>
-                  </div>
+
+                    <div className="avatar-look-reference">
+                      <div className="avatar-look-reference__media">
+                        {displayReferenceImage ? (
+                          <img src={displayReferenceImage} alt={`${avatarName} reference`} />
+                        ) : (
+                          <div className="avatar-look-reference__placeholder">
+                            <Sparkles size={28} />
+                          </div>
+                        )}
+                        <span className="avatar-look-reference__tag">
+                          {referenceMode === 'custom' ? 'Custom reference' : 'Reference avatar'}
+                        </span>
+                      </div>
+                      <div className="avatar-look-reference__copy">
+                        <span className="avatar-look-context__badge">Personal avatar</span>
+                        <strong>{avatarName}</strong>
+                        <p>
+                          New looks use your reference image plus avatar group id. The prompt automatically
+                          asks for the <strong>same person as the reference avatar</strong>.
+                        </p>
+                        {referenceMode === 'custom' ? (
+                          <div className="avatar-look-reference-upload">
+                            <input
+                              ref={fileInputRef}
+                              type="file"
+                              accept={REFERENCE_IMAGE_TYPES.join(',')}
+                              className="avatar-look-reference-upload__input"
+                              onChange={handleReferenceFileChange}
+                            />
+                            <button
+                              type="button"
+                              className="btn-action-secondary avatar-look-reference-upload__btn"
+                              onClick={() => fileInputRef.current?.click()}
+                            >
+                              <Upload size={16} />
+                              <span>{customFile ? 'Change image' : 'Choose image'}</span>
+                            </button>
+                            {customFile ? (
+                              <button
+                                type="button"
+                                className="avatar-look-reference-upload__clear"
+                                onClick={clearCustomReference}
+                              >
+                                Use avatar preview instead
+                              </button>
+                            ) : null}
+                            {uploadProgress != null ? (
+                              <p className="avatar-look-reference-upload__progress">Uploading… {uploadProgress}%</p>
+                            ) : null}
+                            <p className="avatar-look-reference-upload__hint">JPEG, PNG, or WebP</p>
+                          </div>
+                        ) : null}
+                        <div className="avatar-look-reference__ids">
+                          <span>Avatar id · {avatarGroupId}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="avatar-look-section">
+                    <span className="section-label">Look details</span>
+                    <div className="input-group">
+                      <label className="avatar-look-field-label" htmlFor="look-name">Look name</label>
+                      <div className="input-with-counter">
+                        <input
+                          id="look-name"
+                          type="text"
+                          placeholder="e.g. Weekend coffee casual"
+                          value={lookName}
+                          maxLength={50}
+                          onChange={(e) => setLookName(e.target.value)}
+                        />
+                        <span className="char-counter">{lookName.length}/50</span>
+                      </div>
+                    </div>
+
+                    <div className="input-group">
+                      <label className="avatar-look-field-label" htmlFor="look-description">Look description</label>
+                      <textarea
+                        id="look-description"
+                        placeholder="Describe outfit, lighting, and setting only — e.g. oatmeal sweater, bright café window seat, soft morning light…"
+                        value={lookPrompt}
+                        onChange={(e) => setLookPrompt(e.target.value)}
+                      />
+                      <p className="avatar-look-prompt-hint">
+                        We append identity instructions so the result matches your reference avatar&apos;s face and likeness.
+                      </p>
+                    </div>
+                  </section>
+
+                  <section className="avatar-look-section avatar-look-section--footer">
+                    {error ? <p className="creation-error-inline">{error}</p> : null}
+                    {status && !isProcessing ? <p className="creation-success-inline">{status}</p> : null}
+
+                    <div className="creation-footer">
+                      <button type="button" className="submit-creation-btn-premium" onClick={handleCreateLook}>
+                        <Sparkles size={18} />
+                        <span>Generate look</span>
+                      </button>
+                      <p className="cta-note">Uses your reference image + avatar id · usually {LOOK_TYPICAL_WAIT_LABEL}</p>
+                    </div>
+                  </section>
                 </div>
+              )}
+            </div>
 
-                <div className="input-group">
-                  <label className="section-label">Look name</label>
-                  <div className="input-with-counter">
-                    <input
-                      type="text"
-                      placeholder="e.g. Weekend coffee casual"
-                      value={lookName}
-                      maxLength={50}
-                      onChange={(e) => setLookName(e.target.value)}
-                    />
-                    <span className="char-counter">{lookName.length}/50</span>
-                  </div>
-                </div>
-
-                <div className="input-group">
-                  <label className="section-label">Look description</label>
-                  <textarea
-                    placeholder="Describe outfit, lighting, and setting only — e.g. oatmeal sweater, bright café window seat, soft morning light…"
-                    value={lookPrompt}
-                    onChange={(e) => setLookPrompt(e.target.value)}
-                  />
-                  <p className="avatar-look-prompt-hint">
-                    We append identity instructions so the result matches your reference avatar&apos;s face and likeness.
-                  </p>
-                </div>
-
-                {error ? <p className="creation-error-inline">{error}</p> : null}
-                {status && !isProcessing ? <p className="creation-success-inline">{status}</p> : null}
-
-                <div className="creation-footer">
-                  <button type="button" className="submit-creation-btn-premium" onClick={handleCreateLook}>
-                    <Sparkles size={18} />
-                    <span>Generate look</span>
-                  </button>
-                  <p className="cta-note">Uses your reference image + avatar id · usually {LOOK_TYPICAL_WAIT_LABEL}</p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <aside className="avatar-look-sidebar">
+            <aside className="avatar-look-sidebar">
             <div className="avatar-look-sidebar__head">
               <div>
                 <h4>Your looks</h4>
@@ -631,8 +643,8 @@ function CreateAvatarLook({ context, onBack, onUseInVideo }) {
                 <p>Your first look will show up here while it generates.</p>
               </div>
             )}
-          </aside>
-        </div>
+            </aside>
+          </div>
         </main>
       </div>
     </div>
