@@ -1,7 +1,13 @@
-import { useState, useRef } from 'react'
-import { ArrowLeft, Mic, Terminal, Upload, Loader2, X, Music, CheckCircle } from 'lucide-react'
-import { MdPlayArrow } from 'react-icons/md'
+import { useState, useRef, useEffect } from 'react'
+import { Mic, Terminal, Loader2, X, Music, CheckCircle } from 'lucide-react'
+import { MdArrowBack, MdPlayArrow } from 'react-icons/md'
 import heygenService from '../../services/heygenService'
+import creditsService, { isInsufficientCreditsError } from '../../services/creditsService'
+import { getSanitizedErrorMessage } from '../../utils/userFacingMessage'
+import { HEYGEN_VOICE_MAX_BYTES } from '../../utils/heygenAssetUpload'
+import '../../components/features/workspace/workspace/WorkspaceStyles.css'
+import '../Videos/Videos.css'
+import '../Avatars/Avatars.css'
 import './Voices.css'
 
 function CreateVoice({ onBack }) {
@@ -16,9 +22,18 @@ function CreateVoice({ onBack }) {
   const [suggestedVoices, setSuggestedVoices] = useState([])
   const [isRecording, setIsRecording] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
+  const [uploadProgress, setUploadProgress] = useState(null)
+  const [creditEstimate, setCreditEstimate] = useState(null)
   const [mediaRecorder, setMediaRecorder] = useState(null)
   const timerRef = useRef(null)
   const fileInputRef = useRef(null)
+
+  useEffect(() => {
+    creditsService
+      .getPersonalEstimate({ feature: 'voice_clone' })
+      .then(setCreditEstimate)
+      .catch(() => setCreditEstimate(null))
+  }, [])
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -81,15 +96,6 @@ function CreateVoice({ onBack }) {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const convertFileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-    });
-  };
-
   const handleCreateVoice = async () => {
     if (creationType === 'clone') {
       if (!creationName || creationName.trim().length === 0) {
@@ -102,41 +108,45 @@ function CreateVoice({ onBack }) {
         return;
       }
 
+      if (selectedFile.size > HEYGEN_VOICE_MAX_BYTES) {
+        alert('Audio sample must be under 100 MB.');
+        return;
+      }
+
       setIsCreating(true);
-      setCreationStatus('Analyzing voice patterns...');
+      setCreationStatus('Uploading audio sample...');
+      setUploadProgress(null);
 
       try {
-        const base64Data = await convertFileToBase64(selectedFile);
-        const base64Content = base64Data.split(',')[1];
-        
-        // Strip codec info from media type if present (e.g., audio/webm;codecs=opus -> audio/webm)
-        const mediaType = selectedFile.type.split(';')[0];
-        
-        const payload = {
-          voice_name: creationName,
-          voiceName: creationName, // Some backends might expect camelCase
-          audio: {
-            type: 'base64',
-            data: base64Content,
-            media_type: mediaType
+        await heygenService.cloneVoiceFromFile({
+          voiceName: creationName,
+          file: selectedFile,
+          removeBackgroundNoise: true,
+          onUploadProgress: ({ percent }) => {
+            setUploadProgress(percent);
+            setCreationStatus(`Uploading audio sample… ${percent}%`);
           },
-          remove_background_noise: true,
-          removeBackgroundNoise: true
-        };
-        
-        console.log('Athena VI: Preparing Clone Payload...', payload);
-        await heygenService.cloneVoice(payload);
+          onCloneStatus: () => {
+            setCreationStatus('Processing voice clone…');
+            setUploadProgress(null);
+          },
+        });
         setCreationStatus('Voice cloned successfully!');
         setTimeout(() => {
           setIsCreating(false);
+          setUploadProgress(null);
           onBack(true);
         }, 2000);
       } catch (err) {
         console.error('Clone voice failed:', err);
-        setCreationStatus(`Error: ${err.message || 'Cloning failed'}`);
+        const fallback = isInsufficientCreditsError(err)
+          ? 'Insufficient credits to clone this voice.'
+          : 'Cloning failed';
+        setCreationStatus(`Error: ${getSanitizedErrorMessage(err, fallback)}`);
         setTimeout(() => {
           setIsCreating(false);
           setCreationStatus('');
+          setUploadProgress(null);
         }, 4000);
       }
     } else {
@@ -160,7 +170,7 @@ function CreateVoice({ onBack }) {
         setCreationStatus('');
       } catch (err) {
         console.error('Create voice failed:', err);
-        setCreationStatus(`Error: ${err.message || 'Creation failed'}`);
+        setCreationStatus(`Error: ${getSanitizedErrorMessage(err, 'Creation failed')}`);
         setTimeout(() => {
           setIsCreating(false);
           setCreationStatus('');
@@ -170,25 +180,41 @@ function CreateVoice({ onBack }) {
   };
 
   return (
-    <div className="workspace-main">
-      <div className="grid-container">
-        <header className="avatars-header">
-          <div className="header-info">
-            <button className="back-btn-sleek" onClick={() => onBack(false)}>
-              <ArrowLeft size={18} />
-              <span>Back to Voices</span>
-            </button>
-            <h1>Neural Voice Laboratory</h1>
-            <p>Generate or replicate perfect neural voice patterns.</p>
+    <div className="videos-page voices-page create-voice-page">
+      <div className="videos-shell">
+        <header className="videos-page-header create-avatar-page-header">
+          <div className="videos-title-section create-avatar-title-section">
+            <div className="create-avatar-title-row">
+              <button
+                type="button"
+                className="workspace-back-btn"
+                onClick={() => onBack(false)}
+                aria-label="Back to Voices"
+              >
+                <MdArrowBack size={20} />
+              </button>
+              <div>
+                <h1 className="videos-page-title">Create Voice</h1>
+                <p className="videos-page-subtitle">
+                  Clone from audio or design a new voice from a text description.
+                </p>
+              </div>
+            </div>
           </div>
         </header>
 
-        <div className="creation-content-wrapper">
-          <div className="creation-form-card standalone">
+        <main className="videos-main create-avatar-main">
+          <div className="creation-content-wrapper">
+            <div className="creation-form-card standalone">
             {isCreating ? (
               <div className="creation-loading">
                 <Loader2 size={60} className="spin-animation" />
                 <h3>{creationStatus}</h3>
+                {uploadProgress != null && uploadProgress < 100 ? (
+                  <div className="progress-bar-bg" style={{ width: 'min(280px, 80%)', margin: '12px auto 0' }}>
+                    <div className="progress-bar-fill" style={{ width: `${uploadProgress}%` }} />
+                  </div>
+                ) : null}
                 <p>We are orchestrating your neural voice model. This won't take long.</p>
               </div>
             ) : (
@@ -304,7 +330,7 @@ function CreateVoice({ onBack }) {
                                 <div className="format-pills">
                                   <span>.mp3</span>
                                   <span>.wav</span>
-                                  <span>Max 50 MB</span>
+                                  <span>Max 100 MB</span>
                                 </div>
                               </div>
                             </>
@@ -364,38 +390,55 @@ function CreateVoice({ onBack }) {
                     <Terminal size={18} />
                     <span>{suggestedVoices.length > 0 ? 'Regenerate Suggestions' : 'Synthesize Neural Voice'}</span>
                   </button>
-                  <p className="cta-note">Audio processing typically takes 1–3 minutes.</p>
+                  <p className="cta-note">
+                    {creditEstimate?.estimatedCredits != null ||
+                    creditEstimate?.credits != null ||
+                    creditEstimate?.cost != null
+                      ? `Estimated cost: ${
+                          creditEstimate.estimatedCredits ??
+                          creditEstimate.credits ??
+                          creditEstimate.cost
+                        } credit${
+                          Number(
+                            creditEstimate.estimatedCredits ??
+                              creditEstimate.credits ??
+                              creditEstimate.cost
+                          ) === 1
+                            ? ''
+                            : 's'
+                        }. `
+                      : ''}
+                    Audio processing typically takes 1–3 minutes.
+                  </p>
                 </div>
 
                 {suggestedVoices.length > 0 && (
-                  <div className="suggested-voices-container" style={{ marginTop: '32px', borderTop: '1px solid var(--border-color)', paddingTop: '32px' }}>
+                  <div style={{ marginTop: '32px', borderTop: '1px solid var(--border-color)', paddingTop: '32px' }}>
                     <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <CheckCircle size={20} style={{ color: 'var(--primary)' }} />
-                      Suggested Neural Matches
+                      Suggested Matches
                     </h3>
-                    <div className="voices-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+                    <div className="voices-suggested-grid">
                       {suggestedVoices.map((voice) => (
-                        <div 
-                          key={voice.voice_id} 
-                          className="voice-card" 
-                          style={{ padding: '16px', gap: '12px' }}
-                        >
-                          <div className="voice-card-header">
-                            <span className="voice-language-badge" style={{ fontSize: '10px' }}>{voice.language}</span>
-                            <span className="voice-language-badge" style={{ fontSize: '10px', background: 'rgba(var(--primary-rgb), 0.1)', color: 'var(--primary)' }}>{voice.gender}</span>
+                        <div key={voice.voice_id} className="voices-suggested-card">
+                          <div className="voices-suggested-card__badges">
+                            <span className="voices-suggested-badge">{voice.language}</span>
+                            {voice.gender ? (
+                              <span className="voices-suggested-badge">{voice.gender}</span>
+                            ) : null}
                           </div>
-                          <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>{voice.name}</h4>
-                          <div className="voice-card-actions" style={{ marginTop: '8px' }}>
-                            <button 
-                              className="voice-action-btn voice-sample-btn" 
-                              style={{ padding: '8px' }}
+                          <h4>{voice.name}</h4>
+                          <div className="voices-suggested-actions">
+                            <button
+                              type="button"
+                              className="voices-suggested-btn"
                               onClick={() => voice.preview_audio_url && new Audio(voice.preview_audio_url).play()}
                             >
                               <MdPlayArrow size={16} /> Preview
                             </button>
-                            <button 
-                              className="voice-action-btn voice-test-btn"
-                              style={{ padding: '8px' }}
+                            <button
+                              type="button"
+                              className="voices-suggested-btn voices-suggested-btn--primary"
                               onClick={async () => {
                                 setCreationStatus('Finalizing selection...');
                                 setIsCreating(true);
@@ -417,7 +460,7 @@ function CreateVoice({ onBack }) {
                                   }, 1500);
                                 } catch (err) {
                                   console.error('Failed to select voice:', err);
-                                  setCreationStatus(`Error: ${err.message || 'Selection failed'}`);
+                                  setCreationStatus(`Error: ${getSanitizedErrorMessage(err, 'Selection failed')}`);
                                   setTimeout(() => {
                                     setIsCreating(false);
                                     setCreationStatus('');
@@ -437,6 +480,7 @@ function CreateVoice({ onBack }) {
             )}
           </div>
         </div>
+        </main>
       </div>
     </div>
   )

@@ -2,12 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import { Video, Image, Terminal, Upload, Loader2, X, Users, Sparkles, CheckCircle2, CheckCircle } from 'lucide-react';
 import { MdClose } from 'react-icons/md';
 import heygenService from '../../../services/heygenService';
+import creditsService, { isInsufficientCreditsError } from '../../../services/creditsService';
 import {
   getConsentUrlFromResponse,
   isConsentApproved,
   parseAvatarCreateResponse,
 } from '../../../utils/heygenAvatars';
+import { WORKSPACE_ASSET_MAX_BYTES } from '../../../utils/heygenAssetUpload';
+import { getSanitizedErrorMessage } from '../../../utils/userFacingMessage';
 import AvatarConsentStep from '../AvatarConsentStep/AvatarConsentStep';
+import DigitalTwinVideoInput from './DigitalTwinVideoInput';
 import '../AvatarConsentStep/AvatarConsentStep.css';
 import '../../../pages/Avatars/Avatars.css';
 import './CreateAvatarModal.css';
@@ -59,6 +63,8 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [creationSuccess, setCreationSuccess] = useState(null);
   const [consentStep, setConsentStep] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(null);
+  const [creditEstimate, setCreditEstimate] = useState(null);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -73,9 +79,32 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
     setShowHelpModal(false);
     setCreationSuccess(null);
     setConsentStep(null);
+    setUploadProgress(null);
+    setCreditEstimate(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
 
     return undefined;
+  }, [isOpen, creationType]);
+
+  useEffect(() => {
+    if (!isOpen || creationType === 'prompt') {
+      setCreditEstimate(null);
+      return undefined;
+    }
+
+    let cancelled = false;
+    creditsService
+      .getPersonalEstimate({ feature: 'avatar_create' })
+      .then((estimate) => {
+        if (!cancelled) setCreditEstimate(estimate);
+      })
+      .catch(() => {
+        if (!cancelled) setCreditEstimate(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen, creationType]);
 
   useEffect(() => {
@@ -99,10 +128,18 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
   };
 
   const clearPreview = (event) => {
-    event.stopPropagation();
+    event?.stopPropagation?.();
     setPreviewUrl(null);
     setSelectedFile(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleVideoReady = ({ file, previewUrl: url }) => {
+    if (previewUrl && previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setSelectedFile(file);
+    setPreviewUrl(url);
   };
 
   const finishWithSuccess = (response, consentMeta = null) => {
@@ -158,28 +195,42 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
       return;
     }
 
+    if (
+      creationType !== 'prompt' &&
+      selectedFile.size > WORKSPACE_ASSET_MAX_BYTES &&
+      !(await heygenService.isHeygenUploadRouteAvailable('avatar'))
+    ) {
+      setCreationStatus(heygenService.formatLargeUploadBlockedMessage(selectedFile.size));
+      return;
+    }
+
     setIsCreating(true);
     setCreationStatus('Preparing asset upload...');
+    setUploadProgress(null);
 
     try {
-      let payload;
+      let response;
 
       if (creationType === 'prompt') {
-        payload = {
+        response = await heygenService.createAvatar({
           type: 'prompt',
           name: creationName,
           prompt: creationPrompt,
-        };
+        });
       } else {
-        payload = new FormData();
-        payload.append('type', creationType);
-        payload.append('name', creationName);
-        payload.append('file', selectedFile);
+        setCreationStatus('Uploading training file...');
+        response = await heygenService.createAvatarFromFile({
+          type: creationType,
+          name: creationName,
+          file: selectedFile,
+          onUploadProgress: ({ percent }) => {
+            setUploadProgress(percent);
+            setCreationStatus(`Uploading training file… ${percent}%`);
+          },
+        });
       }
 
       setCreationStatus(`Creating ${creationType.replace('_', ' ')}...`);
-
-      const response = await heygenService.createAvatar(payload);
       const created = parseAvatarCreateResponse(response, creationName);
       const groupId = created.groupId;
 
@@ -209,13 +260,23 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
       finishWithSuccess(response);
     } catch (err) {
       console.error('Avatar creation failed:', err);
-      setCreationStatus(`Error: ${err.message || 'Creation failed'}`);
+      const fallback = isInsufficientCreditsError(err)
+        ? 'Insufficient credits to create this avatar.'
+        : 'Creation failed';
+      setCreationStatus(`Error: ${getSanitizedErrorMessage(err, fallback)}`);
       setTimeout(() => {
         setIsCreating(false);
         setCreationStatus('');
+        setUploadProgress(null);
       }, 4000);
     }
   };
+
+  const estimatedCredits =
+    creditEstimate?.estimatedCredits ??
+    creditEstimate?.credits ??
+    creditEstimate?.cost ??
+    null;
 
   if (!isOpen || !typeOption) return null;
 
@@ -230,7 +291,7 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
     <>
       <div className="create-avatar-modal-overlay" role="presentation" onClick={handleOverlayClick}>
         <div
-          className={`create-avatar-modal ${isDigitalTwin && consentStep ? 'create-avatar-modal--wide' : ''}`}
+          className={`create-avatar-modal ${isDigitalTwin ? 'create-avatar-modal--wide' : ''}`}
           role="dialog"
           aria-modal="true"
           aria-label={`Create ${typeOption.title}`}
@@ -301,7 +362,7 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
             ) : consentStep ? (
               <>
                 <p className="create-avatar-step-hint">
-                  Step 2 of 3 — Record or upload your consent video on HeyGen&apos;s portal. The
+                  Step 2 of 3 — Record or upload your consent video on the consent portal. The
                   person in the consent video must match your training footage.
                 </p>
                 <AvatarConsentStep
@@ -316,6 +377,11 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
               <div className="creation-loading">
                 <Loader2 size={60} className="spin-animation" />
                 <h3>{creationStatus}</h3>
+                {uploadProgress != null && uploadProgress < 100 ? (
+                  <div className="progress-bar-bg" style={{ width: 'min(280px, 80%)', margin: '12px auto 0' }}>
+                    <div className="progress-bar-fill" style={{ width: `${uploadProgress}%` }} />
+                  </div>
+                ) : null}
                 <p>
                   {isDigitalTwin
                     ? 'Uploading your training video, then we\'ll guide you through consent.'
@@ -325,9 +391,8 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
             ) : (
               <div className="form-main-inputs">
                 {isDigitalTwin ? (
-                  <p className="create-avatar-step-hint">
-                    Step 1 of 3 — Upload your training footage. You&apos;ll record a short consent
-                    video in the next step before your Digital Twin can be used.
+                  <p className="create-avatar-step-hint create-avatar-step-hint--compact">
+                    Step 1 — Record or upload training footage (2–5 min). Consent video is next.
                   </p>
                 ) : null}
                 <div className="input-group">
@@ -353,14 +418,22 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
                       onChange={(event) => setCreationPrompt(event.target.value)}
                     />
                   </div>
+                ) : creationType === 'digital_twin' ? (
+                  <div className="input-group">
+                    <label className="section-label">Training video</label>
+                    <DigitalTwinVideoInput
+                      speakerName={creationName}
+                      previewUrl={previewUrl}
+                      onVideoReady={handleVideoReady}
+                      onClear={clearPreview}
+                    />
+                  </div>
                 ) : (
                   <div className="input-group">
                     <div className="label-with-help">
-                      <label className="section-label">
-                        {creationType === 'digital_twin' ? 'High Fidelity Video Input' : 'Portrait Image Input'}
-                      </label>
+                      <label className="section-label">Portrait Image Input</label>
                       <button type="button" className="context-help-link" onClick={() => setShowHelpModal(true)}>
-                        {creationType === 'digital_twin' ? 'What makes a good video?' : 'What makes a good photo?'}
+                        What makes a good photo?
                       </button>
                     </div>
 
@@ -373,11 +446,7 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
                           <button type="button" className="clear-preview-btn" onClick={clearPreview}>
                             <X size={16} />
                           </button>
-                          {creationType === 'digital_twin' ? (
-                            <video src={previewUrl} className="file-preview-media" autoPlay muted loop />
-                          ) : (
-                            <img src={previewUrl} className="file-preview-media" alt="Preview" />
-                          )}
+                          <img src={previewUrl} className="file-preview-media" alt="Preview" />
                           <div className="preview-overlay">
                             <Upload size={20} />
                             <span>Change File</span>
@@ -390,21 +459,11 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
                           </div>
                           <div className="drop-zone-text">
                             <strong>Click or drag to upload</strong>
-                            <p>{creationType === 'digital_twin' ? '2-5 minutes recommended' : 'Portrait photo'}</p>
+                            <p>Portrait photo</p>
                             <div className="format-pills">
-                              {creationType === 'digital_twin' ? (
-                                <>
-                                  <span>.mp4</span>
-                                  <span>.mov</span>
-                                  <span>Max 2 GB</span>
-                                </>
-                              ) : (
-                                <>
-                                  <span>.jpg</span>
-                                  <span>.png</span>
-                                  <span>Max 10 MB</span>
-                                </>
-                              )}
+                              <span>.jpg</span>
+                              <span>.png</span>
+                              <span>Max 10 MB</span>
                             </div>
                           </div>
                         </>
@@ -413,7 +472,7 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
                         type="file"
                         ref={fileInputRef}
                         style={{ display: 'none' }}
-                        accept={creationType === 'digital_twin' ? 'video/*' : 'image/*'}
+                        accept="image/*"
                         onChange={handleFileChange}
                       />
                     </div>
@@ -426,6 +485,9 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
           {!creationSuccess && !isCreating && !consentStep ? (
             <footer className="create-avatar-modal-footer">
               <p className="create-avatar-modal-footer__note">
+                {estimatedCredits != null
+                  ? `Estimated cost: ${estimatedCredits} credit${Number(estimatedCredits) === 1 ? '' : 's'}. `
+                  : ''}
                 {isDigitalTwin
                   ? 'Training takes 5–10 minutes after consent is approved.'
                   : 'Processing typically takes 5–10 minutes.'}
@@ -467,7 +529,7 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
                         <strong>Resolution:</strong> 1080p or 4K recommended.
                       </li>
                       <li>
-                        <strong>Format:</strong> .mp4 or .mov (Max 2GB).
+                        <strong>Format:</strong> .mp4, .mov, or .webm (max 900 MB).
                       </li>
                     </ul>
                   </div>

@@ -32,6 +32,7 @@ import {
   isSingleAppearanceGroup,
   supportsTransparentWebm,
 } from '../../../../utils/heygenAvatars';
+import { getSanitizedErrorMessage } from '../../../../utils/userFacingMessage';
 import { invalidateHeygenSceneVideo } from '../../../../utils/heygenVideo';
 
 const EditorSidebarAvatar = ({
@@ -378,15 +379,17 @@ const EditorSidebarAvatar = ({
 
     try {
       const type = file.type.startsWith('video/') ? 'digital_twin' : 'photo';
-      
-      setUploadStatus(`Creating ${type.replace('_', ' ')}...`);
-      
-      const payload = new FormData();
-      payload.append('type', type);
-      payload.append('name', file.name.split('.')[0] || 'Custom Persona');
-      payload.append('file', file);
 
-      const response = await heygenService.createAvatar(payload);
+      setUploadStatus(`Uploading ${type.replace('_', ' ')}...`);
+
+      const response = await heygenService.createAvatarFromFile({
+        type,
+        name: file.name.split('.')[0] || 'Custom Persona',
+        file,
+        onUploadProgress: ({ percent }) => {
+          setUploadStatus(`Uploading ${type.replace('_', ' ')}… ${percent}%`);
+        },
+      });
       const created = parseAvatarCreateResponse(response, file.name.split('.')[0] || 'Custom Persona');
       const groupId = created.groupId;
 
@@ -427,7 +430,7 @@ const EditorSidebarAvatar = ({
       
     } catch (error) {
       console.error('Avatar creation failed:', error);
-      setUploadStatus(`Error: ${error.message || 'Creation failed'}`);
+      setUploadStatus(`Error: ${getSanitizedErrorMessage(error, 'Creation failed')}`);
       setTimeout(() => {
         setIsUploading(false);
         setUploadStatus('');

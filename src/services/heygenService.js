@@ -5,6 +5,90 @@ import {
   isLegacyV2Look,
   finalizeVideoCreatePayload,
 } from '../utils/heygenAvatars.js';
+import { sanitizeUserFacingMessage } from '../utils/userFacingMessage.js';
+import {
+  buildHeygenFileAssetFromUploadPayload,
+  buildHeygenUrlAsset,
+  canUploadFileAsHeygenUrl,
+  HEYGEN_SOURCE_MAX_BYTES,
+  HEYGEN_VOICE_MAX_BYTES,
+  normalizeHeygenUploadFile,
+  uploadFileAsHeygenUrl,
+  uploadFormDataWithProgress,
+  WORKSPACE_ASSET_MAX_BYTES,
+} from '../utils/heygenAssetUpload.js';
+
+function authOnlyHeaders() {
+  const token = localStorage.getItem('accessToken');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+function userError(message) {
+  return new Error(sanitizeUserFacingMessage(message));
+}
+
+function sanitizeThrownError(error) {
+  if (error?.message) {
+    error.message = sanitizeUserFacingMessage(error.message);
+  }
+  return error;
+}
+
+const MISSING_ROUTE_STATUSES = new Set([404, 405, 501]);
+let avatarUploadRouteAvailable = null;
+let voiceUploadRouteAvailable = null;
+
+function isHeygenUploadRouteMissing(status) {
+  return MISSING_ROUTE_STATUSES.has(status);
+}
+
+function extractVoiceId(result) {
+  if (!result || typeof result !== 'object') return null;
+  return (
+    result.voice_id ||
+    result.voiceId ||
+    result.voice_clone_id ||
+    result.id ||
+    result.data?.voice_id ||
+    result.data?.voiceId ||
+    null
+  );
+}
+
+async function throwIfHeygenResponseFailed(response, fallbackLabel = 'Request') {
+  if (response.ok) return;
+
+  const errorText = await response.text();
+  let errorData = {};
+  try {
+    errorData = errorText ? JSON.parse(errorText) : {};
+  } catch {
+    errorData = { message: errorText };
+  }
+
+  const message =
+    errorData.message ||
+    errorData.error ||
+    (Array.isArray(errorData.errors) && errorData.errors.length
+      ? errorData.errors.join(' ')
+      : `${fallbackLabel} failed: ${response.status}`);
+
+  if (response.status === 413) {
+    throw userError(
+      'File is too large to send inside JSON. Upload the file first, then create with file.type "url" or "asset_id".'
+    );
+  }
+
+  if (response.status === 402) {
+    throw new InsufficientCreditsError(sanitizeUserFacingMessage(message), errorData);
+  }
+
+  if (response.status === 403) {
+    throw userError(message || 'You do not have permission for this action. Try signing in again.');
+  }
+
+  throw userError(`${fallbackLabel} failed: ${response.status} - ${message}`);
+}
 
 const LOOKS_QUERY_KEYS = new Set([
   'group_id',
@@ -66,7 +150,7 @@ class HeygenService {
         ) {
           return emptyLooksPage();
         }
-        throw new Error(`Failed to fetch avatar looks: ${response.status}`);
+        throw userError(`Failed to fetch avatar looks: ${response.status}`);
       }
 
       const responseData = await response.json();
@@ -131,7 +215,7 @@ class HeygenService {
       return fetchLooksPage(pageParams);
     } catch (error) {
       console.error('Error fetching avatar looks:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -152,46 +236,269 @@ class HeygenService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch avatar groups: ${response.status}`);
+        throw userError(`Failed to fetch avatar groups: ${response.status}`);
       }
 
       const data = await response.json();
       return data.data || data;
     } catch (error) {
       console.error('Error in heygenService.getAvatarGroups:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
   async createAvatar(payload) {
     try {
-      const endpoint = API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.CREATE;
-      const isFormData = payload instanceof FormData;
-      
-      const headers = getAuthHeaders();
-      if (isFormData) {
-        // Remove Content-Type so browser sets it with boundary
-        delete headers['Content-Type'];
+      const fileField = payload?.file;
+      if (fileField?.type === 'base64' || fileField?.data) {
+        throw userError(
+          'Do not send training media as base64 in JSON. Upload via POST /api/heygen/avatars/upload first, then use file.type "url" or "asset_id".'
+        );
       }
+
+      const endpoint = API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.CREATE;
+      const headers = {
+        ...authOnlyHeaders(),
+        'Content-Type': 'application/json',
+      };
 
       const response = await fetch(buildUrl(endpoint), {
         method: 'POST',
-        headers: headers,
-        body: isFormData ? payload : JSON.stringify(payload)
+        headers,
+        body: JSON.stringify(payload),
       });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Athena VI API Error:', errorText);
-        throw new Error(`Failed to create avatar: ${response.status} - ${errorText}`);
-      }
-      
+
+      await throwIfHeygenResponseFailed(response, 'Failed to create avatar');
+
       const data = await response.json();
       return data.data || data;
     } catch (error) {
       console.error('Error in heygenService.createAvatar:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
+  }
+
+  /**
+   * Whether POST /api/heygen/avatars|voices/upload is deployed.
+   * Cached for the session — set false only after a real upload returns 404/405/501.
+   * Do not GET or POST-empty the upload URL (those routes are POST + multipart "file" only).
+   */
+  async isHeygenUploadRouteAvailable(kind = 'avatar') {
+    const cache = kind === 'voice' ? voiceUploadRouteAvailable : avatarUploadRouteAvailable;
+    if (cache != null) return cache;
+    // Optimistic until uploadHeygenSourceFile learns otherwise from an actual POST.
+    return true;
+  }
+
+  formatLargeUploadBlockedMessage(fileSizeBytes) {
+    const sizeMb = Math.max(1, Math.round(fileSizeBytes / (1024 * 1024)));
+    const limitMb = Math.round(WORKSPACE_ASSET_MAX_BYTES / (1024 * 1024));
+    return (
+      `Your file is about ${sizeMb} MB, but large uploads are not enabled on the server yet ` +
+      `(only files up to ${limitMb} MB work without it). ` +
+      'Use POST /api/heygen/avatars/upload for training videos, or ask your administrator to enable file uploads.'
+    );
+  }
+
+  /**
+   * Upload avatar / voice source via multipart (never base64 in JSON).
+   * Prefers POST /api/heygen/avatars|voices/upload; falls back to workspace
+   * asset upload for files ≤ 50 MB when the HeyGen upload route is not deployed.
+   * @returns {{ type: 'url', url: string } | { type: 'asset_id', asset_id: string }}
+   */
+  async uploadHeygenSourceFile(file, kind = 'avatar', { onProgress } = {}) {
+    const fallbackName = kind === 'voice' ? 'voice-sample.mp3' : 'training-video.mp4';
+    const uploadFile = normalizeHeygenUploadFile(file, fallbackName);
+    if (!uploadFile) {
+      throw userError('A valid file is required for upload. Select a video or audio file and try again.');
+    }
+
+    const maxBytes = kind === 'voice' ? HEYGEN_VOICE_MAX_BYTES : HEYGEN_SOURCE_MAX_BYTES;
+    if (uploadFile.size > maxBytes) {
+      const limitMb = Math.round(maxBytes / (1024 * 1024));
+      throw userError(`File exceeds the ${limitMb} MB upload limit.`);
+    }
+
+    const endpoint =
+      kind === 'voice'
+        ? API_CONFIG.ENDPOINTS.HEYGEN.VOICES.UPLOAD
+        : API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.UPLOAD;
+
+    const formData = new FormData();
+    formData.append('file', uploadFile, uploadFile.name || fallbackName);
+
+    const uploadUrl = buildUrl(endpoint);
+    const headers = authOnlyHeaders();
+
+    let response;
+    let responseJson;
+
+    if (onProgress) {
+      try {
+        const xhrResult = await uploadFormDataWithProgress({
+          url: uploadUrl,
+          formData,
+          headers,
+          onProgress,
+        });
+        response = { ok: true, status: xhrResult.status };
+        responseJson = xhrResult.data;
+      } catch (xhrError) {
+        response = { ok: false, status: xhrError.status || 0 };
+        responseJson = xhrError.data || { message: xhrError.message };
+      }
+    } else {
+      response = await fetch(uploadUrl, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+      responseJson = await response.json().catch(() => ({}));
+    }
+
+    if (response.ok) {
+      const payload = responseJson.data || responseJson;
+      const fileAsset = buildHeygenFileAssetFromUploadPayload(payload);
+      if (!fileAsset) {
+        throw userError('Upload succeeded but no url or asset_id was returned.');
+      }
+      return fileAsset;
+    }
+
+    const status = response.status;
+    const errorMessage = String(responseJson?.message || responseJson?.error || '');
+
+    if (status === 400 && /file is required/i.test(errorMessage)) {
+      throw userError(
+        'Upload failed: the file was not sent as multipart form field "file". Select your video again and retry.'
+      );
+    }
+
+    if (status === 502) {
+      throw userError('Upload to HeyGen failed. Large videos can take several minutes — please retry.');
+    }
+
+    const missingHeygenUpload = isHeygenUploadRouteMissing(status);
+    if (missingHeygenUpload) {
+      if (kind === 'voice') voiceUploadRouteAvailable = false;
+      else avatarUploadRouteAvailable = false;
+    }
+
+    if (missingHeygenUpload && canUploadFileAsHeygenUrl(uploadFile)) {
+      console.warn(
+        `HeyGen ${kind} upload route unavailable (${status}); using workspace asset upload.`
+      );
+      const { url } = await uploadFileAsHeygenUrl(uploadFile);
+      return buildHeygenUrlAsset(url);
+    }
+
+    if (missingHeygenUpload) {
+      throw userError(this.formatLargeUploadBlockedMessage(uploadFile.size));
+    }
+
+    console.error('Athena VI upload error:', errorMessage || JSON.stringify(responseJson));
+    throw userError(errorMessage || `Failed to upload file: ${status}`);
+  }
+
+  /**
+   * Avatar create from a local file: multipart upload → small JSON with file url/asset_id.
+   * Never embeds base64 in the create request.
+   */
+  async createAvatarFromFile({ type, name, file, onUploadProgress, ...extra }) {
+    if (!file) {
+      throw userError('A file is required to create this avatar.');
+    }
+    if (!type || !name) {
+      throw userError('Avatar type and name are required.');
+    }
+
+    const filePayload = await this.uploadHeygenSourceFile(file, 'avatar', {
+      onProgress: onUploadProgress,
+    });
+
+    return this.createAvatar({
+      type,
+      name,
+      file: filePayload,
+      ...extra,
+    });
+  }
+
+  /**
+   * Clone voice from a local file: multipart upload → small JSON with audio url/asset_id.
+   * Never embeds base64 in the clone request.
+   */
+  async cloneVoiceFromFile({
+    voiceName,
+    file,
+    language,
+    removeBackgroundNoise = true,
+    onUploadProgress,
+    pollUntilReady = true,
+    onCloneStatus,
+  }) {
+    if (!voiceName?.trim()) {
+      throw userError('A voice name is required.');
+    }
+    if (!file) {
+      throw userError('An audio sample is required to clone a voice.');
+    }
+
+    const audioPayload = await this.uploadHeygenSourceFile(file, 'voice', {
+      onProgress: onUploadProgress,
+    });
+
+    const cloneResult = await this.cloneVoice({
+      voice_name: voiceName.trim(),
+      voiceName: voiceName.trim(),
+      audio: audioPayload,
+      remove_background_noise: removeBackgroundNoise,
+      removeBackgroundNoise,
+      ...(language ? { language } : {}),
+    });
+
+    const voiceId = extractVoiceId(cloneResult);
+    if (pollUntilReady && voiceId) {
+      return this.pollVoiceCloneUntilReady(voiceId, { onProgress: onCloneStatus });
+    }
+    return cloneResult;
+  }
+
+  async pollVoiceCloneUntilReady(
+    voiceId,
+    { intervalMs = 5000, timeoutMs = 180000, onProgress } = {}
+  ) {
+    if (!voiceId) {
+      throw userError('Voice id is required to check clone status.');
+    }
+
+    const deadline = Date.now() + timeoutMs;
+    let lastStatus = null;
+
+    while (Date.now() < deadline) {
+      const result = await this.getVoiceStatus(voiceId);
+      const status = String(result?.status || result?.data?.status || '').toLowerCase();
+      lastStatus = status;
+      onProgress?.(result, status);
+
+      if (['completed', 'ready', 'success', 'active'].includes(status)) {
+        return result;
+      }
+      if (['failed', 'error', 'rejected'].includes(status)) {
+        throw userError(result?.message || 'Voice clone failed. Try a clearer MP3 or WAV sample.');
+      }
+      if (status && status !== 'processing' && status !== 'pending') {
+        return result;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    }
+
+    throw userError(
+      lastStatus === 'processing' || lastStatus === 'pending'
+        ? 'Voice clone is still processing. Check My Voices in a few minutes.'
+        : 'Timed out waiting for voice clone to finish.'
+    );
   }
 
   /**
@@ -200,16 +507,16 @@ class HeygenService {
    */
   async createAvatarLook({ name, prompt, avatarGroupId, avatarId, referenceImageUrl }) {
     if (!avatarGroupId) {
-      throw new Error('Avatar group id is required to create a look');
+      throw userError('Avatar group id is required to create a look');
     }
     if (!referenceImageUrl) {
-      throw new Error('Reference avatar image is required to create a look');
+      throw userError('Reference avatar image is required to create a look');
     }
     if (!name?.trim()) {
-      throw new Error('Look name is required');
+      throw userError('Look name is required');
     }
     if (!prompt?.trim()) {
-      throw new Error('Prompt is required to generate a look');
+      throw userError('Prompt is required to generate a look');
     }
 
     const payload = {
@@ -278,14 +585,14 @@ class HeygenService {
       
       if (!response.ok) {
         const errText = await response.text();
-        throw new Error(`Failed to get avatar consent: ${response.status} - ${errText}`);
+        throw userError(`Failed to get avatar consent: ${response.status} - ${errText}`);
       }
       
       const data = await response.json();
       return data.data || data;
     } catch (error) {
       console.error('Error in heygenService.getAvatarConsent:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -302,14 +609,14 @@ class HeygenService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch voices: ${response.status}`);
+        throw userError(`Failed to fetch voices: ${response.status}`);
       }
 
       const data = await response.json();
       return data.data || data;
     } catch (error) {
       console.error('Error in heygenService.getVoices:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -324,43 +631,41 @@ class HeygenService {
 
       if (!response.ok) {
         const errText = await response.text();
-        throw new Error(`Failed to design voice: ${response.status} - ${errText}`);
+        throw userError(`Failed to design voice: ${response.status} - ${errText}`);
       }
 
       const data = await response.json();
       return data.data || data;
     } catch (error) {
       console.error('Error in heygenService.designVoice:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
   async cloneVoice(payload) {
     try {
+      const audioField = payload?.audio;
+      if (audioField?.type === 'base64' || audioField?.data) {
+        throw userError(
+          'Do not send clone audio as base64 in JSON. Upload via POST /api/heygen/voices/upload first, then use audio.type "url" or "asset_id".'
+        );
+      }
+
       const endpoint = API_CONFIG.ENDPOINTS.HEYGEN.VOICES.CLONE;
       console.log('Athena VI: Calling cloneVoice API...', endpoint, payload);
       const response = await fetch(buildUrl(endpoint), {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        let errorData;
-        try {
-          errorData = await response.json();
-        } catch {
-          errorData = { message: await response.text() };
-        }
-        console.error('Athena VI: Clone Voice API Error:', errorData);
-        throw new Error(errorData.message || errorData.error || `Failed to clone voice: ${response.status}`);
-      }
+      await throwIfHeygenResponseFailed(response, 'Failed to clone voice');
 
       const data = await response.json();
       return data.data || data;
     } catch (error) {
       console.error('Error in heygenService.cloneVoice:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -383,14 +688,14 @@ class HeygenService {
 
       if (!response.ok) {
         const errText = await response.text();
-        throw new Error(`Failed to select voice: ${response.status} - ${errText}`);
+        throw userError(`Failed to select voice: ${response.status} - ${errText}`);
       }
 
       const data = await response.json();
       return data.data || data;
     } catch (error) {
       console.error('Error in heygenService.selectVoice:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -403,14 +708,14 @@ class HeygenService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch voice status: ${response.status}`);
+        throw userError(`Failed to fetch voice status: ${response.status}`);
       }
 
       const data = await response.json();
       return data.data || data;
     } catch (error) {
       console.error('Error in heygenService.getVoiceStatus:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -425,14 +730,14 @@ class HeygenService {
 
       if (!response.ok) {
         const errText = await response.text();
-        throw new Error(`Failed to preview speech: ${response.status} - ${errText}`);
+        throw userError(`Failed to preview speech: ${response.status} - ${errText}`);
       }
 
       const data = await response.json();
       return data.data || data;
     } catch (error) {
       console.error('Error in heygenService.previewSpeech:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -516,21 +821,21 @@ class HeygenService {
       if (response.status === 402) {
         const payload = await response.json().catch(() => ({}));
         throw new InsufficientCreditsError(
-          payload.message || 'Insufficient workspace credits for video generation',
+          sanitizeUserFacingMessage(payload.message || 'Insufficient workspace credits for video generation'),
           payload
         );
       }
 
       if (!response.ok) {
         const errText = await response.text();
-        throw new Error(`Failed to generate video: ${response.status} - ${errText}`);
+        throw userError(`Failed to generate video: ${response.status} - ${errText}`);
       }
 
       const data = await response.json();
       return data.data?.heygenVideo || data.heygenVideo || data;
     } catch (error) {
       console.error('Error in heygenService.generateVideo:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -543,14 +848,14 @@ class HeygenService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to list HeyGen videos: ${response.status}`);
+        throw userError(`Failed to list avatar videos: ${response.status}`);
       }
 
       const data = await response.json();
       return data.data?.heygenVideos || data.heygenVideos || [];
     } catch (error) {
       console.error('Error in heygenService.listVideos:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -572,14 +877,14 @@ class HeygenService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch HeyGen video: ${response.status}`);
+        throw userError(`Failed to fetch avatar video: ${response.status}`);
       }
 
       const data = await response.json();
       return data.data?.heygenVideo || data.heygenVideo;
     } catch (error) {
       console.error('Error in heygenService.getVideo:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -592,14 +897,14 @@ class HeygenService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to get download URL: ${response.status}`);
+        throw userError(`Failed to get download URL: ${response.status}`);
       }
 
       const data = await response.json();
       return data.data || data; // Contains presignedUrl
     } catch (error) {
       console.error('Error in heygenService.downloadVideo:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -617,14 +922,14 @@ class HeygenService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch video stream: ${response.status}`);
+        throw userError(`Failed to fetch video stream: ${response.status}`);
       }
 
       const blob = await response.blob();
       return URL.createObjectURL(blob);
     } catch (error) {
       console.error('Error in heygenService.getVideoBlobUrl:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 
@@ -637,14 +942,14 @@ class HeygenService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to get S3 location: ${response.status}`);
+        throw userError(`Failed to get S3 location: ${response.status}`);
       }
 
       const data = await response.json();
       return data.data || data;
     } catch (error) {
       console.error('Error in heygenService.getS3Location:', error);
-      throw error;
+      throw sanitizeThrownError(error);
     }
   }
 }

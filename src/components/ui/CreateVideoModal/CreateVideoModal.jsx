@@ -15,6 +15,7 @@ import {
   sceneMatchesAspectRatio,
 } from '../../../utils/fetchEditorTemplates.js';
 import TemplateBundlePicker from '../../features/editor/editor/TemplateBundlePicker';
+import { sanitizeUserFacingMessage } from '../../../utils/userFacingMessage.js';
 import './CreateVideoModal.css';
 
 const WIZARD_STEPS = [
@@ -197,7 +198,7 @@ const CreateVideoModal = ({
   const toastTimeoutRef = useRef(null);
 
   const showToast = (message, type = 'success') => {
-    setToast({ message, type });
+    setToast({ message: sanitizeUserFacingMessage(message), type });
     if (toastTimeoutRef.current) {
       clearTimeout(toastTimeoutRef.current);
     }

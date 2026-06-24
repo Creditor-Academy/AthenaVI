@@ -31,6 +31,7 @@ const ContributorsPanel = ({
   onUpdateInput,
   onRemoveInput,
   onSendInvites,
+  inviteSending = false,
   onChangeMemberRole,
   onRemoveMember,
   loadContributors
@@ -121,6 +122,7 @@ const ContributorsPanel = ({
                     <button
                       type="button"
                       onClick={() => setShowAddContributors(!showAddContributors)}
+                      disabled={inviteSending}
                       className="astryd-btn-accent-outline"
                       style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', height: '30px' }}
                     >
@@ -150,12 +152,14 @@ const ContributorsPanel = ({
                               className="astryd-input"
                               value={input.email}
                               onChange={(e) => onUpdateInput(index, 'email', e.target.value)}
+                              disabled={inviteSending}
                               style={{ flex: 1, height: '36px' }}
                             />
                             <div className="astryd-select-wrapper" style={{ width: '110px' }}>
                               <button
                                 type="button"
                                 className="astryd-select"
+                                disabled={inviteSending}
                                 style={{ height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', textAlign: 'left' }}
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -199,6 +203,7 @@ const ContributorsPanel = ({
                                 type="button"
                                 className="astryd-btn-secondary"
                                 onClick={() => onRemoveInput(index)}
+                                disabled={inviteSending}
                                 style={{
                                   padding: '0 10px',
                                   height: '36px',
@@ -216,10 +221,19 @@ const ContributorsPanel = ({
                           </div>
                         ))}
                       </div>
+                      {inviteSending && (
+                        <div className="astryd-invite-sending-banner" role="status" aria-live="polite">
+                          <span className="astryd-invite-spinner" aria-hidden />
+                          <span>
+                            Sending invitation{inviteInputs.filter((i) => i.email.trim()).length > 1 ? 's' : ''}…
+                          </span>
+                        </div>
+                      )}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
                         <button
                           type="button"
                           onClick={onAddInput}
+                          disabled={inviteSending}
                           className="astryd-btn-accent-outline"
                           style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', height: '30px' }}
                         >
@@ -228,10 +242,19 @@ const ContributorsPanel = ({
                         <button
                           type="button"
                           onClick={onSendInvites}
-                          className="astryd-btn-primary"
-                          style={{ padding: '6px 16px', fontSize: '12px', height: '30px' }}
+                          disabled={inviteSending}
+                          className="astryd-btn-primary astryd-btn-primary--invite"
+                          style={{ padding: '6px 16px', fontSize: '12px', height: '30px', minWidth: '108px' }}
+                          aria-busy={inviteSending}
                         >
-                          Invite
+                          {inviteSending ? (
+                            <>
+                              <span className="astryd-invite-spinner astryd-invite-spinner--on-primary" aria-hidden />
+                              Sending…
+                            </>
+                          ) : (
+                            'Invite'
+                          )}
                         </button>
                       </div>
                     </div>

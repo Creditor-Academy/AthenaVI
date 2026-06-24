@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import storageService from '../services/storageService.js';
 import { STORAGE_REFRESH_EVENT } from '../utils/storageQuota.js';
+import { getSanitizedErrorMessage } from '../utils/userFacingMessage.js';
 
 export function useStorageQuota() {
   const [quota, setQuota] = useState(null);
@@ -14,7 +15,7 @@ export function useStorageQuota() {
       const data = await storageService.getPersonalQuota();
       setQuota(data);
     } catch (err) {
-      setError(err.message || 'Failed to load storage');
+      setError(getSanitizedErrorMessage(err, 'Failed to load storage'));
       setQuota(null);
     } finally {
       setLoading(false);
@@ -50,7 +51,7 @@ export function useWorkspaceStorage(workspaceId) {
       const data = await storageService.getWorkspaceStorage(workspaceId);
       setStorage(data);
     } catch (err) {
-      setError(err.message || 'Failed to load workspace storage');
+      setError(getSanitizedErrorMessage(err, 'Failed to load workspace storage'));
       setStorage(null);
     } finally {
       setLoading(false);

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FiArrowRight } from 'react-icons/fi'
+import LoadingDots from '../ui/LoadingDots/LoadingDots.jsx'
 
 // Unsplash CDN — free to use with attribution
 const UNSPLASH = (id, w = 800) =>
@@ -370,6 +371,9 @@ function TemplatesSection({ onNavigateToSolution }) {
           <p className="ts-subtitle">
             Ready-made layouts for every use case — pick one, add your content, and generate.
           </p>
+          <div className="ts-loading">
+            <LoadingDots size="sm" />
+          </div>
         </motion.div>
 
         {/* Filters */}

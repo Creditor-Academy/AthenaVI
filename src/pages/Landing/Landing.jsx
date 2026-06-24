@@ -2,6 +2,7 @@ import Navbar from '../../components/layout/Navbar/Navbar.jsx'
 import Hero from '../../components/layout/Hero.jsx'
 import UnifiedVideoSection from '../../components/layout/UnifiedVideoSection.jsx'
 import ProductsSection from '../../components/layout/ProductsSection.jsx'
+import WebsiteTemplateDomeSection from '../../components/layout/WebsiteTemplateDomeSection.jsx'
 import TemplatesSection from '../../components/layout/TemplatesSection.jsx'
 import PlatformFeatures from '../../components/layout/PlatformFeatures.jsx'
 import UseCases from '../../components/layout/UseCases.jsx'
@@ -81,6 +82,7 @@ function Landing({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToC
         <Hero />
         <UnifiedVideoSection />
         <ProductsSection />
+        <WebsiteTemplateDomeSection onLoginClick={onLoginClick} />
         <TemplatesSection onNavigateToSolution={onLoginClick} />
         <PlatformFeatures />
         <UseCases />

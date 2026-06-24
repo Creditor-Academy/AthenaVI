@@ -1,4 +1,4 @@
-import storageService from '../services/storageService.js';
+import { sanitizeUserFacingMessage } from './userFacingMessage.js';
 import { formatBytes } from './formatSize.js';
 
 export const STORAGE_REFRESH_EVENT = 'storage-quota-refresh';
@@ -28,6 +28,32 @@ export function formatStorageTransactionType(type) {
   return labels[type] || type || '—';
 }
 
+export function formatStorageUpgradeStatus(status) {
+  const labels = {
+    pending: 'Pending review',
+    approved: 'Approved',
+    rejected: 'Rejected',
+  };
+  return labels[String(status || '').toLowerCase()] || status || '—';
+}
+
+export function formatStorageUpgradeUrgency(urgency) {
+  const labels = {
+    flexible: 'Flexible',
+    week: 'Within 1 week',
+    urgent: 'Urgent',
+  };
+  return labels[String(urgency || '').toLowerCase()] || urgency || '—';
+}
+
+export function getStorageUpgradeStatusVariant(status) {
+  const key = String(status || '').toLowerCase();
+  if (key === 'pending') return 'pending';
+  if (key === 'approved') return 'approved';
+  if (key === 'rejected') return 'rejected';
+  return 'neutral';
+}
+
 export class StorageLimitError extends Error {
   constructor(message, data = {}) {
     super(message || 'Storage limit exceeded');
@@ -39,9 +65,10 @@ export class StorageLimitError extends Error {
 }
 
 export function formatStorageLimitMessage(error, { settingsPath = 'credits' } = {}) {
-  const base =
+  const base = sanitizeUserFacingMessage(
     error?.message ||
-    'Storage limit exceeded. Workspace assets, HeyGen scene videos, and completed renders count toward your quota.';
+      'Storage limit exceeded. Workspace assets, avatar scene videos, and completed renders count toward your quota.'
+  );
   return `${base} Contact your administrator to request more storage, or open Billing in Settings to review usage.`;
 }
 

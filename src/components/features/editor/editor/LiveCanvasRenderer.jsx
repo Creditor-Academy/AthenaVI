@@ -837,14 +837,10 @@ const LiveCanvasRenderer = ({
           ? Math.max(scaleX, scaleY)
           : Math.min(scaleX, scaleY)
       setDisplayScale(scale)
-      if (scaleMode === 'cover') {
-        setDisplayOffset({
-          x: (width - compositionWidth * scale) / 2,
-          y: (height - compositionHeight * scale) / 2,
-        })
-      } else {
-        setDisplayOffset({ x: 0, y: 0 })
-      }
+      setDisplayOffset({
+        x: (width - compositionWidth * scale) / 2,
+        y: (height - compositionHeight * scale) / 2,
+      })
     }
   }, [scaleMode, compositionWidth, compositionHeight])
 

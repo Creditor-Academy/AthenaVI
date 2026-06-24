@@ -2,6 +2,7 @@ import {
   TEMPLATE_BUNDLE_SOURCES,
   BUNDLE_CATEGORY_FILTER,
 } from '../constants/templateRegistry';
+import { TEMPLATE_CATEGORY_IMAGES } from '../constants/templateCategoryImages';
 
 
 function parseBundleAspectRatio(meta, scenes) {
@@ -97,6 +98,101 @@ export function flattenBundleScenes(bundles = []) {
   return bundles.flatMap((bundle) =>
     (bundle.scenes || []).map((scene) => sceneToPickerItem(scene, bundle))
   );
+}
+
+function findFirstImageSrc(clips = []) {
+  for (const clip of clips) {
+    if (clip.type === 'image') {
+      const src = clip.src || clip.content?.src || clip.url;
+      if (src) return src;
+    }
+  }
+  return null;
+}
+
+function findSceneImageSrc(scene) {
+  if (!scene) return null;
+  if (scene.thumbnail) return scene.thumbnail;
+  if (scene.backgroundImage) return scene.backgroundImage;
+  const bg = scene.background?.value;
+  if (bg && typeof bg === 'string' && (bg.startsWith('http') || bg.startsWith('/'))) return bg;
+
+  for (const clip of scene.clips || []) {
+    if (clip.type === 'avatar') {
+      const avatarSrc = clip.src || clip.previewImage || clip.thumbnail;
+      if (avatarSrc) return avatarSrc;
+    }
+  }
+
+  return findFirstImageSrc(scene.clips);
+}
+
+/**
+ * Map a single template scene to a dome gallery tile image.
+ */
+export function sceneToDomeImage(scene, bundle) {
+  if (!scene) return null;
+
+  const clipSrc = findSceneImageSrc(scene);
+  if (clipSrc) {
+    return {
+      id: scene.id,
+      bundleId: bundle?.id,
+      src: clipSrc,
+      alt: scene.title || bundle?.name || 'Template scene',
+    };
+  }
+
+  const categorySrc = TEMPLATE_CATEGORY_IMAGES[bundle?.category];
+  if (categorySrc) {
+    return {
+      id: scene.id,
+      bundleId: bundle?.id,
+      src: categorySrc,
+      alt: scene.title || bundle?.name || bundle?.category,
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Flatten all scenes from bundles into dome gallery images.
+ */
+export function bundlesToSceneDomeImages(bundles = [], { limit } = {}) {
+  const pairs = bundles.flatMap((bundle) =>
+    (bundle.scenes || []).map((scene) => ({ scene, bundle }))
+  );
+  const slice = typeof limit === 'number' ? pairs.slice(0, limit) : pairs;
+  return slice.map(({ scene, bundle }) => sceneToDomeImage(scene, bundle)).filter(Boolean);
+}
+
+/**
+ * Map template bundles to static images for Dome Gallery tiles.
+ */
+export function bundleToDomeImage(bundle) {
+  if (!bundle) return null;
+
+  const thumb = bundle.thumb || bundle.coverScene?.thumbnail;
+  if (thumb) {
+    return { id: bundle.id, src: thumb, alt: bundle.name || bundle.category };
+  }
+
+  const clipSrc = findFirstImageSrc(bundle.coverScene?.clips);
+  if (clipSrc) {
+    return { id: bundle.id, src: clipSrc, alt: bundle.name || bundle.category };
+  }
+
+  const categorySrc = TEMPLATE_CATEGORY_IMAGES[bundle.category];
+  if (categorySrc) {
+    return { id: bundle.id, src: categorySrc, alt: bundle.name || bundle.category };
+  }
+
+  return null;
+}
+
+export function bundlesToDomeImages(bundles = []) {
+  return bundles.map(bundleToDomeImage).filter(Boolean);
 }
 
 export function bundleToDetailsTemplate(bundle) {

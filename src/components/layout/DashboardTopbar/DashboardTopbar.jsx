@@ -8,7 +8,7 @@ function DashboardTopbar({
     topbarMobileOpen,
     setTopbarMobileOpen,
     onCreate,
-    notificationCount = 9,
+    notificationCount = 0,
     cartCount = 2,
     goToSection,
     onNotificationClick,

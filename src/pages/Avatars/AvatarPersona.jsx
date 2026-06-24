@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Play, Video, X, Sparkles, ShieldCheck } from 'lucide-react'
+import { getSanitizedErrorMessage } from '../../utils/userFacingMessage'
 import heygenService from '../../services/heygenService'
 import AvatarConsentStep, { avatarNeedsConsentFlow } from '../../components/ui/AvatarConsentStep/AvatarConsentStep'
 import {
@@ -85,7 +86,7 @@ function AvatarPersona({ selectedAvatar, closeDetails, onCreate, onCreateLooks, 
             if (mapped.length > 0) setSelectedLook(mapped[0]);
           } catch (e) {
             console.error(e);
-            setDebugLooksInfo(`API Error: ${e.message}`);
+            setDebugLooksInfo(`API Error: ${getSanitizedErrorMessage(e, 'Request failed')}`);
             setActiveLooks([]);
           } finally {
             setLoadingLooks(false);

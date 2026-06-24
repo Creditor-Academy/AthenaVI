@@ -41,7 +41,7 @@ function BundleCard({ bundle, onOpen }) {
     >
       <div style={{ position: 'relative', aspectRatio: '16/9', background: '#0f172a' }}>
         {bundle.coverScene ? (
-          <TemplateScenePreview template={bundle.coverScene} />
+          <TemplateScenePreview template={bundle.coverScene} compact />
         ) : (
           <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #1e293b, #0f172a)' }} />
         )}

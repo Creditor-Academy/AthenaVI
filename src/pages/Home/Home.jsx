@@ -11,6 +11,8 @@ import {
     MdLanguage,
     MdLayers,
     MdAccountBalanceWallet,
+    MdArrowForward,
+    MdTrendingUp,
 } from 'react-icons/md'
 import './Home.css'
 import workspaceService from '../../services/workspaceService.js'
@@ -19,9 +21,8 @@ import creditsService from '../../services/creditsService.js'
 import { fetchTemplateBundles } from '../../utils/fetchTemplateBundles.js'
 import TemplateScenePreview from '../../components/features/editor/editor/TemplateScenePreview'
 import ProjectSceneThumbnail from '../../components/features/workspace/workspace/ProjectSceneThumbnail.jsx'
-import LoadingDots from '../../components/ui/LoadingDots/LoadingDots.jsx'
 
-function Home({ onCreate, onEdit, onShowAIAssistant, onBrowseTemplates, onSelectTemplate }) {
+function Home({ onCreate, onEdit, onShowAIAssistant, onBrowseTemplates, onSelectTemplate, onNavigate }) {
     const { user } = useAuth();
     const firstName = user?.name ? user.name.split(' ')[0] : (user?.email ? user.email.split('@')[0] : 'User');
 
@@ -139,27 +140,64 @@ function Home({ onCreate, onEdit, onShowAIAssistant, onBrowseTemplates, onSelect
 
     const stats = useMemo(() => {
         const workspaceLabel = summary.workspaceCount === 1 ? '1 workspace' : `${summary.workspaceCount} workspaces`
+        const credits = summary.credits ?? 0
+        const creditsMeterPercent = summary.credits == null
+            ? 0
+            : Math.min(100, Math.max(credits > 0 ? 12 : 0, Math.round((credits / 2000) * 100)))
+
         return [
             {
+                id: 'projects',
                 label: 'Video Projects',
                 value: String(summary.projectCount),
                 isLoading: summaryLoading,
                 subtitle: summaryLoading ? 'Loading…' : `Across ${workspaceLabel}`,
+                trend: summaryLoading
+                    ? '…'
+                    : summary.projectCount > 0
+                        ? 'Active drafts'
+                        : 'Start your first',
+                trendVariant: summary.projectCount > 0 ? 'up' : 'neutral',
+                cta: 'Open workspace',
+                navigateTo: 'workspace',
                 icon: <MdCollectionsBookmark />,
             },
             {
+                id: 'exports',
                 label: 'Completed Exports',
                 value: String(summary.exportCount),
                 isLoading: summaryLoading,
-                subtitle: summaryLoading ? 'Loading…' : 'Final MP4 renders',
+                subtitle: summaryLoading ? 'Loading…' : 'Final MP4 renders ready to share',
+                trend: summaryLoading
+                    ? '…'
+                    : summary.exportCount > 0
+                        ? 'Ready to download'
+                        : 'None published yet',
+                trendVariant: summary.exportCount > 0 ? 'up' : 'neutral',
+                cta: 'View exports',
+                navigateTo: 'videos',
                 icon: <MdVideoLibrary />,
             },
             {
+                id: 'credits',
                 label: 'Credits Available',
-                value: Number(summary.credits).toLocaleString(),
+                value: summary.credits == null ? '—' : Number(summary.credits).toLocaleString(),
                 isLoading: summaryLoading || summary.credits == null,
-                subtitle: summaryLoading ? 'Loading…' : 'For exports & AI generation',
+                subtitle: summaryLoading
+                    ? 'Loading…'
+                    : credits < 100
+                        ? 'Top up to keep generating'
+                        : 'For exports & AI generation',
+                trend: summaryLoading || summary.credits == null
+                    ? '…'
+                    : credits < 100
+                        ? 'Low balance'
+                        : 'Healthy balance',
+                trendVariant: credits < 100 ? 'down' : 'up',
+                cta: 'Manage credits',
+                navigateTo: 'credits',
                 icon: <MdAccountBalanceWallet />,
+                meterPercent: creditsMeterPercent,
             },
         ]
     }, [summary, summaryLoading])
@@ -207,18 +245,59 @@ function Home({ onCreate, onEdit, onShowAIAssistant, onBrowseTemplates, onSelect
                 <div className="hero-decoration hero-circle-3"></div>
             </div>
 
-            <div className="home-billing-stats">
+            <div className="home-billing-stats" role="list">
                 {stats.map((stat) => (
-                    <div key={stat.label} className="home-billing-stat-card">
-                        <div className="home-billing-stat-top">
-                            <span className="home-billing-stat-label">{stat.label}</span>
-                            <span className="home-billing-stat-icon">{stat.icon}</span>
+                    <button
+                        key={stat.id}
+                        type="button"
+                        className="home-billing-stat-card home-billing-stat-card--action"
+                        onClick={() => onNavigate?.(stat.navigateTo)}
+                        disabled={!onNavigate}
+                        role="listitem"
+                        aria-label={`${stat.label}: ${stat.isLoading ? 'loading' : stat.value}. ${stat.cta}`}
+                    >
+                        <span className="home-billing-stat-bubble home-billing-stat-bubble--1" aria-hidden />
+                        <span className="home-billing-stat-bubble home-billing-stat-bubble--2" aria-hidden />
+                        <span className="home-billing-stat-bubble home-billing-stat-bubble--3" aria-hidden />
+                        <div className="home-billing-stat-inner">
+                            <div className="home-billing-stat-top">
+                                <span className="home-billing-stat-label">{stat.label}</span>
+                                <span className="home-billing-stat-icon" aria-hidden="true">
+                                    {stat.icon}
+                                </span>
+                            </div>
+                            <div className="home-billing-stat-value" aria-busy={stat.isLoading}>
+                                {stat.isLoading ? (
+                                    <span className="home-billing-stat-skeleton" aria-hidden />
+                                ) : (
+                                    stat.value
+                                )}
+                            </div>
+                            {!stat.isLoading && stat.trend && (
+                                <span className={`home-billing-stat-trend ${stat.trendVariant}`}>
+                                    <MdTrendingUp size={14} aria-hidden />
+                                    {stat.trend}
+                                </span>
+                            )}
+                            <div className="home-billing-stat-subtitle">{stat.subtitle}</div>
+                            {stat.meterPercent != null && !stat.isLoading && (
+                                <div
+                                    className="home-billing-stat-meter"
+                                    role="progressbar"
+                                    aria-valuenow={stat.meterPercent}
+                                    aria-valuemin={0}
+                                    aria-valuemax={100}
+                                    aria-label="Credit balance indicator"
+                                >
+                                    <span style={{ width: `${stat.meterPercent}%` }} />
+                                </div>
+                            )}
+                            <span className="home-billing-stat-cta">
+                                {stat.cta}
+                                <MdArrowForward size={16} aria-hidden />
+                            </span>
                         </div>
-                        <div className="home-billing-stat-value" aria-busy={stat.isLoading}>
-                            {stat.isLoading ? <LoadingDots size="lg" /> : stat.value}
-                        </div>
-                        <div className="home-billing-stat-subtitle">{stat.subtitle}</div>
-                    </div>
+                    </button>
                 ))}
             </div>
 

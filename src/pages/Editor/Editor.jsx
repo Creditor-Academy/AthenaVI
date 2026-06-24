@@ -16,6 +16,7 @@ import QuickCreateModal from '../../components/features/editor/editor/QuickCreat
 import PresenterModeModal from '../../components/features/editor/editor/PresenterModeModal'
 import VoiceOnlySpeechModal from '../../components/features/editor/editor/VoiceOnlySpeechModal'
 import heygenService from '../../services/heygenService'
+import { getSanitizedErrorMessage } from '../../utils/userFacingMessage'
 import creditsService, { isInsufficientCreditsError } from '../../services/creditsService.js'
 import { extractCreditsUsed } from '../../utils/creditTransactions.js'
 import avatar1 from '../../assets/Avatarr1.png'
@@ -647,7 +648,7 @@ function Create({ onBack, initialConfig = null }) {
       if (manual) showToast('Project saved', 'success')
     } catch (error) {
       console.error('Failed to save project:', error)
-      showToast(error?.message || 'Save failed — your work is kept locally', 'error')
+      showToast(getSanitizedErrorMessage(error, 'Save failed — your work is kept locally'), 'error')
     } finally {
       setIsSaving(false)
     }
@@ -1657,7 +1658,7 @@ function Create({ onBack, initialConfig = null }) {
       })
       showToast('Download started', 'success')
     } catch (e) {
-      showToast(e?.message || 'Download failed', 'error')
+      showToast(getSanitizedErrorMessage(e, 'Download failed'), 'error')
     } finally {
       setIsDownloadingExport(false)
     }
@@ -1938,7 +1939,7 @@ function Create({ onBack, initialConfig = null }) {
         bumpCreditsRefresh();
         alert('Not enough workspace credits to generate this avatar video. Allocate credits in Settings → Billing or ask your workspace owner.');
       } else {
-        alert('Failed to start video generation: ' + error.message);
+        alert('Failed to start video generation: ' + getSanitizedErrorMessage(error));
       }
       window.dispatchEvent(new CustomEvent('generation-failed'));
     }

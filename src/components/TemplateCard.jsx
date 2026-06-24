@@ -156,6 +156,59 @@ const TemplateCard = ({ template, onSelect }) => {
     gap: '8px'
   };
 
+  // Bubble colors to use (blue, violet, green)
+  const BUBBLE_COLORS = ['#3b82f6', '#7c3aed', '#10b981'];
+
+  const getSeedFromString = (str = '') => {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) {
+      h = (h << 5) - h + str.charCodeAt(i);
+      h |= 0;
+    }
+    return Math.abs(h);
+  };
+
+  const seededRandom = (seed) => {
+    let x = seed % 2147483647;
+    if (x <= 0) x += 2147483646;
+    return () => {
+      x = (x * 16807) % 2147483647;
+      return (x - 1) / 2147483646;
+    };
+  };
+
+  // Return 2 or 3 unique colored bubble descriptors for the card
+  const getBubbles = (key = '') => {
+    const seed = getSeedFromString(key || (title || ''));
+    const rand = seededRandom(seed);
+    const count = 2 + Math.floor(rand() * 2); // 2 or 3
+
+    // preset relative positions to avoid heavy overlap
+    const POSITIONS = [
+      { top: '8%', left: '6%' },
+      { top: '10%', right: '6%' },
+      { bottom: '8%', left: '8%' },
+      { bottom: '10%', right: '8%' },
+      { top: '30%', left: '50%' }
+    ];
+
+    const SIZES = [18, 22, 28, 34];
+
+    // choose unique colors
+    const colorOrder = [...BUBBLE_COLORS].sort(() => rand() - 0.5);
+    const bubbles = [];
+    for (let i = 0; i < count; i++) {
+      const pos = POSITIONS[Math.floor(rand() * POSITIONS.length)];
+      const size = SIZES[Math.floor(rand() * SIZES.length)];
+      bubbles.push({
+        color: colorOrder[i % colorOrder.length],
+        size,
+        ...pos
+      });
+    }
+    return bubbles;
+  };
+
   return (
     <div 
       className="template-card"
@@ -166,6 +219,30 @@ const TemplateCard = ({ template, onSelect }) => {
     >
       {/* Preview Section */}
       <div style={previewWrapStyle}>
+        {/* Decorative colored bubbles (2-3) */}
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1 }}>
+          {getBubbles(title).map((b, i) => (
+            <div
+              key={`bubble-${i}`}
+              style={{
+                position: 'absolute',
+                width: b.size,
+                height: b.size,
+                backgroundColor: b.color,
+                borderRadius: '50%',
+                opacity: 0.95,
+                boxShadow: '0 6px 14px rgba(2,6,23,0.12)',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 1,
+                ...(
+                  b.left ? { left: b.left, top: b.top || '50%' } :
+                  b.right ? { right: b.right, top: b.top || '50%' } :
+                  { left: b.left || '50%', top: b.top || '50%' }
+                )
+              }}
+            />
+          ))}
+        </div>
         {duration && (
           <div style={{ ...badgeStyle, top: '16px', right: '16px' }}>
             {typeof duration === 'number' ? `${duration}s` : duration}
