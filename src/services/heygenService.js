@@ -7,10 +7,12 @@ import {
 } from '../utils/heygenAvatars.js';
 import { sanitizeUserFacingMessage } from '../utils/userFacingMessage.js';
 import {
+  buildHeygenFileAssetFromUploadPayload,
   buildHeygenUrlAsset,
   canUploadFileAsHeygenUrl,
   HEYGEN_SOURCE_MAX_BYTES,
   HEYGEN_VOICE_MAX_BYTES,
+  normalizeHeygenUploadFile,
   uploadFileAsHeygenUrl,
   uploadFormDataWithProgress,
   WORKSPACE_ASSET_MAX_BYTES,
@@ -73,7 +75,7 @@ async function throwIfHeygenResponseFailed(response, fallbackLabel = 'Request') 
 
   if (response.status === 413) {
     throw userError(
-      'File is too large to send inside JSON. Upload the file first, then create with file.type "url".'
+      'File is too large to send inside JSON. Upload the file first, then create with file.type "url" or "asset_id".'
     );
   }
 
@@ -250,7 +252,7 @@ class HeygenService {
       const fileField = payload?.file;
       if (fileField?.type === 'base64' || fileField?.data) {
         throw userError(
-          'Do not send training media as base64 in JSON. Upload via POST /api/heygen/avatars/upload first, then use file.type "url".'
+          'Do not send training media as base64 in JSON. Upload via POST /api/heygen/avatars/upload first, then use file.type "url" or "asset_id".'
         );
       }
 
@@ -277,32 +279,15 @@ class HeygenService {
   }
 
   /**
-   * Probe whether the dedicated HeyGen multipart upload route is deployed.
-   * Cached for the session — 404/405/501 means not available.
+   * Whether POST /api/heygen/avatars|voices/upload is deployed.
+   * Cached for the session — set false only after a real upload returns 404/405/501.
+   * Do not GET or POST-empty the upload URL (those routes are POST + multipart "file" only).
    */
   async isHeygenUploadRouteAvailable(kind = 'avatar') {
     const cache = kind === 'voice' ? voiceUploadRouteAvailable : avatarUploadRouteAvailable;
     if (cache != null) return cache;
-
-    const endpoint =
-      kind === 'voice'
-        ? API_CONFIG.ENDPOINTS.HEYGEN.VOICES.UPLOAD
-        : API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.UPLOAD;
-
-    let available = false;
-    try {
-      const response = await fetch(buildUrl(endpoint), {
-        method: 'POST',
-        headers: authOnlyHeaders(),
-      });
-      available = !isHeygenUploadRouteMissing(response.status);
-    } catch {
-      available = false;
-    }
-
-    if (kind === 'voice') voiceUploadRouteAvailable = available;
-    else avatarUploadRouteAvailable = available;
-    return available;
+    // Optimistic until uploadHeygenSourceFile learns otherwise from an actual POST.
+    return true;
   }
 
   formatLargeUploadBlockedMessage(fileSizeBytes) {
@@ -319,14 +304,17 @@ class HeygenService {
    * Upload avatar / voice source via multipart (never base64 in JSON).
    * Prefers POST /api/heygen/avatars|voices/upload; falls back to workspace
    * asset upload for files ≤ 50 MB when the HeyGen upload route is not deployed.
+   * @returns {{ type: 'url', url: string } | { type: 'asset_id', asset_id: string }}
    */
   async uploadHeygenSourceFile(file, kind = 'avatar', { onProgress } = {}) {
-    if (!file) {
-      throw userError('A file is required for upload.');
+    const fallbackName = kind === 'voice' ? 'voice-sample.mp3' : 'training-video.mp4';
+    const uploadFile = normalizeHeygenUploadFile(file, fallbackName);
+    if (!uploadFile) {
+      throw userError('A valid file is required for upload. Select a video or audio file and try again.');
     }
 
     const maxBytes = kind === 'voice' ? HEYGEN_VOICE_MAX_BYTES : HEYGEN_SOURCE_MAX_BYTES;
-    if (file.size > maxBytes) {
+    if (uploadFile.size > maxBytes) {
       const limitMb = Math.round(maxBytes / (1024 * 1024));
       throw userError(`File exceeds the ${limitMb} MB upload limit.`);
     }
@@ -337,7 +325,7 @@ class HeygenService {
         : API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.UPLOAD;
 
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', uploadFile, uploadFile.name || fallbackName);
 
     const uploadUrl = buildUrl(endpoint);
     const headers = authOnlyHeaders();
@@ -370,39 +358,50 @@ class HeygenService {
 
     if (response.ok) {
       const payload = responseJson.data || responseJson;
-      const url = payload.url;
-      if (!url) {
-        throw userError('Upload succeeded but no file URL was returned.');
+      const fileAsset = buildHeygenFileAssetFromUploadPayload(payload);
+      if (!fileAsset) {
+        throw userError('Upload succeeded but no url or asset_id was returned.');
       }
-      return url;
+      return fileAsset;
     }
 
     const status = response.status;
+    const errorMessage = String(responseJson?.message || responseJson?.error || '');
+
+    if (status === 400 && /file is required/i.test(errorMessage)) {
+      throw userError(
+        'Upload failed: the file was not sent as multipart form field "file". Select your video again and retry.'
+      );
+    }
+
+    if (status === 502) {
+      throw userError('Upload to HeyGen failed. Large videos can take several minutes — please retry.');
+    }
+
     const missingHeygenUpload = isHeygenUploadRouteMissing(status);
     if (missingHeygenUpload) {
       if (kind === 'voice') voiceUploadRouteAvailable = false;
       else avatarUploadRouteAvailable = false;
     }
 
-    if (missingHeygenUpload && canUploadFileAsHeygenUrl(file)) {
+    if (missingHeygenUpload && canUploadFileAsHeygenUrl(uploadFile)) {
       console.warn(
         `HeyGen ${kind} upload route unavailable (${status}); using workspace asset upload.`
       );
-      const { url } = await uploadFileAsHeygenUrl(file);
-      return url;
+      const { url } = await uploadFileAsHeygenUrl(uploadFile);
+      return buildHeygenUrlAsset(url);
     }
 
     if (missingHeygenUpload) {
-      throw userError(this.formatLargeUploadBlockedMessage(file.size));
+      throw userError(this.formatLargeUploadBlockedMessage(uploadFile.size));
     }
 
-    const errorText = responseJson?.message || JSON.stringify(responseJson);
-    console.error('Athena VI upload error:', errorText);
-    throw userError(`Failed to upload file: ${status}`);
+    console.error('Athena VI upload error:', errorMessage || JSON.stringify(responseJson));
+    throw userError(errorMessage || `Failed to upload file: ${status}`);
   }
 
   /**
-   * Avatar create from a local file: multipart upload → small JSON with file URL.
+   * Avatar create from a local file: multipart upload → small JSON with file url/asset_id.
    * Never embeds base64 in the create request.
    */
   async createAvatarFromFile({ type, name, file, onUploadProgress, ...extra }) {
@@ -413,20 +412,20 @@ class HeygenService {
       throw userError('Avatar type and name are required.');
     }
 
-    const url = await this.uploadHeygenSourceFile(file, 'avatar', {
+    const filePayload = await this.uploadHeygenSourceFile(file, 'avatar', {
       onProgress: onUploadProgress,
     });
 
     return this.createAvatar({
       type,
       name,
-      file: buildHeygenUrlAsset(url),
+      file: filePayload,
       ...extra,
     });
   }
 
   /**
-   * Clone voice from a local file: multipart upload → small JSON with audio URL.
+   * Clone voice from a local file: multipart upload → small JSON with audio url/asset_id.
    * Never embeds base64 in the clone request.
    */
   async cloneVoiceFromFile({
@@ -445,14 +444,14 @@ class HeygenService {
       throw userError('An audio sample is required to clone a voice.');
     }
 
-    const url = await this.uploadHeygenSourceFile(file, 'voice', {
+    const audioPayload = await this.uploadHeygenSourceFile(file, 'voice', {
       onProgress: onUploadProgress,
     });
 
     const cloneResult = await this.cloneVoice({
       voice_name: voiceName.trim(),
       voiceName: voiceName.trim(),
-      audio: buildHeygenUrlAsset(url),
+      audio: audioPayload,
       remove_background_noise: removeBackgroundNoise,
       removeBackgroundNoise,
       ...(language ? { language } : {}),
@@ -648,7 +647,7 @@ class HeygenService {
       const audioField = payload?.audio;
       if (audioField?.type === 'base64' || audioField?.data) {
         throw userError(
-          'Do not send clone audio as base64 in JSON. Upload via POST /api/heygen/voices/upload first, then use audio.type "url".'
+          'Do not send clone audio as base64 in JSON. Upload via POST /api/heygen/voices/upload first, then use audio.type "url" or "asset_id".'
         );
       }
 

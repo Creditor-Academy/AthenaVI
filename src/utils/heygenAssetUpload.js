@@ -60,6 +60,39 @@ export function buildHeygenUrlAsset(url) {
   return { type: 'url', url };
 }
 
+/** HeyGen file union from POST /api/heygen/avatars|voices/upload response payload. */
+export function buildHeygenFileAssetFromUploadPayload(payload) {
+  if (!payload || typeof payload !== 'object') return null;
+
+  const assetId = payload.asset_id ?? payload.assetId;
+  if (assetId) {
+    return { type: 'asset_id', asset_id: String(assetId) };
+  }
+
+  const url = payload.url;
+  if (url) {
+    return { type: 'url', url: String(url) };
+  }
+
+  return null;
+}
+
+/** Normalize File/Blob for multipart upload (strip codec suffix from MIME). */
+export function normalizeHeygenUploadFile(file, fallbackName = 'upload') {
+  if (!(file instanceof Blob) || file.size <= 0) return null;
+
+  const baseMime = (file.type || '').split(';')[0].trim();
+  const name = file.name || fallbackName;
+
+  if (file instanceof File && (!baseMime || file.type === baseMime)) {
+    return file;
+  }
+
+  return new File([file], name, {
+    type: baseMime || file.type || 'application/octet-stream',
+  });
+}
+
 /**
  * Multipart upload with upload progress (fetch cannot report upload %).
  * @param {{ url: string, formData: FormData, headers?: Record<string, string>, onProgress?: (p: { loaded: number, total: number, percent: number }) => void }} opts
