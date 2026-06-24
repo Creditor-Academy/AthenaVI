@@ -1930,6 +1930,14 @@ kbd.shortcut-key {
     pointer-events: none;
 }
 
+.canvas-pause-to-edit-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    cursor: pointer;
+    background: transparent;
+}
+
 .preview-wrapper {
     position: relative;
     aspect-ratio: 16 / 9;

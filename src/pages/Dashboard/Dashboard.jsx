@@ -350,6 +350,10 @@ function Dashboard({ onCreate, initialSection }) {
                 setAvatarLookContext(null)
                 goToSection('avatars')
               }}
+              onUseInVideo={(presenterSeed) => {
+                setAvatarLookContext(null)
+                handleOpenCreateVideoModal({ presenterSeed })
+              }}
             />
           )}
           {section === 'voices' && (
@@ -427,6 +431,7 @@ function Dashboard({ onCreate, initialSection }) {
           }}
           initialWorkspaceId={createVideoModalContext?.initialWorkspaceId || ''}
           initialFolderId={createVideoModalContext?.initialFolderId || ''}
+          presenterSeed={createVideoModalContext?.presenterSeed || null}
           onCreateVideo={handleCreateVideo}
         />
       )}

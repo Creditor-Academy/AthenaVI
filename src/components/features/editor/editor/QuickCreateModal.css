@@ -249,6 +249,31 @@
   flex-shrink: 0;
 }
 
+.qc-ownership-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.qc-ownership-tab {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.qc-ownership-tab.active {
+  border-color: var(--primary);
+  background: rgba(26, 115, 232, 0.1);
+  color: var(--primary);
+}
+
 .qc-avatar-step-wrap {
   display: flex;
   flex-direction: column;

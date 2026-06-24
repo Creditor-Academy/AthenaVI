@@ -191,8 +191,9 @@ const DEFAULT_MEDIA_SHADOW = '0 8px 32px rgba(0,0,0,0.3)';
 const OPACITY_PRESETS = [0, 25, 50, 75, 100];
 
 const AVATAR_MASK_SHAPES = [
+  { label: 'Square', square: true },
   { label: 'Triangle', sides: 3 },
-  { label: 'Square', sides: 4 },
+  { label: 'Diamond', sides: 4 },
   { label: 'Pentagon', sides: 5 },
   { label: 'Hexagon', sides: 6 },
   { label: 'Heptagon', sides: 7 },
@@ -200,11 +201,25 @@ const AVATAR_MASK_SHAPES = [
   { label: 'Circle', circle: true },
 ];
 
-const MaskShapeGraphic = ({ sides, circle }) => {
+const MaskShapeGraphic = ({ sides, circle, square }) => {
   const size = 28;
   const cx = size / 2;
   const cy = size / 2;
   const radius = 11;
+
+  if (square) {
+    return (
+      <svg className="scp-mask-shape-graphic" viewBox={`0 0 ${size} ${size}`} aria-hidden>
+        <rect
+          x={cx - radius}
+          y={cy - radius}
+          width={radius * 2}
+          height={radius * 2}
+          className="scp-mask-shape-graphic__fill"
+        />
+      </svg>
+    );
+  }
 
   if (circle) {
     return (
@@ -624,6 +639,12 @@ const ShapeAndEffectsContent = ({
   const currentRadius = style.borderRadius ?? '50%';
   const isCircle = !polygonMode && String(currentRadius).replace(/\s/g, '') === '50%';
   const cornerRadiusPx = Math.max(0, parseInt(currentRadius, 10) || 0);
+  const isSquare =
+    !polygonMode &&
+    !isCircle &&
+    !style.clipPath &&
+    !style.WebkitClipPath &&
+    cornerRadiusPx === 0;
   const cornerRadiusLocked = polygonMode || isCircle;
 
   const applyPolygonShape = (sides) => {
@@ -645,6 +666,11 @@ const ShapeAndEffectsContent = ({
     updateLayer({ style: { ...rest, borderRadius: '50%' } });
   };
 
+  const applySquare = () => {
+    const { clipPath, WebkitClipPath, polygonSides: _sides, ...rest } = style;
+    updateLayer({ style: { ...rest, borderRadius: '0px' } });
+  };
+
   const applyCornerRadius = (px) => {
     const { clipPath, WebkitClipPath, polygonSides: _sides, ...rest } = style;
     updateLayer({ style: { ...rest, borderRadius: `${px}px` } });
@@ -653,6 +679,7 @@ const ShapeAndEffectsContent = ({
   const updateStyle = (updates) => updateLayer({ style: { ...style, ...updates } });
 
   const isShapeActive = (shape) => {
+    if (shape.square) return isSquare;
     if (shape.circle) return isCircle;
     return polygonMode && polygonSides === shape.sides;
   };
@@ -664,16 +691,20 @@ const ShapeAndEffectsContent = ({
         <div className="scp-mask-shape-chips">
           {AVATAR_MASK_SHAPES.map((shape) => (
             <button
-              key={shape.circle ? 'circle' : shape.sides}
+              key={shape.square ? 'square' : shape.circle ? 'circle' : shape.sides}
               type="button"
               className={`scp-mask-shape-chip${
                 isShapeActive(shape) ? ' scp-mask-shape-chip--active' : ''
               }`}
               title={shape.label}
               aria-label={shape.label}
-              onClick={() => (shape.circle ? applyCircle() : applyPolygonShape(shape.sides))}
+              onClick={() => {
+                if (shape.square) applySquare();
+                else if (shape.circle) applyCircle();
+                else applyPolygonShape(shape.sides);
+              }}
             >
-              <MaskShapeGraphic sides={shape.sides} circle={shape.circle} />
+              <MaskShapeGraphic sides={shape.sides} circle={shape.circle} square={shape.square} />
             </button>
           ))}
         </div>

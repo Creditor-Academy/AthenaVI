@@ -1,5 +1,7 @@
 /** HeyGen avatar catalog helpers (groups → looks, Avatar IV filter). */
 
+import { getCenteredAvatarPlacement } from './heygenVideo.js';
+
 export const AVATAR_IV_ENGINE = 'avatar_iv';
 export const AVATAR_V_ENGINE = 'avatar_v';
 export const LEGACY_V2_ENGINE = 'legacy_v2';
@@ -458,6 +460,66 @@ export function isLookReadyForUse(look) {
   return true;
 }
 
+/** Human-readable reason when an avatar/look cannot be used in video yet. */
+export function getAvatarVideoBlockReason(avatar, look) {
+  if (!avatar) return 'No avatar selected.';
+  if (!look) return 'Select a look for this avatar first.';
+  if (
+    needsAvatarConsent({
+      consent_status: avatar.consentStatus ?? avatar.consent_status,
+      status: avatar.trainingStatus ?? avatar.status ?? avatar.training_status,
+    })
+  ) {
+    return 'Complete consent before using this Digital Twin in videos.';
+  }
+  const lookId = look?.id ?? getLookId(look);
+  if (!lookId || isAvatarGroupId(lookId) || String(lookId).startsWith('ag_')) {
+    return 'No generatable look id — try refreshing or create a look first.';
+  }
+  const status = String(getLookTrainingStatus(look) || look?.status || '').toLowerCase();
+  if (status === 'failed' || status === 'error') return 'This look failed to generate.';
+  if (!getLookPreviewUrl(look) && !look?.image) return 'Look preview is not ready yet.';
+  if (status === 'processing' || status === 'pending' || status === 'pending_consent') {
+    return 'Look is still processing — try again shortly.';
+  }
+  if (look.ready === false) return 'Look is not ready for video yet.';
+  return null;
+}
+
+/** True when avatar + look can be used to start a video or seed the editor. */
+export function canUseAvatarInVideo(avatar, look) {
+  return !getAvatarVideoBlockReason(avatar, look);
+}
+
+/** Payload for Create Video modal / editor boot — mirrors QuickCreate generate shape. */
+export function buildAvatarPresenterSeed(avatar, look) {
+  const avatarKind = look?.avatarType ?? avatar?.avatarType ?? 'studio_avatar';
+  const lookId = look?.id ?? getLookId(look);
+  const groupId = avatar?.id ?? avatar?.groupId ?? look?.groupId ?? null;
+  const resolvedEngine = finalizeVideoCreatePayload({
+    avatarId: lookId,
+    avatarType: avatarKind,
+    avatarEngine: look?.generatableEngine ?? look?.avatarEngine,
+    isLegacyV2: look?.isLegacyV2,
+    supportedEngines: look?.supportedEngines,
+  });
+
+  return {
+    avatarLookId: lookId,
+    avatarGroupId: groupId,
+    avatarImage: look?.image ?? getLookPreviewUrl(look) ?? avatar?.image ?? null,
+    avatarName: avatar?.name ?? look?.name ?? 'AI Presenter',
+    lookName: look?.name ?? avatar?.name ?? null,
+    avatarTypeLabel: avatarKind,
+    avatarEngine: resolvedEngine,
+    supportedEngines: look?.supportedEngines ?? [],
+    isLegacyV2: look?.isLegacyV2 ?? false,
+    engineUnknown: look?.engineUnknown ?? false,
+    voiceId: look?.defaultVoiceId ?? avatar?.defaultVoiceId ?? null,
+    voiceName: look?.defaultVoiceName ?? avatar?.defaultVoiceName ?? null,
+  };
+}
+
 export function mapLookTile(look, fallbackName = 'Look', fallbackImage = null) {
   const id = getLookId(look);
   const image = getLookPreviewUrl(look) || fallbackImage;
@@ -796,10 +858,16 @@ export async function fetchMappedGroupLooks(heygenService, mappedGroup, options 
     };
   }
 
-  const attempts = [
-    { group_id: groupId, limit: options.limit ?? 20 },
-    { group_id: groupId, ownership: 'public', limit: options.limit ?? 20 },
-  ];
+  const limit = options.limit ?? 20;
+  const ownership = options.ownership;
+  const attempts = [];
+  if (ownership) {
+    attempts.push({ group_id: groupId, ownership, limit });
+  }
+  attempts.push({ group_id: groupId, limit });
+  if (ownership !== 'public') {
+    attempts.push({ group_id: groupId, ownership: 'public', limit });
+  }
 
   let lastResponse = null;
   for (const params of attempts) {
@@ -930,6 +998,79 @@ export function getSceneAvatarKind(scene) {
     (AVATAR_KINDS.has(scene.avatarType) ? scene.avatarType : null) ||
     'studio_avatar'
   );
+}
+
+/** Apply a presenter seed to a scene (presenter fields + avatar clip). */
+export function applyPresenterSeedToScene(scene, seed, resolution = { width: 1920, height: 1080 }) {
+  if (!scene || !seed?.avatarLookId) return scene;
+
+  const clips = [...(scene.clips || [])];
+  const avatarClipIndex = clips.findIndex((c) => c.role === 'avatar' || c.type === 'avatar');
+  const duration = scene.duration ?? 8;
+  const avatarImage = seed.avatarImage;
+
+  const sceneDraft = {
+    ...scene,
+    sceneId: scene.sceneId || scene.id,
+    avatarType: seed.avatarLookId,
+    avatarLookId: seed.avatarLookId,
+    avatarKind: seed.avatarTypeLabel,
+    avatarTypeLabel: seed.avatarTypeLabel,
+    avatarEngine: seed.avatarEngine,
+    supportedEngines: seed.supportedEngines,
+    isLegacyV2: seed.isLegacyV2,
+    engineUnknown: seed.engineUnknown,
+    voiceId: seed.voiceId ?? scene.voiceId,
+    script: scene.script ?? '',
+    presenter: {
+      ...(scene.presenter || {}),
+      avatarId: seed.avatarLookId,
+      avatarLookId: seed.avatarLookId,
+      avatarName: seed.avatarName,
+      avatarType: seed.avatarTypeLabel,
+      avatarEngine: seed.avatarEngine,
+      avatarGroupId: seed.avatarGroupId,
+      voiceId: seed.voiceId,
+      voiceName: seed.voiceName,
+      supportedEngines: seed.supportedEngines,
+      isLegacyV2: seed.isLegacyV2,
+      engineUnknown: seed.engineUnknown,
+    },
+  };
+
+  let updatedClips;
+  if (avatarClipIndex !== -1) {
+    updatedClips = [...clips];
+    updatedClips[avatarClipIndex] = {
+      ...updatedClips[avatarClipIndex],
+      role: 'avatar',
+      type: 'avatar',
+      src: avatarImage,
+      content: buildHeygenAvatarContent(sceneDraft, {
+        ...updatedClips[avatarClipIndex],
+        src: avatarImage,
+      }),
+    };
+  } else {
+    const centered = getCenteredAvatarPlacement(resolution);
+    const newClip = {
+      id: `clip_${Date.now()}`,
+      type: 'avatar',
+      role: 'avatar',
+      src: avatarImage,
+      layer: clips.length,
+      startTime: 0,
+      endTime: duration,
+      position: centered.position,
+      size: centered.size,
+      opacity: 1,
+      effects: { brightness: 1, contrast: 1, saturation: 1, blur: 0 },
+    };
+    newClip.content = buildHeygenAvatarContent(sceneDraft, newClip);
+    updatedClips = [...clips, newClip];
+  }
+
+  return { ...sceneDraft, clips: updatedClips };
 }
 
 export function buildHeygenAvatarContent(scene, clip = {}) {

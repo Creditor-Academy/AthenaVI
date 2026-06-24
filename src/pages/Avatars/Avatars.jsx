@@ -10,7 +10,7 @@ import {
 } from 'react-icons/md';
 import heygenService from '../../services/heygenService';
 import { AvatarConsentModal } from '../../components/ui/AvatarConsentStep/AvatarConsentStep';
-import { getConsentUrlFromResponse } from '../../utils/heygenAvatars';
+import { getConsentUrlFromResponse, buildAvatarPresenterSeed, canUseAvatarInVideo, fetchMappedGroupLooks, mapAvatarLook, mapLookTile } from '../../utils/heygenAvatars';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
 import AvatarsSkeleton from '../page-skeleton/AvatarsSkeleton';
 import VideosToolbar from '../Videos/VideosToolbar.jsx';
@@ -214,9 +214,43 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
     setSelectedAvatar(null);
   };
 
-  const handleCreateVideo = () => {
-    if (onCreate) onCreate();
+  const handleCreateVideo = (context = null) => {
+    if (onCreate) onCreate(context || null);
     closeDetails();
+  };
+
+  const openUseInProject = async (avatar, event) => {
+    event?.stopPropagation?.();
+    if (!onCreate || !avatar?.id) return;
+
+    let look = null;
+    if (avatar.rawLooks?.length) {
+      const mapped = avatar.rawLooks
+        .map((raw) => mapAvatarLook(raw, avatar.name))
+        .filter((l) => l.id);
+      look = mapped.find((l) => canUseAvatarInVideo(avatar, mapLookTile(l, l.name, l.image))) || mapped[0];
+    }
+
+    if (!look) {
+      try {
+        const { mappedLooks } = await fetchMappedGroupLooks(heygenService, avatar, {
+          ownership: activeSection === 'private' ? 'private' : activeSection === 'workspace' ? 'workspace' : 'public',
+          limit: 20,
+        });
+        const ready = mappedLooks.find((l) => canUseAvatarInVideo(avatar, mapLookTile(l, l.name, l.image)));
+        look = ready || mappedLooks[0];
+      } catch {
+        openAvatarDetails(avatar);
+        return;
+      }
+    }
+
+    if (!look || !canUseAvatarInVideo(avatar, mapLookTile(look, look.name, look.image))) {
+      openAvatarDetails(avatar);
+      return;
+    }
+
+    onCreate({ presenterSeed: buildAvatarPresenterSeed(avatar, look) });
   };
 
   const loadMoreAvatars = () => {
@@ -284,6 +318,7 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
             avatar={avatar}
             onOpen={openAvatarDetails}
             onCompleteConsent={openConsentForAvatar}
+            onUseInProject={activeSection !== 'public' ? openUseInProject : undefined}
           />
         ) : (
           <AvatarLibraryRow
@@ -291,6 +326,7 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
             avatar={avatar}
             onOpen={openAvatarDetails}
             onCompleteConsent={openConsentForAvatar}
+            onUseInProject={activeSection !== 'public' ? openUseInProject : undefined}
           />
         )
       )}
@@ -347,14 +383,24 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
               </button>
             </div>
             {activeSection === 'private' && onCreateAvatar ? (
-              <button
-                type="button"
-                className="btn-primary videos-create-btn"
-                onClick={onCreateAvatar}
-              >
-                <MdAdd size={18} />
-                Create Avatar
-              </button>
+              <>
+                <button
+                  type="button"
+                  className="btn-secondary videos-create-btn"
+                  onClick={() => onCreate?.()}
+                >
+                  <MdAdd size={18} />
+                  Create Video
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary videos-create-btn"
+                  onClick={onCreateAvatar}
+                >
+                  <MdAdd size={18} />
+                  Create Avatar
+                </button>
+              </>
             ) : onCreate ? (
               <button type="button" className="btn-primary videos-create-btn" onClick={onCreate}>
                 <MdAdd size={18} />
