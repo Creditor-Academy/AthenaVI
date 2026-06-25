@@ -78,7 +78,7 @@ function Dashboard({ onCreate, initialSection }) {
   const [avatarLookContext, setAvatarLookContext] = useState(null)
   const [adminTab, setAdminTab] = useState(() => {
     const saved = localStorage.getItem('adminPortalTab')
-    const valid = ['overview', 'users', 'workspaces', 'reports', 'heygen']
+    const valid = ['overview', 'users', 'workspaces', 'storage-requests', 'reports', 'heygen']
     return valid.includes(saved) ? saved : 'overview'
   })
 

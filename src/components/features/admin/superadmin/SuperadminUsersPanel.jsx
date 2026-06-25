@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Search, ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, X, Shield } from 'lucide-react'
 import superadminService, { SuperadminApiError } from '../../../../services/superadminService'
-import { formatAc, formatDate, formatShortDate, txTypeLabel, formatBytes } from './superadminUtils'
+import { formatAc, formatDate, formatShortDate, txTypeLabel, formatBytes, storageTxTypeLabel } from './superadminUtils'
+import { useAuth } from '../../../../contexts/AuthContext'
 import '../../../../pages/AdminPortal/SuperadminPortal.css'
 import '../../../../pages/page-skeleton/skeleton.css'
 
@@ -80,7 +81,7 @@ function CreditActionCard({ mode, onSubmit, loading, disabled }) {
 }
 
 /* ─── right-side drawer ───────────────────────── */
-function UserDrawer({ open, user, detail, history, historyPagination, historyPage, setHistoryPage, historyType, setHistoryType, detailLoading, detailError, actionLoading, actionMessage, actionError, onCreditAction, onClose }) {
+function UserDrawer({ open, user, detail, history, historyPagination, historyPage, setHistoryPage, historyType, setHistoryType, detailLoading, detailError, actionLoading, actionMessage, actionError, onCreditAction, onClose, onPlatformAccessChange, currentUserId }) {
   const [activeTab, setActiveTab] = useState('profile')
 
   // storage state
@@ -92,27 +93,88 @@ function UserDrawer({ open, user, detail, history, historyPagination, historyPag
   const [grantBytes, setGrantBytes]     = useState('')
   const [revokeBytes, setRevokeBytes]   = useState('')
   const [storageReason, setStorageReason] = useState('')
+  const [storageTiers, setStorageTiers] = useState([])
+  const [selectedTierId, setSelectedTierId] = useState('')
+  const [storageHistory, setStorageHistory] = useState([])
+  const [storageHistoryPage, setStorageHistoryPage] = useState(1)
+  const [storageHistoryPagination, setStorageHistoryPagination] = useState({ page: 1, totalPages: 1 })
+  const [platformAccessLoading, setPlatformAccessLoading] = useState(false)
+  const [platformAccessError, setPlatformAccessError] = useState('')
+  const [isSuperadmin, setIsSuperadmin] = useState(Boolean(user?.isPlatformSuperadmin))
 
-  // reset to profile tab whenever a new user opens
   useEffect(() => {
     if (open) {
       setActiveTab('profile')
       setStorage(null)
       setStorageMsg('')
       setStorageError('')
+      setPlatformAccessError('')
+      setIsSuperadmin(Boolean(user?.isPlatformSuperadmin))
+      setStorageHistory([])
+      setStorageHistoryPage(1)
     }
-  }, [open, user?.id])
+  }, [open, user?.id, user?.isPlatformSuperadmin])
 
   // load storage when tab is opened
   useEffect(() => {
     if (activeTab !== 'storage' || !user?.id || storage) return
     setStorageLoading(true)
     setStorageError('')
-    superadminService.getUserStorage(user.id)
-      .then(data => setStorage(data))
+    Promise.all([
+      superadminService.getUserStorage(user.id),
+      superadminService.getStorageTiers(),
+    ])
+      .then(([data, tiersData]) => {
+        setStorage(data)
+        setStorageTiers(tiersData.tiers || [])
+      })
       .catch(err => setStorageError(err.message || 'Failed to load storage'))
       .finally(() => setStorageLoading(false))
-  }, [activeTab, user?.id])
+  }, [activeTab, user?.id, storage])
+
+  useEffect(() => {
+    if (activeTab !== 'storage' || !user?.id) return
+    superadminService.getUserStorageHistory(user.id, { page: storageHistoryPage, limit: 10 })
+      .then((data) => {
+        const hist = data.history || data
+        setStorageHistory(hist.transactions || [])
+        setStorageHistoryPagination(hist.pagination || { page: 1, totalPages: 1 })
+      })
+      .catch(() => setStorageHistory([]))
+  }, [activeTab, user?.id, storageHistoryPage])
+
+  const handlePlatformAccessToggle = async () => {
+    if (!user?.id) return
+    const next = !isSuperadmin
+    setPlatformAccessLoading(true)
+    setPlatformAccessError('')
+    try {
+      await superadminService.updateUserPlatformAccess(user.id, { isPlatformSuperadmin: next })
+      setIsSuperadmin(next)
+      onPlatformAccessChange?.(user.id, next)
+    } catch (err) {
+      setPlatformAccessError(err.message || 'Failed to update platform access')
+    } finally {
+      setPlatformAccessLoading(false)
+    }
+  }
+
+  const handleTierGrant = async (e) => {
+    e.preventDefault()
+    if (!selectedTierId) return
+    setStorageActionLoading(true); setStorageMsg(''); setStorageError('')
+    try {
+      const result = await superadminService.grantUserStorage(user.id, {
+        tierId: selectedTierId,
+        reason: storageReason.trim() || undefined,
+      })
+      setStorageMsg(`Set tier limit to ${formatBytes(result.user?.storageLimit)}`)
+      setSelectedTierId('')
+      const fresh = await superadminService.getUserStorage(user.id)
+      setStorage(fresh)
+    } catch (err) { setStorageError(err.message || 'Grant failed') }
+    finally { setStorageActionLoading(false) }
+  }
 
   const handleStorageGrant = async (e) => {
     e.preventDefault()
@@ -228,7 +290,37 @@ function UserDrawer({ open, user, detail, history, historyPagination, historyPag
                     <div className="sa-profile-stat-divider" />
                     <div className="sa-profile-stat"><span>Since</span><strong>{user?.createdAt ? formatShortDate(user.createdAt) : '—'}</strong></div>
                     <div className="sa-profile-stat-divider" />
-                    <div className="sa-profile-stat"><span>Role</span><strong>{user?.isPlatformSuperadmin ? 'Superadmin' : 'User'}</strong></div>
+                    <div className="sa-profile-stat"><span>Role</span><strong>{isSuperadmin ? 'Superadmin' : 'User'}</strong></div>
+                  </div>
+                  {platformAccessError && <div className="sa-alert sa-alert--error">{platformAccessError}</div>}
+                  <div className="sa-action-card" style={{ marginTop: 16, padding: '0 0 12px' }}>
+                    <div className="sa-action-card-head" style={{ justifyContent: 'space-between', padding: '12px 12px 8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                        <Shield size={14} />
+                        <span>Platform superadmin access</span>
+                      </div>
+                      <span className={`sa-badge ${isSuperadmin ? 'sa-badge--admin' : 'sa-badge--type'}`}>
+                        {isSuperadmin ? 'Granted' : 'Not granted'}
+                      </span>
+                    </div>
+                    <p style={{ margin: '0 12px 12px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                      Grants access to this admin portal. Env allowlist emails retain access independently.
+                    </p>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 12px' }}>
+                      <button
+                        type="button"
+                        className={`sa-btn sa-btn--sm ${isSuperadmin ? 'sa-btn--danger' : 'sa-btn--primary'}`}
+                        disabled={platformAccessLoading || (user?.id === currentUserId && isSuperadmin)}
+                        onClick={handlePlatformAccessToggle}
+                      >
+                        {platformAccessLoading ? 'Updating…' : isSuperadmin ? 'Revoke superadmin' : 'Grant superadmin'}
+                      </button>
+                    </div>
+                    {user?.id === currentUserId && isSuperadmin && (
+                      <p style={{ margin: '8px 12px 0', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                        You cannot demote yourself.
+                      </p>
+                    )}
                   </div>
                   <div className="sa-profile-grid">
                     <div className="sa-profile-item"><span>Full name</span><strong>{detail?.name || '—'}</strong></div>
@@ -332,24 +424,48 @@ function UserDrawer({ open, user, detail, history, historyPagination, historyPag
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
                         <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-main)' }}>Storage Usage</span>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                          {formatBytes(storage.storageUsed ?? 0)} / {formatBytes(storage.storageLimit ?? 0)}
+                          {formatBytes(storage.usedBytes ?? storage.storageUsed ?? 0)} / {formatBytes(storage.limitBytes ?? storage.storageLimit ?? 0)}
                         </span>
                       </div>
-                      {/* progress bar */}
                       <div style={{ height: 6, background: 'var(--border-color)', borderRadius: 999, overflow: 'hidden' }}>
                         <div style={{
                           height: '100%',
-                          width: `${Math.min(100, ((storage.storageUsed ?? 0) / (storage.storageLimit ?? 1)) * 100)}%`,
+                          width: `${Math.min(100, ((storage.usedBytes ?? storage.storageUsed ?? 0) / (storage.limitBytes ?? storage.storageLimit ?? 1)) * 100)}%`,
                           background: 'var(--primary, #3b82f6)',
                           borderRadius: 999,
                           transition: 'width 0.4s ease',
                         }} />
                       </div>
                       <div style={{ marginTop: 8, fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                        {formatBytes((storage.storageLimit ?? 0) - (storage.storageUsed ?? 0))} free
+                        {storage.tier?.label ? `Tier: ${storage.tier.label} · ` : ''}
+                        {formatBytes((storage.limitBytes ?? storage.storageLimit ?? 0) - (storage.usedBytes ?? storage.storageUsed ?? 0))} free
                       </div>
+                      {storage.activeUpgradeRequest && (
+                        <div className="sa-alert" style={{ marginTop: 10, fontSize: '0.75rem' }}>
+                          Pending upgrade request: +{formatBytes(storage.activeUpgradeRequest.requestedAdditionalBytes)}
+                        </div>
+                      )}
                     </div>
                   ) : null}
+
+                  {storageTiers.length > 0 && (
+                    <form onSubmit={handleTierGrant} style={{ marginBottom: 16 }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>
+                        Set tier preset
+                      </label>
+                      <div className="sa-field sa-field--inline">
+                        <select className="sa-select" value={selectedTierId} onChange={(e) => setSelectedTierId(e.target.value)} disabled={storageActionLoading} style={{ flex: 1 }}>
+                          <option value="">Select tier…</option>
+                          {storageTiers.map((tier) => (
+                            <option key={tier.id} value={tier.id}>{tier.label} ({formatBytes(tier.limitBytes)})</option>
+                          ))}
+                        </select>
+                        <button type="submit" className="sa-btn sa-btn--sm sa-btn--primary" disabled={storageActionLoading || !selectedTierId}>
+                          Apply
+                        </button>
+                      </div>
+                    </form>
+                  )}
 
                   {/* Shared reason field */}
                   <div style={{ marginBottom: 14 }}>
@@ -431,6 +547,37 @@ function UserDrawer({ open, user, detail, history, historyPagination, historyPag
                       </form>
                     </div>
                   </div>
+
+                  {storageHistory.length > 0 && (
+                    <div style={{ marginTop: 20 }}>
+                      <span className="sa-section-label">Storage ledger</span>
+                      <div className="sa-tx-feed" style={{ marginTop: 8 }}>
+                        {storageHistory.map((tx) => (
+                          <div key={tx.id} className="sa-tx-row">
+                            <div className="sa-tx-body">
+                              <div className="sa-tx-top">
+                                <span className="sa-tx-type">{storageTxTypeLabel(tx.type)}</span>
+                                <span className="sa-tx-ref">{tx.reference || '—'}</span>
+                              </div>
+                              <div className="sa-tx-bottom"><span className="sa-tx-date">{formatDate(tx.createdAt)}</span></div>
+                            </div>
+                            <span className={`sa-tx-amount ${tx.type === 'platform_revoke' ? 'sa-amount--negative' : 'sa-amount--positive'}`}>
+                              {tx.type === 'platform_revoke' ? '−' : '+'}{formatBytes(tx.amountBytes)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      {storageHistoryPagination.totalPages > 1 && (
+                        <div className="sa-pagination" style={{ marginTop: 8 }}>
+                          <span>Page {storageHistoryPagination.page} of {storageHistoryPagination.totalPages}</span>
+                          <div className="sa-toolbar">
+                            <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost" disabled={storageHistoryPage <= 1} onClick={() => setStorageHistoryPage((p) => p - 1)}><ChevronLeft size={14} /></button>
+                            <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost" disabled={storageHistoryPage >= storageHistoryPagination.totalPages} onClick={() => setStorageHistoryPage((p) => p + 1)}><ChevronRight size={14} /></button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -446,6 +593,7 @@ function UserDrawer({ open, user, detail, history, historyPagination, historyPag
 const PAGE_SIZE = 20
 
 function SuperadminUsersPanel() {
+  const { user: currentUser } = useAuth()
   const [users, setUsers]             = useState([])
   const [pagination, setPagination]   = useState({ page: 1, totalPages: 1, total: 0 })
   const [searchInput, setSearchInput] = useState('')
@@ -536,6 +684,10 @@ function SuperadminUsersPanel() {
       setActionError(err instanceof SuperadminApiError && err.status === 402 ? 'Insufficient credits.' : err.message || 'Action failed')
       return false
     } finally { setActionLoading(false) }
+  }
+
+  const handlePlatformAccessChange = (userId, isPlatformSuperadmin) => {
+    setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, isPlatformSuperadmin } : u)))
   }
 
   return (
@@ -649,6 +801,8 @@ function SuperadminUsersPanel() {
         actionError={actionError}
         onCreditAction={handleCreditAction}
         onClose={closeDrawer}
+        onPlatformAccessChange={handlePlatformAccessChange}
+        currentUserId={currentUser?.id}
       />
     </div>
   )

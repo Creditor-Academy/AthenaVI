@@ -71,3 +71,22 @@ export function formatBytes(bytes) {
   const val = n / Math.pow(1024, i)
   return `${i === 0 ? val : val.toFixed(2)} ${units[i]}`
 }
+
+export const STORAGE_TX_TYPE_LABELS = {
+  initial: 'Initial quota',
+  platform_grant: 'Platform grant',
+  platform_revoke: 'Platform revoke',
+  purchase: 'Purchase',
+}
+
+export function storageTxTypeLabel(type) {
+  return STORAGE_TX_TYPE_LABELS[type] || type || 'Unknown'
+}
+
+export function storageStatusLabel(status) {
+  const s = String(status || '').toLowerCase()
+  if (s === 'pending') return 'Pending'
+  if (s === 'approved') return 'Approved'
+  if (s === 'rejected') return 'Rejected'
+  return status || 'Unknown'
+}
