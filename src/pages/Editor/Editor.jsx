@@ -23,6 +23,7 @@ import avatar1 from '../../assets/Avatarr1.png'
 import projectTemplate from '../../constants/projectTemplate.json'
 import workspaceService from '../../services/workspaceService'
 import {
+  applyPresenterSeedToScene,
   buildHeygenAvatarContent,
   getSceneAvatarKind,
   getSceneAvatarLookId,
@@ -58,6 +59,7 @@ import {
 } from '../../utils/sceneDuration'
 import { useEditorHistory } from '../../hooks/useEditorHistory'
 import { useEditorUx } from '../../hooks/useEditorUx'
+import { findSceneMusicClip, resolveAudioClipSrc } from '../../utils/audioClipUtils'
 import { normalizeClipStack, normalizeClipsToScene } from '../../utils/editorLayerUtils'
 import {
   findTopFrameAtPoint,
@@ -284,16 +286,41 @@ function buildInitialProject(initialConfig) {
   })();
 
   const projectId = initialConfig?.videoId || initialConfig?.videoData?.id || initialConfig?.videoData?._id
+  let resolvedScenes = initialScenes.length > 0
+    ? normalizeBootScenes(
+        initialScenes.map((scene, idx) => ensureSceneIdentity(scene, idx)),
+        resolvedResolution
+      )
+    : [];
+
+  if (initialConfig?.presenterSeed) {
+    if (resolvedScenes.length === 0) {
+      const sceneKey = `scene_${Date.now()}`;
+      resolvedScenes = normalizeBootScenes(
+        [
+          ensureSceneIdentity({
+            id: sceneKey,
+            sceneId: sceneKey,
+            title: 'Intro',
+            duration: 8,
+            clips: [],
+          }, 0),
+        ],
+        resolvedResolution
+      );
+    }
+    resolvedScenes = resolvedScenes.map((scene, idx) =>
+      idx === 0
+        ? applyPresenterSeedToScene(scene, initialConfig.presenterSeed, resolvedResolution)
+        : scene
+    );
+  }
+
   const base = {
     ...projectTemplate.project,
     title: resolvedTitle,
     resolution: resolvedResolution,
-    scenes: initialScenes.length > 0
-      ? normalizeBootScenes(
-          initialScenes.map((scene, idx) => ensureSceneIdentity(scene, idx)),
-          resolvedResolution
-        )
-      : [],
+    scenes: resolvedScenes,
     updatedAt: new Date().toISOString(),
     id: projectId,
     workspaceId: initialConfig?.workspaceId || initialConfig?.videoData?.workspaceId,
@@ -334,6 +361,13 @@ function Create({ onBack, initialConfig = null }) {
   const [timelineScope, setTimelineScope] = useState('all')
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(1)
+
+  const pausePlayback = useCallback(() => {
+    if (!isPlaying) return
+    playerRef.current?.pause()
+    setIsPlaying(false)
+    window.speechSynthesis?.cancel()
+  }, [isPlaying])
   const [zoomLevel, setZoomLevel] = useState(100)
   const [showPreviewModal, setShowPreviewModal] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
@@ -749,30 +783,42 @@ function Create({ onBack, initialConfig = null }) {
 
   // Memoized access for convenience
   const scenes = project.scenes || [];
-  const bgMusic = scenes.find(s => s.clips?.some(c => c.type === 'audio'))?.clips?.find(c => c.type === 'audio')?.src || null;
-  const [bgMusicVolume, setBgMusicVolume] = useState(0.6);
+  const activeScene = project.scenes.find(s => s.id === activeSceneId)
+  const activeSceneMusicClip = useMemo(
+    () => findSceneMusicClip(activeScene),
+    [activeScene]
+  )
+  const bgMusic = useMemo(
+    () => (activeSceneMusicClip ? resolveAudioClipSrc(activeSceneMusicClip, activeScene) : null),
+    [activeSceneMusicClip, activeScene]
+  )
+  const bgMusicVolume = activeSceneMusicClip?.volume ?? 0.6
+
+  const handleAddAudioClip = useCallback(
+    (src, assetId = null, options = {}) => {
+      const clipId = addAudioClip(src, assetId, options)
+      if (clipId) {
+        setSelectedLayerId(clipId)
+        setIsRightSidebarOpen(true)
+      }
+    },
+    [addAudioClip]
+  )
+
+  const handleUpdateAudioClip = useCallback(
+    (updates) => {
+      if (!activeSceneId || !activeSceneMusicClip) return
+      uxUpdateScene(activeSceneId, {
+        clips: (activeScene?.clips || []).map((clip) =>
+          clip.id === activeSceneMusicClip.id ? { ...clip, ...updates } : clip
+        ),
+      }, { history: true })
+    },
+    [activeSceneId, activeScene, activeSceneMusicClip, uxUpdateScene]
+  )
 
   const setBgMusic = (url) => {
-    // Update or add audio clip to the first scene as a simple management strategy for now
-    setProject(prev => {
-      const newScenes = [...prev.scenes];
-      if (newScenes.length > 0) {
-        const audioClip = newScenes[0].clips.find(c => c.type === 'audio');
-        if (audioClip) {
-          newScenes[0].clips = newScenes[0].clips.map(c => c.type === 'audio' ? { ...c, src: url } : c);
-        } else {
-          newScenes[0].clips.push({
-            id: `audio_${Date.now()}`,
-            type: 'audio',
-            src: url,
-            startTime: 0,
-            endTime: newScenes[0].duration,
-            volume: bgMusicVolume
-          });
-        }
-      }
-      return { ...prev, updatedAt: new Date().toISOString(), scenes: newScenes };
-    });
+    handleAddAudioClip(url, null, { name: 'Background music' })
   }
 
   // Auto-create a default blank scene and return the new scene + updated scenes array
@@ -804,6 +850,14 @@ function Create({ onBack, initialConfig = null }) {
   }
 
   const addLayer = (type, content, meta = null) => {
+    if (type === 'audio') {
+      const isMediaObject = content && typeof content === 'object' && !Array.isArray(content)
+      const mediaSrc = isMediaObject ? (content.url || content.src) : content
+      const assetId = isMediaObject ? content.assetId : meta?.assetId
+      handleAddAudioClip(mediaSrc, assetId, { name: meta?.name })
+      return
+    }
+
     let targetSceneId = activeSceneId
     let currentScenes = project.scenes
 
@@ -904,6 +958,7 @@ function Create({ onBack, initialConfig = null }) {
 
   // Update a specific layer's size within the active scene
   const updateLayerSize = (layerId, width, height) => {
+    pausePlayback()
     if (!activeSceneId) return
     setProject(prev => ({
       ...prev,
@@ -921,6 +976,7 @@ function Create({ onBack, initialConfig = null }) {
   }
 
   const updateLayerRotation = (layerId, rotation) => {
+    pausePlayback()
     if (!activeSceneId) return
     const normalized = ((rotation % 360) + 360) % 360
     setProject(prev => ({
@@ -992,6 +1048,7 @@ function Create({ onBack, initialConfig = null }) {
 
   // Update a specific layer's position within the active scene (with optional snap)
   const updateLayerPosition = (layerId, x, y, options) => {
+    pausePlayback()
     uxUpdateLayerPosition(layerId, x, y, options)
   }
 
@@ -1084,9 +1141,14 @@ function Create({ onBack, initialConfig = null }) {
       updatedAt: new Date().toISOString(),
       scenes: prev.scenes.map(s => ({
         ...s,
-        clips: s.clips.filter(c => c.type !== 'audio')
+        clips: s.clips.filter((c) => {
+          if (c.type !== 'audio') return true
+          const role = String(c.role || '').toLowerCase()
+          return role === 'narration' || role === 'voiceover'
+        }),
       }))
     }));
+    setSelectedLayerId(null)
   }
 
   const handleMusicDurationChange = (newDuration) => {
@@ -1097,7 +1159,6 @@ function Create({ onBack, initialConfig = null }) {
   const speechSynthesisRef = useRef(null)
   const lastSpeakSceneIdRef = useRef(null)
 
-  const activeScene = project.scenes.find(s => s.id === activeSceneId)
   const selectedLayer = activeScene?.clips?.find((c) => c.id === selectedLayerId)
 
   const handleTimelineResize = useCallback((delta) => {
@@ -1162,12 +1223,14 @@ function Create({ onBack, initialConfig = null }) {
   }
 
   const handleSelectLayer = (layerId, sceneId, event) => {
+    pausePlayback()
     if (sceneId) setActiveSceneId(sceneId)
     selectLayer(layerId, sceneId, { additive: event?.shiftKey })
     if (layerId) setIsRightSidebarOpen(true)
   }
 
   const handleSelectLayerId = (layerId) => {
+    pausePlayback()
     if (layerId) {
       setSelectedLayerIds([layerId])
       setSelectedLayerId(layerId)
@@ -1946,6 +2009,7 @@ function Create({ onBack, initialConfig = null }) {
   }
 
   const handleSeek = (time) => {
+    pausePlayback()
     setCurrentTime(time)
     if (playerRef.current?.seekTo) {
       playerRef.current.seekTo(time)
@@ -1958,6 +2022,7 @@ function Create({ onBack, initialConfig = null }) {
   }
 
   const handleSelectScene = useCallback((sceneId, options = {}) => {
+    pausePlayback()
     setActiveSceneId(sceneId)
     setSelectedLayerIds([])
     setSelectedLayerId(null)
@@ -1976,9 +2041,10 @@ function Create({ onBack, initialConfig = null }) {
     if (options.openSidebar && !isRightSidebarOpen) {
       setIsRightSidebarOpen(true)
     }
-  }, [getSceneStartTime, timelineScope, isRightSidebarOpen])
+  }, [getSceneStartTime, timelineScope, isRightSidebarOpen, pausePlayback])
 
   const handleSelectAvatarVideoFromTimeline = useCallback((sceneId) => {
+    pausePlayback()
     const scene = projectRef.current?.scenes?.find((s) => s.id === sceneId)
     setActiveSceneId(sceneId)
 
@@ -1996,7 +2062,7 @@ function Create({ onBack, initialConfig = null }) {
     const start = getSceneStartTime(sceneId)
     setCurrentTime(start)
     playerRef.current?.seekTo?.(start)
-  }, [getSceneStartTime])
+  }, [getSceneStartTime, pausePlayback])
 
   const handleQuickCreateGenerate = (payload) => {
     if (payload.isStoryboard) {
@@ -2661,6 +2727,9 @@ function Create({ onBack, initialConfig = null }) {
         isOpen={showQuickCreateModal && !isProjectLoading}
         onClose={() => setShowQuickCreateModal(false)}
         onGenerate={handleQuickCreateGenerate}
+        initialOwnership={initialConfig?.presenterSeed ? 'private' : null}
+        initialGroupId={initialConfig?.presenterSeed?.avatarGroupId ?? null}
+        initialLookId={initialConfig?.presenterSeed?.avatarLookId ?? null}
       />
       <PresenterModeModal
         isOpen={showPresenterModeModal && !isProjectLoading}
@@ -2730,6 +2799,7 @@ function Create({ onBack, initialConfig = null }) {
         lastSaved={lastSaved}
         activeSceneId={activeSceneId}
         addLayer={addLayer}
+        onAddAudio={handleAddAudioClip}
         updateScene={updateScene}
         activeScene={activeScene}
         workspaceId={project.workspaceId || project.createConfig?.workspaceId}
@@ -2850,6 +2920,7 @@ function Create({ onBack, initialConfig = null }) {
               selectedLayerIds={selectedLayerIds}
               currentTime={currentTime}
               isPlaying={isPlaying}
+              onPausePlayback={pausePlayback}
               onSeek={handleSeek}
               onSelectScene={handleSelectScene}
               onSelectAvatarVideo={handleSelectAvatarVideoFromTimeline}
@@ -2860,6 +2931,7 @@ function Create({ onBack, initialConfig = null }) {
               onReorderScenes={handleReorderScenes}
               onDeleteLayer={deleteLayer}
               onDeleteMusic={deleteMusic}
+              onUpdateAudioClip={handleUpdateAudioClip}
               onUndo={() => { if (undo()) showToast('Undo', 'info') }}
               onRedo={() => { if (redo()) showToast('Redo', 'info') }}
               canUndo={canUndo}

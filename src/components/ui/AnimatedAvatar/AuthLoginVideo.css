@@ -1,0 +1,29 @@
+.auth-login-video-shell {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: var(--auth-panel-brand-bg, var(--auth-brand, #185fa5));
+}
+
+.auth-login-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  border: none;
+  outline: none;
+  display: block;
+  pointer-events: none;
+}
+
+.auth-login-video__tint {
+  position: absolute;
+  inset: 0;
+  background: var(--auth-video-tint, var(--auth-brand, #185fa5));
+  opacity: var(--auth-video-tint-opacity, 0.38);
+  mix-blend-mode: color;
+  pointer-events: none;
+}

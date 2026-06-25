@@ -188,8 +188,25 @@
 }
 
 .asset-delete-btn--grid {
-  opacity: 0;
-  transition: opacity 0.15s ease;
+  background: rgba(15, 23, 42, 0.82);
+  color: #fff;
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.asset-delete-btn--grid:hover {
+  background: rgba(15, 23, 42, 0.95);
+  color: #fff;
+  transform: scale(1.05);
 }
 
 .masonry-card-actions {
@@ -198,18 +215,16 @@
   right: 8px;
   display: flex;
   gap: 6px;
-  z-index: 3;
-  opacity: 0;
-  transition: opacity 0.15s ease;
+  z-index: 5;
+  pointer-events: auto;
 }
 
-.masonry-card:hover .masonry-card-actions,
-.asset-card.grid:hover .asset-delete-btn--grid {
+.masonry-card-actions--visible {
   opacity: 1;
 }
 
-.asset-delete-btn--grid.asset-action-btn--rename {
-  position: static;
+.asset-delete-btn--grid.asset-action-btn--rename:hover {
+  color: #fff;
 }
 
 .asset-preview {
@@ -610,6 +625,119 @@
   100% { background-position: -200% 0; }
 }
 
+.library-list-skeleton-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.4fr) minmax(72px, 110px) minmax(88px, 130px) minmax(72px, 100px) 76px;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+}
+
+.library-list-skeleton-row .col.name {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.library-list-skeleton-thumb,
+.library-list-skeleton-line {
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--bg-surface) 0%, var(--bg-card) 50%, var(--bg-surface) 100%);
+  background-size: 200% 100%;
+  animation: library-masonry-shimmer 1.2s ease-in-out infinite;
+}
+
+.library-list-skeleton-thumb {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.library-list-skeleton-line {
+  display: block;
+  height: 12px;
+  width: 72%;
+}
+
+.library-list-skeleton-line--title {
+  width: 55%;
+}
+
+.library-list-skeleton-line--short {
+  width: 48%;
+}
+
+.asset-preview-icon--audio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
+.asset-preview-audio {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 12px 12px;
+  min-height: 132px;
+  line-height: normal;
+}
+
+.asset-preview-audio__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--primary) 12%, var(--bg-surface));
+  color: var(--primary);
+  font-size: 22px;
+}
+
+.asset-preview-audio__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.asset-preview-audio__meta .asset-name {
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.asset-preview-audio__unavailable {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.masonry-card--audio .asset-preview {
+  line-height: normal;
+}
+
+.asset-audio-preview {
+  width: 100%;
+  max-width: none;
+  height: 36px;
+  position: relative;
+  z-index: 2;
+}
+
+.asset-audio-preview--list {
+  margin-top: 6px;
+  max-width: 280px;
+}
+
 .assets-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
@@ -748,11 +876,13 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
 }
 
 .asset-card.list {
   display: grid;
-  grid-template-columns: 1fr 160px 180px 120px 40px;
+  grid-template-columns: minmax(220px, 1.4fr) minmax(72px, 110px) minmax(88px, 130px) minmax(72px, 100px) 76px;
   align-items: center;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -760,6 +890,7 @@
   gap: 12px;
   border-radius: 12px;
   transition: all 0.2s;
+  min-width: 720px;
 }
 
 .asset-card.list:hover {
@@ -783,7 +914,7 @@
 
 .list-header {
   display: grid;
-  grid-template-columns: 1fr 160px 180px 120px 40px;
+  grid-template-columns: minmax(220px, 1.4fr) minmax(72px, 110px) minmax(88px, 130px) minmax(72px, 100px) 76px;
   gap: 12px;
   padding: 8px 14px;
   color: var(--text-muted);
@@ -793,6 +924,7 @@
   border-left: 1px solid transparent;
   border-right: 1px solid transparent;
   margin-bottom: 6px;
+  min-width: 720px;
 }
 .list-header .col {
   display: flex;
@@ -859,8 +991,52 @@
   background: color-mix(in srgb, #ef4444 8%, var(--bg-card));
 }
 
+.asset-delete-btn--grid:hover {
+  color: #fff;
+  background: rgba(15, 23, 42, 0.95);
+  border: none;
+}
+
 .asset-delete-btn--list {
-  margin-left: auto;
+  margin-left: 0;
+}
+
+.col.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 76px;
+  flex-shrink: 0;
+}
+
+.asset-list-action-btn,
+.asset-delete-btn--list {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-main);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.asset-list-action-btn:hover,
+.asset-delete-btn--list:hover {
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border-color));
+  background: color-mix(in srgb, var(--primary) 6%, var(--bg-card));
+}
+
+.asset-delete-btn--list:last-child:hover {
+  color: #ef4444;
+  border-color: color-mix(in srgb, #ef4444 35%, var(--border-color));
+  background: color-mix(in srgb, #ef4444 8%, var(--bg-card));
 }
 
 /* Drag-and-Drop Placeholder */

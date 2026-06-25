@@ -1930,6 +1930,14 @@ kbd.shortcut-key {
     pointer-events: none;
 }
 
+.canvas-pause-to-edit-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    cursor: pointer;
+    background: transparent;
+}
+
 .preview-wrapper {
     position: relative;
     aspect-ratio: 16 / 9;
@@ -4779,10 +4787,10 @@ kbd.shortcut-key {
     text-transform: uppercase;
 }
 
+.upload-insert-panel__rename,
 .upload-insert-panel__delete {
     position: absolute;
     top: 6px;
-    right: 6px;
     width: 26px;
     height: 26px;
     border-radius: 8px;
@@ -4795,8 +4803,34 @@ kbd.shortcut-key {
     transition: opacity 0.15s ease;
 }
 
+.upload-insert-panel__rename {
+    right: 36px;
+}
+
+.upload-insert-panel__delete {
+    right: 6px;
+}
+
+.upload-insert-panel__asset:hover .upload-insert-panel__rename,
 .upload-insert-panel__asset:hover .upload-insert-panel__delete {
     opacity: 1;
+}
+
+.upload-insert-panel__grid--skeleton {
+    pointer-events: none;
+}
+
+.upload-insert-panel__asset-skeleton {
+    aspect-ratio: 16 / 10;
+    border-radius: 10px;
+    background: linear-gradient(90deg, var(--bg-surface) 0%, var(--bg-card) 50%, var(--bg-surface) 100%);
+    background-size: 200% 100%;
+    animation: upload-asset-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes upload-asset-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
 
 .upload-insert-panel__grid {
@@ -6769,4 +6803,106 @@ kbd.shortcut-key {
     background: var(--border-color);
     height: 4px;
     border-radius: 2px;
+}
+
+/* Audio layer properties — aligned with scene-config-panel */
+.audio-layer-panel {
+  padding: 0;
+}
+
+.audio-props-preview-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+}
+
+.audio-props-preview-card__wave {
+  height: 48px;
+  border-radius: 10px;
+  padding: 6px 8px;
+  background: color-mix(in srgb, var(--primary) 8%, var(--bg-surface));
+  border: 1px solid var(--border-color);
+  color: color-mix(in srgb, var(--primary) 65%, var(--text-muted));
+  overflow: hidden;
+}
+
+.audio-props-preview-card__wave .audio-waveform {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.audio-props-preview-card__player {
+  width: 100%;
+  height: 32px;
+}
+
+.audio-props-preview-card__missing {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.audio-props-sidebar-hint {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.audio-props-sidebar-remove {
+  width: 100%;
+  justify-content: center;
+  gap: 8px;
+  color: #ef4444 !important;
+  border-color: color-mix(in srgb, #ef4444 28%, var(--border-color)) !important;
+}
+
+.audio-fade-section {
+  margin-top: 8px;
+}
+
+.audio-fade-section .layer-animate-section__head {
+  margin-bottom: 6px;
+}
+
+.audio-fade-grid {
+  margin-bottom: 4px;
+}
+
+.audio-fade-card__preview {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--primary) 14%, #fff);
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border-color));
+  display: block;
+}
+
+.audio-fade-card__preview--in {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--primary) 8%, #fff) 0%,
+    color-mix(in srgb, var(--primary) 55%, #c4b5fd) 100%
+  );
+}
+
+.audio-fade-card__preview--out {
+  background: linear-gradient(
+    270deg,
+    color-mix(in srgb, var(--primary) 8%, #fff) 0%,
+    color-mix(in srgb, var(--primary) 55%, #c4b5fd) 100%
+  );
+}
+
+.audio-fade-card__preview--none {
+  background: color-mix(in srgb, var(--primary) 12%, var(--bg-surface));
+  opacity: 0.65;
+}
+
+.audio-fade-card.layer-animate-card--active .audio-fade-card__preview {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 35%, transparent);
 }

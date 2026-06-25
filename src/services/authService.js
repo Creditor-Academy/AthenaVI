@@ -1,5 +1,6 @@
 import axios from 'axios'
-import { buildUrl } from '../config/api.js'
+import API_CONFIG, { buildUrl } from '../config/api.js'
+import { getOAuthAccessTokenFromUrl } from '../utils/authRouting.js'
 import {
   shouldSkipTokenRefresh,
   getApiError,
@@ -10,7 +11,7 @@ const SIGNUP_PRECHECK_OTP = 100000
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '',
+  baseURL: API_CONFIG.BASE_URL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
@@ -150,9 +151,7 @@ export const authService = {
   },
 
   handleGoogleCallback() {
-    const hash = window.location.hash
-    const params = new URLSearchParams(hash.substring(1))
-    const accessToken = params.get('access_token')
+    const accessToken = getOAuthAccessTokenFromUrl()
 
     if (accessToken) {
       localStorage.setItem('accessToken', accessToken)

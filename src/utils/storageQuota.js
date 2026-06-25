@@ -1,5 +1,6 @@
 import { sanitizeUserFacingMessage } from './userFacingMessage.js';
 import { formatBytes } from './formatSize.js';
+import storageService from '../services/storageService.js';
 
 export const STORAGE_REFRESH_EVENT = 'storage-quota-refresh';
 

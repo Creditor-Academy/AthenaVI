@@ -146,6 +146,16 @@
   line-height: 1.4;
 }
 
+.create-video-presenter-banner {
+  margin-bottom: 4px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(26, 115, 232, 0.1);
+  border: 1px solid rgba(26, 115, 232, 0.2);
+  font-size: 14px;
+  color: var(--text-main, #1e293b);
+}
+
 .create-video-wizard-body {
   min-height: 0;
   overflow-y: auto;

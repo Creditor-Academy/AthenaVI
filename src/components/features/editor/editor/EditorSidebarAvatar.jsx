@@ -31,6 +31,11 @@ import {
   isDeclaredSingleLookGroup,
   isSingleAppearanceGroup,
   supportsTransparentWebm,
+  isLookReadyForUse,
+  needsAvatarConsent,
+  canUseAvatarInVideo,
+  mapLookTile,
+  getAvatarVideoBlockReason,
 } from '../../../../utils/heygenAvatars';
 import { getSanitizedErrorMessage } from '../../../../utils/userFacingMessage';
 import { invalidateHeygenSceneVideo } from '../../../../utils/heygenVideo';
@@ -72,6 +77,36 @@ const EditorSidebarAvatar = ({
 
   const ownershipForTab = activeTab === 'mine' ? 'private' : activeTab === 'team' ? 'workspace' : 'public';
 
+  const refreshGroups = useCallback(async () => {
+    setLoading(true);
+    try {
+      const responseData = await heygenService.getAvatarGroups({
+        ownership: ownershipForTab,
+        limit: 20,
+      });
+      const data = responseData?.data || responseData;
+      const groupList = extractHeygenList(responseData, ['avatar_groups', 'groups']);
+      setGroups(groupList.map(mapAvatarGroup).filter((g) => g.id));
+      setGroupsHasMore(!!(data?.has_more ?? responseData?.has_more));
+      setGroupsNextToken(data?.token ?? responseData?.token ?? data?.next_token ?? responseData?.next_token ?? null);
+    } catch (err) {
+      console.error('Failed to load avatar groups:', err);
+      setGroups([]);
+      setGroupsHasMore(false);
+      setGroupsNextToken(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [ownershipForTab]);
+
+  const canSelectLook = useCallback((group, look) => {
+    const avatar = {
+      consentStatus: group?.sourceGroup?.consent_status ?? group?.consent_status,
+      trainingStatus: group?.sourceGroup?.status ?? group?.status,
+    };
+    return canUseAvatarInVideo(avatar, mapLookTile(look, look.name, look.image));
+  }, []);
+
   useEffect(() => {
     setAvatarEngine(
       normalizeAvatarEngine(activeScene?.presenter?.avatarEngine || activeScene?.avatarEngine || avatarEngine)
@@ -90,28 +125,10 @@ const EditorSidebarAvatar = ({
     setLookEngineFilter(LOOK_ENGINE_FILTERS.ALL);
 
     const fetchGroups = async () => {
-      setLoading(true);
-      try {
-        const responseData = await heygenService.getAvatarGroups({
-          ownership: ownershipForTab,
-          limit: 20,
-        });
-        const data = responseData?.data || responseData;
-        const groupList = extractHeygenList(responseData, ['avatar_groups', 'groups']);
-        setGroups(groupList.map(mapAvatarGroup).filter((g) => g.id));
-        setGroupsHasMore(!!(data?.has_more ?? responseData?.has_more));
-        setGroupsNextToken(data?.token ?? responseData?.token ?? data?.next_token ?? responseData?.next_token ?? null);
-      } catch (err) {
-        console.error('Failed to load avatar groups:', err);
-        setGroups([]);
-        setGroupsHasMore(false);
-        setGroupsNextToken(null);
-      } finally {
-        setLoading(false);
-      }
+      await refreshGroups();
     };
     fetchGroups();
-  }, [activeTab, ownershipForTab]);
+  }, [activeTab, ownershipForTab, refreshGroups]);
 
   const loadMoreGroups = async () => {
     if (!groupsHasMore || !groupsNextToken || loadingMoreGroups) return;
@@ -152,7 +169,11 @@ const EditorSidebarAvatar = ({
       );
       if (filtered.length > 0) rawList = filtered;
     }
-    const mapped = rawList.map((look) => mapAvatarLook(look, groupName, pageData)).filter((l) => l.id);
+    const mapped = rawList.map((look) => {
+      const base = mapAvatarLook(look, groupName, pageData);
+      const tile = mapLookTile(look, base.name, base.image);
+      return { ...base, ready: tile.ready, status: tile.status };
+    }).filter((l) => l.id);
     setLooks(mapped);
     if (mapped.length === 0) {
       const filterLabels = {
@@ -181,14 +202,22 @@ const EditorSidebarAvatar = ({
     setSelectedGroup(group);
 
     const prefetchMapped = mapResolvedLooks(null, group, group.name);
-    if (prefetchMapped.length >= 1) {
+    if (prefetchMapped.length >= 1 && canSelectLook(group, prefetchMapped[0])) {
       applyLookToScene(prefetchMapped[0]);
     }
 
     try {
-      const { parsed, mappedLooks } = await fetchMappedGroupLooks(heygenService, group, { limit: 20 });
+      const { parsed, mappedLooks } = await fetchMappedGroupLooks(heygenService, group, {
+        limit: 20,
+        ownership: ownershipForTab,
+      });
 
-      if (mappedLooks.length === 0) {
+      const enrichedLooks = mappedLooks.map((look) => {
+        const tile = mapLookTile(look, look.name, look.image);
+        return { ...look, ready: tile.ready, status: tile.status };
+      });
+
+      if (enrichedLooks.length === 0) {
         setLooks([]);
         setLooksPageData(null);
         setLooksError('No supported looks for this character.');
@@ -200,13 +229,20 @@ const EditorSidebarAvatar = ({
 
       setLooksPageData(parsed);
       setLookEngineFilter(LOOK_ENGINE_FILTERS.ALL);
-      setLooks(mappedLooks);
+      setLooks(enrichedLooks);
       setLooksHasMore(!!parsed?.hasMore);
       setLooksNextToken(parsed?.nextToken ?? null);
       setLooksError('');
 
-      if (mappedLooks.length === 1 || isSingleAppearanceGroup(parsed, group) || isDeclaredSingleLookGroup(group)) {
-        applyLookToScene(mappedLooks[0]);
+      const firstReady = enrichedLooks.find((look) => look.ready) || enrichedLooks[0];
+      if (
+        enrichedLooks.length === 1 ||
+        isSingleAppearanceGroup(parsed, group) ||
+        isDeclaredSingleLookGroup(group)
+      ) {
+        if (firstReady && canSelectLook(group, firstReady)) {
+          applyLookToScene(firstReady);
+        }
         setPickerView('groups');
         return;
       }
@@ -215,10 +251,15 @@ const EditorSidebarAvatar = ({
       applyLooksDisplay(parsed, LOOK_ENGINE_FILTERS.ALL, group);
     } catch (err) {
       console.error('Failed to load looks:', err);
-      const fallbackMapped = mapResolvedLooks(null, group, group.name);
+      const fallbackMapped = mapResolvedLooks(null, group, group.name).map((look) => {
+        const tile = mapLookTile(look, look.name, look.image);
+        return { ...look, ready: tile.ready, status: tile.status };
+      });
       if (fallbackMapped.length >= 1) {
         setLooks(fallbackMapped);
-        applyLookToScene(fallbackMapped[0]);
+        if (canSelectLook(group, fallbackMapped[0])) {
+          applyLookToScene(fallbackMapped[0]);
+        }
         setLooksPageData(null);
         setPickerView('groups');
         setLooksError('');
@@ -243,6 +284,7 @@ const EditorSidebarAvatar = ({
     try {
       const responseData = await heygenService.getAvatarLooks({
         group_id: getLooksApiGroupId(selectedGroup) || selectedGroup.id,
+        ownership: ownershipForTab,
         limit: 20,
         token: looksNextToken,
       });
@@ -677,17 +719,42 @@ const EditorSidebarAvatar = ({
                   {filteredItems.map((item) => {
                     const isActive = pickerView === 'looks' && activeScene?.avatarType === item.id;
                     const typeLabel = pickerView === 'looks' ? formatLookBadgeLabel(item) : '';
-                    
+                    const groupNeedsConsent =
+                      pickerView === 'groups' && activeTab === 'mine' && needsAvatarConsent(item.sourceGroup);
+
                     return (
                       <div
                         key={item.id}
                         onClick={() => {
                           if (pickerView === 'groups') {
+                            if (groupNeedsConsent) {
+                              heygenService
+                                .getAvatarConsent(item.id)
+                                .then((consentRes) => {
+                                  const group = consentRes?.avatar_group ?? consentRes?.avatarGroup;
+                                  setConsentModal({
+                                    groupId: item.id,
+                                    avatarName: item.name,
+                                    consentUrl: getConsentUrlFromResponse(consentRes),
+                                    consentStatus: group?.consent_status ?? 'pending',
+                                  });
+                                })
+                                .catch(() => {
+                                  setConsentModal({
+                                    groupId: item.id,
+                                    avatarName: item.name,
+                                    consentUrl: '',
+                                    consentStatus: 'pending',
+                                  });
+                                });
+                              return;
+                            }
                             fetchLooksForGroup(item);
                             return;
                           }
                           applyLookToScene(item);
                         }}
+                        title={groupNeedsConsent ? 'Consent required' : undefined}
                         style={{
                           position: 'relative',
                           borderRadius: '10px',
@@ -724,6 +791,22 @@ const EditorSidebarAvatar = ({
                               {typeLabel}
                             </span>
                           )}
+                          {groupNeedsConsent ? (
+                            <span style={{
+                              position: 'absolute',
+                              top: '8px',
+                              right: '8px',
+                              zIndex: 2,
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              fontSize: '9px',
+                              fontWeight: 700,
+                              background: 'rgba(251, 188, 4, 0.9)',
+                              color: '#1a1a1a',
+                            }}>
+                              Consent
+                            </span>
+                          ) : null}
                           <img 
                             src={item.image} 
                             alt={item.name} 
@@ -761,22 +844,61 @@ const EditorSidebarAvatar = ({
               ) : filteredItems.map((item) => {
                 const isActive = pickerView === 'looks' && activeScene?.avatarType === item.id;
                 const typeLabel = pickerView === 'looks' ? formatLookBadgeLabel(item) : '';
-                
+                const groupNeedsConsent =
+                  pickerView === 'groups' && activeTab === 'mine' && needsAvatarConsent(item.sourceGroup);
+                const lookBlocked =
+                  pickerView === 'looks' && selectedGroup && !canSelectLook(selectedGroup, item);
+                const blockReason =
+                  lookBlocked && selectedGroup
+                    ? getAvatarVideoBlockReason(
+                        {
+                          consentStatus: selectedGroup?.sourceGroup?.consent_status,
+                          trainingStatus: selectedGroup?.sourceGroup?.status,
+                        },
+                        mapLookTile(item, item.name, item.image)
+                      )
+                    : null;
+
                 return (
                   <div
                     key={item.id}
                     onClick={() => {
                       if (pickerView === 'groups') {
+                        if (groupNeedsConsent) {
+                          heygenService
+                            .getAvatarConsent(item.id)
+                            .then((consentRes) => {
+                              const group = consentRes?.avatar_group ?? consentRes?.avatarGroup;
+                              setConsentModal({
+                                groupId: item.id,
+                                avatarName: item.name,
+                                consentUrl: getConsentUrlFromResponse(consentRes),
+                                consentStatus: group?.consent_status ?? 'pending',
+                              });
+                            })
+                            .catch(() => {
+                              setConsentModal({
+                                groupId: item.id,
+                                avatarName: item.name,
+                                consentUrl: '',
+                                consentStatus: 'pending',
+                              });
+                            });
+                          return;
+                        }
                         fetchLooksForGroup(item);
                         return;
                       }
+                      if (lookBlocked) return;
                       applyLookToScene(item);
                     }}
+                    title={blockReason || (groupNeedsConsent ? 'Consent required' : undefined)}
                     style={{
                       position: 'relative',
                       borderRadius: '10px',
                       overflow: 'hidden',
-                      cursor: 'pointer',
+                      cursor: lookBlocked ? 'not-allowed' : 'pointer',
+                      opacity: lookBlocked ? 0.55 : 1,
                       border: isActive ? '2px solid var(--primary)' : '1px solid var(--border-color)',
                       background: 'var(--bg-card)',
                       transition: 'all 0.2s ease',
@@ -820,6 +942,38 @@ const EditorSidebarAvatar = ({
                             {typeLabel}
                           </span>
                         )}
+                        {groupNeedsConsent ? (
+                          <span style={{
+                            position: 'absolute',
+                            top: '8px',
+                            right: '8px',
+                            zIndex: 2,
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontSize: '9px',
+                            fontWeight: 700,
+                            background: 'rgba(251, 188, 4, 0.9)',
+                            color: '#1a1a1a',
+                          }}>
+                            Consent
+                          </span>
+                        ) : null}
+                        {pickerView === 'looks' && item.ready === false ? (
+                          <span style={{
+                            position: 'absolute',
+                            top: '8px',
+                            right: '8px',
+                            zIndex: 2,
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontSize: '9px',
+                            fontWeight: 700,
+                            background: 'rgba(100, 116, 139, 0.85)',
+                            color: '#fff',
+                          }}>
+                            Processing
+                          </span>
+                        ) : null}
                         <img 
                           src={item.image} 
                           alt={item.name} 
@@ -922,7 +1076,10 @@ const EditorSidebarAvatar = ({
       consentUrl={consentModal?.consentUrl}
       consentStatus={consentModal?.consentStatus}
       onClose={() => setConsentModal(null)}
-      onComplete={() => setConsentModal(null)}
+      onComplete={() => {
+        setConsentModal(null);
+        refreshGroups();
+      }}
     />
     </>
   );

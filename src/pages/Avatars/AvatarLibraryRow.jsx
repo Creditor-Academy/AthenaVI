@@ -1,4 +1,4 @@
-import { MdPerson, MdVerifiedUser } from 'react-icons/md';
+import { MdPerson, MdVerifiedUser, MdVideoLibrary } from 'react-icons/md';
 import { avatarNeedsConsentFlow } from '../../components/ui/AvatarConsentStep/AvatarConsentStep';
 
 function getStatusBadge(avatar) {
@@ -11,9 +11,10 @@ function getStatusBadge(avatar) {
   return null;
 }
 
-function AvatarLibraryRow({ avatar, onOpen, onCompleteConsent }) {
+function AvatarLibraryRow({ avatar, onOpen, onCompleteConsent, onUseInProject }) {
   const statusBadge = getStatusBadge(avatar);
   const needsConsent = avatarNeedsConsentFlow(avatar);
+  const canUseInProject = onUseInProject && !needsConsent;
 
   return (
     <article
@@ -54,6 +55,17 @@ function AvatarLibraryRow({ avatar, onOpen, onCompleteConsent }) {
       </div>
 
       <div className="row-actions avatars-library-row__actions">
+        {canUseInProject ? (
+          <button
+            type="button"
+            className="avatars-use-project-cta"
+            title="Use in project"
+            aria-label={`Use ${avatar.name} in a project`}
+            onClick={(event) => onUseInProject(avatar, event)}
+          >
+            <MdVideoLibrary size={18} />
+          </button>
+        ) : null}
         {needsConsent && onCompleteConsent ? (
           <button
             type="button"

@@ -27,23 +27,12 @@ function clipNeedsAssetUrl(clip) {
 export async function buildAssetUrlMap(workspaceId, assetIds) {
   if (!workspaceId || !assetIds?.size) return new Map();
 
-  const list = await assetService.listAssets(workspaceId, { take: 100, source: 'all' });
+  const list = await assetService.listAllAssets(workspaceId, { source: 'all' });
   const map = new Map();
   for (const raw of list) {
     const normalized = assetService.normalizeAsset(raw);
     if (normalized?.id && normalized?.url) {
       map.set(String(normalized.id), normalized.url);
-    }
-  }
-
-  const missing = [...assetIds].filter((id) => !map.has(String(id)));
-  if (missing.length && list.length >= 100) {
-    const more = await assetService.listAssets(workspaceId, { take: 100, skip: 100, source: 'all' });
-    for (const raw of more) {
-      const normalized = assetService.normalizeAsset(raw);
-      if (normalized?.id && normalized?.url) {
-        map.set(String(normalized.id), normalized.url);
-      }
     }
   }
 
