@@ -1,4 +1,4 @@
-import { MdGraphicEq, MdPlayArrow } from 'react-icons/md';
+import { MdDelete, MdGraphicEq, MdPlayArrow } from 'react-icons/md';
 import { Loader2 } from 'lucide-react';
 import { VoiceGenderIcon } from '../../components/ui/icons';
 import { normalizeVoiceGender } from '../../utils/voiceGender';
@@ -13,7 +13,7 @@ function getStatusBadge(voice) {
   return null;
 }
 
-function VoiceLibraryCard({ voice, onOpen, onPreview, onTest }) {
+function VoiceLibraryCard({ voice, onOpen, onPreview, onTest, canDelete = false, onDelete }) {
   const statusBadge = getStatusBadge(voice);
   const genderKind = normalizeVoiceGender(voice.gender);
   const hasAvatarImage = Boolean(voice.image);
@@ -95,6 +95,20 @@ function VoiceLibraryCard({ voice, onOpen, onPreview, onTest }) {
           >
             <MdGraphicEq size={18} />
           </button>
+          {canDelete ? (
+            <button
+              type="button"
+              className="context-menu-btn library-delete-cta"
+              title="Delete voice"
+              aria-label={`Delete ${voice.name}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                onDelete?.(voice, event);
+              }}
+            >
+              <MdDelete size={18} />
+            </button>
+          ) : null}
         </div>
       </div>
     </article>

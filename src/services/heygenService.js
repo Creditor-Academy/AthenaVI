@@ -596,6 +596,68 @@ class HeygenService {
     }
   }
 
+  async deleteAvatarGroup(groupId, { voiceId } = {}) {
+    try {
+      const query = new URLSearchParams();
+      if (voiceId) query.set('voice_id', String(voiceId));
+      const endpoint = `${API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.DELETE_GROUP(groupId)}${
+        query.toString() ? `?${query.toString()}` : ''
+      }`;
+      const response = await fetch(buildUrl(endpoint), {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+
+      await throwIfHeygenResponseFailed(response, 'Failed to delete avatar group');
+
+      const data = await response.json();
+      return data.data || data;
+    } catch (error) {
+      console.error('Error in heygenService.deleteAvatarGroup:', error);
+      throw sanitizeThrownError(error);
+    }
+  }
+
+  async deleteAvatarLook(lookId, { voiceId } = {}) {
+    try {
+      const query = new URLSearchParams();
+      if (voiceId) query.set('voice_id', String(voiceId));
+      const endpoint = `${API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.DELETE_LOOK(lookId)}${
+        query.toString() ? `?${query.toString()}` : ''
+      }`;
+      const response = await fetch(buildUrl(endpoint), {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+
+      await throwIfHeygenResponseFailed(response, 'Failed to delete avatar look');
+
+      const data = await response.json();
+      return data.data || data;
+    } catch (error) {
+      console.error('Error in heygenService.deleteAvatarLook:', error);
+      throw sanitizeThrownError(error);
+    }
+  }
+
+  async deleteVoice(voiceId) {
+    try {
+      const endpoint = API_CONFIG.ENDPOINTS.HEYGEN.VOICES.DELETE(voiceId);
+      const response = await fetch(buildUrl(endpoint), {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+
+      await throwIfHeygenResponseFailed(response, 'Failed to delete voice');
+
+      const data = await response.json();
+      return data.data || data;
+    } catch (error) {
+      console.error('Error in heygenService.deleteVoice:', error);
+      throw sanitizeThrownError(error);
+    }
+  }
+
   async getVoices(params = {}) {
     try {
       const queryParams = new URLSearchParams(params).toString();

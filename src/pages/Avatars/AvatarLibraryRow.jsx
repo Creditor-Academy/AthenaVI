@@ -1,4 +1,4 @@
-import { MdPerson, MdVerifiedUser, MdVideoLibrary } from 'react-icons/md';
+import { MdDelete, MdPerson, MdVerifiedUser, MdVideoLibrary } from 'react-icons/md';
 import { avatarNeedsConsentFlow } from '../../components/ui/AvatarConsentStep/AvatarConsentStep';
 
 function getStatusBadge(avatar) {
@@ -11,7 +11,7 @@ function getStatusBadge(avatar) {
   return null;
 }
 
-function AvatarLibraryRow({ avatar, onOpen, onCompleteConsent, onUseInProject }) {
+function AvatarLibraryRow({ avatar, onOpen, onCompleteConsent, onUseInProject, onDelete, canDelete = false }) {
   const statusBadge = getStatusBadge(avatar);
   const needsConsent = avatarNeedsConsentFlow(avatar);
   const canUseInProject = onUseInProject && !needsConsent;
@@ -89,6 +89,20 @@ function AvatarLibraryRow({ avatar, onOpen, onCompleteConsent, onUseInProject })
         >
           <MdPerson size={18} />
         </button>
+        {canDelete ? (
+          <button
+            type="button"
+            className="context-menu-btn library-delete-cta"
+            title="Delete avatar"
+            aria-label={`Delete ${avatar.name}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              onDelete?.(avatar, event);
+            }}
+          >
+            <MdDelete size={18} />
+          </button>
+        ) : null}
       </div>
     </article>
   );

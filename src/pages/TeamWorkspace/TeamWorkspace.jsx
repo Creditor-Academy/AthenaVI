@@ -30,7 +30,7 @@ import { useWorkspaceData } from './useWorkspaceData.js';
 import { useWorkspaceActions } from './useWorkspaceActions.js';
 import InvitationsPanel from './InvitationsPanel.jsx';
 import ContributorsPanel from './ContributorsPanel.jsx';
-import ConfirmDialog from './ConfirmDialog.jsx';
+import ConfirmDialog from '../../components/ui/ConfirmDialog/ConfirmDialog.jsx';
 import Toast from './Toast.jsx';
 
 import { buildWorkspaceUserLookup, getAuthDisplayName } from '../../utils/workspaceUsers.js';
