@@ -28,6 +28,9 @@ import {
 } from 'react-icons/md'
 import { getClipTextContent } from '../../../utils/textClip'
 import { isAvatarClip, findSceneAvatarClip } from '../../../utils/heygenVideo'
+import { findSceneMusicClip } from '../../../utils/audioClipUtils'
+import TimelineAudioClip from './editor/TimelineAudioClip'
+import AudioWaveform from './editor/AudioWaveform'
 import {
     computeFitZoom,
     buildRulerTicks,
@@ -56,6 +59,7 @@ const TimelineEditor = ({
     totalDuration,
     onDeleteLayer,
     onDeleteMusic,
+    onUpdateAudioClip,
     musicDuration,
     onMusicDurationChange,
     onSelectLayer,
@@ -93,6 +97,11 @@ const TimelineEditor = ({
         const activeSceneStart = scenes.slice(0, idx).reduce((sum, s) => sum + (s.duration || 8), 0)
         return { activeScene: scenes[idx], activeSceneStart }
     }, [scenes, activeSceneId])
+
+    const activeSceneMusicClip = useMemo(
+        () => findSceneMusicClip(activeScene),
+        [activeScene]
+    )
 
     const scopedScenes = useMemo(() => {
         if (timelineScope === 'single' && activeScene) {
@@ -749,6 +758,11 @@ const TimelineEditor = ({
               align-items: center;
               padding: 0 10px;
               position: absolute;
+              cursor: pointer;
+          }
+
+          .music-clip--selected {
+              box-shadow: 0 0 0 2px #fff, 0 0 0 4px #059669;
           }
 
           .clip-track {
@@ -1253,19 +1267,26 @@ const TimelineEditor = ({
 
                                 {/* Music Track (BOTTOM) */}
                                 <div className="music-track">
-                                    {bgMusic ? (
-                                        <div className="music-clip" style={{ left: timelineScope === 'single' ? -activeSceneStart * zoom : 0, width: musicDuration * zoom }}>
-                                            <MdMusicNote size={14} style={{ marginRight: 6 }} /> <span>{bgMusic.split('/').pop().slice(0, 15)}...</span>
-                                            <div className="music-waveform" />
-                                            <div className="music-trim-handle" onMouseDown={(e) => {
-                                                e.stopPropagation();
-                                                isDraggingMusicTrim.current = true;
-                                            }} />
-                                        </div>
+                                    {bgMusic && activeSceneMusicClip ? (
+                                        <TimelineAudioClip
+                                            clip={activeSceneMusicClip}
+                                            audioSrc={bgMusic}
+                                            zoom={zoom}
+                                            left={timelineScope === 'single' ? -activeSceneStart * zoom : 0}
+                                            width={(musicDuration || activeScene?.duration || 8) * zoom}
+                                            selected={selectedLayerId === activeSceneMusicClip.id}
+                                            onSelect={() => onSelectLayer?.(activeSceneMusicClip.id)}
+                                            onUpdate={onUpdateAudioClip}
+                                            onRemove={onDeleteMusic}
+                                        />
                                     ) : (
-                                        <div className="music-clip-empty" style={{ left: 0, width: totalDuration * zoom }}>
-                                            <MdMusicNote size={14} style={{ marginRight: 6 }} /> <span style={{ fontSize: '11px' }}>Audio Track</span>
-                                            <div className="music-waveform" style={{ opacity: 0.1, filter: 'grayscale(100%)' }} />
+                                        <div
+                                            className="timeline-audio-track-empty"
+                                            style={{ left: 0, width: totalDuration * zoom }}
+                                        >
+                                            <MdMusicNote size={14} />
+                                            <span>Audio track</span>
+                                            <AudioWaveform seed="empty-audio" density="timeline" />
                                         </div>
                                     )}
                                 </div>

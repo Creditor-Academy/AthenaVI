@@ -1,5 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import authService from '../services/authService.js'
+import {
+  clearOAuthParamsFromUrl,
+  getOAuthAccessTokenFromUrl,
+  getOAuthErrorFromUrl,
+} from '../utils/authRouting.js'
 
 // Create Auth Context
 const AuthContext = createContext()
@@ -56,48 +61,40 @@ export const AuthProvider = ({ children }) => {
 
   // Check authentication status on mount
   useEffect(() => {
+    const completeGoogleOAuth = async (accessToken) => {
+      localStorage.setItem('accessToken', accessToken)
+      clearOAuthParamsFromUrl()
+
+      try {
+        const { default: userService } = await import('../services/userService.js')
+        const profile = await userService.getUserProfile()
+        const profileId = profile?.id || profile?._id || profile?.userId
+        const userData = { ...profile, id: profileId }
+        localStorage.setItem('user', JSON.stringify(userData))
+        setUser(userData)
+      } catch (profileError) {
+        console.error('Failed to fetch profile after Google OAuth:', profileError)
+        // Token is stored; profile can be fetched later
+      }
+
+      setIsAuthenticated(true)
+      window.history.replaceState({ view: 'dashboard' }, '', '/dashboard')
+      window.dispatchEvent(new CustomEvent('auth:oauth-complete'))
+    }
+
     const checkAuth = async () => {
       try {
-        // Handle Google OAuth redirect: backend sends #access_token=<token> in the URL hash
-        const hash = window.location.hash
-        if (hash && hash.includes('access_token=')) {
-          const params = new URLSearchParams(hash.substring(1))
-          const accessToken = params.get('access_token')
-          if (accessToken) {
-            localStorage.setItem('accessToken', accessToken)
-            // Remove the token from the URL to keep it clean
-            window.history.replaceState(null, '', window.location.pathname + window.location.search)
-            // Fetch user profile to populate user data
-            try {
-              const { default: userService } = await import('../services/userService.js')
-              const profile = await userService.getUserProfile()
-              const profileId = profile?.id || profile?._id || profile?.userId
-              const userData = { ...profile, id: profileId }
-              localStorage.setItem('user', JSON.stringify(userData))
-              setUser(userData)
-              setIsAuthenticated(true)
-              // Navigate to dashboard
-              window.history.pushState({ view: 'dashboard' }, '', '/dashboard')
-              window.location.reload()
-            } catch (profileError) {
-              console.error('Failed to fetch profile after Google OAuth:', profileError)
-              // Token is stored; proceed — profile can be fetched later
-              setIsAuthenticated(true)
-              window.history.pushState({ view: 'dashboard' }, '', '/dashboard')
-              window.location.reload()
-            }
-            return
-          }
+        const accessToken = getOAuthAccessTokenFromUrl()
+        if (accessToken) {
+          await completeGoogleOAuth(accessToken)
+          return
         }
 
-        // Handle Google OAuth error redirect: backend sends ?error=...
-        const urlParams = new URLSearchParams(window.location.search)
-        const oauthError = urlParams.get('error')
+        const oauthError = getOAuthErrorFromUrl()
         if (oauthError) {
           console.error('Google OAuth error:', oauthError)
-          // Remove the error param from URL
-          window.history.replaceState(null, '', window.location.pathname)
-          // Fall through to normal unauthenticated state
+          localStorage.setItem('authError', 'Google sign-in failed. Please try again.')
+          clearOAuthParamsFromUrl()
           setLoading(false)
           return
         }
@@ -279,14 +276,12 @@ export const AuthProvider = ({ children }) => {
   // (used by GoogleCallback component if rendered directly)
   const handleGoogleCallback = async () => {
     try {
-      const hash = window.location.hash
-      const params = new URLSearchParams(hash.substring(1))
-      const accessToken = params.get('access_token')
+      const accessToken = getOAuthAccessTokenFromUrl()
       if (!accessToken) {
         return { success: false, error: 'No access token found in URL' }
       }
       localStorage.setItem('accessToken', accessToken)
-      window.history.replaceState(null, '', window.location.pathname + window.location.search)
+      clearOAuthParamsFromUrl()
       const { default: userService } = await import('../services/userService.js')
       const profile = await userService.getUserProfile()
       const profileId = profile?.id || profile?._id || profile?.userId
@@ -294,6 +289,8 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(userData))
       setUser(userData)
       setIsAuthenticated(true)
+      window.history.replaceState({ view: 'dashboard' }, '', '/dashboard')
+      window.dispatchEvent(new CustomEvent('auth:oauth-complete'))
       return { success: true }
     } catch (error) {
       console.error('handleGoogleCallback error:', error)

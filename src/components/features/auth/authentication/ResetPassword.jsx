@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { MdLock, MdVisibility, MdVisibilityOff, MdCheck } from 'react-icons/md'
 import { useAuth } from '../../../../contexts/AuthContext'
+import '../../../../pages/Auth/auth-forms.css'
 
 function ResetPassword() {
   const { resetPassword, loading } = useAuth()

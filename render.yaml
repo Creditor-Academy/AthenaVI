@@ -1,0 +1,120 @@
+################################################################################
+# AthenaVI Frontend — Render Blueprint (Static Site)
+################################################################################
+#
+# WHAT THIS DEPLOYS
+#   Vite + React SPA served from Render's global CDN (static site).
+#
+# SETUP (first time)
+#   1. Push this repo to GitHub, GitLab, or Bitbucket
+#   2. Render Dashboard → New → Blueprint → connect the repo
+#   3. Render reads this file and creates the "athena-vi" static site
+#   4. Open the service → Environment → add:
+#        VITE_API_BASE_URL = https://your-production-backend.com
+#      (no trailing slash — must match where your API is hosted)
+#   5. Trigger a manual deploy (env vars are baked in at build time)
+#
+# CUSTOM DOMAIN (optional)
+#   Service → Settings → Custom Domains → add your domain
+#   Render provisions TLS automatically.
+#
+# PULL REQUEST PREVIEWS
+#   Each PR gets a preview URL when frontend files change.
+#   Set VITE_API_BASE_URL on the preview service too, or use a staging API.
+#
+# BACKEND CORS
+#   Your backend must allow the Render frontend origin, e.g.:
+#     https://athena-vi.onrender.com
+#     https://your-custom-domain.com
+#
+# GOOGLE OAUTH (backend env)
+#   FRONTEND_URL     = your Render frontend URL (e.g. https://athena-vi.onrender.com)
+#   OAUTH_SUCCESS_PATH = /auth/google/callback  (supported by the frontend)
+#   After Google sign-in the backend redirects to:
+#     {FRONTEND_URL}{OAUTH_SUCCESS_PATH}#access_token=...
+#
+################################################################################
+
+# Blueprint-level preview environments (PR deploys)
+previews:
+  generation: automatic
+  expireAfterDays: 7
+
+services:
+  - type: web
+    name: athena-vi
+    runtime: static
+
+    # Only trigger builds when frontend-related files change
+    buildFilter:
+      paths:
+        - package.json
+        - package-lock.json
+        - vite.config.js
+        - index.html
+        - postcss.config.js
+        - tailwind.config.js
+        - public/**
+        - src/**
+        - scripts/render-build.mjs
+        - scripts/render-postbuild.mjs
+        - render.yaml
+      ignoredPaths:
+        - "**/*.md"
+        - "**/*.test.js"
+        - "**/*.spec.js"
+        - api_doc.md
+
+    # Lockfile install → pre-build checks → Vite production bundle
+    buildCommand: npm ci && npm run build:render
+    staticPublishPath: ./dist
+
+    envVars:
+      # Pin Node to match .nvmrc (https://render.com/docs/node-version)
+      - key: NODE_VERSION
+        value: "22.22.0"
+      - key: NODE_ENV
+        value: production
+      # REQUIRED — set your production backend URL in the Render dashboard
+      - key: VITE_API_BASE_URL
+        sync: false
+
+    # Per-service PR preview deploys
+    previews:
+      generation: automatic
+
+    # React SPA + Google OAuth callback paths — serve index.html for all routes
+    routes:
+      - type: rewrite
+        source: /
+        destination: /index.html
+      - type: rewrite
+        source: /auth/*
+        destination: /index.html
+      - type: rewrite
+        source: /dashboard/*
+        destination: /index.html
+      - type: rewrite
+        source: /login
+        destination: /index.html
+      - type: rewrite
+        source: /signup
+        destination: /index.html
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+    # Security headers + long-lived cache for Vite hashed assets (/assets/*)
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: SAMEORIGIN
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable

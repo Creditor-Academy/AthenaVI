@@ -2,11 +2,11 @@
 // This service handles all user-related API calls
 
 // Import from existing API config to maintain consistency
-import { buildUrl, getAuthHeaders } from '../config/api.js'
+import API_CONFIG, { buildUrl, getAuthHeaders } from '../config/api.js'
 
 class UserService {
   constructor() {
-    this.baseURL = import.meta.env.VITE_API_BASE_URL || '';
+    this.baseURL = API_CONFIG.BASE_URL;
   }
 
   // Get user profile (only essential fields)

@@ -2,9 +2,11 @@ import { extractUserId, readRole } from '../pages/TeamWorkspace/workspaceUtils.j
 import { isTeamWorkspaceType } from './creditTransactions.js';
 
 export function canManageAsset(asset, workspace, currentUserId) {
-  if (!asset || !workspace) return false;
+  if (!asset) return false;
 
   const userId = String(currentUserId || '');
+  if (!workspace) return Boolean(userId);
+
   const type = String(workspace.type || workspace.workspaceType || '').toUpperCase();
   const isPersonal =
     workspace.isPersonal ||
@@ -13,6 +15,8 @@ export function canManageAsset(asset, workspace, currentUserId) {
     workspace.type === 'personal';
 
   if (isPersonal || !isTeamWorkspaceType(type)) {
+    // Private workspace: API only exposes assets to the owner.
+    if (userId) return true;
     const role = readRole(workspace);
     const ownerId = String(workspace.ownerId || workspace.owner?.id || '');
     return role === 'OWNER' || (ownerId && ownerId === userId);

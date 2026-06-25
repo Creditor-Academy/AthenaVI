@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import Landing from './pages/Landing/Landing.jsx'
-import Auth from './pages/Auth/Auth.jsx'
+import AuthPage from './pages/Auth/AuthPage.jsx'
 import Dashboard from './pages/Dashboard/Dashboard.jsx'
 import Create from './pages/Editor/Editor.jsx'
 import Products from './pages/Products/Products.jsx'
@@ -25,7 +25,54 @@ import AIAvatarsVideos from './pages/AIAvatarsVideos/AIAvatarsVideos.jsx'
 import AIVideos from './pages/AIVideos/AIVideos.jsx'
 import NotFound from './pages/NotFound/NotFound.jsx'
 import RenderDownload from './pages/Download/RenderDownload.jsx'
+import GoogleCallback from './components/features/auth/GoogleCallback.jsx'
 import { persistWorkspaceFolderNavigation } from './utils/navigateToWorkspaceFolder.js'
+import { resolveViewFromLocation } from './utils/authRouting.js'
+
+const PATH_TO_VIEW_MAP = {
+  '/': 'landing',
+  '/dashboard': 'dashboard',
+  '/dashboard/home': 'dashboard',
+  '/dashboard/videos': 'dashboard',
+  '/dashboard/avatars': 'dashboard',
+  '/dashboard/create-avatar': 'dashboard',
+  '/dashboard/templates': 'dashboard',
+  '/dashboard/template-details': 'dashboard',
+  '/dashboard/library': 'dashboard',
+  '/dashboard/workspace': 'dashboard',
+  '/dashboard/admin-portal': 'dashboard',
+  '/dashboard/settings': 'dashboard',
+  '/dashboard/voices': 'dashboard',
+  '/dashboard/create-voice': 'dashboard',
+  '/dashboard/brandkits': 'dashboard',
+  '/dashboard/credits': 'dashboard',
+  '/dashboard/help': 'dashboard',
+  '/profile': 'dashboard',
+  '/create': 'create',
+  '/products': 'products',
+  '/about-us': 'about-us-blog',
+  '/news': 'news',
+  '/resources': 'resources',
+  '/help': 'help-center',
+  '/privacy': 'privacy-policy',
+  '/marketing-suite': 'marketing-suite',
+  '/sales-suite': 'sales-suite',
+  '/ethics': 'ethics',
+  '/technology': 'technology',
+  '/use-cases': 'use-cases',
+  '/customer-experience': 'customer-experience',
+  '/learning-development': 'learning-development',
+  '/settings': 'settings',
+  '/ai-videos': 'ai-videos',
+  '/ai-avatars-videos': 'ai-avatars-videos',
+  '/support': 'dashboard',
+  '/download': 'download',
+  '/login': 'login',
+  '/signup': 'login',
+  '/auth/google/callback': 'google-callback',
+  '/auth/callback': 'google-callback',
+  '/oauth/callback': 'google-callback',
+}
 
 // Protected Route Component
 const ProtectedRoute = ({ children, setView }) => {
@@ -94,109 +141,6 @@ const ProtectedRoute = ({ children, setView }) => {
   return children
 }
 
-// Import auth styles from Auth.jsx
-const authStyles = `
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  width: 100%;
-  padding: 20px;
-}
-
-.auth-form-header {
-  text-align: center;
-  margin-bottom: 24px;
-}
-
-.auth-form-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 8px 0;
-}
-
-.auth-form-subtitle {
-  font-size: 14px;
-  color: #6b7280;
-  margin: 0;
-  line-height: 1.5;
-}
-
-.auth-input-wrapper {
-  position: relative;
-  margin-bottom: 16px;
-}
-
-.auth-input {
-  width: 100%;
-  padding: 12px 16px 12px 48px;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s ease;
-  background: #f9fafb;
-}
-
-.auth-input:focus {
-  border-color: #3b82f6;
-  background: #ffffff;
-}
-
-.auth-input-icon {
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #6b7280;
-  font-size: 18px;
-}
-
-.auth-password-toggle {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: #6b7280;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: color 0.2s ease;
-}
-
-.auth-password-toggle:hover {
-  color: #3b82f6;
-}
-
-.auth-submit-btn {
-  width: 100%;
-  padding: 14px 24px;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-top: 8px;
-}
-
-.auth-submit-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-}
-
-.auth-submit-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-`
-
 // App Component with Auth Protection
 function App() {
   const isInviteAcceptancePath =
@@ -204,85 +148,7 @@ function App() {
     window.location.pathname.includes('/invitations/accept')
 
   // Initialize view from localStorage on mount to persist page on refresh
-  const [view, setView] = useState(() => {
-    // Check if current URL matches a known route
-    const pathToViewMap = {
-      '/': 'landing',
-      '/dashboard': 'dashboard',
-      '/dashboard/home': 'dashboard',
-      '/dashboard/videos': 'dashboard',
-      '/dashboard/avatars': 'dashboard',
-      '/dashboard/create-avatar': 'dashboard',
-      '/dashboard/templates': 'dashboard',
-      '/dashboard/template-details': 'dashboard',
-      '/dashboard/library': 'dashboard',
-      '/dashboard/workspace': 'dashboard',
-      '/dashboard/admin-portal': 'dashboard',
-      '/dashboard/settings': 'dashboard',
-      '/dashboard/voices': 'dashboard',
-      '/dashboard/create-voice': 'dashboard',
-      '/dashboard/brandkits': 'dashboard',
-      '/dashboard/credits': 'dashboard',
-      '/dashboard/help': 'dashboard',
-      '/profile': 'dashboard',
-      '/create': 'create',
-      '/products': 'products',
-      '/about-us': 'about-us-blog',
-      '/news': 'news',
-      '/resources': 'resources',
-      '/help': 'help-center',
-      '/privacy': 'privacy-policy',
-      '/marketing-suite': 'marketing-suite',
-      '/sales-suite': 'sales-suite',
-      '/ethics': 'ethics',
-      '/technology': 'technology',
-      '/use-cases': 'use-cases',
-      '/customer-experience': 'customer-experience',
-      '/learning-development': 'learning-development',
-      '/settings': 'settings',
-      '/ai-videos': 'ai-videos',
-      '/ai-avatars-videos': 'ai-avatars-videos',
-      '/support': 'dashboard',
-      '/download': 'download',
-    }
-    
-    // Get current path (handle both hash and regular routing)
-    let currentPath = window.location.pathname
-    if (currentPath.endsWith('/') && currentPath.length > 1) {
-      currentPath = currentPath.slice(0, -1)
-    }
-    
-    // Check if current URL is a Google Auth callback redirect (contains access_token in the hash)
-    if (window.location.hash && window.location.hash.includes('access_token=')) {
-      return 'dashboard'
-    }
-    
-    // If hash routing is being used, extract from hash
-    if (window.location.hash && window.location.hash !== '#') {
-      currentPath = window.location.hash.replace('#', '') || '/'
-      if (currentPath.endsWith('/') && currentPath.length > 1) {
-        currentPath = currentPath.slice(0, -1)
-      }
-    }
-    
-    const urlView = pathToViewMap[currentPath]
-    
-    if (urlView) {
-      return urlView
-    }
-
-    const isSpecialPath = currentPath.includes('/reset-password') || 
-                          currentPath.includes('/invite/accept') || 
-                          currentPath.includes('/invitations/accept')
-    if (isSpecialPath) {
-      // Fallback to localStorage for special overlay pages
-      const savedView = window.localStorage.getItem('athenavi:view')
-      return savedView || 'landing'
-    }
-    
-    return 'not-found'
-  })
-  const [showAuthModal, setShowAuthModal] = useState(false)
+  const [view, setView] = useState(() => resolveViewFromLocation(PATH_TO_VIEW_MAP))
   const [productSection, setProductSection] = useState(null)
   const [createVideoConfig, setCreateVideoConfig] = useState(() => {
     try {
@@ -335,6 +201,7 @@ function App() {
       'ai-avatars-videos': '/ai-avatars-videos',
       'help': '/dashboard/help',
       'download': '/download',
+      'login': '/login',
     }
     
     const newUrl = urlMap[view] || '/'
@@ -363,78 +230,22 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'instant' })
   }, [view])
 
+  // After Google OAuth completes, switch from callback spinner to dashboard
+  useEffect(() => {
+    const onOAuthComplete = () => setView('dashboard')
+    const onOAuthError = () => setView('login')
+    window.addEventListener('auth:oauth-complete', onOAuthComplete)
+    window.addEventListener('auth:oauth-error', onOAuthError)
+    return () => {
+      window.removeEventListener('auth:oauth-complete', onOAuthComplete)
+      window.removeEventListener('auth:oauth-error', onOAuthError)
+    }
+  }, [])
+
   // Handle browser back/forward buttons
   useEffect(() => {
     const handlePopState = () => {
-      const pathToViewMap = {
-        '/': 'landing',
-        '/dashboard': 'dashboard',
-        '/dashboard/home': 'dashboard',
-        '/dashboard/videos': 'dashboard',
-        '/dashboard/avatars': 'dashboard',
-        '/dashboard/create-avatar': 'dashboard',
-        '/dashboard/templates': 'dashboard',
-        '/dashboard/template-details': 'dashboard',
-        '/dashboard/library': 'dashboard',
-        '/dashboard/workspace': 'dashboard',
-        '/dashboard/admin-portal': 'dashboard',
-        '/dashboard/settings': 'dashboard',
-        '/dashboard/voices': 'dashboard',
-        '/dashboard/create-voice': 'dashboard',
-        '/dashboard/brandkits': 'dashboard',
-        '/dashboard/credits': 'dashboard',
-        '/profile': 'dashboard',
-        '/create': 'create',
-        '/products': 'products',
-        '/about-us': 'about-us-blog',
-        '/news': 'news',
-        '/resources': 'resources',
-        '/help': 'help-center',
-        '/privacy': 'privacy-policy',
-        '/marketing-suite': 'marketing-suite',
-        '/sales-suite': 'sales-suite',
-        '/ethics': 'ethics',
-        '/technology': 'technology',
-        '/use-cases': 'use-cases',
-        '/customer-experience': 'customer-experience',
-        '/learning-development': 'learning-development',
-        '/settings': 'settings',
-        '/ai-videos': 'ai-videos',
-        '/ai-avatars-videos': 'ai-avatars-videos',
-        '/support': 'dashboard',
-        '/download': 'download',
-      }
-      
-      let currentPath = window.location.pathname
-      if (currentPath.endsWith('/') && currentPath.length > 1) {
-        currentPath = currentPath.slice(0, -1)
-      }
-      
-      // Check if current URL is a Google Auth callback redirect (contains access_token in the hash)
-      if (window.location.hash && window.location.hash.includes('access_token=')) {
-        setView('dashboard')
-        return
-      }
-      
-      // If hash routing is being used, extract from hash
-      if (window.location.hash && window.location.hash !== '#') {
-        currentPath = window.location.hash.replace('#', '') || '/'
-        if (currentPath.endsWith('/') && currentPath.length > 1) {
-          currentPath = currentPath.slice(0, -1)
-        }
-      }
-      const urlView = pathToViewMap[currentPath]
-      
-      if (urlView) {
-        setView(urlView)
-      } else {
-        const isSpecialPath = currentPath.includes('/reset-password') || 
-                              currentPath.includes('/invite/accept') || 
-                              currentPath.includes('/invitations/accept')
-        if (!isSpecialPath) {
-          setView('not-found')
-        }
-      }
+      setView(resolveViewFromLocation(PATH_TO_VIEW_MAP))
     }
 
     window.addEventListener('popstate', handlePopState)
@@ -442,12 +253,11 @@ function App() {
   }, [])
 
   const handleAuthComplete = () => {
-    setShowAuthModal(false)
     setView('dashboard')
   }
 
   const handleLoginClick = () => {
-    setShowAuthModal(true)
+    setView('login')
   }
 
   const handleNavigateToCompany = (item) => {
@@ -496,18 +306,6 @@ function App() {
     if (currentPath.includes('/reset-password') || isInviteAcceptancePath) {
       // Don't show auth modal, let reset password or invite acceptance component handle it
       return
-    }
-  }, [isInviteAcceptancePath])
-
-  // Inject auth styles into document head
-  useEffect(() => {
-    if (window.location.pathname.includes('/reset-password') || isInviteAcceptancePath) {
-      const styleElement = document.createElement('style')
-      styleElement.textContent = authStyles
-      document.head.appendChild(styleElement)
-      return () => {
-        document.head.removeChild(styleElement)
-      }
     }
   }, [isInviteAcceptancePath])
 
@@ -577,24 +375,12 @@ function App() {
             }}
             initialConfig={createVideoConfig}
           />
-          {showAuthModal && (
-            <Auth 
-              onAuthComplete={handleAuthComplete}
-              onClose={() => setShowAuthModal(false)}
-            />
-          )}
         </ProtectedRoute>
       )}
 
       {view === 'download' && (
         <ProtectedRoute view={view} setView={setView}>
           <RenderDownload onBack={() => setView('create')} />
-          {showAuthModal && (
-            <Auth 
-              onAuthComplete={handleAuthComplete}
-              onClose={() => setShowAuthModal(false)}
-            />
-          )}
         </ProtectedRoute>
       )}
 
@@ -630,12 +416,6 @@ function App() {
               return 'home'
             })()}
           />
-          {showAuthModal && (
-            <Auth 
-              onAuthComplete={handleAuthComplete}
-              onClose={() => setShowAuthModal(false)}
-            />
-          )}
         </ProtectedRoute>
       )}
       {view === 'ai-videos' && (
@@ -650,12 +430,6 @@ function App() {
             onNavigateToTechnology={() => setView('technology')}
             onNavigateToUseCases={() => setView('use-cases')}
           />
-          {showAuthModal && (
-            <Auth 
-              onAuthComplete={handleAuthComplete}
-              onClose={() => setShowAuthModal(false)}
-            />
-          )}
         </>
       )}
 
@@ -671,24 +445,12 @@ function App() {
             onNavigateToTechnology={() => setView('technology')}
             onNavigateToUseCases={() => setView('use-cases')}
           />
-          {showAuthModal && (
-            <Auth 
-              onAuthComplete={handleAuthComplete}
-              onClose={() => setShowAuthModal(false)}
-            />
-          )}
         </>
       )}
 
       {view === 'settings' && (
         <ProtectedRoute view={view} setView={setView}>
           <Settings onBack={() => setView('dashboard')} />
-          {showAuthModal && (
-            <Auth 
-              onAuthComplete={handleAuthComplete}
-              onClose={() => setShowAuthModal(false)}
-            />
-          )}
         </ProtectedRoute>
       )}
 
@@ -742,12 +504,6 @@ function App() {
             onNavigateToCompany={handleNavigateToCompany}
             onNavigateToUseCases={() => setView('use-cases')}
           />
-          {showAuthModal && (
-            <Auth 
-              onAuthComplete={handleAuthComplete}
-              onClose={() => setShowAuthModal(false)}
-            />
-          )}
         </>
       )}
 
@@ -778,12 +534,6 @@ function App() {
             onNavigateToTechnology={() => setView('technology')}
             onNavigateToUseCases={() => setView('use-cases')}
           />
-          {showAuthModal && (
-            <Auth 
-              onAuthComplete={handleAuthComplete}
-              onClose={() => setShowAuthModal(false)}
-            />
-          )}
         </>
       )}
 
@@ -814,12 +564,6 @@ function App() {
             onNavigateToTechnology={() => setView('technology')}
             onNavigateToUseCases={() => setView('use-cases')}
           />
-          {showAuthModal && (
-            <Auth 
-              onAuthComplete={handleAuthComplete}
-              onClose={() => setShowAuthModal(false)}
-            />
-          )}
         </>
       )}
 
@@ -850,12 +594,6 @@ function App() {
             onNavigateToTechnology={() => setView('technology')}
             onNavigateToUseCases={() => setView('use-cases')}
           />
-          {showAuthModal && (
-            <Auth 
-              onAuthComplete={handleAuthComplete}
-              onClose={() => setShowAuthModal(false)}
-            />
-          )}
         </>
       )}
 
@@ -871,12 +609,6 @@ function App() {
             onNavigateToTechnology={() => setView('technology')}
             onNavigateToUseCases={() => setView('use-cases')}
           />
-          {showAuthModal && (
-            <Auth 
-              onAuthComplete={handleAuthComplete}
-              onClose={() => setShowAuthModal(false)}
-            />
-          )}
         </>
       )}
 
@@ -907,12 +639,6 @@ function App() {
             onNavigateToTechnology={() => setView('technology')}
             onNavigateToUseCases={() => setView('use-cases')}
           />
-          {showAuthModal && (
-            <Auth 
-              onAuthComplete={handleAuthComplete}
-              onClose={() => setShowAuthModal(false)}
-            />
-          )}
         </>
       )}
 
@@ -928,12 +654,6 @@ function App() {
             onNavigateToTechnology={() => setView('technology')}
             onNavigateToUseCases={() => setView('use-cases')}
           />
-          {showAuthModal && (
-            <Auth 
-              onAuthComplete={handleAuthComplete}
-              onClose={() => setShowAuthModal(false)}
-            />
-          )}
         </>
       )}
 
@@ -948,12 +668,6 @@ function App() {
             onNavigateToTechnology={() => setView('technology')}
             onNavigateToUseCases={() => setView('use-cases')}
           />
-          {showAuthModal && (
-            <Auth 
-              onAuthComplete={handleAuthComplete}
-              onClose={() => setShowAuthModal(false)}
-            />
-          )}
         </>
       )}
 
@@ -984,12 +698,6 @@ function App() {
             onNavigateToTechnology={() => setView('technology')}
             onNavigateToUseCases={() => setView('use-cases')}
           />
-          {showAuthModal && (
-            <Auth 
-              onAuthComplete={handleAuthComplete}
-              onClose={() => setShowAuthModal(false)}
-            />
-          )}
         </>
       )}
 
@@ -1005,12 +713,6 @@ function App() {
             onNavigateToTechnology={() => setView('technology')}
             onNavigateToUseCases={() => setView('use-cases')}
           />
-          {showAuthModal && (
-            <Auth 
-              onAuthComplete={handleAuthComplete}
-              onClose={() => setShowAuthModal(false)}
-            />
-          )}
         </>
       )}
 
@@ -1026,12 +728,6 @@ function App() {
             onNavigateToTechnology={() => setView('technology')}
             onNavigateToUseCases={() => setView('use-cases')}
           />
-          {showAuthModal && (
-            <Auth 
-              onAuthComplete={handleAuthComplete}
-              onClose={() => setShowAuthModal(false)}
-            />
-          )}
         </>
       )}
 
@@ -1047,12 +743,6 @@ function App() {
             onNavigateToTechnology={() => setView('technology')}
             onNavigateToUseCases={() => setView('use-cases')}
           />
-          {showAuthModal && (
-            <Auth 
-              onAuthComplete={handleAuthComplete}
-              onClose={() => setShowAuthModal(false)}
-            />
-          )}
         </>
       )}
 
@@ -1068,20 +758,24 @@ function App() {
             onNavigateToTechnology={() => setView('technology')}
             onNavigateToUseCases={() => setView('use-cases')}
           />
-          {showAuthModal && (
-            <Auth 
-              onAuthComplete={handleAuthComplete}
-              onClose={() => setShowAuthModal(false)}
-            />
-          )}
         </>
+      )}
+
+      {view === 'google-callback' && <GoogleCallback />}
+
+      {view === 'login' && (
+        <AuthPage
+          initialMode={window.location.pathname === '/signup' ? 'signup' : 'login'}
+          onAuthComplete={handleAuthComplete}
+          onBack={() => setView('landing')}
+        />
       )}
 
       {view === 'not-found' && (
         <NotFound setView={setView} />
       )}
 
-      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings', 'not-found'].includes(view) && (
+      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings', 'login', 'google-callback', 'not-found'].includes(view) && (
         <>
           <Landing 
             onLoginClick={handleLoginClick}
@@ -1093,12 +787,6 @@ function App() {
             onLogoClick={() => setView('landing')}
             onNavigateToCompany={handleNavigateToCompany}
           />
-          {showAuthModal && (
-            <Auth 
-              onAuthComplete={handleAuthComplete}
-              onClose={() => setShowAuthModal(false)}
-            />
-          )}
         </>
       )}
     </AuthProvider>
