@@ -1,32 +1,17 @@
-import './skeleton.css';
+import './skeleton.css'
+import { SkeletonMediaCollection } from './SkeletonPrimitives'
 
-const VoicesSkeleton = () => {
+const VoicesSkeleton = ({ viewMode = 'grid', showCreateCard = false }) => {
   return (
-    <div className="videos-groups ps-page">
-      <div className="items-container videos-export-items voices-library-items tile-view ps-grid ps-grid--4">
-        {[...Array(8)].map((_, i) => (
-          <div key={i} className="workspace-item-card ps-stack" style={{ gap: 0, border: 'none' }}>
-            <div className="ps-block" style={{ height: 200, borderRadius: '12px 12px 0 0' }} />
-            <div
-              className="workspace-item-meta ps-stack"
-              style={{
-                padding: '12px 16px',
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <div className="ps-stack" style={{ gap: 4, flex: 1 }}>
-                <div className="ps-block ps-block--line" style={{ height: 16, width: '60%' }} />
-                <div className="ps-block ps-block--line" style={{ height: 12, width: '40%' }} />
-              </div>
-              <div className="ps-block" style={{ height: 32, width: 64, borderRadius: 8 }} />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
+    <SkeletonMediaCollection
+      viewMode={viewMode}
+      showCreateCard={showCreateCard}
+      createCardClassName="voices-creation-card"
+      itemsClassName="items-container videos-export-items voices-library-items"
+      cardCount={showCreateCard && viewMode === 'grid' ? 7 : 8}
+      ariaLabel="Loading voices"
+    />
+  )
+}
 
-export default VoicesSkeleton;
+export default VoicesSkeleton
