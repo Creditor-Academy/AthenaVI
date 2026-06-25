@@ -416,26 +416,38 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
 
   if (selectedAvatar) {
     return (
-      <div className="avatars-persona-shell">
-        <AvatarPersona
-          selectedAvatar={selectedAvatar}
-          closeDetails={closeDetails}
-          onCreate={handleCreateVideo}
-          isPrivate={activeSection === 'private'}
-          onCreateLooks={
-            activeSection === 'private' && onCreateLooks
-              ? (ctx) => {
-                  onCreateLooks(ctx);
-                  closeDetails();
-                }
-              : undefined
-          }
-          onCompleteConsent={openConsentForAvatar}
-          onDeleteAvatar={performDeleteAvatar}
-          onDeleteLook={deleteLook}
-          onOpenConfirm={openConfirmDialog}
+      <>
+        <div className="avatars-persona-shell">
+          <AvatarPersona
+            selectedAvatar={selectedAvatar}
+            closeDetails={closeDetails}
+            isPrivate={activeSection === 'private'}
+            onCreateLooks={
+              activeSection === 'private' && onCreateLooks
+                ? (ctx) => {
+                    onCreateLooks(ctx);
+                    closeDetails();
+                  }
+                : undefined
+            }
+            onCompleteConsent={openConsentForAvatar}
+            onDeleteAvatar={performDeleteAvatar}
+            onDeleteLook={deleteLook}
+            onOpenConfirm={openConfirmDialog}
+          />
+        </div>
+        <AvatarConsentModal
+          isOpen={Boolean(consentModal)}
+          groupId={consentModal?.groupId}
+          avatarName={consentModal?.avatarName}
+          consentUrl={consentModal?.consentUrl}
+          consentStatus={consentModal?.consentStatus}
+          onClose={() => setConsentModal(null)}
+          onComplete={handleConsentComplete}
+          onRefresh={handleConsentRefresh}
         />
-      </div>
+        <ConfirmDialog dialog={confirmDialog} onCancel={() => setConfirmDialog(null)} />
+      </>
     );
   }
 
