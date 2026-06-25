@@ -27,6 +27,12 @@
 #     https://athena-vi.onrender.com
 #     https://your-custom-domain.com
 #
+# GOOGLE OAUTH (backend env)
+#   FRONTEND_URL     = your Render frontend URL (e.g. https://athena-vi.onrender.com)
+#   OAUTH_SUCCESS_PATH = /auth/google/callback  (supported by the frontend)
+#   After Google sign-in the backend redirects to:
+#     {FRONTEND_URL}{OAUTH_SUCCESS_PATH}#access_token=...
+#
 ################################################################################
 
 # Blueprint-level preview environments (PR deploys)
@@ -51,6 +57,7 @@ services:
         - public/**
         - src/**
         - scripts/render-build.mjs
+        - scripts/render-postbuild.mjs
         - render.yaml
       ignoredPaths:
         - "**/*.md"
@@ -76,8 +83,23 @@ services:
     previews:
       generation: automatic
 
-    # React Router / pathname routes: serve index.html for all paths
+    # React SPA + Google OAuth callback paths — serve index.html for all routes
     routes:
+      - type: rewrite
+        source: /
+        destination: /index.html
+      - type: rewrite
+        source: /auth/*
+        destination: /index.html
+      - type: rewrite
+        source: /dashboard/*
+        destination: /index.html
+      - type: rewrite
+        source: /login
+        destination: /index.html
+      - type: rewrite
+        source: /signup
+        destination: /index.html
       - type: rewrite
         source: /*
         destination: /index.html

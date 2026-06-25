@@ -25,7 +25,54 @@ import AIAvatarsVideos from './pages/AIAvatarsVideos/AIAvatarsVideos.jsx'
 import AIVideos from './pages/AIVideos/AIVideos.jsx'
 import NotFound from './pages/NotFound/NotFound.jsx'
 import RenderDownload from './pages/Download/RenderDownload.jsx'
+import GoogleCallback from './components/features/auth/GoogleCallback.jsx'
 import { persistWorkspaceFolderNavigation } from './utils/navigateToWorkspaceFolder.js'
+import { resolveViewFromLocation } from './utils/authRouting.js'
+
+const PATH_TO_VIEW_MAP = {
+  '/': 'landing',
+  '/dashboard': 'dashboard',
+  '/dashboard/home': 'dashboard',
+  '/dashboard/videos': 'dashboard',
+  '/dashboard/avatars': 'dashboard',
+  '/dashboard/create-avatar': 'dashboard',
+  '/dashboard/templates': 'dashboard',
+  '/dashboard/template-details': 'dashboard',
+  '/dashboard/library': 'dashboard',
+  '/dashboard/workspace': 'dashboard',
+  '/dashboard/admin-portal': 'dashboard',
+  '/dashboard/settings': 'dashboard',
+  '/dashboard/voices': 'dashboard',
+  '/dashboard/create-voice': 'dashboard',
+  '/dashboard/brandkits': 'dashboard',
+  '/dashboard/credits': 'dashboard',
+  '/dashboard/help': 'dashboard',
+  '/profile': 'dashboard',
+  '/create': 'create',
+  '/products': 'products',
+  '/about-us': 'about-us-blog',
+  '/news': 'news',
+  '/resources': 'resources',
+  '/help': 'help-center',
+  '/privacy': 'privacy-policy',
+  '/marketing-suite': 'marketing-suite',
+  '/sales-suite': 'sales-suite',
+  '/ethics': 'ethics',
+  '/technology': 'technology',
+  '/use-cases': 'use-cases',
+  '/customer-experience': 'customer-experience',
+  '/learning-development': 'learning-development',
+  '/settings': 'settings',
+  '/ai-videos': 'ai-videos',
+  '/ai-avatars-videos': 'ai-avatars-videos',
+  '/support': 'dashboard',
+  '/download': 'download',
+  '/login': 'login',
+  '/signup': 'login',
+  '/auth/google/callback': 'google-callback',
+  '/auth/callback': 'google-callback',
+  '/oauth/callback': 'google-callback',
+}
 
 // Protected Route Component
 const ProtectedRoute = ({ children, setView }) => {
@@ -101,86 +148,7 @@ function App() {
     window.location.pathname.includes('/invitations/accept')
 
   // Initialize view from localStorage on mount to persist page on refresh
-  const [view, setView] = useState(() => {
-    // Check if current URL matches a known route
-    const pathToViewMap = {
-      '/': 'landing',
-      '/dashboard': 'dashboard',
-      '/dashboard/home': 'dashboard',
-      '/dashboard/videos': 'dashboard',
-      '/dashboard/avatars': 'dashboard',
-      '/dashboard/create-avatar': 'dashboard',
-      '/dashboard/templates': 'dashboard',
-      '/dashboard/template-details': 'dashboard',
-      '/dashboard/library': 'dashboard',
-      '/dashboard/workspace': 'dashboard',
-      '/dashboard/admin-portal': 'dashboard',
-      '/dashboard/settings': 'dashboard',
-      '/dashboard/voices': 'dashboard',
-      '/dashboard/create-voice': 'dashboard',
-      '/dashboard/brandkits': 'dashboard',
-      '/dashboard/credits': 'dashboard',
-      '/dashboard/help': 'dashboard',
-      '/profile': 'dashboard',
-      '/create': 'create',
-      '/products': 'products',
-      '/about-us': 'about-us-blog',
-      '/news': 'news',
-      '/resources': 'resources',
-      '/help': 'help-center',
-      '/privacy': 'privacy-policy',
-      '/marketing-suite': 'marketing-suite',
-      '/sales-suite': 'sales-suite',
-      '/ethics': 'ethics',
-      '/technology': 'technology',
-      '/use-cases': 'use-cases',
-      '/customer-experience': 'customer-experience',
-      '/learning-development': 'learning-development',
-      '/settings': 'settings',
-      '/ai-videos': 'ai-videos',
-      '/ai-avatars-videos': 'ai-avatars-videos',
-      '/support': 'dashboard',
-      '/download': 'download',
-      '/login': 'login',
-      '/signup': 'login',
-    }
-    
-    // Get current path (handle both hash and regular routing)
-    let currentPath = window.location.pathname
-    if (currentPath.endsWith('/') && currentPath.length > 1) {
-      currentPath = currentPath.slice(0, -1)
-    }
-    
-    // Check if current URL is a Google Auth callback redirect (contains access_token in the hash)
-    if (window.location.hash && window.location.hash.includes('access_token=')) {
-      return 'dashboard'
-    }
-    
-    // If hash routing is being used, extract from hash
-    if (window.location.hash && window.location.hash !== '#') {
-      currentPath = window.location.hash.replace('#', '') || '/'
-      if (currentPath.endsWith('/') && currentPath.length > 1) {
-        currentPath = currentPath.slice(0, -1)
-      }
-    }
-    
-    const urlView = pathToViewMap[currentPath]
-    
-    if (urlView) {
-      return urlView
-    }
-
-    const isSpecialPath = currentPath.includes('/reset-password') || 
-                          currentPath.includes('/invite/accept') || 
-                          currentPath.includes('/invitations/accept')
-    if (isSpecialPath) {
-      // Fallback to localStorage for special overlay pages
-      const savedView = window.localStorage.getItem('athenavi:view')
-      return savedView || 'landing'
-    }
-    
-    return 'not-found'
-  })
+  const [view, setView] = useState(() => resolveViewFromLocation(PATH_TO_VIEW_MAP))
   const [productSection, setProductSection] = useState(null)
   const [createVideoConfig, setCreateVideoConfig] = useState(() => {
     try {
@@ -262,80 +230,22 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'instant' })
   }, [view])
 
+  // After Google OAuth completes, switch from callback spinner to dashboard
+  useEffect(() => {
+    const onOAuthComplete = () => setView('dashboard')
+    const onOAuthError = () => setView('login')
+    window.addEventListener('auth:oauth-complete', onOAuthComplete)
+    window.addEventListener('auth:oauth-error', onOAuthError)
+    return () => {
+      window.removeEventListener('auth:oauth-complete', onOAuthComplete)
+      window.removeEventListener('auth:oauth-error', onOAuthError)
+    }
+  }, [])
+
   // Handle browser back/forward buttons
   useEffect(() => {
     const handlePopState = () => {
-      const pathToViewMap = {
-        '/': 'landing',
-        '/dashboard': 'dashboard',
-        '/dashboard/home': 'dashboard',
-        '/dashboard/videos': 'dashboard',
-        '/dashboard/avatars': 'dashboard',
-        '/dashboard/create-avatar': 'dashboard',
-        '/dashboard/templates': 'dashboard',
-        '/dashboard/template-details': 'dashboard',
-        '/dashboard/library': 'dashboard',
-        '/dashboard/workspace': 'dashboard',
-        '/dashboard/admin-portal': 'dashboard',
-        '/dashboard/settings': 'dashboard',
-        '/dashboard/voices': 'dashboard',
-        '/dashboard/create-voice': 'dashboard',
-        '/dashboard/brandkits': 'dashboard',
-        '/dashboard/credits': 'dashboard',
-        '/profile': 'dashboard',
-        '/create': 'create',
-        '/products': 'products',
-        '/about-us': 'about-us-blog',
-        '/news': 'news',
-        '/resources': 'resources',
-        '/help': 'help-center',
-        '/privacy': 'privacy-policy',
-        '/marketing-suite': 'marketing-suite',
-        '/sales-suite': 'sales-suite',
-        '/ethics': 'ethics',
-        '/technology': 'technology',
-        '/use-cases': 'use-cases',
-        '/customer-experience': 'customer-experience',
-        '/learning-development': 'learning-development',
-        '/settings': 'settings',
-        '/ai-videos': 'ai-videos',
-        '/ai-avatars-videos': 'ai-avatars-videos',
-        '/support': 'dashboard',
-        '/download': 'download',
-        '/login': 'login',
-        '/signup': 'login',
-      }
-      
-      let currentPath = window.location.pathname
-      if (currentPath.endsWith('/') && currentPath.length > 1) {
-        currentPath = currentPath.slice(0, -1)
-      }
-      
-      // Check if current URL is a Google Auth callback redirect (contains access_token in the hash)
-      if (window.location.hash && window.location.hash.includes('access_token=')) {
-        setView('dashboard')
-        return
-      }
-      
-      // If hash routing is being used, extract from hash
-      if (window.location.hash && window.location.hash !== '#') {
-        currentPath = window.location.hash.replace('#', '') || '/'
-        if (currentPath.endsWith('/') && currentPath.length > 1) {
-          currentPath = currentPath.slice(0, -1)
-        }
-      }
-      const urlView = pathToViewMap[currentPath]
-      
-      if (urlView) {
-        setView(urlView)
-      } else {
-        const isSpecialPath = currentPath.includes('/reset-password') || 
-                              currentPath.includes('/invite/accept') || 
-                              currentPath.includes('/invitations/accept')
-        if (!isSpecialPath) {
-          setView('not-found')
-        }
-      }
+      setView(resolveViewFromLocation(PATH_TO_VIEW_MAP))
     }
 
     window.addEventListener('popstate', handlePopState)
@@ -851,6 +761,8 @@ function App() {
         </>
       )}
 
+      {view === 'google-callback' && <GoogleCallback />}
+
       {view === 'login' && (
         <AuthPage
           initialMode={window.location.pathname === '/signup' ? 'signup' : 'login'}
@@ -863,7 +775,7 @@ function App() {
         <NotFound setView={setView} />
       )}
 
-      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings', 'login', 'not-found'].includes(view) && (
+      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings', 'login', 'google-callback', 'not-found'].includes(view) && (
         <>
           <Landing 
             onLoginClick={handleLoginClick}

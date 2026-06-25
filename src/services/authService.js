@@ -1,5 +1,6 @@
 import axios from 'axios'
 import API_CONFIG, { buildUrl } from '../config/api.js'
+import { getOAuthAccessTokenFromUrl } from '../utils/authRouting.js'
 import {
   shouldSkipTokenRefresh,
   getApiError,
@@ -150,9 +151,7 @@ export const authService = {
   },
 
   handleGoogleCallback() {
-    const hash = window.location.hash
-    const params = new URLSearchParams(hash.substring(1))
-    const accessToken = params.get('access_token')
+    const accessToken = getOAuthAccessTokenFromUrl()
 
     if (accessToken) {
       localStorage.setItem('accessToken', accessToken)
