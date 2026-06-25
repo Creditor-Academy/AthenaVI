@@ -371,7 +371,7 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
             </div>
           ) : null}
           {loading ? (
-            <VoicesSkeleton />
+            <VoicesSkeleton viewMode={viewMode} showCreateCard={showCreateCard} />
           ) : error ? (
             <div className="videos-empty-state">
               <div className="videos-empty-state__card">

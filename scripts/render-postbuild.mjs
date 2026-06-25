@@ -19,6 +19,7 @@ const SPA_ROUTE_DIRS = [
   'dashboard/videos',
   'dashboard/avatars',
   'dashboard/create-avatar',
+  'dashboard/create-avatar-look',
   'dashboard/templates',
   'dashboard/template-details',
   'dashboard/library',

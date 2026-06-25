@@ -21,6 +21,8 @@ import creditsService from '../../services/creditsService.js'
 import { fetchTemplateBundles } from '../../utils/fetchTemplateBundles.js'
 import TemplateScenePreview from '../../components/features/editor/editor/TemplateScenePreview'
 import ProjectSceneThumbnail from '../../components/features/workspace/workspace/ProjectSceneThumbnail.jsx'
+import { SkeletonProjectCard } from '../page-skeleton/SkeletonPrimitives'
+import '../page-skeleton/skeleton.css'
 
 function Home({ onCreate, onEdit, onShowAIAssistant, onBrowseTemplates, onSelectTemplate, onNavigate }) {
     const { user } = useAuth();
@@ -333,13 +335,7 @@ function Home({ onCreate, onEdit, onShowAIAssistant, onBrowseTemplates, onSelect
                         {templatesLoading && (
                             <div className="projects-grid-override">
                                 {[1, 2, 3, 4, 5, 6].map((i) => (
-                                    <div key={i} className="project-card project-card--skeleton">
-                                        <div className="project-thumb-container skeleton-thumb" />
-                                        <div className="project-content">
-                                            <div className="skeleton-line skeleton-title" />
-                                            <div className="skeleton-line skeleton-meta" />
-                                        </div>
-                                    </div>
+                                    <SkeletonProjectCard key={i} />
                                 ))}
                             </div>
                         )}
@@ -422,14 +418,8 @@ function Home({ onCreate, onEdit, onShowAIAssistant, onBrowseTemplates, onSelect
 
                         {recentLoading && (
                             <div className="projects-grid-override">
-                                {[1, 2, 3].map(i => (
-                                    <div key={i} className="project-card project-card--skeleton">
-                                        <div className="project-thumb-container skeleton-thumb" />
-                                        <div className="project-content">
-                                            <div className="skeleton-line skeleton-title" />
-                                            <div className="skeleton-line skeleton-meta" />
-                                        </div>
-                                    </div>
+                                {[1, 2, 3].map((i) => (
+                                    <SkeletonProjectCard key={i} />
                                 ))}
                             </div>
                         )}

@@ -390,24 +390,22 @@ function CreateAvatarLook({ context, onBack, onUseInVideo }) {
           </div>
         </header>
 
-        <main className="videos-main create-avatar-main">
+        <main className="videos-main create-avatar-main create-avatar-look-main">
           {fromDigitalTwin ? (
             <div className="avatar-look-welcome-banner" role="status">
               <div className="avatar-look-welcome-banner__icon">
-                <Sparkles size={22} />
+                <Sparkles size={20} />
               </div>
               <div className="avatar-look-welcome-banner__copy">
-                <strong>Your Digital Twin is ready — now define how {avatarName} appears on camera.</strong>
+                <strong>Your Digital Twin is ready — define how {avatarName} appears on camera.</strong>
                 <p>
-                  Looks are the main way you&apos;ll use this avatar in videos. Generate a casual outfit, a
-                  studio setup, or a branded scene — each look keeps the same face and voice.
+                  Generate outfits and scenes for videos. Each look keeps the same face and voice.
                 </p>
               </div>
-              <Wand2 size={20} className="avatar-look-welcome-banner__accent" aria-hidden="true" />
             </div>
           ) : null}
 
-          <div className="creation-content-wrapper avatar-look-layout avatar-look-workspace">
+          <div className="avatar-look-layout">
             <div className="creation-form-card standalone avatar-look-main-panel">
               {isProcessing ? (
               <div className="look-processing-panel">
@@ -475,34 +473,7 @@ function CreateAvatarLook({ context, onBack, onUseInVideo }) {
               ) : (
                 <div className="form-body">
                   <section className="avatar-look-section">
-                    <div className="avatar-look-section__head">
-                      <span className="section-label">Reference image</span>
-                      <div className="avatar-look-reference-mode">
-                        <label className="avatar-look-reference-mode__option">
-                          <input
-                            type="radio"
-                            name="referenceMode"
-                            value="preview"
-                            checked={referenceMode === 'preview'}
-                            onChange={() => {
-                              setReferenceMode('preview');
-                              setError('');
-                            }}
-                          />
-                          <span>Avatar preview</span>
-                        </label>
-                        <label className="avatar-look-reference-mode__option">
-                          <input
-                            type="radio"
-                            name="referenceMode"
-                            value="custom"
-                            checked={referenceMode === 'custom'}
-                            onChange={() => setReferenceMode('custom')}
-                          />
-                          <span>Custom upload</span>
-                        </label>
-                      </div>
-                    </div>
+                    <span className="section-label">Reference image</span>
 
                     <div className="avatar-look-reference">
                       <div className="avatar-look-reference__media">
@@ -521,43 +492,38 @@ function CreateAvatarLook({ context, onBack, onUseInVideo }) {
                         <span className="avatar-look-context__badge">Personal avatar</span>
                         <strong>{avatarName}</strong>
                         <p>
-                          New looks use your reference image plus avatar group id. The prompt automatically
-                          asks for the <strong>same person as the reference avatar</strong>.
+                          New looks use your reference image. The prompt keeps the{' '}
+                          <strong>same person as the reference avatar</strong>.
                         </p>
-                        {referenceMode === 'custom' ? (
-                          <div className="avatar-look-reference-upload">
-                            <input
-                              ref={fileInputRef}
-                              type="file"
-                              accept={REFERENCE_IMAGE_TYPES.join(',')}
-                              className="avatar-look-reference-upload__input"
-                              onChange={handleReferenceFileChange}
-                            />
+                        <div className="avatar-look-reference-upload avatar-look-reference-upload--optional">
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept={REFERENCE_IMAGE_TYPES.join(',')}
+                            className="avatar-look-reference-upload__input"
+                            onChange={handleReferenceFileChange}
+                          />
+                          <button
+                            type="button"
+                            className="btn-action-secondary avatar-look-reference-upload__btn"
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            <Upload size={16} />
+                            <span>{customFile ? 'Change image' : 'Upload a different image'}</span>
+                          </button>
+                          {referenceMode === 'custom' ? (
                             <button
                               type="button"
-                              className="btn-action-secondary avatar-look-reference-upload__btn"
-                              onClick={() => fileInputRef.current?.click()}
+                              className="avatar-look-reference-upload__clear"
+                              onClick={clearCustomReference}
                             >
-                              <Upload size={16} />
-                              <span>{customFile ? 'Change image' : 'Choose image'}</span>
+                              Use avatar preview instead
                             </button>
-                            {customFile ? (
-                              <button
-                                type="button"
-                                className="avatar-look-reference-upload__clear"
-                                onClick={clearCustomReference}
-                              >
-                                Use avatar preview instead
-                              </button>
-                            ) : null}
-                            {uploadProgress != null ? (
-                              <p className="avatar-look-reference-upload__progress">Uploading… {uploadProgress}%</p>
-                            ) : null}
-                            <p className="avatar-look-reference-upload__hint">JPEG, PNG, or WebP</p>
-                          </div>
-                        ) : null}
-                        <div className="avatar-look-reference__ids">
-                          <span>Avatar id · {avatarGroupId}</span>
+                          ) : null}
+                          {uploadProgress != null ? (
+                            <p className="avatar-look-reference-upload__progress">Uploading… {uploadProgress}%</p>
+                          ) : null}
+                          <p className="avatar-look-reference-upload__hint">Optional · JPEG, PNG, or WebP</p>
                         </div>
                       </div>
                     </div>
@@ -613,64 +579,70 @@ function CreateAvatarLook({ context, onBack, onUseInVideo }) {
               )}
             </div>
 
-            <aside className="avatar-look-sidebar avatar-look-sidebar--premium">
-            <div className="avatar-look-sidebar__head">
-              <div>
-                <p className="avatar-look-sidebar__eyebrow">Your library</p>
-                <h4>Looks for {avatarName}</h4>
-                <p>{sidebarLooks.length ? `${sidebarLooks.length} saved to this avatar` : 'No looks yet — your first style appears here'}</p>
+            <aside className="avatar-look-sidebar">
+              <div className="avatar-look-sidebar__head">
+                <div>
+                  <h2 className="videos-group__heading avatar-look-sidebar__title">
+                    <Palette size={16} aria-hidden="true" />
+                    Looks for {avatarName}
+                  </h2>
+                  <p className="avatar-look-sidebar__meta">
+                    {sidebarLooks.length
+                      ? `${sidebarLooks.length} saved to this avatar`
+                      : 'Your first style will appear here'}
+                  </p>
+                </div>
+                {isProcessing ? (
+                  <span className="avatar-look-sidebar__live">
+                    <span className="avatar-look-sidebar__live-dot" />
+                    Live
+                  </span>
+                ) : null}
               </div>
-              {isProcessing ? (
-                <span className="avatar-look-sidebar__live">
-                  <span className="avatar-look-sidebar__live-dot" />
-                  Live
-                </span>
-              ) : null}
-            </div>
 
-            {sidebarLooks.length > 0 ? (
-              <div className="avatar-look-grid">
-                {sidebarLooks.map((look) => (
-                  <div
-                    key={look.id || `pending-${look.name}`}
-                    className={`avatar-look-tile${look.processing ? ' avatar-look-tile--processing' : ''}`}
-                  >
-                    <div className="avatar-look-tile__media">
-                      {look.image ? (
-                        <img src={look.image} alt={look.name} className={look.processing ? 'is-dimmed' : ''} />
-                      ) : (
-                        <div className="avatar-look-tile__skeleton" />
-                      )}
-                      {look.processing ? (
-                        <div className="avatar-look-tile__overlay">
-                          <Loader2 size={18} className="spin-animation" />
-                          <span>Generating</span>
-                        </div>
+              {sidebarLooks.length > 0 ? (
+                <div className="avatar-look-grid">
+                  {sidebarLooks.map((look) => (
+                    <div
+                      key={look.id || `pending-${look.name}`}
+                      className={`avatar-look-tile${look.processing ? ' avatar-look-tile--processing' : ''}`}
+                    >
+                      <div className="avatar-look-tile__media">
+                        {look.image ? (
+                          <img src={look.image} alt={look.name} className={look.processing ? 'is-dimmed' : ''} />
+                        ) : (
+                          <div className="avatar-look-tile__skeleton" />
+                        )}
+                        {look.processing ? (
+                          <div className="avatar-look-tile__overlay">
+                            <Loader2 size={18} className="spin-animation" />
+                            <span>Generating</span>
+                          </div>
+                        ) : null}
+                      </div>
+                      <span className="avatar-look-tile__label">{look.name}</span>
+                      {look.ready && onUseInVideo ? (
+                        <button
+                          type="button"
+                          className="avatar-look-tile__use-btn"
+                          onClick={() => handleUseLookInVideo(look)}
+                        >
+                          <Video size={14} />
+                          Use in video
+                        </button>
                       ) : null}
                     </div>
-                    <span className="avatar-look-tile__label">{look.name}</span>
-                    {look.ready && onUseInVideo ? (
-                      <button
-                        type="button"
-                        className="avatar-look-tile__use-btn"
-                        onClick={() => handleUseLookInVideo(look)}
-                      >
-                        <Video size={14} />
-                        Use in video
-                      </button>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="avatar-look-sidebar__empty avatar-look-sidebar__empty--premium">
-                <div className="avatar-look-sidebar__empty-icon">
-                  <Wand2 size={24} />
+                  ))}
                 </div>
-                <strong>Start your look library</strong>
-                <p>Generate your first outfit or scene — previews appear here while they render.</p>
-              </div>
-            )}
+              ) : (
+                <div className="avatar-look-sidebar__empty">
+                  <div className="avatar-look-sidebar__empty-icon">
+                    <Wand2 size={22} />
+                  </div>
+                  <strong>Start your look library</strong>
+                  <p>Generate your first outfit or scene — previews appear here while they render.</p>
+                </div>
+              )}
             </aside>
           </div>
         </main>

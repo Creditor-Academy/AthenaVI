@@ -7,32 +7,18 @@ import '../../../../pages/AdminPortal/SuperadminPortal.css'
 import '../../../../pages/page-skeleton/skeleton.css'
 
 /* ─── skeletons ───────────────────────────────── */
-function Sk({ w, h = 14, radius = 6, style }) {
-  return <div className="ps-block ps-block--line" style={{ width: w, height: h, borderRadius: radius, flexShrink: 0, ...style }} />
-}
 function TableSkeleton() {
   return Array.from({ length: 8 }).map((_, i) => (
-    <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr 130px', gap: 16, padding: '13px 20px', borderBottom: '1px solid var(--border-color)', alignItems: 'center' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div className="ps-block" style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0 }} />
-        <Sk w="55%" h={11} />
-      </div>
-      <Sk w="70%" h={10} />
-      <Sk w={70} h={10} style={{ marginLeft: 'auto' }} />
+    <div key={i} style={{ padding: '13px 20px', borderBottom: '1px solid var(--border-color)' }}>
+      <div className="ps-block" style={{ height: 40, width: '100%' }} aria-hidden />
     </div>
   ))
 }
 function DrawerSkeleton() {
   return (
     <div style={{ padding: '28px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-        <div className="ps-block" style={{ width: 48, height: 48, borderRadius: '50%', flexShrink: 0 }} />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-          <Sk w={150} h={14} radius={6} />
-          <Sk w={200} h={10} />
-        </div>
-      </div>
-      {Array.from({ length: 5 }).map((_, i) => <Sk key={i} w={`${80 - i * 8}%`} h={11} />)}
+      <div className="ps-block" style={{ height: 72 }} aria-hidden />
+      <div className="ps-block" style={{ height: 220 }} aria-hidden />
     </div>
   )
 }

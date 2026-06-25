@@ -7,30 +7,12 @@ import '../../../../pages/page-skeleton/skeleton.css'
 
 /* ─── skeleton ────────────────────────────────────────────── */
 
-function Sk({ w, h = 14, radius = 6, style }) {
-  return (
-    <div
-      className="ps-block ps-block--line"
-      style={{ width: w, height: h, borderRadius: radius, flexShrink: 0, ...style }}
-    />
-  )
-}
-
 function HeygenAccountSkeleton() {
   return (
     <div className="sa-card" aria-hidden="true">
-      <div className="sa-card-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Sk w={160} h={14} />
-          <Sk w={70} h={10} />
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Sk w={90} h={22} radius={99} />
-          <Sk w={100} h={10} />
-        </div>
-      </div>
+      <div className="ps-block" style={{ height: 48, margin: '16px 16px 0' }} />
       <div className="sa-card-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div className="sa-heygen-balance-block ps-block" style={{ height: 88, borderRadius: 10 }} />
+        <div className="ps-block" style={{ height: 88, borderRadius: 10 }} />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
           <div className="ps-block" style={{ height: 56, borderRadius: 8 }} />
           <div className="ps-block" style={{ height: 56, borderRadius: 8 }} />

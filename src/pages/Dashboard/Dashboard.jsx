@@ -32,7 +32,17 @@ import { useInboxUnreadCount } from '../../hooks/useInboxUnreadCount.js'
 import userService from '../../services/userService.js'
 import { useAuth } from '../../contexts/AuthContext'
 import { bundleToDetailsTemplate } from '../../utils/fetchTemplateBundles.js'
+import {
+  clearAvatarLookContext,
+  clearAvatarsListNavigation,
+  loadAvatarLookContext,
+  saveAvatarLookContext,
+  saveAvatarsActiveSection,
+} from '../../utils/avatarsNavigationStorage.js'
+import { clearWorkspaceNavigation } from '../../utils/workspaceNavigationStorage.js'
 import './Dashboard.css'
+
+const AVATAR_FLOW_SECTIONS = new Set(['avatars', 'create-avatar-look', 'create-avatar'])
 
 
 function Dashboard({ onCreate, initialSection }) {
@@ -77,7 +87,7 @@ function Dashboard({ onCreate, initialSection }) {
   const [topbarMobileOpen, setTopbarMobileOpen] = useState(false)
   const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false)
   const [lastVoiceCreated, setLastVoiceCreated] = useState(false)
-  const [avatarLookContext, setAvatarLookContext] = useState(null)
+  const [avatarLookContext, setAvatarLookContext] = useState(() => loadAvatarLookContext())
   const [avatarCreateTypeId, setAvatarCreateTypeId] = useState(null)
   const [adminTab, setAdminTab] = useState(() => {
     const saved = localStorage.getItem('adminPortalTab')
@@ -115,6 +125,19 @@ function Dashboard({ onCreate, initialSection }) {
     setSidebarMobileOpen(false)
     setSection(id)
   }, [canAccessSuperadminPortal])
+
+  const openCreateAvatarLook = useCallback((ctx) => {
+    saveAvatarLookContext(ctx)
+    saveAvatarsActiveSection('private')
+    setAvatarLookContext(ctx)
+    goToSection('create-avatar-look')
+  }, [goToSection])
+
+  const closeCreateAvatarLook = useCallback(() => {
+    clearAvatarLookContext()
+    setAvatarLookContext(null)
+    goToSection('avatars')
+  }, [goToSection])
 
   const handlePortalToggle = useCallback(() => {
     if (isAdminPortal) {
@@ -217,6 +240,26 @@ function Dashboard({ onCreate, initialSection }) {
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
+
+  useEffect(() => {
+    if (!AVATAR_FLOW_SECTIONS.has(section)) {
+      clearAvatarsListNavigation()
+    }
+  }, [section])
+
+  useEffect(() => {
+    if (section !== 'workspace') {
+      clearWorkspaceNavigation()
+    }
+  }, [section])
+
+  useEffect(() => {
+    if (avatarLookContext) {
+      saveAvatarLookContext(avatarLookContext)
+    } else {
+      clearAvatarLookContext()
+    }
+  }, [avatarLookContext])
 
   useEffect(() => {
     if (section === 'create-avatar-look' && !avatarLookContext) {
@@ -331,10 +374,7 @@ function Dashboard({ onCreate, initialSection }) {
               onCreate={handleOpenCreateVideoModal} 
               onEdit={handleEditVideo}              goToSection={goToSection} 
               onCreateAvatar={() => goToSection('create-avatar')}
-              onCreateLooks={(ctx) => {
-                setAvatarLookContext(ctx)
-                goToSection('create-avatar-look')
-              }}
+              onCreateLooks={openCreateAvatarLook}
             />
           )}
           {section === 'create-avatar' && (
@@ -346,11 +386,9 @@ function Dashboard({ onCreate, initialSection }) {
           {section === 'create-avatar-look' && avatarLookContext && (
             <CreateAvatarLook
               context={avatarLookContext}
-              onBack={() => {
-                setAvatarLookContext(null)
-                goToSection('avatars')
-              }}
+              onBack={closeCreateAvatarLook}
               onUseInVideo={(presenterSeed) => {
+                clearAvatarLookContext()
                 setAvatarLookContext(null)
                 handleOpenCreateVideoModal({ presenterSeed })
               }}
@@ -441,9 +479,7 @@ function Dashboard({ onCreate, initialSection }) {
           typeOption={getAvatarTypeOption(avatarCreateTypeId)}
           onClose={() => setAvatarCreateTypeId(null)}
           onCreateLooks={(ctx) => {
-            setAvatarLookContext(ctx)
-            setAvatarCreateTypeId(null)
-            goToSection('create-avatar-look')
+            openCreateAvatarLook(ctx)
           }}
           onCompleted={() => {
             setAvatarCreateTypeId(null)

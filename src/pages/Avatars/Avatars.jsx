@@ -13,6 +13,13 @@ import { AvatarConsentModal } from '../../components/ui/AvatarConsentStep/Avatar
 import ConfirmDialog from '../../components/ui/ConfirmDialog/ConfirmDialog.jsx';
 import { getConsentUrlFromResponse, buildAvatarPresenterSeed, canUseAvatarInVideo, fetchMappedGroupLooks, mapAvatarLook, mapLookTile } from '../../utils/heygenAvatars';
 import { getAvatarDeleteMessage, isOwnedPrivateAvatar, resolvePairedVoiceId } from '../../utils/heygenDelete';
+import {
+  clearAvatarsPersonaGroupId,
+  loadAvatarsActiveSection,
+  loadAvatarsPersonaGroupId,
+  saveAvatarsActiveSection,
+  saveAvatarsPersonaGroupId,
+} from '../../utils/avatarsNavigationStorage';
 import { getSanitizedErrorMessage } from '../../utils/userFacingMessage';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
 import AvatarsSkeleton from '../page-skeleton/AvatarsSkeleton';
@@ -88,7 +95,7 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
   const [nextToken, setNextToken] = useState(null);
   const [selectedAvatar, setSelectedAvatar] = useState(null);
   const [viewMode, setViewMode] = useState('grid');
-  const [activeSection, setActiveSection] = useState('public');
+  const [activeSection, setActiveSection] = useState(() => loadAvatarsActiveSection());
   const [searchQuery, setSearchQuery] = useState('');
   const [filterBy, setFilterBy] = useState('all');
   const [sortBy, setSortBy] = useState('name_asc');
@@ -99,6 +106,7 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
   const [confirmDialog, setConfirmDialog] = useState(null);
   const fetchRequestRef = useRef(0);
   const bannerTimeoutRef = useRef(null);
+  const personaRestoredRef = useRef(false);
 
   const showBanner = useCallback((message, tone = 'info') => {
     setConsentBanner(message);
@@ -162,13 +170,38 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
   }, []);
 
   useEffect(() => {
+    saveAvatarsActiveSection(activeSection);
+  }, [activeSection]);
+
+  useEffect(() => {
     setSearchQuery('');
     setFilterBy('all');
     setAvatars([]);
     setHasMore(false);
     setNextToken(null);
+    personaRestoredRef.current = false;
     fetchAvatars({ ownership: activeSection });
   }, [activeSection, fetchAvatars]);
+
+  useEffect(() => {
+    if (personaRestoredRef.current || loading || selectedAvatar) return;
+
+    const groupId = loadAvatarsPersonaGroupId();
+    if (!groupId) {
+      personaRestoredRef.current = true;
+      return;
+    }
+
+    const found = avatars.find((avatar) => avatar.id === groupId);
+    if (found) {
+      personaRestoredRef.current = true;
+      setSelectedAvatar(found);
+      return;
+    }
+
+    personaRestoredRef.current = true;
+    clearAvatarsPersonaGroupId();
+  }, [loading, avatars, selectedAvatar]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -234,10 +267,12 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
 
   const openAvatarDetails = (avatar) => {
     setSelectedAvatar(avatar);
+    saveAvatarsPersonaGroupId(avatar?.id);
   };
 
   const closeDetails = () => {
     setSelectedAvatar(null);
+    clearAvatarsPersonaGroupId();
   };
 
   const handleCreateVideo = (context = null) => {
@@ -426,7 +461,6 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
               activeSection === 'private' && onCreateLooks
                 ? (ctx) => {
                     onCreateLooks(ctx);
-                    closeDetails();
                   }
                 : undefined
             }
@@ -551,7 +585,10 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
             </div>
           ) : null}
           {loading ? (
-            <AvatarsSkeleton />
+            <AvatarsSkeleton
+              viewMode={viewMode}
+              showCreateCard={showCreateCard}
+            />
           ) : filteredAvatars.length === 0 && !showCreateCard ? (
             <div className="videos-empty-state">
               <div className="videos-empty-state__card">
