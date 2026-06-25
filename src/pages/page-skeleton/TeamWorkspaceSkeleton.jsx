@@ -10,7 +10,7 @@ const TeamWorkspaceSkeleton = ({ viewMode = 'tile' }) => {
     <div aria-busy="true" aria-label="Loading workspaces">
       <div className="workspace-section">
         <SkeletonSectionHeader />
-        <SkeletonWorkspaceItems viewMode={viewMode} cardCount={1} />
+        <SkeletonWorkspaceItems viewMode={viewMode} cardCount={1} cardVariant="workspace" />
       </div>
 
       <div className="workspace-root-tabs-wrapper">
@@ -22,7 +22,7 @@ const TeamWorkspaceSkeleton = ({ viewMode = 'tile' }) => {
 
       <div className="workspace-section">
         <SkeletonSectionHeader withAction />
-        <SkeletonWorkspaceItems viewMode={viewMode} cardCount={4} />
+        <SkeletonWorkspaceItems viewMode={viewMode} cardCount={4} cardVariant="workspace" />
       </div>
     </div>
   )

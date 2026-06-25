@@ -9,7 +9,7 @@ const WorkspaceSkeleton = () => {
 
         <div className="workspace-section">
           <SkeletonSectionHeader />
-          <SkeletonWorkspaceItems viewMode="tile" cardCount={6} />
+          <SkeletonWorkspaceItems viewMode="tile" cardCount={6} cardVariant="workspace" />
         </div>
       </div>
     </div>

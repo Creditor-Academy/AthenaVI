@@ -86,6 +86,29 @@
   border-radius: 12px 12px 0 0;
 }
 
+.ps-skeleton-card__thumb--workspace {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--primary) 14%, var(--bg-card)) 25%,
+    color-mix(in srgb, var(--primary) 26%, var(--bg-card)) 50%,
+    color-mix(in srgb, var(--primary) 14%, var(--bg-card)) 75%
+  );
+  background-size: 800px 100%;
+  animation: psShimmer 1.4s infinite linear;
+}
+
+.ps-skeleton-card__thumb--folder {
+  background: linear-gradient(90deg, #fef08a 25%, #fde047 50%, #fef08a 75%);
+  background-size: 800px 100%;
+  animation: psShimmer 1.4s infinite linear;
+}
+
+.ps-skeleton-card__thumb--video {
+  background: linear-gradient(90deg, #ddd6fe 25%, #c4b5fd 50%, #ddd6fe 75%);
+  background-size: 800px 100%;
+  animation: psShimmer 1.4s infinite linear;
+}
+
 .ps-skeleton-card__meta {
   height: 72px;
   width: 100%;
