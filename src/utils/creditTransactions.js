@@ -216,6 +216,27 @@ export function parseCreditEstimate(data) {
   return Number.isFinite(value) && value > 0 ? value : null;
 }
 
+/** Fallback when estimate API is unavailable — matches platform avatar_create charge. */
+export const AVATAR_CREATE_MIN_CREDITS = 14000;
+
+export function resolveAvatarCreateCreditCost(estimatePayload) {
+  return parseCreditEstimate(estimatePayload) ?? AVATAR_CREATE_MIN_CREDITS;
+}
+
+/** Absolute credit count for balances, costs, and minimums (no +/- prefix). */
+export function formatCreditsPlain(amount) {
+  const value = Number(amount);
+  if (!Number.isFinite(value)) return '';
+  return Math.abs(value).toLocaleString();
+}
+
+export function hasEnoughCreditsForAvatar(personalBalance, requiredCredits) {
+  const balance = Number(personalBalance);
+  const required = Number(requiredCredits);
+  if (!Number.isFinite(balance) || !Number.isFinite(required)) return true;
+  return balance >= required;
+}
+
 export function findRecentUsageCredits(transactions = [], { withinMs = 180000 } = {}) {
   const cutoff = Date.now() - withinMs;
   for (const tx of transactions) {

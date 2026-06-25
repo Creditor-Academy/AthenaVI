@@ -1123,6 +1123,30 @@ export function needsAvatarConsent(group) {
   return isAvatarPendingConsent(group);
 }
 
+const AVATAR_TRAINING_IN_PROGRESS = new Set([
+  'processing',
+  'pending',
+  'pending_consent',
+  'training',
+  'queued',
+]);
+
+export function isAvatarTrainingInProgress(group) {
+  const training = String(getAvatarTrainingStatus(group) || '').toLowerCase();
+  return AVATAR_TRAINING_IN_PROGRESS.has(training);
+}
+
+/** Consent approved and HeyGen finished training — safe to create looks. */
+export function isAvatarReadyForLooks(group) {
+  if (!group) return false;
+  if (!isConsentApproved(group)) return false;
+  return !isAvatarTrainingInProgress(group);
+}
+
+export const AVATAR_TRAINING_POLL_INTERVAL_MS = 8000;
+export const AVATAR_TRAINING_MAX_WAIT_MS = 15 * 60 * 1000;
+export const AVATAR_TRAINING_TYPICAL_LABEL = '5–10 minutes';
+
 export function getConsentUrlFromResponse(response) {
   return response?.url ?? response?.consent_url ?? response?.consentUrl ?? null;
 }

@@ -1,16 +1,10 @@
-import { useState } from 'react';
 import { MdArrowBack } from 'react-icons/md';
-import CreateAvatarModal from '../../components/ui/CreateAvatarModal/CreateAvatarModal.jsx';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
 import '../Videos/Videos.css';
 import { AVATAR_TYPE_OPTIONS } from './avatarTypeOptions';
 import './Avatars.css';
 
-function CreateAvatar({ onBack, onCreateLooks }) {
-  const [activeTypeId, setActiveTypeId] = useState(null);
-
-  const activeTypeOption = AVATAR_TYPE_OPTIONS.find((option) => option.id === activeTypeId) || null;
-
+function CreateAvatar({ onBack, onOpenModal }) {
   return (
     <div className="videos-page avatars-page create-avatar-page">
       <div className="videos-shell">
@@ -42,7 +36,7 @@ function CreateAvatar({ onBack, onCreateLooks }) {
                 key={option.id}
                 type="button"
                 className="type-card type-card--image"
-                onClick={() => setActiveTypeId(option.id)}
+                onClick={() => onOpenModal?.(option.id)}
                 aria-label={`Create ${option.title}`}
               >
                 <img src={option.image} alt="" className="type-card__bg" loading="lazy" />
@@ -57,14 +51,6 @@ function CreateAvatar({ onBack, onCreateLooks }) {
           </div>
         </main>
       </div>
-
-      <CreateAvatarModal
-        isOpen={Boolean(activeTypeId)}
-        typeOption={activeTypeOption}
-        onClose={() => setActiveTypeId(null)}
-        onCreateLooks={onCreateLooks}
-        onCompleted={(refresh) => onBack?.(refresh)}
-      />
     </div>
   );
 }

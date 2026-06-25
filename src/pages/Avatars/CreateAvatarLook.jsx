@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Loader2, Sparkles, Upload, Video } from 'lucide-react';
+import { Loader2, Sparkles, Upload, Video, Wand2, ArrowRight, Palette } from 'lucide-react';
 import { MdArrowBack } from 'react-icons/md';
 import heygenService from '../../services/heygenService';
 import {
@@ -49,6 +49,7 @@ function CreateAvatarLook({ context, onBack, onUseInVideo }) {
   const avatarGroupId = context?.groupId;
   const referenceImage = context?.previewImage || null;
   const avatarName = context?.name || 'Your avatar';
+  const fromDigitalTwin = Boolean(context?.fromDigitalTwin);
 
   const displayReferenceImage =
     referenceMode === 'custom' && (customPreviewUrl || uploadedReferenceUrl)
@@ -362,7 +363,7 @@ function CreateAvatarLook({ context, onBack, onUseInVideo }) {
   return (
     <div className="videos-page avatars-page create-avatar-page create-avatar-look-page">
       <div className="videos-shell">
-        <header className="videos-page-header create-avatar-page-header">
+        <header className="videos-page-header create-avatar-page-header create-avatar-look-page__header">
           <div className="videos-title-section create-avatar-title-section">
             <div className="create-avatar-title-row">
               <button
@@ -375,10 +376,14 @@ function CreateAvatarLook({ context, onBack, onUseInVideo }) {
                 <MdArrowBack size={20} />
               </button>
               <div>
+                <p className="create-avatar-look-page__eyebrow">
+                  <Palette size={14} />
+                  <span>Avatar looks studio</span>
+                </p>
                 <h1 className="videos-page-title">Create looks for {avatarName}</h1>
                 <p className="videos-page-subtitle">
-                  Describe a new outfit or scene. We use your reference avatar image and personal avatar id so the
-                  generated look stays the same person — typically ready in {LOOK_TYPICAL_WAIT_LABEL}.
+                  Design outfits and scenes that keep the same person — your Digital Twin identity stays
+                  locked while style changes.
                 </p>
               </div>
             </div>
@@ -386,6 +391,22 @@ function CreateAvatarLook({ context, onBack, onUseInVideo }) {
         </header>
 
         <main className="videos-main create-avatar-main">
+          {fromDigitalTwin ? (
+            <div className="avatar-look-welcome-banner" role="status">
+              <div className="avatar-look-welcome-banner__icon">
+                <Sparkles size={22} />
+              </div>
+              <div className="avatar-look-welcome-banner__copy">
+                <strong>Your Digital Twin is ready — now define how {avatarName} appears on camera.</strong>
+                <p>
+                  Looks are the main way you&apos;ll use this avatar in videos. Generate a casual outfit, a
+                  studio setup, or a branded scene — each look keeps the same face and voice.
+                </p>
+              </div>
+              <Wand2 size={20} className="avatar-look-welcome-banner__accent" aria-hidden="true" />
+            </div>
+          ) : null}
+
           <div className="creation-content-wrapper avatar-look-layout avatar-look-workspace">
             <div className="creation-form-card standalone avatar-look-main-panel">
               {isProcessing ? (
@@ -577,23 +598,27 @@ function CreateAvatarLook({ context, onBack, onUseInVideo }) {
                     {error ? <p className="creation-error-inline">{error}</p> : null}
                     {status && !isProcessing ? <p className="creation-success-inline">{status}</p> : null}
 
-                    <div className="creation-footer">
-                      <button type="button" className="submit-creation-btn-premium" onClick={handleCreateLook}>
+                    <div className="creation-footer avatar-look-cta-footer">
+                      <button type="button" className="submit-creation-btn-premium submit-creation-btn-premium--hero" onClick={handleCreateLook}>
                         <Sparkles size={18} />
                         <span>Generate look</span>
+                        <ArrowRight size={16} className="creation-success-cta-arrow" />
                       </button>
-                      <p className="cta-note">Uses your reference image + avatar id · usually {LOOK_TYPICAL_WAIT_LABEL}</p>
+                      <p className="cta-note">
+                        Uses your reference image + avatar id · usually {LOOK_TYPICAL_WAIT_LABEL}
+                      </p>
                     </div>
                   </section>
                 </div>
               )}
             </div>
 
-            <aside className="avatar-look-sidebar">
+            <aside className="avatar-look-sidebar avatar-look-sidebar--premium">
             <div className="avatar-look-sidebar__head">
               <div>
-                <h4>Your looks</h4>
-                <p>{sidebarLooks.length ? `${sidebarLooks.length} saved to this avatar` : 'No looks yet'}</p>
+                <p className="avatar-look-sidebar__eyebrow">Your library</p>
+                <h4>Looks for {avatarName}</h4>
+                <p>{sidebarLooks.length ? `${sidebarLooks.length} saved to this avatar` : 'No looks yet — your first style appears here'}</p>
               </div>
               {isProcessing ? (
                 <span className="avatar-look-sidebar__live">
@@ -638,9 +663,12 @@ function CreateAvatarLook({ context, onBack, onUseInVideo }) {
                 ))}
               </div>
             ) : (
-              <div className="avatar-look-sidebar__empty">
-                <Sparkles size={22} />
-                <p>Your first look will show up here while it generates.</p>
+              <div className="avatar-look-sidebar__empty avatar-look-sidebar__empty--premium">
+                <div className="avatar-look-sidebar__empty-icon">
+                  <Wand2 size={24} />
+                </div>
+                <strong>Start your look library</strong>
+                <p>Generate your first outfit or scene — previews appear here while they render.</p>
               </div>
             )}
             </aside>

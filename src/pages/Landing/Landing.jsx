@@ -5,7 +5,6 @@ import ProductsSection from '../../components/layout/ProductsSection.jsx'
 import WebsiteTemplateDomeSection from '../../components/layout/WebsiteTemplateDomeSection.jsx'
 import TemplatesSection from '../../components/layout/TemplatesSection.jsx'
 import PlatformFeatures from '../../components/layout/PlatformFeatures.jsx'
-import UseCases from '../../components/layout/UseCases.jsx'
 import ReadySection from '../../components/layout/ReadySection.jsx'
 import Footer from '../../components/layout/Footer/Footer.jsx'
 
@@ -85,7 +84,6 @@ function Landing({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToC
         <WebsiteTemplateDomeSection onLoginClick={onLoginClick} />
         <TemplatesSection onNavigateToSolution={onLoginClick} />
         <PlatformFeatures />
-        <UseCases />
         <ReadySection />
         <Footer
           onLogoClick={onLogoClick}

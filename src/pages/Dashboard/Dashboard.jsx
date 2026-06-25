@@ -24,6 +24,8 @@ import AIVideoAssistant from '../../components/ui/AIVideoAssistant/AIVideoAssist
 import ImportPowerPointModal from '../../components/ui/ImportPowerPointModal/ImportPowerPointModal.jsx'
 import TranslateVideoModal from '../../components/ui/TranslateVideoModal/TranslateVideoModal.jsx'
 import CreateVideoModal from '../../components/ui/CreateVideoModal/CreateVideoModal.jsx'
+import CreateAvatarModal from '../../components/ui/CreateAvatarModal/CreateAvatarModal.jsx'
+import { getAvatarTypeOption } from '../Avatars/avatarTypeOptions.js'
 import NotificationsQuickModal from '../../components/ui/NotificationsQuickModal/NotificationsQuickModal.jsx'
 import CreditsQuickModal from '../../components/ui/CreditsQuickModal/CreditsQuickModal.jsx'
 import { useInboxUnreadCount } from '../../hooks/useInboxUnreadCount.js'
@@ -76,9 +78,10 @@ function Dashboard({ onCreate, initialSection }) {
   const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false)
   const [lastVoiceCreated, setLastVoiceCreated] = useState(false)
   const [avatarLookContext, setAvatarLookContext] = useState(null)
+  const [avatarCreateTypeId, setAvatarCreateTypeId] = useState(null)
   const [adminTab, setAdminTab] = useState(() => {
     const saved = localStorage.getItem('adminPortalTab')
-    const valid = ['overview', 'users', 'workspaces', 'reports', 'heygen']
+    const valid = ['overview', 'users', 'workspaces', 'storage-requests', 'reports', 'heygen']
     return valid.includes(saved) ? saved : 'overview'
   })
 
@@ -337,10 +340,7 @@ function Dashboard({ onCreate, initialSection }) {
           {section === 'create-avatar' && (
             <CreateAvatar
               onBack={() => goToSection('avatars')}
-              onCreateLooks={(ctx) => {
-                setAvatarLookContext(ctx)
-                goToSection('create-avatar-look')
-              }}
+              onOpenModal={(typeId) => setAvatarCreateTypeId(typeId)}
             />
           )}
           {section === 'create-avatar-look' && avatarLookContext && (
@@ -435,6 +435,22 @@ function Dashboard({ onCreate, initialSection }) {
           onCreateVideo={handleCreateVideo}
         />
       )}
+      {avatarCreateTypeId ? (
+        <CreateAvatarModal
+          isOpen={Boolean(avatarCreateTypeId)}
+          typeOption={getAvatarTypeOption(avatarCreateTypeId)}
+          onClose={() => setAvatarCreateTypeId(null)}
+          onCreateLooks={(ctx) => {
+            setAvatarLookContext(ctx)
+            setAvatarCreateTypeId(null)
+            goToSection('create-avatar-look')
+          }}
+          onCompleted={() => {
+            setAvatarCreateTypeId(null)
+            goToSection('avatars')
+          }}
+        />
+      ) : null}
       {showImportModal && <ImportPowerPointModal onClose={() => setShowImportModal(false)} />}
       {showTranslateModal && <TranslateVideoModal onClose={() => setShowTranslateModal(true)} />}
 

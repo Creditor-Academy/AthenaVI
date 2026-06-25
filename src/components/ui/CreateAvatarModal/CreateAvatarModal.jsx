@@ -1,20 +1,33 @@
 import { useEffect, useRef, useState } from 'react';
-import { Video, Image, Terminal, Upload, Loader2, X, Users, Sparkles, CheckCircle2, CheckCircle } from 'lucide-react';
+import { Terminal, Upload, X, CheckCircle2, CheckCircle, ArrowRight, Wand2, Loader2 } from 'lucide-react';
 import { MdClose } from 'react-icons/md';
 import heygenService from '../../../services/heygenService';
 import creditsService, { isInsufficientCreditsError } from '../../../services/creditsService';
 import {
+  AVATAR_TRAINING_MAX_WAIT_MS,
+  AVATAR_TRAINING_POLL_INTERVAL_MS,
+  AVATAR_TRAINING_TYPICAL_LABEL,
   getConsentUrlFromResponse,
+  isAvatarReadyForLooks,
   isConsentApproved,
   parseAvatarCreateResponse,
 } from '../../../utils/heygenAvatars';
 import { WORKSPACE_ASSET_MAX_BYTES } from '../../../utils/heygenAssetUpload';
+import {
+  extractCreditsUsed,
+  formatCreditsPlain,
+  hasEnoughCreditsForAvatar,
+  resolveAvatarCreateCreditCost,
+} from '../../../utils/creditTransactions';
 import { getSanitizedErrorMessage } from '../../../utils/userFacingMessage';
 import AvatarConsentStep from '../AvatarConsentStep/AvatarConsentStep';
 import DigitalTwinVideoInput from './DigitalTwinVideoInput';
+import DigitalTwinProgressPanel from './DigitalTwinProgressPanel';
 import '../AvatarConsentStep/AvatarConsentStep.css';
 import '../../../pages/Avatars/Avatars.css';
 import './CreateAvatarModal.css';
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const DIGITAL_TWIN_STEPS = [
   { number: 1, label: 'Training video' },
@@ -22,10 +35,10 @@ const DIGITAL_TWIN_STEPS = [
   { number: 3, label: 'Ready' },
 ];
 
-function getDigitalTwinActiveStep({ creationSuccess, consentStep, isCreating }) {
-  if (creationSuccess) return 3;
-  if (consentStep) return 2;
-  if (isCreating) return 2;
+function getDigitalTwinActiveStep(phase) {
+  if (phase === 'ready') return 3;
+  if (phase === 'training') return 3;
+  if (phase === 'consent') return 2;
   return 1;
 }
 
@@ -56,7 +69,7 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
   const creationType = typeOption?.id || 'digital_twin';
   const [creationName, setCreationName] = useState('');
   const [creationPrompt, setCreationPrompt] = useState('');
-  const [isCreating, setIsCreating] = useState(false);
+  const [creationPhase, setCreationPhase] = useState('form');
   const [creationStatus, setCreationStatus] = useState('');
   const [previewUrl, setPreviewUrl] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -65,14 +78,20 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
   const [consentStep, setConsentStep] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(null);
   const [creditEstimate, setCreditEstimate] = useState(null);
+  const [personalCredits, setPersonalCredits] = useState(null);
+  const [creditsInfoLoading, setCreditsInfoLoading] = useState(false);
+  const [creditsUsed, setCreditsUsed] = useState(null);
   const fileInputRef = useRef(null);
+  const pollAbortRef = useRef(false);
+  const wasOpenRef = useRef(false);
+  const openTypeRef = useRef(null);
 
-  useEffect(() => {
-    if (!isOpen) return undefined;
+  const isBusy = creationPhase !== 'form' && creationPhase !== 'ready' && creationPhase !== 'consent';
 
+  const resetCreationState = () => {
     setCreationName('');
     setCreationPrompt('');
-    setIsCreating(false);
+    setCreationPhase('form');
     setCreationStatus('');
     setPreviewUrl(null);
     setSelectedFile(null);
@@ -81,25 +100,65 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
     setConsentStep(null);
     setUploadProgress(null);
     setCreditEstimate(null);
+    setPersonalCredits(null);
+    setCreditsUsed(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
-
-    return undefined;
-  }, [isOpen, creationType]);
+  };
 
   useEffect(() => {
-    if (!isOpen || creationType === 'prompt') {
+    if (!isOpen) {
+      pollAbortRef.current = true;
+      wasOpenRef.current = false;
+      openTypeRef.current = null;
+      return undefined;
+    }
+
+    pollAbortRef.current = false;
+
+    const typeKey = typeOption?.id || creationType;
+    const isFreshOpen = !wasOpenRef.current;
+    const isNewType = openTypeRef.current != null && openTypeRef.current !== typeKey;
+
+    if (isFreshOpen || isNewType) {
+      resetCreationState();
+      openTypeRef.current = typeKey;
+    }
+
+    wasOpenRef.current = true;
+
+    return () => {
+      pollAbortRef.current = true;
+    };
+  }, [isOpen, typeOption?.id, creationType]);
+
+  useEffect(() => {
+    if (!isOpen) {
       setCreditEstimate(null);
+      setPersonalCredits(null);
+      setCreditsInfoLoading(false);
       return undefined;
     }
 
     let cancelled = false;
-    creditsService
-      .getPersonalEstimate({ feature: 'avatar_create' })
-      .then((estimate) => {
-        if (!cancelled) setCreditEstimate(estimate);
+    setCreditsInfoLoading(true);
+
+    Promise.all([
+      creditsService.getPersonalEstimate({ feature: 'avatar_create' }),
+      creditsService.getPersonalBalance(),
+    ])
+      .then(([estimate, balance]) => {
+        if (cancelled) return;
+        setCreditEstimate(estimate);
+        setPersonalCredits(balance?.personalCredits ?? null);
       })
       .catch(() => {
-        if (!cancelled) setCreditEstimate(null);
+        if (!cancelled) {
+          setCreditEstimate(null);
+          setPersonalCredits(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setCreditsInfoLoading(false);
       });
 
     return () => {
@@ -111,14 +170,14 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
     if (!isOpen) return undefined;
 
     const handleKeyDown = (event) => {
-      if (event.key === 'Escape' && !isCreating) {
+      if (event.key === 'Escape' && creationPhase === 'form') {
         onClose?.();
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, isCreating, onClose]);
+  }, [isOpen, creationPhase, onClose]);
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -142,12 +201,88 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
     setPreviewUrl(url);
   };
 
-  const finishWithSuccess = (response, consentMeta = null) => {
+  const mergeAvatarMeta = (base, group) => {
+    if (!group) return base;
+    const parsed = parseAvatarCreateResponse({ avatar_group: group }, base.name || creationName);
+    return {
+      ...base,
+      ...parsed,
+      previewImage: parsed.previewImage || base.previewImage || null,
+    };
+  };
+
+  const resolveAvatarCreditsUsed = async (response, requiredCredits) => {
+    const fromResponse = extractCreditsUsed(response);
+    if (fromResponse) return fromResponse;
+    try {
+      const recent = await creditsService.resolveRecentUsageCredits(null, { withinMs: 180000 });
+      if (recent) return recent;
+    } catch {
+      // fall through to estimate
+    }
+    return requiredCredits;
+  };
+
+  const attachCreditsUsed = (meta, used) => ({
+    ...meta,
+    creditsUsed: used ?? creditsUsed ?? null,
+  });
+
+  const waitForAvatarTraining = async (meta, usedCredits = creditsUsed) => {
+    const groupId = meta.groupId;
+    if (!groupId) {
+      setCreationSuccess(attachCreditsUsed({ ...meta, fromDigitalTwin: creationType === 'digital_twin' }, usedCredits));
+      setCreationPhase('ready');
+      setCreationStatus('');
+      return;
+    }
+
+    setCreationPhase('training');
+    setCreationStatus('Building your Digital Twin…');
+
+    const started = Date.now();
+    let latest = meta;
+
+    while (Date.now() - started < AVATAR_TRAINING_MAX_WAIT_MS) {
+      if (pollAbortRef.current) return;
+
+      try {
+        const group = await heygenService.getAvatarGroup(groupId);
+        if (group) {
+          latest = mergeAvatarMeta(latest, group);
+          if (isAvatarReadyForLooks(group)) {
+            setCreationSuccess(attachCreditsUsed({ ...latest, fromDigitalTwin: creationType === 'digital_twin' }, usedCredits));
+            setCreationPhase('ready');
+            setCreationStatus('');
+            return;
+          }
+          const training = String(group?.status ?? group?.training_status ?? '').toLowerCase();
+          if (training === 'processing' || training === 'training') {
+            setCreationStatus('Training your Digital Twin — almost there…');
+          }
+        }
+      } catch (pollErr) {
+        console.warn('Avatar training poll failed', pollErr);
+      }
+
+      await sleep(AVATAR_TRAINING_POLL_INTERVAL_MS);
+    }
+
+    setCreationSuccess(attachCreditsUsed({
+      ...latest,
+      fromDigitalTwin: creationType === 'digital_twin',
+      trainingTimedOut: true,
+    }, usedCredits));
+    setCreationPhase('ready');
+    setCreationStatus('');
+  };
+
+  const finishWithSuccess = async (response, consentMeta = null, usedCredits = creditsUsed) => {
     const created = parseAvatarCreateResponse(response, creationName);
     if (!created.groupId) {
       setCreationStatus('Persona created, but we could not read the avatar id. Check My Avatars.');
       setTimeout(() => {
-        setIsCreating(false);
+        setCreationPhase('form');
         onCompleted?.(true);
         onClose?.();
       }, 2500);
@@ -163,20 +298,26 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
 
     if (creationType === 'digital_twin' && !isConsentApproved(merged)) {
       setConsentStep(merged);
-      setIsCreating(false);
+      setCreationPhase('consent');
       setCreationStatus('');
       return;
     }
 
-    setCreationSuccess(merged);
-    setIsCreating(false);
+    if (creationType === 'digital_twin') {
+      await waitForAvatarTraining(merged, usedCredits);
+      return;
+    }
+
+    setCreationSuccess(attachCreditsUsed(merged, usedCredits));
+    setCreationPhase('ready');
     setCreationStatus('');
   };
 
-  const handleConsentComplete = () => {
+  const handleConsentComplete = async () => {
     if (!consentStep) return;
-    setCreationSuccess({ ...consentStep, consentStatus: 'approved' });
+    const approved = { ...consentStep, consentStatus: 'approved' };
     setConsentStep(null);
+    await waitForAvatarTraining(approved);
   };
 
   const handleCreateAvatar = async () => {
@@ -204,7 +345,12 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
       return;
     }
 
-    setIsCreating(true);
+    const requiredCredits = resolveAvatarCreateCreditCost(creditEstimate);
+    if (!hasEnoughCreditsForAvatar(personalCredits, requiredCredits)) {
+      return;
+    }
+
+    setCreationPhase(creationType === 'digital_twin' ? 'uploading' : 'creating');
     setCreationStatus('Preparing asset upload...');
     setUploadProgress(null);
 
@@ -230,7 +376,13 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
         });
       }
 
+      setCreationPhase('creating');
+      setUploadProgress(100);
       setCreationStatus(`Creating ${creationType.replace('_', ' ')}...`);
+
+      const usedCredits = await resolveAvatarCreditsUsed(response, requiredCredits);
+      setCreditsUsed(usedCredits);
+
       const created = parseAvatarCreateResponse(response, creationName);
       const groupId = created.groupId;
 
@@ -240,51 +392,62 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
           const consentRes = await heygenService.getAvatarConsent(groupId);
           const url = getConsentUrlFromResponse(consentRes);
           const group = consentRes?.avatar_group ?? consentRes?.avatarGroup;
-          finishWithSuccess(response, {
+          await finishWithSuccess(response, {
             consentUrl: url,
             consentStatus: group?.consent_status ?? created.consentStatus ?? 'pending',
             trainingStatus: group?.status ?? created.trainingStatus ?? 'pending_consent',
-          });
+          }, usedCredits);
           return;
         } catch (consentErr) {
           console.warn('Consent fetch failed or not required', consentErr);
-          finishWithSuccess(response, {
+          await finishWithSuccess(response, {
             consentStatus: created.consentStatus ?? 'pending',
             trainingStatus: created.trainingStatus ?? 'pending_consent',
-          });
+          }, usedCredits);
           return;
         }
       }
 
       setCreationStatus('Persona created successfully!');
-      finishWithSuccess(response);
+      await finishWithSuccess(response, null, usedCredits);
     } catch (err) {
       console.error('Avatar creation failed:', err);
+      const requiredCredits = resolveAvatarCreateCreditCost(creditEstimate);
       const fallback = isInsufficientCreditsError(err)
-        ? 'Insufficient credits to create this avatar.'
+        ? `You need at least ${formatCreditsPlain(requiredCredits)} credits to create this avatar.`
         : 'Creation failed';
       setCreationStatus(`Error: ${getSanitizedErrorMessage(err, fallback)}`);
       setTimeout(() => {
-        setIsCreating(false);
+        setCreationPhase('form');
         setCreationStatus('');
         setUploadProgress(null);
       }, 4000);
     }
   };
 
-  const estimatedCredits =
-    creditEstimate?.estimatedCredits ??
-    creditEstimate?.credits ??
-    creditEstimate?.cost ??
-    null;
+  const requiredCredits = resolveAvatarCreateCreditCost(creditEstimate);
+  const insufficientCredits =
+    personalCredits != null && !hasEnoughCreditsForAvatar(personalCredits, requiredCredits);
+  const displayCreditsUsed = creationSuccess?.creditsUsed ?? creditsUsed;
 
   if (!isOpen || !typeOption) return null;
 
   const isDigitalTwin = creationType === 'digital_twin';
-  const digitalTwinActiveStep = getDigitalTwinActiveStep({ creationSuccess, consentStep, isCreating });
+  const digitalTwinActiveStep = getDigitalTwinActiveStep(creationPhase);
+  const displayName = creationSuccess?.name || creationName;
 
   const handleOverlayClick = () => {
-    if (!isCreating && !consentStep) onClose?.();
+    if (creationPhase === 'form') onClose?.();
+  };
+
+  const handleRequestClose = () => {
+    if (isBusy || creationPhase === 'training') return;
+    onClose?.();
+  };
+
+  const handleCreateLooksClick = () => {
+    if (!onCreateLooks || !creationSuccess) return;
+    onCreateLooks({ ...creationSuccess, fromDigitalTwin: isDigitalTwin });
   };
 
   return (
@@ -305,8 +468,8 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
             <button
               type="button"
               className="create-avatar-modal-close"
-              onClick={onClose}
-              disabled={isCreating}
+              onClick={handleRequestClose}
+              disabled={isBusy || creationPhase === 'training'}
               aria-label="Close"
             >
               <MdClose size={20} />
@@ -318,33 +481,46 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
           ) : null}
 
           <div className="create-avatar-modal-body">
-            {creationSuccess ? (
-              <div className="creation-success-panel">
-                <div className="creation-success-icon">
-                  <CheckCircle2 size={52} />
+            {creationPhase === 'ready' && creationSuccess ? (
+              <div className="creation-success-panel creation-success-panel--premium">
+                <div className="creation-success-panel__glow" aria-hidden="true" />
+                <div className="creation-success-icon creation-success-icon--premium">
+                  <CheckCircle2 size={56} />
                 </div>
-                <h3>{creationSuccess.name || creationName} is ready</h3>
-                <p>
-                  Your avatar was created and consent is approved. Generate additional outfits and
-                  styles as looks — we&apos;ll use avatar id{' '}
-                  <code>{creationSuccess.groupId}</code> so they stay on your character.
+                <p className="creation-success-panel__eyebrow">
+                  {isDigitalTwin ? 'Digital Twin ready' : 'Avatar ready'}
                 </p>
-                {creationSuccess.previewImage ? (
-                  <img
-                    src={creationSuccess.previewImage}
-                    alt={creationSuccess.name}
-                    className="creation-success-preview"
-                  />
+                <h3>{displayName} is live</h3>
+                <p className="creation-success-panel__lead">
+                  {creationSuccess.trainingTimedOut
+                    ? `Training is still finishing in the background (${AVATAR_TRAINING_TYPICAL_LABEL}). You can start creating looks now — previews update when training completes.`
+                    : 'Your likeness is trained and consent is approved. The next step is creating looks — outfits and scenes that keep the same person.'}
+                </p>
+                {displayCreditsUsed != null ? (
+                  <p className="creation-success-credits-used" role="status">
+                    <span className="creation-success-credits-used__label">Credits used</span>
+                    <strong>{formatCreditsPlain(displayCreditsUsed)}</strong>
+                  </p>
                 ) : null}
-                <div className="creation-success-actions">
+                {creationSuccess.previewImage ? (
+                  <div className="creation-success-preview-wrap">
+                    <img
+                      src={creationSuccess.previewImage}
+                      alt={displayName}
+                      className="creation-success-preview creation-success-preview--hero"
+                    />
+                  </div>
+                ) : null}
+                <div className="creation-success-actions creation-success-actions--premium">
                   {onCreateLooks ? (
                     <button
                       type="button"
-                      className="submit-creation-btn-premium"
-                      onClick={() => onCreateLooks(creationSuccess)}
+                      className="submit-creation-btn-premium submit-creation-btn-premium--hero"
+                      onClick={handleCreateLooksClick}
                     >
-                      <Sparkles size={18} />
-                      <span>Create looks</span>
+                      <Wand2 size={20} />
+                      <span>Create looks for {displayName}</span>
+                      <ArrowRight size={18} className="creation-success-cta-arrow" />
                     </button>
                   ) : null}
                   <button
@@ -359,12 +535,17 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
                   </button>
                 </div>
               </div>
-            ) : consentStep ? (
+            ) : creationPhase === 'consent' && consentStep ? (
               <>
                 <p className="create-avatar-step-hint">
-                  Step 2 of 3 — Record or upload your consent video on the consent portal. The
-                  person in the consent video must match your training footage.
+                  Step 2 of 3 — Record or upload your consent video. The person in the consent video
+                  must match your training footage.
                 </p>
+                {displayCreditsUsed != null ? (
+                  <p className="create-avatar-credits-charged" role="status">
+                    {formatCreditsPlain(displayCreditsUsed)} credits used for this avatar creation.
+                  </p>
+                ) : null}
                 <AvatarConsentStep
                   groupId={consentStep.groupId}
                   avatarName={consentStep.name || creationName}
@@ -373,23 +554,35 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
                   onComplete={handleConsentComplete}
                 />
               </>
-            ) : isCreating ? (
-              <div className="creation-loading">
-                <Loader2 size={60} className="spin-animation" />
-                <h3>{creationStatus}</h3>
-                {uploadProgress != null && uploadProgress < 100 ? (
-                  <div className="progress-bar-bg" style={{ width: 'min(280px, 80%)', margin: '12px auto 0' }}>
-                    <div className="progress-bar-fill" style={{ width: `${uploadProgress}%` }} />
-                  </div>
-                ) : null}
-                <p>
-                  {isDigitalTwin
-                    ? 'Uploading your training video, then we\'ll guide you through consent.'
-                    : 'We are orchestrating your digital persona. This won\'t take long.'}
-                </p>
-              </div>
+            ) : isBusy ? (
+              isDigitalTwin ? (
+                <DigitalTwinProgressPanel
+                  phase={creationPhase}
+                  status={creationStatus}
+                  uploadProgress={uploadProgress}
+                />
+              ) : (
+                <div className="creation-loading">
+                  <Loader2 size={60} className="spin-animation" />
+                  <h3>{creationStatus}</h3>
+                  <p>We are orchestrating your digital persona. This won&apos;t take long.</p>
+                </div>
+              )
             ) : (
               <div className="form-main-inputs">
+                {insufficientCredits ? (
+                  <div className="create-avatar-credits-warning" role="alert">
+                    <strong>Not enough credits</strong>
+                    <p>
+                      You need at least <strong>{formatCreditsPlain(requiredCredits)} credits</strong> to
+                      create this avatar.
+                      {personalCredits != null ? (
+                        <> Your balance is <strong>{formatCreditsPlain(personalCredits)}</strong>.</>
+                      ) : null}
+                      {' '}Add credits in Billing before continuing.
+                    </p>
+                  </div>
+                ) : null}
                 {isDigitalTwin ? (
                   <p className="create-avatar-step-hint create-avatar-step-hint--compact">
                     Step 1 — Record or upload training footage (2–5 min). Consent video is next.
@@ -482,20 +675,25 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
             )}
           </div>
 
-          {!creationSuccess && !isCreating && !consentStep ? (
+          {creationPhase === 'form' ? (
             <footer className="create-avatar-modal-footer">
               <p className="create-avatar-modal-footer__note">
-                {estimatedCredits != null
-                  ? `Estimated cost: ${estimatedCredits} credit${Number(estimatedCredits) === 1 ? '' : 's'}. `
-                  : ''}
+                {creditsInfoLoading
+                  ? 'Loading credit requirements… '
+                  : `Minimum ${formatCreditsPlain(requiredCredits)} credits required${
+                      personalCredits != null
+                        ? ` · Your balance: ${formatCreditsPlain(personalCredits)}`
+                        : ''
+                    }. `}
                 {isDigitalTwin
-                  ? 'Training takes 5–10 minutes after consent is approved.'
+                  ? `Training takes ${AVATAR_TRAINING_TYPICAL_LABEL} after consent is approved.`
                   : 'Processing typically takes 5–10 minutes.'}
               </p>
               <button
                 type="button"
                 className="create-avatar-modal-btn create-avatar-modal-btn-primary"
                 onClick={handleCreateAvatar}
+                disabled={insufficientCredits || creditsInfoLoading}
               >
                 <Terminal size={18} />
                 <span>{isDigitalTwin ? 'Upload & continue to consent' : 'Build My AI Avatar'}</span>
@@ -518,60 +716,21 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
               {creationType === 'digital_twin' ? (
                 <>
                   <div className="help-section">
-                    <h4>
-                      <Video size={18} /> Video Requirements
-                    </h4>
+                    <h4>Video Requirements</h4>
                     <ul>
-                      <li>
-                        <strong>Length:</strong> 2-5 minutes of continuous footage.
-                      </li>
-                      <li>
-                        <strong>Resolution:</strong> 1080p or 4K recommended.
-                      </li>
-                      <li>
-                        <strong>Format:</strong> .mp4, .mov, or .webm (max 900 MB).
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="help-section">
-                    <h4>
-                      <Users size={18} /> Best Practices
-                    </h4>
-                    <ul>
-                      <li>Speak naturally about any topic to capture mouth movements.</li>
-                      <li>Keep your head relatively still but use natural hand gestures.</li>
-                      <li>Maintain a steady gaze towards the camera lens.</li>
-                      <li>Ensure there are no other people or distracting objects in frame.</li>
+                      <li><strong>Length:</strong> 2-5 minutes of continuous footage.</li>
+                      <li><strong>Resolution:</strong> 1080p or 4K recommended.</li>
+                      <li><strong>Format:</strong> .mp4, .mov, or .webm (max 900 MB).</li>
                     </ul>
                   </div>
                 </>
               ) : (
                 <>
                   <div className="help-section">
-                    <h4>
-                      <Image size={18} /> Image Requirements
-                    </h4>
+                    <h4>Image Requirements</h4>
                     <ul>
-                      <li>
-                        <strong>Resolution:</strong> 1080x1080 minimum recommended.
-                      </li>
-                      <li>
-                        <strong>Format:</strong> .png, .jpg, or .webp.
-                      </li>
-                      <li>
-                        <strong>Size:</strong> Max 10MB.
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="help-section">
-                    <h4>
-                      <Users size={18} /> Best Practices
-                    </h4>
-                    <ul>
-                      <li>Ensure good, even lighting across the face (no harsh shadows).</li>
-                      <li>Look directly at the camera lens.</li>
-                      <li>Maintain a neutral expression with a closed mouth.</li>
-                      <li>Use a solid or very clean background.</li>
+                      <li><strong>Resolution:</strong> 1080x1080 minimum recommended.</li>
+                      <li><strong>Format:</strong> .png, .jpg, or .webp.</li>
                     </ul>
                   </div>
                 </>

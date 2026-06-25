@@ -48,6 +48,14 @@ const superadminService = {
     return superadminRequest(`/api/superadmin/users${toQuery({ page, limit, search })}`)
   },
 
+  updateUserPlatformAccess(userId, { isPlatformSuperadmin }) {
+    return superadminRequest(`/api/superadmin/users/${userId}/platform-access`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isPlatformSuperadmin }),
+    })
+  },
+
   getUserCredits(userId) {
     return superadminRequest(`/api/superadmin/users/${userId}/credits`)
   },
@@ -72,29 +80,14 @@ const superadminService = {
     })
   },
 
-  getWorkspaceCredits(workspaceId) {
-    return superadminRequest(`/api/superadmin/workspaces/${workspaceId}/credits`)
-  },
-
-  grantWorkspaceCredits(workspaceId, { amount, reason }) {
-    return superadminRequest(`/api/superadmin/workspaces/${workspaceId}/credits/grant`, {
-      method: 'POST',
-      body: JSON.stringify({ amount, reason }),
-    })
-  },
-
-  getUsageReport({ from, to, workspaceId, userId } = {}) {
-    return superadminRequest(
-      `/api/superadmin/reports/credits/usage${toQuery({ from, to, workspaceId, userId })}`
-    )
-  },
-
-  getHeygenAccount() {
-    return superadminRequest('/api/superadmin/heygen/account')
-  },
-
   getUserStorage(userId) {
     return superadminRequest(`/api/superadmin/users/${userId}/storage`)
+  },
+
+  getUserStorageHistory(userId, { page = 1, limit = 20, type } = {}) {
+    return superadminRequest(
+      `/api/superadmin/users/${userId}/storage/history${toQuery({ page, limit, type })}`
+    )
   },
 
   grantUserStorage(userId, { additionalBytes, tierId, reason }) {
@@ -111,6 +104,76 @@ const superadminService = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ amountBytes, reason }),
     })
+  },
+
+  getStorageTiers() {
+    return superadminRequest('/api/superadmin/storage/tiers')
+  },
+
+  listStorageRequests({ page = 1, limit = 20, status } = {}) {
+    return superadminRequest(`/api/superadmin/storage/requests${toQuery({ page, limit, status })}`)
+  },
+
+  rejectStorageRequest(requestId, { reviewNote } = {}) {
+    return superadminRequest(`/api/superadmin/storage/requests/${requestId}/reject`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reviewNote }),
+    })
+  },
+
+  listWorkspaces({ page = 1, limit = 20, search } = {}) {
+    return superadminRequest(`/api/superadmin/workspaces${toQuery({ page, limit, search })}`)
+  },
+
+  getWorkspaceCredits(workspaceId) {
+    return superadminRequest(`/api/superadmin/workspaces/${workspaceId}/credits`)
+  },
+
+  getWorkspaceCreditHistory(workspaceId, { page = 1, limit = 20, type } = {}) {
+    return superadminRequest(
+      `/api/superadmin/workspaces/${workspaceId}/credits/history${toQuery({ page, limit, type })}`
+    )
+  },
+
+  getWorkspaceUsageByMember(workspaceId, { page = 1, limit = 20 } = {}) {
+    return superadminRequest(
+      `/api/superadmin/workspaces/${workspaceId}/credits/usage-by-member${toQuery({ page, limit })}`
+    )
+  },
+
+  grantWorkspaceCredits(workspaceId, { amount, reason }) {
+    return superadminRequest(`/api/superadmin/workspaces/${workspaceId}/credits/grant`, {
+      method: 'POST',
+      body: JSON.stringify({ amount, reason }),
+    })
+  },
+
+  revokeWorkspaceCredits(workspaceId, { amount, reason }) {
+    return superadminRequest(`/api/superadmin/workspaces/${workspaceId}/credits/revoke`, {
+      method: 'POST',
+      body: JSON.stringify({ amount, reason }),
+    })
+  },
+
+  getUsageReport({ from, to, workspaceId, userId, topLimit } = {}) {
+    return superadminRequest(
+      `/api/superadmin/reports/credits/usage${toQuery({ from, to, workspaceId, userId, topLimit })}`
+    )
+  },
+
+  getPlatformActionsReport({ page = 1, limit = 20, from, to, type, scope } = {}) {
+    return superadminRequest(
+      `/api/superadmin/reports/credits/platform-actions${toQuery({ page, limit, from, to, type, scope })}`
+    )
+  },
+
+  getAlertsSummary() {
+    return superadminRequest('/api/superadmin/alerts/summary')
+  },
+
+  getHeygenAccount() {
+    return superadminRequest('/api/superadmin/heygen/account')
   },
 }
 
