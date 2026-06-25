@@ -803,7 +803,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
 
       <div className="workspace-content-area" style={{ flex: 1 }}>
         {loading && workspaces.length === 0 ? (
-          <TeamWorkspaceSkeleton />
+          <TeamWorkspaceSkeleton viewMode={viewMode} />
         ) : (
           <>
             {currentLevel.type === 'root' && renderRoot()}

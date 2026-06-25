@@ -293,7 +293,7 @@ function Videos({ onCreate, onEdit }) {
 
         <main className="videos-main">
           {loading && videos.length === 0 ? (
-            <VideosSkeleton />
+            <VideosSkeleton viewMode={viewMode} />
           ) : filteredVideos.length === 0 ? (
             <div className="videos-empty-state">
               <div className="videos-empty-state__card">

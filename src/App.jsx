@@ -36,6 +36,7 @@ const PATH_TO_VIEW_MAP = {
   '/dashboard/videos': 'dashboard',
   '/dashboard/avatars': 'dashboard',
   '/dashboard/create-avatar': 'dashboard',
+  '/dashboard/create-avatar-look': 'dashboard',
   '/dashboard/templates': 'dashboard',
   '/dashboard/template-details': 'dashboard',
   '/dashboard/library': 'dashboard',

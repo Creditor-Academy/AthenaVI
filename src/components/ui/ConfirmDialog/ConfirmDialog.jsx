@@ -1,8 +1,8 @@
-import React from 'react';
-import { MdWarning } from 'react-icons/md';
+import { MdWarning } from 'react-icons/md'
+import './ConfirmDialog.css'
 
 const ConfirmDialog = ({ dialog, onCancel }) => {
-  if (!dialog) return null;
+  if (!dialog) return null
 
   const {
     message,
@@ -11,67 +11,41 @@ const ConfirmDialog = ({ dialog, onCancel }) => {
     confirmLabel = 'Confirm',
     cancelLabel = 'Cancel',
     variant = 'default',
-  } = dialog;
+  } = dialog
+
+  const isDanger = variant === 'danger'
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(15,23,42,0.45)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 10100,
-        backdropFilter: 'blur(4px)',
-        animation: 'twFadeIn 0.18s ease',
-      }}
-      onClick={onCancel}
-    >
+    <div className="confirm-dialog-overlay" onClick={onCancel} role="presentation">
       <div
-        style={{
-          width: 'min(420px, 92vw)',
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '14px',
-          boxShadow: '0 18px 45px rgba(15,23,42,0.22)',
-          padding: '22px',
-          textAlign: 'center',
-          animation: 'twSlideUp 0.2s ease',
-        }}
+        className="confirm-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-dialog-title"
         onClick={(e) => e.stopPropagation()}
       >
         <div
-          style={{
-            width: 48,
-            height: 48,
-            borderRadius: '50%',
-            margin: '0 auto 12px',
-            background: 'rgba(var(--primary-rgb),0.12)',
-            display: 'grid',
-            placeItems: 'center',
-          }}
+          className={`confirm-dialog-icon-wrap${isDanger ? ' confirm-dialog-icon-wrap--danger' : ''}`}
         >
-          <MdWarning style={{ fontSize: 24, color: 'var(--primary)' }} />
+          <MdWarning
+            className={`confirm-dialog-icon${isDanger ? ' confirm-dialog-icon--danger' : ''}`}
+            aria-hidden="true"
+          />
         </div>
-        <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: 'var(--text-main)' }}>
+        <h3 id="confirm-dialog-title" className="confirm-dialog-title">
           {title}
         </h3>
-        <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.45 }}>
-          {message}
-        </p>
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 18 }}>
-          <button className="btn-secondary" onClick={onCancel}>
+        <p className="confirm-dialog-message">{message}</p>
+        <div className="confirm-dialog-actions">
+          <button type="button" className="btn-secondary" onClick={onCancel}>
             {cancelLabel}
           </button>
           <button
-            className={variant === 'danger' ? 'btn-danger' : 'btn-primary'}
+            type="button"
+            className={isDanger ? 'btn-danger' : 'btn-primary'}
             onClick={async () => {
-              onCancel();
-              if (onConfirm) await onConfirm();
+              onCancel()
+              if (onConfirm) await onConfirm()
             }}
           >
             {confirmLabel}
@@ -79,7 +53,7 @@ const ConfirmDialog = ({ dialog, onCancel }) => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ConfirmDialog;
+export default ConfirmDialog

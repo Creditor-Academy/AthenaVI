@@ -1,27 +1,28 @@
 import './skeleton.css'
+import {
+  SkeletonSectionHeader,
+  SkeletonTab,
+  SkeletonWorkspaceItems,
+} from './SkeletonPrimitives'
 
-const TeamWorkspaceSkeleton = () => {
+const TeamWorkspaceSkeleton = ({ viewMode = 'tile' }) => {
   return (
-    <div className="team-workspace-container">
-      <div className="workspace-content-area ps-page" style={{ flex: 1 }}>
-        <div className="ps-row">
-        <div className="ps-block ps-block--line" style={{ height: 32, width: 220 }} />
-        <div className="ps-block ps-block--line" style={{ height: 40, width: 140 }} />
-        </div>
+    <div aria-busy="true" aria-label="Loading workspaces">
+      <div className="workspace-section">
+        <SkeletonSectionHeader />
+        <SkeletonWorkspaceItems viewMode={viewMode} cardCount={1} />
+      </div>
 
-        <div className="ps-chip-row">
-        <div className="ps-block ps-block--line" style={{ height: 36, width: 160 }} />
-        <div className="ps-block ps-block--line" style={{ height: 36, width: 160 }} />
+      <div className="workspace-root-tabs-wrapper">
+        <div className="workspace-root-tabs">
+          <SkeletonTab active />
+          <SkeletonTab />
         </div>
+      </div>
 
-        <div className="workspace-tiles ps-grid ps-grid--3">
-          <div className="ps-block" style={{ height: 176 }} />
-          <div className="ps-block" style={{ height: 176 }} />
-          <div className="ps-block" style={{ height: 176 }} />
-          <div className="ps-block" style={{ height: 176 }} />
-          <div className="ps-block" style={{ height: 176 }} />
-          <div className="ps-block" style={{ height: 176 }} />
-        </div>
+      <div className="workspace-section">
+        <SkeletonSectionHeader withAction />
+        <SkeletonWorkspaceItems viewMode={viewMode} cardCount={4} />
       </div>
     </div>
   )

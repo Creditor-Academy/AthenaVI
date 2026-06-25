@@ -7,10 +7,6 @@ import '../../../../pages/page-skeleton/skeleton.css'
 
 const PAGE_SIZE = 20
 
-function Sk({ w, h = 14, radius = 6, style }) {
-  return <div className="ps-block ps-block--line" style={{ width: w, height: h, borderRadius: radius, flexShrink: 0, ...style }} />
-}
-
 function CreditActionCard({ mode, onSubmit, loading, disabled }) {
   const isGrant = mode === 'grant'
   const [amount, setAmount] = useState('')
@@ -111,7 +107,9 @@ function WorkspaceDrawer({
         </div>
 
         {detailLoading && !summary ? (
-          <div style={{ padding: 24 }}><Sk w="80%" h={12} /><Sk w="60%" h={10} style={{ marginTop: 10 }} /></div>
+          <div style={{ padding: 24 }}>
+            <div className="ps-block" style={{ height: 160 }} aria-hidden />
+          </div>
         ) : detailError ? (
           <div style={{ padding: 20 }}><div className="sa-alert sa-alert--error">{detailError}</div></div>
         ) : (
