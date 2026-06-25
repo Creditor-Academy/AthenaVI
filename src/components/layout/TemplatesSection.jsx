@@ -1,89 +1,90 @@
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { FiArrowRight } from 'react-icons/fi'
-import LoadingDots from '../ui/LoadingDots/LoadingDots.jsx'
 
-// Unsplash CDN — free to use with attribution
-const UNSPLASH = (id, w = 800) =>
+// Unsplash CDN helper
+const U = (id, w = 400) =>
   `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=80`
 
-const TEMPLATES = [
+// Each category has 4 portrait-style preview images
+const CATEGORIES = [
   {
     id: 1,
-    title: 'Corporate Presentation',
-    description: 'Polish your brand story with structured slides, data visuals, and a professional AI avatar.',
-    category: 'Business',
-    duration: '3–5 min',
-    scenes: 8,
-    // Modern office / boardroom — Unsplash: Scott Graham
-    img: UNSPLASH('1556761175-4b46a572b786'),
+    title: 'Corporate\nPresentation',
+    count: 12,
+    images: [
+      U('1556761175-4b46a572b786'), // boardroom
+      U('1573497019236-17f8177b81e8'), // presentation
+      U('1497366216548-37526070297c'), // modern office
+    ],
   },
   {
     id: 2,
-    title: 'Educational Module',
-    description: 'Break down complex topics into clear, engaging lessons your audience will actually retain.',
-    category: 'Education',
-    duration: '2–4 min',
-    scenes: 6,
-    // Student studying / learning — Unsplash: Green Chameleon
-    img: UNSPLASH('1456513080510-7bf3a84b82f8'),
+    title: 'Educational\nModule',
+    count: 9,
+    images: [
+      U('1456513080510-7bf3a84b82f8'), // studying
+      U('1503676260728-1c00da094a0b'), // classroom
+      U('1516321318423-f06f85e504b3'), // laptop learning
+    ],
   },
   {
     id: 3,
-    title: 'Marketing Campaign',
-    description: 'Drive clicks and conversions with high-energy visuals and persuasive AI-generated copy.',
-    category: 'Marketing',
-    duration: '1–2 min',
-    scenes: 5,
-    // Bold colorful marketing / neon lights — Unsplash: Merakist
-    img: UNSPLASH('1533750349088-cd871a92f312'),
+    title: 'Marketing\nCampaign',
+    count: 14,
+    images: [
+      U('1533750349088-cd871a92f312'), // neon marketing
+      U('1460925895917-afdab827c52f'), // laptop analytics
+      U('1551650975-d300049d99fa'), // phone mockup
+    ],
   },
   {
     id: 4,
-    title: 'Personal Story',
-    description: 'Share your journey in an authentic, human way — great for personal branding and portfolios.',
-    category: 'Personal',
-    duration: '1–3 min',
-    scenes: 4,
-    // Portrait / personal brand — Unsplash: Ivana Cajina
-    img: UNSPLASH('1531746020798-e6953c6e8e04'),
+    title: 'Personal\nStory',
+    count: 8,
+    images: [
+      U('1531746020798-e6953c6e8e04'), // portrait
+      U('1529156069898-49953e39b3ac'), // lifestyle
+      U('1508214751196-bcfd4ca60f91'), // individual
+    ],
   },
   {
     id: 5,
-    title: 'Social Short',
-    description: 'Punchy 30–60 second clips built for Instagram, TikTok, and YouTube Shorts.',
-    category: 'Social',
-    duration: '30–60 s',
-    scenes: 3,
-    // Phone / social media content creator — Unsplash: Jakob Owens
-    img: UNSPLASH('1611162616475-46b635cb6868'),
+    title: 'Social\nShort',
+    count: 11,
+    images: [
+      U('1611162616475-46b635cb6868'), // phone creator
+      U('1585184394271-4c0d40a8e25f'), // content creation
+      U('1512941937669-90a1b58e7e9c'), // mobile phone
+    ],
   },
   {
     id: 6,
-    title: 'All-Purpose',
-    description: 'A flexible starter layout that adapts to any message — the perfect blank canvas.',
-    category: 'General',
-    duration: '2–5 min',
-    scenes: 7,
-    // Clean workspace / creative setup — Unsplash: Domenico Loia
-    img: UNSPLASH('1499750310107-5fef28a66643'),
+    title: 'All-Purpose\nTemplate',
+    count: 16,
+    images: [
+      U('1499750310107-5fef28a66643'), // workspace
+      U('1522202176988-66273c2fd55f'), // team creative
+      U('1454165804606-c3d57bc86b40'), // work desk
+    ],
   },
 ]
 
-const CATEGORIES = ['All', 'Business', 'Education', 'Marketing', 'Personal', 'Social', 'General']
-
 const css = `
+/* ─────────────────────────────────────────
+   Templates Section
+───────────────────────────────────────── */
 .ts-section {
-  padding: 96px 40px 80px;
-  background: #ffffff;
+  padding: 96px 48px 88px;
+  background: #e8eef6;
   font-family: 'Inter', sans-serif;
 }
 
-/* ── Header ── */
+/* Header */
 .ts-header {
   text-align: center;
-  max-width: 640px;
-  margin: 0 auto 52px;
+  max-width: 620px;
+  margin: 0 auto 56px;
 }
 .ts-eyebrow {
   display: inline-flex;
@@ -104,23 +105,23 @@ const css = `
   width: 6px; height: 6px;
   border-radius: 50%;
   background: #3b82f6;
-  animation: ts-blink 2s ease-in-out infinite;
+  animation: ts-pulse 2s ease-in-out infinite;
 }
-@keyframes ts-blink {
+@keyframes ts-pulse {
   0%,100% { opacity:1; transform:scale(1); }
-  50%      { opacity:.35; transform:scale(.6); }
+  50%      { opacity:.3; transform:scale(.55); }
 }
 .ts-title {
   font-family: 'Georgia','Times New Roman',serif;
-  font-size: clamp(34px,4vw,52px);
+  font-size: clamp(32px, 4vw, 50px);
   font-weight: 400;
   color: #0f172a;
   line-height: 1.12;
-  letter-spacing: -1.8px;
+  letter-spacing: -1.6px;
   margin: 0 0 14px;
 }
 .ts-title span {
-  background: linear-gradient(135deg,#1e40af,#3b82f6);
+  background: linear-gradient(135deg, #1e40af, #3b82f6);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -132,155 +133,95 @@ const css = `
   margin: 0;
 }
 
-/* ── Filters ── */
-.ts-filters {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 52px;
-}
-.ts-filter {
-  padding: 7px 18px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 500;
-  border: 1px solid rgba(15,23,42,0.1);
-  background: transparent;
-  color: #64748b;
-  cursor: pointer;
-  transition: all .2s ease;
-  font-family: 'Inter',sans-serif;
-}
-.ts-filter:hover {
-  border-color: rgba(30,64,175,.25);
-  color: #1e40af;
-}
-.ts-filter.active {
-  background: #1e40af;
-  border-color: #1e40af;
-  color: #fff;
-  box-shadow: 0 4px 14px rgba(30,64,175,.22);
-}
-
-/* ── Grid ── */
+/* Grid — 3 cols × 2 rows */
 .ts-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 40px 32px;
+  gap: 16px;
   max-width: 1200px;
-  margin: 0 auto 64px;
+  margin: 0 auto 56px;
 }
 
-/* ── Card — image-first, text below ── */
+/* ── Card ── */
 .ts-card {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background: #ffffff;
+  border: 1.5px solid rgba(15,23,42,0.09);
+  border-radius: 18px;
+  height: 160px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color .28s ease, box-shadow .28s ease;
+}
+.ts-card:hover {
+  border-color: rgba(30,64,175,0.22);
+  box-shadow: 0 8px 32px rgba(15,23,42,0.09);
+}
+
+/* Left text block */
+.ts-card-label {
+  flex-shrink: 0;
+  width: 148px;
+  padding: 0 0 0 28px;
   display: flex;
   flex-direction: column;
-  cursor: pointer;
-  background: transparent;
-  border: none;
+  gap: 6px;
+  z-index: 2;
+}
+.ts-card-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.25;
+  white-space: pre-line;
+  letter-spacing: -0.4px;
+}
+.ts-card-count {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 500;
 }
 
-/* Image block */
-.ts-img-wrap {
-  width: 100%;
-  aspect-ratio: 4/3;
-  border-radius: 20px;
-  overflow: hidden;
-  background: #f1f5f9;
-  position: relative;
-  flex-shrink: 0;
+/* Right image cluster — sits flush to right edge, clipped by card overflow:hidden */
+.ts-img-cluster {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 46%;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  transition: width .42s cubic-bezier(.16,1,.3,1);
 }
-.ts-img-wrap img {
+.ts-card:hover .ts-img-cluster {
+  width: 56%;
+}
+
+/* Each portrait image strip */
+.ts-img-strip {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+  border-left: 2px solid #ffffff;
+}
+.ts-img-strip:first-child {
+  border-left: none;
+}
+.ts-img-strip img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform .55s cubic-bezier(.16,1,.3,1);
+  transform: scale(1);
+  transition: transform .5s cubic-bezier(.16,1,.3,1);
 }
-.ts-card:hover .ts-img-wrap img {
-  transform: scale(1.05);
-}
-
-/* Hover overlay */
-.ts-img-wrap::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(15,23,42,0);
-  border-radius: 20px;
-  transition: background .3s ease;
-}
-.ts-card:hover .ts-img-wrap::after {
-  background: rgba(15,23,42,0.08);
-}
-
-/* "Use template" pill that appears on hover */
-.ts-hover-pill {
-  position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%) translateY(8px);
-  white-space: nowrap;
-  background: #ffffff;
-  color: #0f172a;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 8px 20px;
-  border-radius: 999px;
-  box-shadow: 0 4px 20px rgba(15,23,42,0.18);
-  opacity: 0;
-  transition: opacity .25s ease, transform .25s ease;
-  z-index: 2;
-  pointer-events: none;
-}
-.ts-card:hover .ts-hover-pill {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-/* Text below image */
-.ts-card-body {
-  padding: 20px 4px 0;
-}
-.ts-card-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #0f172a;
-  margin: 0 0 8px;
-  letter-spacing: -.3px;
-  line-height: 1.3;
-}
-.ts-card-desc {
-  font-size: 14px;
-  color: #64748b;
-  line-height: 1.6;
-  margin: 0 0 12px;
-}
-.ts-card-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.ts-cat {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 6px;
-  background: rgba(30,64,175,0.07);
-  color: #1e40af;
-  border: 1px solid rgba(30,64,175,0.12);
-}
-.ts-meta-dot {
-  width: 3px; height: 3px;
-  border-radius: 50%;
-  background: #cbd5e1;
-  flex-shrink: 0;
-}
-.ts-meta-text {
-  font-size: 12px;
-  color: #94a3b8;
+.ts-card:hover .ts-img-strip img {
+  transform: scale(1.07);
 }
 
 /* ── CTA strip ── */
@@ -319,7 +260,7 @@ const css = `
   color: #fff;
   font-size: 14px;
   font-weight: 600;
-  font-family: 'Inter',sans-serif;
+  font-family: 'Inter', sans-serif;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
@@ -328,26 +269,25 @@ const css = `
 .ts-cta-btn:hover {
   background: #1e40af;
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(30,64,175,.25);
+  box-shadow: 0 8px 24px rgba(30,64,175,.28);
 }
 
-/* ── Responsive ── */
+/* Responsive */
 @media (max-width: 1024px) {
   .ts-grid { grid-template-columns: repeat(2, 1fr); }
 }
-@media (max-width: 600px) {
-  .ts-grid { grid-template-columns: 1fr; gap: 32px 0; }
-  .ts-section { padding: 60px 20px; }
+@media (max-width: 640px) {
+  .ts-grid { grid-template-columns: 1fr; }
+  .ts-section { padding: 64px 20px; }
   .ts-cta { flex-direction: column; text-align: center; }
   .ts-cta-btn { width: 100%; justify-content: center; }
+  .ts-card { height: 140px; }
+  .ts-card-label { width: 130px; padding-left: 20px; }
+  .ts-card-name { font-size: 15px; }
 }
 `
 
 function TemplatesSection({ onNavigateToSolution }) {
-  const [active, setActive] = useState('All')
-
-  const list = active === 'All' ? TEMPLATES : TEMPLATES.filter(t => t.category === active)
-
   return (
     <>
       <style>{css}</style>
@@ -371,65 +311,36 @@ function TemplatesSection({ onNavigateToSolution }) {
           <p className="ts-subtitle">
             Ready-made layouts for every use case — pick one, add your content, and generate.
           </p>
-          <div className="ts-loading">
-            <LoadingDots size="sm" />
-          </div>
-        </motion.div>
-
-        {/* Filters */}
-        <motion.div
-          className="ts-filters"
-          initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          {CATEGORIES.map(cat => (
-            <button
-              key={cat}
-              className={`ts-filter${active === cat ? ' active' : ''}`}
-              onClick={() => setActive(cat)}
-            >
-              {cat}
-            </button>
-          ))}
         </motion.div>
 
         {/* Grid */}
-        <motion.div className="ts-grid" layout>
-          <AnimatePresence mode="popLayout">
-            {list.map((t, i) => (
-              <motion.div
-                key={t.id}
-                className="ts-card"
-                layout
-                initial={{ opacity: 0, y: 28 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.96 }}
-                transition={{ duration: 0.4, delay: i * 0.07 }}
-              >
-                {/* Image */}
-                <div className="ts-img-wrap">
-                  <img src={t.img} alt={t.title} loading="lazy" />
-                  <span className="ts-hover-pill">Use this template →</span>
-                </div>
+        <div className="ts-grid">
+          {CATEGORIES.map((cat, i) => (
+            <motion.div
+              key={cat.id}
+              className="ts-card"
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: i * 0.07 }}
+            >
+              {/* Left: title */}
+              <div className="ts-card-label">
+                <span className="ts-card-name">{cat.title}</span>
+                <span className="ts-card-count">{cat.count} templates</span>
+              </div>
 
-                {/* Text below */}
-                <div className="ts-card-body">
-                  <div className="ts-card-title">{t.title}</div>
-                  <p className="ts-card-desc">{t.description}</p>
-                  <div className="ts-card-meta">
-                    <span className="ts-cat">{t.category}</span>
-                    <span className="ts-meta-dot" />
-                    <span className="ts-meta-text">{t.scenes} scenes</span>
-                    <span className="ts-meta-dot" />
-                    <span className="ts-meta-text">{t.duration}</span>
+              {/* Right: image strips */}
+              <div className="ts-img-cluster">
+                {cat.images.map((src, j) => (
+                  <div className="ts-img-strip" key={j}>
+                    <img src={src} alt={`${cat.title} preview ${j + 1}`} loading="lazy" />
                   </div>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          ))}
+        </div>
 
         {/* CTA strip */}
         <motion.div
