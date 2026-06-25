@@ -93,6 +93,8 @@ const API_CONFIG = {
         LOOKS: '/api/heygen/avatars/looks',
         CREATE: '/api/heygen/avatars',
         UPLOAD: '/api/heygen/avatars/upload',
+        DELETE_GROUP: (groupId) => `/api/heygen/avatars/${groupId}`,
+        DELETE_LOOK: (lookId) => `/api/heygen/avatars/looks/${lookId}`,
       },
       VOICES: {
         LIST: '/api/heygen/voices',
@@ -101,7 +103,8 @@ const API_CONFIG = {
         UPLOAD: '/api/heygen/voices/upload',
         SELECT: '/api/heygen/voices/select',
         PREVIEW: '/api/heygen/voices/preview-speech',
-        STATUS: '/api/heygen/voices' // Path will be /api/heygen/voices/:voiceId
+        STATUS: '/api/heygen/voices', // Path will be /api/heygen/voices/:voiceId
+        DELETE: (voiceId) => `/api/heygen/voices/${voiceId}`,
       },
       VIDEOS: {
         CREATE: (workspaceId, projectId) => `/api/workspaces/${workspaceId}/projects/${projectId}/heygen/videos`

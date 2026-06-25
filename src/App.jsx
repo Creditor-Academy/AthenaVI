@@ -27,7 +27,7 @@ import NotFound from './pages/NotFound/NotFound.jsx'
 import RenderDownload from './pages/Download/RenderDownload.jsx'
 import GoogleCallback from './components/features/auth/GoogleCallback.jsx'
 import { persistWorkspaceFolderNavigation } from './utils/navigateToWorkspaceFolder.js'
-import { resolveViewFromLocation } from './utils/authRouting.js'
+import { isOAuthCallbackPath, resolveViewFromLocation } from './utils/authRouting.js'
 
 const PATH_TO_VIEW_MAP = {
   '/': 'landing',
@@ -174,7 +174,7 @@ function App() {
 
   // Save view to localStorage whenever it changes
   useEffect(() => {
-    if (view === 'not-found') return
+    if (view === 'not-found' || view === 'google-callback') return
 
     window.localStorage.setItem('athenavi:view', view)
     
@@ -210,7 +210,8 @@ function App() {
     const currentPath = window.location.pathname
     const onProtectedPath = currentPath.includes('/invitations/accept') ||
       currentPath.includes('/invite/accept') ||
-      currentPath.includes('/reset-password')
+      currentPath.includes('/reset-password') ||
+      isOAuthCallbackPath(currentPath)
     const isDashboardSubPath = currentPath === '/profile' || currentPath.startsWith('/dashboard')
     const targetUrl = (view === 'dashboard' && isDashboardSubPath) ? currentPath : newUrl
     try {

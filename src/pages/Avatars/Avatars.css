@@ -184,6 +184,25 @@
   font-size: 14px;
 }
 
+.avatars-consent-banner--success {
+  background: rgba(22, 163, 74, 0.12);
+  border-color: rgba(22, 163, 74, 0.35);
+}
+
+.avatars-consent-banner--error {
+  background: rgba(220, 38, 38, 0.1);
+  border-color: rgba(220, 38, 38, 0.3);
+}
+
+.library-delete-cta {
+  color: #dc2626;
+}
+
+.library-delete-cta:hover {
+  background: rgba(220, 38, 38, 0.12);
+  color: #b91c1c;
+}
+
 .avatars-persona-consent {
   margin: 16px 0 20px;
   padding: 16px;
@@ -808,6 +827,34 @@
   object-fit: cover;
 }
 
+.filmstrip-delete-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.68);
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.filmstrip-item:hover .filmstrip-delete-btn,
+.filmstrip-item.active .filmstrip-delete-btn {
+  opacity: 1;
+}
+
+.filmstrip-delete-btn:hover {
+  background: rgba(220, 38, 38, 0.95);
+  transform: scale(1.08);
+}
+
 .filmstrip-item:hover {
   opacity: 1;
   transform: translateY(-5px);
@@ -1137,6 +1184,27 @@
 
 .btn-action-primary:active {
   transform: translateY(-1px);
+}
+
+.btn-action-danger {
+  padding: 12px;
+  background: rgba(220, 38, 38, 0.12);
+  color: #dc2626;
+  border-radius: 10px;
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-action-danger:hover {
+  background: rgba(220, 38, 38, 0.2);
+  color: #b91c1c;
 }
 
 .btn-action-secondary {

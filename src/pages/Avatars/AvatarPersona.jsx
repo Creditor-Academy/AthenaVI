@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Video, X, Sparkles, ShieldCheck } from 'lucide-react'
+import { Video, X, Sparkles, ShieldCheck, Trash2 } from 'lucide-react'
 import { getSanitizedErrorMessage } from '../../utils/userFacingMessage'
 import heygenService from '../../services/heygenService'
 import AvatarConsentStep, { avatarNeedsConsentFlow } from '../../components/ui/AvatarConsentStep/AvatarConsentStep'
@@ -12,8 +12,19 @@ import {
   getConsentUrlFromResponse,
   mapLookTile,
 } from '../../utils/heygenAvatars'
+import { getAvatarDeleteMessage } from '../../utils/heygenDelete'
 
-function AvatarPersona({ selectedAvatar, closeDetails, onCreate, onCreateLooks, isPrivate, onCompleteConsent }) {
+function AvatarPersona({
+  selectedAvatar,
+  closeDetails,
+  onCreate,
+  onCreateLooks,
+  isPrivate,
+  onCompleteConsent,
+  onDeleteAvatar,
+  onDeleteLook,
+  onOpenConfirm,
+}) {
   const [activeLooks, setActiveLooks] = useState([])
   const [selectedLook, setSelectedLook] = useState(null)
   const [loadingLooks, setLoadingLooks] = useState(false)
@@ -115,6 +126,47 @@ function AvatarPersona({ selectedAvatar, closeDetails, onCreate, onCreateLooks, 
     closeDetails()
   }
 
+  const handleDeleteAvatar = () => {
+    if (!isPrivate || !onDeleteAvatar || !onOpenConfirm) return
+    onOpenConfirm(
+      getAvatarDeleteMessage(selectedAvatar),
+      async () => {
+        await onDeleteAvatar(selectedAvatar)
+      },
+      {
+        title: 'Delete avatar',
+        confirmLabel: 'Delete avatar',
+        variant: 'danger',
+      }
+    )
+  }
+
+  const handleDeleteLook = (look, event) => {
+    event.stopPropagation()
+    if (!isPrivate || !onDeleteLook || !onOpenConfirm || !look?.id) return
+    const isLastLook = activeLooks.length <= 1
+    onOpenConfirm(
+      getAvatarDeleteMessage(selectedAvatar, { isLastLook }),
+      async () => {
+        const result = await onDeleteLook(selectedAvatar, look, { isLastLook })
+        if (result?.cascadedGroupDelete) {
+          closeDetails()
+          return
+        }
+        const nextLooks = activeLooks.filter((item) => item.id !== look.id)
+        setActiveLooks(nextLooks)
+        setSelectedLook((prev) =>
+          prev?.id !== look.id ? prev : nextLooks.find((item) => item.ready) || nextLooks[0] || null
+        )
+      },
+      {
+        title: 'Delete look',
+        confirmLabel: isLastLook ? 'Delete avatar' : 'Delete look',
+        variant: 'danger',
+      }
+    )
+  }
+
   if (!selectedAvatar) return null
 
   return (
@@ -143,6 +195,17 @@ function AvatarPersona({ selectedAvatar, closeDetails, onCreate, onCreateLooks, 
                     title={look.ready ? look.name : `${look.name} (processing)`}
                   >
                     <img src={look.image} alt={look.name} />
+                    {isPrivate && onDeleteLook ? (
+                      <button
+                        type="button"
+                        className="filmstrip-delete-btn"
+                        title={`Delete look ${look.name}`}
+                        aria-label={`Delete look ${look.name}`}
+                        onClick={(event) => handleDeleteLook(look, event)}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    ) : null}
                     {look.avatarType ? (
                       <span className="filmstrip-type-badge">
                         {formatAvatarTypeLabel(look.avatarType)}
@@ -249,6 +312,12 @@ function AvatarPersona({ selectedAvatar, closeDetails, onCreate, onCreateLooks, 
                 <button type="button" className="btn-action-secondary" onClick={handleCreateLook}>
                   <Sparkles size={20} />
                   <span>Create look</span>
+                </button>
+              ) : null}
+              {isPrivate && onDeleteAvatar ? (
+                <button type="button" className="btn-action-danger" onClick={handleDeleteAvatar}>
+                  <Trash2 size={20} />
+                  <span>Delete Avatar</span>
                 </button>
               ) : null}
               <button
