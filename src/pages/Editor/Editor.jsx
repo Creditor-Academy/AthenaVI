@@ -59,6 +59,7 @@ import {
 } from '../../utils/sceneDuration'
 import { useEditorHistory } from '../../hooks/useEditorHistory'
 import { useEditorUx } from '../../hooks/useEditorUx'
+import { findSceneMusicClip, resolveAudioClipSrc } from '../../utils/audioClipUtils'
 import { normalizeClipStack, normalizeClipsToScene } from '../../utils/editorLayerUtils'
 import {
   findTopFrameAtPoint,
@@ -782,30 +783,42 @@ function Create({ onBack, initialConfig = null }) {
 
   // Memoized access for convenience
   const scenes = project.scenes || [];
-  const bgMusic = scenes.find(s => s.clips?.some(c => c.type === 'audio'))?.clips?.find(c => c.type === 'audio')?.src || null;
-  const [bgMusicVolume, setBgMusicVolume] = useState(0.6);
+  const activeScene = project.scenes.find(s => s.id === activeSceneId)
+  const activeSceneMusicClip = useMemo(
+    () => findSceneMusicClip(activeScene),
+    [activeScene]
+  )
+  const bgMusic = useMemo(
+    () => (activeSceneMusicClip ? resolveAudioClipSrc(activeSceneMusicClip, activeScene) : null),
+    [activeSceneMusicClip, activeScene]
+  )
+  const bgMusicVolume = activeSceneMusicClip?.volume ?? 0.6
+
+  const handleAddAudioClip = useCallback(
+    (src, assetId = null, options = {}) => {
+      const clipId = addAudioClip(src, assetId, options)
+      if (clipId) {
+        setSelectedLayerId(clipId)
+        setIsRightSidebarOpen(true)
+      }
+    },
+    [addAudioClip]
+  )
+
+  const handleUpdateAudioClip = useCallback(
+    (updates) => {
+      if (!activeSceneId || !activeSceneMusicClip) return
+      uxUpdateScene(activeSceneId, {
+        clips: (activeScene?.clips || []).map((clip) =>
+          clip.id === activeSceneMusicClip.id ? { ...clip, ...updates } : clip
+        ),
+      }, { history: true })
+    },
+    [activeSceneId, activeScene, activeSceneMusicClip, uxUpdateScene]
+  )
 
   const setBgMusic = (url) => {
-    // Update or add audio clip to the first scene as a simple management strategy for now
-    setProject(prev => {
-      const newScenes = [...prev.scenes];
-      if (newScenes.length > 0) {
-        const audioClip = newScenes[0].clips.find(c => c.type === 'audio');
-        if (audioClip) {
-          newScenes[0].clips = newScenes[0].clips.map(c => c.type === 'audio' ? { ...c, src: url } : c);
-        } else {
-          newScenes[0].clips.push({
-            id: `audio_${Date.now()}`,
-            type: 'audio',
-            src: url,
-            startTime: 0,
-            endTime: newScenes[0].duration,
-            volume: bgMusicVolume
-          });
-        }
-      }
-      return { ...prev, updatedAt: new Date().toISOString(), scenes: newScenes };
-    });
+    handleAddAudioClip(url, null, { name: 'Background music' })
   }
 
   // Auto-create a default blank scene and return the new scene + updated scenes array
@@ -837,6 +850,14 @@ function Create({ onBack, initialConfig = null }) {
   }
 
   const addLayer = (type, content, meta = null) => {
+    if (type === 'audio') {
+      const isMediaObject = content && typeof content === 'object' && !Array.isArray(content)
+      const mediaSrc = isMediaObject ? (content.url || content.src) : content
+      const assetId = isMediaObject ? content.assetId : meta?.assetId
+      handleAddAudioClip(mediaSrc, assetId, { name: meta?.name })
+      return
+    }
+
     let targetSceneId = activeSceneId
     let currentScenes = project.scenes
 
@@ -1120,9 +1141,14 @@ function Create({ onBack, initialConfig = null }) {
       updatedAt: new Date().toISOString(),
       scenes: prev.scenes.map(s => ({
         ...s,
-        clips: s.clips.filter(c => c.type !== 'audio')
+        clips: s.clips.filter((c) => {
+          if (c.type !== 'audio') return true
+          const role = String(c.role || '').toLowerCase()
+          return role === 'narration' || role === 'voiceover'
+        }),
       }))
     }));
+    setSelectedLayerId(null)
   }
 
   const handleMusicDurationChange = (newDuration) => {
@@ -1133,7 +1159,6 @@ function Create({ onBack, initialConfig = null }) {
   const speechSynthesisRef = useRef(null)
   const lastSpeakSceneIdRef = useRef(null)
 
-  const activeScene = project.scenes.find(s => s.id === activeSceneId)
   const selectedLayer = activeScene?.clips?.find((c) => c.id === selectedLayerId)
 
   const handleTimelineResize = useCallback((delta) => {
@@ -2774,6 +2799,7 @@ function Create({ onBack, initialConfig = null }) {
         lastSaved={lastSaved}
         activeSceneId={activeSceneId}
         addLayer={addLayer}
+        onAddAudio={handleAddAudioClip}
         updateScene={updateScene}
         activeScene={activeScene}
         workspaceId={project.workspaceId || project.createConfig?.workspaceId}
@@ -2905,6 +2931,7 @@ function Create({ onBack, initialConfig = null }) {
               onReorderScenes={handleReorderScenes}
               onDeleteLayer={deleteLayer}
               onDeleteMusic={deleteMusic}
+              onUpdateAudioClip={handleUpdateAudioClip}
               onUndo={() => { if (undo()) showToast('Undo', 'info') }}
               onRedo={() => { if (redo()) showToast('Redo', 'info') }}
               canUndo={canUndo}

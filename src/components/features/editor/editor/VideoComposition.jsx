@@ -10,6 +10,7 @@ import {
   OffthreadVideo,
   Sequence,
 } from 'remotion'
+import SceneAudioSequence from './SceneAudioSequence'
 import {
     MdPerson,
     MdAddCircleOutline,
@@ -129,20 +130,16 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
     <>
       {audioEnabled &&
         (scene.clips || [])
-          .filter((clip) => clip?.type === 'audio' && clip?.src)
-          .map((clip) => {
-            const clipStartSec = clip.startTime || 0
-            const clipEndSec = clip.endTime ?? scene.duration ?? 5
-            const clipStart = Math.floor(clipStartSec * fps)
-            const clipDuration = Math.max(1, Math.floor((clipEndSec - clipStartSec) * fps))
-            const globalFrom = sceneStartFrame + clipStart
-            const volume = typeof clip.volume === 'number' ? clip.volume : 1
-            return (
-              <Sequence key={clip.id || `${scene.id}-audio`} from={globalFrom} durationInFrames={clipDuration} layout="none">
-                <Audio src={clip.src} volume={volume} placeholder={null} />
-              </Sequence>
-            )
-          })}
+          .filter((clip) => clip?.type === 'audio')
+          .map((clip) => (
+            <SceneAudioSequence
+              key={clip.id || `${scene.id}-audio`}
+              clip={clip}
+              scene={scene}
+              fps={fps}
+              sceneStartFrame={sceneStartFrame}
+            />
+          ))}
       {!hasBgClip && <div style={backgroundStyle} />}
       {sortClipsForRender(scene.clips || []).map((clip) => {
         const clipStart = (clip.startTime || 0) * fps
@@ -412,6 +409,15 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) 
       () => getSceneStartFrames(scenes || [], fps),
       [scenes, fps]
     )
+    const hasSceneTimelineAudio = React.useMemo(
+      () =>
+        scenesList.some((scene) =>
+          (scene.clips || []).some(
+            (clip) => clip?.type === 'audio' && resolveClipMediaSrc(clip, scene)
+          )
+        ),
+      [scenesList]
+    )
 
     if (!scenesList || scenesList.length === 0) {
         return (
@@ -476,7 +482,7 @@ const VideoComposition = ({ scenes, bgMusic, bgMusicVolume = 0.3, onAddScene }) 
             backgroundColor: '#ffffff',
             fontFamily: 'Inter, sans-serif',
         }}>
-            {bgMusic && <Audio src={bgMusic} volume={bgMusicVolume} placeholder={null} />}
+            {hasSceneTimelineAudio ? null : bgMusic ? <Audio src={bgMusic} volume={bgMusicVolume} placeholder={null} /> : null}
 
             {layers.map((layer, index) => {
               const sceneKey = layer.scene.id || layer.scene.sceneId

@@ -46,11 +46,8 @@ const ALLOWED_MIME_TYPES = new Set([
   'image/png',
   'image/webp',
   'video/mp4',
-  'video/webm',
   'audio/mpeg',
   'audio/mp3',
-  'audio/wav',
-  'audio/webm',
 ]);
 
 const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
@@ -68,8 +65,12 @@ class AssetService {
     if (!file) return 'No file selected';
     if (file.size > MAX_UPLOAD_BYTES) return 'File exceeds the 50 MB limit';
     const mime = file.type || '';
+    const name = String(file.name || '').toLowerCase();
+    const allowedByExtension =
+      /\.(jpe?g|png|webp|mp4|mp3)$/.test(name);
+    if (!mime && allowedByExtension) return null;
     if (!ALLOWED_MIME_TYPES.has(mime)) {
-      return 'File type not allowed. Use JPEG, PNG, WebP, MP4, WebM, MP3, WAV, or WebM audio.';
+      return 'File type not allowed. Use JPEG, PNG, WebP, MP4, or MP3.';
     }
     return null;
   }
@@ -121,6 +122,22 @@ class AssetService {
 
     const data = await response.json();
     return data.data?.assets || data.assets || [];
+  }
+
+  async listAllAssets(workspaceId, { source = 'all', pageSize = 100 } = {}) {
+    const take = Math.min(Math.max(pageSize, 1), 100);
+    const all = [];
+    let skip = 0;
+
+    while (true) {
+      const page = await this.listAssets(workspaceId, { take, skip, source });
+      if (!page.length) break;
+      all.push(...page);
+      if (page.length < take) break;
+      skip += take;
+    }
+
+    return all;
   }
 
   async renameAsset(workspaceId, assetId, name) {
@@ -192,6 +209,10 @@ class AssetService {
     if (mime.startsWith('video')) return 'video';
     if (mime.startsWith('audio')) return 'audio';
     if (mime.startsWith('image')) return 'image';
+    const name = String(asset?.name || asset?.fileName || '').toLowerCase();
+    if (/\.(mp3|mpeg|wav|ogg|m4a|aac)$/.test(name)) return 'audio';
+    if (/\.(mp4|webm|mov)$/.test(name)) return 'video';
+    if (/\.(jpe?g|png|webp|gif|svg)$/.test(name)) return 'image';
     const raw = String(asset?.mediaType || asset?.type || '').toLowerCase();
     if (raw === 'video' || raw === 'audio' || raw === 'image') return raw;
     return 'image';

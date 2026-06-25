@@ -37,6 +37,7 @@ import LayerFitFlipAdjustments from './LayerFitFlipAdjustments';
 import LayerAdjustmentsCompact from './LayerAdjustmentsCompact';
 import LayerTransformBar from './LayerTransformBar';
 import { resolveClipMediaSrc, isAvatarClip, isVideoMedia } from '../../../../utils/heygenVideo';
+import AudioLayerPropertiesPanel from './AudioLayerPropertiesPanel';
 import SceneSettingsPanel from './SceneSettingsPanel';
 import PropertiesAccordion from './PropertiesAccordion';
 import AvatarVoiceoverSection from './AvatarVoiceoverSection';
@@ -786,6 +787,7 @@ const LayerPanel = ({
   });
 
   const isImage  = activeLayer.type === 'image';
+  const isAudio  = activeLayer.type === 'audio' && activeLayer.role !== 'narration' && activeLayer.role !== 'voiceover';
   const isText   = isTextLayer(activeLayer);
   const isHeading = isText && (activeLayer.role === 'main-text' || activeLayer.label?.toLowerCase().includes('head'));
   const isAvatarLayer = isAvatarClip(activeLayer);
@@ -799,7 +801,22 @@ const LayerPanel = ({
   const isShape  = activeLayer.type === 'shape';
   const isFrame  = isShape && activeLayer.role === 'frame';
 
-  const roleLabel = isHeading ? 'Heading' : getLayerDisplayLabel(activeLayer);
+  const roleLabel = isHeading ? 'Heading' : isAudio ? 'Scene audio' : getLayerDisplayLabel(activeLayer);
+
+  if (isAudio) {
+    return (
+      <AudioLayerPropertiesPanel
+        activeLayer={activeLayer}
+        activeScene={activeScene}
+        updateLayer={updateLayer}
+        onRemove={() => {
+          updateScene(activeSceneId, {
+            clips: clips.filter((c) => c.id !== activeLayer.id),
+          });
+        }}
+      />
+    );
+  }
 
   if (isText) {
     return (

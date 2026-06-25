@@ -65,6 +65,7 @@ const EditorTopbar = ({
     lastSaved,
     activeSceneId,
     addLayer,
+    onAddAudio,
     updateScene,
     activeScene,
     workspaceId,
@@ -175,6 +176,7 @@ const EditorTopbar = ({
                 return (
                     <EditorSidebarUpload
                         addLayer={addLayerWithClose}
+                        onAddAudio={onAddAudio}
                         workspaceId={workspaceId}
                         onUploadError={onUploadError}
                         onClose={closeInsertModal}

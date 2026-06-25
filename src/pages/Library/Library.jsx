@@ -17,7 +17,7 @@ import {
 import assetService, { isAssetInUseError, formatAssetInUseMessage } from '../../services/assetService'
 import workspaceService from '../../services/workspaceService'
 import { useAuth } from '../../contexts/AuthContext'
-import { extractUserId } from '../TeamWorkspace/workspaceUtils'
+import { extractUserId, normalizeWorkspace } from '../TeamWorkspace/workspaceUtils'
 import { canManageAsset, shouldShowUploader } from '../../utils/assetPermissions'
 import { assertUploadFits, dispatchStorageRefresh, formatStorageLimitMessage, isStorageLimitError } from '../../utils/storageQuota'
 import { useWorkspaceStorage } from '../../hooks/useStorageQuota'
@@ -43,7 +43,7 @@ const mediaTabs = [
 
 function Library() {
   const { user } = useAuth()
-  const currentUserId = extractUserId(user)
+  const currentUserId = extractUserId(user) || workspaceService.getCurrentUserId?.() || ''
   const [activeView, setActiveView] = useState('grid')
   const [activeTab, setActiveTab] = useState('images')
   const [searchQuery, setSearchQuery] = useState('')
@@ -56,6 +56,7 @@ function Library() {
   const [workspaces, setWorkspaces] = useState([])
   const [workspaceId, setWorkspaceId] = useState('')
   const [workspaceLoading, setWorkspaceLoading] = useState(true)
+  const [workspaceMeta, setWorkspaceMeta] = useState(null)
 
   const [assets, setAssets] = useState([])
   const [assetsLoading, setAssetsLoading] = useState(false)
@@ -70,7 +71,9 @@ function Library() {
     setWorkspaceLoading(true)
     try {
       const list = await workspaceService.listWorkspaces()
-      setWorkspaces(list || [])
+      setWorkspaces(
+        (list || []).map((ws) => normalizeWorkspace(ws, currentUserId, user))
+      )
       if (list?.length) {
         setWorkspaceId((prev) => {
           if (prev && list.some((ws) => String(ws.id) === String(prev))) return prev
@@ -83,7 +86,7 @@ function Library() {
     } finally {
       setWorkspaceLoading(false)
     }
-  }, [])
+  }, [currentUserId, user])
 
   const refreshAssets = useCallback(async () => {
     if (!workspaceId) {
@@ -93,7 +96,7 @@ function Library() {
     setAssetsLoading(true)
     setAssetsError('')
     try {
-      const list = await assetService.listAssets(workspaceId, { take: 100, source: 'all' })
+      const list = await assetService.listAllAssets(workspaceId, { source: 'all' })
       setAssets(list.map((item) => assetService.normalizeAsset(item)).filter(Boolean))
     } catch (err) {
       setAssets([])
@@ -110,6 +113,25 @@ function Library() {
   useEffect(() => {
     refreshAssets()
   }, [refreshAssets])
+
+  useEffect(() => {
+    if (!workspaceId) {
+      setWorkspaceMeta(null)
+      return
+    }
+    let cancelled = false
+    workspaceService
+      .getWorkspace(workspaceId)
+      .then((ws) => {
+        if (!cancelled) setWorkspaceMeta(ws)
+      })
+      .catch(() => {
+        if (!cancelled) setWorkspaceMeta(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [workspaceId])
 
   useEffect(() => {
     if (searchRef?.current) searchRef.current.focus()
@@ -209,6 +231,10 @@ function Library() {
           const without = prev.filter((item) => item.id !== normalized.id)
           return [normalized, ...without]
         })
+        if (normalized.mediaType === 'audio') {
+          setSelectedCategory('music')
+          setActiveTab('music')
+        }
       }
       dispatchStorageRefresh()
     } catch (err) {
@@ -235,13 +261,52 @@ function Library() {
     return <MdImage />
   }
 
-  const selectedWorkspace = workspaces.find((ws) => String(ws.id) === String(workspaceId))
+  const selectedWorkspace =
+    workspaceMeta || workspaces.find((ws) => String(ws.id) === String(workspaceId))
   const showUploaderColumn = shouldShowUploader(selectedWorkspace)
 
   const assetCanManage = useCallback(
     (asset) => canManageAsset(asset, selectedWorkspace, currentUserId),
     [selectedWorkspace, currentUserId]
   )
+
+  const showAssetActions = useCallback(
+    (asset) => {
+      if (!workspaceId || !asset) return false
+      if (asset.source === 'stock') return assetCanManage(asset)
+      return assetCanManage(asset) || Boolean(workspaceId)
+    },
+    [workspaceId, assetCanManage]
+  )
+
+  const renderAssetActions = (asset, variant = 'grid') => {
+    if (!showAssetActions(asset)) return null
+    const listClass = variant === 'list' ? ' asset-list-action-btn' : ''
+    return (
+      <>
+        <button
+          type="button"
+          className={`asset-delete-btn asset-delete-btn--${variant}${listClass}${variant === 'grid' ? ' asset-action-btn--rename' : ''}`}
+          aria-label={`Rename ${asset.name}`}
+          title="Rename"
+          disabled={renamingId === asset.id}
+          onClick={() => handleRenameAsset(asset)}
+        >
+          <MdDriveFileRenameOutline />
+        </button>
+        <button
+          type="button"
+          className={`asset-delete-btn asset-delete-btn--${variant}${listClass}`}
+          aria-label={`Delete ${asset.name}`}
+          title="Delete"
+          disabled={deletingId === asset.id}
+          onClick={() => handleDeleteAsset(asset.id)}
+        >
+          <MdDeleteOutline />
+        </button>
+      </>
+    )
+  }
 
   const storageUsedBytes = Number(workspaceStorage?.quota?.usedBytes) || 0
   const storageLimitBytes = Number(workspaceStorage?.quota?.limitBytes) || 0
@@ -263,13 +328,64 @@ function Library() {
     </div>
   )
 
-  const renderGridAsset = (asset) => (
-    <div key={asset.id} className="asset-card grid masonry-card">
+  const renderListSkeleton = () => (
+    <div className="assets-list library-list-skeleton" aria-busy="true" aria-label="Loading assets">
+      <div className="list-header">
+        <div className="col name">Name</div>
+        <div className="col owner">{showUploaderColumn ? 'Uploader' : 'Source'}</div>
+        <div className="col modified">Date modified</div>
+        <div className="col size">Size</div>
+        <div className="col actions" />
+      </div>
+      {Array.from({ length: 8 }, (_, index) => (
+        <div key={`list-skeleton-${index}`} className="library-list-skeleton-row" aria-hidden>
+          <div className="col name">
+            <span className="library-list-skeleton-thumb" />
+            <span className="library-list-skeleton-line library-list-skeleton-line--title" />
+          </div>
+          <div className="col owner">
+            <span className="library-list-skeleton-line" />
+          </div>
+          <div className="col modified">
+            <span className="library-list-skeleton-line library-list-skeleton-line--short" />
+          </div>
+          <div className="col size">
+            <span className="library-list-skeleton-line library-list-skeleton-line--short" />
+          </div>
+          <div className="col actions" />
+        </div>
+      ))}
+    </div>
+  )
+
+  const renderGridAsset = (asset) => {
+    const isAudio = asset.mediaType === 'audio'
+    const showActions = showAssetActions(asset)
+
+    return (
+    <div key={asset.id} className={`asset-card grid masonry-card${isAudio ? ' masonry-card--audio' : ''}`}>
       <div className="asset-preview">
         {asset.mediaType === 'video' ? (
           <video src={asset.url} muted playsInline />
-        ) : asset.mediaType === 'audio' ? (
-          <div className="asset-preview-icon asset-preview-icon--audio">{assetIcon(asset)}</div>
+        ) : isAudio ? (
+          <div className="asset-preview-audio">
+            <div className="asset-preview-audio__icon">{assetIcon(asset)}</div>
+            {asset.url ? (
+              <audio
+                src={asset.url}
+                controls
+                preload="none"
+                className="asset-audio-preview"
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <p className="asset-preview-audio__unavailable">Preview unavailable</p>
+            )}
+            <div className="asset-preview-audio__meta">
+              <span className="asset-name" title={asset.name}>{asset.name}</span>
+              {asset.sizeLabel ? <span>{asset.sizeLabel}</span> : null}
+            </div>
+          </div>
         ) : asset.url ? (
           <img src={asset.url} alt={asset.name} loading="lazy" />
         ) : (
@@ -280,6 +396,7 @@ function Library() {
           <span className="asset-source-badge">Stock</span>
         ) : null}
 
+        {!isAudio ? (
         <div className="masonry-card-overlay">
           <div className="asset-name" title={asset.name}>
             {asset.name}
@@ -291,32 +408,16 @@ function Library() {
             {asset.sizeLabel ? <span>{asset.sizeLabel}</span> : null}
           </div>
         </div>
+        ) : null}
 
-        {assetCanManage(asset) ? (
-          <div className="masonry-card-actions">
-            <button
-              type="button"
-              className="asset-delete-btn asset-delete-btn--grid asset-action-btn--rename"
-              aria-label={`Rename ${asset.name}`}
-              disabled={renamingId === asset.id}
-              onClick={() => handleRenameAsset(asset)}
-            >
-              <MdDriveFileRenameOutline />
-            </button>
-            <button
-              type="button"
-              className="asset-delete-btn asset-delete-btn--grid"
-              aria-label={`Delete ${asset.name}`}
-              disabled={deletingId === asset.id}
-              onClick={() => handleDeleteAsset(asset.id)}
-            >
-              <MdDeleteOutline />
-            </button>
+        {showActions ? (
+          <div className="masonry-card-actions masonry-card-actions--visible">
+            {renderAssetActions(asset, 'grid')}
           </div>
         ) : null}
       </div>
     </div>
-  )
+  )}
 
   return (
     <div className="library-page">
@@ -491,7 +592,9 @@ function Library() {
               style={{ display: 'none' }}
               ref={fileInputRef}
               multiple
-              accept={assetService.acceptForTab(uploadType)}
+              accept={assetService.acceptForTab(
+                selectedCategory === 'music' ? 'music' : uploadType
+              )}
               onChange={handleFileInputChange}
             />
 
@@ -502,7 +605,7 @@ function Library() {
                   onBrowseMedia={() => handleCategoryClick(CATEGORY_CARDS[0])}
                 />
               ) : assetsLoading && filteredAssets.length === 0 ? (
-                renderMasonrySkeleton()
+                activeView === 'list' ? renderListSkeleton() : renderMasonrySkeleton()
               ) : isCurrentTabEmpty ? (
                 <div className="library-empty-state">
                   <p className="library-empty-title">No {activeTab === 'images' ? 'photos' : activeTab} yet</p>
@@ -531,7 +634,7 @@ function Library() {
                       <div className="col owner">{showUploaderColumn ? 'Uploader' : 'Source'}</div>
                       <div className="col modified">Date modified</div>
                       <div className="col size">Size</div>
-                      <div className="col actions" />
+                      <div className="col actions">Actions</div>
                     </div>
                   )}
 
@@ -551,8 +654,17 @@ function Library() {
                                 <div className="asset-preview-icon">{assetIcon(asset)}</div>
                               )}
                             </div>
-                            <div style={{ minWidth: 0 }}>
+                            <div style={{ minWidth: 0, flex: 1 }}>
                               <div className="asset-name" title={asset.name}>{asset.name}</div>
+                              {asset.mediaType === 'audio' && asset.url ? (
+                                <audio
+                                  src={asset.url}
+                                  controls
+                                  preload="none"
+                                  className="asset-audio-preview asset-audio-preview--list"
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              ) : null}
                             </div>
                           </div>
 
@@ -567,28 +679,7 @@ function Library() {
                           <div className="col size" style={{ color: 'var(--text-muted)', fontSize: 13 }}>{asset.sizeLabel || ''}</div>
 
                           <div className="col actions">
-                            {assetCanManage(asset) ? (
-                              <>
-                                <button
-                                  type="button"
-                                  className="asset-delete-btn asset-delete-btn--list"
-                                  aria-label={`Rename ${asset.name}`}
-                                  disabled={renamingId === asset.id}
-                                  onClick={() => handleRenameAsset(asset)}
-                                >
-                                  <MdDriveFileRenameOutline />
-                                </button>
-                                <button
-                                  type="button"
-                                  className="asset-delete-btn asset-delete-btn--list"
-                                  aria-label={`Delete ${asset.name}`}
-                                  disabled={deletingId === asset.id}
-                                  onClick={() => handleDeleteAsset(asset.id)}
-                                >
-                                  <MdDeleteOutline />
-                                </button>
-                              </>
-                            ) : null}
+                            {renderAssetActions(asset, 'list')}
                           </div>
                         </>
                       </div>

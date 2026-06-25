@@ -8,6 +8,7 @@ import {
   sendClipToBack,
   snapPoint,
 } from '../utils/editorLayerUtils';
+import { buildSceneMusicClip } from '../utils/audioClipUtils';
 
 export function useEditorUx({
   project,
@@ -163,30 +164,28 @@ export function useEditorUx({
     setProject((prev) => prev, { history: true });
   };
 
-  const addAudioClip = (src, assetId = null) => {
-    if (!activeSceneId) return;
+  const addAudioClip = (src, assetId = null, options = {}) => {
+    if (!activeSceneId) return null;
+    let newId = null;
     updateActiveSceneClips((clips) => {
       const scene = project.scenes.find((s) => s.id === activeSceneId);
       const duration = scene?.duration || 8;
-      const content = assetId ? { assetId, mediaType: 'audio' } : { src };
+      const clip = buildSceneMusicClip({
+        src: src || null,
+        assetId,
+        sceneDuration: duration,
+        name: options.name || 'Background music',
+        volume: options.volume ?? 1,
+        startTime: options.startTime ?? 0,
+      });
+      newId = clip.id;
       return [
-        ...clips.filter((c) => c.type !== 'audio' || c.role !== 'scene-audio'),
-        {
-          id: `clip_audio_${Date.now()}`,
-          type: 'audio',
-          role: 'scene-audio',
-          src: assetId ? undefined : src,
-          content,
-          layer: clips.length,
-          startTime: 0,
-          endTime: duration,
-          duration,
-          volume: 1,
-          visible: true,
-        },
+        ...clips.filter((c) => c.type !== 'audio' || !['scene-audio', 'background-music'].includes(c.role)),
+        clip,
       ];
     });
-    showToast?.('Audio clip added to scene', 'success');
+    showToast?.('Audio added to scene', 'success');
+    return newId;
   };
 
   return {

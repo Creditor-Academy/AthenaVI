@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { MdAudiotrack, MdCloudUpload, MdDeleteOutline, MdImage, MdVideocam } from 'react-icons/md';
+import {
+  MdAudiotrack,
+  MdCloudUpload,
+  MdDeleteOutline,
+  MdDriveFileRenameOutline,
+  MdImage,
+  MdVideocam,
+} from 'react-icons/md';
 import assetService, { isAssetInUseError, formatAssetInUseMessage } from '../../../../services/assetService';
 import workspaceService from '../../../../services/workspaceService';
 import { useAuth } from '../../../../contexts/AuthContext';
@@ -14,7 +21,7 @@ const SOURCE_TABS = [
   { id: 'stock', label: 'Stock' },
 ];
 
-const EditorSidebarUpload = ({ addLayer, workspaceId, onUploadError, onClose }) => {
+const EditorSidebarUpload = ({ addLayer, onAddAudio, workspaceId, onUploadError, onClose }) => {
   const { user } = useAuth();
   const currentUserId = extractUserId(user);
   const inputRef = useRef(null);
@@ -23,6 +30,7 @@ const EditorSidebarUpload = ({ addLayer, workspaceId, onUploadError, onClose }) 
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [renamingId, setRenamingId] = useState(null);
   const [sourceFilter, setSourceFilter] = useState('all');
 
   const refreshAssets = useCallback(async () => {
@@ -32,10 +40,7 @@ const EditorSidebarUpload = ({ addLayer, workspaceId, onUploadError, onClose }) 
     }
     setLoading(true);
     try {
-      const list = await assetService.listAssets(workspaceId, {
-        take: 100,
-        source: sourceFilter,
-      });
+      const list = await assetService.listAllAssets(workspaceId, { source: sourceFilter });
       setAssets(list.map((item) => assetService.normalizeAsset(item)).filter(Boolean));
     } catch {
       setAssets([]);
@@ -101,10 +106,14 @@ const EditorSidebarUpload = ({ addLayer, workspaceId, onUploadError, onClose }) 
           onUploadError?.('Upload succeeded but the image URL is missing. Try selecting it from workspace assets.');
           continue;
         }
-        addLayer(normalized.mediaType || file.type.split('/')[0], {
-          url: normalized.url,
-          assetId: normalized.id,
-        });
+        if ((normalized.mediaType || file.type.split('/')[0]) === 'audio') {
+          onAddAudio?.(normalized.url, normalized.id, { name: normalized.name || file.name });
+        } else {
+          addLayer(normalized.mediaType || file.type.split('/')[0], {
+            url: normalized.url,
+            assetId: normalized.id,
+          });
+        }
       }
       await refreshAssets();
       dispatchStorageRefresh();
@@ -115,6 +124,30 @@ const EditorSidebarUpload = ({ addLayer, workspaceId, onUploadError, onClose }) 
       );
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleRename = async (asset, event) => {
+    event?.stopPropagation();
+    event?.preventDefault();
+    if (!workspaceId || !asset?.id || renamingId) return;
+
+    const nextName = window.prompt('Rename asset', asset.name);
+    if (nextName == null) return;
+    const trimmed = nextName.trim();
+    if (!trimmed || trimmed === asset.name) return;
+
+    setRenamingId(asset.id);
+    try {
+      const updated = await assetService.renameAsset(workspaceId, asset.id, trimmed);
+      const normalized = assetService.normalizeAsset(updated);
+      if (normalized) {
+        setAssets((prev) => prev.map((item) => (item.id === normalized.id ? normalized : item)));
+      }
+    } catch (err) {
+      onUploadError?.(err?.message || 'Failed to rename asset');
+    } finally {
+      setRenamingId(null);
     }
   };
 
@@ -153,6 +186,15 @@ const EditorSidebarUpload = ({ addLayer, workspaceId, onUploadError, onClose }) 
   };
 
   const addAssetToCanvas = (asset) => {
+    if (asset.mediaType === 'audio') {
+      if (!onAddAudio) {
+        onUploadError?.('Audio cannot be added in this context.');
+        return;
+      }
+      onAddAudio(asset.url, asset.id, { name: asset.name });
+      onClose?.();
+      return;
+    }
     addLayer(asset.mediaType || 'image', {
       url: asset.url,
       assetId: asset.id,
@@ -213,10 +255,17 @@ const EditorSidebarUpload = ({ addLayer, workspaceId, onUploadError, onClose }) 
               ))}
             </div>
           </div>
-          {loading ? <p className="upload-insert-panel__status">Loading assets…</p> : null}
+          {loading ? (
+            <div className="upload-insert-panel__grid upload-insert-panel__grid--skeleton" aria-busy="true">
+              {Array.from({ length: 8 }, (_, index) => (
+                <div key={`asset-skeleton-${index}`} className="upload-insert-panel__asset-skeleton" aria-hidden />
+              ))}
+            </div>
+          ) : null}
           {!loading && assets.length === 0 ? (
             <p className="upload-insert-panel__status">No assets in this view yet.</p>
           ) : null}
+          {!loading ? (
           <div className="upload-insert-panel__grid premium-scrollbar">
             {assets.map((asset) => (
               <button
@@ -241,6 +290,19 @@ const EditorSidebarUpload = ({ addLayer, workspaceId, onUploadError, onClose }) 
                   <span className="upload-insert-panel__badge">Stock</span>
                 ) : null}
                 {assetCanManage(asset) ? (
+                <>
+                <span
+                  className="upload-insert-panel__rename"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Rename ${asset.name}`}
+                  onClick={(e) => handleRename(asset, e)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') handleRename(asset, e);
+                  }}
+                >
+                  <MdDriveFileRenameOutline size={16} />
+                </span>
                 <span
                   className="upload-insert-panel__delete"
                   role="button"
@@ -253,6 +315,7 @@ const EditorSidebarUpload = ({ addLayer, workspaceId, onUploadError, onClose }) 
                 >
                   <MdDeleteOutline size={16} />
                 </span>
+                </>
                 ) : null}
                 <span className="upload-insert-panel__asset-label">
                   {mediaIcon(asset.mediaType)}
@@ -261,6 +324,7 @@ const EditorSidebarUpload = ({ addLayer, workspaceId, onUploadError, onClose }) 
               </button>
             ))}
           </div>
+          ) : null}
         </div>
       ) : (
         <p className="upload-insert-panel__notice">
