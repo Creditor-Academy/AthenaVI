@@ -30,7 +30,7 @@ import { useWorkspaceData } from './useWorkspaceData.js';
 import { useWorkspaceActions } from './useWorkspaceActions.js';
 import InvitationsPanel from './InvitationsPanel.jsx';
 import ContributorsPanel from './ContributorsPanel.jsx';
-import ConfirmDialog from './ConfirmDialog.jsx';
+import ConfirmDialog from '../../components/ui/ConfirmDialog/ConfirmDialog.jsx';
 import Toast from './Toast.jsx';
 
 import { buildWorkspaceUserLookup, getAuthDisplayName } from '../../utils/workspaceUsers.js';
@@ -803,7 +803,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
 
       <div className="workspace-content-area" style={{ flex: 1 }}>
         {loading && workspaces.length === 0 ? (
-          <TeamWorkspaceSkeleton />
+          <TeamWorkspaceSkeleton viewMode={viewMode} />
         ) : (
           <>
             {currentLevel.type === 'root' && renderRoot()}

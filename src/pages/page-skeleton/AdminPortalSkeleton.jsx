@@ -5,9 +5,7 @@ const AdminPortalSkeleton = () => {
   return (
     <div className="sa-portal ps-page">
       <div className="sa-panel">
-        <div className="sa-panel-header">
-          <div className="ps-block ps-block--line" style={{ height: 22, width: 160 }} />
-        </div>
+        <div className="ps-block" style={{ height: 48, marginBottom: 16 }} />
         <div className="sa-split">
           <div className="ps-block" style={{ minHeight: 420 }} />
           <div className="ps-block" style={{ minHeight: 420 }} />

@@ -10,7 +10,17 @@ import {
 } from 'react-icons/md';
 import heygenService from '../../services/heygenService';
 import { AvatarConsentModal } from '../../components/ui/AvatarConsentStep/AvatarConsentStep';
+import ConfirmDialog from '../../components/ui/ConfirmDialog/ConfirmDialog.jsx';
 import { getConsentUrlFromResponse, buildAvatarPresenterSeed, canUseAvatarInVideo, fetchMappedGroupLooks, mapAvatarLook, mapLookTile } from '../../utils/heygenAvatars';
+import { getAvatarDeleteMessage, isOwnedPrivateAvatar, resolvePairedVoiceId } from '../../utils/heygenDelete';
+import {
+  clearAvatarsPersonaGroupId,
+  loadAvatarsActiveSection,
+  loadAvatarsPersonaGroupId,
+  saveAvatarsActiveSection,
+  saveAvatarsPersonaGroupId,
+} from '../../utils/avatarsNavigationStorage';
+import { getSanitizedErrorMessage } from '../../utils/userFacingMessage';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
 import AvatarsSkeleton from '../page-skeleton/AvatarsSkeleton';
 import VideosToolbar from '../Videos/VideosToolbar.jsx';
@@ -61,6 +71,8 @@ function mapAvatarList(avatarList, ownership) {
     rawLooks: av.avatar_looks || [],
     consentStatus: av.consent_status ?? av.consentStatus ?? null,
     trainingStatus: av.status ?? av.training_status ?? null,
+    defaultVoiceId: av.default_voice_id ?? av.defaultVoiceId ?? null,
+    raw: av,
   }));
 }
 
@@ -83,14 +95,29 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
   const [nextToken, setNextToken] = useState(null);
   const [selectedAvatar, setSelectedAvatar] = useState(null);
   const [viewMode, setViewMode] = useState('grid');
-  const [activeSection, setActiveSection] = useState('public');
+  const [activeSection, setActiveSection] = useState(() => loadAvatarsActiveSection());
   const [searchQuery, setSearchQuery] = useState('');
   const [filterBy, setFilterBy] = useState('all');
   const [sortBy, setSortBy] = useState('name_asc');
   const [groupBy, setGroupBy] = useState('none');
   const [consentBanner, setConsentBanner] = useState('');
+  const [consentBannerTone, setConsentBannerTone] = useState('info');
   const [consentModal, setConsentModal] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(null);
   const fetchRequestRef = useRef(0);
+  const bannerTimeoutRef = useRef(null);
+  const personaRestoredRef = useRef(false);
+
+  const showBanner = useCallback((message, tone = 'info') => {
+    setConsentBanner(message);
+    setConsentBannerTone(tone);
+    if (bannerTimeoutRef.current) clearTimeout(bannerTimeoutRef.current);
+    bannerTimeoutRef.current = setTimeout(() => setConsentBanner(''), 4200);
+  }, []);
+
+  const openConfirmDialog = useCallback((message, onConfirm, options = {}) => {
+    setConfirmDialog({ message, onConfirm, ...options });
+  }, []);
 
   const fetchAvatars = useCallback(async ({ ownership, token, append = false } = {}) => {
     const requestId = append ? fetchRequestRef.current : ++fetchRequestRef.current;
@@ -143,13 +170,38 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
   }, []);
 
   useEffect(() => {
+    saveAvatarsActiveSection(activeSection);
+  }, [activeSection]);
+
+  useEffect(() => {
     setSearchQuery('');
     setFilterBy('all');
     setAvatars([]);
     setHasMore(false);
     setNextToken(null);
+    personaRestoredRef.current = false;
     fetchAvatars({ ownership: activeSection });
   }, [activeSection, fetchAvatars]);
+
+  useEffect(() => {
+    if (personaRestoredRef.current || loading || selectedAvatar) return;
+
+    const groupId = loadAvatarsPersonaGroupId();
+    if (!groupId) {
+      personaRestoredRef.current = true;
+      return;
+    }
+
+    const found = avatars.find((avatar) => avatar.id === groupId);
+    if (found) {
+      personaRestoredRef.current = true;
+      setSelectedAvatar(found);
+      return;
+    }
+
+    personaRestoredRef.current = true;
+    clearAvatarsPersonaGroupId();
+  }, [loading, avatars, selectedAvatar]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -157,7 +209,7 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
     const groupId = params.get('groupId');
     if (consentDone !== 'done' || !groupId) return;
 
-    setConsentBanner("Thanks — we're verifying your consent. Refresh if your avatar doesn't update yet.");
+    showBanner("Thanks — we're verifying your consent. Refresh if your avatar doesn't update yet.");
     setActiveSection('private');
     fetchAvatars({ ownership: 'private' });
 
@@ -191,7 +243,14 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
       '',
       `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ''}${window.location.hash}`
     );
-  }, [fetchAvatars]);
+  }, [fetchAvatars, showBanner]);
+
+  useEffect(
+    () => () => {
+      if (bannerTimeoutRef.current) clearTimeout(bannerTimeoutRef.current);
+    },
+    []
+  );
 
   const filteredAvatars = useMemo(() => {
     const filtered = applyAvatarFilters(avatars, { searchQuery, filterBy });
@@ -208,10 +267,12 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
 
   const openAvatarDetails = (avatar) => {
     setSelectedAvatar(avatar);
+    saveAvatarsPersonaGroupId(avatar?.id);
   };
 
   const closeDetails = () => {
     setSelectedAvatar(null);
+    clearAvatarsPersonaGroupId();
   };
 
   const handleCreateVideo = (context = null) => {
@@ -285,8 +346,59 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
   };
 
   const handleConsentComplete = () => {
-    setConsentBanner('Consent approved — your Digital Twin will finish processing shortly.');
+    showBanner('Consent approved — your Digital Twin will finish processing shortly.', 'success');
     fetchAvatars({ ownership: activeSection });
+  };
+
+  const canDeleteFromSection = isOwnedPrivateAvatar(activeSection);
+
+  const performDeleteAvatar = async (avatar) => {
+    if (!avatar?.id) return;
+    try {
+      let voiceId = resolvePairedVoiceId(avatar);
+      if (!voiceId) {
+        const group = await heygenService.getAvatarGroup(avatar.id);
+        voiceId = resolvePairedVoiceId(group);
+      }
+      await heygenService.deleteAvatarGroup(avatar.id, voiceId ? { voiceId } : {});
+      showBanner(`Deleted avatar "${avatar.name}".`, 'success');
+      if (selectedAvatar?.id === avatar.id) closeDetails();
+      fetchAvatars({ ownership: 'private' });
+    } catch (error) {
+      showBanner(getSanitizedErrorMessage(error, 'Failed to delete avatar.'), 'error');
+    }
+  };
+
+  const requestDeleteAvatar = async (avatar, event) => {
+    event?.stopPropagation?.();
+    if (!canDeleteFromSection || !avatar?.id) return;
+    openConfirmDialog(
+      getAvatarDeleteMessage(avatar),
+      async () => {
+        await performDeleteAvatar(avatar);
+      },
+      { title: 'Delete avatar', confirmLabel: 'Delete avatar', variant: 'danger' }
+    );
+  };
+
+  const deleteLook = async (avatar, look) => {
+    if (!avatar?.id || !look?.id) return { cascadedGroupDelete: false };
+    try {
+      const voiceId = resolvePairedVoiceId(avatar);
+      const res = await heygenService.deleteAvatarLook(look.id, voiceId ? { voiceId } : {});
+      const cascadedGroupDelete = Boolean(res?.cascadedGroupDelete ?? res?.cascaded_group_delete);
+      showBanner(
+        cascadedGroupDelete
+          ? `Deleted look "${look.name}" and removed avatar "${avatar.name}".`
+          : `Deleted look "${look.name}".`,
+        'success'
+      );
+      fetchAvatars({ ownership: 'private' });
+      return { cascadedGroupDelete };
+    } catch (error) {
+      showBanner(getSanitizedErrorMessage(error, 'Failed to delete look.'), 'error');
+      return { cascadedGroupDelete: false };
+    }
   };
 
   const renderAvatarCollection = (collection) => (
@@ -319,6 +431,8 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
             onOpen={openAvatarDetails}
             onCompleteConsent={openConsentForAvatar}
             onUseInProject={activeSection !== 'public' ? openUseInProject : undefined}
+            canDelete={canDeleteFromSection}
+            onDelete={requestDeleteAvatar}
           />
         ) : (
           <AvatarLibraryRow
@@ -327,6 +441,8 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
             onOpen={openAvatarDetails}
             onCompleteConsent={openConsentForAvatar}
             onUseInProject={activeSection !== 'public' ? openUseInProject : undefined}
+            canDelete={canDeleteFromSection}
+            onDelete={requestDeleteAvatar}
           />
         )
       )}
@@ -335,23 +451,37 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
 
   if (selectedAvatar) {
     return (
-      <div className="avatars-persona-shell">
-        <AvatarPersona
-          selectedAvatar={selectedAvatar}
-          closeDetails={closeDetails}
-          onCreate={handleCreateVideo}
-          isPrivate={activeSection === 'private'}
-          onCreateLooks={
-            activeSection === 'private' && onCreateLooks
-              ? (ctx) => {
-                  onCreateLooks(ctx);
-                  closeDetails();
-                }
-              : undefined
-          }
-          onCompleteConsent={openConsentForAvatar}
+      <>
+        <div className="avatars-persona-shell">
+          <AvatarPersona
+            selectedAvatar={selectedAvatar}
+            closeDetails={closeDetails}
+            isPrivate={activeSection === 'private'}
+            onCreateLooks={
+              activeSection === 'private' && onCreateLooks
+                ? (ctx) => {
+                    onCreateLooks(ctx);
+                  }
+                : undefined
+            }
+            onCompleteConsent={openConsentForAvatar}
+            onDeleteAvatar={performDeleteAvatar}
+            onDeleteLook={deleteLook}
+            onOpenConfirm={openConfirmDialog}
+          />
+        </div>
+        <AvatarConsentModal
+          isOpen={Boolean(consentModal)}
+          groupId={consentModal?.groupId}
+          avatarName={consentModal?.avatarName}
+          consentUrl={consentModal?.consentUrl}
+          consentStatus={consentModal?.consentStatus}
+          onClose={() => setConsentModal(null)}
+          onComplete={handleConsentComplete}
+          onRefresh={handleConsentRefresh}
         />
-      </div>
+        <ConfirmDialog dialog={confirmDialog} onCancel={() => setConfirmDialog(null)} />
+      </>
     );
   }
 
@@ -450,12 +580,15 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
 
         <main className="videos-main">
           {consentBanner ? (
-            <div className="avatars-consent-banner" role="status">
+            <div className={`avatars-consent-banner avatars-consent-banner--${consentBannerTone}`} role="status">
               {consentBanner}
             </div>
           ) : null}
           {loading ? (
-            <AvatarsSkeleton />
+            <AvatarsSkeleton
+              viewMode={viewMode}
+              showCreateCard={showCreateCard}
+            />
           ) : filteredAvatars.length === 0 && !showCreateCard ? (
             <div className="videos-empty-state">
               <div className="videos-empty-state__card">
@@ -521,6 +654,7 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
         onComplete={handleConsentComplete}
         onRefresh={handleConsentRefresh}
       />
+      <ConfirmDialog dialog={confirmDialog} onCancel={() => setConfirmDialog(null)} />
     </div>
   );
 }

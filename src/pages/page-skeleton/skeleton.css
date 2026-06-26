@@ -47,24 +47,123 @@
 }
 
 .ps-block {
-  background: rgba(148, 163, 184, 0.35);
-  border: 1px solid rgba(100, 116, 139, 0.22);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--primary) 10%, var(--bg-card)) 25%,
+    color-mix(in srgb, var(--primary) 18%, var(--bg-card)) 50%,
+    color-mix(in srgb, var(--primary) 10%, var(--bg-card)) 75%
+  );
+  background-size: 800px 100%;
+  border: none;
+  box-shadow: none;
   border-radius: 12px;
-  animation: psPulse 1.35s ease-in-out infinite;
+  animation: psShimmer 1.4s infinite linear;
 }
 
-.ps-block--line {
+.ps-block--tile {
+  min-height: 224px;
+  width: 100%;
+}
+
+.ps-block--tile-sm {
+  min-height: 200px;
+  width: 100%;
+}
+
+.ps-skeleton-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.ps-skeleton-card__thumb {
+  height: 140px;
+  width: 100%;
+  border-radius: 12px 12px 0 0;
+}
+
+.ps-skeleton-card__meta {
+  height: 72px;
+  width: 100%;
+  border-radius: 0 0 12px 12px;
+}
+
+.ps-skeleton-create-card__body {
+  min-height: 212px;
+  width: 100%;
+  border-radius: 12px;
+}
+
+.ps-skeleton-section-title {
+  height: 22px;
+  width: 180px;
   border-radius: 8px;
 }
 
-@keyframes psPulse {
+.ps-skeleton-section-action {
+  height: 36px;
+  width: 148px;
+  border-radius: 10px;
+}
+
+.ps-skeleton-tab {
+  height: 40px;
+  flex: 1;
+  max-width: 220px;
+  border-radius: 10px;
+}
+
+.ps-skeleton-list-header {
+  height: 40px;
+  width: 100%;
+  border-radius: 10px;
+  margin-bottom: 4px;
+}
+
+.ps-skeleton-list-row {
+  height: 56px;
+  width: 100%;
+  border-radius: 10px;
+}
+
+.ps-skeleton-template-card__thumb {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 0;
+}
+
+.ps-skeleton-template-card__meta {
+  height: 88px;
+  width: 100%;
+  border-radius: 0 0 20px 20px;
+}
+
+.ps-skeleton-project-card__meta {
+  height: 48px;
+  width: 100%;
+  border-radius: 8px;
+}
+
+.project-card--skeleton .ps-skeleton-card__thumb {
+  height: 100%;
+  min-height: 140px;
+  border-radius: 0;
+}
+
+.project-card--skeleton .project-thumb-container {
+  aspect-ratio: 16 / 9;
+  min-height: 140px;
+}
+
+@keyframes psShimmer {
   0% {
-    opacity: 0.65;
-  }
-  50% {
-    opacity: 1;
+    background-position: -400px 0;
   }
   100% {
-    opacity: 0.65;
+    background-position: 400px 0;
   }
 }

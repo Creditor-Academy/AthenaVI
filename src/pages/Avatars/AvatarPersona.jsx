@@ -1,30 +1,42 @@
 import { useState, useEffect } from 'react'
-import { Video, X, Sparkles, ShieldCheck } from 'lucide-react'
+import { MdArrowBack } from 'react-icons/md'
+import { Sparkles, ShieldCheck, Trash2, Palette, Loader2 } from 'lucide-react'
 import { getSanitizedErrorMessage } from '../../utils/userFacingMessage'
 import heygenService from '../../services/heygenService'
 import AvatarConsentStep, { avatarNeedsConsentFlow } from '../../components/ui/AvatarConsentStep/AvatarConsentStep'
 import {
-  buildAvatarPresenterSeed,
-  canUseAvatarInVideo,
   fetchMappedGroupLooks,
-  formatAvatarTypeLabel,
-  getAvatarVideoBlockReason,
   getConsentUrlFromResponse,
   mapLookTile,
 } from '../../utils/heygenAvatars'
+import { getAvatarDeleteMessage } from '../../utils/heygenDelete'
+import AvatarPersonaLookCard from './AvatarPersonaLookCard'
+import '../../components/features/workspace/workspace/WorkspaceStyles.css'
+import '../Videos/Videos.css'
+import './Avatars.css'
 
-function AvatarPersona({ selectedAvatar, closeDetails, onCreate, onCreateLooks, isPrivate, onCompleteConsent }) {
+function AvatarPersona({
+  selectedAvatar,
+  closeDetails,
+  onCreateLooks,
+  isPrivate,
+  onCompleteConsent,
+  onDeleteAvatar,
+  onDeleteLook,
+  onOpenConfirm,
+}) {
   const [activeLooks, setActiveLooks] = useState([])
   const [selectedLook, setSelectedLook] = useState(null)
   const [loadingLooks, setLoadingLooks] = useState(false)
-  const [debugLooksInfo, setDebugLooksInfo] = useState('')
-  const [isPreviewing, setIsPreviewing] = useState(false)
+  const [looksError, setLooksError] = useState('')
   const [showConsentPanel, setShowConsentPanel] = useState(false)
   const [consentUrl, setConsentUrl] = useState('')
 
   const needsConsent = isPrivate && avatarNeedsConsentFlow(selectedAvatar)
-  const videoBlockReason = getAvatarVideoBlockReason(selectedAvatar, selectedLook)
-  const canStartVideo = canUseAvatarInVideo(selectedAvatar, selectedLook)
+  const canManageLooks = isPrivate && Boolean(onCreateLooks)
+  const canDeleteLooks = isPrivate && Boolean(onDeleteLook)
+  const lookCount = activeLooks.length
+  const displayName = selectedLook?.name || selectedAvatar?.name || 'Avatar'
 
   useEffect(() => {
     if (!needsConsent || !selectedAvatar?.id) {
@@ -54,7 +66,7 @@ function AvatarPersona({ selectedAvatar, closeDetails, onCreate, onCreateLooks, 
 
     const fetchLooks = async () => {
       setLoadingLooks(true)
-      setDebugLooksInfo('')
+      setLooksError('')
       try {
         const { mappedLooks } = await fetchMappedGroupLooks(heygenService, selectedAvatar, {
           ownership: isPrivate ? 'private' : 'public',
@@ -69,7 +81,6 @@ function AvatarPersona({ selectedAvatar, closeDetails, onCreate, onCreateLooks, 
             return {
               ...look,
               ...tile,
-              preview: look.preview_video_url || selectedAvatar.preview,
             }
           })
           .filter((look) => look.id)
@@ -79,12 +90,12 @@ function AvatarPersona({ selectedAvatar, closeDetails, onCreate, onCreateLooks, 
         setSelectedLook(firstReady)
 
         if (mapped.length === 0) {
-          setDebugLooksInfo('No supported looks for this character — try creating a look.')
+          setLooksError('No looks available for this avatar yet.')
         }
       } catch (e) {
         if (cancelled) return
         console.error(e)
-        setDebugLooksInfo(`API Error: ${getSanitizedErrorMessage(e, 'Request failed')}`)
+        setLooksError(getSanitizedErrorMessage(e, 'Could not load looks'))
         setActiveLooks([])
         setSelectedLook(null)
       } finally {
@@ -98,6 +109,10 @@ function AvatarPersona({ selectedAvatar, closeDetails, onCreate, onCreateLooks, 
     }
   }, [selectedAvatar, isPrivate])
 
+  const handleSelectLook = (look) => {
+    setSelectedLook(look)
+  }
+
   const handleCreateLook = () => {
     if (!onCreateLooks || !selectedAvatar?.id) return
     onCreateLooks({
@@ -108,162 +123,234 @@ function AvatarPersona({ selectedAvatar, closeDetails, onCreate, onCreateLooks, 
     })
   }
 
-  const handleCreateVideo = () => {
-    if (!canStartVideo || !onCreate) return
-    const presenterSeed = buildAvatarPresenterSeed(selectedAvatar, selectedLook)
-    onCreate({ presenterSeed })
-    closeDetails()
+  const handleDeleteAvatar = () => {
+    if (!isPrivate || !onDeleteAvatar || !onOpenConfirm) return
+    onOpenConfirm(
+      getAvatarDeleteMessage(selectedAvatar),
+      async () => {
+        await onDeleteAvatar(selectedAvatar)
+      },
+      {
+        title: 'Delete avatar',
+        confirmLabel: 'Delete avatar',
+        variant: 'danger',
+      }
+    )
+  }
+
+  const handleDeleteLook = (look, event) => {
+    event.stopPropagation()
+    if (!canDeleteLooks || !onOpenConfirm || !look?.id) return
+    const isLastLook = activeLooks.length <= 1
+    onOpenConfirm(
+      getAvatarDeleteMessage(selectedAvatar, { isLastLook }),
+      async () => {
+        const result = await onDeleteLook(selectedAvatar, look, { isLastLook })
+        if (result?.cascadedGroupDelete) {
+          closeDetails()
+          return
+        }
+        const nextLooks = activeLooks.filter((item) => item.id !== look.id)
+        setActiveLooks(nextLooks)
+        setSelectedLook((prev) =>
+          prev?.id !== look.id ? prev : nextLooks.find((item) => item.ready) || nextLooks[0] || null
+        )
+      },
+      {
+        title: 'Delete look',
+        confirmLabel: isLastLook ? 'Delete avatar' : 'Delete look',
+        variant: 'danger',
+      }
+    )
   }
 
   if (!selectedAvatar) return null
 
   return (
-    <div className="hero-showcase-wrapper">
-      <div className="hero-top-nav">
-        <button className="back-to-library-btn" onClick={closeDetails}>
-          <X size={18} /> Close Persona
-        </button>
-      </div>
-
-      <div className="hero-showcase-card">
-        <div className="hero-visual">
-          <div className="persona-filmstrip">
-            {loadingLooks ? (
-              <div style={{ color: 'white', fontSize: '12px', padding: '10px' }}>Loading looks...</div>
-            ) : activeLooks.length > 0 ? (
-              <div style={{ display: 'flex', gap: '12px' }}>
-                {activeLooks.map((look) => (
-                  <div
-                    key={look.id}
-                    className={`filmstrip-item ${selectedLook?.id === look.id ? 'active' : ''}${look.ready ? '' : ' filmstrip-item--pending'}`}
-                    onClick={() => {
-                      setSelectedLook(look)
-                      setIsPreviewing(false)
-                    }}
-                    title={look.ready ? look.name : `${look.name} (processing)`}
-                  >
-                    <img src={look.image} alt={look.name} />
-                    {look.avatarType ? (
-                      <span className="filmstrip-type-badge">
-                        {formatAvatarTypeLabel(look.avatarType)}
-                      </span>
-                    ) : null}
-                    {!look.ready ? (
-                      <span className="filmstrip-status-badge">Processing</span>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ color: '#ff8a8a', fontSize: '11px', padding: '4px', maxWidth: '300px', textAlign: 'center' }}>
-                {debugLooksInfo || 'No sub-looks available'}
-              </div>
-            )}
-          </div>
-
-          {!isPreviewing ? (
-            <div className="hero-still" onClick={() => setIsPreviewing(true)}>
-              <img src={selectedLook?.image || selectedAvatar.image} alt={selectedLook?.name || selectedAvatar.name} />
-            </div>
-          ) : (
-            <div className="hero-motion">
-              <video
-                src={selectedLook?.preview || selectedAvatar.preview}
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="hero-video"
-              />
-              <button className="exit-preview-corner" onClick={(e) => { e.stopPropagation(); setIsPreviewing(false) }}>
-                <X size={20} />
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="hero-details">
-          <div className="hero-glass-pan">
-            <div className="hero-top-meta">Unit {selectedLook?.id || selectedAvatar.id} // v4.2</div>
-            <h1 className="hero-title">{selectedLook?.name || selectedAvatar.name}</h1>
-            <div className="hero-badge">{selectedAvatar.category} Model</div>
-
-            <p className="hero-bio">{selectedAvatar.description}</p>
-
-            {needsConsent ? (
-              <div className="avatars-persona-consent">
-                <div className="avatars-persona-consent__header">
-                  <ShieldCheck size={18} />
-                  <span>Consent required before this Digital Twin can be used</span>
-                </div>
-                {showConsentPanel ? (
-                  <AvatarConsentStep
-                    groupId={selectedAvatar.id}
-                    avatarName={selectedAvatar.name}
-                    consentUrl={consentUrl}
-                    consentStatus={selectedAvatar.consentStatus}
-                    onComplete={() => setShowConsentPanel(false)}
-                  />
-                ) : (
-                  <button
-                    type="button"
-                    className="btn-action-secondary avatars-persona-consent__btn"
-                    onClick={() => {
-                      if (onCompleteConsent) {
-                        onCompleteConsent(selectedAvatar)
-                      } else {
-                        setShowConsentPanel(true)
-                      }
-                    }}
-                  >
-                    <ShieldCheck size={18} />
-                    <span>Complete consent</span>
-                  </button>
-                )}
-              </div>
-            ) : null}
-
-            <div className="hero-specs">
-              <div className="spec-tile">
-                <label>Oral Expression</label>
-                <span>{selectedAvatar.style}</span>
-              </div>
-              <div className="spec-tile">
-                <label>Quality Score</label>
-                <span>{selectedAvatar.rating} Index</span>
-              </div>
-              <div className="spec-tile">
-                <label>Integration</label>
-                <span>Athena Ready</span>
-              </div>
-            </div>
-
-            {!canStartVideo && videoBlockReason && !needsConsent ? (
-              <p className="avatars-persona-video-hint" role="status">
-                {videoBlockReason}
-              </p>
-            ) : null}
-
-            <div className="hero-actions">
-              {isPrivate && onCreateLooks ? (
-                <button type="button" className="btn-action-secondary" onClick={handleCreateLook}>
-                  <Sparkles size={20} />
-                  <span>Create look</span>
-                </button>
-              ) : null}
+    <div className="videos-page avatars-page avatar-persona-page">
+      <div className="videos-shell">
+        <header className="videos-page-header avatar-persona-page__header">
+          <div className="videos-title-section create-avatar-title-section">
+            <div className="create-avatar-title-row">
               <button
                 type="button"
-                className="btn-action-primary"
-                onClick={handleCreateVideo}
-                disabled={!canStartVideo}
-                title={!canStartVideo ? videoBlockReason || 'Not ready for video' : undefined}
+                className="workspace-back-btn"
+                onClick={closeDetails}
+                aria-label="Back to Avatars"
               >
-                <Video size={22} />
-                <span>Start Video with this Avatar</span>
+                <MdArrowBack size={20} />
               </button>
+              <div>
+                <p className="create-avatar-look-page__eyebrow">
+                  <Sparkles size={14} />
+                  <span>Avatar persona</span>
+                </p>
+                <h1 className="videos-page-title">{selectedAvatar.name}</h1>
+                <p className="videos-page-subtitle">
+                  {selectedAvatar.category || 'Avatar'}
+                  {' · '}
+                  {loadingLooks ? 'Loading looks…' : `${lookCount} look${lookCount === 1 ? '' : 's'}`}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+          {isPrivate && onDeleteAvatar ? (
+            <div className="videos-actions avatar-persona-page__header-actions">
+              <button
+                type="button"
+                className="btn-action-danger avatar-persona-page__delete-btn"
+                onClick={handleDeleteAvatar}
+              >
+                <Trash2 size={18} />
+                <span>Delete avatar</span>
+              </button>
+            </div>
+          ) : null}
+        </header>
+
+        <main className="videos-main avatar-persona-main">
+          <div className="avatar-persona-layout">
+            <section className="avatar-persona-preview" aria-label="Selected look">
+              <div className="workspace-item-card avatar-persona-preview-card">
+                <div className="avatar-persona-preview-card__header">
+                  <div>
+                    <h2 className="avatar-persona-preview-card__title">{displayName}</h2>
+                    {selectedLook ? (
+                      <p className="avatar-persona-preview-card__hint">Selected look</p>
+                    ) : null}
+                  </div>
+                  {selectedAvatar.category ? (
+                    <span className="avatar-persona-preview-card__badge">{selectedAvatar.category}</span>
+                  ) : null}
+                </div>
+
+                <div className="avatar-persona-preview-card__media">
+                  {needsConsent ? (
+                    <div className="avatar-persona-preview-card__consent-overlay">
+                      <ShieldCheck size={28} />
+                      <p>Complete consent to use this Digital Twin</p>
+                    </div>
+                  ) : null}
+
+                  <div className="avatar-persona-preview-card__image-wrap">
+                    <img
+                      src={selectedLook?.image || selectedAvatar.image}
+                      alt={displayName}
+                    />
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <aside className="avatar-persona-sidebar">
+              {needsConsent ? (
+                <div className="avatars-persona-consent">
+                  <div className="avatars-persona-consent__header">
+                    <ShieldCheck size={18} />
+                    <span>Consent required before this Digital Twin can be used</span>
+                  </div>
+                  {showConsentPanel ? (
+                    <AvatarConsentStep
+                      groupId={selectedAvatar.id}
+                      avatarName={selectedAvatar.name}
+                      consentUrl={consentUrl}
+                      consentStatus={selectedAvatar.consentStatus}
+                      onComplete={() => setShowConsentPanel(false)}
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn-action-secondary avatars-persona-consent__btn"
+                      onClick={() => {
+                        if (onCompleteConsent) {
+                          onCompleteConsent(selectedAvatar)
+                        } else {
+                          setShowConsentPanel(true)
+                        }
+                      }}
+                    >
+                      <ShieldCheck size={18} />
+                      <span>Complete consent</span>
+                    </button>
+                  )}
+                </div>
+              ) : null}
+
+              <section className="avatar-persona-looks-section" aria-labelledby="avatar-looks-heading">
+                <div className="avatar-persona-looks-section__header">
+                  <div>
+                    <h2 id="avatar-looks-heading" className="videos-group__heading">
+                      <Palette size={16} aria-hidden="true" />
+                      Avatar looks
+                    </h2>
+                    <p className="avatar-persona-looks-section__subheading">
+                      Manage looks — view, create, and delete styles for this avatar
+                    </p>
+                  </div>
+                  {canManageLooks ? (
+                    <button
+                      type="button"
+                      className="btn-secondary videos-create-btn avatar-persona-looks-section__create"
+                      onClick={handleCreateLook}
+                    >
+                      <Sparkles size={16} />
+                      <span>Create look</span>
+                    </button>
+                  ) : null}
+                </div>
+
+                {loadingLooks ? (
+                  <div className="avatar-persona-looks-loading" role="status">
+                    <Loader2 size={20} className="spin-animation" />
+                    <span>Loading looks…</span>
+                  </div>
+                ) : looksError && lookCount === 0 ? (
+                  <div className="videos-empty-state">
+                    <div className="videos-empty-state__card">
+                      <div className="videos-empty-state__icon-wrap">
+                        <Palette size={24} />
+                      </div>
+                      <p className="videos-empty-state__eyebrow">Avatar looks</p>
+                      <h3 className="videos-empty-state__title">No looks yet</h3>
+                      <p className="videos-empty-state__description">{looksError}</p>
+                    </div>
+                  </div>
+                ) : lookCount === 0 ? (
+                  <div className="videos-empty-state">
+                    <div className="videos-empty-state__card">
+                      <div className="videos-empty-state__icon-wrap">
+                        <Palette size={24} />
+                      </div>
+                      <p className="videos-empty-state__eyebrow">Avatar looks</p>
+                      <h3 className="videos-empty-state__title">No looks available</h3>
+                      <p className="videos-empty-state__description">
+                        This avatar does not have any looks yet.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <p className="avatar-persona-looks-section__count">
+                      {lookCount} look{lookCount === 1 ? '' : 's'} — select one to view
+                    </p>
+                    <div className="avatar-persona-look-grid" role="list">
+                      {activeLooks.map((look) => (
+                        <AvatarPersonaLookCard
+                          key={look.id}
+                          look={look}
+                          isSelected={selectedLook?.id === look.id}
+                          canDelete={canDeleteLooks}
+                          onSelect={handleSelectLook}
+                          onDelete={handleDeleteLook}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </section>
+            </aside>
+          </div>
+        </main>
       </div>
     </div>
   )

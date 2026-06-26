@@ -25,6 +25,8 @@ import StorageUsageBar from '../../components/ui/StorageUsageBar/StorageUsageBar
 import '../../components/ui/StorageUsageBar/StorageUsageBar.css'
 import { formatBytes } from '../../utils/formatSize'
 import LibraryComingSoon from './LibraryComingSoon'
+import { SkeletonListRow } from '../page-skeleton/SkeletonPrimitives'
+import '../page-skeleton/skeleton.css'
 import './Library.css'
 
 const MASONRY_SKELETON_HEIGHTS = [168, 224, 192, 256, 180, 240, 200, 272, 176, 208, 232, 188]
@@ -320,7 +322,7 @@ function Library() {
       {MASONRY_SKELETON_HEIGHTS.map((height, index) => (
         <div
           key={`skeleton-${index}`}
-          className="library-masonry-skeleton"
+          className="library-masonry-skeleton ps-block"
           style={{ height }}
           aria-hidden
         />
@@ -329,7 +331,7 @@ function Library() {
   )
 
   const renderListSkeleton = () => (
-    <div className="assets-list library-list-skeleton" aria-busy="true" aria-label="Loading assets">
+    <div className="assets-list" aria-busy="true" aria-label="Loading assets">
       <div className="list-header">
         <div className="col name">Name</div>
         <div className="col owner">{showUploaderColumn ? 'Uploader' : 'Source'}</div>
@@ -338,22 +340,7 @@ function Library() {
         <div className="col actions" />
       </div>
       {Array.from({ length: 8 }, (_, index) => (
-        <div key={`list-skeleton-${index}`} className="library-list-skeleton-row" aria-hidden>
-          <div className="col name">
-            <span className="library-list-skeleton-thumb" />
-            <span className="library-list-skeleton-line library-list-skeleton-line--title" />
-          </div>
-          <div className="col owner">
-            <span className="library-list-skeleton-line" />
-          </div>
-          <div className="col modified">
-            <span className="library-list-skeleton-line library-list-skeleton-line--short" />
-          </div>
-          <div className="col size">
-            <span className="library-list-skeleton-line library-list-skeleton-line--short" />
-          </div>
-          <div className="col actions" />
-        </div>
+        <SkeletonListRow key={`list-skeleton-${index}`} className="library-list-skeleton-row" />
       ))}
     </div>
   )

@@ -10,6 +10,7 @@ import {
 } from 'react-icons/md';
 import { Loader2 } from 'lucide-react';
 import heygenService from '../../services/heygenService';
+import ConfirmDialog from '../../components/ui/ConfirmDialog/ConfirmDialog.jsx';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
 import VoicesSkeleton from '../page-skeleton/VoicesSkeleton';
 import VideosToolbar from '../Videos/VideosToolbar.jsx';
@@ -30,6 +31,8 @@ import {
   VOICE_SORT_OPTIONS,
 } from './voicesUtils';
 import { extractVoiceImageFromRow, fetchVoiceAvatarImageMap, resolveVoiceImage } from './voiceAvatarImages';
+import { isDeletableClonedVoice } from '../../utils/heygenDelete';
+import { getSanitizedErrorMessage } from '../../utils/userFacingMessage';
 import './Voices.css';
 
 const TAB_ICONS = {
@@ -46,6 +49,7 @@ function mapVoiceList(voiceList) {
     status: voice.status || null,
     previewUrl: voice.preview_audio_url || null,
     image: extractVoiceImageFromRow(voice),
+    source: voice.source ?? voice.raw?.source ?? null,
     raw: voice,
   }));
 }
@@ -73,6 +77,8 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
   const [speechText, setSpeechText] = useState('');
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const [voiceImageMap, setVoiceImageMap] = useState(() => new Map());
+  const [confirmDialog, setConfirmDialog] = useState(null);
+  const [statusBanner, setStatusBanner] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -126,6 +132,11 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
       setLoading(false);
     }
   }, [activeSection]);
+
+  const showStatusBanner = useCallback((message, tone = 'success') => {
+    setStatusBanner({ message, tone });
+    setTimeout(() => setStatusBanner(null), 4200);
+  }, []);
 
   useEffect(() => {
     setSearchQuery('');
@@ -207,6 +218,26 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
     }
   };
 
+  const requestDeleteVoice = (voice, event) => {
+    event?.stopPropagation?.();
+    if (activeSection !== 'private' || !isDeletableClonedVoice(voice)) return;
+    setConfirmDialog({
+      title: 'Delete voice',
+      message: `Permanently delete cloned voice ${voice.name}? This cannot be undone.`,
+      confirmLabel: 'Delete voice',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await heygenService.deleteVoice(voice.id);
+          showStatusBanner(`Deleted voice "${voice.name}".`, 'success');
+          fetchVoices();
+        } catch (err) {
+          showStatusBanner(getSanitizedErrorMessage(err, 'Failed to delete voice.'), 'error');
+        }
+      },
+    });
+  };
+
   const renderVoiceCollection = (collection) => (
     <div
       className={`items-container videos-export-items voices-library-items ${
@@ -237,6 +268,8 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
             onOpen={openVoice}
             onPreview={handlePreview}
             onTest={setSelectedVoiceForTest}
+            canDelete={activeSection === 'private' && isDeletableClonedVoice(voice)}
+            onDelete={requestDeleteVoice}
           />
         ) : (
           <VoiceLibraryRow
@@ -245,6 +278,8 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
             onOpen={openVoice}
             onPreview={handlePreview}
             onTest={setSelectedVoiceForTest}
+            canDelete={activeSection === 'private' && isDeletableClonedVoice(voice)}
+            onDelete={requestDeleteVoice}
           />
         )
       )}
@@ -330,8 +365,13 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
         />
 
         <main className="videos-main">
+          {statusBanner ? (
+            <div className={`voices-status-banner voices-status-banner--${statusBanner.tone}`} role="status">
+              {statusBanner.message}
+            </div>
+          ) : null}
           {loading ? (
-            <VoicesSkeleton />
+            <VoicesSkeleton viewMode={viewMode} showCreateCard={showCreateCard} />
           ) : error ? (
             <div className="videos-empty-state">
               <div className="videos-empty-state__card">
@@ -452,6 +492,7 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
           </div>
         </div>
       ) : null}
+      <ConfirmDialog dialog={confirmDialog} onCancel={() => setConfirmDialog(null)} />
     </div>
   );
 }
