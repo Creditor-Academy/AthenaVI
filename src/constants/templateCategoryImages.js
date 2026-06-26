@@ -6,6 +6,7 @@ import BusinessImg from '../assets/Template Image/Coporate.png'
 export const TEMPLATE_CATEGORY_IMAGES = {
   'All Templates': AllTemplateImg,
   Pitch: BusinessImg,
+  'Business Proposal': BusinessImg,
   'Product Launch': MarketingImg,
   'Course Module': EducationImg,
   'Course Explanation': EducationImg,

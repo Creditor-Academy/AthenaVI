@@ -1,9 +1,9 @@
 {
-  "category": "Course Explanation",
+  "category": "Courses",
   "template": {
     "id": "course-explanation-clear-classroom",
     "name": "Course Explanation — Clear Classroom Bundle",
-    "category": "Course Explanation",
+    "category": "Courses",
     "theme": {
       "name": "Clear Classroom",
       "fonts": {

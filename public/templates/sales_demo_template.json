@@ -1,9 +1,9 @@
 {
-  "category": "Sales Demo",
+  "category": "Company",
   "template": {
     "id": "sales-demo-deal-room",
     "name": "Sales Demo — Deal Room Bundle",
-    "category": "Sales Demo",
+    "category": "Company",
     "theme": {
       "name": "Deal Room",
       "fonts": {

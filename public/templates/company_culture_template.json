@@ -1,0 +1,2655 @@
+{
+  "category": "Company",
+  "template": {
+    "id": "company-culture",
+    "name": "Company Culture & Onboarding",
+    "category": "Company",
+    "theme": {
+      "fonts": {
+        "serif": "'Playfair Display', Georgia, serif",
+        "sans": "'Inter', 'Segoe UI', sans-serif"
+      }
+    },
+    "totalSlides": 5,
+    "canvasSize": {
+      "width": 1280,
+      "height": 720
+    },
+    "aspectRatio": "16:9",
+    "colorPalette": {
+      "primary": "#2d6a4f",
+      "secondary": "#d8f3dc",
+      "dark": "#1b4332",
+      "white": "#ffffff",
+      "line": "#e6e6e6",
+      "light": "#f4f9f4",
+      "accent": "#ffb703",
+      "gray": "#6c757d"
+    },
+    "description": "A premium 5-slide orientation deck in a Mint & Forest theme, complete with department cards, milestone timelines, and split benefit tiles."
+  },
+  "scenes": [
+    {
+      "id": "culture_01",
+      "slideIndex": 1,
+      "title": "Company Culture",
+      "layoutType": "Cover",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "hero": {
+          "x": 680,
+          "y": 100,
+          "width": 500,
+          "height": 500
+        },
+        "title": {
+          "x": 64,
+          "y": 160,
+          "width": 600,
+          "height": 260
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Elegant dark cover with forest green gradients, metadata labels, and asymmetrical curved team photo.",
+      "flow": "Cover → Values",
+      "duration": 8,
+      "tags": [
+        "company-culture",
+        "cover",
+        "culture"
+      ],
+      "clips": [
+        {
+          "id": "dashed_line",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 60
+          },
+          "size": {
+            "width": 1152,
+            "height": 1
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "borderBottom": "1px dashed rgba(255,255,255,0.2)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "hdr_left",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "size": {
+            "width": 300,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "ONBOARDING GUIDE",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 16,
+            "color": "#d8f3dc"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "hdr_right",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1116,
+            "y": 36
+          },
+          "size": {
+            "width": 100,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "2026",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 16,
+            "color": "#d8f3dc",
+            "textAlign": "right"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 64,
+            "y": 160
+          },
+          "size": {
+            "width": 600,
+            "height": 260
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Company Culture\n& Onboarding",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "800",
+            "fontSize": 60,
+            "color": "#ffffff",
+            "lineHeight": 1.15
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "t_sub",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 64,
+            "y": 450
+          },
+          "size": {
+            "width": 460,
+            "height": 150
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Welcome to your journey. Learn about our mission, values, team, and benefits as we build the future together.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 20,
+            "color": "#d8f3dc",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "badge_circle",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 620,
+            "y": 450
+          },
+          "size": {
+            "width": 120,
+            "height": 120
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffb703",
+            "borderRadius": "50%",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.15)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "badge_icon",
+          "type": "image",
+          "assetKey": "values",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 650,
+            "y": 480
+          },
+          "size": {
+            "width": 60,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/star.png",
+          "placeholder": true,
+          "alt": "Values",
+          "style": {
+            "objectFit": "contain"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "img_hero",
+          "type": "image",
+          "assetKey": "culture-cover",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 680,
+            "y": 100
+          },
+          "size": {
+            "width": 500,
+            "height": 500
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3184333/pexels-photo-3184333.jpeg",
+          "placeholder": true,
+          "alt": "Team Workshop",
+          "style": {
+            "borderRadius": "250px 30px 30px 250px",
+            "objectFit": "cover",
+            "boxShadow": "0 20px 40px rgba(0,0,0,0.2)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #ffffff",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.12)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "gradient",
+        "value": "linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%)"
+      }
+    },
+    {
+      "id": "culture_02",
+      "slideIndex": 2,
+      "title": "Mission & Values",
+      "layoutType": "Values",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "title": {
+          "x": 64,
+          "y": 90,
+          "width": 600,
+          "height": 80
+        },
+        "cards": {
+          "x": 64,
+          "y": 300,
+          "width": 1152,
+          "height": 320
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Mint-tinted slide showcasing three card columns of core business behaviors.",
+      "flow": "Values → Structure",
+      "duration": 8,
+      "tags": [
+        "company-culture",
+        "values",
+        "purpose"
+      ],
+      "clips": [
+        {
+          "id": "dashed_line",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 60
+          },
+          "size": {
+            "width": 1152,
+            "height": 1
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "borderBottom": "1px dashed #e6e6e6"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "hdr_left",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "size": {
+            "width": 300,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "OUR PURPOSE",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 16,
+            "color": "#6c757d"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 90
+          },
+          "size": {
+            "width": 600,
+            "height": 80
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "MISSION & VALUES",
+          "style": {
+            "fontFamily": "'Playfair Display', Georgia, serif",
+            "fontWeight": "700",
+            "fontSize": 48,
+            "color": "#1b4332"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "t_desc",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 180
+          },
+          "size": {
+            "width": 1100,
+            "height": 80
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "We are committed to fostering an inclusive, collaborative, and forward-thinking environment where every individual has the power to grow and innovate.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 22,
+            "color": "#6c757d",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "card_1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 64,
+            "y": 300
+          },
+          "size": {
+            "width": 350,
+            "height": 320
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "20px",
+            "border": "1px solid #e6e6e6",
+            "boxShadow": "0 12px 32px rgba(0,0,0,0.04)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "icon_1",
+          "type": "image",
+          "assetKey": "values",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 94,
+            "y": 330
+          },
+          "size": {
+            "width": 60,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/star.png",
+          "placeholder": true,
+          "alt": "Values",
+          "style": {
+            "objectFit": "contain"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "c_title_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 94,
+            "y": 410
+          },
+          "size": {
+            "width": 290,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Integrity First",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "700",
+            "fontSize": 24,
+            "color": "#1b4332"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "c_body_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 94,
+            "y": 460
+          },
+          "size": {
+            "width": 290,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "We do the right thing, always. Transparency and honesty are the foundation of our work.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 18,
+            "color": "#6c757d",
+            "lineHeight": 1.5
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "card_2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 464,
+            "y": 300
+          },
+          "size": {
+            "width": 350,
+            "height": 320
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "20px",
+            "border": "1px solid #e6e6e6",
+            "boxShadow": "0 12px 32px rgba(0,0,0,0.04)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "icon_2",
+          "type": "image",
+          "assetKey": "growth",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 494,
+            "y": 330
+          },
+          "size": {
+            "width": 60,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/combo-chart.png",
+          "placeholder": true,
+          "alt": "Growth",
+          "style": {
+            "objectFit": "contain"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
+        },
+        {
+          "id": "c_title_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 494,
+            "y": 410
+          },
+          "size": {
+            "width": 290,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Bold Innovation",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "700",
+            "fontSize": 24,
+            "color": "#1b4332"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
+        },
+        {
+          "id": "c_body_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 494,
+            "y": 460
+          },
+          "size": {
+            "width": 290,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "We challenge status quo, embrace change, and push the boundaries of what is possible.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 18,
+            "color": "#6c757d",
+            "lineHeight": 1.5
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.7
+            }
+          ]
+        },
+        {
+          "id": "card_3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 864,
+            "y": 300
+          },
+          "size": {
+            "width": 350,
+            "height": 320
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "20px",
+            "border": "1px solid #e6e6e6",
+            "boxShadow": "0 12px 32px rgba(0,0,0,0.04)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "icon_3",
+          "type": "image",
+          "assetKey": "team",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 894,
+            "y": 330
+          },
+          "size": {
+            "width": 60,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/conference-call.png",
+          "placeholder": true,
+          "alt": "Team",
+          "style": {
+            "objectFit": "contain"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.35
+            }
+          ]
+        },
+        {
+          "id": "c_title_3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 894,
+            "y": 410
+          },
+          "size": {
+            "width": 290,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Stronger Together",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "700",
+            "fontSize": 24,
+            "color": "#1b4332"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.78
+            }
+          ]
+        },
+        {
+          "id": "c_body_3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 894,
+            "y": 460
+          },
+          "size": {
+            "width": 290,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "We support each other, value diverse perspectives, and win as a single united team.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 18,
+            "color": "#6c757d",
+            "lineHeight": 1.5
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.8600000000000001
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #ffffff",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.12)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "gradient",
+        "value": "linear-gradient(135deg, #f4f9f4 0%, #ffffff 100%)"
+      }
+    },
+    {
+      "id": "culture_03",
+      "slideIndex": 3,
+      "title": "Our Team",
+      "layoutType": "Team",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "title": {
+          "x": 64,
+          "y": 100,
+          "width": 400,
+          "height": 140
+        },
+        "teams": {
+          "x": 500,
+          "y": 100,
+          "width": 692,
+          "height": 520
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Clean split grid layout presenting department columns with rounded profile images.",
+      "flow": "Structure → Onboarding",
+      "duration": 8,
+      "tags": [
+        "company-culture",
+        "team",
+        "structure"
+      ],
+      "clips": [
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 100
+          },
+          "size": {
+            "width": 400,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "MEET THE\nTEAM",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "800",
+            "fontSize": 52,
+            "color": "#1b4332",
+            "lineHeight": 1.15
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "t_subtext",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 260
+          },
+          "size": {
+            "width": 380,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "We believe in empowerment, clear alignment, and cross-functional support across all teams.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 20,
+            "color": "#6c757d",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "divider",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 380
+          },
+          "size": {
+            "width": 380,
+            "height": 1
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#e6e6e6"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "team_img_1",
+          "type": "image",
+          "assetKey": "culture-team",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 500,
+            "y": 100
+          },
+          "size": {
+            "width": 210,
+            "height": 320
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3184423/pexels-photo-3184423.jpeg",
+          "placeholder": true,
+          "alt": "Team Meeting",
+          "style": {
+            "borderRadius": "100px 20px 20px 20px",
+            "objectFit": "cover",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.08)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "col_title_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 500,
+            "y": 440
+          },
+          "size": {
+            "width": 210,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Engineering & Tech",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "700",
+            "fontSize": 20,
+            "color": "#1b4332"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "col_body_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 500,
+            "y": 480
+          },
+          "size": {
+            "width": 210,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Building robust platforms, scalable tools, and clean architectures.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 16,
+            "color": "#6c757d",
+            "lineHeight": 1.5
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "team_img_2",
+          "type": "image",
+          "assetKey": "culture-mission",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 740,
+            "y": 100
+          },
+          "size": {
+            "width": 210,
+            "height": 320
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3182763/pexels-photo-3182763.jpeg",
+          "placeholder": true,
+          "alt": "Hands Stacked",
+          "style": {
+            "borderRadius": "100px 20px 20px 20px",
+            "objectFit": "cover",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.08)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
+        },
+        {
+          "id": "col_title_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 740,
+            "y": 440
+          },
+          "size": {
+            "width": 210,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Product & Design",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "700",
+            "fontSize": 20,
+            "color": "#1b4332"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "col_body_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 740,
+            "y": 480
+          },
+          "size": {
+            "width": 210,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Crafting seamless user flows, beautiful interfaces, and blueprints.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 16,
+            "color": "#6c757d",
+            "lineHeight": 1.5
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
+        },
+        {
+          "id": "team_img_3",
+          "type": "image",
+          "assetKey": "culture-timeline",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 980,
+            "y": 100
+          },
+          "size": {
+            "width": 210,
+            "height": 320
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3184311/pexels-photo-3184311.jpeg",
+          "placeholder": true,
+          "alt": "Co-workers at Computer",
+          "style": {
+            "borderRadius": "100px 20px 20px 20px",
+            "objectFit": "cover",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.08)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.35
+            }
+          ]
+        },
+        {
+          "id": "col_title_3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 980,
+            "y": 440
+          },
+          "size": {
+            "width": 210,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Marketing & Growth",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "700",
+            "fontSize": 20,
+            "color": "#1b4332"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.7
+            }
+          ]
+        },
+        {
+          "id": "col_body_3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 980,
+            "y": 480
+          },
+          "size": {
+            "width": 210,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Driving brand engagement, growth strategies, and supporting customers.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 16,
+            "color": "#6c757d",
+            "lineHeight": 1.5
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.78
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #ffffff",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.12)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "solid",
+        "value": "#ffffff"
+      }
+    },
+    {
+      "id": "culture_04",
+      "slideIndex": 4,
+      "title": "Onboarding Timeline",
+      "layoutType": "Timeline",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "title": {
+          "x": 64,
+          "y": 90,
+          "width": 600,
+          "height": 60
+        },
+        "milestones": {
+          "x": 64,
+          "y": 230,
+          "width": 1152,
+          "height": 350
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Step-by-step horizontal milestone graph detail for the first quarter.",
+      "flow": "Onboarding → Perks",
+      "duration": 8,
+      "tags": [
+        "company-culture",
+        "timeline",
+        "process"
+      ],
+      "clips": [
+        {
+          "id": "dashed_line",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 60
+          },
+          "size": {
+            "width": 1152,
+            "height": 1
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "borderBottom": "1px dashed #e6e6e6"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "hdr_left",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "size": {
+            "width": 300,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "YOUR FIRST 90 DAYS",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 16,
+            "color": "#6c757d"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 90
+          },
+          "size": {
+            "width": 600,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "ONBOARDING TIMELINE",
+          "style": {
+            "fontFamily": "'Playfair Display', Georgia, serif",
+            "fontWeight": "700",
+            "fontSize": 44,
+            "color": "#1b4332"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "timeline_line",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 94,
+            "y": 300
+          },
+          "size": {
+            "width": 1092,
+            "height": 4
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#2d6a4f"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "node_1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 164,
+            "y": 294
+          },
+          "size": {
+            "width": 16,
+            "height": 16
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffb703",
+            "borderRadius": "50%",
+            "border": "4px solid #ffffff"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "m_title_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 104,
+            "y": 230
+          },
+          "size": {
+            "width": 136,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Day 1",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "700",
+            "fontSize": 20,
+            "color": "#1b4332",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "m_lbl_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 74,
+            "y": 340
+          },
+          "size": {
+            "width": 196,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "IT Setup & Welcome",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "600",
+            "fontSize": 16,
+            "color": "#1b4332",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "m_body_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 74,
+            "y": 370
+          },
+          "size": {
+            "width": 196,
+            "height": 150
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Configure your setup, connect accounts, and meet your manager.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 14,
+            "color": "#6c757d",
+            "textAlign": "center",
+            "lineHeight": 1.4
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "node_2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 444,
+            "y": 294
+          },
+          "size": {
+            "width": 16,
+            "height": 16
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffb703",
+            "borderRadius": "50%",
+            "border": "4px solid #ffffff"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "m_title_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 384,
+            "y": 230
+          },
+          "size": {
+            "width": 136,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Week 1",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "700",
+            "fontSize": 20,
+            "color": "#1b4332",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
+        },
+        {
+          "id": "m_lbl_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 354,
+            "y": 340
+          },
+          "size": {
+            "width": 196,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Team Alignment",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "600",
+            "fontSize": 16,
+            "color": "#1b4332",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.7
+            }
+          ]
+        },
+        {
+          "id": "m_body_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 354,
+            "y": 370
+          },
+          "size": {
+            "width": 196,
+            "height": 150
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Attend deep-dive roadmap reviews and align on immediate tasks.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 14,
+            "color": "#6c757d",
+            "textAlign": "center",
+            "lineHeight": 1.4
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.78
+            }
+          ]
+        },
+        {
+          "id": "node_3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 724,
+            "y": 294
+          },
+          "size": {
+            "width": 16,
+            "height": 16
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffb703",
+            "borderRadius": "50%",
+            "border": "4px solid #ffffff"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "m_title_3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 664,
+            "y": 230
+          },
+          "size": {
+            "width": 136,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Month 1",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "700",
+            "fontSize": 20,
+            "color": "#1b4332",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.8600000000000001
+            }
+          ]
+        },
+        {
+          "id": "m_lbl_3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 634,
+            "y": 340
+          },
+          "size": {
+            "width": 196,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "First Milestone",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "600",
+            "fontSize": 16,
+            "color": "#1b4332",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.94
+            }
+          ]
+        },
+        {
+          "id": "m_body_3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 634,
+            "y": 370
+          },
+          "size": {
+            "width": 196,
+            "height": 150
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Take ownership of your first shipment, campaign, or code release.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 14,
+            "color": "#6c757d",
+            "textAlign": "center",
+            "lineHeight": 1.4
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.02
+            }
+          ]
+        },
+        {
+          "id": "node_4",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1004,
+            "y": 294
+          },
+          "size": {
+            "width": 16,
+            "height": 16
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffb703",
+            "borderRadius": "50%",
+            "border": "4px solid #ffffff"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "m_title_4",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 944,
+            "y": 230
+          },
+          "size": {
+            "width": 136,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Month 3",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "700",
+            "fontSize": 20,
+            "color": "#1b4332",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.1
+            }
+          ]
+        },
+        {
+          "id": "m_lbl_4",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 914,
+            "y": 340
+          },
+          "size": {
+            "width": 196,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Full Autonomy",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "600",
+            "fontSize": 16,
+            "color": "#1b4332",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.18
+            }
+          ]
+        },
+        {
+          "id": "m_body_4",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 914,
+            "y": 370
+          },
+          "size": {
+            "width": 196,
+            "height": 150
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Own core metrics, direct strategies, and guide incoming teammates.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 14,
+            "color": "#6c757d",
+            "textAlign": "center",
+            "lineHeight": 1.4
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.26
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #ffffff",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.12)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "solid",
+        "value": "#f4f9f4"
+      }
+    },
+    {
+      "id": "culture_05",
+      "slideIndex": 5,
+      "title": "Benefits & Perks",
+      "layoutType": "Perks",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "title": {
+          "x": 64,
+          "y": 100,
+          "width": 400,
+          "height": 150
+        },
+        "card_left": {
+          "x": 64,
+          "y": 350,
+          "width": 380,
+          "height": 290
+        },
+        "cards_right": {
+          "x": 500,
+          "y": 150,
+          "width": 650,
+          "height": 490
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Split layout detailing flexible work dark panel on the left and mint detail boxes on the right.",
+      "flow": "Perks → Summary",
+      "duration": 8,
+      "tags": [
+        "company-culture",
+        "perks",
+        "benefits"
+      ],
+      "clips": [
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 100
+          },
+          "size": {
+            "width": 400,
+            "height": 150
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "BENEFITS\n& PERKS",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "800",
+            "fontSize": 52,
+            "color": "#1b4332",
+            "lineHeight": 1.15
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "t_subtitle",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 250
+          },
+          "size": {
+            "width": 380,
+            "height": 80
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "We take care of our people so we can grow together sustainably.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 20,
+            "color": "#6c757d",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "card_left",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 350
+          },
+          "size": {
+            "width": 380,
+            "height": 290
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1b4332",
+            "borderRadius": "24px",
+            "boxShadow": "0 12px 32px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "left_img",
+          "type": "image",
+          "assetKey": "culture-perks",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 84,
+            "y": 370
+          },
+          "size": {
+            "width": 140,
+            "height": 250
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/7014387/pexels-photo-7014387.jpeg",
+          "placeholder": true,
+          "alt": "Coffee Break",
+          "style": {
+            "borderRadius": "16px",
+            "objectFit": "cover"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "left_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 244,
+            "y": 390
+          },
+          "size": {
+            "width": 180,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Flexible Work",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "700",
+            "fontSize": 22,
+            "color": "#ffffff"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "left_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 244,
+            "y": 430
+          },
+          "size": {
+            "width": 180,
+            "height": 190
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Work from anywhere, anytime. We prioritize trust, outcomes, and clear communication over hours.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 16,
+            "color": "#cccccc",
+            "lineHeight": 1.5
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "card_right_1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 500,
+            "y": 150
+          },
+          "size": {
+            "width": 650,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#f4f9f4",
+            "borderRadius": "20px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "right_icon_1",
+          "type": "image",
+          "assetKey": "wellness",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 530,
+            "y": 180
+          },
+          "size": {
+            "width": 60,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/heart.png",
+          "placeholder": true,
+          "alt": "Wellness",
+          "style": {
+            "objectFit": "contain"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
+        },
+        {
+          "id": "right_title_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 610,
+            "y": 170
+          },
+          "size": {
+            "width": 500,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Wellness & Health",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "700",
+            "fontSize": 22,
+            "color": "#1b4332"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "right_body_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 610,
+            "y": 210
+          },
+          "size": {
+            "width": 500,
+            "height": 110
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Comprehensive premium medical plan, annual wellness stipends, and subsidized gym memberships.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 16,
+            "color": "#6c757d",
+            "lineHeight": 1.5
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
+        },
+        {
+          "id": "card_right_2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 500,
+            "y": 400
+          },
+          "size": {
+            "width": 650,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#f4f9f4",
+            "borderRadius": "20px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "right_icon_2",
+          "type": "image",
+          "assetKey": "learning",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 530,
+            "y": 430
+          },
+          "size": {
+            "width": 60,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/open-book.png",
+          "placeholder": true,
+          "alt": "Learning",
+          "style": {
+            "objectFit": "contain"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.35
+            }
+          ]
+        },
+        {
+          "id": "right_title_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 610,
+            "y": 420
+          },
+          "size": {
+            "width": 500,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Continuous Growth",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "700",
+            "fontSize": 22,
+            "color": "#1b4332"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.7
+            }
+          ]
+        },
+        {
+          "id": "right_body_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 610,
+            "y": 460
+          },
+          "size": {
+            "width": 500,
+            "height": 110
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Dedicated annual education budget, access to online learning platforms, and sponsored conference travel.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 16,
+            "color": "#6c757d",
+            "lineHeight": 1.5
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.78
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #ffffff",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.12)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "solid",
+        "value": "#ffffff"
+      }
+    }
+  ]
+}

@@ -1,0 +1,3937 @@
+{
+  "category": "Courses",
+  "template": {
+    "id": "womens-wellness",
+    "name": "Women's Wellness",
+    "category": "Courses",
+    "theme": {
+      "name": "Women's Wellness",
+      "fonts": {
+        "display": "\"Outfit\", \"DM Sans\", system-ui, sans-serif",
+        "serif": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+        "sans": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+        "accent": "\"Source Serif 4\", Georgia, serif"
+      }
+    },
+    "totalSlides": 6,
+    "canvasSize": {
+      "width": 1280,
+      "height": 720
+    },
+    "aspectRatio": "16:9",
+    "colorPalette": {
+      "primary": "#FDA4AF",
+      "secondary": "#F472B6",
+      "accent": "#A7F3D0",
+      "cream": "#FFF5F5",
+      "dark": "#374151",
+      "white": "#FFFFFF",
+      "line": "#F5E5E5",
+      "grey": "#6B7280"
+    },
+    "description": "A beautiful 6-slide pink-themed hormone harmony and wellness self-care tracker presentation bundle."
+  },
+  "scenes": [
+    {
+      "id": "wellness_01",
+      "slideIndex": 1,
+      "title": "Wellness Cover",
+      "layoutType": "Cover",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "title": {
+          "x": 80,
+          "y": 220,
+          "width": 650,
+          "height": 160
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Serif title cover page with soft pink botanical and line overlays.",
+      "flow": "Cover → Wellness Pillars",
+      "duration": 8,
+      "tags": [
+        "womens-wellness",
+        "cover"
+      ],
+      "clips": [
+        {
+          "id": "orbit_1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 660,
+            "y": 180
+          },
+          "size": {
+            "width": 240,
+            "height": 240
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "border": "1px solid rgba(244,114,182,0.25)",
+            "borderRadius": "50%",
+            "backgroundColor": "rgba(253,164,175,0.05)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "orbit_2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 720,
+            "y": 120
+          },
+          "size": {
+            "width": 360,
+            "height": 360
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "border": "2.5px solid rgba(244,114,182,0.12)",
+            "borderRadius": "50%",
+            "backgroundColor": "rgba(253,164,175,0.02)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "orbit_3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 600,
+            "y": 60
+          },
+          "size": {
+            "width": 480,
+            "height": 480
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "border": "1px dashed rgba(244,114,182,0.18)",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "bg_wave_cover",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "size": {
+            "width": 460,
+            "height": 648
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(253, 164, 175, 0.12)",
+            "borderRadius": "0 100% 100% 0 / 0 100% 100% 0"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "img_logo",
+          "type": "image",
+          "assetKey": "wellness-logo",
+          "role": "logo",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 80,
+            "y": 60
+          },
+          "size": {
+            "width": 180,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://placehold.co/320x64/FDA4AF/ffffff?text=HARMONY+STUDIO",
+          "placeholder": true,
+          "alt": "Wellness Logo",
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "header_date",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 1000,
+            "y": 60
+          },
+          "size": {
+            "width": 200,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "August 2026",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 14,
+            "color": "#6B7280",
+            "textAlign": "right"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "hdr_sub",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 80,
+            "y": 160
+          },
+          "size": {
+            "width": 400,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "HOLISTIC SELF-CARE",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 14,
+            "color": "#F472B6",
+            "letterSpacing": "0.12em"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 80,
+            "y": 220
+          },
+          "size": {
+            "width": 650,
+            "height": 160
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "WOMEN'S WELLNESS",
+          "style": {
+            "fontFamily": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+            "fontWeight": "700",
+            "fontSize": 62,
+            "color": "#F472B6",
+            "lineHeight": 1.25
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "t_sub",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 80,
+            "y": 410
+          },
+          "size": {
+            "width": 580,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "A progressive guide to hormone alignment, mindful nourishment, and reclaiming daily peace.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 18,
+            "color": "#374151",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "t_footer",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 80,
+            "y": 580
+          },
+          "size": {
+            "width": 500,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Self-Care Routine for Busy Women",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 14,
+            "color": "#6B7280"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "arch_outline",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 745,
+            "y": 125
+          },
+          "size": {
+            "width": 430,
+            "height": 475
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "border": "2px solid #F472B6",
+            "borderRadius": "215px 215px 0 0",
+            "backgroundColor": "transparent"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "img_cover",
+          "type": "image",
+          "assetKey": "wellness-cover",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 760,
+            "y": 140
+          },
+          "size": {
+            "width": 400,
+            "height": 460
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3759664/pexels-photo-3759664.jpeg",
+          "placeholder": true,
+          "alt": "Meditation botanical cover",
+          "style": {
+            "borderRadius": "200px 200px 0 0",
+            "objectFit": "cover",
+            "boxShadow": "0 20px 40px rgba(244,114,182,0.15)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #FDA4AF",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "solid",
+        "value": "#FFF5F5"
+      }
+    },
+    {
+      "id": "wellness_02",
+      "slideIndex": 2,
+      "title": "Core Wellness Pillars",
+      "layoutType": "Pillars",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "title": {
+          "x": 480,
+          "y": 100,
+          "width": 500,
+          "height": 50
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Left vertical image with right title, intro box, and 3 column pillars.",
+      "flow": "Pillars → Daily Rituals",
+      "duration": 8,
+      "tags": [
+        "womens-wellness",
+        "pillars"
+      ],
+      "clips": [
+        {
+          "id": "img_pillars",
+          "type": "image",
+          "assetKey": "wellness-yoga",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 100
+          },
+          "size": {
+            "width": 360,
+            "height": 480
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3822622/pexels-photo-3822622.jpeg",
+          "placeholder": true,
+          "alt": "Yoga poses stretch",
+          "style": {
+            "borderRadius": "24px",
+            "objectFit": "cover",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.06)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 480,
+            "y": 100
+          },
+          "size": {
+            "width": 500,
+            "height": 50
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "CORE WELLNESS PILLARS",
+          "style": {
+            "fontFamily": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+            "fontWeight": "700",
+            "fontSize": 32,
+            "color": "#374151"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "pillars_intro_box",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 480,
+            "y": 160
+          },
+          "size": {
+            "width": 500,
+            "height": 90
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "border": "1px solid #F5E5E5",
+            "borderRadius": "12px",
+            "backgroundColor": "rgba(255,255,255,0.5)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "pillars_intro_txt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 495,
+            "y": 175
+          },
+          "size": {
+            "width": 470,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Holistic self-care is built upon three foundational pillars that support your nervous system, somatic balance, and emotional alignment.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 13,
+            "color": "#6B7280",
+            "lineHeight": 1.45
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "p1_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 480,
+            "y": 275
+          },
+          "size": {
+            "width": 150,
+            "height": 305
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "12px",
+            "border": "1px solid #F5E5E5",
+            "boxShadow": "0 4px 12px rgba(0,0,0,0.02)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "p1_icon",
+          "type": "image",
+          "assetKey": "brain",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 535,
+            "y": 290
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/FDA4AF/brain.png",
+          "placeholder": true,
+          "alt": "Mindful Brain",
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
+        },
+        {
+          "id": "p1_lbl",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 485,
+            "y": 345
+          },
+          "size": {
+            "width": 140,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Nourished Mind",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 13,
+            "color": "#374151",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "p1_desc",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 485,
+            "y": 375
+          },
+          "size": {
+            "width": 140,
+            "height": 190
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Calming stress loops, box-breathing, and digital boundaries.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 11,
+            "color": "#6B7280",
+            "textAlign": "center",
+            "lineHeight": 1.4
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "p2_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 655,
+            "y": 275
+          },
+          "size": {
+            "width": 150,
+            "height": 305
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "12px",
+            "border": "1px solid #F5E5E5",
+            "boxShadow": "0 4px 12px rgba(0,0,0,0.02)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "p2_icon",
+          "type": "image",
+          "assetKey": "flower",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 710,
+            "y": 290
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/A7F3D0/lotus.png",
+          "placeholder": true,
+          "alt": "Flower Lotus",
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.35
+            }
+          ]
+        },
+        {
+          "id": "p2_lbl",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 660,
+            "y": 345
+          },
+          "size": {
+            "width": 140,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Somatic Body",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 13,
+            "color": "#374151",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "p2_desc",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 660,
+            "y": 375
+          },
+          "size": {
+            "width": 140,
+            "height": 190
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Gentle yoga, walks, and biological cycle workout syncing.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 11,
+            "color": "#6B7280",
+            "textAlign": "center",
+            "lineHeight": 1.4
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
+        },
+        {
+          "id": "p3_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 830,
+            "y": 275
+          },
+          "size": {
+            "width": 150,
+            "height": 305
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "12px",
+            "border": "1px solid #F5E5E5",
+            "boxShadow": "0 4px 12px rgba(0,0,0,0.02)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "p3_icon",
+          "type": "image",
+          "assetKey": "heart",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 885,
+            "y": 290
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/F472B6/like.png",
+          "placeholder": true,
+          "alt": "Heart Health",
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.45000000000000007
+            }
+          ]
+        },
+        {
+          "id": "p3_lbl",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 835,
+            "y": 345
+          },
+          "size": {
+            "width": 140,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Alignment",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 13,
+            "color": "#374151",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.7
+            }
+          ]
+        },
+        {
+          "id": "p3_desc",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 835,
+            "y": 375
+          },
+          "size": {
+            "width": 140,
+            "height": 190
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Community connections, journals, and self-compassion.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 11,
+            "color": "#6B7280",
+            "textAlign": "center",
+            "lineHeight": 1.4
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.78
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #FDA4AF",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "solid",
+        "value": "#FFF5F5"
+      }
+    },
+    {
+      "id": "wellness_03",
+      "slideIndex": 3,
+      "title": "Daily Rituals",
+      "layoutType": "Timeline",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "title": {
+          "x": 80,
+          "y": 110,
+          "width": 600,
+          "height": 60
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Horizontal connecting timeline charting four daily rituals matching reference flow.",
+      "flow": "Daily Rituals → Nutrition Grid",
+      "duration": 8,
+      "tags": [
+        "womens-wellness",
+        "rituals"
+      ],
+      "clips": [
+        {
+          "id": "img_logo",
+          "type": "image",
+          "assetKey": "wellness-logo",
+          "role": "logo",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 80,
+            "y": 60
+          },
+          "size": {
+            "width": 180,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://placehold.co/320x64/FDA4AF/ffffff?text=HARMONY+STUDIO",
+          "placeholder": true,
+          "alt": "Wellness Logo",
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "header_date",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 1000,
+            "y": 60
+          },
+          "size": {
+            "width": 200,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "August 2026",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 14,
+            "color": "#6B7280",
+            "textAlign": "right"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 80,
+            "y": 110
+          },
+          "size": {
+            "width": 600,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "DAILY WELLNESS RITUALS",
+          "style": {
+            "fontFamily": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+            "fontWeight": "700",
+            "fontSize": 48,
+            "color": "#374151"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "timeline_line",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 80,
+            "y": 230
+          },
+          "size": {
+            "width": 800,
+            "height": 3
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F472B6"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "step_node_1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 85,
+            "y": 215
+          },
+          "size": {
+            "width": 30,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F472B6",
+            "border": "4px solid #FFFFFF",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "step_num_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 85,
+            "y": 220
+          },
+          "size": {
+            "width": 30,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "01",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 11,
+            "color": "#FFFFFF",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "step_lbl_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 64,
+            "y": 280
+          },
+          "size": {
+            "width": 180,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Hydration First",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 15,
+            "color": "#374151"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "step_desc_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 64,
+            "y": 310
+          },
+          "size": {
+            "width": 180,
+            "height": 90
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Drink 500ml warm water with fresh lemon to wake the stomach.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 12,
+            "color": "#6B7280",
+            "lineHeight": 1.4
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "step_node_2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 305,
+            "y": 215
+          },
+          "size": {
+            "width": 30,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F472B6",
+            "border": "4px solid #FFFFFF",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "step_num_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 305,
+            "y": 220
+          },
+          "size": {
+            "width": 30,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "02",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 11,
+            "color": "#FFFFFF",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
+        },
+        {
+          "id": "step_lbl_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 280,
+            "y": 280
+          },
+          "size": {
+            "width": 180,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Light Somatics",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 15,
+            "color": "#374151"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.7
+            }
+          ]
+        },
+        {
+          "id": "step_desc_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 280,
+            "y": 310
+          },
+          "size": {
+            "width": 180,
+            "height": 90
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "15 minutes of gentle stretching or yoga to release tension.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 12,
+            "color": "#6B7280",
+            "lineHeight": 1.4
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.78
+            }
+          ]
+        },
+        {
+          "id": "step_node_3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 525,
+            "y": 215
+          },
+          "size": {
+            "width": 30,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F472B6",
+            "border": "4px solid #FFFFFF",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "step_num_3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 525,
+            "y": 220
+          },
+          "size": {
+            "width": 30,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "03",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 11,
+            "color": "#FFFFFF",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.8600000000000001
+            }
+          ]
+        },
+        {
+          "id": "step_lbl_3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 500,
+            "y": 280
+          },
+          "size": {
+            "width": 180,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Whole Foods",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 15,
+            "color": "#374151"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.94
+            }
+          ]
+        },
+        {
+          "id": "step_desc_3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 500,
+            "y": 310
+          },
+          "size": {
+            "width": 180,
+            "height": 90
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "High-protein breakfast with organic fats to fuel energy.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 12,
+            "color": "#6B7280",
+            "lineHeight": 1.4
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.02
+            }
+          ]
+        },
+        {
+          "id": "step_node_4",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 745,
+            "y": 215
+          },
+          "size": {
+            "width": 30,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F472B6",
+            "border": "4px solid #FFFFFF",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "step_num_4",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 745,
+            "y": 220
+          },
+          "size": {
+            "width": 30,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "04",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 11,
+            "color": "#FFFFFF",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.1
+            }
+          ]
+        },
+        {
+          "id": "step_lbl_4",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 720,
+            "y": 280
+          },
+          "size": {
+            "width": 180,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Quiet Planning",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 15,
+            "color": "#374151"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.18
+            }
+          ]
+        },
+        {
+          "id": "step_desc_4",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 720,
+            "y": 310
+          },
+          "size": {
+            "width": 180,
+            "height": 90
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Journaling top goals before scanning workspace alerts.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 12,
+            "color": "#6B7280",
+            "lineHeight": 1.4
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.26
+            }
+          ]
+        },
+        {
+          "id": "step_footer_hdr",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 80,
+            "y": 440
+          },
+          "size": {
+            "width": 500,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Time to Recharge",
+          "style": {
+            "fontFamily": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+            "fontWeight": "700",
+            "fontSize": 24,
+            "color": "#374151"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.34
+            }
+          ]
+        },
+        {
+          "id": "step_footer_desc",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 80,
+            "y": 480
+          },
+          "size": {
+            "width": 600,
+            "height": 120
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Establish a calming rhythm that aligns your nervous system and supports natural biological flow. These routines lay a solid foundation for optimal energy.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 14,
+            "color": "#6B7280",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.4200000000000002
+            }
+          ]
+        },
+        {
+          "id": "t_routine_footer",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 80,
+            "y": 650
+          },
+          "size": {
+            "width": 400,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Self-Care Routine for Busy Women",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 13,
+            "color": "#6B7280"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.5
+            }
+          ]
+        },
+        {
+          "id": "page_num_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 1156,
+            "y": 630
+          },
+          "size": {
+            "width": 60,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F472B6",
+            "borderRadius": "4px 0 0 4px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "page_num_txt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 1156,
+            "y": 640
+          },
+          "size": {
+            "width": 60,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "03",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 14,
+            "color": "#FFFFFF",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.58
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #FDA4AF",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "gradient",
+        "value": "linear-gradient(145deg, #FFF5F5 0%, #FFE4E6 60%, #FDE2E4 100%)"
+      }
+    },
+    {
+      "id": "wellness_04",
+      "slideIndex": 4,
+      "title": "Nutrition Grid",
+      "layoutType": "Nutrition",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "title": {
+          "x": 80,
+          "y": 150,
+          "width": 320,
+          "height": 220
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Left layout title with right 2x2 grid card panels matching reference flow.",
+      "flow": "Nutrition Grid → Habits Tracker",
+      "duration": 8,
+      "tags": [
+        "womens-wellness",
+        "nutrition"
+      ],
+      "clips": [
+        {
+          "id": "bg_wave_grid",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "size": {
+            "width": 420,
+            "height": 648
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(253, 164, 175, 0.15)",
+            "borderRadius": "0 80% 80% 0 / 0 100% 100% 0"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "img_logo",
+          "type": "image",
+          "assetKey": "wellness-logo",
+          "role": "logo",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 80,
+            "y": 60
+          },
+          "size": {
+            "width": 180,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://placehold.co/320x64/FDA4AF/ffffff?text=HARMONY+STUDIO",
+          "placeholder": true,
+          "alt": "Wellness Logo",
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 80,
+            "y": 150
+          },
+          "size": {
+            "width": 320,
+            "height": 220
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "SUPERFOODS\n& NUTRITION",
+          "style": {
+            "fontFamily": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+            "fontWeight": "700",
+            "fontSize": 36,
+            "color": "#F472B6",
+            "lineHeight": 1.25
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "nutri_hdr",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 80,
+            "y": 370
+          },
+          "size": {
+            "width": 320,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Essential hormone nourishers",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 13,
+            "color": "#F472B6",
+            "letterSpacing": "0.05em"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "nutri_desc",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 80,
+            "y": 400
+          },
+          "size": {
+            "width": 320,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Cruciferous greens, organic fats, and clean hydration support stable hormones and constant daily energy.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 14,
+            "color": "#6B7280",
+            "lineHeight": 1.5
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "g1_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 450,
+            "y": 100
+          },
+          "size": {
+            "width": 260,
+            "height": 240
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "8px",
+            "border": "1px solid #F5E5E5",
+            "boxShadow": "0 4px 12px rgba(0,0,0,0.03)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "g1_img",
+          "type": "image",
+          "assetKey": "wellness-nutrition",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 450,
+            "y": 100
+          },
+          "size": {
+            "width": 260,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/1092730/pexels-photo-1092730.jpeg",
+          "placeholder": true,
+          "alt": "Organic superfoods",
+          "style": {
+            "borderRadius": "8px 8px 0 0",
+            "objectFit": "cover"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
+        },
+        {
+          "id": "g1_lbl",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 465,
+            "y": 255
+          },
+          "size": {
+            "width": 230,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Healthy Fats",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 14,
+            "color": "#F472B6"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "g1_desc",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 465,
+            "y": 280
+          },
+          "size": {
+            "width": 230,
+            "height": 50
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Avocados, extra-virgin olive oil, and cold-pressed seeds supply stable lipids.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 11,
+            "color": "#6B7280",
+            "lineHeight": 1.35
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "g2_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 740,
+            "y": 100
+          },
+          "size": {
+            "width": 260,
+            "height": 240
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "8px",
+            "border": "1px solid #F5E5E5",
+            "boxShadow": "0 4px 12px rgba(0,0,0,0.03)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "g2_img",
+          "type": "image",
+          "assetKey": "wellness-cover",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 740,
+            "y": 100
+          },
+          "size": {
+            "width": 260,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3759664/pexels-photo-3759664.jpeg",
+          "placeholder": true,
+          "alt": "Meditation botanical cover",
+          "style": {
+            "borderRadius": "8px 8px 0 0",
+            "objectFit": "cover"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.35
+            }
+          ]
+        },
+        {
+          "id": "g2_lbl",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 755,
+            "y": 255
+          },
+          "size": {
+            "width": 230,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Adaptogens",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 14,
+            "color": "#F472B6"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
+        },
+        {
+          "id": "g2_desc",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 755,
+            "y": 280
+          },
+          "size": {
+            "width": 230,
+            "height": 50
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Ashwagandha and reishi extract target high cortisol spikes.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 11,
+            "color": "#6B7280",
+            "lineHeight": 1.35
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.7
+            }
+          ]
+        },
+        {
+          "id": "g3_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 450,
+            "y": 365
+          },
+          "size": {
+            "width": 260,
+            "height": 240
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "8px",
+            "border": "1px solid #F5E5E5",
+            "boxShadow": "0 4px 12px rgba(0,0,0,0.03)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "g3_img",
+          "type": "image",
+          "assetKey": "wellness-yoga",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 450,
+            "y": 365
+          },
+          "size": {
+            "width": 260,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3822622/pexels-photo-3822622.jpeg",
+          "placeholder": true,
+          "alt": "Yoga poses stretch",
+          "style": {
+            "borderRadius": "8px 8px 0 0",
+            "objectFit": "cover"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.45000000000000007
+            }
+          ]
+        },
+        {
+          "id": "g3_lbl",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 465,
+            "y": 520
+          },
+          "size": {
+            "width": 230,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Organic Greens",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 14,
+            "color": "#F472B6"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.78
+            }
+          ]
+        },
+        {
+          "id": "g3_desc",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 465,
+            "y": 545
+          },
+          "size": {
+            "width": 230,
+            "height": 50
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Cruciferous vegetables support cellular recovery and liver health.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 11,
+            "color": "#6B7280",
+            "lineHeight": 1.35
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.8600000000000001
+            }
+          ]
+        },
+        {
+          "id": "g4_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 740,
+            "y": 365
+          },
+          "size": {
+            "width": 260,
+            "height": 240
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "8px",
+            "border": "1px solid #F5E5E5",
+            "boxShadow": "0 4px 12px rgba(0,0,0,0.03)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "g4_img",
+          "type": "image",
+          "assetKey": "wellness-tracker",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 740,
+            "y": 365
+          },
+          "size": {
+            "width": 260,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/6457579/pexels-photo-6457579.jpeg",
+          "placeholder": true,
+          "alt": "Journals and planning",
+          "style": {
+            "borderRadius": "8px 8px 0 0",
+            "objectFit": "cover"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.55
+            }
+          ]
+        },
+        {
+          "id": "g4_lbl",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 755,
+            "y": 520
+          },
+          "size": {
+            "width": 230,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Hydration",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 14,
+            "color": "#F472B6"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.94
+            }
+          ]
+        },
+        {
+          "id": "g4_desc",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 755,
+            "y": 545
+          },
+          "size": {
+            "width": 230,
+            "height": 50
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Infusing trace minerals and electrolytes resets water delivery.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 11,
+            "color": "#6B7280",
+            "lineHeight": 1.35
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.02
+            }
+          ]
+        },
+        {
+          "id": "t_nutri_footer",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 80,
+            "y": 650
+          },
+          "size": {
+            "width": 400,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Women Presentation",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 13,
+            "color": "#6B7280"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.1
+            }
+          ]
+        },
+        {
+          "id": "page_num_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 1156,
+            "y": 630
+          },
+          "size": {
+            "width": 60,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F472B6",
+            "borderRadius": "4px 0 0 4px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "page_num_txt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 1156,
+            "y": 640
+          },
+          "size": {
+            "width": 60,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "04",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 14,
+            "color": "#FFFFFF",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.18
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #FDA4AF",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "solid",
+        "value": "#FFF5F5"
+      }
+    },
+    {
+      "id": "wellness_05",
+      "slideIndex": 5,
+      "title": "Self-Care Habits",
+      "layoutType": "Tracker",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "title": {
+          "x": 80,
+          "y": 150,
+          "width": 320,
+          "height": 220
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Left layout title with two large checklist cards on right and check badge.",
+      "flow": "Habits Tracker → Breathing Exercises & CTA",
+      "duration": 8,
+      "tags": [
+        "womens-wellness",
+        "tracker"
+      ],
+      "clips": [
+        {
+          "id": "bg_wave_tracker",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "size": {
+            "width": 420,
+            "height": 648
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "rgba(253, 164, 175, 0.15)",
+            "borderRadius": "0 80% 80% 0 / 0 100% 100% 0"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "img_logo",
+          "type": "image",
+          "assetKey": "wellness-logo",
+          "role": "logo",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 80,
+            "y": 60
+          },
+          "size": {
+            "width": 180,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://placehold.co/320x64/FDA4AF/ffffff?text=HARMONY+STUDIO",
+          "placeholder": true,
+          "alt": "Wellness Logo",
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 80,
+            "y": 150
+          },
+          "size": {
+            "width": 320,
+            "height": 220
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "DAILY WELLNESS\nHABITS",
+          "style": {
+            "fontFamily": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+            "fontWeight": "700",
+            "fontSize": 36,
+            "color": "#F472B6",
+            "lineHeight": 1.25
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "tracker_hdr",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 80,
+            "y": 370
+          },
+          "size": {
+            "width": 320,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Consistency Tracker",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 13,
+            "color": "#F472B6",
+            "letterSpacing": "0.05em"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "tracker_desc",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 80,
+            "y": 400
+          },
+          "size": {
+            "width": 320,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Consistency is key to biological recovery. Checking off these self-care rituals daily builds lasting neuroplasticity.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 14,
+            "color": "#6B7280",
+            "lineHeight": 1.5
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "card_top",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 500,
+            "y": 100
+          },
+          "size": {
+            "width": 480,
+            "height": 205
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F472B6",
+            "borderRadius": "16px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "t_top_lbl",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 520,
+            "y": 115
+          },
+          "size": {
+            "width": 440,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "VITAL CHECKLIST",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "850",
+            "fontSize": 13,
+            "color": "#FFFFFF",
+            "letterSpacing": "0.08em"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "chk_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 520,
+            "y": 145
+          },
+          "size": {
+            "width": 440,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "✔ Slept 8 hours last night",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 14,
+            "color": "#FFFFFF"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "chk_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 520,
+            "y": 175
+          },
+          "size": {
+            "width": 440,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "✔ Drank 2.5 liters of clean water",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 14,
+            "color": "#FFFFFF"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
+        },
+        {
+          "id": "chk_3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 520,
+            "y": 205
+          },
+          "size": {
+            "width": 440,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "✔ Took adaptogen mineral supplements",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 14,
+            "color": "#FFFFFF"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.7
+            }
+          ]
+        },
+        {
+          "id": "card_bottom",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 500,
+            "y": 355
+          },
+          "size": {
+            "width": 480,
+            "height": 205
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F472B6",
+            "borderRadius": "16px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "t_bot_lbl",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 520,
+            "y": 370
+          },
+          "size": {
+            "width": 440,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "MINDFULNESS & MOTION",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "850",
+            "fontSize": 13,
+            "color": "#FFFFFF",
+            "letterSpacing": "0.08em"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.78
+            }
+          ]
+        },
+        {
+          "id": "chk_4",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 520,
+            "y": 405
+          },
+          "size": {
+            "width": 440,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "✔ Finished 15 min somatic stretch",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 14,
+            "color": "#FFFFFF"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.8600000000000001
+            }
+          ]
+        },
+        {
+          "id": "chk_5",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 520,
+            "y": 435
+          },
+          "size": {
+            "width": 440,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "✔ Completed 10 min quiet reflection",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 14,
+            "color": "#FFFFFF"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.94
+            }
+          ]
+        },
+        {
+          "id": "chk_6",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 520,
+            "y": 465
+          },
+          "size": {
+            "width": 440,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "✔ Aligned daily workflow speed",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 14,
+            "color": "#FFFFFF"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.02
+            }
+          ]
+        },
+        {
+          "id": "mid_circle_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 715,
+            "y": 305
+          },
+          "size": {
+            "width": 50,
+            "height": 50
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "border": "3px solid #F472B6",
+            "borderRadius": "50%",
+            "boxShadow": "0 4px 8px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "mid_chk",
+          "type": "image",
+          "assetKey": "check",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 5,
+          "position": {
+            "x": 727,
+            "y": 317
+          },
+          "size": {
+            "width": 26,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/F472B6/checkmark.png",
+          "placeholder": true,
+          "alt": "Checkmark",
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
+        },
+        {
+          "id": "t_tracker_footer",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 80,
+            "y": 650
+          },
+          "size": {
+            "width": 400,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Women Presentation",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 13,
+            "color": "#6B7280"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.1
+            }
+          ]
+        },
+        {
+          "id": "page_num_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 1156,
+            "y": 630
+          },
+          "size": {
+            "width": 60,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F472B6",
+            "borderRadius": "4px 0 0 4px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "page_num_txt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 1156,
+            "y": 640
+          },
+          "size": {
+            "width": 60,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "05",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 14,
+            "color": "#FFFFFF",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.18
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #FDA4AF",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "solid",
+        "value": "#FFF5F5"
+      }
+    },
+    {
+      "id": "wellness_06",
+      "slideIndex": 6,
+      "title": "Calm & CTA",
+      "layoutType": "CTA",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "title": {
+          "x": 80,
+          "y": 110,
+          "width": 500,
+          "height": 60
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Left title & image with right exercise block and solid pink CTA bottom card.",
+      "flow": "CTA → End",
+      "duration": 8,
+      "tags": [
+        "womens-wellness",
+        "cta",
+        "breathing"
+      ],
+      "clips": [
+        {
+          "id": "img_logo",
+          "type": "image",
+          "assetKey": "wellness-logo",
+          "role": "logo",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 80,
+            "y": 60
+          },
+          "size": {
+            "width": 180,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://placehold.co/320x64/FDA4AF/ffffff?text=HARMONY+STUDIO",
+          "placeholder": true,
+          "alt": "Wellness Logo",
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 80,
+            "y": 110
+          },
+          "size": {
+            "width": 500,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "BREATHE IN, LET GO",
+          "style": {
+            "fontFamily": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+            "fontWeight": "700",
+            "fontSize": 36,
+            "color": "#374151"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "img_calm",
+          "type": "image",
+          "assetKey": "wellness-yoga",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 190
+          },
+          "size": {
+            "width": 420,
+            "height": 390
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3822622/pexels-photo-3822622.jpeg",
+          "placeholder": true,
+          "alt": "Yoga poses stretch",
+          "style": {
+            "borderRadius": "24px",
+            "objectFit": "cover",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.06)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
+        },
+        {
+          "id": "exercise_lbl",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 520,
+            "y": 110
+          },
+          "size": {
+            "width": 480,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "4-7-8 CALMING TECHNIQUE",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "850",
+            "fontSize": 13,
+            "color": "#F472B6",
+            "letterSpacing": "0.08em"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "exercise_desc",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 520,
+            "y": 140
+          },
+          "size": {
+            "width": 480,
+            "height": 140
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "01. Inhale (4s): Breathe in quietly through the nose.\n02. Hold (7s): Hold your breath, relaxing the shoulders.\n03. Exhale (8s): Exhale completely making a whoosh sound.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 14,
+            "color": "#6B7280",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "cta_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 520,
+            "y": 290
+          },
+          "size": {
+            "width": 480,
+            "height": 290
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F472B6",
+            "borderRadius": "16px",
+            "boxShadow": "0 12px 32px rgba(244,114,182,0.25)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "card_badge",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 550,
+            "y": 320
+          },
+          "size": {
+            "width": 420,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "JOIN WELLNESS CIRCLE",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "850",
+            "fontSize": 18,
+            "color": "#FFFFFF",
+            "letterSpacing": "0.08em"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "card_sub",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 550,
+            "y": 365
+          },
+          "size": {
+            "width": 420,
+            "height": 90
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Sync with our community for daily breathing cues, self-care routines, and hormone-alignment support guides.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 14,
+            "color": "#FFFFFF",
+            "lineHeight": 1.5
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "btn_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 550,
+            "y": 490
+          },
+          "size": {
+            "width": 180,
+            "height": 46
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "8px",
+            "cursor": "pointer"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "btn_lbl",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 550,
+            "y": 503
+          },
+          "size": {
+            "width": 180,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "JOIN CIRCLE",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 13,
+            "color": "#F472B6",
+            "textAlign": "center",
+            "letterSpacing": "0.05em"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
+        },
+        {
+          "id": "card_guarantee",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 760,
+            "y": 504
+          },
+          "size": {
+            "width": 210,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "100% Free Community",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 11,
+            "color": "rgba(255,255,255,0.8)",
+            "textAlign": "right"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.7
+            }
+          ]
+        },
+        {
+          "id": "page_num_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 1156,
+            "y": 630
+          },
+          "size": {
+            "width": 60,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F472B6",
+            "borderRadius": "4px 0 0 4px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "page_num_txt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 1156,
+            "y": 640
+          },
+          "size": {
+            "width": 60,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "06",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 14,
+            "color": "#FFFFFF",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.78
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #FDA4AF",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "solid",
+        "value": "#FFF5F5"
+      }
+    }
+  ]
+}

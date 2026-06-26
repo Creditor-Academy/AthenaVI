@@ -1,0 +1,2390 @@
+{
+  "category": "Courses",
+  "template": {
+    "id": "masterclass-intro",
+    "name": "Masterclass Introduction",
+    "category": "Courses",
+    "theme": {
+      "fonts": {
+        "serif": "'Playfair Display', Georgia, serif",
+        "sans": "'Inter', 'Segoe UI', sans-serif"
+      }
+    },
+    "totalSlides": 5,
+    "canvasSize": {
+      "width": 1280,
+      "height": 720
+    },
+    "aspectRatio": "16:9",
+    "colorPalette": {
+      "primary": "#d4b896",
+      "secondary": "#e8d5c0",
+      "dark": "#121214",
+      "white": "#ffffff",
+      "line": "rgba(255, 255, 255, 0.08)",
+      "light": "#1c1c1f",
+      "accent": "#c5a880",
+      "gray": "#a1a1aa"
+    },
+    "description": "An elegant dark-themed 5-slide introductory course presentation package, complete with chapters grid, biography panel, and CTA enroll card."
+  },
+  "scenes": [
+    {
+      "id": "masterclass_01",
+      "slideIndex": 1,
+      "title": "Masterclass Promo",
+      "layoutType": "Cover",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "hero": {
+          "x": 680,
+          "y": 100,
+          "width": 500,
+          "height": 500
+        },
+        "title": {
+          "x": 64,
+          "y": 180,
+          "width": 620,
+          "height": 200
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Elegant dark cover with serif title, gold badges, and asymmetric instructor photo.",
+      "flow": "Cover → About Me",
+      "duration": 8,
+      "tags": [
+        "masterclass",
+        "cover",
+        "masterclass"
+      ],
+      "clips": [
+        {
+          "id": "dashed_line",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 60
+          },
+          "size": {
+            "width": 1152,
+            "height": 1
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "borderBottom": "1px dashed rgba(255,255,255,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "hdr_left",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "size": {
+            "width": 300,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "ONLINE MASTERCLASS",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 14,
+            "color": "#d4b896",
+            "fontWeight": "700",
+            "letterSpacing": "0.08em"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "hdr_right",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1116,
+            "y": 36
+          },
+          "size": {
+            "width": 100,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "VOL. 01",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 14,
+            "color": "#a1a1aa",
+            "textAlign": "right"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "t_badge",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 140
+          },
+          "size": {
+            "width": 400,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "CREATIVE DIRECTION",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "800",
+            "fontSize": 14,
+            "color": "#c5a880",
+            "letterSpacing": "0.1em"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 64,
+            "y": 180
+          },
+          "size": {
+            "width": 620,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Creative Direction\n& Visual Strategy",
+          "style": {
+            "fontFamily": "'Playfair Display', Georgia, serif",
+            "fontWeight": "700",
+            "fontSize": 52,
+            "color": "#ffffff",
+            "lineHeight": 1.2
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "t_instructor",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 400
+          },
+          "size": {
+            "width": 500,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "WITH INSTRUCTOR SARAH JENKINS",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "700",
+            "fontSize": 15,
+            "color": "#d4b896",
+            "letterSpacing": "0.05em"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "t_sub",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 64,
+            "y": 440
+          },
+          "size": {
+            "width": 500,
+            "height": 130
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Learn the core methodologies behind designing iconic visual systems and directing high-end creative campaigns.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 18,
+            "color": "#a1a1aa",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
+        },
+        {
+          "id": "badge_circle",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 620,
+            "y": 450
+          },
+          "size": {
+            "width": 110,
+            "height": 110
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#d4b896",
+            "borderRadius": "50%",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.2)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "badge_text",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 620,
+            "y": 492
+          },
+          "size": {
+            "width": 110,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "ENROLL",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "color": "#121214",
+            "textAlign": "center",
+            "fontSize": 14,
+            "fontWeight": "800",
+            "letterSpacing": "0.05em"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.7
+            }
+          ]
+        },
+        {
+          "id": "img_hero",
+          "type": "image",
+          "assetKey": "masterclass-host",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 680,
+            "y": 100
+          },
+          "size": {
+            "width": 500,
+            "height": 500
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3777943/pexels-photo-3777943.jpeg",
+          "placeholder": true,
+          "alt": "Instructor Portrait",
+          "style": {
+            "borderRadius": "250px 30px 250px 30px",
+            "objectFit": "cover",
+            "boxShadow": "0 20px 40px rgba(0,0,0,0.4)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #d4b896",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.3)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "solid",
+        "value": "#121214"
+      }
+    },
+    {
+      "id": "masterclass_02",
+      "slideIndex": 2,
+      "title": "Instructor Bio",
+      "layoutType": "Bio",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "title": {
+          "x": 64,
+          "y": 90,
+          "width": 600,
+          "height": 60
+        },
+        "bio_desc": {
+          "x": 64,
+          "y": 160,
+          "width": 600,
+          "height": 180
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Spacious biography overview splitting text paragraphs and wide office view card.",
+      "flow": "About Me → Syllabus",
+      "duration": 8,
+      "tags": [
+        "masterclass",
+        "bio",
+        "profile"
+      ],
+      "clips": [
+        {
+          "id": "dashed_line",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 60
+          },
+          "size": {
+            "width": 1152,
+            "height": 1
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "borderBottom": "1px dashed rgba(255,255,255,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "hdr_left",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "size": {
+            "width": 300,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "ABOUT YOUR INSTRUCTOR",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 14,
+            "color": "#a1a1aa",
+            "letterSpacing": "0.05em"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 90
+          },
+          "size": {
+            "width": 600,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "MEET SARAH JENKINS",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "800",
+            "fontSize": 24,
+            "color": "#d4b896",
+            "letterSpacing": "0.05em"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "t_bio_serif",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 150
+          },
+          "size": {
+            "width": 600,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "A multi-disciplinary creative director with 12+ years of experience leading visual campaigns.",
+          "style": {
+            "fontFamily": "'Playfair Display', Georgia, serif",
+            "fontWeight": "600",
+            "fontSize": 28,
+            "color": "#ffffff",
+            "lineHeight": 1.35
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "t_col1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 64,
+            "y": 350
+          },
+          "size": {
+            "width": 280,
+            "height": 240
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "For over a decade, Sarah has led design teams, directed cinematic campaigns, and engineered creative identity systems for global clients. This course packages those methodologies.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 16,
+            "color": "#a1a1aa",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "t_col2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 384,
+            "y": 350
+          },
+          "size": {
+            "width": 280,
+            "height": 240
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "She believes that strategy is the container for design. In this masterclass, she shares actionable tools, client decks, and key presentation principles.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 16,
+            "color": "#a1a1aa",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "img_bio",
+          "type": "image",
+          "assetKey": "masterclass-bio",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 680,
+            "y": 120
+          },
+          "size": {
+            "width": 500,
+            "height": 480
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3184311/pexels-photo-3184311.jpeg",
+          "placeholder": true,
+          "alt": "Creative Desk",
+          "style": {
+            "borderRadius": "24px",
+            "objectFit": "cover",
+            "boxShadow": "0 20px 40px rgba(0,0,0,0.3)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #d4b896",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.3)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "solid",
+        "value": "#121214"
+      }
+    },
+    {
+      "id": "masterclass_03",
+      "slideIndex": 3,
+      "title": "Course Syllabus",
+      "layoutType": "Syllabus",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "title": {
+          "x": 64,
+          "y": 90,
+          "width": 600,
+          "height": 60
+        },
+        "grid": {
+          "x": 64,
+          "y": 170,
+          "width": 1152,
+          "height": 450
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "2x2 grid representing curriculum chapters with index highlights.",
+      "flow": "Syllabus → Outcomes",
+      "duration": 8,
+      "tags": [
+        "masterclass",
+        "syllabus",
+        "chapters"
+      ],
+      "clips": [
+        {
+          "id": "dashed_line",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 60
+          },
+          "size": {
+            "width": 1152,
+            "height": 1
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "borderBottom": "1px dashed rgba(255,255,255,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "hdr_left",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "size": {
+            "width": 300,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "CURRICULUM OVERVIEW",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 14,
+            "color": "#a1a1aa",
+            "letterSpacing": "0.05em"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 90
+          },
+          "size": {
+            "width": 600,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "COURSE SYLLABUS",
+          "style": {
+            "fontFamily": "'Playfair Display', Georgia, serif",
+            "fontWeight": "700",
+            "fontSize": 36,
+            "color": "#ffffff"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "c1_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 170
+          },
+          "size": {
+            "width": 550,
+            "height": 190
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1c1c1f",
+            "borderRadius": "16px",
+            "border": "1px solid rgba(255, 255, 255, 0.08)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "c1_idx",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 88,
+            "y": 194
+          },
+          "size": {
+            "width": 60,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "01",
+          "style": {
+            "fontFamily": "'Playfair Display', Georgia, serif",
+            "fontWeight": "700",
+            "fontSize": 32,
+            "color": "#d4b896"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "c1_lbl",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 154,
+            "y": 198
+          },
+          "size": {
+            "width": 430,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Foundations of Design Direction",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "700",
+            "fontSize": 18,
+            "color": "#ffffff"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "c1_desc",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 154,
+            "y": 238
+          },
+          "size": {
+            "width": 430,
+            "height": 90
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Setting strategic scope, crafting creative briefs, and align visual goals with target consumer expectations.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 14,
+            "color": "#a1a1aa",
+            "lineHeight": 1.5
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "c2_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 664,
+            "y": 170
+          },
+          "size": {
+            "width": 550,
+            "height": 190
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1c1c1f",
+            "borderRadius": "16px",
+            "border": "1px solid rgba(255, 255, 255, 0.08)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "c2_idx",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 688,
+            "y": 194
+          },
+          "size": {
+            "width": 60,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "02",
+          "style": {
+            "fontFamily": "'Playfair Display', Georgia, serif",
+            "fontWeight": "700",
+            "fontSize": 32,
+            "color": "#d4b896"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
+        },
+        {
+          "id": "c2_lbl",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 754,
+            "y": 198
+          },
+          "size": {
+            "width": 430,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Visual Moodboarding & Curation",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "700",
+            "fontSize": 18,
+            "color": "#ffffff"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.7
+            }
+          ]
+        },
+        {
+          "id": "c2_desc",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 754,
+            "y": 238
+          },
+          "size": {
+            "width": 430,
+            "height": 90
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Translating keywords to concepts, aggregating inspiration, and filtering styles down into coherent palettes.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 14,
+            "color": "#a1a1aa",
+            "lineHeight": 1.5
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.78
+            }
+          ]
+        },
+        {
+          "id": "c3_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 390
+          },
+          "size": {
+            "width": 550,
+            "height": 190
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1c1c1f",
+            "borderRadius": "16px",
+            "border": "1px solid rgba(255, 255, 255, 0.08)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "c3_idx",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 88,
+            "y": 414
+          },
+          "size": {
+            "width": 60,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "03",
+          "style": {
+            "fontFamily": "'Playfair Display', Georgia, serif",
+            "fontWeight": "700",
+            "fontSize": 32,
+            "color": "#d4b896"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.8600000000000001
+            }
+          ]
+        },
+        {
+          "id": "c3_lbl",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 154,
+            "y": 418
+          },
+          "size": {
+            "width": 430,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Structuring the Visual Language",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "700",
+            "fontSize": 18,
+            "color": "#ffffff"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.94
+            }
+          ]
+        },
+        {
+          "id": "c3_desc",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 154,
+            "y": 458
+          },
+          "size": {
+            "width": 430,
+            "height": 90
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Designing unified typographic hierarchies, asset libraries, logo variations, and style guides.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 14,
+            "color": "#a1a1aa",
+            "lineHeight": 1.5
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.02
+            }
+          ]
+        },
+        {
+          "id": "c4_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 664,
+            "y": 390
+          },
+          "size": {
+            "width": 550,
+            "height": 190
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1c1c1f",
+            "borderRadius": "16px",
+            "border": "1px solid rgba(255, 255, 255, 0.08)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "c4_idx",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 688,
+            "y": 414
+          },
+          "size": {
+            "width": 60,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "04",
+          "style": {
+            "fontFamily": "'Playfair Display', Georgia, serif",
+            "fontWeight": "700",
+            "fontSize": 32,
+            "color": "#d4b896"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.1
+            }
+          ]
+        },
+        {
+          "id": "c4_lbl",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 754,
+            "y": 418
+          },
+          "size": {
+            "width": 430,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Client Pitching & Presenting",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "700",
+            "fontSize": 18,
+            "color": "#ffffff"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.18
+            }
+          ]
+        },
+        {
+          "id": "c4_desc",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 754,
+            "y": 458
+          },
+          "size": {
+            "width": 430,
+            "height": 90
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Formulating compelling decks, presenting layouts logically, and steering client reviews to active approval.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 14,
+            "color": "#a1a1aa",
+            "lineHeight": 1.5
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.26
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #d4b896",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.3)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "solid",
+        "value": "#121214"
+      }
+    },
+    {
+      "id": "masterclass_04",
+      "slideIndex": 4,
+      "title": "Core Outcomes",
+      "layoutType": "Outcomes",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "title": {
+          "x": 64,
+          "y": 90,
+          "width": 600,
+          "height": 60
+        },
+        "list": {
+          "x": 680,
+          "y": 170,
+          "width": 480,
+          "height": 420
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Highlighting three key skills with text icons next to a portrait placeholder.",
+      "flow": "Outcomes → CTA",
+      "duration": 8,
+      "tags": [
+        "masterclass",
+        "outcomes",
+        "skills"
+      ],
+      "clips": [
+        {
+          "id": "dashed_line",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 60
+          },
+          "size": {
+            "width": 1152,
+            "height": 1
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "borderBottom": "1px dashed rgba(255,255,255,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "hdr_left",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "size": {
+            "width": 300,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "KEY LEARNING OUTCOMES",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 14,
+            "color": "#a1a1aa",
+            "letterSpacing": "0.05em"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 90
+          },
+          "size": {
+            "width": 600,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "SKILLS YOU WILL ACQUIRE",
+          "style": {
+            "fontFamily": "'Playfair Display', Georgia, serif",
+            "fontWeight": "700",
+            "fontSize": 36,
+            "color": "#ffffff"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "img_outcomes",
+          "type": "image",
+          "assetKey": "masterclass-outcomes",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 170
+          },
+          "size": {
+            "width": 560,
+            "height": 420
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3182763/pexels-photo-3182763.jpeg",
+          "placeholder": true,
+          "alt": "Moodboard Selection",
+          "style": {
+            "borderRadius": "24px",
+            "objectFit": "cover"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "ico_bg_1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 670,
+            "y": 180
+          },
+          "size": {
+            "width": 52,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1c1c1f",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "ico_1",
+          "type": "image",
+          "assetKey": "values",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 681,
+            "y": 191
+          },
+          "size": {
+            "width": 30,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/trophy.png",
+          "placeholder": true,
+          "alt": "Award",
+          "style": {
+            "objectFit": "contain"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
+        },
+        {
+          "id": "out_lbl_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 740,
+            "y": 178
+          },
+          "size": {
+            "width": 400,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Define Brand Systems",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "700",
+            "fontSize": 18,
+            "color": "#ffffff"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "out_body_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 740,
+            "y": 208
+          },
+          "size": {
+            "width": 400,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Construct scalable and modular brand guides that clients can deploy with ease.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 14,
+            "color": "#a1a1aa",
+            "lineHeight": 1.5
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "ico_bg_2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 670,
+            "y": 310
+          },
+          "size": {
+            "width": 52,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1c1c1f",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "ico_2",
+          "type": "image",
+          "assetKey": "growth",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 681,
+            "y": 321
+          },
+          "size": {
+            "width": 30,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/combo-chart.png",
+          "placeholder": true,
+          "alt": "Chart",
+          "style": {
+            "objectFit": "contain"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.35
+            }
+          ]
+        },
+        {
+          "id": "out_lbl_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 740,
+            "y": 308
+          },
+          "size": {
+            "width": 400,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Structure High-Rate Pitching",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "700",
+            "fontSize": 18,
+            "color": "#ffffff"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "out_body_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 740,
+            "y": 338
+          },
+          "size": {
+            "width": 400,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Structure pitch strategies that explain the business value of your aesthetics.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 14,
+            "color": "#a1a1aa",
+            "lineHeight": 1.5
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
+        },
+        {
+          "id": "ico_bg_3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 670,
+            "y": 440
+          },
+          "size": {
+            "width": 52,
+            "height": 52
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1c1c1f",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "ico_3",
+          "type": "image",
+          "assetKey": "team",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 681,
+            "y": 451
+          },
+          "size": {
+            "width": 30,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/conference-call.png",
+          "placeholder": true,
+          "alt": "Conference",
+          "style": {
+            "objectFit": "contain"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.45000000000000007
+            }
+          ]
+        },
+        {
+          "id": "out_lbl_3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 740,
+            "y": 438
+          },
+          "size": {
+            "width": 400,
+            "height": 26
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Lead Creative Strategy",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "700",
+            "fontSize": 18,
+            "color": "#ffffff"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.7
+            }
+          ]
+        },
+        {
+          "id": "out_body_3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 740,
+            "y": 468
+          },
+          "size": {
+            "width": 400,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Direct designers, developers, and photographers toward unified creative visions.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 14,
+            "color": "#a1a1aa",
+            "lineHeight": 1.5
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.78
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #d4b896",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.3)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "solid",
+        "value": "#121214"
+      }
+    },
+    {
+      "id": "masterclass_05",
+      "slideIndex": 5,
+      "title": "Start Learning",
+      "layoutType": "CTA",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "title": {
+          "x": 64,
+          "y": 90,
+          "width": 600,
+          "height": 60
+        },
+        "card": {
+          "x": 240,
+          "y": 160,
+          "width": 800,
+          "height": 440
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Centered masterclass enrollment card with outlines and a gold button CTA.",
+      "flow": "CTA → End",
+      "duration": 8,
+      "tags": [
+        "masterclass",
+        "cta",
+        "enroll"
+      ],
+      "clips": [
+        {
+          "id": "dashed_line",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 60
+          },
+          "size": {
+            "width": 1152,
+            "height": 1
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "borderBottom": "1px dashed rgba(255,255,255,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "hdr_left",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "size": {
+            "width": 300,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "JOIN THE MASTERCLASS",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 14,
+            "color": "#a1a1aa",
+            "letterSpacing": "0.05em"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 90
+          },
+          "size": {
+            "width": 600,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "START TODAY",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "800",
+            "fontSize": 24,
+            "color": "#d4b896",
+            "letterSpacing": "0.05em"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "card_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 240,
+            "y": 160
+          },
+          "size": {
+            "width": 800,
+            "height": 440
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1c1c1f",
+            "borderRadius": "24px",
+            "border": "1px solid rgba(255, 255, 255, 0.08)",
+            "boxShadow": "0 20px 48px rgba(0,0,0,0.4)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "card_badge",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 240,
+            "y": 210
+          },
+          "size": {
+            "width": 800,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "LIMITED ENROLLMENTS AVAILABLE",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "850",
+            "fontSize": 12,
+            "color": "#c5a880",
+            "letterSpacing": "0.12em",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "card_h1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 290,
+            "y": 250
+          },
+          "size": {
+            "width": 700,
+            "height": 50
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Unlock Sarah Jenkins Masterclass",
+          "style": {
+            "fontFamily": "'Playfair Display', Georgia, serif",
+            "fontWeight": "700",
+            "fontSize": 36,
+            "color": "#ffffff",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "card_sub",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 300,
+            "y": 320
+          },
+          "size": {
+            "width": 680,
+            "height": 80
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Gain instant lifetime access to 40+ high-definition lessons, downloadable visual templates, and access to our private Discord creative network.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 16,
+            "color": "#a1a1aa",
+            "lineHeight": 1.6,
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "btn_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 540,
+            "y": 440
+          },
+          "size": {
+            "width": 200,
+            "height": 50
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#d4b896",
+            "borderRadius": "8px",
+            "cursor": "pointer"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "btn_lbl",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 540,
+            "y": 454
+          },
+          "size": {
+            "width": 200,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "ENROLL NOW",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "800",
+            "fontSize": 14,
+            "color": "#121214",
+            "textAlign": "center",
+            "letterSpacing": "0.05em"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
+        },
+        {
+          "id": "card_guarantee",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 240,
+            "y": 514
+          },
+          "size": {
+            "width": 800,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "14-Day Money Back Guarantee",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 13,
+            "color": "#a1a1aa",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.7
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #d4b896",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.3)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "solid",
+        "value": "#121214"
+      }
+    }
+  ]
+}

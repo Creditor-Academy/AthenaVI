@@ -1,0 +1,40 @@
+{
+  "colors": {
+    "primary": "#2d6a4f",
+    "secondary": "#d8f3dc",
+    "dark": "#1b4332",
+    "white": "#ffffff",
+    "line": "#e6e6e6",
+    "light": "#f4f9f4",
+    "accent": "#ffb703",
+    "gray": "#6c757d"
+  },
+  "backgrounds": [
+    { "id": "bg-white", "name": "Clean White", "value": "#ffffff" },
+    { "id": "bg-tint", "name": "Mint Tint", "value": "#f4f9f4" },
+    { "id": "bg-dark", "name": "Forest Dark", "value": "#1b4332" },
+    { "id": "bg-gradient-forest", "name": "Forest Gradient", "value": "linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%)" },
+    { "id": "bg-gradient-light", "name": "Mint Gradient", "value": "linear-gradient(135deg, #f4f9f4 0%, #ffffff 100%)" }
+  ],
+  "theme": {
+    "fonts": {
+      "serif": "'Playfair Display', Georgia, serif",
+      "sans": "'Inter', 'Segoe UI', sans-serif"
+    }
+  },
+  "images": [
+    { "id": "culture-cover", "name": "Team Workshop", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3184333/pexels-photo-3184333.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3184333/pexels-photo-3184333.jpeg" },
+    { "id": "culture-mission", "name": "Hands Stacked", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3182763/pexels-photo-3182763.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3182763/pexels-photo-3182763.jpeg" },
+    { "id": "culture-team", "name": "Team Meeting", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3184423/pexels-photo-3184423.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3184423/pexels-photo-3184423.jpeg" },
+    { "id": "culture-timeline", "name": "Co-workers at Computer", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3184311/pexels-photo-3184311.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3184311/pexels-photo-3184311.jpeg" },
+    { "id": "culture-perks", "name": "Coffee Break", "role": "hero-image", "thumb": "https://images.pexels.com/photos/7014387/pexels-photo-7014387.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/7014387/pexels-photo-7014387.jpeg" }
+  ],
+  "icons": [
+    { "id": "values", "name": "Values", "category": "business", "src": "https://img.icons8.com/doodle/96/star.png" },
+    { "id": "team", "name": "Team", "category": "business", "src": "https://img.icons8.com/doodle/96/conference-call.png" },
+    { "id": "growth", "name": "Growth", "category": "business", "src": "https://img.icons8.com/doodle/96/combo-chart.png" },
+    { "id": "wellness", "name": "Wellness", "category": "business", "src": "https://img.icons8.com/doodle/96/heart.png" },
+    { "id": "learning", "name": "Learning", "category": "business", "src": "https://img.icons8.com/doodle/96/open-book.png" },
+    { "id": "check", "name": "Check", "category": "business", "src": "https://img.icons8.com/doodle/96/checkmark.png" }
+  ]
+}

@@ -1,9 +1,9 @@
 {
-  "category": "Product Launch",
+  "category": "Company",
   "template": {
     "id": "product-launch-editorial",
     "name": "Product Launch — Editorial Bundle",
-    "category": "Product Launch",
+    "category": "Company",
     "theme": {
       "name": "Editorial Launch",
       "fonts": {

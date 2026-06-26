@@ -8,12 +8,13 @@ const PREVIEW_FPS = 30;
 export function useComputedEntranceState(clip) {
   const { staticEntrance } = usePreviewMode();
   const { entrance, progress } = useLayerEntrancePreview(clip);
+  const delayFrames = Math.round((entrance?.delay || 0) * PREVIEW_FPS);
   const durationFrames = Math.max(1, Math.round((entrance?.duration || 0.75) * PREVIEW_FPS));
   const frameInClip = staticEntrance
-    ? durationFrames
+    ? delayFrames + durationFrames
     : progress != null
-      ? Math.floor(progress * durationFrames)
-      : durationFrames;
+      ? (progress === 0 ? 0 : delayFrames + Math.floor(progress * durationFrames))
+      : delayFrames + durationFrames;
 
   const animState =
     entrance && entrance.type !== 'none' && (staticEntrance || progress != null)

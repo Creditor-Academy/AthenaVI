@@ -22,24 +22,18 @@ import './Templates.css'
 
 const CATEGORY_ICONS = {
   'All Templates': AllTemplateImg,
-  'Pitch': BusinessImg,
-  'Product Launch': MarketingImg,
-  'Course Module': EducationImg,
-  'Course Explanation': EducationImg,
-  'Sales Demo': BusinessImg,
+  'Company': BusinessImg,
+  'Courses': EducationImg,
   'Social Short': MarketingImg,
   'Podcast': MarketingImg,
 }
 
-const CATEGORY_FILTERS = ['All Templates', 'Pitch', 'Product Launch', 'Course Module', 'Course Explanation', 'Sales Demo', 'Social Short', 'Podcast']
+const CATEGORY_FILTERS = ['All Templates', 'Company', 'Courses', 'Social Short', 'Podcast']
 
 const CATEGORY_MAPPING = {
   'All Templates': null,
-  'Pitch': 'Pitch',
-  'Product Launch': 'Product Launch',
-  'Course Module': 'Course Module',
-  'Course Explanation': 'Course Explanation',
-  'Sales Demo': 'Sales Demo',
+  'Company': 'Company',
+  'Courses': 'Courses',
   'Social Short': 'Social Short',
   'Podcast': 'Podcast',
 }

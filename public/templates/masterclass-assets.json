@@ -1,0 +1,34 @@
+{
+  "colors": {
+    "primary": "#d4b896",
+    "secondary": "#e8d5c0",
+    "dark": "#121214",
+    "white": "#ffffff",
+    "line": "rgba(255, 255, 255, 0.08)",
+    "light": "#1c1c1f",
+    "accent": "#c5a880",
+    "gray": "#a1a1aa"
+  },
+  "backgrounds": [
+    { "id": "bg-dark", "name": "Pitch Black", "value": "#121214" },
+    { "id": "bg-slate", "name": "Studio Slate", "value": "#1c1c1f" },
+    { "id": "bg-gradient-dark", "name": "Premium Fade", "value": "linear-gradient(135deg, #121214 0%, #1c1c1f 100%)" }
+  ],
+  "theme": {
+    "fonts": {
+      "serif": "'Playfair Display', Georgia, serif",
+      "sans": "'Inter', 'Segoe UI', sans-serif"
+    }
+  },
+  "images": [
+    { "id": "masterclass-host", "name": "Instructor Portrait", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3777943/pexels-photo-3777943.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3777943/pexels-photo-3777943.jpeg" },
+    { "id": "masterclass-bio", "name": "Creative Desk", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3184311/pexels-photo-3184311.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3184311/pexels-photo-3184311.jpeg" },
+    { "id": "masterclass-outcomes", "name": "Moodboard Selection", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3182763/pexels-photo-3182763.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3182763/pexels-photo-3182763.jpeg" }
+  ],
+  "icons": [
+    { "id": "values", "name": "Award", "category": "business", "src": "https://img.icons8.com/doodle/96/trophy.png" },
+    { "id": "growth", "name": "Chart", "category": "business", "src": "https://img.icons8.com/doodle/96/combo-chart.png" },
+    { "id": "team", "name": "Conference", "category": "business", "src": "https://img.icons8.com/doodle/96/conference-call.png" },
+    { "id": "check", "name": "Checkmark", "category": "business", "src": "https://img.icons8.com/doodle/96/checkmark.png" }
+  ]
+}

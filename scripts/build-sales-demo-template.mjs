@@ -733,11 +733,11 @@ const SCENE_AVATAR = [
 });
 
 const template = {
-  category: 'Sales Demo',
+  category: 'Company',
   template: {
     id: 'sales-demo-deal-room',
     name: 'Sales Demo — Deal Room Bundle',
-    category: 'Sales Demo',
+    category: 'Company',
     theme: assets.theme,
     presenter: PRESENTER,
     totalSlides: 8,
