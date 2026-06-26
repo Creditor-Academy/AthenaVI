@@ -109,6 +109,22 @@ export function snapPoint(point, gridSize, enabled) {
   };
 }
 
+/** Pixel step for arrow-key nudging on the canvas (Shift = larger step). */
+export function getLayerNudgeStep(editorView = {}, shiftKey = false) {
+  const grid = editorView.gridSize || DEFAULT_GRID_SIZE;
+  if (editorView.snapToGrid) {
+    return shiftKey ? grid * 5 : grid;
+  }
+  return shiftKey ? 10 : 1;
+}
+
+export function isCanvasNudgeableClip(clip) {
+  if (!clip || clip.locked) return false;
+  if (clip.type === 'audio') return false;
+  const role = String(clip.role || '').toLowerCase();
+  return !['narration', 'voiceover', 'scene-audio', 'background-music'].includes(role);
+}
+
 /** Assign sequential layer numbers from the given paint order (do not re-sort). */
 export function reindexLayerNumbers(clips) {
   let nextLayer = 1;

@@ -16,6 +16,10 @@ import {
 } from '../../../utils/fetchEditorTemplates.js';
 import TemplateBundlePicker from '../../features/editor/editor/TemplateBundlePicker';
 import { sanitizeUserFacingMessage } from '../../../utils/userFacingMessage.js';
+import {
+  DUPLICATE_PROJECT_NAME_MESSAGE,
+  findDuplicateProjectName,
+} from '../../../utils/projectNameValidation.js';
 import './CreateVideoModal.css';
 
 const WIZARD_STEPS = [
@@ -182,6 +186,8 @@ const CreateVideoModal = ({
   const [folderLoading, setFolderLoading] = useState(false);
   const [folderId, setFolderId] = useState(initialFolderId || '');
   const [folderProjects, setFolderProjects] = useState([]);
+  const [folderProjectsLoading, setFolderProjectsLoading] = useState(false);
+  const [folderProjectsLoadError, setFolderProjectsLoadError] = useState(false);
 
   const [showInlineWorkspaceCreate, setShowInlineWorkspaceCreate] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
@@ -194,6 +200,8 @@ const CreateVideoModal = ({
   const [videoTitle, setVideoTitle] = useState('');
   const [videoTags, setVideoTags] = useState([]);
   const [submitting, setSubmitting] = useState(false);
+  const [verifyingName, setVerifyingName] = useState(false);
+  const [showNameDuplicateError, setShowNameDuplicateError] = useState(false);
   const [toast, setToast] = useState(null);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const toastTimeoutRef = useRef(null);
@@ -294,18 +302,24 @@ const CreateVideoModal = ({
   const trimmedVideoTitle = videoTitle.trim();
 
   const isProjectNameDuplicate = useMemo(() => {
-    if (!trimmedVideoTitle || !folderId) return false;
-    return folderProjects.some((project) => {
-      const name = (project.name || project.title || '').trim();
-      return name.toLowerCase() === trimmedVideoTitle.toLowerCase();
-    });
-  }, [trimmedVideoTitle, folderId, folderProjects]);
+    if (!trimmedVideoTitle || !folderId || folderProjectsLoadError) {
+      return false;
+    }
+    if (folderProjectsLoading && folderProjects.length === 0) {
+      return false;
+    }
+    return Boolean(findDuplicateProjectName(trimmedVideoTitle, folderProjects));
+  }, [trimmedVideoTitle, folderId, folderProjects, folderProjectsLoading, folderProjectsLoadError]);
+
+  const showDuplicateNameError = isProjectNameDuplicate || showNameDuplicateError;
 
   const canProceedStep1 = Boolean(aspectRatio);
   const canProceedStep2 = selectedTemplateId !== null;
   const canCreateVideo =
     Boolean(trimmedVideoTitle) &&
     !isProjectNameDuplicate &&
+    !folderProjectsLoading &&
+    !folderProjectsLoadError &&
     Boolean(aspectRatio) &&
     Boolean(workspaceId) &&
     Boolean(folderId) &&
@@ -337,14 +351,26 @@ const CreateVideoModal = ({
   async function loadFolderProjects(nextWorkspaceId, nextFolderId) {
     if (!nextWorkspaceId || !nextFolderId) {
       setFolderProjects([]);
+      setFolderProjectsLoading(false);
+      setFolderProjectsLoadError(false);
       return;
     }
 
+    setFolderProjectsLoading(true);
+    setFolderProjectsLoadError(false);
     try {
-      const projects = await workspaceService.listProjects(nextWorkspaceId, nextFolderId);
+      const projects = await workspaceService.listProjectsInFolder(nextWorkspaceId, nextFolderId);
       setFolderProjects(projects || []);
-    } catch {
+    } catch (error) {
       setFolderProjects([]);
+      setFolderProjectsLoadError(true);
+      showToast(
+        sanitizeUserFacingMessage(error?.message) ||
+          'Could not load existing projects in this folder',
+        'error'
+      );
+    } finally {
+      setFolderProjectsLoading(false);
     }
   }
 
@@ -407,6 +433,16 @@ const CreateVideoModal = ({
 
   useEffect(() => {
     if (!isOpen) return;
+    if (!workspaceId || !folderId) {
+      setFolderProjects([]);
+      setFolderProjectsLoading(false);
+      setFolderProjectsLoadError(false);
+      return;
+    }
+
+    setFolderProjects([]);
+    setFolderProjectsLoading(true);
+    setFolderProjectsLoadError(false);
     loadFolderProjects(workspaceId, folderId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, workspaceId, folderId]);
@@ -453,7 +489,8 @@ const CreateVideoModal = ({
         const normalizedVideo = {
           ...video,
           id: video.id || video._id,
-          name: video.name || video.title
+          name: video.name || video.title,
+          folderId: video.folderId || createdFolderId,
         };
         setFolderProjects((prev) => {
           if (prev.some((project) => String(project.id) === String(normalizedVideo.id))) return prev;
@@ -629,23 +666,56 @@ const CreateVideoModal = ({
   };
 
   const handleCreate = async () => {
-    if (!canCreateVideo || isProjectNameDuplicate) return;
+    if (submitting || verifyingName || folderProjectsLoading) return;
+
+    const title = videoTitle.trim();
+    if (
+      !title ||
+      !aspectRatio ||
+      !workspaceId ||
+      !folderId ||
+      !canCreateInWorkspace(selectedWorkspace)
+    ) {
+      return;
+    }
+
+    // Step 1: always check the server for an existing project with this name before creating.
+    setVerifyingName(true);
+    let nameCheck;
+    try {
+      nameCheck = await workspaceService.verifyProjectNameInFolder(workspaceId, folderId, title);
+    } catch (error) {
+      showToast(
+        sanitizeUserFacingMessage(error?.message) ||
+          'Could not verify project name. Please try again.',
+        'error'
+      );
+      return;
+    } finally {
+      setVerifyingName(false);
+    }
+
+    if (!nameCheck.available) {
+      setFolderProjects(nameCheck.projects || []);
+      setShowNameDuplicateError(true);
+      return;
+    }
+
+    setShowNameDuplicateError(false);
 
     const payload = {
-      title: trimmedVideoTitle,
+      title,
       tags: videoTags,
       aspectRatio: canvasSize === 'custom' ? 'custom' : aspectRatio,
+      folderId,
     };
-
-    if (folderId) {
-      payload.folderId = folderId;
-    }
 
     if (canvasSize === 'custom' && customCanvas.width && customCanvas.height) {
       payload.customWidth = parseInt(customCanvas.width, 10) || 1920;
       payload.customHeight = parseInt(customCanvas.height, 10) || 1080;
     }
 
+    // Step 2: name is free — create the project.
     setSubmitting(true);
     try {
       const createdProject = await workspaceService.createProject(workspaceId, payload);
@@ -689,7 +759,10 @@ const CreateVideoModal = ({
         });
       }
     } catch (error) {
-      showToast(error?.message || 'Failed to create project. Please try again.', 'error');
+      showToast(
+        sanitizeUserFacingMessage(error?.message) || 'Failed to create project. Please try again.',
+        'error'
+      );
     } finally {
       setSubmitting(false);
     }
@@ -878,17 +951,34 @@ const CreateVideoModal = ({
             {step === 3 && (
               <div className="create-video-form-stack">
                 <label className="create-video-field">
-                  <span>Project Title *</span>
+                  <span className="create-video-field-label">Project Title *</span>
                   <input
                     type="text"
                     value={videoTitle}
-                    onChange={(event) => setVideoTitle(event.target.value)}
+                    onChange={(event) => {
+                      setVideoTitle(event.target.value);
+                      setShowNameDuplicateError(false);
+                    }}
                     placeholder="Enter project title..."
-                    className={isProjectNameDuplicate ? 'create-video-input-error' : ''}
+                    className={showDuplicateNameError ? 'create-video-input-error' : ''}
+                    aria-invalid={showDuplicateNameError}
+                    aria-describedby={showDuplicateNameError ? 'project-title-duplicate-error' : undefined}
                   />
-                  {isProjectNameDuplicate && (
+                  {showDuplicateNameError && (
+                    <p
+                      id="project-title-duplicate-error"
+                      className="create-video-title-error"
+                      role="alert"
+                    >
+                      {DUPLICATE_PROJECT_NAME_MESSAGE}
+                    </p>
+                  )}
+                  {folderProjectsLoading && (
+                    <span className="create-video-field-hint">Checking existing projects…</span>
+                  )}
+                  {folderProjectsLoadError && (
                     <span className="create-video-field-error">
-                      A project with this name already exists in this folder
+                      Could not verify existing projects in this folder
                     </span>
                   )}
                 </label>
@@ -1024,14 +1114,28 @@ const CreateVideoModal = ({
                   type="button"
                   className="create-video-btn create-video-btn-primary"
                   onClick={handleCreate}
-                  disabled={!canCreateVideo || submitting}
+                  disabled={
+                    !trimmedVideoTitle ||
+                    !aspectRatio ||
+                    !workspaceId ||
+                    !folderId ||
+                    !canCreateInWorkspace(selectedWorkspace) ||
+                    submitting ||
+                    verifyingName ||
+                    folderProjectsLoading ||
+                    folderProjectsLoadError
+                  }
                   title={
-                    selectedWorkspace && !canCreateInWorkspace(selectedWorkspace)
-                      ? 'You need Editor access to create a project in this workspace'
-                      : ''
+                    showDuplicateNameError
+                      ? DUPLICATE_PROJECT_NAME_MESSAGE
+                      : folderProjectsLoadError
+                      ? 'Could not verify existing projects in this folder'
+                      : selectedWorkspace && !canCreateInWorkspace(selectedWorkspace)
+                        ? 'You need Editor access to create a project in this workspace'
+                        : ''
                   }
                 >
-                  {submitting ? 'Creating...' : 'Create Project'}
+                  {verifyingName ? 'Checking...' : submitting ? 'Creating...' : 'Create Project'}
                 </button>
               )}
             </div>
@@ -1071,9 +1175,15 @@ const CreateVideoModal = ({
         )}
 
         {toast && (
-          <div className={`create-video-toast create-video-toast--${toast.type}`}>
+          <div
+            className={`create-video-toast create-video-toast--${toast.type}`}
+            role="alert"
+            aria-live="polite"
+          >
             {toast.type === 'success' ? (
               <MdCheckCircle className="create-video-toast-icon" />
+            ) : toast.type === 'warning' ? (
+              <MdWarning className="create-video-toast-icon" />
             ) : (
               <MdCancel className="create-video-toast-icon" />
             )}
