@@ -3,7 +3,9 @@
   left: 50%;
   top: calc(100% + 12px);
   bottom: auto;
-  transform: translate(calc(-50% + var(--sq-shift-x, 0px)), var(--sq-shift-y, 0px));
+  transform: scale(var(--sq-ui-scale, 1))
+    translate(calc(-50% + var(--sq-shift-x, 0px)), var(--sq-shift-y, 0px));
+  transform-origin: top center;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -15,7 +17,7 @@
   z-index: 2147483646;
   pointer-events: auto;
   white-space: nowrap;
-  max-width: min(95vw, 920px);
+  max-width: min(var(--sq-max-width, 95vw), 920px);
   overflow: visible;
   scrollbar-width: none;
 }
@@ -23,6 +25,7 @@
 .sq-toolbar--above {
   top: auto;
   bottom: calc(100% + 12px);
+  transform-origin: bottom center;
 }
 
 .sq-toolbar--media-right {
@@ -30,7 +33,9 @@
   right: auto;
   top: 0;
   bottom: auto;
-  transform: translate(var(--sq-shift-x, 0px), var(--sq-shift-y, 0px));
+  transform: scale(var(--sq-ui-scale, 1))
+    translate(var(--sq-shift-x, 0px), var(--sq-shift-y, 0px));
+  transform-origin: left top;
   flex-direction: column;
   align-items: stretch;
   gap: 6px;
@@ -45,7 +50,9 @@
   right: calc(100% + 12px);
   top: 0;
   bottom: auto;
-  transform: translate(var(--sq-shift-x, 0px), var(--sq-shift-y, 0px));
+  transform: scale(var(--sq-ui-scale, 1))
+    translate(var(--sq-shift-x, 0px), var(--sq-shift-y, 0px));
+  transform-origin: right top;
   flex-direction: column;
   align-items: stretch;
   gap: 6px;
@@ -304,8 +311,26 @@
   flex-shrink: 0;
 }
 
+.sq-toolbar__color--swatch {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid #e2e8f0;
+  background: var(--sq-swatch, #1a1b1c);
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.06);
+}
+
+.sq-toolbar__color--swatch:hover {
+  border-color: #cbd5e1;
+}
+
 .sq-toolbar__color:hover {
   background: #f1f5f9;
+}
+
+.sq-toolbar__color--swatch:hover {
+  background: var(--sq-swatch, #1a1b1c);
 }
 
 .sq-toolbar__color input[type='color'] {
@@ -318,4 +343,11 @@
   border-radius: 4px;
   cursor: pointer;
   opacity: 0;
+}
+
+.sq-toolbar__color--swatch input[type='color'] {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
 }

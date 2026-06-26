@@ -556,7 +556,13 @@ POST /api/workspaces/{workspaceId-from-dropdown}/projects
 
 Saved `data.meta` includes `aspectRatio` and `tags` when provided.
 
+**Uniqueness** — Project `name` / `title` must be unique **per folder** within a workspace (case-insensitive, trimmed). The same name may exist in different folders.
+
 **Response (201)** – `data.project`: created project row with `folder`, `data`, `duration`, and timestamps.
+
+**Response (409)** – A project with the same name already exists in the target folder. Message: `A project with this name already exists in this folder`.
+
+**Backend requirement** — Enforce with a unique index on `(workspace_id, folder_id, lower(trim(name)))` (or equivalent).
 
 ---
 
@@ -617,6 +623,8 @@ Each project includes:
 ```
 
 **Response (200)** – `data.project`: updated project row.
+
+**Response (409)** – Rename would duplicate another project name in the same folder. Message: `A project with this name already exists in this folder`.
 
 ---
 
@@ -748,6 +756,8 @@ When a project moves folders, the backend also migrates folder-aware S3 paths fo
 - final rendered exports
 
 **Response (200)** – `data.project`: updated project row now pointing at the new folder.
+
+**Response (409)** – Target folder already contains a project with the same name (case-insensitive). Message: `A project with this name already exists in this folder`.
 
 ---
 
