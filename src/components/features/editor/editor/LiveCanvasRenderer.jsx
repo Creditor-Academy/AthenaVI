@@ -48,6 +48,7 @@ const ClipSelectionChrome = ({
   displayScale,
   onUpdatePosition,
   onUpdateSize,
+  onUpdateBounds,
   onUpdateTextFontSize,
   onUpdateRotation,
   onCommit,
@@ -64,6 +65,7 @@ const ClipSelectionChrome = ({
       displayScale={displayScale}
       onUpdatePosition={onUpdatePosition}
       onUpdateSize={onUpdateSize}
+      onUpdateBounds={onUpdateBounds}
       onUpdateTextFontSize={onUpdateTextFontSize}
       onUpdateRotation={onUpdateRotation}
       onCommit={onCommit}
@@ -121,7 +123,7 @@ const clipBase = (clip, isSelected) => {
   width: typeof size.width === 'number' ? size.width : (size.width || 'auto'),
   height: typeof size.height === 'number' ? size.height : (size.height || 'auto'),
   transform: `rotate(${clip.rotation ?? 0}deg) scale(${clip.scale ?? 1})`,
-  transformOrigin: 'center center',
+  transformOrigin: 'top left',
   opacity: clip.opacity ?? 1,
   zIndex: getClipZIndex(clip),
   outline: isSelected
@@ -134,7 +136,7 @@ const clipBase = (clip, isSelected) => {
 }
 }
 
-const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, onUpdatePosition, onUpdateSize, onUpdateRotation, onCommit, getRotationPivotClient, toolbarProps, overlayMode = false }) => {
+const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, onUpdatePosition, onUpdateSize, onUpdateBounds, onUpdateRotation, onCommit, getRotationPivotClient, toolbarProps, overlayMode = false }) => {
   const divRef = useRef(null)
   const measureRaf = useRef(null)
   const s = clip.style || {}
@@ -142,7 +144,7 @@ const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, o
   const { entrance, animState, progress: previewProgress } = useComputedEntranceState(clip)
 
   const syncTextSize = useCallback(() => {
-    if (!divRef.current || overlayMode) return
+    if (!divRef.current || overlayMode || clip._userPlaced) return
     const hasFill =
       !!(s.backgroundColor && s.backgroundColor !== 'transparent') ||
       !!(s.boxShadow && s.boxShadow !== 'none')
@@ -234,6 +236,7 @@ const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, o
       outerStyle={{
         ...clipBase(clip, isSelected),
         transform: `rotate(${clip.rotation ?? 0}deg)`,
+        transformOrigin: 'top left',
         userSelect: isSelected && !overlayMode ? 'text' : 'none',
         opacity: overlayMode ? 0 : previewVisible ? 1 : 0,
       }}
@@ -253,6 +256,7 @@ const TextClip = ({ clip, isSelected, onSelect, onContentChange, displayScale, o
           displayScale={displayScale}
           onUpdatePosition={(x, y) => onUpdatePosition(clip.id, x, y)}
           onUpdateSize={(w, h) => onUpdateSize(clip.id, w, h)}
+          onUpdateBounds={(x, y, w, h) => onUpdateBounds(clip.id, x, y, w, h)}
           onUpdateTextFontSize={(fontSize) => toolbarProps?.onUpdateStyle?.({ fontSize })}
           onUpdateRotation={(deg) => onUpdateRotation?.(clip.id, deg)}
           onCommit={onCommit}
@@ -329,7 +333,7 @@ const buildCssFilter = (cf = {}) => {
   return parts.length > 0 ? parts.join(' ') : undefined
 }
 
-const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition, onUpdateSize, onUpdateRotation, onCommit, getRotationPivotClient, toolbarProps, overlayMode = false }) => {
+const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition, onUpdateSize, onUpdateBounds, onUpdateRotation, onCommit, getRotationPivotClient, toolbarProps, overlayMode = false }) => {
   const s   = clip.style || {}
   const cf  = clip.cssFilters || {}
   const { animState } = useComputedEntranceState(clip)
@@ -361,6 +365,7 @@ const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition,
       displayScale={displayScale}
       onUpdatePosition={(x, y) => onUpdatePosition(clip.id, x, y)}
       onUpdateSize={(w, h) => onUpdateSize(clip.id, w, h)}
+      onUpdateBounds={(x, y, w, h) => onUpdateBounds(clip.id, x, y, w, h)}
       onUpdateRotation={(deg) => onUpdateRotation?.(clip.id, deg)}
       onCommit={onCommit}
       getRotationPivotClient={getRotationPivotClient}
@@ -382,15 +387,6 @@ const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition,
       }}
       selectionChrome={selectionChrome}
     >
-      {isSelected && !overlayMode && (
-        <SelectionOverlay
-          clip={clip}
-          displayScale={displayScale}
-          onUpdatePosition={(x, y) => onUpdatePosition(clip.id, x, y)}
-          onUpdateSize={(w, h) => onUpdateSize(clip.id, w, h)}
-          onCommit={onCommit}
-        />
-      )}
       {src ? (
         !overlayMode ? (
         <img
@@ -441,7 +437,7 @@ const PausedVideoPreview = ({ src, style }) => {
   )
 }
 
-const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePosition, onUpdateSize, onUpdateRotation, onCommit, getRotationPivotClient, toolbarProps, overlayMode = false }) => {
+const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePosition, onUpdateSize, onUpdateBounds, onUpdateRotation, onCommit, getRotationPivotClient, toolbarProps, overlayMode = false }) => {
   const playbackSrc = resolveClipMediaSrc(clip, scene)
   const displaySrc = playbackSrc || resolveAvatarDisplaySrc(clip, scene)
   const isVideo = isVideoMedia(clip, playbackSrc)
@@ -480,6 +476,7 @@ const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdateP
       displayScale={displayScale}
       onUpdatePosition={(x, y) => onUpdatePosition(clip.id, x, y)}
       onUpdateSize={(w, h) => onUpdateSize(clip.id, w, h)}
+      onUpdateBounds={(x, y, w, h) => onUpdateBounds(clip.id, x, y, w, h)}
       onUpdateRotation={(deg) => onUpdateRotation?.(clip.id, deg)}
       onCommit={onCommit}
       getRotationPivotClient={getRotationPivotClient}
@@ -549,7 +546,7 @@ const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdateP
   )
 }
 
-const VideoClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePosition, onUpdateSize, onUpdateRotation, onCommit, getRotationPivotClient, toolbarProps, overlayMode = false }) => {
+const VideoClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePosition, onUpdateSize, onUpdateBounds, onUpdateRotation, onCommit, getRotationPivotClient, toolbarProps, overlayMode = false }) => {
   const src = resolveClipMediaSrc(clip, scene)
   const isVideo = isVideoMedia(clip, src)
   const isAvatarLike = clip.role === 'avatar' || clip.type === 'avatar'
@@ -590,6 +587,7 @@ const VideoClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePo
       displayScale={displayScale}
       onUpdatePosition={(x, y) => onUpdatePosition(clip.id, x, y)}
       onUpdateSize={(w, h) => onUpdateSize(clip.id, w, h)}
+      onUpdateBounds={(x, y, w, h) => onUpdateBounds(clip.id, x, y, w, h)}
       onUpdateRotation={(deg) => onUpdateRotation?.(clip.id, deg)}
       onCommit={onCommit}
       getRotationPivotClient={getRotationPivotClient}
@@ -675,6 +673,7 @@ const ShapeClip = ({
   displayScale,
   onUpdatePosition,
   onUpdateSize,
+  onUpdateBounds,
   onUpdateRotation,
   onCommit,
   onFillShape,
@@ -738,6 +737,7 @@ const ShapeClip = ({
       displayScale={displayScale}
       onUpdatePosition={(x, y) => onUpdatePosition(clip.id, x, y)}
       onUpdateSize={(w, h) => onUpdateSize(clip.id, w, h)}
+      onUpdateBounds={(x, y, w, h) => onUpdateBounds(clip.id, x, y, w, h)}
       onUpdateRotation={(deg) => onUpdateRotation?.(clip.id, deg)}
       onCommit={onCommit}
       getRotationPivotClient={getRotationPivotClient}
@@ -801,6 +801,7 @@ const LiveCanvasRenderer = ({
   onUpdateLayerPosition,
   onCommitLayerPosition,
   onUpdateLayerSize,
+  onUpdateLayerBounds,
   onUpdateLayerRotation,
   onUpdateLayerStyle,
   onUpdateLayer,
@@ -893,6 +894,10 @@ const LiveCanvasRenderer = ({
   const handleUpdateSize = useCallback((clipId, w, h) => {
     if (onUpdateLayerSize) onUpdateLayerSize(clipId, w, h)
   }, [onUpdateLayerSize])
+
+  const handleUpdateBounds = useCallback((clipId, x, y, w, h) => {
+    if (onUpdateLayerBounds) onUpdateLayerBounds(clipId, x, y, w, h)
+  }, [onUpdateLayerBounds])
 
   const handleUpdateRotation = useCallback((clipId, rotation) => {
     if (onUpdateLayerRotation) onUpdateLayerRotation(clipId, rotation)
@@ -1027,6 +1032,7 @@ const LiveCanvasRenderer = ({
             displayScale,
             onUpdatePosition: clip.isBackground || isLocked || isBackgroundClip(clip) ? () => {} : handleUpdatePosition,
             onUpdateSize: clip.isBackground || isLocked || isBackgroundClip(clip) ? () => {} : handleUpdateSize,
+            onUpdateBounds: clip.isBackground || isLocked || isBackgroundClip(clip) ? () => {} : handleUpdateBounds,
             onUpdateRotation: clip.isBackground || isLocked || isBackgroundClip(clip) ? undefined : handleUpdateRotation,
             onCommit: onCommitLayerPosition,
             getRotationPivotClient: handleGetRotationPivotClient,

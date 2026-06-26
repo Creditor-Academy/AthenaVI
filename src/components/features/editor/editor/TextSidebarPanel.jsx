@@ -737,11 +737,8 @@ const TextSidebarPanel = ({
                 content: (
                   <LayerTransformBar
                     clip={activeLayer}
-                    onPositionChange={(x, y) =>
-                      updateLayer({ position: { ...(activeLayer.position || {}), x, y } })
-                    }
                     onSizeChange={(w, h) =>
-                      updateLayer({ size: { ...(activeLayer.size || {}), width: w, height: h } })
+                      updateLayer({ size: { ...(activeLayer.size || {}), width: w, height: h }, _userPlaced: true })
                     }
                   />
                 ),
@@ -807,11 +804,8 @@ const TextSidebarPanel = ({
           {isRight ? (
             <LayerTransformBar
               clip={activeLayer}
-              onPositionChange={(x, y) =>
-                updateLayer({ position: { ...(activeLayer.position || {}), x, y } })
-              }
               onSizeChange={(w, h) =>
-                updateLayer({ size: { ...(activeLayer.size || {}), width: w, height: h } })
+                updateLayer({ size: { ...(activeLayer.size || {}), width: w, height: h }, _userPlaced: true })
               }
             />
           ) : null}
