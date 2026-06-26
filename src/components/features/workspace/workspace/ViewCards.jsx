@@ -8,7 +8,7 @@ import WorkspaceCreditsBadge from './WorkspaceCreditsBadge.jsx';
 export const WorkspaceCard = ({ workspace, onClick, contextProps, onAllocateCredits, showAllocateCredits = false }) => {
     return (
         <div className="workspace-item-card" onClick={onClick}>
-            <div className="card-thumb-container">
+            <div className="card-thumb-container workspace-thumb">
                 <div className="workspace-card-icon">
                     {workspace.type === 'personal' ? <MdPerson size={36} /> : <MdPeople size={36} />}
                 </div>

@@ -1,9 +1,21 @@
 import './skeleton.css'
 
-export function SkeletonItemCard({ className = '' }) {
+const THUMB_VARIANT_CLASS = {
+  workspace: 'ps-skeleton-card__thumb--workspace',
+  folder: 'ps-skeleton-card__thumb--folder',
+  video: 'ps-skeleton-card__thumb--video',
+  default: '',
+}
+
+export function SkeletonItemCard({ className = '', variant = 'default' }) {
+  const thumbVariantClass = THUMB_VARIANT_CLASS[variant] || THUMB_VARIANT_CLASS.default
+  const thumbClassName = thumbVariantClass
+    ? `ps-skeleton-card__thumb ${thumbVariantClass}`
+    : 'ps-block ps-skeleton-card__thumb'
+
   return (
     <article className={`ps-skeleton-card workspace-item-card ${className}`.trim()} aria-hidden>
-      <div className="ps-block ps-skeleton-card__thumb" />
+      <div className={thumbClassName} />
       <div className="ps-block ps-skeleton-card__meta" />
     </article>
   )
@@ -111,6 +123,7 @@ export function SkeletonWorkspaceItems({
   viewMode = 'tile',
   cardCount = 4,
   listHeaderClassName = '',
+  cardVariant = 'workspace',
 }) {
   const isGrid = viewMode === 'tile'
 
@@ -118,7 +131,9 @@ export function SkeletonWorkspaceItems({
     <div className={`items-container ${isGrid ? 'tile-view' : 'list-view'}`.trim()}>
       {!isGrid ? <SkeletonListHeader className={listHeaderClassName || 'list-header'} /> : null}
       {isGrid
-        ? Array.from({ length: cardCount }, (_, index) => <SkeletonItemCard key={index} />)
+        ? Array.from({ length: cardCount }, (_, index) => (
+            <SkeletonItemCard key={index} variant={cardVariant} />
+          ))
         : Array.from({ length: cardCount }, (_, index) => (
             <SkeletonListRow key={index} className="workspace-item-row" />
           ))}
