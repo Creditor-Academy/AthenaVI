@@ -3,6 +3,7 @@ import {
   computeResize,
   getClipTransformCenter,
   isCornerHandle,
+  localizePointerDelta,
   MIN_CLIP_HEIGHT,
   MIN_CLIP_WIDTH,
   MIN_TEXT_HEIGHT,
@@ -11,6 +12,7 @@ import {
   pointerAngleFromCenter,
   snapAngle,
 } from '../../../../utils/canvasTransformUtils';
+import { resolveClipRect } from '../../../../utils/clipLayout';
 import './SelectionOverlay.css';
 
 const HANDLE_OFFSET = 7;
@@ -81,6 +83,7 @@ const SelectionOverlay = ({
   displayScale,
   onUpdatePosition,
   onUpdateSize,
+  onUpdateBounds,
   onUpdateTextFontSize,
   onUpdateRotation,
   onCommit,
@@ -89,21 +92,21 @@ const SelectionOverlay = ({
   showDimensions = false,
 }) => {
   const containerRef = useRef(null);
-  const lastTextFontRef = useRef(null);
+  const lastBoundsRef = useRef(null);
   const [angleBadge, setAngleBadge] = useState(null);
   const [sizeBadge, setSizeBadge] = useState(null);
 
   const isText = clipType === 'text';
   const minW = isText ? MIN_TEXT_WIDTH : MIN_CLIP_WIDTH;
   const minH = isText ? MIN_TEXT_HEIGHT : MIN_CLIP_HEIGHT;
-  const proportionalCorners = clipType !== 'text';
 
   const startDrag = useCallback(
     (e) => {
       const startX = e.clientX;
       const startY = e.clientY;
-      const origX = clip.position?.x ?? 0;
-      const origY = clip.position?.y ?? 0;
+      const layout = resolveClipRect(clip);
+      const origX = layout.position.x;
+      const origY = layout.position.y;
 
       attachPointerDrag(
         e,
@@ -122,36 +125,36 @@ const SelectionOverlay = ({
     (handle, e) => {
       const startX = e.clientX;
       const startY = e.clientY;
-      const origW = clip.size?.width ?? 200;
-      const origH = clip.size?.height ?? 120;
-      const origX = clip.position?.x ?? 0;
-      const origY = clip.position?.y ?? 0;
+      const layout = resolveClipRect(clip);
+      const origW = Number(layout.size.width) || 200;
+      const origH = Number(layout.size.height) || 120;
+      const origX = Number(layout.position.x) || 0;
+      const origY = Number(layout.position.y) || 0;
+      if (origW <= 0 || origH <= 0) return;
       const origFontSize = Number.parseFloat(String(clip.style?.fontSize ?? 24)) || 24;
-
-      const useProportional = isCornerHandle(handle) && proportionalCorners;
+      const rotation = clip.rotation ?? 0;
 
       attachPointerDrag(
         e,
         (mv) => {
           const dx = (mv.clientX - startX) / displayScale;
           const dy = (mv.clientY - startY) / displayScale;
+          const { dx: localDx, dy: localDy } = localizePointerDelta(dx, dy, rotation);
+          const useProportional = isCornerHandle(handle) && mv.shiftKey;
           const result = computeResize(
             handle,
             { width: origW, height: origH, x: origX, y: origY },
-            dx,
-            dy,
+            localDx,
+            localDy,
             { proportional: useProportional, minWidth: minW, minHeight: minH }
           );
-          onUpdateSize(result.width, result.height);
-          if (result.x !== origX || result.y !== origY) {
-            onUpdatePosition(result.x, result.y);
-          }
-          if (isText && isCornerHandle(handle) && onUpdateTextFontSize) {
-            const nextFontRaw = Math.max(8, Math.min(300, origFontSize * (result.width / origW)));
-            const nextFont = Math.round(nextFontRaw * 10) / 10;
-            if (lastTextFontRef.current == null || Math.abs(lastTextFontRef.current - nextFont) >= 0.2) {
-              lastTextFontRef.current = nextFont;
-              onUpdateTextFontSize(nextFont);
+          lastBoundsRef.current = result;
+          if (onUpdateBounds) {
+            onUpdateBounds(result.x, result.y, result.width, result.height);
+          } else {
+            onUpdateSize(result.width, result.height);
+            if (result.x !== origX || result.y !== origY) {
+              onUpdatePosition(result.x, result.y);
             }
           }
           if (showDimensions) {
@@ -159,7 +162,13 @@ const SelectionOverlay = ({
           }
         },
         () => {
-          lastTextFontRef.current = null;
+          const result = lastBoundsRef.current;
+          if (result && isText && isCornerHandle(handle) && onUpdateTextFontSize) {
+            const nextFontRaw = Math.max(8, Math.min(300, origFontSize * (result.width / origW)));
+            const nextFont = Math.round(nextFontRaw * 10) / 10;
+            onUpdateTextFontSize(nextFont);
+          }
+          lastBoundsRef.current = null;
           setSizeBadge(null);
           onCommit?.();
         }
@@ -170,10 +179,10 @@ const SelectionOverlay = ({
       displayScale,
       onUpdatePosition,
       onUpdateSize,
+      onUpdateBounds,
       onCommit,
       minW,
       minH,
-      proportionalCorners,
       showDimensions,
       isText,
       onUpdateTextFontSize,

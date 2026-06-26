@@ -993,6 +993,36 @@ function Create({ onBack, initialConfig = null }) {
     }))
   }
 
+  // Atomic position + size update (used during canvas resize — no grid snap)
+  const updateLayerBounds = (layerId, x, y, width, height) => {
+    if (!activeSceneId) return
+    const px = Math.round(Number(x) || 0)
+    const py = Math.round(Number(y) || 0)
+    const w = Math.max(1, Math.round(Number(width) || 0))
+    const h = Math.max(1, Math.round(Number(height) || 0))
+    setProject(prev => ({
+      ...prev,
+      updatedAt: new Date().toISOString(),
+      scenes: prev.scenes.map(s => {
+        if (s.id !== activeSceneId) return s
+        return {
+          ...s,
+          clips: s.clips.map(c =>
+            c.id === layerId
+              ? {
+                  ...c,
+                  position: { x: px, y: py },
+                  size: { width: w, height: h },
+                  _userPlaced: true,
+                  _coordsNormalized: true,
+                }
+              : c
+          )
+        }
+      })
+    }))
+  }
+
   const updateLayerRotation = (layerId, rotation) => {
     pausePlayback()
     if (!activeSceneId) return
@@ -2930,6 +2960,7 @@ function Create({ onBack, initialConfig = null }) {
                 onUpdateLayerPosition={updateLayerPosition}
                 onCommitLayerPosition={handleCommitLayerPosition}
                 onUpdateLayerSize={updateLayerSize}
+                onUpdateLayerBounds={updateLayerBounds}
                 onUpdateLayerRotation={updateLayerRotation}
                 onUpdateLayerStyle={updateLayerStyleFromCanvas}
                 onUpdateLayer={updateLayerFromCanvas}

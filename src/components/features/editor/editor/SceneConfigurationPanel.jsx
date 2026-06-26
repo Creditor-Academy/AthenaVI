@@ -597,7 +597,7 @@ const SceneBackgroundBanner = ({ isBackground, canBeSceneBackground, hasBackgrou
       style={{ marginBottom: 8, width: '100%' }}
     >
       <MdWallpaper size={16} />
-      {hasBackgroundSource ? 'Set as Scene Background' : 'Add media from the sidebar first'}
+      {hasBackgroundSource ? 'Set as background' : 'Add media from the sidebar first'}
     </button>
   );
 };
@@ -865,11 +865,8 @@ const LayerPanel = ({
       <>
         <LayerTransformBar
           clip={activeLayer}
-          onPositionChange={(x, y) =>
-            updateLayer({ position: { ...(activeLayer.position || {}), x, y } })
-          }
           onSizeChange={(w, h) =>
-            updateLayer({ size: { ...(activeLayer.size || {}), width: w, height: h } })
+            updateLayer({ size: { ...(activeLayer.size || {}), width: w, height: h }, _userPlaced: true })
           }
         />
         <SceneBackgroundBanner

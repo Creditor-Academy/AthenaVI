@@ -1,11 +1,9 @@
 import './LayerTransformBar.css';
 
 /**
- * X / Y / W / H controls for the selected layer (right sidebar only).
+ * Width / height controls for the selected layer (right sidebar Position section).
  */
-const LayerTransformBar = ({ clip, onPositionChange, onSizeChange }) => {
-  const x = Math.round(clip?.position?.x ?? 0);
-  const y = Math.round(clip?.position?.y ?? 0);
+const LayerTransformBar = ({ clip, onSizeChange }) => {
   const w = Math.round(clip?.size?.width ?? 200);
   const h = Math.round(clip?.size?.height ?? 120);
 
@@ -14,6 +12,7 @@ const LayerTransformBar = ({ clip, onPositionChange, onSizeChange }) => {
       <span className="layer-transform-bar__label">{label}</span>
       <input
         type="number"
+        min={1}
         value={Number.isFinite(value) ? value : 0}
         onChange={(e) => {
           const n = Number(e.target.value);
@@ -27,11 +26,8 @@ const LayerTransformBar = ({ clip, onPositionChange, onSizeChange }) => {
 
   return (
     <div className="layer-transform-bar" onClick={(e) => e.stopPropagation()}>
-      {numInput('X', x, (v) => onPositionChange(v, y))}
-      {numInput('Y', y, (v) => onPositionChange(x, v))}
-      <div className="layer-transform-bar__divider" aria-hidden />
-      {numInput('W', w, (v) => onSizeChange(w, h))}
-      {numInput('H', h, (v) => onSizeChange(w, v))}
+      {numInput('Width', w, (v) => onSizeChange(v, h))}
+      {numInput('Height', h, (v) => onSizeChange(w, v))}
     </div>
   );
 };
