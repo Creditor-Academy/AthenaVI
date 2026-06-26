@@ -264,7 +264,19 @@ export async function exportFullProjectVideo({
   let render = created;
   if (!isRenderComplete(render)) {
     render = await pollRenderUntilReady(workspaceService, workspaceId, projectId, renderId, {
-      onPoll: (r) => onStatus?.(`Rendering… (${formatRenderStatus(r)})`),
+      onPoll: (r) => {
+        let pct = 0;
+        if (r && r.progress !== undefined) {
+          pct = typeof r.progress === 'number'
+            ? (r.progress <= 1 ? Math.round(r.progress * 100) : Math.round(r.progress))
+            : parseInt(r.progress, 10) || 0;
+        } else if (r && r.percent !== undefined) {
+          pct = typeof r.percent === 'number'
+            ? (r.percent <= 1 ? Math.round(r.percent * 100) : Math.round(r.percent))
+            : parseInt(r.percent, 10) || 0;
+        }
+        onStatus?.(`Rendering… (${formatRenderStatus(r)})`, pct);
+      },
     });
   }
 

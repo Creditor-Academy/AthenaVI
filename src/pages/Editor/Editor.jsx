@@ -373,6 +373,7 @@ function Create({ onBack, initialConfig = null }) {
   const [showExportModal, setShowExportModal] = useState(false)
   const [exportPhase, setExportPhase] = useState('configure')
   const [exportStatus, setExportStatus] = useState('')
+  const [exportProgress, setExportProgress] = useState(0)
   const [exportError, setExportError] = useState('')
   const [showTemplateModal, setShowTemplateModal] = useState(false)
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false)
@@ -1662,6 +1663,7 @@ function Create({ onBack, initialConfig = null }) {
 
     setExportPhase('loading')
     setExportStatus('Saving project…')
+    setExportProgress(0)
     setExportError('')
     setIsExporting(true)
     setExportReady(null)
@@ -1675,7 +1677,12 @@ function Create({ onBack, initialConfig = null }) {
         filename,
         autoDownload: false,
         forceRebuild: false,
-        onStatus: setExportStatus,
+        onStatus: (status, progress) => {
+          setExportStatus(status)
+          if (progress !== undefined) {
+            setExportProgress(progress)
+          }
+        },
       })
       if (result?.projectState?.scenes) {
         setProject((prev) => ({
@@ -1732,6 +1739,7 @@ function Create({ onBack, initialConfig = null }) {
     setShowExportModal(false)
     setExportPhase('configure')
     setExportStatus('')
+    setExportProgress(0)
     setExportError('')
     setExportReady(null)
     setIsDownloadingExport(false)
@@ -2773,6 +2781,7 @@ function Create({ onBack, initialConfig = null }) {
         totalDurationSec={totalDurationInFrames / 30}
         phase={exportPhase}
         statusMessage={exportStatus}
+        progress={exportProgress}
         errorMessage={exportError}
         onStartExport={handleStartExport}
         onDownload={exportPhase === 'success' ? handleDownloadExport : undefined}

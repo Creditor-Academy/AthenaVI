@@ -620,11 +620,11 @@ const SCENE_AVATAR = [
 });
 
 const template = {
-  category: 'Course Module',
+  category: 'Courses',
   template: {
     id: 'course-module-academic-forge',
     name: 'Course Module — Academic Forge Bundle',
-    category: 'Course Module',
+    category: 'Courses',
     theme: assets.theme,
     presenter: PRESENTER,
     totalSlides: 8,

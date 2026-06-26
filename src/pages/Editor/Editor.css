@@ -2666,7 +2666,7 @@ kbd.shortcut-key {
 
 /* Download / export modal */
 .export-modal {
-    max-width: 440px;
+    max-width: 520px; /* Wider to support horizontal process timeline stepper */
 }
 
 .export-modal-header {
@@ -2749,20 +2749,7 @@ kbd.shortcut-key {
     align-items: center;
     padding: 12px 0 8px;
     text-align: center;
-}
-
-.export-modal-spinner {
-    width: 44px;
-    height: 44px;
-    border: 3px solid var(--border-color);
-    border-top-color: var(--primary, #7c3aed);
-    border-radius: 50%;
-    animation: export-modal-spin 0.85s linear infinite;
-    margin-bottom: 16px;
-}
-
-@keyframes export-modal-spin {
-    to { transform: rotate(360deg); }
+    width: 100%;
 }
 
 .export-modal-status {
@@ -2776,58 +2763,164 @@ kbd.shortcut-key {
     margin: 0 0 20px;
     font-size: 12px;
     color: var(--text-muted);
-    max-width: 320px;
+    max-width: 340px;
     line-height: 1.5;
 }
 
-.export-modal-steps {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+/* Process Timeline Stepper styles */
+.process-timeline-container {
     width: 100%;
-    text-align: left;
-}
-
-.export-modal-steps li {
+    margin: 24px 0 32px;
     position: relative;
-    padding: 8px 0 8px 28px;
-    font-size: 13px;
-    color: var(--text-muted);
-    border-left: 2px solid var(--border-color);
-    margin-left: 10px;
+    padding: 0 16px;
+    box-sizing: border-box;
 }
 
-.export-modal-steps li:last-child {
-    border-left-color: transparent;
-}
-
-.export-modal-steps li::before {
-    content: '';
+.timeline-connectors {
     position: absolute;
-    left: -6px;
-    top: 12px;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--border-color);
+    top: 46px; /* align vertically with step nodes */
+    left: 10%;
+    right: 10%;
+    display: flex;
+    z-index: 1;
+    height: 3px;
 }
 
-.export-modal-steps li.active {
-    color: var(--text-main);
+.timeline-connector {
+    flex: 1;
+    height: 3px;
+    background: var(--border-color, #e2e8f0);
+    transition: background-color 0.3s ease;
+}
+
+.timeline-connector.completed {
+    background: #475569;
+}
+
+.timeline-connector.active {
+    background: #10b981;
+}
+
+.timeline-steps {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    position: relative;
+    z-index: 2;
+}
+
+.timeline-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 72px;
+    text-align: center;
+}
+
+.step-icon {
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+    transition: color 0.3s ease;
+}
+
+.timeline-step.completed .step-icon {
+    color: #475569;
+}
+
+.timeline-step.active .step-icon {
+    color: #10b981;
+}
+
+.timeline-step.pending .step-icon {
+    color: #cbd5e1;
+}
+
+.step-node {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-card, #ffffff);
+    transition: all 0.3s ease;
+    z-index: 2;
+    box-sizing: border-box;
+}
+
+.timeline-step.completed .step-node {
+    background: #475569;
+    border: 2px solid #475569;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.timeline-step.active .step-node {
+    border: 2px solid #10b981;
+    position: relative;
+    background: var(--bg-card, #ffffff);
+}
+
+.timeline-step.active .step-node::after {
+    content: '';
+    width: 16px;
+    height: 16px;
+    border: 2px solid #10b981;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: timeline-step-spin 1s linear infinite;
+    box-sizing: border-box;
+}
+
+@keyframes timeline-step-spin {
+    to { transform: rotate(360deg); }
+}
+
+.timeline-step.pending .step-node {
+    border: 2px solid #cbd5e1;
+}
+
+.timeline-step.pending .step-node::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: #cbd5e1;
+    border-radius: 50%;
+    box-sizing: border-box;
+}
+
+.step-label {
+    font-size: 12px;
+    margin-top: 8px;
+    text-align: center;
+    transition: color 0.3s ease, font-weight 0.3s ease;
+    white-space: nowrap;
+}
+
+.timeline-step.completed .step-label {
+    color: #475569;
+    font-weight: 500;
+}
+
+.timeline-step.active .step-label {
+    color: #10b981;
     font-weight: 600;
 }
 
-.export-modal-steps li.active::before {
-    background: var(--primary, #7c3aed);
-    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+.timeline-step.pending .step-label {
+    color: #94a3b8;
+    font-weight: 400;
 }
 
-.export-modal-steps li.done {
-    color: var(--text-muted);
-}
-
-.export-modal-steps li.done::before {
-    background: #22c55e;
+.step-percentage {
+    font-size: 11px;
+    font-weight: 700;
+    display: block;
+    margin-top: 2px;
 }
 
 .export-modal-result {
