@@ -822,6 +822,7 @@ const LiveCanvasRenderer = ({
   compositionHeight = 1080,
 }) => {
   const containerRef = useRef(null)
+  const compositionRef = useRef(null)
   const [displayScale, setDisplayScale] = useState(0.2)
   const [displayOffset, setDisplayOffset] = useState({ x: 0, y: 0 })
 
@@ -908,6 +909,10 @@ const LiveCanvasRenderer = ({
   const buildToolbarProps = useCallback((clip) => {
     if (!clip || clip.locked || clip.isBackground || isBackgroundClip(clip)) return null
     return {
+      compositionWidth,
+      compositionHeight,
+      displayScale,
+      compositionRef,
       onUpdateStyle: (styleUpdates) => onUpdateLayerStyle?.(clip.id, styleUpdates),
       onUpdateLayer: (updates) => onUpdateLayer?.(clip.id, updates),
       onDuplicate: () => onDuplicateLayer?.(clip.id),
@@ -917,6 +922,9 @@ const LiveCanvasRenderer = ({
       onOpenCrop: () => onOpenLayerCrop?.(clip.id),
     }
   }, [
+    compositionWidth,
+    compositionHeight,
+    displayScale,
     onUpdateLayerStyle,
     onUpdateLayer,
     onDuplicateLayer,
@@ -984,6 +992,7 @@ const LiveCanvasRenderer = ({
     >
       {/* Fixed composition virtual canvas, scaled to fit or cover */}
       <div
+        ref={compositionRef}
         onDragOver={handleCompositionDragOver}
         onDrop={handleCompositionDrop}
         style={{

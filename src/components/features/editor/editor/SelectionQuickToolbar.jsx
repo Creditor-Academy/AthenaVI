@@ -27,7 +27,254 @@ import {
   resolveFontFamilyValue,
 } from '../../../../utils/textClip';
 import { buildLayerBorderPatch, parseLayerBorder } from '../../../../utils/layerBorderUtils';
+import {
+  COMPOSITION_H,
+  COMPOSITION_W,
+  resolveClipRect,
+} from '../../../../utils/clipLayout';
 import './SelectionQuickToolbar.css';
+
+const TOOLBAR_GAP = 12;
+const CANVAS_MARGIN = 8;
+
+/** Partial counter-scale: readable on a zoomed-out canvas without full screen-sized UI. */
+export function getToolbarUiScale(displayScale) {
+  const scale = Number(displayScale);
+  if (!scale || scale <= 0 || scale >= 0.9) return 1;
+  const fullCompensation = 1 / scale;
+  const partial = 1 + (fullCompensation - 1) * 0.5;
+  return Math.min(1.75, partial);
+}
+
+export function getToolbarCompositionBounds(toolbarEl, compositionEl, displayScale) {
+  if (!toolbarEl || !compositionEl || !displayScale) return null;
+  const tRect = toolbarEl.getBoundingClientRect();
+  const cRect = compositionEl.getBoundingClientRect();
+  return {
+    left: (tRect.left - cRect.left) / displayScale,
+    top: (tRect.top - cRect.top) / displayScale,
+    right: (tRect.right - cRect.left) / displayScale,
+    bottom: (tRect.bottom - cRect.top) / displayScale,
+    width: tRect.width / displayScale,
+    height: tRect.height / displayScale,
+  };
+}
+
+function measureCanvasOverflow(bounds, compositionWidth, compositionHeight) {
+  let dx = 0;
+  let dy = 0;
+  if (bounds.left < CANVAS_MARGIN) dx += CANVAS_MARGIN - bounds.left;
+  if (bounds.right > compositionWidth - CANVAS_MARGIN) {
+    dx -= bounds.right - (compositionWidth - CANVAS_MARGIN);
+  }
+  if (bounds.top < CANVAS_MARGIN) dy += CANVAS_MARGIN - bounds.top;
+  if (bounds.bottom > compositionHeight - CANVAS_MARGIN) {
+    dy -= bounds.bottom - (compositionHeight - CANVAS_MARGIN);
+  }
+  return { dx, dy };
+}
+
+function applyToolbarPlacementDom(el, placement, mediaLeftLayout) {
+  el.style.setProperty('--sq-shift-x', `${placement.shiftX}px`);
+  el.style.setProperty('--sq-shift-y', `${placement.shiftY}px`);
+  if (mediaLeftLayout) {
+    el.classList.toggle('sq-toolbar--media-right', placement.mediaRight);
+    el.classList.toggle('sq-toolbar--media-left-side', !placement.mediaRight);
+    el.classList.remove('sq-toolbar--above');
+  } else {
+    el.classList.toggle('sq-toolbar--above', !placement.below);
+    el.classList.remove('sq-toolbar--media-right', 'sq-toolbar--media-left-side');
+  }
+}
+
+function overflowMagnitude(dx, dy) {
+  return Math.abs(dx) + Math.abs(dy);
+}
+
+export function refineToolbarPlacement({
+  toolbarEl,
+  compositionEl,
+  displayScale,
+  initialPlacement,
+  compositionWidth,
+  compositionHeight,
+  mediaLeftLayout,
+}) {
+  const tryRefine = (startPlacement) => {
+    let current = { ...startPlacement, shiftX: 0, shiftY: 0 };
+    applyToolbarPlacementDom(toolbarEl, current, mediaLeftLayout);
+
+    for (let i = 0; i < 5; i += 1) {
+      const bounds = getToolbarCompositionBounds(toolbarEl, compositionEl, displayScale);
+      if (!bounds) return current;
+      const { dx, dy } = measureCanvasOverflow(bounds, compositionWidth, compositionHeight);
+      if (overflowMagnitude(dx, dy) < 0.5) return current;
+      current = {
+        ...current,
+        shiftX: Math.round(current.shiftX + dx),
+        shiftY: Math.round(current.shiftY + dy),
+      };
+      applyToolbarPlacementDom(toolbarEl, current, mediaLeftLayout);
+    }
+    return current;
+  };
+
+  let placement = tryRefine(initialPlacement);
+  const bounds = getToolbarCompositionBounds(toolbarEl, compositionEl, displayScale);
+  if (!bounds) return placement;
+
+  const primaryOverflow = measureCanvasOverflow(bounds, compositionWidth, compositionHeight);
+  if (overflowMagnitude(primaryOverflow.dx, primaryOverflow.dy) <= 0.5) {
+    return placement;
+  }
+
+  const alternate = {
+    ...initialPlacement,
+    shiftX: 0,
+    shiftY: 0,
+    ...(mediaLeftLayout
+      ? { mediaRight: !initialPlacement.mediaRight }
+      : { below: !initialPlacement.below }),
+  };
+
+  if (
+    alternate.mediaRight === initialPlacement.mediaRight &&
+    alternate.below === initialPlacement.below
+  ) {
+    return placement;
+  }
+
+  const alternatePlacement = tryRefine(alternate);
+  const alternateBounds = getToolbarCompositionBounds(toolbarEl, compositionEl, displayScale);
+  if (!alternateBounds) return placement;
+
+  const alternateOverflow = measureCanvasOverflow(
+    alternateBounds,
+    compositionWidth,
+    compositionHeight
+  );
+  if (
+    overflowMagnitude(alternateOverflow.dx, alternateOverflow.dy) <
+    overflowMagnitude(primaryOverflow.dx, primaryOverflow.dy)
+  ) {
+    return alternatePlacement;
+  }
+
+  return placement;
+}
+
+/**
+ * Compute toolbar flip/shift so the bar stays inside the composition canvas.
+ * Coordinates are composition pixels; toolbar is positioned relative to the clip box.
+ */
+export function computeToolbarPlacement({
+  clipRect,
+  toolbarW,
+  toolbarH,
+  compositionWidth,
+  compositionHeight,
+  mediaLeftLayout,
+}) {
+  const clipX = clipRect.position.x;
+  const clipY = clipRect.position.y;
+  const clipW = clipRect.size.width;
+  const clipH = clipRect.size.height;
+  const clipRight = clipX + clipW;
+  const clipBottom = clipY + clipH;
+
+  if (mediaLeftLayout) {
+    const rightFits = clipRight + TOOLBAR_GAP + toolbarW <= compositionWidth - CANVAS_MARGIN;
+    const leftFits = clipX - TOOLBAR_GAP - toolbarW >= CANVAS_MARGIN;
+    let mediaRight = true;
+    if (rightFits) {
+      mediaRight = true;
+    } else if (leftFits) {
+      mediaRight = false;
+    } else {
+      const roomRight = compositionWidth - CANVAS_MARGIN - (clipRight + TOOLBAR_GAP);
+      const roomLeft = clipX - TOOLBAR_GAP - CANVAS_MARGIN;
+      mediaRight = roomRight >= roomLeft;
+    }
+
+    let shiftX = 0;
+    let shiftY = 0;
+
+    const toolbarTop = () => clipY + shiftY;
+    const toolbarBottom = () => toolbarTop() + toolbarH;
+    if (toolbarTop() < CANVAS_MARGIN) {
+      shiftY += CANVAS_MARGIN - toolbarTop();
+    }
+    if (toolbarBottom() > compositionHeight - CANVAS_MARGIN) {
+      shiftY -= toolbarBottom() - (compositionHeight - CANVAS_MARGIN);
+    }
+
+    const toolbarLeft = () =>
+      mediaRight
+        ? clipRight + TOOLBAR_GAP + shiftX
+        : clipX - TOOLBAR_GAP - toolbarW + shiftX;
+    const toolbarRight = () => toolbarLeft() + toolbarW;
+
+    if (toolbarLeft() < CANVAS_MARGIN) {
+      shiftX += CANVAS_MARGIN - toolbarLeft();
+    }
+    if (toolbarRight() > compositionWidth - CANVAS_MARGIN) {
+      shiftX -= toolbarRight() - (compositionWidth - CANVAS_MARGIN);
+    }
+
+    return {
+      below: true,
+      mediaRight,
+      shiftX: Math.round(shiftX),
+      shiftY: Math.round(shiftY),
+    };
+  }
+
+  const belowFits = clipBottom + TOOLBAR_GAP + toolbarH <= compositionHeight - CANVAS_MARGIN;
+  const aboveFits = clipY - TOOLBAR_GAP - toolbarH >= CANVAS_MARGIN;
+  let below = true;
+  if (belowFits) {
+    below = true;
+  } else if (aboveFits) {
+    below = false;
+  } else {
+    const roomBelow = compositionHeight - CANVAS_MARGIN - (clipBottom + TOOLBAR_GAP);
+    const roomAbove = clipY - TOOLBAR_GAP - CANVAS_MARGIN;
+    below = roomBelow >= roomAbove;
+  }
+
+  let shiftX = 0;
+  let shiftY = 0;
+  const centerX = clipX + clipW / 2;
+
+  const toolbarLeft = () => centerX - toolbarW / 2 + shiftX;
+  const toolbarRight = () => toolbarLeft() + toolbarW;
+  if (toolbarLeft() < CANVAS_MARGIN) {
+    shiftX += CANVAS_MARGIN - toolbarLeft();
+  }
+  if (toolbarRight() > compositionWidth - CANVAS_MARGIN) {
+    shiftX -= toolbarRight() - (compositionWidth - CANVAS_MARGIN);
+  }
+
+  const toolbarTop = () =>
+    below
+      ? clipBottom + TOOLBAR_GAP + shiftY
+      : clipY - TOOLBAR_GAP - toolbarH + shiftY;
+  const toolbarBottom = () => toolbarTop() + toolbarH;
+
+  if (toolbarTop() < CANVAS_MARGIN) {
+    shiftY += CANVAS_MARGIN - toolbarTop();
+  }
+  if (toolbarBottom() > compositionHeight - CANVAS_MARGIN) {
+    shiftY -= toolbarBottom() - (compositionHeight - CANVAS_MARGIN);
+  }
+
+  return {
+    below,
+    mediaRight: true,
+    shiftX: Math.round(shiftX),
+    shiftY: Math.round(shiftY),
+  };
+}
 
 const ToolbarBtn = ({ icon, title, active, onClick, danger }) => (
   <button
@@ -51,6 +298,10 @@ const ToolbarDivider = () => <span className="sq-toolbar__divider" />;
  */
 const SelectionQuickToolbar = ({
   clip,
+  compositionWidth = COMPOSITION_W,
+  compositionHeight = COMPOSITION_H,
+  displayScale = 1,
+  compositionRef,
   onUpdateStyle,
   onUpdateLayer,
   onDuplicate,
@@ -73,65 +324,95 @@ const SelectionQuickToolbar = ({
   });
   const [fontListUpward, setFontListUpward] = useState(false);
   const [fontListShiftX, setFontListShiftX] = useState(0);
-  if (!clip) return null;
 
-  const isText = clip.type === 'text' || isTextLayer(clip);
+  const isText = clip?.type === 'text' || (clip ? isTextLayer(clip) : false);
   const isMedia =
-    clip.type === 'image' ||
-    clip.type === 'video' ||
-    clip.type === 'avatar' ||
-    clip.role === 'avatar';
-  const isShape = clip.type === 'shape';
-  const isLocked = !!clip.locked;
-  const style = clip.style || {};
-  const shapeBorder = parseLayerBorder(style, '#1a1b1c');
-  const applyShapeBorder = (patch) => {
-    onUpdateLayer?.({
-      style: buildLayerBorderPatch(style, patch, '#1a1b1c'),
-    });
-  };
+    clip?.type === 'image' ||
+    clip?.type === 'video' ||
+    clip?.type === 'avatar' ||
+    clip?.role === 'avatar';
+  const isShape = clip?.type === 'shape';
   const mediaLeftLayout = isMedia && !isText && !isShape;
+  const uiScale = getToolbarUiScale(displayScale);
 
-  const fontSize = parseFontSize(style.fontSize, 24);
-  const fontWeight = String(style.fontWeight || '400');
-  const fontStyle = style.fontStyle || 'normal';
-  const textDecoration = style.textDecoration || 'none';
-  const resolvedFont = resolveFontFamilyValue(style.fontFamily);
+  const clipPosX = clip?.position?.x;
+  const clipPosY = clip?.position?.y;
+  const clipSizeW = clip?.size?.width;
+  const clipSizeH = clip?.size?.height;
 
   useLayoutEffect(() => {
     const el = toolbarRef.current;
-    if (!el) return undefined;
+    if (!el || !clip) return undefined;
 
-    const margin = 8;
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const rect = el.getBoundingClientRect();
+    const updatePlacement = () => {
+      const layoutW = el.offsetWidth;
+      const layoutH = el.offsetHeight;
+      if (layoutW <= 0 || layoutH <= 0) return;
 
-    const next = {
-      below: !isText ? true : rect.bottom <= vh - margin,
-      mediaRight: !mediaLeftLayout ? true : rect.right <= vw - margin,
-      shiftX: 0,
-      shiftY: 0,
+      const toolbarW = layoutW * uiScale;
+      const toolbarH = layoutH * uiScale;
+
+      const clipRect = resolveClipRect(clip, {
+        width: compositionWidth,
+        height: compositionHeight,
+      });
+      const initial = computeToolbarPlacement({
+        clipRect,
+        toolbarW,
+        toolbarH,
+        compositionWidth,
+        compositionHeight,
+        mediaLeftLayout,
+      });
+
+      const compositionEl = compositionRef?.current;
+      const next =
+        compositionEl && displayScale
+          ? refineToolbarPlacement({
+              toolbarEl: el,
+              compositionEl,
+              displayScale,
+              initialPlacement: initial,
+              compositionWidth,
+              compositionHeight,
+              mediaLeftLayout,
+            })
+          : initial;
+
+      setToolbarPlacement((prev) =>
+        prev.below === next.below &&
+        prev.mediaRight === next.mediaRight &&
+        prev.shiftX === next.shiftX &&
+        prev.shiftY === next.shiftY
+          ? prev
+          : next
+      );
     };
 
-    let dx = 0;
-    let dy = 0;
-    if (rect.left < margin) dx += margin - rect.left;
-    if (rect.right > vw - margin) dx -= rect.right - (vw - margin);
-    if (rect.top < margin) dy += margin - rect.top;
-    if (rect.bottom > vh - margin) dy -= rect.bottom - (vh - margin);
-    next.shiftX = Math.round(dx);
-    next.shiftY = Math.round(dy);
+    updatePlacement();
 
-    setToolbarPlacement((prev) =>
-      prev.below === next.below &&
-      prev.mediaRight === next.mediaRight &&
-      prev.shiftX === next.shiftX &&
-      prev.shiftY === next.shiftY
-        ? prev
-        : next
-    );
-  }, [clip.id, isText, mediaLeftLayout, fontMenuOpen, toolbarPlacement.below, toolbarPlacement.mediaRight]);
+    const observer = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(updatePlacement)
+      : null;
+    observer?.observe(el);
+
+    return () => observer?.disconnect();
+  }, [
+    clip,
+    clipPosX,
+    clipPosY,
+    clipSizeW,
+    clipSizeH,
+    mediaLeftLayout,
+    fontMenuOpen,
+    compositionWidth,
+    compositionHeight,
+    displayScale,
+    uiScale,
+    compositionRef,
+    toolbarPlacement.below,
+    toolbarPlacement.mediaRight,
+  ]);
 
   const handleReplaceFile = (e) => {
     const file = e.target.files?.[0];
@@ -172,6 +453,23 @@ const SelectionQuickToolbar = ({
     setFontListShiftX(Math.round(shiftX));
   }, [fontMenuOpen]);
 
+  if (!clip) return null;
+
+  const isLocked = !!clip.locked;
+  const style = clip.style || {};
+  const shapeBorder = parseLayerBorder(style, '#1a1b1c');
+  const applyShapeBorder = (patch) => {
+    onUpdateLayer?.({
+      style: buildLayerBorderPatch(style, patch, '#1a1b1c'),
+    });
+  };
+
+  const fontSize = parseFontSize(style.fontSize, 24);
+  const fontWeight = String(style.fontWeight || '400');
+  const fontStyle = style.fontStyle || 'normal';
+  const textDecoration = style.textDecoration || 'none';
+  const resolvedFont = resolveFontFamilyValue(style.fontFamily);
+
   return (
     <div
       ref={toolbarRef}
@@ -183,6 +481,8 @@ const SelectionQuickToolbar = ({
       style={{
         '--sq-shift-x': `${toolbarPlacement.shiftX}px`,
         '--sq-shift-y': `${toolbarPlacement.shiftY}px`,
+        '--sq-max-width': `${Math.max(0, compositionWidth - CANVAS_MARGIN * 2)}px`,
+        '--sq-ui-scale': uiScale,
       }}
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
@@ -236,7 +536,11 @@ const SelectionQuickToolbar = ({
             <span>{fontSize}</span>
             <button type="button" onClick={() => onUpdateStyle?.({ fontSize: Math.min(300, fontSize + 2) })}>+</button>
           </div>
-          <label className="sq-toolbar__color" title="Text color">
+          <label
+            className="sq-toolbar__color sq-toolbar__color--swatch"
+            title="Text color"
+            style={{ '--sq-swatch': style.color || '#1a1b1c' }}
+          >
             <input
               type="color"
               value={style.color || '#1a1b1c'}

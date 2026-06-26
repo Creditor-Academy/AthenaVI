@@ -698,23 +698,19 @@ const TextSidebarPanel = ({
   );
 
   const textInput = (
-    <input
-      type="text"
-      value={textContent}
-      onChange={(e) => updateTextContent(e.target.value)}
-      placeholder="Edit text on canvas…"
-      style={{
-        width: '100%',
-        boxSizing: 'border-box',
-        background: 'var(--ts-surface)',
-        border: '1px solid var(--ts-border)',
-        borderRadius: 8,
-        padding: '8px 10px',
-        fontSize: 12,
-        color: 'var(--ts-text)',
-        outline: 'none',
-      }}
-    />
+    <div className="text-sidebar-text-field__group">
+      <label className="text-sidebar-text-field__label" htmlFor="text-sidebar-content-input">
+        Text content
+      </label>
+      <textarea
+        id="text-sidebar-content-input"
+        className="text-sidebar-text-field__input"
+        value={textContent}
+        onChange={(e) => updateTextContent(e.target.value)}
+        placeholder="Edit text on canvas…"
+        rows={3}
+      />
+    </div>
   );
 
   return (
@@ -757,8 +753,8 @@ const TextSidebarPanel = ({
                 icon: <MdTextFields size={14} />,
                 content: (
                   <>
-                    {textToolbar}
-                    <div style={{ paddingTop: 8 }}>{textInput}</div>
+                    <div className="text-sidebar-text-field">{textInput}</div>
+                    <div className="text-sidebar-toolbar-wrap">{textToolbar}</div>
                   </>
                 ),
               },
@@ -819,11 +815,9 @@ const TextSidebarPanel = ({
               }
             />
           ) : null}
+          <div className="text-sidebar-text-field text-sidebar-text-field--standalone">{textInput}</div>
           {textToolbar}
           <div className={bodyClass}>
-            <div className="text-sidebar-section" style={{ paddingTop: 8 }}>
-              {textInput}
-            </div>
             <div className="text-sidebar-effects-groups">
               <div className="text-sidebar-effects-groups__block">
                 <h4 className="text-sidebar-effects-groups__heading">Animation</h4>
