@@ -96,6 +96,9 @@
   .website-dome-section {
     padding: 56px 0 32px;
   }
+  .website-dome-section__loading {
+    min-height: 300px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

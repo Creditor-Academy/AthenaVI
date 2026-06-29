@@ -9,22 +9,22 @@ import PersonalAvatar from '../../assets/Personal Avatar.mp4';
 const steps = [
   {
     title: "Create Project",
-    description: "Start a new project in your workspace and organize your video scenes.",
+    description: "Choose a template or start from blank to design your canvas.",
     Icon: FiFolderPlus,
   },
   {
-    title: "Write Script",
-    description: "Add narration text for each scene. The AI avatar will speak this script automatically.",
-    Icon: FiFileText,
-  },
-  {
-    title: "Choose AI Avatar",
-    description: "Select an AI instructor avatar and customize voice and layout.",
+    title: "Choose Avatar",
+    description: "Select platform avatars or create your personal Digital Twin clone.",
     Icon: FiUser,
   },
   {
+    title: "Write Script & Voice",
+    description: "Select a voice and write the narration script for your scenes.",
+    Icon: FiFileText,
+  },
+  {
     title: "Generate Video",
-    description: "Render the final video in HD and share it instantly.",
+    description: "Render the final video in high definition and share it instantly.",
     Icon: FiPlay,
   },
 ];
