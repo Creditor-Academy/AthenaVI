@@ -6,6 +6,8 @@ pipeline {
         AWS_ACCOUNT_ID = "205091463760"
         ECR_REPOSITORY = "vi-athena-frontend"
         IMAGE_TAG = "${BUILD_NUMBER}"
+
+        VITE_API_BASE_URL = "https://api.vs.lmsathena.com"
     }
 
     stages {
@@ -24,7 +26,10 @@ pipeline {
 
         stage('Build React App') {
             steps {
-                sh 'npm run build'
+                sh '''
+                echo "Building with API: $VITE_API_BASE_URL"
+                npm run build
+                '''
             }
         }
 
@@ -94,6 +99,7 @@ pipeline {
         success {
             echo "========================================"
             echo "Frontend CI Pipeline Completed Successfully"
+            echo "Frontend built with API: ${VITE_API_BASE_URL}"
             echo "Docker Image Pushed to Amazon ECR"
             echo "========================================"
         }
