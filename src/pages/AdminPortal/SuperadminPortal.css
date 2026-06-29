@@ -50,6 +50,10 @@
   gap: 20px;
   flex-shrink: 0;
   padding-bottom: 4px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--primary) 5%, transparent) 0%, transparent 100%);
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 8px;
 }
 
 .sa-panel-title {
@@ -57,6 +61,7 @@
   font-size: 1.125rem;
   font-weight: 650;
   letter-spacing: -0.02em;
+  color: var(--text-main);
 }
 
 .sa-panel-desc {
@@ -90,6 +95,7 @@
 .sa-select:focus {
   outline: 2px solid color-mix(in srgb, var(--primary) 45%, transparent);
   border-color: var(--primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 10%, transparent);
 }
 
 .sa-input--search {
@@ -166,15 +172,18 @@
 }
 
 .sa-btn--primary {
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 85%, #2563eb) 100%);
   border-color: var(--primary);
   color: #fff;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--primary) 25%, transparent);
 }
 
 .sa-btn--primary:hover:not(:disabled) {
-  background: var(--primary-hover, var(--primary));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 90%, #2563eb) 0%, var(--primary) 100%);
   border-color: var(--primary-hover, var(--primary));
   color: #fff;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 35%, transparent);
+  transform: translateY(-1px);
 }
 
 .sa-btn--danger {
@@ -185,6 +194,14 @@
 
 .sa-btn--ghost {
   background: transparent;
+  border-color: color-mix(in srgb, var(--primary) 25%, var(--border-color));
+  color: var(--primary);
+}
+
+.sa-btn--ghost:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .sa-btn--sm {
@@ -203,13 +220,18 @@
 }
 
 .sa-card {
-  background: var(--bg-card);
+  background: linear-gradient(135deg, var(--bg-card) 0%, color-mix(in srgb, var(--primary) 3%, var(--bg-card)) 100%);
   border: 1px solid var(--border-color);
   border-radius: 12px;
   overflow: hidden;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  transition: all 0.2s ease;
+}
+
+.sa-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border-color));
 }
 
 .sa-card--flush {
@@ -299,8 +321,9 @@
 }
 
 .sa-tab--active {
-  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 18%, transparent) 0%, color-mix(in srgb, var(--primary) 10%, transparent) 100%);
   color: var(--primary);
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, var(--border-color));
 }
 
 /* Scrollable tab content area */
@@ -327,8 +350,8 @@
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--primary) 18%, var(--bg-card));
-  border: 1px solid color-mix(in srgb, var(--primary) 28%, var(--border-color));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 18%, var(--bg-card)) 0%, color-mix(in srgb, var(--primary) 28%, var(--bg-card)) 100%);
+  border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border-color));
   color: var(--primary);
   font-size: 1.25rem;
   font-weight: 700;
@@ -337,6 +360,7 @@
   justify-content: center;
   flex-shrink: 0;
   letter-spacing: -0.01em;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--primary) 15%, transparent);
 }
 
 .sa-profile-identity-info {
@@ -443,6 +467,25 @@
   border-radius: 10px;
   overflow: hidden;
   margin-top: 12px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.sa-tx-feed::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sa-tx-feed::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sa-tx-feed::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text-muted) 25%, var(--border-color));
+  border-radius: 99px;
+}
+
+.sa-tx-feed::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--primary) 40%, var(--text-muted));
 }
 
 .sa-tx-row {
@@ -459,7 +502,8 @@
 }
 
 .sa-tx-row:hover {
-  background: color-mix(in srgb, var(--primary) 4%, transparent);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--primary) 8%, transparent) 0%, transparent 100%);
+  border-left: 3px solid var(--primary);
 }
 
 .sa-tx-dot {
@@ -606,11 +650,11 @@
 }
 
 .sa-list-item:hover {
-  background: color-mix(in srgb, var(--primary) 6%, transparent);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--primary) 8%, transparent) 0%, transparent 100%);
 }
 
 .sa-list-item--active {
-  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--primary) 12%, transparent) 0%, transparent 100%);
   box-shadow: inset 3px 0 0 var(--primary);
 }
 
@@ -750,9 +794,15 @@
 .sa-stat-pill {
   padding: 10px 16px;
   border-radius: 10px;
-  background: color-mix(in srgb, var(--primary) 8%, var(--bg-card));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 8%, var(--bg-card)) 0%, color-mix(in srgb, var(--primary) 15%, var(--bg-card)) 100%);
   border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border-color));
   flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.sa-stat-pill:hover {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border-color));
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--primary) 15%, transparent);
 }
 
 .sa-stat-pill-label {
@@ -1028,7 +1078,13 @@
   padding: 16px;
   border-radius: 12px;
   border: 1px solid var(--border-color);
-  background: var(--bg-card);
+  background: linear-gradient(135deg, var(--bg-card) 0%, color-mix(in srgb, var(--primary) 8%, var(--bg-card)) 100%);
+  transition: all 0.2s ease;
+}
+
+.sa-metric-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border-color));
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 15%, transparent);
 }
 
 .sa-metric-card-label {
@@ -1146,7 +1202,12 @@
   padding: 12px;
   border-radius: 10px;
   border: 1px solid var(--border-color);
-  background: color-mix(in srgb, var(--bg-card) 95%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--bg-card) 95%, transparent) 0%, color-mix(in srgb, var(--primary) 5%, var(--bg-card)) 100%);
+  transition: all 0.2s ease;
+}
+
+.sa-meta-item:hover {
+  border-color: color-mix(in srgb, var(--primary) 25%, var(--border-color));
 }
 
 .sa-meta-item--inline {

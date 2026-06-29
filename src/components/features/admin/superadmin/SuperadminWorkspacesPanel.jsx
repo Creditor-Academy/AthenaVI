@@ -70,39 +70,70 @@ function WorkspaceDrawer({
   return (
     <>
       {open && (
-        <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200 }} aria-hidden />
+        <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200 }} aria-hidden />
       )}
       <div
         style={{
-          position: 'fixed', top: 0, right: 0, bottom: 0, width: 480, maxWidth: '92vw',
-          background: 'var(--bg-surface)', borderLeft: '1px solid var(--border-color)',
-          boxShadow: '-12px 0 48px rgba(0,0,0,0.18)', zIndex: 201,
+          position: 'fixed', top: '50%', left: '50%',
+          transform: open ? 'translate(-50%, -50%)' : 'translate(-50%, -48%)',
+          width: 600, maxWidth: '94vw',
+          height: '80vh', minHeight: '500px',
+          background: 'var(--bg-surface)', border: '1px solid var(--border-color)',
+          borderRadius: 16,
+          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', zIndex: 201,
           display: 'flex', flexDirection: 'column',
-          transform: open ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'transform 0.28s cubic-bezier(0.16,1,0.3,1)',
+          opacity: open ? 1 : 0,
+          transition: 'transform 0.28s cubic-bezier(0.16,1,0.3,1), opacity 0.2s ease',
+          willChange: 'transform, opacity',
         }}
         role="dialog"
         aria-modal="true"
         aria-label="Workspace details"
       >
-        <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-card)', display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0, background: 'var(--primary-muted)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Building2 size={18} />
+        <div style={{ 
+          padding: '20px 24px', 
+          borderBottom: '1px solid var(--border-color)', 
+          background: 'linear-gradient(135deg, var(--bg-card) 0%, color-mix(in srgb, var(--primary) 5%, var(--bg-card)) 100%)', 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 16, 
+          flexShrink: 0,
+          borderTopLeftRadius: 16,
+          borderTopRightRadius: 16,
+        }}>
+          <div style={{ 
+            width: 48, height: 48, borderRadius: 12, flexShrink: 0, 
+            background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 15%, var(--bg-card)) 0%, color-mix(in srgb, var(--primary) 25%, var(--bg-card)) 100%)',
+            border: '1px solid color-mix(in srgb, var(--primary) 30%, var(--border-color))',
+            color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 2px 8px color-mix(in srgb, var(--primary) 15%, transparent)',
+          }}>
+            <Building2 size={20} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '0.95rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: '1.05rem', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {summary?.name || workspace?.name || 'Workspace'}
             </div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
               {workspace?.workspaceId}
             </div>
           </div>
-          <div className="sa-stat-pill" style={{ flexShrink: 0 }}>
-            <span className="sa-stat-pill-label">Pool</span>
-            <span className="sa-stat-pill-value">{formatAc(summary?.workspaceCredits ?? workspace?.workspaceCredits)}</span>
-          </div>
-          <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost" onClick={onClose} aria-label="Close">
-            <X size={16} />
+          <button 
+            type="button" 
+            className="sa-btn sa-btn--sm sa-btn--ghost" 
+            onClick={onClose} 
+            aria-label="Close"
+            style={{ 
+              width: 36, 
+              height: 36, 
+              padding: 0,
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <X size={18} />
           </button>
         </div>
 
@@ -114,7 +145,11 @@ function WorkspaceDrawer({
           <div style={{ padding: 20 }}><div className="sa-alert sa-alert--error">{detailError}</div></div>
         ) : (
           <>
-            <div className="sa-tab-bar" role="tablist" style={{ flexShrink: 0 }}>
+            <div className="sa-tab-bar" role="tablist" style={{ 
+              flexShrink: 0,
+              padding: '12px 24px',
+              background: 'var(--bg-card)',
+            }}>
               {[
                 { id: 'overview', label: 'Overview' },
                 { id: 'credits', label: 'Credits' },
@@ -129,20 +164,73 @@ function WorkspaceDrawer({
               ))}
             </div>
 
-            <div style={{ flex: 1, overflowY: 'auto' }} className="sa-scroll">
+            <div style={{ 
+              flex: 1, 
+              overflowY: 'auto',
+              borderBottomLeftRadius: 16,
+              borderBottomRightRadius: 16,
+            }} className="sa-scroll">
               {activeTab === 'overview' && (
-                <div className="sa-tab-pane">
-                  <div className="sa-workspace-meta">
-                    <div className="sa-meta-item"><span>Type</span><strong>{summary?.type || 'TEAM'}</strong></div>
-                    <div className="sa-meta-item"><span>Members</span><strong>{summary?.memberCount ?? '—'}</strong></div>
-                    <div className="sa-meta-item"><span>Owner</span><strong>{summary?.owner?.name || summary?.owner?.email || '—'}</strong></div>
-                    <div className="sa-meta-item"><span>Owner balance</span><strong>{formatAc(summary?.owner?.personalCredits)}</strong></div>
+                <div className="sa-tab-pane" style={{ padding: '20px 24px' }}>
+                  <div className="sa-workspace-meta" style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+                    gap: 16 
+                  }}>
+                    <div className="sa-meta-item" style={{ 
+                      padding: 16, 
+                      borderRadius: 12, 
+                      border: '1px solid var(--border-color)',
+                      background: 'linear-gradient(135deg, var(--bg-card) 0%, color-mix(in srgb, var(--primary) 5%, var(--bg-card)) 100%)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 4,
+                    }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Type</span>
+                      <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>{summary?.type || 'TEAM'}</strong>
+                    </div>
+                    <div className="sa-meta-item" style={{ 
+                      padding: 16, 
+                      borderRadius: 12, 
+                      border: '1px solid var(--border-color)',
+                      background: 'linear-gradient(135deg, var(--bg-card) 0%, color-mix(in srgb, var(--primary) 5%, var(--bg-card)) 100%)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 4,
+                    }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Members</span>
+                      <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>{summary?.memberCount ?? '—'}</strong>
+                    </div>
+                    <div className="sa-meta-item" style={{ 
+                      padding: 16, 
+                      borderRadius: 12, 
+                      border: '1px solid var(--border-color)',
+                      background: 'linear-gradient(135deg, var(--bg-card) 0%, color-mix(in srgb, var(--primary) 5%, var(--bg-card)) 100%)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 4,
+                    }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Owner</span>
+                      <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)', wordBreak: 'break-word' }}>{summary?.owner?.name || summary?.owner?.email || '—'}</strong>
+                    </div>
+                    <div className="sa-meta-item" style={{ 
+                      padding: 16, 
+                      borderRadius: 12, 
+                      border: '1px solid var(--border-color)',
+                      background: 'linear-gradient(135deg, var(--bg-card) 0%, color-mix(in srgb, var(--primary) 5%, var(--bg-card)) 100%)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 4,
+                    }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Owner balance</span>
+                      <strong style={{ fontSize: '0.95rem', color: 'var(--primary,#3b82f6)' }}>{formatAc(summary?.owner?.personalCredits)}</strong>
+                    </div>
                   </div>
                 </div>
               )}
 
               {activeTab === 'credits' && (
-                <div className="sa-tab-pane">
+                <div className="sa-tab-pane" style={{ padding: '20px 24px' }}>
                   {actionMessage && <div className="sa-alert sa-alert--success">{actionMessage}</div>}
                   {actionError && <div className="sa-alert sa-alert--error">{actionError}</div>}
                   <div className="sa-action-row">
@@ -154,23 +242,63 @@ function WorkspaceDrawer({
               )}
 
               {activeTab === 'history' && (
-                <div className="sa-tab-pane">
+                <div className="sa-tab-pane" style={{ padding: '20px 24px' }}>
                   {history.length === 0 ? (
                     <div className="sa-empty" style={{ padding: '32px 0' }}>No ledger entries.</div>
                   ) : (
-                    <div className="sa-tx-feed">
+                    <div className="sa-tx-feed" style={{ 
+                      background: 'var(--bg-card)', 
+                      borderRadius: 12, 
+                      border: '1px solid var(--border-color)',
+                      overflow: 'hidden',
+                    }}>
                       {history.map((tx) => {
                         const isPos = tx.amount > 0
                         return (
-                          <div key={tx.id} className="sa-tx-row">
-                            <div className="sa-tx-body">
-                              <div className="sa-tx-top">
-                                <span className="sa-tx-type">{txTypeLabel(tx.type)}</span>
-                                <span className="sa-tx-ref">{tx.reference || tx.metadata?.reason || '—'}</span>
+                          <div key={tx.id} className="sa-tx-row" style={{
+                            padding: '14px 16px',
+                            borderBottom: '1px solid var(--border-color)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 16,
+                            transition: 'all 0.2s ease',
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = 'linear-gradient(90deg, color-mix(in srgb, var(--primary) 6%, transparent) 0%, transparent 100%)'
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.background = 'transparent'
+                          }}
+                          >
+                            <div className="sa-tx-body" style={{ flex: 1, minWidth: 0 }}>
+                              <div className="sa-tx-top" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                                <span className="sa-tx-type" style={{ 
+                                  fontSize: '0.8rem', 
+                                  fontWeight: 600, 
+                                  color: 'var(--text-primary)',
+                                  background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 10%, var(--bg-card)) 0%, color-mix(in srgb, var(--primary) 5%, var(--bg-card)) 100%)',
+                                  padding: '4px 10px',
+                                  borderRadius: 6,
+                                  border: '1px solid color-mix(in srgb, var(--primary) 20%, var(--border-color))',
+                                }}>{txTypeLabel(tx.type)}</span>
+                                <span className="sa-tx-ref" style={{ fontSize: '0.78rem', color: 'var(--text-muted)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.reference || tx.metadata?.reason || '—'}</span>
                               </div>
-                              <div className="sa-tx-bottom"><span className="sa-tx-date">{formatDate(tx.createdAt)}</span></div>
+                              <div className="sa-tx-bottom"><span className="sa-tx-date" style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{formatDate(tx.createdAt)}</span></div>
                             </div>
-                            <span className={`sa-tx-amount ${isPos ? 'sa-amount--positive' : 'sa-amount--negative'}`}>
+                            <span className={`sa-tx-amount ${isPos ? 'sa-amount--positive' : 'sa-amount--negative'}`} style={{
+                              fontSize: '0.9rem',
+                              fontWeight: 700,
+                              padding: '6px 12px',
+                              borderRadius: 8,
+                              background: isPos 
+                                ? 'linear-gradient(135deg, color-mix(in srgb, #10b981 10%, var(--bg-card)) 0%, color-mix(in srgb, #10b981 5%, var(--bg-card)) 100%)'
+                                : 'linear-gradient(135deg, color-mix(in srgb, #ef4444 10%, var(--bg-card)) 0%, color-mix(in srgb, #ef4444 5%, var(--bg-card)) 100%)',
+                              border: isPos 
+                                ? '1px solid color-mix(in srgb, #10b981 25%, var(--border-color))'
+                                : '1px solid color-mix(in srgb, #ef4444 25%, var(--border-color))',
+                              color: isPos ? '#10b981' : '#ef4444',
+                            }}>
                               {isPos ? '+' : ''}{formatAc(tx.amount)}
                             </span>
                           </div>
@@ -191,23 +319,59 @@ function WorkspaceDrawer({
               )}
 
               {activeTab === 'members' && (
-                <div className="sa-tab-pane">
+                <div className="sa-tab-pane" style={{ padding: '20px 24px' }}>
                   {members.length === 0 ? (
                     <div className="sa-empty" style={{ padding: '32px 0' }}>No member usage recorded.</div>
                   ) : (
-                    <div className="sa-tx-feed">
+                    <div className="sa-tx-feed" style={{ 
+                      background: 'var(--bg-card)', 
+                      borderRadius: 12, 
+                      border: '1px solid var(--border-color)',
+                      overflow: 'hidden',
+                    }}>
                       {members.map((row) => (
-                        <div key={row.userId} className="sa-tx-row">
-                          <div className="sa-tx-body">
-                            <div className="sa-tx-top">
-                              <span className="sa-tx-type">{row.user?.name || 'Member'}</span>
-                              <span className="sa-tx-ref">{row.user?.email || row.userId}</span>
+                        <div key={row.userId} className="sa-tx-row" style={{
+                          padding: '14px 16px',
+                          borderBottom: '1px solid var(--border-color)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: 16,
+                          transition: 'all 0.2s ease',
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.background = 'linear-gradient(90deg, color-mix(in srgb, var(--primary) 6%, transparent) 0%, transparent 100%)'
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.background = 'transparent'
+                        }}
+                        >
+                          <div className="sa-tx-body" style={{ flex: 1, minWidth: 0 }}>
+                            <div className="sa-tx-top" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                              <span className="sa-tx-type" style={{ 
+                                fontSize: '0.8rem', 
+                                fontWeight: 600, 
+                                color: 'var(--text-primary)',
+                                background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 10%, var(--bg-card)) 0%, color-mix(in srgb, var(--primary) 5%, var(--bg-card)) 100%)',
+                                padding: '4px 10px',
+                                borderRadius: 6,
+                                border: '1px solid color-mix(in srgb, var(--primary) 20%, var(--border-color))',
+                              }}>{row.user?.name || 'Member'}</span>
+                              <span className="sa-tx-ref" style={{ fontSize: '0.78rem', color: 'var(--text-muted)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.user?.email || row.userId}</span>
                             </div>
                             <div className="sa-tx-bottom">
-                              <span className="sa-tx-date">{row.transactionCount} transactions</span>
+                              <span className="sa-tx-date" style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{row.transactionCount} transactions</span>
                             </div>
                           </div>
-                          <span className="sa-tx-amount sa-amount--negative">{formatAc(row.totalUsageAc)}</span>
+                          <span className="sa-tx-amount sa-amount--negative" style={{
+                            fontSize: '0.9rem',
+                            fontWeight: 700,
+                            padding: '6px 12px',
+                            borderRadius: 8,
+                            background: 'linear-gradient(135deg, color-mix(in srgb, #ef4444 10%, var(--bg-card)) 0%, color-mix(in srgb, #ef4444 5%, var(--bg-card)) 100%)',
+                            border: '1px solid color-mix(in srgb, #ef4444 25%, var(--border-color))',
+                            color: '#ef4444',
+                          }}>{formatAc(row.totalUsageAc)}</span>
                         </div>
                       ))}
                     </div>
@@ -389,16 +553,57 @@ function SuperadminWorkspacesPanel() {
             <button key={ws.workspaceId} type="button" onClick={() => openDrawer(ws.workspaceId)}
               style={{
                 width: '100%', display: 'grid', gridTemplateColumns: '1.2fr 1fr 100px 100px',
-                gap: 12, padding: '13px 20px', background: selectedId === ws.workspaceId && drawerOpen ? 'var(--bg-hover)' : 'transparent',
-                border: 'none', borderBottom: '1px solid var(--border-color)', borderLeft: selectedId === ws.workspaceId && drawerOpen ? '3px solid var(--primary)' : '3px solid transparent',
+                gap: 12, padding: '14px 20px', 
+                background: selectedId === ws.workspaceId && drawerOpen 
+                  ? 'linear-gradient(90deg, color-mix(in srgb, var(--primary) 12%, transparent) 0%, transparent 100%)' 
+                  : 'transparent',
+                border: 'none', borderBottom: '1px solid var(--border-color)', 
+                borderLeft: selectedId === ws.workspaceId && drawerOpen ? '3px solid var(--primary,#3b82f6)' : '3px solid transparent',
                 alignItems: 'center', cursor: 'pointer', textAlign: 'left',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={e => { 
+                if (selectedId !== ws.workspaceId || !drawerOpen) {
+                  e.currentTarget.style.background = 'linear-gradient(90deg, color-mix(in srgb, var(--primary) 6%, transparent) 0%, transparent 100%)'
+                  e.currentTarget.style.borderLeft = '3px solid color-mix(in srgb, var(--primary) 50%, var(--border-color))'
+                }
+              }}
+              onMouseLeave={e => { 
+                if (selectedId !== ws.workspaceId || !drawerOpen) {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.borderLeft = '3px solid transparent'
+                }
+              }}
+            >
+              <span style={{ 
+                fontWeight: 600, 
+                fontSize: '0.85rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
               }}>
-              <span style={{ fontWeight: 600, fontSize: '0.83rem' }}>{ws.name}</span>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{
+                  width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                  background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 15%, var(--bg-card)) 0%, color-mix(in srgb, var(--primary) 25%, var(--bg-card)) 100%)',
+                  border: '1px solid color-mix(in srgb, var(--primary) 30%, var(--border-color))',
+                  color: 'var(--primary)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '0.7rem', fontWeight: 700,
+                }}>
+                  <Building2 size={14} />
+                </span>
+                {ws.name}
+              </span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {ws.owner?.email || '—'}
               </span>
               <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{ws.memberCount ?? '—'}</span>
-              <span style={{ fontSize: '0.83rem', fontWeight: 600, color: 'var(--primary)', textAlign: 'right' }}>{formatAc(ws.workspaceCredits)}</span>
+              <span style={{ 
+                fontSize: '0.85rem', 
+                fontWeight: 600, 
+                color: 'var(--primary,#3b82f6)', 
+                textAlign: 'right',
+              }}>{formatAc(ws.workspaceCredits)}</span>
             </button>
           ))}
         </div>
