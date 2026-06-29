@@ -137,7 +137,7 @@ const css = `
 .ts-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap: 24px;
   max-width: 1200px;
   margin: 0 auto 56px;
 }
@@ -146,73 +146,28 @@ const css = `
 .ts-card {
   position: relative;
   display: flex;
-  flex-direction: row;
-  align-items: center;
+  flex-direction: column;
   background: #ffffff;
   border: 1.5px solid rgba(15,23,42,0.09);
-  border-radius: 18px;
-  height: 160px;
+  border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
-  transition: border-color .28s ease, box-shadow .28s ease;
+  transition: border-color .28s ease, box-shadow .28s ease, transform .28s ease;
 }
 .ts-card:hover {
   border-color: rgba(30,64,175,0.22);
-  box-shadow: 0 8px 32px rgba(15,23,42,0.09);
+  box-shadow: 0 12px 40px rgba(15,23,42,0.12);
+  transform: translateY(-4px);
 }
 
-/* Left text block */
-.ts-card-label {
-  flex-shrink: 0;
-  width: 148px;
-  padding: 0 0 0 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  z-index: 2;
-}
-.ts-card-name {
-  font-size: 17px;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1.25;
-  white-space: pre-line;
-  letter-spacing: -0.4px;
-}
-.ts-card-count {
-  font-size: 12px;
-  color: #94a3b8;
-  font-weight: 500;
-}
-
-/* Right image cluster — sits flush to right edge, clipped by card overflow:hidden */
-.ts-img-cluster {
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 46%;
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  transition: width .42s cubic-bezier(.16,1,.3,1);
-}
-.ts-card:hover .ts-img-cluster {
-  width: 56%;
-}
-
-/* Each portrait image strip */
-.ts-img-strip {
-  flex: 1;
-  min-width: 0;
+/* Image at top */
+.ts-card-image {
+  width: 100%;
+  height: 200px;
   overflow: hidden;
   position: relative;
-  border-left: 2px solid #ffffff;
 }
-.ts-img-strip:first-child {
-  border-left: none;
-}
-.ts-img-strip img {
+.ts-card-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -220,8 +175,36 @@ const css = `
   transform: scale(1);
   transition: transform .5s cubic-bezier(.16,1,.3,1);
 }
-.ts-card:hover .ts-img-strip img {
-  transform: scale(1.07);
+.ts-card:hover .ts-card-image img {
+  transform: scale(1.05);
+}
+
+/* White bar at bottom */
+.ts-card-bar {
+  background: #ffffff;
+  padding: 16px 18px;
+  border-top: 1px solid rgba(15,23,42,0.06);
+}
+.ts-card-bar-category {
+  font-size: 11px;
+  font-weight: 600;
+  color: #3b82f6;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 4px;
+}
+.ts-card-bar-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.3;
+  letter-spacing: -0.4px;
+}
+.ts-card-bar-count {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+  margin-top: 2px;
 }
 
 /* ── CTA strip ── */
@@ -281,9 +264,9 @@ const css = `
   .ts-section { padding: 64px 20px; }
   .ts-cta { flex-direction: column; text-align: center; }
   .ts-cta-btn { width: 100%; justify-content: center; }
-  .ts-card { height: 140px; }
-  .ts-card-label { width: 130px; padding-left: 20px; }
-  .ts-card-name { font-size: 15px; }
+  .ts-card-image { height: 180px; }
+  .ts-card-content { padding: 16px; }
+  .ts-card-name { font-size: 16px; }
 }
 `
 
@@ -324,19 +307,16 @@ function TemplatesSection({ onNavigateToSolution }) {
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: i * 0.07 }}
             >
-              {/* Left: title */}
-              <div className="ts-card-label">
-                <span className="ts-card-name">{cat.title}</span>
-                <span className="ts-card-count">{cat.count} templates</span>
+              {/* Image at top */}
+              <div className="ts-card-image">
+                <img src={cat.images[0]} alt={`${cat.title} preview`} loading="lazy" />
               </div>
 
-              {/* Right: image strips */}
-              <div className="ts-img-cluster">
-                {cat.images.map((src, j) => (
-                  <div className="ts-img-strip" key={j}>
-                    <img src={src} alt={`${cat.title} preview ${j + 1}`} loading="lazy" />
-                  </div>
-                ))}
+              {/* White bar at bottom */}
+              <div className="ts-card-bar">
+                <div className="ts-card-bar-category">Template</div>
+                <div className="ts-card-bar-name">{cat.title.replace('\n', ' ')}</div>
+                <div className="ts-card-bar-count">{cat.count} templates</div>
               </div>
             </motion.div>
           ))}
