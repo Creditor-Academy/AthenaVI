@@ -84,8 +84,8 @@ function Landing({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToC
         <DigitalTwinSection />
         <ProductsSection />
         <WebsiteTemplateDomeSection onLoginClick={onLoginClick} />
-        <TemplatesSection onNavigateToSolution={onLoginClick} />
         <PlatformFeatures />
+        <TemplatesSection onNavigateToSolution={onLoginClick} />
         <ReadySection />
         <Footer
           onLogoClick={onLogoClick}
