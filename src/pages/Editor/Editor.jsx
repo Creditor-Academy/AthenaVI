@@ -2524,6 +2524,10 @@ function Create({ onBack, initialConfig = null }) {
         if (existingAudioIndex >= 0) nextClips[existingAudioIndex] = { ...nextClips[existingAudioIndex], ...audioClip }
         else nextClips.push(audioClip)
 
+        // Stretch all non-audio clips (backgrounds, text, overlays) to the new scene duration
+        // so timeline layers remain in sync with the narration length.
+        const normalizedClips = normalizeClipsToScene(nextClips, duration)
+
         return {
           ...s,
           // voice-only presenter fields
@@ -2544,8 +2548,10 @@ function Create({ onBack, initialConfig = null }) {
             ...(s.generation || {}),
             speechGenerationId: speechId,
             status: 'completed',
+            // Clear any stale HeyGen video id so the scene is treated as voice-only
+            heygenVideoId: undefined,
           },
-          clips: nextClips,
+          clips: normalizedClips,
         }
       })
 
@@ -2834,6 +2840,8 @@ function Create({ onBack, initialConfig = null }) {
         onClose={() => setShowVoiceOnlySpeechModal(false)}
         initialScript={activeScene?.script || ''}
         initialVoiceId={activeScene?.voiceId || ''}
+        initialSpeed={activeScene?.voiceSettings?.speed ?? 1}
+        initialLocale={activeScene?.voiceSettings?.locale || 'en-US'}
         onGenerate={handleGenerateVoiceOnlySpeech}
       />
       <GeneratedVideoModal 

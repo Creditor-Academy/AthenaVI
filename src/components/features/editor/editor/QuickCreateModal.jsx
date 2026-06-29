@@ -57,12 +57,21 @@ const TOTAL_STEPS = 5;
 const GENERATING_STEP = 6;
 const STEP_LABELS = ['Presenter', 'Look', 'Voice', 'Script', 'Settings'];
 
+// Voice engines unsupported by the HeyGen TTS speech generation endpoint.
+const UNSUPPORTED_TTS_ENGINES = ['STARFISH']
+
+function isSupportedTtsVoice(rawVoice) {
+  const engine = String(rawVoice?.voice_engine || rawVoice?.engine || rawVoice?.provider || '').toUpperCase()
+  return engine === '' || !UNSUPPORTED_TTS_ENGINES.includes(engine)
+}
+
 const mapVoiceFromApi = (voice) => ({
   id: voice.voice_id || voice.voiceId || voice.id,
   name: voice.name || voice.voice_name || voice.display_name || 'AI Voice',
   gender: voice.gender || 'Unknown',
   language: voice.language || voice.language_code || voice.language_name || 'English (US)',
   previewUrl: voice.preview_audio_url || voice.preview_url || voice.preview_audio || null,
+  engine: String(voice.voice_engine || voice.engine || voice.provider || '').toUpperCase() || null,
 });
 
 const BACKGROUND_COLOR_PALETTE = [
@@ -641,7 +650,8 @@ const QuickCreateModal = ({
         limit: 100,
       });
       const voiceList = extractHeygenList(responseData, ['voices']);
-      const mappedVoices = voiceList.map(mapVoiceFromApi).filter((voice) => voice.id);
+      // Filter out engines unsupported by the TTS speech generation API (e.g. STARFISH)
+      const mappedVoices = voiceList.filter(isSupportedTtsVoice).map(mapVoiceFromApi).filter((voice) => voice.id);
       setVoices(mappedVoices);
     } catch (err) {
       console.error('Failed to load voices:', err);
