@@ -521,11 +521,11 @@ const SCENE_AVATAR = [
 });
 
 const template = {
-  category: 'Product Launch',
+  category: 'Company',
   template: {
     id: 'product-launch-editorial',
     name: 'Product Launch — Editorial Bundle',
-    category: 'Product Launch',
+    category: 'Company',
     theme: assets.theme,
     presenter: PRESENTER,
     totalSlides: 8,

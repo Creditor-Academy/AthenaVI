@@ -1,0 +1,38 @@
+{
+  "colors": {
+    "primary": "#e07a5f",
+    "secondary": "#f4f1de",
+    "dark": "#1c1917",
+    "white": "#ffffff",
+    "line": "#e6e6e6",
+    "light": "#f2f4f3",
+    "accent": "#5f6f65",
+    "purple": "#9d4edd",
+    "gray": "#707070"
+  },
+  "backgrounds": [
+    { "id": "bg-white", "name": "White", "value": "#ffffff" },
+    { "id": "bg-linen", "name": "Linen", "value": "#faf8f5" },
+    { "id": "bg-sage", "name": "Sage", "value": "#e8ebe4" },
+    { "id": "bg-gradient-sage", "name": "Gradient Sage", "value": "linear-gradient(135deg, #e8ebe4 0%, #f7f4ee 100%)" }
+  ],
+  "theme": {
+    "fonts": {
+      "serif": "'Playfair Display', Georgia, serif",
+      "sans": "'Inter', 'Segoe UI', sans-serif"
+    }
+  },
+  "images": [
+    { "id": "proposal-watch-hero", "name": "Watch Catalogue Hero", "role": "hero-image", "thumb": "https://images.pexels.com/photos/190819/pexels-photo-190819.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/190819/pexels-photo-190819.jpeg" },
+    { "id": "proposal-watch-inset", "name": "Watch Adjust Inset", "role": "hero-image", "thumb": "https://images.pexels.com/photos/1191503/pexels-photo-1191503.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/1191503/pexels-photo-1191503.jpeg" },
+    { "id": "proposal-pearls", "name": "Pearls Texture", "role": "hero-image", "thumb": "https://images.pexels.com/photos/4041391/pexels-photo-4041391.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/4041391/pexels-photo-4041391.jpeg" },
+    { "id": "proposal-meeting", "name": "Colleague Discussion", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3184306/pexels-photo-3184306.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3184306/pexels-photo-3184306.jpeg" },
+    { "id": "proposal-team", "name": "Corporate Team Group", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg" },
+    { "id": "proposal-pointing", "name": "Presenter Pointing", "role": "hero-image", "thumb": "https://images.pexels.com/photos/2182977/pexels-photo-2182977.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/2182977/pexels-photo-2182977.jpeg" }
+  ],
+  "icons": [
+    { "id": "target", "name": "Target", "category": "business", "src": "https://img.icons8.com/doodle/96/bullseye.png" },
+    { "id": "solution", "name": "Solution", "category": "business", "src": "https://img.icons8.com/doodle/96/puzzle.png" },
+    { "id": "idea", "name": "Idea", "category": "business", "src": "https://img.icons8.com/doodle/96/light-on.png" }
+  ]
+}

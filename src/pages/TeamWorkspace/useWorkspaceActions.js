@@ -8,6 +8,11 @@ import {
   normalizeVideo,
   workspaceCanEdit
 } from './workspaceUtils.js';
+import {
+  DUPLICATE_PROJECT_NAME_MESSAGE,
+  findDuplicateProjectName,
+  getProjectDisplayName,
+} from '../../utils/projectNameValidation.js';
 
 /**
  * All user-triggered mutation handlers for the workspace page.
@@ -242,10 +247,8 @@ export function useWorkspaceActions({
       const parentFolder = parentWorkspace.folders.find((folder) =>
         (folder.videos || []).some((video) => String(video.id) === String(id))
       );
-      const duplicateProject = (parentFolder?.videos || []).some((video) => {
-        if (String(video.id) === String(id)) return false;
-        const existingName = String(video.name || video.title || '').trim().toLowerCase();
-        return existingName === String(newName || '').trim().toLowerCase();
+      const duplicateProject = findDuplicateProjectName(newName, parentFolder?.videos || [], {
+        excludeProjectId: id,
       });
       if (duplicateProject) {
         throw new Error(`A project named "${newName}" already exists in this folder.`);
@@ -279,6 +282,12 @@ export function useWorkspaceActions({
   // ------------------------------------------------------------------
   // Delete
   // ------------------------------------------------------------------
+  const refreshWorkspaceData = useCallback(async () => {
+    if (typeof loadWorkspaces === 'function') {
+      await loadWorkspaces();
+    }
+  }, [loadWorkspaces]);
+
   const deleteItem = useCallback((type, id, workspaceContext = null) => {
     if (type === 'workspace') {
       const workspace = workspaces.find((item) => String(item.id) === String(id));
@@ -301,6 +310,7 @@ export function useWorkspaceActions({
             if (String(currentLevel.id) === String(workspace.id)) {
               setCurrentLevel({ type: 'root', id: null });
             }
+            await refreshWorkspaceData();
             showToast('Left workspace successfully', 'success');
           } catch (error) {
             showToast(error.message || 'Failed to leave workspace', 'error');
@@ -318,6 +328,7 @@ export function useWorkspaceActions({
             if (String(currentLevel.id) === String(workspace.id)) {
               setCurrentLevel({ type: 'root', id: null });
             }
+            await refreshWorkspaceData();
             showToast('Workspace deleted successfully', 'success');
           } catch (error) {
             showToast(error.message || 'Failed to delete workspace', 'error');
@@ -360,6 +371,7 @@ export function useWorkspaceActions({
           if (String(currentLevel.id) === String(id)) {
             setCurrentLevel({ type: 'workspace', id: parentWorkspace.id, ws: parentWorkspace });
           }
+          await refreshWorkspaceData();
           showToast('Folder deleted successfully', 'success');
         } catch (error) {
           showToast(error.message || 'Failed to delete folder', 'error');
@@ -400,13 +412,14 @@ export function useWorkspaceActions({
               [parentFolder.id]: (prev.videos[parentFolder.id] || []).filter((video) => String(video.id) !== String(id))
             }
           }));
+          await refreshWorkspaceData();
           showToast('Video deleted successfully', 'success');
         } catch (error) {
           showToast(error.message || 'Failed to delete video', 'error');
         }
       });
     }
-  }, [workspaces, activeWorkspace, activeFolder, currentLevel, setWorkspaces, setLocalAdditions, setCurrentLevel, showToast, openConfirmDialog]);
+  }, [workspaces, activeWorkspace, activeFolder, currentLevel, setWorkspaces, setLocalAdditions, setCurrentLevel, showToast, openConfirmDialog, refreshWorkspaceData]);
 
   // ------------------------------------------------------------------
   // Leave shared workspace
@@ -419,12 +432,13 @@ export function useWorkspaceActions({
         if (String(currentLevel.id) === String(workspace.id)) {
           setCurrentLevel({ type: 'root', id: null });
         }
+        await refreshWorkspaceData();
         showToast('Left workspace successfully', 'success');
       } catch (error) {
         showToast(error.message || 'Failed to leave workspace', 'error');
       }
     });
-  }, [currentLevel, setWorkspaces, setCurrentLevel, showToast, openConfirmDialog]);
+  }, [currentLevel, setWorkspaces, setCurrentLevel, showToast, openConfirmDialog, refreshWorkspaceData]);
 
   // ------------------------------------------------------------------
   // Manage workspace contributors
@@ -534,6 +548,18 @@ export function useWorkspaceActions({
   const handleMoveProject = useCallback(async (targetFolderId, moveTargetVideo, moveTargetWorkspace) => {
     if (!moveTargetVideo || !moveTargetWorkspace) return;
     try {
+      const targetFolder = moveTargetWorkspace.folders?.find(
+        (folder) => String(folder.id) === String(targetFolderId)
+      );
+      const duplicate = findDuplicateProjectName(
+        getProjectDisplayName(moveTargetVideo),
+        targetFolder?.videos || [],
+        { excludeProjectId: moveTargetVideo.id }
+      );
+      if (duplicate) {
+        throw new Error(DUPLICATE_PROJECT_NAME_MESSAGE);
+      }
+
       await workspaceService.moveProjectFolder(moveTargetWorkspace.id, moveTargetVideo.id, targetFolderId);
 
       setWorkspaces((prev) =>

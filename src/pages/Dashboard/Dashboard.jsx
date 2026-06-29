@@ -423,7 +423,16 @@ function Dashboard({ onCreate, initialSection }) {
               template={selectedTemplateForDetails} 
               onBack={() => goToSection('templates')}
               onUse={() => {
-                handleOpenCreateVideoModal(selectedTemplateForDetails)
+                if (onCreate && selectedTemplateForDetails) {
+                  const ratioMap = { '9:16': 'portrait', '1:1': 'square' }
+                  onCreate({
+                    template: {
+                      scenes: selectedTemplateForDetails.bundleScenes || [],
+                    },
+                    name: selectedTemplateForDetails.name || 'Untitled',
+                    pageSize: ratioMap[selectedTemplateForDetails.ratio] || 'landscape',
+                  })
+                }
               }}
             />
           )}

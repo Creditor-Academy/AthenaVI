@@ -1,0 +1,49 @@
+{
+  "theme": {
+    "name": "Financial Growth",
+    "fonts": {
+      "display": "\"Outfit\", \"DM Sans\", system-ui, sans-serif",
+      "serif": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+      "sans": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+      "accent": "\"Source Serif 4\", Georgia, serif"
+    }
+  },
+  "presenter": {
+    "name": "Financial Advisor"
+  },
+  "colors": {
+    "primary": "#EAA844",
+    "secondary": "#3B82F6",
+    "accent": "#F97316",
+    "green": "#10B981",
+    "pink": "#F472B6",
+    "white": "#FFFFFF",
+    "dark": "#111827",
+    "cream": "#FAF9F6",
+    "line": "#E2E8F0",
+    "slate": "#475569",
+    "grey": "#6B7280"
+  },
+  "backgrounds": [
+    { "id": "bg-cream", "name": "Cream Ivory", "value": "#FAF9F6" },
+    { "id": "bg-white", "name": "Clean White", "value": "#FFFFFF" },
+    { "id": "bg-dark", "name": "Deep Dark", "value": "#111827" },
+    { "id": "bg-gradient-cream", "name": "Soft Warm Gradient", "value": "linear-gradient(145deg, #FAF9F6 0%, #FFFDF9 60%, #FFF5E6 100%)" }
+  ],
+  "images": [
+    { "id": "financial-cover", "name": "Growth cover chart", "role": "hero-image", "thumb": "https://images.pexels.com/photos/590022/pexels-photo-590022.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/590022/pexels-photo-590022.jpeg" },
+    { "id": "person-laptop", "name": "Person working on laptop", "role": "hero-image", "thumb": "https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg" },
+    { "id": "financial-chart", "name": "Market analytics", "role": "hero-image", "thumb": "https://images.pexels.com/photos/6801874/pexels-photo-6801874.jpeg?auto=compress&cs=tinysrgb&w=400", "src": "https://images.pexels.com/photos/6801874/pexels-photo-6801874.jpeg" },
+    { "id": "financial-logo", "name": "Wealth Logo", "role": "logo", "thumb": "https://placehold.co/200x48/EAA844/ffffff?text=FINANCE", "src": "https://placehold.co/320x64/EAA844/ffffff?text=WEALTH+ACADEMY" }
+  ],
+  "icons": [
+    { "id": "card", "name": "Credit Card", "category": "finance", "src": "https://img.icons8.com/ios-filled/96/3B82F6/bank-card.png" },
+    { "id": "folder", "name": "Secure Folder", "category": "finance", "src": "https://img.icons8.com/ios-filled/96/EAA844/folder-invoices.png" },
+    { "id": "globe", "name": "Global Shield", "category": "finance", "src": "https://img.icons8.com/ios-filled/96/F97316/shield.png" },
+    { "id": "network", "name": "Market Network", "category": "finance", "src": "https://img.icons8.com/ios-filled/96/EAA844/collaboration.png" },
+    { "id": "rocket", "name": "Product Launch", "category": "finance", "src": "https://img.icons8.com/ios-filled/96/10B981/rocket.png" },
+    { "id": "monitor", "name": "Digital Monitor", "category": "finance", "src": "https://img.icons8.com/ios-filled/96/EAA844/monitor.png" },
+    { "id": "handshake", "name": "Partnership Agreement", "category": "finance", "src": "https://img.icons8.com/ios-filled/96/F472B6/handshake.png" }
+  ],
+  "shapes": []
+}

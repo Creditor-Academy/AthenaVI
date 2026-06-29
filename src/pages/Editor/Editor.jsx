@@ -17,6 +17,9 @@ import PresenterModeModal from '../../components/features/editor/editor/Presente
 import VoiceOnlySpeechModal from '../../components/features/editor/editor/VoiceOnlySpeechModal'
 import heygenService from '../../services/heygenService'
 import { getSanitizedErrorMessage } from '../../utils/userFacingMessage'
+import {
+  DUPLICATE_PROJECT_NAME_MESSAGE,
+} from '../../utils/projectNameValidation'
 import creditsService, { isInsufficientCreditsError } from '../../services/creditsService.js'
 import { extractCreditsUsed } from '../../utils/creditTransactions.js'
 import avatar1 from '../../assets/Avatarr1.png'
@@ -60,7 +63,7 @@ import {
 import { useEditorHistory } from '../../hooks/useEditorHistory'
 import { useEditorUx } from '../../hooks/useEditorUx'
 import { findSceneMusicClip, resolveAudioClipSrc } from '../../utils/audioClipUtils'
-import { normalizeClipStack, normalizeClipsToScene } from '../../utils/editorLayerUtils'
+import { normalizeClipStack, normalizeClipsToScene, getLayerNudgeStep } from '../../utils/editorLayerUtils'
 import {
   findTopFrameAtPoint,
   resolveDropAssetId,
@@ -360,7 +363,7 @@ function Create({ onBack, initialConfig = null }) {
   const [selectedTool, setSelectedTool] = useState(null)
   const [timelineScope, setTimelineScope] = useState('all')
   const [isPlaying, setIsPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState(1)
+  const [currentTime, setCurrentTime] = useState(0)
 
   const pausePlayback = useCallback(() => {
     if (!isPlaying) return
@@ -373,6 +376,7 @@ function Create({ onBack, initialConfig = null }) {
   const [showExportModal, setShowExportModal] = useState(false)
   const [exportPhase, setExportPhase] = useState('configure')
   const [exportStatus, setExportStatus] = useState('')
+  const [exportProgress, setExportProgress] = useState(0)
   const [exportError, setExportError] = useState('')
   const [showTemplateModal, setShowTemplateModal] = useState(false)
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false)
@@ -479,6 +483,7 @@ function Create({ onBack, initialConfig = null }) {
     selectLayer,
     updateLayerPosition: uxUpdateLayerPosition,
     commitLayerPositionHistory,
+    nudgeSelectedLayers,
     addAudioClip,
   } = ux
 
@@ -674,6 +679,19 @@ function Create({ onBack, initialConfig = null }) {
       await workspaceService.saveProjectState(workspaceId, projectId, payload)
 
       if (manual) {
+        const folderId = projectState.folderId || projectState.createConfig?.folderId
+        if (folderId && projectState.title?.trim()) {
+          const nameCheck = await workspaceService.verifyProjectNameInFolder(
+            workspaceId,
+            folderId,
+            projectState.title,
+            { excludeProjectId: projectId }
+          )
+          if (!nameCheck.available) {
+            showToast(DUPLICATE_PROJECT_NAME_MESSAGE, 'error')
+            return
+          }
+        }
         await workspaceService.updateProject(workspaceId, projectId, { name: projectState.title })
       }
 
@@ -975,6 +993,36 @@ function Create({ onBack, initialConfig = null }) {
     }))
   }
 
+  // Atomic position + size update (used during canvas resize — no grid snap)
+  const updateLayerBounds = (layerId, x, y, width, height) => {
+    if (!activeSceneId) return
+    const px = Math.round(Number(x) || 0)
+    const py = Math.round(Number(y) || 0)
+    const w = Math.max(1, Math.round(Number(width) || 0))
+    const h = Math.max(1, Math.round(Number(height) || 0))
+    setProject(prev => ({
+      ...prev,
+      updatedAt: new Date().toISOString(),
+      scenes: prev.scenes.map(s => {
+        if (s.id !== activeSceneId) return s
+        return {
+          ...s,
+          clips: s.clips.map(c =>
+            c.id === layerId
+              ? {
+                  ...c,
+                  position: { x: px, y: py },
+                  size: { width: w, height: h },
+                  _userPlaced: true,
+                  _coordsNormalized: true,
+                }
+              : c
+          )
+        }
+      })
+    }))
+  }
+
   const updateLayerRotation = (layerId, rotation) => {
     pausePlayback()
     if (!activeSceneId) return
@@ -1156,6 +1204,7 @@ function Create({ onBack, initialConfig = null }) {
   }
 
   const playerRef = useRef(null)
+  const handleSeekRef = useRef(null)
   const speechSynthesisRef = useRef(null)
   const lastSpeakSceneIdRef = useRef(null)
 
@@ -1318,12 +1367,17 @@ function Create({ onBack, initialConfig = null }) {
   // Global Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Don't trigger if user is typing in an input or textarea
-      if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+      // Don't trigger if user is typing in an input, textarea, or contenteditable layer
+      const activeEl = document.activeElement
+      if (
+        ['INPUT', 'TEXTAREA'].includes(activeEl?.tagName) ||
+        activeEl?.isContentEditable ||
+        activeEl?.closest?.('[contenteditable="true"]')
+      ) {
         // Allow escape even if focused
         if (e.key === 'Escape') {
           setSelectedTool(null)
-          document.activeElement.blur()
+          activeEl?.blur?.()
         }
         return
       }
@@ -1396,18 +1450,40 @@ function Create({ onBack, initialConfig = null }) {
         }
       }
 
-      // Arrow Keys: Step frame (0.1s increments)
-      if (e.key === 'ArrowLeft') {
-        handleSeek(Math.max(0, currentTime - 0.1))
-      }
-      if (e.key === 'ArrowRight') {
-        handleSeek(Math.min(totalDurationInFrames / 30, currentTime + 0.1))
+      // Arrow keys: nudge selected canvas layers, or step the timeline when nothing is selected
+      const arrowKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']
+      if (arrowKeys.includes(e.key)) {
+        const layerIds =
+          selectedLayerIds.length > 0
+            ? selectedLayerIds
+            : selectedLayerId
+              ? [selectedLayerId]
+              : []
+
+        if (layerIds.length > 0) {
+          e.preventDefault()
+          pausePlayback()
+          const step = getLayerNudgeStep(editorView, e.shiftKey)
+          const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0
+          const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0
+          nudgeSelectedLayers(dx, dy, layerIds)
+          return
+        }
+
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault()
+          handleSeekRef.current?.(Math.max(0, currentTime - 0.1))
+        }
+        if (e.key === 'ArrowRight') {
+          e.preventDefault()
+          handleSeekRef.current?.(Math.min(totalDurationInFrames / 30, currentTime + 0.1))
+        }
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isPlaying, activeSceneId, scenes.length, currentTime, totalDurationInFrames, saveProject, selectedLayerIds, undo, redo, copySelectedLayers, pasteLayers, duplicateSelectedLayers, deleteSelectedLayers, showToast])
+  }, [isPlaying, activeSceneId, scenes.length, currentTime, totalDurationInFrames, saveProject, selectedLayerIds, selectedLayerId, editorView, pausePlayback, nudgeSelectedLayers, undo, redo, copySelectedLayers, pasteLayers, duplicateSelectedLayers, deleteSelectedLayers, showToast])
 
   const addScene = () => {
     insertAfterIndexRef.current = null
@@ -1662,6 +1738,7 @@ function Create({ onBack, initialConfig = null }) {
 
     setExportPhase('loading')
     setExportStatus('Saving project…')
+    setExportProgress(0)
     setExportError('')
     setIsExporting(true)
     setExportReady(null)
@@ -1675,7 +1752,12 @@ function Create({ onBack, initialConfig = null }) {
         filename,
         autoDownload: false,
         forceRebuild: false,
-        onStatus: setExportStatus,
+        onStatus: (status, progress) => {
+          setExportStatus(status)
+          if (progress !== undefined) {
+            setExportProgress(progress)
+          }
+        },
       })
       if (result?.projectState?.scenes) {
         setProject((prev) => ({
@@ -1732,6 +1814,7 @@ function Create({ onBack, initialConfig = null }) {
     setShowExportModal(false)
     setExportPhase('configure')
     setExportStatus('')
+    setExportProgress(0)
     setExportError('')
     setExportReady(null)
     setIsDownloadingExport(false)
@@ -2020,6 +2103,7 @@ function Create({ onBack, initialConfig = null }) {
       setActiveSceneId(scene.id)
     }
   }
+  handleSeekRef.current = handleSeek
 
   const handleSelectScene = useCallback((sceneId, options = {}) => {
     pausePlayback()
@@ -2773,6 +2857,7 @@ function Create({ onBack, initialConfig = null }) {
         totalDurationSec={totalDurationInFrames / 30}
         phase={exportPhase}
         statusMessage={exportStatus}
+        progress={exportProgress}
         errorMessage={exportError}
         onStartExport={handleStartExport}
         onDownload={exportPhase === 'success' ? handleDownloadExport : undefined}
@@ -2875,6 +2960,7 @@ function Create({ onBack, initialConfig = null }) {
                 onUpdateLayerPosition={updateLayerPosition}
                 onCommitLayerPosition={handleCommitLayerPosition}
                 onUpdateLayerSize={updateLayerSize}
+                onUpdateLayerBounds={updateLayerBounds}
                 onUpdateLayerRotation={updateLayerRotation}
                 onUpdateLayerStyle={updateLayerStyleFromCanvas}
                 onUpdateLayer={updateLayerFromCanvas}

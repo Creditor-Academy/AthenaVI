@@ -35,6 +35,7 @@ const VideoCanvas = forwardRef(({
   onUpdateLayerPosition,
   onCommitLayerPosition,
   onUpdateLayerSize,
+  onUpdateLayerBounds,
   onUpdateLayerRotation,
   onUpdateLayerStyle,
   onUpdateLayer,
@@ -374,6 +375,9 @@ const VideoCanvas = forwardRef(({
                 onCommitLayerPosition={onCommitLayerPosition}
                 onUpdateLayerSize={(clipId, w, h) =>
                   onUpdateLayerSize && onUpdateLayerSize(clipId, w, h)
+                }
+                onUpdateLayerBounds={(clipId, x, y, w, h) =>
+                  onUpdateLayerBounds && onUpdateLayerBounds(clipId, x, y, w, h)
                 }
                 onUpdateLayerRotation={(clipId, deg) =>
                   onUpdateLayerRotation && onUpdateLayerRotation(clipId, deg)

@@ -1,5 +1,6 @@
 import { buildUrl, getAuthHeaders } from '../config/api.js';
 import videoLibraryService from './videoLibraryService.js';
+import { filterProjectsInFolder, resolveProjectFolderId, findDuplicateProjectName } from '../utils/projectNameValidation.js';
 
 class WorkspaceService {
   constructor() {
@@ -32,6 +33,13 @@ class WorkspaceService {
   async readErrorMessage(response, fallbackMessage) {
     const errorData = await response.json().catch(() => ({}));
     return errorData.message || fallbackMessage;
+  }
+
+  projectConflictMessage(response, fallbackMessage) {
+    if (response.status === 409) {
+      return 'A project with this name already exists in this folder';
+    }
+    return fallbackMessage;
   }
 
   // List all workspaces for the current user
@@ -552,8 +560,11 @@ class WorkspaceService {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Failed to create project: ${response.status}`);
+        const fallback = this.projectConflictMessage(
+          response,
+          `Failed to create project: ${response.status}`
+        );
+        throw new Error(await this.readErrorMessage(response, fallback));
       }
 
       const data = await response.json();
@@ -563,6 +574,42 @@ class WorkspaceService {
       console.error('Error in createProject:', error);
       throw error;
     }
+  }
+
+  async listProjectsInFolder(workspaceId, folderId) {
+    const targetFolderId = String(folderId || '');
+    if (!workspaceId || !targetFolderId) return [];
+
+    const [allProjects, queryProjects] = await Promise.all([
+      this.listProjects(workspaceId),
+      this.listProjects(workspaceId, folderId).catch(() => []),
+    ]);
+
+    const merged = new Map();
+    const addProject = (project) => {
+      if (!project) return;
+      const normalized = {
+        ...this.normalizeId(project),
+        folderId: resolveProjectFolderId(project) || targetFolderId,
+      };
+      merged.set(String(normalized.id), normalized);
+    };
+
+    filterProjectsInFolder(allProjects, folderId).forEach(addProject);
+    (queryProjects || []).forEach(addProject);
+
+    return Array.from(merged.values());
+  }
+
+  /** Fresh server check before create/rename — returns whether the name is free in this folder. */
+  async verifyProjectNameInFolder(workspaceId, folderId, name, { excludeProjectId = null } = {}) {
+    const projects = await this.listProjectsInFolder(workspaceId, folderId);
+    const conflict = findDuplicateProjectName(name, projects, { excludeProjectId });
+    return {
+      available: !conflict,
+      conflict,
+      projects,
+    };
   }
 
   async listProjects(workspaceId, folderId = null) {
@@ -620,7 +667,11 @@ class WorkspaceService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to update project: ${response.status}`);
+        const fallback = this.projectConflictMessage(
+          response,
+          `Failed to update project: ${response.status}`
+        );
+        throw new Error(await this.readErrorMessage(response, fallback));
       }
 
       const data = await response.json();
@@ -670,7 +721,11 @@ class WorkspaceService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to move project: ${response.status}`);
+        const fallback = this.projectConflictMessage(
+          response,
+          `Failed to move project: ${response.status}`
+        );
+        throw new Error(await this.readErrorMessage(response, fallback));
       }
 
       const data = await response.json();

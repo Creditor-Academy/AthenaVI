@@ -788,11 +788,11 @@ scenes.forEach((scene, i) => {
 });
 
 const template = {
-  category: 'Course Explanation',
+  category: 'Courses',
   template: {
     id: 'course-explanation-clear-classroom',
     name: 'Course Explanation — Clear Classroom Bundle',
-    category: 'Course Explanation',
+    category: 'Courses',
     theme: assets.theme,
     presenter: PRESENTER,
     totalSlides: 8,

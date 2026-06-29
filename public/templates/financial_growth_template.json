@@ -1,0 +1,2853 @@
+{
+  "category": "Courses",
+  "template": {
+    "id": "financial-growth",
+    "name": "Financial Growth",
+    "category": "Courses",
+    "theme": {
+      "name": "Financial Growth",
+      "fonts": {
+        "display": "\"Outfit\", \"DM Sans\", system-ui, sans-serif",
+        "serif": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+        "sans": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+        "accent": "\"Source Serif 4\", Georgia, serif"
+      }
+    },
+    "totalSlides": 4,
+    "canvasSize": {
+      "width": 1280,
+      "height": 720
+    },
+    "aspectRatio": "16:9",
+    "colorPalette": {
+      "primary": "#EAA844",
+      "secondary": "#3B82F6",
+      "accent": "#F97316",
+      "green": "#10B981",
+      "pink": "#F472B6",
+      "white": "#FFFFFF",
+      "dark": "#111827",
+      "cream": "#FAF9F6",
+      "line": "#E2E8F0",
+      "slate": "#475569",
+      "grey": "#6B7280"
+    },
+    "description": "A 4-slide business roadmap template detailing opportunity mapping, key insights, and progression workflows."
+  },
+  "scenes": [
+    {
+      "id": "financial_01",
+      "slideIndex": 1,
+      "title": "Online Course Cover",
+      "layoutType": "Cover",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "title": {
+          "x": 100,
+          "y": 240,
+          "width": 1080,
+          "height": 120
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Presentation cover with wavy blobs, circular overlays, and central title.",
+      "flow": "Cover → Key Insights",
+      "duration": 8,
+      "tags": [
+        "financial-growth",
+        "cover"
+      ],
+      "clips": [
+        {
+          "id": "c_tl_1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "size": {
+            "width": 180,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#EAA844",
+            "borderRadius": "50%",
+            "opacity": 0.8
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "c_tl_2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "size": {
+            "width": 180,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#D12E2E",
+            "borderRadius": "50%",
+            "opacity": 0.8
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "c_br_1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 1036,
+            "y": 504
+          },
+          "size": {
+            "width": 180,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#EAA844",
+            "borderRadius": "50%",
+            "opacity": 0.8
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "c_br_2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 1036,
+            "y": 504
+          },
+          "size": {
+            "width": 180,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#D12E2E",
+            "borderRadius": "50%",
+            "opacity": 0.8
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "blob_tr",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 996,
+            "y": 36
+          },
+          "size": {
+            "width": 220,
+            "height": 220
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#EAA844",
+            "borderRadius": "0 0 0 100%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "blob_bl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 464
+          },
+          "size": {
+            "width": 220,
+            "height": 220
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#EAA844",
+            "borderRadius": "0 100% 0 0"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "badge_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 380,
+            "y": 150
+          },
+          "size": {
+            "width": 520,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#EAA844",
+            "borderRadius": "30px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "badge_txt",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 380,
+            "y": 166
+          },
+          "size": {
+            "width": 520,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Presentation",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 24,
+            "color": "#111827",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 100,
+            "y": 240
+          },
+          "size": {
+            "width": 1080,
+            "height": 120
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "ONLINE COURSE",
+          "style": {
+            "fontFamily": "\"Outfit\", \"DM Sans\", system-ui, sans-serif",
+            "fontWeight": "900",
+            "fontSize": 82,
+            "color": "#111827",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "div_line",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 390,
+            "y": 380
+          },
+          "size": {
+            "width": 500,
+            "height": 3
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#EAA844"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "div_dot_l",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 386,
+            "y": 377
+          },
+          "size": {
+            "width": 8,
+            "height": 8
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#EAA844",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "div_dot_r",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 886,
+            "y": 377
+          },
+          "size": {
+            "width": 8,
+            "height": 8
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#EAA844",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "t_presenter",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 100,
+            "y": 410
+          },
+          "size": {
+            "width": 1080,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Presented by : Olivia Wilson",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "700",
+            "fontSize": 24,
+            "color": "#111827",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #EAA844",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "solid",
+        "value": "#FAF9F6"
+      }
+    },
+    {
+      "id": "financial_02",
+      "slideIndex": 2,
+      "title": "Key Insights",
+      "layoutType": "Insights",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "title": {
+          "x": 64,
+          "y": 220,
+          "width": 320,
+          "height": 60
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Hexagon vertical stack detailing findings, simplifying data, and opportunity mapping.",
+      "flow": "Key Insights → Opportunity Mapping",
+      "duration": 8,
+      "tags": [
+        "financial-growth",
+        "insights"
+      ],
+      "clips": [
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 220
+          },
+          "size": {
+            "width": 320,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Key Insights",
+          "style": {
+            "fontFamily": "\"Outfit\", \"DM Sans\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 44,
+            "color": "#111827"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "t_desc",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 64,
+            "y": 300
+          },
+          "size": {
+            "width": 320,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "A structured analysis of market statistics, credit mechanisms, and growth fields configured for direct action.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 16,
+            "color": "#6B7280",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "hex_bg_1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 480,
+            "y": 100
+          },
+          "size": {
+            "width": 180,
+            "height": 160
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#3B82F6",
+            "clipPath": "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "hex_c_1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 558,
+            "y": 120
+          },
+          "size": {
+            "width": 24,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "hex_num_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 558,
+            "y": 124
+          },
+          "size": {
+            "width": 24,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "01",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 11,
+            "color": "#3B82F6",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "hex_ico_1",
+          "type": "image",
+          "assetKey": "card",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 535,
+            "y": 155
+          },
+          "size": {
+            "width": 70,
+            "height": 70
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/3B82F6/bank-card.png",
+          "placeholder": true,
+          "alt": "Credit Card",
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "hex_bg_2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 560,
+            "y": 240
+          },
+          "size": {
+            "width": 180,
+            "height": 160
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#EAA844",
+            "clipPath": "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "hex_c_2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 638,
+            "y": 260
+          },
+          "size": {
+            "width": 24,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "hex_num_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 638,
+            "y": 264
+          },
+          "size": {
+            "width": 24,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "02",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 11,
+            "color": "#EAA844",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "hex_ico_2",
+          "type": "image",
+          "assetKey": "folder",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 615,
+            "y": 295
+          },
+          "size": {
+            "width": 70,
+            "height": 70
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/EAA844/folder-invoices.png",
+          "placeholder": true,
+          "alt": "Secure Folder",
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
+        },
+        {
+          "id": "hex_bg_3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 480,
+            "y": 380
+          },
+          "size": {
+            "width": 180,
+            "height": 160
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F97316",
+            "clipPath": "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "hex_c_3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 558,
+            "y": 400
+          },
+          "size": {
+            "width": 24,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "hex_num_3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 558,
+            "y": 404
+          },
+          "size": {
+            "width": 24,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "03",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 11,
+            "color": "#F97316",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "hex_ico_3",
+          "type": "image",
+          "assetKey": "globe",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 535,
+            "y": 455
+          },
+          "size": {
+            "width": 70,
+            "height": 70
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/F97316/shield.png",
+          "placeholder": true,
+          "alt": "Global Shield",
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.35
+            }
+          ]
+        },
+        {
+          "id": "row_line_1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 780,
+            "y": 140
+          },
+          "size": {
+            "width": 4,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#3B82F6"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "row_lbl_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 800,
+            "y": 132
+          },
+          "size": {
+            "width": 380,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Important Findings",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 18,
+            "color": "#111827"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
+        },
+        {
+          "id": "row_desc_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 800,
+            "y": 160
+          },
+          "size": {
+            "width": 380,
+            "height": 50
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Analyzing transaction pipelines and securing payment routes.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 14,
+            "color": "#6B7280"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.7
+            }
+          ]
+        },
+        {
+          "id": "row_line_2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 780,
+            "y": 280
+          },
+          "size": {
+            "width": 4,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#EAA844"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "row_lbl_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 800,
+            "y": 272
+          },
+          "size": {
+            "width": 380,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Simplifying Information",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 18,
+            "color": "#111827"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.78
+            }
+          ]
+        },
+        {
+          "id": "row_desc_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 800,
+            "y": 300
+          },
+          "size": {
+            "width": 380,
+            "height": 50
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Grouping complex folders into secure, visual dashboards.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 14,
+            "color": "#6B7280"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.8600000000000001
+            }
+          ]
+        },
+        {
+          "id": "row_line_3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 780,
+            "y": 420
+          },
+          "size": {
+            "width": 4,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F97316"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "row_lbl_3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 800,
+            "y": 412
+          },
+          "size": {
+            "width": 380,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Identifying Opportunities",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 18,
+            "color": "#111827"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.94
+            }
+          ]
+        },
+        {
+          "id": "row_desc_3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 800,
+            "y": 440
+          },
+          "size": {
+            "width": 380,
+            "height": 50
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Unlocking global markets and expanding target audience profiles.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 14,
+            "color": "#6B7280"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.02
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #EAA844",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "solid",
+        "value": "#FAF9F6"
+      }
+    },
+    {
+      "id": "financial_03",
+      "slideIndex": 3,
+      "title": "Opportunity Mapping",
+      "layoutType": "Map",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "title": {
+          "x": 100,
+          "y": 60,
+          "width": 1080,
+          "height": 60
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Circular workspace center surrounded by 4 rounded business nodes.",
+      "flow": "Opportunity Mapping → Work Plan",
+      "duration": 8,
+      "tags": [
+        "financial-growth",
+        "map"
+      ],
+      "clips": [
+        {
+          "id": "doodle_tl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "size": {
+            "width": 60,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "borderLeft": "3px solid #111827",
+            "borderTop": "3px solid #111827",
+            "borderRadius": "50% 0 0 0"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "doodle_br",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 1156,
+            "y": 624
+          },
+          "size": {
+            "width": 60,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "borderRight": "3px solid #111827",
+            "borderBottom": "3px solid #111827",
+            "borderRadius": "0 0 50% 0"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "doodle_bl",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 630
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "borderLeft": "3px solid #111827",
+            "borderBottom": "3px solid #111827",
+            "borderRadius": "0 0 0 50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 100,
+            "y": 60
+          },
+          "size": {
+            "width": 1080,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Opportunity Mapping",
+          "style": {
+            "fontFamily": "\"Outfit\", \"DM Sans\", system-ui, sans-serif",
+            "fontWeight": "900",
+            "fontSize": 48,
+            "color": "#111827",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "avatar_outer",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 510,
+            "y": 240
+          },
+          "size": {
+            "width": 260,
+            "height": 260
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "border": "1px solid #E2E8F0",
+            "borderRadius": "50%",
+            "boxShadow": "0 8px 30px rgba(0,0,0,0.05)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "avatar_inner",
+          "type": "image",
+          "assetKey": "person-laptop",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 540,
+            "y": 270
+          },
+          "size": {
+            "width": 200,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg",
+          "placeholder": true,
+          "alt": "Person working on laptop",
+          "style": {
+            "borderRadius": "50%",
+            "objectFit": "cover"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "quad_1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 300,
+            "y": 250
+          },
+          "size": {
+            "width": 240,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#EAA844",
+            "borderRadius": "50px 0 0 50px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "quad_b_1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 330,
+            "y": 280
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "clipPath": "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "quad_num_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 330,
+            "y": 290
+          },
+          "size": {
+            "width": 40,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "01",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 13,
+            "color": "#EAA844",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "quad_ico_1",
+          "type": "image",
+          "assetKey": "network",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 400,
+            "y": 270
+          },
+          "size": {
+            "width": 60,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/EAA844/collaboration.png",
+          "placeholder": true,
+          "alt": "Market Network",
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
+        },
+        {
+          "id": "quad_lbl_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 140,
+            "y": 230
+          },
+          "size": {
+            "width": 160,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Market Expansion",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 16,
+            "color": "#111827",
+            "textAlign": "right"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "quad_desc_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 140,
+            "y": 258
+          },
+          "size": {
+            "width": 160,
+            "height": 70
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Entering new segments or geographical areas.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 12,
+            "color": "#6B7280",
+            "textAlign": "right"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "quad_2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 300,
+            "y": 380
+          },
+          "size": {
+            "width": 240,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#10B981",
+            "borderRadius": "50px 0 0 50px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "quad_b_2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 330,
+            "y": 410
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "clipPath": "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "quad_num_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 330,
+            "y": 420
+          },
+          "size": {
+            "width": 40,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "02",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 13,
+            "color": "#10B981",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "quad_ico_2",
+          "type": "image",
+          "assetKey": "rocket",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 400,
+            "y": 400
+          },
+          "size": {
+            "width": 60,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/10B981/rocket.png",
+          "placeholder": true,
+          "alt": "Product Launch",
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.35
+            }
+          ]
+        },
+        {
+          "id": "quad_lbl_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 140,
+            "y": 400
+          },
+          "size": {
+            "width": 160,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Product Innovation",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 16,
+            "color": "#111827",
+            "textAlign": "right"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
+        },
+        {
+          "id": "quad_desc_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 140,
+            "y": 428
+          },
+          "size": {
+            "width": 160,
+            "height": 70
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Developing new features or improving existing offerings.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 12,
+            "color": "#6B7280",
+            "textAlign": "right"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.7
+            }
+          ]
+        },
+        {
+          "id": "quad_3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 740,
+            "y": 380
+          },
+          "size": {
+            "width": 240,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#EAA844",
+            "borderRadius": "0 50px 50px 0"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "quad_b_3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 910,
+            "y": 410
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "clipPath": "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "quad_num_3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 910,
+            "y": 420
+          },
+          "size": {
+            "width": 40,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "03",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 13,
+            "color": "#EAA844",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.78
+            }
+          ]
+        },
+        {
+          "id": "quad_ico_3",
+          "type": "image",
+          "assetKey": "monitor",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 820,
+            "y": 400
+          },
+          "size": {
+            "width": 60,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/EAA844/monitor.png",
+          "placeholder": true,
+          "alt": "Digital Monitor",
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.45000000000000007
+            }
+          ]
+        },
+        {
+          "id": "quad_lbl_3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 980,
+            "y": 400
+          },
+          "size": {
+            "width": 160,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Digitalization",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 16,
+            "color": "#111827"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.8600000000000001
+            }
+          ]
+        },
+        {
+          "id": "quad_desc_3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 980,
+            "y": 428
+          },
+          "size": {
+            "width": 160,
+            "height": 70
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Collaborations that strengthen capabilities or reach.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 12,
+            "color": "#6B7280"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.94
+            }
+          ]
+        },
+        {
+          "id": "quad_4",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 740,
+            "y": 250
+          },
+          "size": {
+            "width": 240,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#F472B6",
+            "borderRadius": "0 50px 50px 0"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "quad_b_4",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 910,
+            "y": 280
+          },
+          "size": {
+            "width": 40,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#FFFFFF",
+            "clipPath": "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "quad_num_4",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 910,
+            "y": 290
+          },
+          "size": {
+            "width": 40,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "04",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 13,
+            "color": "#F472B6",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.02
+            }
+          ]
+        },
+        {
+          "id": "quad_ico_4",
+          "type": "image",
+          "assetKey": "handshake",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 820,
+            "y": 270
+          },
+          "size": {
+            "width": 60,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/ios-filled/96/F472B6/handshake.png",
+          "placeholder": true,
+          "alt": "Partnership Agreement",
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.55
+            }
+          ]
+        },
+        {
+          "id": "quad_lbl_4",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 980,
+            "y": 230
+          },
+          "size": {
+            "width": 160,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Partnership",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 16,
+            "color": "#111827"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.1
+            }
+          ]
+        },
+        {
+          "id": "quad_desc_4",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 980,
+            "y": 258
+          },
+          "size": {
+            "width": 160,
+            "height": 70
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Adopting technology to improve efficiency.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 12,
+            "color": "#6B7280"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.18
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #EAA844",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "solid",
+        "value": "#FAF9F6"
+      }
+    },
+    {
+      "id": "financial_04",
+      "slideIndex": 4,
+      "title": "Work Plan",
+      "layoutType": "Timeline",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "title": {
+          "x": 80,
+          "y": 180,
+          "width": 400,
+          "height": 60
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Split layout detailing left handwritten work plan and right vertical checklist.",
+      "flow": "Work Plan → End",
+      "duration": 8,
+      "tags": [
+        "financial-growth",
+        "timeline",
+        "plan"
+      ],
+      "clips": [
+        {
+          "id": "swirl_1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "size": {
+            "width": 120,
+            "height": 120
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "border": "2px solid rgba(139,90,43,0.15)",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "swirl_2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 150
+          },
+          "size": {
+            "width": 180,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "border": "2px solid rgba(139,90,43,0.1)",
+            "borderRadius": "50% 40% 60% 50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "swirl_3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 320,
+            "y": 484
+          },
+          "size": {
+            "width": 200,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "border": "2px solid rgba(139,90,43,0.1)",
+            "borderRadius": "40% 60% 50% 50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 80,
+            "y": 180
+          },
+          "size": {
+            "width": 400,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "WORK PLAN",
+          "style": {
+            "fontFamily": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+            "fontWeight": "800",
+            "fontSize": 52,
+            "color": "#5C3E21"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "t_desc",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 80,
+            "y": 260
+          },
+          "size": {
+            "width": 500,
+            "height": 380
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "A progressive roadmap detailing execution milestones. We align structural opportunities with market networks, optimizing resources step-by-step for sustainable scalability.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 17,
+            "color": "#5C3E21",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "right_panel",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 640,
+            "y": 36
+          },
+          "size": {
+            "width": 576,
+            "height": 648
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#EAA844"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "timeline_line",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 832,
+            "y": 60
+          },
+          "size": {
+            "width": 2,
+            "height": 600
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#5C3E21"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "step_dot_1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 826,
+            "y": 140
+          },
+          "size": {
+            "width": 14,
+            "height": 14
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#5C3E21",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "step_lbl_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 870,
+            "y": 125
+          },
+          "size": {
+            "width": 60,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "01",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 32,
+            "color": "#5C3E21"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "step_desc_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 870,
+            "y": 175
+          },
+          "size": {
+            "width": 320,
+            "height": 80
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Analyzing transaction pipelines and securing payment routes.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 14,
+            "color": "#5C3E21",
+            "lineHeight": 1.4
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "step_dot_2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 826,
+            "y": 290
+          },
+          "size": {
+            "width": 14,
+            "height": 14
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#5C3E21",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "step_lbl_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 870,
+            "y": 275
+          },
+          "size": {
+            "width": 60,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "02",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 32,
+            "color": "#5C3E21"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "step_desc_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 870,
+            "y": 325
+          },
+          "size": {
+            "width": 320,
+            "height": 80
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Grouping complex folders into secure, visual dashboards.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 14,
+            "color": "#5C3E21",
+            "lineHeight": 1.4
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
+        },
+        {
+          "id": "step_dot_3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 826,
+            "y": 440
+          },
+          "size": {
+            "width": 14,
+            "height": 14
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#5C3E21",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "step_lbl_3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 870,
+            "y": 425
+          },
+          "size": {
+            "width": 60,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "03",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 32,
+            "color": "#5C3E21"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.7
+            }
+          ]
+        },
+        {
+          "id": "step_desc_3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 870,
+            "y": 475
+          },
+          "size": {
+            "width": 320,
+            "height": 80
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Unlocking global markets and expanding target audience profiles.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 14,
+            "color": "#5C3E21",
+            "lineHeight": 1.4
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.78
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #EAA844",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "solid",
+        "value": "#FAF9F6"
+      }
+    }
+  ]
+}

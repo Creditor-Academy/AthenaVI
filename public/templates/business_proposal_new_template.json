@@ -1,0 +1,2540 @@
+{
+  "category": "Company",
+  "template": {
+    "id": "business-proposal-new",
+    "name": "Business Proposal",
+    "category": "Company",
+    "theme": {
+      "fonts": {
+        "serif": "'Playfair Display', Georgia, serif",
+        "sans": "'Inter', 'Segoe UI', sans-serif"
+      }
+    },
+    "totalSlides": 5,
+    "canvasSize": {
+      "width": 1280,
+      "height": 720
+    },
+    "aspectRatio": "16:9",
+    "colorPalette": {
+      "primary": "#e07a5f",
+      "secondary": "#f4f1de",
+      "dark": "#1c1917",
+      "white": "#ffffff",
+      "line": "#e6e6e6",
+      "light": "#f2f4f3",
+      "accent": "#5f6f65",
+      "purple": "#9d4edd",
+      "gray": "#707070"
+    },
+    "description": "High-end 5-slide Business Proposal presentation mimicking custom mockups with dynamic pie charts, asymmetrical watch covers, and text layout columns."
+  },
+  "scenes": [
+    {
+      "id": "proposal_01",
+      "slideIndex": 1,
+      "title": "Business Proposal",
+      "layoutType": "Cover",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "hero": {
+          "x": 580,
+          "y": 76,
+          "width": 636,
+          "height": 608
+        },
+        "title": {
+          "x": 64,
+          "y": 220,
+          "width": 540,
+          "height": 170
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Minimalist cover layout with asymmetrical curved hero image and metadata.",
+      "flow": "Cover → Agenda",
+      "duration": 8,
+      "tags": [
+        "business-proposal",
+        "cover",
+        "branding"
+      ],
+      "clips": [
+        {
+          "id": "dashed_line",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 60
+          },
+          "size": {
+            "width": 1152,
+            "height": 1
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "borderBottom": "1px dashed #cccccc"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "hdr_left",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "size": {
+            "width": 300,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Presentation Template",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 16,
+            "color": "#707070"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "hdr_right",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1116,
+            "y": 36
+          },
+          "size": {
+            "width": 100,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "2026",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 16,
+            "color": "#707070",
+            "textAlign": "right"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 64,
+            "y": 220
+          },
+          "size": {
+            "width": 540,
+            "height": 170
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Business\nProposal",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "800",
+            "fontSize": 76,
+            "color": "#1c1917",
+            "lineHeight": 1.15
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "t_sub",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 64,
+            "y": 410
+          },
+          "size": {
+            "width": 420,
+            "height": 160
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla tempus magna eu felis pretium, blandit pharetra massa hendrerit. Sed eu tortor vel neque consectetur interdum ac eu nibh. Pellentesque ut varius neque.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 20,
+            "color": "#707070",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "img_inset",
+          "type": "image",
+          "assetKey": "proposal-watch-inset",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 300,
+            "y": 440
+          },
+          "size": {
+            "width": 220,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/1191503/pexels-photo-1191503.jpeg",
+          "placeholder": true,
+          "alt": "Watch Adjust Inset",
+          "style": {
+            "borderRadius": "22px",
+            "objectFit": "cover"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "img_hero",
+          "type": "image",
+          "assetKey": "proposal-watch-hero",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 580,
+            "y": 76
+          },
+          "size": {
+            "width": 636,
+            "height": 608
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/190819/pexels-photo-190819.jpeg",
+          "placeholder": true,
+          "alt": "Watch Catalogue Hero",
+          "style": {
+            "borderRadius": "140px 22px 22px 22px",
+            "objectFit": "cover",
+            "boxShadow": "0 20px 40px rgba(0,0,0,0.08)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #ffffff",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.12)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "solid",
+        "value": "#ffffff"
+      }
+    },
+    {
+      "id": "proposal_02",
+      "slideIndex": 2,
+      "title": "Agenda Overview",
+      "layoutType": "Agenda",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "title": {
+          "x": 64,
+          "y": 200,
+          "width": 400,
+          "height": 130
+        },
+        "list": {
+          "x": 680,
+          "y": 150,
+          "width": 400,
+          "height": 440
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Linen editorial list showing index bullets and arrow prompt.",
+      "flow": "Agenda → Target",
+      "duration": 8,
+      "tags": [
+        "business-proposal",
+        "agenda",
+        "index"
+      ],
+      "clips": [
+        {
+          "id": "img_pearls",
+          "type": "image",
+          "assetKey": "proposal-pearls",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "size": {
+            "width": 260,
+            "height": 648
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/4041391/pexels-photo-4041391.jpeg",
+          "placeholder": true,
+          "alt": "Pearls Texture",
+          "style": {
+            "objectFit": "contain",
+            "opacity": 0.65
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 180,
+            "y": 220
+          },
+          "size": {
+            "width": 400,
+            "height": 130
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "AGENDA\nOVERVIEW",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "800",
+            "fontSize": 56,
+            "color": "#1c1917",
+            "lineHeight": 1.15
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "hdr_logo",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 916,
+            "y": 36
+          },
+          "size": {
+            "width": 300,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Warner & Spencer",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 16,
+            "color": "#707070",
+            "textAlign": "right"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "t_arrow",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 480,
+            "y": 270
+          },
+          "size": {
+            "width": 120,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "—————→",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "800",
+            "fontSize": 32,
+            "color": "#e07a5f"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "bullet_0",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 660,
+            "y": 132
+          },
+          "size": {
+            "width": 12,
+            "height": 12
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#e07a5f",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "item_0",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 685,
+            "y": 120
+          },
+          "size": {
+            "width": 400,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Problem",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "600",
+            "fontSize": 24,
+            "color": "#1c1917"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "bullet_1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 660,
+            "y": 194
+          },
+          "size": {
+            "width": 12,
+            "height": 12
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#e07a5f",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "item_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 685,
+            "y": 182
+          },
+          "size": {
+            "width": 400,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Solution",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "600",
+            "fontSize": 24,
+            "color": "#1c1917"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "bullet_2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 660,
+            "y": 256
+          },
+          "size": {
+            "width": 12,
+            "height": 12
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#e07a5f",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "item_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 685,
+            "y": 244
+          },
+          "size": {
+            "width": 400,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Key Metrics",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "600",
+            "fontSize": 24,
+            "color": "#1c1917"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
+        },
+        {
+          "id": "bullet_3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 660,
+            "y": 318
+          },
+          "size": {
+            "width": 12,
+            "height": 12
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#e07a5f",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "item_3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 685,
+            "y": 306
+          },
+          "size": {
+            "width": 400,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Unique Value Position",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "600",
+            "fontSize": 24,
+            "color": "#1c1917"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.7
+            }
+          ]
+        },
+        {
+          "id": "bullet_4",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 660,
+            "y": 380
+          },
+          "size": {
+            "width": 12,
+            "height": 12
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#e07a5f",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "item_4",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 685,
+            "y": 368
+          },
+          "size": {
+            "width": 400,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "SWOT",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "600",
+            "fontSize": 24,
+            "color": "#1c1917"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.78
+            }
+          ]
+        },
+        {
+          "id": "bullet_5",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 660,
+            "y": 442
+          },
+          "size": {
+            "width": 12,
+            "height": 12
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#e07a5f",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "item_5",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 685,
+            "y": 430
+          },
+          "size": {
+            "width": 400,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Unfair Advantage",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "600",
+            "fontSize": 24,
+            "color": "#1c1917"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.8600000000000001
+            }
+          ]
+        },
+        {
+          "id": "bullet_6",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 660,
+            "y": 504
+          },
+          "size": {
+            "width": 12,
+            "height": 12
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#e07a5f",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "item_6",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 685,
+            "y": 492
+          },
+          "size": {
+            "width": 400,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Marketing Channels",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "600",
+            "fontSize": 24,
+            "color": "#1c1917"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.94
+            }
+          ]
+        },
+        {
+          "id": "bullet_7",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 660,
+            "y": 566
+          },
+          "size": {
+            "width": 12,
+            "height": 12
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#e07a5f",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "item_7",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 685,
+            "y": 554
+          },
+          "size": {
+            "width": 400,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Consumer Segment",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "600",
+            "fontSize": 24,
+            "color": "#1c1917"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.02
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #ffffff",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.12)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "solid",
+        "value": "#faf8f5"
+      }
+    },
+    {
+      "id": "proposal_03",
+      "slideIndex": 3,
+      "title": "Target Audience",
+      "layoutType": "Chart",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "title": {
+          "x": 64,
+          "y": 200,
+          "width": 400,
+          "height": 130
+        },
+        "chart": {
+          "x": 760,
+          "y": 200,
+          "width": 320,
+          "height": 320
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Monochrome pie chart with item percentage callouts.",
+      "flow": "Target → Who I Am",
+      "duration": 8,
+      "tags": [
+        "business-proposal",
+        "audience",
+        "analytics"
+      ],
+      "clips": [
+        {
+          "id": "hdr_line",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 60
+          },
+          "size": {
+            "width": 1152,
+            "height": 1
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#e6e6e6"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "t_hdr_left",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "size": {
+            "width": 200,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "STUDIO NAME",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 16,
+            "color": "#707070"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "t_hdr_mid",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 490,
+            "y": 36
+          },
+          "size": {
+            "width": 300,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "STRATEGY APPROACH",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 16,
+            "color": "#707070",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "t_hdr_right",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1116,
+            "y": 36
+          },
+          "size": {
+            "width": 100,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "PAGE 1",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 16,
+            "color": "#707070",
+            "textAlign": "right"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "ftr_line",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 660
+          },
+          "size": {
+            "width": 1152,
+            "height": 1
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#e6e6e6"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "t_ftr_left",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 660
+          },
+          "size": {
+            "width": 100,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "YEAR",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 16,
+            "color": "#707070"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "t_ftr_mid",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 540,
+            "y": 660
+          },
+          "size": {
+            "width": 200,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "CONFIDENTIAL",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 16,
+            "color": "#707070",
+            "textAlign": "center"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
+        },
+        {
+          "id": "t_ftr_right",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1016,
+            "y": 660
+          },
+          "size": {
+            "width": 200,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "STUDIO NAME",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 16,
+            "color": "#707070",
+            "textAlign": "right"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.7
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 200
+          },
+          "size": {
+            "width": 400,
+            "height": 130
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "TARGET\nAUDIENCE",
+          "style": {
+            "fontFamily": "'Playfair Display', Georgia, serif",
+            "fontWeight": "600",
+            "fontSize": 56,
+            "color": "#1c1917",
+            "lineHeight": 1.15
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "t_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 380
+          },
+          "size": {
+            "width": 460,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 22,
+            "color": "#707070",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.78
+            }
+          ]
+        },
+        {
+          "id": "pie_chart",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 760,
+            "y": 200
+          },
+          "size": {
+            "width": 320,
+            "height": 320
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "borderRadius": "50%",
+            "background": "conic-gradient(#1c1917 0% 12.5%, #707070 12.5% 37.5%, #cccccc 37.5% 100%)",
+            "boxShadow": "0 10px 30px rgba(0,0,0,0.06)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "lbl_item3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 700,
+            "y": 160
+          },
+          "size": {
+            "width": 100,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Item 3\n12.5%",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 20,
+            "color": "#1c1917",
+            "textAlign": "right",
+            "fontWeight": "600"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.8600000000000001
+            }
+          ]
+        },
+        {
+          "id": "lbl_item2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 640,
+            "y": 430
+          },
+          "size": {
+            "width": 100,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Item 2\n25%",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 20,
+            "color": "#1c1917",
+            "textAlign": "right",
+            "fontWeight": "600"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.94
+            }
+          ]
+        },
+        {
+          "id": "lbl_item1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 1100,
+            "y": 330
+          },
+          "size": {
+            "width": 100,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Item 1\n62.5%",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 20,
+            "color": "#1c1917",
+            "fontWeight": "600"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.02
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #ffffff",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.12)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "solid",
+        "value": "#ffffff"
+      }
+    },
+    {
+      "id": "proposal_04",
+      "slideIndex": 4,
+      "title": "Who I Am",
+      "layoutType": "Profile",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "image_left": {
+          "x": 64,
+          "y": 100,
+          "width": 460,
+          "height": 330
+        },
+        "card_right_top": {
+          "x": 620,
+          "y": 100,
+          "width": 420,
+          "height": 300
+        },
+        "card_right_bottom": {
+          "x": 480,
+          "y": 440,
+          "width": 400,
+          "height": 220
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Abstract profiles matching talking bubbles and background stripes.",
+      "flow": "Who I Am → Needs",
+      "duration": 8,
+      "tags": [
+        "business-proposal",
+        "profile",
+        "about"
+      ],
+      "clips": [
+        {
+          "id": "stripe_blue",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 1120,
+            "y": 36
+          },
+          "size": {
+            "width": 30,
+            "height": 300
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#3b82f6",
+            "borderRadius": "15px",
+            "transform": "rotate(-45deg)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "stripe_ochre",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 1150,
+            "y": 36
+          },
+          "size": {
+            "width": 30,
+            "height": 300
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#e07a5f",
+            "borderRadius": "15px",
+            "transform": "rotate(-45deg)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "stripe_orange",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 1180,
+            "y": 36
+          },
+          "size": {
+            "width": 30,
+            "height": 300
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#f48c06",
+            "borderRadius": "15px",
+            "transform": "rotate(-45deg)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "squiggle_purple",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 504
+          },
+          "size": {
+            "width": 180,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "border": "4px solid #9d4edd",
+            "borderRadius": "40% 60% 30% 70% / 60% 30% 70% 40%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "img_presenter",
+          "type": "image",
+          "assetKey": "proposal-pointing",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 100
+          },
+          "size": {
+            "width": 460,
+            "height": 330
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/2182977/pexels-photo-2182977.jpeg",
+          "placeholder": true,
+          "alt": "Presenter Pointing",
+          "style": {
+            "borderRadius": "100px 100px 0 100px",
+            "objectFit": "cover"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 470
+          },
+          "size": {
+            "width": 260,
+            "height": 80
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Who I Am",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "800",
+            "fontSize": 52,
+            "color": "#1c1917"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "env_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 340,
+            "y": 510
+          },
+          "size": {
+            "width": 110,
+            "height": 110
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "16px",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.06)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "env_icon",
+          "type": "image",
+          "assetKey": "solution",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 355,
+            "y": 525
+          },
+          "size": {
+            "width": 80,
+            "height": 80
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/puzzle.png",
+          "placeholder": true,
+          "alt": "Solution",
+          "style": {
+            "objectFit": "contain"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
+        },
+        {
+          "id": "talk_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 620,
+            "y": 100
+          },
+          "size": {
+            "width": 420,
+            "height": 300
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#e07a5f",
+            "borderRadius": "80px 24px 24px 80px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "talk_img",
+          "type": "image",
+          "assetKey": "proposal-meeting",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 635,
+            "y": 115
+          },
+          "size": {
+            "width": 390,
+            "height": 270
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3184306/pexels-photo-3184306.jpeg",
+          "placeholder": true,
+          "alt": "Colleague Discussion",
+          "style": {
+            "borderRadius": "68px 18px 18px 68px",
+            "objectFit": "cover"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.35
+            }
+          ]
+        },
+        {
+          "id": "details_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 480,
+            "y": 440
+          },
+          "size": {
+            "width": 400,
+            "height": 220
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1c1917",
+            "borderRadius": "20px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "card_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 504,
+            "y": 460
+          },
+          "size": {
+            "width": 352,
+            "height": 40
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Build Today's Identity Purposefully",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "700",
+            "fontSize": 22,
+            "color": "#ffffff"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "card_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 504,
+            "y": 510
+          },
+          "size": {
+            "width": 352,
+            "height": 130
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Today's identity reflects accumulated experiences, refined values, and clearer direction, forming a more intentional and grounded personal brand, built through consistent purposeful actions.",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 16,
+            "color": "#cccccc",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "social_btn",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 920,
+            "y": 570
+          },
+          "size": {
+            "width": 36,
+            "height": 36
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1c1917",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "social_arrow",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 920,
+            "y": 575
+          },
+          "size": {
+            "width": 36,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "→",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "color": "#ffffff",
+            "textAlign": "center",
+            "fontSize": 18,
+            "fontWeight": "800"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "social_tag",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 965,
+            "y": 576
+          },
+          "size": {
+            "width": 200,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "@reallygreatsite",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "600",
+            "fontSize": 16,
+            "color": "#1c1917"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #ffffff",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.12)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "solid",
+        "value": "#ffffff"
+      }
+    },
+    {
+      "id": "proposal_05",
+      "slideIndex": 5,
+      "title": "Customer Profile",
+      "layoutType": "CustomerDetails",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "title": {
+          "x": 64,
+          "y": 120,
+          "width": 400,
+          "height": 180
+        },
+        "card_profile": {
+          "x": 520,
+          "y": 80,
+          "width": 560,
+          "height": 340
+        },
+        "card_needs": {
+          "x": 64,
+          "y": 490,
+          "width": 640,
+          "height": 160
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Profile metrics matching customer needs cards.",
+      "flow": "Needs → End",
+      "duration": 8,
+      "tags": [
+        "business-proposal",
+        "needs",
+        "summary"
+      ],
+      "clips": [
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 120
+          },
+          "size": {
+            "width": 400,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Target\nAudience",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "300",
+            "fontSize": 72,
+            "color": "#1c1917",
+            "lineHeight": 1.15
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "profile_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 520,
+            "y": 80
+          },
+          "size": {
+            "width": 560,
+            "height": 340
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1c1917",
+            "borderRadius": "24px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "p_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 550,
+            "y": 110
+          },
+          "size": {
+            "width": 260,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Customer Profile",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "600",
+            "fontSize": 28,
+            "color": "#ffffff"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "p_body",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 550,
+            "y": 160
+          },
+          "size": {
+            "width": 260,
+            "height": 240
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Age: 18–35 Years Old\n\nLifestyle: Active, trend-aware, digital-savvy\n\nInterests: Fashion, lifestyle, social media, creativity",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 20,
+            "color": "#cccccc",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "img_team",
+          "type": "image",
+          "assetKey": "proposal-team",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 730,
+            "y": 160
+          },
+          "size": {
+            "width": 310,
+            "height": 310
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg",
+          "placeholder": true,
+          "alt": "Corporate Team Group",
+          "style": {
+            "borderRadius": "20px",
+            "objectFit": "cover",
+            "boxShadow": "0 15px 35px rgba(0,0,0,0.15)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "needs_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 490
+          },
+          "size": {
+            "width": 640,
+            "height": 160
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1c1917",
+            "borderRadius": "24px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "n_title",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 94,
+            "y": 514
+          },
+          "size": {
+            "width": 580,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Customer Needs",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontWeight": "600",
+            "fontSize": 26,
+            "color": "#ffffff"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "n_col1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 94,
+            "y": 564
+          },
+          "size": {
+            "width": 170,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Quality products",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 20,
+            "color": "#cccccc",
+            "fontWeight": "500"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "n_col2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 284,
+            "y": 564
+          },
+          "size": {
+            "width": 170,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Relatable branding",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 20,
+            "color": "#cccccc",
+            "fontWeight": "500"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
+        },
+        {
+          "id": "n_col3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 474,
+            "y": 564
+          },
+          "size": {
+            "width": 170,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Engaging online experience",
+          "style": {
+            "fontFamily": "'Inter', 'Segoe UI', sans-serif",
+            "fontSize": 20,
+            "color": "#cccccc",
+            "fontWeight": "500"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.7
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #ffffff",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.12)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "gradient",
+        "value": "linear-gradient(135deg, #e8ebe4 0%, #f7f4ee 100%)"
+      }
+    }
+  ]
+}

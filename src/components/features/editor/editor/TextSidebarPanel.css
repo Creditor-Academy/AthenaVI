@@ -77,6 +77,60 @@
   border-radius: 3px;
 }
 
+.text-sidebar-text-field {
+  padding: 0 0 8px;
+}
+
+.text-sidebar-text-field__group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.text-sidebar-text-field__label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ts-muted);
+}
+
+.text-sidebar-text-field__input {
+  width: 100%;
+  min-height: calc(1.45em * 3 + 16px);
+  box-sizing: border-box;
+  background: var(--ts-surface);
+  border: 1px solid var(--ts-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ts-text);
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.text-sidebar-text-field__input:focus {
+  border-color: color-mix(in srgb, var(--ts-accent) 55%, var(--ts-border));
+  box-shadow: 0 0 0 3px var(--ts-accent-dim);
+}
+
+.text-sidebar-text-field--standalone {
+  padding: 10px 14px 8px;
+}
+
+.text-sidebar-toolbar-wrap {
+  padding-top: 4px;
+}
+
+.text-sidebar-toolbar-wrap .text-sidebar-toolbar--compact {
+  border-bottom: none;
+  padding-top: 0;
+  background: transparent;
+}
+
 .text-sidebar-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -144,20 +198,39 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: 8px;
-  border: 1px solid var(--ts-border);
+  border-radius: 50%;
+  border: 2px solid var(--ts-border);
   background: var(--ts-bg);
   cursor: pointer;
   flex-shrink: 0;
+  overflow: hidden;
+  padding: 0;
 }
 
 .text-sidebar-toolbar__color input[type='color'] {
-  width: 22px;
-  height: 22px;
+  width: 100%;
+  height: 100%;
   border: none;
   padding: 0;
   background: none;
   cursor: pointer;
+  border-radius: 50%;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.text-sidebar-toolbar__color input[type='color']::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.text-sidebar-toolbar__color input[type='color']::-webkit-color-swatch {
+  border: none;
+  border-radius: 50%;
+}
+
+.text-sidebar-toolbar__color input[type='color']::-moz-color-swatch {
+  border: none;
+  border-radius: 50%;
 }
 
 .text-sidebar-toolbar__duration {

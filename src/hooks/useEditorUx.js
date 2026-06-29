@@ -6,6 +6,7 @@ import {
   pasteClipsAt,
   sendClipBackward,
   sendClipToBack,
+  isCanvasNudgeableClip,
   snapPoint,
 } from '../utils/editorLayerUtils';
 import { buildSceneMusicClip } from '../utils/audioClipUtils';
@@ -164,6 +165,36 @@ export function useEditorUx({
     setProject((prev) => prev, { history: true });
   };
 
+  const nudgeSelectedLayers = (dx, dy, layerIds = selectedLayerIds) => {
+    if (!activeSceneId || !layerIds?.length) return false;
+    let moved = false;
+    setProject(
+      (prev) => ({
+        ...prev,
+        updatedAt: new Date().toISOString(),
+        scenes: prev.scenes.map((s) => {
+          if (s.id !== activeSceneId) return s;
+          return {
+            ...s,
+            clips: s.clips.map((c) => {
+              if (!layerIds.includes(c.id) || !isCanvasNudgeableClip(c)) return c;
+              const pos = c.position || { x: 0, y: 0 };
+              const snapped = snapPoint(
+                { x: pos.x + dx, y: pos.y + dy },
+                editorView.gridSize,
+                editorView.snapToGrid
+              );
+              moved = true;
+              return { ...c, position: snapped, _userPlaced: true };
+            }),
+          };
+        }),
+      }),
+      { history: true }
+    );
+    return moved;
+  };
+
   const addAudioClip = (src, assetId = null, options = {}) => {
     if (!activeSceneId) return null;
     let newId = null;
@@ -201,6 +232,7 @@ export function useEditorUx({
     selectLayer,
     updateLayerPosition,
     commitLayerPositionHistory,
+    nudgeSelectedLayers,
     addAudioClip,
   };
 }

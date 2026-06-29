@@ -1,9 +1,9 @@
 {
-  "category": "Pitch",
+  "category": "Company",
   "template": {
     "id": "company-profile-pitch",
     "name": "Company Profile Pitch Template",
-    "category": "Pitch",
+    "category": "Company",
     "totalSlides": 8,
     "canvasSize": {
       "width": 1280,
@@ -56,10 +56,10 @@
           "height": 430
         },
         "avatar": {
-          "x": 1016,
-          "y": 444,
-          "width": 200,
-          "height": 240
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
         }
       },
       "description": "Company profile cover with hero image, logo, and title.",
@@ -80,8 +80,8 @@
           "editable": true,
           "layer": 0,
           "position": {
-            "x": 420,
-            "y": 0
+            "x": 356,
+            "y": 36
           },
           "size": {
             "width": 860,
@@ -92,7 +92,15 @@
           "style": {
             "backgroundColor": "#3b82f6",
             "clipPath": "polygon(12% 0%, 100% 0%, 100% 100%, 0% 72%)"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "s_blue_light",
@@ -102,7 +110,7 @@
           "editable": true,
           "layer": 1,
           "position": {
-            "x": 500,
+            "x": 436,
             "y": 40
           },
           "size": {
@@ -114,7 +122,15 @@
           "style": {
             "backgroundColor": "#dbeafe",
             "clipPath": "polygon(8% 0%, 100% 0%, 100% 85%, 0% 100%)"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "s_accent_line",
@@ -125,7 +141,7 @@
           "layer": 2,
           "position": {
             "x": 73,
-            "y": 418
+            "y": 480
           },
           "size": {
             "width": 140,
@@ -136,7 +152,15 @@
           "style": {
             "backgroundColor": "#1e40af",
             "borderRadius": "4px"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "s_circle_ring",
@@ -159,7 +183,15 @@
             "backgroundColor": "transparent",
             "border": "8px solid #1e3a8a",
             "borderRadius": "50%"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "img_hero",
@@ -184,7 +216,15 @@
           "style": {
             "borderRadius": "0",
             "objectFit": "cover"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
         },
         {
           "id": "img_circle",
@@ -209,7 +249,15 @@
           "style": {
             "borderRadius": "50%",
             "objectFit": "cover"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
         },
         {
           "id": "img_logo",
@@ -233,7 +281,15 @@
           "alt": "Company logo",
           "style": {
             "objectFit": "contain"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.35
+            }
+          ]
         },
         {
           "id": "t_free",
@@ -243,10 +299,10 @@
           "layer": 11,
           "position": {
             "x": 73,
-            "y": 244
+            "y": 224
           },
           "size": {
-            "width": 200,
+            "width": 400,
             "height": 80
           },
           "startTime": 0,
@@ -254,10 +310,18 @@
           "content": "FREE",
           "style": {
             "fontSize": 66,
-            "fontWeight": "800",
+            "fontWeight": "900",
             "color": "#0f172a",
-            "fontFamily": "Segoe UI"
-          }
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
         },
         {
           "id": "t_company",
@@ -267,10 +331,10 @@
           "layer": 12,
           "position": {
             "x": 73,
-            "y": 318
+            "y": 302
           },
           "size": {
-            "width": 400,
+            "width": 450,
             "height": 80
           },
           "startTime": 0,
@@ -278,10 +342,18 @@
           "content": "COMPANY",
           "style": {
             "fontSize": 66,
-            "fontWeight": "800",
+            "fontWeight": "900",
             "color": "#1e40af",
-            "fontFamily": "Segoe UI"
-          }
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
         },
         {
           "id": "t_profile",
@@ -291,10 +363,10 @@
           "layer": 13,
           "position": {
             "x": 73,
-            "y": 392
+            "y": 380
           },
           "size": {
-            "width": 350,
+            "width": 400,
             "height": 80
           },
           "startTime": 0,
@@ -302,10 +374,18 @@
           "content": "PROFILE",
           "style": {
             "fontSize": 66,
-            "fontWeight": "800",
+            "fontWeight": "900",
             "color": "#0f172a",
-            "fontFamily": "Segoe UI"
-          }
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
         },
         {
           "id": "t_sub",
@@ -315,7 +395,7 @@
           "layer": 14,
           "position": {
             "x": 73,
-            "y": 560
+            "y": 514
           },
           "size": {
             "width": 560,
@@ -325,35 +405,52 @@
           "endTime": 8,
           "content": "PRESENTATION TEMPLATE",
           "style": {
-            "fontSize": 28,
-            "fontWeight": "400",
+            "fontSize": 24,
+            "fontWeight": "700",
             "color": "#0f172a",
-            "fontFamily": "Segoe UI"
-          }
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "letterSpacing": "0.05em"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
         },
         {
           "id": "t_footer",
           "type": "text",
-          "role": "placeholder",
+          "role": "body-text",
           "editable": true,
           "layer": 15,
           "position": {
-            "x": 150,
+            "x": 73,
             "y": 620
           },
           "size": {
-            "width": 200,
+            "width": 400,
             "height": 32
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "Edit Text Here",
+          "content": "Create your presentation in minutes.",
           "style": {
-            "fontSize": 14,
-            "fontWeight": "400",
+            "fontSize": 15,
+            "fontWeight": "500",
             "color": "#64748b",
-            "fontFamily": "Segoe UI"
-          }
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
         },
         {
           "id": "avatar_presenter",
@@ -362,15 +459,29 @@
           "editable": true,
           "layer": 60,
           "position": {
-            "x": 1016,
-            "y": 444
+            "x": 1024,
+            "y": 462
           },
           "size": {
-            "width": 200,
-            "height": 240
+            "width": 180,
+            "height": 210
           },
           "startTime": 0,
-          "endTime": 8
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #3b82f6",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
         }
       ]
     },
@@ -402,10 +513,10 @@
           "height": 434
         },
         "avatar": {
-          "x": 1016,
-          "y": 444,
-          "width": 200,
-          "height": 240
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
         }
       },
       "description": "Mission, purpose, and service pillars with hero image.",
@@ -418,28 +529,6 @@
       ],
       "clips": [
         {
-          "id": "s_panel",
-          "type": "shape",
-          "role": "decoration",
-          "shapeKey": null,
-          "editable": true,
-          "layer": 0,
-          "position": {
-            "x": 560,
-            "y": 120
-          },
-          "size": {
-            "width": 700,
-            "height": 500
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "style": {
-            "backgroundColor": "#dbeafe",
-            "borderRadius": "12px"
-          }
-        },
-        {
           "id": "s_outline",
           "type": "shape",
           "role": "decoration",
@@ -447,42 +536,62 @@
           "editable": true,
           "layer": 1,
           "position": {
-            "x": 540,
+            "x": 576,
             "y": 100
           },
           "size": {
-            "width": 740,
+            "width": 640,
             "height": 540
           },
           "startTime": 0,
           "endTime": 8,
           "style": {
             "backgroundColor": "transparent",
-            "border": "3px solid #1e3a8a",
-            "borderRadius": "12px"
-          }
+            "border": "2px solid #1e40af",
+            "borderRadius": "24px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
-          "id": "s_trap",
-          "type": "shape",
-          "role": "decoration",
-          "shapeKey": null,
+          "id": "img_intro",
+          "type": "image",
+          "assetKey": "pitch-intro",
+          "role": "hero-image",
           "editable": true,
-          "layer": 2,
+          "layer": 6,
           "position": {
-            "x": 520,
-            "y": 480
+            "x": 600,
+            "y": 120
           },
           "size": {
-            "width": 400,
-            "height": 180
+            "width": 600,
+            "height": 500
           },
           "startTime": 0,
           "endTime": 8,
+          "src": "https://images.pexels.com/photos/3862132/pexels-photo-3862132.jpeg",
+          "placeholder": true,
+          "alt": "Factory automation",
           "style": {
-            "backgroundColor": "#bfdbfe",
-            "clipPath": "polygon(0% 30%, 100% 0%, 100% 100%, 0% 100%)"
-          }
+            "borderRadius": "20px",
+            "objectFit": "cover",
+            "boxShadow": "0 20px 40px rgba(0,0,0,0.15)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
         },
         {
           "id": "t_title",
@@ -503,10 +612,18 @@
           "content": "Introduction",
           "style": {
             "fontSize": 48,
-            "fontWeight": "800",
+            "fontWeight": "900",
             "color": "#0f172a",
-            "fontFamily": "Segoe UI"
-          }
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
         },
         {
           "id": "t_mission",
@@ -516,7 +633,7 @@
           "layer": 11,
           "position": {
             "x": 73,
-            "y": 360
+            "y": 180
           },
           "size": {
             "width": 500,
@@ -524,13 +641,21 @@
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "Mission and Purpose",
+          "content": "Our Mission and Purpose",
           "style": {
-            "fontSize": 24,
-            "fontWeight": "700",
+            "fontSize": 22,
+            "fontWeight": "800",
             "color": "#1e40af",
-            "fontFamily": "Segoe UI"
-          }
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
         },
         {
           "id": "t_body",
@@ -540,22 +665,60 @@
           "layer": 12,
           "position": {
             "x": 73,
-            "y": 405
+            "y": 230
           },
           "size": {
             "width": 480,
-            "height": 90
+            "height": 110
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text. Insert your sample text here.",
+          "content": "We help companies streamline workflows, automate visual asset production, and scale communication channels globally using premium AI engines.",
           "style": {
             "fontSize": 16,
-            "fontWeight": "400",
             "color": "#0f172a",
-            "lineHeight": 1.5,
-            "fontFamily": "Segoe UI"
-          }
+            "lineHeight": 1.6,
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "serve_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 73,
+            "y": 380
+          },
+          "size": {
+            "width": 230,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#f8fafc",
+            "borderRadius": "12px",
+            "border": "1px solid #bfdbfe"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "ico_serve_bg",
@@ -565,19 +728,27 @@
           "editable": true,
           "layer": 8,
           "position": {
-            "x": 73,
-            "y": 510
+            "x": 88,
+            "y": 396
           },
           "size": {
-            "width": 64,
-            "height": 64
+            "width": 44,
+            "height": 44
           },
           "startTime": 0,
           "endTime": 8,
           "style": {
-            "backgroundColor": "#ffffff",
+            "backgroundColor": "#1e40af",
             "borderRadius": "50%"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "ico_serve",
@@ -587,12 +758,12 @@
           "editable": true,
           "layer": 9,
           "position": {
-            "x": 83,
-            "y": 520
+            "x": 96,
+            "y": 404
           },
           "size": {
-            "width": 44,
-            "height": 44
+            "width": 28,
+            "height": 28
           },
           "startTime": 0,
           "endTime": 8,
@@ -603,7 +774,15 @@
             "objectFit": "contain",
             "borderRadius": "0",
             "backgroundColor": "transparent"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
         },
         {
           "id": "t_serve_h",
@@ -612,8 +791,8 @@
           "editable": true,
           "layer": 13,
           "position": {
-            "x": 140,
-            "y": 512
+            "x": 88,
+            "y": 455
           },
           "size": {
             "width": 200,
@@ -623,10 +802,19 @@
           "endTime": 8,
           "content": "Who we Serve",
           "style": {
-            "fontSize": 18,
-            "fontWeight": "700",
-            "color": "#0f172a"
-          }
+            "fontSize": 16,
+            "fontWeight": "800",
+            "color": "#0f172a",
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
         },
         {
           "id": "t_serve_b",
@@ -635,22 +823,61 @@
           "editable": true,
           "layer": 14,
           "position": {
-            "x": 73,
-            "y": 548
+            "x": 88,
+            "y": 490
           },
           "size": {
-            "width": 240,
-            "height": 70
+            "width": 200,
+            "height": 78
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "This is a sample text. Insert your desired text here. You can add text.",
+          "content": "Enterprises and educational leaders building global courses.",
           "style": {
-            "fontSize": 14,
-            "fontWeight": "400",
+            "fontSize": 13,
             "color": "#64748b",
-            "lineHeight": 1.4
-          }
+            "lineHeight": 1.4,
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "why_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 320,
+            "y": 380
+          },
+          "size": {
+            "width": 230,
+            "height": 200
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#f8fafc",
+            "borderRadius": "12px",
+            "border": "1px solid #bfdbfe"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "ico_why_bg",
@@ -660,19 +887,27 @@
           "editable": true,
           "layer": 8,
           "position": {
-            "x": 340,
-            "y": 510
+            "x": 335,
+            "y": 396
           },
           "size": {
-            "width": 64,
-            "height": 64
+            "width": 44,
+            "height": 44
           },
           "startTime": 0,
           "endTime": 8,
           "style": {
-            "backgroundColor": "#ffffff",
+            "backgroundColor": "#1e40af",
             "borderRadius": "50%"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "ico_why",
@@ -682,12 +917,12 @@
           "editable": true,
           "layer": 9,
           "position": {
-            "x": 350,
-            "y": 520
+            "x": 343,
+            "y": 404
           },
           "size": {
-            "width": 44,
-            "height": 44
+            "width": 28,
+            "height": 28
           },
           "startTime": 0,
           "endTime": 8,
@@ -698,7 +933,15 @@
             "objectFit": "contain",
             "borderRadius": "0",
             "backgroundColor": "transparent"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.35
+            }
+          ]
         },
         {
           "id": "t_why_h",
@@ -707,8 +950,8 @@
           "editable": true,
           "layer": 15,
           "position": {
-            "x": 408,
-            "y": 512
+            "x": 335,
+            "y": 455
           },
           "size": {
             "width": 200,
@@ -718,10 +961,19 @@
           "endTime": 8,
           "content": "Why we Serve",
           "style": {
-            "fontSize": 18,
-            "fontWeight": "700",
-            "color": "#0f172a"
-          }
+            "fontSize": 16,
+            "fontWeight": "800",
+            "color": "#0f172a",
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
         },
         {
           "id": "t_why_b",
@@ -730,47 +982,30 @@
           "editable": true,
           "layer": 16,
           "position": {
-            "x": 340,
-            "y": 548
+            "x": 335,
+            "y": 490
           },
           "size": {
-            "width": 240,
-            "height": 70
+            "width": 200,
+            "height": 78
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "This is a sample text. Insert your desired text here. You can add text.",
+          "content": "To replace expensive production loops with modern AI pipelines.",
           "style": {
-            "fontSize": 14,
-            "fontWeight": "400",
+            "fontSize": 13,
             "color": "#64748b",
-            "lineHeight": 1.4
-          }
-        },
-        {
-          "id": "img_intro",
-          "type": "image",
-          "assetKey": "pitch-intro",
-          "role": "hero-image",
-          "editable": true,
-          "layer": 6,
-          "position": {
-            "x": 530,
-            "y": 198
+            "lineHeight": 1.4,
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
           },
-          "size": {
-            "width": 686,
-            "height": 434
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "src": "https://images.pexels.com/photos/3862132/pexels-photo-3862132.jpeg",
-          "placeholder": true,
-          "alt": "Factory automation",
-          "style": {
-            "borderRadius": "16px",
-            "objectFit": "cover"
-          }
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.7
+            }
+          ]
         },
         {
           "id": "avatar_presenter",
@@ -779,15 +1014,29 @@
           "editable": true,
           "layer": 60,
           "position": {
-            "x": 1016,
-            "y": 444
+            "x": 1024,
+            "y": 462
           },
           "size": {
-            "width": 200,
-            "height": 240
+            "width": 180,
+            "height": 210
           },
           "startTime": 0,
-          "endTime": 8
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #3b82f6",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
         }
       ]
     },
@@ -819,10 +1068,10 @@
           "height": 515
         },
         "avatar": {
-          "x": 1016,
-          "y": 444,
-          "width": 200,
-          "height": 240
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
         }
       },
       "description": "Pain point, solution, and key benefit stats.",
@@ -842,18 +1091,26 @@
           "editable": true,
           "layer": 0,
           "position": {
-            "x": 820,
-            "y": 0
+            "x": 756,
+            "y": 36
           },
           "size": {
             "width": 460,
-            "height": 720
+            "height": 648
           },
           "startTime": 0,
           "endTime": 8,
           "style": {
             "backgroundColor": "#dbeafe"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "s_diamond_bg",
@@ -863,7 +1120,7 @@
           "editable": true,
           "layer": 1,
           "position": {
-            "x": 860,
+            "x": 796,
             "y": 150
           },
           "size": {
@@ -876,378 +1133,15 @@
             "backgroundColor": "#1e3a8a",
             "clipPath": "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)",
             "borderRadius": "8px"
-          }
-        },
-        {
-          "id": "t_title",
-          "type": "text",
-          "role": "slide-title",
-          "editable": true,
-          "layer": 10,
-          "position": {
-            "x": 73,
-            "y": 100
           },
-          "size": {
-            "width": 600,
-            "height": 56
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "Value Proposition",
-          "style": {
-            "fontSize": 48,
-            "fontWeight": "800",
-            "color": "#0f172a",
-            "fontFamily": "Segoe UI"
-          }
-        },
-        {
-          "id": "ico_pain_bg",
-          "type": "shape",
-          "role": "decoration",
-          "shapeKey": "pitch-icon-badge",
-          "editable": true,
-          "layer": 8,
-          "position": {
-            "x": 73,
-            "y": 200
-          },
-          "size": {
-            "width": 60,
-            "height": 60
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "style": {
-            "backgroundColor": "#ffffff",
-            "borderRadius": "50%"
-          }
-        },
-        {
-          "id": "ico_pain",
-          "type": "image",
-          "assetKey": "target",
-          "role": "icon",
-          "editable": true,
-          "layer": 9,
-          "position": {
-            "x": 82,
-            "y": 209
-          },
-          "size": {
-            "width": 42,
-            "height": 42
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "src": "https://img.icons8.com/doodle/96/bullseye.png",
-          "placeholder": true,
-          "alt": "Target",
-          "style": {
-            "objectFit": "contain",
-            "borderRadius": "0",
-            "backgroundColor": "transparent"
-          }
-        },
-        {
-          "id": "t_pain_h",
-          "type": "text",
-          "role": "body-text",
-          "editable": true,
-          "layer": 11,
-          "position": {
-            "x": 140,
-            "y": 202
-          },
-          "size": {
-            "width": 200,
-            "height": 28
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "Pain Point",
-          "style": {
-            "fontSize": 20,
-            "fontWeight": "700",
-            "color": "#1e40af"
-          }
-        },
-        {
-          "id": "t_pain_b",
-          "type": "text",
-          "role": "body-text",
-          "editable": true,
-          "layer": 12,
-          "position": {
-            "x": 73,
-            "y": 238
-          },
-          "size": {
-            "width": 520,
-            "height": 70
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text. Insert your sample text here.",
-          "style": {
-            "fontSize": 14,
-            "color": "#64748b",
-            "lineHeight": 1.45
-          }
-        },
-        {
-          "id": "ico_sol_bg",
-          "type": "shape",
-          "role": "decoration",
-          "shapeKey": "pitch-icon-badge",
-          "editable": true,
-          "layer": 8,
-          "position": {
-            "x": 73,
-            "y": 320
-          },
-          "size": {
-            "width": 60,
-            "height": 60
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "style": {
-            "backgroundColor": "#ffffff",
-            "borderRadius": "50%"
-          }
-        },
-        {
-          "id": "ico_sol",
-          "type": "image",
-          "assetKey": "solution",
-          "role": "icon",
-          "editable": true,
-          "layer": 9,
-          "position": {
-            "x": 82,
-            "y": 329
-          },
-          "size": {
-            "width": 42,
-            "height": 42
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "src": "https://img.icons8.com/doodle/96/puzzle.png",
-          "placeholder": true,
-          "alt": "Solution",
-          "style": {
-            "objectFit": "contain",
-            "borderRadius": "0",
-            "backgroundColor": "transparent"
-          }
-        },
-        {
-          "id": "t_sol_h",
-          "type": "text",
-          "role": "body-text",
-          "editable": true,
-          "layer": 13,
-          "position": {
-            "x": 140,
-            "y": 322
-          },
-          "size": {
-            "width": 200,
-            "height": 28
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "Our Solution",
-          "style": {
-            "fontSize": 20,
-            "fontWeight": "700",
-            "color": "#1e40af"
-          }
-        },
-        {
-          "id": "t_sol_b",
-          "type": "text",
-          "role": "body-text",
-          "editable": true,
-          "layer": 14,
-          "position": {
-            "x": 73,
-            "y": 358
-          },
-          "size": {
-            "width": 520,
-            "height": 70
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text. Insert your sample text here.",
-          "style": {
-            "fontSize": 14,
-            "color": "#64748b",
-            "lineHeight": 1.45
-          }
-        },
-        {
-          "id": "s_divider",
-          "type": "shape",
-          "role": "decoration",
-          "shapeKey": null,
-          "editable": true,
-          "layer": 9,
-          "position": {
-            "x": 73,
-            "y": 450
-          },
-          "size": {
-            "width": 560,
-            "height": 2
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "style": {
-            "backgroundColor": "#bfdbfe"
-          }
-        },
-        {
-          "id": "t_b1_l",
-          "type": "text",
-          "role": "body-text",
-          "editable": true,
-          "layer": 15,
-          "position": {
-            "x": 73,
-            "y": 470
-          },
-          "size": {
-            "width": 160,
-            "height": 22
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "Key Benefit 1",
-          "style": {
-            "fontSize": 14,
-            "fontWeight": "600",
-            "color": "#0f172a"
-          }
-        },
-        {
-          "id": "t_b1_v",
-          "type": "text",
-          "role": "body-text",
-          "editable": true,
-          "layer": 16,
-          "position": {
-            "x": 73,
-            "y": 495
-          },
-          "size": {
-            "width": 260,
-            "height": 72
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "$300M",
-          "style": {
-            "fontSize": 56,
-            "fontWeight": "800",
-            "color": "#1e3a8a"
-          }
-        },
-        {
-          "id": "t_b1_d",
-          "type": "text",
-          "role": "body-text",
-          "editable": true,
-          "layer": 17,
-          "position": {
-            "x": 73,
-            "y": 570
-          },
-          "size": {
-            "width": 280,
-            "height": 60
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "This is a sample text. Insert your desired text here. You can add sample text.",
-          "style": {
-            "fontSize": 13,
-            "color": "#64748b",
-            "lineHeight": 1.4
-          }
-        },
-        {
-          "id": "t_b2_l",
-          "type": "text",
-          "role": "body-text",
-          "editable": true,
-          "layer": 18,
-          "position": {
-            "x": 380,
-            "y": 470
-          },
-          "size": {
-            "width": 160,
-            "height": 22
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "Key Benefit 2",
-          "style": {
-            "fontSize": 14,
-            "fontWeight": "600",
-            "color": "#0f172a"
-          }
-        },
-        {
-          "id": "t_b2_v",
-          "type": "text",
-          "role": "body-text",
-          "editable": true,
-          "layer": 19,
-          "position": {
-            "x": 380,
-            "y": 495
-          },
-          "size": {
-            "width": 260,
-            "height": 72
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "5.6M",
-          "style": {
-            "fontSize": 56,
-            "fontWeight": "800",
-            "color": "#1e3a8a"
-          }
-        },
-        {
-          "id": "t_b2_d",
-          "type": "text",
-          "role": "body-text",
-          "editable": true,
-          "layer": 20,
-          "position": {
-            "x": 380,
-            "y": 570
-          },
-          "size": {
-            "width": 280,
-            "height": 60
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "This is a sample text. Insert your desired text here. You can add sample text.",
-          "style": {
-            "fontSize": 13,
-            "color": "#64748b",
-            "lineHeight": 1.4
-          }
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "img_value",
@@ -1258,7 +1152,7 @@
           "layer": 6,
           "position": {
             "x": 836,
-            "y": 168
+            "y": 170
           },
           "size": {
             "width": 380,
@@ -1272,7 +1166,592 @@
           "style": {
             "clipPath": "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)",
             "objectFit": "cover"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 73,
+            "y": 80
+          },
+          "size": {
+            "width": 600,
+            "height": 56
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Value Proposition",
+          "style": {
+            "fontSize": 48,
+            "fontWeight": "900",
+            "color": "#0f172a",
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "ico_pain_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 73,
+            "y": 170
+          },
+          "size": {
+            "width": 48,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1e3a8a",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "ico_pain",
+          "type": "image",
+          "assetKey": "target",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 82,
+            "y": 179
+          },
+          "size": {
+            "width": 30,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/bullseye.png",
+          "placeholder": true,
+          "alt": "Target",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
+        },
+        {
+          "id": "t_pain_h",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 135,
+            "y": 172
+          },
+          "size": {
+            "width": 200,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "The Challenge",
+          "style": {
+            "fontSize": 18,
+            "fontWeight": "800",
+            "color": "#1e40af",
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "t_pain_b",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 73,
+            "y": 230
+          },
+          "size": {
+            "width": 680,
+            "height": 50
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Manual video editing and presenter hiring costs brands $15k per course, slowing down deployment speeds.",
+          "style": {
+            "fontSize": 14,
+            "color": "#64748b",
+            "lineHeight": 1.45,
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "sol_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 73,
+            "y": 300
+          },
+          "size": {
+            "width": 680,
+            "height": 130
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#f8fafc",
+            "borderRadius": "16px",
+            "border": "1px solid #bfdbfe"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "ico_sol_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 93,
+            "y": 320
+          },
+          "size": {
+            "width": 48,
+            "height": 48
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1e40af",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "ico_sol",
+          "type": "image",
+          "assetKey": "solution",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 102,
+            "y": 329
+          },
+          "size": {
+            "width": 30,
+            "height": 30
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/puzzle.png",
+          "placeholder": true,
+          "alt": "Solution",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.35
+            }
+          ]
+        },
+        {
+          "id": "t_sol_h",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 155,
+            "y": 322
+          },
+          "size": {
+            "width": 200,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Our AI Solution",
+          "style": {
+            "fontSize": 18,
+            "fontWeight": "800",
+            "color": "#1e40af",
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "t_sol_b",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 93,
+            "y": 380
+          },
+          "size": {
+            "width": 640,
+            "height": 50
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Generative avatars compile presentation slides, script narrations, and translate to 120+ languages in minutes.",
+          "style": {
+            "fontSize": 14,
+            "color": "#64748b",
+            "lineHeight": 1.45,
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "b1_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 73,
+            "y": 460
+          },
+          "size": {
+            "width": 320,
+            "height": 190
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "border": "1px solid #bfdbfe",
+            "borderRadius": "16px",
+            "boxShadow": "0 10px 20px rgba(0,0,0,0.02)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "t_b1_l",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 93,
+            "y": 480
+          },
+          "size": {
+            "width": 200,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "AVERAGE COST SAVED",
+          "style": {
+            "fontSize": 12,
+            "fontWeight": "800",
+            "color": "#3b82f6",
+            "letterSpacing": "0.05em",
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
+        },
+        {
+          "id": "t_b1_v",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 93,
+            "y": 506
+          },
+          "size": {
+            "width": 280,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "82%",
+          "style": {
+            "fontSize": 52,
+            "fontWeight": "900",
+            "color": "#1e3a8a",
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.7
+            }
+          ]
+        },
+        {
+          "id": "t_b1_d",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 17,
+          "position": {
+            "x": 93,
+            "y": 580
+          },
+          "size": {
+            "width": 280,
+            "height": 50
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Cost reduction compared to film studios.",
+          "style": {
+            "fontSize": 13,
+            "color": "#64748b",
+            "lineHeight": 1.4,
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.78
+            }
+          ]
+        },
+        {
+          "id": "b2_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 420,
+            "y": 460
+          },
+          "size": {
+            "width": 320,
+            "height": 190
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "border": "1px solid #bfdbfe",
+            "borderRadius": "16px",
+            "boxShadow": "0 10px 20px rgba(0,0,0,0.02)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "t_b2_l",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 18,
+          "position": {
+            "x": 440,
+            "y": 480
+          },
+          "size": {
+            "width": 200,
+            "height": 22
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "SPEED TO DEPLOY",
+          "style": {
+            "fontSize": 12,
+            "fontWeight": "800",
+            "color": "#3b82f6",
+            "letterSpacing": "0.05em",
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.8600000000000001
+            }
+          ]
+        },
+        {
+          "id": "t_b2_v",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 19,
+          "position": {
+            "x": 440,
+            "y": 506
+          },
+          "size": {
+            "width": 280,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "10x",
+          "style": {
+            "fontSize": 52,
+            "fontWeight": "900",
+            "color": "#1e3a8a",
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.94
+            }
+          ]
+        },
+        {
+          "id": "t_b2_d",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 20,
+          "position": {
+            "x": 440,
+            "y": 580
+          },
+          "size": {
+            "width": 280,
+            "height": 50
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Accelerate module launch workflows.",
+          "style": {
+            "fontSize": 13,
+            "color": "#64748b",
+            "lineHeight": 1.4,
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.02
+            }
+          ]
         },
         {
           "id": "avatar_presenter",
@@ -1281,15 +1760,29 @@
           "editable": true,
           "layer": 60,
           "position": {
-            "x": 1016,
-            "y": 444
+            "x": 1024,
+            "y": 462
           },
           "size": {
-            "width": 200,
-            "height": 240
+            "width": 180,
+            "height": 210
           },
           "startTime": 0,
-          "endTime": 8
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #3b82f6",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
         }
       ]
     },
@@ -1321,10 +1814,10 @@
           "height": 300
         },
         "avatar": {
-          "x": 1016,
-          "y": 444,
-          "width": 200,
-          "height": 240
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
         }
       },
       "description": "Core offering with three service columns.",
@@ -1344,7 +1837,7 @@
           "layer": 10,
           "position": {
             "x": 73,
-            "y": 90
+            "y": 60
           },
           "size": {
             "width": 400,
@@ -1355,9 +1848,18 @@
           "content": "Services",
           "style": {
             "fontSize": 48,
-            "fontWeight": "800",
-            "color": "#0f172a"
-          }
+            "fontWeight": "900",
+            "color": "#0f172a",
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
         },
         {
           "id": "t_sub",
@@ -1367,7 +1869,7 @@
           "layer": 11,
           "position": {
             "x": 73,
-            "y": 148
+            "y": 118
           },
           "size": {
             "width": 400,
@@ -1375,12 +1877,22 @@
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "The Core Offering",
+          "content": "THE CORE OFFERING",
           "style": {
-            "fontSize": 28,
-            "fontWeight": "400",
-            "color": "#0f172a"
-          }
+            "fontSize": 14,
+            "fontWeight": "800",
+            "color": "#3b82f6",
+            "letterSpacing": "0.08em",
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
         },
         {
           "id": "t_body",
@@ -1390,20 +1902,29 @@
           "layer": 12,
           "position": {
             "x": 73,
-            "y": 255
+            "y": 155
           },
           "size": {
-            "width": 540,
-            "height": 100
+            "width": 500,
+            "height": 80
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text. Insert your desired text here. You can add sample text. This is a sample text.",
+          "content": "We provide complete production workflows for course modules, customer education campaigns, and corporate onboarding portals.",
           "style": {
             "fontSize": 15,
             "color": "#64748b",
-            "lineHeight": 1.5
-          }
+            "lineHeight": 1.5,
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
         },
         {
           "id": "img_services",
@@ -1413,12 +1934,12 @@
           "editable": true,
           "layer": 5,
           "position": {
-            "x": 616,
-            "y": 90
+            "x": 596,
+            "y": 60
           },
           "size": {
-            "width": 600,
-            "height": 320
+            "width": 620,
+            "height": 220
           },
           "startTime": 0,
           "endTime": 8,
@@ -1426,10 +1947,49 @@
           "placeholder": true,
           "alt": "Business team",
           "style": {
-            "clipPath": "polygon(18% 0%, 100% 0%, 100% 100%, 0% 100%)",
-            "borderRadius": "0 0 24px 0",
+            "borderRadius": "24px",
             "objectFit": "cover"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "svc_card_1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 73,
+            "y": 300
+          },
+          "size": {
+            "width": 340,
+            "height": 340
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "border": "1px solid #bfdbfe",
+            "borderRadius": "16px",
+            "boxShadow": "0 12px 30px rgba(0,0,0,0.02)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "ico_svc1_bg",
@@ -1439,45 +1999,61 @@
           "editable": true,
           "layer": 8,
           "position": {
-            "x": 73,
-            "y": 400
+            "x": 93,
+            "y": 320
           },
           "size": {
-            "width": 56,
-            "height": 56
+            "width": 48,
+            "height": 48
           },
           "startTime": 0,
           "endTime": 8,
           "style": {
             "backgroundColor": "#1e3a8a",
             "borderRadius": "50%"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "ico_svc1",
           "type": "image",
-          "assetKey": "arrow-growth",
+          "assetKey": "rocket",
           "role": "icon",
           "editable": true,
           "layer": 9,
           "position": {
-            "x": 81,
-            "y": 408
+            "x": 102,
+            "y": 329
           },
           "size": {
-            "width": 40,
-            "height": 40
+            "width": 30,
+            "height": 30
           },
           "startTime": 0,
           "endTime": 8,
-          "src": "https://img.icons8.com/doodle/96/increase.png",
+          "src": "https://img.icons8.com/doodle/96/rocket.png",
           "placeholder": true,
-          "alt": "Growth arrow",
+          "alt": "Rocket",
           "style": {
             "objectFit": "contain",
             "borderRadius": "0",
             "backgroundColor": "transparent"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
         },
         {
           "id": "t_svc1_h",
@@ -1486,21 +2062,30 @@
           "editable": true,
           "layer": 13,
           "position": {
-            "x": 141,
-            "y": 402
+            "x": 155,
+            "y": 332
           },
           "size": {
-            "width": 200,
+            "width": 230,
             "height": 28
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "Service 1",
+          "content": "Avatar Creation",
           "style": {
             "fontSize": 18,
-            "fontWeight": "700",
-            "color": "#0f172a"
-          }
+            "fontWeight": "850",
+            "color": "#0f172a",
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
         },
         {
           "id": "t_svc1_b",
@@ -1509,21 +2094,30 @@
           "editable": true,
           "layer": 14,
           "position": {
-            "x": 73,
-            "y": 440
+            "x": 93,
+            "y": 390
           },
           "size": {
             "width": 300,
-            "height": 60
+            "height": 70
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text.",
+          "content": "Generate hyper-realistic digital twin presenters based on human actors.",
           "style": {
             "fontSize": 13,
             "color": "#64748b",
-            "lineHeight": 1.4
-          }
+            "lineHeight": 1.4,
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
         },
         {
           "id": "chk1a_bg",
@@ -1533,19 +2127,27 @@
           "editable": true,
           "layer": 7,
           "position": {
-            "x": 73,
-            "y": 510
+            "x": 93,
+            "y": 480
           },
           "size": {
-            "width": 28,
-            "height": 28
+            "width": 24,
+            "height": 24
           },
           "startTime": 0,
           "endTime": 8,
           "style": {
-            "backgroundColor": "#bfdbfe",
+            "backgroundColor": "#dbeafe",
             "borderRadius": "50%"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "chk1a",
@@ -1555,12 +2157,12 @@
           "editable": true,
           "layer": 8,
           "position": {
-            "x": 77,
-            "y": 514
+            "x": 97,
+            "y": 484
           },
           "size": {
-            "width": 20,
-            "height": 20
+            "width": 16,
+            "height": 16
           },
           "startTime": 0,
           "endTime": 8,
@@ -1571,7 +2173,15 @@
             "objectFit": "contain",
             "borderRadius": "0",
             "backgroundColor": "transparent"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.35
+            }
+          ]
         },
         {
           "id": "t_chk1a",
@@ -1580,8 +2190,8 @@
           "editable": true,
           "layer": 20,
           "position": {
-            "x": 109,
-            "y": 508
+            "x": 126,
+            "y": 482
           },
           "size": {
             "width": 260,
@@ -1589,11 +2199,20 @@
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "This is a sample text.",
+          "content": "Professional script synching",
           "style": {
-            "fontSize": 14,
-            "color": "#0f172a"
-          }
+            "fontSize": 13,
+            "color": "#0f172a",
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
         },
         {
           "id": "chk1b_bg",
@@ -1603,19 +2222,27 @@
           "editable": true,
           "layer": 7,
           "position": {
-            "x": 73,
-            "y": 545
+            "x": 93,
+            "y": 515
           },
           "size": {
-            "width": 28,
-            "height": 28
+            "width": 24,
+            "height": 24
           },
           "startTime": 0,
           "endTime": 8,
           "style": {
-            "backgroundColor": "#bfdbfe",
+            "backgroundColor": "#dbeafe",
             "borderRadius": "50%"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "chk1b",
@@ -1625,12 +2252,12 @@
           "editable": true,
           "layer": 8,
           "position": {
-            "x": 77,
-            "y": 549
+            "x": 97,
+            "y": 519
           },
           "size": {
-            "width": 20,
-            "height": 20
+            "width": 16,
+            "height": 16
           },
           "startTime": 0,
           "endTime": 8,
@@ -1641,7 +2268,15 @@
             "objectFit": "contain",
             "borderRadius": "0",
             "backgroundColor": "transparent"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.45000000000000007
+            }
+          ]
         },
         {
           "id": "t_chk1b",
@@ -1650,8 +2285,8 @@
           "editable": true,
           "layer": 23,
           "position": {
-            "x": 109,
-            "y": 543
+            "x": 126,
+            "y": 517
           },
           "size": {
             "width": 260,
@@ -1659,11 +2294,52 @@
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "You can add sample text.",
+          "content": "Custom gesture modules",
           "style": {
-            "fontSize": 14,
-            "color": "#0f172a"
-          }
+            "fontSize": 13,
+            "color": "#0f172a",
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.7
+            }
+          ]
+        },
+        {
+          "id": "svc_card_2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 470,
+            "y": 300
+          },
+          "size": {
+            "width": 340,
+            "height": 340
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "border": "1px solid #bfdbfe",
+            "borderRadius": "16px",
+            "boxShadow": "0 12px 30px rgba(0,0,0,0.02)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "ico_svc2_bg",
@@ -1673,45 +2349,61 @@
           "editable": true,
           "layer": 8,
           "position": {
-            "x": 430,
-            "y": 400
+            "x": 490,
+            "y": 320
           },
           "size": {
-            "width": 56,
-            "height": 56
+            "width": 48,
+            "height": 48
           },
           "startTime": 0,
           "endTime": 8,
           "style": {
-            "backgroundColor": "#3b82f6",
+            "backgroundColor": "#1e3a8a",
             "borderRadius": "50%"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "ico_svc2",
           "type": "image",
-          "assetKey": "arrow-growth",
+          "assetKey": "trophy",
           "role": "icon",
           "editable": true,
           "layer": 9,
           "position": {
-            "x": 438,
-            "y": 408
+            "x": 499,
+            "y": 329
           },
           "size": {
-            "width": 40,
-            "height": 40
+            "width": 30,
+            "height": 30
           },
           "startTime": 0,
           "endTime": 8,
-          "src": "https://img.icons8.com/doodle/96/increase.png",
+          "src": "https://img.icons8.com/doodle/96/trophy.png",
           "placeholder": true,
-          "alt": "Growth arrow",
+          "alt": "Trophy",
           "style": {
             "objectFit": "contain",
             "borderRadius": "0",
             "backgroundColor": "transparent"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.55
+            }
+          ]
         },
         {
           "id": "t_svc2_h",
@@ -1720,21 +2412,30 @@
           "editable": true,
           "layer": 16,
           "position": {
-            "x": 498,
-            "y": 402
+            "x": 552,
+            "y": 332
           },
           "size": {
-            "width": 200,
+            "width": 230,
             "height": 28
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "Service 2",
+          "content": "Script Narration",
           "style": {
             "fontSize": 18,
-            "fontWeight": "700",
-            "color": "#0f172a"
-          }
+            "fontWeight": "850",
+            "color": "#0f172a",
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.78
+            }
+          ]
         },
         {
           "id": "t_svc2_b",
@@ -1743,21 +2444,30 @@
           "editable": true,
           "layer": 17,
           "position": {
-            "x": 430,
-            "y": 440
+            "x": 490,
+            "y": 390
           },
           "size": {
             "width": 300,
-            "height": 60
+            "height": 70
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text.",
+          "content": "Inject high-fidelity speech synthesis matching local accents.",
           "style": {
             "fontSize": 13,
             "color": "#64748b",
-            "lineHeight": 1.4
-          }
+            "lineHeight": 1.4,
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.8600000000000001
+            }
+          ]
         },
         {
           "id": "chk2a_bg",
@@ -1767,19 +2477,27 @@
           "editable": true,
           "layer": 7,
           "position": {
-            "x": 430,
-            "y": 510
+            "x": 490,
+            "y": 480
           },
           "size": {
-            "width": 28,
-            "height": 28
+            "width": 24,
+            "height": 24
           },
           "startTime": 0,
           "endTime": 8,
           "style": {
-            "backgroundColor": "#bfdbfe",
+            "backgroundColor": "#dbeafe",
             "borderRadius": "50%"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "chk2a",
@@ -1789,12 +2507,12 @@
           "editable": true,
           "layer": 8,
           "position": {
-            "x": 434,
-            "y": 514
+            "x": 494,
+            "y": 484
           },
           "size": {
-            "width": 20,
-            "height": 20
+            "width": 16,
+            "height": 16
           },
           "startTime": 0,
           "endTime": 8,
@@ -1805,7 +2523,15 @@
             "objectFit": "contain",
             "borderRadius": "0",
             "backgroundColor": "transparent"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.65
+            }
+          ]
         },
         {
           "id": "t_chk2a",
@@ -1814,8 +2540,8 @@
           "editable": true,
           "layer": 21,
           "position": {
-            "x": 466,
-            "y": 508
+            "x": 523,
+            "y": 482
           },
           "size": {
             "width": 260,
@@ -1823,11 +2549,20 @@
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "This is a sample text.",
+          "content": "120+ languages supported",
           "style": {
-            "fontSize": 14,
-            "color": "#0f172a"
-          }
+            "fontSize": 13,
+            "color": "#0f172a",
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.94
+            }
+          ]
         },
         {
           "id": "chk2b_bg",
@@ -1837,19 +2572,27 @@
           "editable": true,
           "layer": 7,
           "position": {
-            "x": 430,
-            "y": 545
+            "x": 490,
+            "y": 515
           },
           "size": {
-            "width": 28,
-            "height": 28
+            "width": 24,
+            "height": 24
           },
           "startTime": 0,
           "endTime": 8,
           "style": {
-            "backgroundColor": "#bfdbfe",
+            "backgroundColor": "#dbeafe",
             "borderRadius": "50%"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "chk2b",
@@ -1859,12 +2602,12 @@
           "editable": true,
           "layer": 8,
           "position": {
-            "x": 434,
-            "y": 549
+            "x": 494,
+            "y": 519
           },
           "size": {
-            "width": 20,
-            "height": 20
+            "width": 16,
+            "height": 16
           },
           "startTime": 0,
           "endTime": 8,
@@ -1875,7 +2618,15 @@
             "objectFit": "contain",
             "borderRadius": "0",
             "backgroundColor": "transparent"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.7500000000000001
+            }
+          ]
         },
         {
           "id": "t_chk2b",
@@ -1884,8 +2635,8 @@
           "editable": true,
           "layer": 24,
           "position": {
-            "x": 466,
-            "y": 543
+            "x": 523,
+            "y": 517
           },
           "size": {
             "width": 260,
@@ -1893,11 +2644,52 @@
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "You can add sample text.",
+          "content": "Voice cloning integrations",
           "style": {
-            "fontSize": 14,
-            "color": "#0f172a"
-          }
+            "fontSize": 13,
+            "color": "#0f172a",
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.02
+            }
+          ]
+        },
+        {
+          "id": "svc_card_3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 867,
+            "y": 300
+          },
+          "size": {
+            "width": 340,
+            "height": 340
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "border": "1px solid #bfdbfe",
+            "borderRadius": "16px",
+            "boxShadow": "0 12px 30px rgba(0,0,0,0.02)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "ico_svc3_bg",
@@ -1907,45 +2699,61 @@
           "editable": true,
           "layer": 8,
           "position": {
-            "x": 787,
-            "y": 400
+            "x": 887,
+            "y": 320
           },
           "size": {
-            "width": 56,
-            "height": 56
+            "width": 48,
+            "height": 48
           },
           "startTime": 0,
           "endTime": 8,
           "style": {
-            "backgroundColor": "#3b82f6",
+            "backgroundColor": "#1e3a8a",
             "borderRadius": "50%"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "ico_svc3",
           "type": "image",
-          "assetKey": "arrow-growth",
+          "assetKey": "chart",
           "role": "icon",
           "editable": true,
           "layer": 9,
           "position": {
-            "x": 795,
-            "y": 408
+            "x": 896,
+            "y": 329
           },
           "size": {
-            "width": 40,
-            "height": 40
+            "width": 30,
+            "height": 30
           },
           "startTime": 0,
           "endTime": 8,
-          "src": "https://img.icons8.com/doodle/96/increase.png",
+          "src": "https://img.icons8.com/doodle/96/combo-chart.png",
           "placeholder": true,
-          "alt": "Growth arrow",
+          "alt": "Chart",
           "style": {
             "objectFit": "contain",
             "borderRadius": "0",
             "backgroundColor": "transparent"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.8500000000000001
+            }
+          ]
         },
         {
           "id": "t_svc3_h",
@@ -1954,21 +2762,30 @@
           "editable": true,
           "layer": 19,
           "position": {
-            "x": 855,
-            "y": 402
+            "x": 949,
+            "y": 332
           },
           "size": {
-            "width": 200,
+            "width": 230,
             "height": 28
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "Service 3",
+          "content": "Stitching Engine",
           "style": {
             "fontSize": 18,
-            "fontWeight": "700",
-            "color": "#0f172a"
-          }
+            "fontWeight": "850",
+            "color": "#0f172a",
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.1
+            }
+          ]
         },
         {
           "id": "t_svc3_b",
@@ -1977,21 +2794,30 @@
           "editable": true,
           "layer": 20,
           "position": {
-            "x": 787,
-            "y": 440
+            "x": 887,
+            "y": 390
           },
           "size": {
             "width": 300,
-            "height": 60
+            "height": 70
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text.",
+          "content": "Stitch assets, slides, music, and subtitles into a single MP4.",
           "style": {
             "fontSize": 13,
             "color": "#64748b",
-            "lineHeight": 1.4
-          }
+            "lineHeight": 1.4,
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.18
+            }
+          ]
         },
         {
           "id": "chk3a_bg",
@@ -2001,19 +2827,27 @@
           "editable": true,
           "layer": 7,
           "position": {
-            "x": 787,
-            "y": 510
+            "x": 887,
+            "y": 480
           },
           "size": {
-            "width": 28,
-            "height": 28
+            "width": 24,
+            "height": 24
           },
           "startTime": 0,
           "endTime": 8,
           "style": {
-            "backgroundColor": "#bfdbfe",
+            "backgroundColor": "#dbeafe",
             "borderRadius": "50%"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "chk3a",
@@ -2023,12 +2857,12 @@
           "editable": true,
           "layer": 8,
           "position": {
-            "x": 791,
-            "y": 514
+            "x": 891,
+            "y": 484
           },
           "size": {
-            "width": 20,
-            "height": 20
+            "width": 16,
+            "height": 16
           },
           "startTime": 0,
           "endTime": 8,
@@ -2039,7 +2873,15 @@
             "objectFit": "contain",
             "borderRadius": "0",
             "backgroundColor": "transparent"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.9500000000000001
+            }
+          ]
         },
         {
           "id": "t_chk3a",
@@ -2048,8 +2890,8 @@
           "editable": true,
           "layer": 22,
           "position": {
-            "x": 823,
-            "y": 508
+            "x": 920,
+            "y": 482
           },
           "size": {
             "width": 260,
@@ -2057,11 +2899,20 @@
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "This is a sample text.",
+          "content": "Remotion frame processing",
           "style": {
-            "fontSize": 14,
-            "color": "#0f172a"
-          }
+            "fontSize": 13,
+            "color": "#0f172a",
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.26
+            }
+          ]
         },
         {
           "id": "chk3b_bg",
@@ -2071,19 +2922,27 @@
           "editable": true,
           "layer": 7,
           "position": {
-            "x": 787,
-            "y": 545
+            "x": 887,
+            "y": 515
           },
           "size": {
-            "width": 28,
-            "height": 28
+            "width": 24,
+            "height": 24
           },
           "startTime": 0,
           "endTime": 8,
           "style": {
-            "backgroundColor": "#bfdbfe",
+            "backgroundColor": "#dbeafe",
             "borderRadius": "50%"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "chk3b",
@@ -2093,12 +2952,12 @@
           "editable": true,
           "layer": 8,
           "position": {
-            "x": 791,
-            "y": 549
+            "x": 891,
+            "y": 519
           },
           "size": {
-            "width": 20,
-            "height": 20
+            "width": 16,
+            "height": 16
           },
           "startTime": 0,
           "endTime": 8,
@@ -2109,7 +2968,15 @@
             "objectFit": "contain",
             "borderRadius": "0",
             "backgroundColor": "transparent"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 1.05
+            }
+          ]
         },
         {
           "id": "t_chk3b",
@@ -2118,8 +2985,8 @@
           "editable": true,
           "layer": 25,
           "position": {
-            "x": 823,
-            "y": 543
+            "x": 920,
+            "y": 517
           },
           "size": {
             "width": 260,
@@ -2127,11 +2994,20 @@
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "You can add sample text.",
+          "content": "Instant cloud caching rendering",
           "style": {
-            "fontSize": 14,
-            "color": "#0f172a"
-          }
+            "fontSize": 13,
+            "color": "#0f172a",
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.34
+            }
+          ]
         },
         {
           "id": "avatar_presenter",
@@ -2140,15 +3016,29 @@
           "editable": true,
           "layer": 60,
           "position": {
-            "x": 1016,
-            "y": 444
+            "x": 1024,
+            "y": 462
           },
           "size": {
-            "width": 200,
-            "height": 240
+            "width": 180,
+            "height": 210
           },
           "startTime": 0,
-          "endTime": 8
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #3b82f6",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
         }
       ]
     },
@@ -2180,10 +3070,10 @@
           "height": 634
         },
         "avatar": {
-          "x": 1016,
-          "y": 444,
-          "width": 200,
-          "height": 240
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
         }
       },
       "description": "Three USP rows with icons and hero image.",
@@ -2214,7 +3104,15 @@
           "style": {
             "backgroundColor": "#bfdbfe",
             "clipPath": "polygon(0% 0%, 100% 100%, 0% 100%)"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "s_tri2",
@@ -2236,376 +3134,15 @@
           "style": {
             "backgroundColor": "#3b82f6",
             "clipPath": "polygon(0% 0%, 100% 100%, 0% 100%)"
-          }
-        },
-        {
-          "id": "t_title",
-          "type": "text",
-          "role": "slide-title",
-          "editable": true,
-          "layer": 10,
-          "position": {
-            "x": 73,
-            "y": 100
           },
-          "size": {
-            "width": 600,
-            "height": 56
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "Unique Selling Point",
-          "style": {
-            "fontSize": 48,
-            "fontWeight": "800",
-            "color": "#0f172a"
-          }
-        },
-        {
-          "id": "s_row0",
-          "type": "shape",
-          "role": "decoration",
-          "shapeKey": null,
-          "editable": true,
-          "layer": 2,
-          "position": {
-            "x": 64,
-            "y": 190
-          },
-          "size": {
-            "width": 560,
-            "height": 88
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "style": {
-            "backgroundColor": "transparent"
-          }
-        },
-        {
-          "id": "ico_usp0_bg",
-          "type": "shape",
-          "role": "decoration",
-          "shapeKey": "pitch-icon-badge",
-          "editable": true,
-          "layer": 8,
-          "position": {
-            "x": 73,
-            "y": 200
-          },
-          "size": {
-            "width": 60,
-            "height": 60
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "style": {
-            "backgroundColor": "#ffffff",
-            "borderRadius": "50%"
-          }
-        },
-        {
-          "id": "ico_usp0",
-          "type": "image",
-          "assetKey": "shield-user",
-          "role": "icon",
-          "editable": true,
-          "layer": 9,
-          "position": {
-            "x": 82,
-            "y": 209
-          },
-          "size": {
-            "width": 42,
-            "height": 42
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "src": "https://img.icons8.com/doodle/96/checked-shield.png",
-          "placeholder": true,
-          "alt": "Protection",
-          "style": {
-            "objectFit": "contain",
-            "borderRadius": "0",
-            "backgroundColor": "transparent"
-          }
-        },
-        {
-          "id": "t_usp0_h",
-          "type": "text",
-          "role": "body-text",
-          "editable": true,
-          "layer": 11,
-          "position": {
-            "x": 140,
-            "y": 204
-          },
-          "size": {
-            "width": 300,
-            "height": 28
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "Edit Text Here",
-          "style": {
-            "fontSize": 20,
-            "fontWeight": "700",
-            "color": "#0f172a"
-          }
-        },
-        {
-          "id": "t_usp0_b",
-          "type": "text",
-          "role": "body-text",
-          "editable": true,
-          "layer": 12,
-          "position": {
-            "x": 140,
-            "y": 234
-          },
-          "size": {
-            "width": 460,
-            "height": 44
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text.",
-          "style": {
-            "fontSize": 14,
-            "color": "#64748b",
-            "lineHeight": 1.4
-          }
-        },
-        {
-          "id": "s_row1",
-          "type": "shape",
-          "role": "decoration",
-          "shapeKey": null,
-          "editable": true,
-          "layer": 2,
-          "position": {
-            "x": 64,
-            "y": 300
-          },
-          "size": {
-            "width": 560,
-            "height": 88
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "style": {
-            "backgroundColor": "transparent"
-          }
-        },
-        {
-          "id": "ico_usp1_bg",
-          "type": "shape",
-          "role": "decoration",
-          "shapeKey": "pitch-icon-badge",
-          "editable": true,
-          "layer": 8,
-          "position": {
-            "x": 73,
-            "y": 310
-          },
-          "size": {
-            "width": 60,
-            "height": 60
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "style": {
-            "backgroundColor": "#ffffff",
-            "borderRadius": "50%"
-          }
-        },
-        {
-          "id": "ico_usp1",
-          "type": "image",
-          "assetKey": "team-dollar",
-          "role": "icon",
-          "editable": true,
-          "layer": 9,
-          "position": {
-            "x": 82,
-            "y": 319
-          },
-          "size": {
-            "width": 42,
-            "height": 42
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "src": "https://img.icons8.com/doodle/96/conference-call.png",
-          "placeholder": true,
-          "alt": "Team value",
-          "style": {
-            "objectFit": "contain",
-            "borderRadius": "0",
-            "backgroundColor": "transparent"
-          }
-        },
-        {
-          "id": "t_usp1_h",
-          "type": "text",
-          "role": "body-text",
-          "editable": true,
-          "layer": 13,
-          "position": {
-            "x": 140,
-            "y": 314
-          },
-          "size": {
-            "width": 300,
-            "height": 28
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "Edit Text Here",
-          "style": {
-            "fontSize": 20,
-            "fontWeight": "700",
-            "color": "#0f172a"
-          }
-        },
-        {
-          "id": "t_usp1_b",
-          "type": "text",
-          "role": "body-text",
-          "editable": true,
-          "layer": 14,
-          "position": {
-            "x": 140,
-            "y": 344
-          },
-          "size": {
-            "width": 460,
-            "height": 44
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text.",
-          "style": {
-            "fontSize": 14,
-            "color": "#64748b",
-            "lineHeight": 1.4
-          }
-        },
-        {
-          "id": "s_row2",
-          "type": "shape",
-          "role": "decoration",
-          "shapeKey": null,
-          "editable": true,
-          "layer": 2,
-          "position": {
-            "x": 64,
-            "y": 410
-          },
-          "size": {
-            "width": 560,
-            "height": 88
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "style": {
-            "backgroundColor": "#1e3a8a",
-            "borderRadius": "4px"
-          }
-        },
-        {
-          "id": "ico_usp2_bg",
-          "type": "shape",
-          "role": "decoration",
-          "shapeKey": "pitch-icon-badge",
-          "editable": true,
-          "layer": 8,
-          "position": {
-            "x": 73,
-            "y": 420
-          },
-          "size": {
-            "width": 60,
-            "height": 60
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "style": {
-            "backgroundColor": "#ffffff",
-            "borderRadius": "50%"
-          }
-        },
-        {
-          "id": "ico_usp2",
-          "type": "image",
-          "assetKey": "lifebuoy",
-          "role": "icon",
-          "editable": true,
-          "layer": 9,
-          "position": {
-            "x": 82,
-            "y": 429
-          },
-          "size": {
-            "width": 42,
-            "height": 42
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "src": "https://img.icons8.com/doodle/96/technical-support.png",
-          "placeholder": true,
-          "alt": "Support",
-          "style": {
-            "objectFit": "contain",
-            "borderRadius": "0",
-            "backgroundColor": "transparent"
-          }
-        },
-        {
-          "id": "t_usp2_h",
-          "type": "text",
-          "role": "body-text",
-          "editable": true,
-          "layer": 15,
-          "position": {
-            "x": 140,
-            "y": 424
-          },
-          "size": {
-            "width": 300,
-            "height": 28
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "Edit Text Here",
-          "style": {
-            "fontSize": 20,
-            "fontWeight": "700",
-            "color": "#ffffff"
-          }
-        },
-        {
-          "id": "t_usp2_b",
-          "type": "text",
-          "role": "body-text",
-          "editable": true,
-          "layer": 16,
-          "position": {
-            "x": 140,
-            "y": 454
-          },
-          "size": {
-            "width": 460,
-            "height": 44
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text.",
-          "style": {
-            "fontSize": 14,
-            "color": "#bfdbfe",
-            "lineHeight": 1.4
-          }
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "img_usp",
@@ -2630,7 +3167,524 @@
           "style": {
             "clipPath": "polygon(22% 0%, 100% 0%, 100% 100%, 0% 100%)",
             "objectFit": "cover"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "t_title",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 10,
+          "position": {
+            "x": 73,
+            "y": 100
+          },
+          "size": {
+            "width": 600,
+            "height": 56
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Unique Selling Point",
+          "style": {
+            "fontSize": 48,
+            "fontWeight": "900",
+            "color": "#0f172a",
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "s_row0",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 73,
+            "y": 198
+          },
+          "size": {
+            "width": 540,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#f8fafc",
+            "borderRadius": "12px",
+            "border": "1px solid #bfdbfe"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "ico_usp0_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 93,
+            "y": 210
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1e3a8a",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "ico_usp0",
+          "type": "image",
+          "assetKey": "shield-user",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 101,
+            "y": 218
+          },
+          "size": {
+            "width": 28,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/checked-shield.png",
+          "placeholder": true,
+          "alt": "Protection",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
+        },
+        {
+          "id": "t_usp0_h",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 155,
+            "y": 214
+          },
+          "size": {
+            "width": 380,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Enterprise-Grade Security",
+          "style": {
+            "fontSize": 16,
+            "fontWeight": "850",
+            "color": "#0f172a",
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "t_usp0_b",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 155,
+            "y": 244
+          },
+          "size": {
+            "width": 440,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Secure local datasets, asset encryption, and private workspaces.",
+          "style": {
+            "fontSize": 13,
+            "color": "#64748b",
+            "lineHeight": 1.4,
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "s_row1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 73,
+            "y": 318
+          },
+          "size": {
+            "width": 540,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#f8fafc",
+            "borderRadius": "12px",
+            "border": "1px solid #bfdbfe"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "ico_usp1_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 93,
+            "y": 330
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1e3a8a",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "ico_usp1",
+          "type": "image",
+          "assetKey": "team-dollar",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 101,
+            "y": 338
+          },
+          "size": {
+            "width": 28,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/conference-call.png",
+          "placeholder": true,
+          "alt": "Team value",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.35
+            }
+          ]
+        },
+        {
+          "id": "t_usp1_h",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 155,
+            "y": 334
+          },
+          "size": {
+            "width": 380,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Modular Resource Pricing",
+          "style": {
+            "fontSize": 16,
+            "fontWeight": "850",
+            "color": "#0f172a",
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "t_usp1_b",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 155,
+            "y": 364
+          },
+          "size": {
+            "width": 440,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Flexible user pricing based on exact render credits used.",
+          "style": {
+            "fontSize": 13,
+            "color": "#64748b",
+            "lineHeight": 1.4,
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "s_row2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 73,
+            "y": 438
+          },
+          "size": {
+            "width": 540,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1e3a8a",
+            "borderRadius": "12px",
+            "boxShadow": "0 10px 20px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "ico_usp2_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 93,
+            "y": 450
+          },
+          "size": {
+            "width": 44,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "ico_usp2",
+          "type": "image",
+          "assetKey": "lifebuoy",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 101,
+            "y": 458
+          },
+          "size": {
+            "width": 28,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/technical-support.png",
+          "placeholder": true,
+          "alt": "Support",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.45000000000000007
+            }
+          ]
+        },
+        {
+          "id": "t_usp2_h",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 155,
+            "y": 454
+          },
+          "size": {
+            "width": 380,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Dedicated Somatic Support",
+          "style": {
+            "fontSize": 16,
+            "fontWeight": "850",
+            "color": "#ffffff",
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
+        },
+        {
+          "id": "t_usp2_b",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 16,
+          "position": {
+            "x": 155,
+            "y": 484
+          },
+          "size": {
+            "width": 440,
+            "height": 44
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "24/7 client managers to review workflows and optimize audio.",
+          "style": {
+            "fontSize": 13,
+            "color": "#bfdbfe",
+            "lineHeight": 1.4,
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.7
+            }
+          ]
         },
         {
           "id": "avatar_presenter",
@@ -2639,15 +3693,29 @@
           "editable": true,
           "layer": 60,
           "position": {
-            "x": 1016,
-            "y": 444
+            "x": 1024,
+            "y": 462
           },
           "size": {
-            "width": 200,
-            "height": 240
+            "width": 180,
+            "height": 210
           },
           "startTime": 0,
-          "endTime": 8
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #3b82f6",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
         }
       ]
     },
@@ -2679,10 +3747,10 @@
           "height": 420
         },
         "avatar": {
-          "x": 1016,
-          "y": 444,
-          "width": 200,
-          "height": 240
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
         }
       },
       "description": "Four milestone columns in bar chart style.",
@@ -2702,10 +3770,10 @@
           "layer": 10,
           "position": {
             "x": 73,
-            "y": 100
+            "y": 80
           },
           "size": {
-            "width": 400,
+            "width": 600,
             "height": 56
           },
           "startTime": 0,
@@ -2713,9 +3781,18 @@
           "content": "Key Milestones",
           "style": {
             "fontSize": 48,
-            "fontWeight": "800",
-            "color": "#0f172a"
-          }
+            "fontWeight": "900",
+            "color": "#0f172a",
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
         },
         {
           "id": "t_intro",
@@ -2724,493 +3801,846 @@
           "editable": true,
           "layer": 11,
           "position": {
-            "x": 500,
-            "y": 110
+            "x": 73,
+            "y": 140
           },
           "size": {
-            "width": 700,
-            "height": 60
+            "width": 600,
+            "height": 50
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text. Insert your desired text here.",
+          "content": "A progressive look at our product evolution and target growth milestones.",
           "style": {
-            "fontSize": 15,
+            "fontSize": 16,
             "color": "#64748b",
-            "lineHeight": 1.45
-          }
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
         },
         {
-          "id": "bar0",
+          "id": "timeline_base_line",
           "type": "shape",
           "role": "decoration",
           "shapeKey": null,
           "editable": true,
-          "layer": 1,
+          "layer": 2,
           "position": {
-            "x": 80,
-            "y": 380
+            "x": 100,
+            "y": 310
           },
           "size": {
-            "width": 200,
-            "height": 260
+            "width": 1080,
+            "height": 3
           },
           "startTime": 0,
           "endTime": 8,
           "style": {
-            "backgroundColor": "#f1f5f9",
-            "borderRadius": "8px 8px 0 0"
-          }
+            "backgroundColor": "#bfdbfe"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
-          "id": "ico_ms0_bg",
+          "id": "timeline_done_line",
           "type": "shape",
           "role": "decoration",
-          "shapeKey": "pitch-icon-badge",
+          "shapeKey": null,
           "editable": true,
-          "layer": 9,
+          "layer": 2,
           "position": {
-            "x": 150,
-            "y": 340
+            "x": 100,
+            "y": 310
           },
           "size": {
-            "width": 68,
-            "height": 68
+            "width": 540,
+            "height": 3
           },
           "startTime": 0,
           "endTime": 8,
           "style": {
-            "backgroundColor": "#ffffff",
-            "borderRadius": "50%"
-          }
+            "backgroundColor": "#3b82f6"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
-          "id": "ico_ms0",
-          "type": "image",
-          "assetKey": "signpost",
-          "role": "icon",
+          "id": "node_1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
           "editable": true,
-          "layer": 10,
+          "layer": 3,
           "position": {
-            "x": 160,
+            "x": 150,
+            "y": 302
+          },
+          "size": {
+            "width": 20,
+            "height": 20
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#3b82f6",
+            "borderRadius": "50%",
+            "border": "4px solid #ffffff"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "t_m1_idx",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 130,
+            "y": 250
+          },
+          "size": {
+            "width": 80,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Q1 2026",
+          "style": {
+            "fontSize": 14,
+            "fontWeight": "800",
+            "color": "#3b82f6",
+            "textAlign": "center",
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "m1_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 70,
             "y": 350
           },
           "size": {
-            "width": 48,
-            "height": 48
+            "width": 200,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#f8fafc",
+            "borderRadius": "12px",
+            "border": "1px solid #bfdbfe"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "m1_ico",
+          "type": "image",
+          "assetKey": "signpost",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 150,
+            "y": 365
+          },
+          "size": {
+            "width": 40,
+            "height": 40
           },
           "startTime": 0,
           "endTime": 8,
           "src": "https://img.icons8.com/doodle/96/milestone.png",
           "placeholder": true,
           "alt": "Milestone",
-          "style": {
-            "objectFit": "contain",
-            "borderRadius": "0",
-            "backgroundColor": "transparent"
-          }
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
         },
         {
-          "id": "t_ms0_h",
+          "id": "t_m1_lbl",
           "type": "text",
           "role": "body-text",
           "editable": true,
-          "layer": 12,
+          "layer": 3,
           "position": {
-            "x": 90,
-            "y": 404
+            "x": 80,
+            "y": 420
           },
           "size": {
             "width": 180,
-            "height": 28
+            "height": 24
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "Milestone 1",
+          "content": "Phase 1 Init",
           "style": {
-            "fontSize": 18,
-            "fontWeight": "700",
-            "color": "#0f172a",
-            "textAlign": "center"
-          }
-        },
-        {
-          "id": "t_ms0_b",
-          "type": "text",
-          "role": "body-text",
-          "editable": true,
-          "layer": 13,
-          "position": {
-            "x": 90,
-            "y": 438
-          },
-          "size": {
-            "width": 180,
-            "height": 100
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text.",
-          "style": {
-            "fontSize": 13,
+            "fontSize": 15,
+            "fontWeight": "800",
             "color": "#0f172a",
             "textAlign": "center",
-            "lineHeight": 1.4
-          }
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
         },
         {
-          "id": "bar1",
+          "id": "t_m1_desc",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 80,
+            "y": 450
+          },
+          "size": {
+            "width": 180,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Core engine rollout and team workspace creation.",
+          "style": {
+            "fontSize": 12,
+            "color": "#64748b",
+            "textAlign": "center",
+            "lineHeight": 1.4,
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "node_2",
           "type": "shape",
           "role": "decoration",
           "shapeKey": null,
           "editable": true,
-          "layer": 1,
+          "layer": 3,
           "position": {
-            "x": 340,
-            "y": 280
+            "x": 430,
+            "y": 302
           },
           "size": {
-            "width": 200,
-            "height": 360
+            "width": 20,
+            "height": 20
           },
           "startTime": 0,
           "endTime": 8,
           "style": {
             "backgroundColor": "#3b82f6",
-            "borderRadius": "8px 8px 0 0"
-          }
+            "borderRadius": "50%",
+            "border": "4px solid #ffffff"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
-          "id": "ico_ms1_bg",
-          "type": "shape",
-          "role": "decoration",
-          "shapeKey": "pitch-icon-badge",
+          "id": "t_m2_idx",
+          "type": "text",
+          "role": "body-text",
           "editable": true,
-          "layer": 9,
+          "layer": 4,
           "position": {
             "x": 410,
-            "y": 240
+            "y": 250
           },
           "size": {
-            "width": 68,
-            "height": 68
+            "width": 80,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Q2 2026",
+          "style": {
+            "fontSize": 14,
+            "fontWeight": "800",
+            "color": "#3b82f6",
+            "textAlign": "center",
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
+        },
+        {
+          "id": "m2_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 350,
+            "y": 350
+          },
+          "size": {
+            "width": 200,
+            "height": 180
           },
           "startTime": 0,
           "endTime": 8,
           "style": {
-            "backgroundColor": "#ffffff",
-            "borderRadius": "50%"
-          }
+            "backgroundColor": "#f8fafc",
+            "borderRadius": "12px",
+            "border": "1px solid #bfdbfe"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
-          "id": "ico_ms1",
+          "id": "m2_ico",
           "type": "image",
           "assetKey": "handshake",
-          "role": "icon",
+          "role": "hero-image",
           "editable": true,
-          "layer": 10,
+          "layer": 4,
           "position": {
-            "x": 420,
-            "y": 250
+            "x": 430,
+            "y": 365
           },
           "size": {
-            "width": 48,
-            "height": 48
+            "width": 40,
+            "height": 40
           },
           "startTime": 0,
           "endTime": 8,
           "src": "https://img.icons8.com/doodle/96/handshake.png",
           "placeholder": true,
           "alt": "Handshake",
-          "style": {
-            "objectFit": "contain",
-            "borderRadius": "0",
-            "backgroundColor": "transparent"
-          }
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
         },
         {
-          "id": "t_ms1_h",
+          "id": "t_m2_lbl",
           "type": "text",
           "role": "body-text",
           "editable": true,
-          "layer": 14,
+          "layer": 3,
           "position": {
-            "x": 350,
-            "y": 304
+            "x": 360,
+            "y": 420
           },
           "size": {
             "width": 180,
-            "height": 28
+            "height": 24
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "Milestone 2",
+          "content": "Integration",
           "style": {
-            "fontSize": 18,
-            "fontWeight": "700",
-            "color": "#ffffff",
-            "textAlign": "center"
-          }
-        },
-        {
-          "id": "t_ms1_b",
-          "type": "text",
-          "role": "body-text",
-          "editable": true,
-          "layer": 15,
-          "position": {
-            "x": 350,
-            "y": 338
-          },
-          "size": {
-            "width": 180,
-            "height": 100
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text.",
-          "style": {
-            "fontSize": 13,
-            "color": "#ffffff",
+            "fontSize": 15,
+            "fontWeight": "800",
+            "color": "#0f172a",
             "textAlign": "center",
-            "lineHeight": 1.4
-          }
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.7
+            }
+          ]
         },
         {
-          "id": "bar2",
+          "id": "t_m2_desc",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 360,
+            "y": 450
+          },
+          "size": {
+            "width": 180,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "HeyGen voice-sycn integration finalized.",
+          "style": {
+            "fontSize": 12,
+            "color": "#64748b",
+            "textAlign": "center",
+            "lineHeight": 1.4,
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.78
+            }
+          ]
+        },
+        {
+          "id": "node_3",
           "type": "shape",
           "role": "decoration",
           "shapeKey": null,
           "editable": true,
-          "layer": 1,
+          "layer": 3,
           "position": {
-            "x": 600,
-            "y": 340
-          },
-          "size": {
-            "width": 200,
-            "height": 300
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "style": {
-            "backgroundColor": "#1e40af",
-            "borderRadius": "8px 8px 0 0"
-          }
-        },
-        {
-          "id": "ico_ms2_bg",
-          "type": "shape",
-          "role": "decoration",
-          "shapeKey": "pitch-icon-badge",
-          "editable": true,
-          "layer": 9,
-          "position": {
-            "x": 670,
+            "x": 708,
             "y": 300
           },
           "size": {
-            "width": 68,
-            "height": 68
+            "width": 24,
+            "height": 24
           },
           "startTime": 0,
           "endTime": 8,
           "style": {
             "backgroundColor": "#ffffff",
-            "borderRadius": "50%"
-          }
+            "borderRadius": "50%",
+            "border": "4px solid #1e40af"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
-          "id": "ico_ms2",
-          "type": "image",
-          "assetKey": "target",
-          "role": "icon",
+          "id": "t_m3_idx",
+          "type": "text",
+          "role": "body-text",
           "editable": true,
-          "layer": 10,
+          "layer": 4,
           "position": {
-            "x": 680,
-            "y": 310
+            "x": 690,
+            "y": 250
           },
           "size": {
-            "width": 48,
-            "height": 48
+            "width": 80,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Q3 2026",
+          "style": {
+            "fontSize": 14,
+            "fontWeight": "800",
+            "color": "#1e40af",
+            "textAlign": "center",
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.8600000000000001
+            }
+          ]
+        },
+        {
+          "id": "m3_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 630,
+            "y": 350
+          },
+          "size": {
+            "width": 200,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#ffffff",
+            "borderRadius": "12px",
+            "border": "2px solid #1e40af",
+            "boxShadow": "0 10px 20px rgba(30,64,175,0.05)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "m3_ico",
+          "type": "image",
+          "assetKey": "target",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 710,
+            "y": 365
+          },
+          "size": {
+            "width": 40,
+            "height": 40
           },
           "startTime": 0,
           "endTime": 8,
           "src": "https://img.icons8.com/doodle/96/bullseye.png",
           "placeholder": true,
           "alt": "Target",
-          "style": {
-            "objectFit": "contain",
-            "borderRadius": "0",
-            "backgroundColor": "transparent"
-          }
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.35
+            }
+          ]
         },
         {
-          "id": "t_ms2_h",
+          "id": "t_m3_lbl",
           "type": "text",
           "role": "body-text",
           "editable": true,
-          "layer": 16,
+          "layer": 3,
           "position": {
-            "x": 610,
-            "y": 364
+            "x": 640,
+            "y": 420
           },
           "size": {
             "width": 180,
-            "height": 28
+            "height": 24
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "Milestone 3",
+          "content": "Global Rollout",
           "style": {
-            "fontSize": 18,
-            "fontWeight": "700",
-            "color": "#ffffff",
-            "textAlign": "center"
-          }
-        },
-        {
-          "id": "t_ms2_b",
-          "type": "text",
-          "role": "body-text",
-          "editable": true,
-          "layer": 17,
-          "position": {
-            "x": 610,
-            "y": 398
-          },
-          "size": {
-            "width": 180,
-            "height": 100
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text.",
-          "style": {
-            "fontSize": 13,
-            "color": "#ffffff",
+            "fontSize": 15,
+            "fontWeight": "800",
+            "color": "#1e40af",
             "textAlign": "center",
-            "lineHeight": 1.4
-          }
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.94
+            }
+          ]
         },
         {
-          "id": "bar3",
+          "id": "t_m3_desc",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 640,
+            "y": 450
+          },
+          "size": {
+            "width": 180,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Stitching pipeline scalability benchmarked.",
+          "style": {
+            "fontSize": 12,
+            "color": "#64748b",
+            "textAlign": "center",
+            "lineHeight": 1.4,
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.02
+            }
+          ]
+        },
+        {
+          "id": "node_4",
           "type": "shape",
           "role": "decoration",
           "shapeKey": null,
           "editable": true,
-          "layer": 1,
+          "layer": 3,
           "position": {
-            "x": 860,
-            "y": 240
+            "x": 990,
+            "y": 302
           },
           "size": {
-            "width": 200,
-            "height": 400
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "style": {
-            "backgroundColor": "#1e3a8a",
-            "borderRadius": "8px 8px 0 0"
-          }
-        },
-        {
-          "id": "ico_ms3_bg",
-          "type": "shape",
-          "role": "decoration",
-          "shapeKey": "pitch-icon-badge",
-          "editable": true,
-          "layer": 9,
-          "position": {
-            "x": 930,
-            "y": 200
-          },
-          "size": {
-            "width": 68,
-            "height": 68
+            "width": 20,
+            "height": 20
           },
           "startTime": 0,
           "endTime": 8,
           "style": {
             "backgroundColor": "#ffffff",
-            "borderRadius": "50%"
-          }
+            "borderRadius": "50%",
+            "border": "4px solid #bfdbfe"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
-          "id": "ico_ms3",
-          "type": "image",
-          "assetKey": "presentation",
-          "role": "icon",
+          "id": "t_m4_idx",
+          "type": "text",
+          "role": "body-text",
           "editable": true,
-          "layer": 10,
+          "layer": 4,
           "position": {
-            "x": 940,
-            "y": 210
+            "x": 970,
+            "y": 250
           },
           "size": {
-            "width": 48,
-            "height": 48
+            "width": 80,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Q4 2026",
+          "style": {
+            "fontSize": 14,
+            "color": "#64748b",
+            "textAlign": "center",
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.1
+            }
+          ]
+        },
+        {
+          "id": "m4_card",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 910,
+            "y": 350
+          },
+          "size": {
+            "width": 200,
+            "height": 180
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#f8fafc",
+            "borderRadius": "12px",
+            "border": "1px solid #bfdbfe"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "m4_ico",
+          "type": "image",
+          "assetKey": "presentation",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 990,
+            "y": 365
+          },
+          "size": {
+            "width": 40,
+            "height": 40
           },
           "startTime": 0,
           "endTime": 8,
           "src": "https://img.icons8.com/doodle/96/presentation.png",
           "placeholder": true,
           "alt": "Presentation",
-          "style": {
-            "objectFit": "contain",
-            "borderRadius": "0",
-            "backgroundColor": "transparent"
-          }
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.45000000000000007
+            }
+          ]
         },
         {
-          "id": "t_ms3_h",
+          "id": "t_m4_lbl",
           "type": "text",
           "role": "body-text",
           "editable": true,
-          "layer": 18,
+          "layer": 3,
           "position": {
-            "x": 870,
-            "y": 264
+            "x": 920,
+            "y": 420
           },
           "size": {
             "width": 180,
-            "height": 28
+            "height": 24
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "Milestone 4",
+          "content": "Enterprise Hub",
           "style": {
-            "fontSize": 18,
-            "fontWeight": "700",
-            "color": "#ffffff",
-            "textAlign": "center"
-          }
-        },
-        {
-          "id": "t_ms3_b",
-          "type": "text",
-          "role": "body-text",
-          "editable": true,
-          "layer": 19,
-          "position": {
-            "x": 870,
-            "y": 298
-          },
-          "size": {
-            "width": 180,
-            "height": 100
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "This is a sample text. Insert your desired text here. You can add sample text. This is a sample text.",
-          "style": {
-            "fontSize": 13,
-            "color": "#ffffff",
+            "fontSize": 15,
+            "color": "#64748b",
             "textAlign": "center",
-            "lineHeight": 1.4
-          }
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.18
+            }
+          ]
+        },
+        {
+          "id": "t_m4_desc",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 920,
+            "y": 450
+          },
+          "size": {
+            "width": 180,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Dedicated private cloud server configurations.",
+          "style": {
+            "fontSize": 12,
+            "color": "#64748b",
+            "textAlign": "center",
+            "lineHeight": 1.4,
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 1.26
+            }
+          ]
         },
         {
           "id": "avatar_presenter",
@@ -3219,15 +4649,29 @@
           "editable": true,
           "layer": 60,
           "position": {
-            "x": 1016,
-            "y": 444
+            "x": 1024,
+            "y": 462
           },
           "size": {
-            "width": 200,
-            "height": 240
+            "width": 180,
+            "height": 210
           },
           "startTime": 0,
-          "endTime": 8
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #3b82f6",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
         }
       ]
     },
@@ -3259,10 +4703,10 @@
           "height": 584
         },
         "avatar": {
-          "x": 1016,
-          "y": 444,
-          "width": 200,
-          "height": 240
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
         }
       },
       "description": "Contact details with portrait image.",
@@ -3293,7 +4737,15 @@
           "endTime": 8,
           "style": {
             "backgroundColor": "#3b82f6"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "t_title",
@@ -3303,7 +4755,7 @@
           "layer": 10,
           "position": {
             "x": 73,
-            "y": 100
+            "y": 80
           },
           "size": {
             "width": 500,
@@ -3311,268 +4763,21 @@
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "Edit Text Here",
+          "content": "Let's Connect",
           "style": {
             "fontSize": 48,
-            "fontWeight": "800",
-            "color": "#0f172a"
-          }
-        },
-        {
-          "id": "t_loc_h",
-          "type": "text",
-          "role": "body-text",
-          "editable": true,
-          "layer": 11,
-          "position": {
-            "x": 73,
-            "y": 200
+            "fontWeight": "900",
+            "color": "#0f172a",
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
           },
-          "size": {
-            "width": 200,
-            "height": 28
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "Location",
-          "style": {
-            "fontSize": 20,
-            "fontWeight": "700",
-            "color": "#0f172a"
-          }
-        },
-        {
-          "id": "t_loc_b",
-          "type": "text",
-          "role": "body-text",
-          "editable": true,
-          "layer": 12,
-          "position": {
-            "x": 73,
-            "y": 232
-          },
-          "size": {
-            "width": 400,
-            "height": 60
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "123 Anywhere St., Any City, ST 12345\nThis is a sample text. Edit text here.",
-          "style": {
-            "fontSize": 15,
-            "color": "#64748b",
-            "lineHeight": 1.5
-          }
-        },
-        {
-          "id": "ico_phone_bg",
-          "type": "shape",
-          "role": "decoration",
-          "shapeKey": "pitch-icon-badge",
-          "editable": true,
-          "layer": 8,
-          "position": {
-            "x": 73,
-            "y": 330
-          },
-          "size": {
-            "width": 56,
-            "height": 56
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "style": {
-            "backgroundColor": "#1e3a8a",
-            "borderRadius": "50%"
-          }
-        },
-        {
-          "id": "ico_phone",
-          "type": "image",
-          "assetKey": "phone",
-          "role": "icon",
-          "editable": true,
-          "layer": 9,
-          "position": {
-            "x": 81,
-            "y": 338
-          },
-          "size": {
-            "width": 40,
-            "height": 40
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "src": "https://img.icons8.com/doodle/96/phone.png",
-          "placeholder": true,
-          "alt": "Phone",
-          "style": {
-            "objectFit": "contain",
-            "borderRadius": "0",
-            "backgroundColor": "transparent"
-          }
-        },
-        {
-          "id": "t_phone",
-          "type": "text",
-          "role": "body-text",
-          "editable": true,
-          "layer": 13,
-          "position": {
-            "x": 135,
-            "y": 338
-          },
-          "size": {
-            "width": 280,
-            "height": 32
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "+1 (212) 123-4567",
-          "style": {
-            "fontSize": 16,
-            "color": "#0f172a"
-          }
-        },
-        {
-          "id": "ico_email_bg",
-          "type": "shape",
-          "role": "decoration",
-          "shapeKey": "pitch-icon-badge",
-          "editable": true,
-          "layer": 8,
-          "position": {
-            "x": 73,
-            "y": 395
-          },
-          "size": {
-            "width": 56,
-            "height": 56
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "style": {
-            "backgroundColor": "#3b82f6",
-            "borderRadius": "50%"
-          }
-        },
-        {
-          "id": "ico_email",
-          "type": "image",
-          "assetKey": "email",
-          "role": "icon",
-          "editable": true,
-          "layer": 9,
-          "position": {
-            "x": 81,
-            "y": 403
-          },
-          "size": {
-            "width": 40,
-            "height": 40
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "src": "https://img.icons8.com/doodle/96/new-post.png",
-          "placeholder": true,
-          "alt": "Email",
-          "style": {
-            "objectFit": "contain",
-            "borderRadius": "0",
-            "backgroundColor": "transparent"
-          }
-        },
-        {
-          "id": "t_email",
-          "type": "text",
-          "role": "body-text",
-          "editable": true,
-          "layer": 14,
-          "position": {
-            "x": 135,
-            "y": 403
-          },
-          "size": {
-            "width": 320,
-            "height": 32
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "Enter your email address here",
-          "style": {
-            "fontSize": 16,
-            "color": "#0f172a"
-          }
-        },
-        {
-          "id": "ico_web_bg",
-          "type": "shape",
-          "role": "decoration",
-          "shapeKey": "pitch-icon-badge",
-          "editable": true,
-          "layer": 8,
-          "position": {
-            "x": 73,
-            "y": 460
-          },
-          "size": {
-            "width": 56,
-            "height": 56
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "style": {
-            "backgroundColor": "#1e3a8a",
-            "borderRadius": "50%"
-          }
-        },
-        {
-          "id": "ico_web",
-          "type": "image",
-          "assetKey": "website",
-          "role": "icon",
-          "editable": true,
-          "layer": 9,
-          "position": {
-            "x": 81,
-            "y": 468
-          },
-          "size": {
-            "width": 40,
-            "height": 40
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "src": "https://img.icons8.com/doodle/96/domain.png",
-          "placeholder": true,
-          "alt": "Website",
-          "style": {
-            "objectFit": "contain",
-            "borderRadius": "0",
-            "backgroundColor": "transparent"
-          }
-        },
-        {
-          "id": "t_web",
-          "type": "text",
-          "role": "body-text",
-          "editable": true,
-          "layer": 15,
-          "position": {
-            "x": 135,
-            "y": 468
-          },
-          "size": {
-            "width": 320,
-            "height": 32
-          },
-          "startTime": 0,
-          "endTime": 8,
-          "content": "Enter your website here",
-          "style": {
-            "fontSize": 16,
-            "color": "#0f172a"
-          }
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
         },
         {
           "id": "img_contact",
@@ -3586,8 +4791,8 @@
             "y": 100
           },
           "size": {
-            "width": 492,
-            "height": 584
+            "width": 490,
+            "height": 520
           },
           "startTime": 0,
           "endTime": 8,
@@ -3595,9 +4800,463 @@
           "placeholder": true,
           "alt": "Support representative",
           "style": {
-            "borderRadius": "16px",
-            "objectFit": "cover"
-          }
+            "borderRadius": "250px 30px 250px 30px",
+            "objectFit": "cover",
+            "boxShadow": "0 20px 40px rgba(0,0,0,0.15)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "t_loc_h",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 11,
+          "position": {
+            "x": 73,
+            "y": 170
+          },
+          "size": {
+            "width": 200,
+            "height": 28
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "Headquarters",
+          "style": {
+            "fontSize": 18,
+            "fontWeight": "800",
+            "color": "#1e40af",
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "t_loc_b",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 12,
+          "position": {
+            "x": 73,
+            "y": 205
+          },
+          "size": {
+            "width": 520,
+            "height": 60
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "123 Anywhere St., Any City, ST 12345\nReach us directly below for customized plans.",
+          "style": {
+            "fontSize": 15,
+            "color": "#64748b",
+            "lineHeight": 1.5,
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "row_c1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 73,
+            "y": 300
+          },
+          "size": {
+            "width": 520,
+            "height": 80
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#f8fafc",
+            "borderRadius": "12px",
+            "border": "1px solid #bfdbfe"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "ico_phone_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 93,
+            "y": 315
+          },
+          "size": {
+            "width": 50,
+            "height": 50
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1e3a8a",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "ico_phone",
+          "type": "image",
+          "assetKey": "phone",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 102,
+            "y": 324
+          },
+          "size": {
+            "width": 32,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/phone.png",
+          "placeholder": true,
+          "alt": "Phone",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
+        },
+        {
+          "id": "t_phone",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 13,
+          "position": {
+            "x": 160,
+            "y": 326
+          },
+          "size": {
+            "width": 280,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "+1 (212) 123-4567",
+          "style": {
+            "fontSize": 16,
+            "fontWeight": "700",
+            "color": "#0f172a",
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "row_c2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 73,
+            "y": 400
+          },
+          "size": {
+            "width": 520,
+            "height": 80
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#f8fafc",
+            "borderRadius": "12px",
+            "border": "1px solid #bfdbfe"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "ico_email_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 93,
+            "y": 415
+          },
+          "size": {
+            "width": 50,
+            "height": 50
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#3b82f6",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "ico_email",
+          "type": "image",
+          "assetKey": "email",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 102,
+            "y": 424
+          },
+          "size": {
+            "width": 32,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/new-post.png",
+          "placeholder": true,
+          "alt": "Email",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.35
+            }
+          ]
+        },
+        {
+          "id": "t_email",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 14,
+          "position": {
+            "x": 160,
+            "y": 426
+          },
+          "size": {
+            "width": 320,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "support@athenavi.com",
+          "style": {
+            "fontSize": 16,
+            "fontWeight": "700",
+            "color": "#0f172a",
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
+        },
+        {
+          "id": "row_c3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 73,
+            "y": 500
+          },
+          "size": {
+            "width": 520,
+            "height": 80
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#f8fafc",
+            "borderRadius": "12px",
+            "border": "1px solid #bfdbfe"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "ico_web_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": "pitch-icon-badge",
+          "editable": true,
+          "layer": 8,
+          "position": {
+            "x": 93,
+            "y": 515
+          },
+          "size": {
+            "width": 50,
+            "height": 50
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1e3a8a",
+            "borderRadius": "50%"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "ico_web",
+          "type": "image",
+          "assetKey": "website",
+          "role": "icon",
+          "editable": true,
+          "layer": 9,
+          "position": {
+            "x": 102,
+            "y": 524
+          },
+          "size": {
+            "width": 32,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "src": "https://img.icons8.com/doodle/96/domain.png",
+          "placeholder": true,
+          "alt": "Website",
+          "style": {
+            "objectFit": "contain",
+            "borderRadius": "0",
+            "backgroundColor": "transparent"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.45000000000000007
+            }
+          ]
+        },
+        {
+          "id": "t_web",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 15,
+          "position": {
+            "x": 160,
+            "y": 526
+          },
+          "size": {
+            "width": 320,
+            "height": 32
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "content": "www.athenavi.com",
+          "style": {
+            "fontSize": 16,
+            "fontWeight": "700",
+            "color": "#0f172a",
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
         },
         {
           "id": "avatar_presenter",
@@ -3606,15 +5265,29 @@
           "editable": true,
           "layer": 60,
           "position": {
-            "x": 1016,
-            "y": 444
+            "x": 1024,
+            "y": 462
           },
           "size": {
-            "width": 200,
-            "height": 240
+            "width": 180,
+            "height": 210
           },
           "startTime": 0,
-          "endTime": 8
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #3b82f6",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
         }
       ]
     },
@@ -3646,10 +5319,10 @@
           "height": 600
         },
         "avatar": {
-          "x": 1016,
-          "y": 444,
-          "width": 200,
-          "height": 240
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
         }
       },
       "description": "Promotional slide with coupon and CTA.",
@@ -3668,21 +5341,31 @@
           "role": "decoration",
           "shapeKey": null,
           "editable": true,
-          "layer": 0,
+          "layer": 2,
           "position": {
-            "x": 640,
+            "x": 680,
             "y": 80
           },
           "size": {
-            "width": 600,
-            "height": 560
+            "width": 520,
+            "height": 540
           },
           "startTime": 0,
           "endTime": 8,
           "style": {
-            "backgroundColor": "#dbeafe",
-            "borderRadius": "16px"
-          }
+            "backgroundColor": "#f8fafc",
+            "borderRadius": "24px",
+            "border": "1px solid #bfdbfe",
+            "boxShadow": "0 20px 40px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "img_logo",
@@ -3692,8 +5375,8 @@
           "editable": true,
           "layer": 5,
           "position": {
-            "x": 720,
-            "y": 100
+            "x": 780,
+            "y": 120
           },
           "size": {
             "width": 320,
@@ -3706,7 +5389,46 @@
           "alt": "Logo",
           "style": {
             "objectFit": "contain"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "coupon_box",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 740,
+            "y": 210
+          },
+          "size": {
+            "width": 400,
+            "height": 110
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#dbeafe",
+            "border": "2px dashed #3b82f6",
+            "borderRadius": "12px"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
         },
         {
           "id": "t_discount",
@@ -3715,22 +5437,31 @@
           "editable": true,
           "layer": 10,
           "position": {
-            "x": 680,
-            "y": 170
+            "x": 750,
+            "y": 222
           },
           "size": {
-            "width": 520,
+            "width": 380,
             "height": 36
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "Get 15% discount from regular price",
+          "content": "Get 15% Discount Now",
           "style": {
-            "fontSize": 18,
-            "fontWeight": "600",
-            "color": "#0f172a",
-            "textAlign": "center"
-          }
+            "fontSize": 16,
+            "fontWeight": "800",
+            "color": "#1e3a8a",
+            "textAlign": "center",
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
         },
         {
           "id": "t_coupon",
@@ -3739,23 +5470,32 @@
           "editable": true,
           "layer": 11,
           "position": {
-            "x": 700,
-            "y": 220
+            "x": 750,
+            "y": 260
           },
           "size": {
-            "width": 480,
-            "height": 80
+            "width": 380,
+            "height": 40
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "Coupon Code:\nFREEBUNDLE15",
+          "content": "FREEBUNDLE15",
           "style": {
-            "fontSize": 20,
-            "fontWeight": "700",
+            "fontSize": 26,
+            "fontWeight": "900",
             "color": "#1e40af",
             "textAlign": "center",
-            "lineHeight": 1.4
-          }
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif",
+            "letterSpacing": "0.05em"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
         },
         {
           "id": "t_apply",
@@ -3765,7 +5505,7 @@
           "layer": 12,
           "position": {
             "x": 700,
-            "y": 340
+            "y": 345
           },
           "size": {
             "width": 480,
@@ -3773,36 +5513,85 @@
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "Apply this coupon code during sign up",
+          "content": "Enter code during checkout registration.",
           "style": {
-            "fontSize": 15,
+            "fontSize": 14,
             "color": "#64748b",
-            "textAlign": "center"
-          }
+            "textAlign": "center",
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
         },
         {
-          "id": "t_subscribe",
+          "id": "btn_bg",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 840,
+            "y": 410
+          },
+          "size": {
+            "width": 200,
+            "height": 50
+          },
+          "startTime": 0,
+          "endTime": 8,
+          "style": {
+            "backgroundColor": "#1e40af",
+            "borderRadius": "8px",
+            "cursor": "pointer"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "btn_lbl",
           "type": "text",
           "role": "body-text",
           "editable": true,
-          "layer": 13,
+          "layer": 4,
           "position": {
-            "x": 700,
-            "y": 470
+            "x": 840,
+            "y": 424
           },
           "size": {
-            "width": 480,
-            "height": 48
+            "width": 200,
+            "height": 30
           },
           "startTime": 0,
           "endTime": 8,
           "content": "SUBSCRIBE NOW",
           "style": {
-            "fontSize": 24,
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
             "fontWeight": "800",
-            "color": "#0f172a",
+            "fontSize": 14,
+            "color": "#ffffff",
             "textAlign": "center"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.54
+            }
+          ]
         },
         {
           "id": "t_visit",
@@ -3812,7 +5601,7 @@
           "layer": 14,
           "position": {
             "x": 720,
-            "y": 560
+            "y": 530
           },
           "size": {
             "width": 440,
@@ -3820,12 +5609,22 @@
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "Visit slidemodel.com",
+          "content": "Visit www.athenavi.com",
           "style": {
-            "fontSize": 16,
-            "color": "#1e40af",
-            "textAlign": "center"
-          }
+            "fontSize": 15,
+            "fontWeight": "700",
+            "color": "#3b82f6",
+            "textAlign": "center",
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.62
+            }
+          ]
         },
         {
           "id": "t_feat_h",
@@ -3838,17 +5637,26 @@
             "y": 440
           },
           "size": {
-            "width": 560,
+            "width": 540,
             "height": 36
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "Download PowerPoint templates and save hours of work.",
+          "content": "Deploy interactive, scalable video courses.",
           "style": {
-            "fontSize": 18,
-            "fontWeight": "600",
-            "color": "#0f172a"
-          }
+            "fontSize": 22,
+            "fontWeight": "800",
+            "color": "#0f172a",
+            "fontFamily": "\"Outfit\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.7
+            }
+          ]
         },
         {
           "id": "t_feat_b",
@@ -3858,20 +5666,29 @@
           "layer": 16,
           "position": {
             "x": 73,
-            "y": 480
+            "y": 490
           },
           "size": {
-            "width": 400,
+            "width": 540,
             "height": 100
           },
           "startTime": 0,
           "endTime": 8,
-          "content": "Easy to use\nFully customizable\nCutting edge designs",
+          "content": "✔ Dynamic actor avatars matching scripts\n✔ 120+ localized languages and accent clones\n✔ Complete video rendering templates library",
           "style": {
             "fontSize": 16,
             "color": "#64748b",
-            "lineHeight": 1.6
-          }
+            "lineHeight": 1.8,
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.78
+            }
+          ]
         },
         {
           "id": "img_shot",
@@ -3881,12 +5698,12 @@
           "editable": true,
           "layer": 6,
           "position": {
-            "x": 100,
+            "x": 73,
             "y": 100
           },
           "size": {
-            "width": 480,
-            "height": 280
+            "width": 540,
+            "height": 300
           },
           "startTime": 0,
           "endTime": 8,
@@ -3894,10 +5711,18 @@
           "placeholder": true,
           "alt": "Product screenshot",
           "style": {
-            "borderRadius": "12px",
+            "borderRadius": "16px",
             "objectFit": "cover",
-            "border": "1px solid #e2e8f0"
-          }
+            "border": "1px solid #bfdbfe"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
         },
         {
           "id": "img_banner",
@@ -3907,11 +5732,11 @@
           "editable": true,
           "layer": 4,
           "position": {
-            "x": 0,
-            "y": 640
+            "x": 64,
+            "y": 604
           },
           "size": {
-            "width": 1280,
+            "width": 1152,
             "height": 80
           },
           "startTime": 0,
@@ -3921,7 +5746,15 @@
           "alt": "Footer banner",
           "style": {
             "objectFit": "cover"
-          }
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.35
+            }
+          ]
         },
         {
           "id": "avatar_presenter",
@@ -3930,15 +5763,29 @@
           "editable": true,
           "layer": 60,
           "position": {
-            "x": 1016,
-            "y": 444
+            "x": 1024,
+            "y": 462
           },
           "size": {
-            "width": 200,
-            "height": 240
+            "width": 180,
+            "height": 210
           },
           "startTime": 0,
-          "endTime": 8
+          "endTime": 8,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #3b82f6",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
         }
       ]
     }
