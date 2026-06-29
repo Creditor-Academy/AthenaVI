@@ -6,9 +6,6 @@ pipeline {
         AWS_ACCOUNT_ID = "205091463760"
         ECR_REPOSITORY = "vi-athena-frontend"
         IMAGE_TAG = "${BUILD_NUMBER}"
-
-        // Production Backend API
-        VITE_API_BASE_URL = "https://api.vs.lmsathena.com"
     }
 
     stages {
@@ -30,9 +27,7 @@ pipeline {
                 sh '''
                 echo "===================================="
                 echo "Building React Application"
-                echo "API URL: $VITE_API_BASE_URL"
                 echo "===================================="
-
                 npm run build
                 '''
             }
@@ -61,7 +56,6 @@ pipeline {
                 sh """
                 docker build \
                 --no-cache \
-                --build-arg VITE_API_BASE_URL=${VITE_API_BASE_URL} \
                 -t ${ECR_REPOSITORY}:${IMAGE_TAG} .
                 """
             }
@@ -69,12 +63,14 @@ pipeline {
 
         stage('Trivy Scan') {
             steps {
-                sh """
+                sh '''
+                rm -rf ~/.cache/trivy/db
                 trivy image \
-                --exit-code 0 \
-                --severity HIGH,CRITICAL \
-                ${ECR_REPOSITORY}:${IMAGE_TAG}
-                """
+                  --scanners vuln \
+                  --exit-code 0 \
+                  --severity HIGH,CRITICAL \
+                  ${ECR_REPOSITORY}:${IMAGE_TAG}
+                '''
             }
         }
 
@@ -106,9 +102,7 @@ pipeline {
         success {
             echo "========================================"
             echo "Frontend Pipeline Completed Successfully"
-            echo "API URL : ${VITE_API_BASE_URL}"
-            echo "Image Tag : ${IMAGE_TAG}"
-            echo "Image pushed to Amazon ECR"
+            echo "Docker Image Pushed Successfully"
             echo "========================================"
         }
 
