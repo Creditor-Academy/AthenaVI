@@ -134,6 +134,18 @@ const SelectionOverlay = ({
       const origFontSize = Number.parseFloat(String(clip.style?.fontSize ?? 24)) || 24;
       const rotation = clip.rotation ?? 0;
 
+      /** Compute font scale from resize result based on which handle was dragged. */
+      const computeFontScale = (result) => {
+        if (handle === 'left' || handle === 'right') {
+          return result.width / origW;
+        }
+        if (handle === 'top' || handle === 'bottom') {
+          return result.height / origH;
+        }
+        // corners: use the smaller ratio so text always fits inside the box
+        return Math.min(result.width / origW, result.height / origH);
+      };
+
       attachPointerDrag(
         e,
         (mv) => {
@@ -160,12 +172,19 @@ const SelectionOverlay = ({
           if (showDimensions) {
             setSizeBadge({ w: result.width, h: result.height });
           }
+          // Live font scaling for text clips — all handle types
+          if (isText && onUpdateTextFontSize) {
+            const scale = computeFontScale(result);
+            const nextFont = Math.round(Math.max(8, Math.min(300, origFontSize * scale)) * 10) / 10;
+            onUpdateTextFontSize(nextFont);
+          }
         },
         () => {
           const result = lastBoundsRef.current;
-          if (result && isText && isCornerHandle(handle) && onUpdateTextFontSize) {
-            const nextFontRaw = Math.max(8, Math.min(300, origFontSize * (result.width / origW)));
-            const nextFont = Math.round(nextFontRaw * 10) / 10;
+          // Final commit of scaled font size for text clips
+          if (result && isText && onUpdateTextFontSize) {
+            const scale = computeFontScale(result);
+            const nextFont = Math.round(Math.max(8, Math.min(300, origFontSize * scale)) * 10) / 10;
             onUpdateTextFontSize(nextFont);
           }
           lastBoundsRef.current = null;
