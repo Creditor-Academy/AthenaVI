@@ -4,7 +4,6 @@ import {
   Video,
   Trash2,
   Library,
-  Palette,
   BookOpen,
   User,
   Volume2,
@@ -29,7 +28,6 @@ export const mainDashboardSidebarGroups = [
     label: 'Assets',
     items: [
       { id: 'library', label: 'Library', Icon: Library },
-      { id: 'brandkits', label: 'Brand Kits', Icon: Palette },
       { id: 'avatars', label: 'Avatars', Icon: User },
       { id: 'voices', label: 'Voices', Icon: Volume2 }
     ]

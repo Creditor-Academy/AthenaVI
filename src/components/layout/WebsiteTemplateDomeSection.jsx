@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { fetchDomeGalleryContent } from '../../utils/domeGalleryContent';
-import { TemplateDomeShowcase } from '../ui/DomeGallery';
+import { TemplateDomeShowcase, DomeGallerySkeleton } from '../ui/DomeGallery';
 import './WebsiteTemplateDomeSection.css';
 
 function WebsiteTemplateDomeSection({ onLoginClick }) {
@@ -46,7 +46,7 @@ function WebsiteTemplateDomeSection({ onLoginClick }) {
 
       {loading ? (
         <div className="website-dome-section__loading" aria-busy="true" aria-label="Loading gallery">
-          <div className="website-dome-section__spinner" />
+          <DomeGallerySkeleton />
         </div>
       ) : galleryImages.length > 0 ? (
         <TemplateDomeShowcase

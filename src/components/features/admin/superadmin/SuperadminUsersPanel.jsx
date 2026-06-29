@@ -6,6 +6,22 @@ import { useAuth } from '../../../../contexts/AuthContext'
 import '../../../../pages/AdminPortal/SuperadminPortal.css'
 import '../../../../pages/page-skeleton/skeleton.css'
 
+/* Simple inline skeleton component */
+function Sk({ w = '100%', h = 16, radius = 4 }) {
+  return (
+    <div
+      style={{
+        width: w,
+        height: h,
+        borderRadius: radius,
+        background: 'var(--border-color)',
+        opacity: 0.5,
+      }}
+      aria-hidden
+    />
+  )
+}
+
 /* ─── skeletons ───────────────────────────────── */
 function TableSkeleton() {
   return Array.from({ length: 8 }).map((_, i) => (
@@ -198,56 +214,83 @@ function UserDrawer({ open, user, detail, history, historyPagination, historyPag
       {open && (
         <div
           onClick={onClose}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200 }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200 }}
           aria-hidden
         />
       )}
 
-      {/* drawer panel */}
+      {/* centered modal */}
       <div style={{
         position: 'fixed',
-        top: 0, right: 0, bottom: 0,
-        width: 460,
-        maxWidth: '92vw',
+        top: '50%',
+        left: '50%',
+        transform: open ? 'translate(-50%, -50%)' : 'translate(-50%, -48%)',
+        width: 600,
+        maxWidth: '94vw',
+        height: '80vh',
+        minHeight: '500px',
         background: 'var(--bg-surface)',
-        borderLeft: '1px solid var(--border-color)',
-        boxShadow: '-12px 0 48px rgba(0,0,0,0.18)',
+        border: '1px solid var(--border-color)',
+        borderRadius: 16,
+        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
         zIndex: 201,
         display: 'flex',
         flexDirection: 'column',
-        transform: open ? 'translateX(0)' : 'translateX(100%)',
-        transition: 'transform 0.28s cubic-bezier(0.16,1,0.3,1)',
-        willChange: 'transform',
+        opacity: open ? 1 : 0,
+        transition: 'transform 0.28s cubic-bezier(0.16,1,0.3,1), opacity 0.2s ease',
+        willChange: 'transform, opacity',
       }}
         role="dialog"
         aria-modal="true"
         aria-label="User details"
       >
-        {/* Drawer header */}
-        <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-card)', display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
+        {/* Modal header */}
+        <div style={{ 
+          padding: '20px 24px', 
+          borderBottom: '1px solid var(--border-color)', 
+          background: 'linear-gradient(135deg, var(--bg-card) 0%, color-mix(in srgb, var(--primary) 5%, var(--bg-card)) 100%)', 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 16, 
+          flexShrink: 0,
+          borderTopLeftRadius: 16,
+          borderTopRightRadius: 16,
+        }}>
           <div style={{
-            width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
-            background: 'var(--primary-muted, rgba(59,130,246,0.15))',
+            width: 48, height: 48, borderRadius: '50%', flexShrink: 0,
+            background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 15%, var(--bg-card)) 0%, color-mix(in srgb, var(--primary) 25%, var(--bg-card)) 100%)',
+            border: '1px solid color-mix(in srgb, var(--primary) 30%, var(--border-color))',
             color: 'var(--primary, #3b82f6)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '0.9rem', fontWeight: 700,
+            fontSize: '1.1rem', fontWeight: 700,
+            boxShadow: '0 2px 8px color-mix(in srgb, var(--primary) 15%, transparent)',
           }}>
             {(detail?.name || user?.name || '?')[0].toUpperCase()}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {detail?.name || user?.name || 'User'}
             </div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {detail?.email || user?.email}
             </div>
           </div>
-          <div className="sa-stat-pill" style={{ flexShrink: 0 }}>
-            <span className="sa-stat-pill-label">Balance</span>
-            <span className="sa-stat-pill-value">{formatAc(detail?.personalCredits)}</span>
-          </div>
-          <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost" onClick={onClose} aria-label="Close drawer">
-            <X size={16} />
+          <button 
+            type="button" 
+            className="sa-btn sa-btn--sm sa-btn--ghost" 
+            onClick={onClose} 
+            aria-label="Close modal"
+            style={{ 
+              width: 36, 
+              height: 36, 
+              padding: 0,
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <X size={18} />
           </button>
         </div>
 
@@ -256,7 +299,11 @@ function UserDrawer({ open, user, detail, history, historyPagination, historyPag
         ) : (
           <>
             {/* Tab bar */}
-            <div className="sa-tab-bar" role="tablist" style={{ flexShrink: 0 }}>
+            <div className="sa-tab-bar" role="tablist" style={{ 
+              flexShrink: 0,
+              padding: '12px 24px',
+              background: 'var(--bg-card)',
+            }}>
               {[{ id: 'profile', label: 'Profile' }, { id: 'credits', label: 'Credits' }, { id: 'history', label: 'History' }, { id: 'storage', label: 'Storage' }].map(tab => (
                 <button key={tab.id} type="button" role="tab" aria-selected={activeTab === tab.id}
                   className={`sa-tab ${activeTab === tab.id ? 'sa-tab--active' : ''}`}
@@ -267,10 +314,16 @@ function UserDrawer({ open, user, detail, history, historyPagination, historyPag
             </div>
 
             {/* Tab content — scrollable */}
-            <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-surface)' }}>
+            <div style={{ 
+              flex: 1, 
+              overflowY: 'auto', 
+              background: 'var(--bg-surface)',
+              borderBottomLeftRadius: 16,
+              borderBottomRightRadius: 16,
+            }}>
 
               {activeTab === 'profile' && (
-                <div className="sa-tab-pane">
+                <div className="sa-tab-pane" style={{ padding: '20px 24px' }}>
                   <div className="sa-profile-stats">
                     <div className="sa-profile-stat"><span>Balance</span><strong style={{ color: 'var(--primary)' }}>{formatAc(detail?.personalCredits)}</strong></div>
                     <div className="sa-profile-stat-divider" />
@@ -308,17 +361,14 @@ function UserDrawer({ open, user, detail, history, historyPagination, historyPag
                       </p>
                     )}
                   </div>
-                  <div className="sa-profile-grid">
-                    <div className="sa-profile-item"><span>Full name</span><strong>{detail?.name || '—'}</strong></div>
-                    <div className="sa-profile-item"><span>Email</span><strong style={{ wordBreak: 'break-all' }}>{detail?.email || '—'}</strong></div>
-                    <div className="sa-profile-item"><span>Joined</span><strong>{user?.createdAt ? formatDate(user.createdAt) : '—'}</strong></div>
+                  <div className="sa-profile-grid" style={{ marginTop: '20px' }}>
                     <div className="sa-profile-item"><span>User ID</span><strong style={{ fontFamily: 'monospace', fontSize: '0.7rem', color: 'var(--text-muted)', wordBreak: 'break-all' }}>{detail?.userId || user?.id || '—'}</strong></div>
                   </div>
                 </div>
               )}
 
               {activeTab === 'credits' && (
-                <div className="sa-tab-pane">
+                <div className="sa-tab-pane" style={{ padding: '20px 24px' }}>
                   {actionMessage && <div className="sa-alert sa-alert--success">{actionMessage}</div>}
                   {actionError   && <div className="sa-alert sa-alert--error">{actionError}</div>}
                   <div className="sa-action-row">
@@ -329,7 +379,7 @@ function UserDrawer({ open, user, detail, history, historyPagination, historyPag
               )}
 
               {activeTab === 'history' && (
-                <div className="sa-tab-pane">
+                <div className="sa-tab-pane" style={{ padding: '20px 24px' }}>
                   <div className="sa-history-toolbar">
                     <span className="sa-section-label" style={{ margin: 0 }}>
                       Transactions
@@ -396,7 +446,7 @@ function UserDrawer({ open, user, detail, history, historyPagination, historyPag
               )}
 
               {activeTab === 'storage' && (
-                <div className="sa-tab-pane">
+                <div className="sa-tab-pane" style={{ padding: '20px 24px' }}>
                   {storageMsg   && <div className="sa-alert sa-alert--success">{storageMsg}</div>}
                   {storageError && <div className="sa-alert sa-alert--error">{storageError}</div>}
 
@@ -587,6 +637,7 @@ function SuperadminUsersPanel() {
   const [page, setPage]               = useState(1)
   const [listLoading, setListLoading] = useState(true)
   const [listError, setListError]     = useState('')
+  const [adminFilter, setAdminFilter] = useState('all') // all, admin, non-admin
 
   const [selectedId, setSelectedId]   = useState(null)
   const [drawerOpen, setDrawerOpen]   = useState(false)
@@ -605,11 +656,20 @@ function SuperadminUsersPanel() {
     setListLoading(true); setListError('')
     try {
       const data = await superadminService.listUsers({ page, limit: PAGE_SIZE, search })
-      setUsers(data.users || [])
+      let filteredUsers = data.users || []
+      
+      // Client-side filter for admin status (since API doesn't support it)
+      if (adminFilter === 'admin') {
+        filteredUsers = filteredUsers.filter(u => u.isPlatformSuperadmin)
+      } else if (adminFilter === 'non-admin') {
+        filteredUsers = filteredUsers.filter(u => !u.isPlatformSuperadmin)
+      }
+      
+      setUsers(filteredUsers)
       setPagination(data.pagination || { page: 1, totalPages: 1, total: 0 })
     } catch (err) { setListError(err.message || 'Failed to load users'); setUsers([]) }
     finally { setListLoading(false) }
-  }, [page, search])
+  }, [page, search, adminFilter])
 
   const loadDetail = useCallback(async (userId) => {
     if (!userId) return
@@ -686,13 +746,26 @@ function SuperadminUsersPanel() {
 
       <div className="sa-card sa-card--flush" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
 
-        {/* Header + search */}
-        <div className="sa-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0 }}>
+        {/* Header + search + filter */}
+        <div className="sa-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0, flexWrap: 'wrap' }}>
           <h3>All users <span className="sa-card-header-count">{pagination.total ?? 0}</span></h3>
-          <div className="sa-list-search" style={{ maxWidth: 280, flex: '0 0 auto' }}>
-            <Search className="sa-search-field-icon" size={13} strokeWidth={2} aria-hidden />
-            <input className="sa-input sa-input--list-search" type="search" placeholder="Search by email…"
-              value={searchInput} onChange={e => setSearchInput(e.target.value)} aria-label="Search users" />
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <select 
+              className="sa-select" 
+              value={adminFilter}
+              onChange={e => { setAdminFilter(e.target.value); setPage(1) }}
+              style={{ height: 32, fontSize: '0.8rem', padding: '0 10px' }}
+              aria-label="Filter by admin status"
+            >
+              <option value="all">All users</option>
+              <option value="admin">Admins only</option>
+              <option value="non-admin">Non-admins</option>
+            </select>
+            <div className="sa-list-search" style={{ maxWidth: 240, flex: '0 0 auto' }}>
+              <Search className="sa-search-field-icon" size={13} strokeWidth={2} aria-hidden />
+              <input className="sa-input sa-input--list-search" type="search" placeholder="Search by email…"
+                value={searchInput} onChange={e => setSearchInput(e.target.value)} aria-label="Search users" />
+            </div>
           </div>
         </div>
 
@@ -717,40 +790,61 @@ function SuperadminUsersPanel() {
               onClick={() => openDrawer(user.id)}
               style={{
                 width: '100%', display: 'grid', gridTemplateColumns: '1fr 1.4fr 130px',
-                gap: 16, padding: '13px 20px',
-                background: selectedId === user.id && drawerOpen ? 'var(--bg-hover, rgba(59,130,246,0.06))' : 'transparent',
+                gap: 16, padding: '14px 20px',
+                background: selectedId === user.id && drawerOpen 
+                  ? 'linear-gradient(90deg, color-mix(in srgb, var(--primary) 12%, transparent) 0%, transparent 100%)' 
+                  : 'transparent',
                 border: 'none', outline: 'none',
                 borderBottom: '1px solid var(--border-color)',
                 borderLeft: selectedId === user.id && drawerOpen ? '3px solid var(--primary,#3b82f6)' : '3px solid transparent',
                 alignItems: 'center', cursor: 'pointer', textAlign: 'left',
-                transition: 'background 0.15s',
+                transition: 'all 0.2s ease',
               }}
-              onMouseEnter={e => { if (selectedId !== user.id || !drawerOpen) e.currentTarget.style.background = 'var(--bg-hover, rgba(255,255,255,0.03))' }}
-              onMouseLeave={e => { if (selectedId !== user.id || !drawerOpen) e.currentTarget.style.background = 'transparent' }}
+              onMouseEnter={e => { 
+                if (selectedId !== user.id || !drawerOpen) {
+                  e.currentTarget.style.background = 'linear-gradient(90deg, color-mix(in srgb, var(--primary) 6%, transparent) 0%, transparent 100%)'
+                  e.currentTarget.style.borderLeft = '3px solid color-mix(in srgb, var(--primary) 50%, var(--border-color))'
+                }
+              }}
+              onMouseLeave={e => { 
+                if (selectedId !== user.id || !drawerOpen) {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.borderLeft = '3px solid transparent'
+                }
+              }}
             >
-              <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <span style={{
-                  width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-                  background: selectedId === user.id && drawerOpen ? 'var(--primary,#3b82f6)' : 'var(--primary-muted,rgba(59,130,246,0.12))',
+                  width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+                  background: selectedId === user.id && drawerOpen 
+                    ? 'linear-gradient(135deg, var(--primary,#3b82f6) 0%, color-mix(in srgb, var(--primary) 85%, #2563eb) 100%)' 
+                    : 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 15%, var(--bg-card)) 0%, color-mix(in srgb, var(--primary) 25%, var(--bg-card)) 100%)',
                   color: selectedId === user.id && drawerOpen ? '#fff' : 'var(--primary,#3b82f6)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '0.72rem', fontWeight: 700,
+                  fontSize: '0.75rem', fontWeight: 700,
+                  border: selectedId === user.id && drawerOpen ? '2px solid var(--primary,#3b82f6)' : '1px solid color-mix(in srgb, var(--primary) 30%, var(--border-color))',
+                  boxShadow: selectedId === user.id && drawerOpen ? '0 4px 12px color-mix(in srgb, var(--primary) 25%, transparent)' : 'none',
                 }}>
                   {(user.name || '?')[0].toUpperCase()}
                 </span>
                 <span>
-                  <span style={{ display: 'block', fontSize: '0.83rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  <span style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                     {user.name || 'No name'}
                   </span>
                   {user.isPlatformSuperadmin && (
-                    <span className="sa-badge sa-badge--admin" style={{ fontSize: '0.62rem' }}>Admin</span>
+                    <span className="sa-badge sa-badge--admin" style={{ fontSize: '0.62rem', marginTop: 2 }}>Admin</span>
                   )}
                 </span>
               </span>
               <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {user.email}
               </span>
-              <span style={{ fontSize: '0.83rem', fontWeight: 600, color: 'var(--primary,#3b82f6)', textAlign: 'right' }}>
+              <span style={{ 
+                fontSize: '0.85rem', 
+                fontWeight: 600, 
+                color: 'var(--primary,#3b82f6)', 
+                textAlign: 'right',
+              }}>
                 {formatAc(user.credits)}
               </span>
             </button>

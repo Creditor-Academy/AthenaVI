@@ -1,6 +1,12 @@
 /** Single source of truth for template bundle JSON files and display metadata. */
 export const TEMPLATE_BUNDLE_SOURCES = [
   {
+    file: 'platform_tutorial_template',
+    category: 'Courses',
+    label: 'AI Video Creation Guide',
+    filterCategory: 'Training',
+  },
+  {
     file: 'pitch_template',
     category: 'Company',
     label: 'Company Profile Pitch',

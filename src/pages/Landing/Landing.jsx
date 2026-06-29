@@ -1,6 +1,7 @@
 import Navbar from '../../components/layout/Navbar/Navbar.jsx'
 import Hero from '../../components/layout/Hero.jsx'
 import UnifiedVideoSection from '../../components/layout/UnifiedVideoSection.jsx'
+import DigitalTwinSection from '../../components/layout/DigitalTwinSection.jsx'
 import ProductsSection from '../../components/layout/ProductsSection.jsx'
 import WebsiteTemplateDomeSection from '../../components/layout/WebsiteTemplateDomeSection.jsx'
 import TemplatesSection from '../../components/layout/TemplatesSection.jsx'
@@ -80,10 +81,11 @@ function Landing({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToC
         />
         <Hero />
         <UnifiedVideoSection />
+        <DigitalTwinSection />
         <ProductsSection />
         <WebsiteTemplateDomeSection onLoginClick={onLoginClick} />
-        <TemplatesSection onNavigateToSolution={onLoginClick} />
         <PlatformFeatures />
+        <TemplatesSection onNavigateToSolution={onLoginClick} />
         <ReadySection />
         <Footer
           onLogoClick={onLogoClick}

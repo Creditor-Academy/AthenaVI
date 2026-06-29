@@ -9,6 +9,15 @@ RUN npm ci
 
 COPY . .
 
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
+# DEBUG
+RUN echo "==========================="
+RUN echo "VITE_API_BASE_URL=$VITE_API_BASE_URL"
+RUN printenv | grep VITE
+RUN echo "==========================="
+
 RUN npm run build
 
 # ---------- Production Stage ----------
