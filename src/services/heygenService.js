@@ -396,7 +396,7 @@ class HeygenService {
       throw userError(this.formatLargeUploadBlockedMessage(uploadFile.size));
     }
 
-    console.error('Athena VI upload error:', errorMessage || JSON.stringify(responseJson));
+    console.error('Virtual Studio upload error:', errorMessage || JSON.stringify(responseJson));
     throw userError(errorMessage || `Failed to upload file: ${status}`);
   }
 
@@ -582,12 +582,12 @@ class HeygenService {
           reroute_url: rerouteUrl || this.buildConsentRerouteUrl(groupId),
         }),
       });
-      
+
       if (!response.ok) {
         const errText = await response.text();
         throw userError(`Failed to get avatar consent: ${response.status} - ${errText}`);
       }
-      
+
       const data = await response.json();
       return data.data || data;
     } catch (error) {
@@ -600,9 +600,8 @@ class HeygenService {
     try {
       const query = new URLSearchParams();
       if (voiceId) query.set('voice_id', String(voiceId));
-      const endpoint = `${API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.DELETE_GROUP(groupId)}${
-        query.toString() ? `?${query.toString()}` : ''
-      }`;
+      const endpoint = `${API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.DELETE_GROUP(groupId)}${query.toString() ? `?${query.toString()}` : ''
+        }`;
       const response = await fetch(buildUrl(endpoint), {
         method: 'DELETE',
         headers: getAuthHeaders(),
@@ -622,9 +621,8 @@ class HeygenService {
     try {
       const query = new URLSearchParams();
       if (voiceId) query.set('voice_id', String(voiceId));
-      const endpoint = `${API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.DELETE_LOOK(lookId)}${
-        query.toString() ? `?${query.toString()}` : ''
-      }`;
+      const endpoint = `${API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.DELETE_LOOK(lookId)}${query.toString() ? `?${query.toString()}` : ''
+        }`;
       const response = await fetch(buildUrl(endpoint), {
         method: 'DELETE',
         headers: getAuthHeaders(),
@@ -663,7 +661,7 @@ class HeygenService {
       const queryParams = new URLSearchParams(params).toString();
       const endpoint = `${API_CONFIG.ENDPOINTS.HEYGEN.VOICES.LIST}${queryParams ? `?${queryParams}` : ''}`;
       const fullUrl = buildUrl(endpoint);
-      console.log('Athena VI: Fetching voices from...', fullUrl);
+      console.log('Virtual Studio: Fetching voices from...', fullUrl);
 
       const response = await fetch(fullUrl, {
         method: 'GET',
@@ -714,7 +712,7 @@ class HeygenService {
       }
 
       const endpoint = API_CONFIG.ENDPOINTS.HEYGEN.VOICES.CLONE;
-      console.log('Athena VI: Calling cloneVoice API...', endpoint, payload);
+      console.log('Virtual Studio: Calling cloneVoice API...', endpoint, payload);
       const response = await fetch(buildUrl(endpoint), {
         method: 'POST',
         headers: getAuthHeaders(),
@@ -735,13 +733,13 @@ class HeygenService {
     try {
       const endpoint = API_CONFIG.ENDPOINTS.HEYGEN.VOICES.SELECT;
       const vId = typeof voiceData === 'string' ? voiceData : (voiceData.voice_id || voiceData.id);
-      
-      const payload = { 
-        voiceId: vId, 
+
+      const payload = {
+        voiceId: vId,
         voice_id: vId
       };
-      
-      console.log('Athena VI: Calling selectVoice API...', endpoint, payload);
+
+      console.log('Virtual Studio: Calling selectVoice API...', endpoint, payload);
       const response = await fetch(buildUrl(endpoint), {
         method: 'POST',
         headers: getAuthHeaders(),

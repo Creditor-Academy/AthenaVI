@@ -4,7 +4,7 @@ export function buildScriptParagraphs(displayName) {
     {
       label: 'Opening — warm & welcoming',
       direction: 'Smile, relaxed shoulders, steady eye contact.',
-      text: `Hi, my name is ${name}. I'm recording this footage to create my Digital Twin on Athena VI. I'll speak naturally so the avatar can capture how I look, move, and express myself on camera.`,
+      text: `Hi, my name is ${name}. I'm recording this footage to create my Digital Twin on Virtual Studio. I'll speak naturally so the avatar can capture how I look, move, and express myself on camera.`,
     },
     {
       label: 'Professional tone',
@@ -24,7 +24,7 @@ export function buildScriptParagraphs(displayName) {
     {
       label: 'Closing',
       direction: 'Warm smile, hold for two seconds, then stop recording.',
-      text: `Thanks for listening. This recording gives Athena VI everything needed to build a high-quality Digital Twin — my voice, my face, and the way I connect with an audience. I'm ready to bring this avatar to life.`,
+      text: `Thanks for listening. This recording gives Virtual Studio everything needed to build a high-quality Digital Twin — my voice, my face, and the way I connect with an audience. I'm ready to bring this avatar to life.`,
     },
   ];
 }

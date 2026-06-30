@@ -214,7 +214,7 @@ function EngagementSection() {
       image: avatar1,
       color: '#f4686fff',
       title: 'Cost-efficient Content',
-      description: 'Traditional video production with human presenters can be expensive and time-consuming. Athena VI offers an innovative AI video solution that is not just affordable but also highly efficient.',
+      description: 'Traditional video production with human presenters can be expensive and time-consuming. Virtual Studio offers an innovative AI video solution that is not just affordable but also highly efficient.',
     },
     {
       image: avatar2,
@@ -232,7 +232,7 @@ function EngagementSection() {
       image: avatar4,
       color: '#f06f76ff',
       title: 'Higher Engagement',
-      description: 'People retain 95% of video content messaging compared to only 10% of text and images alone. With Athena VI, you are creating an experience.',
+      description: 'People retain 95% of video content messaging compared to only 10% of text and images alone. With Virtual Studio, you are creating an experience.',
     }
   ]
 

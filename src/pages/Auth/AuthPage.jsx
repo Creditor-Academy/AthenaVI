@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useAuth } from '../../contexts/AuthContext'
 import AuthLoginVideo from '../../components/ui/AnimatedAvatar/AuthLoginVideo.jsx'
-import AuthShellBubbles from '../../components/ui/AnimatedAvatar/AuthShellBubbles.jsx'
 import Login from '../../components/features/auth/authentication/Login.jsx'
 import Signup from '../../components/features/auth/authentication/Signup.jsx'
 import ForgotPassword from '../../components/features/auth/authentication/ForgotPassword.jsx'
@@ -74,7 +73,6 @@ function AuthPage({ onAuthComplete, onBack, initialMode = 'login' }) {
 
   return (
     <div className="auth-shell">
-      <AuthShellBubbles />
       <div className="auth-card">
         {/* ── Left brand panel ── */}
         <aside className="auth-panel auth-panel--brand">
@@ -87,7 +85,7 @@ function AuthPage({ onAuthComplete, onBack, initialMode = 'login' }) {
                 <polygon points="6,4 20,12 6,20" />
               </svg>
             </span>
-            <span className="auth-panel__brand-name">Athena VI</span>
+            <span className="auth-panel__brand-name">Virtual Studio</span>
           </div>
 
           <div className="auth-panel__center">

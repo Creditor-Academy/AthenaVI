@@ -333,15 +333,18 @@ const styles = `
 `
 
 function Hero() {
-  const [avatarsList, setAvatarsList] = useState([
-    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_2.mp4', name: 'Ethan', role: 'AI Video Assistant' },
-    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_1.mp4', name: 'Ava', role: 'Digital Assistant' },
-    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_2+(1).mp4', name: 'Oliver', role: 'Digital Host' },
-    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_2.mp4', name: 'Sophia', role: 'Support Guide' },
-    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_3.mp4', name: 'Olivia', role: 'Language Coach' },
-    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target+(1).mp4', name: 'Liam', role: 'Virtual Instructor' },
-    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target+(2).mp4', name: 'Lucas', role: 'Product Presenter' },
+  const [avatarsList] = useState([
+    /* ── Target avatars in sequence (1 → 7) ── */
     { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target.mp4', name: 'Noah', role: 'Technical Expert' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target+(1).mp4', name: 'Liam', role: 'Virtual Studio' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target+(2).mp4', name: 'Lucas', role: 'Product Presenter' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target+(6).mp4', name: 'Mia', role: 'Brand Storyteller' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target+(7).mp4', name: 'Zara', role: 'Sales Presenter' },
+    /* ── Talk avatars ── */
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_1.mp4', name: 'Ava', role: 'Digital Assistant' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_2.mp4', name: 'Ethan', role: 'AI Video Assistant' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_2+(1).mp4', name: 'Oliver', role: 'Digital Host' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_3.mp4', name: 'Olivia', role: 'Language Coach' },
   ])
 
   useEffect(() => {

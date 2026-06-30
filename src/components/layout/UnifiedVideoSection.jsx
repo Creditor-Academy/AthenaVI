@@ -381,13 +381,13 @@ const UnifiedVideoSection = () => {
         <div className="section-blob blob-2"></div>
 
         <div className="unified-content">
-          
+
           {/* Part 1: Video Features */}
           <div className="vs-header">
-            <div className="vs-badge">
+            {/* <div className="vs-badge">
               <span className="vs-badge-dot"></span>
               AI-Powered Tools
-            </div>
+            </div> */}
             <h2 className="vs-title">Create Stunning Videos</h2>
             <p className="vs-subtitle">
               Transform your ideas into engaging video content with our powerful AI tools
@@ -396,8 +396,8 @@ const UnifiedVideoSection = () => {
 
           <div ref={gridRef} className="video-grid">
             {featureCards.map((card, i) => (
-              <div 
-                className={`video-card-ref${i === 1 ? ' variant-middle' : ''}${gridVisible ? ' visible' : ''}`} 
+              <div
+                className={`video-card-ref${i === 1 ? ' variant-middle' : ''}${gridVisible ? ' visible' : ''}`}
                 key={i}
                 style={{ transitionDelay: `${i * 150}ms` }}
               >

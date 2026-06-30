@@ -210,7 +210,7 @@
           },
           "startTime": 0,
           "endTime": 9,
-          "content": "First, start your project in Athena VI. Choose from our catalog of pre-designed templates to jumpstart your creation, or start from a blank canvas to build your vision from scratch.",
+          "content": "First, start your project in Virtual Studio. Choose from our catalog of pre-designed templates to jumpstart your creation, or start from a blank canvas to build your vision from scratch.",
           "style": {
             "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
             "fontSize": 18,
@@ -1196,7 +1196,7 @@
           },
           "startTime": 0,
           "endTime": 9,
-          "content": "Finally, click Generate. Athena VI processes your scenes and layers into a seamless HD video, ready to download and share with your audience instantly.",
+          "content": "Finally, click Generate. Virtual Studio processes your scenes and layers into a seamless HD video, ready to download and share with your audience instantly.",
           "style": {
             "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
             "fontSize": 18,

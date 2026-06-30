@@ -97,30 +97,30 @@ function normalizeWorkspace(workspace, currentUserId, authUser) {
 
   const ownerId = normalizeId(
     workspace.ownerId ||
-      workspace.ownerUserId ||
-      workspace.owner_id ||
-      workspace.owner?.id ||
-      workspace.owner?._id ||
-      workspace.owner
+    workspace.ownerUserId ||
+    workspace.owner_id ||
+    workspace.owner?.id ||
+    workspace.owner?._id ||
+    workspace.owner
   );
 
   const creatorId = normalizeId(
     workspace.createdBy ||
-      workspace.createdById ||
-      workspace.creatorId ||
-      workspace.creator?.id ||
-      workspace.creator?._id
+    workspace.createdById ||
+    workspace.creatorId ||
+    workspace.creator?.id ||
+    workspace.creator?._id
   );
 
   const role = readRole(workspace);
 
   const ownerInMembers = Array.isArray(workspace.members)
     ? workspace.members.some((member) => {
-        const memberId = normalizeId(
-          member.userId || member.user?.id || member.user?._id || member.user || member.id || member._id
-        );
-        return memberId === currentUserId && String(member.role || '').toUpperCase() === 'OWNER';
-      })
+      const memberId = normalizeId(
+        member.userId || member.user?.id || member.user?._id || member.user || member.id || member._id
+      );
+      return memberId === currentUserId && String(member.role || '').toUpperCase() === 'OWNER';
+    })
     : false;
 
   const isOwner =
@@ -256,16 +256,16 @@ const CreateVideoModal = ({
   const hasDirtyData = useMemo(() => {
     return Boolean(
       videoTitle.trim() ||
-        selectedTemplateId ||
-        videoTags.length ||
-        workspaceId ||
-        folderId ||
-        showInlineWorkspaceCreate ||
-        showInlineFolderCreate ||
-        newWorkspaceName.trim() ||
-        newFolderName.trim() ||
-        (canvasSize === 'custom' && (customCanvas.width || customCanvas.height)) ||
-        canvasSize !== 'landscape'
+      selectedTemplateId ||
+      videoTags.length ||
+      workspaceId ||
+      folderId ||
+      showInlineWorkspaceCreate ||
+      showInlineFolderCreate ||
+      newWorkspaceName.trim() ||
+      newFolderName.trim() ||
+      (canvasSize === 'custom' && (customCanvas.width || customCanvas.height)) ||
+      canvasSize !== 'landscape'
     );
   }, [
     videoTitle,
@@ -576,7 +576,7 @@ const CreateVideoModal = ({
 
     let width = 1920;
     let height = 1080;
-    
+
     if (canvasSize === 'custom' && customCanvas.width && customCanvas.height) {
       width = parseInt(customCanvas.width, 10) || 1920;
       height = parseInt(customCanvas.height, 10) || 1080;
@@ -671,7 +671,7 @@ const CreateVideoModal = ({
         <aside className="create-video-wizard-sidebar">
           <div className="create-video-logo-block">
             <div className="create-video-logo-mark">VI</div>
-            <div className="create-video-logo-text">Athena VI</div>
+            <div className="create-video-logo-text">Virtual Studio</div>
           </div>
 
           <ol className="create-video-step-list" aria-label="Create video steps">

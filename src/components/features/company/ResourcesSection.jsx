@@ -721,7 +721,7 @@ function ResourcesSection(props) {
       backgroundImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop',
       cardClass: 'video',
       icon: MdPlayCircle,
-      description: 'Learn step-by-step how to create your first AI-powered virtual instructor using AthenaVI. This comprehensive tutorial covers everything from avatar selection to voice customization and content creation.',
+      description: 'Learn step-by-step how to create your first AI-powered Virtual Studio using AthenaVI. This comprehensive tutorial covers everything from avatar selection to voice customization and content creation.',
       content: {
         overview: 'This video tutorial provides a complete walkthrough of the AthenaVI platform, guiding you through the process of creating engaging AI-powered educational content.',
         steps: [
@@ -730,7 +730,7 @@ function ResourcesSection(props) {
           'Customizing voice and speech patterns',
           'Creating and uploading your educational content',
           'Configuring interactive features and assessments',
-          'Publishing and sharing your virtual instructor'
+          'Publishing and sharing your Virtual Studio'
         ],
         duration: '45 minutes',
         level: 'Beginner to Intermediate'
@@ -772,7 +772,7 @@ function ResourcesSection(props) {
       <style>{styles}</style>
       <section id="resources" className="resources-section">
         <div className="resources-header">
-          <motion.div 
+          <motion.div
             className="resources-header-content"
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -787,49 +787,49 @@ function ResourcesSection(props) {
             </p>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             className="resources-header-avatar-container"
             initial={{ opacity: 0, x: 30, scale: 0.9 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
           >
-            <motion.img 
-              src="/avatar4.png" 
-              alt="AI Instructor" 
+            <motion.img
+              src="/avatar4.png"
+              alt="AI Instructor"
               className="resources-header-avatar"
               animate={{ y: [0, -15, 0] }}
               transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
             />
           </motion.div>
         </div>
-        
+
         <div className="resources-cards-section">
           <div className="resources-cards-container">
             {resources.map((resource, index) => {
               const IconComponent = resource.icon
               return (
-              <div key={index} className={`resource-card ${resource.cardClass}`}>
-                <div 
-                  className="resource-card-background"
-                  style={{ backgroundImage: `url(${resource.backgroundImage})` }}
-                />
-                <div className="resource-card-overlay" />
-                <div className="resource-card-icon">
-                  {IconComponent && <IconComponent size={24} />}
-                </div>
-                <div className="resource-card-content">
-                  <div>
-                    <p className="resource-card-type">{resource.type}</p>
-                    <h3 className="resource-card-title">{resource.title}</h3>
+                <div key={index} className={`resource-card ${resource.cardClass}`}>
+                  <div
+                    className="resource-card-background"
+                    style={{ backgroundImage: `url(${resource.backgroundImage})` }}
+                  />
+                  <div className="resource-card-overlay" />
+                  <div className="resource-card-icon">
+                    {IconComponent && <IconComponent size={24} />}
                   </div>
-                  <button 
-                    className="resource-card-button"
-                    onClick={() => handleOpenModal(resource)}
-                  >
-                    {resource.buttonText}
-                  </button>
+                  <div className="resource-card-content">
+                    <div>
+                      <p className="resource-card-type">{resource.type}</p>
+                      <h3 className="resource-card-title">{resource.title}</h3>
+                    </div>
+                    <button
+                      className="resource-card-button"
+                      onClick={() => handleOpenModal(resource)}
+                    >
+                      {resource.buttonText}
+                    </button>
+                  </div>
                 </div>
-              </div>
               )
             })}
           </div>
@@ -838,7 +838,7 @@ function ResourcesSection(props) {
 
       {/* Resource Modal */}
       {selectedResource && (
-        <div 
+        <div
           className="resource-modal-overlay"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
@@ -847,12 +847,12 @@ function ResourcesSection(props) {
           }}
         >
           <div className="resource-modal-container">
-            <div 
+            <div
               className="resource-modal-header"
               style={{ backgroundImage: `url(${selectedResource.backgroundImage})` }}
             >
               <div className="resource-modal-header-overlay" />
-              <button 
+              <button
                 className="resource-modal-close-btn"
                 onClick={handleCloseModal}
                 aria-label="Close modal"
@@ -864,7 +864,7 @@ function ResourcesSection(props) {
                 <h2 className="resource-modal-title">{selectedResource.title}</h2>
               </div>
             </div>
-            
+
             <div className="resource-modal-body">
               <p className="resource-modal-description">
                 {selectedResource.description}
@@ -942,7 +942,7 @@ function ResourcesSection(props) {
                   {selectedResource.buttonText}
                   <MdPlayCircle size={20} />
                 </button>
-                <button 
+                <button
                   className="resource-modal-secondary-btn"
                   onClick={handleCloseModal}
                 >

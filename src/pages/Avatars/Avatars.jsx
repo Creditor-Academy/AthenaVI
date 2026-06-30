@@ -56,7 +56,7 @@ function mapAvatarList(avatarList, ownership) {
     id: av.avatar_group_id || av.id || `group-${idx}`,
     name: av.name || av.group_name || 'AI Presenter',
     role: av.role || 'Virtual Presenter',
-    description: av.description || 'High-fidelity Athena VI avatar.',
+    description: av.description || 'High-fidelity Virtual Studio avatar.',
     image:
       av.preview_image_url ||
       av.thumbnail_url ||
@@ -151,10 +151,10 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
       setHasMore(!!(data?.has_more ?? responseData?.has_more));
       setNextToken(
         data?.token ??
-          responseData?.token ??
-          data?.next_token ??
-          responseData?.next_token ??
-          null
+        responseData?.token ??
+        data?.next_token ??
+        responseData?.next_token ??
+        null
       );
     } catch (error) {
       if (requestId !== fetchRequestRef.current) return;
@@ -403,9 +403,8 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
 
   const renderAvatarCollection = (collection) => (
     <div
-      className={`items-container videos-export-items avatars-library-items ${
-        viewMode === 'grid' ? 'tile-view' : 'list-view export-list-view'
-      }`}
+      className={`items-container videos-export-items avatars-library-items ${viewMode === 'grid' ? 'tile-view' : 'list-view export-list-view'
+        }`}
     >
       {viewMode === 'list' ? (
         <div className="list-header export-list-header">
@@ -460,8 +459,8 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
             onCreateLooks={
               activeSection === 'private' && onCreateLooks
                 ? (ctx) => {
-                    onCreateLooks(ctx);
-                  }
+                  onCreateLooks(ctx);
+                }
                 : undefined
             }
             onCompleteConsent={openConsentForAvatar}

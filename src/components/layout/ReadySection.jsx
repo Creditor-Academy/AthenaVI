@@ -207,14 +207,14 @@ function ReadySection() {
             </h2>
 
             <p className="rs-sub">
-              Join educators, trainers, and creators already using Athena VI to build
+              Join educators, trainers, and creators already using Virtual Studio to build
               professional videos — no camera, no crew, no editing skills needed.
             </p>
           </div>
 
           {/* Right — single clean avatar image */}
           <div className="rs-right">
-            <img src={AvatarImg} alt="Athena VI avatar" className="rs-avatar" />
+            <img src={AvatarImg} alt="Virtual Studio avatar" className="rs-avatar" />
           </div>
 
         </div>
