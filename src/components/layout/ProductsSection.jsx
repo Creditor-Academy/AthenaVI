@@ -38,9 +38,9 @@ const styles = `
 }
 
 .ps-section-title {
-  font-family: 'Georgia', 'Times New Roman', serif;
+  font-family: 'Inter', sans-serif;
   font-size: 55px;
-  font-weight: 400;
+  font-weight: 800;
   color: #0f172a;
   margin: 0 0 12px;
   line-height: 1.2;
@@ -442,10 +442,10 @@ function ProductsSection() {
       <section className="ps-section">
 
         <div className="ps-section-header">
-          <div className="ps-section-eyebrow">
+          {/* <div className="ps-section-eyebrow">
             <span className="ps-section-eyebrow-line" />
             Our Products
-          </div>
+          </div> */}
           <h2 className="ps-section-title">
             Everything You Need to <span>Create</span>
           </h2>

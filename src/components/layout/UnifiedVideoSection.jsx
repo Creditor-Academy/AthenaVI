@@ -124,9 +124,9 @@ const styles = `
   50% { opacity: 0.4; transform: scale(0.6); }
 }
 .vs-title {
-  font-family: 'Georgia', 'Times New Roman', serif;
+  font-family: 'Inter', sans-serif;
   font-size: clamp(40px, 5vw, 64px);
-  font-weight: 400;
+  font-weight: 800;
   line-height: 1.1;
   margin: 0 0 24px;
   background: linear-gradient(135deg, #0f172a 0%, #1e40af 50%, #3b82f6 100%);
