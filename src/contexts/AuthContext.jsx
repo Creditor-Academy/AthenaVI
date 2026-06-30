@@ -148,7 +148,6 @@ export const AuthProvider = ({ children }) => {
 
   // Login function
   const login = async (credentials) => {
-    setLoading(true)
     try {
       const { user: userData } = await authService.login(credentials)
       setUser(userData)
@@ -161,14 +160,11 @@ export const AuthProvider = ({ children }) => {
         status: error.status,
         retryAfter: error.retryAfter,
       }
-    } finally {
-      setLoading(false)
     }
   }
 
   // Register function
   const register = async (userData) => {
-    setLoading(true)
     try {
       const { user: newUser } = await authService.register(userData)
       setUser(newUser)
@@ -181,13 +177,10 @@ export const AuthProvider = ({ children }) => {
         status: error.status,
         retryAfter: error.retryAfter,
       }
-    } finally {
-      setLoading(false)
     }
   }
 
   const precheckSignupEmail = async (payload) => {
-    setLoading(true)
     try {
       const result = await authService.precheckSignupEmail(payload)
       return { success: true, ...result }
@@ -199,14 +192,11 @@ export const AuthProvider = ({ children }) => {
         retryAfter: error.retryAfter,
         emailExists: error.emailExists,
       }
-    } finally {
-      setLoading(false)
     }
   }
 
   // Generate OTP function
   const generateOTP = async (email) => {
-    setLoading(true)
     try {
       const result = await authService.generateOTP(email)
       return { success: true, data: result.data }
@@ -218,14 +208,11 @@ export const AuthProvider = ({ children }) => {
         retryAfter: error.retryAfter,
         emailExists: error.emailExists,
       }
-    } finally {
-      setLoading(false)
     }
   }
 
   // Resend OTP function
   const resendOTP = async (email) => {
-    setLoading(true)
     try {
       const result = await authService.resendOTP(email)
       return { success: true, data: result.data }
@@ -236,34 +223,26 @@ export const AuthProvider = ({ children }) => {
         status: error.status,
         retryAfter: error.retryAfter,
       }
-    } finally {
-      setLoading(false)
     }
   }
 
   // Forgot Password function
   const forgotPassword = async (email) => {
-    setLoading(true)
     try {
       const result = await authService.forgotPassword(email)
       return { success: true, data: result.data }
     } catch (error) {
       return { success: false, error: error.message }
-    } finally {
-      setLoading(false)
     }
   }
 
   // Reset Password function
   const resetPassword = async (token, newPassword) => {
-    setLoading(true)
     try {
       const result = await authService.resetPassword(token, newPassword)
       return { success: true, data: result.data }
     } catch (error) {
       return { success: false, error: error.message }
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -300,7 +279,6 @@ export const AuthProvider = ({ children }) => {
 
   // Logout function
   const logout = async () => {
-    setLoading(true)
     try {
       await authService.logout()
       setUser(null)
@@ -312,14 +290,11 @@ export const AuthProvider = ({ children }) => {
       setUser(null)
       setIsAuthenticated(false)
       setCapabilities(null)
-    } finally {
-      setLoading(false)
     }
   }
 
   // Logout from all devices function
   const logoutAll = async () => {
-    setLoading(true)
     try {
       await authService.logoutAll()
       setUser(null)
@@ -331,8 +306,6 @@ export const AuthProvider = ({ children }) => {
       setUser(null)
       setIsAuthenticated(false)
       setCapabilities(null)
-    } finally {
-      setLoading(false)
     }
   }
 
