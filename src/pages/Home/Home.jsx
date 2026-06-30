@@ -90,7 +90,20 @@ function Home({ onCreate, onEdit, onShowAIAssistant, onBrowseTemplates, onSelect
         }
 
         loadSummary()
-        return () => { cancelled = true }
+
+        // Re-fetch whenever a video is rendered (dispatches storage refresh) or credits change
+        const handleRefresh = () => {
+            loadSummary()
+        }
+
+        window.addEventListener('storage-quota-refresh', handleRefresh)
+        window.addEventListener('editor-credits-refresh', handleRefresh)
+
+        return () => {
+            cancelled = true
+            window.removeEventListener('storage-quota-refresh', handleRefresh)
+            window.removeEventListener('editor-credits-refresh', handleRefresh)
+        }
     }, [])
 
     useEffect(() => {

@@ -328,23 +328,7 @@ const QuickCreateModal = ({
     applyAvatarDefaultVoice,
   ]);
 
-  useEffect(() => {
-    const handleVideoGenerated = () => {
-      if (step === GENERATING_STEP) {
-        onClose();
-        setTimeout(() => setStep(1), 500);
-      }
-    };
-    const handleGenerationFailed = () => {
-      if (step === GENERATING_STEP) setStep(TOTAL_STEPS);
-    };
-    window.addEventListener('open-generated-video', handleVideoGenerated);
-    window.addEventListener('generation-failed', handleGenerationFailed);
-    return () => {
-      window.removeEventListener('open-generated-video', handleVideoGenerated);
-      window.removeEventListener('generation-failed', handleGenerationFailed);
-    };
-  }, [step, onClose]);
+
 
   const mapGroupList = (responseData) =>
     extractHeygenList(responseData, ['avatar_groups', 'groups'])
@@ -732,13 +716,9 @@ const QuickCreateModal = ({
       return;
     }
     const payload = buildGeneratePayload();
-    if (skipVoice) {
-      onGenerate(payload);
-      onClose();
-      return;
-    }
-    setStep(GENERATING_STEP);
     onGenerate(payload);
+    onClose();
+    setTimeout(() => setStep(1), 500);
   };
 
   const handleSelectVoice = (voice) => {
