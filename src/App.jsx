@@ -28,6 +28,7 @@ const AIAvatarsVideos = lazy(() => import('./pages/AIAvatarsVideos/AIAvatarsVide
 const AIVideos = lazy(() => import('./pages/AIVideos/AIVideos.jsx'))
 const NotFound = lazy(() => import('./pages/NotFound/NotFound.jsx'))
 const RenderDownload = lazy(() => import('./pages/Download/RenderDownload.jsx'))
+const EarlyAccessPage = lazy(() => import('./pages/EarlyAccess/EarlyAccessPage.jsx'))
 const GoogleCallback = lazy(() => import('./components/features/auth/GoogleCallback.jsx'))
 const PATH_TO_VIEW_MAP = {
   '/': 'landing',
@@ -73,6 +74,7 @@ const PATH_TO_VIEW_MAP = {
   '/auth/google/callback': 'google-callback',
   '/auth/callback': 'google-callback',
   '/oauth/callback': 'google-callback',
+  '/early-access': 'early-access',
 }
 
 // Protected Route Component
@@ -252,6 +254,7 @@ function App() {
       'help': '/dashboard/help',
       'download': '/download',
       'login': '/login',
+      'early-access': '/early-access',
     }
     
     const newUrl = urlMap[view] || '/'
@@ -823,6 +826,10 @@ function App() {
         />
       )}
 
+      {view === 'early-access' && (
+        <EarlyAccessPage onBack={() => setView('landing')} />
+      )}
+
       {view === 'landing' && !isHomeReady && (
         <div style={{
           position: 'fixed',
@@ -871,7 +878,7 @@ function App() {
         <NotFound setView={setView} />
       )}
 
-      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings', 'login', 'google-callback', 'not-found'].includes(view) && (
+      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings', 'login', 'early-access', 'google-callback', 'not-found'].includes(view) && (
         <>
           <Landing 
             onLoginClick={handleLoginClick}

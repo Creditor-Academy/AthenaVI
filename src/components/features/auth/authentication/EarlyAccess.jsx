@@ -20,7 +20,8 @@
  *   }
  */
 import { useState } from 'react'
-import { MdPerson, MdEmail, MdBusiness, MdWork, MdSend, MdCheckCircle, MdStar } from 'react-icons/md'
+import { MdPerson, MdEmail, MdBusiness, MdWork, MdSend, MdStar } from 'react-icons/md'
+import EnvelopeSuccess from './EnvelopeSuccess.jsx'
 
 const EARLY_ACCESS_EMAIL = 'team@athenavi.com'
 
@@ -84,11 +85,8 @@ function EarlyAccess() {
       `Sent from Virtual Studio Early Access Form`
     )
 
-    const mailtoLink = `mailto:${EARLY_ACCESS_EMAIL}?subject=${subject}&body=${body}`
-
-    // Simulate async + open mail client
+    // Simulate async request (TODO: replace with actual API call)
     setTimeout(() => {
-      window.location.href = mailtoLink
       setLoading(false)
       setSubmitted(true)
     }, 600)
@@ -96,43 +94,34 @@ function EarlyAccess() {
 
   if (submitted) {
     return (
-      <div className="ea-success">
-        <div className="ea-success__icon-ring">
-          <MdCheckCircle className="ea-success__icon" />
-        </div>
-        <h3 className="ea-success__title">You're on the list!</h3>
-        <p className="ea-success__body">
-          Your early access request has been sent to our team. We'll review your details and reach out
-          to <strong>{formData.email}</strong> soon.
-        </p>
-        <div className="ea-success__badge">
-          <MdStar style={{ fontSize: 14, marginRight: 5 }} />
-          Expected review time: 1–3 business days
-        </div>
-        <button
-          className="ea-retry-btn"
-          onClick={() => {
-            setSubmitted(false)
-            setFormData({ name: '', email: '', company: '', role: '', useCase: '', message: '' })
-          }}
-        >
-          Submit another request
-        </button>
-      </div>
+      <EnvelopeSuccess 
+        email={formData.email} 
+        onReset={() => {
+          setSubmitted(false)
+          setFormData({ name: '', email: '', company: '', role: '', useCase: '', message: '' })
+        }} 
+      />
     )
   }
 
   return (
-    <form className="auth-form ea-form" onSubmit={handleSubmit} noValidate>
-      {/* Badge */}
-      <div className="ea-badge">
-        <span className="ea-badge__dot" />
-        Limited spots available
-      </div>
+    <div className="ea-form-container">
+      <form className="auth-form ea-form" onSubmit={handleSubmit} noValidate>
+        {/* Header Section */}
+        <div className="ea-header-section">
+          <div className="ea-pill">✨ Beyond Artificial</div>
+          <h1 className="ea-heading">Early Access to<br/>Game-Changing AI</h1>
+          <p className="ea-subtitle">
+            Unlock exclusive early access to groundbreaking AI.<br/>
+            Subscribe now and stay ahead of the future!
+          </p>
+        </div>
 
       {error && (
         <div className="ea-error">{error}</div>
       )}
+
+      <div className="ea-form-grid">
 
       {/* Name */}
       <div className="auth-input-wrapper">
@@ -198,6 +187,8 @@ function EarlyAccess() {
         />
       </div>
 
+      </div>
+
       {/* Use Case select */}
       <div className="auth-input-wrapper">
         <select
@@ -232,7 +223,7 @@ function EarlyAccess() {
 
       <button
         type="submit"
-        className="auth-submit-btn ea-submit-btn"
+        className="ea-submit-btn"
         disabled={loading}
       >
         {loading ? (
@@ -248,10 +239,11 @@ function EarlyAccess() {
         )}
       </button>
 
-      <p className="ea-disclaimer">
-        By submitting, you agree to be contacted by the AthenaVI team. No spam, ever.
-      </p>
-    </form>
+        <p className="ea-disclaimer">
+          By submitting, you agree to be contacted by the Virtual Studio team. No spam, ever.
+        </p>
+      </form>
+    </div>
   )
 }
 
