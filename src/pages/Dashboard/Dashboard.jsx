@@ -423,14 +423,24 @@ function Dashboard({ onCreate, initialSection }) {
               template={selectedTemplateForDetails} 
               onBack={() => goToSection('templates')}
               onUse={() => {
-                if (onCreate && selectedTemplateForDetails) {
-                  const ratioMap = { '9:16': 'portrait', '1:1': 'square' }
-                  onCreate({
-                    template: {
-                      scenes: selectedTemplateForDetails.bundleScenes || [],
+                if (selectedTemplateForDetails) {
+                  // Open CreateVideoModal at step 3 with the template pre-selected,
+                  // so the user still fills in workspace / folder details before creating.
+                  const bundleId = selectedTemplateForDetails.id || selectedTemplateForDetails.bundleId
+                  handleOpenCreateVideoModal({
+                    templateSeed: {
+                      templateId: bundleId ? `bundle:${bundleId}` : null,
+                      name: selectedTemplateForDetails.name || 'Untitled',
+                      // Pass enough bundle shape so CreateVideoModal can resolve selectedTemplate
+                      bundle: {
+                        id: bundleId,
+                        name: selectedTemplateForDetails.name,
+                        scenes: selectedTemplateForDetails.bundleScenes || [],
+                        coverScene: selectedTemplateForDetails.coverScene || null,
+                        category: selectedTemplateForDetails.category || '',
+                        description: selectedTemplateForDetails.description || '',
+                      },
                     },
-                    name: selectedTemplateForDetails.name || 'Untitled',
-                    pageSize: ratioMap[selectedTemplateForDetails.ratio] || 'landscape',
                   })
                 }
               }}
@@ -479,6 +489,7 @@ function Dashboard({ onCreate, initialSection }) {
           initialWorkspaceId={createVideoModalContext?.initialWorkspaceId || ''}
           initialFolderId={createVideoModalContext?.initialFolderId || ''}
           presenterSeed={createVideoModalContext?.presenterSeed || null}
+          templateSeed={createVideoModalContext?.templateSeed || null}
           onCreateVideo={handleCreateVideo}
         />
       )}

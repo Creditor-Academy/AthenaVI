@@ -156,6 +156,47 @@
   color: var(--text-main, #1e293b);
 }
 
+.create-video-template-seed-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: color-mix(in srgb, #16a34a 9%, var(--bg-surface));
+  border: 1px solid color-mix(in srgb, #16a34a 30%, var(--border-color));
+  margin-bottom: 2px;
+}
+
+.create-video-template-seed-banner__icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.create-video-template-seed-banner__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.create-video-template-seed-banner__label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #16a34a;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.create-video-template-seed-banner__name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .create-video-wizard-body {
   min-height: 0;
   overflow-y: auto;
@@ -177,6 +218,20 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+}
+
+.create-video-page-size-grid--single {
+  grid-template-columns: minmax(0, 280px);
+  justify-content: center;
+}
+
+.create-video-canvas-note {
+  margin: 14px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  font-style: italic;
+  opacity: 0.75;
 }
 
 .create-video-size-card {
@@ -745,7 +800,50 @@
 
 .create-video-footer-actions {
   display: flex;
+  align-items: center;
   gap: 8px;
+}
+
+.create-video-selection-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 9px;
+  background: color-mix(in srgb, #16a34a 10%, var(--bg-surface));
+  border: 1px solid color-mix(in srgb, #16a34a 35%, var(--border-color));
+  animation: chip-pop-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  max-width: 220px;
+  overflow: hidden;
+}
+
+.create-video-selection-chip__check {
+  font-size: 13px;
+  font-weight: 800;
+  color: #16a34a;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.create-video-selection-chip__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #15803d;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@keyframes chip-pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.82) translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .create-video-btn {

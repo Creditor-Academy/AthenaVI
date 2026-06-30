@@ -6,8 +6,6 @@ pipeline {
         AWS_ACCOUNT_ID = "205091463760"
         ECR_REPOSITORY = "vi-athena-frontend"
         IMAGE_TAG = "${BUILD_NUMBER}"
-
-        VITE_API_BASE_URL = "https://api.vs.lmsathena.com"
     }
 
     stages {
@@ -27,7 +25,9 @@ pipeline {
         stage('Build React App') {
             steps {
                 sh '''
-                echo "Building with API: $VITE_API_BASE_URL"
+                echo "===================================="
+                echo "Building React Application"
+                echo "===================================="
                 npm run build
                 '''
             }
@@ -55,6 +55,7 @@ pipeline {
             steps {
                 sh """
                 docker build \
+                --no-cache \
                 -t ${ECR_REPOSITORY}:${IMAGE_TAG} .
                 """
             }
@@ -62,12 +63,14 @@ pipeline {
 
         stage('Trivy Scan') {
             steps {
-                sh """
+                sh '''
+                rm -rf ~/.cache/trivy/db
                 trivy image \
-                --exit-code 0 \
-                --severity HIGH,CRITICAL \
-                ${ECR_REPOSITORY}:${IMAGE_TAG}
-                """
+                  --scanners vuln \
+                  --exit-code 0 \
+                  --severity HIGH,CRITICAL \
+                  ${ECR_REPOSITORY}:${IMAGE_TAG}
+                '''
             }
         }
 
@@ -97,17 +100,16 @@ pipeline {
 
     post {
         success {
-            echo "========================================"
-            echo "Frontend CI Pipeline Completed Successfully"
-            echo "Frontend built with API: ${VITE_API_BASE_URL}"
-            echo "Docker Image Pushed to Amazon ECR"
-            echo "========================================"
+            echo "======================================="
+            echo "Frontend Pipeline Completed Successfully"
+            echo "Docker Image Pushed Successfully"
+            echo "======================================="
         }
 
         failure {
-            echo "========================================"
-            echo "Frontend CI Pipeline Failed"
-            echo "========================================"
+            echo "======================================"
+            echo "Frontend Pipeline Failed"
+            echo "======================================"
         }
     }
 }

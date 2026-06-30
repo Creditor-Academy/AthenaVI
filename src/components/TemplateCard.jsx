@@ -14,7 +14,7 @@ import TemplateScenePreview from './features/editor/editor/TemplateScenePreview'
  * @param {string} props.template.duration - Formatted duration (e.g., "00:15")
  * @param {function} props.onSelect - Callback function when the card is clicked
  */
-const TemplateCard = ({ template, onSelect }) => {
+const TemplateCard = ({ template, onSelect, isSelected = false }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   if (!template) return null;
@@ -55,14 +55,16 @@ const TemplateCard = ({ template, onSelect }) => {
     position: 'relative',
     backgroundColor: '#ffffff',
     borderRadius: '12px',
-    border: '1px solid #e2e8f0',
+    border: isSelected ? '2px solid #3b82f6' : '1px solid #e2e8f0',
     overflow: 'hidden',
     cursor: 'pointer',
     transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
     transform: isHovered ? 'translateY(-6px)' : 'translateY(0)',
-    boxShadow: isHovered 
-      ? (isMockup ? '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' : '0 12px 20px -8px rgba(0, 0, 0, 0.15)')
-      : (isMockup ? '0 4px 6px -1px rgba(0, 0, 0, 0.05)' : '0 1px 3px 0 rgba(0, 0, 0, 0.1)'),
+    boxShadow: isSelected
+      ? '0 0 0 3px rgba(59,130,246,0.20), 0 12px 28px -8px rgba(59,130,246,0.28)'
+      : isHovered
+        ? (isMockup ? '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' : '0 12px 20px -8px rgba(0, 0, 0, 0.15)')
+        : (isMockup ? '0 4px 6px -1px rgba(0, 0, 0, 0.05)' : '0 1px 3px 0 rgba(0, 0, 0, 0.1)'),
     width: '100%',
     display: 'flex',
     flexDirection: 'column',
@@ -211,12 +213,33 @@ const TemplateCard = ({ template, onSelect }) => {
 
   return (
     <div 
-      className="template-card"
+      className={`template-card${isSelected ? ' template-card--selected' : ''}`}
       style={cardStyle}
       onClick={() => onSelect && onSelect(template)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Selection Badge */}
+      {isSelected && (
+        <div style={{
+          position: 'absolute',
+          top: 10,
+          right: 10,
+          zIndex: 10,
+          background: '#3b82f6',
+          color: '#fff',
+          fontSize: 11,
+          fontWeight: 800,
+          padding: '4px 10px',
+          borderRadius: 999,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 4,
+          boxShadow: '0 2px 8px rgba(59,130,246,0.4)',
+        }}>
+          ✓ Selected
+        </div>
+      )}
       {/* Preview Section */}
       <div style={previewWrapStyle}>
         {/* Decorative colored bubbles (2-3) */}

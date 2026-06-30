@@ -4,7 +4,8 @@ import { useAuth } from '../../../../contexts/AuthContext'
 import '../../../../pages/Auth/auth-forms.css'
 
 function ResetPassword() {
-  const { resetPassword, loading } = useAuth()
+  const { resetPassword } = useAuth()
+  const [loading, setLoading] = useState(false)
 
   const [token, setToken] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -52,6 +53,7 @@ function ResetPassword() {
       return
     }
 
+    setLoading(true)
     try {
       const result = await resetPassword(token, newPassword)
       if (result.success) {
@@ -61,6 +63,8 @@ function ResetPassword() {
       }
     } catch (err) {
       setError(err.message || 'Failed to reset password')
+    } finally {
+      setLoading(false)
     }
   }
 

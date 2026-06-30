@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { MdPerson, MdEmail, MdLock, MdVisibility, MdVisibilityOff, MdArrowBack } from 'react-icons/md'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../../../contexts/AuthContext'
 import {
   formatAuthErrorMessage,
@@ -41,73 +42,75 @@ function Signup({ onSuccess }) {
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   const [step, setStep] = useState(1)
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    otp: ''
-  })
+  const [formData, setFormData] = useState({ name: '', email: '', password: '' })
+  const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', ''])
+  const otpRefs = useRef([])
+  // null | 'combining' | 'done'
+  const [successPhase, setSuccessPhase] = useState(null)
   const { register, precheckSignupEmail, generateOTP, resendOTP, googleLogin } = useAuth()
 
+  /* ── Input handlers ── */
   const handleInputChange = (e) => {
     const { name, value } = e.target
     clearInputValidity(e.target)
-
-    if (name === 'otp') {
-      const numericValue = value.replace(/[^0-9]/g, '')
-      setFormData({
-        ...formData,
-        [name]: numericValue
-      })
-      return
-    }
-
-    setFormData({
-      ...formData,
-      [name]: value
-    })
+    setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
+  const handleDigitChange = (index, e) => {
+    const digit = e.target.value.replace(/[^0-9]/g, '').slice(-1)
+    const next = [...otpDigits]
+    next[index] = digit
+    setOtpDigits(next)
+    if (digit && index < 5) otpRefs.current[index + 1]?.focus()
+  }
+
+  const handleDigitKeyDown = (index, e) => {
+    if (e.key === 'Backspace') {
+      if (otpDigits[index]) {
+        const next = [...otpDigits]
+        next[index] = ''
+        setOtpDigits(next)
+      } else if (index > 0) {
+        otpRefs.current[index - 1]?.focus()
+      }
+    }
+    if (e.key === 'ArrowLeft' && index > 0) otpRefs.current[index - 1]?.focus()
+    if (e.key === 'ArrowRight' && index < 5) otpRefs.current[index + 1]?.focus()
+  }
+
+  const handleDigitPaste = (e) => {
+    e.preventDefault()
+    const pasted = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6)
+    if (!pasted) return
+    const next = ['', '', '', '', '', '']
+    for (let i = 0; i < pasted.length; i++) next[i] = pasted[i]
+    setOtpDigits(next)
+    setTimeout(() => otpRefs.current[Math.min(pasted.length - 1, 5)]?.focus(), 0)
+  }
+
+  /* ── Step 1: email precheck + OTP generate ── */
   const handleFormSubmit = async (event) => {
     event.preventDefault()
     setError('')
     setSuccessMessage('')
 
     const form = event.currentTarget
-    const nameInput = form.elements.name
-    const emailInput = form.elements.email
-    const passwordInput = form.elements.password
-
-    if (!reportNameValidity(nameInput)) {
-      return
-    }
-
-    if (!reportEmailValidity(emailInput)) {
-      return
-    }
-
-    if (!reportPasswordMinLength(passwordInput)) {
-      return
-    }
+    if (!reportNameValidity(form.elements.name)) return
+    if (!reportEmailValidity(form.elements.email)) return
+    if (!reportPasswordMinLength(form.elements.password)) return
 
     setLoading(true)
-
     try {
       const precheck = await precheckSignupEmail({
         name: formData.name.trim(),
         email: formData.email,
         password: formData.password,
       })
-
       if (!precheck.success) {
         setError(formatAuthErrorMessage(precheck, 'Email already registered'))
         return
       }
-
-      if (precheck.otpAlreadySent) {
-        setStep(2)
-        return
-      }
+      if (precheck.otpAlreadySent) { setStep(2); return }
 
       const result = await generateOTP(formData.email)
       if (result.success) {
@@ -122,39 +125,45 @@ function Signup({ onSuccess }) {
     }
   }
 
+  /* ── Step 2: OTP verify + register ── */
   const handleOTPSubmit = async (event) => {
     event.preventDefault()
     setError('')
     setSuccessMessage('')
-    setLoading(true)
 
+    const otp = otpDigits.join('')
+    if (otp.length < 6) {
+      setError('Please enter all 6 digits of your OTP.')
+      return
+    }
+
+    setLoading(true)
     try {
       const result = await register({
         name: formData.name.trim(),
         email: formData.email,
         password: formData.password,
-        otp: Number(formData.otp)
+        otp: Number(otp),
       })
 
       if (result.success) {
-        if (onSuccess) onSuccess()
+        // Start merge animation
+        setSuccessPhase('combining')
+        setTimeout(() => setSuccessPhase('done'), 650)
+        setTimeout(() => { if (onSuccess) onSuccess() }, 2300)
         return
       }
 
       const message = formatAuthErrorMessage(result, 'Registration failed')
-
       if (result.status === 409 || isEmailAlreadyRegisteredMessage(message)) {
-        setError(message)
-        return
+        setError(message); return
       }
-
       if (result.status === 410) {
         setError(message)
         setStep(1)
-        setFormData((prev) => ({ ...prev, otp: '' }))
+        setOtpDigits(['', '', '', '', '', ''])
         return
       }
-
       setError(message)
     } catch (err) {
       setError(getFriendlyAuthErrorMessage(err.message || 'Registration failed'))
@@ -170,7 +179,11 @@ function Signup({ onSuccess }) {
       const result = await resendOTP(formData.email)
       if (result.success) {
         setSuccessMessage('If this email is eligible, a new OTP has been sent.')
-        setTimeout(() => setSuccessMessage(''), 4000)
+        setOtpDigits(['', '', '', '', '', ''])
+        setTimeout(() => {
+          setSuccessMessage('')
+          otpRefs.current[0]?.focus()
+        }, 4000)
       } else {
         setError(formatAuthErrorMessage(result, 'Failed to resend OTP'))
       }
@@ -193,6 +206,8 @@ function Signup({ onSuccess }) {
     setStep(1)
     setError('')
     setSuccessMessage('')
+    setOtpDigits(['', '', '', '', '', ''])
+    setSuccessPhase(null)
   }
 
   return (
@@ -203,13 +218,8 @@ function Signup({ onSuccess }) {
             type="button"
             onClick={goBack}
             style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              marginBottom: '16px',
-              color: '#64748b'
+              background: 'none', border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', marginBottom: '16px', color: '#64748b',
             }}
           >
             <MdArrowBack size={20} style={{ marginRight: '8px' }} />
@@ -218,76 +228,41 @@ function Signup({ onSuccess }) {
         )}
         <h2 className="auth-form-title">Sign Up</h2>
         <p className="auth-form-subtitle">
-          {step === 1
-            ? 'Create your account to get started'
-            : 'Enter the OTP sent to your email'}
+          {step === 1 ? 'Create your account to get started' : 'Enter the OTP sent to your email'}
         </p>
       </div>
 
-      {error && (
-        <div style={authAlertErrorStyle}>
-          {error}
-        </div>
-      )}
-
-      {successMessage && (
-        <div style={authAlertSuccessStyle}>
-          {successMessage}
-        </div>
-      )}
+      {error && <div style={authAlertErrorStyle}>{error}</div>}
+      {successMessage && <div style={authAlertSuccessStyle}>{successMessage}</div>}
 
       {step === 1 ? (
         <>
           <div className="auth-input-wrapper">
             <MdPerson className="auth-input-icon" />
-            <input
-              id="signup-name"
-              name="name"
-              type="text"
-              placeholder="Full Name"
-              className="auth-input"
-              value={formData.name}
-              onChange={handleInputChange}
-              disabled={loading}
-            />
+            <input id="signup-name" name="name" type="text" placeholder="Full Name"
+              className="auth-input" value={formData.name}
+              onChange={handleInputChange} disabled={loading} />
           </div>
 
           <div className="auth-input-wrapper">
             <MdEmail className="auth-input-icon" />
-            <input
-              id="signup-email"
-              name="email"
-              type="text"
-              inputMode="email"
-              autoComplete="email"
-              placeholder="Email address"
-              className="auth-input"
-              value={formData.email}
-              onChange={handleInputChange}
-              disabled={loading}
-            />
+            <input id="signup-email" name="email" type="text" inputMode="email"
+              autoComplete="email" placeholder="Email address"
+              className="auth-input" value={formData.email}
+              onChange={handleInputChange} disabled={loading} />
           </div>
 
           <div className="auth-input-wrapper">
             <MdLock className="auth-input-icon" />
-            <input
-              id="signup-password"
-              name="password"
-              type={showPassword ? 'text' : 'password'}
-              autoComplete="new-password"
+            <input id="signup-password" name="password"
+              type={showPassword ? 'text' : 'password'} autoComplete="new-password"
               placeholder="Password (min. 8 characters)"
-              className="auth-input"
-              value={formData.password}
-              onChange={handleInputChange}
-              disabled={loading}
-            />
-            <button
-              type="button"
-              className="auth-password-toggle"
+              className="auth-input" value={formData.password}
+              onChange={handleInputChange} disabled={loading} />
+            <button type="button" className="auth-password-toggle"
               onClick={() => setShowPassword(!showPassword)}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
-              disabled={loading}
-            >
+              disabled={loading}>
               {showPassword ? <MdVisibilityOff /> : <MdVisibility />}
             </button>
           </div>
@@ -296,17 +271,11 @@ function Signup({ onSuccess }) {
             {loading ? 'Sending OTP...' : 'Continue'}
           </button>
 
-          <div className="auth-divider">
-            <span>or</span>
-          </div>
+          <div className="auth-divider"><span>or</span></div>
 
-          <button
-            type="button"
-            className="auth-google-alt-btn"
+          <button type="button" className="auth-google-alt-btn"
             onClick={() => handleSocialLogin('Google')}
-            aria-label="Sign up with Google"
-            disabled={loading}
-          >
+            aria-label="Sign up with Google" disabled={loading}>
             <svg width="18" height="18" viewBox="0 0 24 24" style={{ marginRight: '8px' }}>
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -317,47 +286,118 @@ function Signup({ onSuccess }) {
           </button>
         </>
       ) : (
+        /* ── Step 2: OTP entry + animation ── */
         <>
-          <div className="auth-input-wrapper">
-            <MdEmail className="auth-input-icon" />
-            <input
-              id="signup-otp"
-              name="otp"
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              placeholder="Enter OTP"
-              className="auth-input"
-              value={formData.otp}
-              onChange={handleInputChange}
-              required
-              disabled={loading}
-              maxLength={6}
-              style={{ letterSpacing: '2px', textAlign: 'center', fontSize: '18px' }}
-            />
+          <div className="otp-anim-container">
+            <AnimatePresence mode="wait">
+              {successPhase === 'done' ? (
+                /* ── Success circle with animated checkmark ── */
+                <motion.div
+                  key="success-circle"
+                  className="otp-success-circle"
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 280, damping: 20 }}
+                >
+                  <svg viewBox="0 0 52 52" className="otp-check-svg">
+                    <motion.circle
+                      cx="26" cy="26" r="23"
+                      fill="none" stroke="#22c55e" strokeWidth="2.5"
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={{ duration: 0.5, ease: 'easeOut' }}
+                    />
+                    <motion.path
+                      fill="none" stroke="#22c55e" strokeWidth="3.5"
+                      strokeLinecap="round" strokeLinejoin="round"
+                      d="M14 27l8 8 16-16"
+                      initial={{ pathLength: 0, opacity: 0 }}
+                      animate={{ pathLength: 1, opacity: 1 }}
+                      transition={{ duration: 0.4, delay: 0.35, ease: 'easeOut' }}
+                    />
+                  </svg>
+                </motion.div>
+              ) : (
+                /* ── Six OTP input boxes ── */
+                <motion.div
+                  key="otp-boxes"
+                  className="otp-boxes-row"
+                  animate={
+                    successPhase === 'combining'
+                      ? { scale: [1, 0.85, 0.4], opacity: [1, 1, 0] }
+                      : { scale: 1, opacity: 1 }
+                  }
+                  transition={
+                    successPhase === 'combining'
+                      ? { duration: 0.55, ease: 'easeIn' }
+                      : {}
+                  }
+                >
+                  {otpDigits.map((digit, i) => (
+                    <motion.input
+                      key={i}
+                      ref={(el) => (otpRefs.current[i] = el)}
+                      id={`otp-box-${i}`}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      className={`otp-box${digit ? ' otp-box--filled' : ''}`}
+                      onChange={(e) => handleDigitChange(i, e)}
+                      onKeyDown={(e) => handleDigitKeyDown(i, e)}
+                      onPaste={handleDigitPaste}
+                      disabled={loading || successPhase !== null}
+                      autoFocus={i === 0}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.05, duration: 0.25 }}
+                    />
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
-          <button type="submit" className="auth-submit-btn" disabled={loading}>
-            {loading ? 'Verifying...' : 'Verify & Create Account'}
-          </button>
+          {/* Success label */}
+          <AnimatePresence>
+            {successPhase === 'done' && (
+              <motion.p
+                className="otp-success-label"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                Account created! Redirecting…
+              </motion.p>
+            )}
+          </AnimatePresence>
 
-          <div style={{ textAlign: 'center', marginTop: '16px' }}>
-            <button
-              type="button"
-              onClick={handleResendOTP}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#2563eb',
-                cursor: 'pointer',
-                fontSize: '14px',
-                textDecoration: 'underline'
-              }}
-              disabled={loading}
-            >
-              Resend OTP
-            </button>
-          </div>
+          {/* Verify button & resend (hidden during animation) */}
+          {successPhase === null && (
+            <>
+              <button
+                type="submit"
+                className="auth-submit-btn"
+                disabled={loading || otpDigits.join('').length < 6}
+              >
+                {loading ? 'Verifying…' : 'Verify & Create Account'}
+              </button>
+
+              <div style={{ textAlign: 'center', marginTop: '12px' }}>
+                <button
+                  type="button"
+                  onClick={handleResendOTP}
+                  style={{
+                    background: 'none', border: 'none', color: '#2563eb',
+                    cursor: 'pointer', fontSize: '14px', textDecoration: 'underline',
+                  }}
+                  disabled={loading}
+                >
+                  Resend OTP
+                </button>
+              </div>
+            </>
+          )}
         </>
       )}
     </form>

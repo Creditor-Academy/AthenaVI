@@ -1,90 +1,84 @@
-import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { FiArrowRight, FiPlay, FiVideo } from 'react-icons/fi'
 
-const PREMIUM_TEMPLATES = [
+import temp1 from '../../assets/Template Image/temp1.png'
+import temp2 from '../../assets/Template Image/temp2.png'
+import temp3 from '../../assets/Template Image/temp3.png'
+import temp4 from '../../assets/Template Image/temp4.png'
+import temp5 from '../../assets/Template Image/temp5.png'
+import temp6 from '../../assets/Template Image/temp6.png'
+import temp7 from '../../assets/Template Image/temp7.png'
+import temp8 from '../../assets/Template Image/temp8.png'
+import temp9 from '../../assets/Template Image/temp9.png'
+import temp10 from '../../assets/Template Image/temp10.png'
+import temp11 from '../../assets/Template Image/temp11.png'
+import temp12 from '../../assets/Template Image/temp12.png'
+
+const TEMPLATE_IMAGES = [
+  temp1, temp2, temp3, temp4,
+  temp5, temp6, temp7, temp8,
+  temp9, temp10, temp11, temp12
+]
+
+const EXPLANATIONS = [
   {
-    id: 1,
-    title: "Business Proposal",
-    category: "Company",
-    duration: "8s",
-    transition: "Asymmetric Cover",
-    thumb: "https://images.pexels.com/photos/190819/pexels-photo-190819.jpeg?auto=compress&cs=tinysrgb&w=800",
-    desc: "A high-end 5-slide Business Proposal presentation mimicking custom editorial mockups. Features dynamic pie charts, asymmetrical cover layouts, and sleek column arrangements.",
+    id: "exp-1",
+    title: "Life Science Graphics",
+    category: "Specialized",
+    desc: "Pre-made DNA structures, cell divisions, and clinical trials graphics optimized for scientific research.",
     accentColor: "#3b82f6",
-    accentRgb: "59, 130, 246",
-    span: 2
+    accentRgb: "59, 130, 246"
   },
   {
-    id: 2,
-    title: "Women's Wellness",
-    category: "Courses",
-    duration: "8s",
-    transition: "Cross Dissolve",
-    thumb: "https://images.pexels.com/photos/3759664/pexels-photo-3759664.jpeg?auto=compress&cs=tinysrgb&w=800",
-    desc: "A beautiful 6-slide wellness self-care tracker designed to present wellness guides, biological routines, and somatic habits.",
-    accentColor: "#f472b6",
-    accentRgb: "244, 114, 182",
-    span: 1
-  },
-  {
-    id: 3,
-    title: "Product Demo",
-    category: "SaaS Marketing",
-    duration: "8s",
-    transition: "Slide Left",
-    thumb: "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800",
-    desc: "Showcase software product features side-by-side with an engaging virtual instructor.",
-    accentColor: "#a855f7",
-    accentRgb: "168, 85, 247",
-    span: 1
-  },
-  {
-    id: 4,
-    title: "Performance Metrics",
-    category: "Data Analytics",
-    duration: "8s",
-    transition: "Zoom In",
-    thumb: "https://images.pexels.com/photos/590022/pexels-photo-590022.jpeg?auto=compress&cs=tinysrgb&w=800",
-    desc: "Let statistics and performance charts tell the story. High-fidelity visual metrics and growth charts presented by a digital twin instructor.",
+    id: "exp-2",
+    title: "Corporate Briefings",
+    category: "Professional",
+    desc: "Polished templates for presenting financial reports, key KPIs, and corporate milestones.",
     accentColor: "#10b981",
-    accentRgb: "16, 185, 129",
-    span: 2
+    accentRgb: "16, 185, 129"
   },
   {
-    id: 5,
-    title: "AI Integration Flow",
-    category: "Technical Overview",
-    duration: "8s",
-    transition: "Slide Top",
-    thumb: "https://images.pexels.com/photos/1170412/pexels-photo-1170412.jpeg?auto=compress&cs=tinysrgb&w=800",
-    desc: "Explain complex architectures effortlessly. A futuristic flow layout illustrating technical integrations, system workflows, and machine learning connections.",
+    id: "exp-3",
+    title: "Onboarding & SaaS",
+    category: "Product Suite",
+    desc: "Interactive dashboards and avatar walkthrough layouts to demonstrate software features.",
+    accentColor: "#8b5cf6",
+    accentRgb: "139, 92, 246"
+  },
+  {
+    id: "exp-4",
+    title: "Educational Lessons",
+    category: "Academic",
+    desc: "Clear visual structures for teaching physics, math, and humanities with graphical focus.",
+    accentColor: "#ef4444",
+    accentRgb: "239, 68, 68"
+  },
+  {
+    id: "exp-5",
+    title: "Marketing Campaigns",
+    category: "Ads & Social",
+    desc: "High-impact layouts optimized to grab attention and boost product conversions.",
     accentColor: "#06b6d4",
-    accentRgb: "6, 182, 212",
-    span: 1
+    accentRgb: "6, 182, 212"
   },
   {
-    id: 6,
-    title: "Intro Sequence",
-    category: "AI Presentation",
-    duration: "8s",
-    transition: "Fade Transition",
-    thumb: "https://images.pexels.com/photos/5212345/pexels-photo-5212345.jpeg?auto=compress&cs=tinysrgb&w=800",
-    desc: "Make an unforgettable first impression. High-impact intro scene featuring centered AI avatar presenter.",
-    accentColor: "#2563eb",
-    accentRgb: "37, 99, 235",
-    span: 1
+    id: "exp-6",
+    title: "Company Onboarding",
+    category: "Human Resources",
+    desc: "Welcome templates introducing workspace tools, guidelines, and corporate culture.",
+    accentColor: "#f59e0b",
+    accentRgb: "245, 158, 11"
   }
-];
+]
 
 const css = `
 /* ────────────────────────────────────────────────────────
-   Horizontal Scroll Bento Marquee Layout (Reference Design)
+   Vertical Infinite Scrolling Grid (35:65 ratio)
    ──────────────────────────────────────────────────────── */
 .pts-section {
   position: relative;
   padding: 120px 48px;
-  background: #f4f6fa; /* Clean light slate background */
+  background: #f4f6fa;
   color: #0f172a;
   overflow: hidden;
   font-family: 'Inter', sans-serif;
@@ -123,27 +117,144 @@ const css = `
   filter: blur(80px);
 }
 
-/* 2-Column Split Layout */
-.pts-container {
+/* Layout grid - 35% Left (Info), 65% Right (Scroll) */
+.pts-layout-grid {
   display: grid;
-  grid-template-columns: 360px 1fr;
+  grid-template-columns: 35fr 65fr;
   gap: 56px;
-  width: 100%;
+  align-items: center;
   max-width: 1440px;
   margin: 0 auto;
   position: relative;
   z-index: 2;
-  align-items: center;
-  box-sizing: border-box;
 }
 
-/* Left Column: Heading, buttons & partner logos */
+/* Right side (65%) vertical scroll area */
+.pts-scroll-wrapper {
+  position: relative;
+  height: 680px;
+  overflow: hidden;
+  /* Top & bottom fading mask */
+  mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+}
+
+.pts-scroll-columns-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  height: 100%;
+}
+
+.pts-scroll-column {
+  display: flex;
+  flex-direction: column;
+  height: max-content;
+}
+
+.scroll-track-up {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: scroll-up 35s linear infinite;
+}
+
+.scroll-track-down {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: scroll-down 35s linear infinite;
+}
+
+/* Pausing columns on container hover */
+.pts-scroll-wrapper:hover .scroll-track-up,
+.pts-scroll-wrapper:hover .scroll-track-down {
+  animation-play-state: paused;
+}
+
+@keyframes scroll-up {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+@keyframes scroll-down {
+  0% {
+    transform: translateY(-50%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* ─── PURE IMAGE CARD ─── */
+.pts-image-card {
+  background: #ffffff;
+  border-radius: 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/10;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.pts-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ─── EXPLANATION CARD ─── */
+.pts-explanation-card {
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.pts-card-category-tag {
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--accent-color, #3b82f6);
+  margin-bottom: 6px;
+}
+
+.pts-card-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+  line-height: 1.3;
+}
+
+.pts-card-desc {
+  font-size: 10px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Left Column (35%) styling */
 .pts-info-column {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
 }
+
 .pts-eyebrow {
   display: inline-flex;
   align-items: center;
@@ -160,6 +271,7 @@ const css = `
   margin-bottom: 20px;
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.02);
 }
+
 .pts-eyebrow-dot {
   width: 6px;
   height: 6px;
@@ -168,10 +280,12 @@ const css = `
   box-shadow: 0 0 6px #2563eb;
   animation: pts-pulse 2s infinite;
 }
+
 @keyframes pts-pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.4; transform: scale(0.7); }
 }
+
 .pts-section-title {
   font-family: 'Georgia', serif;
   font-size: clamp(34px, 3.6vw, 44px);
@@ -181,6 +295,7 @@ const css = `
   letter-spacing: -1.2px;
   margin: 0 0 24px;
 }
+
 .pts-section-title span {
   background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
   -webkit-background-clip: text;
@@ -188,34 +303,43 @@ const css = `
   background-clip: text;
 }
 
-/* Button row matching reference image style */
+.pts-section-subtitle {
+  font-size: 15px;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 0 0 32px;
+}
+
 .pts-btn-row {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 32px;
+  margin-bottom: 36px;
   flex-wrap: wrap;
 }
+
 .pts-btn-left-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  background: #93c5fd; /* Soft blue primary button from image */
+  background: #93c5fd;
   color: #1e3a8a;
   border: none;
-  padding: 10px 22px;
+  padding: 12px 24px;
   border-radius: 999px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 4px 14px rgba(147, 197, 253, 0.3);
 }
+
 .pts-btn-left-primary:hover {
   background: #bdd7ff;
   transform: translateY(-1px);
 }
+
 .pts-btn-left-outline {
   display: inline-flex;
   align-items: center;
@@ -224,32 +348,25 @@ const css = `
   background: transparent;
   color: #0f172a;
   border: 1px solid rgba(15, 23, 42, 0.4);
-  padding: 10px 22px;
+  padding: 12px 24px;
   border-radius: 999px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
 }
+
 .pts-btn-left-outline:hover {
   background: rgba(15, 23, 42, 0.04);
 }
 
-.pts-section-subtitle {
-  font-size: 14px;
-  color: #64748b;
-  line-height: 1.6;
-  margin: 0 0 32px;
-  max-width: 320px;
-}
-
-/* Partner Logos Section */
 .pts-partners {
   display: flex;
   flex-direction: column;
   gap: 12px;
   width: 100%;
 }
+
 .pts-partner-row {
   display: flex;
   align-items: center;
@@ -257,429 +374,81 @@ const css = `
   flex-wrap: wrap;
   opacity: 0.65;
 }
+
 .pts-partner-logo {
   font-size: 13px;
   font-weight: 850;
   color: #475569;
   letter-spacing: -0.5px;
 }
-.pts-partner-logo span {
-  color: #2563eb;
-}
 
-/* Right Column: Horizontally Scrollable Marquee Viewport */
-.pts-scroll-column {
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-  padding: 12px 0;
-  /* fade edges mask */
-  mask-image: linear-gradient(to right, transparent, white 5%, white 95%, transparent);
-  -webkit-mask-image: linear-gradient(to right, transparent, white 5%, white 95%, transparent);
-}
-
-/* Marquee Track */
-.pts-marquee-track {
-  display: flex;
-  gap: 24px;
-  width: max-content;
-  animation: pts-bento-marquee 40s linear infinite;
-}
-.pts-marquee-track:hover {
-  animation-play-state: paused;
-}
-
-@keyframes pts-bento-marquee {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    /* Translate exactly by 2 bento groups (1144px width + 24px gap) */
-    transform: translateX(-1168px);
+/* ────────────────────────────────────────────────────────
+   Responsive Media Queries
+   ──────────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .pts-layout-grid {
+    grid-template-columns: 40fr 60fr;
+    gap: 32px;
   }
 }
 
-/* Bento Group Container */
-.pts-bento-group {
-  display: grid;
-  grid-template-columns: repeat(2, 270px);
-  grid-template-rows: repeat(2, 210px);
-  gap: 20px;
-  width: 560px;
-  height: 440px;
-  flex-shrink: 0;
-}
+@media (max-width: 968px) {
+  .pts-section {
+    padding: 80px 24px;
+  }
 
-/* Bento Card Style */
-.pts-bento-card {
-  position: relative;
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 24px;
-  overflow: hidden;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.03);
-  box-sizing: border-box;
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.3s ease;
-}
-.pts-bento-card:hover {
-  transform: translateY(-4px);
-  border-color: var(--accent);
-  box-shadow: 0 20px 40px rgba(var(--accent-rgb), 0.08),
-              0 0 0 1px var(--accent);
-}
-
-/* Individual placements inside bento grid */
-.pts-bento-card-wide {
-  grid-column: 1 / 3;
-  grid-row: 1 / 2;
-  width: 560px;
-  height: 210px;
-}
-.pts-bento-card-standard-1 {
-  grid-column: 1 / 2;
-  grid-row: 2 / 3;
-  width: 270px;
-  height: 210px;
-}
-.pts-bento-card-standard-2 {
-  grid-column: 2 / 3;
-  grid-row: 2 / 3;
-  width: 270px;
-  height: 210px;
-}
-
-/* Inner Layouts */
-.pts-card-inner-wide {
-  display: flex;
-  flex-direction: row;
-  height: 100%;
-  width: 100%;
-}
-.pts-card-inner-wide .pts-card-media {
-  width: 50%;
-  height: 100%;
-  border-bottom: none;
-  border-right: 1px solid rgba(15, 23, 42, 0.04);
-}
-.pts-card-inner-wide .pts-card-info {
-  width: 50%;
-  height: 100%;
-}
-
-.pts-card-inner-standard {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  width: 100%;
-}
-.pts-card-inner-standard .pts-card-media {
-  height: 105px;
-}
-.pts-card-inner-standard .pts-card-info {
-  height: 105px;
-}
-
-/* Media Areas */
-.pts-card-media {
-  position: relative;
-  overflow: hidden;
-  background: #0f172a;
-}
-.pts-card-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0.85;
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-              opacity 0.3s ease;
-}
-.pts-bento-card:hover .pts-card-img {
-  transform: scale(1.05);
-  opacity: 0.95;
-}
-
-/* Float Badge */
-.pts-card-float-badge {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  z-index: 5;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 100px;
-  color: #ffffff;
-  font-size: 9px;
-  font-weight: 600;
-}
-
-/* Play Overlays */
-.pts-card-play-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(15, 23, 42, 0.25);
-  backdrop-filter: blur(1px);
-  opacity: 0;
-  transition: opacity 0.35s ease;
-  z-index: 4;
-}
-.pts-bento-card:hover .pts-card-play-overlay {
-  opacity: 1;
-}
-.pts-card-play-btn {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: #ffffff;
-  color: var(--accent, #2563eb);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.2);
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  padding-left: 2px;
-}
-.pts-card-play-btn:hover {
-  transform: scale(1.1);
-  background: var(--accent, #2563eb);
-  color: #ffffff;
-}
-
-/* Progress Timeline */
-.pts-card-progress-track {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.15);
-  z-index: 5;
-}
-.pts-card-progress-bar {
-  height: 100%;
-  width: 0;
-  background: var(--accent, #2563eb);
-}
-.pts-bento-card:hover .pts-card-progress-bar {
-  animation: bento-play-line 3s linear infinite;
-}
-@keyframes bento-play-line {
-  0% { width: 0%; }
-  100% { width: 100%; }
-}
-
-/* Info Details */
-.pts-card-info {
-  padding: 16px 20px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  box-sizing: border-box;
-  overflow: hidden;
-}
-.pts-card-inner-standard .pts-card-info {
-  padding: 10px 14px;
-}
-
-.pts-card-cat {
-  font-size: 8px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--accent, #2563eb);
-  letter-spacing: 1px;
-  margin-bottom: 2px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.pts-card-cat-dot {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: currentColor;
-}
-.pts-card-title {
-  font-size: 15px;
-  font-weight: 800;
-  color: #0f172a;
-  letter-spacing: -0.3px;
-  margin: 0 0 2px;
-  line-height: 1.2;
-}
-.pts-card-inner-wide .pts-card-title {
-  font-size: 17px;
-  margin-bottom: 4px;
-}
-.pts-card-desc {
-  font-size: 11px;
-  color: #64748b;
-  line-height: 1.35;
-  margin: 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.pts-card-inner-wide .pts-card-desc {
-  -webkit-line-clamp: 3;
-}
-
-/* Actions Button Reveal on Hover */
-.pts-card-actions {
-  max-height: 0;
-  opacity: 0;
-  overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.pts-bento-card:hover .pts-card-actions {
-  max-height: 34px;
-  opacity: 1;
-  margin-top: 6px;
-}
-.pts-btn-primary {
-  font-family: 'Inter', sans-serif;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  background: var(--accent, #2563eb);
-  color: #ffffff;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 10px rgba(var(--accent-rgb), 0.15);
-  width: 100%;
-}
-.pts-btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(var(--accent-rgb), 0.25);
-  filter: brightness(1.05);
-}
-
-/* Responsive design */
-@media (max-width: 1024px) {
-  .pts-container {
+  .pts-layout-grid {
     grid-template-columns: 1fr;
-    gap: 40px;
+    gap: 48px;
   }
+  
   .pts-info-column {
     align-items: center;
     text-align: center;
     max-width: 600px;
     margin: 0 auto;
   }
-  .pts-scroll-column {
-    mask-image: none;
-    -webkit-mask-image: none;
+  
+  .pts-scroll-wrapper {
+    height: 520px;
   }
 }
 
-@media (max-width: 768px) {
-  .pts-section {
-    padding: 80px 20px;
+@media (max-width: 576px) {
+  .pts-scroll-columns-container {
+    grid-template-columns: repeat(2, 1fr);
   }
-  .pts-scroll-column {
-    overflow-x: auto;
+  
+  .pts-scroll-column:nth-child(3) {
+    display: none;
   }
-  .pts-marquee-track {
-    animation: none;
+  
+  .pts-scroll-wrapper {
+    height: 420px;
   }
 }
-`;
+`
 
-function BentoMarqueeCard({ tpl, isWide, standardIndex, onUseClick }) {
-  const innerClass = isWide ? 'pts-card-inner-wide' : 'pts-card-inner-standard'
-  const placementClass = isWide 
-    ? 'pts-bento-card-wide' 
-    : (standardIndex === 1 ? 'pts-bento-card-standard-1' : 'pts-bento-card-standard-2')
-
+function ImageCard({ img }) {
   return (
-    <div
-      className={`pts-bento-card ${placementClass}`}
-      style={{
-        '--accent': tpl.accentColor,
-        '--accent-rgb': tpl.accentRgb
-      }}
-    >
-      <div className={innerClass}>
-        
-        {/* Media Area */}
-        <div className="pts-card-media">
-          <img
-            src={tpl.thumb}
-            alt={tpl.title}
-            className="pts-card-img"
-          />
-          <span className="pts-card-float-badge">
-            <FiVideo size={11} />
-            {tpl.duration}
-          </span>
-          
-          {/* Play Overlay */}
-          <div className="pts-card-play-overlay">
-            <div className="pts-card-play-btn" onClick={onUseClick}>
-              <FiPlay size={16} />
-            </div>
-          </div>
-
-          {/* Progress Timeline */}
-          <div className="pts-card-progress-track">
-            <div className="pts-card-progress-bar" />
-          </div>
-        </div>
-
-        {/* Info Details */}
-        <div className="pts-card-info">
-          <div className="pts-card-main-info">
-            <div className="pts-card-cat">
-              <span className="pts-card-cat-dot" />
-              {tpl.category}
-            </div>
-            <h3 className="pts-card-title">{tpl.title}</h3>
-            <p className="pts-card-desc">{tpl.desc}</p>
-          </div>
-
-          {/* Actions Button */}
-          <div className="pts-card-actions">
-            <button className="pts-btn-primary" onClick={onUseClick}>
-              Use Template <FiArrowRight size={12} />
-            </button>
-          </div>
-        </div>
-
-      </div>
+    <div className="pts-image-card">
+      <img src={img} alt="Template Preview" className="pts-card-img" />
     </div>
   )
 }
 
-function BentoGroup({ groupIndex, templates, onUseClick }) {
-  // Group 0: Top = templates[0], BottomLeft = templates[1], BottomRight = templates[2]
-  // Group 1: Top = templates[3], BottomLeft = templates[4], BottomRight = templates[5]
-  const tplTop = groupIndex === 0 ? templates[0] : templates[3]
-  const tplBottomLeft = groupIndex === 0 ? templates[1] : templates[4]
-  const tplBottomRight = groupIndex === 0 ? templates[2] : templates[5]
-
+function ExplanationCard({ info }) {
   return (
-    <div className="pts-bento-group">
-      <BentoMarqueeCard tpl={tplTop} isWide={true} onUseClick={onUseClick} />
-      <BentoMarqueeCard tpl={tplBottomLeft} isWide={false} standardIndex={1} onUseClick={onUseClick} />
-      <BentoMarqueeCard tpl={tplBottomRight} isWide={false} standardIndex={2} onUseClick={onUseClick} />
+    <div 
+      className="pts-explanation-card"
+      style={{
+        '--accent-color': info.accentColor,
+        '--accent-rgb': info.accentRgb
+      }}
+    >
+      <div className="pts-card-category-tag">{info.category}</div>
+      <h3 className="pts-card-title">{info.title}</h3>
+      <p className="pts-card-desc">{info.desc}</p>
     </div>
   )
 }
@@ -688,6 +457,40 @@ function TemplatesSection({ onNavigateToSolution }) {
   const handleUseClick = () => {
     onNavigateToSolution && onNavigateToSolution('AI Videos')
   }
+
+  // Column 1: Mix of images and text explanations
+  const col1 = [
+    { type: 'image', id: 'img-1', data: TEMPLATE_IMAGES[0] },
+    { type: 'text', id: 'exp-1', data: EXPLANATIONS[0] },
+    { type: 'image', id: 'img-2', data: TEMPLATE_IMAGES[1] },
+    { type: 'image', id: 'img-3', data: TEMPLATE_IMAGES[2] },
+    { type: 'text', id: 'exp-2', data: EXPLANATIONS[1] },
+    { type: 'image', id: 'img-4', data: TEMPLATE_IMAGES[3] }
+  ]
+
+  // Column 2: Mix of images and text explanations
+  const col2 = [
+    { type: 'image', id: 'img-5', data: TEMPLATE_IMAGES[4] },
+    { type: 'text', id: 'exp-3', data: EXPLANATIONS[2] },
+    { type: 'image', id: 'img-6', data: TEMPLATE_IMAGES[5] },
+    { type: 'image', id: 'img-7', data: TEMPLATE_IMAGES[6] },
+    { type: 'text', id: 'exp-4', data: EXPLANATIONS[3] },
+    { type: 'image', id: 'img-8', data: TEMPLATE_IMAGES[7] }
+  ]
+
+  // Column 3: Mix of images and text explanations
+  const col3 = [
+    { type: 'image', id: 'img-9', data: TEMPLATE_IMAGES[8] },
+    { type: 'text', id: 'exp-5', data: EXPLANATIONS[4] },
+    { type: 'image', id: 'img-10', data: TEMPLATE_IMAGES[9] },
+    { type: 'image', id: 'img-11', data: TEMPLATE_IMAGES[10] },
+    { type: 'text', id: 'exp-6', data: EXPLANATIONS[5] },
+    { type: 'image', id: 'img-12', data: TEMPLATE_IMAGES[11] }
+  ]
+
+  const col1Repeated = [...col1, ...col1]
+  const col2Repeated = [...col2, ...col2]
+  const col3Repeated = [...col3, ...col3]
 
   return (
     <>
@@ -700,10 +503,10 @@ function TemplatesSection({ onNavigateToSolution }) {
           <div className="pts-glow-purple" />
         </div>
 
-        {/* Split Container */}
-        <div className="pts-container">
+        {/* 35:65 Layout Grid */}
+        <div className="pts-layout-grid">
           
-          {/* LEFT COLUMN: Reference-styled headings & info */}
+          {/* LEFT SIDE (35%): Typography & CTA content */}
           <motion.div
             className="pts-info-column"
             initial={{ opacity: 0, x: -25 }}
@@ -716,9 +519,13 @@ function TemplatesSection({ onNavigateToSolution }) {
               Template Library
             </div>
             <h2 className="pts-section-title">
-              World-class templates that<span> empower creators</span>
+              World-class templates that <span>empower creators</span>
             </h2>
             
+            <p className="pts-section-subtitle">
+              Virtual Studio empowers creators to transform text into professional videos with lifelike AI avatars and virtual instructors. Select a pre-designed layout to jumpstart your production.
+            </p>
+
             {/* Button CTA Row */}
             <div className="pts-btn-row">
               <button className="pts-btn-left-primary" onClick={handleUseClick}>
@@ -729,11 +536,7 @@ function TemplatesSection({ onNavigateToSolution }) {
               </button>
             </div>
 
-            <p className="pts-section-subtitle">
-              AthenaVI collaborates with professional-led teams to foster the creation of premium life science, corporate, and educational videos.
-            </p>
-
-            {/* Client logos matching reference mockup */}
+            {/* Client logos matching mockup style */}
             <div className="pts-partners">
               <div className="pts-partner-row">
                 <div className="pts-partner-logo">● Headway</div>
@@ -744,14 +547,49 @@ function TemplatesSection({ onNavigateToSolution }) {
             </div>
           </motion.div>
 
-          {/* RIGHT COLUMN: Infinite Scrolling Bento Marquee */}
-          <div className="pts-scroll-column">
-            <div className="pts-marquee-track">
-              <BentoGroup groupIndex={0} templates={PREMIUM_TEMPLATES} onUseClick={handleUseClick} />
-              <BentoGroup groupIndex={1} templates={PREMIUM_TEMPLATES} onUseClick={handleUseClick} />
-              {/* Duplicate groups to make loop seamless */}
-              <BentoGroup groupIndex={0} templates={PREMIUM_TEMPLATES} onUseClick={handleUseClick} />
-              <BentoGroup groupIndex={1} templates={PREMIUM_TEMPLATES} onUseClick={handleUseClick} />
+          {/* RIGHT SIDE (65%): Infinite Scroll Columns */}
+          <div className="pts-scroll-wrapper">
+            <div className="pts-scroll-columns-container">
+              
+              {/* Column 1: Scrolls Up */}
+              <div className="pts-scroll-column">
+                <div className="scroll-track-up">
+                  {col1Repeated.map((item, idx) => (
+                    item.type === 'image' ? (
+                      <ImageCard key={`col1-img-${item.id}-${idx}`} img={item.data} />
+                    ) : (
+                      <ExplanationCard key={`col1-exp-${item.id}-${idx}`} info={item.data} />
+                    )
+                  ))}
+                </div>
+              </div>
+
+              {/* Column 2: Scrolls Down */}
+              <div className="pts-scroll-column">
+                <div className="scroll-track-down">
+                  {col2Repeated.map((item, idx) => (
+                    item.type === 'image' ? (
+                      <ImageCard key={`col2-img-${item.id}-${idx}`} img={item.data} />
+                    ) : (
+                      <ExplanationCard key={`col2-exp-${item.id}-${idx}`} info={item.data} />
+                    )
+                  ))}
+                </div>
+              </div>
+
+              {/* Column 3: Scrolls Up */}
+              <div className="pts-scroll-column">
+                <div className="scroll-track-up">
+                  {col3Repeated.map((item, idx) => (
+                    item.type === 'image' ? (
+                      <ImageCard key={`col3-img-${item.id}-${idx}`} img={item.data} />
+                    ) : (
+                      <ExplanationCard key={`col3-exp-${item.id}-${idx}`} info={item.data} />
+                    )
+                  ))}
+                </div>
+              </div>
+
             </div>
           </div>
 
