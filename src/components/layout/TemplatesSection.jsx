@@ -78,8 +78,8 @@ const css = `
 .pts-section {
   position: relative;
   padding: 120px 48px;
-  background: #f4f6fa;
-  color: #0f172a;
+  background: radial-gradient(circle at 50% 30%, #080f26 0%, #040817 60%, #01020a 100%);
+  color: #ffffff;
   overflow: hidden;
   font-family: 'Inter', sans-serif;
   width: 100%;
@@ -260,24 +260,23 @@ const css = `
   align-items: center;
   gap: 8px;
   padding: 6px 14px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 224, 130, 0.08);
+  border: 1px solid rgba(255, 224, 130, 0.15);
   border-radius: 999px;
-  color: #2563eb;
+  color: #ffb300;
   font-size: 11px;
   font-weight: 750;
   letter-spacing: 1.2px;
   text-transform: uppercase;
   margin-bottom: 20px;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.02);
 }
 
 .pts-eyebrow-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #2563eb;
-  box-shadow: 0 0 6px #2563eb;
+  background: #ffb300;
+  box-shadow: 0 0 6px #ffb300;
   animation: pts-pulse 2s infinite;
 }
 
@@ -287,17 +286,17 @@ const css = `
 }
 
 .pts-section-title {
-  font-family: 'Georgia', serif;
+  font-family: 'Inter', sans-serif;
   font-size: clamp(34px, 3.6vw, 44px);
-  font-weight: 400;
-  color: #0f172a;
+  font-weight: 800;
+  color: #ffffff;
   line-height: 1.25;
   letter-spacing: -1.2px;
   margin: 0 0 24px;
 }
 
 .pts-section-title span {
-  background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #ffe082 0%, #ffb300 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -305,7 +304,7 @@ const css = `
 
 .pts-section-subtitle {
   font-size: 15px;
-  color: #64748b;
+  color: #94a3b8;
   line-height: 1.6;
   margin: 0 0 32px;
 }
@@ -345,9 +344,9 @@ const css = `
   align-items: center;
   justify-content: center;
   gap: 6px;
-  background: transparent;
-  color: #0f172a;
-  border: 1px solid rgba(15, 23, 42, 0.4);
+  background: rgba(255, 255, 255, 0.03);
+  color: #f1f5f9;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   padding: 12px 24px;
   border-radius: 999px;
   font-size: 14px;
@@ -357,7 +356,8 @@ const css = `
 }
 
 .pts-btn-left-outline:hover {
-  background: rgba(15, 23, 42, 0.04);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .pts-partners {
@@ -378,7 +378,7 @@ const css = `
 .pts-partner-logo {
   font-size: 13px;
   font-weight: 850;
-  color: #475569;
+  color: #94a3b8;
   letter-spacing: -0.5px;
 }
 
@@ -514,10 +514,10 @@ function TemplatesSection({ onNavigateToSolution }) {
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
           >
-            <div className="pts-eyebrow">
+            {/* <div className="pts-eyebrow">
               <span className="pts-eyebrow-dot" />
               Template Library
-            </div>
+            </div> */}
             <h2 className="pts-section-title">
               World-class templates that <span>empower creators</span>
             </h2>

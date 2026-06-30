@@ -10,7 +10,7 @@ const styles = `
   height: 100vh;
   min-height: 750px;
   max-height: 950px;
-  background: #04060b;
+  background: radial-gradient(circle at 50% 30%, #080f26 0%, #040817 60%, #01020a 100%);
   overflow: hidden;
   color: #ffffff;
   font-family: 'Inter', sans-serif;
@@ -161,9 +161,9 @@ const styles = `
 }
 
 .dt-showcase-heading {
-  font-family: 'Georgia', serif;
+  font-family: 'Inter', sans-serif;
   font-size: clamp(24px, 3vw, 42px);
-  font-weight: 400;
+  font-weight: 800;
   letter-spacing: -1px;
   color: #ffffff;
 }
@@ -242,7 +242,7 @@ const DigitalTwinSection = () => {
 
         {/* Section title header */}
         <div className="dt-showcase-title-block">
-          <span className="dt-showcase-eyebrow">Advanced AI Cloning</span>
+          {/* <span className="dt-showcase-eyebrow">Advanced AI Cloning</span> */}
           <h2 id="dt-showcase-heading" className="dt-showcase-heading">
             Scale Your Presence with <span>Digital Twin</span>
           </h2>

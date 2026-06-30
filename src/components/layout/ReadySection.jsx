@@ -5,7 +5,7 @@ import AvatarImg from '../../assets/AvtarHero.png'
 const css = `
 .rs-wrap {
   padding: 48px 40px 64px;
-  background: #ffffff;
+  background: #e1ecf7;
   font-family: 'Inter', sans-serif;
 }
 
@@ -80,9 +80,9 @@ const css = `
 }
 
 .rs-title {
-  font-family: 'Georgia','Times New Roman',serif;
+  font-family: 'Inter', sans-serif;
   font-size: clamp(26px, 2.8vw, 38px);
-  font-weight: 400;
+  font-weight: 800;
   color: #f8fafc;
   line-height: 1.22;
   letter-spacing: -1px;
@@ -196,10 +196,10 @@ function ReadySection() {
 
           {/* Left */}
           <div className="rs-left">
-            <div className="rs-badge">
+            {/* <div className="rs-badge">
               <span className="rs-dot" />
               Start for free
-            </div>
+            </div> */}
 
             <h2 className="rs-title">
               Ready to create your<br />

@@ -1,8 +1,9 @@
 .website-dome-section {
   width: 100%;
   padding: 80px 0 48px;
-  background: #ffffff;
+  background: radial-gradient(circle at 50% 30%, #080f26 0%, #040817 60%, #01020a 100%);
   overflow: hidden;
+  position: relative;
 }
 
 .website-dome-section__intro {
@@ -17,8 +18,9 @@
   padding: 6px 14px;
   margin-bottom: 16px;
   border-radius: 999px;
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  background: rgba(255, 224, 130, 0.08);
+  border: 1px solid rgba(255, 224, 130, 0.15);
+  color: #ffb300;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -27,23 +29,24 @@
 
 .website-dome-section__title {
   margin: 0 0 14px;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Inter', sans-serif;
   font-size: clamp(32px, 4.5vw, 52px);
-  font-weight: 400;
+  font-weight: 800;
   line-height: 1.12;
-  color: #0f172a;
+  color: #ffffff;
   letter-spacing: -0.02em;
 }
 
 .website-dome-section__title span {
-  color: #3b82f6;
+  color: #ffb300;
 }
 
 .website-dome-section__subtitle {
   margin: 0;
+  font-family: 'Inter', sans-serif;
   font-size: clamp(15px, 2vw, 18px);
   line-height: 1.65;
-  color: #64748b;
+  color: #94a3b8;
 }
 
 .website-dome-section__loading {

@@ -358,11 +358,7 @@ const EditorPreview = ({ activeKey }) => {
 const css = `
   .pf-section {
     padding: 80px 20px 100px;
-    background: #1e40af;
-    background-image: 
-      radial-gradient(circle at 0% 0%, rgba(139, 92, 246, 0.3) 0%, transparent 40%),
-      radial-gradient(circle at 100% 100%, rgba(255, 255, 255, 0.15) 0%, transparent 40%),
-      linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+    background: #e1ecf7;
     font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
     position: relative;
     overflow: hidden;
@@ -386,23 +382,23 @@ const css = `
     font-weight: 700;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: #fbfbfbff;
-    background: rgba(142, 179, 237, 0.1);
-    border: 1px solid rgba(217, 229, 249, 0.2);
+    color: #1e40af;
+    background: rgba(30, 64, 175, 0.08);
+    border: 1px solid rgba(30, 64, 175, 0.15);
     margin-bottom: 18px;
     backdrop-filter: blur(4px);
   }
   .pf-heading {
-    font-family: 'Georgia', 'Times New Roman', serif;
+    font-family: 'Inter', sans-serif;
     font-size: 55px;
-    font-weight: 400;
-    color: #ffffff;
+    font-weight: 800;
+    color: #0f172a;
     line-height: 1.2;
     margin: 0 0 20px;
     letter-spacing: -1.5px;
   }
   .pf-heading span {
-    background: linear-gradient(135deg, #fde047, #fbbf24);
+    background: linear-gradient(135deg, #1e40af, #7c3aed);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -411,7 +407,7 @@ const css = `
   .pf-subtext {
     font-family: 'Inter', sans-serif;
     font-size: clamp(15px, 1.8vw, 18px);
-    color: rgba(255, 255, 255, 0.75);
+    color: #64748b;
     max-width: 680px;
     margin: 0 auto;
     line-height: 1.7;
@@ -549,7 +545,7 @@ const PlatformFeatures = () => {
                 <motion.div
                     style={{ textAlign: 'center', position: 'relative', zIndex: 2 }}
                 >
-                    <div className="pf-badge">Platform Features</div>
+                    {/* <div className="pf-badge">Platform Features</div> */}
                     <h2 className="pf-heading">
                         Powerful AI Video <span>Creation Platform</span>
                     </h2>
@@ -575,7 +571,7 @@ const PlatformFeatures = () => {
                             </div>
 
                             <div className="pf-canvas">
-                                    <EditorPreview key={activeFeature.previewKey} activeKey={activeFeature.previewKey} />
+                                <EditorPreview key={activeFeature.previewKey} activeKey={activeFeature.previewKey} />
 
                                 <div className="pf-strip">
                                     <div className="pf-strip-bar pf-strip-1" />

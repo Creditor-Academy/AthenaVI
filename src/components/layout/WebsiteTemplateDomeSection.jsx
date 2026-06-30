@@ -34,7 +34,7 @@ function WebsiteTemplateDomeSection({ onLoginClick }) {
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
       >
-        <span className="website-dome-section__eyebrow">Avatars &amp; scenes</span>
+        {/* <span className="website-dome-section__eyebrow">Avatars &amp; scenes</span> */}
         <h2 id="website-dome-heading" className="website-dome-section__title">
           Your studio, in <span>3D motion</span>
         </h2>
@@ -53,7 +53,7 @@ function WebsiteTemplateDomeSection({ onLoginClick }) {
           images={galleryImages}
           borderless
           showDragHint={false}
-          overlayBlurColor="#ffffff"
+          overlayBlurColor="#040817"
           grayscale={false}
           autoRotate
           autoRotateSpeed={12}
