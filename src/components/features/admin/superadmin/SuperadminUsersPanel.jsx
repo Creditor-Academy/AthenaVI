@@ -314,7 +314,7 @@ function UserDrawer({ open, user, detail, history, historyPagination, historyPag
             </div>
 
             {/* Tab content — scrollable */}
-            <div style={{ 
+            <div className="sa-scroll" style={{ 
               flex: 1, 
               overflowY: 'auto', 
               background: 'var(--bg-surface)',
@@ -798,6 +798,7 @@ function SuperadminUsersPanel() {
                 borderBottom: '1px solid var(--border-color)',
                 borderLeft: selectedId === user.id && drawerOpen ? '3px solid var(--primary,#3b82f6)' : '3px solid transparent',
                 alignItems: 'center', cursor: 'pointer', textAlign: 'left',
+                color: 'var(--text-main)',
                 transition: 'all 0.2s ease',
               }}
               onMouseEnter={e => { 
@@ -828,7 +829,7 @@ function SuperadminUsersPanel() {
                   {(user.name || '?')[0].toUpperCase()}
                 </span>
                 <span>
-                  <span style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  <span style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)' }}>
                     {user.name || 'No name'}
                   </span>
                   {user.isPlatformSuperadmin && (
