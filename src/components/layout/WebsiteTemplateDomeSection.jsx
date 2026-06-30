@@ -62,13 +62,7 @@ function WebsiteTemplateDomeSection({ onLoginClick }) {
         />
       ) : null}
 
-      {onLoginClick ? (
-        <div className="website-dome-section__cta">
-          <button type="button" className="website-dome-section__cta-btn" onClick={onLoginClick}>
-            Start creating with templates
-          </button>
-        </div>
-      ) : null}
+
     </section>
   );
 }

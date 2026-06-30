@@ -477,10 +477,6 @@ function ProductsSection() {
                           <h3 className="ps-expanded-title">{card.title}</h3>
                         </div>
                         <p className="ps-expanded-desc">{card.description}</p>
-                        <button className="ps-expanded-btn">
-                          {card.btn}
-                          <span className="ps-expanded-btn-icon"><MdArrowForward /></span>
-                        </button>
                       </div>
                       <div className="ps-card-right" style={{ background: card.cardBg }}>
                         <img

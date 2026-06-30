@@ -52,7 +52,7 @@ function useReveal(threshold = 0.15) {
 const styles = `
 .unified-section {
   padding: 80px 40px;
-  background: #ffffff;
+  background: #e1ecf7;
   color: #1e40af;
   position: relative;
   overflow: hidden;
@@ -79,8 +79,8 @@ const styles = `
   z-index: 0;
   pointer-events: none;
 }
-.blob-1 { top: -100px; left: -100px; background: #3b82fb; }
-.blob-2 { bottom: 200px; right: -100px; background: #8b5cf6; width: 400px; height: 400px; }
+.blob-1 { top: -100px; left: -100px; background: #3b82fb; opacity: 0.25; }
+.blob-2 { bottom: 200px; right: -100px; background: #8b5cf6; width: 400px; height: 400px; opacity: 0.2; }
 
 .unified-content {
   max-width: 1400px;
@@ -316,26 +316,29 @@ const styles = `
   transform: scale(1.08);
 }
 
-/* Middle Card Variant (Index 1) */
+/* Middle Card Variant (Index 1) — matches Hero section navy gradient */
 .video-card-ref.variant-middle {
-  background: linear-gradient(145deg, #1e40af 0%, #1d4ed8 40%, #3b82f6 100%);
+  background: radial-gradient(circle at 50% 30%, #080f26 0%, #040817 60%, #01020a 100%);
   color: #ffffff;
-  border: none;
+  border: 1px solid rgba(59, 130, 246, 0.15);
   box-shadow: 
-    0 10px 30px rgba(30, 64, 175, 0.2),
-    0 20px 60px rgba(30, 64, 175, 0.15);
+    0 10px 30px rgba(4, 8, 23, 0.45),
+    0 20px 60px rgba(8, 15, 38, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 .video-card-ref.variant-middle::before {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: radial-gradient(circle at top left, rgba(255,255,255,0.15) 0%, transparent 60%);
+  background:
+    radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.18) 0%, transparent 55%),
+    radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.12) 0%, transparent 50%);
   pointer-events: none;
 }
 
-.variant-middle .card-category { color: rgba(255,255,255,0.8); }
-.variant-middle .card-number { color: rgba(255,255,255,0.05); }
-.variant-middle .feature-tag { background: rgba(255,255,255,0.1); border: none; color: #fff; }
+.variant-middle .card-category { color: rgba(255,255,255,0.7); }
+.variant-middle .card-number { color: rgba(255,255,255,0.04); }
+.variant-middle .feature-tag { background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.25); color: #93c5fd; }
 
 .variant-middle .ref-title {
   color: #ffffff;
@@ -343,7 +346,7 @@ const styles = `
 }
 
 .variant-middle .ref-description {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.7);
   margin-bottom: 16px;
 }
 
@@ -352,7 +355,7 @@ const styles = `
   height: 240px;
   border-radius: 0;
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.35);
 }
 
 

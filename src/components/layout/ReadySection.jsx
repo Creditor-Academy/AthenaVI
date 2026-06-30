@@ -210,15 +210,6 @@ function ReadySection() {
               Join educators, trainers, and creators already using Athena VI to build
               professional videos — no camera, no crew, no editing skills needed.
             </p>
-
-            <div className="rs-actions">
-              <button className="rs-btn-primary">
-                Get Started Free <MdArrowOutward size={15} />
-              </button>
-              <button className="rs-btn-ghost">
-                <FiPlay size={13} /> Watch Demo
-              </button>
-            </div>
           </div>
 
           {/* Right — single clean avatar image */}

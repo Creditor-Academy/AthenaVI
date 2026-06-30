@@ -12,8 +12,8 @@ import Footer from '../../components/layout/Footer/Footer.jsx'
 const styles = `
 .landing-page {
   min-height: 100vh;
-  background: #ffffff;
-  color: #1e40af;
+  background: #040817;
+  color: #f1f5f9;
   font-family: 'Inter', sans-serif;
 }
 

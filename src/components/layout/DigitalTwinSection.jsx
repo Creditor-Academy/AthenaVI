@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, animate, useMotionValue } from 'framer-motion';
+import React from 'react';
 import { FiShield, FiMic, FiGlobe, FiVideo, FiCpu } from 'react-icons/fi';
 
-import DigitalTwin01 from '../../assets/digitaltwin01.png';
-import DigitalTwin02 from '../../assets/digitaltwin02.png';
+import DigitalTwin03 from '../../assets/digitaltwin04.png';
 
 const styles = `
 .dt-showcase-section {
@@ -18,14 +16,13 @@ const styles = `
   font-family: 'Inter', sans-serif;
 }
 
-/* Base images stack */
+/* Base image background styling */
 .dt-showcase-media-container {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   z-index: 1;
-  cursor: crosshair;
 }
 
 .dt-portrait-img {
@@ -36,17 +33,6 @@ const styles = `
   object-fit: cover;
   object-position: center;
   pointer-events: none;
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.dt-portrait-real {
-  z-index: 3;
-  filter: contrast(1.02) brightness(0.95);
-}
-
-.dt-portrait-clone {
-  z-index: 2;
-  filter: contrast(1.08) brightness(1.02) saturate(1.08);
 }
 
 /* Sci-fi Overlay Vignette */
@@ -185,27 +171,6 @@ const styles = `
   color: #ffffff;
 }
 
-/* Hover prompt overlay instruction */
-.dt-interactive-hint {
-  position: absolute;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 12;
-  font-size: 12px;
-  color: #94a3b8;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  opacity: 0.75;
-  animation: pulse-opacity 2s infinite alternate;
-  pointer-events: none;
-}
-@keyframes pulse-opacity {
-  0% { opacity: 0.4; }
-  100% { opacity: 0.9; }
-}
-
 @media (max-width: 1100px) {
   .dt-showcase-panels-overlay {
     padding: 80px 3%;
@@ -256,88 +221,19 @@ const styles = `
 `;
 
 const DigitalTwinSection = () => {
-  const [hovered, setHovered] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const radiusVal = useMotionValue(0);
-  const [radius, setRadius] = useState(0);
-
-  // Synchronize MotionValue to React state for clip-path rendering
-  useEffect(() => {
-    const unsubscribe = radiusVal.on('change', (latest) => {
-      setRadius(latest);
-    });
-    return () => unsubscribe();
-  }, [radiusVal]);
-
-  const handleMouseEnter = () => {
-    setHovered(true);
-    animate(radiusVal, 220, { duration: 0.4, ease: 'easeOut' });
-  };
-
-  const handleMouseLeave = () => {
-    setHovered(false);
-    animate(radiusVal, 0, { duration: 0.3, ease: 'easeIn' });
-  };
-
-  const handleMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    setMousePos({ x, y });
-  };
-
-  // Smooth, organic fluid blob shape following the mouse cursor
-  const getSmoothBlob = (cx, cy, r) => {
-    if (r === 0) return 'polygon(0% 0%, 0% 0%)';
-    const numPoints = 36; // High density polygon for smooth rounded curves
-    const points = [];
-    
-    for (let i = 0; i < numPoints; i++) {
-      const angle = (i * 2 * Math.PI) / numPoints;
-      // Fluid wave formula creating smooth, organic lobes
-      const factor = 1 + 0.12 * Math.sin(angle * 3) + 0.05 * Math.cos(angle * 5);
-      const radiusWithNoise = r * factor;
-      const x = cx + Math.cos(angle) * radiusWithNoise;
-      const y = cy + Math.sin(angle) * radiusWithNoise;
-      points.push(`${Math.round(x)}px ${Math.round(y)}px`);
-    }
-    return `polygon(${points.join(', ')})`;
-  };
-
   return (
     <>
       <style>{styles}</style>
-      <section 
-        className="dt-showcase-section" 
+      <section
+        className="dt-showcase-section"
         aria-labelledby="dt-showcase-heading"
       >
-        {/* Interactive media container */}
-        <div 
-          className="dt-showcase-media-container"
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-          onMouseMove={handleMouseMove}
-        >
-          {/* Base Layer: AI Digital Twin (always visible in background) */}
-          <img 
-            src={DigitalTwin02} 
-            alt="AI digital twin clone portrait" 
-            className="dt-portrait-img dt-portrait-clone"
-            style={{ 
-              transform: hovered ? 'scale(1.02)' : 'scale(1.0)',
-              opacity: 1
-            }}
-          />
-
-          {/* Reveal Layer: Real Human (sits on top, clipped on hover) */}
-          <img 
-            src={DigitalTwin01} 
-            alt="Real human portrait source" 
-            className="dt-portrait-img dt-portrait-real"
-            style={{ 
-              transform: hovered ? 'scale(0.70)' : 'scale(0.85)',
-              clipPath: getSmoothBlob(mousePos.x, mousePos.y, radius)
-            }}
+        {/* Background media container */}
+        <div className="dt-showcase-media-container">
+          <img
+            src={DigitalTwin03}
+            alt="AI digital twin clone portrait background"
+            className="dt-portrait-img"
           />
         </div>
 
@@ -363,7 +259,7 @@ const DigitalTwinSection = () => {
               </div>
               <h3 className="dt-panel-title">Cinematic Digital Twin</h3>
               <p className="dt-panel-desc">
-                Generate a photorealistic AI avatar with one click. Replicates your micro‑expressions, gestures, and natural body language in stunning HD quality.
+                Generate a photorealistic AI avatar with one click. Replicates your micro‑expressions, gestures, and body language in stunning HD quality.
               </p>
             </div>
 
@@ -399,7 +295,7 @@ const DigitalTwinSection = () => {
               </div>
               <h3 className="dt-panel-title">80+ Fluent Languages</h3>
               <p className="dt-panel-desc">
-                Go global instantly. Speak over 80 languages and dialects fluently while retaining your unique cloned voice and natural speech patterns.
+                Go global instantly. Speak over 80 languages and dialects fluently while retaining your unique cloned voice and speech patterns.
               </p>
             </div>
 
@@ -415,14 +311,6 @@ const DigitalTwinSection = () => {
             </div>
           </div>
         </div>
-
-        {/* Interactive Indicator Hint */}
-        {!hovered && (
-          <div className="dt-interactive-hint">
-            <span>Hover portrait to scan likeness</span>
-            <FiCpu className="pulsing-icon" />
-          </div>
-        )}
       </section>
     </>
   );

@@ -439,7 +439,7 @@ function ImageCard({ img }) {
 
 function ExplanationCard({ info }) {
   return (
-    <div 
+    <div
       className="pts-explanation-card"
       style={{
         '--accent-color': info.accentColor,
@@ -496,7 +496,7 @@ function TemplatesSection({ onNavigateToSolution }) {
     <>
       <style>{css}</style>
       <section className="pts-section">
-        
+
         {/* Glow Effects */}
         <div className="pts-bg-glows">
           <div className="pts-glow-blue" />
@@ -505,7 +505,7 @@ function TemplatesSection({ onNavigateToSolution }) {
 
         {/* 35:65 Layout Grid */}
         <div className="pts-layout-grid">
-          
+
           {/* LEFT SIDE (35%): Typography & CTA content */}
           <motion.div
             className="pts-info-column"
@@ -521,7 +521,7 @@ function TemplatesSection({ onNavigateToSolution }) {
             <h2 className="pts-section-title">
               World-class templates that <span>empower creators</span>
             </h2>
-            
+
             <p className="pts-section-subtitle">
               Virtual Studio empowers creators to transform text into professional videos with lifelike AI avatars and virtual instructors. Select a pre-designed layout to jumpstart your production.
             </p>
@@ -550,7 +550,7 @@ function TemplatesSection({ onNavigateToSolution }) {
           {/* RIGHT SIDE (65%): Infinite Scroll Columns */}
           <div className="pts-scroll-wrapper">
             <div className="pts-scroll-columns-container">
-              
+
               {/* Column 1: Scrolls Up */}
               <div className="pts-scroll-column">
                 <div className="scroll-track-up">
