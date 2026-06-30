@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { HardDrive, ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { HardDrive, ChevronLeft, ChevronRight, X, Check } from 'lucide-react'
 import superadminService from '../../../../services/superadminService'
 import { formatBytes, formatDate, storageStatusLabel } from './superadminUtils'
 import '../../../../pages/AdminPortal/SuperadminPortal.css'
@@ -10,6 +10,96 @@ const STATUS_OPTIONS = [
   { value: 'approved', label: 'Approved' },
   { value: 'rejected', label: 'Rejected' },
 ]
+
+function GrantModal({ request, onClose, onGranted }) {
+  const [reason, setReason] = useState(`Storage upgrade request approved`)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleGrant = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    try {
+      await superadminService.grantUserStorage(request.user.id, {
+        additionalBytes: request.requestedAdditionalBytes,
+        reason: reason.trim() || undefined,
+      })
+      onGranted()
+      onClose()
+    } catch (err) {
+      setError(err.message || 'Failed to grant storage')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 300 }} aria-hidden />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Grant storage request"
+        style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 'min(440px, 92vw)',
+          background: 'var(--bg-surface)',
+          border: '1px solid var(--border-color)',
+          borderRadius: 12,
+          boxShadow: '0 24px 64px rgba(0,0,0,0.25)',
+          zIndex: 301,
+          padding: '22px 24px',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+          <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 650, color: 'var(--text-main)' }}>Grant storage request</h3>
+          <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost" onClick={onClose} aria-label="Close">
+            <X size={16} />
+          </button>
+        </div>
+        <p style={{ margin: '0 0 14px', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+          Grant{' '}
+          <strong style={{ color: 'var(--text-main)' }}>{formatBytes(request.requestedAdditionalBytes)}</strong>{' '}
+          additional storage to{' '}
+          <strong style={{ color: 'var(--text-main)' }}>{request.user?.name || request.user?.email || 'User'}</strong>.
+        </p>
+        {error && <div className="sa-alert sa-alert--error" style={{ marginBottom: 12 }}>{error}</div>}
+        <form onSubmit={handleGrant}>
+          <div className="sa-field">
+            <label htmlFor="grant-reason">Message to user (optional)</label>
+            <textarea
+              id="grant-reason"
+              className="sa-reason-input"
+              rows={3}
+              maxLength={500}
+              placeholder="Reason shown in their inbox notification…"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
+            <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost" onClick={onClose} disabled={loading}>
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="sa-btn sa-btn--sm sa-btn--primary"
+              disabled={loading}
+              style={{ background: '#22c55e', borderColor: '#22c55e', color: '#fff' }}
+            >
+              {loading ? 'Granting…' : 'Grant storage'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
+  )
+}
 
 function RejectModal({ request, onClose, onRejected }) {
   const [reviewNote, setReviewNote] = useState('')
@@ -101,6 +191,7 @@ function SuperadminStorageRequestsPanel() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [rejectTarget, setRejectTarget] = useState(null)
+  const [grantTarget, setGrantTarget] = useState(null)
   const [actionMessage, setActionMessage] = useState('')
 
   const loadRequests = useCallback(async () => {
@@ -136,7 +227,7 @@ function SuperadminStorageRequestsPanel() {
         <div>
           <h2 className="sa-panel-title">Storage upgrade queue</h2>
           <p className="sa-panel-desc">
-            Review user storage upgrade requests. Grant storage from the Users panel to approve; reject here to notify the user.
+            Review user storage upgrade requests. Grant or reject requests directly from here.
           </p>
         </div>
       </div>
@@ -166,7 +257,7 @@ function SuperadminStorageRequestsPanel() {
 
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '1.2fr 1fr 120px 100px 100px',
+          gridTemplateColumns: '1.2fr 1fr 120px 100px 160px',
           gap: 12,
           padding: '8px 20px',
           borderBottom: '1px solid var(--border-color)',
@@ -208,7 +299,7 @@ function SuperadminStorageRequestsPanel() {
                   key={req.requestId}
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: '1.2fr 1fr 120px 100px 100px',
+                    gridTemplateColumns: '1.2fr 1fr 120px 100px 160px',
                     gap: 12,
                     padding: '14px 20px',
                     borderBottom: '1px solid var(--border-color)',
@@ -250,13 +341,24 @@ function SuperadminStorageRequestsPanel() {
                   </span>
                   <div style={{ textAlign: 'right' }}>
                     {statusKey === 'pending' ? (
-                      <button
-                        type="button"
-                        className="sa-btn sa-btn--sm sa-btn--danger"
-                        onClick={() => setRejectTarget(req)}
-                      >
-                        Reject
-                      </button>
+                      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                        <button
+                          type="button"
+                          className="sa-btn sa-btn--sm"
+                          style={{ background: '#22c55e', borderColor: '#22c55e', color: '#fff' }}
+                          onClick={() => setGrantTarget(req)}
+                        >
+                          <Check size={13} style={{ marginRight: 3 }} />
+                          Grant
+                        </button>
+                        <button
+                          type="button"
+                          className="sa-btn sa-btn--sm sa-btn--danger"
+                          onClick={() => setRejectTarget(req)}
+                        >
+                          Reject
+                        </button>
+                      </div>
                     ) : req.reviewNote ? (
                       <span title={req.reviewNote} style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                         Note
@@ -292,6 +394,17 @@ function SuperadminStorageRequestsPanel() {
           onClose={() => setRejectTarget(null)}
           onRejected={() => {
             setActionMessage('Storage upgrade request rejected. User has been notified.')
+            loadRequests()
+          }}
+        />
+      )}
+
+      {grantTarget && (
+        <GrantModal
+          request={grantTarget}
+          onClose={() => setGrantTarget(null)}
+          onGranted={() => {
+            setActionMessage(`Storage granted to ${grantTarget.user?.name || grantTarget.user?.email || 'user'}. They have been notified.`)
             loadRequests()
           }}
         />

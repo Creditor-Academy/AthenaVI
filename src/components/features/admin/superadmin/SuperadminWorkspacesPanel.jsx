@@ -222,8 +222,8 @@ function WorkspaceDrawer({
                       flexDirection: 'column',
                       gap: 4,
                     }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Owner balance</span>
-                      <strong style={{ fontSize: '0.95rem', color: 'var(--primary,#3b82f6)' }}>{formatAc(summary?.owner?.personalCredits)}</strong>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Workspace balance</span>
+                      <strong style={{ fontSize: '0.95rem', color: 'var(--primary,#3b82f6)' }}>{formatAc(summary?.workspaceCredits)}</strong>
                     </div>
                   </div>
                 </div>
@@ -554,6 +554,7 @@ function SuperadminWorkspacesPanel() {
               style={{
                 width: '100%', display: 'grid', gridTemplateColumns: '1.2fr 1fr 100px 100px',
                 gap: 12, padding: '14px 20px', 
+                color: 'var(--text-main)',
                 background: selectedId === ws.workspaceId && drawerOpen 
                   ? 'linear-gradient(90deg, color-mix(in srgb, var(--primary) 12%, transparent) 0%, transparent 100%)' 
                   : 'transparent',
@@ -578,6 +579,7 @@ function SuperadminWorkspacesPanel() {
               <span style={{ 
                 fontWeight: 600, 
                 fontSize: '0.85rem',
+                color: 'var(--text-primary)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 10,
