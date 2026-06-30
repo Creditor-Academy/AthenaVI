@@ -28,6 +28,9 @@ pipeline {
                 echo "===================================="
                 echo "Building React Application"
                 echo "===================================="
+                if [ -d dist ]; then
+                    rm -rf dist 2>/dev/null || docker run --rm -v "$PWD:/w" -w /w alpine rm -rf dist
+                fi
                 npm run build
                 '''
             }
