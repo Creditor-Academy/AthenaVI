@@ -1,196 +1,43 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import Navbar from '../../components/layout/Navbar/Navbar.jsx'
 import Footer from '../../components/layout/Footer/Footer.jsx'
 import { FiShoppingCart, FiBookOpen, FiPlayCircle, FiGlobe, FiUsers, FiHardDrive } from 'react-icons/fi'
+import './UseCases.css'
 
-const styles = `
-.use-cases-page {
-  min-height: 100vh;
-  background: #ffffff;
-  color: #0f172a;
-  font-family: 'Inter', sans-serif;
-  overflow-x: hidden;
-}
-
-.use-cases-hero {
-  padding: 120px 40px 80px;
-  background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.05), transparent),
-              radial-gradient(circle at bottom left, rgba(30, 64, 175, 0.03), transparent);
-  text-align: center;
-}
-
-.hero-tag {
-  display: inline-block;
-  padding: 8px 16px;
-  background: rgba(59, 130, 246, 0.1);
-  color: #2563eb;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 24px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.hero-title {
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: clamp(40px, 5vw, 64px);
-  font-weight: 400;
-  line-height: 1.1;
-  color: #1e3a8a;
-  margin-bottom: 24px;
-  max-width: 1000px;
-  margin-left: auto;
-  margin-right: auto;
-  letter-spacing: -1.5px;
-}
-
-.hero-subtitle {
-  font-size: clamp(18px, 2vw, 22px);
-  color: #64748b;
-  max-width: 700px;
-  margin: 0 auto 40px;
-  line-height: 1.6;
-}
-
-.use-cases-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 32px;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 80px 40px;
-}
-
-.use-case-card {
-  background: #ffffff;
-  border-radius: 24px;
-  padding: 40px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.use-case-card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.1), 0 18px 36px -18px rgba(0, 0, 0, 0.1);
-  border-color: rgba(59, 130, 246, 0.2);
-}
-
-.card-icon {
-  width: 64px;
-  height: 64px;
-  background: #eff6ff;
-  color: #1e40af;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  transition: all 0.3s ease;
-}
-
-.use-case-card:hover .card-icon {
-  background: #1e40af;
-  color: #ffffff;
-}
-
-.card-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: #1e293b;
-}
-
-.card-desc {
-  font-size: 16px;
-  color: #64748b;
-  line-height: 1.6;
-  flex-grow: 1;
-}
-
-.card-features {
-  list-style: none;
-  padding: 0;
-  margin: 20px 0 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.feature-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  color: #475569;
-}
-
-.feature-dot {
-  width: 6px;
-  height: 6px;
-  background: #3b82f6;
-  border-radius: 50%;
-}
-
-.industry-section {
-  padding: 100px 40px;
-  background: #0f172a;
-  color: #ffffff;
-  position: relative;
-}
-
-.industry-header {
-  text-align: center;
-  margin-bottom: 60px;
-}
-
-.industry-title {
-  font-size: 55px;
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-weight: 400;
-  margin-bottom: 20px;
-  letter-spacing: -1.5px;
-  line-height: 1.2;
-}
-
-.industry-tabs {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 60px;
-}
-
-.industry-tab {
-  padding: 12px 24px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 999px;
-  color: #94a3b8;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.industry-tab.active {
-  background: #3b82f6;
-  color: #ffffff;
-  border-color: #3b82f6;
-}
-
-@media (max-width: 768px) {
-  .use-cases-hero {
-    padding: 100px 24px 60px;
+const industries = [
+  {
+    name: "Finance",
+    title: "Finance & Banking",
+    desc: "Deliver personalized market updates, explain investment plans, and automate customer inquiries with secure, regulatory-compliant AI presenters."
+  },
+  {
+    name: "Healthcare",
+    title: "Healthcare & Patient Care",
+    desc: "Explain complex medical procedures, provide automated patient intake instructions, and offer 24/7 care guides in multiple languages."
+  },
+  {
+    name: "Education",
+    title: "Education & E-Learning",
+    desc: "Create interactive courses with digital instructors that can answer student questions in over 120 languages. Perfect for global certification programs and corporate upskilling."
+  },
+  {
+    name: "Tech",
+    title: "Technology & SaaS",
+    desc: "Create high-impact product demos, release updates, and walk clients through onboarding tutorials with lifelike digital avatars."
+  },
+  {
+    name: "Hospitality",
+    title: "Hospitality & Travel",
+    desc: "Deploy virtual concierges, welcome guests in their native languages, and showcase destination highlights dynamically."
+  },
+  {
+    name: "Manufacturing",
+    title: "Manufacturing & Operations",
+    desc: "Standardize safety briefings, deliver equipment tutorials, and scale corporate training across global factories operations."
   }
-  .use-cases-grid {
-    padding: 40px 24px;
-    grid-template-columns: 1fr;
-  }
-}
-`
+]
+
 
 const useCases = [
   {
@@ -232,10 +79,18 @@ const useCases = [
 ]
 
 function UseCases({ onLoginClick, onLogoClick, onNavigateToSolution, onNavigateToProduct, onNavigateToEthics, onNavigateToTechnology, onNavigateToCompany, onNavigateToUseCases }) {
+  const [activeTab, setActiveTab] = useState(2) // Defaults to Education
+
   return (
     <>
-      <style>{styles}</style>
       <div className="use-cases-page">
+        {/* Ambient background graphics */}
+        <div className="uc-bg-graphics">
+          <div className="uc-orb uc-orb-1" />
+          <div className="uc-orb uc-orb-2" />
+          <div className="uc-dot-grid" />
+        </div>
+
         <Navbar
           onLoginClick={onLoginClick}
           onLogoClick={onLogoClick}
@@ -254,7 +109,7 @@ function UseCases({ onLoginClick, onLogoClick, onNavigateToSolution, onNavigateT
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            Real-World impact
+            Real-World Impact
           </motion.span>
           <motion.h1
             className="hero-title"
@@ -302,17 +157,31 @@ function UseCases({ onLoginClick, onLogoClick, onNavigateToSolution, onNavigateT
         <section className="industry-section">
           <div className="industry-header">
             <h2 className="industry-title">Built for every industry</h2>
-            <p style={{ color: '#94a3b8', fontSize: '18px' }}>Seamless integration into your existing workflows.</p>
+            <p className="industry-subtext">Seamless integration into your existing workflows.</p>
           </div>
           <div className="industry-tabs">
-            {["Finance", "Healthcare", "Education", "Tech", "Hospitality", "Manufacturing"].map((tab, i) => (
-              <span key={i} className={`industry-tab ${i === 2 ? 'active' : ''}`}>{tab}</span>
+            {industries.map((ind, i) => (
+              <span
+                key={i}
+                className={`industry-tab ${i === activeTab ? 'active' : ''}`}
+                onClick={() => setActiveTab(i)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    setActiveTab(i)
+                  }
+                }}
+              >
+                {ind.name}
+              </span>
             ))}
           </div>
-          <div style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto', border: '1px solid rgba(255,255,255,0.1)', padding: '60px', borderRadius: '32px', background: 'rgba(255,255,255,0.02)' }}>
-            <h3 style={{ fontSize: '28px', marginBottom: '20px' }}>Education & E-Learning</h3>
-            <p style={{ color: '#94a3b8', fontSize: '18px', lineHeight: '1.6' }}>
-              Create interactive courses with digital instructors that can answer student questions in over 120 languages. Perfect for global certification programs and corporate upskilling.
+          <div className="industry-details-card">
+            <h3 className="industry-details-title">{industries[activeTab].title}</h3>
+            <p className="industry-details-desc">
+              {industries[activeTab].desc}
             </p>
           </div>
         </section>

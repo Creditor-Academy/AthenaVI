@@ -145,7 +145,7 @@ function PrivacyPolicy({ onLoginClick, onLogoClick, onNavigateToCompany, onNavig
     <>
       <style>{styles}</style>
       <div className="privacy-page">
-        <Navbar 
+        <Navbar
           onLoginClick={onLoginClick}
           onLogoClick={onLogoClick}
           onNavigateToCompany={onNavigateToCompany}
@@ -155,7 +155,7 @@ function PrivacyPolicy({ onLoginClick, onLogoClick, onNavigateToCompany, onNavig
           onNavigateToProduct={onNavigateToProduct}
           onNavigateToUseCases={onNavigateToUseCases}
         />
-        
+
         <div className="page-header">
           <h1>Privacy Policy</h1>
           <p>Your privacy is important to us. This policy explains how we collect, use, and protect your information.</p>
@@ -167,16 +167,16 @@ function PrivacyPolicy({ onLoginClick, onLogoClick, onNavigateToCompany, onNavig
           <div className="privacy-section">
             <h2>1. Introduction</h2>
             <p>
-              AthenaVI ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our AI-powered video creation platform and services.
+              Virtual Studio ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our AI-powered video creation platform and services.
             </p>
             <p>
-              By using AthenaVI, you agree to the collection and use of information in accordance with this policy. If you do not agree with our policies and practices, please do not use our services.
+              By using Virtual Studio, you agree to the collection and use of information in accordance with this policy. If you do not agree with our policies and practices, please do not use our services.
             </p>
           </div>
 
           <div className="privacy-section">
             <h2>2. Information We Collect</h2>
-            
+
             <h3>2.1 Information You Provide</h3>
             <p>We collect information that you provide directly to us, including:</p>
             <ul>
@@ -216,7 +216,7 @@ function PrivacyPolicy({ onLoginClick, onLogoClick, onNavigateToCompany, onNavig
           <div className="privacy-section">
             <h2>4. Information Sharing and Disclosure</h2>
             <p>We do not sell your personal information. We may share your information in the following circumstances:</p>
-            
+
             <h3>4.1 Service Providers</h3>
             <p>We may share information with third-party service providers who perform services on our behalf, such as:</p>
             <ul>
@@ -295,14 +295,14 @@ function PrivacyPolicy({ onLoginClick, onLogoClick, onNavigateToCompany, onNavig
             <h3>11. Contact Us</h3>
             <p>If you have any questions about this Privacy Policy or our privacy practices, please contact us:</p>
             <ul>
-              <li><strong>Email:</strong> privacy@athenavi.com</li>
-              <li><strong>Address:</strong> AthenaVI Privacy Team, [Your Address]</li>
+              <li><strong>Email:</strong> virtual.studio@lmsathena.com.com</li>
+              <li><strong>Address:</strong>  Virtual Studio Privacy Team, [Your Address]</li>
             </ul>
             <p>We will respond to your inquiry within 30 days.</p>
           </div>
         </div>
 
-        <Footer 
+        <Footer
           onLogoClick={onLogoClick}
           onNavigateToProduct={onNavigateToProduct}
           onNavigateToSolution={onNavigateToSolution}

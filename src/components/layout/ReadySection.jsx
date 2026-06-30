@@ -1,6 +1,7 @@
 import { MdArrowOutward } from 'react-icons/md'
 import { FiPlay } from 'react-icons/fi'
 import AvatarImg from '../../assets/AvtarHero.png'
+import { LANDING_DARK, LANDING_FONT } from '../../styles/landingTypography'
 
 const css = `
 .rs-wrap {
@@ -58,10 +59,10 @@ const css = `
   align-items: center;
   gap: 7px;
   padding: 5px 14px;
-  background: rgba(59,130,246,0.12);
-  border: 1px solid rgba(59,130,246,0.22);
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.22);
   border-radius: 999px;
-  color: #60a5fa;
+  color: ${LANDING_DARK.eyebrow};
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -71,7 +72,7 @@ const css = `
 .rs-dot {
   width: 6px; height: 6px;
   border-radius: 50%;
-  background: #3b82f6;
+  background: ${LANDING_DARK.eyebrow};
   animation: rs-blink 2s ease-in-out infinite;
 }
 @keyframes rs-blink {
@@ -80,24 +81,22 @@ const css = `
 }
 
 .rs-title {
-  font-family: 'Inter', sans-serif;
+  font-family: ${LANDING_FONT};
   font-size: clamp(26px, 2.8vw, 38px);
   font-weight: 800;
-  color: #f8fafc;
+  color: ${LANDING_DARK.title};
   line-height: 1.22;
   letter-spacing: -1px;
   margin: 0 0 14px;
 }
 .rs-title span {
-  background: linear-gradient(135deg, #3b82f6, #60a5fa);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: ${LANDING_DARK.titleAccent};
 }
 
 .rs-sub {
+  font-family: ${LANDING_FONT};
   font-size: 14px;
-  color: rgba(255,255,255,0.5);
+  color: ${LANDING_DARK.subtitle};
   line-height: 1.65;
   margin: 0 0 28px;
   max-width: 420px;

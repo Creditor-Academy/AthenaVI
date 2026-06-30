@@ -1,5 +1,6 @@
 import React from 'react';
 import { FiShield, FiMic, FiGlobe, FiVideo, FiCpu } from 'react-icons/fi';
+import { LANDING_DARK, LANDING_FONT } from '../../styles/landingTypography';
 
 import DigitalTwin03 from '../../assets/digitaltwin04.png';
 
@@ -66,8 +67,8 @@ const styles = `
 
 .dt-feature-panel {
   position: relative;
-  background: rgba(10, 15, 30, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(37, 99, 235, 0.14);
+  border: 1px solid rgba(37, 99, 235, 0.24);
   border-radius: 16px;
   padding: 24px;
   backdrop-filter: blur(12px);
@@ -82,9 +83,9 @@ const styles = `
 
 .dt-feature-panel:hover {
   transform: translateY(-4px);
-  background: rgba(15, 23, 42, 0.6);
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+  background: rgba(24, 95, 165, 0.2);
+  border-color: rgba(37, 99, 235, 0.45);
+  box-shadow: 0 25px 50px -12px rgba(37, 99, 235, 0.28);
 }
 
 .dt-panel-top-row {
@@ -107,19 +108,19 @@ const styles = `
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(37, 99, 235, 0.12);
+  border: 1px solid rgba(37, 99, 235, 0.28);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.5);
+  color: #60a5fa;
   transition: all 0.3s ease;
 }
 
 .dt-feature-panel:hover .dt-panel-icon-wrapper {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
+  background: rgba(37, 99, 235, 0.28);
+  border-color: rgba(37, 99, 235, 0.5);
+  color: #dbeafe;
 }
 
 .dt-panel-title {
@@ -131,7 +132,7 @@ const styles = `
 
 .dt-panel-desc {
   font-size: 13px;
-  color: #94a3b8;
+  color: ${LANDING_DARK.subtitle};
   line-height: 1.55;
 }
 
@@ -148,27 +149,27 @@ const styles = `
 
 .dt-showcase-eyebrow {
   display: inline-block;
-  font-size: 9.5px;
-  font-weight: 800;
-  letter-spacing: 0.25em;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #94a3b8;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 4px 14px;
+  color: ${LANDING_DARK.eyebrow};
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  padding: 6px 14px;
   border-radius: 100px;
   margin-bottom: 12px;
 }
 
 .dt-showcase-heading {
-  font-family: 'Inter', sans-serif;
+  font-family: ${LANDING_FONT};
   font-size: clamp(24px, 3vw, 42px);
   font-weight: 800;
   letter-spacing: -1px;
-  color: #ffffff;
+  color: ${LANDING_DARK.title};
 }
 .dt-showcase-heading span {
-  color: #ffffff;
+  color: ${LANDING_DARK.titleAccent};
 }
 
 @media (max-width: 1100px) {
