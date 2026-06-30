@@ -1,287 +1,184 @@
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { MdArrowOutward, MdPayments } from 'react-icons/md'
-import { HiTrendingUp } from 'react-icons/hi'
-import avatar1 from '../../assets/Avatarr1.png'
-import avatar2 from '../../assets/Avatarr2.png'
-import avatar3 from '../../assets/Avatarr3.png'
-import avatar4 from '../../assets/Avatarr4.png'
-import avatar5 from '../../assets/Avatarr5.png'
-import LeftCard from './LeftCard'
-import RightCardCarousel from './RightCardCarousel'
+import { useEffect, useState } from 'react'
+import { MdArrowOutward } from 'react-icons/md'
+
+import HeroArcGallery from './HeroArcGallery'
+import heygenService from '../../services/heygenService'
+import { extractHeygenList, mapAvatarGroup } from '../../utils/heygenAvatars'
 
 const styles = `
 .hero-container {
   width: 100%;
-  min-height: 85vh;
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: radial-gradient(circle at 50% 30%, #080f26 0%, #040817 60%, #01020a 100%);
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: center;
   font-family: 'Inter', sans-serif;
-  color: #ffffff;
+  color: #f1f5f9;
+  padding-top: 130px;
+  padding-bottom: 40px;
+  box-sizing: border-box;
 }
 
-.hero-top {
-  position: relative;
-  width: 100%;
-  padding: 40px 40px 0px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 100;
-  text-align: center;
-}
-
-.hero-title-top {
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: clamp(40px, 5vw, 64px);
-  font-weight: 400;
-  color: #ffffff;
-  margin: 0 0 24px;
-  line-height: 1.1;
-  letter-spacing: -1.5px;
-  text-align: center;
-  width: 100%;
-  max-width: 1200px;
-  padding: 0 20px;
-}
-
-.hero-subtitle-top {
-  font-family: 'Inter', sans-serif;
-  font-size: clamp(15px, 2vw, 18px);
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0 auto;
-  font-weight: 400;
-  line-height: 1.7;
-  letter-spacing: 0;
-  text-align: center;
-  max-width: 700px;
-  padding: 0 20px;
-}
-
-.hero-avatars {
-  position: relative;
-  width: 100%;
-  min-height: 550px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 10;
-  overflow: visible;
-  padding: 40px 20px;
-}
-
-.hero-avatar-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 150px;
-  width: 100%;
-  max-width: 1800px;
-  position: relative;
-  padding: 0 60px;
-  margin-top: -20px;
-}
-
-.center-avatar-wrapper {
-  position: relative;
-  width: 450px;
-  height: 500px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  perspective: 1500px;
-}
-
-.hero-cube-container {
-  width: 320px;
-  height: 400px;
-  position: relative;
-  transform-style: preserve-3d;
-}
-
-.hero-cube {
-  width: 100%;
-  height: 100%;
+/* Elegant bottom gradient border line */
+.hero-container::after {
+  content: "";
   position: absolute;
-  transform-style: preserve-3d;
-  animation: rotateCube 20s linear infinite;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(59, 130, 246, 0.2) 25%, rgba(255, 224, 130, 0.15) 50%, rgba(147, 51, 234, 0.2) 75%, transparent 100%);
+  z-index: 15;
+  pointer-events: none;
 }
 
-.cube-face {
+/* Background Graphics Container */
+.hero-bg-graphics {
   position: absolute;
-  width: 320px;
-  height: 400px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.2) 100%);
-  backdrop-filter: blur(25px);
-  border: 1.5px solid rgba(255, 255, 255, 0.5);
-  border-radius: 32px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  padding-bottom: 35px;
-  backface-visibility: visible;
-  transition: all 0.5s ease;
+  inset: 0;
   overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
 }
 
-.cube-face-content {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-/* Floating Neon Ring under avatar */
-.cube-face-content::after {
-  content: '';
+/* Ambient Dynamic Glow Orbs */
+.hero-orb {
   position: absolute;
-  bottom: 85px;
-  width: 160px;
-  height: 60px;
-  border: 2px solid rgba(251, 191, 36, 0.4);
   border-radius: 50%;
-  transform: rotateX(75deg);
-  box-shadow: 
-    0 0 25px rgba(251, 191, 36, 0.2),
-    inset 0 0 15px rgba(251, 191, 36, 0.2);
-  z-index: 0;
-  animation: floatRing 4s ease-in-out infinite;
+  filter: blur(130px);
+  opacity: 0.18;
+  will-change: transform;
 }
 
-@keyframes floatRing {
-  0%, 100% { transform: rotateX(75deg) translateY(0) scale(1); opacity: 0.4; }
-  50% { transform: rotateX(75deg) translateY(-15px) scale(1.1); opacity: 0.7; }
+.hero-orb-1 {
+  top: 5%;
+  left: 10%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, #06b6d4 0%, rgba(6, 182, 212, 0) 70%);
+  animation: floatOrb1 22s infinite ease-in-out alternate;
 }
 
-.cube-face img {
-  width: 90%;
-  height: 280px;
-  object-fit: contain;
-  filter: drop-shadow(0 15px 30px rgba(0,0,0,0.3));
-  position: absolute;
-  bottom: 70px;
+.hero-orb-2 {
+  bottom: 5%;
+  right: 10%;
+  width: 550px;
+  height: 550px;
+  background: radial-gradient(circle, #8b5cf6 0%, rgba(147, 51, 234, 0) 70%);
+  animation: floatOrb2 28s infinite ease-in-out alternate;
+}
+
+.hero-orb-3 {
+  top: 30%;
   left: 50%;
-  transform: translateX(-50%);
-  /* Fade out the bottom to hide sharp cuts */
-  -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
-  mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+  transform: translate(-50%, -50%);
+  width: 650px;
+  height: 650px;
+  background: radial-gradient(circle, #3b82f6 0%, rgba(59, 130, 246, 0) 70%);
+  animation: floatOrb3 35s infinite ease-in-out alternate;
 }
 
-.cube-face-label {
-  text-align: center;
-  z-index: 10;
-  padding: 0px 20px;
+/* Tech Dot Matrix Grid Layer */
+.hero-dot-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1.5px, transparent 1.5px);
+  background-size: 40px 40px;
+  background-position: center;
+  mask-image: radial-gradient(circle at 50% 40%, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 85%);
+  -webkit-mask-image: radial-gradient(circle at 50% 40%, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 85%);
+  z-index: 2;
+}
+
+/* Cyber orbits SVG layer */
+.hero-tech-orbits {
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 850px;
+  height: 850px;
+  z-index: 3;
+  opacity: 0.45;
+  pointer-events: none;
+  animation: slowSpin 80s linear infinite;
+  mask-image: radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 100%);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 100%);
+}
+
+@keyframes floatOrb1 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(60px, 90px) scale(1.1); }
+}
+
+@keyframes floatOrb2 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-90px, -60px) scale(0.95); }
+}
+
+@keyframes floatOrb3 {
+  0% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+  50% { transform: translate(-46%, -54%) scale(1.05) rotate(180deg); }
+  100% { transform: translate(-50%, -50%) scale(1) rotate(360deg); }
+}
+
+@keyframes slowSpin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+
+.hero-copy {
   position: relative;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 24px 40px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  text-align: center;
+  z-index: 10;
 }
 
-.face-name {
-  display: block;
-  font-family: 'Georgia', serif;
-  font-size: 26px;
-  font-weight: 650;
-  background: linear-gradient(to bottom, #1e3a8a 0%, #3b82f6 100%);
+.hero-eyebrow {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ffe082 0%, #ffb300 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  letter-spacing: -0.5px;
-  line-height: 1.1;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.face-role {
-  display: block;
-  font-size: 11px;
-  font-weight: 800;
-  color: #d97706; /* Darker amber for contrast on white */
+  background-clip: text;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
-  letter-spacing: 2px;
-  opacity: 0.9;
+  margin: 0 0 16px;
 }
 
-.face-0 { 
-  transform: rotateY(0deg) translateZ(220px); 
-  border-color: rgba(59, 130, 246, 0.7);
-  box-shadow: 0 15px 45px rgba(59, 130, 246, 0.25), inset 0 0 50px rgba(59, 130, 246, 0.5);
-}
-.face-1 { 
-  transform: rotateY(72deg) translateZ(220px); 
-  border-color: rgba(168, 85, 247, 0.7);
-  box-shadow: 0 15px 45px rgba(168, 85, 247, 0.25), inset 0 0 50px rgba(168, 85, 247, 0.5);
-}
-.face-2 { 
-  transform: rotateY(144deg) translateZ(220px); 
-  border-color: rgba(236, 72, 153, 0.7);
-  box-shadow: 0 15px 45px rgba(236, 72, 153, 0.25), inset 0 0 50px rgba(236, 72, 153, 0.5);
-}
-.face-3 { 
-  transform: rotateY(216deg) translateZ(220px); 
-  border-color: rgba(20, 184, 166, 0.7);
-  box-shadow: 0 15px 45px rgba(20, 184, 166, 0.25), inset 0 0 50px rgba(20, 184, 166, 0.5);
-}
-.face-4 { 
-  transform: rotateY(288deg) translateZ(220px); 
-  border-color: rgba(245, 158, 11, 0.7);
-  box-shadow: 0 15px 45px rgba(245, 158, 11, 0.25), inset 0 0 50px rgba(245, 158, 11, 0.5);
+.hero-title {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(36px, 5vw, 56px);
+  font-weight: 800;
+  background: linear-gradient(135deg, #ffffff 40%, #e2e8f0 75%, #94a3b8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 20px;
+  line-height: 1.15;
+  letter-spacing: -1.5px;
 }
 
-@keyframes rotateCube {
-  from { transform: rotateX(-5deg) rotateY(0deg); }
-  to { transform: rotateX(-5deg) rotateY(360deg); }
-}
-
-.hero-bottom {
-  padding: 20px 40px 40px;
-  max-width: 1400px;
-  margin: 0 auto;
-  text-align: center;
-  position: relative;
-  z-index: 50;
-}
-
-.avatar-label-container {
-  position: absolute;
-  bottom: -50px;
-  left: 50%;
-  transform: translateX(-50%);
-  text-align: center;
-  width: max-content;
-  pointer-events: none;
-  z-index: 40;
-}
-
-.avatar-message {
-  font-size: clamp(10px, 3.8vw, 18px);
-  font-weight: 600;
-  color: #ffffff;
-  margin: 0;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-  line-height: 1.5;
-  padding-bottom: 8px;
-  white-space: nowrap;
-}
-
-.avatar-message span {
-  color: #fbbf24;
-}
-
-.hero-bottom {
-  padding: 20px 40px 40px;
-  max-width: 1400px;
-  margin: 0 auto;
-  text-align: center;
-  position: relative;
-  z-index: 50;
+.hero-subtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(16px, 2vw, 18px);
+  color: #94a3b8;
+  margin: 0 auto 36px;
+  font-weight: 400;
+  line-height: 1.7;
+  max-width: 580px;
 }
 
 .hero-cta {
@@ -292,253 +189,214 @@ const styles = `
   flex-wrap: wrap;
 }
 
-.btn-outline {
-  font-family: 'Inter', sans-serif;
-  background: transparent;
-  border: 2px solid rgba(255, 255, 255, 0.85);
-  color: #fff;
-  padding: 14px 28px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  text-decoration: none;
-  white-space: nowrap;
-  letter-spacing: 0.5px;
-  backdrop-filter: blur(4px);
-}
-
-.btn-outline:hover {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: #fff;
-  transform: translateY(-2px);
-}
-
-.btn-primary {
-  font-family: 'Inter', sans-serif;
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-  border: none;
-  color: #1a1a1a;
-  padding: 14px 28px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  text-decoration: none;
-  white-space: nowrap;
-  box-shadow: 0 6px 20px rgba(251, 191, 36, 0.45);
-  letter-spacing: 0.5px;
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px) scale(1.03);
-  box-shadow: 0 10px 28px rgba(251, 191, 36, 0.55) !important;
-  background: linear-gradient(135deg, #f3c42aff 0%, #fbbf24 100%) !important;
-}
-
 .hero-cta .btn-primary {
-  padding: 16px 32px;
-  font-size: 16px;
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, #ffe082 0%, #ffb300 50%, #ff8f00 100%);
+  border: none;
+  color: #030712;
+  padding: 14px 30px;
+  border-radius: 100px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(255, 179, 0, 0.35);
+  letter-spacing: 0.5px;
+}
+
+.hero-cta .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(255, 179, 0, 0.5), 0 0 15px rgba(255, 224, 130, 0.2);
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe082 50%, #ffb300 100%);
 }
 
 .hero-cta .btn-outline {
-  padding: 16px 32px;
-  font-size: 16px;
-}
-
-.floating-card {
-  position: absolute;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(16px);
-  border-radius: 24px;
-  padding: 24px;
+  font-family: 'Inter', sans-serif;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #f1f5f9;
+  padding: 14px 30px;
+  border-radius: 100px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 20px;
-  width: 320px;
-  min-height: 400px;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  gap: 8px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  letter-spacing: 0.5px;
 }
 
-.card-icon-wrapper {
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
+.hero-cta .btn-outline:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.05);
+}
+
+.hero-gallery-bleed {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  overflow: hidden;
+  position: relative;
+  z-index: 5;
+}
+
+.hero-cards-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  color: #fff;
-  flex-shrink: 0;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-}
-
-@media (max-width: 1200px) {
-  .hero-avatar-container {
-    gap: 40px;
-    padding: 0 30px;
-  }
-  .center-avatar-wrapper {
-    width: 350px;
-    height: 400px;
-  }
+  gap: 40px;
+  max-width: 900px;
+  margin: 48px auto 64px;
+  padding: 0 24px;
+  width: 100%;
+  position: relative;
+  z-index: 5;
 }
 
 @media (max-width: 1024px) {
-  .hero-avatar-container {
+  .hero-cards-row {
     flex-direction: column;
-    gap: 60px;
-    padding: 10px 20px;
+    align-items: center;
+    gap: 32px;
+    margin: 40px auto 56px;
   }
-  
-  .center-avatar-wrapper {
-    width: 100%;
-    max-width: 450px;
-    height: 450px;
-    order: 1;
-  }
-  
-  .left-card-wrapper {
-    order: 2;
-    width: 100%;
-    max-width: 450px;
-  }
-  
-  .right-card-container {
-    order: 3;
+
+  .hero-cards-row .left-card-wrapper,
+  .hero-cards-row .right-card-container {
     width: 100%;
     max-width: 450px;
   }
 }
 
 @media (max-width: 768px) {
-  .hero-top {
-    padding: 60px 24px 30px;
+  .hero-container {
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding-top: 100px;
+    padding-bottom: 24px;
   }
 
-  .hero-title-top {
-    font-size: 48px;
+  .hero-copy {
+    padding: 0 20px 32px;
   }
 
-  .hero-subtitle-top {
-    font-size: 18px;
-    padding: 0 16px;
+  .hero-title {
+    font-size: 36px;
+    letter-spacing: -1px;
   }
 
-  .hero-avatars {
-    min-height: 300px;
-    padding: 20px 0;
-  }
-
-  .hero-bottom {
-    padding: 30px 24px 60px;
+  .hero-subtitle {
+    font-size: 16px;
+    margin-bottom: 24px;
   }
 
   .hero-cta {
     flex-direction: column;
-    padding: 0 16px;
+    width: 100%;
   }
 
   .hero-cta .btn-primary,
   .hero-cta .btn-outline {
     width: 100%;
     max-width: 300px;
+    justify-content: center;
+  }
+
+  .hero-cards-row {
+    margin: 32px auto 48px;
+    gap: 24px;
   }
 }
 
 @media (max-width: 480px) {
-  .hero-title-top {
-    font-size: 40px;
-    margin: 0 0 20px;
-    letter-spacing: -1px;
+  .hero-title {
+    font-size: 32px;
     line-height: 1.15;
   }
 
-  .hero-subtitle-top {
-    font-size: 16px;
-    line-height: 1.5;
-    padding: 0 16px;
+  .hero-subtitle {
+    font-size: 15px;
+    line-height: 1.55;
   }
 }
+
 `
 
 function Hero() {
-  const avatars = [
-    { src: avatar1, name: "Ethan", role: "an AI Video Assistant" },
-    { src: avatar4, name: "Liam", role: "a Virtual Instructor" },
-    { src: avatar2, name: "Oliver", role: "a Digital Host" },
-    { src: avatar5, name: "Noah", role: "a Technical Expert" },
-    { src: avatar3, name: "Olivia", role: "a Language Coach" }
-  ]
+  const [avatarsList] = useState([
+    /* ── Target avatars in sequence (1 → 7) ── */
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target.mp4', name: 'Noah', role: 'Technical Expert' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target+(1).mp4', name: 'Liam', role: 'Virtual Studio' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target+(2).mp4', name: 'Lucas', role: 'Product Presenter' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target+(6).mp4', name: 'Mia', role: 'Brand Storyteller' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target+(7).mp4', name: 'Zara', role: 'Sales Presenter' },
+    /* ── Talk avatars ── */
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_1.mp4', name: 'Ava', role: 'Digital Assistant' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_2.mp4', name: 'Ethan', role: 'AI Video Assistant' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_2+(1).mp4', name: 'Oliver', role: 'Digital Host' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_3.mp4', name: 'Olivia', role: 'Language Coach' },
+  ])
+
+  useEffect(() => {
+    // HeyGen image fetching disabled to display local high-fidelity videos in the hero marquee instead of static images
+  }, [])
+
 
   return (
     <>
       <style>{styles}</style>
       <div className="hero-container">
-        {/* Top Section with Heading and Subheading */}
-        <div className="hero-top">
-          <h1 className="hero-title-top">
+        {/* Modern Graphic Background Elements */}
+        <div className="hero-bg-graphics">
+          <div className="hero-orb hero-orb-1" />
+          <div className="hero-orb hero-orb-2" />
+          <div className="hero-orb hero-orb-3" />
+          <div className="hero-dot-grid" />
+          <div className="hero-tech-orbits">
+            <svg viewBox="0 0 1000 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="500" cy="500" r="400" stroke="rgba(255, 255, 255, 0.03)" strokeWidth="1" strokeDasharray="4 8" />
+              <circle cx="500" cy="500" r="300" stroke="rgba(59, 130, 246, 0.05)" strokeWidth="1.5" />
+              <circle cx="500" cy="500" r="200" stroke="rgba(255, 224, 130, 0.03)" strokeWidth="1" strokeDasharray="20 10 5 10" />
+              <circle cx="500" cy="100" r="4" fill="rgba(59, 130, 246, 0.3)" />
+              <circle cx="500" cy="300" r="3" fill="rgba(255, 179, 0, 0.3)" />
+            </svg>
+          </div>
+        </div>
+
+        <div className="hero-copy">
+          <h1 className="hero-title">
             Create AI-Powered Videos
             <br />
             That Speak Your Language
           </h1>
-          <p className="hero-subtitle-top">
+          <p className="hero-subtitle">
             Transform text into engaging video content with lifelike AI avatars.
             Create professional videos in minutes, not hours.
           </p>
-        </div>
-
-        {/* Middle Section with Avatar Carousel */}
-        <div className="hero-avatars">
-          <div className="hero-avatar-container">
-            {/* LEFT SIDE: Static Card */}
-            <LeftCard />
-
-            {/* CENTER: 3D Rotating Pentagonal Prism (for 5 avatars) */}
-            <div className="center-avatar-wrapper">
-              <div className="hero-cube-container">
-                <div className="hero-cube">
-                  {avatars.map((avatar, i) => (
-                    <div key={i} className={`cube-face face-${i}`}>
-                      <div className="cube-face-content">
-                        <img src={avatar.src} alt={avatar.name} />
-                        <div className="cube-face-label">
-                          <span className="face-name">{avatar.name}</span>
-                          <span className="face-role">{avatar.role}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* RIGHT SIDE: Auto-Rotating Cards */}
-            <RightCardCarousel />
-          </div>
-        </div>
-
-        {/* Bottom Section with CTA Buttons */}
-        <div className="hero-bottom">
           <div className="hero-cta">
-            <button className="btn-primary">
-              START FREE TRIAL
+            <button type="button" className="btn-primary">
+              Request Early Access
               <MdArrowOutward />
             </button>
-            <button className="btn-outline">
+            <button type="button" className="btn-outline">
               CONTACT SALES
               <MdArrowOutward />
             </button>
           </div>
+        </div>
+
+        <div className="hero-gallery-bleed">
+          <HeroArcGallery avatars={avatarsList} fullWidth />
         </div>
       </div>
     </>

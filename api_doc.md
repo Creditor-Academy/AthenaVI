@@ -1,6 +1,6 @@
-# Athena VI Backend – API Documentation
+# Virtual Studio Backend – API Documentation
 
-Backend API for **Athena VI** (Virtual Instructor). Use this document for frontend integration.
+Backend API for **Virtual Studio** (Virtual Studio). Use this document for frontend integration.
 
 ---
 

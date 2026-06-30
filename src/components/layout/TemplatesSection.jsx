@@ -1,346 +1,599 @@
-import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { FiArrowRight } from 'react-icons/fi'
+import { FiArrowRight, FiPlay, FiVideo } from 'react-icons/fi'
 
-// Unsplash CDN helper
-const U = (id, w = 400) =>
-  `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=80`
+import temp1 from '../../assets/Template Image/temp1.png'
+import temp2 from '../../assets/Template Image/temp2.png'
+import temp3 from '../../assets/Template Image/temp3.png'
+import temp4 from '../../assets/Template Image/temp4.png'
+import temp5 from '../../assets/Template Image/temp5.png'
+import temp6 from '../../assets/Template Image/temp6.png'
+import temp7 from '../../assets/Template Image/temp7.png'
+import temp8 from '../../assets/Template Image/temp8.png'
+import temp9 from '../../assets/Template Image/temp9.png'
+import temp10 from '../../assets/Template Image/temp10.png'
+import temp11 from '../../assets/Template Image/temp11.png'
+import temp12 from '../../assets/Template Image/temp12.png'
 
-// Each category has 4 portrait-style preview images
-const CATEGORIES = [
+const TEMPLATE_IMAGES = [
+  temp1, temp2, temp3, temp4,
+  temp5, temp6, temp7, temp8,
+  temp9, temp10, temp11, temp12
+]
+
+const EXPLANATIONS = [
   {
-    id: 1,
-    title: 'Corporate\nPresentation',
-    count: 12,
-    images: [
-      U('1556761175-4b46a572b786'), // boardroom
-      U('1573497019236-17f8177b81e8'), // presentation
-      U('1497366216548-37526070297c'), // modern office
-    ],
+    id: "exp-1",
+    title: "Life Science Graphics",
+    category: "Specialized",
+    desc: "Pre-made DNA structures, cell divisions, and clinical trials graphics optimized for scientific research.",
+    accentColor: "#3b82f6",
+    accentRgb: "59, 130, 246"
   },
   {
-    id: 2,
-    title: 'Educational\nModule',
-    count: 9,
-    images: [
-      U('1456513080510-7bf3a84b82f8'), // studying
-      U('1503676260728-1c00da094a0b'), // classroom
-      U('1516321318423-f06f85e504b3'), // laptop learning
-    ],
+    id: "exp-2",
+    title: "Corporate Briefings",
+    category: "Professional",
+    desc: "Polished templates for presenting financial reports, key KPIs, and corporate milestones.",
+    accentColor: "#10b981",
+    accentRgb: "16, 185, 129"
   },
   {
-    id: 3,
-    title: 'Marketing\nCampaign',
-    count: 14,
-    images: [
-      U('1533750349088-cd871a92f312'), // neon marketing
-      U('1460925895917-afdab827c52f'), // laptop analytics
-      U('1551650975-d300049d99fa'), // phone mockup
-    ],
+    id: "exp-3",
+    title: "Onboarding & SaaS",
+    category: "Product Suite",
+    desc: "Interactive dashboards and avatar walkthrough layouts to demonstrate software features.",
+    accentColor: "#8b5cf6",
+    accentRgb: "139, 92, 246"
   },
   {
-    id: 4,
-    title: 'Personal\nStory',
-    count: 8,
-    images: [
-      U('1531746020798-e6953c6e8e04'), // portrait
-      U('1529156069898-49953e39b3ac'), // lifestyle
-      U('1508214751196-bcfd4ca60f91'), // individual
-    ],
+    id: "exp-4",
+    title: "Educational Lessons",
+    category: "Academic",
+    desc: "Clear visual structures for teaching physics, math, and humanities with graphical focus.",
+    accentColor: "#ef4444",
+    accentRgb: "239, 68, 68"
   },
   {
-    id: 5,
-    title: 'Social\nShort',
-    count: 11,
-    images: [
-      U('1611162616475-46b635cb6868'), // phone creator
-      U('1585184394271-4c0d40a8e25f'), // content creation
-      U('1512941937669-90a1b58e7e9c'), // mobile phone
-    ],
+    id: "exp-5",
+    title: "Marketing Campaigns",
+    category: "Ads & Social",
+    desc: "High-impact layouts optimized to grab attention and boost product conversions.",
+    accentColor: "#06b6d4",
+    accentRgb: "6, 182, 212"
   },
   {
-    id: 6,
-    title: 'All-Purpose\nTemplate',
-    count: 16,
-    images: [
-      U('1499750310107-5fef28a66643'), // workspace
-      U('1522202176988-66273c2fd55f'), // team creative
-      U('1454165804606-c3d57bc86b40'), // work desk
-    ],
-  },
+    id: "exp-6",
+    title: "Company Onboarding",
+    category: "Human Resources",
+    desc: "Welcome templates introducing workspace tools, guidelines, and corporate culture.",
+    accentColor: "#f59e0b",
+    accentRgb: "245, 158, 11"
+  }
 ]
 
 const css = `
-/* ─────────────────────────────────────────
-   Templates Section
-───────────────────────────────────────── */
-.ts-section {
-  padding: 96px 48px 88px;
-  background: #e8eef6;
+/* ────────────────────────────────────────────────────────
+   Vertical Infinite Scrolling Grid (35:65 ratio)
+   ──────────────────────────────────────────────────────── */
+.pts-section {
+  position: relative;
+  padding: 120px 48px;
+  background: radial-gradient(circle at 50% 30%, #080f26 0%, #040817 60%, #01020a 100%);
+  color: #ffffff;
+  overflow: hidden;
   font-family: 'Inter', sans-serif;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-/* Header */
-.ts-header {
-  text-align: center;
-  max-width: 620px;
-  margin: 0 auto 56px;
+/* Background ambient glows */
+.pts-bg-glows {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
 }
-.ts-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 16px;
-  background: rgba(30,64,175,0.06);
-  border: 1px solid rgba(30,64,175,0.12);
-  border-radius: 999px;
-  color: #1e40af;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  margin-bottom: 20px;
-}
-.ts-eyebrow-dot {
-  width: 6px; height: 6px;
+.pts-glow-blue {
+  position: absolute;
+  top: 10%;
+  left: -10%;
+  width: 600px;
+  height: 600px;
   border-radius: 50%;
-  background: #3b82f6;
-  animation: ts-pulse 2s ease-in-out infinite;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.07) 0%, rgba(255, 255, 255, 0) 70%);
+  filter: blur(80px);
 }
-@keyframes ts-pulse {
-  0%,100% { opacity:1; transform:scale(1); }
-  50%      { opacity:.3; transform:scale(.55); }
-}
-.ts-title {
-  font-family: 'Georgia','Times New Roman',serif;
-  font-size: clamp(32px, 4vw, 50px);
-  font-weight: 400;
-  color: #0f172a;
-  line-height: 1.12;
-  letter-spacing: -1.6px;
-  margin: 0 0 14px;
-}
-.ts-title span {
-  background: linear-gradient(135deg, #1e40af, #3b82f6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.ts-subtitle {
-  font-size: 16px;
-  color: #64748b;
-  line-height: 1.65;
-  margin: 0;
+.pts-glow-purple {
+  position: absolute;
+  bottom: 10%;
+  right: 5%;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
+  filter: blur(80px);
 }
 
-/* Grid — 3 cols × 2 rows */
-.ts-grid {
+/* Layout grid - 35% Left (Info), 65% Right (Scroll) */
+.pts-layout-grid {
+  display: grid;
+  grid-template-columns: 35fr 65fr;
+  gap: 56px;
+  align-items: center;
+  max-width: 1440px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+/* Right side (65%) vertical scroll area */
+.pts-scroll-wrapper {
+  position: relative;
+  height: 680px;
+  overflow: hidden;
+  /* Top & bottom fading mask */
+  mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+}
+
+.pts-scroll-columns-container {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  max-width: 1200px;
-  margin: 0 auto 56px;
+  gap: 20px;
+  height: 100%;
 }
 
-/* ── Card ── */
-.ts-card {
-  position: relative;
+.pts-scroll-column {
   display: flex;
   flex-direction: column;
-  background: #ffffff;
-  border: 1.5px solid rgba(15,23,42,0.09);
-  border-radius: 16px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: border-color .28s ease, box-shadow .28s ease, transform .28s ease;
-}
-.ts-card:hover {
-  border-color: rgba(30,64,175,0.22);
-  box-shadow: 0 12px 40px rgba(15,23,42,0.12);
-  transform: translateY(-4px);
+  height: max-content;
 }
 
-/* Image at top */
-.ts-card-image {
-  width: 100%;
-  height: 200px;
-  overflow: hidden;
-  position: relative;
+.scroll-track-up {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: scroll-up 35s linear infinite;
 }
-.ts-card-image img {
+
+.scroll-track-down {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: scroll-down 35s linear infinite;
+}
+
+/* Pausing columns on container hover */
+.pts-scroll-wrapper:hover .scroll-track-up,
+.pts-scroll-wrapper:hover .scroll-track-down {
+  animation-play-state: paused;
+}
+
+@keyframes scroll-up {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+@keyframes scroll-down {
+  0% {
+    transform: translateY(-50%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* ─── PURE IMAGE CARD ─── */
+.pts-image-card {
+  background: #ffffff;
+  border-radius: 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/10;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.pts-card-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
-  transform: scale(1);
-  transition: transform .5s cubic-bezier(.16,1,.3,1);
-}
-.ts-card:hover .ts-card-image img {
-  transform: scale(1.05);
 }
 
-/* White bar at bottom */
-.ts-card-bar {
+/* ─── EXPLANATION CARD ─── */
+.pts-explanation-card {
   background: #ffffff;
-  padding: 16px 18px;
-  border-top: 1px solid rgba(15,23,42,0.06);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
 }
-.ts-card-bar-category {
-  font-size: 11px;
-  font-weight: 600;
-  color: #3b82f6;
+
+.pts-card-category-tag {
+  font-size: 8px;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  margin-bottom: 4px;
-}
-.ts-card-bar-name {
-  font-size: 16px;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1.3;
-  letter-spacing: -0.4px;
-}
-.ts-card-bar-count {
-  font-size: 12px;
-  color: #64748b;
-  font-weight: 500;
-  margin-top: 2px;
+  color: var(--accent-color, #3b82f6);
+  margin-bottom: 6px;
 }
 
-/* ── CTA strip ── */
-.ts-cta {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 28px 36px;
-  background: #f8fafc;
-  border: 1px solid rgba(15,23,42,0.06);
-  border-radius: 20px;
-}
-.ts-cta-left h4 {
-  font-size: 17px;
-  font-weight: 600;
+.pts-card-title {
+  font-size: 13px;
+  font-weight: 800;
   color: #0f172a;
-  margin: 0 0 4px;
-  letter-spacing: -.3px;
+  margin: 0 0 6px 0;
+  line-height: 1.3;
 }
-.ts-cta-left p {
-  font-size: 14px;
+
+.pts-card-desc {
+  font-size: 10px;
   color: #64748b;
   margin: 0;
-}
-.ts-cta-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 28px;
-  background: #0f172a;
-  border: none;
-  border-radius: 12px;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: 'Inter', sans-serif;
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: background .2s, transform .2s, box-shadow .2s;
-}
-.ts-cta-btn:hover {
-  background: #1e40af;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(30,64,175,.28);
+  line-height: 1.4;
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-  .ts-grid { grid-template-columns: repeat(2, 1fr); }
+/* Left Column (35%) styling */
+.pts-info-column {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
 }
-@media (max-width: 640px) {
-  .ts-grid { grid-template-columns: 1fr; }
-  .ts-section { padding: 64px 20px; }
-  .ts-cta { flex-direction: column; text-align: center; }
-  .ts-cta-btn { width: 100%; justify-content: center; }
-  .ts-card-image { height: 180px; }
-  .ts-card-content { padding: 16px; }
-  .ts-card-name { font-size: 16px; }
+
+.pts-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(255, 224, 130, 0.08);
+  border: 1px solid rgba(255, 224, 130, 0.15);
+  border-radius: 999px;
+  color: #ffb300;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.pts-eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffb300;
+  box-shadow: 0 0 6px #ffb300;
+  animation: pts-pulse 2s infinite;
+}
+
+@keyframes pts-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+.pts-section-title {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(34px, 3.6vw, 44px);
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.25;
+  letter-spacing: -1.2px;
+  margin: 0 0 24px;
+}
+
+.pts-section-title span {
+  background: linear-gradient(135deg, #ffe082 0%, #ffb300 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.pts-section-subtitle {
+  font-size: 15px;
+  color: #94a3b8;
+  line-height: 1.6;
+  margin: 0 0 32px;
+}
+
+.pts-btn-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 36px;
+  flex-wrap: wrap;
+}
+
+.pts-btn-left-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #93c5fd;
+  color: #1e3a8a;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(147, 197, 253, 0.3);
+}
+
+.pts-btn-left-primary:hover {
+  background: #bdd7ff;
+  transform: translateY(-1px);
+}
+
+.pts-btn-left-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #f1f5f9;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 12px 24px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pts-btn-left-outline:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.pts-partners {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.pts-partner-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  opacity: 0.65;
+}
+
+.pts-partner-logo {
+  font-size: 13px;
+  font-weight: 850;
+  color: #94a3b8;
+  letter-spacing: -0.5px;
+}
+
+/* ────────────────────────────────────────────────────────
+   Responsive Media Queries
+   ──────────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .pts-layout-grid {
+    grid-template-columns: 40fr 60fr;
+    gap: 32px;
+  }
+}
+
+@media (max-width: 968px) {
+  .pts-section {
+    padding: 80px 24px;
+  }
+
+  .pts-layout-grid {
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+  
+  .pts-info-column {
+    align-items: center;
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .pts-scroll-wrapper {
+    height: 520px;
+  }
+}
+
+@media (max-width: 576px) {
+  .pts-scroll-columns-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .pts-scroll-column:nth-child(3) {
+    display: none;
+  }
+  
+  .pts-scroll-wrapper {
+    height: 420px;
+  }
 }
 `
 
+function ImageCard({ img }) {
+  return (
+    <div className="pts-image-card">
+      <img src={img} alt="Template Preview" className="pts-card-img" />
+    </div>
+  )
+}
+
+function ExplanationCard({ info }) {
+  return (
+    <div
+      className="pts-explanation-card"
+      style={{
+        '--accent-color': info.accentColor,
+        '--accent-rgb': info.accentRgb
+      }}
+    >
+      <div className="pts-card-category-tag">{info.category}</div>
+      <h3 className="pts-card-title">{info.title}</h3>
+      <p className="pts-card-desc">{info.desc}</p>
+    </div>
+  )
+}
+
 function TemplatesSection({ onNavigateToSolution }) {
+  const handleUseClick = () => {
+    onNavigateToSolution && onNavigateToSolution('AI Videos')
+  }
+
+  // Column 1: Mix of images and text explanations
+  const col1 = [
+    { type: 'image', id: 'img-1', data: TEMPLATE_IMAGES[0] },
+    { type: 'text', id: 'exp-1', data: EXPLANATIONS[0] },
+    { type: 'image', id: 'img-2', data: TEMPLATE_IMAGES[1] },
+    { type: 'image', id: 'img-3', data: TEMPLATE_IMAGES[2] },
+    { type: 'text', id: 'exp-2', data: EXPLANATIONS[1] },
+    { type: 'image', id: 'img-4', data: TEMPLATE_IMAGES[3] }
+  ]
+
+  // Column 2: Mix of images and text explanations
+  const col2 = [
+    { type: 'image', id: 'img-5', data: TEMPLATE_IMAGES[4] },
+    { type: 'text', id: 'exp-3', data: EXPLANATIONS[2] },
+    { type: 'image', id: 'img-6', data: TEMPLATE_IMAGES[5] },
+    { type: 'image', id: 'img-7', data: TEMPLATE_IMAGES[6] },
+    { type: 'text', id: 'exp-4', data: EXPLANATIONS[3] },
+    { type: 'image', id: 'img-8', data: TEMPLATE_IMAGES[7] }
+  ]
+
+  // Column 3: Mix of images and text explanations
+  const col3 = [
+    { type: 'image', id: 'img-9', data: TEMPLATE_IMAGES[8] },
+    { type: 'text', id: 'exp-5', data: EXPLANATIONS[4] },
+    { type: 'image', id: 'img-10', data: TEMPLATE_IMAGES[9] },
+    { type: 'image', id: 'img-11', data: TEMPLATE_IMAGES[10] },
+    { type: 'text', id: 'exp-6', data: EXPLANATIONS[5] },
+    { type: 'image', id: 'img-12', data: TEMPLATE_IMAGES[11] }
+  ]
+
+  const col1Repeated = [...col1, ...col1]
+  const col2Repeated = [...col2, ...col2]
+  const col3Repeated = [...col3, ...col3]
+
   return (
     <>
       <style>{css}</style>
-      <section className="ts-section">
+      <section className="pts-section">
 
-        {/* Header */}
-        <motion.div
-          className="ts-header"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-        >
-          <div className="ts-eyebrow">
-            <span className="ts-eyebrow-dot" />
-            Templates
-          </div>
-          <h2 className="ts-title">
-            Start with a template.<br /><span>Ship in minutes.</span>
-          </h2>
-          <p className="ts-subtitle">
-            Ready-made layouts for every use case — pick one, add your content, and generate.
-          </p>
-        </motion.div>
-
-        {/* Grid */}
-        <div className="ts-grid">
-          {CATEGORIES.map((cat, i) => (
-            <motion.div
-              key={cat.id}
-              className="ts-card"
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: i * 0.07 }}
-            >
-              {/* Image at top */}
-              <div className="ts-card-image">
-                <img src={cat.images[0]} alt={`${cat.title} preview`} loading="lazy" />
-              </div>
-
-              {/* White bar at bottom */}
-              <div className="ts-card-bar">
-                <div className="ts-card-bar-category">Template</div>
-                <div className="ts-card-bar-name">{cat.title.replace('\n', ' ')}</div>
-                <div className="ts-card-bar-count">{cat.count} templates</div>
-              </div>
-            </motion.div>
-          ))}
+        {/* Glow Effects */}
+        <div className="pts-bg-glows">
+          <div className="pts-glow-blue" />
+          <div className="pts-glow-purple" />
         </div>
 
-        {/* CTA strip */}
-        <motion.div
-          className="ts-cta"
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.15 }}
-        >
-          <div className="ts-cta-left">
-            <h4>50+ templates across every category</h4>
-            <p>New templates added every week — always something fresh to start from.</p>
-          </div>
-          <button
-            className="ts-cta-btn"
-            onClick={() => onNavigateToSolution && onNavigateToSolution('AI Videos')}
+        {/* 35:65 Layout Grid */}
+        <div className="pts-layout-grid">
+
+          {/* LEFT SIDE (35%): Typography & CTA content */}
+          <motion.div
+            className="pts-info-column"
+            initial={{ opacity: 0, x: -25 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
           >
-            Browse All Templates <FiArrowRight size={15} />
-          </button>
-        </motion.div>
+            {/* <div className="pts-eyebrow">
+              <span className="pts-eyebrow-dot" />
+              Template Library
+            </div> */}
+            <h2 className="pts-section-title">
+              World-class templates that <span>empower creators</span>
+            </h2>
+
+            <p className="pts-section-subtitle">
+              Virtual Studio empowers creators to transform text into professional videos with lifelike AI avatars and virtual instructors. Select a pre-designed layout to jumpstart your production.
+            </p>
+
+            {/* Button CTA Row */}
+            <div className="pts-btn-row">
+              <button className="pts-btn-left-primary" onClick={handleUseClick}>
+                Get started <FiArrowRight size={13} style={{ marginLeft: 2 }} />
+              </button>
+              <button className="pts-btn-left-outline" onClick={handleUseClick}>
+                <FiPlay size={11} style={{ marginRight: 4, display: 'inline' }} /> How it works
+              </button>
+            </div>
+
+            {/* Client logos matching mockup style */}
+            <div className="pts-partners">
+              <div className="pts-partner-row">
+                <div className="pts-partner-logo">● Headway</div>
+                <div className="pts-partner-logo">brightline</div>
+                <div className="pts-partner-logo">hazel</div>
+                <div className="pts-partner-logo">G&STC</div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* RIGHT SIDE (65%): Infinite Scroll Columns */}
+          <div className="pts-scroll-wrapper">
+            <div className="pts-scroll-columns-container">
+
+              {/* Column 1: Scrolls Up */}
+              <div className="pts-scroll-column">
+                <div className="scroll-track-up">
+                  {col1Repeated.map((item, idx) => (
+                    item.type === 'image' ? (
+                      <ImageCard key={`col1-img-${item.id}-${idx}`} img={item.data} />
+                    ) : (
+                      <ExplanationCard key={`col1-exp-${item.id}-${idx}`} info={item.data} />
+                    )
+                  ))}
+                </div>
+              </div>
+
+              {/* Column 2: Scrolls Down */}
+              <div className="pts-scroll-column">
+                <div className="scroll-track-down">
+                  {col2Repeated.map((item, idx) => (
+                    item.type === 'image' ? (
+                      <ImageCard key={`col2-img-${item.id}-${idx}`} img={item.data} />
+                    ) : (
+                      <ExplanationCard key={`col2-exp-${item.id}-${idx}`} info={item.data} />
+                    )
+                  ))}
+                </div>
+              </div>
+
+              {/* Column 3: Scrolls Up */}
+              <div className="pts-scroll-column">
+                <div className="scroll-track-up">
+                  {col3Repeated.map((item, idx) => (
+                    item.type === 'image' ? (
+                      <ImageCard key={`col3-img-${item.id}-${idx}`} img={item.data} />
+                    ) : (
+                      <ExplanationCard key={`col3-exp-${item.id}-${idx}`} info={item.data} />
+                    )
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
 
       </section>
     </>

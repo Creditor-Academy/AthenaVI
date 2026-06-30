@@ -24,7 +24,15 @@ pipeline {
 
         stage('Build React App') {
             steps {
-                sh 'npm run build'
+                sh '''
+                echo "===================================="
+                echo "Building React Application"
+                echo "===================================="
+                if [ -d dist ]; then
+                    rm -rf dist 2>/dev/null || docker run --rm -v "$PWD:/w" -w /w alpine rm -rf dist
+                fi
+                npm run build
+                '''
             }
         }
 
@@ -50,6 +58,7 @@ pipeline {
             steps {
                 sh """
                 docker build \
+                --no-cache \
                 -t ${ECR_REPOSITORY}:${IMAGE_TAG} .
                 """
             }
@@ -57,12 +66,14 @@ pipeline {
 
         stage('Trivy Scan') {
             steps {
-                sh """
+                sh '''
+                rm -rf ~/.cache/trivy/db
                 trivy image \
-                --exit-code 0 \
-                --severity HIGH,CRITICAL \
-                ${ECR_REPOSITORY}:${IMAGE_TAG}
-                """
+                  --scanners vuln \
+                  --exit-code 0 \
+                  --severity HIGH,CRITICAL \
+                  ${ECR_REPOSITORY}:${IMAGE_TAG}
+                '''
             }
         }
 
@@ -88,20 +99,32 @@ pipeline {
                 """
             }
         }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh """
+                kubectl set image deployment/frontend \
+                frontend=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}
+
+                kubectl rollout status deployment/frontend
+                """
+            }
+        }
     }
 
     post {
         success {
-            echo "========================================"
-            echo "Frontend CI Pipeline Completed Successfully"
-            echo "Docker Image Pushed to Amazon ECR"
-            echo "========================================"
+            echo "======================================="
+            echo "Frontend Pipeline Completed Successfully"
+            echo "Docker Image Pushed Successfully"
+            echo "Kubernetes Deployment Updated Successfully"
+            echo "======================================="
         }
 
         failure {
-            echo "========================================"
-            echo "Frontend CI Pipeline Failed"
-            echo "========================================"
+            echo "======================================"
+            echo "Frontend Pipeline Failed"
+            echo "======================================"
         }
     }
 }

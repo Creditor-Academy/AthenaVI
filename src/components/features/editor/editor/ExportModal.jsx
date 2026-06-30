@@ -29,6 +29,7 @@ const ExportModal = ({
   phase = 'configure',
   statusMessage = '',
   errorMessage = '',
+  errorObject = null,
   readyFilename = '',
   downloading = false,
   onStartExport,
@@ -274,20 +275,54 @@ const ExportModal = ({
         )}
 
         {isError && (
-          <div className="export-modal-result export-modal-result--error">
-            <MdErrorOutline size={48} />
-            <p>{errorMessage || 'Something went wrong while exporting your video.'}</p>
-            <div className="modal-actions">
+          <div className="export-modal-result export-modal-result--error" style={{ width: '100%' }}>
+            <div className="export-error-glass">
+              <div className="export-error-title">
+                <MdErrorOutline size={24} />
+                <span>{errorObject?.title || 'Export Failed'}</span>
+              </div>
+              <p className="export-error-desc">
+                {errorObject?.message || errorMessage || 'An unexpected error occurred while exporting.'}
+              </p>
+              
+              {errorObject?.remediation && errorObject.remediation.length > 0 && (
+                <>
+                  <div className="export-error-remediation-title">To resolve this:</div>
+                  <ul className="export-error-steps">
+                    {errorObject.remediation.map((step, i) => (
+                      <li key={i} className="export-error-step">
+                        {step}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+
+              {errorObject?.details && (
+                <details style={{ marginTop: '12px' }}>
+                  <summary className="export-error-details-summary">Technical details</summary>
+                  <pre className="export-error-details-pre">
+                    {typeof errorObject.details === 'object'
+                      ? JSON.stringify(errorObject.details, null, 2)
+                      : String(errorObject.details)}
+                  </pre>
+                </details>
+              )}
+            </div>
+
+            <div className="modal-actions" style={{ marginTop: '16px', width: '100%' }}>
               <button type="button" className="btn-secondary" onClick={onClose}>
-                Cancel
+                Close
               </button>
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={() => onStartExport?.({ filename: filename.trim() || projectTitle, resolution, quality })}
-              >
-                Try again
-              </button>
+              {!errorObject?.title && (
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={() => onStartExport?.({ filename: filename.trim() || projectTitle, resolution, quality })}
+                >
+                  Try again
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -296,6 +331,80 @@ const ExportModal = ({
       <style>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+        .export-error-glass {
+          background: color-mix(in srgb, var(--delete-red) 6%, var(--bg-surface));
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 1px solid color-mix(in srgb, var(--delete-red) 25%, var(--border-color));
+          border-radius: 12px;
+          padding: 20px;
+          width: 100%;
+          text-align: left;
+          box-shadow: var(--shadow);
+          box-sizing: border-box;
+        }
+        .export-error-title {
+          font-size: 16px;
+          font-weight: 700;
+          color: var(--delete-red);
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 10px;
+        }
+        .export-error-desc {
+          font-size: 14px;
+          color: var(--text-main);
+          line-height: 1.5;
+          margin: 0 0 16px 0 !important;
+          max-width: 100% !important;
+          text-align: left;
+        }
+        .export-error-remediation-title {
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: var(--text-muted);
+          font-weight: 700;
+          margin-bottom: 8px;
+        }
+        .export-error-steps {
+          list-style: none;
+          padding: 0;
+          margin: 0 0 8px 0;
+        }
+        .export-error-step {
+          font-size: 13px;
+          color: var(--text-main);
+          margin-bottom: 6px;
+          display: flex;
+          align-items: flex-start;
+          gap: 6px;
+        }
+        .export-error-step::before {
+          content: "•";
+          color: var(--delete-red);
+          font-weight: bold;
+        }
+        .export-error-details-summary {
+          font-size: 11px;
+          color: var(--text-muted);
+          cursor: pointer;
+          user-select: none;
+          margin-bottom: 4px;
+        }
+        .export-error-details-pre {
+          background: var(--bg-main);
+          border: 1px solid var(--border-color);
+          padding: 10px;
+          border-radius: 6px;
+          font-family: monospace;
+          font-size: 11px;
+          color: var(--text-main);
+          overflow-x: auto;
+          margin-top: 6px;
+          white-space: pre-wrap;
         }
       `}</style>
     </div>

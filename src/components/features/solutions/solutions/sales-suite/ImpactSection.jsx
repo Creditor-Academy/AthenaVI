@@ -198,7 +198,7 @@ function ImpactSection() {
     {
       number: '01',
       title: 'Cost-effective',
-      description: 'Conventional video creation featuring live presenters often comes with high costs and lengthy timelines. Athena VI provides a groundbreaking artificial intelligence video platform that combines budget-friendly pricing with productivity.'
+      description: 'Conventional video creation featuring live presenters often comes with high costs and lengthy timelines. Virtual Studio provides a groundbreaking artificial intelligence video platform that combines budget-friendly pricing with productivity.'
     },
     {
       number: '02',
@@ -208,7 +208,7 @@ function ImpactSection() {
     {
       number: '03',
       title: 'Retention',
-      description: "Audiences engage much more effectively with video materials compared to written text. Through Athena VI, you're crafting memorable moments that resonate."
+      description: "Audiences engage much more effectively with video materials compared to written text. Through Virtual Studio, you're crafting memorable moments that resonate."
     }
   ]
 
@@ -249,33 +249,33 @@ function ImpactSection() {
   // Card 0: Moves from 0 up to shiftY0
   const x0Desktop = useTransform(smoothProgress, [0, 1], [finalX0, finalX0])
   const y0Desktop = useTransform(
-  smoothProgress,
-  [0, 0.15, 0.3, 1.0],
-  [baseEntranceY, 0, 0, shiftY0]
-)
+    smoothProgress,
+    [0, 0.15, 0.3, 1.0],
+    [baseEntranceY, 0, 0, shiftY0]
+  )
 
   // Card 1: Moves from 0 up to shiftY1
   const x1Desktop = useTransform(smoothProgress, [0, 1], [finalX1, finalX1])
   const y1Desktop = useTransform(
-  smoothProgress,
-  [0, 0.15, 0.3, 1.0],
-  [baseEntranceY, 0, 0, shiftY1]
-)
+    smoothProgress,
+    [0, 0.15, 0.3, 1.0],
+    [baseEntranceY, 0, 0, shiftY1]
+  )
 
 
   // Card 2: Stays at 0
   const x2Desktop = useTransform(smoothProgress, [0, 1], [finalX2, finalX2])
   const y2Desktop = useTransform(
-  smoothProgress,
-  [0, 0.15, 0.5, 1.0],
-  [baseEntranceY, 0, 0, shiftY2]
-)
+    smoothProgress,
+    [0, 0.15, 0.5, 1.0],
+    [baseEntranceY, 0, 0, shiftY2]
+  )
 
   // Header transform: Starts moving up as the cards begin their staggered rise
   const headerY = useTransform(smoothProgress, [0.3, 0.8], [0, -150])
 
   // Wrapper vertical shift starts as the internal move finishes to scroll the whole group away
- const wrapperY = useTransform(smoothProgress, [0.8, 1.0], [0, -500])
+  const wrapperY = useTransform(smoothProgress, [0.8, 1.0], [0, -500])
 
   return (
     <>

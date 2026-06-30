@@ -1,0 +1,1350 @@
+{
+  "category": "Courses",
+  "template": {
+    "id": "platform-tutorial",
+    "name": "AI Video Creation Guide",
+    "category": "Courses",
+    "theme": {
+      "name": "Platform Tutorial",
+      "fonts": {
+        "display": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+        "serif": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+        "sans": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+        "accent": "\"Source Serif 4\", Georgia, serif"
+      }
+    },
+    "totalSlides": 4,
+    "canvasSize": {
+      "width": 1280,
+      "height": 720
+    },
+    "aspectRatio": "16:9",
+    "colorPalette": {
+      "primary": "#3B82F6",
+      "secondary": "#1E40AF",
+      "accent": "#10B981",
+      "cream": "#F8FAFC",
+      "dark": "#0F172A",
+      "white": "#FFFFFF",
+      "line": "#E2E8F0",
+      "grey": "#64748B"
+    },
+    "description": "Learn how to build AI videos step-by-step with this 4-slide tutorial presentation template."
+  },
+  "scenes": [
+    {
+      "id": "tutorial_01",
+      "slideIndex": 1,
+      "title": "Create Project",
+      "layoutType": "Cover",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "hero": {
+          "x": 680,
+          "y": 100,
+          "width": 500,
+          "height": 500
+        },
+        "title": {
+          "x": 64,
+          "y": 160,
+          "width": 600,
+          "height": 260
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Tutorial Scene 1 - Create Project: Choose a template or start from blank.",
+      "flow": "Create Project → Choose Avatar",
+      "duration": 9,
+      "tags": [
+        "platform-tutorial",
+        "project"
+      ],
+      "clips": [
+        {
+          "id": "dashed_line_1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 60
+          },
+          "size": {
+            "width": 1152,
+            "height": 1
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "style": {
+            "borderBottom": "1px dashed #E2E8F0"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "hdr_left_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "size": {
+            "width": 300,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "content": "STEP 1: GETTING STARTED",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 16,
+            "color": "#3B82F6"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "hdr_right_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1116,
+            "y": 36
+          },
+          "size": {
+            "width": 100,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "content": "01 / 04",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 16,
+            "color": "#64748B",
+            "textAlign": "right"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "t_title_1",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 64,
+            "y": 160
+          },
+          "size": {
+            "width": 600,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "content": "Create Project",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 60,
+            "color": "#0F172A"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "t_sub_1",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 64,
+            "y": 280
+          },
+          "size": {
+            "width": 500,
+            "height": 160
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "content": "First, start your project in Virtual Studio. Choose from our catalog of pre-designed templates to jumpstart your creation, or start from a blank canvas to build your vision from scratch.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 18,
+            "color": "#64748B",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "badge_circle_1",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 620,
+            "y": 450
+          },
+          "size": {
+            "width": 100,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "style": {
+            "backgroundColor": "#3B82F6",
+            "borderRadius": "50%",
+            "boxShadow": "0 8px 24px rgba(59,130,246,0.2)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "badge_icon_1",
+          "type": "image",
+          "assetKey": "project",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 645,
+            "y": 475
+          },
+          "size": {
+            "width": 50,
+            "height": 50
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "src": "https://img.icons8.com/ios-filled/96/3B82F6/folder-invoices.png",
+          "placeholder": true,
+          "alt": "Project Folder",
+          "style": {
+            "objectFit": "contain"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "img_hero_1",
+          "type": "image",
+          "assetKey": "tutorial-step1",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 680,
+            "y": 100
+          },
+          "size": {
+            "width": 500,
+            "height": 500
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "src": "https://images.pexels.com/photos/3182773/pexels-photo-3182773.jpeg",
+          "placeholder": true,
+          "alt": "Create Project Canvas",
+          "style": {
+            "borderRadius": "24px",
+            "objectFit": "cover",
+            "boxShadow": "0 20px 40px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #3B82F6",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.15)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "gradient",
+        "value": "linear-gradient(145deg, #FFFFFF 0%, #EFF6FF 55%, #DBEAFE 100%)"
+      }
+    },
+    {
+      "id": "tutorial_02",
+      "slideIndex": 2,
+      "title": "Choose Avatar",
+      "layoutType": "Tutorial",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "hero": {
+          "x": 680,
+          "y": 100,
+          "width": 500,
+          "height": 500
+        },
+        "title": {
+          "x": 64,
+          "y": 160,
+          "width": 600,
+          "height": 260
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Tutorial Scene 2 - Choose Avatar: Select platform avatars or create your personal twin.",
+      "flow": "Choose Avatar → Write Script",
+      "duration": 9,
+      "tags": [
+        "platform-tutorial",
+        "avatar"
+      ],
+      "clips": [
+        {
+          "id": "dashed_line_2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 60
+          },
+          "size": {
+            "width": 1152,
+            "height": 1
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "style": {
+            "borderBottom": "1px dashed #E2E8F0"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "hdr_left_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "size": {
+            "width": 300,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "content": "STEP 2: PRESENTATION LOOK",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 16,
+            "color": "#3B82F6"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "hdr_right_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1116,
+            "y": 36
+          },
+          "size": {
+            "width": 100,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "content": "02 / 04",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 16,
+            "color": "#64748B",
+            "textAlign": "right"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "t_title_2",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 64,
+            "y": 160
+          },
+          "size": {
+            "width": 600,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "content": "Choose Avatar",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 60,
+            "color": "#0F172A"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "t_sub_2",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 64,
+            "y": 280
+          },
+          "size": {
+            "width": 500,
+            "height": 160
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "content": "Next, pick your presenter. Choose one of our highly expressive platform avatars, or create your own personal Digital Twin from a short video clip for a truly custom appearance.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 18,
+            "color": "#64748B",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "badge_circle_2",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 620,
+            "y": 450
+          },
+          "size": {
+            "width": 100,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "style": {
+            "backgroundColor": "#1E40AF",
+            "borderRadius": "50%",
+            "boxShadow": "0 8px 24px rgba(30,64,175,0.2)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "badge_icon_2",
+          "type": "image",
+          "assetKey": "avatar",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 645,
+            "y": 475
+          },
+          "size": {
+            "width": 50,
+            "height": 50
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "src": "https://img.icons8.com/ios-filled/96/1E40AF/gender-neutral-user.png",
+          "placeholder": true,
+          "alt": "Presenter Profile",
+          "style": {
+            "objectFit": "contain"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "img_hero_2",
+          "type": "image",
+          "assetKey": "tutorial-step2",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 680,
+            "y": 100
+          },
+          "size": {
+            "width": 500,
+            "height": 500
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "src": "https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg",
+          "placeholder": true,
+          "alt": "Choose AI Avatar",
+          "style": {
+            "borderRadius": "24px",
+            "objectFit": "cover",
+            "boxShadow": "0 20px 40px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #3B82F6",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.15)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "solid",
+        "value": "#F8FAFC"
+      }
+    },
+    {
+      "id": "tutorial_03",
+      "slideIndex": 3,
+      "title": "Write Script & Voice",
+      "layoutType": "Tutorial",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "hero": {
+          "x": 680,
+          "y": 100,
+          "width": 500,
+          "height": 500
+        },
+        "title": {
+          "x": 64,
+          "y": 160,
+          "width": 600,
+          "height": 260
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Tutorial Scene 3 - Write Script & Voice: Select voice and write narration script.",
+      "flow": "Write Script → Generate Video",
+      "duration": 9,
+      "tags": [
+        "platform-tutorial",
+        "voice",
+        "script"
+      ],
+      "clips": [
+        {
+          "id": "dashed_line_3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 60
+          },
+          "size": {
+            "width": 1152,
+            "height": 1
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "style": {
+            "borderBottom": "1px dashed #E2E8F0"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "hdr_left_3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "size": {
+            "width": 300,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "content": "STEP 3: AUDIO & SPEECH",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 16,
+            "color": "#3B82F6"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "hdr_right_3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1116,
+            "y": 36
+          },
+          "size": {
+            "width": 100,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "content": "03 / 04",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 16,
+            "color": "#64748B",
+            "textAlign": "right"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "t_title_3",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 64,
+            "y": 160
+          },
+          "size": {
+            "width": 600,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "content": "Write Script",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 60,
+            "color": "#0F172A"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "t_sub_3",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 64,
+            "y": 280
+          },
+          "size": {
+            "width": 500,
+            "height": 160
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "content": "Now, choose a voice and write your script. Select from dozens of natural-sounding voices, type or paste your narration for each scene, and the avatar will speak it automatically.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 18,
+            "color": "#64748B",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "badge_circle_3",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 620,
+            "y": 450
+          },
+          "size": {
+            "width": 100,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "style": {
+            "backgroundColor": "#10B981",
+            "borderRadius": "50%",
+            "boxShadow": "0 8px 24px rgba(16,185,129,0.2)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "badge_icon_3",
+          "type": "image",
+          "assetKey": "script",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 645,
+            "y": 475
+          },
+          "size": {
+            "width": 50,
+            "height": 50
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "src": "https://img.icons8.com/ios-filled/96/10B981/document.png",
+          "placeholder": true,
+          "alt": "Narrator Text",
+          "style": {
+            "objectFit": "contain"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "img_hero_3",
+          "type": "image",
+          "assetKey": "tutorial-step3",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 680,
+            "y": 100
+          },
+          "size": {
+            "width": 500,
+            "height": 500
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "src": "https://images.pexels.com/photos/3182769/pexels-photo-3182769.jpeg",
+          "placeholder": true,
+          "alt": "Script Writing panel",
+          "style": {
+            "borderRadius": "24px",
+            "objectFit": "cover",
+            "boxShadow": "0 20px 40px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #3B82F6",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.15)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "gradient",
+        "value": "linear-gradient(145deg, #FFFFFF 0%, #EFF6FF 55%, #DBEAFE 100%)"
+      }
+    },
+    {
+      "id": "tutorial_04",
+      "slideIndex": 4,
+      "title": "Generate Video",
+      "layoutType": "CTA",
+      "canvasSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "avatarPosition": "bottom-right",
+      "zones": {
+        "hero": {
+          "x": 680,
+          "y": 100,
+          "width": 500,
+          "height": 500
+        },
+        "title": {
+          "x": 64,
+          "y": 160,
+          "width": 600,
+          "height": 260
+        },
+        "avatar": {
+          "x": 1024,
+          "y": 462,
+          "width": 180,
+          "height": 210
+        }
+      },
+      "description": "Tutorial Scene 4 - Generate Video: Render in HD and download.",
+      "flow": "Generate Video → End",
+      "duration": 9,
+      "tags": [
+        "platform-tutorial",
+        "generate",
+        "download"
+      ],
+      "clips": [
+        {
+          "id": "dashed_line_4",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 1,
+          "position": {
+            "x": 64,
+            "y": 60
+          },
+          "size": {
+            "width": 1152,
+            "height": 1
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "style": {
+            "borderBottom": "1px dashed #E2E8F0"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "hdr_left_4",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "size": {
+            "width": 300,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "content": "STEP 4: RENDER & SHARE",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 16,
+            "color": "#3B82F6"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.3
+            }
+          ]
+        },
+        {
+          "id": "hdr_right_4",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 2,
+          "position": {
+            "x": 1116,
+            "y": 36
+          },
+          "size": {
+            "width": 100,
+            "height": 24
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "content": "04 / 04",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 16,
+            "color": "#64748B",
+            "textAlign": "right"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.38
+            }
+          ]
+        },
+        {
+          "id": "t_title_4",
+          "type": "text",
+          "role": "slide-title",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 64,
+            "y": 160
+          },
+          "size": {
+            "width": 600,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "content": "Generate Video",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontWeight": "800",
+            "fontSize": 60,
+            "color": "#0F172A"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideRight",
+              "duration": 0.8,
+              "delay": 0.2
+            }
+          ]
+        },
+        {
+          "id": "t_sub_4",
+          "type": "text",
+          "role": "body-text",
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 64,
+            "y": 280
+          },
+          "size": {
+            "width": 500,
+            "height": 160
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "content": "Finally, click Generate. Virtual Studio processes your scenes and layers into a seamless HD video, ready to download and share with your audience instantly.",
+          "style": {
+            "fontFamily": "\"Inter\", \"Segoe UI\", system-ui, sans-serif",
+            "fontSize": 18,
+            "color": "#64748B",
+            "lineHeight": 1.6
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.6,
+              "delay": 0.45999999999999996
+            }
+          ]
+        },
+        {
+          "id": "badge_circle_4",
+          "type": "shape",
+          "role": "decoration",
+          "shapeKey": null,
+          "editable": true,
+          "layer": 3,
+          "position": {
+            "x": 620,
+            "y": 450
+          },
+          "size": {
+            "width": 100,
+            "height": 100
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "style": {
+            "backgroundColor": "#3B82F6",
+            "borderRadius": "50%",
+            "boxShadow": "0 8px 24px rgba(59,130,246,0.2)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "fadeIn",
+              "duration": 0.9,
+              "delay": 0.1
+            }
+          ]
+        },
+        {
+          "id": "badge_icon_4",
+          "type": "image",
+          "assetKey": "generate",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 645,
+            "y": 475
+          },
+          "size": {
+            "width": 50,
+            "height": 50
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "src": "https://img.icons8.com/ios-filled/96/3B82F6/play.png",
+          "placeholder": true,
+          "alt": "Render Play",
+          "style": {
+            "objectFit": "contain"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.15
+            }
+          ]
+        },
+        {
+          "id": "img_hero_4",
+          "type": "image",
+          "assetKey": "tutorial-step4",
+          "role": "hero-image",
+          "editable": true,
+          "layer": 4,
+          "position": {
+            "x": 680,
+            "y": 100
+          },
+          "size": {
+            "width": 500,
+            "height": 500
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "src": "https://images.pexels.com/photos/3184328/pexels-photo-3184328.jpeg",
+          "placeholder": true,
+          "alt": "Video Generation render",
+          "style": {
+            "borderRadius": "24px",
+            "objectFit": "cover",
+            "boxShadow": "0 20px 40px rgba(0,0,0,0.1)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "zoomIn",
+              "duration": 0.8,
+              "delay": 0.25
+            }
+          ]
+        },
+        {
+          "id": "avatar_presenter",
+          "type": "avatar",
+          "role": "avatar",
+          "editable": true,
+          "layer": 60,
+          "position": {
+            "x": 1024,
+            "y": 462
+          },
+          "size": {
+            "width": 180,
+            "height": 210
+          },
+          "startTime": 0,
+          "endTime": 9,
+          "placeholder": true,
+          "style": {
+            "borderRadius": "50%",
+            "border": "2px solid #3B82F6",
+            "boxShadow": "0 8px 24px rgba(0,0,0,0.15)"
+          },
+          "animations": [
+            {
+              "phase": "entrance",
+              "type": "slideLeft",
+              "duration": 0.7,
+              "delay": 0.5
+            }
+          ]
+        }
+      ],
+      "background": {
+        "type": "solid",
+        "value": "#F8FAFC"
+      }
+    }
+  ]
+}

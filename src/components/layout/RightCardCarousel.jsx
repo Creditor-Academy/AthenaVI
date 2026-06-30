@@ -16,32 +16,57 @@ const styles = `
 .right-card-wrapper {
   position: absolute;
   width: 100%;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
   padding: 30px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-  color: #1e293b;
+  color: #f1f5f9;
   cursor: pointer;
   height: 270px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  transition: box-shadow 0.3s ease;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
   overflow: hidden;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
 }
 
-.right-card-wrapper:hover {
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
+/* Hover & Active front card glow shadows */
+.right-card-wrapper.is-front:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.card-rendering.is-front {
+  border-color: rgba(59, 130, 246, 0.25);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(59, 130, 246, 0.15);
+}
+.card-rendering.is-front:hover {
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 0 0 45px rgba(59, 130, 246, 0.25);
+}
+
+.card-ai.is-front {
+  border-color: rgba(147, 51, 234, 0.25);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(147, 51, 234, 0.15);
+}
+.card-ai.is-front:hover {
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 0 0 45px rgba(147, 51, 234, 0.25);
+}
+
+.card-scale.is-front {
+  border-color: rgba(16, 185, 129, 0.25);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(16, 185, 129, 0.15);
+}
+.card-scale.is-front:hover {
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 0 0 45px rgba(16, 185, 129, 0.25);
 }
 
 .right-card-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
+  gap: 12px;
+  margin-bottom: 10px;
   position: relative;
   z-index: 10;
 }
@@ -54,35 +79,66 @@ const styles = `
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 10;
+}
+
+.card-rendering .right-card-icon-box {
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+}
+
+.card-ai .right-card-icon-box {
+  box-shadow: 0 0 12px rgba(147, 51, 234, 0.4);
+}
+
+.card-scale .right-card-icon-box {
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
 }
 
 .right-card-tag {
   display: inline-block;
   padding: 4px 12px;
-  background: rgba(30, 64, 175, 0.1);
-  border: 1px solid rgba(30, 64, 175, 0.2);
   border-radius: 100px;
   font-size: 11px;
   font-weight: 600;
-  color: #1e40af;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
+  position: relative;
+  z-index: 10;
+}
+
+.card-rendering .right-card-tag {
+  color: #60a5fa;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.card-ai .right-card-tag {
+  color: #c084fc;
+  background: rgba(147, 51, 234, 0.12);
+  border: 1px solid rgba(147, 51, 234, 0.25);
+}
+
+.card-scale .right-card-tag {
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
 }
 
 .right-card-title {
   font-size: 24px;
   font-weight: 700;
   margin-bottom: 12px;
-  color: #1e40af;
+  color: #ffffff;
   position: relative;
   z-index: 10;
+  letter-spacing: -0.5px;
 }
 
 .right-card-description {
   font-size: 15px;
   line-height: 1.6;
-  color: #475569;
+  color: #94a3b8;
   position: relative;
   z-index: 10;
 }
@@ -110,10 +166,10 @@ const styles = `
 
 /* RENDERING */
 .card-rendering::before {
-  background: radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.15), transparent 70%);
+  background: radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.18), transparent 70%);
 }
 .card-rendering::after {
-  background-image: url("data:image/svg+xml;utf8,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 100 Q50 50 100 100 T200 100' stroke='%233b82f6' fill='none' stroke-width='1.5' opacity='0.2'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml;utf8,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 100 Q50 50 100 100 T200 100' stroke='%2360a5fa' fill='none' stroke-width='1.5' opacity='0.25'/%3E%3C/svg%3E");
   animation: flowMove 6s linear infinite;
 }
 
@@ -124,7 +180,7 @@ const styles = `
   inset: 0;
   background: radial-gradient(
     circle at 80% 20%,
-    rgba(147,51,234,0.2),
+    rgba(147,51,234,0.22),
     transparent 60%
   );
 }
@@ -135,8 +191,8 @@ const styles = `
 
   background-image: url("data:image/svg+xml;utf8,\
   <svg width='400' height='200' viewBox='0 0 400 200' xmlns='http://www.w3.org/2000/svg'>\
-    <path d='M0 100 C100 20 300 180 400 100' stroke='%239333ea' fill='none' stroke-width='2' opacity='0.2'/>\
-    <path d='M0 140 C120 60 280 200 400 140' stroke='%239333ea' fill='none' stroke-width='2' opacity='0.15'/>\
+    <path d='M0 100 C100 20 300 180 400 100' stroke='%23c084fc' fill='none' stroke-width='2' opacity='0.25'/>\
+    <path d='M0 140 C120 60 280 200 400 140' stroke='%23c084fc' fill='none' stroke-width='2' opacity='0.18'/>\
   </svg>");
 
   background-size: cover;
@@ -146,10 +202,10 @@ const styles = `
 }
 /* SCALE */
 .card-scale::before {
-  background: radial-gradient(circle at center, rgba(16, 185, 129, 0.15), transparent 70%);
+  background: radial-gradient(circle at center, rgba(16, 185, 129, 0.18), transparent 70%);
 }
 .card-scale::after {
-  background-image: url("data:image/svg+xml;utf8,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='100' cy='100' r='60' stroke='%2310b981' fill='none' stroke-width='2' opacity='0.2'/%3E%3Ccircle cx='100' cy='100' r='90' stroke='%233b82f6' fill='none' stroke-width='2' opacity='0.15'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml;utf8,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='100' cy='100' r='60' stroke='%2334d399' fill='none' stroke-width='2' opacity='0.25'/%3E%3Ccircle cx='100' cy='100' r='90' stroke='%2360a5fa' fill='none' stroke-width='2' opacity='0.18'/%3E%3C/svg%3E");
   animation: pulseGlow 4s ease-in-out infinite;
 }
 
@@ -263,7 +319,7 @@ const RightCardCarousel = () => {
           return (
             <motion.div
               key={i}
-              className={`right-card-wrapper ${card.type}`}
+              className={`right-card-wrapper ${card.type} ${isFront ? 'is-front' : ''}`}
               onMouseMove={isFront ? handleMouseMove : undefined}
               onMouseLeave={isFront ? handleMouseLeave : undefined}
               animate={{

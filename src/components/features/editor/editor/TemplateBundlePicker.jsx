@@ -17,7 +17,7 @@ const sceneGridStyle = {
   width: '100%',
 };
 
-function BundleCard({ bundle, onOpen }) {
+function BundleCard({ bundle, onOpen, isSelected }) {
   const [isHovered, setIsHovered] = useState(false);
   const sceneCount = bundle.scenes?.length || bundle.totalSlides || 0;
   const totalDuration = (bundle.scenes || []).reduce((sum, scene) => sum + (scene.duration || 8), 0);
@@ -28,12 +28,14 @@ function BundleCard({ bundle, onOpen }) {
       style={{
         background: '#ffffff',
         borderRadius: '14px',
-        border: '1px solid #e2e8f0',
+        border: isSelected ? '2px solid #3b82f6' : '1px solid #e2e8f0',
         overflow: 'hidden',
         cursor: 'pointer',
         transition: 'all 0.25s ease',
         transform: isHovered ? 'translateY(-4px)' : 'none',
-        boxShadow: isHovered ? '0 16px 32px -12px rgba(0,0,0,0.12)' : '0 1px 3px rgba(0,0,0,0.06)',
+        boxShadow: isSelected
+          ? '0 0 0 3px rgba(59,130,246,0.18), 0 16px 32px -12px rgba(59,130,246,0.22)'
+          : isHovered ? '0 16px 32px -12px rgba(0,0,0,0.12)' : '0 1px 3px rgba(0,0,0,0.06)',
       }}
       onClick={() => onOpen(bundle)}
       onMouseEnter={() => setIsHovered(true)}
@@ -44,6 +46,24 @@ function BundleCard({ bundle, onOpen }) {
           <TemplateScenePreview template={bundle.coverScene} compact />
         ) : (
           <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #1e293b, #0f172a)' }} />
+        )}
+        {isSelected && (
+          <div style={{
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            background: '#3b82f6',
+            color: '#fff',
+            fontSize: 11,
+            fontWeight: 800,
+            padding: '4px 10px',
+            borderRadius: 999,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+          }}>
+            ✓ Selected
+          </div>
         )}
         <span
           style={{
@@ -65,7 +85,7 @@ function BundleCard({ bundle, onOpen }) {
         <span
           style={{
             position: 'absolute',
-            top: 10,
+            top: isSelected ? 40 : 10,
             right: 10,
             background: 'rgba(255,255,255,0.92)',
             color: '#475569',
@@ -79,7 +99,7 @@ function BundleCard({ bundle, onOpen }) {
         </span>
       </div>
       <div style={{ padding: '14px 16px 16px' }}>
-        <h4 style={{ margin: '0 0 6px', fontSize: 15, fontWeight: 700, color: '#0f172a' }}>{bundle.name}</h4>
+        <h4 style={{ margin: '0 0 6px', fontSize: 15, fontWeight: 700, color: isSelected ? '#3b82f6' : '#0f172a' }}>{bundle.name}</h4>
         <p
           style={{
             margin: '0 0 12px',
@@ -120,6 +140,8 @@ const TemplateBundlePicker = ({
   onSelectScene,
   onApplyBundle,
   emptyMessage = 'No templates found matching your criteria.',
+  selectedSceneId = null,
+  selectedBundleId = null,
 }) => {
   const [activeBundle, setActiveBundle] = useState(null);
 
@@ -187,7 +209,12 @@ const TemplateBundlePicker = ({
     return (
       <div style={bundleGridStyle}>
         {filteredBundles.map((bundle) => (
-          <BundleCard key={bundle.file || bundle.id} bundle={bundle} onOpen={setActiveBundle} />
+          <BundleCard
+            key={bundle.file || bundle.id}
+            bundle={bundle}
+            onOpen={setActiveBundle}
+            isSelected={selectedBundleId && String(selectedBundleId) === String(bundle.id)}
+          />
         ))}
       </div>
     );
@@ -281,6 +308,7 @@ const TemplateBundlePicker = ({
               key={scene.id}
               template={scene}
               onSelect={(selected) => onSelectScene?.(selected, activeBundle)}
+              isSelected={selectedSceneId && String(selectedSceneId) === String(scene.id)}
             />
           ))}
         </div>

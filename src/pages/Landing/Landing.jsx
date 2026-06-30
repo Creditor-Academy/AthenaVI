@@ -1,6 +1,7 @@
 import Navbar from '../../components/layout/Navbar/Navbar.jsx'
 import Hero from '../../components/layout/Hero.jsx'
 import UnifiedVideoSection from '../../components/layout/UnifiedVideoSection.jsx'
+import DigitalTwinSection from '../../components/layout/DigitalTwinSection.jsx'
 import ProductsSection from '../../components/layout/ProductsSection.jsx'
 import WebsiteTemplateDomeSection from '../../components/layout/WebsiteTemplateDomeSection.jsx'
 import TemplatesSection from '../../components/layout/TemplatesSection.jsx'
@@ -11,8 +12,8 @@ import Footer from '../../components/layout/Footer/Footer.jsx'
 const styles = `
 .landing-page {
   min-height: 100vh;
-  background: #ffffff;
-  color: #1e40af;
+  background: #040817;
+  color: #f1f5f9;
   font-family: 'Inter', sans-serif;
 }
 
@@ -80,10 +81,11 @@ function Landing({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToC
         />
         <Hero />
         <UnifiedVideoSection />
+        <DigitalTwinSection />
         <ProductsSection />
         <WebsiteTemplateDomeSection onLoginClick={onLoginClick} />
-        <TemplatesSection onNavigateToSolution={onLoginClick} />
         <PlatformFeatures />
+        <TemplatesSection onNavigateToSolution={onLoginClick} />
         <ReadySection />
         <Footer
           onLogoClick={onLogoClick}

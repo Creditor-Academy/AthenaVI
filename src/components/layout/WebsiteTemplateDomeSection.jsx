@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { fetchDomeGalleryContent } from '../../utils/domeGalleryContent';
-import { TemplateDomeShowcase } from '../ui/DomeGallery';
+import { TemplateDomeShowcase, DomeGallerySkeleton } from '../ui/DomeGallery';
 import './WebsiteTemplateDomeSection.css';
 
 function WebsiteTemplateDomeSection({ onLoginClick }) {
@@ -34,7 +34,7 @@ function WebsiteTemplateDomeSection({ onLoginClick }) {
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
       >
-        <span className="website-dome-section__eyebrow">Avatars &amp; scenes</span>
+        {/* <span className="website-dome-section__eyebrow">Avatars &amp; scenes</span> */}
         <h2 id="website-dome-heading" className="website-dome-section__title">
           Your studio, in <span>3D motion</span>
         </h2>
@@ -46,14 +46,14 @@ function WebsiteTemplateDomeSection({ onLoginClick }) {
 
       {loading ? (
         <div className="website-dome-section__loading" aria-busy="true" aria-label="Loading gallery">
-          <div className="website-dome-section__spinner" />
+          <DomeGallerySkeleton />
         </div>
       ) : galleryImages.length > 0 ? (
         <TemplateDomeShowcase
           images={galleryImages}
           borderless
           showDragHint={false}
-          overlayBlurColor="#ffffff"
+          overlayBlurColor="#040817"
           grayscale={false}
           autoRotate
           autoRotateSpeed={12}
@@ -62,13 +62,7 @@ function WebsiteTemplateDomeSection({ onLoginClick }) {
         />
       ) : null}
 
-      {onLoginClick ? (
-        <div className="website-dome-section__cta">
-          <button type="button" className="website-dome-section__cta-btn" onClick={onLoginClick}>
-            Start creating with templates
-          </button>
-        </div>
-      ) : null}
+
     </section>
   );
 }

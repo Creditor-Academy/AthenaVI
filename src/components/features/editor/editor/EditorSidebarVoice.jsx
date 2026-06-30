@@ -3,6 +3,14 @@ import { MdMic, MdSearch, MdPlayArrow, MdVolumeUp } from 'react-icons/md';
 import { Loader2 } from 'lucide-react';
 import heygenService from '../../../../services/heygenService';
 
+// Voice engines unsupported by the HeyGen TTS speech generation endpoint.
+const UNSUPPORTED_TTS_ENGINES = ['STARFISH']
+
+function isSupportedTtsVoice(rawVoice) {
+  const engine = String(rawVoice?.voice_engine || rawVoice?.engine || rawVoice?.provider || '').toUpperCase()
+  return engine === '' || !UNSUPPORTED_TTS_ENGINES.includes(engine)
+}
+
 const EditorSidebarVoice = ({ activeScene, activeSceneId, updateScene }) => {
   const [voices, setVoices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,13 +23,13 @@ const EditorSidebarVoice = ({ activeScene, activeSceneId, updateScene }) => {
       try {
         const params = { limit: 100, type: 'public' };
         if (activeGender !== 'all') params.gender = activeGender;
-        
+
         const responseData = await heygenService.getVoices(params);
-        
+
         // Robust mapping to handle different API versions and response shapes
         let voiceList = [];
         const data = responseData?.data || responseData;
-        
+
         if (Array.isArray(data)) {
           voiceList = data;
         } else if (data?.voices) {
@@ -30,17 +38,19 @@ const EditorSidebarVoice = ({ activeScene, activeSceneId, updateScene }) => {
           voiceList = responseData.voices;
         }
 
-        console.log(`Athena VI (Editor): Mapping ${voiceList.length} voices`, { raw: responseData });
-        
-        const mappedVoices = voiceList.map(v => ({
+        console.log(`Virtual Studio (Editor): Mapping ${voiceList.length} voices`, { raw: responseData });
+
+        // Filter out engines not supported by TTS speech generation (e.g. STARFISH)
+        const mappedVoices = voiceList.filter(isSupportedTtsVoice).map(v => ({
           id: v.voice_id || v.id,
           name: v.name || v.display_name || 'AI Voice',
           gender: v.gender || 'unknown',
           language: v.language || v.language_name || 'English',
           previewUrl: v.preview_audio_url || v.preview_url || v.preview_audio,
+          engine: String(v.voice_engine || v.engine || v.provider || '').toUpperCase() || null,
           tags: v.tags || []
         }));
-        
+
         setVoices(mappedVoices);
       } catch (err) {
         console.error('Failed to load voices:', err);
@@ -51,7 +61,7 @@ const EditorSidebarVoice = ({ activeScene, activeSceneId, updateScene }) => {
     fetchVoices();
   }, [activeGender]);
 
-  const filteredVoices = voices.filter(v => 
+  const filteredVoices = voices.filter(v =>
     v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     v.language.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -83,7 +93,7 @@ const EditorSidebarVoice = ({ activeScene, activeSceneId, updateScene }) => {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
           <div>
             <h3 style={{ fontSize: '16px', fontWeight: '600', color: 'var(--text-main)', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
-               AI Voices <MdVolumeUp style={{ color: '#9333ea' }} size={16}/>
+              AI Voices <MdVolumeUp style={{ color: '#9333ea' }} size={16} />
             </h3>
             <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>Natural neural speech synthesis</p>
           </div>
@@ -101,9 +111,9 @@ const EditorSidebarVoice = ({ activeScene, activeSceneId, updateScene }) => {
           marginBottom: '16px'
         }}>
           <MdSearch size={18} style={{ color: 'var(--text-muted)' }} />
-          <input 
-            type="text" 
-            placeholder="Search voices, languages..." 
+          <input
+            type="text"
+            placeholder="Search voices, languages..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
@@ -120,7 +130,7 @@ const EditorSidebarVoice = ({ activeScene, activeSceneId, updateScene }) => {
         {/* Gender Filter Chips */}
         <div className="elements-chips-scroll">
           {['all', 'male', 'female'].map(gender => (
-            <button 
+            <button
               key={gender}
               className={`elements-chip ${activeGender === gender ? 'active' : ''}`}
               onClick={() => setActiveGender(gender)}
@@ -148,8 +158,8 @@ const EditorSidebarVoice = ({ activeScene, activeSceneId, updateScene }) => {
             {filteredVoices.map((voice) => {
               const isSelected = activeScene?.voiceId === voice.id;
               return (
-                <div 
-                  key={voice.id} 
+                <div
+                  key={voice.id}
                   className={`audio-item ${isSelected ? 'active' : ''}`}
                   onClick={() => handleSelectVoice(voice)}
                   style={{
@@ -185,7 +195,7 @@ const EditorSidebarVoice = ({ activeScene, activeSceneId, updateScene }) => {
                       <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{voice.language} • {voice.gender}</div>
                     </div>
                   </div>
-                  <button 
+                  <button
                     className="play-preview-btn"
                     onClick={(e) => playPreview(e, voice.previewUrl)}
                     style={{

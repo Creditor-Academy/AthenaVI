@@ -378,6 +378,7 @@ function Create({ onBack, initialConfig = null }) {
   const [exportStatus, setExportStatus] = useState('')
   const [exportProgress, setExportProgress] = useState(0)
   const [exportError, setExportError] = useState('')
+  const [exportErrorObject, setExportErrorObject] = useState(null)
   const [showTemplateModal, setShowTemplateModal] = useState(false)
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false)
   const [timelineHeight, setTimelineHeight] = useState(() =>
@@ -1727,6 +1728,7 @@ function Create({ onBack, initialConfig = null }) {
     setExportPhase('configure')
     setExportStatus('')
     setExportError('')
+    setExportErrorObject(null)
     setShowExportModal(true)
   }
 
@@ -1740,6 +1742,7 @@ function Create({ onBack, initialConfig = null }) {
     setExportStatus('Saving project…')
     setExportProgress(0)
     setExportError('')
+    setExportErrorObject(null)
     setIsExporting(true)
     setExportReady(null)
 
@@ -1777,6 +1780,7 @@ function Create({ onBack, initialConfig = null }) {
       bumpCreditsRefresh()
     } catch (err) {
       console.error('[Export] Full render download failed:', err)
+      setExportErrorObject(err)
       setExportError(err?.message || 'Download failed. The video may still be rendering.')
       setExportPhase('error')
     } finally {
@@ -1816,6 +1820,7 @@ function Create({ onBack, initialConfig = null }) {
     setExportStatus('')
     setExportProgress(0)
     setExportError('')
+    setExportErrorObject(null)
     setExportReady(null)
     setIsDownloadingExport(false)
   }
@@ -1830,6 +1835,11 @@ function Create({ onBack, initialConfig = null }) {
   const generateSceneVideo = async (sceneId, overrides = null) => {
     const scene = project.scenes.find(s => s.id === sceneId);
     if (!scene && !overrides) return;
+
+    // Request browser notification permission if not already granted/denied
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
 
     const avatarLookId =
       overrides?.avatarLookId || overrides?.avatarType || getSceneAvatarLookId(scene);
@@ -2062,6 +2072,19 @@ function Create({ onBack, initialConfig = null }) {
             detail: { url: videoUrl, sceneId, creditsUsed },
           })
         );
+
+        // Native OS notification if tab is in background
+        if (typeof document !== 'undefined' && document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+          try {
+            const currentScene = projectRef.current.scenes.find((s) => s.id === sceneId) || scene;
+            const sceneName = currentScene?.title || `Scene`;
+            new Notification('AI Presenter Ready', {
+              body: `Your presenter video for "${sceneName}" has finished generating!`,
+            });
+          } catch (e) {
+            console.warn('[Notification] Failed to send background notification:', e);
+          }
+        }
       };
 
       try {
@@ -2076,6 +2099,19 @@ function Create({ onBack, initialConfig = null }) {
         console.error('HeyGen generation polling failed:', err);
         updateScene(sceneId, { heygenStatus: 'failed' });
         window.dispatchEvent(new CustomEvent('generation-failed'));
+
+        // Native OS notification if tab is in background
+        if (typeof document !== 'undefined' && document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+          try {
+            const currentScene = projectRef.current.scenes.find((s) => s.id === sceneId) || scene;
+            const sceneName = currentScene?.title || `Scene`;
+            new Notification('Avatar Generation Failed', {
+              body: `Generation failed for "${sceneName}". Please try again.`,
+            });
+          } catch (e) {
+            console.warn('[Notification] Failed to send background notification:', e);
+          }
+        }
       }
 
     } catch (error) {
@@ -2524,6 +2560,10 @@ function Create({ onBack, initialConfig = null }) {
         if (existingAudioIndex >= 0) nextClips[existingAudioIndex] = { ...nextClips[existingAudioIndex], ...audioClip }
         else nextClips.push(audioClip)
 
+        // Stretch all non-audio clips (backgrounds, text, overlays) to the new scene duration
+        // so timeline layers remain in sync with the narration length.
+        const normalizedClips = normalizeClipsToScene(nextClips, duration)
+
         return {
           ...s,
           // voice-only presenter fields
@@ -2544,8 +2584,10 @@ function Create({ onBack, initialConfig = null }) {
             ...(s.generation || {}),
             speechGenerationId: speechId,
             status: 'completed',
+            // Clear any stale HeyGen video id so the scene is treated as voice-only
+            heygenVideoId: undefined,
           },
-          clips: nextClips,
+          clips: normalizedClips,
         }
       })
 
@@ -2834,6 +2876,8 @@ function Create({ onBack, initialConfig = null }) {
         onClose={() => setShowVoiceOnlySpeechModal(false)}
         initialScript={activeScene?.script || ''}
         initialVoiceId={activeScene?.voiceId || ''}
+        initialSpeed={activeScene?.voiceSettings?.speed ?? 1}
+        initialLocale={activeScene?.voiceSettings?.locale || 'en-US'}
         onGenerate={handleGenerateVoiceOnlySpeech}
       />
       <GeneratedVideoModal 
@@ -2847,6 +2891,7 @@ function Create({ onBack, initialConfig = null }) {
         onUseInEditor={handleUseGeneratedVideo}
         onRemake={handleRemakeVideo}
         onSelectLayout={handleSelectLayout}
+        sceneTitle={project.scenes.find(s => s.id === generatingSceneId)?.title || `Scene`}
       />
       <EditorToast toast={toast} onDismiss={() => setToast(null)} />
       <ExportModal
@@ -2859,6 +2904,7 @@ function Create({ onBack, initialConfig = null }) {
         statusMessage={exportStatus}
         progress={exportProgress}
         errorMessage={exportError}
+        errorObject={exportErrorObject}
         onStartExport={handleStartExport}
         onDownload={exportPhase === 'success' ? handleDownloadExport : undefined}
         readyFilename={exportReady?.filename || ''}

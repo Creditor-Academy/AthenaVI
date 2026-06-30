@@ -13,7 +13,7 @@ import productDemoVideo from '../assets/Product.mp4';
 
 const LOCAL_AVATAR_IMAGES = [
   { id: 'avatar-1', src: avatar1, alt: 'AI video presenter', kind: 'avatar', mediaType: 'image' },
-  { id: 'avatar-2', src: avatar2, alt: 'Virtual instructor avatar', kind: 'avatar', mediaType: 'image' },
+  { id: 'avatar-2', src: avatar2, alt: 'Virtual Studio avatar', kind: 'avatar', mediaType: 'image' },
   { id: 'avatar-3', src: avatar3, alt: 'Training avatar', kind: 'avatar', mediaType: 'image' },
   { id: 'avatar-4', src: avatar4, alt: 'Corporate presenter', kind: 'avatar', mediaType: 'image' },
   { id: 'avatar-5', src: avatar5, alt: 'Course narrator', kind: 'avatar', mediaType: 'image' },
@@ -286,9 +286,9 @@ export async function fetchDomeGalleryContent() {
   const safeScenes = sceneMedia?.length
     ? sceneMedia
     : (bundles || [])
-        .map((b) => b?.coverScene?.thumbnail || b?.thumb)
-        .filter((src) => src && !isIconOrPlaceholderUrl(src))
-        .map((src, i) => ({ id: `bundle-cover-${i}`, src, alt: 'Template preview', kind: 'scene', mediaType: 'image' }));
+      .map((b) => b?.coverScene?.thumbnail || b?.thumb)
+      .filter((src) => src && !isIconOrPlaceholderUrl(src))
+      .map((src, i) => ({ id: `bundle-cover-${i}`, src, alt: 'Template preview', kind: 'scene', mediaType: 'image' }));
 
   const videos = uniqueBySrc([...SHOWCASE_VIDEOS, ...EXTERNAL_DEMO_VIDEOS]);
 

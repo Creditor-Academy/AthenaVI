@@ -12,6 +12,15 @@ import heygenService from '../../../../services/heygenService'
 import { getSanitizedErrorMessage } from '../../../../utils/userFacingMessage'
 import './VoiceOnlySpeechModal.css'
 
+// Voice engines that are NOT compatible with the HeyGen TTS speech generation API.
+// Voices using these engines will silently fail or throw "not supported" errors.
+const UNSUPPORTED_TTS_ENGINES = ['STARFISH']
+
+function isSupportedTtsVoice(rawVoice) {
+  const engine = String(rawVoice?.voice_engine || rawVoice?.engine || rawVoice?.provider || '').toUpperCase()
+  return engine === '' || !UNSUPPORTED_TTS_ENGINES.includes(engine)
+}
+
 const mapVoiceFromApi = (voice) => ({
   id: voice.voice_id || voice.voiceId || voice.id,
   name: voice.name || voice.voice_name || voice.display_name || 'AI Voice',
@@ -20,6 +29,7 @@ const mapVoiceFromApi = (voice) => ({
     String(voice.language || voice.language_code || voice.language_name || voice.locale || '')
       .trim() || 'Unknown',
   previewUrl: voice.preview_audio_url || voice.preview_url || voice.preview_audio || null,
+  engine: String(voice.voice_engine || voice.engine || voice.provider || '').toUpperCase() || null,
 })
 
 function normalizeGender(raw) {
@@ -34,6 +44,8 @@ export default function VoiceOnlySpeechModal({
   onClose,
   initialScript = '',
   initialVoiceId = '',
+  initialSpeed = 1,
+  initialLocale = 'en-US',
   onGenerate,
 }) {
   const [step, setStep] = useState('voice') // 'voice' | 'script'
@@ -44,8 +56,8 @@ export default function VoiceOnlySpeechModal({
   const [languageFilter, setLanguageFilter] = useState('all') // all|<lang>
   const [selectedVoiceId, setSelectedVoiceId] = useState(initialVoiceId || '')
   const [script, setScript] = useState(initialScript || '')
-  const [speed, setSpeed] = useState(1)
-  const [locale, setLocale] = useState('en-US')
+  const [speed, setSpeed] = useState(initialSpeed)
+  const [locale, setLocale] = useState(initialLocale)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -58,7 +70,19 @@ export default function VoiceOnlySpeechModal({
     setError('')
     setSubmitting(false)
     setStep('voice')
-  }, [isOpen])
+    setScript(initialScript || '')
+    setSpeed(initialSpeed)
+    setLocale(initialLocale)
+    // If voices are already loaded (cached from a prior open), validate the initial
+    // voice id immediately — if it was a STARFISH/unsupported voice it won't be in
+    // the filtered list, so clear it and force the user to pick a supported one.
+    if (voices.length > 0) {
+      const isKnownSupported = voices.some((v) => v.id === initialVoiceId)
+      setSelectedVoiceId(isKnownSupported ? (initialVoiceId || '') : '')
+    } else {
+      setSelectedVoiceId(initialVoiceId || '')
+    }
+  }, [isOpen, initialVoiceId, initialScript, initialSpeed, initialLocale])
 
   useEffect(() => {
     if (!isOpen) return
@@ -73,8 +97,23 @@ export default function VoiceOnlySpeechModal({
           responseData?.voices ||
           responseData?.data ||
           (Array.isArray(responseData) ? responseData : [])
-        const mapped = (Array.isArray(list) ? list : []).map(mapVoiceFromApi).filter((v) => v.id)
-        if (!cancelled) setVoices(mapped)
+        // Filter raw list first to drop unsupported TTS engines (e.g. STARFISH),
+        // then map to our display shape.
+        const supported = (Array.isArray(list) ? list : []).filter(isSupportedTtsVoice)
+        const mapped = supported.map(mapVoiceFromApi).filter((v) => v.id)
+        if (!cancelled) {
+          setVoices(mapped)
+          // If the pre-selected voice (from the scene) is a STARFISH/unsupported voice it
+          // won't exist in the filtered list — clear it so the user must pick a valid one.
+          setSelectedVoiceId((prev) => {
+            if (!prev) return prev
+            const exists = mapped.some((v) => v.id === prev)
+            if (!exists) {
+              return ''
+            }
+            return prev
+          })
+        }
       } catch (err) {
         if (!cancelled) setError('Failed to load voices. Check your connection.')
       } finally {
@@ -162,6 +201,19 @@ export default function VoiceOnlySpeechModal({
     const trimmed = script.trim()
     if (!selectedVoiceId) {
       setError('Select a voice first.')
+      return
+    }
+    // Guard: reject voices from unsupported TTS engines (e.g. STARFISH) that may have
+    // been stored on the scene from an earlier avatar-creation step.
+    const resolvedVoice = voices.find((v) => v.id === selectedVoiceId)
+    const isUnsupported =
+      resolvedVoice
+        ? UNSUPPORTED_TTS_ENGINES.includes(resolvedVoice.engine)
+        : false
+    if (isUnsupported) {
+      setError('This voice is not supported for speech generation. Please select a different voice.')
+      setStep('voice')
+      setSelectedVoiceId('')
       return
     }
     if (!trimmed) {

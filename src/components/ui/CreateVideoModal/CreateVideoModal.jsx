@@ -30,10 +30,6 @@ const WIZARD_STEPS = [
 
 const CANVAS_OPTIONS = [
   { id: 'landscape', label: '16:9 Landscape', ratio: '16:9' },
-  { id: 'portrait', label: '9:16 Portrait', ratio: '9:16' },
-  { id: 'square', label: '1:1 Square', ratio: '1:1' },
-  { id: 'four-five', label: '4:5 Vertical', ratio: '4:5' },
-  { id: 'custom', label: 'Custom', ratio: 'Custom' }
 ];
 
 const PREBUILT_TAGS = ['Professional', 'Presentation', 'Marketing', 'Social Media', 'Education', 'Personal'];
@@ -77,30 +73,30 @@ function normalizeWorkspace(workspace, currentUserId, authUser) {
 
   const ownerId = normalizeId(
     workspace.ownerId ||
-      workspace.ownerUserId ||
-      workspace.owner_id ||
-      workspace.owner?.id ||
-      workspace.owner?._id ||
-      workspace.owner
+    workspace.ownerUserId ||
+    workspace.owner_id ||
+    workspace.owner?.id ||
+    workspace.owner?._id ||
+    workspace.owner
   );
 
   const creatorId = normalizeId(
     workspace.createdBy ||
-      workspace.createdById ||
-      workspace.creatorId ||
-      workspace.creator?.id ||
-      workspace.creator?._id
+    workspace.createdById ||
+    workspace.creatorId ||
+    workspace.creator?.id ||
+    workspace.creator?._id
   );
 
   const role = readRole(workspace);
 
   const ownerInMembers = Array.isArray(workspace.members)
     ? workspace.members.some((member) => {
-        const memberId = normalizeId(
-          member.userId || member.user?.id || member.user?._id || member.user || member.id || member._id
-        );
-        return memberId === currentUserId && String(member.role || '').toUpperCase() === 'OWNER';
-      })
+      const memberId = normalizeId(
+        member.userId || member.user?.id || member.user?._id || member.user || member.id || member._id
+      );
+      return memberId === currentUserId && String(member.role || '').toUpperCase() === 'OWNER';
+    })
     : false;
 
   const isOwner =
@@ -163,18 +159,19 @@ const CreateVideoModal = ({
   initialWorkspaceId = '',
   initialFolderId = '',
   presenterSeed = null,
+  templateSeed = null,
 }) => {
   const { user: authUser } = useAuth();
   const currentUserId = extractUserId(authUser);
 
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(() => templateSeed ? 3 : 1);
 
   const [canvasSize, setCanvasSize] = useState('landscape');
   const [customCanvas, setCustomCanvas] = useState({ width: '', height: '' });
 
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTemplateId, setSelectedTemplateId] = useState(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState(() => templateSeed?.templateId || null);
   const [templatesLoading, setTemplatesLoading] = useState(false);
   const [templateBundles, setTemplateBundles] = useState([]);
 
@@ -197,7 +194,7 @@ const CreateVideoModal = ({
   const [newFolderName, setNewFolderName] = useState('');
   const [creatingFolder, setCreatingFolder] = useState(false);
 
-  const [videoTitle, setVideoTitle] = useState('');
+  const [videoTitle, setVideoTitle] = useState(() => templateSeed?.name || '');
   const [videoTags, setVideoTags] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [verifyingName, setVerifyingName] = useState(false);
@@ -273,16 +270,16 @@ const CreateVideoModal = ({
   const hasDirtyData = useMemo(() => {
     return Boolean(
       videoTitle.trim() ||
-        selectedTemplateId ||
-        videoTags.length ||
-        workspaceId ||
-        folderId ||
-        showInlineWorkspaceCreate ||
-        showInlineFolderCreate ||
-        newWorkspaceName.trim() ||
-        newFolderName.trim() ||
-        (canvasSize === 'custom' && (customCanvas.width || customCanvas.height)) ||
-        canvasSize !== 'landscape'
+      selectedTemplateId ||
+      videoTags.length ||
+      workspaceId ||
+      folderId ||
+      showInlineWorkspaceCreate ||
+      showInlineFolderCreate ||
+      newWorkspaceName.trim() ||
+      newFolderName.trim() ||
+      (canvasSize === 'custom' && (customCanvas.width || customCanvas.height)) ||
+      canvasSize !== 'landscape'
     );
   }, [
     videoTitle,
@@ -366,7 +363,7 @@ const CreateVideoModal = ({
       setFolderProjectsLoadError(true);
       showToast(
         sanitizeUserFacingMessage(error?.message) ||
-          'Could not load existing projects in this folder',
+        'Could not load existing projects in this folder',
         'error'
       );
     } finally {
@@ -415,6 +412,14 @@ const CreateVideoModal = ({
     if (!aspectRatio) {
       setTemplateBundles([]);
       return;
+    }
+    // If we already have a templateSeed with its bundle injected, seed templateBundles
+    // immediately so selectedTemplate resolves before the async fetch completes.
+    if (templateSeed?.bundle) {
+      setTemplateBundles((prev) => {
+        const exists = prev.some((b) => String(b.id) === String(templateSeed.bundle.id));
+        return exists ? prev : [templateSeed.bundle, ...prev];
+      });
     }
     loadTemplates();
   }, [isOpen, aspectRatio]);
@@ -687,7 +692,7 @@ const CreateVideoModal = ({
     } catch (error) {
       showToast(
         sanitizeUserFacingMessage(error?.message) ||
-          'Could not verify project name. Please try again.',
+        'Could not verify project name. Please try again.',
         'error'
       );
       return;
@@ -738,14 +743,22 @@ const CreateVideoModal = ({
 
       if (onCreateVideo) {
         showToast('Project created successfully', 'success');
+
+        // Resolve template payload: prefer selectedTemplate (from picker),
+        // fall back to templateSeed.bundle when coming from the template page.
+        let templatePayload = null;
+        if (selectedTemplate) {
+          templatePayload = selectedTemplate.scenes?.length
+            ? { scenes: selectedTemplate.scenes }
+            : selectedTemplate.scene
+              ? { scene: selectedTemplate.scene }
+              : null;
+        } else if (templateSeed?.bundle?.scenes?.length) {
+          templatePayload = { scenes: templateSeed.bundle.scenes };
+        }
+
         onCreateVideo({
-          template: selectedTemplate
-            ? selectedTemplate.scenes?.length
-              ? { scenes: selectedTemplate.scenes }
-              : selectedTemplate.scene
-                ? { scene: selectedTemplate.scene }
-                : null
-            : null,
+          template: templatePayload,
           pageSize: canvasSize,
           canvasSize: aspectRatio,
           workspace: selectedWorkspace?.name || '',
@@ -780,13 +793,14 @@ const CreateVideoModal = ({
         <aside className="create-video-wizard-sidebar">
           <div className="create-video-logo-block">
             <div className="create-video-logo-mark">VI</div>
-            <div className="create-video-logo-text">Athena VI</div>
+            <div className="create-video-logo-text">Virtual Studio</div>
           </div>
 
           <ol className="create-video-step-list" aria-label="Create project steps">
             {WIZARD_STEPS.map((stepItem) => {
               const isActive = step === stepItem.id;
-              const isCompleted = step > stepItem.id;
+              // When templateSeed is used, steps before the current are pre-completed
+              const isCompleted = step > stepItem.id || (templateSeed && stepItem.id < 3);
               return (
                 <li key={stepItem.id} className={`create-video-step-item ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}>
                   <span className="create-video-step-dot" aria-hidden>
@@ -833,7 +847,7 @@ const CreateVideoModal = ({
             ) : null}
             {step === 1 && (
               <div>
-                <div className="create-video-page-size-grid" role="radiogroup" aria-label="Choose canvas size">
+                <div className="create-video-page-size-grid create-video-page-size-grid--single" role="radiogroup" aria-label="Choose canvas size">
                   {CANVAS_OPTIONS.map(({ id, label, ratio }) => (
                     <button
                       key={id}
@@ -851,27 +865,9 @@ const CreateVideoModal = ({
                     </button>
                   ))}
                 </div>
-
-                {canvasSize === 'custom' && (
-                  <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-                    <input
-                      type="number"
-                      min="1"
-                      placeholder="Width"
-                      value={customCanvas.width}
-                      onChange={(event) => setCustomCanvas((prev) => ({ ...prev, width: event.target.value }))}
-                      className="create-video-inline-input"
-                    />
-                    <input
-                      type="number"
-                      min="1"
-                      placeholder="Height"
-                      value={customCanvas.height}
-                      onChange={(event) => setCustomCanvas((prev) => ({ ...prev, height: event.target.value }))}
-                      className="create-video-inline-input"
-                    />
-                  </div>
-                )}
+                <p className="create-video-canvas-note">
+                  Only 16:9 Landscape is available. More aspect ratios coming soon.
+                </p>
               </div>
             )}
 
@@ -933,6 +929,16 @@ const CreateVideoModal = ({
                       onSelectScene={(scene) => handleSelectTemplate(`scene:${scene.id}`)}
                       onApplyBundle={(bundle) => handleSelectTemplate(`bundle:${bundle.id}`)}
                       emptyMessage="No template groups match your canvas size or filters."
+                      selectedSceneId={
+                        selectedTemplateId && String(selectedTemplateId).startsWith('scene:')
+                          ? String(selectedTemplateId).replace('scene:', '')
+                          : null
+                      }
+                      selectedBundleId={
+                        selectedTemplateId && String(selectedTemplateId).startsWith('bundle:')
+                          ? String(selectedTemplateId).replace('bundle:', '')
+                          : null
+                      }
                     />
 
                     {selectedTemplateId && selectedTemplateId !== 'blank' ? (
@@ -950,6 +956,15 @@ const CreateVideoModal = ({
 
             {step === 3 && (
               <div className="create-video-form-stack">
+                {templateSeed && (
+                  <div className="create-video-template-seed-banner">
+                    <span className="create-video-template-seed-banner__icon">🎬</span>
+                    <div className="create-video-template-seed-banner__text">
+                      <span className="create-video-template-seed-banner__label">Template selected</span>
+                      <span className="create-video-template-seed-banner__name">{templateSeed.name}</span>
+                    </div>
+                  </div>
+                )}
                 <label className="create-video-field">
                   <span className="create-video-field-label">Project Title *</span>
                   <input
@@ -1100,6 +1115,24 @@ const CreateVideoModal = ({
                 Back
               </button>
 
+              {step === 2 && selectedTemplateId && selectedTemplateId !== 'blank' && (
+                <div className="create-video-selection-chip">
+                  <span className="create-video-selection-chip__check">✓</span>
+                  <span className="create-video-selection-chip__label">
+                    {String(selectedTemplateId).startsWith('bundle:')
+                      ? `${selectedTemplate?.bundle?.name || 'Template bundle'} (all scenes)`
+                      : selectedTemplate?.scene?.title || 'Scene selected'}
+                  </span>
+                </div>
+              )}
+
+              {step === 2 && selectedTemplateId === 'blank' && (
+                <div className="create-video-selection-chip">
+                  <span className="create-video-selection-chip__check">✓</span>
+                  <span className="create-video-selection-chip__label">Blank canvas</span>
+                </div>
+              )}
+
               {step < 3 ? (
                 <button
                   type="button"
@@ -1129,10 +1162,10 @@ const CreateVideoModal = ({
                     showDuplicateNameError
                       ? DUPLICATE_PROJECT_NAME_MESSAGE
                       : folderProjectsLoadError
-                      ? 'Could not verify existing projects in this folder'
-                      : selectedWorkspace && !canCreateInWorkspace(selectedWorkspace)
-                        ? 'You need Editor access to create a project in this workspace'
-                        : ''
+                        ? 'Could not verify existing projects in this folder'
+                        : selectedWorkspace && !canCreateInWorkspace(selectedWorkspace)
+                          ? 'You need Editor access to create a project in this workspace'
+                          : ''
                   }
                 >
                   {verifyingName ? 'Checking...' : submitting ? 'Creating...' : 'Create Project'}

@@ -12,7 +12,7 @@ import {
   getTextShapeWrapperStyle,
   getTextShapeInnerStyle,
 } from '../../../../utils/textEffects'
-import { getClipZIndex, isBackgroundClip, sortClipsForRender } from '../../../../utils/editorLayerUtils'
+import { getClipZIndex, isBackgroundClip, isResizableBackgroundClip, sortClipsForRender } from '../../../../utils/editorLayerUtils'
 import { resolveClipRect } from '../../../../utils/clipLayout'
 import { resolveClipMediaSrc, isVideoMedia } from '../../../../utils/heygenVideo'
 import { resolveAvatarDisplaySrc } from '../../../../utils/templateAvatarPreview'
@@ -125,13 +125,13 @@ const clipBase = (clip, isSelected) => {
   transform: `rotate(${clip.rotation ?? 0}deg) scale(${clip.scale ?? 1})`,
   transformOrigin: 'top left',
   opacity: clip.opacity ?? 1,
-  zIndex: getClipZIndex(clip),
+  zIndex: isSelected ? 9999 : getClipZIndex(clip),
   outline: isSelected
     ? (isBackgroundClip(clip) ? '2px dashed rgba(26,115,232,0.6)' : 'none')
     : '2px solid transparent',
   outlineOffset: isSelected && isBackgroundClip(clip) ? -2 : 1,
   boxSizing: 'border-box',
-  cursor: isSelected ? (isBackgroundClip(clip) ? 'default' : 'move') : 'pointer',
+  cursor: isSelected ? (isResizableBackgroundClip(clip) ? 'nwse-resize' : isBackgroundClip(clip) ? 'default' : 'move') : 'pointer',
   transition: 'outline 0.1s',
 }
 }
@@ -912,7 +912,8 @@ const LiveCanvasRenderer = ({
   }, [displayScale, displayOffset])
 
   const buildToolbarProps = useCallback((clip) => {
-    if (!clip || clip.locked || clip.isBackground || isBackgroundClip(clip)) return null
+    // Allow toolbar for avatar backgrounds so they can be resized/unset via the toolbar
+    if (!clip || clip.locked || (isBackgroundClip(clip) && !isResizableBackgroundClip(clip))) return null
     return {
       compositionWidth,
       compositionHeight,
@@ -1025,15 +1026,21 @@ const LiveCanvasRenderer = ({
           const isLocked = !!clip.locked
           const selectionCount = selectedIds.length || (selectedId ? 1 : 0)
           const isSingleSelection = selectionCount <= 1
+          const isResizableBg = isResizableBackgroundClip(clip)
+          // For avatar backgrounds: resize is permitted but position is locked to (0,0)
+          const bgResizeBounds = isResizableBg
+            ? (clipId, _x, _y, w, h) => handleUpdateBounds(clipId, 0, 0, w, h)
+            : null
           const sharedProps = {
             clip,
             isSelected,
             onSelect: (id, e) => onSelectClip && onSelectClip(id, e),
             displayScale,
-            onUpdatePosition: clip.isBackground || isLocked || isBackgroundClip(clip) ? () => {} : handleUpdatePosition,
-            onUpdateSize: clip.isBackground || isLocked || isBackgroundClip(clip) ? () => {} : handleUpdateSize,
-            onUpdateBounds: clip.isBackground || isLocked || isBackgroundClip(clip) ? () => {} : handleUpdateBounds,
-            onUpdateRotation: clip.isBackground || isLocked || isBackgroundClip(clip) ? undefined : handleUpdateRotation,
+            // Avatar backgrounds can be resized in-place; position + rotation remain locked
+            onUpdatePosition: isLocked || isBackgroundClip(clip) ? () => {} : handleUpdatePosition,
+            onUpdateSize: isLocked ? () => {} : (isResizableBg || !isBackgroundClip(clip)) ? handleUpdateSize : () => {},
+            onUpdateBounds: isLocked ? () => {} : isResizableBg ? bgResizeBounds : isBackgroundClip(clip) ? () => {} : handleUpdateBounds,
+            onUpdateRotation: isLocked || isBackgroundClip(clip) ? undefined : handleUpdateRotation,
             onCommit: onCommitLayerPosition,
             getRotationPivotClient: handleGetRotationPivotClient,
             toolbarProps: isSelected && !overlayMode && isSingleSelection ? buildToolbarProps(clip) : null,

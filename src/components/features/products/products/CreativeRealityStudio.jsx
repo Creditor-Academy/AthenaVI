@@ -253,7 +253,7 @@ function CreativeRealityStudio({ variant = 'light' }) {
       <section id="creative-reality-studio" className={`product-section ${variant}`}>
         <div className="product-section-content">
           <h1 className="product-section-title">Creative Reality™ Studio</h1>
-          
+
           <div className="product-grid-layout">
             {/* First Column: Text Card on top, Image below */}
             <div className="product-grid-column">
@@ -265,9 +265,9 @@ function CreativeRealityStudio({ variant = 'light' }) {
                 <p className="product-grid-card-description">Student Satisfaction</p>
               </div>
               <div className="product-grid-image-container">
-                <img 
-                  src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&h=400&fit=crop" 
-                  alt="Virtual classroom instruction" 
+                <img
+                  src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&h=400&fit=crop"
+                  alt="Virtual classroom instruction"
                   className="product-grid-image"
                 />
               </div>
@@ -275,9 +275,9 @@ function CreativeRealityStudio({ variant = 'light' }) {
 
             {/* Second Column: Full image with overlay text (spans 2 rows) - CENTER */}
             <div className="product-grid-center">
-              <img 
-                src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&h=800&fit=crop" 
-                alt="Creative studio professional" 
+              <img
+                src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&h=800&fit=crop"
+                alt="Creative studio professional"
                 className="product-grid-center-image"
               />
               <div className="product-grid-center-overlay">
@@ -291,9 +291,9 @@ function CreativeRealityStudio({ variant = 'light' }) {
             {/* Third Column: Image on top, Text Card below */}
             <div className="product-grid-column">
               <div className="product-grid-image-container">
-                <img 
-                  src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&h=400&fit=crop" 
-                  alt="Virtual instructor platform" 
+                <img
+                  src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&h=400&fit=crop"
+                  alt="Virtual Studio platform"
                   className="product-grid-image"
                 />
               </div>

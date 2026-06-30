@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { 
-  MdSearch, 
-  MdBookmarkBorder, 
+import {
+  MdSearch,
+  MdBookmarkBorder,
   MdBookmark,
   MdMonitor,
   MdPhoneIphone,
@@ -115,8 +115,8 @@ function Templates({ onSelect }) {
             {CATEGORY_FILTERS.map(cat => {
               const imageSrc = CATEGORY_ICONS[cat]
               return (
-                <button 
-                  key={cat} 
+                <button
+                  key={cat}
                   className={`category-item ${activeCategory === cat ? 'active' : ''}`}
                   onClick={() => {
                     setActiveCategory(cat)
@@ -140,9 +140,9 @@ function Templates({ onSelect }) {
               </div>
               <div className="search-bar-premium">
                 <MdSearch className="search-icon" />
-                <input 
-                  type="text" 
-                  placeholder="Search template groups..." 
+                <input
+                  type="text"
+                  placeholder="Search template groups..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -310,7 +310,7 @@ function Templates({ onSelect }) {
                     <div className="card-info-premium">
                       <div className="card-info-top">
                         <h3>{bundle.name}</h3>
-                        <button 
+                        <button
                           className={`bookmark-btn ${bookmarked.includes(bundle.id) ? 'active' : ''}`}
                           onClick={(e) => toggleBookmark(bundle.id, e)}
                         >
@@ -362,7 +362,7 @@ function Templates({ onSelect }) {
           <a href="#">Privacy Policy</a>
           <a href="#">Support</a>
         </div>
-        <div className="footer-copy">© 2026 Virtual Instructor. All rights reserved.</div>
+        <div className="footer-copy">© 2026 Virtual Studio. All rights reserved.</div>
       </footer>
     </div>
   )

@@ -56,7 +56,7 @@ function Dashboard({ onCreate, initialSection }) {
     if (initialSection) {
       return initialSection
     }
-    
+
     // Fallback: Initialize section based on current URL path
     let currentPath = window.location.pathname
     if (window.location.hash && window.location.hash !== '#') {
@@ -162,7 +162,7 @@ function Dashboard({ onCreate, initialSection }) {
   const handleNavigationWithModal = (targetSection) => {
     setPendingSection(targetSection)
     setShowProcessingModal(true)
-    
+
     // Auto-proceed after a short "processing" delay to feel premium but fast
     setTimeout(() => {
       setShowProcessingModal(false)
@@ -209,7 +209,7 @@ function Dashboard({ onCreate, initialSection }) {
     } else {
       newPath = `/dashboard/${section}`
     }
-    
+
     if (window.location.pathname !== newPath) {
       window.history.pushState({ section }, '', newPath)
     }
@@ -301,12 +301,12 @@ function Dashboard({ onCreate, initialSection }) {
             type="button"
             className="dashboard-sidebar-brand"
             onClick={() => (isAdminPortal ? handlePortalToggle() : goToSection('home'))}
-            aria-label={isAdminPortal ? 'Back to platform' : 'Virtual Instructor, go to home'}
+            aria-label={isAdminPortal ? 'Back to platform' : 'Virtual Studio, go to home'}
           >
             <span className="dashboard-sidebar-brand-logo" aria-hidden>
               V
             </span>
-            <span className="dashboard-sidebar-brand-name">Virtual Instructor</span>
+            <span className="dashboard-sidebar-brand-name">Virtual Studio</span>
           </button>
 
           {canAccessSuperadminPortal && (
@@ -338,7 +338,7 @@ function Dashboard({ onCreate, initialSection }) {
       </div>
 
       <div className="dashboard-main-column">
-        <DashboardTopbar 
+        <DashboardTopbar
           sidebarMobileOpen={sidebarMobileOpen}
           setSidebarMobileOpen={setSidebarMobileOpen}
           topbarMobileOpen={topbarMobileOpen}
@@ -370,9 +370,9 @@ function Dashboard({ onCreate, initialSection }) {
           )}
           {section === 'videos' && <Videos onCreate={handleOpenCreateVideoModal} onEdit={handleEditVideo} />}
           {section === 'avatars' && (
-            <Avatars 
-              onCreate={handleOpenCreateVideoModal} 
-              onEdit={handleEditVideo}              goToSection={goToSection} 
+            <Avatars
+              onCreate={handleOpenCreateVideoModal}
+              onEdit={handleEditVideo} goToSection={goToSection}
               onCreateAvatar={() => goToSection('create-avatar')}
               onCreateLooks={openCreateAvatarLook}
             />
@@ -395,42 +395,52 @@ function Dashboard({ onCreate, initialSection }) {
             />
           )}
           {section === 'voices' && (
-            <Voices 
-              onCreateVoice={() => goToSection('create-voice')} 
+            <Voices
+              onCreateVoice={() => goToSection('create-voice')}
               onVoiceClick={(voice) => { setSelectedVoice(voice); }}
-              initialFilter={lastVoiceCreated ? 'private' : 'public'} 
+              initialFilter={lastVoiceCreated ? 'private' : 'public'}
             />
           )}
           {section === 'create-voice' && (
-            <CreateVoice 
+            <CreateVoice
               onBack={(success) => {
                 setLastVoiceCreated(success);
                 goToSection('voices');
-              }} 
+              }}
             />
           )}
           {section === 'library' && <Library />}
           {section === 'templates' && (
-            <Templates 
+            <Templates
               onSelect={(template) => {
                 setSelectedTemplateForDetails(template)
                 goToSection('template-details')
-              }} 
+              }}
             />
           )}
           {section === 'template-details' && (
-            <TemplateDetails 
-              template={selectedTemplateForDetails} 
+            <TemplateDetails
+              template={selectedTemplateForDetails}
               onBack={() => goToSection('templates')}
               onUse={() => {
-                if (onCreate && selectedTemplateForDetails) {
-                  const ratioMap = { '9:16': 'portrait', '1:1': 'square' }
-                  onCreate({
-                    template: {
-                      scenes: selectedTemplateForDetails.bundleScenes || [],
+                if (selectedTemplateForDetails) {
+                  // Open CreateVideoModal at step 3 with the template pre-selected,
+                  // so the user still fills in workspace / folder details before creating.
+                  const bundleId = selectedTemplateForDetails.id || selectedTemplateForDetails.bundleId
+                  handleOpenCreateVideoModal({
+                    templateSeed: {
+                      templateId: bundleId ? `bundle:${bundleId}` : null,
+                      name: selectedTemplateForDetails.name || 'Untitled',
+                      // Pass enough bundle shape so CreateVideoModal can resolve selectedTemplate
+                      bundle: {
+                        id: bundleId,
+                        name: selectedTemplateForDetails.name,
+                        scenes: selectedTemplateForDetails.bundleScenes || [],
+                        coverScene: selectedTemplateForDetails.coverScene || null,
+                        category: selectedTemplateForDetails.category || '',
+                        description: selectedTemplateForDetails.description || '',
+                      },
                     },
-                    name: selectedTemplateForDetails.name || 'Untitled',
-                    pageSize: ratioMap[selectedTemplateForDetails.ratio] || 'landscape',
                   })
                 }
               }}
@@ -479,6 +489,7 @@ function Dashboard({ onCreate, initialSection }) {
           initialWorkspaceId={createVideoModalContext?.initialWorkspaceId || ''}
           initialFolderId={createVideoModalContext?.initialFolderId || ''}
           presenterSeed={createVideoModalContext?.presenterSeed || null}
+          templateSeed={createVideoModalContext?.templateSeed || null}
           onCreateVideo={handleCreateVideo}
         />
       )}

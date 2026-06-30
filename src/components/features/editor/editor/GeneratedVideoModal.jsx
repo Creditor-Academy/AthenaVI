@@ -11,6 +11,7 @@ const GeneratedVideoModal = ({
   onUseInEditor,
   onRemake,
   onSelectLayout,
+  sceneTitle,
 }) => {
   const [activeLayout, setActiveLayout] = useState(null);
 
@@ -84,7 +85,7 @@ const GeneratedVideoModal = ({
             <span>✨</span> AI Presenter Ready
           </h2>
           <p style={{ color: 'var(--text-muted, #94a3b8)', margin: 0, fontSize: '12px', paddingRight: '20px' }}>
-            Your presenter is already centered on the scene. Preview below, or optionally replace the layout with a template.
+            Your presenter is ready for <strong>{sceneTitle || 'Scene'}</strong> and is centered. Preview below, or optionally replace the layout with a template.
           </p>
         </div>
 
