@@ -81,7 +81,7 @@ function EarlyAccess() {
       `Use Case: ${formData.useCase || 'N/A'}\n\n` +
       `Additional Notes:\n${formData.message || 'None'}\n\n` +
       `${'='.repeat(40)}\n` +
-      `Sent from AthenaVI Early Access Form`
+      `Sent from Virtual Studio Early Access Form`
     )
 
     const mailtoLink = `mailto:${EARLY_ACCESS_EMAIL}?subject=${subject}&body=${body}`

@@ -1,6 +1,7 @@
 import React, { useRef, useState, useCallback } from 'react';
 import { FiLayers, FiMove, FiFileText, FiCloud, FiFilm, FiPlay, FiCheck } from 'react-icons/fi';
 import { motion } from 'framer-motion';
+import { LANDING_FONT, LANDING_LIGHT, LANDING_TYPE } from '../../styles/landingTypography';
 
 /* ── Feature data ── */
 const features = [
@@ -272,7 +273,7 @@ const EditorPreview = ({ activeKey }) => {
                     fontSize: '12px',
                     minHeight: '160px',
                 }}>
-                    {['Welcome to AthenaVI, your AI-powered', 'video creation platform.', '', 'Today we explore Scene 2.'].map((line, i) => (
+                    {['Welcome to Virtual Studio, your AI-powered', 'video creation platform.', '', 'Today we explore Scene 2.'].map((line, i) => (
                         <motion.div
                             key={i}
                             style={{ color: line === '' ? 'transparent' : 'rgba(255,255,255,0.7)', marginBottom: '6px', minHeight: '18px' }}
@@ -378,41 +379,38 @@ const css = `
     display: inline-block;
     padding: 6px 18px;
     border-radius: 100px;
-    font-size: 11px;
-    font-weight: 700;
+    font-size: ${LANDING_TYPE.eyebrowSize};
+    font-weight: ${LANDING_TYPE.eyebrowWeight};
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: #1e40af;
+    color: ${LANDING_LIGHT.eyebrow};
     background: rgba(30, 64, 175, 0.08);
     border: 1px solid rgba(30, 64, 175, 0.15);
     margin-bottom: 18px;
     backdrop-filter: blur(4px);
   }
   .pf-heading {
-    font-family: 'Inter', sans-serif;
+    font-family: ${LANDING_FONT};
     font-size: 55px;
-    font-weight: 800;
-    color: #0f172a;
+    font-weight: ${LANDING_TYPE.titleWeight};
+    color: ${LANDING_LIGHT.title};
     line-height: 1.2;
     margin: 0 0 20px;
-    letter-spacing: -1.5px;
+    letter-spacing: ${LANDING_TYPE.titleSpacing};
   }
   .pf-heading span {
-    background: linear-gradient(135deg, #1e40af, #7c3aed);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: ${LANDING_LIGHT.titleAccent};
     display: inline-block;
   }
   .pf-subtext {
-    font-family: 'Inter', sans-serif;
-    font-size: clamp(15px, 1.8vw, 18px);
-    color: #64748b;
+    font-family: ${LANDING_FONT};
+    font-size: ${LANDING_TYPE.subtitleSize};
+    color: ${LANDING_LIGHT.subtitle};
     max-width: 680px;
     margin: 0 auto;
     line-height: 1.7;
     letter-spacing: 0;
-    font-weight: 400;
+    font-weight: ${LANDING_TYPE.subtitleWeight};
   }
 
   .pf-grid {

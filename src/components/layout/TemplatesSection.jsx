@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion'
 import { FiArrowRight, FiPlay, FiVideo } from 'react-icons/fi'
+import { LANDING_DARK, LANDING_FONT } from '../../styles/landingTypography'
 
 import temp1 from '../../assets/Template Image/temp1.png'
 import temp2 from '../../assets/Template Image/temp2.png'
@@ -303,8 +303,9 @@ const css = `
 }
 
 .pts-section-subtitle {
+  font-family: ${LANDING_FONT};
   font-size: 15px;
-  color: #94a3b8;
+  color: ${LANDING_DARK.subtitle};
   line-height: 1.6;
   margin: 0 0 32px;
 }
@@ -507,13 +508,7 @@ function TemplatesSection({ onNavigateToSolution }) {
         <div className="pts-layout-grid">
 
           {/* LEFT SIDE (35%): Typography & CTA content */}
-          <motion.div
-            className="pts-info-column"
-            initial={{ opacity: 0, x: -25 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-          >
+          <div className="pts-info-column">
             {/* <div className="pts-eyebrow">
               <span className="pts-eyebrow-dot" />
               Template Library
@@ -545,7 +540,7 @@ function TemplatesSection({ onNavigateToSolution }) {
                 <div className="pts-partner-logo">G&STC</div>
               </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* RIGHT SIDE (65%): Infinite Scroll Columns */}
           <div className="pts-scroll-wrapper">

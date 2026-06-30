@@ -12,7 +12,7 @@ import Footer from '../../components/layout/Footer/Footer.jsx'
 const styles = `
 .landing-page {
   min-height: 100vh;
-  background: #040817;
+  background: transparent;
   color: #f1f5f9;
   font-family: 'Inter', sans-serif;
 }
@@ -79,7 +79,7 @@ function Landing({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToC
           onNavigateToCompany={onNavigateToCompany}
           onNavigateToUseCases={onNavigateToUseCases}
         />
-        <Hero />
+        <Hero onContactSalesClick={() => onNavigateToSolution?.('Sales Solutions')} />
         <UnifiedVideoSection />
         <DigitalTwinSection />
         <ProductsSection />

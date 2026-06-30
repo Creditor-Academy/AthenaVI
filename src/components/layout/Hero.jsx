@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { MdArrowOutward } from 'react-icons/md'
 
 import HeroArcGallery from './HeroArcGallery'
 import heygenService from '../../services/heygenService'
 import { extractHeygenList, mapAvatarGroup } from '../../utils/heygenAvatars'
+
+import { LANDING_DARK, LANDING_FONT } from '../../styles/landingTypography'
 
 const styles = `
 .hero-container {
@@ -147,34 +149,29 @@ const styles = `
 
 .hero-eyebrow {
   display: inline-block;
+  font-family: ${LANDING_FONT};
   font-size: 13px;
   font-weight: 700;
-  background: linear-gradient(135deg, #ffe082 0%, #ffb300 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: ${LANDING_DARK.eyebrow};
   letter-spacing: 0.15em;
   text-transform: uppercase;
   margin: 0 0 16px;
 }
 
 .hero-title {
-  font-family: 'Inter', sans-serif;
+  font-family: ${LANDING_FONT};
   font-size: clamp(36px, 5vw, 56px);
   font-weight: 800;
-  background: linear-gradient(135deg, #ffffff 40%, #e2e8f0 75%, #94a3b8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: ${LANDING_DARK.title};
   margin: 0 0 20px;
   line-height: 1.15;
   letter-spacing: -1.5px;
 }
 
 .hero-subtitle {
-  font-family: 'Inter', sans-serif;
+  font-family: ${LANDING_FONT};
   font-size: clamp(16px, 2vw, 18px);
-  color: #94a3b8;
+  color: ${LANDING_DARK.subtitle};
   margin: 0 auto 36px;
   font-weight: 400;
   line-height: 1.7;
@@ -332,7 +329,7 @@ const styles = `
 
 `
 
-function Hero() {
+function Hero({ onContactSalesClick }) {
   const [avatarsList] = useState([
     /* ── Target avatars in sequence (1 → 7) ── */
     { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target.mp4', name: 'Noah', role: 'Technical Expert' },
@@ -346,11 +343,6 @@ function Hero() {
     { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_2+(1).mp4', name: 'Oliver', role: 'Digital Host' },
     { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_3.mp4', name: 'Olivia', role: 'Language Coach' },
   ])
-
-  useEffect(() => {
-    // HeyGen image fetching disabled to display local high-fidelity videos in the hero marquee instead of static images
-  }, [])
-
 
   return (
     <>
@@ -388,8 +380,12 @@ function Hero() {
               Request Early Access
               <MdArrowOutward />
             </button>
-            <button type="button" className="btn-outline">
-              CONTACT SALES
+            <button 
+              type="button" 
+              className="btn-outline"
+              onClick={onContactSalesClick}
+            >
+              Contact Sales
               <MdArrowOutward />
             </button>
           </div>

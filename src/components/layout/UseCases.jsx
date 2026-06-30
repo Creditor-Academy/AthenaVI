@@ -196,6 +196,8 @@ export default function UseCases() {
                     <img
                       src={card.img}
                       alt={card.title}
+                      loading="lazy"
+                      decoding="async"
                       draggable={false}
                       style={{
                         width: "100%",
@@ -229,6 +231,8 @@ export default function UseCases() {
                   <img
                     src={card.img}
                     alt={card.title}
+                    loading="lazy"
+                    decoding="async"
                     draggable={false}
                     style={{
                       width: "100%",

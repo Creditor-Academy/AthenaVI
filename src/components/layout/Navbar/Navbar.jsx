@@ -50,7 +50,7 @@ const styles = `
 }
 
 .nav-logo-img {
-  height: 38px;
+  height: 46px;
   width: auto;
   object-fit: contain;
   display: block;
@@ -315,12 +315,12 @@ const styles = `
 
 .login-link {
   font-family: 'Inter', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   color: #fff;
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
   border: none;
-  padding: 8px 20px;
+  padding: 10px 22px;
   border-radius: 999px;
   cursor: pointer;
   white-space: nowrap;
@@ -340,12 +340,12 @@ const styles = `
 
 .act-primary {
   font-family: 'Inter', sans-serif;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   color: #020617;
   background: linear-gradient(135deg, #ffe082 0%, #ffb300 100%);
   border: none;
-  padding: 9px 20px;
+  padding: 10px 22px;
   border-radius: 999px;
   cursor: pointer;
   white-space: nowrap;
@@ -583,16 +583,16 @@ function Navbar({
   onNavigateToUseCases,
 }) {
   const [activeDropdown, setActiveDropdown] = useState(null)
-  const [drawerOpen, setDrawerOpen]         = useState(false)
-  const [drawerSubs, setDrawerSubs]         = useState({})
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [drawerSubs, setDrawerSubs] = useState({})
 
   const wrapperRefs = useRef({})
-  const closeTimer  = useRef(null)
+  const closeTimer = useRef(null)
 
   /* ── helpers ── */
-  const openDD  = (name) => { clearTimeout(closeTimer.current); setActiveDropdown(name) }
-  const closeDD = ()     => { closeTimer.current = setTimeout(() => setActiveDropdown(null), 120) }
-  const keepDD  = ()     => clearTimeout(closeTimer.current)
+  const openDD = (name) => { clearTimeout(closeTimer.current); setActiveDropdown(name) }
+  const closeDD = () => { closeTimer.current = setTimeout(() => setActiveDropdown(null), 120) }
+  const keepDD = () => clearTimeout(closeTimer.current)
 
   const toggleDrawerSub = (key) =>
     setDrawerSubs(prev => ({ ...prev, [key]: !prev[key] }))
@@ -612,31 +612,31 @@ function Navbar({
 
   /* ── data ── */
   const productsItems = [
-    { title: 'Visual AI Agents',         desc: 'AI teaching avatars',        icon: <FiCpu /> },
-    { title: 'Creative Reality™ Studio', desc: 'AI video studio',            icon: <FiPlayCircle /> },
-    { title: 'Video Translate',          desc: 'Multilingual video',         icon: <FiGlobe /> },
-    { title: 'Video Campaigns',          desc: 'Marketing videos',           icon: <FiTrendingUp /> },
-    { title: 'Personal Avatars',         desc: 'Digital instructors',        icon: <FiUserCheck /> },
-    { title: 'AI Avatars & Videos',      desc: 'AI avatars and video demos', icon: <FiPlayCircle /> },
-    { title: 'Technology',               desc: 'Technology overview',        icon: <FiCpu /> },
+    { title: 'Visual AI Agents', desc: 'AI teaching avatars', icon: <FiCpu /> },
+    { title: 'Creative Reality™ Studio', desc: 'AI video studio', icon: <FiPlayCircle /> },
+    { title: 'Video Translate', desc: 'Multilingual video', icon: <FiGlobe /> },
+    { title: 'Video Campaigns', desc: 'Marketing videos', icon: <FiTrendingUp /> },
+    { title: 'Personal Avatars', desc: 'Digital instructors', icon: <FiUserCheck /> },
+    { title: 'AI Avatars & Videos', desc: 'AI avatars and video demos', icon: <FiPlayCircle /> },
+    { title: 'Technology', desc: 'Technology overview', icon: <FiCpu /> },
   ]
 
   const solutionsItems = [
-    { title: 'Marketing Suite',       desc: 'Campaign automation',  icon: <FiBriefcase /> },
-    { title: 'Sales Solutions',       desc: 'Video outreach',       icon: <FiDollarSign /> },
-    { title: 'Customer Experience',   desc: 'Customer engagement',  icon: <FiUsers /> },
-    { title: 'Learning & Development',desc: 'Corporate training',   icon: <FiBookOpen /> },
-    { title: 'AI Videos',             desc: 'Automated comms',      icon: <FiMail /> },
+    { title: 'Marketing Suite', desc: 'Campaign automation', icon: <FiBriefcase /> },
+    { title: 'Sales Solutions', desc: 'Video outreach', icon: <FiDollarSign /> },
+    { title: 'Customer Experience', desc: 'Customer engagement', icon: <FiUsers /> },
+    { title: 'Learning & Development', desc: 'Corporate training', icon: <FiBookOpen /> },
+    { title: 'AI Videos', desc: 'Automated comms', icon: <FiMail /> },
   ]
 
   const companyItems = [
-    { title: 'About Us',        desc: 'Company overview',  icon: <FiInfo /> },
-    { title: 'Blog',            desc: 'Insights & articles',icon: <FiFileText /> },
-    { title: 'News',            desc: 'Platform updates',  icon: <FiRss /> },
-    { title: 'Ethics',          desc: 'AI Ethics pledge',  icon: <FiShield /> },
-    { title: 'Resources',       desc: 'Learning materials',icon: <FiLayers /> },
-    { title: 'Privacy Policy',  desc: 'Data protection',   icon: <FiShield /> },
-    { title: 'Help Center',     desc: 'Customer support',  icon: <FiHelpCircle /> },
+    { title: 'About Us', desc: 'Company overview', icon: <FiInfo /> },
+    { title: 'Blog', desc: 'Insights & articles', icon: <FiFileText /> },
+    { title: 'News', desc: 'Platform updates', icon: <FiRss /> },
+    { title: 'Ethics', desc: 'AI Ethics pledge', icon: <FiShield /> },
+    { title: 'Resources', desc: 'Learning materials', icon: <FiLayers /> },
+    { title: 'Privacy Policy', desc: 'Data protection', icon: <FiShield /> },
+    { title: 'Help Center', desc: 'Customer support', icon: <FiHelpCircle /> },
   ]
 
   /* ── item click dispatcher ── */
@@ -777,9 +777,10 @@ function Navbar({
           </a>
 
           {/* Pricing */}
-          <a href="#" className="nav-plain" onClick={(e) => e.preventDefault()}>Pricing</a>
+          {/* <a href="#" className="nav-plain" onClick={(e) => e.preventDefault()}>Pricing</a> */}
 
           {/* Company */}
+          {/* 
           <button
             className={`nav-btn ${activeDropdown === 'company' ? 'open' : ''}`}
             onMouseEnter={() => openDD('company')}
@@ -800,6 +801,7 @@ function Navbar({
               ))}
             </div>
           </div>
+          */}
 
         </div>
 
@@ -898,6 +900,7 @@ function Navbar({
         </div>
 
         {/* Company */}
+        {/* 
         <div className="drawer-section">
           <button
             className={`drawer-nav-btn ${drawerSubs.company ? 'open' : ''}`}
@@ -913,6 +916,7 @@ function Navbar({
             </div>
           </div>
         </div>
+        */}
 
         {/* Actions */}
         <div className="drawer-actions">

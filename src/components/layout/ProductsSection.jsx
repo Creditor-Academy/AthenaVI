@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { MdArrowForward, MdArrowOutward, MdArrowBackIos, MdArrowForwardIos } from 'react-icons/md'
+import { LANDING_FONT, LANDING_LIGHT, LANDING_TYPE } from '../../styles/landingTypography'
 import VisualAIAgentImg from '../../assets/Visual AI Agent.png'
 import VideoStudioImg from '../../assets/Video Studio.png'
 import VideoCampaignsImg from '../../assets/Video Campaigns.png'
@@ -22,10 +23,10 @@ const styles = `
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-family: 'Inter', sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  color: #f59e0b;
+  font-family: ${LANDING_FONT};
+  font-size: ${LANDING_TYPE.eyebrowSize};
+  font-weight: ${LANDING_TYPE.eyebrowWeight};
+  color: ${LANDING_LIGHT.eyebrow};
   letter-spacing: 2px;
   text-transform: uppercase;
   margin-bottom: 14px;
@@ -33,29 +34,29 @@ const styles = `
 
 .ps-section-eyebrow-line {
   width: 20px; height: 2px;
-  background: #f59e0b;
+  background: ${LANDING_LIGHT.eyebrow};
   border-radius: 2px;
 }
 
 .ps-section-title {
-  font-family: 'Inter', sans-serif;
+  font-family: ${LANDING_FONT};
   font-size: 55px;
-  font-weight: 800;
-  color: #0f172a;
+  font-weight: ${LANDING_TYPE.titleWeight};
+  color: ${LANDING_LIGHT.title};
   margin: 0 0 12px;
   line-height: 1.2;
-  letter-spacing: -1.5px;
+  letter-spacing: ${LANDING_TYPE.titleSpacing};
 }
 
 .ps-section-title span {
- color: #1e40af;
+ color: ${LANDING_LIGHT.titleAccent};
 }
 
 .ps-section-sub {
-  font-family: 'Inter', sans-serif;
-  font-size: clamp(15px, 2vw, 18px);
-  font-weight: 400;
-  color: #64748b;
+  font-family: ${LANDING_FONT};
+  font-size: ${LANDING_TYPE.subtitleSize};
+  font-weight: ${LANDING_TYPE.subtitleWeight};
+  color: ${LANDING_LIGHT.subtitle};
   max-width: 500px;
   margin: 0 auto;
   line-height: 1.7;
@@ -495,6 +496,8 @@ function ProductsSection() {
                         <img
                           src={card.img}
                           alt={card.title}
+                          loading="lazy"
+                          decoding="async"
                           onError={e => { e.currentTarget.src = `https://placehold.co/240x360/1e293b/fff?text=${card.title}` }}
                         />
                       </div>
