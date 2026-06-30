@@ -1,270 +1,239 @@
 import { useState, useEffect, useRef } from 'react'
 import { MdKeyboardArrowDown, MdArrowOutward, MdMenu, MdClose } from 'react-icons/md'
-import { 
+import {
   FiCpu, FiPlayCircle, FiGlobe, FiTrendingUp, FiUserCheck,
   FiBriefcase, FiDollarSign, FiUsers, FiBookOpen, FiMail,
   FiInfo, FiFileText, FiRss, FiLayers, FiShield, FiHelpCircle
 } from 'react-icons/fi'
 import ProductVideo from '../../../assets/ProductVideo.mp4'
-import LogoImg from '../../../assets/logo.png'
+import LogoImg from '../../../assets/herologo.png'
 
+/* ─────────────────────────────────────────────────
+   STYLES
+───────────────────────────────────────────────── */
 const styles = `
+
+/* ── Floating pill container ── */
 .navbar {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 500;
+  width: calc(100% - 32px);
+  max-width: 1320px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 28px;
-  background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #1e293b 100%);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  position: sticky;
-  top: 0;
-  z-index: 300;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-  width: 100%;
-  max-width: 100%;
-  overflow: visible;
-  box-sizing: border-box;
-}
-
-.nav-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-  min-width: 0;
-  z-index: 101;
-}
-
-.logo {
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 24px;
-  font-weight: 500;
-  background: linear-gradient(135deg, #ffe082 0%, #ffb300 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  text-decoration: none;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-}
-
-.logo:hover {
-  opacity: 0.8;
-}
-
-.logo-icon {
-  width: 32px;
-  height: 32px;
-  border: 2px solid #ffb300;
-  border-radius: 50%;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #ffe082 0%, #ffb300 100%);
-}
-
-.logo-img {
-  width: 36px;
-  height: 36px;
-  object-fit: contain;
-  display: block;
-  border-radius: 8px;
-}
-
-.logo-icon::before {
-  content: '';
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  background: #ffb300;
-  border-radius: 50%;
-  top: -4px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.logo-icon::after {
-  content: '';
-  position: absolute;
-  width: 4px;
-  height: 4px;
-  background: #ffe082;
-  border-radius: 50%;
-  top: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.nav-center {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex: 1 1 auto;
-  justify-content: flex-start;
-  flex-wrap: nowrap;
-  min-width: 0;
-  max-width: 100%;
-  overflow: visible;
-  margin-left: 40px;
-}
-
-.nav-pills-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border-radius: 999px;
-  padding: 5px 8px;
-}
-
-.nav-link-wrapper {
-  position: relative;
-  display: inline-block;
-  z-index: 201;
-}
-
-.nav-link {
-  font-family: 'Inter', sans-serif;
-  color: #cbd5e1;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  transition: all 0.22s ease;
-  position: relative;
-  white-space: nowrap;
-  flex-shrink: 0;
-  padding: 8px 16px;
-  border-radius: 999px;
-}
-
-.nav-link:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
-}
-
-.nav-link.active {
-  background: rgba(59, 130, 246, 0.2);
-  color: #60a5fa;
-}
-
-.nav-link svg {
-  font-size: 18px;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.nav-link.active svg {
-  transform: rotate(180deg);
-}
-
-.nav-divider {
-  width: 1px;
-  height: 24px;
-  background: rgba(255, 255, 255, 0.12);
-  margin: 0 12px 0 auto;
-  flex-shrink: 0;
-}
-
-/* Mega Dropdown Styles */
-.dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%) translateY(6px);
-  background: #0f172a;
-  border-radius: 14px;
-  box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.5), 0 8px 24px -12px rgba(0, 0, 0, 0.3);
+  padding: 0 8px 0 20px;
+  height: 60px;
+  background: rgba(8, 14, 30, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  width: min(720px, 92vw);
-  padding: 18px;
-  max-height: calc(100vh - 120px);
-  overflow-y: auto;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition: all 0.26s cubic-bezier(0.4, 0, 0.2, 1);
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  z-index: 1100;
-}
-
-.dropdown.products-mega {
-  width: min(980px, 96vw);
-  display: grid;
-  grid-template-columns: 1.6fr 1.2fr;
-  padding: 0;
-  overflow: hidden;
+  border-radius: 999px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-sizing: border-box;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
   gap: 0;
 }
 
-.dropdown.products-mega.active {
-  transform: translateX(-22%) translateY(0);
+/* ── Logo ── */
+.nav-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  flex-shrink: 0;
+  cursor: pointer;
 }
 
-.dropdown-links-side {
-  padding: 24px;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+.nav-logo-img {
+  height: 38px;
+  width: auto;
+  object-fit: contain;
+  display: block;
 }
 
-.dropdown-video-side {
-  background: #0b0f19;
+/* ── Centre nav links ── */
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex: 1;
+  justify-content: center;
+}
+
+.nav-item {
   position: relative;
   display: flex;
-  flex-direction: column;
-  padding: 24px;
-  gap: 16px;
-  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  align-items: center;
 }
 
-.dropdown-video-container {
+.nav-btn {
+  font-family: 'Inter', sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: rgba(203, 213, 225, 0.9);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  transition: color 0.18s ease, background 0.18s ease;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  height: 36px;
+  box-sizing: border-box;
+}
+
+.nav-btn:hover,
+.nav-btn.open {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.nav-btn svg.chevron {
+  font-size: 16px;
+  opacity: 0.7;
+  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1), opacity 0.18s ease;
+}
+
+.nav-btn.open svg.chevron {
+  transform: rotate(180deg);
+  opacity: 1;
+}
+
+/* plain link variant (Pricing, Use Cases) */
+.nav-plain {
+  font-family: 'Inter', sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: rgba(203, 213, 225, 0.9);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 999px;
+  text-decoration: none;
+  transition: color 0.18s ease, background 0.18s ease;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  height: 36px;
+  box-sizing: border-box;
+  line-height: 1;
+}
+
+.nav-plain:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* ── Dropdown panel ── */
+.nav-dropdown {
+  position: fixed;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  background: linear-gradient(160deg, #0d1526 0%, #0a1020 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.3);
+  padding: 8px;
+  min-width: 240px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.22s ease, visibility 0.22s ease, transform 0.22s cubic-bezier(0.4,0,0.2,1);
+  z-index: 600;
+}
+
+.nav-dropdown.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* bridge gap so mouse can move from button to panel */
+.nav-dropdown::before {
+  content: '';
+  position: absolute;
+  top: -14px;
+  left: 0;
+  right: 0;
+  height: 14px;
+  background: transparent;
+}
+
+/* ── Products mega dropdown ── */
+.nav-dropdown.mega {
+  left: 50%;
+  min-width: 780px;
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+.mega-left {
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  align-content: start;
+}
+
+.mega-right {
+  background: rgba(255, 255, 255, 0.025);
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mega-video {
   width: 100%;
   aspect-ratio: 16/9;
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   background: #000;
 }
 
-.dropdown-video-container video {
+.mega-video video {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.video-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.video-info-title {
-  font-size: 16px;
+.mega-video-title {
+  font-size: 14px;
   font-weight: 600;
   color: #ffffff;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
-.video-info-desc {
-  font-size: 13px;
-  color: #94a3b8;
-  line-height: 1.5;
+.mega-video-desc {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.55;
+  margin-top: -6px;
 }
 
-.see-all-link {
+.mega-see-all {
   margin-top: auto;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #60a5fa;
   display: flex;
@@ -272,200 +241,95 @@ const styles = `
   gap: 4px;
   text-decoration: none;
   transition: gap 0.2s ease;
-}
-
-.see-all-link:hover {
-  gap: 8px;
-}
-
-.dropdown::before {
-  content: '';
-  position: absolute;
-  top: -15px;
-  left: 0;
-  right: 0;
-  height: 15px;
-  background: transparent;
-}
-
-.dropdown::after {
-  content: '';
-  position: absolute;
-  top: -6px;
-  left: 50%;
-  transform: translateX(-50%) rotate(45deg);
-  width: 12px;
-  height: 12px;
-  background: #0f172a;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
-  z-index: -1;
-}
-
-.dropdown.active {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transform: translateX(-50%) translateY(0);
-}
-
-.dropdown-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 16px;
-  border-radius: 12px;
-  text-decoration: none;
-  transition: all 0.2s ease;
   cursor: pointer;
 }
 
-.dropdown-item:hover {
-  background: rgba(255, 255, 255, 0.04);
+.mega-see-all:hover { gap: 8px; }
+
+/* ── Dropdown item ── */
+.dd-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.18s ease;
 }
 
-.dropdown-icon {
-  width: 44px;
-  height: 44px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
+.dd-item:hover { background: rgba(255, 255, 255, 0.05); }
+
+.dd-icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #60a5fa;
-  font-size: 22px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-  transition: all 0.2s ease;
-  flex-shrink: 0;
+  font-size: 16px;
+  transition: background 0.18s ease, color 0.18s ease;
 }
 
-.dropdown-item:hover .dropdown-icon {
+.dd-item:hover .dd-icon {
   background: #3b82f6;
-  color: #ffffff;
-  transform: scale(1.05);
+  color: #fff;
 }
 
-.dropdown-content {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.dropdown-title {
-  color: #ffffff;
-  font-size: 14px;
+.dd-text {}
+.dd-title {
+  font-size: 13px;
   font-weight: 500;
-  transition: color 0.2s ease;
+  color: #e2e8f0;
+  line-height: 1.3;
+  transition: color 0.18s ease;
 }
-
-.dropdown-desc {
-  color: #94a3b8;
-  font-size: 12px;
+.dd-item:hover .dd-title { color: #60a5fa; }
+.dd-desc {
+  font-size: 11.5px;
+  color: #475569;
+  margin-top: 2px;
   line-height: 1.4;
 }
 
-.dropdown-item:hover .dropdown-title {
-  color: #60a5fa;
-}
-
-/* Backdrop for active dropdowns */
-.nav-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(2, 6, 23, 0.6);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 150;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s ease;
-  pointer-events: none;
-}
-
-.nav-backdrop.active {
-  opacity: 1;
-  visibility: visible;
-}
-
-.nav-right {
+/* simple column dropdown (solutions, company) */
+.dd-list {
+  padding: 8px;
   display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-shrink: 0;
-  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.btn-outline {
-  font-family: 'Inter', sans-serif;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #fff;
-  padding: 9px 18px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
+/* ── Right CTA group ── */
+.nav-actions {
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  white-space: nowrap;
   flex-shrink: 0;
-}
-
-.btn-outline:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.4);
-}
-
-.btn-primary {
-  font-family: 'Inter', sans-serif;
-  background: linear-gradient(135deg, #ffe082 0%, #ffb300 100%);
-  border: none;
-  color: #020617;
-  padding: 9px 18px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(255, 179, 0, 0.25);
-  flex-shrink: 0;
-}
-
-.btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 179, 0, 0.35);
-  background: linear-gradient(135deg, #fff3e0 0%, #ffe082 100%);
+  padding-left: 8px;
 }
 
 .login-link {
   font-family: 'Inter', sans-serif;
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
-  border: none;
-  color: #fff;
-  padding: 9px 18px;
-  border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
+  color: #fff;
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
+  border: none;
+  padding: 8px 20px;
+  border-radius: 999px;
   cursor: pointer;
+  white-space: nowrap;
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.2s ease;
   text-decoration: none;
-  white-space: nowrap;
   box-shadow: 0 2px 8px rgba(30, 64, 175, 0.25);
+  transition: all 0.18s ease;
   flex-shrink: 0;
 }
 
@@ -474,942 +338,596 @@ const styles = `
   box-shadow: 0 4px 12px rgba(30, 64, 175, 0.35);
 }
 
-.mobile-menu-btn {
-  display: none;
-  background: transparent;
+.act-primary {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #020617;
+  background: linear-gradient(135deg, #ffe082 0%, #ffb300 100%);
   border: none;
-  color: #f1f5f9;
-  font-size: 24px;
+  padding: 9px 20px;
+  border-radius: 999px;
   cursor: pointer;
-  padding: 8px;
-  transition: color 0.2s ease;
-  z-index: 1101;
-  position: relative;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  box-shadow: 0 2px 12px rgba(255,179,0,0.3);
+  transition: all 0.18s ease;
+}
+
+.act-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(255,179,0,0.42);
+}
+
+/* Hamburger */
+.nav-ham {
+  display: none;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #f1f5f9;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 20px;
   flex-shrink: 0;
+  transition: all 0.18s ease;
 }
 
-.mobile-menu-btn:hover {
-  color: #60a5fa;
+.nav-ham:hover {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
 }
 
-.mobile-menu-overlay {
+/* ── Overlay backdrop ── */
+.nav-overlay {
   display: none;
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 1098;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(3px);
+  z-index: 490;
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
 }
 
-.mobile-menu-overlay.active {
+.nav-overlay.show {
   display: block;
   opacity: 1;
   pointer-events: auto;
 }
 
-.mobile-menu {
+/* ── Mobile drawer ── */
+.mobile-drawer {
   position: fixed;
   top: 0;
   right: 0;
   bottom: 0;
-  height: 100vh;
-  width: 100%;
-  max-width: 400px;
-  background: #0f172a;
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
-  z-index: 1099;
-  padding: 24px;
-  padding-bottom: env(safe-area-inset-bottom, 24px);
-  overflow-y: auto;
+  width: min(380px, 90vw);
+  background: #0a1020;
+  border-left: 1px solid rgba(255,255,255,0.07);
+  z-index: 510;
   transform: translateX(100%);
-  transition: transform 0.3s ease;
-  box-shadow: -2px 0 20px rgba(0, 0, 0, 0.3);
+  transition: transform 0.32s cubic-bezier(0.4,0,0.2,1);
+  overflow-y: auto;
+  padding: 24px 20px;
+  box-sizing: border-box;
 }
 
-.mobile-menu.active {
+.mobile-drawer.open {
   transform: translateX(0);
 }
 
-.mobile-menu-close-btn {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: transparent;
-  border: none;
-  color: #f1f5f9;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 22px;
-  z-index: 1;
-}
-
-.mobile-menu-close-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: #60a5fa;
-  transform: rotate(90deg);
-}
-
-.mobile-nav-link {
-  font-family: 'Inter', sans-serif;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #cbd5e1;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.mobile-nav-link svg {
-  font-size: 18px;
-}
-
-.mobile-nav-link:hover {
-  color: #60a5fa;
-}
-
-.mobile-nav-link.has-dropdown {
+.drawer-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 28px;
 }
 
-.mobile-nav-link.has-dropdown svg {
-  transition: transform 0.3s ease;
+.drawer-close {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #f1f5f9;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.18s ease;
 }
 
-.mobile-nav-link.has-dropdown.active svg {
+.drawer-close:hover {
+  background: rgba(255,255,255,0.1);
+  transform: rotate(90deg);
+}
+
+.drawer-section {
+  margin-bottom: 6px;
+}
+
+.drawer-nav-btn {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #cbd5e1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 13px 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+
+.drawer-nav-btn:hover { color: #fff; }
+
+.drawer-nav-btn svg.chevron {
+  font-size: 16px;
+  opacity: 0.6;
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
+}
+
+.drawer-nav-btn.open svg.chevron {
   transform: rotate(180deg);
+  opacity: 1;
 }
 
-.mobile-dropdown {
+.drawer-sub {
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.3s ease;
-  background: #0b0f19;
-  border-radius: 8px;
 }
 
-.mobile-dropdown.active {
-  max-height: 1000px;
-  margin-bottom: 8px;
+.drawer-sub.open { max-height: 1200px; }
+
+.drawer-sub-inner {
+  padding: 8px 0 8px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.mobile-dropdown-item {
+.drawer-sub-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 16px;
+  padding: 10px 12px;
+  border-radius: 10px;
   text-decoration: none;
-  transition: all 0.2s ease;
+  cursor: pointer;
+  transition: background 0.18s ease;
 }
 
-.mobile-item-icon {
-  font-size: 18px;
+.drawer-sub-item:hover { background: rgba(255,255,255,0.04); }
+
+.drawer-sub-icon {
+  font-size: 15px;
   color: #60a5fa;
+  flex-shrink: 0;
 }
 
-.mobile-item-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.mobile-item-title {
-  color: #ffffff;
-  font-size: 14px;
+.drawer-sub-title {
+  font-size: 13px;
   font-weight: 500;
+  color: #e2e8f0;
 }
 
-.mobile-item-desc {
-  color: #94a3b8;
+.drawer-sub-desc {
   font-size: 11px;
+  color: #475569;
 }
 
-.mobile-actions {
+.drawer-actions {
   margin-top: 24px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
-.mobile-actions .btn-outline,
-.mobile-actions .btn-primary,
-.mobile-actions .login-link {
+.drawer-actions .act-ghost,
+.drawer-actions .act-primary {
   width: 100%;
   justify-content: center;
+  border-radius: 12px;
+  padding: 13px 20px;
+  font-size: 14px;
 }
 
-@media (min-width: 1920px) {
-  .navbar {
-    padding: 16px 60px;
-  }
-  
-  .nav-center {
-    gap: 40px;
-  }
-  
-  .nav-link {
-    font-size: 15px;
-  }
-  
-  .btn-outline,
-  .btn-primary,
-  .login-link {
-    padding: 10px 20px;
-    font-size: 14px;
-  }
-}
-
-@media (max-width: 1400px) {
-  .nav-center {
-    gap: 24px;
-  }
-  
-  .nav-link {
-    font-size: 14px;
-  }
-}
-
-@media (max-width: 1200px) {
-  .nav-center {
-    gap: 20px;
-  }
-  
-  .nav-link {
-    font-size: 13px;
-  }
-  
-  .btn-outline,
-  .btn-primary,
-  .login-link {
-    padding: 8px 14px;
-    font-size: 12px;
-  }
- 
-  .dropdown {
-    width: 700px;
-  }
-}
-
+/* ── Responsive ── */
 @media (max-width: 1024px) {
-  .navbar {
-    padding: 14px 24px;
-  }
-  
-  .nav-center {
-    gap: 12px;
-  }
-  
-  .nav-link {
-    font-size: 13px;
-    padding: 8px 12px;
-  }
-  
-  .btn-outline,
-  .btn-primary,
-  .login-link {
-    padding: 8px 14px;
-    font-size: 12px;
-  }
+  .nav-links { gap: 0; }
+  .nav-btn, .nav-plain { font-size: 13px; padding: 8px 11px; }
+  .act-ghost { display: none; }
 }
 
-@media (max-width: 968px) {
-  .nav-center,
-  .nav-right {
-    display: none;
-  }
- 
-  .mobile-menu-btn {
-    display: block;
-  }
-  
-  .navbar {
-    padding: 12px 20px;
-  }
-  
-  .logo {
-    font-size: 22px;
-  }
-}
-
-@media (max-width: 768px) {
-  .navbar {
-    padding: 12px 16px;
-  }
-  
-  .logo {
-    font-size: 20px;
-  }
-  
-  .logo-icon {
-    width: 28px;
-    height: 28px;
-  }
-  
-  .mobile-menu {
-    max-width: 100%;
-    padding: 20px;
-  }
-  
-  .mobile-nav-link {
-    font-size: 14px;
-    padding: 12px 0;
-  }
+@media (max-width: 860px) {
+  .nav-links, .nav-actions { display: none; }
+  .nav-ham { display: flex; }
+  .navbar { height: 56px; padding: 0 8px 0 16px; }
+  .nav-logo-img { height: 32px; }
 }
 
 @media (max-width: 480px) {
-  .navbar {
-    padding: 10px 12px;
-  }
-  
-  .logo {
-    font-size: 18px;
-  }
-  
-  .logo-icon {
-    width: 24px;
-    height: 24px;
-  }
-  
-  .mobile-menu-btn {
-    font-size: 22px;
-    padding: 6px;
-  }
-  
-  .mobile-menu {
-    padding: 16px;
-  }
+  .navbar { width: calc(100% - 20px); top: 10px; }
 }
 
 `
 
-function Navbar({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology, onNavigateToUseCases }) {
+/* ─────────────────────────────────────────────────
+   COMPONENT
+───────────────────────────────────────────────── */
+function Navbar({
+  onLoginClick,
+  onNavigateToProduct,
+  onLogoClick,
+  onNavigateToCompany,
+  onNavigateToSolution,
+  onNavigateToEthics,
+  onNavigateToTechnology,
+  onNavigateToUseCases,
+}) {
   const [activeDropdown, setActiveDropdown] = useState(null)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [mobileDropdowns, setMobileDropdowns] = useState({})
-  const dropdownRefs = useRef({})
-  const mobileMenuRef = useRef(null)
-  const mobileMenuBtnRef = useRef(null)
-  const clickTimeoutRef = useRef(null)
-  const clickedDropdownRef = useRef(null)
+  const [drawerOpen, setDrawerOpen]         = useState(false)
+  const [drawerSubs, setDrawerSubs]         = useState({})
 
+  const wrapperRefs = useRef({})
+  const closeTimer  = useRef(null)
+
+  /* ── helpers ── */
+  const openDD  = (name) => { clearTimeout(closeTimer.current); setActiveDropdown(name) }
+  const closeDD = ()     => { closeTimer.current = setTimeout(() => setActiveDropdown(null), 120) }
+  const keepDD  = ()     => clearTimeout(closeTimer.current)
+
+  const toggleDrawerSub = (key) =>
+    setDrawerSubs(prev => ({ ...prev, [key]: !prev[key] }))
+
+  useEffect(() => {
+    document.body.style.overflow = drawerOpen ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [drawerOpen])
+
+  useEffect(() => {
+    const esc = (e) => { if (e.key === 'Escape') { setActiveDropdown(null); setDrawerOpen(false) } }
+    document.addEventListener('keydown', esc)
+    return () => document.removeEventListener('keydown', esc)
+  }, [])
+
+  useEffect(() => () => clearTimeout(closeTimer.current), [])
+
+  /* ── data ── */
   const productsItems = [
-    { title: 'Visual AI Agents', desc: 'AI teaching avatars', icon: <FiCpu /> },
-    { title: 'Creative Reality™ Studio', desc: 'AI video studio', icon: <FiPlayCircle /> },
-    { title: 'Video Translate', desc: 'Multilingual video', icon: <FiGlobe /> },
-    { title: 'Video Campaigns', desc: 'Marketing videos', icon: <FiTrendingUp /> },
-    { title: 'Personal Avatars', desc: 'Digital instructors', icon: <FiUserCheck /> },
-    { title: 'AI Avatars & Videos', desc: 'AI avatars and video demos', icon: <FiPlayCircle /> },
-    { title: 'Technology', desc: 'Technology overview', icon: <FiCpu /> }
-  ];
+    { title: 'Visual AI Agents',         desc: 'AI teaching avatars',        icon: <FiCpu /> },
+    { title: 'Creative Reality™ Studio', desc: 'AI video studio',            icon: <FiPlayCircle /> },
+    { title: 'Video Translate',          desc: 'Multilingual video',         icon: <FiGlobe /> },
+    { title: 'Video Campaigns',          desc: 'Marketing videos',           icon: <FiTrendingUp /> },
+    { title: 'Personal Avatars',         desc: 'Digital instructors',        icon: <FiUserCheck /> },
+    { title: 'AI Avatars & Videos',      desc: 'AI avatars and video demos', icon: <FiPlayCircle /> },
+    { title: 'Technology',               desc: 'Technology overview',        icon: <FiCpu /> },
+  ]
 
   const solutionsItems = [
-    { title: 'Marketing Suite', desc: 'Campaign automation', icon: <FiBriefcase /> },
-    { title: 'Sales Solutions', desc: 'Video outreach', icon: <FiDollarSign /> },
-    { title: 'Customer Experience', desc: 'Customer engagement', icon: <FiUsers /> },
-    { title: 'Learning & Development', desc: 'Corporate training', icon: <FiBookOpen /> },
-    { title: 'AI Videos', desc: 'Automated communication', icon: <FiMail /> },
+    { title: 'Marketing Suite',       desc: 'Campaign automation',  icon: <FiBriefcase /> },
+    { title: 'Sales Solutions',       desc: 'Video outreach',       icon: <FiDollarSign /> },
+    { title: 'Customer Experience',   desc: 'Customer engagement',  icon: <FiUsers /> },
+    { title: 'Learning & Development',desc: 'Corporate training',   icon: <FiBookOpen /> },
+    { title: 'AI Videos',             desc: 'Automated comms',      icon: <FiMail /> },
   ]
 
   const companyItems = [
-    { title: 'About Us', desc: 'Company overview', icon: <FiInfo /> },
-    { title: 'Blog', desc: 'Insights articles', icon: <FiFileText /> },
-    { title: 'News', desc: 'Platform updates', icon: <FiRss /> },
-    { title: 'Ethics', desc: 'AI Ethics pledge', icon: <FiShield /> },
-    { title: 'Resources', desc: 'Learning materials', icon: <FiLayers /> },
-    { title: 'Privacy Policy', desc: 'Data protection', icon: <FiShield /> },
-    { title: 'Help Center', desc: 'Customer support', icon: <FiHelpCircle /> }
+    { title: 'About Us',        desc: 'Company overview',  icon: <FiInfo /> },
+    { title: 'Blog',            desc: 'Insights & articles',icon: <FiFileText /> },
+    { title: 'News',            desc: 'Platform updates',  icon: <FiRss /> },
+    { title: 'Ethics',          desc: 'AI Ethics pledge',  icon: <FiShield /> },
+    { title: 'Resources',       desc: 'Learning materials',icon: <FiLayers /> },
+    { title: 'Privacy Policy',  desc: 'Data protection',   icon: <FiShield /> },
+    { title: 'Help Center',     desc: 'Customer support',  icon: <FiHelpCircle /> },
   ]
 
-  const handleCompanyItemClick = (item) => {
-    if (item === 'Ethics') {
-      if (onNavigateToEthics) onNavigateToEthics()
-    } else if (onNavigateToCompany) {
-      onNavigateToCompany(item)
-    }
-    setActiveDropdown(null)
-    setMobileMenuOpen(false)
+  /* ── item click dispatcher ── */
+  const handleProductClick = (title) => {
+    if (title === 'Technology') { if (onNavigateToTechnology) onNavigateToTechnology() }
+    else if (onNavigateToProduct) onNavigateToProduct(title)
+    setActiveDropdown(null); setDrawerOpen(false)
   }
 
-  // Handle desktop dropdown clicks outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      let clickedInside = false
-
-      Object.keys(dropdownRefs.current).forEach((key) => {
-        const ref = dropdownRefs.current[key]
-        if (ref && ref.contains(event.target)) {
-          clickedInside = true
-        }
-      })
-
-      if (!clickedInside && activeDropdown) {
-        // Clear click timeout if dropdown is closed
-        if (clickTimeoutRef.current) {
-          clearTimeout(clickTimeoutRef.current)
-          clickTimeoutRef.current = null
-        }
-        clickedDropdownRef.current = null
-        setActiveDropdown(null)
-      }
-    }
-
-    if (activeDropdown) {
-      // Small delay to allow click events to complete
-      const timeoutId = setTimeout(() => {
-        document.addEventListener('mousedown', handleClickOutside)
-      }, 0)
-
-      return () => {
-        clearTimeout(timeoutId)
-        document.removeEventListener('mousedown', handleClickOutside)
-      }
-    }
-  }, [activeDropdown])
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (clickTimeoutRef.current) {
-        clearTimeout(clickTimeoutRef.current)
-      }
-    }
-  }, [])
-
-  // Handle mobile menu overlay clicks and body scroll lock
-  useEffect(() => {
-    if (mobileMenuOpen) {
-      // Lock body scroll
-      document.body.style.overflow = 'hidden'
-
-      const handleClickOutside = (event) => {
-        if (
-          mobileMenuRef.current &&
-          !mobileMenuRef.current.contains(event.target) &&
-          mobileMenuBtnRef.current &&
-          !mobileMenuBtnRef.current.contains(event.target)
-        ) {
-          setMobileMenuOpen(false)
-        }
-      }
-
-      // Small delay to prevent immediate close
-      const timeoutId = setTimeout(() => {
-        document.addEventListener('mousedown', handleClickOutside)
-      }, 100)
-
-      return () => {
-        clearTimeout(timeoutId)
-        document.removeEventListener('mousedown', handleClickOutside)
-        document.body.style.overflow = ''
-      }
-    } else {
-      document.body.style.overflow = ''
-    }
-  }, [mobileMenuOpen])
-
-  // Close mobile menu on escape key
-  useEffect(() => {
-    const handleEscape = (event) => {
-      if (event.key === 'Escape' && mobileMenuOpen) {
-        setMobileMenuOpen(false)
-      }
-    }
-
-    document.addEventListener('keydown', handleEscape)
-    return () => document.removeEventListener('keydown', handleEscape)
-  }, [mobileMenuOpen])
-
-
-  const toggleMobileDropdown = (dropdownName) => {
-    setMobileDropdowns(prev => ({
-      ...prev,
-      [dropdownName]: !prev[dropdownName]
-    }))
+  const handleSolutionClick = (title) => {
+    if (onNavigateToSolution) onNavigateToSolution(title)
+    setActiveDropdown(null); setDrawerOpen(false)
   }
 
-  const handleMobileLinkClick = (e, hasDropdown) => {
-    if (hasDropdown) {
-      e.preventDefault()
-      const dropdownName = e.currentTarget.dataset.dropdown
-      toggleMobileDropdown(dropdownName)
-    } else {
-      setMobileMenuOpen(false)
-    }
+  const handleCompanyClick = (title) => {
+    if (title === 'Ethics') { if (onNavigateToEthics) onNavigateToEthics() }
+    else if (onNavigateToCompany) onNavigateToCompany(title)
+    setActiveDropdown(null); setDrawerOpen(false)
   }
 
-  const handleMobileActionClick = () => {
-    setMobileMenuOpen(false)
-  }
+  /* ── reusable desktop dropdown item ── */
+  const DDItem = ({ item, onClick }) => (
+    <a
+      href="#"
+      className="dd-item"
+      onClick={(e) => { e.preventDefault(); onClick(item.title) }}
+    >
+      <div className="dd-icon">{item.icon}</div>
+      <div className="dd-text">
+        <div className="dd-title">{item.title}</div>
+        <div className="dd-desc">{item.desc}</div>
+      </div>
+    </a>
+  )
+
+  /* ── reusable drawer sub item ── */
+  const DrawerItem = ({ item, onClick }) => (
+    <a
+      href="#"
+      className="drawer-sub-item"
+      onClick={(e) => { e.preventDefault(); onClick(item.title) }}
+    >
+      <span className="drawer-sub-icon">{item.icon}</span>
+      <div>
+        <div className="drawer-sub-title">{item.title}</div>
+        <div className="drawer-sub-desc">{item.desc}</div>
+      </div>
+    </a>
+  )
 
   return (
     <>
       <style>{styles}</style>
-      <div className={`nav-backdrop ${activeDropdown ? 'active' : ''}`} />
-      <nav className="navbar">
-        <div className="nav-left">
-          <a
-            href="#"
-            className="logo"
-            onClick={(e) => {
-              e.preventDefault()
-              setMobileMenuOpen(false)
-              if (onLogoClick) {
-                onLogoClick()
-              }
-            }}
+
+      {/* ── Floating Navbar ── */}
+      <nav className="navbar" role="navigation" aria-label="Main navigation">
+
+        {/* Logo */}
+        <a
+          href="#"
+          className="nav-logo"
+          onClick={(e) => { e.preventDefault(); setDrawerOpen(false); if (onLogoClick) onLogoClick() }}
+          aria-label="Home"
+        >
+          <img src={LogoImg} alt="Logo" className="nav-logo-img" />
+        </a>
+
+        {/* Centre links (desktop) */}
+        <div className="nav-links">
+
+          {/* Products */}
+          <button
+            className={`nav-btn ${activeDropdown === 'products' ? 'open' : ''}`}
+            onMouseEnter={() => openDD('products')}
+            onMouseLeave={closeDD}
+            onClick={() => setActiveDropdown(activeDropdown === 'products' ? null : 'products')}
+            aria-expanded={activeDropdown === 'products'}
           >
-            <img src={LogoImg} alt="Athena VI" className="logo-img" />
-            <span style={{display: 'inline-block'}} aria-hidden="true">Athena VI</span>
-          </a>
-        </div>
-
-        <div className="nav-center">
-          {/* Pill group for nav links */}
-          <div className="nav-pills-group">
-            <div
-              className="nav-link-wrapper"
-              ref={el => dropdownRefs.current.products = el}
-              onMouseEnter={() => {
-                if (clickTimeoutRef.current) {
-                  clearTimeout(clickTimeoutRef.current)
-                  clickTimeoutRef.current = null
-                }
-                setActiveDropdown('products')
-              }}
-              onMouseLeave={() => {
-                if (clickedDropdownRef.current !== 'products') {
-                  setActiveDropdown(null)
-                }
-              }}
-            >
-              <a
-                href="#"
-                className={`nav-link ${activeDropdown === 'products' ? 'active' : ''}`}
-                onClick={(e) => {
-                  e.preventDefault()
-                  if (clickTimeoutRef.current) {
-                    clearTimeout(clickTimeoutRef.current)
-                  }
-                  clickedDropdownRef.current = 'products'
-                  setActiveDropdown('products')
-                }}
-              >
-                Products
-                <MdKeyboardArrowDown />
-              </a>
-              <div className={`dropdown products-mega ${activeDropdown === 'products' ? 'active' : ''}`}>
-                <div className="dropdown-links-side">
-                  {productsItems.map((item, index) => (
-                    <a
-                      key={index}
-                      href="#"
-                      className="dropdown-item"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        if (clickTimeoutRef.current) {
-                          clearTimeout(clickTimeoutRef.current)
-                          clickTimeoutRef.current = null
-                        }
-                        clickedDropdownRef.current = null
-                        if (item.title === 'Technology') {
-                          if (onNavigateToTechnology) onNavigateToTechnology()
-                        } else if (onNavigateToProduct) {
-                          onNavigateToProduct(item.title)
-                        }
-                        setActiveDropdown(null)
-                      }}
-                    >
-                      <div className="dropdown-icon">{item.icon}</div>
-                      <div className="dropdown-content">
-                        <div className="dropdown-title">{item.title}</div>
-                        <div className="dropdown-desc">{item.desc}</div>
-                      </div>
-                    </a>
-                  ))}
-                </div>
-                
-                <div className="dropdown-video-side">
-                  <div className="dropdown-video-container">
-                    <video 
-                      autoPlay 
-                      muted 
-                      loop 
-                      playsInline
-                    >
-                      <source src={ProductVideo} type="video/mp4" />
-                    </video>
-                  </div>
-                  <div className="video-info">
-                    <div className="video-info-title">
-                      Translate audio and captions <MdArrowOutward />
-                    </div>
-                    <p className="video-info-desc">
-                      Save time and money on localization with AI-powered video translation. Adapt audio and captions into dozens of languages fast.
-                    </p>
-                  </div>
-                  <a href="#" className="see-all-link" onClick={(e) => {
-                    e.preventDefault()
-                    if (onNavigateToTechnology) onNavigateToTechnology()
-                    setActiveDropdown(null)
-                  }}>
-                    See all Technology <MdArrowOutward />
-                  </a>
-                </div>
-              </div>
+            Products <MdKeyboardArrowDown className="chevron" />
+          </button>
+          <div
+            className={`nav-dropdown mega ${activeDropdown === 'products' ? 'open' : ''}`}
+            onMouseEnter={keepDD}
+            onMouseLeave={closeDD}
+          >
+            <div className="mega-left">
+              {productsItems.map((item, i) => (
+                <DDItem key={i} item={item} onClick={handleProductClick} />
+              ))}
             </div>
-
-            <div
-              className="nav-link-wrapper"
-              ref={el => dropdownRefs.current.solutions = el}
-              onMouseEnter={() => {
-                if (clickTimeoutRef.current) {
-                  clearTimeout(clickTimeoutRef.current)
-                  clickTimeoutRef.current = null
-                }
-                setActiveDropdown('solutions')
-              }}
-              onMouseLeave={() => {
-                if (clickedDropdownRef.current !== 'solutions') {
-                  setActiveDropdown(null)
-                }
-              }}
-            >
-              <a
-                href="#"
-                className={`nav-link ${activeDropdown === 'solutions' ? 'active' : ''}`}
-                onClick={(e) => {
-                  e.preventDefault()
-                  if (clickTimeoutRef.current) {
-                    clearTimeout(clickTimeoutRef.current)
-                  }
-                  clickedDropdownRef.current = 'solutions'
-                  setActiveDropdown('solutions')
-                }}
-              >
-                Solutions
-                <MdKeyboardArrowDown />
-              </a>
-              <div className={`dropdown ${activeDropdown === 'solutions' ? 'active' : ''}`}>
-                {solutionsItems.map((item, index) => (
-                  <a
-                    key={index}
-                    href="#"
-                    className="dropdown-item"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      if (clickTimeoutRef.current) {
-                        clearTimeout(clickTimeoutRef.current)
-                        clickTimeoutRef.current = null
-                      }
-                      clickedDropdownRef.current = null
-                      if (onNavigateToSolution) {
-                        onNavigateToSolution(item.title)
-                      }
-                      setActiveDropdown(null)
-                    }}
-                  >
-                    <div className="dropdown-icon">{item.icon}</div>
-                    <div className="dropdown-content">
-                      <div className="dropdown-title">{item.title}</div>
-                      <div className="dropdown-desc">{item.desc}</div>
-                    </div>
-                  </a>
-                ))}
+            <div className="mega-right">
+              <div className="mega-video">
+                <video autoPlay muted loop playsInline>
+                  <source src={ProductVideo} type="video/mp4" />
+                </video>
               </div>
-            </div>
-
-            <a
-              href="#"
-              className="nav-link"
-              onClick={(e) => {
-                e.preventDefault()
-                if (onNavigateToUseCases) {
-                  onNavigateToUseCases()
-                }
-              }}
-            >
-              Use Cases
-            </a>
-
-            <a href="#" className="nav-link">Pricing</a>
-
-            <div
-              className="nav-link-wrapper"
-              ref={el => dropdownRefs.current.company = el}
-              onMouseEnter={() => {
-                if (clickTimeoutRef.current) {
-                  clearTimeout(clickTimeoutRef.current)
-                  clickTimeoutRef.current = null
-                }
-                setActiveDropdown('company')
-              }}
-              onMouseLeave={() => {
-                if (clickedDropdownRef.current !== 'company') {
-                  setActiveDropdown(null)
-                }
-              }}
-            >
-              <a
-                href="#"
-                className={`nav-link ${activeDropdown === 'company' ? 'active' : ''}`}
-                onClick={(e) => {
-                  e.preventDefault()
-                  if (clickTimeoutRef.current) {
-                    clearTimeout(clickTimeoutRef.current)
-                  }
-                  clickedDropdownRef.current = 'company'
-                  setActiveDropdown('company')
-                }}
-              >
-                Company
-                <MdKeyboardArrowDown />
-              </a>
-              <div className={`dropdown ${activeDropdown === 'company' ? 'active' : ''}`}>
-                {companyItems.map((item, index) => (
-                  <a
-                    key={index}
-                    href="#"
-                    className="dropdown-item"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      if (clickTimeoutRef.current) {
-                        clearTimeout(clickTimeoutRef.current)
-                        clickTimeoutRef.current = null
-                      }
-                      handleCompanyItemClick(item.title)
-                    }}
-                  >
-                    <div className="dropdown-icon">{item.icon}</div>
-                    <div className="dropdown-content">
-                      <div className="dropdown-title">{item.title}</div>
-                      <div className="dropdown-desc">{item.desc}</div>
-                    </div>
-                  </a>
-                ))}
+              <div className="mega-video-title">
+                Translate audio &amp; captions <MdArrowOutward />
               </div>
+              <p className="mega-video-desc">
+                Save time and money on localisation with AI‑powered video translation.
+              </p>
+              <a href="#" className="mega-see-all" onClick={(e) => { e.preventDefault(); if (onNavigateToTechnology) onNavigateToTechnology(); setActiveDropdown(null) }}>
+                See all Technology <MdArrowOutward />
+              </a>
             </div>
           </div>
 
-          {/* Separator between nav pill group and auth buttons */}
-          <div className="nav-divider" />
+          {/* Solutions */}
+          <button
+            className={`nav-btn ${activeDropdown === 'solutions' ? 'open' : ''}`}
+            onMouseEnter={() => openDD('solutions')}
+            onMouseLeave={closeDD}
+            onClick={() => setActiveDropdown(activeDropdown === 'solutions' ? null : 'solutions')}
+            aria-expanded={activeDropdown === 'solutions'}
+          >
+            Solutions <MdKeyboardArrowDown className="chevron" />
+          </button>
+          <div
+            className={`nav-dropdown ${activeDropdown === 'solutions' ? 'open' : ''}`}
+            onMouseEnter={keepDD}
+            onMouseLeave={closeDD}
+          >
+            <div className="dd-list">
+              {solutionsItems.map((item, i) => (
+                <DDItem key={i} item={item} onClick={handleSolutionClick} />
+              ))}
+            </div>
+          </div>
 
+          {/* Use Cases */}
+          <a
+            href="#"
+            className="nav-plain"
+            onClick={(e) => { e.preventDefault(); if (onNavigateToUseCases) onNavigateToUseCases() }}
+          >
+            Use Cases
+          </a>
+
+          {/* Pricing */}
+          <a href="#" className="nav-plain" onClick={(e) => e.preventDefault()}>Pricing</a>
+
+          {/* Company */}
+          <button
+            className={`nav-btn ${activeDropdown === 'company' ? 'open' : ''}`}
+            onMouseEnter={() => openDD('company')}
+            onMouseLeave={closeDD}
+            onClick={() => setActiveDropdown(activeDropdown === 'company' ? null : 'company')}
+            aria-expanded={activeDropdown === 'company'}
+          >
+            Company <MdKeyboardArrowDown className="chevron" />
+          </button>
+          <div
+            className={`nav-dropdown ${activeDropdown === 'company' ? 'open' : ''}`}
+            onMouseEnter={keepDD}
+            onMouseLeave={closeDD}
+          >
+            <div className="dd-list">
+              {companyItems.map((item, i) => (
+                <DDItem key={i} item={item} onClick={handleCompanyClick} />
+              ))}
+            </div>
+          </div>
+
+        </div>
+
+        {/* Right CTA */}
+        <div className="nav-actions">
           <a
             href="#"
             className="login-link"
-            onClick={(e) => {
-              e.preventDefault()
-              if (onLoginClick) onLoginClick()
-            }}
+            onClick={(e) => { e.preventDefault(); if (onLoginClick) onLoginClick() }}
           >
             Log in
-            <MdArrowOutward />
           </a>
-
-          <button className="btn-primary" style={{ marginLeft: '8px' }}>
-            CONTACT US
-            <MdArrowOutward />
-          </button>
+          <a href="#" className="act-primary" onClick={(e) => e.preventDefault()}>
+            Request Early Access <MdArrowOutward />
+          </a>
         </div>
 
+        {/* Hamburger */}
         <button
-          ref={mobileMenuBtnRef}
-          className="mobile-menu-btn"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle menu"
-          aria-expanded={mobileMenuOpen}
+          className="nav-ham"
+          onClick={() => setDrawerOpen(true)}
+          aria-label="Open menu"
         >
-          {mobileMenuOpen ? <MdClose /> : <MdMenu />}
+          <MdMenu />
         </button>
       </nav>
 
-      {/* Mobile Menu Overlay */}
+      {/* ── Mobile overlay ── */}
       <div
-        className={`mobile-menu-overlay ${mobileMenuOpen ? 'active' : ''}`}
-        onClick={() => setMobileMenuOpen(false)}
-        aria-hidden={!mobileMenuOpen}
+        className={`nav-overlay ${drawerOpen ? 'show' : ''}`}
+        onClick={() => setDrawerOpen(false)}
+        aria-hidden="true"
       />
 
-      {/* Mobile Menu */}
-      <div
-        ref={mobileMenuRef}
-        className={`mobile-menu ${mobileMenuOpen ? 'active' : ''}`}
-        aria-hidden={!mobileMenuOpen}
-      >
-        <button
-          className="mobile-menu-close-btn"
-          onClick={() => setMobileMenuOpen(false)}
-          aria-label="Close menu"
-        >
-          <MdClose />
-        </button>
+      {/* ── Mobile drawer ── */}
+      <aside className={`mobile-drawer ${drawerOpen ? 'open' : ''}`} aria-hidden={!drawerOpen}>
 
-        <a
-          href="#"
-          className="mobile-nav-link"
-          onClick={(e) => {
-            e.preventDefault()
-            handleMobileActionClick()
-            if (onLogoClick) {
-              onLogoClick()
-            }
-          }}
-        >
-          Home
-        </a>
-
-        <a
-          href="#"
-          className={`mobile-nav-link has-dropdown ${mobileDropdowns.products ? 'active' : ''}`}
-          data-dropdown="products"
-          onClick={(e) => handleMobileLinkClick(e, true)}
-        >
-          Products
-          <MdKeyboardArrowDown />
-        </a>
-        <div className={`mobile-dropdown ${mobileDropdowns.products ? 'active' : ''}`}>
-          {productsItems.map((item, index) => (
-            <a
-              key={index}
-              href="#"
-              className="mobile-dropdown-item"
-              onClick={(e) => {
-                e.preventDefault()
-                handleMobileActionClick()
-                if (item.title === 'Technology') {
-                  if (onNavigateToTechnology) onNavigateToTechnology()
-                } else if (onNavigateToProduct) {
-                  onNavigateToProduct(item.title)
-                }
-              }}
-            >
-              <div className="mobile-item-icon">{item.icon}</div>
-              <div className="mobile-item-info">
-                <span className="mobile-item-title">{item.title}</span>
-                <span className="mobile-item-desc">{item.desc}</span>
-              </div>
-            </a>
-          ))}
-        </div>
-
-        <a
-          href="#"
-          className={`mobile-nav-link has-dropdown ${mobileDropdowns.solutions ? 'active' : ''}`}
-          data-dropdown="solutions"
-          onClick={(e) => handleMobileLinkClick(e, true)}
-        >
-          Solutions
-          <MdKeyboardArrowDown />
-        </a>
-        <div className={`mobile-dropdown ${mobileDropdowns.solutions ? 'active' : ''}`}>
-          {solutionsItems.map((item, index) => (
-            <a
-              key={index}
-              href="#"
-              className="mobile-dropdown-item"
-              onClick={(e) => {
-                e.preventDefault()
-                handleMobileActionClick()
-                if (onNavigateToSolution) {
-                  onNavigateToSolution(item.title)
-                }
-              }}
-            >
-              <div className="mobile-item-icon">{item.icon}</div>
-              <div className="mobile-item-info">
-                <span className="mobile-item-title">{item.title}</span>
-                <span className="mobile-item-desc">{item.desc}</span>
-              </div>
-            </a>
-          ))}
-        </div>
-
-        <a
-          href="#"
-          className="mobile-nav-link"
-          onClick={(e) => {
-            e.preventDefault()
-            handleMobileActionClick()
-            if (onNavigateToUseCases) {
-              onNavigateToUseCases()
-            }
-          }}
-        >
-          Use Cases
-        </a>
-
-
-        <a href="#" className="mobile-nav-link" onClick={handleMobileActionClick}>
-          Pricing
-        </a>
-
-        <a
-          href="#"
-          className={`mobile-nav-link has-dropdown ${mobileDropdowns.company ? 'active' : ''}`}
-          data-dropdown="company"
-          onClick={(e) => handleMobileLinkClick(e, true)}
-        >
-          Company
-          <MdKeyboardArrowDown />
-        </a>
-        <div className={`mobile-dropdown ${mobileDropdowns.company ? 'active' : ''}`}>
-          {companyItems.map((item, index) => (
-            <a
-              key={index}
-              href="#"
-              className="mobile-dropdown-item"
-              onClick={(e) => {
-                e.preventDefault()
-                handleCompanyItemClick(item.title)
-              }}
-            >
-              <div className="mobile-item-icon">{item.icon}</div>
-              <div className="mobile-item-info">
-                <span className="mobile-item-title">{item.title}</span>
-                <span className="mobile-item-desc">{item.desc}</span>
-              </div>
-            </a>
-          ))}
-        </div>
-
-        <div className="mobile-actions">
-          <button className="btn-outline" onClick={handleMobileActionClick}>
-            CONTACT SALES
-            <MdArrowOutward />
+        {/* Drawer header */}
+        <div className="drawer-head">
+          <img src={LogoImg} alt="Logo" style={{ height: 32, width: 'auto' }} />
+          <button className="drawer-close" onClick={() => setDrawerOpen(false)} aria-label="Close menu">
+            <MdClose />
           </button>
-          <button className="btn-primary" onClick={handleMobileActionClick}>
-            CONTACT US
-            <MdArrowOutward />
+        </div>
+
+        {/* Products */}
+        <div className="drawer-section">
+          <button
+            className={`drawer-nav-btn ${drawerSubs.products ? 'open' : ''}`}
+            onClick={() => toggleDrawerSub('products')}
+          >
+            Products <MdKeyboardArrowDown className="chevron" />
           </button>
+          <div className={`drawer-sub ${drawerSubs.products ? 'open' : ''}`}>
+            <div className="drawer-sub-inner">
+              {productsItems.map((item, i) => (
+                <DrawerItem key={i} item={item} onClick={handleProductClick} />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Solutions */}
+        <div className="drawer-section">
+          <button
+            className={`drawer-nav-btn ${drawerSubs.solutions ? 'open' : ''}`}
+            onClick={() => toggleDrawerSub('solutions')}
+          >
+            Solutions <MdKeyboardArrowDown className="chevron" />
+          </button>
+          <div className={`drawer-sub ${drawerSubs.solutions ? 'open' : ''}`}>
+            <div className="drawer-sub-inner">
+              {solutionsItems.map((item, i) => (
+                <DrawerItem key={i} item={item} onClick={handleSolutionClick} />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Use Cases */}
+        <div className="drawer-section">
+          <a
+            href="#"
+            className="drawer-nav-btn"
+            onClick={(e) => { e.preventDefault(); if (onNavigateToUseCases) onNavigateToUseCases(); setDrawerOpen(false) }}
+          >
+            Use Cases
+          </a>
+        </div>
+
+        {/* Pricing */}
+        <div className="drawer-section">
+          <a href="#" className="drawer-nav-btn" onClick={(e) => { e.preventDefault(); setDrawerOpen(false) }}>
+            Pricing
+          </a>
+        </div>
+
+        {/* Company */}
+        <div className="drawer-section">
+          <button
+            className={`drawer-nav-btn ${drawerSubs.company ? 'open' : ''}`}
+            onClick={() => toggleDrawerSub('company')}
+          >
+            Company <MdKeyboardArrowDown className="chevron" />
+          </button>
+          <div className={`drawer-sub ${drawerSubs.company ? 'open' : ''}`}>
+            <div className="drawer-sub-inner">
+              {companyItems.map((item, i) => (
+                <DrawerItem key={i} item={item} onClick={handleCompanyClick} />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="drawer-actions">
           <a
             href="#"
             className="login-link"
-            onClick={(e) => {
-              e.preventDefault()
-              handleMobileActionClick()
-              if (onLoginClick) onLoginClick()
-            }}
+            onClick={(e) => { e.preventDefault(); setDrawerOpen(false); if (onLoginClick) onLoginClick() }}
           >
             Log in
-            <MdArrowOutward />
+          </a>
+          <a href="#" className="act-primary" onClick={(e) => { e.preventDefault(); setDrawerOpen(false) }}>
+            Request Early Access <MdArrowOutward />
           </a>
         </div>
-      </div>
+      </aside>
     </>
   )
 }

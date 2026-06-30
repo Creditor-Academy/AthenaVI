@@ -35,7 +35,7 @@ const styles = `
 }
 
 .hero-arc-gallery--full {
-  height: 380px;
+  height: 420px;
   perspective: 1100px;
 }
 
@@ -61,13 +61,14 @@ const styles = `
 }
 
 .hero-arc-gallery--full .hero-arc-tile {
-  width: 240px;
-  height: 340px;
+  width: 270px;
+  height: 380px;
   border-radius: 32px;
-  margin: 0 -35px;
+  margin: 0 -30px;
 }
 
-.hero-arc-tile img {
+.hero-arc-tile img,
+.hero-arc-tile video {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -105,12 +106,12 @@ const styles = `
 
 @media (max-width: 1200px) {
   .hero-arc-gallery--full {
-    height: 320px;
+    height: 360px;
   }
 
   .hero-arc-gallery--full .hero-arc-tile {
-    width: 200px;
-    height: 290px;
+    width: 230px;
+    height: 320px;
     border-radius: 28px;
     margin: 0 -20px;
   }
@@ -129,13 +130,13 @@ const styles = `
   }
 
   .hero-arc-gallery--full {
-    height: 260px;
+    height: 300px;
   }
 
   .hero-arc-gallery--full .hero-arc-tile,
   .hero-arc-tile {
-    width: 165px;
-    height: 235px;
+    width: 185px;
+    height: 260px;
     border-radius: 22px;
     margin: 0 -20px;
   }
@@ -221,7 +222,15 @@ function HeroArcGallery({ avatars = [], fullWidth = false, pillarLabels = [] }) 
               }}
               className="hero-arc-tile"
             >
-              <img src={avatar.src} alt={avatar.name} draggable={false} />
+              <video
+                src={avatar.src}
+                muted
+                autoPlay
+                loop
+                playsInline
+                webkit-playsinline="true"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
             </div>
           ))}
         </motion.div>

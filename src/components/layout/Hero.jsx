@@ -1,10 +1,5 @@
 import { useEffect, useState } from 'react'
 import { MdArrowOutward } from 'react-icons/md'
-import avatar1 from '../../assets/Avatarr1.png'
-import avatar2 from '../../assets/Avatarr2.png'
-import avatar3 from '../../assets/Avatarr3.png'
-import avatar4 from '../../assets/Avatarr4.png'
-import avatar5 from '../../assets/Avatarr5.png'
 
 import HeroArcGallery from './HeroArcGallery'
 import heygenService from '../../services/heygenService'
@@ -13,46 +8,129 @@ import { extractHeygenList, mapAvatarGroup } from '../../utils/heygenAvatars'
 const styles = `
 .hero-container {
   width: 100%;
-  min-height: auto;
-  background: radial-gradient(circle at 50% 30%, #0b1a40 0%, #060d24 55%, #020412 100%);
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: radial-gradient(circle at 50% 30%, #080f26 0%, #040817 60%, #01020a 100%);
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   font-family: 'Inter', sans-serif;
   color: #f1f5f9;
-  padding-top: 64px;
+  padding-top: 130px;
+  padding-bottom: 40px;
+  box-sizing: border-box;
 }
 
-/* Luxury glowing mesh grid overlay */
-.hero-container::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
-  background-size: 50px 50px;
-  background-position: center;
-  pointer-events: none;
-  mask-image: radial-gradient(circle at 50% 30%, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 80%);
-  -webkit-mask-image: radial-gradient(circle at 50% 30%, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 80%);
-  z-index: 1;
-}
-
-/* Subtle glowing abstract light source */
+/* Elegant bottom gradient border line */
 .hero-container::after {
   content: "";
   position: absolute;
-  top: 15%;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(59, 130, 246, 0.2) 25%, rgba(255, 224, 130, 0.15) 50%, rgba(147, 51, 234, 0.2) 75%, transparent 100%);
+  z-index: 15;
+  pointer-events: none;
+}
+
+/* Background Graphics Container */
+.hero-bg-graphics {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Ambient Dynamic Glow Orbs */
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(130px);
+  opacity: 0.18;
+  will-change: transform;
+}
+
+.hero-orb-1 {
+  top: 5%;
+  left: 10%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, #06b6d4 0%, rgba(6, 182, 212, 0) 70%);
+  animation: floatOrb1 22s infinite ease-in-out alternate;
+}
+
+.hero-orb-2 {
+  bottom: 5%;
+  right: 10%;
+  width: 550px;
+  height: 550px;
+  background: radial-gradient(circle, #8b5cf6 0%, rgba(147, 51, 234, 0) 70%);
+  animation: floatOrb2 28s infinite ease-in-out alternate;
+}
+
+.hero-orb-3 {
+  top: 30%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 600px;
-  height: 350px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, rgba(147, 51, 234, 0.03) 70%, transparent 100%);
-  filter: blur(60px);
-  pointer-events: none;
+  width: 650px;
+  height: 650px;
+  background: radial-gradient(circle, #3b82f6 0%, rgba(59, 130, 246, 0) 70%);
+  animation: floatOrb3 35s infinite ease-in-out alternate;
+}
+
+/* Tech Dot Matrix Grid Layer */
+.hero-dot-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1.5px, transparent 1.5px);
+  background-size: 40px 40px;
+  background-position: center;
+  mask-image: radial-gradient(circle at 50% 40%, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 85%);
+  -webkit-mask-image: radial-gradient(circle at 50% 40%, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 85%);
   z-index: 2;
 }
+
+/* Cyber orbits SVG layer */
+.hero-tech-orbits {
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 850px;
+  height: 850px;
+  z-index: 3;
+  opacity: 0.45;
+  pointer-events: none;
+  animation: slowSpin 80s linear infinite;
+  mask-image: radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 100%);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 100%);
+}
+
+@keyframes floatOrb1 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(60px, 90px) scale(1.1); }
+}
+
+@keyframes floatOrb2 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-90px, -60px) scale(0.95); }
+}
+
+@keyframes floatOrb3 {
+  0% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+  50% { transform: translate(-46%, -54%) scale(1.05) rotate(180deg); }
+  100% { transform: translate(-50%, -50%) scale(1) rotate(360deg); }
+}
+
+@keyframes slowSpin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
 
 .hero-copy {
   position: relative;
@@ -202,7 +280,10 @@ const styles = `
 
 @media (max-width: 768px) {
   .hero-container {
-    padding-top: 48px;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding-top: 100px;
+    padding-bottom: 24px;
   }
 
   .hero-copy {
@@ -253,78 +334,18 @@ const styles = `
 
 function Hero() {
   const [avatarsList, setAvatarsList] = useState([
-    { src: avatar1, name: 'Ethan', role: 'AI Video Assistant' },
-    { src: avatar4, name: 'Liam', role: 'Virtual Instructor' },
-    { src: avatar2, name: 'Oliver', role: 'Digital Host' },
-    { src: avatar5, name: 'Noah', role: 'Technical Expert' },
-    { src: avatar3, name: 'Olivia', role: 'Language Coach' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_2.mp4', name: 'Ethan', role: 'AI Video Assistant' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_1.mp4', name: 'Ava', role: 'Digital Assistant' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_2+(1).mp4', name: 'Oliver', role: 'Digital Host' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_2.mp4', name: 'Sophia', role: 'Support Guide' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_3.mp4', name: 'Olivia', role: 'Language Coach' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target+(1).mp4', name: 'Liam', role: 'Virtual Instructor' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target+(2).mp4', name: 'Lucas', role: 'Product Presenter' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target.mp4', name: 'Noah', role: 'Technical Expert' },
   ])
 
   useEffect(() => {
-    async function loadPublicAvatars() {
-      const token = localStorage.getItem('accessToken');
-      console.log('Hero: Fetching public HeyGen avatars... Token present:', !!token);
-      if (!token) {
-        console.warn('Hero: Access token is missing. HeyGen API requests require authentication. Keeping static fallback avatars.');
-        return;
-      }
-      try {
-        const groupsRes = await heygenService.getAvatarGroups({ ownership: 'public', limit: 6 })
-        console.log('Hero: getAvatarGroups response:', groupsRes)
-        const groups = extractHeygenList(groupsRes, ['avatar_groups', 'groups'])
-          .map(mapAvatarGroup)
-          .filter((g) => g.id)
-          .slice(0, 6)
-
-        console.log('Hero: Mapped public avatar groups:', groups)
-        if (groups.length === 0) {
-          console.warn('Hero: No avatar groups found or filtered out')
-          return
-        }
-
-        // For each group, fetch its looks using the looks API
-        const fetchedAvatars = await Promise.all(
-          groups.map(async (group) => {
-            try {
-              console.log(`Hero: Fetching looks for group ${group.id}...`)
-              const looksRes = await heygenService.getAvatarLooks({
-                group_id: group.id,
-                ownership: 'public',
-                limit: 1,
-              })
-              console.log(`Hero: Looks response for group ${group.id}:`, looksRes)
-              const looks = extractHeygenList(looksRes, ['avatar_looks', 'looks'])
-              if (looks && looks.length > 0) {
-                const look = looks[0]
-                const image = look.preview_image_url || look.thumbnail_url || look.normal_image_url || look.image_url || group.image
-                return {
-                  src: image,
-                  name: look.avatar_name || look.name || group.name,
-                  role: group.subtitle || 'AI Presenter',
-                }
-              }
-            } catch (err) {
-              console.warn(`Failed to fetch looks for avatar group ${group.id}:`, err)
-            }
-            return {
-              src: group.image,
-              name: group.name,
-              role: group.subtitle || 'AI Presenter',
-            }
-          })
-        )
-
-        const validFetched = fetchedAvatars.filter(av => av && av.src)
-        console.log('Hero: Setting avatars list to:', validFetched)
-        if (validFetched.length > 0) {
-          setAvatarsList(validFetched)
-        }
-      } catch (error) {
-        console.error('Failed to load public avatars from HeyGen API:', error)
-      }
-    }
-
-    loadPublicAvatars()
+    // HeyGen image fetching disabled to display local high-fidelity videos in the hero marquee instead of static images
   }, [])
 
 
@@ -332,6 +353,23 @@ function Hero() {
     <>
       <style>{styles}</style>
       <div className="hero-container">
+        {/* Modern Graphic Background Elements */}
+        <div className="hero-bg-graphics">
+          <div className="hero-orb hero-orb-1" />
+          <div className="hero-orb hero-orb-2" />
+          <div className="hero-orb hero-orb-3" />
+          <div className="hero-dot-grid" />
+          <div className="hero-tech-orbits">
+            <svg viewBox="0 0 1000 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="500" cy="500" r="400" stroke="rgba(255, 255, 255, 0.03)" strokeWidth="1" strokeDasharray="4 8" />
+              <circle cx="500" cy="500" r="300" stroke="rgba(59, 130, 246, 0.05)" strokeWidth="1.5" />
+              <circle cx="500" cy="500" r="200" stroke="rgba(255, 224, 130, 0.03)" strokeWidth="1" strokeDasharray="20 10 5 10" />
+              <circle cx="500" cy="100" r="4" fill="rgba(59, 130, 246, 0.3)" />
+              <circle cx="500" cy="300" r="3" fill="rgba(255, 179, 0, 0.3)" />
+            </svg>
+          </div>
+        </div>
+
         <div className="hero-copy">
           <h1 className="hero-title">
             Create AI-Powered Videos
@@ -344,7 +382,7 @@ function Hero() {
           </p>
           <div className="hero-cta">
             <button type="button" className="btn-primary">
-              START FREE TRIAL
+              Request Early Access
               <MdArrowOutward />
             </button>
             <button type="button" className="btn-outline">

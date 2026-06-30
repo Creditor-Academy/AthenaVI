@@ -314,7 +314,7 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-      {/* Reset Password Page - Standalone */}
+        {/* Reset Password Page - Standalone */}
       {window.location.pathname.includes('/reset-password') && (
         <div style={{
           position: 'fixed',
