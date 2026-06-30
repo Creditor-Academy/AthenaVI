@@ -52,6 +52,7 @@ import {
   pollUntilHeygenPlaybackReady,
 } from '../../utils/heygenVideo'
 import { downloadFinalRenderStream, exportFullProjectVideo } from '../../utils/projectRender'
+import { validateExport } from '../../utils/exportValidation'
 import {
   applyDurationToSceneClips,
   buildSceneDurationPatch,
@@ -378,6 +379,7 @@ function Create({ onBack, initialConfig = null }) {
   const [exportStatus, setExportStatus] = useState('')
   const [exportProgress, setExportProgress] = useState(0)
   const [exportError, setExportError] = useState('')
+  const [exportErrorObject, setExportErrorObject] = useState(null)
   const [showTemplateModal, setShowTemplateModal] = useState(false)
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false)
   const [timelineHeight, setTimelineHeight] = useState(() =>
@@ -1727,6 +1729,7 @@ function Create({ onBack, initialConfig = null }) {
     setExportPhase('configure')
     setExportStatus('')
     setExportError('')
+    setExportErrorObject(null)
     setShowExportModal(true)
   }
 
@@ -1740,10 +1743,14 @@ function Create({ onBack, initialConfig = null }) {
     setExportStatus('Saving project…')
     setExportProgress(0)
     setExportError('')
+    setExportErrorObject(null)
     setIsExporting(true)
     setExportReady(null)
 
     try {
+      // Pre-export validation
+      validateExport(projectRef.current)
+
       const result = await exportFullProjectVideo({
         workspaceService,
         workspaceId,
@@ -1777,6 +1784,7 @@ function Create({ onBack, initialConfig = null }) {
       bumpCreditsRefresh()
     } catch (err) {
       console.error('[Export] Full render download failed:', err)
+      setExportErrorObject(err)
       setExportError(err?.message || 'Download failed. The video may still be rendering.')
       setExportPhase('error')
     } finally {
@@ -1816,6 +1824,7 @@ function Create({ onBack, initialConfig = null }) {
     setExportStatus('')
     setExportProgress(0)
     setExportError('')
+    setExportErrorObject(null)
     setExportReady(null)
     setIsDownloadingExport(false)
   }
@@ -2524,6 +2533,10 @@ function Create({ onBack, initialConfig = null }) {
         if (existingAudioIndex >= 0) nextClips[existingAudioIndex] = { ...nextClips[existingAudioIndex], ...audioClip }
         else nextClips.push(audioClip)
 
+        // Stretch all non-audio clips (backgrounds, text, overlays) to the new scene duration
+        // so timeline layers remain in sync with the narration length.
+        const normalizedClips = normalizeClipsToScene(nextClips, duration)
+
         return {
           ...s,
           // voice-only presenter fields
@@ -2544,8 +2557,10 @@ function Create({ onBack, initialConfig = null }) {
             ...(s.generation || {}),
             speechGenerationId: speechId,
             status: 'completed',
+            // Clear any stale HeyGen video id so the scene is treated as voice-only
+            heygenVideoId: undefined,
           },
-          clips: nextClips,
+          clips: normalizedClips,
         }
       })
 
@@ -2834,6 +2849,8 @@ function Create({ onBack, initialConfig = null }) {
         onClose={() => setShowVoiceOnlySpeechModal(false)}
         initialScript={activeScene?.script || ''}
         initialVoiceId={activeScene?.voiceId || ''}
+        initialSpeed={activeScene?.voiceSettings?.speed ?? 1}
+        initialLocale={activeScene?.voiceSettings?.locale || 'en-US'}
         onGenerate={handleGenerateVoiceOnlySpeech}
       />
       <GeneratedVideoModal 
@@ -2859,6 +2876,7 @@ function Create({ onBack, initialConfig = null }) {
         statusMessage={exportStatus}
         progress={exportProgress}
         errorMessage={exportError}
+        errorObject={exportErrorObject}
         onStartExport={handleStartExport}
         onDownload={exportPhase === 'success' ? handleDownloadExport : undefined}
         readyFilename={exportReady?.filename || ''}

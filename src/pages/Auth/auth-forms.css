@@ -177,3 +177,78 @@
   margin-bottom: 24px;
   text-align: left;
 }
+
+/* ─── OTP 6-box input ─────────────────────────────────────── */
+.otp-anim-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 72px;
+  margin: 8px 0 4px;
+}
+
+.otp-boxes-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.otp-box {
+  width: 46px;
+  height: 56px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+  background: #f8fafc;
+  outline: none;
+  caret-color: transparent;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  appearance: none;
+  -moz-appearance: textfield;
+}
+
+.otp-box::-webkit-outer-spin-button,
+.otp-box::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.otp-box:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+  background: #ffffff;
+}
+
+.otp-box--filled {
+  border-color: #6366f1;
+  background: #fafafe;
+}
+
+/* ─── OTP success animation ───────────────────────────────── */
+.otp-success-circle {
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0fdf4;
+  border-radius: 50%;
+  border: 2px solid #86efac;
+}
+
+.otp-check-svg {
+  width: 52px;
+  height: 52px;
+  overflow: visible;
+}
+
+.otp-success-label {
+  text-align: center;
+  color: #16a34a;
+  font-weight: 600;
+  font-size: 15px;
+  margin: 8px 0 0;
+}

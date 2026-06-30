@@ -331,6 +331,11 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
       return;
     }
 
+    if (creationType === 'prompt' && promptWordCount > 150) {
+      alert('Please decrease your prompt to 150 words or less.');
+      return;
+    }
+
     if (creationType !== 'prompt' && !selectedFile) {
       alert('Please select a file (image or video) for your avatar.');
       return;
@@ -425,10 +430,13 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
     }
   };
 
+  const promptCharLimit = 1000;
+  const promptTokenCount = Math.ceil(creationPrompt.length / 4);
+  const promptWordCount = creationPrompt.trim() === '' ? 0 : creationPrompt.trim().split(/\s+/).length;
   const requiredCredits = resolveAvatarCreateCreditCost(creditEstimate);
-  const insufficientCredits =
-    personalCredits != null && !hasEnoughCreditsForAvatar(personalCredits, requiredCredits);
+  const insufficientCredits = personalCredits != null && !hasEnoughCreditsForAvatar(personalCredits, requiredCredits);
   const displayCreditsUsed = creationSuccess?.creditsUsed ?? creditsUsed;
+
 
   if (!isOpen || !typeOption) return null;
 
@@ -492,7 +500,9 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
                 </p>
                 <h3>{displayName} is live</h3>
                 <p className="creation-success-panel__lead">
-                  {creationSuccess.trainingTimedOut
+                  {creationType === 'prompt'
+                    ? 'Your AI avatar has been generated successfully from your description. You can now use it in your videos or generate a new version.'
+                    : creationSuccess.trainingTimedOut
                     ? `Training is still finishing in the background (${AVATAR_TRAINING_TYPICAL_LABEL}). You can start creating looks now — previews update when training completes.`
                     : 'Your likeness is trained and consent is approved. The next step is creating looks — outfits and scenes that keep the same person.'}
                 </p>
@@ -512,27 +522,74 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
                   </div>
                 ) : null}
                 <div className="creation-success-actions creation-success-actions--premium">
-                  {onCreateLooks ? (
-                    <button
-                      type="button"
-                      className="submit-creation-btn-premium submit-creation-btn-premium--hero"
-                      onClick={handleCreateLooksClick}
-                    >
-                      <Wand2 size={20} />
-                      <span>Create looks for {displayName}</span>
-                      <ArrowRight size={18} className="creation-success-cta-arrow" />
-                    </button>
-                  ) : null}
-                  <button
-                    type="button"
-                    className="creation-secondary-btn"
-                    onClick={() => {
-                      onCompleted?.(true);
-                      onClose?.();
-                    }}
-                  >
-                    Back to My Avatars
-                  </button>
+                  {creationType === 'prompt' ? (
+                    <>
+                      <button
+                        type="button"
+                        className="submit-creation-btn-premium submit-creation-btn-premium--hero"
+                        onClick={() => {
+                          onCompleted?.(true);
+                          onClose?.();
+                        }}
+                      >
+                        <CheckCircle size={20} />
+                        <span>Done</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="creation-secondary-btn"
+                        onClick={() => {
+                          resetCreationState();
+                          setCreationPhase('form');
+                        }}
+                      >
+                        Generate Again
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {onCreateLooks ? (
+                        <button
+                          type="button"
+                          className="submit-creation-btn-premium submit-creation-btn-premium--hero"
+                          onClick={handleCreateLooksClick}
+                        >
+                          <Wand2 size={20} />
+                          <span>Create looks for {displayName}</span>
+                          <ArrowRight size={18} className="creation-success-cta-arrow" />
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        className="creation-secondary-btn"
+                        onClick={() => {
+                          onCompleted?.(true);
+                          onClose?.();
+                        }}
+                      >
+                        Back to My Avatars
+                      </button>
+                      <button
+                        type="button"
+                        className="submit-creation-btn-premium"
+                        onClick={() => {
+                          resetCreationState();
+                          setCreationPhase('form');
+                        }}
+                      >
+                        Generate Again
+                      </button>
+                      <button
+                        type="button"
+                        className="creation-secondary-btn"
+                        onClick={() => {
+                          onClose?.();
+                        }}
+                      >
+                        Done
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ) : creationPhase === 'consent' && consentStep ? (
@@ -562,10 +619,16 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
                   uploadProgress={uploadProgress}
                 />
               ) : (
-                <div className="creation-loading">
+                <div className="creation-loading-prompt">
+                  <div className="avatar-preview-placeholder">
+                    <Wand2 size={40} className="generating-pulsate-icon" />
+                  </div>
                   <Loader2 size={60} className="spin-animation" />
                   <h3>{creationStatus}</h3>
-                  <p>We are orchestrating your digital persona. This won&apos;t take long.</p>
+                  <p>Generating your avatar...</p>
+                  {creationType === 'prompt' && creationPrompt && (
+                    <p className="creation-token-info">Estimated tokens: ~{promptTokenCount}</p>
+                  )}
                 </div>
               )
             ) : (
@@ -607,9 +670,21 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
                     <label className="section-label">AI Personality / Description</label>
                     <textarea
                       placeholder="Describe the appearance, ethnicity, age, and professional style of the avatar you want to generate..."
+                      maxLength={promptCharLimit}
                       value={creationPrompt}
                       onChange={(event) => setCreationPrompt(event.target.value)}
                     />
+                    <div className="char-token-counter">
+                      <span className={`char-counter ${promptWordCount > 150 ? 'char-counter--warning' : ''}`}>
+                        {promptWordCount}/150 words
+                      </span>
+                      <span className="token-counter">~{promptTokenCount} tokens</span>
+                    </div>
+                    {promptWordCount > 150 && (
+                      <p className="photo-prompt-warning-message" role="alert">
+                        Please decrease the word count to 150 or less.
+                      </p>
+                    )}
                   </div>
                 ) : creationType === 'digital_twin' ? (
                   <div className="input-group">
@@ -693,7 +768,11 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
                 type="button"
                 className="create-avatar-modal-btn create-avatar-modal-btn-primary"
                 onClick={handleCreateAvatar}
-                disabled={insufficientCredits || creditsInfoLoading}
+                disabled={
+                  insufficientCredits ||
+                  creditsInfoLoading ||
+                  (creationType === 'prompt' && promptWordCount > 150)
+                }
               >
                 <Terminal size={18} />
                 <span>{isDigitalTwin ? 'Upload & continue to consent' : 'Build My AI Avatar'}</span>

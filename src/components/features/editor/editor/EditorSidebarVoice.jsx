@@ -3,6 +3,14 @@ import { MdMic, MdSearch, MdPlayArrow, MdVolumeUp } from 'react-icons/md';
 import { Loader2 } from 'lucide-react';
 import heygenService from '../../../../services/heygenService';
 
+// Voice engines unsupported by the HeyGen TTS speech generation endpoint.
+const UNSUPPORTED_TTS_ENGINES = ['STARFISH']
+
+function isSupportedTtsVoice(rawVoice) {
+  const engine = String(rawVoice?.voice_engine || rawVoice?.engine || rawVoice?.provider || '').toUpperCase()
+  return engine === '' || !UNSUPPORTED_TTS_ENGINES.includes(engine)
+}
+
 const EditorSidebarVoice = ({ activeScene, activeSceneId, updateScene }) => {
   const [voices, setVoices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,12 +40,14 @@ const EditorSidebarVoice = ({ activeScene, activeSceneId, updateScene }) => {
 
         console.log(`Athena VI (Editor): Mapping ${voiceList.length} voices`, { raw: responseData });
         
-        const mappedVoices = voiceList.map(v => ({
+        // Filter out engines not supported by TTS speech generation (e.g. STARFISH)
+        const mappedVoices = voiceList.filter(isSupportedTtsVoice).map(v => ({
           id: v.voice_id || v.id,
           name: v.name || v.display_name || 'AI Voice',
           gender: v.gender || 'unknown',
           language: v.language || v.language_name || 'English',
           previewUrl: v.preview_audio_url || v.preview_url || v.preview_audio,
+          engine: String(v.voice_engine || v.engine || v.provider || '').toUpperCase() || null,
           tags: v.tags || []
         }));
         

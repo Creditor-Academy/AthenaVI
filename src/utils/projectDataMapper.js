@@ -392,12 +392,18 @@ function buildGeneration(scene) {
     scene.generation?.heygenVideoId ||
     avatarContent.heygenVideoId;
 
-  if (!heygenVideoId) return undefined;
+  const speechId =
+    scene.speechGenerationId ||
+    scene.generation?.speechGenerationId ||
+    scene.presenter?.speechGenerationId;
+
+  if (!heygenVideoId && !speechId) return undefined;
 
   const status = scene.heygenStatus || scene.generation?.status || 'completed';
   return {
     status: status === 'completed' || status === 'success' ? 'completed' : status,
-    heygenVideoId: heygenVideoId || undefined,
+    ...(heygenVideoId ? { heygenVideoId } : {}),
+    ...(speechId ? { speechGenerationId: speechId } : {}),
   };
 }
 
@@ -462,7 +468,9 @@ export function toBackendProjectData(projectState) {
       const presenter = buildPresenter(scene);
       const generation = buildGeneration(scene);
       if (presenter) scenePayload.presenter = presenter;
-      if (generation?.heygenVideoId) scenePayload.generation = generation;
+      if (generation && (generation.heygenVideoId || generation.speechGenerationId)) {
+        scenePayload.generation = generation;
+      }
 
       return scenePayload;
     }),
