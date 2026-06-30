@@ -260,9 +260,9 @@ function BenefitsSection() {
       <section className={`benefits-section ${hoveredIndex !== null ? 'is-hovering' : ''}`}>
         <div className="benefits-content">
           <div className="benefits-header">
-            <h2 className="benefits-title">The Benefits of Athena VI's Sales Platform</h2>
+            <h2 className="benefits-title">The Benefits of Virtual Studio's Sales Platform</h2>
             <p className="benefits-subtitle">
-              Empower your sales team with AI-powered video solutions that drive engagement, 
+              Empower your sales team with AI-powered video solutions that drive engagement,
               increase conversion rates, and scale your outreach efforts globally.
             </p>
           </div>
@@ -270,14 +270,14 @@ function BenefitsSection() {
           <div className="marquee-container">
             <div className="marquee-track">
               {marqueeItems.map((benefit, index) => (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className="benefits-card"
                   onMouseEnter={() => setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}
                 >
-                  <img 
-                    src={benefit.image} 
+                  <img
+                    src={benefit.image}
                     alt={benefit.title}
                     className="benefits-card-image"
                     loading="lazy"

@@ -24,7 +24,7 @@
   max-height: 100dvh;
   overflow: hidden;
   padding: var(--auth-shell-pad);
-  background: var(--auth-shell-bg);
+  background: url('../../assets/login_bg.jpg') center / cover no-repeat;
   font-family: 'Inter', sans-serif;
   box-sizing: border-box;
 }
@@ -67,7 +67,9 @@
 .auth-panel--brand {
   flex: 1.1;
   min-width: 280px;
-  background: var(--auth-panel-brand-bg);
+  background: rgba(8, 20, 50, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   color: #ffffff;
   padding: 28px 32px 24px;
 }
@@ -79,9 +81,9 @@
   pointer-events: none;
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--auth-brand) 35%, transparent) 0%,
-    color-mix(in srgb, var(--auth-brand) 8%, transparent) 45%,
-    color-mix(in srgb, var(--auth-brand) 45%, transparent) 100%
+    rgba(4, 10, 30, 0.4) 0%,
+    rgba(4, 10, 30, 0.1) 45%,
+    rgba(4, 10, 30, 0.55) 100%
   );
 }
 

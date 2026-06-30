@@ -1328,471 +1328,471 @@ function Ethics({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToPr
 
 
       <div className="ethics-outer-wrap">
-      <div className="ethics-page">
-        <Navbar
-          onLoginClick={onLoginClick}
-          onLogoClick={onLogoClick}
-          onNavigateToSolution={onNavigateToSolution}
-          onNavigateToProduct={onNavigateToProduct}
-          onNavigateToEthics={onNavigateToEthics}
-          onNavigateToTechnology={onNavigateToTechnology}
-          onNavigateToCompany={onNavigateToCompany}
-        />
-
-        {/* Section 1: Hero */}
-        <div className="ethics-hero" id="Introduction" style={{ backgroundImage: `url(${EthicsBg})` }}>
-          <motion.div
-            className="decoration-blob blob-1"
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.5, 0.8, 0.5],
-              x: [0, 50, 0]
-            }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <motion.div
-            className="decoration-blob blob-2"
-            animate={{
-              scale: [1, 1.3, 1],
-              opacity: [0.3, 0.6, 0.3],
-              y: [0, 30, 0]
-            }}
-            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        <div className="ethics-page">
+          <Navbar
+            onLoginClick={onLoginClick}
+            onLogoClick={onLogoClick}
+            onNavigateToSolution={onNavigateToSolution}
+            onNavigateToProduct={onNavigateToProduct}
+            onNavigateToEthics={onNavigateToEthics}
+            onNavigateToTechnology={onNavigateToTechnology}
+            onNavigateToCompany={onNavigateToCompany}
           />
 
-          <motion.div
-            className="ethics-hero-content"
-            initial={{ opacity: 0, x: -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
-            <motion.span
-              className="hero-tag"
-              initial={{ opacity: 0, y: 10 }}
+          {/* Section 1: Hero */}
+          <div className="ethics-hero" id="Introduction" style={{ backgroundImage: `url(${EthicsBg})` }}>
+            <motion.div
+              className="decoration-blob blob-1"
+              animate={{
+                scale: [1, 1.2, 1],
+                opacity: [0.5, 0.8, 0.5],
+                x: [0, 50, 0]
+              }}
+              transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+            />
+            <motion.div
+              className="decoration-blob blob-2"
+              animate={{
+                scale: [1, 1.3, 1],
+                opacity: [0.3, 0.6, 0.3],
+                y: [0, 30, 0]
+              }}
+              transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+            />
+
+            <motion.div
+              className="ethics-hero-content"
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+            >
+              <motion.span
+                className="hero-tag"
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
+              >
+                Ethics First
+              </motion.span>
+              <h1 className="ethics-title">
+                Ethical Pledge for <br />
+                <span className="hero-accent">Synthetic Media</span>
+              </h1>
+              <p className="ethics-subtitle">
+                At Athena Virtual Studio, we believe synthetic media represents one of the most powerful technological advancements of our generation.
+              </p>
+            </motion.div>
+
+            <motion.div
+              className="scroll-indicator"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1 }}
+            >
+              <div className="scroll-line" />
+              <span>Scroll to Explore</span>
+            </motion.div>
+          </div>
+
+          <div className="section-container">
+            {/* Section 2: Vision + Responsibility */}
+            <motion.div
+              className="split-layout"
+              id="Vision"
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 1 }}
+            >
+              {/* Left Text */}
+              <div className="split-text">
+                <div className="vision-tag">
+                  <span className="vision-tag-dot" />
+                  Our Foundation
+                </div>
+                <h2 className="split-heading">
+                  Vision
+                </h2>
+                <p className="split-body">
+                  Through generative AI, we can unlock creativity, increase access to knowledge, and dramatically improve how people learn, communicate, and build businesses.
+                </p>
+                <p className="split-body">
+                  With this power comes responsibility. Synthetic media must be developed and deployed with care — to empower people, not deceive, exploit, or manipulate them.
+                </p>
+                <div className="vision-stats">
+                  <div className="vision-stat">
+                    <span className="vision-stat-number">120+</span>
+                    <span className="vision-stat-label">Languages</span>
+                  </div>
+                  <div className="vision-stat">
+                    <span className="vision-stat-number">1M+</span>
+                    <span className="vision-stat-label">Users</span>
+                  </div>
+                  <div className="vision-stat">
+                    <span className="vision-stat-number">80%</span>
+                    <span className="vision-stat-label">Cost Reduced</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Graphic */}
+              <div className="vision-graphic-card">
+                <div className="vision-graphic-ring" />
+                <div className="vision-graphic-ring" />
+                <div className="vision-graphic-ring" />
+
+                <motion.div
+                  className="vision-center-icon"
+                  animate={{ scale: [1, 1.08, 1] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <Layers size={36} color="#ffffff" />
+                </motion.div>
+
+                {/* Badge: Top Left */}
+                <motion.div
+                  className="vision-badge"
+                  style={{ top: 40, left: 32 }}
+                  animate={{ y: [0, -6, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <div className="vision-badge-icon"><Eye size={16} /></div>
+                  <div>
+                    <div className="vision-badge-text">Transparency</div>
+                    <div className="vision-badge-sub">Always disclosed</div>
+                  </div>
+                </motion.div>
+
+                {/* Badge: Bottom Right */}
+                <motion.div
+                  className="vision-badge"
+                  style={{ bottom: 40, right: 32 }}
+                  animate={{ y: [0, 6, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                >
+                  <div className="vision-badge-icon"><Shield size={16} /></div>
+                  <div>
+                    <div className="vision-badge-text">Accountability</div>
+                    <div className="vision-badge-sub">Full responsibility</div>
+                  </div>
+                </motion.div>
+
+                {/* Badge: Bottom Left */}
+                <motion.div
+                  className="vision-badge"
+                  style={{ bottom: 40, left: 32 }}
+                  animate={{ y: [0, -5, 0] }}
+                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                >
+                  <div className="vision-badge-icon"><Lock size={16} /></div>
+                  <div>
+                    <div className="vision-badge-text">Privacy</div>
+                    <div className="vision-badge-sub">Data protected</div>
+                  </div>
+                </motion.div>
+              </div>
+            </motion.div>
+
+            {/* Section 3: Risks Section */}
+            <motion.div
+              className="risks-box"
+              id="Commitment"
+              initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
+              transition={{ duration: 0.8 }}
             >
-              Ethics First
-            </motion.span>
-            <h1 className="ethics-title">
-              Ethical Pledge for <br />
-              <span className="hero-accent">Synthetic Media</span>
-            </h1>
-            <p className="ethics-subtitle">
-              At Athena Virtual Instructor, we believe synthetic media represents one of the most powerful technological advancements of our generation.
-            </p>
-          </motion.div>
+              {/* Decorative blobs */}
+              <div className="risks-blob risks-blob-1" />
+              <div className="risks-blob risks-blob-2" />
 
-          <motion.div
-            className="scroll-indicator"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1 }}
-          >
-            <div className="scroll-line" />
-            <span>Scroll to Explore</span>
-          </motion.div>
-        </div>
+              <div className="risks-inner">
+                <div className="risks-left">
+                  <div className="risks-tag">
+                    <span className="risks-chip-dot" style={{ background: '#f87171' }} />
+                    Our Commitment
+                  </div>
+                  <div className="risks-header">
+                    <h2>The Responsibility</h2>
+                  </div>
+                  <p className="risks-body">
+                    Operating at the frontier of AI-powered communication, we accept the responsibility to protect individuals, safeguard data, and ensure our technology creates real value for society.
+                  </p>
+                  <div className="risks-chips">
+                    {['Bias Prevention', 'Privacy Violations', 'Misinformation', 'Misuse by Bad Actors'].map((risk) => (
+                      <div key={risk} className="risks-chip">
+                        <span className="risks-chip-dot" />
+                        {risk}
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
-        <div className="section-container">
-          {/* Section 2: Vision + Responsibility */}
-          <motion.div
-            className="split-layout"
-            id="Vision"
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 1 }}
-          >
-            {/* Left Text */}
-            <div className="split-text">
-              <div className="vision-tag">
-                <span className="vision-tag-dot" />
-                Our Foundation
+                <div className="risks-right">
+                  <motion.div
+                    className="risks-icon-wrap"
+                    animate={{ scale: [1, 1.06, 1] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    <AlertTriangle size={44} color="#f87171" />
+                  </motion.div>
+                  <div className="risks-stat">
+                    <div className="risks-stat-number">4</div>
+                    <div className="risks-stat-label">Risk Areas</div>
+                  </div>
+                </div>
               </div>
-              <h2 className="split-heading">
-                Vision
-              </h2>
-              <p className="split-body">
-                Through generative AI, we can unlock creativity, increase access to knowledge, and dramatically improve how people learn, communicate, and build businesses.
-              </p>
-              <p className="split-body">
-                With this power comes responsibility. Synthetic media must be developed and deployed with care — to empower people, not deceive, exploit, or manipulate them.
-              </p>
-              <div className="vision-stats">
-                <div className="vision-stat">
-                  <span className="vision-stat-number">120+</span>
-                  <span className="vision-stat-label">Languages</span>
+            </motion.div>
+
+            {/* Section 4: Core Principles */}
+            <div className="ethics-section" id="Principles">
+              <div className="principles-header">
+                <motion.div
+                  className="values-tag"
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                >
+                  Core Values
+                </motion.div>
+                <motion.h2
+                  className="ethics-section-title"
+                  style={{ margin: 0 }}
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                >
+                  Our Core Principles
+                </motion.h2>
+              </div>
+
+              <div className="principles-slider-container">
+                <button
+                  className="principles-nav-button nav-prev"
+                  onClick={() => handleScroll('left', scrollRef)}
+                  disabled={!canScrollLeft}
+                  aria-label="Previous principle"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+
+                <div className="principles-grid" ref={scrollRef}>
+                  {[
+                    { icon: <Eye />, title: "Transparency", desc: "Users will always know when content is AI-generated, ensuring authentic interactions." },
+                    { icon: <CheckCircle />, title: "Consent", desc: "No identity, voice, or likeness will ever be used without explicit, verifiable permission." },
+                    { icon: <Lock />, title: "Privacy", desc: "Personal data is strictly protected using industry-leading encryption and never exploited." },
+                    { icon: <Scale />, title: "Fairness", desc: "We actively work to minimize algorithmic bias and prevent harmful or discriminatory outputs." },
+                    { icon: <Shield />, title: "Accountability", desc: "We take full responsibility for our tools and maintain strict usage policies for all partners." }
+                  ].map((item, i) => (
+                    <motion.div
+                      key={i}
+                      className="glass-card"
+                      initial={{ opacity: 0, y: 30 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.6, delay: i * 0.15 }}
+                    >
+                      <div className="card-icon-container">
+                        {item.icon}
+                      </div>
+                      <h3>{item.title}</h3>
+                      <p>{item.desc}</p>
+                      <div className="card-arrow">
+                        Read Policy
+                        <Check size={14} />
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
-                <div className="vision-stat">
-                  <span className="vision-stat-number">1M+</span>
-                  <span className="vision-stat-label">Users</span>
-                </div>
-                <div className="vision-stat">
-                  <span className="vision-stat-number">80%</span>
-                  <span className="vision-stat-label">Cost Reduced</span>
-                </div>
+
+                <button
+                  className="principles-nav-button nav-next"
+                  onClick={() => handleScroll('right', scrollRef)}
+                  disabled={!canScrollRight}
+                  aria-label="Next principle"
+                >
+                  <ChevronRight size={24} />
+                </button>
               </div>
             </div>
 
-            {/* Right Graphic */}
-            <div className="vision-graphic-card">
-              <div className="vision-graphic-ring" />
-              <div className="vision-graphic-ring" />
-              <div className="vision-graphic-ring" />
-
-              <motion.div
-                className="vision-center-icon"
-                animate={{ scale: [1, 1.08, 1] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <Layers size={36} color="#ffffff" />
-              </motion.div>
-
-              {/* Badge: Top Left */}
-              <motion.div
-                className="vision-badge"
-                style={{ top: 40, left: 32 }}
-                animate={{ y: [0, -6, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <div className="vision-badge-icon"><Eye size={16} /></div>
-                <div>
-                  <div className="vision-badge-text">Transparency</div>
-                  <div className="vision-badge-sub">Always disclosed</div>
-                </div>
-              </motion.div>
-
-              {/* Badge: Bottom Right */}
-              <motion.div
-                className="vision-badge"
-                style={{ bottom: 40, right: 32 }}
-                animate={{ y: [0, 6, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-              >
-                <div className="vision-badge-icon"><Shield size={16} /></div>
-                <div>
-                  <div className="vision-badge-text">Accountability</div>
-                  <div className="vision-badge-sub">Full responsibility</div>
-                </div>
-              </motion.div>
-
-              {/* Badge: Bottom Left */}
-              <motion.div
-                className="vision-badge"
-                style={{ bottom: 40, left: 32 }}
-                animate={{ y: [0, -5, 0] }}
-                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-              >
-                <div className="vision-badge-icon"><Lock size={16} /></div>
-                <div>
-                  <div className="vision-badge-text">Privacy</div>
-                  <div className="vision-badge-sub">Data protected</div>
-                </div>
-              </motion.div>
-            </div>
-          </motion.div>
-
-          {/* Section 3: Risks Section */}
-          <motion.div
-            className="risks-box"
-            id="Commitment"
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
-            {/* Decorative blobs */}
-            <div className="risks-blob risks-blob-1" />
-            <div className="risks-blob risks-blob-2" />
-
-            <div className="risks-inner">
-              <div className="risks-left">
-                <div className="risks-tag">
-                  <span className="risks-chip-dot" style={{ background: '#f87171' }} />
-                  Our Commitment
-                </div>
-                <div className="risks-header">
-                  <h2>The Responsibility</h2>
-                </div>
-                <p className="risks-body">
-                  Operating at the frontier of AI-powered communication, we accept the responsibility to protect individuals, safeguard data, and ensure our technology creates real value for society.
+            {/* Section 5: How We Will Lead */}
+            <div className="leadership-scroll-section" id="Leadership">
+              {/* LEFT — sticky header */}
+              <div className="leadership-side-header">
+                <motion.div
+                  className="values-tag"
+                  style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#4ade80', borderColor: 'rgba(34, 197, 94, 0.3)' }}
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                >
+                  Leadership
+                </motion.div>
+                <motion.h2
+                  className="ethics-section-title"
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.1 }}
+                >
+                  How We Will Lead
+                </motion.h2>
+                <p className="leadership-side-subtext">
+                  Our commitments aren't aspirational — they're operational. Every principle below is actively enforced across our platform.
                 </p>
-                <div className="risks-chips">
-                  {['Bias Prevention', 'Privacy Violations', 'Misinformation', 'Misuse by Bad Actors'].map((risk) => (
-                    <div key={risk} className="risks-chip">
-                      <span className="risks-chip-dot" />
-                      {risk}
+
+                {/* Stats */}
+                <div className="leadership-side-stats">
+                  {[
+                    { value: '24/7', label: 'Active Monitoring' },
+                    { value: '100%', label: 'Consent Required' },
+                    { value: 'Zero', label: 'Tolerance Policy' },
+                  ].map((s) => (
+                    <div key={s.label} className="leadership-side-stat">
+                      <div className="leadership-side-stat-bar" />
+                      <div>
+                        <div className="leadership-side-stat-value">{s.value}</div>
+                        <div className="leadership-side-stat-label">{s.label}</div>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="risks-right">
-                <motion.div
-                  className="risks-icon-wrap"
-                  animate={{ scale: [1, 1.06, 1] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                >
-                  <AlertTriangle size={44} color="#f87171" />
-                </motion.div>
-                <div className="risks-stat">
-                  <div className="risks-stat-number">4</div>
-                  <div className="risks-stat-label">Risk Areas</div>
+              {/* RIGHT — cards scroll with the page */}
+              <div className="leadership-slider-container">
+                <div className="leadership-grid">
+                  {[
+                    {
+                      icon: <UserCheck size={22} />,
+                      title: 'Identity Protection',
+                      desc: "Requiring proper authorization for any real person's identity before synthesis.",
+                      detail: "Every use of a real person's face, voice, or likeness requires verified, explicit written consent — stored securely and auditable at any time.",
+                    },
+                    {
+                      icon: <ShieldAlert size={22} />,
+                      title: 'Abuse Prevention',
+                      desc: 'Maintaining strong safeguards and active monitoring to prevent deepfake misuse.',
+                      detail: 'Our real-time content scanning system flags potential misuse patterns and escalates to human review within minutes — 24/7, 365 days a year.',
+                    },
+                    {
+                      icon: <Tag size={22} />,
+                      title: 'Clear Labeling',
+                      desc: 'Providing unequivocal labeling for all AI-generated content to ensure viewer clarity.',
+                      detail: 'All synthetic media produced with our platform includes a cryptographically verified provenance tag — always detectable by inspection tools.',
+                    },
+                    {
+                      icon: <Activity size={22} />,
+                      title: 'Continuous Audit',
+                      desc: 'Regularly auditing our systems for safety, fairness, and potential algorithmic bias.',
+                      detail: 'An independent third-party panel conducts quarterly reviews of our AI outputs across demographic groups to eliminate systemic bias.',
+                    },
+                    {
+                      icon: <AlertCircle size={22} />,
+                      title: 'Safety First',
+                      desc: 'Preventing the use of our technology for impersonation, fraud, or intentional harm.',
+                      detail: 'Our policy framework prohibits use in election interference, financial fraud, or non-consensual content — violations result in immediate account termination.',
+                    },
+                  ].map((item, i) => (
+                    <motion.div
+                      key={i}
+                      className="leadership-card"
+                      initial={{ opacity: 0, x: 30 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: i * 0.1 }}
+                    >
+                      {/* Left col: number → connector → icon */}
+                      <div className="leadership-card-left">
+                        <div className="leadership-card-num">{String(i + 1).padStart(2, '0')}</div>
+                        <div className="leadership-card-connector" />
+                        <div className="leadership-card-icon">{item.icon}</div>
+                      </div>
+
+                      {/* Right col: text */}
+                      <div className="leadership-card-body">
+                        <h3>{item.title}</h3>
+                        <p className="leadership-card-desc">{item.desc}</p>
+                        <p className="leadership-card-detail">{item.detail}</p>
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
               </div>
             </div>
-          </motion.div>
 
-          {/* Section 4: Core Principles */}
-          <div className="ethics-section" id="Principles">
-            <div className="principles-header">
-              <motion.div
-                className="values-tag"
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-              >
-                Core Values
-              </motion.div>
-              <motion.h2
-                className="ethics-section-title"
-                style={{ margin: 0 }}
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-              >
-                Our Core Principles
-              </motion.h2>
-            </div>
-
-            <div className="principles-slider-container">
-              <button
-                className="principles-nav-button nav-prev"
-                onClick={() => handleScroll('left', scrollRef)}
-                disabled={!canScrollLeft}
-                aria-label="Previous principle"
-              >
-                <ChevronLeft size={24} />
-              </button>
-
-              <div className="principles-grid" ref={scrollRef}>
-                {[
-                  { icon: <Eye />, title: "Transparency", desc: "Users will always know when content is AI-generated, ensuring authentic interactions." },
-                  { icon: <CheckCircle />, title: "Consent", desc: "No identity, voice, or likeness will ever be used without explicit, verifiable permission." },
-                  { icon: <Lock />, title: "Privacy", desc: "Personal data is strictly protected using industry-leading encryption and never exploited." },
-                  { icon: <Scale />, title: "Fairness", desc: "We actively work to minimize algorithmic bias and prevent harmful or discriminatory outputs." },
-                  { icon: <Shield />, title: "Accountability", desc: "We take full responsibility for our tools and maintain strict usage policies for all partners." }
-                ].map((item, i) => (
-                  <motion.div
-                    key={i}
-                    className="glass-card"
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: i * 0.15 }}
-                  >
-                    <div className="card-icon-container">
-                      {item.icon}
-                    </div>
-                    <h3>{item.title}</h3>
-                    <p>{item.desc}</p>
-                    <div className="card-arrow">
-                      Read Policy
-                      <Check size={14} />
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-
-              <button
-                className="principles-nav-button nav-next"
-                onClick={() => handleScroll('right', scrollRef)}
-                disabled={!canScrollRight}
-                aria-label="Next principle"
-              >
-                <ChevronRight size={24} />
-              </button>
-            </div>
           </div>
 
-          {/* Section 5: How We Will Lead */}
-          <div className="leadership-scroll-section" id="Leadership">
-            {/* LEFT — sticky header */}
-            <div className="leadership-side-header">
-              <motion.div
-                className="values-tag"
-                style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#4ade80', borderColor: 'rgba(34, 197, 94, 0.3)' }}
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-              >
-                Leadership
-              </motion.div>
-              <motion.h2
-                className="ethics-section-title"
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.1 }}
-              >
-                How We Will Lead
-              </motion.h2>
-              <p className="leadership-side-subtext">
-                Our commitments aren't aspirational — they're operational. Every principle below is actively enforced across our platform.
+          {/* Section 6: Ongoing Promise */}
+          <div className="promise-block" id="Promise">
+            <motion.div
+              className="promise-icon-wrap"
+              initial={{ opacity: 0, scale: 0.5 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+            >
+              <ShieldCheck size={32} weight="fill" />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1 }}
+            >
+              <p className="promise-text">
+                This pledge is not a one-time statement — it is a <span className="hero-accent">living commitment</span>.
               </p>
-
-              {/* Stats */}
-              <div className="leadership-side-stats">
-                {[
-                  { value: '24/7', label: 'Active Monitoring' },
-                  { value: '100%', label: 'Consent Required' },
-                  { value: 'Zero', label: 'Tolerance Policy' },
-                ].map((s) => (
-                  <div key={s.label} className="leadership-side-stat">
-                    <div className="leadership-side-stat-bar" />
-                    <div>
-                      <div className="leadership-side-stat-value">{s.value}</div>
-                      <div className="leadership-side-stat-label">{s.label}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* RIGHT — cards scroll with the page */}
-            <div className="leadership-slider-container">
-              <div className="leadership-grid">
-                {[
-                  {
-                    icon: <UserCheck size={22} />,
-                    title: 'Identity Protection',
-                    desc: "Requiring proper authorization for any real person's identity before synthesis.",
-                    detail: "Every use of a real person's face, voice, or likeness requires verified, explicit written consent — stored securely and auditable at any time.",
-                  },
-                  {
-                    icon: <ShieldAlert size={22} />,
-                    title: 'Abuse Prevention',
-                    desc: 'Maintaining strong safeguards and active monitoring to prevent deepfake misuse.',
-                    detail: 'Our real-time content scanning system flags potential misuse patterns and escalates to human review within minutes — 24/7, 365 days a year.',
-                  },
-                  {
-                    icon: <Tag size={22} />,
-                    title: 'Clear Labeling',
-                    desc: 'Providing unequivocal labeling for all AI-generated content to ensure viewer clarity.',
-                    detail: 'All synthetic media produced with our platform includes a cryptographically verified provenance tag — always detectable by inspection tools.',
-                  },
-                  {
-                    icon: <Activity size={22} />,
-                    title: 'Continuous Audit',
-                    desc: 'Regularly auditing our systems for safety, fairness, and potential algorithmic bias.',
-                    detail: 'An independent third-party panel conducts quarterly reviews of our AI outputs across demographic groups to eliminate systemic bias.',
-                  },
-                  {
-                    icon: <AlertCircle size={22} />,
-                    title: 'Safety First',
-                    desc: 'Preventing the use of our technology for impersonation, fraud, or intentional harm.',
-                    detail: 'Our policy framework prohibits use in election interference, financial fraud, or non-consensual content — violations result in immediate account termination.',
-                  },
-                ].map((item, i) => (
-                  <motion.div
-                    key={i}
-                    className="leadership-card"
-                    initial={{ opacity: 0, x: 30 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: i * 0.1 }}
-                  >
-                    {/* Left col: number → connector → icon */}
-                    <div className="leadership-card-left">
-                      <div className="leadership-card-num">{String(i + 1).padStart(2, '0')}</div>
-                      <div className="leadership-card-connector" />
-                      <div className="leadership-card-icon">{item.icon}</div>
-                    </div>
-
-                    {/* Right col: text */}
-                    <div className="leadership-card-body">
-                      <h3>{item.title}</h3>
-                      <p className="leadership-card-desc">{item.desc}</p>
-                      <p className="leadership-card-detail">{item.detail}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
+              <p className="ethics-text" style={{ marginTop: '32px', maxWidth: '700px', margin: '32px auto 0' }}>
+                We invite the broader AI community to join us in building a future where synthetic media is trusted, ethical, and beneficial for everyone.
+              </p>
+            </motion.div>
           </div>
 
-        </div>
-
-        {/* Section 6: Ongoing Promise */}
-        <div className="promise-block" id="Promise">
+          {/* Section 7: Signature */}
           <motion.div
-            className="promise-icon-wrap"
-            initial={{ opacity: 0, scale: 0.5 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-          >
-            <ShieldCheck size={32} weight="fill" />
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            className="signature-section"
+            initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 1 }}
+            transition={{ duration: 0.8 }}
           >
-            <p className="promise-text">
-              This pledge is not a one-time statement — it is a <span className="hero-accent">living commitment</span>.
-            </p>
-            <p className="ethics-text" style={{ marginTop: '32px', maxWidth: '700px', margin: '32px auto 0' }}>
-              We invite the broader AI community to join us in building a future where synthetic media is trusted, ethical, and beneficial for everyone.
-            </p>
-          </motion.div>
-        </div>
-
-        {/* Section 7: Signature */}
-        <motion.div
-          className="signature-section"
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-        >
-          <div className="founder-avatar-wrap">
-            <div className="founder-avatar">
-              <div className="founder-avatar-inner">
-                <Target size={48} weight="bold" />
+            <div className="founder-avatar-wrap">
+              <div className="founder-avatar">
+                <div className="founder-avatar-inner">
+                  <Target size={48} weight="bold" />
+                </div>
+              </div>
+              <div className="signature-badge">
+                <CheckCircle size={20} weight="fill" />
               </div>
             </div>
-            <div className="signature-badge">
-              <CheckCircle size={20} weight="fill" />
-            </div>
-          </div>
 
-          <div className="signature-info">
-            <p className="signature-name">Paulmichael Rowland</p>
-            <p className="signature-role">Founder, Athena Virtual Instructor</p>
-            <div className="pledge-verified">
-              <ShieldCheck size={14} color="#22c55e" weight="fill" />
-              Official Pledge Verified
+            <div className="signature-info">
+              <p className="signature-name">Paulmichael Rowland</p>
+              <p className="signature-role">Founder, Athena Virtual Studio</p>
+              <div className="pledge-verified">
+                <ShieldCheck size={14} color="#22c55e" weight="fill" />
+                Official Pledge Verified
+              </div>
+              <p className="ethics-date" style={{ marginTop: '24px', fontSize: '12px', opacity: 0.6 }}>
+                ESTABLISHED <span className="ethics-date">JANUARY 2024</span>
+              </p>
             </div>
-            <p className="ethics-date" style={{ marginTop: '24px', fontSize: '12px', opacity: 0.6 }}>
-              ESTABLISHED <span className="ethics-date">JANUARY 2024</span>
-            </p>
-          </div>
-        </motion.div>
+          </motion.div>
 
-        <Footer
-          onLogoClick={onLogoClick}
-          onNavigateToProduct={onNavigateToProduct}
-          onNavigateToSolution={onNavigateToSolution}
-          onNavigateToEthics={onNavigateToEthics}
-          onNavigateToTechnology={onNavigateToTechnology}
-          onNavigateToCompany={onNavigateToCompany}
-          onNavigateToUseCases={onNavigateToUseCases}
-        />
-      </div>
+          <Footer
+            onLogoClick={onLogoClick}
+            onNavigateToProduct={onNavigateToProduct}
+            onNavigateToSolution={onNavigateToSolution}
+            onNavigateToEthics={onNavigateToEthics}
+            onNavigateToTechnology={onNavigateToTechnology}
+            onNavigateToCompany={onNavigateToCompany}
+            onNavigateToUseCases={onNavigateToUseCases}
+          />
+        </div>
       </div>
     </>
   )

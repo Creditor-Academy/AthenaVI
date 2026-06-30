@@ -236,8 +236,8 @@ function UseCases({ onLoginClick, onLogoClick, onNavigateToSolution, onNavigateT
     <>
       <style>{styles}</style>
       <div className="use-cases-page">
-        <Navbar 
-          onLoginClick={onLoginClick} 
+        <Navbar
+          onLoginClick={onLoginClick}
           onLogoClick={onLogoClick}
           onNavigateToSolution={onNavigateToSolution}
           onNavigateToProduct={onNavigateToProduct}
@@ -248,7 +248,7 @@ function UseCases({ onLoginClick, onLogoClick, onNavigateToSolution, onNavigateT
         />
 
         <section className="use-cases-hero">
-          <motion.span 
+          <motion.span
             className="hero-tag"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -256,7 +256,7 @@ function UseCases({ onLoginClick, onLogoClick, onNavigateToSolution, onNavigateT
           >
             Real-World impact
           </motion.span>
-          <motion.h1 
+          <motion.h1
             className="hero-title"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -264,19 +264,19 @@ function UseCases({ onLoginClick, onLogoClick, onNavigateToSolution, onNavigateT
           >
             Universal Applications for Visual AI
           </motion.h1>
-          <motion.p 
+          <motion.p
             className="hero-subtitle"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            Discover how visionary companies are using Athena VI to redefine communication, education, and customer engagement across every industry.
+            Discover how visionary companies are using Virtual Studio to redefine communication, education, and customer engagement across every industry.
           </motion.p>
         </section>
 
         <section className="use-cases-grid">
           {useCases.map((uc, index) => (
-            <motion.div 
+            <motion.div
               key={index}
               className="use-case-card"
               initial={{ opacity: 0, y: 40 }}
@@ -310,14 +310,14 @@ function UseCases({ onLoginClick, onLogoClick, onNavigateToSolution, onNavigateT
             ))}
           </div>
           <div style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto', border: '1px solid rgba(255,255,255,0.1)', padding: '60px', borderRadius: '32px', background: 'rgba(255,255,255,0.02)' }}>
-             <h3 style={{ fontSize: '28px', marginBottom: '20px' }}>Education & E-Learning</h3>
-             <p style={{ color: '#94a3b8', fontSize: '18px', lineHeight: '1.6' }}>
-               Create interactive courses with digital instructors that can answer student questions in over 120 languages. Perfect for global certification programs and corporate upskilling.
-             </p>
+            <h3 style={{ fontSize: '28px', marginBottom: '20px' }}>Education & E-Learning</h3>
+            <p style={{ color: '#94a3b8', fontSize: '18px', lineHeight: '1.6' }}>
+              Create interactive courses with digital instructors that can answer student questions in over 120 languages. Perfect for global certification programs and corporate upskilling.
+            </p>
           </div>
         </section>
 
-        <Footer 
+        <Footer
           onLogoClick={onLogoClick}
           onNavigateToProduct={onNavigateToProduct}
           onNavigateToSolution={onNavigateToSolution}

@@ -12,7 +12,7 @@ const CARDS = [
     tagColor: "#1a3a2a",
     img: CourseCreatorImg,
     stat: "10K+",
-    statLabel: "Courses created using Athena VI",
+    statLabel: "Courses created using Virtual Studio",
     bottomLabel: "Start creating",
   },
   {
@@ -23,7 +23,7 @@ const CARDS = [
     bottomLabel: "Let them be heard",
   },
   {
-    title: "Join 5000+ People Using Athena VI",
+    title: "Join 5000+ People Using Virtual Studio",
     tag: null,
     img: null,
     bottomLabel: "Join community",
@@ -60,7 +60,7 @@ const ArrowIcon = ({ color = "#fff" }) => (
 // [outer-left, inner-left, center, inner-right, outer-right]
 // U-shape: outers are highest (smallest translateY), center is lowest
 const HEIGHTS = [420, 460, 500, 460, 420];
-const WIDTHS  = [200, 215, 240, 215, 200];
+const WIDTHS = [200, 215, 240, 215, 200];
 const Y_OFFSETS = [0, 30, 60, 30, 0];   // U-valley: outers up, center down
 
 export default function UseCases() {
@@ -88,7 +88,7 @@ export default function UseCases() {
             letterSpacing: "-1.5px",
           }}
         >
-          Who uses Athena VI
+          Who uses Virtual Studio
         </h2>
 
         <p
@@ -100,7 +100,7 @@ export default function UseCases() {
             margin: "0 auto",
           }}
         >
-          Professionals across education, training, and marketing use Athena VI to create
+          Professionals across education, training, and marketing use Virtual Studio to create
           high-quality videos — instantly.
         </p>
       </div>

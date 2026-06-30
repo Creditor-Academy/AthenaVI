@@ -288,7 +288,7 @@ const LDWhyChoose = () => {
           viewport={{ once: true }}
         >
           <div className="ld-why-badge">Platform Benefits</div>
-          <h2 className="ld-why-choose-title">Why Teams Choose Athena VI</h2>
+          <h2 className="ld-why-choose-title">Why Teams Choose Virtual Studio</h2>
           <p className="ld-why-choose-subtitle">
             Deliver impactful training experiences with AI-powered video creation,
             personalization, and seamless scalability across your global organization.

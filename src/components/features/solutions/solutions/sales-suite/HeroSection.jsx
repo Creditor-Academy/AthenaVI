@@ -354,7 +354,7 @@ function HeroSection() {
           <div className="hero-left">
             <h1 className="hero-title">Transform Your Sales Strategy with AI</h1>
             <p className="hero-description">
-              In today's competitive sales landscape, grabbing your prospects' attention has never been more important. Athena VI focuses on harnessing state-of-the-art artificial intelligence to produce customized, compelling video materials that enable sales teams to achieve remarkable results across all their interactions.
+              In today's competitive sales landscape, grabbing your prospects' attention has never been more important. Virtual Studio focuses on harnessing state-of-the-art artificial intelligence to produce customized, compelling video materials that enable sales teams to achieve remarkable results across all their interactions.
             </p>
             <div className="hero-stats">
               <div className="hero-stat">
@@ -380,8 +380,8 @@ function HeroSection() {
             <div className="features-grid">
               {features.map((feature, index) => (
                 <div key={index} className="feature-panel">
-                  <img 
-                    src={feature.image} 
+                  <img
+                    src={feature.image}
                     alt={feature.label}
                     className="feature-panel-image"
                     loading="lazy"

@@ -201,7 +201,7 @@ scene01.clips = [
 
   // Main text content
   text('t_title_1', 3, SAFE.x, 160, 600, 100, 'Create Project', { fontFamily: F.sans, fontWeight: '800', fontSize: 60, color: C.dark }, 'slide-title'),
-  text('t_sub_1', 3, SAFE.x, 280, 500, 160, 'First, start your project in Athena VI. Choose from our catalog of pre-designed templates to jumpstart your creation, or start from a blank canvas to build your vision from scratch.', { fontFamily: F.sans, fontSize: 18, color: C.grey, lineHeight: 1.6 }),
+  text('t_sub_1', 3, SAFE.x, 280, 500, 160, 'First, start your project in Virtual Studio. Choose from our catalog of pre-designed templates to jumpstart your creation, or start from a blank canvas to build your vision from scratch.', { fontFamily: F.sans, fontSize: 18, color: C.grey, lineHeight: 1.6 }),
 
   // Accent circular badge
   shape('badge_circle_1', 3, 620, 450, 100, 100, { backgroundColor: C.primary, borderRadius: '50%', boxShadow: '0 8px 24px rgba(59,130,246,0.2)' }),
@@ -288,7 +288,7 @@ scene04.clips = [
 
   // Main text content
   text('t_title_4', 3, SAFE.x, 160, 600, 100, 'Generate Video', { fontFamily: F.sans, fontWeight: '800', fontSize: 60, color: C.dark }, 'slide-title'),
-  text('t_sub_4', 3, SAFE.x, 280, 500, 160, 'Finally, click Generate. Athena VI processes your scenes and layers into a seamless HD video, ready to download and share with your audience instantly.', { fontFamily: F.sans, fontSize: 18, color: C.grey, lineHeight: 1.6 }),
+  text('t_sub_4', 3, SAFE.x, 280, 500, 160, 'Finally, click Generate. Virtual Studio processes your scenes and layers into a seamless HD video, ready to download and share with your audience instantly.', { fontFamily: F.sans, fontSize: 18, color: C.grey, lineHeight: 1.6 }),
 
   // Accent circular badge
   shape('badge_circle_4', 3, 620, 450, 100, 100, { backgroundColor: C.primary, borderRadius: '50%', boxShadow: '0 8px 24px rgba(59,130,246,0.2)' }),

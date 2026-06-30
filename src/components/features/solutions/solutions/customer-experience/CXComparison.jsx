@@ -288,7 +288,7 @@ const CXComparison = () => {
       <style>{styles}</style>
       <div className="cx-comp-container">
         {/* Section Header */}
-        <motion.div 
+        <motion.div
           className="cx-comp-header"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -305,8 +305,8 @@ const CXComparison = () => {
         {/* Comparison Table */}
         <div className="cx-comp-table-wrapper">
           <div className="cx-comp-badge">RECOMMENDED</div>
-          
-          <motion.div 
+
+          <motion.div
             className="cx-comp-grid"
             variants={container}
             initial="hidden"
@@ -317,7 +317,7 @@ const CXComparison = () => {
             <div className="cx-comp-grid-header">
               <div className="cx-comp-header-cell">Features</div>
               <div className="cx-comp-header-cell">Traditional Tools</div>
-              <div className="cx-comp-header-cell cx-comp-ai-header">Athena VI</div>
+              <div className="cx-comp-header-cell cx-comp-ai-header">Virtual Studio</div>
             </div>
 
             {/* Feature Comparison Rows */}
@@ -340,7 +340,7 @@ const CXComparison = () => {
         </div>
 
         {/* Center CTA Pill */}
-        <motion.div 
+        <motion.div
           className="cx-comp-footer"
           initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
