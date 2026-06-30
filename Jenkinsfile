@@ -100,10 +100,10 @@ pipeline {
 
     post {
         success {
-            echo "========================================"
+            echo "======================================="
             echo "Frontend Pipeline Completed Successfully"
             echo "Docker Image Pushed Successfully"
-            echo "========================================"
+            echo "======================================="
         }
 
         failure {
