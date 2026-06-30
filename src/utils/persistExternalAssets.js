@@ -158,7 +158,9 @@ function buildUploadName(clip, url) {
 async function urlToUploadFile(url, filename) {
   const response = await fetch(url);
   if (!response.ok) {
-    throw new Error(`Could not download media (${response.status})`);
+    // Return null so callers can skip this asset gracefully instead of
+    // crashing the entire export when an external URL is broken/expired.
+    return null;
   }
   const blob = await response.blob();
   const type = blob.type || 'image/jpeg';
@@ -207,10 +209,11 @@ function applyFillAssetToClip(clip, asset) {
  */
 export async function persistExternalSceneAssets(scenes = [], workspaceId, { onProgress } = {}) {
   if (!workspaceId || !Array.isArray(scenes) || scenes.length === 0) {
-    return { scenes, uploadCount: 0 };
+    return { scenes, uploadCount: 0, skippedUrls: new Set() };
   }
 
   const urlCache = new Map();
+  const skippedUrls = new Set(); // URLs that failed to download or were rejected by the server
   let uploadCount = 0;
 
   const resolveUrl = async (url, clip) => {
@@ -246,8 +249,31 @@ export async function persistExternalSceneAssets(scenes = [], workspaceId, { onP
             !isWorkspaceAssetUrl(src) &&
             (isEphemeralUrl(src) || /^https?:\/\//i.test(src))
           ) {
-            const asset = await resolveUrl(src, clip);
-            next = applyAssetToClip(next, asset);
+            const file = await urlToUploadFile(src, buildUploadName(clip, src));
+            if (file) {
+              try {
+                if (!urlCache.has(src)) {
+                  onProgress?.(
+                    uploadCount === 0
+                      ? 'Uploading template images to workspace…'
+                      : `Uploading template images (${uploadCount + 1})…`
+                  );
+                  const asset = await assetService.uploadAsset(workspaceId, file);
+                  uploadCount += 1;
+                  urlCache.set(src, asset);
+                }
+                next = applyAssetToClip(next, urlCache.get(src));
+              } catch (uploadErr) {
+                // Server rejected the file (e.g. SVG not allowed) — skip gracefully
+                console.warn(`[Export] Server rejected asset "${clip.role || clip.type}" (${src}):`, uploadErr?.message);
+                skippedUrls.add(src);
+              }
+            } else {
+              console.warn(
+                `[Export] Skipping broken asset for clip "${clip.role || clip.type}" — URL returned non-OK: ${src}`
+              );
+              skippedUrls.add(src);
+            }
           }
 
           if (
@@ -256,16 +282,30 @@ export async function persistExternalSceneAssets(scenes = [], workspaceId, { onP
             !isWorkspaceAssetUrl(clip.fillSrc) &&
             (isEphemeralUrl(clip.fillSrc) || /^https?:\/\//i.test(clip.fillSrc))
           ) {
-            const fillAsset = await resolveUrl(clip.fillSrc, clip);
-            next = applyFillAssetToClip(next, fillAsset);
+            const fillFile = await urlToUploadFile(clip.fillSrc, buildUploadName(clip, clip.fillSrc));
+            if (fillFile) {
+              try {
+                const fillAsset = await resolveUrl(clip.fillSrc, clip);
+                next = applyFillAssetToClip(next, fillAsset);
+              } catch (uploadErr) {
+                console.warn(`[Export] Server rejected fill asset "${clip.role || clip.type}":`, uploadErr?.message);
+                skippedUrls.add(clip.fillSrc);
+              }
+            } else {
+              console.warn(
+                `[Export] Skipping broken fill asset for clip "${clip.role || clip.type}" — URL returned non-OK: ${clip.fillSrc}`
+              );
+              skippedUrls.add(clip.fillSrc);
+            }
           }
         }
       } catch (err) {
         const label = clip.role || clip.assetKey || clip.type || 'media';
-        throw new Error(
-          `Failed to upload "${label}" for export: ${err?.message || 'unknown error'}. ` +
-            'Replace the image from your workspace library or upload a local file.'
-        );
+        // Log but don't crash — a missing logo/icon shouldn't block the whole export.
+        console.error(`[Export] Could not persist asset "${label}":`, err);
+        const src = clipMediaSrc(clip);
+        if (src) skippedUrls.add(src);
+        if (clip.fillSrc) skippedUrls.add(clip.fillSrc);
       }
 
       nextClips.push(next);
@@ -278,10 +318,10 @@ export async function persistExternalSceneAssets(scenes = [], workspaceId, { onP
     dispatchStorageRefresh();
   }
 
-  return { scenes: nextScenes, uploadCount };
+  return { scenes: nextScenes, uploadCount, skippedUrls };
 }
 
-export function getUnresolvedExportMediaIssues(scenes = []) {
+export function getUnresolvedExportMediaIssues(scenes = [], skippedUrls = new Set()) {
   const issues = [];
 
   scenes.forEach((scene, index) => {
@@ -308,6 +348,9 @@ export function getUnresolvedExportMediaIssues(scenes = []) {
       const assetId = content?.assetId || clip.fillAssetId;
       const src = clip.src || content?.src || content?.url;
 
+      // Skip URLs that were already attempted but couldn't be uploaded (wrong format, 404, etc.)
+      if (src && skippedUrls.has(src)) continue;
+
       if (!assetId && src && /^https?:\/\//i.test(src) && !isWorkspaceAssetUrl(src)) {
         issues.push(
           `${label}: "${clip.role || clip.assetKey || clip.type}" is still an external URL — re-upload or replace it`
@@ -324,13 +367,14 @@ export function getUnresolvedExportMediaIssues(scenes = []) {
  */
 export async function prepareScenesForBackendExport(scenes = [], workspaceId, { onProgress } = {}) {
   const flattened = flattenStaticAvatarClips(scenes);
-  const { scenes: persisted, uploadCount } = await persistExternalSceneAssets(
+  const { scenes: persisted, uploadCount, skippedUrls } = await persistExternalSceneAssets(
     flattened,
     workspaceId,
     { onProgress }
   );
 
-  const issues = getUnresolvedExportMediaIssues(persisted);
+  // Pass skippedUrls so assets that failed (unsupported format, 404) don't block export
+  const issues = getUnresolvedExportMediaIssues(persisted, skippedUrls);
   if (issues.length) {
     throw new Error(issues.join(' '));
   }

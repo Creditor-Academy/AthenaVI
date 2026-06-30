@@ -51,6 +51,17 @@ export function isBackgroundClip(clip) {
   return false;
 }
 
+/**
+ * True when a background clip supports direct resize while remaining in the
+ * background layer (i.e. avatar backgrounds). Position remains locked to the
+ * canvas origin; only width/height can be adjusted.
+ */
+export function isResizableBackgroundClip(clip) {
+  if (!clip) return false;
+  if (!isBackgroundClip(clip)) return false;
+  return clip.type === 'avatar' || clip.role === 'avatar';
+}
+
 export function clipRenderRank(clip) {
   if (isBackgroundClip(clip)) return -1000 + (clip.layer ?? 0);
   return clip.layer ?? 0;

@@ -52,7 +52,6 @@ import {
   pollUntilHeygenPlaybackReady,
 } from '../../utils/heygenVideo'
 import { downloadFinalRenderStream, exportFullProjectVideo } from '../../utils/projectRender'
-import { validateExport } from '../../utils/exportValidation'
 import {
   applyDurationToSceneClips,
   buildSceneDurationPatch,
@@ -1748,9 +1747,6 @@ function Create({ onBack, initialConfig = null }) {
     setExportReady(null)
 
     try {
-      // Pre-export validation
-      validateExport(projectRef.current)
-
       const result = await exportFullProjectVideo({
         workspaceService,
         workspaceId,
@@ -1839,6 +1835,11 @@ function Create({ onBack, initialConfig = null }) {
   const generateSceneVideo = async (sceneId, overrides = null) => {
     const scene = project.scenes.find(s => s.id === sceneId);
     if (!scene && !overrides) return;
+
+    // Request browser notification permission if not already granted/denied
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
 
     const avatarLookId =
       overrides?.avatarLookId || overrides?.avatarType || getSceneAvatarLookId(scene);
@@ -2071,6 +2072,19 @@ function Create({ onBack, initialConfig = null }) {
             detail: { url: videoUrl, sceneId, creditsUsed },
           })
         );
+
+        // Native OS notification if tab is in background
+        if (typeof document !== 'undefined' && document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+          try {
+            const currentScene = projectRef.current.scenes.find((s) => s.id === sceneId) || scene;
+            const sceneName = currentScene?.title || `Scene`;
+            new Notification('AI Presenter Ready', {
+              body: `Your presenter video for "${sceneName}" has finished generating!`,
+            });
+          } catch (e) {
+            console.warn('[Notification] Failed to send background notification:', e);
+          }
+        }
       };
 
       try {
@@ -2085,6 +2099,19 @@ function Create({ onBack, initialConfig = null }) {
         console.error('HeyGen generation polling failed:', err);
         updateScene(sceneId, { heygenStatus: 'failed' });
         window.dispatchEvent(new CustomEvent('generation-failed'));
+
+        // Native OS notification if tab is in background
+        if (typeof document !== 'undefined' && document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+          try {
+            const currentScene = projectRef.current.scenes.find((s) => s.id === sceneId) || scene;
+            const sceneName = currentScene?.title || `Scene`;
+            new Notification('Avatar Generation Failed', {
+              body: `Generation failed for "${sceneName}". Please try again.`,
+            });
+          } catch (e) {
+            console.warn('[Notification] Failed to send background notification:', e);
+          }
+        }
       }
 
     } catch (error) {
@@ -2864,6 +2891,7 @@ function Create({ onBack, initialConfig = null }) {
         onUseInEditor={handleUseGeneratedVideo}
         onRemake={handleRemakeVideo}
         onSelectLayout={handleSelectLayout}
+        sceneTitle={project.scenes.find(s => s.id === generatingSceneId)?.title || `Scene`}
       />
       <EditorToast toast={toast} onDismiss={() => setToast(null)} />
       <ExportModal
