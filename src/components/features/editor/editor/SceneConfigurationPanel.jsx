@@ -6,6 +6,7 @@ import {
   getClipStackIndex,
   getLayerDisplayLabel,
   isBackgroundClip,
+  isResizableBackgroundClip,
   minMovableStackIndex,
   sortClipsByPaintOrder,
 } from '../../../../utils/editorLayerUtils';
@@ -573,18 +574,25 @@ const LayerOrderContent = ({ activeLayer, clips, onMoveLayerOrder, onToggleLayer
   );
 };
 
-const SceneBackgroundBanner = ({ isBackground, canBeSceneBackground, hasBackgroundSource, setAsBackground, unsetAsBackground }) => {
+const SceneBackgroundBanner = ({ isBackground, canBeSceneBackground, hasBackgroundSource, setAsBackground, unsetAsBackground, isResizable }) => {
   if (!canBeSceneBackground) return null;
   if (isBackground) {
     return (
-      <div className="scp-banner scp-banner--active" style={{ marginBottom: 8, justifyContent: 'space-between' }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <MdWallpaper size={16} />
-          Scene Background
-        </span>
-        <button type="button" className="scp-btn scp-btn--ghost" onClick={unsetAsBackground}>
-          Unset
-        </button>
+      <div className="scp-banner scp-banner--active" style={{ marginBottom: 8, justifyContent: 'space-between', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <MdWallpaper size={16} />
+            Scene Background
+          </span>
+          <button type="button" className="scp-btn scp-btn--ghost" onClick={unsetAsBackground}>
+            Unset
+          </button>
+        </div>
+        {isResizable && (
+          <span style={{ fontSize: 10, color: 'var(--text-muted)', lineHeight: 1.4 }}>
+            Drag the canvas handles or adjust Width/Height above to resize the avatar while it stays as the background.
+          </span>
+        )}
       </div>
     );
   }
@@ -875,6 +883,7 @@ const LayerPanel = ({
           hasBackgroundSource={hasBackgroundSource}
           setAsBackground={setAsBackground}
           unsetAsBackground={unsetAsBackground}
+          isResizable={isResizableBackgroundClip(activeLayer)}
         />
       </>
     ),

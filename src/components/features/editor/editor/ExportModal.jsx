@@ -333,21 +333,21 @@ const ExportModal = ({
           to { transform: rotate(360deg); }
         }
         .export-error-glass {
-          background: rgba(30, 41, 59, 0.45);
+          background: color-mix(in srgb, var(--delete-red) 6%, var(--bg-surface));
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
-          border: 1px solid rgba(239, 68, 68, 0.25);
+          border: 1px solid color-mix(in srgb, var(--delete-red) 25%, var(--border-color));
           border-radius: 12px;
           padding: 20px;
           width: 100%;
           text-align: left;
-          box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+          box-shadow: var(--shadow);
           box-sizing: border-box;
         }
         .export-error-title {
           font-size: 16px;
           font-weight: 700;
-          color: #fca5a5;
+          color: var(--delete-red);
           display: flex;
           align-items: center;
           gap: 8px;
@@ -355,7 +355,7 @@ const ExportModal = ({
         }
         .export-error-desc {
           font-size: 14px;
-          color: #e2e8f0;
+          color: var(--text-main);
           line-height: 1.5;
           margin: 0 0 16px 0 !important;
           max-width: 100% !important;
@@ -365,7 +365,7 @@ const ExportModal = ({
           font-size: 11px;
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          color: #94a3b8;
+          color: var(--text-muted);
           font-weight: 700;
           margin-bottom: 8px;
         }
@@ -376,7 +376,7 @@ const ExportModal = ({
         }
         .export-error-step {
           font-size: 13px;
-          color: #cbd5e1;
+          color: var(--text-main);
           margin-bottom: 6px;
           display: flex;
           align-items: flex-start;
@@ -384,23 +384,24 @@ const ExportModal = ({
         }
         .export-error-step::before {
           content: "•";
-          color: #f87171;
+          color: var(--delete-red);
           font-weight: bold;
         }
         .export-error-details-summary {
           font-size: 11px;
-          color: #64748b;
+          color: var(--text-muted);
           cursor: pointer;
           user-select: none;
           margin-bottom: 4px;
         }
         .export-error-details-pre {
-          background: rgba(15, 23, 42, 0.6);
+          background: var(--bg-main);
+          border: 1px solid var(--border-color);
           padding: 10px;
           border-radius: 6px;
           font-family: monospace;
           font-size: 11px;
-          color: #cbd5e1;
+          color: var(--text-main);
           overflow-x: auto;
           margin-top: 6px;
           white-space: pre-wrap;

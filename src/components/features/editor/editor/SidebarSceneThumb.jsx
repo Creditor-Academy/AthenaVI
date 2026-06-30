@@ -129,6 +129,12 @@ const SidebarSceneThumb = ({ scene, isActive }) => {
       ) : null}
       {hint ? <div className="sidebar-scene-thumb__text" aria-hidden>{hint}</div> : null}
       <div className="sidebar-scene-thumb__shade" aria-hidden />
+      {scene?.heygenStatus === 'processing' && (
+        <div className="sidebar-scene-thumb__processing-overlay">
+          <div className="sidebar-scene-thumb__spin" />
+          <span className="sidebar-scene-thumb__processing-text">Generating...</span>
+        </div>
+      )}
       {isActive ? <div className="sidebar-scene-thumb__ring" aria-hidden /> : null}
     </div>
   );

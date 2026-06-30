@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { sanitizeUserFacingMessage } from '../../utils/userFacingMessage'
+import Toast from '../../components/ui/Toast/Toast'
 import {
   MdAdd,
   MdApps,
@@ -10,8 +11,6 @@ import {
   MdViewList,
   MdWorkspaces,
   MdClose,
-  MdCheckCircle,
-  MdCancel,
 } from 'react-icons/md'
 import { useAuth } from '../../contexts/AuthContext'
 import videoLibraryService from '../../services/videoLibraryService'
@@ -366,16 +365,7 @@ function Videos({ onCreate, onEdit }) {
         </div>
       ) : null}
 
-      {toast ? (
-        <div className={`videos-toast videos-toast--${toast.type}`}>
-          {toast.type === 'success' ? (
-            <MdCheckCircle className="videos-toast-icon" />
-          ) : (
-            <MdCancel className="videos-toast-icon" />
-          )}
-          <span>{toast.message}</span>
-        </div>
-      ) : null}
+      <Toast toast={toast} />
     </div>
   )
 }

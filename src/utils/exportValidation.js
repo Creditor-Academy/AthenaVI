@@ -4,6 +4,7 @@ import {
   ExportFailedError,
 } from './exportErrors';
 import { getSceneAvatarLookId } from './heygenAvatars';
+import { resolveSceneHeygenVideoId } from './heygenVideo';
 
 export function validateExport(projectState) {
   if (!projectState?.scenes?.length) {
@@ -32,11 +33,12 @@ export function validateExport(projectState) {
       });
     }
 
-    // 3. Check if avatar video needs generation or is still generating
-    const status = scene.heygenStatus || scene.generation?.status;
-    const videoId = scene.heygenVideoId || scene.generation?.heygenVideoId;
-
+    // 3. Check if avatar video needs generation or is still generating.
+    // Use resolveSceneHeygenVideoId to check scene fields AND clip content.
     if (lookId && hasScript && scene.voiceId) {
+      const status = scene.heygenStatus || scene.generation?.status;
+      const videoId = resolveSceneHeygenVideoId(scene);
+
       if (status === 'processing') {
         throw new MissingAvatarError({
           sceneName,
@@ -47,7 +49,14 @@ export function validateExport(projectState) {
           sceneName,
           details: `Avatar video generation failed for Scene "${sceneName}". Please click "Generate" again in Scene Settings.`
         });
-      } else if (!videoId || status !== 'completed') {
+      } else if (status === 'needs_regeneration') {
+        throw new MissingAvatarError({
+          sceneName,
+          details: `Avatar video for Scene "${sceneName}" needs to be regenerated. Click "Generate" in Scene Settings.`
+        });
+      } else if (!videoId) {
+        // Only block if there is truly no video ID anywhere in the scene.
+        // If a videoId exists with unknown/missing status, treat it as ready.
         throw new MissingAvatarError({
           sceneName,
           details: `Avatar video has not been generated for Scene "${sceneName}". Click "Generate" in Scene Settings first.`
