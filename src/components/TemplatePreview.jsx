@@ -101,7 +101,7 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
       case 'left-avatar':
         return (
           <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '16px', height: '100%' }}>
-            <div style={avatarStyle} />
+            <div style={avatarPlaceholderStyle} />
             <div style={{ flex: 1 }}>
               <div style={{ ...textLineStyle, width: '70%', height: '8px' }} />
               <div style={{ ...textLineStyle, width: '90%' }} />
@@ -143,9 +143,9 @@ const TemplatePreview = ({ template, layoutType = 'Hero', variant = 'centered' }
         return (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%', gap: '12px', justifyContent: 'center' }}>
             <div style={{ display: 'flex', gap: '-12px' }}>
-              <div style={{ ...avatarStyle, border: '2px solid #f8fafc', width: '28px', height: '28px' }} />
-              <div style={{ ...avatarStyle, border: '2px solid #f8fafc', width: '28px', height: '28px', marginLeft: '-12px' }} />
-              <div style={{ ...avatarStyle, border: '2px solid #f8fafc', width: '28px', height: '28px', marginLeft: '-12px' }} />
+              <div style={{ ...avatarPlaceholderStyle, border: '2px solid #f8fafc', width: '28px', height: '28px' }} />
+              <div style={{ ...avatarPlaceholderStyle, border: '2px solid #f8fafc', width: '28px', height: '28px', marginLeft: '-12px' }} />
+              <div style={{ ...avatarPlaceholderStyle, border: '2px solid #f8fafc', width: '28px', height: '28px', marginLeft: '-12px' }} />
             </div>
             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <div style={{ ...textLineStyle, width: '60%', height: '8px' }} />

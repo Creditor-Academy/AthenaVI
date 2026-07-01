@@ -31,7 +31,7 @@ import { useWorkspaceActions } from './useWorkspaceActions.js';
 import InvitationsPanel from './InvitationsPanel.jsx';
 import ContributorsPanel from './ContributorsPanel.jsx';
 import ConfirmDialog from '../../components/ui/ConfirmDialog/ConfirmDialog.jsx';
-import Toast from './Toast.jsx';
+import Toast from '../../components/ui/Toast/Toast';
 
 import { buildWorkspaceUserLookup, getAuthDisplayName } from '../../utils/workspaceUsers.js';
 import { formatFolderSize } from '../../utils/formatSize.js';

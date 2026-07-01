@@ -814,7 +814,15 @@ function Navbar({
           >
             Log in
           </a>
-          <a href="#" className="act-primary" onClick={(e) => e.preventDefault()}>
+          <a
+            href="/early-access"
+            className="act-primary"
+            onClick={(e) => {
+              e.preventDefault();
+              window.history.pushState({ view: 'early-access' }, '', '/early-access');
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            }}
+          >
             Request Early Access <MdArrowOutward />
           </a>
         </div>
@@ -927,7 +935,16 @@ function Navbar({
           >
             Log in
           </a>
-          <a href="#" className="act-primary" onClick={(e) => { e.preventDefault(); setDrawerOpen(false) }}>
+          <a 
+            href="/early-access" 
+            className="act-primary" 
+            onClick={(e) => { 
+              e.preventDefault(); 
+              setDrawerOpen(false);
+              window.history.pushState({ view: 'early-access' }, '', '/early-access');
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            }}
+          >
             Request Early Access <MdArrowOutward />
           </a>
         </div>

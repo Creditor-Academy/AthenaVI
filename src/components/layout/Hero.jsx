@@ -376,7 +376,15 @@ function Hero({ onContactSalesClick }) {
             Create professional videos in minutes, not hours.
           </p>
           <div className="hero-cta">
-            <button type="button" className="btn-primary">
+            <button 
+              type="button" 
+              className="btn-primary"
+              onClick={(e) => {
+                e.preventDefault();
+                window.history.pushState({ view: 'early-access' }, '', '/early-access');
+                window.dispatchEvent(new PopStateEvent('popstate'));
+              }}
+            >
               Request Early Access
               <MdArrowOutward />
             </button>
