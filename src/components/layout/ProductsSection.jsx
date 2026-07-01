@@ -72,11 +72,14 @@ const styles = `
   gap: 16px;
   align-items: stretch;
   justify-content: center;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
 }
 
 /* ── Base card ── */
 .ps-card {
-  flex-shrink: 0;
+  flex-shrink: 1;
   border-radius: 24px;
   cursor: pointer;
   transition: width 0.38s cubic-bezier(0.16, 1, 0.3, 1),
@@ -91,6 +94,7 @@ const styles = `
 /* Collapsed card */
 .ps-card.collapsed {
   width: 240px;
+  min-width: 160px;
   background: #1e293b;
   position: relative;
   overflow: hidden;
@@ -100,6 +104,7 @@ const styles = `
 /* Expanded (active) card */
 .ps-card.expanded {
   width: 580px;
+  min-width: 380px;
   background: #ffffff;
   flex-direction: row;
   box-shadow: 0 16px 48px rgba(30, 64, 175, 0.15);
@@ -378,14 +383,87 @@ const styles = `
   border-radius: 4px;
 }
 
-@media (max-width: 768px) {
-  .ps-section { padding: 60px 20px; }
-  .ps-section-title { font-size: 34px; }
-  .ps-card { height: auto !important; }
-  .ps-card.expanded { width: 100%; flex-direction: column; }
-  .ps-card.collapsed { width: 160px; min-height: 220px; }
-  .ps-card-right { width: 100%; height: 180px; border-radius: 0 0 24px 24px; }
-  .ps-track { flex-wrap: nowrap; overflow-x: auto; }
+@media (max-width: 1024px) {
+  .ps-section {
+    padding: 60px 24px;
+  }
+
+  .ps-section-title {
+    font-size: 38px;
+  }
+
+  .ps-track {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  .ps-card {
+    width: 100% !important;
+    height: auto !important;
+    min-width: 0 !important;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .ps-card.collapsed {
+    height: 90px !important;
+    min-height: 90px !important;
+    background: #1e293b;
+  }
+
+  .ps-card-collapsed-inner {
+    padding: 16px 20px;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .ps-collapsed-footer {
+    width: 100%;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .ps-collapsed-title {
+    font-size: 16px;
+    margin: 0;
+  }
+
+  .ps-collapsed-label {
+    display: none;
+  }
+
+  .ps-card.expanded {
+    flex-direction: column;
+    box-shadow: 0 12px 32px rgba(30, 64, 175, 0.1);
+  }
+
+  .ps-card-left {
+    padding: 24px 20px;
+    gap: 12px;
+  }
+
+  .ps-expanded-title {
+    font-size: 22px;
+  }
+
+  .ps-expanded-desc {
+    font-size: 14px;
+    -webkit-line-clamp: unset;
+    overflow: visible;
+  }
+
+  .ps-card-right {
+    width: 100%;
+    height: 200px;
+    border-radius: 0 0 24px 24px;
+  }
+
+  .ps-nav {
+    display: none;
+  }
 }
 `
 

@@ -20,6 +20,8 @@ import {
 import { getClipTextContent, isTextLayer } from '../../../../utils/textClip'
 import { pixelRectToPercent, resolveClipRect } from '../../../../utils/clipLayout'
 import { getClipZIndex, isBackgroundClip, sortClipsForRender } from '../../../../utils/editorLayerUtils'
+import { getRootClips, getGroupChildren, isGroupClip } from '../../../../utils/editorGroupUtils'
+import { buildClipTransform, CLIP_TRANSFORM_ORIGIN } from '../../../../utils/clipTransformUtils'
 import { resolveClipMediaSrc, isVideoMedia, isAvatarClip, clipHasHeygenAudio } from '../../../../utils/heygenVideo'
 import { resolveAvatarDisplaySrc } from '../../../../utils/templateAvatarPreview'
 import { formatLayerBorderCss } from '../../../../utils/layerBorderUtils'
@@ -141,7 +143,7 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
             />
           ))}
       {!hasBgClip && <div style={backgroundStyle} />}
-      {sortClipsForRender(scene.clips || []).map((clip) => {
+      {sortClipsForRender(getRootClips(scene.clips || [])).map((clip) => {
         const clipStart = (clip.startTime || 0) * fps
         const clipDuration = ((clip.endTime || scene.duration || 5) - (clip.startTime || 0)) * fps
         if (frameInScene < clipStart || frameInScene >= clipStart + clipDuration) return null
@@ -224,14 +226,20 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
         const isText = clip.type === 'text' || isTextLayer(clip)
         const layout = resolveClipRect(clip)
         const rect = pixelRectToPercent(layout.position, layout.size)
+        const { transform } = buildClipTransform(clip, {
+          translateX,
+          translateY,
+          rotation: animRotation,
+          scale: scale * (isText ? 1 : (clip.scale || 1)),
+        })
         const style = {
           position: 'absolute',
           left: rect.left,
           top: rect.top,
           width: rect.width,
           height: rect.height,
-          transform: `translate(${translateX}px, ${translateY}px) rotate(${(clip.rotation ?? 0) + animRotation}deg) scale(${scale * (isText ? 1 : (clip.scale || 1))})`,
-          transformOrigin: 'center center',
+          transform,
+          transformOrigin: CLIP_TRANSFORM_ORIGIN,
           zIndex: getClipZIndex(clip),
           opacity,
           filter: blurPx > 0 ? `blur(${blurPx}px)` : undefined,
@@ -391,6 +399,105 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
                   }}
                 />
               )}
+            </div>
+          )
+        }
+
+        if (isGroupClip(clip)) {
+          const children = getGroupChildren(scene.clips || [], clip)
+          const groupLayout = resolveClipRect(clip)
+          const groupRect = pixelRectToPercent(groupLayout.position, groupLayout.size)
+          const { transform: groupTransform } = buildClipTransform(clip, {
+            translateX,
+            translateY,
+            rotation: animRotation,
+            scale: scale * (clip.scale || 1),
+          })
+          return (
+            <div
+              key={clip.id}
+              style={{
+                position: 'absolute',
+                left: groupRect.left,
+                top: groupRect.top,
+                width: groupRect.width,
+                height: groupRect.height,
+                transform: groupTransform,
+                transformOrigin: CLIP_TRANSFORM_ORIGIN,
+                zIndex: getClipZIndex(clip),
+                opacity,
+                pointerEvents: 'none',
+                overflow: 'visible',
+              }}
+            >
+              {children.map((child) => {
+                const childLayout = resolveClipRect(child)
+                const { transform: childTransform } = buildClipTransform(child)
+                const cw = childLayout.size.width
+                const ch = childLayout.size.height
+                const childStyle = {
+                  position: 'absolute',
+                  left: childLayout.position.x,
+                  top: childLayout.position.y,
+                  width: cw,
+                  height: ch,
+                  transform: childTransform,
+                  transformOrigin: CLIP_TRANSFORM_ORIGIN,
+                  overflow: 'hidden',
+                }
+                if (child.type === 'text' || isTextLayer(child)) {
+                  const s = child.style || {}
+                  return (
+                    <div key={child.id} style={childStyle}>
+                      <div style={{ ...buildTextDisplayStyle(s, child.opacity ?? 1), fontSize: childLayout.fontSize }}>
+                        {getClipTextContent(child)}
+                      </div>
+                    </div>
+                  )
+                }
+                if (child.type === 'image' || child.type === 'avatar' || child.type === 'video') {
+                  const src = resolveClipMediaSrc(child, scene) || (child.type === 'avatar' ? resolveAvatarDisplaySrc(child, scene) : null)
+                  const s = child.style || {}
+                  return (
+                    <div key={child.id} style={{ ...childStyle, borderRadius: s.borderRadius || '12px' }}>
+                      {src ? (
+                        isVideoMedia(child, src) ? (
+                          <ClipSequenceVideo
+                            src={src}
+                            clip={child}
+                            scene={scene}
+                            sceneStartFrame={sceneStartFrame}
+                            fps={fps}
+                            audioEnabled={false}
+                            style={{ width: '100%', height: '100%', objectFit: s.objectFit || 'cover' }}
+                          />
+                        ) : (
+                          <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: s.objectFit || 'cover' }} />
+                        )
+                      ) : null}
+                    </div>
+                  )
+                }
+                if (child.type === 'shape') {
+                  const s = child.style || {}
+                  return (
+                    <div
+                      key={child.id}
+                      style={{
+                        ...childStyle,
+                        background: child.fillSrc ? 'transparent' : (s.backgroundColor || s.background || 'rgba(99,102,241,0.85)'),
+                        borderRadius: s.borderRadius || '0',
+                        clipPath: s.clipPath,
+                      }}
+                    >
+                      {child.fillSrc ? (
+                        <Img src={child.fillSrc} style={{ width: '100%', height: '100%', objectFit: child.fillObjectFit || 'cover' }} />
+                      ) : null}
+                    </div>
+                  )
+                }
+                return null
+              })}
             </div>
           )
         }

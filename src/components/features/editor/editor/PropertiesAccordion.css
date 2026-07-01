@@ -187,7 +187,7 @@
   padding: 6px;
   border-radius: 10px;
   border: 1.5px solid var(--border-color, #e2e8f0);
-  background: var(--bg-card, #fff);
+  background: var(--bg-card);
   color: var(--text-muted, #64748b);
   cursor: pointer;
   transition:

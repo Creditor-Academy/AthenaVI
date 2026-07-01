@@ -2,7 +2,7 @@ const CanvasGuidesOverlay = ({
   width = 1920,
   height = 1080,
   showGrid = true,
-  showSafeZone = true,
+  showSafeZone = false,
   gridSize = 20,
 }) => (
   <div

@@ -1,0 +1,90 @@
+.render-download-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2600;
+  background: color-mix(in srgb, var(--bg-main) 55%, transparent);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.render-download-modal {
+  width: min(1100px, 96vw);
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  box-shadow: var(--shadow), 0 24px 80px rgba(0, 0, 0, 0.2);
+  color: var(--text-main);
+  overflow: hidden;
+  font-family: var(--font-family);
+}
+
+.render-download-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.render-download-modal__title {
+  font-weight: 900;
+  font-size: 13px;
+}
+
+.render-download-modal__filename {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.render-download-modal__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.render-download-modal__btn {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-main);
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.render-download-modal__btn--primary {
+  padding: 10px 14px;
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border-color));
+  background: var(--primary);
+  color: var(--primary-contrast);
+  font-weight: 800;
+}
+
+.render-download-modal__btn--primary:disabled {
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  border-color: var(--border-color);
+}
+
+.render-download-modal__video-wrap {
+  padding: 14px;
+  background: #000;
+}
+
+.render-download-modal__video {
+  width: 100%;
+  max-height: 76vh;
+  border-radius: 12px;
+  background: #000;
+}
+
+.render-download-modal__empty {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}

@@ -6,6 +6,12 @@ import AuthPage from './pages/Auth/AuthPage.jsx'
 import ResetPassword from './components/features/auth/authentication/ResetPassword.jsx'
 import { persistWorkspaceFolderNavigation } from './utils/navigateToWorkspaceFolder.js'
 import { isOAuthCallbackPath, resolveViewFromLocation } from './utils/authRouting.js'
+import {
+  dashboardPathForSection,
+  isDashboardClientPath,
+  readClientPath,
+  resolveDashboardSectionFromPath,
+} from './utils/dashboardRouting.js'
 
 const Dashboard = lazy(() => import('./pages/Dashboard/Dashboard.jsx'))
 const Create = lazy(() => import('./pages/Editor/Editor.jsx'))
@@ -260,12 +266,12 @@ function App() {
     const newUrl = urlMap[view] || '/'
     
     // Don't override the URL on invite acceptance or reset-password paths — the token lives in the path/hash
-    const currentPath = window.location.pathname
+    const currentPath = readClientPath()
     const onProtectedPath = currentPath.includes('/invitations/accept') ||
       currentPath.includes('/invite/accept') ||
       currentPath.includes('/reset-password') ||
       isOAuthCallbackPath(currentPath)
-    const isDashboardSubPath = currentPath === '/profile' || currentPath.startsWith('/dashboard')
+    const isDashboardSubPath = isDashboardClientPath()
     const targetUrl = (view === 'dashboard' && isDashboardSubPath) ? currentPath : newUrl
     try {
       if (!onProtectedPath && currentPath !== targetUrl) {
@@ -450,26 +456,7 @@ function App() {
               setCreateVideoConfig(config || null)
               setView('create')
             }}
-            initialSection={(() => {
-              // Pass the initial section from URL to Dashboard
-              let currentPath = window.location.pathname
-              if (window.location.hash && window.location.hash !== '#') {
-                currentPath = window.location.hash.replace('#', '') || '/'
-                if (currentPath.endsWith('/') && currentPath.length > 1) {
-                  currentPath = currentPath.slice(0, -1)
-                }
-              }
-              if (currentPath === '/support') {
-                return 'help'
-              }
-              if (currentPath.startsWith('/dashboard/')) {
-                return currentPath.replace('/dashboard/', '') || 'home'
-              }
-              if (currentPath === '/profile') {
-                return 'profile'
-              }
-              return 'home'
-            })()}
+            initialSection={resolveDashboardSectionFromPath() ?? 'home'}
           />
         </ProtectedRoute>
       )}
@@ -842,33 +829,43 @@ function App() {
           color: '#f8fafc',
           overflow: 'hidden'
         }}>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '18px',
-            textAlign: 'center',
-            padding: '24px'
-          }}>
-            <div style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '999px',
-              border: '3px solid rgba(255,255,255,0.16)',
-              borderTopColor: '#fbbf24',
-              animation: 'spin 0.9s linear infinite'
-            }} />
-            <div style={{ fontSize: '18px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              Loading Virtual Instructor
-            </div>
-            <div style={{ fontSize: '14px', color: 'rgba(248,250,252,0.72)' }}>
-              Preparing the home experience...
-            </div>
+          <div className="dots-wave">
+            <div />
+            <div />
+            <div />
           </div>
           <style>{`
-            @keyframes spin {
-              from { transform: rotate(0deg); }
-              to { transform: rotate(360deg); }
+            .dots-wave {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 8px;
+            }
+            .dots-wave div {
+              width: 14px;
+              height: 14px;
+              background-color: #fbbf24;
+              border-radius: 50%;
+              animation: dot-wave 1.2s infinite ease-in-out;
+            }
+            .dots-wave div:nth-child(1) {
+              animation-delay: 0s;
+            }
+            .dots-wave div:nth-child(2) {
+              animation-delay: 0.15s;
+            }
+            .dots-wave div:nth-child(3) {
+              animation-delay: 0.3s;
+            }
+            @keyframes dot-wave {
+              0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.35;
+              }
+              30% {
+                transform: translateY(-10px);
+                opacity: 1;
+              }
             }
           `}</style>
         </div>

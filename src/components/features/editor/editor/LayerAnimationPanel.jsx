@@ -75,7 +75,7 @@ const LayerAnimationPanel = ({ activeLayer, updateLayer }) => {
                 padding: '8px 6px',
                 borderRadius: 8,
                 border: `1px solid ${active ? 'var(--primary, #1a73e8)' : 'var(--border-subtle, rgba(0,0,0,0.1))'}`,
-                background: active ? 'rgba(26, 115, 232, 0.08)' : 'white',
+                background: active ? 'rgba(var(--primary-rgb), 0.08)' : 'var(--bg-card)',
                 color: active ? 'var(--primary, #1a73e8)' : 'var(--text-main, #1a1b1c)',
                 fontSize: 10,
                 fontWeight: 700,

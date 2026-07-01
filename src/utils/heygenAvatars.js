@@ -962,16 +962,24 @@ export function formatAvatarTypeLabel(type) {
 
 const AVATAR_KINDS = new Set(['studio_avatar', 'photo_avatar', 'digital_twin']);
 
+function getSceneAvatarClipContent(scene) {
+  const avatarClip = (scene?.clips || []).find((c) => c.role === 'avatar' || c.type === 'avatar');
+  return typeof avatarClip?.content === 'object' ? avatarClip.content : {};
+}
+
 /** HeyGen look id (lk_…) — scene.avatarType historically stored the look id. */
 export function getSceneAvatarLookId(scene) {
   if (!scene) return null;
 
+  const avatarContent = getSceneAvatarClipContent(scene);
   const candidates = [
     scene.avatarLookId,
     scene.presenter?.avatarLookId,
     scene.presenter?.lookId,
     scene.presenter?.avatarId,
     scene.presenter?.id,
+    avatarContent.avatarLookId,
+    avatarContent.avatarId,
     scene.avatarType,
   ];
 
@@ -985,6 +993,25 @@ export function getSceneAvatarLookId(scene) {
   }
 
   return null;
+}
+
+/** Voice id used for HeyGen generation (scene, presenter, or avatar clip). */
+export function getSceneVoiceId(scene) {
+  if (!scene) return null;
+  const avatarContent = getSceneAvatarClipContent(scene);
+  return scene.voiceId || scene.presenter?.voiceId || avatarContent.voiceId || null;
+}
+
+/** Narration script for HeyGen generation. */
+export function getSceneScript(scene) {
+  if (!scene) return '';
+  const avatarContent = getSceneAvatarClipContent(scene);
+  return String(scene.script ?? scene.presenter?.script ?? avatarContent.script ?? '').trim();
+}
+
+/** True when avatar look, voice, and script are all configured for generation. */
+export function hasScenePresenterSetup(scene) {
+  return Boolean(getSceneAvatarLookId(scene) && getSceneVoiceId(scene) && getSceneScript(scene));
 }
 
 /** studio_avatar | photo_avatar | digital_twin */
