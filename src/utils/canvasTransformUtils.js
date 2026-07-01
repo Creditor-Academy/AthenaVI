@@ -1,5 +1,7 @@
 /** Resize, rotation, and snap helpers for canvas object manipulation. */
 
+import { getClipCenter } from './clipTransformUtils';
+
 export const MIN_CLIP_WIDTH = 40;
 export const MIN_CLIP_HEIGHT = 24;
 export const MIN_TEXT_WIDTH = 40;
@@ -249,11 +251,7 @@ export function pointerAngleFromCenter(clientX, clientY, centerX, centerY) {
 
 /** Composition-space center of a clip's transform box. */
 export function getClipTransformCenter(clip, layout = null) {
-  const x = Number(layout?.position?.x ?? clip?.position?.x ?? 0);
-  const y = Number(layout?.position?.y ?? clip?.position?.y ?? 0);
-  const width = Number(layout?.size?.width ?? clip?.size?.width ?? 200);
-  const height = Number(layout?.size?.height ?? clip?.size?.height ?? 120);
-  return { x: x + width / 2, y: y + height / 2 };
+  return getClipCenter(clip, layout);
 }
 
 export function measureTextContentSize(element, { paddingX = 8, paddingY = 4 } = {}) {

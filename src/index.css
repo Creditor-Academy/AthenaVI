@@ -98,6 +98,9 @@
   --warning-amber: #f59e0b;
   --shape-preview-fill: #64748b;
   --topbar-panel-hover: rgba(var(--primary-rgb), 0.08);
+  --bg-panel: #f8fafc;
+  --bg-input: #ffffff;
+  --bg-elevated: #ffffff;
 }
 
 /* Mode: Dark */
@@ -118,6 +121,9 @@
   --warning-amber: #fbbf24;
   --shape-preview-fill: #cbd5e1;
   --topbar-panel-hover: rgba(var(--primary-rgb), 0.15);
+  --bg-panel: #0f172a;
+  --bg-input: #1e293b;
+  --bg-elevated: #1e293b;
 }
 
 * {

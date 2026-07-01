@@ -242,6 +242,22 @@
   background: var(--border-color);
 }
 
+[data-mode='dark'] .video-preview__overlay {
+  background: color-mix(in srgb, var(--bg-card) 96%, transparent);
+}
+
+[data-mode='dark'] .video-preview__load-title {
+  color: var(--text-main);
+}
+
+[data-mode='dark'] .video-preview__load-sub {
+  color: var(--text-muted);
+}
+
+[data-mode='dark'] .video-preview__progress {
+  background: var(--border-color);
+}
+
 @media (max-width: 900px) {
   .video-preview__body {
     padding: 12px;

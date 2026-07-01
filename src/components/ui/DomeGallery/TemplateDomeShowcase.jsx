@@ -23,11 +23,11 @@ function usePreferStaticGallery() {
 function useIsNarrowViewport() {
   const [isNarrow, setIsNarrow] = useState(() => {
     if (typeof window === 'undefined') return false;
-    return window.innerWidth < 768;
+    return window.innerWidth < 1025;
   });
 
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 767px)');
+    const mq = window.matchMedia('(max-width: 1024px)');
     const update = () => setIsNarrow(mq.matches);
     update();
     mq.addEventListener('change', update);
@@ -59,6 +59,21 @@ export default function TemplateDomeShowcase({
   const isNarrow = useIsNarrowViewport();
   const useFallback = preferStatic || isNarrow;
 
+  const [limit, setLimit] = useState(() => {
+    if (typeof window === 'undefined') return 8;
+    return window.innerWidth < 640 ? 4 : 8;
+  });
+
+  useEffect(() => {
+    if (!useFallback) return;
+    const updateLimit = () => {
+      setLimit(window.innerWidth < 640 ? 4 : 8);
+    };
+    updateLimit();
+    window.addEventListener('resize', updateLimit);
+    return () => window.removeEventListener('resize', updateLimit);
+  }, [useFallback]);
+
   const shellClass = [
     'dome-gallery-shell',
     compact ? 'dome-gallery-shell--compact' : '',
@@ -71,9 +86,10 @@ export default function TemplateDomeShowcase({
   if (!images.length) return null;
 
   if (useFallback) {
+    const displayImages = images.slice(0, limit);
     return (
       <div className={shellClass}>
-        <DomeGalleryFallback images={images} onImageClick={interactive ? onImageClick : undefined} />
+        <DomeGalleryFallback images={displayImages} onImageClick={interactive ? onImageClick : undefined} />
       </div>
     );
   }

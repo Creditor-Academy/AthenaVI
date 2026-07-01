@@ -81,7 +81,7 @@
   padding: 8px 4px;
   border-radius: 8px;
   border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.1));
-  background: white;
+  background: var(--bg-input);
   color: var(--text-muted, #64748b);
   font-size: 12px;
   font-weight: 700;
@@ -109,7 +109,7 @@
   padding: 9px 8px;
   border-radius: 8px;
   border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.1));
-  background: white;
+  background: var(--bg-input);
   color: var(--text-muted, #64748b);
   font-size: 12px;
   font-weight: 700;

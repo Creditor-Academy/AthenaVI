@@ -2,6 +2,7 @@ import { useRef, useCallback, forwardRef, useImperativeHandle, useEffect, useSta
 import { Player } from '@remotion/player'
 import VideoComposition from './VideoComposition'
 import LiveCanvasRenderer from './LiveCanvasRenderer'
+import useTextCanvasInteraction from '../../../../hooks/useTextCanvasInteraction'
 import heygenService from '../../../../services/heygenService'
 import {
   prepareScenesForPlayback,
@@ -49,6 +50,10 @@ const VideoCanvas = forwardRef(({
   onFillShape,
   onCanvasDrop,
   editorView = {},
+  onUpdateClipFields,
+  onClearSelection,
+  onSelectTextIds,
+  textCanvasInteraction,
   workspaceId,
   projectId,
   previewOpen = false,
@@ -77,6 +82,22 @@ const VideoCanvas = forwardRef(({
 
   const activeScene = (scenes || []).find(s => s.id === activeSceneId)
   const isEditingLayer = !showRemotionPlayer && !!(selectedLayerId || selectedLayerIds.length)
+
+  const internalTextCanvas = useTextCanvasInteraction()
+  const {
+    textEditClipId,
+    enterEditMode,
+    hoverClipId,
+    setHoverClipId,
+    smartGuides,
+    setSmartGuides,
+    marqueeRect,
+    setMarqueeRect,
+    dragBadge,
+    setDragBadge,
+    ephemeralTransform,
+    setEphemeralTransform,
+  } = textCanvasInteraction || internalTextCanvas
 
   const toLocalFrame = useCallback((globalTime) => {
     const localTime = isSingleScene
@@ -286,8 +307,9 @@ const VideoCanvas = forwardRef(({
   )
 
   const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget && setSelectedLayerId) {
-      setSelectedLayerId(null)
+    if (e.target === e.currentTarget) {
+      if (onClearSelection) onClearSelection()
+      else if (setSelectedLayerId) setSelectedLayerId(null)
     }
   }
 
@@ -361,6 +383,20 @@ const VideoCanvas = forwardRef(({
                 overlayMode={false}
                 selectedId={selectedLayerId}
                 selectedIds={selectedLayerIds}
+                zoomLevel={zoomLevel}
+                textEditClipId={textEditClipId}
+                onEnterTextEdit={enterEditMode}
+                hoverTextClipId={hoverClipId}
+                onHoverTextClip={setHoverClipId}
+                onSelectTextIds={onSelectTextIds}
+                smartGuides={smartGuides}
+                onSmartGuidesChange={setSmartGuides}
+                marqueeRect={marqueeRect}
+                onMarqueeChange={setMarqueeRect}
+                dragBadge={dragBadge}
+                onDragBadgeChange={setDragBadge}
+                ephemeralTransform={ephemeralTransform}
+                onEphemeralTransformChange={setEphemeralTransform}
                 onSelectClip={(id, e) => {
                   if (onSelectLayer) onSelectLayer(id, activeSceneId, e)
                   else if (setSelectedLayerId) setSelectedLayerId(id)
@@ -368,7 +404,11 @@ const VideoCanvas = forwardRef(({
                 onContentChange={(clipId, newText) =>
                   updateClipContent && updateClipContent(activeSceneId, clipId, newText)
                 }
-                onDeselect={() => setSelectedLayerId && setSelectedLayerId(null)}
+                onDeselect={() => {
+                  if (onClearSelection) onClearSelection()
+                  else if (setSelectedLayerId) setSelectedLayerId(null)
+                }}
+                onUpdateClipFields={onUpdateClipFields}
                 onUpdateLayerPosition={(clipId, x, y) =>
                   onUpdateLayerPosition && onUpdateLayerPosition(clipId, x, y)
                 }
@@ -403,6 +443,7 @@ const VideoCanvas = forwardRef(({
                 showPageGrid={editorView.showPageGrid}
                 showSafeZone={editorView.showSafeZone}
                 gridSize={editorView.gridSize || 20}
+                snapToGrid={editorView.snapToGrid !== false}
               />
             </div>
           )}

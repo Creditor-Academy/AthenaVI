@@ -58,7 +58,6 @@ const SceneSettingsPanel = ({
   updateScene,
   clips,
   generateSceneVideo,
-  applyGlobalSetting,
   onOpenQuickCreate,
   onDuplicateScene,
 }) => {
@@ -98,7 +97,6 @@ const SceneSettingsPanel = ({
         activeScene={activeScene}
         activeSceneId={activeSceneId}
         generateSceneVideo={generateSceneVideo}
-        applyGlobalSetting={applyGlobalSetting}
         onOpenQuickCreate={onOpenQuickCreate}
       />
 

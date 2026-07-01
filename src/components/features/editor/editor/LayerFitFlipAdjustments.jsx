@@ -42,8 +42,8 @@ const LayerMediaPreview = ({
       ].filter(Boolean)
     : [];
   const flipParts = [
-    scaleX === -1 ? 'scaleX(-1)' : '',
-    scaleY === -1 ? 'scaleY(-1)' : '',
+    scaleX === -1 ? 'scale(-1, 1)' : '',
+    scaleY === -1 ? 'scale(1, -1)' : '',
   ].filter(Boolean);
   const transform = [...animParts, ...flipParts].filter(Boolean).join(' ') || undefined;
   const previewOpacity = animState
@@ -70,6 +70,7 @@ const LayerMediaPreview = ({
           filter: previewBlur,
           opacity: previewOpacity,
           transform,
+          transformOrigin: 'center center',
         }}
       >
         {src ? (

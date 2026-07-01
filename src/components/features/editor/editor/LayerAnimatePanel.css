@@ -75,7 +75,7 @@
   padding: 8px 4px 6px;
   border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
   border-radius: 10px;
-  background: white;
+  background: var(--bg-input);
   cursor: pointer;
 }
 
