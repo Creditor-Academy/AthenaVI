@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   MdNotifications,
   MdSecurity,
@@ -9,10 +9,18 @@ import ThemePage from '../../components/features/settings/settings/ThemePage'
 import NotificationSettings from '../../components/features/settings/settings/NotificationSettings'
 import SecuritySettings from '../../components/features/settings/settings/SecuritySettings'
 import BillingSettings from '../../components/features/settings/settings/BillingSettings'
+import { consumeDashboardSearchContext } from '../../utils/dashboardSearchNavigate.js'
 import './Settings.css'
 
 const Settings = ({ onBack, initialTab = 'preferences' }) => {
   const [activeTab, setActiveTab] = useState(initialTab)
+
+  useEffect(() => {
+    const ctx = consumeDashboardSearchContext('settings')
+    if (ctx?.settingsTab) {
+      setActiveTab(ctx.settingsTab)
+    }
+  }, [])
 
   const menuItems = [
     { id: 'preferences', label: 'Appearance', icon: <MdPalette /> },

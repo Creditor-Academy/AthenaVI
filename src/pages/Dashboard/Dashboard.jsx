@@ -44,6 +44,8 @@ import {
   dashboardPathForSection,
   resolveDashboardSectionFromPath,
 } from '../../utils/dashboardRouting.js'
+import useDashboardSearch from '../../hooks/useDashboardSearch.js'
+import { applySearchResult } from '../../utils/dashboardSearchNavigate.js'
 import './Dashboard.css'
 
 const AVATAR_FLOW_SECTIONS = new Set(['avatars', 'create-avatar-look', 'create-avatar'])
@@ -83,6 +85,8 @@ function Dashboard({ onCreate, initialSection }) {
   const cartCount = 2
   const { unreadCount: notificationCount, refresh: refreshInboxUnread, setUnreadCount: setInboxUnreadCount } =
     useInboxUnreadCount()
+
+  const dashboardSearch = useDashboardSearch()
 
   const noPaddingSections = ['templates', 'template-details']
   const workspaceConsistentSections = [
@@ -183,6 +187,28 @@ function Dashboard({ onCreate, initialSection }) {
       })
     }
   }, [onCreate])
+
+  const handleSearchResultSelect = useCallback((result) => {
+    dashboardSearch.handleClose()
+    dashboardSearch.setQuery('')
+    applySearchResult(result, {
+      goToSection,
+      handleEditVideo,
+      setSelectedTemplateForDetails,
+      bundleToDetailsTemplate,
+    })
+  }, [dashboardSearch, goToSection, handleEditVideo, setSelectedTemplateForDetails])
+
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        dashboardSearch.handleOpen()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [dashboardSearch])
 
   // Keep section aligned with the URL on hard refresh / direct links.
   useEffect(() => {
@@ -328,6 +354,21 @@ function Dashboard({ onCreate, initialSection }) {
           onNotificationClick={() => setShowNotificationsModal(true)}
           onCartClick={() => setShowCreditsModal(true)}
           isAdminPortal={isAdminPortal}
+          searchQuery={dashboardSearch.query}
+          onSearchQueryChange={dashboardSearch.setQuery}
+          searchInputRef={dashboardSearch.inputRef}
+          searchIsOpen={dashboardSearch.isOpen}
+          onSearchFocus={dashboardSearch.handleFocus}
+          onSearchClose={dashboardSearch.handleClose}
+          onSearchSelect={handleSearchResultSelect}
+          searchIsIndexing={dashboardSearch.isIndexing}
+          searchIndexError={dashboardSearch.indexError}
+          searchResultsByCategory={dashboardSearch.resultsByCategory}
+          searchFlatResults={dashboardSearch.flatResults}
+          searchCategoryLabels={dashboardSearch.categoryLabels}
+          searchActiveIndex={dashboardSearch.activeIndex}
+          onSearchActiveIndexChange={dashboardSearch.setActiveIndex}
+          onSearchMoveActive={dashboardSearch.moveActive}
         />
 
         <main

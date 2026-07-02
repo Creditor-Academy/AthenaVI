@@ -17,6 +17,7 @@ import EducationImg from '../../assets/Template Image/Educational.png'
 import BusinessImg from '../../assets/Template Image/Coporate.png'
 import TemplateScenePreview from '../../components/features/editor/editor/TemplateScenePreview'
 import { fetchTemplateBundles, bundleToDetailsTemplate } from '../../utils/fetchTemplateBundles'
+import { consumeDashboardSearchContext } from '../../utils/dashboardSearchNavigate.js'
 import TemplatesSkeleton from '../page-skeleton/TemplatesSkeleton'
 import './Templates.css'
 
@@ -62,6 +63,11 @@ function Templates({ onSelect }) {
   const [allBundles, setAllBundles] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeBundle, setActiveBundle] = useState(null)
+
+  useEffect(() => {
+    const ctx = consumeDashboardSearchContext('templates')
+    if (ctx?.searchQuery) setSearchQuery(ctx.searchQuery)
+  }, [])
 
   useEffect(() => {
     fetchTemplateBundles().then((data) => {

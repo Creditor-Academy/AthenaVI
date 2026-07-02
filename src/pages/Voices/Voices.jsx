@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   MdAdd,
   MdClose,
@@ -10,6 +10,7 @@ import {
 } from 'react-icons/md';
 import { Loader2 } from 'lucide-react';
 import heygenService from '../../services/heygenService';
+import { consumeDashboardSearchContext } from '../../utils/dashboardSearchNavigate.js';
 import ConfirmDialog from '../../components/ui/ConfirmDialog/ConfirmDialog.jsx';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
 import VoicesSkeleton from '../page-skeleton/VoicesSkeleton';
@@ -70,6 +71,15 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
   const [viewMode, setViewMode] = useState('grid');
   const [activeSection, setActiveSection] = useState(initialFilter);
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const ctx = consumeDashboardSearchContext('voices');
+    if (ctx?.searchQuery) {
+      preserveSearchRef.current = ctx.searchQuery;
+      setSearchQuery(ctx.searchQuery);
+    }
+    if (ctx?.voicesSection) setActiveSection(ctx.voicesSection);
+  }, []);
   const [filterBy, setFilterBy] = useState('all');
   const [sortBy, setSortBy] = useState('name_asc');
   const [groupBy, setGroupBy] = useState('none');
@@ -79,6 +89,7 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
   const [voiceImageMap, setVoiceImageMap] = useState(() => new Map());
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [statusBanner, setStatusBanner] = useState(null);
+  const preserveSearchRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -139,7 +150,12 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
   }, []);
 
   useEffect(() => {
-    setSearchQuery('');
+    if (preserveSearchRef.current) {
+      setSearchQuery(preserveSearchRef.current);
+      preserveSearchRef.current = null;
+    } else {
+      setSearchQuery('');
+    }
     setFilterBy('all');
     fetchVoices();
   }, [activeSection, fetchVoices]);

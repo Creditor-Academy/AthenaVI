@@ -6,6 +6,7 @@ import {
   FiInfo, FiFileText, FiRss, FiLayers, FiShield, FiHelpCircle
 } from 'react-icons/fi'
 import ProductVideo from '../../../assets/ProductVideo.mp4'
+import SolutionVideo from '../../../assets/SolutionNav.mp4'
 import LogoImg from '../../../assets/herologo.png'
 
 /* ─────────────────────────────────────────────────
@@ -756,14 +757,30 @@ function Navbar({
             Solutions <MdKeyboardArrowDown className="chevron" />
           </button>
           <div
-            className={`nav-dropdown ${activeDropdown === 'solutions' ? 'open' : ''}`}
+            className={`nav-dropdown mega ${activeDropdown === 'solutions' ? 'open' : ''}`}
             onMouseEnter={keepDD}
             onMouseLeave={closeDD}
           >
-            <div className="dd-list">
+            <div className="mega-left">
               {solutionsItems.map((item, i) => (
                 <DDItem key={i} item={item} onClick={handleSolutionClick} />
               ))}
+            </div>
+            <div className="mega-right">
+              <div className="mega-video">
+                <video autoPlay muted loop playsInline>
+                  <source src={SolutionVideo} type="video/mp4" />
+                </video>
+              </div>
+              <div className="mega-video-title">
+                Explore Industry Solutions <MdArrowOutward />
+              </div>
+              <p className="mega-video-desc">
+                Deploy scalable AI avatar video agents tailored for your business use cases.
+              </p>
+              <a href="#" className="mega-see-all" onClick={(e) => { e.preventDefault(); if (onNavigateToUseCases) onNavigateToUseCases(); setActiveDropdown(null) }}>
+                See all Use Cases <MdArrowOutward />
+              </a>
             </div>
           </div>
 

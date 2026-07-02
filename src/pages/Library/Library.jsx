@@ -24,6 +24,7 @@ import { useWorkspaceStorage } from '../../hooks/useStorageQuota'
 import StorageUsageBar from '../../components/ui/StorageUsageBar/StorageUsageBar'
 import '../../components/ui/StorageUsageBar/StorageUsageBar.css'
 import { formatBytes } from '../../utils/formatSize'
+import { consumeDashboardSearchContext } from '../../utils/dashboardSearchNavigate.js'
 import LibraryComingSoon from './LibraryComingSoon'
 import { SkeletonListRow } from '../page-skeleton/SkeletonPrimitives'
 import '../page-skeleton/skeleton.css'
@@ -54,6 +55,24 @@ function Library() {
   const searchRef = useRef(null)
   const [uploadType, setUploadType] = useState('images')
   const [selectedCategory, setSelectedCategory] = useState('media')
+
+  useEffect(() => {
+    const ctx = consumeDashboardSearchContext('library')
+    if (ctx?.searchQuery) setSearchQuery(ctx.searchQuery)
+    if (ctx?.libraryWorkspaceId) setWorkspaceId(ctx.libraryWorkspaceId)
+    if (ctx?.libraryTab) {
+      if (ctx.libraryTab === 'music') {
+        setSelectedCategory('music')
+        setActiveTab('music')
+      } else if (ctx.libraryTab === 'fonts') {
+        setSelectedCategory('fonts')
+        setActiveTab('fonts')
+      } else {
+        setSelectedCategory('media')
+        setActiveTab(ctx.libraryTab === 'videos' ? 'videos' : 'images')
+      }
+    }
+  }, [])
 
   const [workspaces, setWorkspaces] = useState([])
   const [workspaceId, setWorkspaceId] = useState('')

@@ -22,6 +22,7 @@ import {
   helpCategories,
   helpArticles,
 } from './helpContent.js'
+import { consumeDashboardSearchContext } from '../../utils/dashboardSearchNavigate.js'
 import { useTheme, getContrastColor } from '../../contexts/ThemeContext.jsx'
 import './Help.css'
 
@@ -97,6 +98,20 @@ function Help({ embedded = false, onOpenBilling }) {
   const [activeTopic, setActiveTopic] = useState(null)
   const [activeArticle, setActiveArticle] = useState(null)
   const [showContact, setShowContact] = useState(false)
+
+  useEffect(() => {
+    const ctx = consumeDashboardSearchContext('help')
+    if (!ctx?.helpArticleTitle) return
+    const categoryId = ctx.helpCategoryId
+    const articles = categoryId ? helpArticles[categoryId] : null
+    const article = articles?.find((a) => a.title === ctx.helpArticleTitle)
+    if (article) {
+      setActiveArticle({ ...article, categoryId })
+      setActiveTopic(null)
+      setShowContact(false)
+      setSearchQuery('')
+    }
+  }, [])
 
   const [tickets, setTickets] = useState(() => {
     try {
