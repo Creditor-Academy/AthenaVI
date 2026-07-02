@@ -5,7 +5,6 @@ import AuthLoginVideo from '../../components/ui/AnimatedAvatar/AuthLoginVideo.js
 import Login from '../../components/features/auth/authentication/Login.jsx'
 import Signup from '../../components/features/auth/authentication/Signup.jsx'
 import ForgotPassword from '../../components/features/auth/authentication/ForgotPassword.jsx'
-import EarlyAccess from '../../components/features/auth/authentication/EarlyAccess.jsx'
 import './auth-forms.css'
 import './AuthPage.css'
 
@@ -51,14 +50,7 @@ function AuthPage({ onAuthComplete, onBack, initialMode = 'login' }) {
     setShowForgotPassword(false)
   }
 
-  const switchToEarlyAccess = () => {
-    setDirection(1)
-    setMode('early-access')
-    setShowForgotPassword(false)
-  }
-
   const isLogin = mode === 'login'
-  const isEarlyAccess = mode === 'early-access'
   const formKey = showForgotPassword ? 'forgot' : mode
 
   if (loading) {
@@ -107,28 +99,13 @@ function AuthPage({ onAuthComplete, onBack, initialMode = 'login' }) {
               <header className="auth-form-panel__header">
                 <h2>Your studio awaits</h2>
                 <p>Sign in and turn your next lesson into a lifelike avatar video.</p>
-                <button
-                  type="button"
-                  className="auth-early-access-btn"
-                  onClick={switchToEarlyAccess}
-                >
-                  <span className="auth-early-access-btn__dot" />
-                  Request Early Access
-                </button>
               </header>
             )}
 
-            {!showForgotPassword && !isLogin && !isEarlyAccess && (
+            {!showForgotPassword && !isLogin && (
               <header className="auth-form-panel__header">
                 <h2>Lights, camera &mdash; let&apos;s go</h2>
                 <p>Create your account and start building with AI avatars.</p>
-              </header>
-            )}
-
-            {!showForgotPassword && isEarlyAccess && (
-              <header className="auth-form-panel__header">
-                <h2>Get early access</h2>
-                <p>Join the waitlist &mdash; we&apos;ll personally review your request.</p>
               </header>
             )}
 
@@ -149,8 +126,6 @@ function AuthPage({ onAuthComplete, onBack, initialMode = 'login' }) {
                       onBack={() => setShowForgotPassword(false)}
                       onSuccess={onAuthComplete}
                     />
-                  ) : isEarlyAccess ? (
-                    <EarlyAccess />
                   ) : isLogin ? (
                     <Login
                       onSuccess={onAuthComplete}
@@ -163,7 +138,7 @@ function AuthPage({ onAuthComplete, onBack, initialMode = 'login' }) {
               </AnimatePresence>
             </div>
 
-            {!showForgotPassword && !isEarlyAccess && (
+            {!showForgotPassword && (
               <p className="auth-form-panel__footer">
                 {isLogin ? (
                   <>
@@ -180,15 +155,6 @@ function AuthPage({ onAuthComplete, onBack, initialMode = 'login' }) {
                     </button>
                   </>
                 )}
-              </p>
-            )}
-
-            {!showForgotPassword && isEarlyAccess && (
-              <p className="auth-form-panel__footer">
-                Already have access?{' '}
-                <button type="button" onClick={switchToLogin}>
-                  Sign in
-                </button>
               </p>
             )}
           </div>

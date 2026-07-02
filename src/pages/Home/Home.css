@@ -342,12 +342,6 @@
   gap: 10px;
 }
 
-@media (max-width: 900px) {
-  .home-billing-stats {
-    grid-template-columns: 1fr;
-  }
-}
-
 /* Dashboard Home page polish: solid theme colors and tighter spacing */
 .content.content--home .home-container {
   width: 100%;
@@ -567,22 +561,159 @@
   border-color: var(--primary-hover);
 }
 
-@media (max-width: 900px) {
+/* ── Tablet & Mobile Responsiveness ────────────────────────────── */
 
+/* --- Welcome Banner --- */
+@media (max-width: 992px) {
+  .hero-redesign .hero-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 24px;
+    text-align: left;
+  }
 
+  .hero-redesign .hero-text {
+    max-width: 100%;
+  }
+
+  .hero-redesign .hero-text h1 {
+    font-size: 2rem;
+  }
+
+  .hero-redesign .hero-action {
+    align-self: flex-start;
+    width: 100%;
+  }
+
+  .hero-redesign .btn-create-hero {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .content.content--home .welcome-banner.hero-redesign {
+    padding: 24px 20px;
+    border-radius: 16px;
+    margin-bottom: 18px;
+  }
+
+  .hero-redesign .hero-text h1 {
+    font-size: 1.6rem;
+  }
+
+  .hero-redesign .hero-text p {
+    font-size: 0.95rem;
+    margin-bottom: 18px;
+  }
+
+  .hero-redesign .hero-chips {
+    gap: 8px;
+  }
+
+  .hero-redesign .hero-chip {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+  
+  .hero-redesign .hero-circle-1 {
+    width: 200px;
+    height: 200px;
+  }
+  
+  .hero-redesign .hero-circle-2 {
+    width: 100px;
+    height: 100px;
+    right: 50px;
+  }
+}
+
+/* --- Stats Cards Layout (Optimized for sidebar states) --- */
+/* Desktop / Large Tablet with Sidebar open (tight fit) */
+@media (min-width: 901px) and (max-width: 1100px) {
   .content.content--home .home-billing-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 760px) {
-  .content.content--home .welcome-banner {
-    padding: 18px;
+/* Tablet with Sidebar closed (gets full screen width) */
+@media (max-width: 900px) {
+  .content.content--home .home-billing-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+
+/* Small Tablet / Large Mobile */
+@media (max-width: 768px) {
+  .content.content--home .home-billing-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  
+  .home-billing-stat-card {
+    padding: 12px 14px;
   }
 
+  .home-billing-stat-value {
+    font-size: 24px;
+  }
+
+  .home-billing-stat-subtitle {
+    font-size: 11px;
+  }
+}
+
+/* Mobile Portrait */
+@media (max-width: 640px) {
   .content.content--home .home-billing-stats {
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  
+  .home-billing-stat-card {
+    padding: 16px 20px;
+  }
+
+  .home-billing-stat-value {
+    font-size: 28px;
+  }
+  
+  .home-billing-stat-subtitle {
+    font-size: 13px;
+  }
+}
+
+/* --- Segmented Tabs --- */
+@media (max-width: 480px) {
+  .content.content--home .home-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    width: 100%;
+  }
+
+  .content.content--home .home-tab {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    padding: 10px 8px;
+  }
+}
+
+/* --- Projects/Templates Grid --- */
+@media (max-width: 600px) {
+  .content.content--home .projects-grid-override {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .project-card--skeleton .skeleton-thumb,
+  .project-thumb-placeholder {
+    min-height: auto;
   }
 }
 

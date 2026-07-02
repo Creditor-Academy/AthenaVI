@@ -231,11 +231,9 @@
   flex-direction: column;
   align-items: flex-start;
   border-radius: 10px;
-  background: color-mix(in srgb, var(--bg-card) 75%, transparent);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid color-mix(in srgb, var(--border-color) 45%, transparent);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2), 0 0 0 1px color-mix(in srgb, var(--border-color) 25%, transparent);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px var(--border-color);
   color: var(--text-main);
   position: relative;
   z-index: 2600;
@@ -297,7 +295,7 @@
 }
 
 .astryd-close-btn:hover {
-  background: color-mix(in srgb, var(--bg-surface) 60%, transparent);
+  background: var(--bg-surface);
   color: var(--text-main);
 }
 
@@ -324,8 +322,8 @@
 .astryd-input {
   width: 100%;
   padding: 10px 14px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
-  background: color-mix(in srgb, var(--bg-surface) 40%, transparent);
+  border: 1px solid var(--border-color);
+  background: var(--bg-main);
   color: var(--text-main);
   border-radius: 8px;
   font-size: 14px;
@@ -336,7 +334,7 @@
 
 .astryd-input:focus {
   border-color: var(--primary);
-  background: color-mix(in srgb, var(--bg-surface) 60%, transparent);
+  background: var(--bg-main);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 15%, transparent);
 }
 
@@ -446,7 +444,7 @@
 }
 
 .astryd-btn-secondary:hover {
-  background: color-mix(in srgb, var(--bg-surface) 60%, transparent);
+  background: var(--bg-surface);
   border-color: var(--text-muted);
 }
 
@@ -619,8 +617,7 @@
   background: color-mix(in srgb, #ef4444 10%, transparent);
 }
 
-/* Accent Header Styles for Modals */
-
+/* Accent header — solid primary band; body stays opaque white/dark card */
 .astryd-modal {
   padding: 0 !important;
   gap: 0 !important;
@@ -630,8 +627,8 @@
 .astryd-header {
   background: var(--primary);
   padding: 18px 24px;
-  border-top-left-radius: 15px;
-  border-top-right-radius: 15px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
   box-sizing: border-box;
 }
 
@@ -677,8 +674,8 @@
   -moz-appearance: none;
   width: 100%;
   padding: 0 30px 0 12px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
-  background: color-mix(in srgb, var(--bg-surface) 40%, transparent);
+  border: 1px solid var(--border-color);
+  background: var(--bg-main);
   color: var(--text-main);
   border-radius: 8px;
   font-size: 13px;
@@ -691,7 +688,7 @@
 
 .astryd-select:focus {
   border-color: var(--primary);
-  background: color-mix(in srgb, var(--bg-surface) 60%, transparent);
+  background: var(--bg-main);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 15%, transparent);
 }
 

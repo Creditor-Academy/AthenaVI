@@ -46,6 +46,7 @@ import {
   buildRegularPolygonClipPath,
   getPolygonSideLabel,
   isPolygonMaskStyle,
+  applyShapeBorderRadius,
 } from '../../../../utils/shapeClipPath';
 import {
   colorToHex,
@@ -170,11 +171,11 @@ const ToggleSwitch = ({ checked, onChange, accent = 'var(--primary)' }) => (
       style={{ opacity: 0, width: 0, height: 0 }} />
     <span style={{
       position: 'absolute', inset: 0, borderRadius: 10, cursor: 'pointer', transition: 'background 0.2s',
-      background: checked ? accent : '#cbd5e1',
+      background: checked ? accent : 'var(--border-color)',
     }}>
       <span style={{
         position: 'absolute', top: 2, left: checked ? 18 : 2, width: 16, height: 16,
-        background: 'white', borderRadius: '50%', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+        background: 'var(--bg-elevated)', borderRadius: '50%', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
       }} />
     </span>
   </label>
@@ -372,7 +373,7 @@ const BorderControls = ({
             <span
               className="scp-property-bar__color-preview"
               style={{
-                background: 'var(--bg-card, #fff)',
+                background: 'var(--bg-card)',
                 border: `${Math.max(2, borderWidth || 2)}px solid ${borderColor}`,
               }}
               aria-hidden
@@ -654,6 +655,12 @@ const ShapeAndEffectsContent = ({
     !style.clipPath &&
     !style.WebkitClipPath &&
     cornerRadiusPx === 0;
+  const isRoundedRect =
+    !polygonMode &&
+    !isCircle &&
+    !style.clipPath &&
+    !style.WebkitClipPath &&
+    cornerRadiusPx > 0;
   const cornerRadiusLocked = polygonMode || isCircle;
 
   const applyPolygonShape = (sides) => {
@@ -681,14 +688,15 @@ const ShapeAndEffectsContent = ({
   };
 
   const applyCornerRadius = (px) => {
-    const { clipPath, WebkitClipPath, polygonSides: _sides, ...rest } = style;
-    updateLayer({ style: { ...rest, borderRadius: `${px}px` } });
+    const nextStyle = applyShapeBorderRadius(style, px, activeLayer.size || {});
+    updateLayer({ style: nextStyle });
   };
 
   const updateStyle = (updates) => updateLayer({ style: { ...style, ...updates } });
 
   const isShapeActive = (shape) => {
     if (shape.square) return isSquare;
+    if (shape.roundedRect) return isRoundedRect;
     if (shape.circle) return isCircle;
     return polygonMode && polygonSides === shape.sides;
   };
@@ -729,6 +737,7 @@ const ShapeAndEffectsContent = ({
           min={0}
           max={48}
           step={1}
+          disabled={cornerRadiusLocked}
           onChange={applyCornerRadius}
           ariaLabel="Corner radius"
         />
@@ -769,7 +778,6 @@ const LayerPanel = ({
   onMoveLayerOrder,
   onToggleLayerLock,
   generateSceneVideo,
-  applyGlobalSetting,
   onOpenQuickCreate,
   setActiveTab,
 }) => {
@@ -982,9 +990,7 @@ const LayerPanel = ({
             activeScene={activeScene}
             activeSceneId={activeSceneId}
             generateSceneVideo={generateSceneVideo}
-            applyGlobalSetting={applyGlobalSetting}
             onOpenQuickCreate={onOpenQuickCreate}
-            setActiveTab={setActiveTab}
           />
         ),
       },
@@ -1049,7 +1055,7 @@ const LayerPanel = ({
               placeholder="https://... or blob:..."
               style={{
                 width: '100%', boxSizing: 'border-box', fontFamily: 'monospace',
-                background: 'white', border: '1px solid var(--border-subtle, rgba(0,0,0,0.1))',
+                background: 'var(--bg-input)', border: '1px solid var(--border-color)',
                 borderRadius: 8, padding: '7px 10px', fontSize: 10,
                 color: 'var(--text-main)', outline: 'none', wordBreak: 'break-all',
               }}
@@ -1169,7 +1175,7 @@ const LayerPanel = ({
                   style={{
                     padding: '6px 10px', borderRadius: 8,
                     border: `1px solid ${parseInt(activeLayer.style?.borderRadius || 0) === r ? 'var(--primary)' : 'var(--border-subtle, rgba(0,0,0,0.1))'}`,
-                    background: parseInt(activeLayer.style?.borderRadius || 0) === r ? 'rgba(124,58,237,0.08)' : 'white',
+                    background: parseInt(activeLayer.style?.borderRadius || 0) === r ? 'rgba(var(--primary-rgb), 0.08)' : 'var(--bg-input)',
                     fontSize: 10, fontWeight: 700, cursor: 'pointer',
                   }}
                 >
@@ -1249,7 +1255,6 @@ const SceneConfigurationPanel = ({
   selectedLayerId,
   generateSceneVideo,
   setActiveTab,
-  applyGlobalSetting,
   onOpenQuickCreate,
   onMoveLayerOrder,
   onToggleLayerLock,
@@ -1271,7 +1276,6 @@ const SceneConfigurationPanel = ({
         onMoveLayerOrder={onMoveLayerOrder}
         onToggleLayerLock={onToggleLayerLock}
         generateSceneVideo={generateSceneVideo}
-        applyGlobalSetting={applyGlobalSetting}
         onOpenQuickCreate={onOpenQuickCreate}
         setActiveTab={setActiveTab}
       />
@@ -1285,7 +1289,6 @@ const SceneConfigurationPanel = ({
       updateScene={updateScene}
       clips={clips}
       generateSceneVideo={generateSceneVideo}
-      applyGlobalSetting={applyGlobalSetting}
       onOpenQuickCreate={onOpenQuickCreate}
       onDuplicateScene={onDuplicateScene}
     />

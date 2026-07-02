@@ -366,7 +366,7 @@ const TemplateShowcase = () => {
               viewport={{ once: true }}
             >
               <div className="thumb-container">
-                <img src={tpl.thumb} alt={tpl.title} className="thumb-image" />
+                <img src={tpl.thumb} alt={tpl.title} className="thumb-image" loading="lazy" decoding="async" />
                 <div className="play-overlay">
                   <div className="play-button-icon">
                     <MdPlayArrow size={32} />

@@ -177,7 +177,7 @@
   border: none;
   border-radius: 10px;
   background: var(--primary);
-  color: #fff;
+  color: var(--primary-contrast);
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
@@ -251,7 +251,7 @@
   padding: 7px 12px;
   border-radius: 8px;
   border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.1));
-  background: white;
+  background: var(--bg-input);
   font-size: 12px;
   font-weight: 700;
   color: var(--text-main);
@@ -277,7 +277,7 @@
   height: 30px;
   border-radius: 8px;
   border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.1));
-  background: white;
+  background: var(--bg-input);
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
@@ -308,7 +308,7 @@
   padding: 8px 10px;
   font-size: 13px;
   font-weight: 600;
-  background: white;
+  background: var(--bg-input);
   color: var(--text-main);
   cursor: pointer;
   outline: none;
@@ -357,7 +357,7 @@
 
 .scene-settings__apply-btn {
   border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.1));
-  background: white;
+  background: var(--bg-input);
   border-radius: 6px;
   padding: 4px 8px;
   font-size: 11px;

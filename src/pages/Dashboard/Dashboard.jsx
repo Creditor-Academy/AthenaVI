@@ -40,6 +40,10 @@ import {
   saveAvatarsActiveSection,
 } from '../../utils/avatarsNavigationStorage.js'
 import { clearWorkspaceNavigation } from '../../utils/workspaceNavigationStorage.js'
+import {
+  dashboardPathForSection,
+  resolveDashboardSectionFromPath,
+} from '../../utils/dashboardRouting.js'
 import './Dashboard.css'
 
 const AVATAR_FLOW_SECTIONS = new Set(['avatars', 'create-avatar-look', 'create-avatar'])
@@ -52,26 +56,7 @@ function Dashboard({ onCreate, initialSection }) {
     capabilitiesLoading,
   } = useAuth()
   const [section, setSection] = useState(() => {
-    // Use initialSection from props if provided, otherwise get from URL
-    if (initialSection) {
-      return initialSection
-    }
-
-    // Fallback: Initialize section based on current URL path
-    let currentPath = window.location.pathname
-    if (window.location.hash && window.location.hash !== '#') {
-      currentPath = window.location.hash.replace('#', '') || '/'
-      if (currentPath.endsWith('/') && currentPath.length > 1) {
-        currentPath = currentPath.slice(0, -1)
-      }
-    }
-    if (currentPath.startsWith('/dashboard/')) {
-      return currentPath.replace('/dashboard/', '') || 'home'
-    }
-    if (currentPath === '/support') {
-      return 'help'
-    }
-    return 'home'
+    return resolveDashboardSectionFromPath() ?? initialSection ?? 'home'
   })
   const [selectedVoice, setSelectedVoice] = useState(null)
   const [showAIAssistant, setShowAIAssistant] = useState(false)
@@ -199,16 +184,16 @@ function Dashboard({ onCreate, initialSection }) {
     }
   }, [onCreate])
 
+  // Keep section aligned with the URL on hard refresh / direct links.
+  useEffect(() => {
+    const sectionFromUrl = resolveDashboardSectionFromPath()
+    if (!sectionFromUrl) return
+    setSection((current) => (current === sectionFromUrl ? current : sectionFromUrl))
+  }, [])
+
   // Update URL when section changes
   useEffect(() => {
-    let newPath
-    if (section === 'home') {
-      newPath = '/dashboard'
-    } else if (section === 'profile') {
-      newPath = '/profile'
-    } else {
-      newPath = `/dashboard/${section}`
-    }
+    const newPath = dashboardPathForSection(section)
 
     if (window.location.pathname !== newPath) {
       window.history.pushState({ section }, '', newPath)
@@ -218,22 +203,9 @@ function Dashboard({ onCreate, initialSection }) {
   // Handle browser back/forward for dashboard sections
   useEffect(() => {
     const handlePopState = () => {
-      let currentPath = window.location.pathname
-      if (window.location.hash && window.location.hash !== '#') {
-        currentPath = window.location.hash.replace('#', '') || '/'
-        if (currentPath.endsWith('/') && currentPath.length > 1) {
-          currentPath = currentPath.slice(0, -1)
-        }
-      }
-      if (currentPath === '/profile') {
-        setSection('profile')
-      } else if (currentPath === '/support') {
-        setSection('help')
-      } else if (currentPath.startsWith('/dashboard/')) {
-        const newSection = currentPath.replace('/dashboard/', '') || 'home'
-        setSection(newSection)
-      } else if (currentPath === '/dashboard') {
-        setSection('home')
+      const sectionFromUrl = resolveDashboardSectionFromPath()
+      if (sectionFromUrl) {
+        setSection(sectionFromUrl)
       }
     }
 
@@ -266,6 +238,12 @@ function Dashboard({ onCreate, initialSection }) {
       goToSection('avatars')
     }
   }, [section, avatarLookContext, goToSection])
+
+  useEffect(() => {
+    if (section === 'template-details' && !selectedTemplateForDetails) {
+      goToSection('templates')
+    }
+  }, [section, selectedTemplateForDetails, goToSection])
 
   // Eagerly fetch and sync user profile on dashboard mount
   useEffect(() => {

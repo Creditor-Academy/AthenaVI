@@ -1,4 +1,6 @@
 /** Paths the backend may use for OAUTH_SUCCESS_PATH after Google sign-in */
+import { readClientPath } from './dashboardRouting.js';
+
 export const OAUTH_CALLBACK_PATHS = new Set([
   '/auth/google/callback',
   '/auth/callback',
@@ -49,12 +51,7 @@ export function resolveViewFromLocation(pathToViewMap) {
     return 'login';
   }
 
-  let currentPath = normalizePathname(window.location.pathname);
-
-  if (window.location.hash && window.location.hash !== '#') {
-    const hashPath = window.location.hash.replace('#', '') || '/';
-    currentPath = normalizePathname(hashPath);
-  }
+  let currentPath = readClientPath();
 
   const urlView = pathToViewMap[currentPath];
   if (urlView) return urlView;

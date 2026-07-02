@@ -136,7 +136,7 @@ const EditorSidebarVoice = ({ activeScene, activeSceneId, updateScene }) => {
               onClick={() => setActiveGender(gender)}
               style={{
                 background: activeGender === gender ? 'var(--primary)' : 'transparent',
-                color: activeGender === gender ? 'white' : 'var(--text-muted)',
+                color: activeGender === gender ? 'var(--primary-contrast)' : 'var(--text-muted)',
                 borderColor: activeGender === gender ? 'var(--primary)' : 'var(--border-color)',
                 textTransform: 'capitalize'
               }}
@@ -166,7 +166,7 @@ const EditorSidebarVoice = ({ activeScene, activeSceneId, updateScene }) => {
                     padding: '12px',
                     borderRadius: '10px',
                     border: isSelected ? '2px solid var(--primary)' : '1px solid var(--border-color)',
-                    background: isSelected ? 'rgba(26, 115, 232, 0.05)' : 'var(--bg-card)',
+                    background: isSelected ? 'rgba(var(--primary-rgb), 0.05)' : 'var(--bg-card)',
                     marginBottom: '10px',
                     cursor: 'pointer',
                     display: 'flex',
@@ -203,7 +203,7 @@ const EditorSidebarVoice = ({ activeScene, activeSceneId, updateScene }) => {
                       height: '28px',
                       borderRadius: '50%',
                       border: '1px solid var(--border-color)',
-                      background: 'white',
+                      background: 'var(--bg-card)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',

@@ -255,6 +255,13 @@ function uniqueBySrc(items = []) {
 }
 
 /**
+ * Synchronous fallback for first paint — no network required.
+ */
+export function getStaticDomeGalleryContent() {
+  return uniqueBySrc(interleaveMedia(LOCAL_AVATAR_IMAGES, SHOWCASE_VIDEOS));
+}
+
+/**
  * Load avatars, template scene media, and showcase videos for the dome gallery.
  */
 export async function fetchDomeGalleryContent() {

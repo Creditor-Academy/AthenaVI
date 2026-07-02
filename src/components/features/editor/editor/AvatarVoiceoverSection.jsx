@@ -1,15 +1,19 @@
 import {
   MdRecordVoiceOver,
-  MdEdit,
   MdPersonAdd,
   MdSmartDisplay,
   MdRefresh,
   MdCheckCircle,
   MdWarning,
   MdMonitor,
-  MdPerson,
 } from 'react-icons/md';
 import { sceneNeedsHeygenRegeneration } from '../../../../utils/heygenVideo';
+import {
+  getSceneAvatarLookId,
+  getSceneScript,
+  getSceneVoiceId,
+  hasScenePresenterSetup,
+} from '../../../../utils/heygenAvatars';
 import './SceneSettingsPanel.css';
 
 const displayName = (name, emptyLabel = 'Not selected') => {
@@ -24,20 +28,22 @@ const AvatarVoiceoverSection = ({
   activeScene,
   activeSceneId,
   generateSceneVideo,
-  applyGlobalSetting,
   onOpenQuickCreate,
-  setActiveTab,
 }) => {
   const isGenerating = activeScene.heygenStatus === 'processing';
   const isGenerated = activeScene.heygenStatus === 'completed';
   const needsRegeneration = sceneNeedsHeygenRegeneration(activeScene);
   const isFailed = activeScene.heygenStatus === 'failed';
-  const canGenerate = activeScene.avatarType && activeScene.voiceId && activeScene.script;
-  const hasVoiceover = !!(
-    activeScene.avatarType ||
-    activeScene.voiceId ||
-    (activeScene.script || '').trim()
+  const avatarLookId = getSceneAvatarLookId(activeScene);
+  const voiceId = getSceneVoiceId(activeScene);
+  const script = getSceneScript(activeScene);
+  const canGenerate = hasScenePresenterSetup(activeScene);
+  const hasPartialPresenter = Boolean(
+    !canGenerate && (avatarLookId || voiceId || script || activeScene.avatarName || activeScene.presenter?.avatarName)
   );
+  const avatarName =
+    activeScene.avatarName || activeScene.presenter?.avatarName || '';
+  const voiceName = activeScene.voiceName || activeScene.presenter?.voiceName || '';
 
   return (
     <div className="scp-avatar-voiceover">
@@ -47,54 +53,51 @@ const AvatarVoiceoverSection = ({
             <MdRecordVoiceOver size={14} />
             Presenter & Voice
           </span>
-          {hasVoiceover ? (
-            <button type="button" className="scene-settings__ghost-btn" onClick={onOpenQuickCreate}>
-              <MdEdit size={13} />
-              {isGenerated || needsRegeneration ? 'Change' : 'Edit'}
-            </button>
-          ) : null}
         </div>
         <div className="scene-settings__block-body" style={{ padding: 0 }}>
-          {hasVoiceover ? (
+          {canGenerate ? (
             <>
               <div className="scene-settings__summary-grid">
                 <div className="scene-settings__summary-card">
                   <div className="scene-settings__voice-label">
-                    <span className={`scene-settings__dot ${activeScene.avatarType ? 'scene-settings__dot--on' : 'scene-settings__dot--off'}`} />
+                    <span className={`scene-settings__dot ${avatarLookId ? 'scene-settings__dot--on' : 'scene-settings__dot--off'}`} />
                     Presenter
                   </div>
-                  <div className="scene-settings__voice-value">{displayName(activeScene.avatarName)}</div>
-                  {activeScene.avatarType && applyGlobalSetting ? (
-                    <button type="button" className="scene-settings__apply-btn scene-settings__apply-btn--inline" onClick={() => applyGlobalSetting('avatar')}>
-                      Apply to all scenes
-                    </button>
-                  ) : null}
+                  <div className="scene-settings__voice-value">{displayName(avatarName)}</div>
                 </div>
                 <div className="scene-settings__summary-card">
                   <div className="scene-settings__voice-label">
-                    <span className={`scene-settings__dot ${activeScene.voiceId ? 'scene-settings__dot--on' : 'scene-settings__dot--off'}`} />
+                    <span className={`scene-settings__dot ${voiceId ? 'scene-settings__dot--on' : 'scene-settings__dot--off'}`} />
                     Voice
                   </div>
-                  <div className="scene-settings__voice-value">{displayName(activeScene.voiceName)}</div>
-                  {activeScene.voiceId && applyGlobalSetting ? (
-                    <button type="button" className="scene-settings__apply-btn scene-settings__apply-btn--inline" onClick={() => applyGlobalSetting('voice')}>
-                      Apply to all scenes
-                    </button>
-                  ) : null}
+                  <div className="scene-settings__voice-value">{displayName(voiceName)}</div>
                 </div>
               </div>
               <div className="scene-settings__script-wrap">
                 <div className="scene-settings__voice-label">
-                  <span className={`scene-settings__dot ${(activeScene.script || '').trim() ? 'scene-settings__dot--on' : 'scene-settings__dot--off'}`} />
+                  <span className={`scene-settings__dot ${script ? 'scene-settings__dot--on' : 'scene-settings__dot--off'}`} />
                   Narration Script
                 </div>
-                <p className="scene-settings__script">{(activeScene.script || '').trim()}</p>
-                <span className="scene-settings__meta">{(activeScene.script || '').length} characters</span>
+                <p className="scene-settings__script">{script}</p>
+                <span className="scene-settings__meta">{script.length} characters</span>
               </div>
+              <button
+                type="button"
+                className="scene-settings__cta scene-settings__cta--secondary"
+                style={{ marginTop: 10 }}
+                onClick={onOpenQuickCreate}
+              >
+                <MdRefresh size={16} />
+                Edit presenter
+              </button>
             </>
           ) : (
             <div className="scene-settings__empty">
-              <p>No presenter or script on this scene yet.</p>
+              <p>
+                {hasPartialPresenter
+                  ? 'Presenter setup is incomplete — choose a look, voice, and script to generate video.'
+                  : 'No presenter or script on this scene yet.'}
+              </p>
               <button type="button" className="scene-settings__cta" onClick={onOpenQuickCreate}>
                 <MdPersonAdd size={16} />
                 Set up presenter
@@ -106,42 +109,11 @@ const AvatarVoiceoverSection = ({
 
       <div className="scene-settings__block" style={{ margin: '12px 0 0', border: 'none', background: 'transparent' }}>
         <div className="scene-settings__block-body" style={{ padding: 0 }}>
-          <button
-            type="button"
-            className="scene-settings__cta"
-            disabled={isGenerating || (!canGenerate && !isGenerating)}
-            onClick={() => generateSceneVideo?.(activeSceneId)}
-          >
-            {isGenerating ? (
-              <>
-                <span className="scene-settings__spin" />
-                Generating…
-              </>
-            ) : isGenerated || needsRegeneration ? (
-              <>
-                <MdRefresh size={16} />
-                {needsRegeneration ? 'Generate with new presenter' : 'Regenerate video'}
-              </>
-            ) : (
-              <>
-                <MdSmartDisplay size={16} />
-                Generate scene video
-              </>
-            )}
-          </button>
-          {isGenerating && (
-            <p className="scene-settings__status">Avatar video is processing. This may take a minute.</p>
-          )}
-          {needsRegeneration && (
-            <p className="scene-settings__status">
-              Presenter updated — generate again to replace the previous avatar video.
-            </p>
-          )}
-          {isGenerated && !needsRegeneration && (
+          {isGenerated && !needsRegeneration ? (
             <>
               <p className="scene-settings__status scene-settings__status--ok">
                 <MdCheckCircle size={14} />
-                Video ready — use Change above or the Avatar tool, then regenerate for a new look.
+                Video ready — use Regenerate below to change presenter, voice, or script.
               </p>
               <button
                 type="button"
@@ -157,6 +129,54 @@ const AvatarVoiceoverSection = ({
                 <MdMonitor size={14} />
                 View video
               </button>
+              <button
+                type="button"
+                className="scene-settings__cta"
+                style={{ marginTop: 8 }}
+                onClick={onOpenQuickCreate}
+              >
+                <MdRefresh size={16} />
+                Regenerate video
+              </button>
+            </>
+          ) : (
+            <>
+              {!canGenerate ? (
+                <p className="scene-settings__status" style={{ marginBottom: 8 }}>
+                  Set up presenter, voice, and script before generating video.
+                </p>
+              ) : null}
+              <button
+                type="button"
+                className="scene-settings__cta"
+                disabled={isGenerating || !canGenerate}
+                onClick={() => generateSceneVideo?.(activeSceneId)}
+              >
+                {isGenerating ? (
+                  <>
+                    <span className="scene-settings__spin" />
+                    Generating…
+                  </>
+                ) : needsRegeneration ? (
+                  <>
+                    <MdRefresh size={16} />
+                    Generate with new presenter
+                  </>
+                ) : (
+                  <>
+                    <MdSmartDisplay size={16} />
+                    Generate scene video
+                  </>
+                )}
+              </button>
+              {isGenerating && (
+                <p className="scene-settings__status">Avatar video is processing. This may take a minute.</p>
+              )}
+              {needsRegeneration && (
+                <p className="scene-settings__status">
+                  Presenter updated — generate again to replace the previous avatar video.
+                </p>
+              )}
             </>
           )}
           {isFailed && (
@@ -167,18 +187,6 @@ const AvatarVoiceoverSection = ({
           )}
         </div>
       </div>
-
-      {setActiveTab ? (
-        <button
-          type="button"
-          className="scp-btn scp-btn--ghost scp-btn--block"
-          style={{ marginTop: 10 }}
-          onClick={() => setActiveTab('avatar')}
-        >
-          <MdPerson size={14} />
-          Browse avatars
-        </button>
-      ) : null}
     </div>
   );
 };

@@ -1,4 +1,5 @@
 .sq-toolbar {
+  display: none !important;
   position: absolute;
   left: 50%;
   top: calc(100% + 12px);
@@ -10,10 +11,10 @@
   align-items: center;
   gap: 4px;
   padding: 8px 10px;
-  background: #fff;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.14), 0 1px 4px rgba(15, 23, 42, 0.08);
+  box-shadow: var(--shadow), 0 4px 16px rgba(0, 0, 0, 0.12);
   z-index: 2147483646;
   pointer-events: auto;
   white-space: nowrap;
@@ -94,31 +95,31 @@
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: #334155;
+  color: var(--text-main);
   cursor: pointer;
   flex-shrink: 0;
   transition: background 0.12s, color 0.12s;
 }
 
 .sq-toolbar__btn:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+  background: var(--bg-surface);
+  color: var(--text-main);
 }
 
 .sq-toolbar__btn--active {
-  background: #e8f0fe;
-  color: #1a73e8;
+  background: color-mix(in srgb, var(--primary) 14%, var(--bg-surface));
+  color: var(--primary);
 }
 
 .sq-toolbar__btn--danger:hover {
-  background: #fef2f2;
-  color: #dc2626;
+  background: color-mix(in srgb, var(--delete-red) 12%, var(--bg-surface));
+  color: var(--delete-red);
 }
 
 .sq-toolbar__divider {
   width: 1px;
   height: 24px;
-  background: #e2e8f0;
+  background: var(--border-color);
   margin: 0 2px;
   flex-shrink: 0;
 }
@@ -133,38 +134,34 @@
 .sq-toolbar__select {
   height: 36px;
   padding: 0 34px 0 12px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-size: 13px;
-  color: #334155;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  color: var(--text-main);
+  background: var(--bg-input);
   max-width: 170px;
   cursor: pointer;
   flex-shrink: 0;
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
   transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
-  background-image:
-    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-  background-repeat: no-repeat, no-repeat;
-  background-position: 0 0, right 10px center;
-  background-size: auto, 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px;
 }
 
 .sq-toolbar__select:hover {
-  border-color: #94a3b8;
-  background-image:
-    linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border-color));
+  background-color: var(--bg-surface);
 }
 
 .sq-toolbar__select:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18), 0 1px 2px rgba(15, 23, 42, 0.12);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.18);
 }
 
 .sq-toolbar__select--font {
@@ -191,7 +188,7 @@
   right: 8px;
   top: 50%;
   transform: translateY(-50%);
-  color: #475569;
+  color: var(--text-muted);
   flex-shrink: 0;
   transition: transform 0.18s ease, color 0.18s ease;
 }
@@ -215,10 +212,10 @@
   overflow: auto;
   scrollbar-width: none;
   padding: 6px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--border-color);
   border-radius: 10px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.18), 0 2px 8px rgba(15, 23, 42, 0.12);
+  background: var(--bg-card);
+  box-shadow: var(--shadow), 0 14px 28px rgba(0, 0, 0, 0.12);
   z-index: 2147483647;
   transform: translateX(var(--sq-font-list-shift-x, 0px));
 }
@@ -238,7 +235,7 @@
   width: 100%;
   border: 0;
   background: transparent;
-  color: #334155;
+  color: var(--text-main);
   padding: 9px 10px;
   border-radius: 8px;
   display: flex;
@@ -250,12 +247,12 @@
 }
 
 .sq-font-menu__item:hover {
-  background: #eef2ff;
+  background: color-mix(in srgb, var(--primary) 10%, var(--bg-surface));
 }
 
 .sq-font-menu__item--active {
-  background: #e8f0fe;
-  color: #1d4ed8;
+  background: color-mix(in srgb, var(--primary) 14%, var(--bg-surface));
+  color: var(--primary);
   font-weight: 600;
 }
 
@@ -268,7 +265,7 @@
   align-items: center;
   gap: 2px;
   height: 36px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   overflow: hidden;
   flex-shrink: 0;
@@ -278,8 +275,8 @@
   width: 28px;
   height: 100%;
   border: none;
-  background: #f8fafc;
-  color: #475569;
+  background: var(--bg-surface);
+  color: var(--text-muted);
   cursor: pointer;
   font-size: 18px;
   line-height: 1;
@@ -287,7 +284,8 @@
 }
 
 .sq-toolbar__stepper button:hover {
-  background: #e2e8f0;
+  background: var(--border-color);
+  color: var(--text-main);
 }
 
 .sq-toolbar__stepper span {
@@ -295,7 +293,7 @@
   text-align: center;
   font-size: 13px;
   font-weight: 600;
-  color: #334155;
+  color: var(--text-main);
 }
 
 .sq-toolbar__color {
@@ -307,7 +305,7 @@
   height: 38px;
   border-radius: 8px;
   cursor: pointer;
-  color: #475569;
+  color: var(--text-muted);
   flex-shrink: 0;
 }
 
@@ -315,18 +313,18 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--border-color);
   background: var(--sq-swatch, #1a1b1c);
   overflow: hidden;
-  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
 }
 
 .sq-toolbar__color--swatch:hover {
-  border-color: #cbd5e1;
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border-color));
 }
 
 .sq-toolbar__color:hover {
-  background: #f1f5f9;
+  background: var(--bg-surface);
 }
 
 .sq-toolbar__color--swatch:hover {

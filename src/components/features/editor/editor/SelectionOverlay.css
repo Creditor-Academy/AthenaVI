@@ -12,8 +12,8 @@
 .sel-handle--corner {
   width: 14px;
   height: 14px;
-  background: #fff;
-  border: 2px solid #1a73e8;
+  background: var(--bg-elevated);
+  border: 2px solid var(--primary);
   border-radius: 2px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
@@ -26,13 +26,13 @@
   width: 4px;
   height: 4px;
   margin: -2px 0 0 -2px;
-  background: #1a73e8;
+  background: var(--primary);
   border-radius: 50%;
 }
 
 .sel-handle--edge {
-  background: #fff;
-  border: 2px solid #1a73e8;
+  background: var(--bg-elevated);
+  border: 2px solid var(--primary);
   border-radius: 3px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
@@ -58,7 +58,7 @@
 .sel-overlay__border {
   position: absolute;
   inset: 0;
-  border: 2px solid #1a73e8;
+  border: 2px solid var(--primary);
   pointer-events: none;
   z-index: 35;
   box-sizing: border-box;
@@ -71,7 +71,7 @@
   width: 2px;
   height: 20px;
   margin-left: -1px;
-  background: #1a73e8;
+  background: var(--primary);
   pointer-events: none;
   z-index: 55;
 }
@@ -83,8 +83,8 @@
   width: 18px;
   height: 18px;
   margin-left: -9px;
-  background: #fff;
-  border: 2px solid #1a73e8;
+  background: var(--bg-elevated);
+  border: 2px solid var(--primary);
   border-radius: 50%;
   cursor: grab;
   z-index: 60;
@@ -99,8 +99,8 @@
 .sel-overlay__angle-badge {
   position: fixed;
   padding: 4px 10px;
-  background: rgba(15, 23, 42, 0.92);
-  color: #fff;
+  background: color-mix(in srgb, var(--bg-main) 92%, transparent);
+  color: var(--text-main);
   font-size: 12px;
   font-weight: 600;
   border-radius: 6px;
@@ -108,8 +108,9 @@
   z-index: 10000;
   transform: translate(-50%, -100%);
   white-space: nowrap;
-  font-family: Inter, system-ui, sans-serif;
+  font-family: var(--font-family);
   letter-spacing: 0.02em;
+  border: 1px solid var(--border-color);
 }
 
 .sel-overlay__dimension-badge {
@@ -118,13 +119,14 @@
   left: 50%;
   transform: translateX(-50%);
   padding: 3px 8px;
-  background: rgba(15, 23, 42, 0.88);
-  color: #fff;
+  background: color-mix(in srgb, var(--bg-main) 88%, transparent);
+  color: var(--text-main);
   font-size: 11px;
   font-weight: 600;
   border-radius: 4px;
   pointer-events: none;
   z-index: 55;
   white-space: nowrap;
-  font-family: Inter, system-ui, sans-serif;
+  font-family: var(--font-family);
+  border: 1px solid var(--border-color);
 }

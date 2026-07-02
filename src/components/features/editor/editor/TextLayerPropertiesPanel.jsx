@@ -222,7 +222,7 @@ const TextLayerPropertiesPanel = ({
             style={{
               width: '100%',
               boxSizing: 'border-box',
-              background: 'white',
+              background: 'var(--bg-input)',
               border: '1px solid var(--border-subtle, rgba(0,0,0,0.1))',
               borderRadius: 8,
               padding: '7px 10px',
@@ -241,7 +241,7 @@ const TextLayerPropertiesPanel = ({
               width: '100%',
               resize: 'vertical',
               boxSizing: 'border-box',
-              background: 'white',
+              background: 'var(--bg-input)',
               border: '1px solid var(--border-subtle, rgba(0,0,0,0.1))',
               borderRadius: 8,
               padding: '8px 10px',
@@ -365,7 +365,7 @@ const TextLayerPropertiesPanel = ({
               style={{
                 flex: 1,
                 boxSizing: 'border-box',
-                background: 'white',
+                background: 'var(--bg-input)',
                 border: '1px solid var(--border-subtle, rgba(0,0,0,0.1))',
                 borderRadius: 8,
                 padding: '6px 8px',

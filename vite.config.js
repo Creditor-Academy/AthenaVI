@@ -7,6 +7,7 @@ export default defineConfig(({ mode }) => {
   const apiBaseUrl = env.VITE_API_BASE_URL || 'http://localhost:9000'
 
   return {
+    base: '/',
     plugins: [react()],
     server: {
       proxy: {

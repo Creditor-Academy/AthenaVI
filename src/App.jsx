@@ -1,34 +1,41 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import Landing from './pages/Landing/Landing.jsx'
 import AuthPage from './pages/Auth/AuthPage.jsx'
-import Dashboard from './pages/Dashboard/Dashboard.jsx'
-import Create from './pages/Editor/Editor.jsx'
-import Products from './pages/Products/Products.jsx'
-import AboutUsBlog from './pages/AboutUs/AboutUs.jsx'
-import News from './pages/News/News.jsx'
-import Resources from './pages/Resources/Resources.jsx'
-import HelpCenter from './pages/HelpCenter/HelpCenter.jsx'
-import PrivacyPolicy from './pages/PrivacyPolicy/PrivacyPolicy.jsx'
-import MarketingSuite from './pages/MarketingSuite/MarketingSuite.jsx'
-import SalesSuite from './pages/SalesSuite/SalesSuite.jsx'
-import Ethics from './pages/Ethics/Ethics.jsx'
-import Technology from './pages/Technology/Technology.jsx'
-import CustomerExperience from './pages/CustomerExperience/CustomerExperience.jsx'
-import LearningDevelopment from './pages/LearningDevelopment/LearningDevelopment.jsx'
 import ResetPassword from './components/features/auth/authentication/ResetPassword.jsx'
-import Settings from './pages/Settings/Settings.jsx'
-import UseCases from './pages/UseCases/UseCases.jsx'
-import InviteAcceptance from './pages/InviteAcceptance/InviteAcceptance.jsx'
-import AIAvatarsVideos from './pages/AIAvatarsVideos/AIAvatarsVideos.jsx'
-import AIVideos from './pages/AIVideos/AIVideos.jsx'
-import NotFound from './pages/NotFound/NotFound.jsx'
-import RenderDownload from './pages/Download/RenderDownload.jsx'
-import GoogleCallback from './components/features/auth/GoogleCallback.jsx'
 import { persistWorkspaceFolderNavigation } from './utils/navigateToWorkspaceFolder.js'
 import { isOAuthCallbackPath, resolveViewFromLocation } from './utils/authRouting.js'
+import {
+  dashboardPathForSection,
+  isDashboardClientPath,
+  readClientPath,
+  resolveDashboardSectionFromPath,
+} from './utils/dashboardRouting.js'
 
+const Dashboard = lazy(() => import('./pages/Dashboard/Dashboard.jsx'))
+const Create = lazy(() => import('./pages/Editor/Editor.jsx'))
+const Products = lazy(() => import('./pages/Products/Products.jsx'))
+const AboutUsBlog = lazy(() => import('./pages/AboutUs/AboutUs.jsx'))
+const News = lazy(() => import('./pages/News/News.jsx'))
+const Resources = lazy(() => import('./pages/Resources/Resources.jsx'))
+const HelpCenter = lazy(() => import('./pages/HelpCenter/HelpCenter.jsx'))
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy/PrivacyPolicy.jsx'))
+const MarketingSuite = lazy(() => import('./pages/MarketingSuite/MarketingSuite.jsx'))
+const SalesSuite = lazy(() => import('./pages/SalesSuite/SalesSuite.jsx'))
+const Ethics = lazy(() => import('./pages/Ethics/Ethics.jsx'))
+const Technology = lazy(() => import('./pages/Technology/Technology.jsx'))
+const CustomerExperience = lazy(() => import('./pages/CustomerExperience/CustomerExperience.jsx'))
+const LearningDevelopment = lazy(() => import('./pages/LearningDevelopment/LearningDevelopment.jsx'))
+const Settings = lazy(() => import('./pages/Settings/Settings.jsx'))
+const UseCases = lazy(() => import('./pages/UseCases/UseCases.jsx'))
+const InviteAcceptance = lazy(() => import('./pages/InviteAcceptance/InviteAcceptance.jsx'))
+const AIAvatarsVideos = lazy(() => import('./pages/AIAvatarsVideos/AIAvatarsVideos.jsx'))
+const AIVideos = lazy(() => import('./pages/AIVideos/AIVideos.jsx'))
+const NotFound = lazy(() => import('./pages/NotFound/NotFound.jsx'))
+const RenderDownload = lazy(() => import('./pages/Download/RenderDownload.jsx'))
+const EarlyAccessPage = lazy(() => import('./pages/EarlyAccess/EarlyAccessPage.jsx'))
+const GoogleCallback = lazy(() => import('./components/features/auth/GoogleCallback.jsx'))
 const PATH_TO_VIEW_MAP = {
   '/': 'landing',
   '/dashboard': 'dashboard',
@@ -73,6 +80,7 @@ const PATH_TO_VIEW_MAP = {
   '/auth/google/callback': 'google-callback',
   '/auth/callback': 'google-callback',
   '/oauth/callback': 'google-callback',
+  '/early-access': 'early-access',
 }
 
 // Protected Route Component
@@ -142,6 +150,20 @@ const ProtectedRoute = ({ children, setView }) => {
   return children
 }
 
+const PageFallback = () => (
+  <div style={{
+    minHeight: '100vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: '#f8fafc',
+    color: '#64748b',
+    fontSize: '15px'
+  }}>
+    Loading page...
+  </div>
+)
+
 // App Component with Auth Protection
 function App() {
   const isInviteAcceptancePath =
@@ -150,6 +172,7 @@ function App() {
 
   // Initialize view from localStorage on mount to persist page on refresh
   const [view, setView] = useState(() => resolveViewFromLocation(PATH_TO_VIEW_MAP))
+  const [isHomeReady, setIsHomeReady] = useState(() => resolveViewFromLocation(PATH_TO_VIEW_MAP) !== 'landing')
   const [productSection, setProductSection] = useState(null)
   const [createVideoConfig, setCreateVideoConfig] = useState(() => {
     try {
@@ -172,6 +195,40 @@ function App() {
       console.error('Failed to sync createVideoConfig to localStorage', e)
     }
   }, [createVideoConfig])
+
+  useEffect(() => {
+    if (view !== 'landing') {
+      setIsHomeReady(true)
+      return
+    }
+
+    let cancelled = false
+    const markHomeReady = () => {
+      if (!cancelled) {
+        setIsHomeReady(true)
+      }
+    }
+
+    setIsHomeReady(false)
+
+    const handleLoad = () => {
+      window.setTimeout(markHomeReady, 250)
+    }
+
+    if (document.readyState === 'complete') {
+      handleLoad()
+    } else {
+      window.addEventListener('load', handleLoad, { once: true })
+    }
+
+    const fallbackTimer = window.setTimeout(markHomeReady, 2200)
+
+    return () => {
+      cancelled = true
+      window.removeEventListener('load', handleLoad)
+      window.clearTimeout(fallbackTimer)
+    }
+  }, [view])
 
   // Save view to localStorage whenever it changes
   useEffect(() => {
@@ -203,17 +260,18 @@ function App() {
       'help': '/dashboard/help',
       'download': '/download',
       'login': '/login',
+      'early-access': '/early-access',
     }
     
     const newUrl = urlMap[view] || '/'
     
     // Don't override the URL on invite acceptance or reset-password paths — the token lives in the path/hash
-    const currentPath = window.location.pathname
+    const currentPath = readClientPath()
     const onProtectedPath = currentPath.includes('/invitations/accept') ||
       currentPath.includes('/invite/accept') ||
       currentPath.includes('/reset-password') ||
       isOAuthCallbackPath(currentPath)
-    const isDashboardSubPath = currentPath === '/profile' || currentPath.startsWith('/dashboard')
+    const isDashboardSubPath = isDashboardClientPath()
     const targetUrl = (view === 'dashboard' && isDashboardSubPath) ? currentPath : newUrl
     try {
       if (!onProtectedPath && currentPath !== targetUrl) {
@@ -314,6 +372,7 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
+        <Suspense fallback={<PageFallback />}>
         {/* Reset Password Page - Standalone */}
       {window.location.pathname.includes('/reset-password') && (
         <div style={{
@@ -397,26 +456,7 @@ function App() {
               setCreateVideoConfig(config || null)
               setView('create')
             }}
-            initialSection={(() => {
-              // Pass the initial section from URL to Dashboard
-              let currentPath = window.location.pathname
-              if (window.location.hash && window.location.hash !== '#') {
-                currentPath = window.location.hash.replace('#', '') || '/'
-                if (currentPath.endsWith('/') && currentPath.length > 1) {
-                  currentPath = currentPath.slice(0, -1)
-                }
-              }
-              if (currentPath === '/support') {
-                return 'help'
-              }
-              if (currentPath.startsWith('/dashboard/')) {
-                return currentPath.replace('/dashboard/', '') || 'home'
-              }
-              if (currentPath === '/profile') {
-                return 'profile'
-              }
-              return 'home'
-            })()}
+            initialSection={resolveDashboardSectionFromPath() ?? 'home'}
           />
         </ProtectedRoute>
       )}
@@ -773,11 +813,69 @@ function App() {
         />
       )}
 
+      {view === 'early-access' && (
+        <EarlyAccessPage onBack={() => setView('landing')} />
+      )}
+
+      {view === 'landing' && !isHomeReady && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'linear-gradient(135deg, #020617 0%, #040817 45%, #0f172a 100%)',
+          color: '#f8fafc',
+          overflow: 'hidden'
+        }}>
+          <div className="dots-wave">
+            <div />
+            <div />
+            <div />
+          </div>
+          <style>{`
+            .dots-wave {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 8px;
+            }
+            .dots-wave div {
+              width: 14px;
+              height: 14px;
+              background-color: #fbbf24;
+              border-radius: 50%;
+              animation: dot-wave 1.2s infinite ease-in-out;
+            }
+            .dots-wave div:nth-child(1) {
+              animation-delay: 0s;
+            }
+            .dots-wave div:nth-child(2) {
+              animation-delay: 0.15s;
+            }
+            .dots-wave div:nth-child(3) {
+              animation-delay: 0.3s;
+            }
+            @keyframes dot-wave {
+              0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.35;
+              }
+              30% {
+                transform: translateY(-10px);
+                opacity: 1;
+              }
+            }
+          `}</style>
+        </div>
+      )}
+
       {view === 'not-found' && (
         <NotFound setView={setView} />
       )}
 
-      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings', 'login', 'google-callback', 'not-found'].includes(view) && (
+      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings', 'login', 'early-access', 'google-callback', 'not-found'].includes(view) && (
         <>
           <Landing 
             onLoginClick={handleLoginClick}
@@ -791,6 +889,7 @@ function App() {
           />
         </>
       )}
+        </Suspense>
     </AuthProvider>
     </ThemeProvider>
   )

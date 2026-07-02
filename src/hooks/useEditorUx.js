@@ -10,6 +10,13 @@ import {
   snapPoint,
 } from '../utils/editorLayerUtils';
 import { buildSceneMusicClip } from '../utils/audioClipUtils';
+import {
+  canGroup,
+  canUngroup,
+  createGroup,
+  ungroupGroup,
+  isGroupClip,
+} from '../utils/editorGroupUtils';
 
 export function useEditorUx({
   project,
@@ -111,7 +118,16 @@ export function useEditorUx({
 
   const deleteSelectedLayers = () => {
     if (!activeSceneId || !selectedLayerIds.length) return;
-    updateActiveSceneClips((clips) => clips.filter((c) => !selectedLayerIds.includes(c.id)));
+    updateActiveSceneClips((clips) => {
+      const toDelete = new Set(selectedLayerIds);
+      for (const id of selectedLayerIds) {
+        const clip = clips.find((c) => c.id === id);
+        if (isGroupClip(clip)) {
+          (clip.childIds || []).forEach((cid) => toDelete.add(cid));
+        }
+      }
+      return clips.filter((c) => !toDelete.has(c.id));
+    });
     setSelectedLayerIds([]);
     setSelectedLayerId(null);
     showToast?.('Layer deleted', 'info');
@@ -195,6 +211,68 @@ export function useEditorUx({
     return moved;
   };
 
+  const updateClipFields = (clipId, updates, { history = false } = {}) => {
+    if (!activeSceneId) return;
+    setProject(
+      (prev) => ({
+        ...prev,
+        updatedAt: new Date().toISOString(),
+        scenes: prev.scenes.map((s) => {
+          if (s.id !== activeSceneId) return s;
+          return {
+            ...s,
+            clips: (s.clips || []).map((c) => {
+              if (c.id !== clipId || c.locked) return c;
+              const next = { ...c, ...updates };
+              if (updates.position) {
+                next.position = { ...c.position, ...updates.position };
+              }
+              if (updates.size) {
+                next.size = { ...c.size, ...updates.size };
+              }
+              if (updates.style) {
+                next.style = { ...(c.style || {}), ...updates.style };
+              }
+              return next;
+            }),
+          };
+        }),
+      }),
+      { history }
+    );
+  };
+
+  const groupSelectedLayers = () => {
+    if (!activeSceneId || !canGroup(project.scenes.find((s) => s.id === activeSceneId)?.clips || [], selectedLayerIds)) {
+      return;
+    }
+    let newGroupId = null;
+    updateActiveSceneClips((clips) => {
+      const next = createGroup(clips, selectedLayerIds);
+      const group = next.find((c) => isGroupClip(c) && !clips.some((x) => x.id === c.id));
+      newGroupId = group?.id ?? null;
+      return next;
+    });
+    if (newGroupId) {
+      setSelectedLayerIds([newGroupId]);
+      setSelectedLayerId(newGroupId);
+      showToast?.('Grouped layers', 'success');
+    }
+  };
+
+  const ungroupSelectedLayer = () => {
+    if (!activeSceneId || selectedLayerIds.length !== 1) return;
+    const groupId = selectedLayerIds[0];
+    const scene = project.scenes.find((s) => s.id === activeSceneId);
+    if (!canUngroup(scene?.clips || [], selectedLayerIds)) return;
+    const group = scene.clips.find((c) => c.id === groupId);
+    const childIds = group?.childIds || [];
+    updateActiveSceneClips((clips) => ungroupGroup(clips, groupId));
+    setSelectedLayerIds(childIds);
+    setSelectedLayerId(childIds[0] ?? null);
+    showToast?.('Ungrouped layers', 'success');
+  };
+
   const addAudioClip = (src, assetId = null, options = {}) => {
     if (!activeSceneId) return null;
     let newId = null;
@@ -234,5 +312,8 @@ export function useEditorUx({
     commitLayerPositionHistory,
     nudgeSelectedLayers,
     addAudioClip,
+    updateClipFields,
+    groupSelectedLayers,
+    ungroupSelectedLayer,
   };
 }

@@ -84,7 +84,7 @@ const ModernVideoEditor = ({ scenes: initialScenes = [], onSceneUpdate, onBack }
     e.stopPropagation()
     isDraggingPlayhead.current = true
     setIsPlaying(false)
-    
+
     const handleMouseMove = (e) => {
       if (!timelineRef.current) return
       const rect = timelineRef.current.getBoundingClientRect()
@@ -675,8 +675,8 @@ const ModernVideoEditor = ({ scenes: initialScenes = [], onSceneUpdate, onBack }
         <header className="editor-header">
           <div className="header-left">
             {onBack && (
-              <button 
-                className="toolbar-btn" 
+              <button
+                className="toolbar-btn"
                 onClick={onBack}
                 title="Back"
                 style={{ marginRight: 8 }}
@@ -686,7 +686,7 @@ const ModernVideoEditor = ({ scenes: initialScenes = [], onSceneUpdate, onBack }
             )}
             <div className="app-logo">
               <div className="app-icon">A</div>
-              <span>AthenaVI</span>
+              <span>Virtual Studio</span>
             </div>
           </div>
 
@@ -694,22 +694,22 @@ const ModernVideoEditor = ({ scenes: initialScenes = [], onSceneUpdate, onBack }
             <button className="toolbar-btn" title="Select">
               <MdSelectAll size={20} />
             </button>
-            <button 
-              className="toolbar-btn" 
+            <button
+              className="toolbar-btn"
               title="Zoom In"
               onClick={() => setZoomLevel(Math.min(200, zoomLevel + 10))}
             >
               <MdZoomIn size={20} />
             </button>
-            <button 
-              className="toolbar-btn" 
+            <button
+              className="toolbar-btn"
               title="Zoom Out"
               onClick={() => setZoomLevel(Math.max(25, zoomLevel - 10))}
             >
               <MdZoomOut size={20} />
             </button>
-            <button 
-              className="toolbar-btn" 
+            <button
+              className="toolbar-btn"
               title="Fit to Screen"
               onClick={() => setZoomLevel(100)}
             >
@@ -725,8 +725,8 @@ const ModernVideoEditor = ({ scenes: initialScenes = [], onSceneUpdate, onBack }
           </div>
 
           <div className="header-right">
-            <button 
-              className="play-btn" 
+            <button
+              className="play-btn"
               onClick={() => setIsPlaying(!isPlaying)}
               title={isPlaying ? "Pause" : "Play"}
             >
@@ -745,7 +745,7 @@ const ModernVideoEditor = ({ scenes: initialScenes = [], onSceneUpdate, onBack }
         <div className="editor-content">
           {/* Canvas Area */}
           <div className="canvas-container">
-            <div 
+            <div
               className="canvas-wrapper"
               style={{
                 width: `${(1920 * zoomLevel) / 100}px`,
@@ -753,7 +753,7 @@ const ModernVideoEditor = ({ scenes: initialScenes = [], onSceneUpdate, onBack }
                 aspectRatio: '16/9'
               }}
             >
-              <div 
+              <div
                 ref={canvasRef}
                 className="canvas"
                 style={{
@@ -801,7 +801,7 @@ const ModernVideoEditor = ({ scenes: initialScenes = [], onSceneUpdate, onBack }
             <div className="timeline-controls">
               <div className="timing-toggle">
                 <span>Show timing</span>
-                <div 
+                <div
                   className={`toggle-switch ${showTiming ? 'active' : ''}`}
                   onClick={() => setShowTiming(!showTiming)}
                 />
@@ -821,15 +821,15 @@ const ModernVideoEditor = ({ scenes: initialScenes = [], onSceneUpdate, onBack }
             </div>
           </div>
 
-          <div 
+          <div
             className="timeline-content"
             ref={timelineRef}
             onClick={handleTimelineClick}
             style={{ cursor: 'pointer' }}
           >
-            <div 
+            <div
               className="playhead"
-              style={{ 
+              style={{
                 left: `${totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0}%`,
                 display: totalDuration > 0 ? 'block' : 'none',
                 pointerEvents: 'auto',
@@ -859,8 +859,8 @@ const ModernVideoEditor = ({ scenes: initialScenes = [], onSceneUpdate, onBack }
                   Scene {index + 1}
                 </div>
               ))}
-              <button 
-                className="add-scene-btn" 
+              <button
+                className="add-scene-btn"
                 title="Add scene"
                 onClick={() => {
                   const newScene = { id: `scene-${Date.now()}`, duration: 8 }

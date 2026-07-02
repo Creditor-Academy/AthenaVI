@@ -70,6 +70,7 @@ const EditorTopbar = ({
     activeScene,
     workspaceId,
     onUploadError,
+    onAssetInserted,
     setSelectedLayerId,
     creditsRefreshKey = 0,
     editorView,
@@ -179,6 +180,7 @@ const EditorTopbar = ({
                         onAddAudio={onAddAudio}
                         workspaceId={workspaceId}
                         onUploadError={onUploadError}
+                        onAssetInserted={onAssetInserted}
                         onClose={closeInsertModal}
                     />
                 )

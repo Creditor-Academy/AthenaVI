@@ -21,7 +21,7 @@ const SOURCE_TABS = [
   { id: 'stock', label: 'Stock' },
 ];
 
-const EditorSidebarUpload = ({ addLayer, onAddAudio, workspaceId, onUploadError, onClose }) => {
+const EditorSidebarUpload = ({ addLayer, onAddAudio, workspaceId, onUploadError, onAssetInserted, onClose }) => {
   const { user } = useAuth();
   const currentUserId = extractUserId(user);
   const inputRef = useRef(null);
@@ -192,6 +192,7 @@ const EditorSidebarUpload = ({ addLayer, onAddAudio, workspaceId, onUploadError,
         return;
       }
       onAddAudio(asset.url, asset.id, { name: asset.name });
+      onAssetInserted?.();
       onClose?.();
       return;
     }
@@ -199,6 +200,7 @@ const EditorSidebarUpload = ({ addLayer, onAddAudio, workspaceId, onUploadError,
       url: asset.url,
       assetId: asset.id,
     });
+    onAssetInserted?.();
     onClose?.();
   };
 

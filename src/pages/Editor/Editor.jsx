@@ -3,6 +3,7 @@ import { MdChevronRight, MdChevronLeft } from 'react-icons/md'
 import { useCurrentFrame, spring, interpolate, useVideoConfig } from 'remotion'
 import TimelineEditor from '../../components/features/editor/TimelineEditor'
 import './Editor.css'
+import './EditorLoadingOverlay.css'
 import { predefinedAvatars } from '../../constants/editorData'
 import EditorTopbar from '../../components/features/editor/editor/EditorTopbar'
 import EditorSidebar from '../../components/features/editor/editor/EditorSidebar'
@@ -30,13 +31,15 @@ import {
   buildHeygenAvatarContent,
   getSceneAvatarKind,
   getSceneAvatarLookId,
+  getSceneScript,
+  getSceneVoiceId,
   canUseExpressiveness,
   getSceneLookEngineContext,
   resolveAvatarEngine,
   resolveVideoAvatarEngine,
   finalizeVideoCreatePayload,
 } from '../../utils/heygenAvatars'
-import { buildClipTextContent } from '../../utils/textClip'
+import { buildClipTextContent, isTextLayer } from '../../utils/textClip'
 import {
   fromBackendProjectData,
   rehydrateSceneVideos,
@@ -62,6 +65,7 @@ import {
 } from '../../utils/sceneDuration'
 import { useEditorHistory } from '../../hooks/useEditorHistory'
 import { useEditorUx } from '../../hooks/useEditorUx'
+import useTextCanvasInteraction from '../../hooks/useTextCanvasInteraction'
 import { findSceneMusicClip, resolveAudioClipSrc } from '../../utils/audioClipUtils'
 import { normalizeClipStack, normalizeClipsToScene, getLayerNudgeStep } from '../../utils/editorLayerUtils'
 import {
@@ -423,10 +427,12 @@ function Create({ onBack, initialConfig = null }) {
   })
 
   const [selectedLayerIds, setSelectedLayerIds] = useState([])
+  const textCanvasInteraction = useTextCanvasInteraction()
+  const { textEditClipId, enterEditMode, exitEditMode } = textCanvasInteraction
   const [editorView, setEditorView] = useState({
     snapToGrid: true,
     showGuides: false,
-    showSafeZone: true,
+    showSafeZone: false,
     showPageGrid: false,
     gridSize: 20,
   })
@@ -437,11 +443,13 @@ function Create({ onBack, initialConfig = null }) {
   )
   const toastTimerRef = useRef(null)
 
-  const showToast = useCallback((message, type = 'info') => {
+  const notifyEditorToast = useCallback((message, type = 'success') => {
     setToast({ message, type })
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
     toastTimerRef.current = setTimeout(() => setToast(null), 4000)
   }, [])
+
+  const showToast = useCallback(() => {}, [])
 
   useEffect(() => {
     const onOnline = () => {
@@ -486,6 +494,9 @@ function Create({ onBack, initialConfig = null }) {
     commitLayerPositionHistory,
     nudgeSelectedLayers,
     addAudioClip,
+    updateClipFields,
+    groupSelectedLayers,
+    ungroupSelectedLayer,
   } = ux
 
   const versionSnapshots = useMemo(
@@ -743,46 +754,6 @@ function Create({ onBack, initialConfig = null }) {
       window.removeEventListener('pagehide', flushSave)
     }
   }, [])
-
-  const applyGlobalSetting = (type) => {
-    const activeScene = project.scenes.find(s => s.id === activeSceneId);
-    if (!activeScene) return;
-
-    setProject(prev => {
-      const updatedScenes = prev.scenes.map(s => {
-        if (s.id === activeSceneId) return s;
-
-        let newClips = s.clips || [];
-        
-        if (type === 'avatar' && activeScene.avatarType) {
-          const avatarIndex = newClips.findIndex(c => c.role === 'avatar' || c.type === 'avatar');
-          if (avatarIndex !== -1) {
-            newClips = [...newClips];
-            newClips[avatarIndex] = { ...newClips[avatarIndex], src: activeScene.avatar };
-          }
-          return {
-            ...s,
-            avatar: activeScene.avatar,
-            avatarType: activeScene.avatarType,
-            avatarName: activeScene.avatarName,
-            clips: newClips
-          };
-        } else if (type === 'voice' && activeScene.voiceId) {
-          return {
-            ...s,
-            voiceId: activeScene.voiceId,
-            voiceName: activeScene.voiceName,
-            voiceSettings: activeScene.voiceSettings
-          };
-        }
-        return s;
-      });
-
-      const newState = { ...prev, updatedAt: new Date().toISOString(), scenes: updatedScenes };
-      setTimeout(() => saveProject(false, newState), 100);
-      return newState;
-    });
-  };
 
   const autoSaveReadyRef = useRef(false)
 
@@ -1181,7 +1152,7 @@ function Create({ onBack, initialConfig = null }) {
             }
           : s
       )
-    }))
+    }), { history: true })
   }
 
   const deleteMusic = () => {
@@ -1275,9 +1246,35 @@ function Create({ onBack, initialConfig = null }) {
   const handleSelectLayer = (layerId, sceneId, event) => {
     pausePlayback()
     if (sceneId) setActiveSceneId(sceneId)
-    selectLayer(layerId, sceneId, { additive: event?.shiftKey })
+    const additive = !!(event?.ctrlKey || event?.metaKey || event?.shiftKey)
+    selectLayer(layerId, sceneId, { additive })
     if (layerId) setIsRightSidebarOpen(true)
   }
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedLayerIds([])
+    setSelectedLayerId(null)
+    exitEditMode()
+  }, [exitEditMode])
+
+  const handleSelectTextIds = useCallback((ids, { additive = false } = {}) => {
+    pausePlayback()
+    if (!ids?.length) {
+      handleClearSelection()
+      return
+    }
+    if (additive) {
+      setSelectedLayerIds((prev) => {
+        const merged = [...new Set([...prev, ...ids])]
+        return merged
+      })
+      setSelectedLayerId(ids[ids.length - 1])
+    } else {
+      setSelectedLayerIds(ids)
+      setSelectedLayerId(ids[ids.length - 1])
+    }
+    setIsRightSidebarOpen(true)
+  }, [pausePlayback, handleClearSelection])
 
   const handleSelectLayerId = (layerId) => {
     pausePlayback()
@@ -1368,17 +1365,27 @@ function Create({ onBack, initialConfig = null }) {
   // Global Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Don't trigger if user is typing in an input, textarea, or contenteditable layer
       const activeEl = document.activeElement
-      if (
-        ['INPUT', 'TEXTAREA'].includes(activeEl?.tagName) ||
-        activeEl?.isContentEditable ||
-        activeEl?.closest?.('[contenteditable="true"]')
-      ) {
-        // Allow escape even if focused
+      const isEditingText = textEditClipId != null
+      const inContentEditable =
+        activeEl?.isContentEditable || activeEl?.closest?.('[contenteditable="true"]')
+
+      if (inContentEditable && isEditingText) {
+        if (e.key === 'Escape') {
+          e.preventDefault()
+          exitEditMode()
+          activeEl?.blur?.()
+          return
+        }
+        return
+      }
+
+      // Don't trigger if user is typing in an input or textarea
+      if (['INPUT', 'TEXTAREA'].includes(activeEl?.tagName)) {
         if (e.key === 'Escape') {
           setSelectedTool(null)
           activeEl?.blur?.()
+          handleClearSelection()
         }
         return
       }
@@ -1394,9 +1401,14 @@ function Create({ onBack, initialConfig = null }) {
         }
       }
 
-      // Escape: Close sidebar tool panel
+      // Escape: exit edit or clear selection
       if (e.key === 'Escape') {
         setSelectedTool(null)
+        if (textEditClipId) {
+          exitEditMode()
+        } else {
+          handleClearSelection()
+        }
       }
 
       // Delete: remove selected layers, or active scene if none selected
@@ -1416,6 +1428,18 @@ function Create({ onBack, initialConfig = null }) {
       // Meta/Ctrl Shortcuts
       if (e.metaKey || e.ctrlKey) {
         switch (e.key.toLowerCase()) {
+          case 'a':
+            if (!textEditClipId) {
+              const scene = scenes.find((s) => s.id === activeSceneId)
+              const textIds = (scene?.clips || []).filter(isTextLayer).map((c) => c.id)
+              if (textIds.length) {
+                e.preventDefault()
+                setSelectedLayerIds(textIds)
+                setSelectedLayerId(textIds[0])
+                setIsRightSidebarOpen(true)
+              }
+            }
+            break
           case 's':
             e.preventDefault()
             saveProject(true)
@@ -1447,6 +1471,14 @@ function Create({ onBack, initialConfig = null }) {
           case 'd':
             e.preventDefault()
             duplicateSelectedLayers()
+            break
+          case 'g':
+            e.preventDefault()
+            if (e.shiftKey) {
+              ungroupSelectedLayer()
+            } else {
+              groupSelectedLayers()
+            }
             break
         }
       }
@@ -1484,7 +1516,7 @@ function Create({ onBack, initialConfig = null }) {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isPlaying, activeSceneId, scenes.length, currentTime, totalDurationInFrames, saveProject, selectedLayerIds, selectedLayerId, editorView, pausePlayback, nudgeSelectedLayers, undo, redo, copySelectedLayers, pasteLayers, duplicateSelectedLayers, deleteSelectedLayers, showToast])
+  }, [isPlaying, activeSceneId, scenes, currentTime, totalDurationInFrames, saveProject, selectedLayerIds, selectedLayerId, editorView, pausePlayback, nudgeSelectedLayers, undo, redo, copySelectedLayers, pasteLayers, duplicateSelectedLayers, deleteSelectedLayers, groupSelectedLayers, ungroupSelectedLayer, handleClearSelection, showToast, textEditClipId, exitEditMode])
 
   const addScene = () => {
     insertAfterIndexRef.current = null
@@ -1776,7 +1808,7 @@ function Create({ onBack, initialConfig = null }) {
         renderId: result?.renderId,
         filename: result?.filename || `${projectRef.current?.title || filename || 'video'}.mp4`,
       })
-      showToast('Render ready', 'success')
+      notifyEditorToast('Export successful', 'success')
       bumpCreditsRefresh()
     } catch (err) {
       console.error('[Export] Full render download failed:', err)
@@ -1845,8 +1877,8 @@ function Create({ onBack, initialConfig = null }) {
       overrides?.avatarLookId || overrides?.avatarType || getSceneAvatarLookId(scene);
     const avatarKind =
       overrides?.avatarTypeLabel || getSceneAvatarKind(scene);
-    const voiceId = overrides?.voiceId || scene?.voiceId;
-    const script = overrides?.script || scene?.script;
+    const voiceId = overrides?.voiceId || getSceneVoiceId(scene);
+    const script = overrides?.script || getSceneScript(scene);
     const isRegenerate = !!scene?.heygenVideoId || scene?.heygenStatus === 'completed';
     let stableSceneId = overrides?.sceneId || scene?.sceneId || scene?.id || sceneId;
 
@@ -2060,10 +2092,10 @@ function Create({ onBack, initialConfig = null }) {
 
         bumpCreditsRefresh();
 
-        showToast(
+        notifyEditorToast(
           creditsUsed != null
             ? `Video ready — ${Number(creditsUsed).toLocaleString()} credits used.`
-            : 'Presenter placed in the center — your other elements are unchanged.',
+            : 'Avatar video generated successfully.',
           'success'
         );
 
@@ -2633,157 +2665,6 @@ function Create({ onBack, initialConfig = null }) {
     setShowGeneratedVideoModal(false);
   };
 
-  const handleSelectLayout = (layoutId) => {
-    if (!generatingSceneId || !generatedVideoUrl) return;
-
-    setProject(prev => {
-      const newProj = {
-        ...prev,
-        scenes: prev.scenes.map(s => {
-          if (s.id !== generatingSceneId) return s;
-
-          const template = projectTemplate.project.scenes.find(t => t.id === layoutId);
-
-          if (template) {
-            let templateClips = JSON.parse(JSON.stringify(template.clips));
-            
-            // Find avatar placeholder (either labelled or first large image)
-            let avatarIndex = templateClips.findIndex(c => 
-              c.label?.toLowerCase().includes('avatar') || 
-              c.label?.toLowerCase().includes('media') || 
-              c.label?.toLowerCase().includes('center image') ||
-              (c.type === 'image' && !c.label?.toLowerCase().includes('logo'))
-            );
-
-            if (avatarIndex === -1) {
-              templateClips.push({
-                id: `clip_video_${Date.now()}`,
-                type: 'video',
-                role: 'avatar',
-                src: generatedVideoUrl,
-                layer: templateClips.length,
-                startTime: 0,
-                endTime: s.duration || 8,
-                opacity: 1,
-                position: { x: 100, y: 100 },
-                size: { width: 350, height: 500 }
-              });
-            } else {
-              templateClips[avatarIndex] = {
-                ...templateClips[avatarIndex],
-                src: generatedVideoUrl,
-                type: 'video',
-                role: 'avatar'
-              };
-            }
-
-            // Retain user's existing text content if possible
-            const oldTextClip = s.clips?.find(c => c.type === 'text' || c.role === 'main-text');
-            const newTextIndex = templateClips.findIndex(c => c.type === 'text');
-            
-            if (oldTextClip && newTextIndex !== -1) {
-              templateClips[newTextIndex].content = oldTextClip.content;
-            }
-
-            templateClips = normalizeClipsToScene(
-              normalizeSceneClips(templateClips, prev.resolution),
-              s.duration || 8
-            );
-            return { ...s, clips: templateClips, layout: layoutId, generatedVideoUrl, title: template.title };
-          }
-
-          let updatedClips = [...(s.clips || [])];
-
-          // Ensure the avatar is updated to the video
-          let avatarClipIndex = updatedClips.findIndex(c => c.role === 'avatar' || c.type === 'avatar' || c.type === 'video');
-          if (avatarClipIndex === -1) {
-            updatedClips.push({
-              id: `clip_video_${Date.now()}`,
-              type: 'video',
-              role: 'avatar',
-              src: generatedVideoUrl,
-              layer: 1,
-              startTime: 0,
-              endTime: s.duration || 8,
-              opacity: 1
-            });
-            avatarClipIndex = updatedClips.length - 1;
-          } else {
-            updatedClips[avatarClipIndex] = { ...updatedClips[avatarClipIndex], src: generatedVideoUrl, type: 'video' };
-          }
-
-          let textClipIndex = updatedClips.findIndex(c => c.role === 'main-text' || c.type === 'text');
-
-          const applyLayout = (avatarPos, avatarSize, textPos, textSize, textAlignment) => {
-            updatedClips[avatarClipIndex] = {
-              ...updatedClips[avatarClipIndex],
-              position: avatarPos,
-              size: avatarSize
-            };
-            if (textClipIndex !== -1) {
-              updatedClips[textClipIndex] = {
-                ...updatedClips[textClipIndex],
-                position: textPos,
-                size: textSize,
-                style: { 
-                  ...updatedClips[textClipIndex].style, 
-                  width: textSize.width + 'px',
-                  textAlign: textAlignment 
-                }
-              };
-            }
-          };
-
-          // Default canvas dimensions
-          const canvasWidth = prev.resolution?.width || 1920;
-          const canvasHeight = prev.resolution?.height || 1080;
-
-          if (layoutId === 'split-left') {
-             applyLayout(
-               { x: canvasWidth * 0.1, y: canvasHeight * 0.1 }, 
-               { width: canvasWidth * 0.35, height: canvasHeight * 0.8 },
-               { x: canvasWidth * 0.5, y: canvasHeight * 0.2 }, 
-               { width: canvasWidth * 0.4, height: canvasHeight * 0.6 },
-               'left'
-             );
-          } else if (layoutId === 'split-right') {
-             applyLayout(
-               { x: canvasWidth * 0.55, y: canvasHeight * 0.1 }, 
-               { width: canvasWidth * 0.35, height: canvasHeight * 0.8 },
-               { x: canvasWidth * 0.05, y: canvasHeight * 0.2 }, 
-               { width: canvasWidth * 0.4, height: canvasHeight * 0.6 },
-               'left'
-             );
-          } else if (layoutId === 'centered') {
-             applyLayout(
-               { x: canvasWidth * 0.3, y: canvasHeight * 0.1 }, 
-               { width: canvasWidth * 0.4, height: canvasHeight * 0.8 },
-               { x: canvasWidth * 0.1, y: canvasHeight * 0.85 }, 
-               { width: canvasWidth * 0.8, height: canvasHeight * 0.1 },
-               'center'
-             );
-          } else if (layoutId === 'full-avatar' || layoutId === 'pip') {
-             applyLayout(
-               { x: canvasWidth * 0.7, y: canvasHeight * 0.6 }, 
-               { width: canvasWidth * 0.25, height: canvasHeight * 0.35 },
-               { x: canvasWidth * 0.1, y: canvasHeight * 0.1 }, 
-               { width: canvasWidth * 0.8, height: canvasHeight * 0.8 },
-               'left'
-             );
-          }
-
-          return { ...s, clips: updatedClips, generatedVideoUrl, layout: layoutId };
-        })
-      };
-      
-      // Auto-save the project
-      setTimeout(() => {
-        saveProject(false, newProj);
-      }, 100);
-
-      return newProj;
-    });
-  };
   const handleRemakeVideo = () => {
     if (!generatingSceneId) return;
     
@@ -2797,55 +2678,17 @@ function Create({ onBack, initialConfig = null }) {
   return (
     <div className="video-editor-shell">
       {isProjectLoading && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 2500,
-            background: 'rgba(15, 23, 42, 0.72)',
-            backdropFilter: 'blur(10px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 20,
-          }}
-        >
-          <div
-            style={{
-              width: 'min(520px, 94vw)',
-              borderRadius: 16,
-              border: '1px solid rgba(255,255,255,0.12)',
-              background: 'rgba(2, 6, 23, 0.85)',
-              boxShadow: '0 24px 80px rgba(0,0,0,0.45)',
-              padding: 18,
-              color: '#e5e7eb',
-              fontFamily: 'Inter, system-ui, sans-serif',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div
-                style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: 999,
-                  border: '4px solid rgba(148,163,184,0.25)',
-                  borderTop: '4px solid rgba(59,130,246,0.95)',
-                  animation: 'spin 1s linear infinite',
-                }}
-              />
+        <div className="editor-loading-overlay">
+          <div className="editor-loading-card">
+            <div className="editor-loading-card__row">
+              <div className="editor-loading-card__spinner" />
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <div style={{ fontWeight: 900, fontSize: 14 }}>Loading your project…</div>
-                <div style={{ fontSize: 12, color: 'rgba(226,232,240,0.8)' }}>
+                <div className="editor-loading-card__title">Loading your project…</div>
+                <div className="editor-loading-card__subtitle">
                   Preparing scenes and media
                 </div>
               </div>
             </div>
-            <style>{`
-              @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-              }
-            `}</style>
           </div>
         </div>
       )}
@@ -2890,7 +2733,6 @@ function Create({ onBack, initialConfig = null }) {
         creditsUsed={generationCreditsUsed}
         onUseInEditor={handleUseGeneratedVideo}
         onRemake={handleRemakeVideo}
-        onSelectLayout={handleSelectLayout}
         sceneTitle={project.scenes.find(s => s.id === generatingSceneId)?.title || `Scene`}
       />
       <EditorToast toast={toast} onDismiss={() => setToast(null)} />
@@ -2935,6 +2777,7 @@ function Create({ onBack, initialConfig = null }) {
         activeScene={activeScene}
         workspaceId={project.workspaceId || project.createConfig?.workspaceId}
         onUploadError={(msg) => showToast(msg, 'error')}
+        onAssetInserted={() => notifyEditorToast('Asset inserted', 'success')}
         setSelectedLayerId={handleSelectLayerId}
         creditsRefreshKey={creditsRefreshKey}
         editorView={editorView}
@@ -3018,6 +2861,10 @@ function Create({ onBack, initialConfig = null }) {
                 updateClipContent={updateClipContent}
                 onFillShape={fillShapeWithImage}
                 onCanvasDrop={handleCanvasDrop}
+                onUpdateClipFields={(clipId, updates) => updateClipFields(clipId, updates)}
+                onClearSelection={handleClearSelection}
+                onSelectTextIds={handleSelectTextIds}
+                textCanvasInteraction={textCanvasInteraction}
                 editorView={editorView}
                 workspaceId={project.workspaceId}
                 projectId={project.id}
@@ -3170,8 +3017,6 @@ function Create({ onBack, initialConfig = null }) {
                 updateScene={updateScene}
                 selectedLayerId={selectedLayerId}
                 generateSceneVideo={generateSceneVideo}
-                setActiveTab={setSelectedTool}
-                applyGlobalSetting={applyGlobalSetting}
                 onOpenQuickCreate={() => {
                   setShowQuickCreateModal(false)
                   setShowVoiceOnlySpeechModal(false)

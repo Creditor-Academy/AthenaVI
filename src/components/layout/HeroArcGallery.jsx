@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useMemo } from 'react'
-import { motion, useAnimationFrame } from 'framer-motion'
+import { useAnimationFrame } from 'framer-motion'
 
 const SCROLL_DURATION_DESKTOP = 35
 const SCROLL_DURATION_MOBILE = 45
@@ -46,6 +46,15 @@ const styles = `
   width: max-content;
   transform-style: preserve-3d;
   will-change: transform;
+}
+
+@keyframes hero-arc-scroll {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(calc(-1 * var(--scroll-distance, 0px)), 0, 0);
+  }
 }
 
 .hero-arc-tile {
@@ -152,6 +161,12 @@ function HeroArcGallery({ avatars = [], fullWidth = false, pillarLabels = [] }) 
   const tileRefs = useRef([])
   const [scrollDistance, setScrollDistance] = useState(0)
   const [scrollDuration, setScrollDuration] = useState(SCROLL_DURATION_DESKTOP)
+  const trackStyle = scrollDistance > 0
+    ? {
+        ['--scroll-distance']: `${scrollDistance}px`,
+        animation: `${scrollDuration}s hero-arc-scroll linear infinite`,
+      }
+    : undefined
 
   const tiles = useMemo(
     () => [...avatars, ...avatars, ...avatars],
@@ -164,19 +179,32 @@ function HeroArcGallery({ avatars = [], fullWidth = false, pillarLabels = [] }) 
       const second = tileRefs.current[1]
       if (!first || avatars.length === 0) return
 
-      let tileStep = first.offsetWidth
+      let tileStep = first.getBoundingClientRect().width
       if (second) {
-        tileStep = second.offsetLeft - first.offsetLeft
+        const firstRect = first.getBoundingClientRect()
+        const secondRect = second.getBoundingClientRect()
+        tileStep = secondRect.left - firstRect.left
       }
-      setScrollDistance(tileStep * avatars.length)
+
+      setScrollDistance(Math.max(1, Math.round(tileStep * avatars.length)))
       setScrollDuration(getScrollDuration())
     }
 
     const raf = requestAnimationFrame(measure)
+    const resizeObserver = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(() => measure())
+      : null
+
+    if (resizeObserver && galleryRef.current) {
+      resizeObserver.observe(galleryRef.current)
+    }
+
     window.addEventListener('resize', measure)
+
     return () => {
       cancelAnimationFrame(raf)
       window.removeEventListener('resize', measure)
+      resizeObserver?.disconnect()
     }
   }, [avatars.length, tiles.length])
 
@@ -205,15 +233,7 @@ function HeroArcGallery({ avatars = [], fullWidth = false, pillarLabels = [] }) 
     <>
       <style>{styles}</style>
       <div className={galleryClass} ref={galleryRef} aria-hidden="true">
-        <motion.div
-          className="hero-arc-track"
-          animate={scrollDistance > 0 ? { x: [0, -scrollDistance] } : undefined}
-          transition={{
-            duration: scrollDuration,
-            repeat: Infinity,
-            ease: 'linear',
-          }}
-        >
+        <div className="hero-arc-track" style={trackStyle}>
           {tiles.map((avatar, i) => (
             <div
               key={`${avatar.name}-${i}`}
@@ -233,7 +253,7 @@ function HeroArcGallery({ avatars = [], fullWidth = false, pillarLabels = [] }) 
               />
             </div>
           ))}
-        </motion.div>
+        </div>
       </div>
       {fullWidth && pillarLabels.length > 0 && (
         <div className="hero-arc-labels">

@@ -1,8 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { FiCheckCircle } from 'react-icons/fi';
 import CustomizeAi from '../../assets/CustomizeAi.jpg';
 import AIvideo from '../../assets/AIvideo.jpg';
 import Voice from '../../assets/Voice.jpg';
+import { LANDING_FONT, LANDING_LIGHT, LANDING_TYPE } from '../../styles/landingTypography';
 
 /* ── Feature cards ── */
 const featureCards = [
@@ -32,31 +33,14 @@ const featureCards = [
   },
 ];
 
-/* ── Intersection Observer hook ── */
-function useReveal(threshold = 0.15) {
-  const ref = useRef(null);
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) setVisible(true); },
-      { threshold }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [threshold]);
-  return [ref, visible];
-}
-
 const styles = `
 .unified-section {
   padding: 80px 40px;
   background: #e1ecf7;
-  color: #1e40af;
+  color: ${LANDING_LIGHT.titleAccent};
   position: relative;
   overflow: hidden;
-  font-family: 'Inter', sans-serif;
+  font-family: ${LANDING_FONT};
 }
 
 .unified-section::before {
@@ -97,52 +81,41 @@ const styles = `
 .vs-badge {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  background: #ffffff;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-  color: #1e40af;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 1.2px;
+  gap: 8px;
+  font-family: ${LANDING_FONT};
+  font-size: ${LANDING_TYPE.eyebrowSize};
+  font-weight: ${LANDING_TYPE.eyebrowWeight};
+  color: ${LANDING_LIGHT.eyebrow};
+  letter-spacing: 2px;
   text-transform: uppercase;
-  padding: 8px 20px;
-  border-radius: 100px;
-  margin-bottom: 28px;
+  margin-bottom: 14px;
 }
-.vs-badge-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #3b82f6;
-  display: inline-block;
-  animation: pulse-dot 2s ease-in-out infinite;
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
-}
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.6); }
+.vs-badge-line {
+  width: 20px;
+  height: 2px;
+  background: ${LANDING_LIGHT.eyebrow};
+  border-radius: 2px;
 }
 .vs-title {
-  font-family: 'Inter', sans-serif;
-  font-size: clamp(40px, 5vw, 64px);
-  font-weight: 800;
-  line-height: 1.1;
-  margin: 0 0 24px;
-  background: linear-gradient(135deg, #0f172a 0%, #1e40af 50%, #3b82f6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -2px;
+  font-family: ${LANDING_FONT};
+  font-size: ${LANDING_TYPE.titleSize};
+  font-weight: ${LANDING_TYPE.titleWeight};
+  line-height: 1.2;
+  margin: 0 0 12px;
+  color: ${LANDING_LIGHT.title};
+  letter-spacing: ${LANDING_TYPE.titleSpacing};
+}
+.vs-title span {
+  color: ${LANDING_LIGHT.titleAccent};
 }
 .vs-subtitle {
-  font-family: 'Inter', sans-serif;
-  font-size: clamp(16px, 1.2vw, 20px);
-  font-weight: 400;
-  color: #475569;
+  font-family: ${LANDING_FONT};
+  font-size: ${LANDING_TYPE.subtitleSize};
+  font-weight: ${LANDING_TYPE.subtitleWeight};
+  color: ${LANDING_LIGHT.subtitle};
   margin: 0 auto;
   max-width: 640px;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 .video-grid {
@@ -168,8 +141,6 @@ const styles = `
     0 10px 20px rgba(15, 23, 42, 0.04),
     0 20px 40px rgba(15, 23, 42, 0.04);
   overflow: hidden;
-  opacity: 0;
-  transform: translateY(30px);
 }
 
 .card-number {
@@ -194,7 +165,7 @@ const styles = `
   font-weight: 800;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: #3b82f6;
+  color: ${LANDING_LIGHT.category};
   margin-bottom: 20px;
   display: flex;
   align-items: center;
@@ -228,11 +199,6 @@ const styles = `
   left: 150%;
 }
 
-.video-card-ref.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
 .video-card-ref:hover {
   transform: translateY(-16px);
   box-shadow: 
@@ -242,10 +208,10 @@ const styles = `
 }
 
 .ref-title {
-  font-family: 'Inter', sans-serif;
+  font-family: ${LANDING_FONT};
   font-size: 30px;
-  font-weight: 800;
-  color: #0f172a;
+  font-weight: ${LANDING_TYPE.titleWeight};
+  color: ${LANDING_LIGHT.title};
   line-height: 1.25;
   margin: 0 0 16px;
   letter-spacing: -1.2px;
@@ -253,10 +219,10 @@ const styles = `
 }
 
 .ref-description {
-  font-family: 'Inter', sans-serif;
+  font-family: ${LANDING_FONT};
   font-size: 16px;
   line-height: 1.5;
-  color: #475569;
+  color: ${LANDING_LIGHT.subtitle};
   margin-bottom: 20px;
   letter-spacing: -0.2px;
 }
@@ -336,9 +302,9 @@ const styles = `
   pointer-events: none;
 }
 
-.variant-middle .card-category { color: rgba(255,255,255,0.7); }
+.variant-middle .card-category { color: #fbbf24; }
 .variant-middle .card-number { color: rgba(255,255,255,0.04); }
-.variant-middle .feature-tag { background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.25); color: #93c5fd; }
+.variant-middle .feature-tag { background: rgba(251, 191, 36, 0.12); border: 1px solid rgba(251, 191, 36, 0.25); color: #fbbf24; }
 
 .variant-middle .ref-title {
   color: #ffffff;
@@ -346,7 +312,7 @@ const styles = `
 }
 
 .variant-middle .ref-description {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.72);
   margin-bottom: 16px;
 }
 
@@ -370,8 +336,6 @@ const styles = `
 `;
 
 const UnifiedVideoSection = () => {
-  const [gridRef, gridVisible] = useReveal(0.05);
-
   return (
     <>
       <style>{styles}</style>
@@ -384,22 +348,21 @@ const UnifiedVideoSection = () => {
 
           {/* Part 1: Video Features */}
           <div className="vs-header">
-            {/* <div className="vs-badge">
-              <span className="vs-badge-dot"></span>
+            <div className="vs-badge">
+              <span className="vs-badge-line" />
               AI-Powered Tools
-            </div> */}
-            <h2 className="vs-title">Create Stunning Videos</h2>
+            </div>
+            <h2 className="vs-title">Create <span>Stunning Videos</span></h2>
             <p className="vs-subtitle">
               Transform your ideas into engaging video content with our powerful AI tools
             </p>
           </div>
 
-          <div ref={gridRef} className="video-grid">
+          <div className="video-grid">
             {featureCards.map((card, i) => (
               <div
-                className={`video-card-ref${i === 1 ? ' variant-middle' : ''}${gridVisible ? ' visible' : ''}`}
+                className={`video-card-ref${i === 1 ? ' variant-middle' : ''}`}
                 key={i}
-                style={{ transitionDelay: `${i * 150}ms` }}
               >
                 {i === 1 ? (
                   <>

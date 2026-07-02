@@ -19,6 +19,10 @@ import {
 } from './sceneTransitionUtils';
 import { normalizeSceneClips } from './clipLayout';
 import {
+  flipScaleToBackendFlags,
+  backendFlagsToFlipScale,
+} from './clipTransformUtils';
+import {
   applyPlaybackUrlToScene,
   fetchHeygenPlaybackUrl,
   resolveSceneHeygenVideoId,
@@ -122,6 +126,9 @@ function sanitizeStyle(style = {}, type = 'text') {
   delete next.width;
   delete next.height;
   delete next.zIndex;
+  const flipFlags = flipScaleToBackendFlags(next);
+  if (flipFlags.flipHorizontal) next.flipHorizontal = true;
+  if (flipFlags.flipVertical) next.flipVertical = true;
   if (type === 'text') return normalizeTextStyle(next);
   return Object.keys(next).length ? next : undefined;
 }
@@ -271,9 +278,11 @@ function clipToElement(clip, scene, cIdx) {
   const resolvedType =
     clip.role === 'icon'
       ? 'icon'
-      : ['avatar', 'text', 'image', 'video', 'audio', 'shape', 'subtitle'].includes(clip.type)
-        ? clip.type
-        : 'image';
+      : clip.type === 'group'
+        ? 'group'
+        : ['avatar', 'text', 'image', 'video', 'audio', 'shape', 'subtitle'].includes(clip.type)
+          ? clip.type
+          : 'image';
 
   const element = {
     id: String(clip.id || `clip_${cIdx}`),
@@ -302,6 +311,10 @@ function clipToElement(clip, scene, cIdx) {
   if (clip.effects && Object.keys(clip.effects).length) element.effects = clip.effects;
   if (clip.visible !== undefined) element.visible = clip.visible;
   if (clip.isBackground) element.isBackground = true;
+  if (clip.groupId) element.groupId = clip.groupId;
+  if (clip.type === 'group' && Array.isArray(clip.childIds)) {
+    element.childIds = clip.childIds;
+  }
 
   return element;
 }
@@ -522,7 +535,7 @@ function elementToClip(element) {
 
   if (element.role) clip.role = element.role;
   if (element.style) {
-    clip.style = { ...element.style };
+    clip.style = backendFlagsToFlipScale({ ...element.style });
     if (element.style.objectFit) clip.objectFit = element.style.objectFit;
   }
   if (element.filters) {
@@ -536,6 +549,11 @@ function elementToClip(element) {
   if (element.visible !== undefined) clip.visible = element.visible;
   if (element.isBackground) clip.isBackground = true;
   if (element.shapeKey) clip.shapeKey = element.shapeKey;
+  if (element.groupId) clip.groupId = element.groupId;
+  if (element.type === 'group') {
+    clip.type = 'group';
+    clip.childIds = element.childIds || element.content?.childIds || [];
+  }
 
   if (element.type === 'icon') {
     clip.type = 'image';

@@ -772,7 +772,7 @@ const EditorSidebarAvatar = ({
                           width: '100%',
                           aspectRatio: '3/4',
                           overflow: 'hidden',
-                          background: '#f8f9fa'
+                          background: 'var(--bg-surface)'
                         }}>
                           {typeLabel && (
                             <span style={{
@@ -923,7 +923,7 @@ const EditorSidebarAvatar = ({
                       width: '100%',
                       aspectRatio: '3/4',
                       overflow: 'hidden',
-                      background: '#f8f9fa'
+                      background: 'var(--bg-surface)'
                     }}>
                         {typeLabel && (
                           <span style={{

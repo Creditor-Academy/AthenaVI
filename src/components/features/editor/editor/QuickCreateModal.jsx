@@ -1500,38 +1500,10 @@ const QuickCreateModal = ({
           )}
 
           {step === GENERATING_STEP && (
-            <div
-              className="qc-step-pane"
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minHeight: '400px',
-              }}
-            >
-              <Loader2
-                className="qc-spinner"
-                size={64}
-                style={{ color: '#1a73e8', marginBottom: '24px' }}
-              />
-              <h3
-                style={{
-                  fontSize: '24px',
-                  fontWeight: '700',
-                  marginBottom: '8px',
-                  color: '#1a1b1c',
-                }}
-              >
-                Generating Video...
-              </h3>
-              <p
-                style={{
-                  color: '#5f6368',
-                  textAlign: 'center',
-                  maxWidth: '300px',
-                }}
-              >
+            <div className="qc-step-pane qc-generating">
+              <Loader2 className="qc-spinner qc-generating__icon" size={64} />
+              <h3 className="qc-generating__title">Generating Video...</h3>
+              <p className="qc-generating__text">
                 Please wait while our AI creates your masterpiece. This may take a few
                 moments.
               </p>

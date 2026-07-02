@@ -1,25 +1,20 @@
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { fetchDomeGalleryContent } from '../../utils/domeGalleryContent';
-import { TemplateDomeShowcase, DomeGallerySkeleton } from '../ui/DomeGallery';
+import { fetchDomeGalleryContent, getStaticDomeGalleryContent } from '../../utils/domeGalleryContent';
+import { TemplateDomeShowcase } from '../ui/DomeGallery';
 import './WebsiteTemplateDomeSection.css';
 
 function WebsiteTemplateDomeSection({ onLoginClick }) {
-  const [galleryImages, setGalleryImages] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [galleryImages, setGalleryImages] = useState(getStaticDomeGalleryContent);
 
   useEffect(() => {
     let cancelled = false;
     fetchDomeGalleryContent()
       .then((images) => {
-        if (!cancelled) setGalleryImages(images);
+        if (!cancelled && images.length > 0) {
+          setGalleryImages(images);
+        }
       })
-      .catch(() => {
-        if (!cancelled) setGalleryImages([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
@@ -27,14 +22,7 @@ function WebsiteTemplateDomeSection({ onLoginClick }) {
 
   return (
     <section className="website-dome-section" aria-labelledby="website-dome-heading">
-      <motion.div
-        className="website-dome-section__intro"
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-      >
-        {/* <span className="website-dome-section__eyebrow">Avatars &amp; scenes</span> */}
+      <div className="website-dome-section__intro">
         <h2 id="website-dome-heading" className="website-dome-section__title">
           Your studio, in <span>3D motion</span>
         </h2>
@@ -42,13 +30,9 @@ function WebsiteTemplateDomeSection({ onLoginClick }) {
           Real AI avatars and template scenes from our library — continuously rotating so you can
           see the breadth of what you can build.
         </p>
-      </motion.div>
+      </div>
 
-      {loading ? (
-        <div className="website-dome-section__loading" aria-busy="true" aria-label="Loading gallery">
-          <DomeGallerySkeleton />
-        </div>
-      ) : galleryImages.length > 0 ? (
+      {galleryImages.length > 0 && (
         <TemplateDomeShowcase
           images={galleryImages}
           borderless
@@ -60,9 +44,7 @@ function WebsiteTemplateDomeSection({ onLoginClick }) {
           interactive={false}
           enableDrag={false}
         />
-      ) : null}
-
-
+      )}
     </section>
   );
 }

@@ -273,7 +273,7 @@ const EditorSidebarMagic = ({ onGenerateStoryboard }) => {
       }}>
         <div>
           <h3 style={{ fontSize: '16px', fontWeight: '600', color: 'var(--text-main)', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
-             AI Studio <MdAutoAwesome style={{ color: '#a855f7' }} size={16}/>
+             AI Studio <MdAutoAwesome style={{ color: 'var(--secondary)' }} size={16}/>
           </h3>
           <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>Create storyboard instantly from scripts</p>
         </div>
@@ -340,7 +340,7 @@ const EditorSidebarMagic = ({ onGenerateStoryboard }) => {
                 gap: '2px',
                 padding: '2px 6px',
                 borderRadius: '4px',
-                backgroundColor: 'rgba(26, 115, 232, 0.06)'
+                backgroundColor: 'rgba(var(--primary-rgb), 0.06)'
               }}
             >
               <MdPlayArrow size={14} /> Listen
@@ -410,7 +410,7 @@ const EditorSidebarMagic = ({ onGenerateStoryboard }) => {
               padding: '12px', 
               fontSize: '13px', 
               fontWeight: '600',
-              background: 'linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)', 
+              background: 'linear-gradient(135deg, var(--secondary) 0%, color-mix(in srgb, var(--primary) 70%, var(--secondary)) 100%)', 
               border: 'none',
               boxShadow: '0 4px 12px rgba(168, 85, 247, 0.2)'
             }}

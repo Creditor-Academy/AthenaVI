@@ -10,7 +10,14 @@ const EditorToast = ({ toast, onDismiss }) => {
     ? { ...toast, message: sanitizeUserFacingMessage(toast.message) }
     : null;
 
-  return <Toast toast={normalized} onDismiss={onDismiss} />;
+  return (
+    <Toast
+      toast={normalized}
+      onDismiss={onDismiss}
+      placement="bottom-right"
+      replace
+    />
+  );
 };
 
 export default EditorToast;

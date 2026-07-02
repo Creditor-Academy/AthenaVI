@@ -2,7 +2,7 @@
   margin: 8px 0 12px;
   padding: 10px 12px;
   border-radius: 10px;
-  background: var(--bg-card, #fff);
+  background: var(--bg-card);
   border: 1px solid var(--primary, #7c3aed);
   box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.12);
 }
