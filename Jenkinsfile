@@ -191,6 +191,7 @@ VITE_ENV=${env.VITE_ENV}
     post {
 
         always {
+            sh 'docker system prune -af'
             cleanWs()
         }
 
