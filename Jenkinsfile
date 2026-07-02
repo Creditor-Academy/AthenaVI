@@ -2,10 +2,18 @@ pipeline {
     agent any
 
     environment {
-        AWS_REGION = "us-east-1"
-        AWS_ACCOUNT_ID = "205091463760"
-        ECR_REPOSITORY = "vi-athena-frontend"
-        IMAGE_TAG = "${BUILD_NUMBER}"
+        AWS_REGION      = "us-east-1"
+        AWS_ACCOUNT_ID  = "205091463760"
+        ECR_REPOSITORY  = "vi-athena-frontend"
+        IMAGE_TAG       = "${BUILD_NUMBER}"
+
+        // Frontend Environment
+        VITE_API_BASE_URL = "https://api.vs.lmsathena.com"
+        VITE_ENV          = "production"
+    }
+
+    options {
+        timestamps()
     }
 
     stages {
@@ -13,6 +21,20 @@ pipeline {
         stage('Checkout Source') {
             steps {
                 checkout scm
+            }
+        }
+
+        stage('Create Frontend Environment') {
+            steps {
+                sh '''
+                cat > .env.production <<EOF
+VITE_API_BASE_URL=${VITE_API_BASE_URL}
+VITE_ENV=${VITE_ENV}
+EOF
+
+                echo "Generated .env.production"
+                cat .env.production
+                '''
             }
         }
 
@@ -25,12 +47,7 @@ pipeline {
         stage('Build React App') {
             steps {
                 sh '''
-                echo "===================================="
-                echo "Building React Application"
-                echo "===================================="
-                if [ -d dist ]; then
-                    rm -rf dist 2>/dev/null || docker run --rm -v "$PWD:/w" -w /w alpine rm -rf dist
-                fi
+                rm -rf dist || true
                 npm run build
                 '''
             }
@@ -66,21 +83,21 @@ pipeline {
 
         stage('Trivy Scan') {
             steps {
-                sh '''
-                rm -rf ~/.cache/trivy/db
+                sh """
                 trivy image \
-                  --scanners vuln \
-                  --exit-code 0 \
-                  --severity HIGH,CRITICAL \
-                  ${ECR_REPOSITORY}:${IMAGE_TAG}
-                '''
+                --scanners vuln \
+                --severity HIGH,CRITICAL \
+                --exit-code 0 \
+                ${ECR_REPOSITORY}:${IMAGE_TAG}
+                """
             }
         }
 
         stage('Login to Amazon ECR') {
             steps {
                 sh """
-                aws ecr get-login-password --region ${AWS_REGION} | docker login \
+                aws ecr get-login-password --region ${AWS_REGION} | \
+                docker login \
                 --username AWS \
                 --password-stdin \
                 ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
@@ -94,8 +111,14 @@ pipeline {
                 docker tag ${ECR_REPOSITORY}:${IMAGE_TAG} \
                 ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}
 
+                docker tag ${ECR_REPOSITORY}:${IMAGE_TAG} \
+                ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:latest
+
                 docker push \
                 ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}
+
+                docker push \
+                ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:latest
                 """
             }
         }
@@ -103,28 +126,38 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 sh """
+                aws eks update-kubeconfig \
+                    --region ${AWS_REGION} \
+                    --name vi-athena-eks
+
                 kubectl set image deployment/frontend \
                 frontend=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}
 
-                kubectl rollout status deployment/frontend
+                kubectl rollout status deployment/frontend --timeout=300s
                 """
             }
         }
     }
 
     post {
+
+        always {
+            cleanWs()
+        }
+
         success {
             echo "======================================="
             echo "Frontend Pipeline Completed Successfully"
-            echo "Docker Image Pushed Successfully"
-            echo "Kubernetes Deployment Updated Successfully"
+            echo "Docker Image Built Successfully"
+            echo "Docker Image Pushed to Amazon ECR"
+            echo "Frontend Successfully Deployed to Amazon EKS"
             echo "======================================="
         }
 
         failure {
-            echo "======================================"
+            echo "======================================="
             echo "Frontend Pipeline Failed"
-            echo "======================================"
+            echo "======================================="
         }
     }
 }
