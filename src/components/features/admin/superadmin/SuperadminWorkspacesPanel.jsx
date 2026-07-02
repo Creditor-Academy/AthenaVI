@@ -83,6 +83,7 @@ function WorkspaceDrawer({
           boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', zIndex: 201,
           display: 'flex', flexDirection: 'column',
           opacity: open ? 1 : 0,
+          pointerEvents: open ? 'auto' : 'none',
           transition: 'transform 0.28s cubic-bezier(0.16,1,0.3,1), opacity 0.2s ease',
           willChange: 'transform, opacity',
         }}

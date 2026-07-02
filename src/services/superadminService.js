@@ -175,6 +175,14 @@ const superadminService = {
   getHeygenAccount() {
     return superadminRequest('/api/superadmin/heygen/account')
   },
+
+  sendProductEmailBroadcast({ subject, html, text }) {
+    return superadminRequest('/api/superadmin/broadcasts/product-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subject, html, text: text || undefined, confirm: 'send' }),
+    })
+  },
 }
 
 export { SuperadminApiError }

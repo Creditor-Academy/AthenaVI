@@ -5,9 +5,10 @@ import SuperadminStorageRequestsPanel from '../../components/features/admin/supe
 import SuperadminReportsPanel from '../../components/features/admin/superadmin/SuperadminReportsPanel'
 import SuperadminPlatformActionsPanel from '../../components/features/admin/superadmin/SuperadminPlatformActionsPanel'
 import SuperadminHeygenPanel from '../../components/features/admin/superadmin/SuperadminHeygenPanel'
+import SuperadminBroadcastPanel from '../../components/features/admin/superadmin/SuperadminBroadcastPanel'
 import './SuperadminPortal.css'
 
-const VALID_TABS = new Set(['overview', 'users', 'workspaces', 'storage-requests', 'reports', 'platform-actions', 'heygen'])
+const VALID_TABS = new Set(['overview', 'users', 'workspaces', 'storage-requests', 'reports', 'platform-actions', 'heygen', 'broadcast'])
 
 function normalizeTab(tab) {
   return VALID_TABS.has(tab) ? tab : 'overview'
@@ -28,6 +29,7 @@ const AdminPortal = ({
       {activeTab === 'reports' && <SuperadminReportsPanel />}
       {activeTab === 'platform-actions' && <SuperadminPlatformActionsPanel />}
       {activeTab === 'heygen' && <SuperadminHeygenPanel />}
+      {activeTab === 'broadcast' && <SuperadminBroadcastPanel />}
     </div>
   )
 }

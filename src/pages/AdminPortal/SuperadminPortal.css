@@ -83,19 +83,31 @@
   height: 36px;
   padding: 0 12px;
   border-radius: 8px;
-  border: 1px solid var(--border-color);
+  border: 1px solid color-mix(in srgb, var(--text-muted) 35%, var(--border-color));
   background: var(--bg-card);
   color: var(--text-main);
   font: inherit;
   font-size: 0.875rem;
   min-width: 0;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.sa-input:hover:not(:focus):not(:disabled),
+.sa-select:hover:not(:focus):not(:disabled) {
+  border-color: color-mix(in srgb, var(--text-muted) 60%, var(--border-color));
 }
 
 .sa-input:focus,
 .sa-select:focus {
-  outline: 2px solid color-mix(in srgb, var(--primary) 45%, transparent);
+  outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 10%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+.sa-input:disabled,
+.sa-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .sa-input--search {
@@ -924,13 +936,24 @@
   min-height: 48px;
   padding: 7px 10px;
   border-radius: 7px;
-  border: 1px solid var(--border-color);
+  border: 1px solid color-mix(in srgb, var(--text-muted) 35%, var(--border-color));
   background: var(--bg-card);
   color: var(--text-main);
   font: inherit;
   font-size: 0.8125rem;
   resize: vertical;
   box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.sa-reason-input:hover:not(:focus):not(:disabled) {
+  border-color: color-mix(in srgb, var(--text-muted) 60%, var(--border-color));
+}
+
+.sa-reason-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
 }
 
 .sa-field label {
@@ -946,13 +969,24 @@
   min-height: 56px;
   padding: 8px 10px;
   border-radius: 8px;
-  border: 1px solid var(--border-color);
+  border: 1px solid color-mix(in srgb, var(--text-muted) 35%, var(--border-color));
   background: var(--bg-card);
   color: var(--text-main);
   font: inherit;
   font-size: 0.8125rem;
   resize: vertical;
   box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.sa-field textarea:hover:not(:focus):not(:disabled) {
+  border-color: color-mix(in srgb, var(--text-muted) 60%, var(--border-color));
+}
+
+.sa-field textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
 }
 
 .sa-table-wrap {

@@ -237,6 +237,7 @@ function UserDrawer({ open, user, detail, history, historyPagination, historyPag
         display: 'flex',
         flexDirection: 'column',
         opacity: open ? 1 : 0,
+        pointerEvents: open ? 'auto' : 'none',
         transition: 'transform 0.28s cubic-bezier(0.16,1,0.3,1), opacity 0.2s ease',
         willChange: 'transform, opacity',
       }}
@@ -789,17 +790,19 @@ function SuperadminUsersPanel() {
             <button key={user.id} type="button"
               onClick={() => openDrawer(user.id)}
               style={{
-                width: '100%', display: 'grid', gridTemplateColumns: '1fr 1.4fr 130px',
-                gap: 16, padding: '14px 20px',
+                width: '100%',
+                display: 'block',
+                padding: 0,
                 background: selectedId === user.id && drawerOpen 
                   ? 'linear-gradient(90deg, color-mix(in srgb, var(--primary) 12%, transparent) 0%, transparent 100%)' 
                   : 'transparent',
                 border: 'none', outline: 'none',
                 borderBottom: '1px solid var(--border-color)',
                 borderLeft: selectedId === user.id && drawerOpen ? '3px solid var(--primary,#3b82f6)' : '3px solid transparent',
-                alignItems: 'center', cursor: 'pointer', textAlign: 'left',
+                cursor: 'pointer', textAlign: 'left',
                 color: 'var(--text-main)',
                 transition: 'all 0.2s ease',
+                userSelect: 'none',
               }}
               onMouseEnter={e => { 
                 if (selectedId !== user.id || !drawerOpen) {
@@ -814,6 +817,12 @@ function SuperadminUsersPanel() {
                 }
               }}
             >
+              <div style={{
+                display: 'grid', gridTemplateColumns: '1fr 1.4fr 130px',
+                gap: 16, padding: '14px 20px',
+                alignItems: 'center',
+                pointerEvents: 'none',
+              }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <span style={{
                   width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
@@ -848,6 +857,7 @@ function SuperadminUsersPanel() {
               }}>
                 {formatAc(user.credits)}
               </span>
+              </div>
             </button>
           ))}
         </div>
