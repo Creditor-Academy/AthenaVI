@@ -32,6 +32,7 @@ import InvitationsPanel from './InvitationsPanel.jsx';
 import ContributorsPanel from './ContributorsPanel.jsx';
 import ConfirmDialog from '../../components/ui/ConfirmDialog/ConfirmDialog.jsx';
 import Toast from '../../components/ui/Toast/Toast';
+import { consumeDashboardSearchContext } from '../../utils/dashboardSearchNavigate.js';
 
 import { buildWorkspaceUserLookup, getAuthDisplayName } from '../../utils/workspaceUsers.js';
 import { formatFolderSize } from '../../utils/formatSize.js';
@@ -88,6 +89,10 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
   const [allocateCreditsWorkspace, setAllocateCreditsWorkspace] = useState(null);
   const [creditsUsageWorkspace, setCreditsUsageWorkspace] = useState(null);
   const [personalCredits, setPersonalCredits] = useState(null);
+
+  useEffect(() => {
+    consumeDashboardSearchContext('workspace');
+  }, []);
 
   // ------------------------------------------------------------------
   // Toast & confirm dialog

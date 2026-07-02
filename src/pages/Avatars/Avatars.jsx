@@ -20,6 +20,7 @@ import {
   saveAvatarsActiveSection,
   saveAvatarsPersonaGroupId,
 } from '../../utils/avatarsNavigationStorage';
+import { consumeDashboardSearchContext } from '../../utils/dashboardSearchNavigate.js';
 import { getSanitizedErrorMessage } from '../../utils/userFacingMessage';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
 import AvatarsSkeleton from '../page-skeleton/AvatarsSkeleton';
@@ -97,6 +98,18 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
   const [viewMode, setViewMode] = useState('grid');
   const [activeSection, setActiveSection] = useState(() => loadAvatarsActiveSection());
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const ctx = consumeDashboardSearchContext('avatars');
+    if (ctx?.searchQuery) {
+      preserveSearchRef.current = ctx.searchQuery;
+      setSearchQuery(ctx.searchQuery);
+    }
+    if (ctx?.avatarsSection) {
+      saveAvatarsActiveSection(ctx.avatarsSection);
+      setActiveSection(ctx.avatarsSection);
+    }
+  }, []);
   const [filterBy, setFilterBy] = useState('all');
   const [sortBy, setSortBy] = useState('name_asc');
   const [groupBy, setGroupBy] = useState('none');
@@ -107,6 +120,7 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
   const fetchRequestRef = useRef(0);
   const bannerTimeoutRef = useRef(null);
   const personaRestoredRef = useRef(false);
+  const preserveSearchRef = useRef(null);
 
   const showBanner = useCallback((message, tone = 'info') => {
     setConsentBanner(message);
@@ -174,7 +188,12 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
   }, [activeSection]);
 
   useEffect(() => {
-    setSearchQuery('');
+    if (preserveSearchRef.current) {
+      setSearchQuery(preserveSearchRef.current);
+      preserveSearchRef.current = null;
+    } else {
+      setSearchQuery('');
+    }
     setFilterBy('all');
     setAvatars([]);
     setHasMore(false);
