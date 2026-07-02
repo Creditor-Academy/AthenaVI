@@ -2,18 +2,17 @@ pipeline {
     agent any
 
     environment {
-        AWS_REGION      = "us-east-1"
-        AWS_ACCOUNT_ID  = "205091463760"
-        ECR_REPOSITORY  = "vi-athena-frontend"
-        IMAGE_TAG       = "${BUILD_NUMBER}"
+        AWS_REGION = "us-east-1"
+        AWS_ACCOUNT_ID = "205091463760"
+        ECR_REPOSITORY = "vi-athena-frontend"
+        IMAGE_TAG = "${BUILD_NUMBER}"
 
-        // Frontend Environment
         VITE_API_BASE_URL = "https://api.vs.lmsathena.com"
-        VITE_ENV          = "production"
     }
 
     options {
         timestamps()
+        skipDefaultCheckout(true)
     }
 
     stages {
@@ -21,20 +20,6 @@ pipeline {
         stage('Checkout Source') {
             steps {
                 checkout scm
-            }
-        }
-
-        stage('Create Frontend Environment') {
-            steps {
-                sh '''
-                cat > .env.production <<EOF
-VITE_API_BASE_URL=${VITE_API_BASE_URL}
-VITE_ENV=${VITE_ENV}
-EOF
-
-                echo "Generated .env.production"
-                cat .env.production
-                '''
             }
         }
 
@@ -47,7 +32,10 @@ EOF
         stage('Build React App') {
             steps {
                 sh '''
-                rm -rf dist || true
+                export VITE_API_BASE_URL=${VITE_API_BASE_URL}
+
+                rm -rf dist
+
                 npm run build
                 '''
             }
@@ -74,8 +62,7 @@ EOF
         stage('Build Docker Image') {
             steps {
                 sh """
-                docker build \
-                --no-cache \
+                docker build --no-cache \
                 -t ${ECR_REPOSITORY}:${IMAGE_TAG} .
                 """
             }
@@ -127,20 +114,19 @@ EOF
             steps {
                 sh """
                 aws eks update-kubeconfig \
-                    --region ${AWS_REGION} \
-                    --name vi-athena-eks
+                --region ${AWS_REGION} \
+                --name vi-athena-eks
 
                 kubectl set image deployment/frontend \
                 frontend=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}
 
-                kubectl rollout status deployment/frontend --timeout=300s
+                kubectl rollout status deployment/frontend
                 """
             }
         }
     }
 
     post {
-
         always {
             cleanWs()
         }
@@ -148,9 +134,6 @@ EOF
         success {
             echo "======================================="
             echo "Frontend Pipeline Completed Successfully"
-            echo "Docker Image Built Successfully"
-            echo "Docker Image Pushed to Amazon ECR"
-            echo "Frontend Successfully Deployed to Amazon EKS"
             echo "======================================="
         }
 
