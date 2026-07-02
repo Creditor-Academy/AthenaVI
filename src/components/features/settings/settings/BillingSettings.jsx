@@ -27,7 +27,7 @@ import {
   formatCreditTransactionDuration,
   isTeamWorkspaceType,
   isPrivateWorkspaceType,
-  sumUsageCredits,
+  sumRecentUsageCredits,
 } from '../../../../utils/creditTransactions.js'
 import { formatBytes } from '../../../../utils/formatSize.js'
 import { formatStorageTransactionType, formatStorageUpgradeStatus, formatStorageUpgradeUrgency, getStorageUpgradeStatusVariant } from '../../../../utils/storageQuota.js'
@@ -89,6 +89,8 @@ function BillingSettings() {
   const [workspaceCredits, setWorkspaceCredits] = useState(null)
   const [workspaceType, setWorkspaceType] = useState('')
   const [history, setHistory] = useState([])
+  const [recentUsage, setRecentUsage] = useState(0)
+  const [recentUsageLoading, setRecentUsageLoading] = useState(false)
   const [historyPage, setHistoryPage] = useState(1)
   const [historyPagination, setHistoryPagination] = useState({ totalPages: 1, total: 0 })
   const [allocateAmount, setAllocateAmount] = useState('')
@@ -130,7 +132,7 @@ function BillingSettings() {
     [selectedWorkspace]
   )
 
-  const isTeamWorkspace = isTeamWorkspaceType(workspaceType || selectedWorkspace?.type)
+  const isTeamWorkspace = isTeamWorkspaceType(selectedWorkspace?.type || workspaceType)
   const canAllocate = isTeamWorkspace && workspaceRole === 'OWNER'
   const balancesReady = personalCredits != null
 
@@ -153,7 +155,16 @@ function BillingSettings() {
   )
 
   const creditsBoxLoading = loading || workspaceSwitching || !balancesReady
-  const usageBoxLoading = loading || workspaceSwitching || historyLoading
+  const usageBoxLoading = loading || workspaceSwitching || recentUsageLoading
+
+  const resolveBillingContext = useCallback((workspaceId, typeHint = '') => {
+    const workspace = workspacesRef.current.find((ws) => String(ws.id) === String(workspaceId))
+    return {
+      workspace,
+      workspaceType: workspace?.type || typeHint || '',
+      role: workspace ? readRole(workspace) : 'MEMBER',
+    }
+  }, [])
 
   const primaryCreditValue = useMemo(() => {
     if (!balancesReady) return null
@@ -221,19 +232,13 @@ function BillingSettings() {
   const loadHistory = useCallback(async (workspaceId, page = 1, typeHint = '') => {
     setHistoryLoading(true)
     try {
-      const workspace = workspacesRef.current.find((ws) => String(ws.id) === String(workspaceId))
-      const resolvedType = typeHint || workspace?.type || ''
-      let result
-
-      if (!workspaceId || !isTeamWorkspaceType(resolvedType)) {
-        result = await creditsService.getPersonalHistory({ page, limit: 10 })
-      } else {
-        const role = workspace ? readRole(workspace) : 'MEMBER'
-        result =
-          role === 'OWNER' || role === 'ADMIN'
-            ? await creditsService.getWorkspaceHistory(workspaceId, { page, limit: 10 })
-            : await creditsService.getMyWorkspaceHistory(workspaceId, { page, limit: 10 })
-      }
+      const { workspaceType, role } = resolveBillingContext(workspaceId, typeHint)
+      const result = await creditsService.getHistoryForWorkspaceContext(workspaceId, {
+        workspaceType,
+        role,
+        page,
+        limit: 10,
+      })
 
       setHistory(result.transactions)
       setHistoryPagination(result.pagination)
@@ -241,7 +246,25 @@ function BillingSettings() {
     } finally {
       setHistoryLoading(false)
     }
-  }, [])
+  }, [resolveBillingContext])
+
+  const loadRecentUsage = useCallback(async (workspaceId, typeHint = '') => {
+    setRecentUsageLoading(true)
+    try {
+      const { workspaceType, role } = resolveBillingContext(workspaceId, typeHint)
+      const result = await creditsService.getHistoryForWorkspaceContext(workspaceId, {
+        workspaceType,
+        role,
+        page: 1,
+        limit: 50,
+      })
+      setRecentUsage(sumRecentUsageCredits(result.transactions))
+    } catch {
+      setRecentUsage(0)
+    } finally {
+      setRecentUsageLoading(false)
+    }
+  }, [resolveBillingContext])
 
   const loadWorkspaceContext = useCallback(async (workspaceId) => {
     if (!workspaceId) {
@@ -249,19 +272,22 @@ function BillingSettings() {
       setPersonalCredits(personal.personalCredits)
       setWorkspaceCredits(null)
       setWorkspaceType('')
-      await Promise.all([loadHistory(null, 1), loadStorageContext(null)])
+      await Promise.all([loadHistory(null, 1), loadRecentUsage(null), loadStorageContext(null)])
       return
     }
 
+    const { workspaceType: listWorkspaceType } = resolveBillingContext(workspaceId)
     const data = await creditsService.getWorkspaceBalance(workspaceId)
+    const typeHint = listWorkspaceType || data.workspaceType
     setPersonalCredits(data.personalCredits)
     setWorkspaceCredits(data.workspaceCredits)
     setWorkspaceType(data.workspaceType)
     await Promise.all([
-      loadHistory(workspaceId, 1, data.workspaceType),
+      loadHistory(workspaceId, 1, typeHint),
+      loadRecentUsage(workspaceId, typeHint),
       loadStorageContext(workspaceId),
     ])
-  }, [loadHistory, loadStorageContext])
+  }, [loadHistory, loadRecentUsage, loadStorageContext, resolveBillingContext])
 
   const refreshAll = useCallback(async () => {
     setLoading(true)
@@ -304,15 +330,17 @@ function BillingSettings() {
         if (workspaceId) {
           const data = await creditsService.getWorkspaceBalance(workspaceId)
           if (cancelled) return
+          const typeHint = defaultWorkspace?.type || data.workspaceType
           setWorkspaceCredits(data.workspaceCredits)
           setWorkspaceType(data.workspaceType)
           setPersonalCredits(data.personalCredits)
           await Promise.all([
-            loadHistory(workspaceId, 1, data.workspaceType),
+            loadHistory(workspaceId, 1, typeHint),
+            loadRecentUsage(workspaceId, typeHint),
             loadStorageContext(workspaceId),
           ])
         } else {
-          await Promise.all([loadHistory(null, 1), loadStorageContext(null)])
+          await Promise.all([loadHistory(null, 1), loadRecentUsage(null), loadStorageContext(null)])
         }
       } catch (err) {
         if (!cancelled) {
@@ -330,6 +358,14 @@ function BillingSettings() {
     // Mount-only init — workspace switching is handled by handleWorkspaceChange.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    const handleCreditsRefresh = () => {
+      loadWorkspaceContext(selectedWorkspaceId || null).catch(() => {})
+    }
+    window.addEventListener('editor-credits-refresh', handleCreditsRefresh)
+    return () => window.removeEventListener('editor-credits-refresh', handleCreditsRefresh)
+  }, [loadWorkspaceContext, selectedWorkspaceId])
 
   const handleWorkspaceChange = async (workspaceId) => {
     if (String(workspaceId) === String(selectedWorkspaceId)) return
@@ -376,8 +412,6 @@ function BillingSettings() {
       setActionLoading(false)
     }
   }
-
-  const monthlyUsage = useMemo(() => sumUsageCredits(history), [history])
 
   const formatDate = (iso) => {
     if (!iso) return '—'
@@ -731,10 +765,12 @@ function BillingSettings() {
               {usageBoxLoading ? (
                 <LoadingDots size="md" className="billing-credit-loading" />
               ) : (
-                monthlyUsage.toLocaleString()
+                recentUsage.toLocaleString()
               )}
             </p>
-            <p className="billing-metric-card-hint">Credits used in loaded history</p>
+            <p className="billing-metric-card-hint">
+              {isTeamWorkspace ? 'Workspace credits used (last 30 days)' : 'Personal credits used (last 30 days)'}
+            </p>
           </article>
         </div>
 

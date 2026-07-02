@@ -81,7 +81,8 @@
 
 .editor-topbar .topbar-back-btn,
 .editor-topbar .topbar-save-btn,
-.editor-topbar .topbar-preview-btn {
+.editor-topbar .topbar-preview-btn,
+.editor-topbar .topbar-comments-btn {
     border-color: rgba(255, 255, 255, 0.28);
     background: rgba(255, 255, 255, 0.12);
     color: rgba(255, 255, 255, 0.92);
@@ -89,10 +90,18 @@
 
 .editor-topbar .topbar-back-btn:hover,
 .editor-topbar .topbar-save-btn:hover:not(:disabled),
-.editor-topbar .topbar-preview-btn:hover {
+.editor-topbar .topbar-preview-btn:hover,
+.editor-topbar .topbar-comments-btn:hover {
     background: rgba(255, 255, 255, 0.22);
     border-color: rgba(255, 255, 255, 0.4);
     color: #fff;
+}
+
+.editor-topbar .topbar-comments-btn.is-active {
+    background: rgba(255, 255, 255, 0.28);
+    border-color: rgba(255, 255, 255, 0.55);
+    color: #fff;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.14);
 }
 
 .editor-topbar .topbar-save-btn.saved {
@@ -1618,6 +1627,54 @@
     color: var(--primary);
 }
 
+/* Comments Button */
+.topbar-comments-wrap {
+    position: relative;
+    display: inline-flex;
+}
+
+.topbar-comments-btn {
+    border: 1px solid var(--border-color);
+    background: var(--bg-surface);
+    color: var(--text-main);
+}
+
+.topbar-comments-btn:hover {
+    background: var(--bg-main);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.topbar-comments-btn.is-active {
+    background: rgba(var(--primary-rgb), 0.1);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.topbar-comments-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--primary);
+    color: var(--text-inverse, #fff);
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 16px;
+    text-align: center;
+    pointer-events: none;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.editor-topbar .topbar-comments-badge {
+    background: #fff;
+    color: var(--primary);
+    box-shadow: 0 1px 6px rgba(15, 23, 42, 0.2);
+}
+
 /* Export Button */
 .topbar-export-btn {
     border: none;
@@ -2019,6 +2076,15 @@ kbd.shortcut-key {
 
 .properties-panel-shell {
     position: relative;
+}
+
+.properties-panel-shell .scene-config-panel-scroll {
+    position: relative;
+    z-index: 2;
+}
+
+.properties-panel-shell .panel-resize-handle {
+    z-index: 1;
 }
 
 /* Drag handles for timeline height & properties panel width */
@@ -4785,6 +4851,40 @@ kbd.shortcut-key {
     padding: 20px;
     min-height: 100%;
     box-sizing: border-box;
+}
+
+.upload-insert-panel__type-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.upload-insert-panel__type-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-surface);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 10px 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.upload-insert-panel__type-tab:hover {
+    border-color: color-mix(in srgb, var(--primary) 35%, var(--border-color));
+    color: var(--text-main);
+}
+
+.upload-insert-panel__type-tab.is-active {
+    background: var(--bg-card);
+    border-color: color-mix(in srgb, var(--primary) 45%, var(--border-color));
+    color: var(--text-main);
+    box-shadow: 0 1px 6px rgba(15, 23, 42, 0.08);
 }
 
 .upload-insert-panel__dropzone {

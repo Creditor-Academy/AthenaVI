@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import inboxService from '../services/inboxService.js';
+import { countUnreadUserFacingInboxNotifications } from '../utils/inboxNotifications.js';
 
 const POLL_INTERVAL_MS = 60_000;
+const UNREAD_LIST_LIMIT = 100;
 
 export function useInboxUnreadCount({ enabled = true, poll = true } = {}) {
   const [unreadCount, setUnreadCount] = useState(0);
@@ -11,11 +13,15 @@ export function useInboxUnreadCount({ enabled = true, poll = true } = {}) {
   const refresh = useCallback(async () => {
     if (!enabled) return 0;
     try {
-      const data = await inboxService.getUnreadCount();
-      const count = Number(data.unreadCount ?? 0);
-      setUnreadCount(count);
-      setByCategory(data.byCategory || {});
-      return count;
+      const [countData, listData] = await Promise.all([
+        inboxService.getUnreadCount(),
+        inboxService.listNotifications({ limit: UNREAD_LIST_LIMIT }),
+      ]);
+
+      const visibleUnread = countUnreadUserFacingInboxNotifications(listData.notifications || []);
+      setUnreadCount(visibleUnread);
+      setByCategory(countData.byCategory || {});
+      return visibleUnread;
     } catch {
       return null;
     } finally {

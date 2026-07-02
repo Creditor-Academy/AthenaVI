@@ -862,6 +862,45 @@
   max-width: 680px;
 }
 
+.toggle-blocked-note {
+  margin-top: 6px !important;
+  font-size: 0.78rem !important;
+  color: color-mix(in srgb, var(--text-muted) 85%, var(--primary)) !important;
+}
+
+.settings-toggle-row--blocked .toggle-info h4,
+.settings-toggle-row--blocked .toggle-info p:not(.toggle-blocked-note) {
+  opacity: 0.65;
+}
+
+.toggle-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.toggle-status {
+  min-width: 28px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.toggle-status--on {
+  color: var(--primary);
+}
+
+.toggle-status--off {
+  color: var(--text-muted);
+}
+
+.toggle-switch:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .toggle-switch {
   width: 48px;
   height: 28px;

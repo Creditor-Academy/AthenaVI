@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import './EnvelopeSuccess.css'
 
-function EnvelopeSuccess({ email, onReset }) {
+function EnvelopeSuccess({ email, message, onReset }) {
   const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
@@ -18,10 +18,10 @@ function EnvelopeSuccess({ email, onReset }) {
           <div className="env-letter">
             <h3 className="env-title">You're on the list!</h3>
             <p className="env-body">
-              Thanks for requesting early access to Virtual Studio.
+              {message || 'Thanks for requesting early access to Virtual Studio.'}
             </p>
             <p className="env-sub">
-              Our team will review your request and get back to you at <strong>{email}</strong> shortly.
+              We'll reach you at <strong>{email}</strong>.
             </p>
           </div>
           <div className="env-flap-bottom"></div>

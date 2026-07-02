@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   MdAudiotrack,
   MdCloudUpload,
@@ -21,6 +21,24 @@ const SOURCE_TABS = [
   { id: 'stock', label: 'Stock' },
 ];
 
+const MEDIA_TYPE_TABS = [
+  { id: 'images', label: 'Images', icon: MdImage },
+  { id: 'videos', label: 'Videos', icon: MdVideocam },
+  { id: 'music', label: 'Music', icon: MdAudiotrack },
+];
+
+const UPLOAD_LABELS = {
+  images: 'Upload images from your device',
+  videos: 'Upload videos from your device',
+  music: 'Upload music from your device',
+};
+
+const EMPTY_LABELS = {
+  images: 'No images in this view yet.',
+  videos: 'No videos in this view yet.',
+  music: 'No music in this view yet.',
+};
+
 const EditorSidebarUpload = ({ addLayer, onAddAudio, workspaceId, onUploadError, onAssetInserted, onClose }) => {
   const { user } = useAuth();
   const currentUserId = extractUserId(user);
@@ -32,6 +50,15 @@ const EditorSidebarUpload = ({ addLayer, onAddAudio, workspaceId, onUploadError,
   const [deletingId, setDeletingId] = useState(null);
   const [renamingId, setRenamingId] = useState(null);
   const [sourceFilter, setSourceFilter] = useState('all');
+  const [mediaTypeTab, setMediaTypeTab] = useState('images');
+
+  const filteredAssets = useMemo(
+    () =>
+      assets.filter(
+        (asset) => assetService.toLibraryTab(asset.mediaType) === mediaTypeTab
+      ),
+    [assets, mediaTypeTab]
+  );
 
   const refreshAssets = useCallback(async () => {
     if (!workspaceId) {
@@ -206,10 +233,31 @@ const EditorSidebarUpload = ({ addLayer, onAddAudio, workspaceId, onUploadError,
 
   return (
     <div className="tool-panel-content upload-insert-panel">
+      <div className="upload-insert-panel__type-tabs" role="tablist" aria-label="Media type">
+        {MEDIA_TYPE_TABS.map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={mediaTypeTab === tab.id}
+              className={`upload-insert-panel__type-tab${
+                mediaTypeTab === tab.id ? ' is-active' : ''
+              }`}
+              onClick={() => setMediaTypeTab(tab.id)}
+            >
+              <Icon size={16} aria-hidden />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
       <input
         ref={inputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp,video/mp4,audio/mpeg,audio/mp3,.mp3"
+        accept={assetService.acceptForTab(mediaTypeTab)}
         multiple
         hidden
         onChange={(e) => {
@@ -228,10 +276,14 @@ const EditorSidebarUpload = ({ addLayer, onAddAudio, workspaceId, onUploadError,
           <MdCloudUpload size={36} />
         </span>
         <span className="upload-insert-panel__title">
-          {uploading ? 'Uploading…' : 'Upload from your device'}
+          {uploading ? 'Uploading…' : UPLOAD_LABELS[mediaTypeTab]}
         </span>
         <span className="upload-insert-panel__hint">
-          JPEG, PNG, WebP, MP4, MP3 · max 50 MB ·{' '}
+          {mediaTypeTab === 'videos'
+            ? 'MP4 · max 50 MB · '
+            : mediaTypeTab === 'music'
+              ? 'MP3 · max 50 MB · '
+              : 'JPEG, PNG, WebP · max 50 MB · '}
           {workspaceId ? 'Saved to your workspace' : 'Local preview only until project is saved'}
         </span>
       </button>
@@ -264,12 +316,12 @@ const EditorSidebarUpload = ({ addLayer, onAddAudio, workspaceId, onUploadError,
               ))}
             </div>
           ) : null}
-          {!loading && assets.length === 0 ? (
-            <p className="upload-insert-panel__status">No assets in this view yet.</p>
+          {!loading && filteredAssets.length === 0 ? (
+            <p className="upload-insert-panel__status">{EMPTY_LABELS[mediaTypeTab]}</p>
           ) : null}
           {!loading ? (
           <div className="upload-insert-panel__grid premium-scrollbar">
-            {assets.map((asset) => (
+            {filteredAssets.map((asset) => (
               <button
                 key={asset.id}
                 type="button"
