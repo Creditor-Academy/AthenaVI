@@ -160,9 +160,31 @@ export function formatCreditAmount(amount) {
   return value.toLocaleString();
 }
 
+export function getCreditTransactionTimestamp(transaction) {
+  const raw =
+    transaction?.createdAt ??
+    transaction?.created_at ??
+    transaction?.timestamp ??
+    null;
+  const ms = new Date(raw || 0).getTime();
+  return Number.isFinite(ms) ? ms : null;
+}
+
 export function sumUsageCredits(transactions = []) {
   return transactions
     .filter((tx) => String(tx.type || '').toLowerCase() === 'usage')
+    .reduce((sum, tx) => sum + Math.abs(Number(tx.amount || 0)), 0);
+}
+
+/** Sum usage credits within a rolling window (default: last 30 days). */
+export function sumRecentUsageCredits(transactions = [], { withinDays = 30 } = {}) {
+  const cutoff = Date.now() - withinDays * 24 * 60 * 60 * 1000;
+  return transactions
+    .filter((tx) => {
+      if (String(tx.type || '').toLowerCase() !== 'usage') return false;
+      const created = getCreditTransactionTimestamp(tx);
+      return created != null && created >= cutoff;
+    })
     .reduce((sum, tx) => sum + Math.abs(Number(tx.amount || 0)), 0);
 }
 
@@ -241,7 +263,7 @@ export function findRecentUsageCredits(transactions = [], { withinMs = 180000 } 
   const cutoff = Date.now() - withinMs;
   for (const tx of transactions) {
     if (String(tx.type || '').toLowerCase() !== 'usage') continue;
-    const created = new Date(tx.createdAt || tx.created_at || 0).getTime();
+    const created = getCreditTransactionTimestamp(tx) ?? 0;
     if (!Number.isFinite(created) || created < cutoff) continue;
     const amount = Math.abs(Number(tx.amount || 0));
     if (amount > 0) return amount;

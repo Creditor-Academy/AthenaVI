@@ -1,11 +1,24 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { getAvatarColorForName, getNameInitials } from '../../../../utils/workspaceUsers.js';
 
-const UserIdentity = ({ name, className = '', compact = false, showName = true }) => {
+const UserIdentity = ({
+  name,
+  profileImage = null,
+  className = '',
+  compact = false,
+  showName = true,
+  avatarSize,
+}) => {
+  const [imageFailed, setImageFailed] = useState(false);
   const isEmpty = !name || name === '-';
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [profileImage]);
   const displayName = isEmpty ? '-' : name;
   const initials = getNameInitials(isEmpty ? '' : name);
   const avatarColor = getAvatarColorForName(isEmpty ? '' : name);
+  const showPhoto = Boolean(profileImage) && !imageFailed;
 
   return (
     <div
@@ -13,14 +26,28 @@ const UserIdentity = ({ name, className = '', compact = false, showName = true }
       title={isEmpty ? undefined : displayName}
     >
       <span
-        className="user-identity-avatar"
+        className={`user-identity-avatar${showPhoto ? ' user-identity-avatar--photo' : ''}`}
         aria-hidden="true"
-        style={{
-          backgroundColor: avatarColor,
-          boxShadow: `0 1px 3px color-mix(in srgb, ${avatarColor} 40%, transparent)`
-        }}
+        style={
+          showPhoto
+            ? undefined
+            : {
+                backgroundColor: avatarColor,
+                boxShadow: `0 1px 3px color-mix(in srgb, ${avatarColor} 40%, transparent)`,
+              }
+        }
       >
-        {initials}
+        {showPhoto ? (
+          <img
+            src={profileImage}
+            alt=""
+            className="user-identity-avatar-img"
+            onError={() => setImageFailed(true)}
+            style={avatarSize ? { width: avatarSize, height: avatarSize } : undefined}
+          />
+        ) : (
+          initials
+        )}
       </span>
       {showName && <span className="user-identity-name">{displayName}</span>}
     </div>

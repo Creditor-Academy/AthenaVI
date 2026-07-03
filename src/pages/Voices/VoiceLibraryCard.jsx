@@ -2,6 +2,7 @@ import { MdDelete, MdGraphicEq, MdPlayArrow } from 'react-icons/md';
 import { Loader2 } from 'lucide-react';
 import { VoiceGenderIcon } from '../../components/ui/icons';
 import { normalizeVoiceGender } from '../../utils/voiceGender';
+import { CLONE_PREVIEW_TOOLTIP } from '../../utils/heygenVoices';
 
 function getStatusBadge(voice) {
   if (voice.status === 'processing') {
@@ -13,7 +14,16 @@ function getStatusBadge(voice) {
   return null;
 }
 
-function VoiceLibraryCard({ voice, onOpen, onPreview, onTest, canDelete = false, onDelete }) {
+function VoiceLibraryCard({
+  voice,
+  onOpen,
+  onPreview,
+  onTest,
+  showTestButton = true,
+  clonePreviewTooltip = false,
+  canDelete = false,
+  onDelete,
+}) {
   const statusBadge = getStatusBadge(voice);
   const genderKind = normalizeVoiceGender(voice.gender);
   const hasAvatarImage = Boolean(voice.image);
@@ -74,7 +84,7 @@ function VoiceLibraryCard({ voice, onOpen, onPreview, onTest, canDelete = false,
           <button
             type="button"
             className="context-menu-btn"
-            title="Preview voice"
+            title={clonePreviewTooltip ? CLONE_PREVIEW_TOOLTIP : 'Preview voice sample'}
             aria-label={`Preview ${voice.name}`}
             onClick={(event) => {
               event.stopPropagation();
@@ -83,18 +93,20 @@ function VoiceLibraryCard({ voice, onOpen, onPreview, onTest, canDelete = false,
           >
             <MdPlayArrow size={18} />
           </button>
-          <button
-            type="button"
-            className="context-menu-btn"
-            title="Test voice"
-            aria-label={`Test ${voice.name}`}
-            onClick={(event) => {
-              event.stopPropagation();
-              onTest?.(voice, event);
-            }}
-          >
-            <MdGraphicEq size={18} />
-          </button>
+          {showTestButton ? (
+            <button
+              type="button"
+              className="context-menu-btn"
+              title="Preview with text"
+              aria-label={`Preview with text ${voice.name}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                onTest?.(voice, event);
+              }}
+            >
+              <MdGraphicEq size={18} />
+            </button>
+          ) : null}
           {canDelete ? (
             <button
               type="button"

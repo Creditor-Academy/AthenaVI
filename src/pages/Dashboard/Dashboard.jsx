@@ -81,6 +81,7 @@ function Dashboard({ onCreate, initialSection }) {
     const valid = ['overview', 'users', 'workspaces', 'storage-requests', 'reports', 'platform-actions', 'heygen']
     return valid.includes(saved) ? saved : 'overview'
   })
+  const [settingsInitialTab, setSettingsInitialTab] = useState('preferences')
 
   const cartCount = 2
   const { unreadCount: notificationCount, refresh: refreshInboxUnread, setUnreadCount: setInboxUnreadCount } =
@@ -476,7 +477,12 @@ function Dashboard({ onCreate, initialSection }) {
           {section === 'brandkits' && <BrandKits />}
           {section === 'credits' && <Settings onBack={() => goToSection('home')} initialTab="billing" />}
           {section === 'profile' && <Profile onBack={() => goToSection('home')} />}
-          {section === 'settings' && <Settings onBack={() => goToSection('home')} />}
+          {section === 'settings' && (
+            <Settings
+              onBack={() => goToSection('home')}
+              initialTab={settingsInitialTab}
+            />
+          )}
           {section === 'help' && (
             <Help embedded onOpenBilling={() => goToSection('credits')} />
           )}
@@ -551,6 +557,10 @@ function Dashboard({ onCreate, initialSection }) {
             refreshInboxUnread()
           }}
           onUnreadCountChange={setInboxUnreadCount}
+          onOpenNotificationSettings={() => {
+            setSettingsInitialTab('notifications')
+            goToSection('settings')
+          }}
         />
       )}
 

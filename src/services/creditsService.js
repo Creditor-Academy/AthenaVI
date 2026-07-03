@@ -1,5 +1,8 @@
 import API_CONFIG, { buildUrl, getAuthHeaders } from '../config/api.js';
-import { findRecentUsageCredits } from '../utils/creditTransactions.js';
+import {
+  findRecentUsageCredits,
+  isTeamWorkspaceType,
+} from '../utils/creditTransactions.js';
 
 export class InsufficientCreditsError extends Error {
   constructor(message, data = {}) {
@@ -66,14 +69,36 @@ class CreditsService {
   normalizeHistory(data) {
     // backend wraps transactions under { history: { transactions, pagination } }
     const history = data?.history ?? data;
-    const transactions = history?.transactions || history?.items || [];
-    const pagination = history?.pagination || {
+    let transactions = [];
+    if (Array.isArray(history)) {
+      transactions = history;
+    } else if (Array.isArray(data?.transactions)) {
+      transactions = data.transactions;
+    } else {
+      transactions = history?.transactions || history?.items || [];
+    }
+    const pagination = (Array.isArray(history) ? data?.pagination : history?.pagination) || {
       total: transactions.length,
       page: 1,
       limit: transactions.length || 20,
       totalPages: 1,
     };
     return { transactions, pagination };
+  }
+
+  async getHistoryForWorkspaceContext(
+    workspaceId,
+    { workspaceType = '', role = 'MEMBER', page = 1, limit = 20 } = {}
+  ) {
+    if (!workspaceId || !isTeamWorkspaceType(workspaceType)) {
+      return this.getPersonalHistory({ page, limit });
+    }
+
+    const normalizedRole = String(role || 'MEMBER').toUpperCase();
+    if (normalizedRole === 'OWNER' || normalizedRole === 'ADMIN') {
+      return this.getWorkspaceHistory(workspaceId, { page, limit });
+    }
+    return this.getMyWorkspaceHistory(workspaceId, { page, limit });
   }
 
   async getPersonalBalance() {

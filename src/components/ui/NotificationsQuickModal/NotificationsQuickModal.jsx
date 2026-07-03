@@ -1,10 +1,22 @@
-import { useCallback, useEffect, useState } from 'react';
-import { X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Bell,
+  Coins,
+  HardDrive,
+  MessageSquare,
+  Settings,
+  Shield,
+  Users,
+  Video,
+  X,
+} from 'lucide-react';
 import inboxService from '../../../services/inboxService.js';
 import LoadingDots from '../LoadingDots/LoadingDots.jsx';
 import { getSanitizedErrorMessage } from '../../../utils/userFacingMessage.js';
 import {
+  countUnreadUserFacingInboxNotifications,
   decrementUnreadCount,
+  filterUserFacingInboxNotifications,
   formatInboxCategory,
   formatInboxRelativeTime,
   INBOX_CATEGORIES,
@@ -13,7 +25,25 @@ import {
 } from '../../../utils/inboxNotifications.js';
 import './NotificationsQuickModal.css';
 
-function NotificationsQuickModal({ onClose, onUnreadCountChange }) {
+const CATEGORY_ICONS = {
+  videos: Video,
+  credits: Coins,
+  storage: HardDrive,
+  workspace: Users,
+  comments: MessageSquare,
+  platform: Shield,
+};
+
+function NotificationCategoryIcon({ category }) {
+  const Icon = CATEGORY_ICONS[String(category || '').toLowerCase()] || Bell;
+  return (
+    <span className={`inbox-notif-icon inbox-notif-icon--${category || 'default'}`} aria-hidden>
+      <Icon size={16} strokeWidth={1.85} />
+    </span>
+  );
+}
+
+function NotificationsQuickModal({ onClose, onUnreadCountChange, onOpenNotificationSettings }) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
@@ -22,27 +52,40 @@ function NotificationsQuickModal({ onClose, onUnreadCountChange }) {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [unreadOnly, setUnreadOnly] = useState(false);
 
+  const syncUnreadCount = useCallback(
+    (items) => {
+      onUnreadCountChange?.(countUnreadUserFacingInboxNotifications(items));
+    },
+    [onUnreadCountChange]
+  );
+
   const loadNotifications = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const params = { limit: 50 };
+      const params = { limit: 100 };
       if (categoryFilter) params.category = categoryFilter;
       if (unreadOnly) params.unreadOnly = true;
 
       const data = await inboxService.listNotifications(params);
-      setNotifications(data.notifications || []);
-      onUnreadCountChange?.(data.unreadCount);
+      const visible = filterUserFacingInboxNotifications(data.notifications || []);
+      setNotifications(visible);
+      syncUnreadCount(visible);
     } catch (err) {
       setError(getSanitizedErrorMessage(err, 'Failed to load notifications'));
     } finally {
       setLoading(false);
     }
-  }, [categoryFilter, unreadOnly, onUnreadCountChange]);
+  }, [categoryFilter, unreadOnly, syncUnreadCount]);
 
   useEffect(() => {
     loadNotifications();
   }, [loadNotifications]);
+
+  const unreadCount = useMemo(
+    () => notifications.filter(isInboxNotificationUnread).length,
+    [notifications]
+  );
 
   const handleItemClick = async (notification) => {
     const actionUrl = notification?.metadata?.actionUrl;
@@ -50,14 +93,15 @@ function NotificationsQuickModal({ onClose, onUnreadCountChange }) {
     if (isInboxNotificationUnread(notification)) {
       try {
         const updated = await inboxService.markRead(notification.id);
-        setNotifications((prev) =>
-          prev.map((item) =>
+        setNotifications((prev) => {
+          const next = prev.map((item) =>
             item.id === notification.id
               ? { ...item, readAt: updated?.readAt ?? new Date().toISOString() }
               : item
-          )
-        );
-        decrementUnreadCount(onUnreadCountChange);
+          );
+          syncUnreadCount(next);
+          return next;
+        });
       } catch {
         // still navigate if action exists
       }
@@ -77,10 +121,11 @@ function NotificationsQuickModal({ onClose, onUnreadCountChange }) {
     setError('');
     try {
       await inboxService.dismiss(notification.id);
-      setNotifications((prev) => prev.filter((item) => item.id !== notification.id));
-      if (isInboxNotificationUnread(notification)) {
-        decrementUnreadCount(onUnreadCountChange);
-      }
+      setNotifications((prev) => {
+        const next = prev.filter((item) => item.id !== notification.id);
+        syncUnreadCount(next);
+        return next;
+      });
     } catch (err) {
       setError(getSanitizedErrorMessage(err, 'Failed to dismiss notification'));
     } finally {
@@ -92,10 +137,13 @@ function NotificationsQuickModal({ onClose, onUnreadCountChange }) {
     setMarkingAll(true);
     setError('');
     try {
-      const data = await inboxService.markAllRead();
+      await inboxService.markAllRead();
       const readAt = new Date().toISOString();
-      setNotifications((prev) => prev.map((item) => ({ ...item, readAt: item.readAt || readAt })));
-      onUnreadCountChange?.(data.unreadCount);
+      setNotifications((prev) => {
+        const next = prev.map((item) => ({ ...item, readAt: item.readAt || readAt }));
+        syncUnreadCount(next);
+        return next;
+      });
     } catch (err) {
       setError(getSanitizedErrorMessage(err, 'Failed to mark notifications as read'));
     } finally {
@@ -103,62 +151,98 @@ function NotificationsQuickModal({ onClose, onUnreadCountChange }) {
     }
   };
 
-  const hasUnread = notifications.some(isInboxNotificationUnread);
+  const handleOpenSettings = () => {
+    onClose();
+    onOpenNotificationSettings?.();
+  };
 
   return (
     <div className="quick-access-modal-overlay" onClick={onClose}>
       <div
-        className="quick-access-modal notifications-modal"
+        className="quick-access-modal notifications-modal notifications-modal--enhanced"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-labelledby="notifications-modal-title"
         aria-busy={loading}
       >
-        <div className="modal-header-sleek">
-          <h4 id="notifications-modal-title">Notifications</h4>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {hasUnread && !loading && (
+        <div className="notifications-modal-header">
+          <div className="notifications-modal-heading">
+            <div className="notifications-modal-title-row">
+              <span className="notifications-modal-title-icon" aria-hidden>
+                <Bell size={18} strokeWidth={1.85} />
+              </span>
+              <div>
+                <h4 id="notifications-modal-title">Notifications</h4>
+                <p className="notifications-modal-subtitle">
+                  {loading
+                    ? 'Loading your alerts…'
+                    : unreadCount > 0
+                      ? `${unreadCount} unread alert${unreadCount === 1 ? '' : 's'}`
+                      : 'You are all caught up'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="notifications-modal-actions">
+            {unreadCount > 0 && !loading && (
               <button
                 type="button"
-                className="btn-link-action"
+                className="notifications-action-btn notifications-action-btn--text"
                 onClick={handleMarkAllRead}
                 disabled={markingAll}
-                style={{ padding: '4px 8px' }}
               >
                 {markingAll ? 'Marking…' : 'Mark all read'}
               </button>
             )}
-            <button type="button" className="close-mini-btn" onClick={onClose} aria-label="Close">
-              <X size={18} />
+            <button
+              type="button"
+              className="notifications-action-btn"
+              onClick={handleOpenSettings}
+              aria-label="Notification settings"
+              title="Notification settings"
+            >
+              <Settings size={16} strokeWidth={1.85} />
+            </button>
+            <button type="button" className="notifications-action-btn" onClick={onClose} aria-label="Close">
+              <X size={16} strokeWidth={1.85} />
             </button>
           </div>
         </div>
 
         <div className="inbox-modal-toolbar">
-          <div className="inbox-category-filters" role="tablist" aria-label="Filter by category">
-            {INBOX_CATEGORIES.map((cat) => (
-              <button
-                key={cat.id || 'all'}
-                type="button"
-                role="tab"
-                aria-selected={categoryFilter === cat.id}
-                className={`inbox-category-chip${categoryFilter === cat.id ? ' active' : ''}`}
-                onClick={() => setCategoryFilter(cat.id)}
-                disabled={loading}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-          <label className="inbox-unread-toggle">
-            <input
-              type="checkbox"
-              checked={unreadOnly}
-              onChange={(event) => setUnreadOnly(event.target.checked)}
+          <div className="notifications-filter-bar">
+            <span className="notifications-filter-label">Filter by</span>
+            <button
+              type="button"
+              className={`notifications-unread-pill${unreadOnly ? ' active' : ''}`}
+              onClick={() => setUnreadOnly((value) => !value)}
               disabled={loading}
-            />
-            Unread only
-          </label>
+              aria-pressed={unreadOnly}
+            >
+              Unread only
+            </button>
+          </div>
+          <div className="inbox-category-filters-track" role="tablist" aria-label="Filter by category">
+            {INBOX_CATEGORIES.map((cat) => {
+              const Icon = cat.id ? CATEGORY_ICONS[cat.id] : Bell;
+              const isActive = categoryFilter === cat.id;
+              return (
+                <button
+                  key={cat.id || 'all'}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  className={`inbox-category-chip${isActive ? ' active' : ''}`}
+                  onClick={() => setCategoryFilter(cat.id)}
+                  disabled={loading}
+                >
+                  <Icon size={14} strokeWidth={1.85} aria-hidden />
+                  <span>{cat.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {error && <p className="inbox-modal-error">{error}</p>}
@@ -166,14 +250,20 @@ function NotificationsQuickModal({ onClose, onUnreadCountChange }) {
         <div className="notifications-list-mini">
           {loading ? (
             <p className="inbox-modal-loading">
-              <LoadingDots size="sm" /> Loading…
+              <LoadingDots size="sm" /> Loading notifications…
             </p>
           ) : notifications.length === 0 ? (
-            <p className="inbox-modal-empty">
-              {unreadOnly || categoryFilter
-                ? 'No notifications match these filters.'
-                : "You're all caught up — no notifications yet."}
-            </p>
+            <div className="inbox-modal-empty">
+              <span className="inbox-empty-icon" aria-hidden>
+                <Bell size={28} strokeWidth={1.5} />
+              </span>
+              <strong>No notifications</strong>
+              <p>
+                {unreadOnly || categoryFilter
+                  ? 'Nothing matches these filters.'
+                  : 'Activity from exports, credits, storage, and your workspace will appear here.'}
+              </p>
+            </div>
           ) : (
             notifications.map((notification) => {
               const unread = isInboxNotificationUnread(notification);
@@ -185,8 +275,7 @@ function NotificationsQuickModal({ onClose, onUnreadCountChange }) {
                     className={`notification-item-mini${unread ? '' : ' notification-item-mini--read'}`}
                     onClick={() => handleItemClick(notification)}
                   >
-                    {unread && <div className="notif-dot" aria-hidden />}
-                    {!unread && <div className="notif-dot notif-dot--read" aria-hidden />}
+                    <NotificationCategoryIcon category={category} />
                     <div className="notif-content-mini">
                       {category && (
                         <span className={`inbox-cat-badge inbox-cat-badge--${category}`}>
@@ -195,7 +284,12 @@ function NotificationsQuickModal({ onClose, onUnreadCountChange }) {
                       )}
                       <h6>{notification.title}</h6>
                       <p>{notification.message}</p>
-                      <span>{formatInboxRelativeTime(notification.createdAt)}</span>
+                    </div>
+                    <div className="notif-item-meta">
+                      <time className="notif-time" dateTime={notification.createdAt || undefined}>
+                        {formatInboxRelativeTime(notification.createdAt)}
+                      </time>
+                      {unread && <span className="notif-unread-pill" aria-label="Unread" />}
                     </div>
                   </button>
                   <button
@@ -212,6 +306,8 @@ function NotificationsQuickModal({ onClose, onUnreadCountChange }) {
             })
           )}
         </div>
+
+        
       </div>
     </div>
   );

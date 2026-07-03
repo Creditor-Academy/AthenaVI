@@ -146,8 +146,9 @@ export const authService = {
     }
   },
 
-  async googleLogin() {
-    window.location.href = buildUrl('/api/auth/google')
+  googleLogin() {
+    // replace() avoids stacking the login page before the OAuth redirect chain
+    window.location.replace(buildUrl('/api/auth/google'))
   },
 
   handleGoogleCallback() {

@@ -426,6 +426,27 @@
   color: var(--text-muted);
 }
 
+.voice-modal-credit-estimate {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.voice-modal-error {
+  margin: 0;
+  font-size: 13px;
+  color: #dc2626;
+}
+
+.voices-preview-notice {
+  margin-bottom: 16px;
+}
+
+.voices-suggested-preview-notice {
+  grid-column: 1 / -1;
+  margin-bottom: 4px;
+}
+
 .voice-modal-submit {
   background: var(--primary);
   color: white;

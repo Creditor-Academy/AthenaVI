@@ -10,6 +10,7 @@ import {
 } from 'react-icons/md';
 import { Loader2 } from 'lucide-react';
 import heygenService from '../../services/heygenService';
+import creditsService, { isInsufficientCreditsError } from '../../services/creditsService';
 import { consumeDashboardSearchContext } from '../../utils/dashboardSearchNavigate.js';
 import ConfirmDialog from '../../components/ui/ConfirmDialog/ConfirmDialog.jsx';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
@@ -31,9 +32,18 @@ import {
   VOICE_SECTION_TABS,
   VOICE_SORT_OPTIONS,
 } from './voicesUtils';
-import { extractVoiceImageFromRow, fetchVoiceAvatarImageMap, resolveVoiceImage } from './voiceAvatarImages';
 import { isDeletableClonedVoice } from '../../utils/heygenDelete';
 import { getSanitizedErrorMessage } from '../../utils/userFacingMessage';
+import {
+  extractHeygenVoiceList,
+  getVoicePreviewUrlFromResponse,
+  isClonedVoice,
+  mapHeygenVoice,
+} from '../../utils/heygenVoices';
+import VoicePreviewUnavailableNotice, {
+  showVoicePreviewUnavailableNotice,
+} from '../../components/ui/VoicePreviewNotice/VoicePreviewNotice';
+import { extractVoiceImageFromRow, fetchVoiceAvatarImageMap, resolveVoiceImage } from './voiceAvatarImages';
 import './Voices.css';
 
 const TAB_ICONS = {
@@ -42,26 +52,19 @@ const TAB_ICONS = {
 };
 
 function mapVoiceList(voiceList) {
-  return (voiceList || []).map((voice, idx) => ({
-    id: voice.voice_id || voice.id || `voice-${idx}`,
-    name: voice.name || voice.voice_name || 'Voice',
-    language: voice.language || voice.locale || 'English',
-    gender: voice.gender || '',
-    status: voice.status || null,
-    previewUrl: voice.preview_audio_url || null,
-    image: extractVoiceImageFromRow(voice),
-    source: voice.source ?? voice.raw?.source ?? null,
-    raw: voice,
-  }));
-}
-
-function extractVoiceList(result) {
-  if (Array.isArray(result)) return result;
-  if (result && Array.isArray(result.voices)) return result.voices;
-  if (result?.data && Array.isArray(result.data.voices)) return result.data.voices;
-  if (result?.data && Array.isArray(result.data)) return result.data;
-  if (result && Array.isArray(result.list)) return result.list;
-  return [];
+  return (voiceList || [])
+    .map((voice, idx) => {
+      const mapped = mapHeygenVoice(voice);
+      if (!mapped) return null;
+      if (!mapped.id) {
+        mapped.id = `voice-${idx}`;
+      }
+      return {
+        ...mapped,
+        image: extractVoiceImageFromRow(voice),
+      };
+    })
+    .filter(Boolean);
 }
 
 function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
@@ -86,9 +89,13 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
   const [selectedVoiceForTest, setSelectedVoiceForTest] = useState(null);
   const [speechText, setSpeechText] = useState('');
   const [isSynthesizing, setIsSynthesizing] = useState(false);
+  const [previewCreditEstimate, setPreviewCreditEstimate] = useState(null);
+  const [testModalError, setTestModalError] = useState('');
   const [voiceImageMap, setVoiceImageMap] = useState(() => new Map());
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [statusBanner, setStatusBanner] = useState(null);
+  const [previewNotice, setPreviewNotice] = useState(null);
+  const previewNoticeTimerRef = useRef(null);
   const preserveSearchRef = useRef(null);
 
   useEffect(() => {
@@ -133,7 +140,7 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
     setError(null);
     try {
       const result = await heygenService.getVoices({ type: activeSection });
-      const voiceList = extractVoiceList(result);
+      const voiceList = extractHeygenVoiceList(result);
       setVoices(mapVoiceList(voiceList));
     } catch (err) {
       console.error('Failed to fetch voices:', err);
@@ -208,27 +215,89 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
   };
 
   const handlePreview = (voice) => {
-    const url = voice.previewUrl || voice.raw?.preview_audio_url;
+    const url = voice.previewUrl || voice.raw?.previewAudioUrl || voice.raw?.preview_audio_url;
     if (url) {
       const audio = new Audio(url);
       audio.play();
+      return;
     }
+    if (previewNoticeTimerRef.current) clearTimeout(previewNoticeTimerRef.current);
+    previewNoticeTimerRef.current = showVoicePreviewUnavailableNotice(setPreviewNotice, voice.name);
   };
+
+  const dismissPreviewNotice = () => {
+    if (previewNoticeTimerRef.current) {
+      clearTimeout(previewNoticeTimerRef.current);
+      previewNoticeTimerRef.current = null;
+    }
+    setPreviewNotice(null);
+  };
+
+  useEffect(() => () => {
+    if (previewNoticeTimerRef.current) clearTimeout(previewNoticeTimerRef.current);
+  }, []);
+
+  const openVoiceTest = (voice) => {
+    if (!voice?.supportsSpeechPreview) return;
+    setTestModalError('');
+    setPreviewCreditEstimate(null);
+    setSpeechText('');
+    setSelectedVoiceForTest(voice);
+  };
+
+  useEffect(() => {
+    if (!selectedVoiceForTest || !speechText.trim()) {
+      setPreviewCreditEstimate(null);
+      return;
+    }
+
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      creditsService
+        .getPersonalEstimate({ feature: 'voice_preview', text: speechText.trim() })
+        .then((estimate) => {
+          if (!cancelled) setPreviewCreditEstimate(estimate);
+        })
+        .catch(() => {
+          if (!cancelled) setPreviewCreditEstimate(null);
+        });
+    }, 300);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [selectedVoiceForTest, speechText]);
 
   const handleSpeechSynthesis = async () => {
     if (!speechText.trim() || !selectedVoiceForTest) return;
+    if (!selectedVoiceForTest.supportsSpeechPreview) {
+      setTestModalError('Custom speech preview is not available for this voice.');
+      return;
+    }
+
     setIsSynthesizing(true);
+    setTestModalError('');
     try {
       const res = await heygenService.previewSpeech({
         text: speechText,
         voice_id: selectedVoiceForTest.id,
+        input_type: 'text',
+        speed: 1,
       });
-      if (res?.preview_audio_url) {
-        const audio = new Audio(res.preview_audio_url);
+      const audioUrl = getVoicePreviewUrlFromResponse(res);
+      if (audioUrl) {
+        const audio = new Audio(audioUrl);
         audio.play();
+      } else {
+        setTestModalError('Preview audio was not returned. Try again.');
       }
     } catch (err) {
       console.error('Synthesis failed:', err);
+      const fallback = isInsufficientCreditsError(err)
+        ? 'Insufficient credits for voice preview.'
+        : 'Could not generate speech preview.';
+      setTestModalError(getSanitizedErrorMessage(err, fallback));
     } finally {
       setIsSynthesizing(false);
     }
@@ -283,7 +352,9 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
             voice={voice}
             onOpen={openVoice}
             onPreview={handlePreview}
-            onTest={setSelectedVoiceForTest}
+            onTest={openVoiceTest}
+            showTestButton={voice.supportsSpeechPreview}
+            clonePreviewTooltip={isClonedVoice(voice) ? true : false}
             canDelete={activeSection === 'private' && isDeletableClonedVoice(voice)}
             onDelete={requestDeleteVoice}
           />
@@ -293,7 +364,9 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
             voice={voice}
             onOpen={openVoice}
             onPreview={handlePreview}
-            onTest={setSelectedVoiceForTest}
+            onTest={openVoiceTest}
+            showTestButton={voice.supportsSpeechPreview}
+            clonePreviewTooltip={isClonedVoice(voice) ? true : false}
             canDelete={activeSection === 'private' && isDeletableClonedVoice(voice)}
             onDelete={requestDeleteVoice}
           />
@@ -381,6 +454,13 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
         />
 
         <main className="videos-main">
+          {previewNotice ? (
+            <VoicePreviewUnavailableNotice
+              voiceName={previewNotice.voiceName}
+              onDismiss={dismissPreviewNotice}
+              className="voices-preview-notice"
+            />
+          ) : null}
           {statusBanner ? (
             <div className={`voices-status-banner voices-status-banner--${statusBanner.tone}`} role="status">
               {statusBanner.message}
@@ -447,7 +527,10 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
       {selectedVoiceForTest ? (
         <div
           className="voice-modal-overlay"
-          onClick={() => setSelectedVoiceForTest(null)}
+          onClick={() => {
+            setSelectedVoiceForTest(null);
+            setTestModalError('');
+          }}
           role="presentation"
         >
           <div
@@ -458,7 +541,7 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
           >
             <header className="voice-modal-header">
               <div>
-                <h3 id="voice-test-title">Test Voice</h3>
+                <h3 id="voice-test-title">Preview with text</h3>
                 <p>
                   Preview speech for: <strong>{selectedVoiceForTest.name}</strong>
                 </p>
@@ -466,7 +549,10 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
               <button
                 type="button"
                 className="voice-modal-close"
-                onClick={() => setSelectedVoiceForTest(null)}
+                onClick={() => {
+                  setSelectedVoiceForTest(null);
+                  setTestModalError('');
+                }}
                 aria-label="Close"
               >
                 <MdClose size={24} />
@@ -485,6 +571,31 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
                 />
                 <span className="char-counter">{speechText.length}/500</span>
               </div>
+
+              {previewCreditEstimate?.estimatedCredits != null ||
+              previewCreditEstimate?.credits != null ||
+              previewCreditEstimate?.cost != null ? (
+                <p className="voice-modal-credit-estimate">
+                  Estimated cost:{' '}
+                  {previewCreditEstimate.estimatedCredits ??
+                    previewCreditEstimate.credits ??
+                    previewCreditEstimate.cost}{' '}
+                  credit
+                  {Number(
+                    previewCreditEstimate.estimatedCredits ??
+                      previewCreditEstimate.credits ??
+                      previewCreditEstimate.cost
+                  ) === 1
+                    ? ''
+                    : 's'}
+                </p>
+              ) : null}
+
+              {testModalError ? (
+                <p className="voice-modal-error" role="alert">
+                  {testModalError}
+                </p>
+              ) : null}
 
               <button
                 type="button"

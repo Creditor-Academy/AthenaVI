@@ -5,6 +5,11 @@ const API_CONFIG = {
   
   // API Endpoints (matching your backend documentation)
   ENDPOINTS: {
+    // Early Access (public, no auth)
+    EARLY_ACCESS: {
+      REQUEST: '/api/early-access/request',
+    },
+
     // Authentication
     AUTH: {
       // OTP
@@ -109,6 +114,16 @@ const API_CONFIG = {
       VIDEOS: {
         CREATE: (workspaceId, projectId) => `/api/workspaces/${workspaceId}/projects/${projectId}/heygen/videos`
       }
+    },
+
+    // Project comments
+    PROJECT_COMMENTS: {
+      BASE: (workspaceId, projectId) =>
+        `/api/workspaces/${workspaceId}/projects/${projectId}/comments`,
+      ONE: (workspaceId, projectId, commentId) =>
+        `/api/workspaces/${workspaceId}/projects/${projectId}/comments/${commentId}`,
+      MENTIONABLE_USERS: (workspaceId, projectId) =>
+        `/api/workspaces/${workspaceId}/projects/${projectId}/comments/mentionable-users`,
     }
   },
   
