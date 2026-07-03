@@ -838,7 +838,8 @@ class HeygenService {
         if (
           response.status === 400 &&
           (errorCode === 'HEYGEN_VOICE_SPEECH_PREVIEW_UNSUPPORTED' ||
-            String(message).toLowerCase().includes('custom speech preview'))
+            String(message).toLowerCase().includes('custom speech preview') ||
+            String(message).toLowerCase().includes('starfish'))
         ) {
           throw new SpeechPreviewUnsupportedError(sanitizeUserFacingMessage(message), errorData);
         }

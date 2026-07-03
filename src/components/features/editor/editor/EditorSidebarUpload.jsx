@@ -14,6 +14,7 @@ import { extractUserId } from '../../../../pages/TeamWorkspace/workspaceUtils';
 import { canManageAsset } from '../../../../utils/assetPermissions';
 import { assertUploadFits, dispatchStorageRefresh, formatStorageLimitMessage, isStorageLimitError } from '../../../../utils/storageQuota';
 import { setCanvasDragData } from '../../../../utils/editorDragDrop';
+import { createAudioBlobPreview, isAudioFile } from '../../../../utils/audioDuration';
 
 const SOURCE_TABS = [
   { id: 'all', label: 'All' },
@@ -122,7 +123,11 @@ const EditorSidebarUpload = ({ addLayer, onAddAudio, workspaceId, onUploadError,
           continue;
         }
         await assertUploadFits(workspaceId, file.size);
-        const uploaded = await assetService.uploadAsset(workspaceId, file);
+        const audioPreview = isAudioFile(file) ? createAudioBlobPreview(file) : null;
+        const [uploaded, sourceDurationSec] = await Promise.all([
+          assetService.uploadAsset(workspaceId, file),
+          audioPreview?.durationPromise ?? Promise.resolve(null),
+        ]);
         let normalized = assetService.normalizeAsset(uploaded);
         if (!normalized?.url && normalized?.id) {
           const list = await assetService.listAssets(workspaceId, { take: 100, source: 'upload' });
@@ -131,11 +136,17 @@ const EditorSidebarUpload = ({ addLayer, onAddAudio, workspaceId, onUploadError,
         }
         if (!normalized?.url) {
           onUploadError?.('Upload succeeded but the image URL is missing. Try selecting it from workspace assets.');
+          if (audioPreview?.previewBlobUrl) URL.revokeObjectURL(audioPreview.previewBlobUrl);
           continue;
         }
         if ((normalized.mediaType || file.type.split('/')[0]) === 'audio') {
-          onAddAudio?.(normalized.url, normalized.id, { name: normalized.name || file.name });
+          onAddAudio?.(normalized.url, normalized.id, {
+            name: normalized.name || file.name,
+            previewBlobUrl: audioPreview?.previewBlobUrl ?? null,
+            sourceDurationSec,
+          });
         } else {
+          if (audioPreview?.previewBlobUrl) URL.revokeObjectURL(audioPreview.previewBlobUrl);
           addLayer(normalized.mediaType || file.type.split('/')[0], {
             url: normalized.url,
             assetId: normalized.id,

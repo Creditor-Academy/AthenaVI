@@ -1,6 +1,8 @@
 import { MdDelete, MdGraphicEq, MdPlayArrow } from 'react-icons/md';
 import { Loader2 } from 'lucide-react';
 import { VoiceGenderIcon } from '../../components/ui/icons';
+import AudioPlayingWave from '../../components/ui/AudioPlayingWave/AudioPlayingWave';
+import VoicePreviewUnavailableInline from '../../components/ui/VoicePreviewUnavailableInline/VoicePreviewUnavailableInline';
 import { normalizeVoiceGender } from '../../utils/voiceGender';
 import { CLONE_PREVIEW_TOOLTIP } from '../../utils/heygenVoices';
 
@@ -19,6 +21,8 @@ function VoiceLibraryCard({
   onOpen,
   onPreview,
   onTest,
+  isPreviewPlaying = false,
+  previewUnavailableReason = null,
   showTestButton = true,
   clonePreviewTooltip = false,
   canDelete = false,
@@ -63,9 +67,15 @@ function VoiceLibraryCard({
               )}
             </span>
           ) : null}
-          <div className="voices-library-overlay" aria-hidden>
-            <span className="btn-edit-premium">View Voice</span>
-          </div>
+          
+          {isPreviewPlaying ? (
+            <div className="voices-library-card__playing-wave" aria-hidden>
+              <AudioPlayingWave size="lg" barCount={7} />
+            </div>
+          ) : null}
+          {previewUnavailableReason ? (
+            <VoicePreviewUnavailableInline variant="overlay" />
+          ) : null}
         </div>
       </button>
 
@@ -83,15 +93,18 @@ function VoiceLibraryCard({
         <div className="voices-library-card__actions">
           <button
             type="button"
-            className="context-menu-btn"
-            title={clonePreviewTooltip ? CLONE_PREVIEW_TOOLTIP : 'Preview voice sample'}
-            aria-label={`Preview ${voice.name}`}
+            className={`context-menu-btn voices-preview-btn${
+              isPreviewPlaying ? ' voices-preview-btn--playing' : ''
+            }`}
+            title={isPreviewPlaying ? 'Stop preview' : clonePreviewTooltip ? CLONE_PREVIEW_TOOLTIP : 'Preview voice sample'}
+            aria-label={isPreviewPlaying ? `Stop preview ${voice.name}` : `Preview ${voice.name}`}
+            aria-pressed={isPreviewPlaying}
             onClick={(event) => {
               event.stopPropagation();
               onPreview?.(voice, event);
             }}
           >
-            <MdPlayArrow size={18} />
+            {isPreviewPlaying ? <AudioPlayingWave size="sm" /> : <MdPlayArrow size={18} />}
           </button>
           {showTestButton ? (
             <button

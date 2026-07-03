@@ -1,5 +1,6 @@
 import { MdAudiotrack, MdDeleteOutline, MdGraphicEq, MdMusicNote, MdSchedule, MdTune } from 'react-icons/md';
 import { resolveAudioClipSrc, getAudioClipDisplayName } from '../../../../utils/audioClipUtils';
+import AudioPreviewPlayer from '../../../ui/AudioPreviewPlayer/AudioPreviewPlayer';
 import AudioWaveform from './AudioWaveform';
 import PropertiesAccordion from './PropertiesAccordion';
 import './PropertiesAccordion.css';
@@ -96,6 +97,7 @@ const AudioLayerPropertiesPanel = ({
 }) => {
   const sceneDuration = Number(activeScene?.duration) || 8;
   const audioSrc = resolveAudioClipSrc(activeLayer, activeScene);
+  const previewSrc = activeLayer?.previewBlobUrl || null;
   const volume = typeof activeLayer.volume === 'number' ? activeLayer.volume : 1;
   const fadeIn = Number(activeLayer.fadeIn) || 0;
   const fadeOut = Number(activeLayer.fadeOut) || 0;
@@ -115,8 +117,12 @@ const AudioLayerPropertiesPanel = ({
           <div className="audio-props-preview-card__wave" aria-hidden>
             <AudioWaveform seed={activeLayer?.id || displayName} density="sidebar" />
           </div>
-          {audioSrc ? (
-            <audio src={audioSrc} controls preload="metadata" className="audio-props-preview-card__player" />
+          {audioSrc || previewSrc ? (
+            <AudioPreviewPlayer
+              src={audioSrc}
+              previewSrc={previewSrc}
+              className="audio-props-preview-card__player"
+            />
           ) : (
             <p className="audio-props-preview-card__missing">
               Audio URL unavailable. Save the project or re-add from Library.

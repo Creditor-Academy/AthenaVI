@@ -9,7 +9,7 @@ import {
   MdViewList,
 } from 'react-icons/md';
 import { Loader2 } from 'lucide-react';
-import heygenService from '../../services/heygenService';
+import heygenService, { isSpeechPreviewUnsupportedError } from '../../services/heygenService';
 import creditsService, { isInsufficientCreditsError } from '../../services/creditsService';
 import { consumeDashboardSearchContext } from '../../utils/dashboardSearchNavigate.js';
 import ConfirmDialog from '../../components/ui/ConfirmDialog/ConfirmDialog.jsx';
@@ -39,10 +39,9 @@ import {
   getVoicePreviewUrlFromResponse,
   isClonedVoice,
   mapHeygenVoice,
+  SPEECH_PREVIEW_UNSUPPORTED_MESSAGE,
 } from '../../utils/heygenVoices';
-import VoicePreviewUnavailableNotice, {
-  showVoicePreviewUnavailableNotice,
-} from '../../components/ui/VoicePreviewNotice/VoicePreviewNotice';
+import { showVoicePreviewUnavailableNotice } from '../../components/ui/VoicePreviewNotice/VoicePreviewNotice';
 import { extractVoiceImageFromRow, fetchVoiceAvatarImageMap, resolveVoiceImage } from './voiceAvatarImages';
 import './Voices.css';
 
@@ -94,8 +93,10 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
   const [voiceImageMap, setVoiceImageMap] = useState(() => new Map());
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [statusBanner, setStatusBanner] = useState(null);
-  const [previewNotice, setPreviewNotice] = useState(null);
+  const [previewUnavailable, setPreviewUnavailable] = useState(null);
+  const [previewingVoiceId, setPreviewingVoiceId] = useState(null);
   const previewNoticeTimerRef = useRef(null);
+  const previewAudioRef = useRef(null);
   const preserveSearchRef = useRef(null);
 
   useEffect(() => {
@@ -156,6 +157,24 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
     setTimeout(() => setStatusBanner(null), 4200);
   }, []);
 
+  const stopVoicePreview = useCallback(() => {
+    const audio = previewAudioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+      previewAudioRef.current = null;
+    }
+    setPreviewingVoiceId(null);
+  }, []);
+
+  const clearPreviewUnavailable = useCallback(() => {
+    if (previewNoticeTimerRef.current) {
+      clearTimeout(previewNoticeTimerRef.current);
+      previewNoticeTimerRef.current = null;
+    }
+    setPreviewUnavailable(null);
+  }, []);
+
   useEffect(() => {
     if (preserveSearchRef.current) {
       setSearchQuery(preserveSearchRef.current);
@@ -164,8 +183,10 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
       setSearchQuery('');
     }
     setFilterBy('all');
+    stopVoicePreview();
+    clearPreviewUnavailable();
     fetchVoices();
-  }, [activeSection, fetchVoices]);
+  }, [activeSection, fetchVoices, stopVoicePreview, clearPreviewUnavailable]);
 
   useEffect(() => {
     const processingVoices = voices.filter((v) => v.status === 'processing');
@@ -214,28 +235,53 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
     onVoiceClick?.(voice.raw || voice);
   };
 
-  const handlePreview = (voice) => {
-    const url = voice.previewUrl || voice.raw?.previewAudioUrl || voice.raw?.preview_audio_url;
-    if (url) {
-      const audio = new Audio(url);
-      audio.play();
+  const handlePreview = async (voice) => {
+    if (previewingVoiceId === voice.id) {
+      stopVoicePreview();
       return;
     }
-    if (previewNoticeTimerRef.current) clearTimeout(previewNoticeTimerRef.current);
-    previewNoticeTimerRef.current = showVoicePreviewUnavailableNotice(setPreviewNotice, voice.name);
-  };
 
-  const dismissPreviewNotice = () => {
-    if (previewNoticeTimerRef.current) {
-      clearTimeout(previewNoticeTimerRef.current);
-      previewNoticeTimerRef.current = null;
+    stopVoicePreview();
+
+    const url = voice.previewUrl || voice.raw?.previewAudioUrl || voice.raw?.preview_audio_url;
+    if (!url) {
+      if (previewNoticeTimerRef.current) clearTimeout(previewNoticeTimerRef.current);
+      previewNoticeTimerRef.current = showVoicePreviewUnavailableNotice(setPreviewUnavailable, voice);
+      return;
     }
-    setPreviewNotice(null);
+
+    clearPreviewUnavailable();
+
+    const audio = new Audio(url);
+    previewAudioRef.current = audio;
+    audio.onended = () => {
+      setPreviewingVoiceId(null);
+      previewAudioRef.current = null;
+    };
+    audio.onerror = () => {
+      setPreviewingVoiceId(null);
+      previewAudioRef.current = null;
+    };
+
+    try {
+      await audio.play();
+      setPreviewingVoiceId(voice.id);
+      clearPreviewUnavailable();
+    } catch (err) {
+      console.error('Voice preview failed:', err);
+      stopVoicePreview();
+      if (previewNoticeTimerRef.current) clearTimeout(previewNoticeTimerRef.current);
+      previewNoticeTimerRef.current = showVoicePreviewUnavailableNotice(setPreviewUnavailable, voice);
+    }
   };
 
-  useEffect(() => () => {
-    if (previewNoticeTimerRef.current) clearTimeout(previewNoticeTimerRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (previewNoticeTimerRef.current) clearTimeout(previewNoticeTimerRef.current);
+      stopVoicePreview();
+    },
+    [stopVoicePreview]
+  );
 
   const openVoiceTest = (voice) => {
     if (!voice?.supportsSpeechPreview) return;
@@ -272,7 +318,7 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
   const handleSpeechSynthesis = async () => {
     if (!speechText.trim() || !selectedVoiceForTest) return;
     if (!selectedVoiceForTest.supportsSpeechPreview) {
-      setTestModalError('Custom speech preview is not available for this voice.');
+      setTestModalError(SPEECH_PREVIEW_UNSUPPORTED_MESSAGE);
       return;
     }
 
@@ -294,10 +340,13 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
       }
     } catch (err) {
       console.error('Synthesis failed:', err);
-      const fallback = isInsufficientCreditsError(err)
-        ? 'Insufficient credits for voice preview.'
-        : 'Could not generate speech preview.';
-      setTestModalError(getSanitizedErrorMessage(err, fallback));
+      if (isInsufficientCreditsError(err)) {
+        setTestModalError('Insufficient credits for voice preview.');
+      } else if (isSpeechPreviewUnsupportedError(err)) {
+        setTestModalError(SPEECH_PREVIEW_UNSUPPORTED_MESSAGE);
+      } else {
+        setTestModalError(getSanitizedErrorMessage(err, 'Could not generate speech preview.'));
+      }
     } finally {
       setIsSynthesizing(false);
     }
@@ -353,6 +402,10 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
             onOpen={openVoice}
             onPreview={handlePreview}
             onTest={openVoiceTest}
+            isPreviewPlaying={previewingVoiceId === voice.id}
+            previewUnavailableReason={
+              previewUnavailable?.voiceId === voice.id ? previewUnavailable.reason : null
+            }
             showTestButton={voice.supportsSpeechPreview}
             clonePreviewTooltip={isClonedVoice(voice) ? true : false}
             canDelete={activeSection === 'private' && isDeletableClonedVoice(voice)}
@@ -365,6 +418,10 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
             onOpen={openVoice}
             onPreview={handlePreview}
             onTest={openVoiceTest}
+            isPreviewPlaying={previewingVoiceId === voice.id}
+            previewUnavailableReason={
+              previewUnavailable?.voiceId === voice.id ? previewUnavailable.reason : null
+            }
             showTestButton={voice.supportsSpeechPreview}
             clonePreviewTooltip={isClonedVoice(voice) ? true : false}
             canDelete={activeSection === 'private' && isDeletableClonedVoice(voice)}
@@ -454,13 +511,6 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
         />
 
         <main className="videos-main">
-          {previewNotice ? (
-            <VoicePreviewUnavailableNotice
-              voiceName={previewNotice.voiceName}
-              onDismiss={dismissPreviewNotice}
-              className="voices-preview-notice"
-            />
-          ) : null}
           {statusBanner ? (
             <div className={`voices-status-banner voices-status-banner--${statusBanner.tone}`} role="status">
               {statusBanner.message}

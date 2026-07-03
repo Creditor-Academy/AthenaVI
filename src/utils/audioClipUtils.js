@@ -48,6 +48,8 @@ export function buildSceneMusicClip({
   startTime = 0,
   fadeIn = 0,
   fadeOut = 0,
+  previewBlobUrl = null,
+  sourceDurationSec = null,
 }) {
   const duration = Math.max(0.1, Number(sceneDuration) || 8);
   const id = `clip_audio_${Date.now()}`;
@@ -72,5 +74,9 @@ export function buildSceneMusicClip({
     fadeIn: Math.max(0, Number(fadeIn) || 0),
     fadeOut: Math.max(0, Number(fadeOut) || 0),
     visible: true,
+    ...(previewBlobUrl ? { previewBlobUrl } : {}),
+    ...(Number.isFinite(sourceDurationSec) && sourceDurationSec > 0
+      ? { sourceDurationSec }
+      : {}),
   };
 }

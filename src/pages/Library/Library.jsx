@@ -25,6 +25,8 @@ import StorageUsageBar from '../../components/ui/StorageUsageBar/StorageUsageBar
 import '../../components/ui/StorageUsageBar/StorageUsageBar.css'
 import { formatBytes } from '../../utils/formatSize'
 import { consumeDashboardSearchContext } from '../../utils/dashboardSearchNavigate.js'
+import { createAudioBlobPreview, isAudioFile } from '../../utils/audioDuration'
+import AudioPreviewPlayer from '../../components/ui/AudioPreviewPlayer/AudioPreviewPlayer'
 import LibraryComingSoon from './LibraryComingSoon'
 import { SkeletonListRow } from '../page-skeleton/SkeletonPrimitives'
 import '../page-skeleton/skeleton.css'
@@ -53,6 +55,7 @@ function Library() {
   const [showUploadModal, setShowUploadModal] = useState(false)
   const fileInputRef = useRef(null)
   const searchRef = useRef(null)
+  const previewBlobUrlsRef = useRef(new Set())
   const [uploadType, setUploadType] = useState('images')
   const [selectedCategory, setSelectedCategory] = useState('media')
 
@@ -230,6 +233,13 @@ function Library() {
     }
   }
 
+  useEffect(() => {
+    return () => {
+      previewBlobUrlsRef.current.forEach((url) => URL.revokeObjectURL(url))
+      previewBlobUrlsRef.current.clear()
+    }
+  }, [])
+
   const handleFileInputChange = async (e) => {
     const files = Array.from(e.target.files || [])
     e.target.value = ''
@@ -245,12 +255,30 @@ function Library() {
     try {
       for (const file of files) {
         await assertUploadFits(workspaceId, file.size)
-        const uploaded = await assetService.uploadAsset(workspaceId, file)
+        const audioPreview = isAudioFile(file) ? createAudioBlobPreview(file) : null
+        const [uploaded, durationSec] = await Promise.all([
+          assetService.uploadAsset(workspaceId, file),
+          audioPreview?.durationPromise ?? Promise.resolve(null),
+        ])
         const normalized = assetService.normalizeAsset(uploaded)
-        if (!normalized) continue
+        if (!normalized) {
+          if (audioPreview?.previewBlobUrl) URL.revokeObjectURL(audioPreview.previewBlobUrl)
+          continue
+        }
+        const enriched =
+          audioPreview?.previewBlobUrl
+            ? {
+                ...normalized,
+                previewBlobUrl: audioPreview.previewBlobUrl,
+                durationSec,
+              }
+            : normalized
+        if (enriched.previewBlobUrl) {
+          previewBlobUrlsRef.current.add(enriched.previewBlobUrl)
+        }
         setAssets((prev) => {
           const without = prev.filter((item) => item.id !== normalized.id)
-          return [normalized, ...without]
+          return [enriched, ...without]
         })
         if (normalized.mediaType === 'audio') {
           setSelectedCategory('music')
@@ -376,11 +404,10 @@ function Library() {
         ) : isAudio ? (
           <div className="asset-preview-audio">
             <div className="asset-preview-audio__icon">{assetIcon(asset)}</div>
-            {asset.url ? (
-              <audio
+            {asset.url || asset.previewBlobUrl ? (
+              <AudioPreviewPlayer
                 src={asset.url}
-                controls
-                preload="none"
+                previewSrc={asset.previewBlobUrl}
                 className="asset-audio-preview"
                 onClick={(e) => e.stopPropagation()}
               />
@@ -662,11 +689,10 @@ function Library() {
                             </div>
                             <div style={{ minWidth: 0, flex: 1 }}>
                               <div className="asset-name" title={asset.name}>{asset.name}</div>
-                              {asset.mediaType === 'audio' && asset.url ? (
-                                <audio
+                              {asset.mediaType === 'audio' && (asset.url || asset.previewBlobUrl) ? (
+                                <AudioPreviewPlayer
                                   src={asset.url}
-                                  controls
-                                  preload="none"
+                                  previewSrc={asset.previewBlobUrl}
                                   className="asset-audio-preview asset-audio-preview--list"
                                   onClick={(e) => e.stopPropagation()}
                                 />

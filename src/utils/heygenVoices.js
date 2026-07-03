@@ -5,6 +5,15 @@
 export const CLONE_PREVIEW_TOOLTIP =
   "Custom speech preview isn't available for cloned voices. Use the sample audio or pick a designed/catalog voice.";
 
+export const SPEECH_PREVIEW_UNSUPPORTED_MESSAGE =
+  "This voice doesn't support custom speech preview. Choose a Starfish-compatible voice from the catalog, or use it in avatar video.";
+
+export const VOICE_PREVIEW_NOTICE_REASONS = {
+  NO_SAMPLE: 'no_sample',
+  NO_SPEECH_PREVIEW: 'no_speech_preview',
+  CLONED: 'cloned',
+};
+
 export function getVoicePreviewUrlFromResponse(res) {
   if (!res) return null;
   return (
@@ -36,7 +45,10 @@ export function mapHeygenVoice(voice, extras = {}) {
       voice.preview_audio ||
       null,
     supportsSpeechPreview:
-      voice.supportsSpeechPreview ?? voice.supports_speech_preview ?? false,
+      voice.supportsSpeechPreview ??
+      voice.supports_speech_preview ??
+      voice.supports_starfish_tts ??
+      false,
     source: voice.source ?? null,
     engine:
       String(voice.voice_engine || voice.engine || voice.provider || '').toUpperCase() ||
@@ -62,6 +74,44 @@ export function isSpeechPreviewSupportedVoice(voice) {
 export function isClonedVoice(voice) {
   const source = String(voice?.source || voice?.raw?.source || '').toLowerCase();
   return source === 'clone';
+}
+
+export function getVoicePreviewNoticeReason(voice) {
+  if (isClonedVoice(voice)) return VOICE_PREVIEW_NOTICE_REASONS.CLONED;
+  if (voice?.supportsSpeechPreview === false) return VOICE_PREVIEW_NOTICE_REASONS.NO_SPEECH_PREVIEW;
+  return VOICE_PREVIEW_NOTICE_REASONS.NO_SAMPLE;
+}
+
+export function getVoicePreviewUnavailableMessage(voiceName, reason = VOICE_PREVIEW_NOTICE_REASONS.NO_SAMPLE) {
+  switch (reason) {
+    case VOICE_PREVIEW_NOTICE_REASONS.CLONED:
+      return {
+        title: 'Preview not available',
+        description: voiceName
+          ? `${voiceName} is a cloned voice with no playable sample. You can still use it for avatar video narration.`
+          : 'This cloned voice has no playable sample. You can still use it for avatar video narration.',
+      };
+    case VOICE_PREVIEW_NOTICE_REASONS.NO_SPEECH_PREVIEW:
+      return {
+        title: 'Preview not available',
+        description: SPEECH_PREVIEW_UNSUPPORTED_MESSAGE,
+      };
+    default:
+      return {
+        title: 'Preview not available',
+        description: voiceName
+          ? `We can't play a sample for ${voiceName} right now, but you can still select and use it in your project.`
+          : "We can't play a sample right now, but you can still select and use this voice in your project.",
+      };
+  }
+}
+
+export function getVoicePreviewUnavailableShortCopy() {
+  return {
+    shortLabel: 'No preview for this voice',
+    ariaLabel:
+      'No preview available for this voice. You can still select and use it in your project.',
+  };
 }
 
 /**

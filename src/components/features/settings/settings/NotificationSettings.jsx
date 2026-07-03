@@ -211,28 +211,42 @@ const NotificationSettings = () => {
         <p>Each notification type can be turned on or off individually. Changes save automatically.</p>
       </header>
 
-      <div className="settings-flow">
-        {visibleSections.map((section) => (
-          <div key={section.title} className="appearance-block">
-            <header className="block-header">
-              <div>
-                <h4>{section.title}</h4>
-                <p>{section.description}</p>
-              </div>
-            </header>
+      <div className="settings-flow notification-settings-flow">
+        {visibleSections.map((section, index) => (
+          <section
+            key={section.title}
+            className="notification-settings-section"
+            aria-labelledby={`notification-section-${index}`}
+          >
+            <div className="notification-settings-panel">
+              <span className="notification-settings-bubble notification-settings-bubble--1" aria-hidden />
+              <span className="notification-settings-bubble notification-settings-bubble--2" aria-hidden />
+              <span className="notification-settings-bubble notification-settings-bubble--3" aria-hidden />
 
-            {section.items.map((item) => (
-              <NotificationToggle
-                key={item.key}
-                title={item.title}
-                description={item.description}
-                checked={Boolean(toggles[item.key])}
-                disabled={isToggleDisabled(item.key)}
-                blockedReason={getBlockedReason(item.key)}
-                onToggle={() => handleToggle(item.key)}
-              />
-            ))}
-          </div>
+              <div className="notification-settings-panel-inner">
+                <header className="block-header notification-settings-panel-header">
+                  <div>
+                    <h4 id={`notification-section-${index}`}>{section.title}</h4>
+                    <p>{section.description}</p>
+                  </div>
+                </header>
+
+                <div className="notification-settings-card">
+                  {section.items.map((item) => (
+                    <NotificationToggle
+                      key={item.key}
+                      title={item.title}
+                      description={item.description}
+                      checked={Boolean(toggles[item.key])}
+                      disabled={isToggleDisabled(item.key)}
+                      blockedReason={getBlockedReason(item.key)}
+                      onToggle={() => handleToggle(item.key)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
         ))}
       </div>
     </div>
