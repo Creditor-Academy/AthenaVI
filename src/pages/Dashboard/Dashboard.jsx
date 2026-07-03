@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import Home from '../Home/Home.jsx'
 import Videos from '../Videos/Videos.jsx'
 import Avatars from '../Avatars/Avatars.jsx'
@@ -188,6 +188,34 @@ function Dashboard({ onCreate, initialSection }) {
       })
     }
   }, [onCreate])
+
+  const notificationNavigateHandlers = useMemo(() => ({
+    onOpenEditor: (config) => {
+      if (onCreate) {
+        onCreate(config || null)
+      }
+    },
+    onGoToSection: (targetSection, options = {}) => {
+      if (options.settingsTab) {
+        setSettingsInitialTab(options.settingsTab)
+      }
+      goToSection(targetSection)
+    },
+  }), [onCreate, goToSection])
+
+  useEffect(() => {
+    const handleDashboardNavigate = (event) => {
+      const { section, settingsTab } = event.detail || {}
+      if (!section) return
+      if (settingsTab) {
+        setSettingsInitialTab(settingsTab)
+      }
+      goToSection(section)
+    }
+
+    window.addEventListener('athena:dashboard-navigate', handleDashboardNavigate)
+    return () => window.removeEventListener('athena:dashboard-navigate', handleDashboardNavigate)
+  }, [goToSection])
 
   const handleSearchResultSelect = useCallback((result) => {
     dashboardSearch.handleClose()
@@ -561,6 +589,7 @@ function Dashboard({ onCreate, initialSection }) {
             setSettingsInitialTab('notifications')
             goToSection('settings')
           }}
+          onNavigate={notificationNavigateHandlers}
         />
       )}
 

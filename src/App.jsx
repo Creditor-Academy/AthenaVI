@@ -343,11 +343,27 @@ function App() {
       setCreateVideoConfig((prev) => mergeCreateConfigFromDeepLink(prev))
     }
 
-    const handleNavigation = () => {
-      const deepLink = parseProjectCommentsDeepLink()
-      if (!deepLink?.projectId && !deepLink?.openComments) return
-      setView('create')
-      setCreateVideoConfig((prev) => mergeCreateConfigFromDeepLink(prev))
+    const handleNavigation = (event) => {
+      const path = event?.detail?.path || readClientPath()
+
+      if (path.startsWith('/create')) {
+        setView('create')
+        setCreateVideoConfig((prev) => mergeCreateConfigFromDeepLink(prev))
+        return
+      }
+
+      const section = resolveDashboardSectionFromPath(path)
+      if (section) {
+        if (window.location.pathname !== path.split('?')[0]) {
+          window.history.pushState({ section }, '', path.split('#')[0])
+        }
+        setView('dashboard')
+        window.dispatchEvent(
+          new CustomEvent('athena:dashboard-navigate', {
+            detail: { section, settingsTab: new URL(path, window.location.origin).searchParams.get('tab') },
+          })
+        )
+      }
     }
 
     window.addEventListener('popstate', handlePopState)
