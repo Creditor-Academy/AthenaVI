@@ -126,6 +126,9 @@ const LayerFitFlipAdjustments = ({
   onOpacityChange,
   extraEffects,
   hideOpacity = false,
+  hideLookPresets = false,
+  hideFilterSteppers = false,
+  hideAdjustments = false,
 }) => {
   const { animState } = useComputedEntranceState(clip);
   const objectFit = style.objectFit || (variant === 'circle' ? 'contain' : 'cover');
@@ -192,18 +195,24 @@ const LayerFitFlipAdjustments = ({
         </div>
       </div>
 
-      <div className="lm-fit-adj__divider" />
+      {!hideAdjustments ? (
+        <>
+          <div className="lm-fit-adj__divider" />
 
-      <LayerAdjustmentsCompact
-        opacity={opacity}
-        cssFilters={cssFilters}
-        onOpacityChange={onOpacityChange}
-        onFilterChange={onUpdateFilter}
-        showInlinePreview={false}
-        previewSrc={src}
-        previewObjectFit={objectFit}
-        hideOpacity={hideOpacity}
-      />
+          <LayerAdjustmentsCompact
+            opacity={opacity}
+            cssFilters={cssFilters}
+            onOpacityChange={onOpacityChange}
+            onFilterChange={onUpdateFilter}
+            showInlinePreview={false}
+            previewSrc={src}
+            previewObjectFit={objectFit}
+            hideOpacity={hideOpacity}
+            hideLookPresets={hideLookPresets}
+            hideFilterSteppers={hideFilterSteppers}
+          />
+        </>
+      ) : null}
 
       {extraEffects ? <div className="lm-fit-adj__extras">{extraEffects}</div> : null}
     </div>
