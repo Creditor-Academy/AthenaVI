@@ -15,13 +15,14 @@ import LoadingDots from '../LoadingDots/LoadingDots.jsx';
 import { getSanitizedErrorMessage } from '../../../utils/userFacingMessage.js';
 import {
   countUnreadUserFacingInboxNotifications,
-  decrementUnreadCount,
+  filterInboxNotificationsByCategory,
   filterUserFacingInboxNotifications,
   formatInboxCategory,
   formatInboxRelativeTime,
+  getInboxEmptyState,
   INBOX_CATEGORIES,
   isInboxNotificationUnread,
-  openNotificationActionUrl,
+  navigateToNotification,
 } from '../../../utils/inboxNotifications.js';
 import './NotificationsQuickModal.css';
 
@@ -43,7 +44,7 @@ function NotificationCategoryIcon({ category }) {
   );
 }
 
-function NotificationsQuickModal({ onClose, onUnreadCountChange, onOpenNotificationSettings }) {
+function NotificationsQuickModal({ onClose, onUnreadCountChange, onOpenNotificationSettings, onNavigate }) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
@@ -63,14 +64,26 @@ function NotificationsQuickModal({ onClose, onUnreadCountChange, onOpenNotificat
     setLoading(true);
     setError('');
     try {
+      // Fetch all notifications — category filtering is client-side only.
+      // The API rejects some category values (e.g. comments) with 400.
       const params = { limit: 100 };
-      if (categoryFilter) params.category = categoryFilter;
       if (unreadOnly) params.unreadOnly = true;
 
       const data = await inboxService.listNotifications(params);
-      const visible = filterUserFacingInboxNotifications(data.notifications || []);
+      let visible = filterUserFacingInboxNotifications(data.notifications || []);
+
+      if (categoryFilter) {
+        visible = filterInboxNotificationsByCategory(visible, categoryFilter);
+      }
+      if (unreadOnly) {
+        visible = visible.filter(isInboxNotificationUnread);
+      }
+
       setNotifications(visible);
-      syncUnreadCount(visible);
+
+      if (!categoryFilter && !unreadOnly) {
+        syncUnreadCount(filterUserFacingInboxNotifications(data.notifications || []));
+      }
     } catch (err) {
       setError(getSanitizedErrorMessage(err, 'Failed to load notifications'));
     } finally {
@@ -82,14 +95,17 @@ function NotificationsQuickModal({ onClose, onUnreadCountChange, onOpenNotificat
     loadNotifications();
   }, [loadNotifications]);
 
+  const emptyState = useMemo(
+    () => getInboxEmptyState(categoryFilter, unreadOnly),
+    [categoryFilter, unreadOnly]
+  );
+
   const unreadCount = useMemo(
     () => notifications.filter(isInboxNotificationUnread).length,
     [notifications]
   );
 
   const handleItemClick = async (notification) => {
-    const actionUrl = notification?.metadata?.actionUrl;
-
     if (isInboxNotificationUnread(notification)) {
       try {
         const updated = await inboxService.markRead(notification.id);
@@ -103,14 +119,12 @@ function NotificationsQuickModal({ onClose, onUnreadCountChange, onOpenNotificat
           return next;
         });
       } catch {
-        // still navigate if action exists
+        // still navigate
       }
     }
 
-    if (actionUrl) {
-      onClose();
-      openNotificationActionUrl(actionUrl);
-    }
+    onClose();
+    navigateToNotification(notification, onNavigate);
   };
 
   const handleDismiss = async (event, notification) => {
@@ -257,12 +271,8 @@ function NotificationsQuickModal({ onClose, onUnreadCountChange, onOpenNotificat
               <span className="inbox-empty-icon" aria-hidden>
                 <Bell size={28} strokeWidth={1.5} />
               </span>
-              <strong>No notifications</strong>
-              <p>
-                {unreadOnly || categoryFilter
-                  ? 'Nothing matches these filters.'
-                  : 'Activity from exports, credits, storage, and your workspace will appear here.'}
-              </p>
+              <strong>{emptyState.title}</strong>
+              <p>{emptyState.message}</p>
             </div>
           ) : (
             notifications.map((notification) => {
