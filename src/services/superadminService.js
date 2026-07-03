@@ -183,6 +183,22 @@ const superadminService = {
       body: JSON.stringify({ subject, html, text: text || undefined, confirm: 'send' }),
     })
   },
+
+  listProductEmailBroadcasts({ page = 1, limit = 20 } = {}) {
+    return superadminRequest(
+      `/api/superadmin/broadcasts/product-email${toQuery({ page, limit })}`
+    )
+  },
+
+  getProductEmailBroadcast(broadcastId) {
+    return superadminRequest(`/api/superadmin/broadcasts/product-email/${broadcastId}`)
+  },
+
+  listProductEmailBroadcastRecipients(broadcastId, { page = 1, limit = 50, status } = {}) {
+    return superadminRequest(
+      `/api/superadmin/broadcasts/product-email/${broadcastId}/recipients${toQuery({ page, limit, status })}`
+    )
+  },
 }
 
 export { SuperadminApiError }
