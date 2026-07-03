@@ -1,6 +1,8 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
+import invitationFlowService from './services/invitationFlowService.js'
+import { getPendingInvitation } from './utils/inviteNavigation.js'
 import Landing from './pages/Landing/Landing.jsx'
 import AuthPage from './pages/Auth/AuthPage.jsx'
 import ResetPassword from './components/features/auth/authentication/ResetPassword.jsx'
@@ -300,6 +302,23 @@ function App() {
     }
   }, [view])
 
+  const handleAuthComplete = useCallback(async () => {
+    const pending = getPendingInvitation()
+    if (pending?.token) {
+      try {
+        const workspace = await invitationFlowService.completePendingInvitation()
+        invitationFlowService.redirectAfterInvite(
+          workspace || { id: pending.workspaceId, name: pending.workspaceName }
+        )
+        return
+      } catch (err) {
+        console.error('Failed to complete workspace invitation:', err)
+        localStorage.setItem('authError', err.message || 'Failed to accept workspace invitation')
+      }
+    }
+    setView('dashboard')
+  }, [])
+
   // Scroll to top whenever view changes
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' })
@@ -307,7 +326,7 @@ function App() {
 
   // After Google OAuth completes, switch from callback spinner to dashboard
   useEffect(() => {
-    const onOAuthComplete = () => setView('dashboard')
+    const onOAuthComplete = () => { handleAuthComplete() }
     const onOAuthError = () => setView('login')
     window.addEventListener('auth:oauth-complete', onOAuthComplete)
     window.addEventListener('auth:oauth-error', onOAuthError)
@@ -315,7 +334,7 @@ function App() {
       window.removeEventListener('auth:oauth-complete', onOAuthComplete)
       window.removeEventListener('auth:oauth-error', onOAuthError)
     }
-  }, [])
+  }, [handleAuthComplete])
 
   // Handle browser back/forward buttons
   useEffect(() => {
@@ -340,10 +359,6 @@ function App() {
       window.removeEventListener('athena:navigation', handleNavigation)
     }
   }, [])
-
-  const handleAuthComplete = () => {
-    setView('dashboard')
-  }
 
   const handleLoginClick = () => {
     setView('login')
@@ -433,23 +448,7 @@ function App() {
       )}
 
       {/* Invite Acceptance Page - Standalone */}
-      {isInviteAcceptancePath && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          zIndex: 2002,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '20px'
-        }}>
-          <InviteAcceptance />
-        </div>
-      )}
+      {isInviteAcceptancePath && <InviteAcceptance />}
 
       {/* Protected Routes */}
       {view === 'create' && (

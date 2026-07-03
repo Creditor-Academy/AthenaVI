@@ -1,5 +1,8 @@
 import { useCallback, useState } from 'react';
 import workspaceService from '../../services/workspaceService.js';
+import invitationFlowService from '../../services/invitationFlowService.js';
+import inboxService from '../../services/inboxService.js';
+import { savePendingInvitation } from '../../utils/inviteNavigation.js';
 import { formatFolderSize } from '../../utils/formatSize.js';
 import { buildWorkspaceUserLookup, getAuthDisplayName } from '../../utils/workspaceUsers.js';
 import {
@@ -135,26 +138,55 @@ export function useWorkspaceActions({
   // ------------------------------------------------------------------
   // Accept / Decline invitation
   // ------------------------------------------------------------------
-  const handleAcceptInvitation = useCallback(async (invitationToken) => {
+  const handleAcceptInvitation = useCallback(async (invitationOrToken) => {
+    const invitation = typeof invitationOrToken === 'object' ? invitationOrToken : null;
+    const token = invitation?.token || invitationOrToken;
+
+    if (!token) {
+      showToast('Invalid invitation', 'error');
+      return;
+    }
+
+    savePendingInvitation({
+      token,
+      email: invitation?.email || '',
+      notificationId: invitation?.notificationId || null,
+      workspaceId: invitation?.workspaceId || invitation?.workspace?.id || null,
+      workspaceName: invitation?.workspaceName || invitation?.workspace?.name || '',
+    });
+
     try {
-      await workspaceService.acceptInvitation(invitationToken);
-      setInvitations((prev) => prev.filter((inv) => (inv.token || inv.id) !== invitationToken));
+      const workspace = await invitationFlowService.completePendingInvitation();
+      setInvitations((prev) => prev.filter((inv) => (inv.token || inv.id) !== token));
       await loadWorkspaces();
+      showToast(
+        `Joined ${workspace?.name || invitation?.workspaceName || 'workspace'} successfully`,
+        'success'
+      );
+      invitationFlowService.redirectAfterInvite(
+        workspace || invitation?.workspace || {
+          id: invitation?.workspaceId,
+          name: invitation?.workspaceName,
+        }
+      );
     } catch (error) {
       console.error(error);
+      showToast(error.message || 'Failed to accept invitation', 'error');
     }
-  }, [setInvitations, loadWorkspaces]);
+  }, [setInvitations, loadWorkspaces, showToast]);
 
   const handleDeclineInvitation = useCallback(async (invitation) => {
     try {
-      if (invitation?.workspaceId && invitation?.id) {
-        await workspaceService.removeInvitation(invitation.workspaceId, invitation.id).catch(() => null);
+      if (invitation?.notificationId) {
+        await inboxService.dismiss(invitation.notificationId);
       }
       setInvitations((prev) => prev.filter((item) => item.id !== invitation.id));
+      showToast('Invitation declined', 'success');
     } catch (error) {
       console.error(error);
+      showToast(error.message || 'Failed to decline invitation', 'error');
     }
-  }, [setInvitations]);
+  }, [setInvitations, showToast]);
 
   // ------------------------------------------------------------------
   // Rename

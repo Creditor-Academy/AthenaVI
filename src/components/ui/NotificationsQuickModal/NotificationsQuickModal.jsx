@@ -23,6 +23,7 @@ import {
   isInboxNotificationUnread,
   openNotificationActionUrl,
 } from '../../../utils/inboxNotifications.js';
+import { savePendingInvitation } from '../../../utils/inviteNavigation.js';
 import './NotificationsQuickModal.css';
 
 const CATEGORY_ICONS = {
@@ -89,6 +90,17 @@ function NotificationsQuickModal({ onClose, onUnreadCountChange, onOpenNotificat
 
   const handleItemClick = async (notification) => {
     const actionUrl = notification?.metadata?.actionUrl;
+    const metadata = notification?.metadata || {};
+
+    if (notification?.type === 'WORKSPACE_INVITATION' && metadata.token) {
+      savePendingInvitation({
+        token: metadata.token,
+        email: metadata.email || '',
+        notificationId: notification.id,
+        workspaceId: metadata.workspaceId || null,
+        workspaceName: metadata.workspaceName || '',
+      });
+    }
 
     if (isInboxNotificationUnread(notification)) {
       try {
