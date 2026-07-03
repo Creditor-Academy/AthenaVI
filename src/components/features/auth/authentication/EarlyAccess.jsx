@@ -1,29 +1,7 @@
-/**
- * EarlyAccess.jsx
- *
- * TODO (Backend Integration):
- *   Currently uses a mailto: fallback to send early access requests.
- *   Once the backend API is ready, replace the handleSubmit mailto block
- *   with a POST /api/early-access/request call.
- *
- *   See full payload spec, response shapes, email templates, and DB schema at:
- *   EARLY_ACCESS_API_SPEC.md (root of project)
- *
- *   Payload shape:
- *   {
- *     name:    string (required),
- *     email:   string (required),
- *     company: string,
- *     role:    string,
- *     useCase: string,
- *     message: string,
- *   }
- */
 import { useState } from 'react'
-import { MdPerson, MdEmail, MdBusiness, MdWork, MdSend, MdStar } from 'react-icons/md'
+import { MdPerson, MdEmail, MdBusiness, MdWork, MdSend } from 'react-icons/md'
 import EnvelopeSuccess from './EnvelopeSuccess.jsx'
-
-const EARLY_ACCESS_EMAIL = 'team@athenavi.com'
+import earlyAccessService from '../../../../services/earlyAccessService.js'
 
 
 const USE_CASES = [
@@ -46,18 +24,27 @@ function EarlyAccess() {
     message: '',
   })
   const [submitted, setSubmitted] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({})
 
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
     setError('')
+    setFieldErrors((prev) => {
+      if (!prev[name]) return prev
+      const next = { ...prev }
+      delete next[name]
+      return next
+    })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    setFieldErrors({})
 
     if (!formData.name.trim()) {
       setError('Please enter your full name.')
@@ -70,34 +57,28 @@ function EarlyAccess() {
 
     setLoading(true)
 
-    // Build mailto link with all user details
-    const subject = encodeURIComponent(`Early Access Request – ${formData.name}`)
-    const body = encodeURIComponent(
-      `Early Access Request\n` +
-      `${'='.repeat(40)}\n\n` +
-      `Name:     ${formData.name}\n` +
-      `Email:    ${formData.email}\n` +
-      `Company:  ${formData.company || 'N/A'}\n` +
-      `Role:     ${formData.role || 'N/A'}\n` +
-      `Use Case: ${formData.useCase || 'N/A'}\n\n` +
-      `Additional Notes:\n${formData.message || 'None'}\n\n` +
-      `${'='.repeat(40)}\n` +
-      `Sent from Virtual Studio Early Access Form`
-    )
-
-    // Simulate async request (TODO: replace with actual API call)
-    setTimeout(() => {
-      setLoading(false)
+    try {
+      const result = await earlyAccessService.submitRequest(formData)
+      setSuccessMessage(result.message)
       setSubmitted(true)
-    }, 600)
+    } catch (err) {
+      if (err.fields && typeof err.fields === 'object') {
+        setFieldErrors(err.fields)
+      }
+      setError(err.message || 'Failed to submit your request. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (submitted) {
     return (
       <EnvelopeSuccess 
-        email={formData.email} 
+        email={formData.email}
+        message={successMessage}
         onReset={() => {
           setSubmitted(false)
+          setSuccessMessage('')
           setFormData({ name: '', email: '', company: '', role: '', useCase: '', message: '' })
         }} 
       />
@@ -110,10 +91,9 @@ function EarlyAccess() {
         {/* Header Section */}
         <div className="ea-header-section">
           <div className="ea-pill">✨ Beyond Artificial</div>
-          <h1 className="ea-heading">Early Access to<br/>Game-Changing AI</h1>
+          <h1 className="ea-heading">Early Access to Game-Changing AI</h1>
           <p className="ea-subtitle">
-            Unlock exclusive early access to groundbreaking AI.<br/>
-            Subscribe now and stay ahead of the future!
+            Unlock exclusive early access to groundbreaking AI. Subscribe now and stay ahead of the future!
           </p>
         </div>
 
@@ -125,66 +105,82 @@ function EarlyAccess() {
 
       {/* Name */}
       <div className="auth-input-wrapper">
-        <MdPerson className="auth-input-icon" />
-        <input
-          id="ea-name"
-          name="name"
-          type="text"
-          placeholder="Full Name *"
-          className="auth-input"
-          value={formData.name}
-          onChange={handleChange}
-          disabled={loading}
-          autoComplete="name"
-        />
+        <div className="auth-input-field">
+          <MdPerson className="auth-input-icon" aria-hidden="true" />
+          <input
+            id="ea-name"
+            name="name"
+            type="text"
+            placeholder="Full Name *"
+            className={`auth-input${fieldErrors.name ? ' ea-input-error' : ''}`}
+            value={formData.name}
+            onChange={handleChange}
+            disabled={loading}
+            autoComplete="name"
+            maxLength={100}
+            aria-invalid={Boolean(fieldErrors.name)}
+          />
+        </div>
+        {fieldErrors.name && <span className="ea-field-error">{fieldErrors.name}</span>}
       </div>
 
       {/* Email */}
       <div className="auth-input-wrapper">
-        <MdEmail className="auth-input-icon" />
-        <input
-          id="ea-email"
-          name="email"
-          type="email"
-          placeholder="Work Email *"
-          className="auth-input"
-          value={formData.email}
-          onChange={handleChange}
-          disabled={loading}
-          autoComplete="email"
-        />
+        <div className="auth-input-field">
+          <MdEmail className="auth-input-icon" aria-hidden="true" />
+          <input
+            id="ea-email"
+            name="email"
+            type="email"
+            placeholder="Work Email *"
+            className={`auth-input${fieldErrors.email ? ' ea-input-error' : ''}`}
+            value={formData.email}
+            onChange={handleChange}
+            disabled={loading}
+            autoComplete="email"
+            maxLength={254}
+            aria-invalid={Boolean(fieldErrors.email)}
+          />
+        </div>
+        {fieldErrors.email && <span className="ea-field-error">{fieldErrors.email}</span>}
       </div>
 
       {/* Company */}
       <div className="auth-input-wrapper">
-        <MdBusiness className="auth-input-icon" />
-        <input
-          id="ea-company"
-          name="company"
-          type="text"
-          placeholder="Company / Organization"
-          className="auth-input"
-          value={formData.company}
-          onChange={handleChange}
-          disabled={loading}
-          autoComplete="organization"
-        />
+        <div className="auth-input-field">
+          <MdBusiness className="auth-input-icon" aria-hidden="true" />
+          <input
+            id="ea-company"
+            name="company"
+            type="text"
+            placeholder="Company / Organization"
+            className="auth-input"
+            value={formData.company}
+            onChange={handleChange}
+            disabled={loading}
+            autoComplete="organization"
+            maxLength={150}
+          />
+        </div>
       </div>
 
       {/* Role */}
       <div className="auth-input-wrapper">
-        <MdWork className="auth-input-icon" />
-        <input
-          id="ea-role"
-          name="role"
-          type="text"
-          placeholder="Your Role / Title"
-          className="auth-input"
-          value={formData.role}
-          onChange={handleChange}
-          disabled={loading}
-          autoComplete="organization-title"
-        />
+        <div className="auth-input-field">
+          <MdWork className="auth-input-icon" aria-hidden="true" />
+          <input
+            id="ea-role"
+            name="role"
+            type="text"
+            placeholder="Your Role / Title"
+            className="auth-input"
+            value={formData.role}
+            onChange={handleChange}
+            disabled={loading}
+            autoComplete="organization-title"
+            maxLength={100}
+          />
+        </div>
       </div>
 
       </div>
@@ -198,7 +194,6 @@ function EarlyAccess() {
           value={formData.useCase}
           onChange={handleChange}
           disabled={loading}
-          style={{ paddingLeft: '14px' }}
         >
           <option value="">Primary Use Case</option>
           {USE_CASES.map((uc) => (
@@ -218,6 +213,7 @@ function EarlyAccess() {
           onChange={handleChange}
           disabled={loading}
           rows={3}
+          maxLength={1000}
         />
       </div>
 

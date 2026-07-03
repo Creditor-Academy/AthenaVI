@@ -12,6 +12,20 @@ import {
   readClientPath,
   resolveDashboardSectionFromPath,
 } from './utils/dashboardRouting.js'
+import { parseProjectCommentsDeepLink } from './utils/inboxNotifications.js'
+
+function mergeCreateConfigFromDeepLink(prev) {
+  const deepLink = parseProjectCommentsDeepLink()
+  if (!deepLink?.projectId && !deepLink?.openComments) return prev
+
+  return {
+    ...(prev || {}),
+    ...(deepLink.projectId ? { videoId: deepLink.projectId } : {}),
+    ...(deepLink.workspaceId ? { workspaceId: deepLink.workspaceId } : {}),
+    openComments: deepLink.openComments,
+    highlightCommentId: deepLink.highlightCommentId,
+  }
+}
 
 const Dashboard = lazy(() => import('./pages/Dashboard/Dashboard.jsx'))
 const Create = lazy(() => import('./pages/Editor/Editor.jsx'))
@@ -177,9 +191,10 @@ function App() {
   const [createVideoConfig, setCreateVideoConfig] = useState(() => {
     try {
       const saved = window.localStorage.getItem('athenavi:createVideoConfig')
-      return saved ? JSON.parse(saved) : null
+      const parsed = saved ? JSON.parse(saved) : null
+      return mergeCreateConfigFromDeepLink(parsed)
     } catch {
-      return null
+      return mergeCreateConfigFromDeepLink(null)
     }
   })
 
@@ -306,10 +321,24 @@ function App() {
   useEffect(() => {
     const handlePopState = () => {
       setView(resolveViewFromLocation(PATH_TO_VIEW_MAP))
+      setCreateVideoConfig((prev) => mergeCreateConfigFromDeepLink(prev))
+    }
+
+    const handleNavigation = () => {
+      const deepLink = parseProjectCommentsDeepLink()
+      if (!deepLink?.projectId && !deepLink?.openComments) return
+      setView('create')
+      setCreateVideoConfig((prev) => mergeCreateConfigFromDeepLink(prev))
     }
 
     window.addEventListener('popstate', handlePopState)
-    return () => window.removeEventListener('popstate', handlePopState)
+    window.addEventListener('hashchange', handleNavigation)
+    window.addEventListener('athena:navigation', handleNavigation)
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+      window.removeEventListener('hashchange', handleNavigation)
+      window.removeEventListener('athena:navigation', handleNavigation)
+    }
   }, [])
 
   const handleAuthComplete = () => {
@@ -431,6 +460,13 @@ function App() {
               setCreateVideoConfig(null)
               if (window.location.pathname !== dashboardPath) {
                 window.history.pushState({ section: 'workspace' }, '', dashboardPath)
+              }
+              setView('dashboard')
+            }}
+            onNavigateToProfile={() => {
+              const profilePath = dashboardPathForSection('profile')
+              if (window.location.pathname !== profilePath) {
+                window.history.pushState({ section: 'profile' }, '', profilePath)
               }
               setView('dashboard')
             }}

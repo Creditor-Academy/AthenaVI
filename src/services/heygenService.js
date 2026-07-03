@@ -1,5 +1,25 @@
 import API_CONFIG, { buildUrl, getAuthHeaders } from '../config/api.js';
 import { InsufficientCreditsError } from './creditsService.js';
+
+export class SpeechPreviewUnsupportedError extends Error {
+  constructor(message, data = {}) {
+    super(
+      message ||
+        'This voice does not support custom speech preview. Use the sample audio or choose a Starfish-compatible voice.'
+    );
+    this.name = 'SpeechPreviewUnsupportedError';
+    this.code = 'HEYGEN_VOICE_SPEECH_PREVIEW_UNSUPPORTED';
+    this.status = 400;
+    this.data = data;
+  }
+}
+
+export function isSpeechPreviewUnsupportedError(error) {
+  return (
+    error?.code === 'HEYGEN_VOICE_SPEECH_PREVIEW_UNSUPPORTED' ||
+    error instanceof SpeechPreviewUnsupportedError
+  );
+}
 import {
   AVATAR_IV_ENGINE,
   isLegacyV2Look,
@@ -789,14 +809,49 @@ class HeygenService {
       });
 
       if (!response.ok) {
-        const errText = await response.text();
-        throw userError(`Failed to preview speech: ${response.status} - ${errText}`);
+        const errorText = await response.text();
+        let errorData = {};
+        try {
+          errorData = errorText ? JSON.parse(errorText) : {};
+        } catch {
+          errorData = { message: errorText };
+        }
+
+        const message =
+          errorData.message ||
+          errorData.error ||
+          (Array.isArray(errorData.errors) && errorData.errors.length
+            ? errorData.errors.join(' ')
+            : `Failed to preview speech: ${response.status}`);
+
+        const errorCode =
+          errorData.code ||
+          errorData.error_code ||
+          (Array.isArray(errorData.errors)
+            ? errorData.errors.find((e) => e?.code)?.code
+            : null);
+
+        if (response.status === 402) {
+          throw new InsufficientCreditsError(sanitizeUserFacingMessage(message), errorData);
+        }
+
+        if (
+          response.status === 400 &&
+          (errorCode === 'HEYGEN_VOICE_SPEECH_PREVIEW_UNSUPPORTED' ||
+            String(message).toLowerCase().includes('custom speech preview'))
+        ) {
+          throw new SpeechPreviewUnsupportedError(sanitizeUserFacingMessage(message), errorData);
+        }
+
+        throw userError(sanitizeUserFacingMessage(message));
       }
 
       const data = await response.json();
       return data.data || data;
     } catch (error) {
-      console.error('Error in heygenService.previewSpeech:', error);
+      if (!isSpeechPreviewUnsupportedError(error)) {
+        console.error('Error in heygenService.previewSpeech:', error);
+      }
       throw sanitizeThrownError(error);
     }
   }

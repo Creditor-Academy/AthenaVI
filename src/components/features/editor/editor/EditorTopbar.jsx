@@ -23,6 +23,7 @@ import {
     MdHelpOutline,
     MdVisibility,
     MdAdd,
+    MdComment,
 } from 'react-icons/md'
 
 import EditorSidebarImage from './EditorSidebarImage'
@@ -47,6 +48,7 @@ const INSERT_LABELS = Object.fromEntries(INSERT_ITEMS.map((t) => [t.id, t.label]
 
 const EditorTopbar = ({
     onBack,
+    onNavigateToProfile,
     selectedTool,
     setSelectedTool,
     handlePreview,
@@ -75,6 +77,9 @@ const EditorTopbar = ({
     creditsRefreshKey = 0,
     editorView,
     onEditorViewChange,
+    commentsPanelOpen = false,
+    onToggleCommentsPanel,
+    commentCount = 0,
 }) => {
     const [saved, setSaved] = useState(false)
     const [activeMenu, setActiveMenu] = useState(null)
@@ -505,6 +510,24 @@ const EditorTopbar = ({
 
                     <div className="topbar-divider" />
 
+                    <div className="topbar-comments-wrap">
+                        <button
+                            type="button"
+                            className={`topbar-icon-action topbar-comments-btn${commentsPanelOpen ? ' is-active' : ''}`}
+                            onClick={onToggleCommentsPanel}
+                            title="Project comments"
+                            aria-label="Project comments"
+                            aria-pressed={commentsPanelOpen}
+                        >
+                            <MdComment size={18} />
+                        </button>
+                        {commentCount > 0 ? (
+                            <span className="topbar-comments-badge" aria-hidden>
+                                {commentCount > 99 ? '99+' : commentCount}
+                            </span>
+                        ) : null}
+                    </div>
+
                     <button
                         type="button"
                         className="topbar-icon-action topbar-preview-btn"
@@ -528,7 +551,7 @@ const EditorTopbar = ({
 
                     <div className="topbar-divider" />
 
-                    <ProfileDropdown compact />
+                    <ProfileDropdown compact onProfileClick={onNavigateToProfile} />
                 </div>
             </div>
 

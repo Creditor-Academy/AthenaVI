@@ -10,27 +10,18 @@ import {
 import { Loader2 } from 'lucide-react'
 import heygenService from '../../../../services/heygenService'
 import { getSanitizedErrorMessage } from '../../../../utils/userFacingMessage'
+import {
+  extractHeygenVoiceList,
+  isSpeechPreviewSupportedVoice,
+  mapHeygenVoice,
+  resolveVoicePreviewAudioUrl,
+} from '../../../../utils/heygenVoices'
+import VoicePreviewUnavailableNotice, {
+  showVoicePreviewUnavailableNotice,
+} from '../../../ui/VoicePreviewNotice/VoicePreviewNotice'
 import './VoiceOnlySpeechModal.css'
 
-// Voice engines that are NOT compatible with the HeyGen TTS speech generation API.
-// Voices using these engines will silently fail or throw "not supported" errors.
-const UNSUPPORTED_TTS_ENGINES = ['STARFISH']
-
-function isSupportedTtsVoice(rawVoice) {
-  const engine = String(rawVoice?.voice_engine || rawVoice?.engine || rawVoice?.provider || '').toUpperCase()
-  return engine === '' || !UNSUPPORTED_TTS_ENGINES.includes(engine)
-}
-
-const mapVoiceFromApi = (voice) => ({
-  id: voice.voice_id || voice.voiceId || voice.id,
-  name: voice.name || voice.voice_name || voice.display_name || 'AI Voice',
-  gender: String(voice.gender || voice.sex || voice.voice_gender || '').trim() || 'Unknown',
-  language:
-    String(voice.language || voice.language_code || voice.language_name || voice.locale || '')
-      .trim() || 'Unknown',
-  previewUrl: voice.preview_audio_url || voice.preview_url || voice.preview_audio || null,
-  engine: String(voice.voice_engine || voice.engine || voice.provider || '').toUpperCase() || null,
-})
+const mapVoiceFromApi = (voice) => mapHeygenVoice(voice)
 
 function normalizeGender(raw) {
   const v = String(raw || '').toLowerCase()
@@ -62,20 +53,21 @@ export default function VoiceOnlySpeechModal({
   const [error, setError] = useState('')
 
   const previewAudioRef = useRef(null)
+  const previewNoticeTimerRef = useRef(null)
   const [previewingVoiceId, setPreviewingVoiceId] = useState(null)
   const [previewLoadingVoiceId, setPreviewLoadingVoiceId] = useState(null)
+  const [previewNotice, setPreviewNotice] = useState(null)
 
   useEffect(() => {
     if (!isOpen) return
     setError('')
+    setPreviewNotice(null)
     setSubmitting(false)
     setStep('voice')
     setScript(initialScript || '')
     setSpeed(initialSpeed)
     setLocale(initialLocale)
-    // If voices are already loaded (cached from a prior open), validate the initial
-    // voice id immediately — if it was a STARFISH/unsupported voice it won't be in
-    // the filtered list, so clear it and force the user to pick a supported one.
+    // If voices are already loaded, validate the initial voice id against Starfish-compatible voices.
     if (voices.length > 0) {
       const isKnownSupported = voices.some((v) => v.id === initialVoiceId)
       setSelectedVoiceId(isKnownSupported ? (initialVoiceId || '') : '')
@@ -91,20 +83,17 @@ export default function VoiceOnlySpeechModal({
     const load = async () => {
       setLoadingVoices(true)
       try {
-        const responseData = await heygenService.getVoices({ type: 'public', limit: 100 })
-        const list =
-          responseData?.data?.voices ||
-          responseData?.voices ||
-          responseData?.data ||
-          (Array.isArray(responseData) ? responseData : [])
-        // Filter raw list first to drop unsupported TTS engines (e.g. STARFISH),
-        // then map to our display shape.
-        const supported = (Array.isArray(list) ? list : []).filter(isSupportedTtsVoice)
-        const mapped = supported.map(mapVoiceFromApi).filter((v) => v.id)
+        const responseData = await heygenService.getVoices({
+          type: 'public',
+          engine: 'starfish',
+          limit: 100,
+        })
+        const list = extractHeygenVoiceList(responseData)
+        const mapped = list
+          .map(mapVoiceFromApi)
+          .filter((v) => v?.id && isSpeechPreviewSupportedVoice(v))
         if (!cancelled) {
           setVoices(mapped)
-          // If the pre-selected voice (from the scene) is a STARFISH/unsupported voice it
-          // won't exist in the filtered list — clear it so the user must pick a valid one.
           setSelectedVoiceId((prev) => {
             if (!prev) return prev
             const exists = mapped.some((v) => v.id === prev)
@@ -147,6 +136,18 @@ export default function VoiceOnlySpeechModal({
     })
   }, [voices, voiceSearch, genderFilter, languageFilter])
 
+  const dismissPreviewNotice = () => {
+    if (previewNoticeTimerRef.current) {
+      clearTimeout(previewNoticeTimerRef.current)
+      previewNoticeTimerRef.current = null
+    }
+    setPreviewNotice(null)
+  }
+
+  useEffect(() => () => {
+    if (previewNoticeTimerRef.current) clearTimeout(previewNoticeTimerRef.current)
+  }, [])
+
   const stopPreview = () => {
     if (previewAudioRef.current) {
       previewAudioRef.current.pause()
@@ -166,15 +167,15 @@ export default function VoiceOnlySpeechModal({
     stopPreview()
     setPreviewLoadingVoiceId(voice.id)
     try {
-      let audioUrl = voice.previewUrl
+      const audioUrl = await resolveVoicePreviewAudioUrl(voice, { mode: 'sample' })
       if (!audioUrl) {
-        const res = await heygenService.previewSpeech({
-          text: 'Hello! This is a quick preview of how this voice sounds.',
-          voice_id: voice.id,
-        })
-        audioUrl = res?.preview_audio_url || res?.audio_url || res?.url
+        if (previewNoticeTimerRef.current) clearTimeout(previewNoticeTimerRef.current)
+        previewNoticeTimerRef.current = showVoicePreviewUnavailableNotice(
+          setPreviewNotice,
+          voice.name
+        )
+        return
       }
-      if (!audioUrl) throw new Error('Preview not available')
       const audio = new Audio(audioUrl)
       previewAudioRef.current = audio
       audio.onended = () => {
@@ -184,7 +185,11 @@ export default function VoiceOnlySpeechModal({
       await audio.play()
       setPreviewingVoiceId(voice.id)
     } catch (err) {
-      setError('Could not play voice preview.')
+      if (previewNoticeTimerRef.current) clearTimeout(previewNoticeTimerRef.current)
+      previewNoticeTimerRef.current = showVoicePreviewUnavailableNotice(
+        setPreviewNotice,
+        voice?.name
+      )
       stopPreview()
     } finally {
       setPreviewLoadingVoiceId(null)
@@ -193,6 +198,7 @@ export default function VoiceOnlySpeechModal({
 
   const handleClose = () => {
     stopPreview()
+    dismissPreviewNotice()
     onClose?.()
   }
 
@@ -203,15 +209,17 @@ export default function VoiceOnlySpeechModal({
       setError('Select a voice first.')
       return
     }
-    // Guard: reject voices from unsupported TTS engines (e.g. STARFISH) that may have
-    // been stored on the scene from an earlier avatar-creation step.
     const resolvedVoice = voices.find((v) => v.id === selectedVoiceId)
-    const isUnsupported =
-      resolvedVoice
-        ? UNSUPPORTED_TTS_ENGINES.includes(resolvedVoice.engine)
-        : false
-    if (isUnsupported) {
-      setError('This voice is not supported for speech generation. Please select a different voice.')
+    if (resolvedVoice && !resolvedVoice.supportsSpeechPreview) {
+      setError(
+        'This voice does not support speech generation. Choose a designed or catalog Starfish voice.'
+      )
+      setStep('voice')
+      setSelectedVoiceId('')
+      return
+    }
+    if (!resolvedVoice) {
+      setError('Select a supported voice first.')
       setStep('voice')
       setSelectedVoiceId('')
       return
@@ -308,6 +316,15 @@ export default function VoiceOnlySpeechModal({
           </div>
 
           {step === 'voice' ? (
+            <>
+              {previewNotice ? (
+                <VoicePreviewUnavailableNotice
+                  voiceName={previewNotice.voiceName}
+                  onDismiss={dismissPreviewNotice}
+                  compact
+                  className="vos-preview-notice"
+                />
+              ) : null}
             <div className="vos-step1-grid">
               <div className="vos-list-pane">
                 <div className="vos-list-scroll premium-scrollbar">
@@ -437,6 +454,7 @@ export default function VoiceOnlySpeechModal({
                 </div>
               </div>
             </div>
+            </>
           ) : (
             <div className="vos-script-full" style={{ minHeight: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div className="vos-fields">

@@ -1,21 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MdMic, MdSearch, MdPlayArrow, MdVolumeUp } from 'react-icons/md';
 import { Loader2 } from 'lucide-react';
 import heygenService from '../../../../services/heygenService';
-
-// Voice engines unsupported by the HeyGen TTS speech generation endpoint.
-const UNSUPPORTED_TTS_ENGINES = ['STARFISH']
-
-function isSupportedTtsVoice(rawVoice) {
-  const engine = String(rawVoice?.voice_engine || rawVoice?.engine || rawVoice?.provider || '').toUpperCase()
-  return engine === '' || !UNSUPPORTED_TTS_ENGINES.includes(engine)
-}
+import { extractHeygenVoiceList, mapHeygenVoice } from '../../../../utils/heygenVoices';
+import VoicePreviewUnavailableNotice, {
+  showVoicePreviewUnavailableNotice,
+} from '../../../ui/VoicePreviewNotice/VoicePreviewNotice';
 
 const EditorSidebarVoice = ({ activeScene, activeSceneId, updateScene }) => {
   const [voices, setVoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeGender, setActiveGender] = useState('all');
+  const [previewNotice, setPreviewNotice] = useState(null);
+  const previewNoticeTimerRef = useRef(null);
 
   useEffect(() => {
     const fetchVoices = async () => {
@@ -25,31 +23,16 @@ const EditorSidebarVoice = ({ activeScene, activeSceneId, updateScene }) => {
         if (activeGender !== 'all') params.gender = activeGender;
 
         const responseData = await heygenService.getVoices(params);
-
-        // Robust mapping to handle different API versions and response shapes
-        let voiceList = [];
-        const data = responseData?.data || responseData;
-
-        if (Array.isArray(data)) {
-          voiceList = data;
-        } else if (data?.voices) {
-          voiceList = data.voices;
-        } else if (responseData?.voices) {
-          voiceList = responseData.voices;
-        }
+        const voiceList = extractHeygenVoiceList(responseData);
 
         console.log(`Virtual Studio (Editor): Mapping ${voiceList.length} voices`, { raw: responseData });
 
-        // Filter out engines not supported by TTS speech generation (e.g. STARFISH)
-        const mappedVoices = voiceList.filter(isSupportedTtsVoice).map(v => ({
-          id: v.voice_id || v.id,
-          name: v.name || v.display_name || 'AI Voice',
-          gender: v.gender || 'unknown',
-          language: v.language || v.language_name || 'English',
-          previewUrl: v.preview_audio_url || v.preview_url || v.preview_audio,
-          engine: String(v.voice_engine || v.engine || v.provider || '').toUpperCase() || null,
-          tags: v.tags || []
-        }));
+        const mappedVoices = voiceList
+          .map((v) => ({
+            ...mapHeygenVoice(v),
+            tags: v.tags || [],
+          }))
+          .filter((v) => v?.id);
 
         setVoices(mappedVoices);
       } catch (err) {
@@ -74,12 +57,23 @@ const EditorSidebarVoice = ({ activeScene, activeSceneId, updateScene }) => {
     });
   };
 
-  const playPreview = (e, url) => {
+  const playPreview = (e, voice) => {
     e.stopPropagation();
-    if (!url) return;
-    const audio = new Audio(url);
-    audio.play();
+    if (voice?.previewUrl) {
+      const audio = new Audio(voice.previewUrl);
+      audio.play();
+      return;
+    }
+    if (previewNoticeTimerRef.current) clearTimeout(previewNoticeTimerRef.current);
+    previewNoticeTimerRef.current = showVoicePreviewUnavailableNotice(
+      setPreviewNotice,
+      voice?.name
+    );
   };
+
+  useEffect(() => () => {
+    if (previewNoticeTimerRef.current) clearTimeout(previewNoticeTimerRef.current);
+  }, []);
 
   return (
     <div className="tool-panel-content elements-ui" style={{ padding: '0px', display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -148,6 +142,20 @@ const EditorSidebarVoice = ({ activeScene, activeSceneId, updateScene }) => {
       </div>
 
       <div style={{ padding: '20px', flex: 1, overflowY: 'auto' }} className="premium-scrollbar">
+        {previewNotice ? (
+          <VoicePreviewUnavailableNotice
+            voiceName={previewNotice.voiceName}
+            onDismiss={() => {
+              if (previewNoticeTimerRef.current) {
+                clearTimeout(previewNoticeTimerRef.current);
+                previewNoticeTimerRef.current = null;
+              }
+              setPreviewNotice(null);
+            }}
+            compact
+            className="voice-preview-notice--spaced"
+          />
+        ) : null}
         {loading ? (
           <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
             <Loader2 className="spinner" size={24} style={{ margin: '0 auto 12px' }} />
@@ -197,7 +205,7 @@ const EditorSidebarVoice = ({ activeScene, activeSceneId, updateScene }) => {
                   </div>
                   <button
                     className="play-preview-btn"
-                    onClick={(e) => playPreview(e, voice.previewUrl)}
+                    onClick={(e) => playPreview(e, voice)}
                     style={{
                       width: '28px',
                       height: '28px',
