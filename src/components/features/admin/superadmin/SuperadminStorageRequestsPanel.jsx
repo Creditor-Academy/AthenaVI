@@ -6,6 +6,7 @@ import '../../../../pages/AdminPortal/SuperadminPortal.css'
 
 const PAGE_SIZE = 20
 const STATUS_OPTIONS = [
+  { value: '', label: 'All' },
   { value: 'pending', label: 'Pending' },
   { value: 'approved', label: 'Approved' },
   { value: 'rejected', label: 'Rejected' },
@@ -186,7 +187,7 @@ function RejectModal({ request, onClose, onRejected }) {
 function SuperadminStorageRequestsPanel() {
   const [requests, setRequests] = useState([])
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 })
-  const [status, setStatus] = useState('pending')
+  const [status, setStatus] = useState('')
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -255,6 +256,8 @@ function SuperadminStorageRequestsPanel() {
           </select>
         </div>
 
+        {/* Column headers — only show when there are rows */}
+        {!loading && requests.length > 0 && (
         <div style={{
           display: 'grid',
           gridTemplateColumns: '1.2fr 1fr 120px 100px 160px',
@@ -274,6 +277,7 @@ function SuperadminStorageRequestsPanel() {
           <span>Submitted</span>
           <span style={{ textAlign: 'right' }}>Action</span>
         </div>
+        )}
 
         <div className="sa-scroll" style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
           {loading ? (
@@ -281,9 +285,40 @@ function SuperadminStorageRequestsPanel() {
               <span className="sa-spinner" /> Loading requests…
             </div>
           ) : requests.length === 0 ? (
-            <div className="sa-empty" style={{ padding: '48px 20px' }}>
-              <HardDrive className="sa-empty-icon" size={36} />
-              No {status} storage requests.
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              minHeight: 200,
+              gap: 12,
+              color: 'var(--text-muted)',
+            }}>
+              <div style={{
+                width: 56,
+                height: 56,
+                borderRadius: 16,
+                background: 'color-mix(in srgb, var(--text-muted) 10%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--text-muted) 20%, var(--border-color))',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <HardDrive size={24} strokeWidth={1.5} />
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: 4 }}>
+                  No {status ? status : ''} requests
+                </div>
+                <div style={{ fontSize: '0.8125rem' }}>
+                  {status === 'pending'
+                    ? 'All caught up — no storage upgrade requests waiting for review.'
+                    : status === ''
+                    ? 'No storage upgrade requests found.'
+                    : `No ${status} storage requests to show.`}
+                </div>
+              </div>
             </div>
           ) : (
             requests.map((req) => {
