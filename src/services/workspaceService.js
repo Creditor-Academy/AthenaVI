@@ -325,6 +325,11 @@ class WorkspaceService {
         if (response.status === 400) {
           throw new Error(errorData.message || 'This invitation is no longer valid');
         }
+        if (response.status === 404) {
+          throw new Error(
+            'Invite service is unavailable. Please try again shortly or contact support.'
+          );
+        }
         throw new Error(errorData.message || `Failed to load invitation: ${response.status}`);
       }
 
