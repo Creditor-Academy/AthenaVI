@@ -166,10 +166,10 @@ export const AuthProvider = ({ children }) => {
   // Register function
   const register = async (userData) => {
     try {
-      const { user: newUser } = await authService.register(userData)
+      const { user: newUser, workspace } = await authService.register(userData)
       setUser(newUser)
       setIsAuthenticated(true)
-      return { success: true }
+      return { success: true, workspace: workspace || null }
     } catch (error) {
       return {
         success: false,
@@ -247,8 +247,8 @@ export const AuthProvider = ({ children }) => {
   }
 
   // Google login function — redirects browser to backend OAuth endpoint
-  const googleLogin = () => {
-    authService.googleLogin()
+  const googleLogin = (invitationToken) => {
+    authService.googleLogin(invitationToken)
   }
 
   // Handle Google OAuth callback — reads #access_token from hash

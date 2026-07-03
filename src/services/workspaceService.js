@@ -1,5 +1,7 @@
-import { buildUrl, getAuthHeaders } from '../config/api.js';
+import API_CONFIG, { buildUrl, getAuthHeaders } from '../config/api.js';
 import videoLibraryService from './videoLibraryService.js';
+import inboxService from './inboxService.js';
+import { mapInboxNotificationsToInvitations } from '../utils/inboxInvitationMapper.js';
 import { filterProjectsInFolder, resolveProjectFolderId, findDuplicateProjectName } from '../utils/projectNameValidation.js';
 
 class WorkspaceService {
@@ -302,6 +304,46 @@ class WorkspaceService {
       return { success: true, message: 'Invitation sent successfully' };
     } catch (error) {
       console.error('Error sending invitation:', error);
+      throw error;
+    }
+  }
+
+  // Preview workspace invitation (public — no auth required)
+  async getInvitationPreview(token) {
+    try {
+      const response = await fetch(
+        buildUrl(`/api/workspaces/invitations/${encodeURIComponent(token)}`),
+        {
+          method: 'GET',
+          headers: API_CONFIG.HEADERS,
+          cache: 'no-store',
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 400) {
+          throw new Error(errorData.message || 'This invitation is no longer valid');
+        }
+        throw new Error(errorData.message || `Failed to load invitation: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const invitation = data.data?.invitation || data.invitation;
+      if (!invitation) {
+        throw new Error('This invitation is no longer valid');
+      }
+
+      return {
+        email: invitation.email || '',
+        role: invitation.role || 'MEMBER',
+        expiresAt: invitation.expiresAt,
+        requiresRegistration: Boolean(invitation.requiresRegistration),
+        workspace: this.normalizeId(invitation.workspace),
+        inviter: invitation.inviter || null,
+      };
+    } catch (error) {
+      console.error('Error loading invitation preview:', error);
       throw error;
     }
   }
@@ -935,10 +977,13 @@ class WorkspaceService {
   }
 
   async getInvitations() {
-    // NOTE: The API has no "list my received invitations" endpoint.
-    // Invitations are only accepted via the email link (POST /api/workspaces/invitations/accept).
-    // This method intentionally returns an empty array.
-    return [];
+    try {
+      const data = await inboxService.listNotifications({ category: 'workspace', limit: 50 });
+      return mapInboxNotificationsToInvitations(data.notifications || []);
+    } catch (error) {
+      console.error('Error loading received invitations:', error);
+      return [];
+    }
   }
 
   async listWorkspaceInvitations(workspaceId) {

@@ -121,12 +121,12 @@ export const authService = {
   async register(userData) {
     try {
       const response = await api.post('/api/auth/register', userData)
-      const { accessToken, user } = response.data.data
+      const { accessToken, user, workspace } = response.data.data
 
       localStorage.setItem('accessToken', accessToken)
       localStorage.setItem('user', JSON.stringify(user))
 
-      return { success: true, user }
+      return { success: true, user, workspace: workspace || null }
     } catch (error) {
       throw getApiError(error, 'Registration failed')
     }
@@ -146,11 +146,13 @@ export const authService = {
     }
   },
 
-  googleLogin() {
+  googleLogin(invitationToken) {
+    const query = invitationToken
+      ? `?invitationToken=${encodeURIComponent(invitationToken)}`
+      : ''
     // replace() avoids stacking the login page before the OAuth redirect chain
-    window.location.replace(buildUrl('/api/auth/google'))
+    window.location.replace(buildUrl(`/api/auth/google${query}`))
   },
-
   handleGoogleCallback() {
     const accessToken = getOAuthAccessTokenFromUrl()
 

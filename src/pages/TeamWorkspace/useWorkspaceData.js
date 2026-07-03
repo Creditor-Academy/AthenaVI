@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import workspaceService from '../../services/workspaceService.js';
 import creditsService from '../../services/creditsService.js';
+import inboxService from '../../services/inboxService.js';
+import { mapInboxNotificationsToInvitations } from '../../utils/inboxInvitationMapper.js';
 import { formatFolderSize } from '../../utils/formatSize.js';
 import { buildWorkspaceUserLookup } from '../../utils/workspaceUsers.js';
 import {
@@ -207,8 +209,9 @@ export function useWorkspaceData({ currentUserId, authUser, authLoading }) {
   // ------------------------------------------------------------------
   const loadInvitations = useCallback(async () => {
     try {
-      const items = await workspaceService.getInvitations();
-      setInvitations(items || []);
+      const data = await inboxService.listNotifications({ category: 'workspace', limit: 50 });
+      const items = mapInboxNotificationsToInvitations(data.notifications || []);
+      setInvitations(items);
     } catch (error) {
       console.error('Failed to load invitations:', error);
       setInvitations([]);
