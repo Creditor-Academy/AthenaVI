@@ -1,6 +1,8 @@
 import { MdDelete, MdGraphicEq, MdPlayArrow } from 'react-icons/md';
 import { Loader2 } from 'lucide-react';
 import { VoiceGenderIcon } from '../../components/ui/icons';
+import AudioPlayingWave from '../../components/ui/AudioPlayingWave/AudioPlayingWave';
+import VoicePreviewUnavailableInline from '../../components/ui/VoicePreviewUnavailableInline/VoicePreviewUnavailableInline';
 import { normalizeVoiceGender } from '../../utils/voiceGender';
 import { CLONE_PREVIEW_TOOLTIP } from '../../utils/heygenVoices';
 
@@ -19,6 +21,8 @@ function VoiceLibraryRow({
   onOpen,
   onPreview,
   onTest,
+  isPreviewPlaying = false,
+  previewUnavailableReason = null,
   showTestButton = true,
   clonePreviewTooltip = false,
   canDelete = false,
@@ -58,6 +62,15 @@ function VoiceLibraryRow({
 
       <div className="col col-name">
         <h4 title={voice.name}>{voice.name}</h4>
+        {isPreviewPlaying ? (
+          <span className="voices-library-row__playing-indicator" aria-hidden>
+            <AudioPlayingWave size="sm" barCount={4} />
+            <span className="voices-library-row__playing-label">Playing</span>
+          </span>
+        ) : null}
+        {!isPreviewPlaying && previewUnavailableReason ? (
+          <VoicePreviewUnavailableInline variant="compact" />
+        ) : null}
         {statusBadge ? (
           <span className={`voices-status-badge voices-status-badge--inline ${statusBadge.className}`}>
             {statusBadge.label === 'Processing' ? (
@@ -85,15 +98,18 @@ function VoiceLibraryRow({
       <div className="row-actions voices-library-row__actions">
         <button
           type="button"
-          className="context-menu-btn"
-          title={clonePreviewTooltip ? CLONE_PREVIEW_TOOLTIP : 'Preview voice sample'}
-          aria-label={`Preview ${voice.name}`}
+          className={`context-menu-btn voices-preview-btn${
+            isPreviewPlaying ? ' voices-preview-btn--playing' : ''
+          }`}
+          title={isPreviewPlaying ? 'Stop preview' : clonePreviewTooltip ? CLONE_PREVIEW_TOOLTIP : 'Preview voice sample'}
+          aria-label={isPreviewPlaying ? `Stop preview ${voice.name}` : `Preview ${voice.name}`}
+          aria-pressed={isPreviewPlaying}
           onClick={(event) => {
             event.stopPropagation();
             onPreview?.(voice, event);
           }}
         >
-          <MdPlayArrow size={18} />
+          {isPreviewPlaying ? <AudioPlayingWave size="sm" /> : <MdPlayArrow size={18} />}
         </button>
         {showTestButton ? (
           <button

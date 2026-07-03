@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { MdClose, MdCheckCircle, MdOpenInNew, MdPlayArrow, MdMic, MdCloudUpload, MdPerson, MdTextFields, MdKeyboardArrowDown, MdPause, MdSpeed, MdEdit } from 'react-icons/md'
+import { probeAudioDuration } from '../../../utils/audioDuration'
 
 const styles = `
 .voice-panel-overlay {
@@ -1107,6 +1108,9 @@ function VoiceCreatePanel({ voice, onClose, onNext }) {
         setAudioUrl(url)
         setAudioFileName(`recording-${Date.now()}.webm`)
         setAudioFileSize(blob.size)
+        setCurrentTime(0)
+        setAudioProgress(0)
+        loadAudioDuration(url)
         // Create a File object for consistency
         const file = new File([blob], `recording-${Date.now()}.webm`, { type: 'audio/webm' })
         setUploadedFile(file)
@@ -1153,8 +1157,11 @@ function VoiceCreatePanel({ voice, onClose, onNext }) {
       setUploadedFile(file)
       setAudioFileName(file.name)
       setAudioFileSize(file.size)
+      setCurrentTime(0)
+      setAudioProgress(0)
       const url = URL.createObjectURL(file)
       setAudioUrl(url)
+      loadAudioDuration(url)
     }
   }
 
@@ -1184,8 +1191,11 @@ function VoiceCreatePanel({ voice, onClose, onNext }) {
       setUploadedFile(file)
       setAudioFileName(file.name)
       setAudioFileSize(file.size)
+      setCurrentTime(0)
+      setAudioProgress(0)
       const url = URL.createObjectURL(file)
       setAudioUrl(url)
+      loadAudioDuration(url)
     }
   }
 
@@ -1201,32 +1211,49 @@ function VoiceCreatePanel({ voice, onClose, onNext }) {
     return (bytes / (1024 * 1024)).toFixed(2) + ' MB'
   }
 
+  const loadAudioDuration = (url, fallbackSeconds = null) => {
+    setAudioDuration(fallbackSeconds ?? 0)
+    if (!url) return
+    probeAudioDuration(url).then((duration) => {
+      if (duration) setAudioDuration(duration)
+    })
+  }
+
   // Handle audio playback
   useEffect(() => {
-    if (audioRef.current) {
-      const audio = audioRef.current
-      const updateProgress = () => {
-        if (audio.duration) {
-          setAudioProgress((audio.currentTime / audio.duration) * 100)
-          setCurrentTime(audio.currentTime)
-          setAudioDuration(audio.duration)
-        }
-      }
-      const handleEnded = () => {
-        setIsPlaying(false)
-        setAudioProgress(0)
-        setCurrentTime(0)
-      }
-      audio.addEventListener('timeupdate', updateProgress)
-      audio.addEventListener('loadedmetadata', () => {
+    if (!audioRef.current || !audioUrl) return
+
+    const audio = audioRef.current
+    const updateProgress = () => {
+      if (audio.duration) {
+        setAudioProgress((audio.currentTime / audio.duration) * 100)
+        setCurrentTime(audio.currentTime)
         setAudioDuration(audio.duration)
-      })
-      audio.addEventListener('ended', handleEnded)
-      return () => {
-        audio.removeEventListener('timeupdate', updateProgress)
-        audio.removeEventListener('loadedmetadata', () => {})
-        audio.removeEventListener('ended', handleEnded)
       }
+    }
+    const handleLoadedMetadata = () => {
+      if (audio.duration) setAudioDuration(audio.duration)
+    }
+    const handleEnded = () => {
+      setIsPlaying(false)
+      setAudioProgress(0)
+      setCurrentTime(0)
+    }
+
+    audio.addEventListener('timeupdate', updateProgress)
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata)
+    audio.addEventListener('ended', handleEnded)
+
+    if (audio.readyState >= 1 && audio.duration) {
+      setAudioDuration(audio.duration)
+    } else {
+      loadAudioDuration(audioUrl)
+    }
+
+    return () => {
+      audio.removeEventListener('timeupdate', updateProgress)
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata)
+      audio.removeEventListener('ended', handleEnded)
     }
   }, [audioUrl])
 
@@ -1519,12 +1546,15 @@ function VoiceCreatePanel({ voice, onClose, onNext }) {
                         <p className="voice-file-display-size">{formatFileSize(audioFileSize)}</p>
                       </div>
                     </div>
-                    <audio ref={audioRef} src={audioUrl} />
+                    <audio ref={audioRef} src={audioUrl} preload="metadata" />
                     <div className="voice-audio-player">
                       <div className="voice-audio-progress">
                         <div className="voice-audio-progress-bar" style={{ width: `${audioProgress}%` }} />
                       </div>
-                      <div className="voice-audio-time">{formatTime(Math.floor(currentTime))}</div>
+                      <div className="voice-audio-time">
+                        {formatTime(Math.floor(currentTime))}
+                        {audioDuration > 0 ? ` / ${formatTime(Math.floor(audioDuration))}` : ''}
+                      </div>
                       <button className="voice-audio-play-btn" onClick={togglePlay}>
                         {isPlaying ? <MdPause size={24} /> : <MdPlayArrow size={24} style={{ marginLeft: '4px' }} />}
                       </button>
@@ -1643,12 +1673,15 @@ function VoiceCreatePanel({ voice, onClose, onNext }) {
                         <p className="voice-file-display-size">{formatFileSize(audioFileSize)}</p>
                       </div>
                     </div>
-                    <audio ref={audioRef} src={audioUrl} />
+                    <audio ref={audioRef} src={audioUrl} preload="metadata" />
                     <div className="voice-audio-player">
                       <div className="voice-audio-progress">
                         <div className="voice-audio-progress-bar" style={{ width: `${audioProgress}%` }} />
                       </div>
-                      <div className="voice-audio-time">{formatTime(Math.floor(currentTime))}</div>
+                      <div className="voice-audio-time">
+                        {formatTime(Math.floor(currentTime))}
+                        {audioDuration > 0 ? ` / ${formatTime(Math.floor(audioDuration))}` : ''}
+                      </div>
                       <button className="voice-audio-play-btn" onClick={togglePlay}>
                         {isPlaying ? <MdPause size={24} /> : <MdPlayArrow size={24} style={{ marginLeft: '4px' }} />}
                       </button>

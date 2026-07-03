@@ -68,6 +68,7 @@ import { useEditorHistory } from '../../hooks/useEditorHistory'
 import { useEditorUx } from '../../hooks/useEditorUx'
 import useTextCanvasInteraction from '../../hooks/useTextCanvasInteraction'
 import { findSceneMusicClip, resolveAudioClipSrc } from '../../utils/audioClipUtils'
+import { probeAudioDuration } from '../../utils/audioDuration'
 import { normalizeClipStack, normalizeClipsToScene, getLayerNudgeStep } from '../../utils/editorLayerUtils'
 import {
   findTopFrameAtPoint,
@@ -115,41 +116,6 @@ function isEphemeralUrl(url) {
   return url.startsWith('blob:') || url.includes('X-Amz-')
 }
 
-async function getAudioDurationSeconds(src, { timeoutMs = 12000 } = {}) {
-  if (!src || typeof src !== 'string') return null
-
-  return await new Promise((resolve) => {
-    const audio = new Audio()
-    audio.preload = 'metadata'
-    audio.crossOrigin = 'anonymous'
-
-    const cleanup = () => {
-      audio.onloadedmetadata = null
-      audio.onerror = null
-      audio.src = ''
-    }
-
-    const timer = setTimeout(() => {
-      cleanup()
-      resolve(null)
-    }, timeoutMs)
-
-    audio.onloadedmetadata = () => {
-      clearTimeout(timer)
-      const d = audio.duration
-      cleanup()
-      resolve(Number.isFinite(d) && d > 0 ? d : null)
-    }
-
-    audio.onerror = () => {
-      clearTimeout(timer)
-      cleanup()
-      resolve(null)
-    }
-
-    audio.src = src
-  })
-}
 
 function stripEphemeralMediaFromDraft(projectState) {
   if (!projectState || typeof projectState !== 'object') return projectState
@@ -2629,7 +2595,7 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
     const presignedUrl = download?.presignedUrl || download?.url
     if (!presignedUrl) throw new Error('Speech download URL missing')
 
-    const speechDurationSecRaw = await getAudioDurationSeconds(presignedUrl)
+    const speechDurationSecRaw = await probeAudioDuration(presignedUrl, { crossOrigin: true })
     // Small guard: keep at least 1s and round to 2 decimals for stable UX.
     const speechDurationSec = speechDurationSecRaw ? Math.max(1, Math.round(speechDurationSecRaw * 100) / 100) : null
 

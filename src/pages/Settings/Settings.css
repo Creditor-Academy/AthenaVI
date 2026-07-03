@@ -834,6 +834,95 @@
   opacity: 0.85;
 }
 
+/* Notification settings — glass panels with decorative bubbles */
+.notification-settings-flow {
+  gap: 20px;
+}
+
+.notification-settings-section {
+  margin: 0;
+}
+
+.notification-settings-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border-color) 72%, transparent);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--bg-card) 68%, transparent);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  padding: 22px 24px;
+  box-shadow:
+    0 10px 36px color-mix(in srgb, #000 5%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #fff 8%, transparent);
+}
+
+.notification-settings-bubble {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(var(--primary-rgb), 0.14) 0%,
+    rgba(var(--primary-rgb), 0.04) 52%,
+    transparent 100%
+  );
+}
+
+.notification-settings-bubble--1 {
+  width: 132px;
+  height: 132px;
+  top: -54px;
+  right: -36px;
+}
+
+.notification-settings-bubble--2 {
+  width: 88px;
+  height: 88px;
+  bottom: -28px;
+  left: -24px;
+  opacity: 0.75;
+}
+
+.notification-settings-bubble--3 {
+  width: 56px;
+  height: 56px;
+  top: 42%;
+  right: 18%;
+  opacity: 0.45;
+}
+
+.notification-settings-panel-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.notification-settings-panel-header h4 {
+  margin-bottom: 2px;
+}
+
+.notification-settings-card {
+  border: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 42%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 2px 16px;
+  overflow: hidden;
+}
+
+.notification-settings-card .settings-toggle-row {
+  padding: 16px 0;
+}
+
+.notification-settings-card .settings-toggle-row:last-child {
+  border-bottom: none;
+}
+
 .settings-toggle-row {
   display: flex;
   align-items: center;
@@ -1387,6 +1476,41 @@
 @media (max-width: 768px) {
   .settings-flow {
     gap: 14px;
+  }
+
+  .notification-settings-flow {
+    gap: 16px;
+  }
+
+  .notification-settings-panel {
+    padding: 18px 16px;
+    border-radius: 18px;
+  }
+
+  .notification-settings-bubble--1 {
+    width: 108px;
+    height: 108px;
+    top: -44px;
+    right: -28px;
+  }
+
+  .notification-settings-bubble--2 {
+    width: 72px;
+    height: 72px;
+    bottom: -22px;
+    left: -18px;
+  }
+
+  .notification-settings-bubble--3 {
+    display: none;
+  }
+
+  .notification-settings-card {
+    padding: 2px 12px;
+  }
+
+  .notification-settings-card .settings-toggle-row {
+    padding: 14px 0;
   }
 
   .mode-selection-square-grid {

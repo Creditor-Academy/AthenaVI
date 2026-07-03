@@ -13,6 +13,7 @@ import {
 import VoicePreviewUnavailableNotice, {
   showVoicePreviewUnavailableNotice,
 } from '../../components/ui/VoicePreviewNotice/VoicePreviewNotice'
+import AudioPreviewPlayer from '../../components/ui/AudioPreviewPlayer/AudioPreviewPlayer'
 import '../../components/features/workspace/workspace/WorkspaceStyles.css'
 import '../Videos/Videos.css'
 import '../Avatars/Avatars.css'
@@ -133,7 +134,7 @@ function CreateVoice({ onBack }) {
         }
         suggestionPreviewNoticeTimerRef.current = showVoicePreviewUnavailableNotice(
           setSuggestionPreviewNotice,
-          mapped.name
+          mapped
         )
       }
     } catch (err) {
@@ -145,7 +146,7 @@ function CreateVoice({ onBack }) {
       }
       suggestionPreviewNoticeTimerRef.current = showVoicePreviewUnavailableNotice(
         setSuggestionPreviewNotice,
-        mapped?.name || voice.name
+        mapped || voice
       )
     } finally {
       setPreviewingSuggestionId(null)
@@ -370,12 +371,12 @@ function CreateVoice({ onBack }) {
                                     <strong>Voice Sample Ready</strong>
                                     <p>{selectedFile?.name || 'recorded-voice.webm'}</p>
                                   </div>
-                                  <audio
+                                  <AudioPreviewPlayer
                                     src={previewUrl}
-                                    controls
+                                    previewSrc={previewUrl}
                                     controlsList="nodownload"
                                     className="premium-audio-player"
-                                    onClick={e => e.stopPropagation()}
+                                    onClick={(e) => e.stopPropagation()}
                                   />
                                   <div className="ready-status">
                                     <CheckCircle size={14} />
@@ -484,6 +485,7 @@ function CreateVoice({ onBack }) {
                         {suggestionPreviewNotice ? (
                           <VoicePreviewUnavailableNotice
                             voiceName={suggestionPreviewNotice.voiceName}
+                            reason={suggestionPreviewNotice.reason}
                             onDismiss={() => {
                               if (suggestionPreviewNoticeTimerRef.current) {
                                 clearTimeout(suggestionPreviewNoticeTimerRef.current)

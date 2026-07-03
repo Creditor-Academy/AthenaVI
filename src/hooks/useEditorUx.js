@@ -286,6 +286,8 @@ export function useEditorUx({
         name: options.name || 'Background music',
         volume: options.volume ?? 1,
         startTime: options.startTime ?? 0,
+        previewBlobUrl: options.previewBlobUrl ?? null,
+        sourceDurationSec: options.sourceDurationSec ?? null,
       });
       newId = clip.id;
       return [

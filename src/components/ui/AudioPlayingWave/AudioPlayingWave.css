@@ -1,0 +1,86 @@
+.audio-playing-wave {
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  color: currentColor;
+}
+
+.audio-playing-wave--sm {
+  height: 14px;
+  gap: 2px;
+}
+
+.audio-playing-wave--sm .audio-playing-wave__bar {
+  width: 2px;
+  border-radius: 1px;
+}
+
+.audio-playing-wave--md {
+  height: 22px;
+  gap: 3px;
+}
+
+.audio-playing-wave--md .audio-playing-wave__bar {
+  width: 3px;
+  border-radius: 1.5px;
+}
+
+.audio-playing-wave--lg {
+  height: 32px;
+  gap: 4px;
+}
+
+.audio-playing-wave--lg .audio-playing-wave__bar {
+  width: 4px;
+  border-radius: 2px;
+}
+
+.audio-playing-wave__bar {
+  display: block;
+  height: 100%;
+  background: currentColor;
+  transform-origin: bottom center;
+  animation: audioPlayingWaveBar 0.85s ease-in-out infinite;
+}
+
+.audio-playing-wave__bar:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.audio-playing-wave__bar:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.audio-playing-wave__bar:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+.audio-playing-wave__bar:nth-child(4) {
+  animation-delay: 0.16s;
+}
+
+.audio-playing-wave__bar:nth-child(5) {
+  animation-delay: 0.08s;
+}
+
+.audio-playing-wave__bar:nth-child(6) {
+  animation-delay: 0.2s;
+}
+
+.audio-playing-wave__bar:nth-child(7) {
+  animation-delay: 0.04s;
+}
+
+@keyframes audioPlayingWaveBar {
+  0%,
+  100% {
+    transform: scaleY(0.28);
+    opacity: 0.45;
+  }
+
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}

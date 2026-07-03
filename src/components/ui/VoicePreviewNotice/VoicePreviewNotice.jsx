@@ -1,12 +1,58 @@
 import { MdClose, MdVolumeUp } from 'react-icons/md';
+import {
+  getVoicePreviewNoticeReason,
+  getVoicePreviewUnavailableMessage,
+  VOICE_PREVIEW_NOTICE_REASONS,
+} from '../../../utils/heygenVoices';
 import './VoicePreviewNotice.css';
+
+function VoicePreviewNoticeBody({ voiceName, reason }) {
+  const { title, description } = getVoicePreviewUnavailableMessage(voiceName, reason);
+
+  if (reason === VOICE_PREVIEW_NOTICE_REASONS.NO_SAMPLE && voiceName) {
+    const [before, after] = description.split(voiceName);
+    return (
+      <>
+        <strong>{title}</strong>
+        <p>
+          {before}
+          <span className="voice-preview-notice__name">{voiceName}</span>
+          {after}
+        </p>
+      </>
+    );
+  }
+
+  if (reason === VOICE_PREVIEW_NOTICE_REASONS.CLONED && voiceName) {
+    const rest = description.slice(voiceName.length);
+    return (
+      <>
+        <strong>{title}</strong>
+        <p>
+          <span className="voice-preview-notice__name">{voiceName}</span>
+          {rest}
+        </p>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <strong>{title}</strong>
+      <p>{description}</p>
+    </>
+  );
+}
 
 export default function VoicePreviewUnavailableNotice({
   voiceName,
+  reason,
   onDismiss,
   className = '',
   compact = false,
 }) {
+  const resolvedReason = reason || VOICE_PREVIEW_NOTICE_REASONS.NO_SAMPLE;
+
   return (
     <div
       className={`voice-preview-notice ${compact ? 'voice-preview-notice--compact' : ''} ${className}`.trim()}
@@ -16,21 +62,7 @@ export default function VoicePreviewUnavailableNotice({
         <MdVolumeUp size={18} />
       </div>
       <div className="voice-preview-notice__body">
-        <strong>Preview unavailable</strong>
-        <p>
-          {voiceName ? (
-            <>
-              We can&apos;t play a sample for{' '}
-              <span className="voice-preview-notice__name">{voiceName}</span> right now, but you
-              can still select and use it in your project.
-            </>
-          ) : (
-            <>
-              We can&apos;t play a sample right now, but you can still select and use this voice in
-              your project.
-            </>
-          )}
-        </p>
+        <VoicePreviewNoticeBody voiceName={voiceName} reason={resolvedReason} />
       </div>
       {onDismiss ? (
         <button
@@ -46,8 +78,16 @@ export default function VoicePreviewUnavailableNotice({
   );
 }
 
-export function showVoicePreviewUnavailableNotice(setter, voiceName, { autoDismissMs = 6000 } = {}) {
-  setter({ voiceName });
+export function showVoicePreviewUnavailableNotice(
+  setter,
+  voiceOrName,
+  { autoDismissMs = 6000, reason } = {}
+) {
+  const voice = voiceOrName && typeof voiceOrName === 'object' ? voiceOrName : null;
+  const voiceName = voice?.name || (typeof voiceOrName === 'string' ? voiceOrName : null);
+  const resolvedReason = reason || (voice ? getVoicePreviewNoticeReason(voice) : VOICE_PREVIEW_NOTICE_REASONS.NO_SAMPLE);
+
+  setter({ voiceId: voice?.id ?? null, voiceName, reason: resolvedReason });
   if (autoDismissMs > 0) {
     return setTimeout(() => setter(null), autoDismissMs);
   }
