@@ -21,6 +21,8 @@ export function mapInboxNotificationToInvitation(notification) {
     workspace: metadata.workspaceId
       ? { id: metadata.workspaceId, name: metadata.workspaceName }
       : null,
+    readAt: notification.readAt ?? null,
+    _raw: notification,
   }
 }
 
@@ -28,4 +30,12 @@ export function mapInboxNotificationsToInvitations(notifications = []) {
   return notifications
     .map(mapInboxNotificationToInvitation)
     .filter(Boolean)
+}
+
+export function filterActionableInvitations(invitations, memberWorkspaceIds) {
+  const ids =
+    memberWorkspaceIds instanceof Set ? memberWorkspaceIds : new Set(memberWorkspaceIds)
+  return (invitations || []).filter(
+    (inv) => inv.workspaceId && !ids.has(inv.workspaceId)
+  )
 }

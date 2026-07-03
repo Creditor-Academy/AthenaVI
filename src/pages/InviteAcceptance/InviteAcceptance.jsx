@@ -2,7 +2,10 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { MdCheck, MdGroup, MdEmail, MdError } from 'react-icons/md'
 import { useAuth } from '../../contexts/AuthContext.jsx'
 import workspaceService from '../../services/workspaceService.js'
-import invitationFlowService from '../../services/invitationFlowService.js'
+import invitationFlowService, {
+  isAlreadyMemberError,
+  isStaleOrExpiredInvitationError,
+} from '../../services/invitationFlowService.js'
 import logoImg from '../../assets/herologo.png'
 import {
   parseInvitationTokenFromUrl,
@@ -110,12 +113,17 @@ const InviteAcceptance = () => {
       invitationFlowService.redirectAfterInvite(workspace || invitation.workspace)
     } catch (err) {
       const message = err.message || 'Failed to accept invitation'
+      if (isAlreadyMemberError(message)) {
+        await invitationFlowService.dismissInvitationInbox({ token })
+        invitationFlowService.redirectAfterInvite(invitation.workspace)
+        return
+      }
       if (message.toLowerCase().includes('different email')) {
         setError(`Sign in with ${invitation.email} to accept this invitation.`)
         setPageMode('wrongAccount')
-      } else if (message.toLowerCase().includes('expired') || message.toLowerCase().includes('invalid')) {
-        setPageMode('invalid')
-        setError('This invitation is no longer valid')
+      } else if (isStaleOrExpiredInvitationError(message)) {
+        await invitationFlowService.dismissInvitationInbox({ token })
+        invitationFlowService.redirectAfterInvite(invitation.workspace)
       } else {
         setError(message)
       }

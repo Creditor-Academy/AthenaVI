@@ -1,6 +1,9 @@
 import { useCallback, useState } from 'react';
 import workspaceService from '../../services/workspaceService.js';
-import invitationFlowService from '../../services/invitationFlowService.js';
+import invitationFlowService, {
+  isAlreadyMemberError,
+  isStaleOrExpiredInvitationError,
+} from '../../services/invitationFlowService.js';
 import inboxService from '../../services/inboxService.js';
 import { savePendingInvitation } from '../../utils/inviteNavigation.js';
 import { formatFolderSize } from '../../utils/formatSize.js';
@@ -171,9 +174,32 @@ export function useWorkspaceActions({
       );
     } catch (error) {
       console.error(error);
+      const workspaceId = invitation?.workspaceId || invitation?.workspace?.id;
+      const alreadyMember = workspaceId
+        ? workspaces.some((ws) => String(ws.id) === String(workspaceId))
+        : false;
+      const staleInvite =
+        isStaleOrExpiredInvitationError(error.message) || isAlreadyMemberError(error.message);
+
+      if (alreadyMember || (staleInvite && workspaceId)) {
+        await invitationFlowService.dismissInvitationInbox({
+          notificationId: invitation?.notificationId,
+          token,
+        });
+        setInvitations((prev) => prev.filter((inv) => (inv.token || inv.id) !== token));
+        showToast("You're already in this workspace", 'success');
+        invitationFlowService.redirectAfterInvite(
+          invitation?.workspace || {
+            id: workspaceId,
+            name: invitation?.workspaceName,
+          }
+        );
+        return;
+      }
+
       showToast(error.message || 'Failed to accept invitation', 'error');
     }
-  }, [setInvitations, loadWorkspaces, showToast]);
+  }, [setInvitations, loadWorkspaces, showToast, workspaces]);
 
   const handleDeclineInvitation = useCallback(async (invitation) => {
     try {

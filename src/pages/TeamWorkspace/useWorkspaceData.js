@@ -2,7 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import workspaceService from '../../services/workspaceService.js';
 import creditsService from '../../services/creditsService.js';
 import inboxService from '../../services/inboxService.js';
-import { mapInboxNotificationsToInvitations } from '../../utils/inboxInvitationMapper.js';
+import {
+  mapInboxNotificationsToInvitations,
+  filterActionableInvitations,
+} from '../../utils/inboxInvitationMapper.js';
 import { formatFolderSize } from '../../utils/formatSize.js';
 import { buildWorkspaceUserLookup } from '../../utils/workspaceUsers.js';
 import {
@@ -209,14 +212,23 @@ export function useWorkspaceData({ currentUserId, authUser, authLoading }) {
   // ------------------------------------------------------------------
   const loadInvitations = useCallback(async () => {
     try {
-      const data = await inboxService.listNotifications({ category: 'workspace', limit: 50 });
+      const data = await inboxService.listNotifications({
+        category: 'workspace',
+        unreadOnly: true,
+        limit: 50,
+      });
       const items = mapInboxNotificationsToInvitations(data.notifications || []);
-      setInvitations(items);
+      const memberWorkspaceIds = new Set(
+        workspaces
+          .map((ws) => ws.id)
+          .filter((id) => id && !String(id).startsWith('personal-'))
+      );
+      setInvitations(filterActionableInvitations(items, memberWorkspaceIds));
     } catch (error) {
       console.error('Failed to load invitations:', error);
       setInvitations([]);
     }
-  }, []);
+  }, [workspaces]);
 
   // ------------------------------------------------------------------
   // loadContributorsForWorkspace
@@ -242,10 +254,15 @@ export function useWorkspaceData({ currentUserId, authUser, authLoading }) {
   useEffect(() => {
     if (!authLoading) {
       loadWorkspaces();
-      loadInvitations();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, authUser?.id, authUser?._id]);
+
+  useEffect(() => {
+    if (!authLoading) {
+      loadInvitations();
+    }
+  }, [authLoading, authUser?.id, authUser?._id, loadInvitations]);
 
   return {
     workspaces,

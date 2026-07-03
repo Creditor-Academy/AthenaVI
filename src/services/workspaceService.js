@@ -325,11 +325,6 @@ class WorkspaceService {
         if (response.status === 400) {
           throw new Error(errorData.message || 'This invitation is no longer valid');
         }
-        if (response.status === 404) {
-          throw new Error(
-            'Invite service is unavailable. Please try again shortly or contact support.'
-          );
-        }
         throw new Error(errorData.message || `Failed to load invitation: ${response.status}`);
       }
 
@@ -983,7 +978,11 @@ class WorkspaceService {
 
   async getInvitations() {
     try {
-      const data = await inboxService.listNotifications({ category: 'workspace', limit: 50 });
+      const data = await inboxService.listNotifications({
+        category: 'workspace',
+        unreadOnly: true,
+        limit: 50,
+      });
       return mapInboxNotificationsToInvitations(data.notifications || []);
     } catch (error) {
       console.error('Error loading received invitations:', error);
