@@ -184,6 +184,38 @@ const superadminService = {
     })
   },
 
+  listEarlyAccessRequests({ page = 1, limit = 20, status } = {}) {
+    return superadminRequest(
+      `/api/superadmin/early-access/requests${toQuery({ page, limit, status })}`
+    )
+  },
+
+  getEarlyAccessRequest(requestId) {
+    return superadminRequest(`/api/superadmin/early-access/requests/${requestId}`)
+  },
+
+  updateEarlyAccessStatus(requestId, { status }) {
+    return superadminRequest(`/api/superadmin/early-access/requests/${requestId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    })
+  },
+
+  approveEarlyAccessRequest(requestId) {
+    return superadminRequest(`/api/superadmin/early-access/requests/${requestId}/approve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+  },
+
+  rejectEarlyAccessRequest(requestId) {
+    return superadminRequest(`/api/superadmin/early-access/requests/${requestId}/reject`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+  },
+
   listProductEmailBroadcasts({ page = 1, limit = 20 } = {}) {
     return superadminRequest(
       `/api/superadmin/broadcasts/product-email${toQuery({ page, limit })}`
