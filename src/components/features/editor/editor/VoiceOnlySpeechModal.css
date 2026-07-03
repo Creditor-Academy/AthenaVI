@@ -109,6 +109,11 @@
   flex-shrink: 0;
 }
 
+.vos-preview-notice {
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
 .vos-step1-grid {
   display: grid;
   grid-template-columns: 1fr 0.68fr; /* ~60/40 */

@@ -1,411 +1,274 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { MdCheck, MdGroup, MdEmail, MdError } from 'react-icons/md'
+import { useAuth } from '../../contexts/AuthContext.jsx'
 import workspaceService from '../../services/workspaceService.js'
-
-const styles = `
-.invite-acceptance-container {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.invite-acceptance-card {
-  background: #ffffff;
-  border-radius: 20px;
-  padding: 48px;
-  width: 100%;
-  max-width: 480px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-  text-align: center;
-  animation: slideUp 0.4s ease;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.invite-icon-wrapper {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 24px;
-  font-size: 40px;
-}
-
-.invite-icon-wrapper.success {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: #ffffff;
-}
-
-.invite-icon-wrapper.error {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  color: #ffffff;
-}
-
-.invite-icon-wrapper.loading {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: #ffffff;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
-.invite-title {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 12px 0;
-}
-
-.invite-subtitle {
-  font-size: 16px;
-  color: #64748b;
-  margin: 0 0 32px 0;
-  line-height: 1.6;
-}
-
-.invite-workspace-info {
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 32px;
-  border: 1px solid #e2e8f0;
-}
-
-.invite-workspace-name {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0 0 8px 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.invite-workspace-type {
-  font-size: 14px;
-  color: #64748b;
-  margin: 0;
-  display: flex;
-  align-items: center;
-}
-
-.invite-email {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  color: #64748b;
-  font-size: 16px;
-  margin-bottom: 24px;
-}
-
-.invite-success-details {
-  text-align: center;
-  padding: 24px;
-  background: #f0fdf4;
-  border-radius: 16px;
-  margin-top: 24px;
-}
-
-.invite-success-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #166534;
-  margin: 0 0 8px 0;
-}
-
-.invite-success-message {
-  color: #15803d;
-  font-size: 16px;
-  line-height: 1.5;
-}
-
-.invite-actions {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-  margin-top: 32px;
-}
-
-.btn-primary,
-.btn-secondary {
-  padding: 14px 28px;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 140px;
-  justify-content: center;
-}
-
-.btn-primary {
-  background: #10b981;
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #059669;
-  transform: translateY(-1px);
-}
-
-.btn-primary:disabled {
-  background: #9ca3af;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.btn-secondary {
-  background: #ffffff;
-  color: #374151;
-  border: 2px solid #e5e7eb;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: #f9fafb;
-  border-color: #d1d5db;
-  color: #1e293b;
-}
-
-.btn-secondary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid #ffffff;
-  border-top: 2px solid transparent;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (max-width: 640px) {
-  .invite-acceptance-card {
-    margin: 20px;
-    max-width: 100%;
-  }
-  
-  .invite-title {
-    font-size: 24px;
-  }
-  
-  .invite-actions {
-    flex-direction: column;
-  }
-}
-`
+import invitationFlowService from '../../services/invitationFlowService.js'
+import logoImg from '../../assets/herologo.png'
+import {
+  parseInvitationTokenFromUrl,
+  buildInvitationHeadline,
+  savePendingInvitation,
+  savePendingInvitationPreview,
+} from '../../utils/inviteNavigation.js'
+import './InviteAcceptance.css'
 
 const InviteAcceptance = () => {
+  const { isAuthenticated, user, loading: authLoading, logout } = useAuth()
   const [token, setToken] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [validating, setValidating] = useState(true)
-  const [inviteData, setInviteData] = useState(null)
+  const [invitation, setInvitation] = useState(null)
+  const [pageMode, setPageMode] = useState('loading')
   const [error, setError] = useState('')
   const [accepting, setAccepting] = useState(false)
 
-  useEffect(() => {
-    // Accept both /invitations/accept/<token> and ?token=<token>
-    const pathParts = window.location.pathname.split('/').filter(Boolean)
-    const acceptIndex = pathParts.findIndex((part) => part === 'accept')
-    const tokenFromPath = acceptIndex >= 0 ? pathParts[acceptIndex + 1] : ''
+  const headline = useMemo(
+    () => (invitation ? buildInvitationHeadline(invitation) : ''),
+    [invitation]
+  )
 
-    const urlParams = new URLSearchParams(window.location.search)
-    const inviteToken = tokenFromPath || urlParams.get('token')
-    
-    if (!inviteToken) {
-      setError('No invitation token found')
-      setLoading(false)
-      setValidating(false)
-      return
+  const persistInviteContext = useCallback(() => {
+    if (!token || !invitation) return
+    savePendingInvitation({
+      token,
+      email: invitation.email,
+      workspaceId: invitation.workspace?.id,
+      workspaceName: invitation.workspace?.name,
+    })
+    savePendingInvitationPreview(invitation)
+  }, [token, invitation])
+
+  const loadPreview = useCallback(async (inviteToken) => {
+    setPageMode('loading')
+    setError('')
+    try {
+      const preview = await workspaceService.getInvitationPreview(inviteToken)
+      setInvitation(preview)
+      savePendingInvitation({
+        token: inviteToken,
+        email: preview.email,
+        workspaceId: preview.workspace?.id,
+        workspaceName: preview.workspace?.name,
+      })
+      savePendingInvitationPreview(preview)
+      setPageMode('ready')
+    } catch (err) {
+      setInvitation(null)
+      setError(err.message || 'This invitation is no longer valid')
+      setPageMode('invalid')
     }
-    
-    setToken(inviteToken)
-    validateToken()
   }, [])
 
-  const validateToken = async () => {
-    try {
-      // There is no dedicated token-validation endpoint in the API.
-      // We proceed with accept flow and let the accept endpoint validate token/email.
-      setInviteData({
-        valid: true,
-        workspace: {
-          name: 'this workspace'
-        },
-        invitedEmail: ''
-      })
-      setError('')
-    } catch (err) {
-      setError(err.message || 'Failed to validate invitation')
-    } finally {
-      setValidating(false)
-      setLoading(false)
+  useEffect(() => {
+    const inviteToken = parseInvitationTokenFromUrl()
+    if (!inviteToken) {
+      setError('No invitation token found. Please use the link from your invitation email.')
+      setPageMode('invalid')
+      return
     }
-  }
+    setToken(inviteToken)
+  }, [])
+
+  useEffect(() => {
+    if (!token || authLoading) return
+    loadPreview(token)
+  }, [token, authLoading, loadPreview])
+
+  useEffect(() => {
+    if (!invitation || authLoading || accepting || pageMode !== 'ready') return
+    if (
+      isAuthenticated &&
+      user?.email &&
+      user.email.toLowerCase() !== invitation.email.toLowerCase()
+    ) {
+      setPageMode('wrongAccount')
+    }
+  }, [invitation, isAuthenticated, authLoading, user?.email, accepting, pageMode])
 
   const handleAcceptInvitation = async () => {
-    if (!token || !inviteData) return
-    
+    if (!token || !invitation) return
+
+    persistInviteContext()
+
+    const isCorrectAccount =
+      isAuthenticated &&
+      user?.email &&
+      user.email.toLowerCase() === invitation.email.toLowerCase()
+
+    if (!isAuthenticated || !isCorrectAccount) {
+      if (isAuthenticated && user?.email && !isCorrectAccount) {
+        setPageMode('wrongAccount')
+        return
+      }
+      const authPath = '/login'
+      window.location.assign(authPath)
+      return
+    }
+
+    setAccepting(true)
+    setError('')
     try {
-      setAccepting(true)
-      setError('')
-      
-      const workspace = await workspaceService.acceptInvitation(token)
-      
-      // Redirect to workspace after successful acceptance
-      window.location.href = workspace?.id ? `/dashboard?workspace=${workspace.id}` : '/dashboard'
+      const workspace = await invitationFlowService.completePendingInvitation()
+      invitationFlowService.redirectAfterInvite(workspace || invitation.workspace)
     } catch (err) {
-      setError(err.message || 'Failed to accept invitation')
+      const message = err.message || 'Failed to accept invitation'
+      if (message.toLowerCase().includes('different email')) {
+        setError(`Sign in with ${invitation.email} to accept this invitation.`)
+        setPageMode('wrongAccount')
+      } else if (message.toLowerCase().includes('expired') || message.toLowerCase().includes('invalid')) {
+        setPageMode('invalid')
+        setError('This invitation is no longer valid')
+      } else {
+        setError(message)
+      }
     } finally {
       setAccepting(false)
     }
   }
 
+  const handleSignOut = async () => {
+    await logout()
+    setPageMode('ready')
+    setError('')
+    if (token) {
+      await loadPreview(token)
+    }
+  }
+
   const handleDecline = () => {
-    // Redirect to home page
     window.location.href = '/'
   }
 
-  const renderContent = () => {
-    if (loading) {
+  const isBusy = pageMode === 'loading' || authLoading
+
+  const renderBody = () => {
+    if (isBusy) {
       return (
         <>
-          <div className="invite-icon-wrapper loading">
+          <div className="invite-icon-badge invite-icon-badge--loading">
             <MdEmail />
           </div>
-          <h1 className="invite-title">Validating Invitation</h1>
+          <h1 className="invite-title">Checking your invitation</h1>
           <p className="invite-subtitle">
-            Please wait while we validate your invitation...
+            Please wait while we prepare your workspace access&hellip;
           </p>
         </>
       )
     }
 
-    if (validating) {
+    if (pageMode === 'invalid') {
       return (
         <>
-          <div className="invite-icon-wrapper loading">
-            <MdEmail />
-          </div>
-          <h1 className="invite-title">Validating Invitation</h1>
-          <p className="invite-subtitle">
-            Please wait while we validate your invitation...
-          </p>
-        </>
-      )
-    }
-
-    if (error) {
-      return (
-        <>
-          <div className="invite-icon-wrapper error">
+          <div className="invite-icon-badge invite-icon-badge--error">
             <MdError />
           </div>
-          <h1 className="invite-title">Invalid Invitation</h1>
+          <h1 className="invite-title">Invitation unavailable</h1>
           <p className="invite-subtitle">
-            {error}
+            This link may have expired or already been used.
           </p>
+          {error && (
+            <div className="invite-error-banner" role="alert">
+              {error}
+            </div>
+          )}
           <div className="invite-actions">
-            <button className="btn-secondary" onClick={handleDecline}>
-              Go Home
+            <button type="button" className="invite-btn invite-btn--secondary" onClick={handleDecline}>
+              Go to homepage
             </button>
           </div>
         </>
       )
     }
 
-    if (inviteData && inviteData.valid) {
-      return (
-        <>
-          <div className="invite-icon-wrapper success">
-            <MdGroup />
-          </div>
-          <h1 className="invite-title">You're Invited!</h1>
-          <div className="invite-info">
-            <p>
-              You've been invited to join <strong>{inviteData.workspace?.name || 'this workspace'}</strong>
-            </p>
-            {inviteData.invitedEmail && (
-              <p className="invite-email">
-                <MdEmail />
-                {inviteData.invitedEmail}
-              </p>
-            )}
-          </div>
-          <div className="invite-actions">
-            <button 
-              className="btn-secondary" 
-              onClick={handleDecline}
-              disabled={accepting}
-            >
-              Decline
-            </button>
-            <button 
-              className="btn-primary" 
-              onClick={handleAcceptInvitation}
-              disabled={accepting}
-            >
-              {accepting ? (
-                <>
-                  <div className="btn-spinner"></div>
-                  Accepting...
-                </>
-              ) : (
-                <>
-                  <MdCheck />
-                  Accept Invitation
-                </>
-              )}
-            </button>
-          </div>
-        </>
-      )
-    }
+    if (!invitation) return null
 
-    return null
+    return (
+      <>
+        <div className="invite-icon-badge invite-icon-badge--success">
+          <MdGroup />
+        </div>
+        <h1 className="invite-title">You&apos;re invited!</h1>
+        <p className="invite-subtitle">{headline}</p>
+        <p className="invite-subtitle invite-subtitle--role">
+          You&apos;ll join as <strong>{invitation.role}</strong>.
+        </p>
+
+        <div className="invite-workspace-card">
+          <p className="invite-workspace-card__label">Workspace invitation</p>
+          <p className="invite-workspace-card__name">
+            <MdGroup size={22} aria-hidden />
+            {invitation.workspace?.name || 'Workspace'}
+          </p>
+          <p className="invite-workspace-card__meta">
+            Invited as {invitation.email}
+          </p>
+        </div>
+
+        {pageMode === 'wrongAccount' && (
+          <div className="invite-error-banner" role="alert">
+            This invite was sent to <strong>{invitation.email}</strong>. Sign out and use that account.
+          </div>
+        )}
+
+        {error && pageMode !== 'wrongAccount' && (
+          <div className="invite-error-banner" role="alert">
+            {error}
+          </div>
+        )}
+
+        <div className="invite-actions">
+          {pageMode === 'wrongAccount' ? (
+            <button type="button" className="invite-btn invite-btn--primary" onClick={handleSignOut}>
+              Sign out
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="invite-btn invite-btn--secondary"
+                onClick={handleDecline}
+                disabled={accepting}
+              >
+                Decline
+              </button>
+              <button
+                type="button"
+                className="invite-btn invite-btn--primary"
+                onClick={handleAcceptInvitation}
+                disabled={accepting}
+              >
+                {accepting ? (
+                  <>
+                    <span className="invite-btn__spinner" aria-hidden />
+                    Accepting&hellip;
+                  </>
+                ) : (
+                  <>
+                    <MdCheck size={18} aria-hidden />
+                    Accept invitation
+                  </>
+                )}
+              </button>
+            </>
+          )}
+        </div>
+
+        {!isAuthenticated && pageMode === 'ready' && (
+          <p className="invite-footer-note">
+            You&apos;ll be asked to sign in to complete this invitation.
+          </p>
+        )}
+      </>
+    )
   }
 
   return (
-    <>
-      <style>{styles}</style>
-      <div className="invite-acceptance-container">
-        {!loading && (
-          <div className="invite-acceptance-card">
-            {renderContent()}
-          </div>
-        )}
+    <div className="invite-shell">
+      <div className="invite-card">
+        <div className="invite-brand">
+          <img src={logoImg} alt="Virtual Studio" className="invite-brand__logo" />
+        </div>
+        {renderBody()}
       </div>
-    </>
+    </div>
   )
 }
 

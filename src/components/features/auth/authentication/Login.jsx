@@ -8,11 +8,25 @@ import {
   reportEmailValidity,
 } from '../../../../utils/authFormValidation.js'
 
-function Login({ onSuccess, onForgotPassword }) {
+function Login({
+  onSuccess,
+  onForgotPassword,
+  inviteMode = false,
+  lockedEmail = '',
+  onInviteLoginSuccess,
+  invitationToken = '',
+}) {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [email, setEmail] = useState(lockedEmail || '')
   const { login, googleLogin } = useAuth()
+
+  useEffect(() => {
+    if (lockedEmail) {
+      setEmail(lockedEmail)
+    }
+  }, [lockedEmail])
 
   useEffect(() => {
     const authError = localStorage.getItem('authError')
@@ -44,13 +58,17 @@ function Login({ onSuccess, onForgotPassword }) {
     const formData = new FormData(event.target)
     const credentials = {
       email: formData.get('email'),
-      password: formData.get('password')
+      password: formData.get('password'),
     }
 
     try {
       const result = await login(credentials)
       if (result.success) {
-        if (onSuccess) onSuccess()
+        if (inviteMode && onInviteLoginSuccess) {
+          await onInviteLoginSuccess()
+        } else if (onSuccess) {
+          onSuccess()
+        }
       } else {
         setError(formatAuthErrorMessage(result, 'Login failed'))
       }
@@ -64,7 +82,7 @@ function Login({ onSuccess, onForgotPassword }) {
   const handleSocialLogin = async (provider) => {
     if (provider === 'Google') {
       try {
-        await googleLogin()
+        await googleLogin(inviteMode ? invitationToken : undefined)
       } catch (err) {
         setError(getFriendlyAuthErrorMessage(err.message || 'Google login failed'))
       }
@@ -87,7 +105,7 @@ function Login({ onSuccess, onForgotPassword }) {
             fontSize: '14px',
             lineHeight: 1.45,
             marginBottom: '16px',
-            border: '1px solid #fecaca'
+            border: '1px solid #fecaca',
           }}
         >
           {error}
@@ -104,8 +122,15 @@ function Login({ onSuccess, onForgotPassword }) {
           autoComplete="email"
           placeholder="Email address"
           className="auth-input"
-          disabled={loading}
-          onInput={(event) => clearInputValidity(event.target)}
+          value={email}
+          onChange={(event) => {
+            if (!lockedEmail) {
+              setEmail(event.target.value)
+            }
+            clearInputValidity(event.target)
+          }}
+          readOnly={Boolean(lockedEmail)}
+          disabled={loading || Boolean(lockedEmail)}
         />
       </div>
 
@@ -132,14 +157,16 @@ function Login({ onSuccess, onForgotPassword }) {
         </button>
       </div>
 
-      <div className="auth-forgot-link">
-        <a href="#" onClick={(e) => { e.preventDefault(); onForgotPassword(); }}>
-          Forgot Password?
-        </a>
-      </div>
+      {!inviteMode && (
+        <div className="auth-forgot-link">
+          <a href="#" onClick={(e) => { e.preventDefault(); onForgotPassword(); }}>
+            Forgot Password?
+          </a>
+        </div>
+      )}
 
       <button type="submit" className="auth-submit-btn" disabled={loading}>
-        {loading ? 'Logging in...' : 'Log in'}
+        {loading ? 'Logging in...' : inviteMode ? 'Sign in & join workspace' : 'Log in'}
       </button>
 
       <div className="auth-divider">

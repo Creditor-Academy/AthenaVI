@@ -70,7 +70,7 @@ const InvitationsPanel = ({ open, onClose, invitations, onAccept, onDecline }) =
                   </p>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button
-                      onClick={() => onAccept(invitation.token || invitation.id)}
+                      onClick={() => onAccept(invitation)}
                       style={{
                         padding: '6px 12px',
                         background: 'var(--success-green)',

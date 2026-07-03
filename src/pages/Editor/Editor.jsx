@@ -9,6 +9,7 @@ import EditorTopbar from '../../components/features/editor/editor/EditorTopbar'
 import EditorSidebar from '../../components/features/editor/editor/EditorSidebar'
 import VideoCanvas from '../../components/features/editor/editor/VideoCanvas'
 import SceneConfigurationPanel from '../../components/features/editor/editor/SceneConfigurationPanel'
+import ProjectCommentsPanel from '../../components/features/editor/editor/ProjectCommentsPanel'
 import TemplateModal from '../../components/features/editor/editor/TemplateModal'
 import PreviewModal from '../../components/features/editor/editor/PreviewModal'
 import ExportModal from '../../components/features/editor/editor/ExportModal'
@@ -349,7 +350,7 @@ function buildInitialProject(initialConfig) {
   return mergeProjectWithDraft(base, loadProjectDraft(projectId))
 }
 
-function Create({ onBack, initialConfig = null }) {
+function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
   useEffect(() => {
     console.log('Create component mounted')
   }, [])
@@ -384,7 +385,13 @@ function Create({ onBack, initialConfig = null }) {
   const [exportError, setExportError] = useState('')
   const [exportErrorObject, setExportErrorObject] = useState(null)
   const [showTemplateModal, setShowTemplateModal] = useState(false)
-  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false)
+  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(() => Boolean(initialConfig?.openComments))
+  const [rightPanelTab, setRightPanelTab] = useState(() =>
+    initialConfig?.openComments ? 'comments' : 'properties'
+  )
+  const [highlightCommentId, setHighlightCommentId] = useState(
+    () => initialConfig?.highlightCommentId || null
+  )
   const [timelineHeight, setTimelineHeight] = useState(() =>
     clampPanelSize(
       readStoredPanelSize(TIMELINE_HEIGHT_STORAGE, TIMELINE_HEIGHT_DEFAULT),
@@ -409,6 +416,7 @@ function Create({ onBack, initialConfig = null }) {
   const [creditsRefreshKey, setCreditsRefreshKey] = useState(0)
   const bumpCreditsRefresh = useCallback(() => {
     setCreditsRefreshKey((key) => key + 1)
+    window.dispatchEvent(new CustomEvent('editor-credits-refresh'))
   }, [])
   const [lastSaved, setLastSaved] = useState(null)
   const [showGeneratedVideoModal, setShowGeneratedVideoModal] = useState(false)
@@ -450,6 +458,48 @@ function Create({ onBack, initialConfig = null }) {
   }, [])
 
   const showToast = useCallback(() => {}, [])
+
+  const commentsWorkspaceId =
+    project.workspaceId || project.createConfig?.workspaceId || initialConfig?.workspaceId
+  const commentsProjectId =
+    project.id ||
+    initialConfig?.videoId ||
+    initialConfig?.videoData?.id ||
+    initialConfig?.videoData?._id
+
+  const [commentCount, setCommentCount] = useState(0)
+
+  const commentsTabPinnedRef = useRef(Boolean(initialConfig?.openComments))
+
+  const handleToggleCommentsPanel = useCallback(() => {
+    if (isRightSidebarOpen && rightPanelTab === 'comments') {
+      setIsRightSidebarOpen(false)
+      commentsTabPinnedRef.current = false
+    } else {
+      commentsTabPinnedRef.current = true
+      setRightPanelTab('comments')
+      setIsRightSidebarOpen(true)
+    }
+  }, [isRightSidebarOpen, rightPanelTab])
+
+  useEffect(() => {
+    if (!initialConfig?.openComments) return
+    commentsTabPinnedRef.current = true
+    setRightPanelTab('comments')
+    setIsRightSidebarOpen(true)
+  }, [initialConfig?.openComments])
+
+  useEffect(() => {
+    if (!highlightCommentId) return undefined
+    const timer = window.setTimeout(() => setHighlightCommentId(null), 6000)
+    return () => window.clearTimeout(timer)
+  }, [highlightCommentId])
+
+  useEffect(() => {
+    if (!selectedLayerId || commentsTabPinnedRef.current) return
+    setRightPanelTab('properties')
+    setIsRightSidebarOpen(true)
+  }, [selectedLayerId])
 
   useEffect(() => {
     const onOnline = () => {
@@ -1380,8 +1430,15 @@ function Create({ onBack, initialConfig = null }) {
         return
       }
 
-      // Don't trigger if user is typing in an input or textarea
-      if (['INPUT', 'TEXTAREA'].includes(activeEl?.tagName)) {
+      // Don't trigger editor shortcuts while typing in form fields
+      const isTypingInField =
+        ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeEl?.tagName) ||
+        activeEl?.isContentEditable ||
+        activeEl?.closest?.(
+          '.mention-autocomplete, .project-comments, [contenteditable="true"]'
+        )
+
+      if (isTypingInField) {
         if (e.key === 'Escape') {
           setSelectedTool(null)
           activeEl?.blur?.()
@@ -2533,6 +2590,22 @@ function Create({ onBack, initialConfig = null }) {
     const scene = projectRef.current.scenes.find((s) => s.id === activeSceneId)
     if (!scene) return
 
+    try {
+      const voiceRes = await heygenService.getVoiceStatus(voiceId)
+      const voiceData = voiceRes?.data ?? voiceRes ?? {}
+      const supportsSpeechPreview =
+        voiceData.supportsSpeechPreview ?? voiceData.supports_speech_preview
+      if (supportsSpeechPreview === false) {
+        showToast(
+          'This voice does not support speech generation. Choose a designed or catalog Starfish voice.',
+          'error'
+        )
+        throw new Error('Voice does not support speech generation')
+      }
+    } catch (err) {
+      if (err?.message === 'Voice does not support speech generation') throw err
+    }
+
     const sceneId = scene.sceneId || scene.id || activeSceneId
     const payload = {
       sceneId,
@@ -2754,6 +2827,7 @@ function Create({ onBack, initialConfig = null }) {
       />
       <EditorTopbar
         onBack={onBack}
+        onNavigateToProfile={onNavigateToProfile}
         selectedTool={selectedTool}
         setSelectedTool={setSelectedTool}
         handlePreview={handlePreview}
@@ -2782,6 +2856,9 @@ function Create({ onBack, initialConfig = null }) {
         creditsRefreshKey={creditsRefreshKey}
         editorView={editorView}
         onEditorViewChange={(patch) => setEditorView((prev) => ({ ...prev, ...patch }))}
+        commentsPanelOpen={isRightSidebarOpen && rightPanelTab === 'comments'}
+        onToggleCommentsPanel={handleToggleCommentsPanel}
+        commentCount={commentCount}
       />
 
       <div className="editor-container">
@@ -3009,8 +3086,38 @@ function Create({ onBack, initialConfig = null }) {
                 height: '100%',
                 overflowY: 'auto',
                 overflowX: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
               }}
             >
+              <div className="editor-right-panel-tabs" role="tablist" aria-label="Right panel">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={rightPanelTab === 'properties'}
+                  className={`editor-right-panel-tab${rightPanelTab === 'properties' ? ' is-active' : ''}`}
+                  onClick={() => {
+                    commentsTabPinnedRef.current = false
+                    setRightPanelTab('properties')
+                  }}
+                >
+                  Properties
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={rightPanelTab === 'comments'}
+                  className={`editor-right-panel-tab${rightPanelTab === 'comments' ? ' is-active' : ''}`}
+                  onClick={() => {
+                    commentsTabPinnedRef.current = true
+                    setRightPanelTab('comments')
+                  }}
+                >
+                  Comments{commentCount > 0 ? ` (${commentCount})` : ''}
+                </button>
+              </div>
+
+              {rightPanelTab === 'properties' ? (
               <SceneConfigurationPanel
                 activeScene={activeScene}
                 activeSceneId={activeSceneId}
@@ -3032,6 +3139,20 @@ function Create({ onBack, initialConfig = null }) {
                   }
                 }}
               />
+              ) : null}
+
+              <div
+                className="project-comments-panel-host"
+                hidden={rightPanelTab !== 'comments'}
+                aria-hidden={rightPanelTab !== 'comments'}
+              >
+                <ProjectCommentsPanel
+                  workspaceId={commentsWorkspaceId}
+                  projectId={commentsProjectId}
+                  highlightCommentId={highlightCommentId}
+                  onCommentCountChange={setCommentCount}
+                />
+              </div>
             </div>
           </div>
         </div>

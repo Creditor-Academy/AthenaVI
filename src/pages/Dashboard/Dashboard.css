@@ -249,6 +249,7 @@
   min-width: 0;
   max-width: 440px;
   margin: 0 auto;
+  position: relative;
 }
 
 .topbar-search {
@@ -263,6 +264,7 @@
   border: 1px solid transparent;
   border-radius: 10px;
   box-sizing: border-box;
+  position: relative;
   transition:
     background 0.15s ease,
     border-color 0.15s ease,

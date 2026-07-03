@@ -387,6 +387,7 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
 
       const usedCredits = await resolveAvatarCreditsUsed(response, requiredCredits);
       setCreditsUsed(usedCredits);
+      window.dispatchEvent(new CustomEvent('editor-credits-refresh'));
 
       const created = parseAvatarCreateResponse(response, creationName);
       const groupId = created.groupId;

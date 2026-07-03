@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { sanitizeUserFacingMessage } from '../../utils/userFacingMessage'
+import { consumeDashboardSearchContext } from '../../utils/dashboardSearchNavigate.js'
 import Toast from '../../components/ui/Toast/Toast'
 import {
   MdAdd,
@@ -64,6 +65,11 @@ function Videos({ onCreate, onEdit }) {
   const [actionId, setActionId] = useState(null)
   const [toast, setToast] = useState(null)
   const toastTimeoutRef = useRef(null)
+
+  useEffect(() => {
+    const ctx = consumeDashboardSearchContext('videos')
+    if (ctx?.searchQuery) setSearchQuery(ctx.searchQuery)
+  }, [])
 
   const showToast = (message, type = 'success') => {
     setToast({ message: sanitizeUserFacingMessage(message), type })

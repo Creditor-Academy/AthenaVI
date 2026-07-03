@@ -1,6 +1,8 @@
-import React from 'react'
+import React, { useRef, useEffect } from 'react'
 import { Search, ShoppingBag, Bell, Menu, X, PanelLeft } from 'lucide-react'
 import ProfileDropdown from '../../ui/ProfileDropdown/ProfileDropdown.jsx'
+import DashboardSearchPanel from '../DashboardSearch/DashboardSearchPanel.jsx'
+import '../DashboardSearch/DashboardSearchPanel.css'
 
 function DashboardTopbar({
     sidebarMobileOpen,
@@ -14,7 +16,72 @@ function DashboardTopbar({
     onNotificationClick,
     onCartClick,
     isAdminPortal = false,
+    searchQuery = '',
+    onSearchQueryChange,
+    searchInputRef,
+    searchIsOpen = false,
+    onSearchFocus,
+    onSearchClose,
+    onSearchSelect,
+    searchIsIndexing = false,
+    searchIndexError = null,
+    searchResultsByCategory = {},
+    searchFlatResults = [],
+    searchCategoryLabels = {},
+    searchActiveIndex = 0,
+    onSearchActiveIndexChange,
+    onSearchMoveActive,
 }) {
+    const wrapRef = useRef(null)
+
+    useEffect(() => {
+        if (!searchIsOpen) return undefined
+        const handlePointerDown = (e) => {
+            if (wrapRef.current && !wrapRef.current.contains(e.target)) {
+                onSearchClose?.()
+            }
+        }
+        document.addEventListener('mousedown', handlePointerDown)
+        return () => document.removeEventListener('mousedown', handlePointerDown)
+    }, [searchIsOpen, onSearchClose])
+
+    const handleSearchKeyDown = (e) => {
+        if (e.key === 'Escape') {
+            e.preventDefault()
+            onSearchClose?.()
+            return
+        }
+        if (e.key === 'ArrowDown') {
+            e.preventDefault()
+            onSearchMoveActive?.(1)
+            return
+        }
+        if (e.key === 'ArrowUp') {
+            e.preventDefault()
+            onSearchMoveActive?.(-1)
+            return
+        }
+        if (e.key === 'Enter') {
+            e.preventDefault()
+            const result = searchFlatResults[searchActiveIndex]
+            if (result) onSearchSelect?.(result)
+        }
+    }
+
+    const searchPanelProps = {
+        query: searchQuery,
+        isOpen: searchIsOpen,
+        isIndexing: searchIsIndexing,
+        indexError: searchIndexError,
+        resultsByCategory: searchResultsByCategory,
+        flatResults: searchFlatResults,
+        categoryLabels: searchCategoryLabels,
+        activeIndex: searchActiveIndex,
+        onSelect: onSearchSelect,
+        onHover: onSearchActiveIndexChange,
+        showSuggestions: !searchQuery.trim(),
+    }
+
     return (
         <header className="topbar topbar--main">
             <div className="topbar-grid topbar-grid--main">
@@ -30,18 +97,33 @@ function DashboardTopbar({
                     </button>
                 </div>
 
-                <div className="topbar-search-wrap">
+                <div className="topbar-search-wrap" ref={wrapRef}>
                     <label className="topbar-search" htmlFor="dashboard-top-search">
                         <span className="visually-hidden">Search</span>
                         <Search className="topbar-search-icon" size={18} strokeWidth={1.75} aria-hidden />
                         <input
+                            ref={searchInputRef}
                             id="dashboard-top-search"
                             className="topbar-search-input"
                             type="search"
-                            placeholder="Search..."
+                            placeholder="Search dashboard..."
                             autoComplete="off"
+                            value={searchQuery}
+                            onChange={(e) => onSearchQueryChange?.(e.target.value)}
+                            onFocus={onSearchFocus}
+                            onKeyDown={handleSearchKeyDown}
+                            role="combobox"
+                            aria-expanded={searchIsOpen}
+                            aria-controls="dashboard-search-results"
+                            aria-autocomplete="list"
                         />
+                        <span className="topbar-search-kbd" aria-hidden>
+                            Ctrl K
+                        </span>
                     </label>
+                    <div id="dashboard-search-results">
+                        <DashboardSearchPanel {...searchPanelProps} />
+                    </div>
                 </div>
 
                 <div className="topbar-right">
@@ -101,10 +183,17 @@ function DashboardTopbar({
                             id="dashboard-top-search-mobile"
                             className="topbar-search-input"
                             type="search"
-                            placeholder="Search..."
+                            placeholder="Search dashboard..."
                             autoComplete="off"
+                            value={searchQuery}
+                            onChange={(e) => onSearchQueryChange?.(e.target.value)}
+                            onFocus={onSearchFocus}
+                            onKeyDown={handleSearchKeyDown}
                         />
                     </label>
+                    <div className="dash-search-panel dash-search-panel--mobile">
+                        {searchIsOpen && <DashboardSearchPanel {...searchPanelProps} />}
+                    </div>
                     <div className="topbar-mobile-icons">
                         <button 
                             type="button" 

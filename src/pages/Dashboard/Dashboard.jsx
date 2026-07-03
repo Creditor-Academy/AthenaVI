@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import Home from '../Home/Home.jsx'
 import Videos from '../Videos/Videos.jsx'
 import Avatars from '../Avatars/Avatars.jsx'
@@ -44,6 +44,8 @@ import {
   dashboardPathForSection,
   resolveDashboardSectionFromPath,
 } from '../../utils/dashboardRouting.js'
+import useDashboardSearch from '../../hooks/useDashboardSearch.js'
+import { applySearchResult } from '../../utils/dashboardSearchNavigate.js'
 import './Dashboard.css'
 
 const AVATAR_FLOW_SECTIONS = new Set(['avatars', 'create-avatar-look', 'create-avatar'])
@@ -79,10 +81,13 @@ function Dashboard({ onCreate, initialSection }) {
     const valid = ['overview', 'users', 'workspaces', 'storage-requests', 'reports', 'platform-actions', 'heygen', 'broadcast']
     return valid.includes(saved) ? saved : 'overview'
   })
+  const [settingsInitialTab, setSettingsInitialTab] = useState('preferences')
 
   const cartCount = 2
   const { unreadCount: notificationCount, refresh: refreshInboxUnread, setUnreadCount: setInboxUnreadCount } =
     useInboxUnreadCount()
+
+  const dashboardSearch = useDashboardSearch()
 
   const noPaddingSections = ['templates', 'template-details']
   const workspaceConsistentSections = [
@@ -183,6 +188,56 @@ function Dashboard({ onCreate, initialSection }) {
       })
     }
   }, [onCreate])
+
+  const notificationNavigateHandlers = useMemo(() => ({
+    onOpenEditor: (config) => {
+      if (onCreate) {
+        onCreate(config || null)
+      }
+    },
+    onGoToSection: (targetSection, options = {}) => {
+      if (options.settingsTab) {
+        setSettingsInitialTab(options.settingsTab)
+      }
+      goToSection(targetSection)
+    },
+  }), [onCreate, goToSection])
+
+  useEffect(() => {
+    const handleDashboardNavigate = (event) => {
+      const { section, settingsTab } = event.detail || {}
+      if (!section) return
+      if (settingsTab) {
+        setSettingsInitialTab(settingsTab)
+      }
+      goToSection(section)
+    }
+
+    window.addEventListener('athena:dashboard-navigate', handleDashboardNavigate)
+    return () => window.removeEventListener('athena:dashboard-navigate', handleDashboardNavigate)
+  }, [goToSection])
+
+  const handleSearchResultSelect = useCallback((result) => {
+    dashboardSearch.handleClose()
+    dashboardSearch.setQuery('')
+    applySearchResult(result, {
+      goToSection,
+      handleEditVideo,
+      setSelectedTemplateForDetails,
+      bundleToDetailsTemplate,
+    })
+  }, [dashboardSearch, goToSection, handleEditVideo, setSelectedTemplateForDetails])
+
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        dashboardSearch.handleOpen()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [dashboardSearch])
 
   // Keep section aligned with the URL on hard refresh / direct links.
   useEffect(() => {
@@ -328,6 +383,21 @@ function Dashboard({ onCreate, initialSection }) {
           onNotificationClick={() => setShowNotificationsModal(true)}
           onCartClick={() => setShowCreditsModal(true)}
           isAdminPortal={isAdminPortal}
+          searchQuery={dashboardSearch.query}
+          onSearchQueryChange={dashboardSearch.setQuery}
+          searchInputRef={dashboardSearch.inputRef}
+          searchIsOpen={dashboardSearch.isOpen}
+          onSearchFocus={dashboardSearch.handleFocus}
+          onSearchClose={dashboardSearch.handleClose}
+          onSearchSelect={handleSearchResultSelect}
+          searchIsIndexing={dashboardSearch.isIndexing}
+          searchIndexError={dashboardSearch.indexError}
+          searchResultsByCategory={dashboardSearch.resultsByCategory}
+          searchFlatResults={dashboardSearch.flatResults}
+          searchCategoryLabels={dashboardSearch.categoryLabels}
+          searchActiveIndex={dashboardSearch.activeIndex}
+          onSearchActiveIndexChange={dashboardSearch.setActiveIndex}
+          onSearchMoveActive={dashboardSearch.moveActive}
         />
 
         <main
@@ -435,7 +505,12 @@ function Dashboard({ onCreate, initialSection }) {
           {section === 'brandkits' && <BrandKits />}
           {section === 'credits' && <Settings onBack={() => goToSection('home')} initialTab="billing" />}
           {section === 'profile' && <Profile onBack={() => goToSection('home')} />}
-          {section === 'settings' && <Settings onBack={() => goToSection('home')} />}
+          {section === 'settings' && (
+            <Settings
+              onBack={() => goToSection('home')}
+              initialTab={settingsInitialTab}
+            />
+          )}
           {section === 'help' && (
             <Help embedded onOpenBilling={() => goToSection('credits')} />
           )}
@@ -510,6 +585,11 @@ function Dashboard({ onCreate, initialSection }) {
             refreshInboxUnread()
           }}
           onUnreadCountChange={setInboxUnreadCount}
+          onOpenNotificationSettings={() => {
+            setSettingsInitialTab('notifications')
+            goToSection('settings')
+          }}
+          onNavigate={notificationNavigateHandlers}
         />
       )}
 

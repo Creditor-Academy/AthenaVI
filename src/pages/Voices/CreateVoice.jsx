@@ -1,10 +1,18 @@
 import { useState, useRef, useEffect } from 'react'
 import { Mic, Terminal, Loader2, X, Music, CheckCircle } from 'lucide-react'
 import { MdArrowBack, MdPlayArrow } from 'react-icons/md'
-import heygenService from '../../services/heygenService'
+import heygenService, { isSpeechPreviewUnsupportedError } from '../../services/heygenService'
 import creditsService, { isInsufficientCreditsError } from '../../services/creditsService'
 import { getSanitizedErrorMessage } from '../../utils/userFacingMessage'
 import { HEYGEN_VOICE_MAX_BYTES } from '../../utils/heygenAssetUpload'
+import {
+  getVoicePreviewUrlFromResponse,
+  mapHeygenVoice,
+  resolveVoicePreviewAudioUrl,
+} from '../../utils/heygenVoices'
+import VoicePreviewUnavailableNotice, {
+  showVoicePreviewUnavailableNotice,
+} from '../../components/ui/VoicePreviewNotice/VoicePreviewNotice'
 import '../../components/features/workspace/workspace/WorkspaceStyles.css'
 import '../Videos/Videos.css'
 import '../Avatars/Avatars.css'
@@ -24,6 +32,9 @@ function CreateVoice({ onBack }) {
   const [recordingTime, setRecordingTime] = useState(0)
   const [uploadProgress, setUploadProgress] = useState(null)
   const [creditEstimate, setCreditEstimate] = useState(null)
+  const [previewingSuggestionId, setPreviewingSuggestionId] = useState(null)
+  const [suggestionPreviewNotice, setSuggestionPreviewNotice] = useState(null)
+  const suggestionPreviewNoticeTimerRef = useRef(null)
   const [mediaRecorder, setMediaRecorder] = useState(null)
   const timerRef = useRef(null)
   const fileInputRef = useRef(null)
@@ -96,6 +107,51 @@ function CreateVoice({ onBack }) {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const previewSuggestedVoice = async (voice) => {
+    const voiceId = voice.voice_id || voice.id
+    if (!voiceId) return
+
+    setPreviewingSuggestionId(voiceId)
+    const mapped = mapHeygenVoice(voice)
+    try {
+      const sampleText = 'Hello! This is a quick preview of how this voice sounds.'
+      let audioUrl = await resolveVoicePreviewAudioUrl(mapped, { mode: 'sample' })
+      if (!audioUrl && mapped.supportsSpeechPreview) {
+        audioUrl = await resolveVoicePreviewAudioUrl(mapped, {
+          mode: 'custom',
+          text: sampleText,
+          previewSpeechFn: (payload) => heygenService.previewSpeech(payload),
+          isSpeechPreviewUnsupportedError,
+        })
+      }
+
+      if (audioUrl) {
+        await new Audio(audioUrl).play()
+      } else {
+        if (suggestionPreviewNoticeTimerRef.current) {
+          clearTimeout(suggestionPreviewNoticeTimerRef.current)
+        }
+        suggestionPreviewNoticeTimerRef.current = showVoicePreviewUnavailableNotice(
+          setSuggestionPreviewNotice,
+          mapped.name
+        )
+      }
+    } catch (err) {
+      console.error('Suggestion preview failed:', err)
+      if (isInsufficientCreditsError(err)) {
+        alert(getSanitizedErrorMessage(err, 'Insufficient credits for voice preview.'))
+      } else if (suggestionPreviewNoticeTimerRef.current) {
+        clearTimeout(suggestionPreviewNoticeTimerRef.current)
+      }
+      suggestionPreviewNoticeTimerRef.current = showVoicePreviewUnavailableNotice(
+        setSuggestionPreviewNotice,
+        mapped?.name || voice.name
+      )
+    } finally {
+      setPreviewingSuggestionId(null)
+    }
+  }
+
   const handleCreateVoice = async () => {
     if (creationType === 'clone') {
       if (!creationName || creationName.trim().length === 0) {
@@ -118,7 +174,7 @@ function CreateVoice({ onBack }) {
       setUploadProgress(null);
 
       try {
-        await heygenService.cloneVoiceFromFile({
+        const cloneResult = await heygenService.cloneVoiceFromFile({
           voiceName: creationName,
           file: selectedFile,
           removeBackgroundNoise: true,
@@ -131,12 +187,20 @@ function CreateVoice({ onBack }) {
             setUploadProgress(null);
           },
         });
-        setCreationStatus('Voice cloned successfully!');
+        const mappedClone = mapHeygenVoice(cloneResult);
+        const sampleUrl =
+          mappedClone?.previewUrl || getVoicePreviewUrlFromResponse(cloneResult);
+        setCreationStatus(
+          sampleUrl
+            ? 'Voice cloned successfully! Sample audio is ready.'
+            : 'Voice cloned successfully!'
+        );
+        window.dispatchEvent(new CustomEvent('editor-credits-refresh'));
         setTimeout(() => {
           setIsCreating(false);
           setUploadProgress(null);
           onBack(true);
-        }, 2000);
+        }, sampleUrl ? 3500 : 2000);
       } catch (err) {
         console.error('Clone voice failed:', err);
         const fallback = isInsufficientCreditsError(err)
@@ -417,6 +481,20 @@ function CreateVoice({ onBack }) {
                         Suggested Matches
                       </h3>
                       <div className="voices-suggested-grid">
+                        {suggestionPreviewNotice ? (
+                          <VoicePreviewUnavailableNotice
+                            voiceName={suggestionPreviewNotice.voiceName}
+                            onDismiss={() => {
+                              if (suggestionPreviewNoticeTimerRef.current) {
+                                clearTimeout(suggestionPreviewNoticeTimerRef.current)
+                                suggestionPreviewNoticeTimerRef.current = null
+                              }
+                              setSuggestionPreviewNotice(null)
+                            }}
+                            compact
+                            className="voices-suggested-preview-notice"
+                          />
+                        ) : null}
                         {suggestedVoices.map((voice) => (
                           <div key={voice.voice_id} className="voices-suggested-card">
                             <div className="voices-suggested-card__badges">
@@ -430,9 +508,18 @@ function CreateVoice({ onBack }) {
                               <button
                                 type="button"
                                 className="voices-suggested-btn"
-                                onClick={() => voice.preview_audio_url && new Audio(voice.preview_audio_url).play()}
+                                disabled={previewingSuggestionId === (voice.voice_id || voice.id)}
+                                onClick={() => previewSuggestedVoice(voice)}
                               >
-                                <MdPlayArrow size={16} /> Preview
+                                {previewingSuggestionId === (voice.voice_id || voice.id) ? (
+                                  <>
+                                    <Loader2 size={16} className="spin-animation" /> Preview
+                                  </>
+                                ) : (
+                                  <>
+                                    <MdPlayArrow size={16} /> Preview
+                                  </>
+                                )}
                               </button>
                               <button
                                 type="button"

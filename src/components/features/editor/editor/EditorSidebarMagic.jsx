@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   MdAutoAwesome, 
   MdChatBubbleOutline, 
@@ -13,6 +13,9 @@ import {
 import { Loader2 } from 'lucide-react';
 import { predefinedAvatars } from '../../../../constants/editorData';
 import heygenService from '../../../../services/heygenService';
+import VoicePreviewUnavailableNotice, {
+  showVoicePreviewUnavailableNotice,
+} from '../../../ui/VoicePreviewNotice/VoicePreviewNotice';
 import { estimateHeygenSceneDuration } from '../../../../utils/sceneDuration';
 
 const POPULAR_VOICES = [
@@ -31,6 +34,8 @@ const EditorSidebarMagic = ({ onGenerateStoryboard }) => {
   
   const [voices, setVoices] = useState(POPULAR_VOICES);
   const [loadingVoices, setLoadingVoices] = useState(true);
+  const [previewNotice, setPreviewNotice] = useState(null);
+  const previewNoticeTimerRef = useRef(null);
 
   // Fetch neural voices from HeyGen service on load
   useEffect(() => {
@@ -83,9 +88,17 @@ const EditorSidebarMagic = ({ onGenerateStoryboard }) => {
       const audio = new Audio(voiceObj.previewUrl);
       audio.play().catch(err => console.error('Audio playback failed:', err));
     } else {
-      alert('Preview audio not available for this voice.');
+      if (previewNoticeTimerRef.current) clearTimeout(previewNoticeTimerRef.current);
+      previewNoticeTimerRef.current = showVoicePreviewUnavailableNotice(
+        setPreviewNotice,
+        voiceObj?.name
+      );
     }
   };
+
+  useEffect(() => () => {
+    if (previewNoticeTimerRef.current) clearTimeout(previewNoticeTimerRef.current);
+  }, []);
 
   const handleGenerate = (mode) => {
     if (!script.trim()) {
@@ -346,6 +359,21 @@ const EditorSidebarMagic = ({ onGenerateStoryboard }) => {
               <MdPlayArrow size={14} /> Listen
             </button>
           </div>
+
+          {previewNotice ? (
+            <VoicePreviewUnavailableNotice
+              voiceName={previewNotice.voiceName}
+              onDismiss={() => {
+                if (previewNoticeTimerRef.current) {
+                  clearTimeout(previewNoticeTimerRef.current);
+                  previewNoticeTimerRef.current = null;
+                }
+                setPreviewNotice(null);
+              }}
+              compact
+              className="voice-preview-notice--spaced"
+            />
+          ) : null}
           
           <select 
             className="premium-property-select"

@@ -54,6 +54,8 @@ const LayerAdjustmentsCompact = ({
   previewSrc = null,
   previewObjectFit = 'cover',
   hideOpacity = false,
+  hideLookPresets = false,
+  hideFilterSteppers = false,
 }) => {
   const cf = cssFilters;
   const opacityPct = Math.round((opacity ?? 1) * 100);
@@ -101,86 +103,90 @@ const LayerAdjustmentsCompact = ({
         </div>
       ) : null}
 
-      <div className="adj-compact-block">
-        <span className="adj-compact-block__title">
-          <MdPalette size={14} />
-          Look
-        </span>
-        <div className="adj-compact-look-grid">
-          {FILTER_PRESETS.map((p) => {
-            const presetFilter = buildCssFilterString({
-              brightness: p.brightness,
-              contrast: p.contrast,
-              saturate: p.saturate,
-            });
-            return (
-              <button
-                key={p.id}
-                type="button"
-                className={`adj-compact-look ${activePreset === p.id ? 'adj-compact-look--active' : ''}`}
-                onClick={() => {
-                  onFilterChange('brightness', p.brightness);
-                  onFilterChange('contrast', p.contrast);
-                  onFilterChange('saturate', p.saturate);
-                }}
-                title={p.label}
-              >
-                <span
-                  className="adj-compact-look__thumb"
-                  style={{ filter: presetFilter || undefined }}
+      {!hideLookPresets ? (
+        <div className="adj-compact-block">
+          <span className="adj-compact-block__title">
+            <MdPalette size={14} />
+            Look
+          </span>
+          <div className="adj-compact-look-grid">
+            {FILTER_PRESETS.map((p) => {
+              const presetFilter = buildCssFilterString({
+                brightness: p.brightness,
+                contrast: p.contrast,
+                saturate: p.saturate,
+              });
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={`adj-compact-look ${activePreset === p.id ? 'adj-compact-look--active' : ''}`}
+                  onClick={() => {
+                    onFilterChange('brightness', p.brightness);
+                    onFilterChange('contrast', p.contrast);
+                    onFilterChange('saturate', p.saturate);
+                  }}
+                  title={p.label}
                 >
-                  {previewSrc ? (
-                    <img
-                      src={previewSrc}
-                      alt=""
-                      style={{ objectFit: previewObjectFit }}
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                      }}
-                    />
-                  ) : (
-                    <MdImage size={18} className="adj-compact-look__placeholder-icon" />
-                  )}
-                </span>
-                <span className="adj-compact-look__label">{p.label}</span>
-              </button>
-            );
-          })}
+                  <span
+                    className="adj-compact-look__thumb"
+                    style={{ filter: presetFilter || undefined }}
+                  >
+                    {previewSrc ? (
+                      <img
+                        src={previewSrc}
+                        alt=""
+                        style={{ objectFit: previewObjectFit }}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <MdImage size={18} className="adj-compact-look__placeholder-icon" />
+                    )}
+                  </span>
+                  <span className="adj-compact-look__label">{p.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      ) : null}
 
-      <div className="adj-compact-block adj-compact-block--tight">
-        <Stepper
-          label="Brightness"
-          icon={<MdBrightness6 size={13} />}
-          value={Math.round((cf.brightness ?? 1) * 100)}
-          min={0}
-          max={200}
-          step={10}
-          unit="%"
-          onChange={(v) => onFilterChange('brightness', v / 100)}
-        />
-        <Stepper
-          label="Contrast"
-          icon={<MdContrast size={13} />}
-          value={Math.round((cf.contrast ?? 1) * 100)}
-          min={0}
-          max={200}
-          step={10}
-          unit="%"
-          onChange={(v) => onFilterChange('contrast', v / 100)}
-        />
-        <Stepper
-          label="Blur"
-          icon={<MdBlurOn size={13} />}
-          value={cf.blur ?? 0}
-          min={0}
-          max={20}
-          step={1}
-          unit="px"
-          onChange={(v) => onFilterChange('blur', v)}
-        />
-      </div>
+      {!hideFilterSteppers ? (
+        <div className="adj-compact-block adj-compact-block--tight">
+          <Stepper
+            label="Brightness"
+            icon={<MdBrightness6 size={13} />}
+            value={Math.round((cf.brightness ?? 1) * 100)}
+            min={0}
+            max={200}
+            step={10}
+            unit="%"
+            onChange={(v) => onFilterChange('brightness', v / 100)}
+          />
+          <Stepper
+            label="Contrast"
+            icon={<MdContrast size={13} />}
+            value={Math.round((cf.contrast ?? 1) * 100)}
+            min={0}
+            max={200}
+            step={10}
+            unit="%"
+            onChange={(v) => onFilterChange('contrast', v / 100)}
+          />
+          <Stepper
+            label="Blur"
+            icon={<MdBlurOn size={13} />}
+            value={cf.blur ?? 0}
+            min={0}
+            max={20}
+            step={1}
+            unit="px"
+            onChange={(v) => onFilterChange('blur', v)}
+          />
+        </div>
+      ) : null}
     </div>
   );
 };

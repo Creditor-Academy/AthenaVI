@@ -19,9 +19,16 @@ import {
   MdCheck,
   MdMic,
   MdInfoOutline,
+  MdAdd,
+  MdFace,
 } from 'react-icons/md';
 import { Loader2 } from 'lucide-react';
 import heygenService from '../../../../services/heygenService';
+import {
+  extractHeygenVoiceList,
+  mapHeygenVoice,
+  resolveVoicePreviewAudioUrl,
+} from '../../../../utils/heygenVoices';
 import {
   AVATAR_IV_ENGINE,
   AVATAR_V_ENGINE,
@@ -47,32 +54,19 @@ import {
   resolveAvatarEngine,
   supportsTransparentWebm,
 } from '../../../../utils/heygenAvatars';
+import { saveAvatarsActiveSection } from '../../../../utils/avatarsNavigationStorage';
+import { dashboardPathForSection } from '../../../../utils/dashboardRouting';
+import VoicePreviewUnavailableNotice, {
+  showVoicePreviewUnavailableNotice,
+} from '../../../ui/VoicePreviewNotice/VoicePreviewNotice';
 import './QuickCreateModal.css';
-
-const VOICE_PREVIEW_SAMPLE =
-  'Hello! This is a quick preview of how this voice sounds for your video narration.';
 
 const AVATAR_DISPLAY_PAGE = 10;
 const TOTAL_STEPS = 5;
 const GENERATING_STEP = 6;
 const STEP_LABELS = ['Presenter', 'Look', 'Voice', 'Script', 'Settings'];
 
-// Voice engines unsupported by the HeyGen TTS speech generation endpoint.
-const UNSUPPORTED_TTS_ENGINES = ['STARFISH']
-
-function isSupportedTtsVoice(rawVoice) {
-  const engine = String(rawVoice?.voice_engine || rawVoice?.engine || rawVoice?.provider || '').toUpperCase()
-  return engine === '' || !UNSUPPORTED_TTS_ENGINES.includes(engine)
-}
-
-const mapVoiceFromApi = (voice) => ({
-  id: voice.voice_id || voice.voiceId || voice.id,
-  name: voice.name || voice.voice_name || voice.display_name || 'AI Voice',
-  gender: voice.gender || 'Unknown',
-  language: voice.language || voice.language_code || voice.language_name || 'English (US)',
-  previewUrl: voice.preview_audio_url || voice.preview_url || voice.preview_audio || null,
-  engine: String(voice.voice_engine || voice.engine || voice.provider || '').toUpperCase() || null,
-});
+const mapVoiceFromApi = (voice) => mapHeygenVoice(voice);
 
 const BACKGROUND_COLOR_PALETTE = [
   {
@@ -195,8 +189,10 @@ const QuickCreateModal = ({
   const [activeColorCategory, setActiveColorCategory] = useState('neutrals');
   const [previewingVoiceId, setPreviewingVoiceId] = useState(null);
   const [previewLoadingVoiceId, setPreviewLoadingVoiceId] = useState(null);
+  const [voicePreviewNotice, setVoicePreviewNotice] = useState(null);
   const [looksDisplayLimit, setLooksDisplayLimit] = useState(AVATAR_DISPLAY_PAGE);
   const previewAudioRef = useRef(null);
+  const previewNoticeTimerRef = useRef(null);
   const bootstrapRef = useRef(false);
 
   const stopVoicePreview = useCallback(() => {
@@ -206,6 +202,18 @@ const QuickCreateModal = ({
     }
     setPreviewingVoiceId(null);
     setPreviewLoadingVoiceId(null);
+  }, []);
+
+  const dismissVoicePreviewNotice = useCallback(() => {
+    if (previewNoticeTimerRef.current) {
+      clearTimeout(previewNoticeTimerRef.current);
+      previewNoticeTimerRef.current = null;
+    }
+    setVoicePreviewNotice(null);
+  }, []);
+
+  useEffect(() => () => {
+    if (previewNoticeTimerRef.current) clearTimeout(previewNoticeTimerRef.current);
   }, []);
 
   const resetAvatarPicker = useCallback(() => {
@@ -633,9 +641,8 @@ const QuickCreateModal = ({
         type: 'public',
         limit: 100,
       });
-      const voiceList = extractHeygenList(responseData, ['voices']);
-      // Filter out engines unsupported by the TTS speech generation API (e.g. STARFISH)
-      const mappedVoices = voiceList.filter(isSupportedTtsVoice).map(mapVoiceFromApi).filter((voice) => voice.id);
+      const voiceList = extractHeygenVoiceList(responseData);
+      const mappedVoices = voiceList.map(mapVoiceFromApi).filter((voice) => voice?.id);
       setVoices(mappedVoices);
     } catch (err) {
       console.error('Failed to load voices:', err);
@@ -744,18 +751,14 @@ const QuickCreateModal = ({
     setPreviewLoadingVoiceId(voice.id);
 
     try {
-      let audioUrl = voice.previewUrl;
+      const audioUrl = await resolveVoicePreviewAudioUrl(voice, { mode: 'sample' });
 
       if (!audioUrl) {
-        const res = await heygenService.previewSpeech({
-          text: VOICE_PREVIEW_SAMPLE,
-          voice_id: voice.id,
-        });
-        audioUrl = res?.preview_audio_url || res?.audio_url || res?.url;
-      }
-
-      if (!audioUrl) {
-        alert('Preview audio is not available for this voice.');
+        if (previewNoticeTimerRef.current) clearTimeout(previewNoticeTimerRef.current);
+        previewNoticeTimerRef.current = showVoicePreviewUnavailableNotice(
+          setVoicePreviewNotice,
+          voice.name
+        );
         return;
       }
 
@@ -774,7 +777,11 @@ const QuickCreateModal = ({
       setPreviewingVoiceId(voice.id);
     } catch (err) {
       console.error('Voice preview failed:', err);
-      alert('Could not play voice preview. Try again in a moment.');
+      if (previewNoticeTimerRef.current) clearTimeout(previewNoticeTimerRef.current);
+      previewNoticeTimerRef.current = showVoicePreviewUnavailableNotice(
+        setVoicePreviewNotice,
+        voice.name
+      );
     } finally {
       setPreviewLoadingVoiceId(null);
     }
@@ -920,6 +927,12 @@ const QuickCreateModal = ({
     </div>
   );
 
+  const handleCreateAvatar = () => {
+    saveAvatarsActiveSection('private');
+    onClose?.();
+    window.location.href = dashboardPathForSection('create-avatar');
+  };
+
   const renderPresenterStep = () => {
     if (loadingGroups) {
       return (
@@ -929,15 +942,14 @@ const QuickCreateModal = ({
         </div>
       );
     }
-    if (groups.length === 0) {
-      return (
-        <div className="qc-loading">
-          <p>No presenters available. Check your connection and try again.</p>
-        </div>
-      );
-    }
+
     const showMoreGroups =
       !avatarSearch.trim() && groupsHasMore && !!groupsNextToken;
+    const hasSearchQuery = Boolean(avatarSearch.trim());
+    const isPrivateEmpty =
+      ownershipTab === 'private' && groups.length === 0 && !hasSearchQuery;
+    const isPublicEmpty =
+      ownershipTab === 'public' && groups.length === 0 && !hasSearchQuery;
 
     return (
       <>
@@ -976,7 +988,26 @@ const QuickCreateModal = ({
           </button>
         </div>
         {renderAvatarSearchBar('Search presenters by name...')}
-        {filteredGroups.length === 0 ? (
+        {isPrivateEmpty ? (
+          <div className="qc-my-avatars-empty">
+            <span className="qc-my-avatars-empty__icon" aria-hidden>
+              <MdFace size={28} />
+            </span>
+            <p className="qc-my-avatars-empty__eyebrow">Nothing here yet</p>
+            <h4 className="qc-my-avatars-empty__title">Create your first avatar</h4>
+            <p className="qc-my-avatars-empty__description">
+              Build a custom AI presenter to use in your videos.
+            </p>
+            <button type="button" className="qc-btn-primary qc-my-avatars-empty__cta" onClick={handleCreateAvatar}>
+              <MdAdd size={16} aria-hidden />
+              Create Avatar
+            </button>
+          </div>
+        ) : isPublicEmpty ? (
+          <div className="qc-loading">
+            <p>No presenters available. Check your connection and try again.</p>
+          </div>
+        ) : filteredGroups.length === 0 ? (
           <div className="qc-loading">
             <p>No presenters match &ldquo;{avatarSearch.trim()}&rdquo;.</p>
           </div>
@@ -1163,6 +1194,15 @@ const QuickCreateModal = ({
                   />
                 </div>
               </div>
+
+              {voicePreviewNotice ? (
+                <VoicePreviewUnavailableNotice
+                  voiceName={voicePreviewNotice.voiceName}
+                  onDismiss={dismissVoicePreviewNotice}
+                  compact
+                  className="qc-voice-preview-notice"
+                />
+              ) : null}
 
               {loadingVoices ? (
                 <div className="qc-loading">

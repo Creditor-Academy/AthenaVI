@@ -1024,13 +1024,7 @@ const LayerPanel = ({
             onUpdateStyle={updateStyle}
             onUpdateFilter={updateFilter}
             onOpacityChange={(v) => updateLayer({ opacity: v })}
-            hideOpacity
-            extraEffects={(
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>Grayscale</span>
-                <ToggleSwitch checked={cf.grayscale > 0} onChange={(v) => updateFilter('grayscale', v ? 1 : 0)} />
-              </div>
-            )}
+            hideAdjustments
           />
         ),
       },

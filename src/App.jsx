@@ -1,6 +1,8 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
+import invitationFlowService from './services/invitationFlowService.js'
+import { getPendingInvitation } from './utils/inviteNavigation.js'
 import Landing from './pages/Landing/Landing.jsx'
 import AuthPage from './pages/Auth/AuthPage.jsx'
 import ResetPassword from './components/features/auth/authentication/ResetPassword.jsx'
@@ -12,6 +14,20 @@ import {
   readClientPath,
   resolveDashboardSectionFromPath,
 } from './utils/dashboardRouting.js'
+import { parseProjectCommentsDeepLink } from './utils/inboxNotifications.js'
+
+function mergeCreateConfigFromDeepLink(prev) {
+  const deepLink = parseProjectCommentsDeepLink()
+  if (!deepLink?.projectId && !deepLink?.openComments) return prev
+
+  return {
+    ...(prev || {}),
+    ...(deepLink.projectId ? { videoId: deepLink.projectId } : {}),
+    ...(deepLink.workspaceId ? { workspaceId: deepLink.workspaceId } : {}),
+    openComments: deepLink.openComments,
+    highlightCommentId: deepLink.highlightCommentId,
+  }
+}
 
 const Dashboard = lazy(() => import('./pages/Dashboard/Dashboard.jsx'))
 const Create = lazy(() => import('./pages/Editor/Editor.jsx'))
@@ -177,9 +193,10 @@ function App() {
   const [createVideoConfig, setCreateVideoConfig] = useState(() => {
     try {
       const saved = window.localStorage.getItem('athenavi:createVideoConfig')
-      return saved ? JSON.parse(saved) : null
+      const parsed = saved ? JSON.parse(saved) : null
+      return mergeCreateConfigFromDeepLink(parsed)
     } catch {
-      return null
+      return mergeCreateConfigFromDeepLink(null)
     }
   })
 
@@ -285,6 +302,23 @@ function App() {
     }
   }, [view])
 
+  const handleAuthComplete = useCallback(async () => {
+    const pending = getPendingInvitation()
+    if (pending?.token) {
+      try {
+        const workspace = await invitationFlowService.completePendingInvitation()
+        invitationFlowService.redirectAfterInvite(
+          workspace || { id: pending.workspaceId, name: pending.workspaceName }
+        )
+        return
+      } catch (err) {
+        console.error('Failed to complete workspace invitation:', err)
+        localStorage.setItem('authError', err.message || 'Failed to accept workspace invitation')
+      }
+    }
+    setView('dashboard')
+  }, [])
+
   // Scroll to top whenever view changes
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' })
@@ -292,7 +326,7 @@ function App() {
 
   // After Google OAuth completes, switch from callback spinner to dashboard
   useEffect(() => {
-    const onOAuthComplete = () => setView('dashboard')
+    const onOAuthComplete = () => { handleAuthComplete() }
     const onOAuthError = () => setView('login')
     window.addEventListener('auth:oauth-complete', onOAuthComplete)
     window.addEventListener('auth:oauth-error', onOAuthError)
@@ -300,21 +334,47 @@ function App() {
       window.removeEventListener('auth:oauth-complete', onOAuthComplete)
       window.removeEventListener('auth:oauth-error', onOAuthError)
     }
-  }, [])
+  }, [handleAuthComplete])
 
   // Handle browser back/forward buttons
   useEffect(() => {
     const handlePopState = () => {
       setView(resolveViewFromLocation(PATH_TO_VIEW_MAP))
+      setCreateVideoConfig((prev) => mergeCreateConfigFromDeepLink(prev))
+    }
+
+    const handleNavigation = (event) => {
+      const path = event?.detail?.path || readClientPath()
+
+      if (path.startsWith('/create')) {
+        setView('create')
+        setCreateVideoConfig((prev) => mergeCreateConfigFromDeepLink(prev))
+        return
+      }
+
+      const section = resolveDashboardSectionFromPath(path)
+      if (section) {
+        if (window.location.pathname !== path.split('?')[0]) {
+          window.history.pushState({ section }, '', path.split('#')[0])
+        }
+        setView('dashboard')
+        window.dispatchEvent(
+          new CustomEvent('athena:dashboard-navigate', {
+            detail: { section, settingsTab: new URL(path, window.location.origin).searchParams.get('tab') },
+          })
+        )
+      }
     }
 
     window.addEventListener('popstate', handlePopState)
-    return () => window.removeEventListener('popstate', handlePopState)
+    window.addEventListener('hashchange', handleNavigation)
+    window.addEventListener('athena:navigation', handleNavigation)
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+      window.removeEventListener('hashchange', handleNavigation)
+      window.removeEventListener('athena:navigation', handleNavigation)
+    }
   }, [])
-
-  const handleAuthComplete = () => {
-    setView('dashboard')
-  }
 
   const handleLoginClick = () => {
     setView('login')
@@ -404,23 +464,7 @@ function App() {
       )}
 
       {/* Invite Acceptance Page - Standalone */}
-      {isInviteAcceptancePath && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          zIndex: 2002,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '20px'
-        }}>
-          <InviteAcceptance />
-        </div>
-      )}
+      {isInviteAcceptancePath && <InviteAcceptance />}
 
       {/* Protected Routes */}
       {view === 'create' && (
@@ -431,6 +475,13 @@ function App() {
               setCreateVideoConfig(null)
               if (window.location.pathname !== dashboardPath) {
                 window.history.pushState({ section: 'workspace' }, '', dashboardPath)
+              }
+              setView('dashboard')
+            }}
+            onNavigateToProfile={() => {
+              const profilePath = dashboardPathForSection('profile')
+              if (window.location.pathname !== profilePath) {
+                window.history.pushState({ section: 'profile' }, '', profilePath)
               }
               setView('dashboard')
             }}
