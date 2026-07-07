@@ -1,4 +1,4 @@
-const { test } = require('@playwright/test');
+const { test ,expect } = require('@playwright/test');
 
 const LoginPage = require('../pages/LoginPage');
 const HomePage = require('../pages/HomePage');
@@ -15,24 +15,16 @@ test.beforeEach(async ({ page }) => {
 });
 
 /* ==========================================
-   TC_HOME_014
-   Verify Logout from Profile Menu
+   TC_HOME_028
+   Verify My Recent Empty State
 ========================================== */
 
-test('TC_HOME_014 Verify Logout from Profile Menu', async ({ page }) => {
+test('TC_HOME_028 Verify My Recent Empty State', async ({ page }) => {
 
     const home = new HomePage(page);
 
-    // Click Profile Avatar
-    await home.clickProfileAvatar();
+    await home.openMyRecent();
 
-    // Verify Logout option is visible
-    await home.verifyLogoutOption();
-
-    // Click Logout
-    await home.clickLogout();
-
-    // Verify Login page
-    await home.verifyLoginPage();
+    await home.verifyNoRecentItems();
 
 });

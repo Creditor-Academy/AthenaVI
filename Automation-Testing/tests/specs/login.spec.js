@@ -1,6 +1,7 @@
 const { test, expect } = require('@playwright/test');
 
 const LoginPage = require('../pages/LoginPage');
+const signpage = require('../pages/')
 const data = require('../utils/testData');
 
 test.describe('Login Module', () => {

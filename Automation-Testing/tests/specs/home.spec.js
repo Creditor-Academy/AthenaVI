@@ -1,4 +1,4 @@
-const { test } = require('@playwright/test');
+const { test , expect} = require('@playwright/test');
 
 const LoginPage = require('../pages/LoginPage');
 
@@ -104,7 +104,7 @@ test('TC_HOME_005 Verify Ctrl + K Shortcut', async ({ page }) => {
    Verify Search with Valid Keyword
 ========================================== */
 
-test.only('Debug Ctrl + K', async ({ page }) => {
+/* test.only('Debug Ctrl + K', async ({ page }) => {
 
     const home = new HomePage(page);
 
@@ -218,5 +218,212 @@ test('TC_HOME_013 Verify User Avatar Opens Profile Menu', async ({ page }) => {
 
     await home.verifyProfileOption();
     await home.clickProfileOption();
+
+});
+
+/* ==========================================
+   TC_HOME_014
+   Verify Logout from Profile Menu
+========================================== */
+
+test('TC_HOME_014 Verify Logout from Profile Menu', async ({ page }) => {
+
+    const home = new HomePage(page);
+    await home.clickProfileAvatar();
+    await home.verifyLogoutOption();
+
+    await home.clickLogout();
+    await home.verifyLoginPage();
+
+});
+
+/* ==========================================
+   TC_HOME_015
+   Verify Welcome Banner Displays Personalized Greeting
+========================================== */
+
+test('TC_HOME_015 Verify Welcome Banner Displays Personalized Greeting', async ({ page }) => {
+
+    const home = new HomePage(page);
+
+    // Verify welcome banner heading
+    await home.verifyWelcomeHeading();
+
+});
+
+/* ==========================================
+   TC_HOME_016
+   Verify Banner Descriptive Text and Feature Tags
+========================================== */
+
+test('TC_HOME_016 Verify Banner Descriptive Text and Feature Tags', async ({ page }) => {
+
+    const home = new HomePage(page);
+
+    // Verify banner description and feature tags
+    await home.verifyWelcomeBanner();
+
+});
+
+/* ==========================================
+   TC_HOME_017
+   Verify Create New Video Navigation
+========================================== */
+
+test('TC_HOME_017 Verify Create New Video Navigation', async ({ page }) => {
+
+    const home = new HomePage(page);
+    await home.clickCreateNewVideo();
+    await home.verifyVideoCreationPage();
+
+});
+
+/* ==========================================
+   TC_HOME_018
+   Verify Video Projects Card
+========================================== */
+
+test('TC_HOME_018 Verify Video Projects Card', async ({ page }) => {
+
+    const home = new HomePage(page);
+
+    await page.waitForTimeout(6000);
+
+    await home.verifyVideoProjectsCard();
+
+});
+
+/* ==========================================
+   TC_HOME_019
+   Verify Open Workspace Navigation
+========================================== */
+
+test('TC_HOME_019 Verify Open Workspace Navigation', async ({ page }) => {
+
+    const home = new HomePage(page);
+
+    // Click Open Workspace
+    await home.clickOpenWorkspace();
+
+    // Verify Workspace page
+    await home.verifyWorkspaceNavigation();
+
+});
+
+/* ==========================================
+   TC_HOME_020
+   Verify Video Projects Count Updates
+========================================== */
+
+test('TC_HOME_020 Verify Video Projects Count Updates', async ({ page }) => {
+
+    const home = new HomePage(page);
+
+    await page.waitForTimeout(6000);
+
+    await home.openVideoWorkspace();
+
+});
+
+/* ==========================================
+   TC_HOME_021
+   Verify Completed Exports card UI
+========================================== */
+
+test('TC_HOME_021 Verify Completed Exports Card', async ({ page }) => {
+
+    const home = new HomePage(page);
+
+    await home.verifyCompletedExportsCard();
+
+});
+
+/* ==========================================
+   TC_HOME_022
+   Verify View exports navigation
+========================================== */
+
+test('TC_HOME_022 Verify View exports Navigation', async ({ page }) => {
+
+    const home = new HomePage(page);
+
+    await home.clickViewExports();
+
+});
+
+/* ==========================================
+   TC_HOME_023
+   Verify Credits Available Card UI
+========================================== */
+
+test('TC_HOME_023 Verify Credits Available Card', async ({ page }) => {
+
+    const home = new HomePage(page);
+
+    await home.verifyCreditsAvailableCard();
+
+});
+
+/* ==========================================
+   TC_HOME_025
+   Verify Low Credit Balance Warning
+========================================== */
+
+test('TC_HOME_025 Verify Low Credit Balance Warning', async ({ page }) => {
+
+    const home = new HomePage(page);
+
+    // Precondition:
+    // Reduce credits below the configured threshold.
+
+    await page.reload();
+
+    await page.waitForTimeout(3000);
+
+    await home.verifyLowCreditWarning();
+
+});
+
+/* ==========================================
+   TC_HOME_026
+   Verify Manage Credits Navigation
+========================================== */
+
+test('TC_HOME_026 Verify Manage Credits Navigation', async ({ page }) => {
+
+    const home = new HomePage(page);
+
+    await home.clickManageCredits();
+
+    await page.waitForLoadState('networkidle');
+
+    await expect(page).toHaveURL(/dashboard\/credits/);
+
+});
+
+/* ==========================================
+   TC_HOME_027
+   Verify Explore Templates / My Recent Toggle
+========================================== */
+
+test('TC_HOME_027 Verify Template Toggle', async ({ page }) => {
+
+    const home = new HomePage(page);
+
+    // Click My Recent
+    await home.openMyRecent();
+
+    await page.waitForLoadState('networkidle');
+
+    // Verify My Recent is active
+    await expect(home.myRecent).toBeVisible();
+
+    // Click Explore Templates
+    await home.openExploreTemplates();
+
+    await page.waitForLoadState('networkidle');
+
+    // Verify Explore Templates is active
+    await expect(home.exploreTemplates).toBeVisible();
 
 });

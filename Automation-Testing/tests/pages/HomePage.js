@@ -41,7 +41,137 @@ class HomePage {
         this.profileAvatar = page.locator('div.profile-avatar');
         this.profileOption = page.getByText('Profile', { exact: true });
         this.logoutBtn = page.getByRole('button', { name: 'Logout' });
+        this.heading = page.getByText('Welcome back, user!', { exact: true });
 
+        this.createNewVideoBtn = page.getByRole('button', { name: 'Create New Video' });
+        this.nextBtn = page.locator('button:has-text("Next")');
+        this.allBtn = page.locator('button:has-text("All")');
+        this.corporateTab = page.getByText('Corporate', { exact: true });
+        this.trainingTab = page.getByRole('tab', { name: 'Training' });
+        this.marketingTab = page.getByRole('tab', { name: 'Marketing' });
+        this.socialTab = page.getByRole('tab', { name: 'Social' });
+        this.minimalTab = page.getByRole('tab', { name: 'Minimal' });
+        this.videoProjectsCard = page.getByText('Video Projects', { exact: true });
+
+        this.videoProjectsCard = page.getByText('Video Projects', { exact: true });
+
+        this.videoProjectsCount = page.getByRole('listitem', {
+        name: /Video Projects: 0/i
+        });
+
+        this.startYourFirstText = page.getByText('Start your first', { exact: true });
+
+        this.acrossWorkspaceText = page.getByText('Across 1 workspace', { exact: true });
+
+        this.openWorkspaceLink = page.getByText('Open workspace', { exact: true });
+        this.videoProjectsCard = page.locator('div.home-billing-stat-inner')
+        .filter({ hasText: 'VIDEO PROJECTS' });
+
+        this.openWorkspace = this.videoProjectsCard.getByText('Open workspace', {
+        exact: true
+        });
+        this.completedExportsCard = page.locator('div.home-billing-stat-inner')
+        .filter({ hasText: 'COMPLETED EXPORTS' });
+
+        this.completedExportsCount = this.completedExportsCard.getByText('0', {
+        exact: true
+        });
+
+        this.completedExportsDescription = this.completedExportsCard.getByText(
+        'None published yet',
+        { exact: true }
+        );
+
+        /* =========================
+        COMPLETED EXPORTS CARD
+        ========================= */
+
+        this.completedExportsCard = page.locator('div.home-billing-stat-inner')
+        .filter({ hasText: 'COMPLETED EXPORTS' });
+
+        this.viewExports = this.completedExportsCard.getByText('View exports', {
+        exact: true
+        });
+
+        /* =========================
+   CREDITS AVAILABLE CARD
+========================= */
+
+this.creditsAvailableCard = page.locator('div.home-billing-stat-inner')
+    .filter({ hasText: 'CREDITS AVAILABLE' });
+
+this.creditBalance = this.creditsAvailableCard.getByText('200,000', {
+    exact: true
+});
+
+this.creditStatus = this.creditsAvailableCard.getByText('Healthy balance', {
+    exact: true
+});
+
+this.creditDescription = this.creditsAvailableCard.getByText(
+    'For exports & AI generation',
+    { exact: true }
+);
+
+this.manageCredits = this.creditsAvailableCard.getByText('Manage credits', {
+    exact: true
+});
+
+/* =========================
+   CREDITS AVAILABLE CARD
+========================= */
+
+this.creditsAvailableCard = page.locator('div.home-billing-stat-inner')
+    .filter({ hasText: 'CREDITS AVAILABLE' });
+
+this.creditsProgressBar = this.creditsAvailableCard.locator(
+    '[role="progressbar"], .progress-bar, .home-progress-bar'
+);
+
+/* =========================
+   LOW CREDIT WARNING
+========================= */
+
+this.creditsAvailableCard = page.locator('div.home-billing-stat-inner')
+    .filter({ hasText: 'CREDITS AVAILABLE' });
+
+this.lowBalanceLabel = this.creditsAvailableCard.getByText('Low balance', {
+    exact: true
+});
+
+/* =========================
+   CREDITS AVAILABLE CARD
+========================= */
+
+this.manageCredits = page.getByText('Manage credits', {
+    exact: true
+});
+
+/* =========================
+   TEMPLATE TOGGLE
+========================= */
+
+this.exploreTemplates = page.getByText('Explore Templates', {
+    exact: true
+});
+
+this.myRecent = page.getByRole('button', {
+    name: 'My Recent'
+});
+
+/* =========================
+   MY RECENT TAB
+========================= */
+
+this.myRecent = page.getByRole('button', {
+    name: 'My Recent'
+});
+
+this.noRecentItems = page.getByText('No recent items', {
+    exact: true
+});
+
+       
         /* ==========================
             Welcome Banner
         ========================== */
@@ -60,10 +190,6 @@ class HomePage {
 
         this.aiToolsTag = page.locator(
             'span:has-text("AI tools available")'
-        );
-
-        this.createNewVideoBtn = page.locator(
-            'button:has-text("Create New Video")'
         );
 
         /* ==========================
@@ -91,6 +217,8 @@ class HomePage {
         this.exploreTemplates = page.getByText('Explore Templates', { exact: true });
 
         this.myRecent = page.getByRole('button', { name: /My Recent/i });
+
+        this.nextBtn = page.getByRole('button', { name: 'Next' });
 
     }
 
@@ -326,14 +454,240 @@ class HomePage {
 
     async verifyLogoutOption() {
     await expect(this.logoutBtn).toBeVisible();
-}
+    }
 
-async clickLogout() {
+    async clickLogout() {
     await this.logoutBtn.click();
+    }
+
+    async verifyLoginPage() {
+    await expect(this.page).toHaveURL(/login/i);
+
+    }
+
+    async verifyWelcomeHeading() {
+
+    await expect(this.heading).toBeVisible();
+
 }
 
-async verifyLoginPage() {
-    await expect(this.page).toHaveURL(/login/i);
+async verifyBannerDescription() {
+
+    await expect(this.description).toBeVisible();
+
+}
+
+async verifyFeatureTags() {
+
+    await expect(this.multiLanguageTag).toBeVisible();
+
+    await expect(this.aiToolsTag).toBeVisible();
+
+}
+
+
+async verifyWelcomeBanner() {
+
+    await expect(this.heading).toBeVisible();
+
+    await expect(this.description).toBeVisible();
+
+    await expect(this.multiLanguageTag).toBeVisible();
+
+    await expect(this.aiToolsTag).toBeVisible();
+
+}
+
+async clickCreateNewVideo() {
+
+    await this.createNewVideoBtn.click();
+    await this.nextBtn.click();
+}
+async verifyVideoCreationPage() {
+    await this.page.waitForTimeout(3000);
+    await expect(this.page).toHaveURL(/dashboard/i);
+    await expect(this.nextBtn).toBeVisible();
+
+}
+async clickOpenWorkspace() {
+
+    await this.openWorkspaceLink.click();
+
+}
+
+async verifyWorkspaceNavigation() {
+
+    await expect(this.page).toHaveURL(/workspace/i);
+
+}
+
+/* =========================
+   CLICK VIEW EXPORTS
+========================= */
+
+async clickViewExports() {
+
+    await this.viewExports.click();
+
+}
+
+/* =========================
+   VERIFY CREDITS CARD
+========================= */
+
+async verifyCreditsAvailableCard() {
+
+    await this.creditsAvailableCard.waitFor({ state: 'visible' });
+
+    await expect(this.creditBalance).toBeVisible();
+
+    await expect(this.creditStatus).toBeVisible();
+
+    await expect(this.creditDescription).toBeVisible();
+
+    await expect(this.manageCredits).toBeVisible();
+
+}
+
+/* =========================
+   VERIFY COMPLETED EXPORTS CARD
+========================= */
+
+async verifyCompletedExportsCard() {
+
+    await this.completedExportsCard.waitFor({ state: 'visible' });
+
+    await expect(this.completedExportsCount).toBeVisible();
+
+    await expect(this.completedExportsDescription).toBeVisible();
+
+    await expect(this.completedExportsText).toBeVisible();
+
+    await expect(this.viewExports).toBeVisible();
+
+}
+
+/* =========================
+   OPEN VIDEO WORKSPACE
+========================= */
+
+async openVideoWorkspace() {
+
+    await this.videoProjectsCard.waitFor({ state: 'visible' });
+
+    await this.openWorkspace.waitFor({ state: 'visible' });
+
+    await this.openWorkspace.click();
+
+}
+
+/* =========================
+   VERIFY CREDITS PROGRESS BAR
+========================= */
+
+async verifyCreditsProgressBar() {
+
+    await this.creditsAvailableCard.waitFor({ state: 'visible' });
+
+    await expect(this.creditsProgressBar).toBeVisible();
+
+}
+
+
+/* ==========================
+    Video Projects Card
+========================== */
+
+async verifyVideoProjectsCard() {
+
+    await expect(this.videoProjectsCard).toBeVisible();
+
+    await expect(this.videoProjectsCount).toBeVisible();
+
+    await expect(this.startYourFirstText).toBeVisible();
+
+    await expect(this.acrossWorkspaceText).toBeVisible();
+
+    await expect(this.openWorkspaceLink).toBeVisible();
+
+}
+/* =========================
+   VERIFY LOW CREDIT WARNING
+========================= */
+
+async verifyLowCreditWarning() {
+
+    await this.creditsAvailableCard.waitFor({ state: 'visible' });
+
+    await this.page.waitForTimeout(2000);
+
+    await this.lowBalanceLabel.waitFor({ state: 'visible' });
+
+    await expect(this.lowBalanceLabel).toBeVisible();
+
+}
+
+/* =========================
+   CLICK MANAGE CREDITS
+========================= */
+
+async clickManageCredits() {
+
+    await this.manageCredits.waitFor({ state: 'visible' });
+
+    await this.manageCredits.click();
+
+}
+
+/* =========================
+   OPEN MY RECENT
+========================= */
+
+async openMyRecent() {
+
+    await this.myRecent.waitFor({ state: 'visible' });
+
+    await this.myRecent.click();
+
+}
+/* =========================
+   OPEN EXPLORE TEMPLATES
+========================= */
+
+async openExploreTemplates() {
+
+    await this.exploreTemplates.waitFor({ state: 'visible' });
+
+    await this.exploreTemplates.click();
+
+}
+ /* =========================
+   OPEN MY RECENT
+========================= */
+
+async openMyRecent() {
+
+    await this.myRecent.waitFor({ state: 'visible' });
+
+    await this.myRecent.click();
+
+}
+
+
+/* =========================
+   VERIFY EMPTY STATE
+========================= */
+
+async verifyNoRecentItems() {
+
+    await this.page.waitForLoadState('networkidle');
+
+    await this.page.waitForTimeout(2000);
+
+    await this.noRecentItems.waitFor({ state: 'visible' });
+
+    await expect(this.noRecentItems).toBeVisible();
+
 }
 
     /* ==========================
