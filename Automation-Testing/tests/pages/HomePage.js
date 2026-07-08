@@ -26,6 +26,7 @@ class HomePage {
 
         this.search = page.getByPlaceholder('Search dashboard...');
         this.searchShortcut = page.getByText('Ctrl+K');
+         this.homeMenu = page.getByText('Home', { exact: true });
 
         this.createBtn = page.getByRole('button', { name: 'Create' });
 
@@ -170,6 +171,111 @@ this.myRecent = page.getByRole('button', {
 this.noRecentItems = page.getByText('No recent items', {
     exact: true
 });
+
+/* ==========================
+   Create Project
+========================== */
+
+this.templateAllTab = page.getByRole('tab', { name: 'All' });
+this.corporateTab = page.getByRole('tab', { name: 'Corporate' });
+this.trainingTab = page.getByRole('tab', { name: 'Training' });
+this.marketingTab = page.getByRole('tab', { name: 'Marketing' });
+this.socialTab = page.getByRole('tab', { name: 'Social' });
+this.minimalTab = page.getByRole('tab', { name: 'Minimal' });
+
+this.firstTemplate = page.locator('.template-bundle-card__preview').first();
+this.useTemplateBtn = page.locator('div').filter({ hasText: /^Use Template$/ }).first();
+
+this.projectTitle = page.getByRole('textbox', { name: 'Project Title *' });
+
+this.workspaceDropdown = page.getByLabel("Workspace *User's Personal+");
+this.newWorkspace = page.getByRole('textbox', { name: 'New workspace name' });
+this.createWorkspaceBtn = page.getByLabel('Create a project').getByRole('button', { name: 'Create', exact: true });
+
+this.folderDropdown = page.getByLabel('Choose Folder *No folders');
+this.newFolder = page.getByRole('textbox', { name: 'New folder name' });
+this.createFolderBtn = page.getByLabel('Create a project').getByRole('button', { name: 'Create', exact: true });
+
+this.createProjectBtn = page.getByRole('button', { name: 'Create Project', exact: true });
+this.closeBtn = page.getByRole('button', { name: 'Close' });
+
+/* ==========================
+   Create Project
+========================== */
+
+this.templateAllTab = page.getByRole('tab', { name: 'All' });
+this.corporateTab = page.getByRole('tab', { name: 'Corporate' });
+this.trainingTab = page.getByRole('tab', { name: 'Training' });
+this.marketingTab = page.getByRole('tab', { name: 'Marketing' });
+this.socialTab = page.getByRole('tab', { name: 'Social' });
+this.minimalTab = page.getByRole('tab', { name: 'Minimal' });
+
+this.firstTemplate = page.locator('.template-bundle-card__preview').first();
+this.useTemplateBtn = page.locator('div').filter({ hasText: /^Use Template$/ }).first();
+
+this.projectTitle = page.getByRole('textbox', { name: 'Project Title *' });
+
+this.workspaceDropdown = page.getByLabel("Workspace *User's Personal+");
+this.newWorkspace = page.getByRole('textbox', { name: 'New workspace name' });
+this.createWorkspaceBtn = page.getByLabel('Create a project').getByRole('button', { name: 'Create', exact: true });
+
+this.folderDropdown = page.getByLabel('Choose Folder *No folders');
+this.newFolder = page.getByRole('textbox', { name: 'New folder name' });
+this.createFolderBtn = page.getByLabel('Create a project').getByRole('button', { name: 'Create', exact: true });
+
+this.createProjectBtn = page.getByRole('button', { name: 'Create Project', exact: true });
+this.closeBtn = page.getByRole('button', { name: 'Close' });
+/* ==========================
+   Shared With Me
+========================== */
+
+this.videoProjectsCard = page.getByRole('listitem', {
+    name: /Video Projects:/i
+});
+
+this.sharedWithMeBtn = page.getByRole('button', {
+    name: 'Shared with Me'
+});
+
+this.homeBtn = page.getByRole('button', {
+    name: 'Home',
+    exact: true
+});
+
+/* ==========================
+   Global Search
+========================== */
+
+this.searchBar = page.getByText('SearchCtrl K');
+
+this.searchBox = page.getByRole('combobox', {
+    name: 'Search'
+});
+
+this.homeDashboardOption = page.getByRole('option', {
+    name: 'Home Dashboard'
+});
+
+this.workspaceDashboardOption = page.getByRole('option', {
+    name: 'Workspace Dashboard · Videos'
+});
+
+this.myVideosDashboardOption = page.getByRole('option', {
+    name: 'My videos Dashboard · Videos'
+});
+
+this.helpSupportOption = page.getByRole('option', {
+    name: 'Help & Support Dashboard'
+});
+
+this.navigateDashboardHelpOption = page.getByRole('option', {
+    name: 'Navigate the dashboard Help'
+});
+
+this.exportMP4HelpOption = page.getByRole('option', {
+    name: 'Export a final MP4 Help ·'
+});
+
 
        
         /* ==========================
@@ -689,8 +795,158 @@ async verifyNoRecentItems() {
     await expect(this.noRecentItems).toBeVisible();
 
 }
+async openSharedWithMe() {
 
-    /* ==========================
+    await this.videoProjectsCard.click();
+
+    await this.sharedWithMeBtn.click();
+
+    await this.homeBtn.click();
+
+}
+async createNewProject() {
+
+    // Generate unique project title
+    const projectTitle = `First Project ${Date.now()}`;
+
+    await this.createNewVideoBtn.click();
+
+    await this.nextBtn.click();
+
+    await this.templateAllTab.click();
+    await this.corporateTab.click();
+    await this.trainingTab.click();
+    await this.marketingTab.click();
+    await this.socialTab.click();
+    await this.minimalTab.click();
+    await this.templateAllTab.click();
+
+    await this.firstTemplate.click();
+
+    await this.useTemplateBtn.click();
+
+    await this.nextBtn.click();
+
+    await this.projectTitle.fill(projectTitle);
+
+    await this.workspaceDropdown.selectOption('__create_workspace__');
+    await this.newWorkspace.fill('khushi');
+    await this.createWorkspaceBtn.click();
+    await this.closeBtn.click();
+
+    console.log(`Created Project: ${projectTitle}`);
+}
+async verifyGlobalSearchNavigation() {
+
+    await this.searchBar.click();
+    await this.homeDashboardOption.click();
+
+    await this.searchBox.click();
+    await this.workspaceDashboardOption.click();
+
+    await this.searchBox.click();
+    await this.myVideosDashboardOption.click();
+
+    await this.searchBox.click();
+    await this.helpSupportOption.click();
+
+    await this.searchBar.click();
+    await this.navigateDashboardHelpOption.click();
+
+    await this.searchBox.click();
+    await this.navigateDashboardHelpOption.click();
+
+    await this.searchBar.click();
+    await this.exportMP4HelpOption.click();
+
+}
+async createTemplateVideo() {
+
+    const projectTitle = `AI Video Creation Guide ${Date.now()}`;
+
+    await this.exploreTemplatesBtn.click();
+
+    await this.useTemplateBtn.click();
+
+    await this.createVideoBtn.click();
+
+    await this.professionalBtn.click();
+
+    await this.presentationBtn.click();
+
+    await this.workspaceDropdown.selectOption('43d16d9d-851b-4066-a2a2-64f523894e1e');
+
+    await this.folderDropdown.click();
+
+    await this.projectTitle.fill(projectTitle);
+
+    await this.page.goto('http://localhost:5173/create');
+
+    await this.presenterPrompt.fill('May I Help You??');
+
+    await this.widthInput.fill('271');
+
+    await this.generateBtn.click();
+
+    await this.genderFilter.selectOption('female');
+
+    await this.languageFilter.selectOption('English');
+
+    this.page.once('dialog', async dialog => {
+        console.log(dialog.message());
+        await dialog.dismiss();
+    });
+
+    await this.narrationTextbox.fill(
+        "May I Help You?? I'm Zain I can assist you to make this project. Thank you!"
+    );
+
+}
+
+/* ==========================
+   Accessibility
+========================== */
+
+async verifyAccessibilityElements() {
+
+    // Verify all buttons
+    const buttons = await this.page.getByRole('button').all();
+
+    for (const button of buttons) {
+
+        const ariaLabel = await button.getAttribute('aria-label');
+        const ariaLabelledBy = await button.getAttribute('aria-labelledby');
+        const title = await button.getAttribute('title');
+        const text = (await button.textContent())?.trim();
+
+        expect(
+            ariaLabel ||
+            ariaLabelledBy ||
+            title ||
+            text
+        ).toBeTruthy();
+    }
+
+    // Verify all links
+    const links = await this.page.getByRole('link').all();
+
+    for (const link of links) {
+
+        const ariaLabel = await link.getAttribute('aria-label');
+        const ariaLabelledBy = await link.getAttribute('aria-labelledby');
+        const title = await link.getAttribute('title');
+        const text = (await link.textContent())?.trim();
+
+        expect(
+            ariaLabel ||
+            ariaLabelledBy ||
+            title ||
+            text
+        ).toBeTruthy();
+    }
+
+}
+   /* ==========================
         Welcome Banner
     ========================== */
 

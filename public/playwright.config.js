@@ -1,19 +1,17 @@
 const { defineConfig } = require('@playwright/test');
 
 module.exports = defineConfig({
-  testDir: './tests/specs',
+
+  testDir: './specs',
 
   timeout: 60000,
 
   use: {
     baseURL: 'http://localhost:5173',
     headless: false,
-    viewport: null,
-    launchOptions: {
-      args: ['--start-maximized']
-    },
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     trace: 'retain-on-failure'
   }
+
 });

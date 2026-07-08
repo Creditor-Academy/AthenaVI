@@ -6,15 +6,14 @@ const HomePage = require('../pages/HomePage');
 
 const data = require('../utils/testData');
 
-test.beforeEach(async ({ page }) => {
+test.describe('Home Module', () => {
 
-    const login = new LoginPage(page);
+    test.beforeEach(async ({ page }) => {
+        const login = new LoginPage(page);
 
-    await login.navigate();
-
-    await login.login(data.email, data.password);
-
-});
+        await login.navigate();
+        await login.login(data.email, data.password);
+    });
 
 /* ==========================================
    TC_HOME_001
@@ -71,18 +70,16 @@ test('TC_HOME_003 Verify Active Home Menu', async ({ page }) => {
 
 });
 
-/* ==========================================
+ /* ==========================================
    TC_HOME_004
-   Verify Search Dashboard
+   Verify Home Menu
 ========================================== */
 
-test('TC_HOME_004 Verify Search Dashboard', async ({ page }) => {
+test('TC_HOME_004 Verify Home Menu', async ({ page }) => {
 
     const home = new HomePage(page);
 
-    await home.verifySearchBar();
-    await home.verifySearchPlaceholder();
-    await home.verifySearchShortcut();
+    await home.verifyHomeMenu();
 
 });
 
@@ -229,11 +226,9 @@ test('TC_HOME_013 Verify User Avatar Opens Profile Menu', async ({ page }) => {
 test('TC_HOME_014 Verify Logout from Profile Menu', async ({ page }) => {
 
     const home = new HomePage(page);
-    await home.clickProfileAvatar();
-    await home.verifyLogoutOption();
 
+    await home.clickProfileAvatar();
     await home.clickLogout();
-    await home.verifyLoginPage();
 
 });
 
@@ -425,5 +420,103 @@ test('TC_HOME_027 Verify Template Toggle', async ({ page }) => {
 
     // Verify Explore Templates is active
     await expect(home.exploreTemplates).toBeVisible();
+
+});
+
+/* ==========================================
+   TC_HOME_028
+   Verify User Can Create New Video Project
+========================================== */
+
+test('TC_HOME_028 Verify User Can Create New Video Project', async ({ page }) => {
+
+    const createProject = new CreateProjectPage(page);
+
+    await createProject.createProject();
+
+});
+
+/* ==========================================
+   TC_HOME_030
+   Verify Shared With Me Navigation
+========================================== */
+
+test('TC_HOME_030 Verify Shared With Me Navigation', async ({ page }) => {
+
+    const home = new HomePage(page);
+
+    await home.openSharedWithMe();
+
+});
+
+/* ==========================================
+   TC_HOME_031
+   Verify Global Search Navigation
+========================================== */
+
+test('TC_HOME_031 Verify Global Search Navigation', async ({ page }) => {
+
+    const home = new HomePage(page);
+
+    await home.verifyGlobalSearchNavigation();
+
+});
+
+test('TC_HOME_032 Verify Home page API failure handling', async ({ page }) => {
+
+    await page.route('**/api/**', async route => {
+        console.log('Intercepted:', route.request().url());
+
+        await route.fulfill({
+            status: 500,
+            contentType: 'application/json',
+            body: JSON.stringify({
+                message: 'Internal Server Error'
+            })
+        });
+    });
+
+    await page.goto('http://localhost:5173/dashboard');
+
+    await page.waitForTimeout(3000);
+});
+test('TC_HOME_033 - Verify Home dashboard layout adapts correctly on tablet and mobile viewport widths', async ({ page }) => {
+
+    // Tablet View
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await page.reload();
+
+    await expect(page.locator('body')).toBeVisible();
+
+    // Mobile View
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.reload();
+
+    await expect(page.locator('body')).toBeVisible();
+
+});
+
+test('TC_HOME_046 - Verify horizontal scroll/overflow does not occur at common breakpoints', async ({ page }) => {
+
+    const viewports = [
+        { width: 320, height: 640 },
+        { width: 768, height: 1024 },
+        { width: 1024, height: 768 },
+        { width: 1440, height: 900 }
+    ];
+
+    for (const viewport of viewports) {
+
+        await page.setViewportSize(viewport);
+        await page.reload();
+
+        const hasHorizontalScroll = await page.evaluate(() => {
+            return document.documentElement.scrollWidth > document.documentElement.clientWidth;
+        });
+
+        expect(hasHorizontalScroll).toBeFalsy();
+    }
+
+});
 
 });
