@@ -12,5 +12,15 @@ test.describe('Home Module', () => {
         await login.navigate();
         await login.login(data.email, data.password);
     });
+
+   test('TC_HOME_047 Verify User Can Create AI Video Project', async ({ page }) => {
+
+    test.setTimeout(900000); // 15 minutes
+
+    const home = new HomePage(page);
+
+    await home.createTalkingAvatarProject();
+
+});
 });
    

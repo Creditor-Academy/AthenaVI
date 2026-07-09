@@ -518,5 +518,14 @@ test('TC_HOME_046 - Verify horizontal scroll/overflow does not occur at common b
     }
 
 });
+ test('TC_HOME_047 Verify User Can Create AI Video Project', async ({ page }) => {
+
+    test.setTimeout(900000); // 15 minutes
+
+    const home = new HomePage(page);
+
+    await home.createTalkingAvatarProject();
+
+});
 
 });

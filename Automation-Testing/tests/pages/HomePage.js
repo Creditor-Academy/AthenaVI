@@ -275,6 +275,197 @@ this.navigateDashboardHelpOption = page.getByRole('option', {
 this.exportMP4HelpOption = page.getByRole('option', {
     name: 'Export a final MP4 Help ·'
 });
+this.nextBtn = page.getByRole('button', { name: 'Next' });
+
+this.firstTemplate = page.locator('.template-bundle-card__preview').first();
+
+this.useTemplateBtn = page.locator('button').filter({
+    hasText: /^Use Template$/
+}).first();
+
+this.projectTitle = page.getByRole('textbox', {
+    name: /Project Title/i
+});
+
+this.professionalBtn = page.getByRole('button', {
+    name: 'Professional'
+});
+
+this.presentationBtn = page.getByRole('button', {
+    name: 'Presentation',
+    exact: true
+});
+
+this.createProjectBtn = page.getByRole('button', {
+    name: 'Create Project',
+    exact: true
+});
+
+this.closeBtn = page.getByRole('button', {
+    name: 'Close'
+});
+
+this.expandSidebarBtn = page.getByRole('button', {
+    name: 'Expand sidebar'
+});
+
+this.setupPresenterBtn = page.getByRole('button', {
+    name: 'Set up presenter'
+});
+
+this.createTalkingAvatarBtn = page.getByRole('button', {
+    name: 'Create talking avatar'
+});
+
+this.annieAvatar = page.getByRole('img', {
+    name: 'Annie'
+});
+
+this.annieStandingSide = page.getByRole('img', {
+    name: 'Annie Lounge Standing Side'
+});
+
+this.annieVoice = page.getByRole('button', {
+    name: /Annie - Lifelike female/
+});
+
+this.continueBtn = page.getByRole('button', {
+    name: 'Continue'
+});
+
+this.presenterTextbox = page.getByRole('textbox', {
+    name: 'Write what your presenter'
+});
+
+this.solidBackdropRadio = page.getByRole('radio', {
+    name: /Solid backdrop/
+});
+
+this.landscapeBtn = page.getByRole('button', {
+    name: /16:9 Landscape/
+});
+
+this.generateVideoBtn = page.getByRole('button', {
+    name: 'Generate video'
+});
+
+this.confirmCloseBtn = page.getByRole('button', {
+    name: 'Confirm & Close'
+});
+
+this.viewVideoBtn = page.getByRole('button', {
+    name: 'View video',
+    exact: true
+});
+
+this.closePreviewBtn = page.getByRole('button', {
+    name: 'Close',
+    exact: true
+});
+
+this.textMarquee = page.locator('.text-marquee-capture');
+
+this.canvasObject = page.locator('div:nth-child(10) > div > div');
+
+// Canvas
+this.moveOverlay = page.locator('.sel-overlay__move');
+
+this.widthInput = page.getByRole('spinbutton', { name: 'Width' });
+this.heightInput = page.getByRole('spinbutton', { name: 'Height' });
+
+this.setAsBackgroundBtn = page.getByRole('button', {
+    name: 'Set as background'
+});
+
+this.unsetBtn = page.getByRole('button', {
+    name: 'Unset'
+});
+
+// Shape & Style
+this.shapeStyleBtn = page.getByRole('button', {
+    name: 'Shape & Style'
+});
+
+this.squareBtn = page.getByRole('button', { name: 'Square' });
+this.triangleBtn = page.getByRole('button', { name: 'Triangle' });
+this.diamondBtn = page.getByRole('button', { name: 'Diamond' });
+this.pentagonBtn = page.getByRole('button', { name: 'Pentagon' });
+this.hexagonBtn = page.getByRole('button', { name: 'Hexagon' });
+this.heptagonBtn = page.getByRole('button', { name: 'Heptagon' });
+this.octagonBtn = page.getByRole('button', { name: 'Octagon' });
+this.circleBtn = page.getByRole('button', { name: 'Circle' });
+
+this.transparencySlider = page.getByRole('slider', {
+    name: 'Layer transparency'
+});
+
+this.shadow75Btn = page.getByRole('button', { name: '75%' });
+this.shadow100Btn = page.getByRole('button', { name: '100%' });
+
+this.border2pxBtn = page.getByText('2px');
+this.borderColorTextbox = page.getByRole('textbox', {
+    name: 'Border color'
+});
+this.border2pxText = page.getByText('Border2px');
+
+this.borderWidthSlider = page.getByRole('slider', {
+    name: 'Border width'
+});
+
+this.deepBtn = page.getByRole('button', { name: 'Deep' });
+
+// Fit & Adjust
+this.fitAdjustBtn = page.getByRole('button', {
+    name: 'Fit & Adjust'
+});
+
+this.containBtn = page.getByRole('button', { name: 'Contain' });
+this.fillBtn = page.getByRole('button', { name: 'Fill' });
+this.coverBtn = page.getByRole('button', { name: 'Cover' });
+
+this.horizontalBtn = page.getByRole('button', {
+    name: 'Horizontal'
+});
+
+this.verticalBtn = page.getByRole('button', {
+    name: 'Vertical'
+});
+
+// Animation
+this.animationBtn = page.getByRole('button', {
+    name: 'Animation',
+    exact: true
+});
+
+this.fadeBtn = page.getByRole('button', { name: 'Fade' });
+this.slideUpBtn = page.getByRole('button', { name: 'Slide up' });
+this.slideDownBtn = page.getByRole('button', { name: 'Slide down' });
+this.zoomInBtn = page.getByRole('button', {
+    name: 'Zoom in',
+    exact: true
+});
+
+this.popBtn = page.getByRole('button', { name: 'Pop' });
+this.wipeBtn = page.getByRole('button', { name: 'Wipe' });
+this.blurBtn = page.getByRole('button', { name: 'Blur' });
+this.driftBtn = page.getByRole('button', { name: 'Drift' });
+this.tectonicBtn = page.getByRole('button', { name: 'Tectonic' });
+this.breatheBtn = page.getByRole('button', { name: 'Breathe' });
+this.scrapbookBtn = page.getByRole('button', { name: 'Scrapbook' });
+this.neonBtn = page.getByRole('button', { name: 'Neon' });
+this.tumbleBtn = page.getByRole('button', { name: 'Tumble' });
+this.stompBtn = page.getByRole('button', { name: 'Stomp' });
+this.rotateBtn = page.getByRole('button', { name: 'Rotate' });
+this.flickerBtn = page.getByRole('button', { name: 'Flicker' });
+this.pulseBtn = page.getByRole('button', { name: 'Pulse' });
+this.wiggleBtn = page.getByRole('button', { name: 'Wiggle' });
+
+this.exitBtn = page.getByRole('button', { name: 'Exit' });
+this.entranceBtn = page.getByRole('button', { name: 'Entrance' });
+this.bothBtn = page.getByRole('button', { name: 'Both' });
+
+// Arrange
+this.arrangeBtn = page.getByText('Arrange');
 
 
        
@@ -945,6 +1136,166 @@ async verifyAccessibilityElements() {
         ).toBeTruthy();
     }
 
+}
+
+async createTalkingAvatarProject() {
+
+    const projectTitle = `Create Project ${Date.now()}`;
+
+    // ==========================
+    // Create Project
+    // ==========================
+
+    await this.page.locator('button.topbar-create-btn').click();
+
+    await this.page.getByRole('button', { name: 'Next' }).click();
+
+    await this.page.locator('.template-bundle-card__preview').first().click();
+
+    await this.page.locator('button')
+        .filter({ hasText: /^Use Template$/ })
+        .first()
+        .click();
+
+    // Required by your application
+    await this.page.locator('button')
+        .filter({ hasText: /^Use Template$/ })
+        .first()
+        .click();
+
+    await this.page.getByRole('button', { name: 'Next' }).click();
+
+    await this.page.getByRole('textbox', {
+        name: 'Project Title * A project'
+    }).fill(projectTitle);
+
+    await this.page.getByRole('button', {
+        name: 'Professional'
+    }).click();
+
+    await this.page.getByRole('button', {
+        name: 'Presentation',
+        exact: true
+    }).click();
+
+    await this.page.getByRole('button', {
+        name: 'Create Project',
+        exact: true
+    }).click();
+
+    await this.page.getByRole('button', {
+        name: 'Close'
+    }).click();
+
+    // ==========================
+    // Presenter
+    // ==========================
+
+    await this.page.getByRole('button', {
+        name: 'Expand sidebar'
+    }).click();
+
+    await this.page.getByRole('button', {
+        name: 'Set up presenter'
+    }).click();
+
+    await this.page.getByRole('button', {
+        name: 'Create talking avatar'
+    }).click();
+
+    await this.page.getByRole('img', {
+        name: 'Annie'
+    }).click();
+
+    await this.page.getByRole('button', {
+        name: 'Continue'
+    }).click();
+
+    await this.page.getByRole('img', {
+        name: 'Annie Lounge Standing Side'
+    }).click();
+
+    await this.page.getByRole('button', {
+        name: 'Continue'
+    }).click();
+
+    await this.page.getByRole('button', {
+        name: 'Annie - Lifelike female ·'
+    }).click();
+
+    await this.page.getByRole('button', {
+        name: 'Continue'
+    }).click();
+
+    await this.page.getByRole('textbox', {
+        name: 'Write what your presenter'
+    }).fill('May i help you??');
+
+    await this.page.getByRole('button', {
+        name: 'Continue'
+    }).click();
+
+    // ==========================
+    // Generate Video
+    // ==========================
+
+    await this.page.getByRole('radio', {
+        name: 'Solid backdrop MP4 with a'
+    }).click();
+
+    await this.page.getByRole('button', {
+        name: '16:9 Landscape YouTube, web,'
+    }).click();
+
+    await this.page.getByRole('button', {
+        name: 'Generate video'
+    }).click();
+
+    await this.page.getByRole('button', {
+        name: 'Confirm & Close'
+    }).click();
+
+    // ==========================
+    // Preview
+    // ==========================
+
+    await this.page.getByRole('button', {
+        name: 'View video',
+        exact: true
+    }).click();
+
+    await this.page.getByRole('button', {
+        name: 'Confirm & Close'
+    }).click();
+
+    await this.page.getByRole('button', {
+        name: 'Confirm & Close'
+    }).click();
+
+    await this.page.getByRole('button', {
+        name: 'Close',
+        exact: true
+    }).click();
+
+    // ==========================
+    // Canvas
+    // ==========================
+
+    await this.page.locator('.text-marquee-capture').click();
+    await this.page.locator('.text-marquee-capture').click();
+
+    await this.page.locator('div:nth-child(10) > div > div')
+        .first()
+        .click();
+
+    await this.page.locator('.text-marquee-capture').click();
+
+    await this.page.locator('div:nth-child(10) > div > div')
+        .first()
+        .click();
+
+    console.log(`Project Created Successfully : ${projectTitle}`);
+    
 }
    /* ==========================
         Welcome Banner
