@@ -32,9 +32,9 @@ VITE_API_BASE_URL=${env.VITE_API_BASE_URL}
 VITE_ENV=${env.VITE_ENV}
 """
                 sh '''
-                echo "==================================="
+                echo "===================================="
                 echo "Generated .env.production"
-                echo "==================================="
+                echo "===================================="
                 cat .env.production
                 '''
             }
