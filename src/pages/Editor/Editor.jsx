@@ -52,6 +52,9 @@ import {
   ensureSceneIdentity,
   findSceneAvatarClip,
   getCenteredAvatarPlacement,
+  isHeygenPlaybackTimeoutError,
+  isHeygenVideoFailed,
+  isHeygenVideoPlaybackReady,
   nextHeygenSceneId,
   pollUntilHeygenPlaybackReady,
 } from '../../utils/heygenVideo'
@@ -1888,7 +1891,9 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
   }
 
   const generateSceneVideo = async (sceneId, overrides = null) => {
-    const scene = project.scenes.find(s => s.id === sceneId);
+    const scene =
+      projectRef.current?.scenes?.find((s) => s.id === sceneId) ||
+      project.scenes.find((s) => s.id === sceneId);
     if (!scene && !overrides) return;
 
     // Request browser notification permission if not already granted/denied
@@ -2152,6 +2157,50 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
         await finishWithPlayback(videoData);
       } catch (err) {
         console.error('HeyGen generation polling failed:', err);
+
+        // Client poll timeout ≠ HeyGen failure (photo avatars often take >2 min).
+        // Re-check once; if still running, keep "processing" so export isn't stuck on false "failed".
+        if (isHeygenPlaybackTimeoutError(err) && heygenVideoId) {
+          try {
+            const latest = await heygenService.getVideo(workspaceId, projectId, heygenVideoId, {
+              sync: 'status',
+            });
+            if (isHeygenVideoPlaybackReady(latest)) {
+              await finishWithPlayback(latest);
+              return;
+            }
+            if (isHeygenVideoFailed(latest)) {
+              updateScene(sceneId, { heygenStatus: 'failed' });
+              window.dispatchEvent(new CustomEvent('generation-failed'));
+              notifyEditorToast(
+                'Avatar video generation failed. Regenerate it in Scene settings.',
+                'error'
+              );
+              return;
+            }
+            updateScene(sceneId, {
+              heygenStatus: 'processing',
+              heygenVideoId,
+            });
+            notifyEditorToast(
+              'Avatar video is still generating. Keep this project open — export will work once it finishes.',
+              'info'
+            );
+            return;
+          } catch (recheckErr) {
+            console.warn('HeyGen timeout recheck failed:', recheckErr);
+            updateScene(sceneId, {
+              heygenStatus: 'processing',
+              heygenVideoId,
+            });
+            notifyEditorToast(
+              'Avatar video is taking longer than usual. Check Scene settings shortly, then export.',
+              'info'
+            );
+            return;
+          }
+        }
+
         updateScene(sceneId, { heygenStatus: 'failed' });
         window.dispatchEvent(new CustomEvent('generation-failed'));
 
@@ -2706,12 +2755,34 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
 
   const handleRemakeVideo = () => {
     if (!generatingSceneId) return;
-    
-    // Close the modal
+
     setShowGeneratedVideoModal(false);
-    
-    // Trigger generation again
-    generateSceneVideo(generatingSceneId);
+    setGenerationCreditsUsed(null);
+
+    const scene = projectRef.current?.scenes?.find((s) => s.id === generatingSceneId);
+    if (!scene) {
+      generateSceneVideo(generatingSceneId);
+      return;
+    }
+
+    const avatarLookId = getSceneAvatarLookId(scene);
+    // Rebuild overrides from the scene so Remake matches the first Quick Create run
+    // (Create My Look hex/uuid look ids + engines are preserved).
+    generateSceneVideo(generatingSceneId, {
+      avatarLookId,
+      avatarType: avatarLookId,
+      avatarTypeLabel: getSceneAvatarKind(scene),
+      avatarEngine: scene.presenter?.avatarEngine || scene.avatarEngine,
+      supportedEngines: scene.supportedEngines || scene.presenter?.supportedEngines,
+      isLegacyV2: scene.isLegacyV2 ?? scene.presenter?.isLegacyV2,
+      voiceId: getSceneVoiceId(scene),
+      script: getSceneScript(scene),
+      voiceSettings: scene.voiceSettings,
+      backgroundColor: scene.background?.value || scene.backgroundColor,
+      expressiveness: scene.expressiveness || scene.presenter?.expressiveness,
+      outputFormat: scene.outputFormat || scene.presenter?.outputFormat,
+      removeBackground: scene.removeBackground,
+    });
   };
 
   return (

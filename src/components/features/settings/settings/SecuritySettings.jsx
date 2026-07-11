@@ -23,6 +23,8 @@ const SecuritySettings = () => {
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [loginAlerts, setLoginAlerts] = useState(true);
+  const [loginAlertsSaving, setLoginAlertsSaving] = useState(false);
+  const [loginAlertsError, setLoginAlertsError] = useState('');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Deletion Modal State
@@ -40,6 +42,9 @@ const SecuritySettings = () => {
           setCanChangePassword(data.canChangePassword);
           setHasPassword(data.hasPassword);
           setAccountDeletion(data.accountDeletion);
+          if (typeof data.loginAlerts === 'boolean') {
+            setLoginAlerts(data.loginAlerts);
+          }
         }
       } catch (error) {
         console.error('Failed to load security settings:', error);
@@ -90,6 +95,29 @@ const SecuritySettings = () => {
     setConfirmPassword('');
     setPasswordError('');
     setPasswordSuccess('');
+  };
+
+  const handleLoginAlertsToggle = async () => {
+    if (loginAlertsSaving) return;
+
+    const previousValue = loginAlerts;
+    const newValue = !loginAlerts;
+    setLoginAlerts(newValue);
+    setLoginAlertsError('');
+    setLoginAlertsSaving(true);
+
+    try {
+      const updated = await userService.updateSecuritySettings({ loginAlerts: newValue });
+      if (updated && typeof updated.loginAlerts === 'boolean') {
+        setLoginAlerts(updated.loginAlerts);
+      }
+    } catch (error) {
+      console.error('Failed to update login alerts setting:', error);
+      setLoginAlerts(previousValue);
+      setLoginAlertsError(error.message || 'Failed to save Login Alerts preference.');
+    } finally {
+      setLoginAlertsSaving(false);
+    }
   };
 
   const handleLogoutAll = async () => {
@@ -265,16 +293,28 @@ const SecuritySettings = () => {
           <div className="toggle-info">
             <h4>Login Alerts</h4>
             <p>Send security alerts whenever a new device signs in to your account.</p>
+            {loginAlertsError && (
+              <p className="toggle-blocked-note" role="alert" style={{ color: '#ef4444' }}>
+                {loginAlertsError}
+              </p>
+            )}
           </div>
-          <button
-            type="button"
-            className={`toggle-switch ${loginAlerts ? 'active' : ''}`}
-            role="switch"
-            aria-checked={loginAlerts}
-            onClick={() => setLoginAlerts(!loginAlerts)}
-          >
-            <div className="toggle-knob" />
-          </button>
+          <div className="toggle-control">
+            <span className={`toggle-status ${loginAlerts ? 'toggle-status--on' : 'toggle-status--off'}`}>
+              {loginAlertsSaving ? 'Saving...' : loginAlerts ? 'On' : 'Off'}
+            </span>
+            <button
+              type="button"
+              className={`toggle-switch ${loginAlerts ? 'active' : ''}`}
+              role="switch"
+              aria-checked={loginAlerts}
+              aria-label={`Login Alerts: ${loginAlerts ? 'on' : 'off'}`}
+              onClick={handleLoginAlertsToggle}
+              disabled={loginAlertsSaving}
+            >
+              <div className="toggle-knob" />
+            </button>
+          </div>
         </div>
 
         {/* Logout from All Devices */}
