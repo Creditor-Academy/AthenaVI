@@ -7,7 +7,11 @@ import {
   MdWarning,
   MdMonitor,
 } from 'react-icons/md';
-import { sceneNeedsHeygenRegeneration } from '../../../../utils/heygenVideo';
+import {
+  isAvatarClip,
+  resolveClipMediaSrc,
+  sceneNeedsHeygenRegeneration,
+} from '../../../../utils/heygenVideo';
 import {
   getSceneAvatarLookId,
   getSceneScript,
@@ -119,11 +123,23 @@ const AvatarVoiceoverSection = ({
                 type="button"
                 className="scene-settings__cta scene-settings__cta--secondary"
                 onClick={() => {
+                  const avatarClip =
+                    activeScene.clips?.find((c) => isAvatarClip(c)) ||
+                    activeScene.clips?.find((c) => c.role === 'avatar' || c.type === 'video');
                   const url =
+                    activeScene.playbackUrl ||
                     activeScene.generatedVideoUrl ||
-                    activeScene.clips?.find((c) => c.role === 'avatar' || c.type === 'video')?.src;
-                  if (url) window.dispatchEvent(new CustomEvent('open-generated-video', { detail: { url } }));
-                  else alert('Video URL not found. It might still be processing.');
+                    resolveClipMediaSrc(avatarClip, activeScene) ||
+                    avatarClip?.src;
+                  if (url) {
+                    window.dispatchEvent(
+                      new CustomEvent('open-generated-video', {
+                        detail: { url, sceneId: activeSceneId },
+                      })
+                    );
+                  } else {
+                    alert('Video URL not found. It might still be processing.');
+                  }
                 }}
               >
                 <MdMonitor size={14} />

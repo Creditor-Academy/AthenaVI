@@ -67,6 +67,29 @@ export function extractHeygenVoiceList(result) {
   return [];
 }
 
+/** Prefer private/cloned voices first; dedupe by voice id. */
+export function mergeHeygenVoiceLists(...lists) {
+  const seen = new Set();
+  const merged = [];
+
+  for (const list of lists) {
+    for (const voice of list || []) {
+      const id = voice?.voice_id || voice?.voiceId || voice?.id;
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      merged.push(voice);
+    }
+  }
+
+  return merged;
+}
+
+/** Exclude voices that are still processing or failed cloning. */
+export function isVoiceReadyForSelection(voice) {
+  const status = String(voice?.status || '').toLowerCase();
+  return status !== 'processing' && status !== 'failed';
+}
+
 export function isSpeechPreviewSupportedVoice(voice) {
   return voice?.supportsSpeechPreview === true;
 }

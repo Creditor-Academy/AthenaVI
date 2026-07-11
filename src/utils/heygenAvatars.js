@@ -967,27 +967,47 @@ function getSceneAvatarClipContent(scene) {
   return typeof avatarClip?.content === 'object' ? avatarClip.content : {};
 }
 
-/** HeyGen look id (lk_…) — scene.avatarType historically stored the look id. */
+/**
+ * HeyGen look id for generation (lk_…, named public id, or hex/uuid look id).
+ * Create My Look / photo looks often use 32-char hex or UUID look ids — those are
+ * valid when stored on explicit look fields. Only skip group-shaped ids on ambiguous fields.
+ */
 export function getSceneAvatarLookId(scene) {
   if (!scene) return null;
 
   const avatarContent = getSceneAvatarClipContent(scene);
-  const candidates = [
+
+  const isGroupPrefix = (id) => id.startsWith('ag_') || id.startsWith('agt_');
+
+  // Explicit look-id fields — accept hex/uuid look ids (Create My Look).
+  const explicitLookIds = [
     scene.avatarLookId,
     scene.presenter?.avatarLookId,
     scene.presenter?.lookId,
+    avatarContent.avatarLookId,
+  ];
+
+  for (const raw of explicitLookIds) {
+    if (!raw) continue;
+    const id = String(raw);
+    if (isGroupPrefix(id)) continue;
+    if (AVATAR_KINDS.has(id)) continue;
+    return id;
+  }
+
+  // Ambiguous fields may hold a look id, group id, or avatar kind label.
+  const ambiguous = [
     scene.presenter?.avatarId,
     scene.presenter?.id,
-    avatarContent.avatarLookId,
     avatarContent.avatarId,
     scene.avatarType,
   ];
 
-  for (const raw of candidates) {
+  for (const raw of ambiguous) {
     if (!raw) continue;
     const id = String(raw);
-    if (id.startsWith('ag_')) continue;
-    if (/^[0-9a-fA-F]{32}$/.test(id)) continue;
+    if (isGroupPrefix(id)) continue;
+    if (isAvatarGroupId(id)) continue;
     if (AVATAR_KINDS.has(id)) continue;
     return id;
   }
