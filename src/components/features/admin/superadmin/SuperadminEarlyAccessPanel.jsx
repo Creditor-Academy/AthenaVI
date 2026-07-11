@@ -14,12 +14,12 @@ const PIPELINE_STAGES = [
 ]
 
 const STATUS_TABS = [
-  { id: '',             label: 'All' },
-  { id: 'pending',      label: 'Pending' },
-  { id: 'under_review', label: 'Under review' },
-  { id: 'in_discussion',label: 'In discussion' },
-  { id: 'approved',     label: 'Approved' },
-  { id: 'rejected',     label: 'Rejected' },
+  { id: '',              label: 'All' },
+  { id: 'pending',       label: 'Pending' },
+  { id: 'under_review',  label: 'Under review' },
+  { id: 'in_discussion', label: 'In discussion' },
+  { id: 'approved',      label: 'Approved' },
+  { id: 'rejected',      label: 'Rejected' },
 ]
 
 const STATUS_META = {
@@ -32,11 +32,10 @@ const STATUS_META = {
 
 const FINAL_STATUSES = new Set(['approved', 'rejected'])
 
-// What "advance pipeline" does from each stage
 const ADVANCE_FROM = {
   pending:       { action: 'under_review',  label: 'Start review' },
   under_review:  { action: 'in_discussion', label: 'Move to discussion' },
-  in_discussion: null, // can only approve or reject from here
+  in_discussion: null,
 }
 
 /* ── pipeline stepper ───────────────────────────────────── */
@@ -52,13 +51,10 @@ function PipelineStepper({ status }) {
           const isDone = isRejected ? false : currentIdx > idx
           const isCurrent = !isRejected && currentIdx === idx
           const isFuture = isRejected || currentIdx < idx
-
           const dotColor = isDone ? '#4ade80' : isCurrent ? STATUS_META[stage.id]?.color || 'var(--primary)' : 'var(--border-color)'
-          const lineColor = isDone ? '#4ade80' : 'var(--border-color)'
 
           return (
             <div key={stage.id} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-              {/* connector line before (skip first) */}
               {idx > 0 && (
                 <div style={{
                   position: 'absolute', top: 13, right: '50%', width: '100%', height: 2,
@@ -66,7 +62,6 @@ function PipelineStepper({ status }) {
                   zIndex: 0,
                 }} />
               )}
-              {/* dot */}
               <div style={{
                 width: 28, height: 28, borderRadius: '50%', zIndex: 1, flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -81,7 +76,6 @@ function PipelineStepper({ status }) {
                   <span style={{ width: 8, height: 8, borderRadius: '50%', background: isCurrent ? dotColor : 'var(--border-color)' }} />
                 )}
               </div>
-              {/* label */}
               <div style={{
                 marginTop: 7, fontSize: '0.6875rem', fontWeight: isCurrent ? 700 : 500,
                 color: isDone ? '#4ade80' : isCurrent ? dotColor : 'var(--text-muted)',
@@ -94,7 +88,6 @@ function PipelineStepper({ status }) {
           )
         })}
 
-        {/* rejected state — separate indicator */}
         {isRejected && (
           <div style={{ position: 'absolute', right: 0, top: -2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7 }}>
             <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'color-mix(in srgb, #f87171 18%, var(--bg-card))', border: '2px solid #f87171', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -160,7 +153,6 @@ function RequestDrawer({ open, request, onClose, onStatusChange }) {
   }, [open, request?.requestId])
 
   const isFinal = FINAL_STATUSES.has(request?.status)
-  const advance = ADVANCE_FROM[request?.status] ?? null
 
   const handleStatusChange = async (newStatus, shortcut = false) => {
     if (!request?.requestId) return
@@ -227,7 +219,6 @@ function RequestDrawer({ open, request, onClose, onStatusChange }) {
             {error && <div className="sa-alert sa-alert--error"><AlertTriangle size={13} style={{ display: 'inline', marginRight: 6 }} />{error}</div>}
             {success && <div className="sa-alert sa-alert--success"><CheckCircle size={13} style={{ display: 'inline', marginRight: 6 }} />{success}</div>}
 
-            {/* Message — shown first so you see it immediately */}
             {request?.message && (
               <div>
                 <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -239,12 +230,10 @@ function RequestDrawer({ open, request, onClose, onStatusChange }) {
               </div>
             )}
 
-            {/* Action zone */}
             {!isFinal && (
               <div style={{ background: 'color-mix(in srgb, var(--bg-card) 95%, transparent)', border: '1px solid var(--border-color)', borderRadius: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>Actions</div>
 
-                {/* Stage dropdown */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                   <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Move to stage</div>
                   <select
@@ -252,9 +241,7 @@ function RequestDrawer({ open, request, onClose, onStatusChange }) {
                     style={{ height: 32, fontSize: '0.8125rem', padding: '0 10px', width: 'auto', minWidth: 160 }}
                     value={request?.status === 'under_review' || request?.status === 'in_discussion' ? request.status : ''}
                     disabled={loading}
-                    onChange={(e) => {
-                      if (e.target.value) handleStatusChange(e.target.value)
-                    }}
+                    onChange={(e) => { if (e.target.value) handleStatusChange(e.target.value) }}
                   >
                     {request?.status !== 'under_review' && request?.status !== 'in_discussion' && (
                       <option value="" disabled>Select stage…</option>
@@ -266,7 +253,6 @@ function RequestDrawer({ open, request, onClose, onStatusChange }) {
 
                 <div style={{ height: 1, background: 'var(--border-color)' }} />
 
-                {/* Approve / Reject */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                   <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Final decision</div>
                   <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
@@ -281,7 +267,6 @@ function RequestDrawer({ open, request, onClose, onStatusChange }) {
               </div>
             )}
 
-            {/* Details */}
             <div className="sa-profile-grid">
               <div className="sa-profile-item"><span style={{ width: 110, flexShrink: 0 }}>Request ID</span><strong style={{ fontFamily: 'monospace', fontSize: '0.75rem', wordBreak: 'break-all' }}>{request?.requestId || '—'}</strong></div>
               <div className="sa-profile-item"><span style={{ width: 110, flexShrink: 0 }}>Name</span><strong>{request?.name || '—'}</strong></div>
@@ -300,6 +285,8 @@ function RequestDrawer({ open, request, onClose, onStatusChange }) {
   )
 }
 
+/* ── main panel ─────────────────────────────────────────── */
+
 const PAGE_SIZE = 20
 
 function SuperadminEarlyAccessPanel() {
@@ -312,7 +299,6 @@ function SuperadminEarlyAccessPanel() {
   const [listLoading, setListLoading] = useState(true)
   const [listError, setListError] = useState('')
   const [tabCounts, setTabCounts] = useState({})
-
   const [selectedRequest, setSelectedRequest] = useState(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
@@ -340,7 +326,6 @@ function SuperadminEarlyAccessPanel() {
     }
   }, [page, statusFilter, search])
 
-  // Load all-status count for badges on tabs
   const loadTabCounts = useCallback(async () => {
     try {
       const statuses = ['pending', 'under_review', 'in_discussion', 'approved', 'rejected']
@@ -361,30 +346,20 @@ function SuperadminEarlyAccessPanel() {
   }, [searchInput])
 
   useEffect(() => { loadRequests() }, [loadRequests])
-
   useEffect(() => { loadTabCounts() }, [loadTabCounts])
 
-  // close on Escape
   useEffect(() => {
     const h = (e) => { if (e.key === 'Escape') closeDrawer() }
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
   }, [])
 
-  const openDrawer = (req) => {
-    setSelectedRequest(req)
-    setDrawerOpen(true)
-  }
-
-  const closeDrawer = () => {
-    setDrawerOpen(false)
-    setTimeout(() => setSelectedRequest(null), 280)
-  }
+  const openDrawer = (req) => { setSelectedRequest(req); setDrawerOpen(true) }
+  const closeDrawer = () => { setDrawerOpen(false); setTimeout(() => setSelectedRequest(null), 280) }
 
   const handleStatusChange = () => {
     loadRequests()
     loadTabCounts()
-    // Update drawer's request to reflect new status by re-fetching
     if (selectedRequest?.requestId) {
       superadminService.getEarlyAccessRequest(selectedRequest.requestId)
         .then(data => setSelectedRequest(data.request || data))
@@ -392,14 +367,10 @@ function SuperadminEarlyAccessPanel() {
     }
   }
 
-  const handleTabChange = (status) => {
-    setStatusFilter(status)
-    setPage(1)
-  }
+  const handleTabChange = (status) => { setStatusFilter(status); setPage(1) }
 
   return (
     <div className="sa-panel">
-      {/* Header */}
       <div className="sa-panel-header">
         <div>
           <h2 className="sa-panel-title">Early access requests</h2>
@@ -410,18 +381,12 @@ function SuperadminEarlyAccessPanel() {
       {listError && <div className="sa-alert sa-alert--error">{listError}</div>}
 
       <div className="sa-card sa-card--flush" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-
         {/* Status tab bar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '10px 16px', borderBottom: '1px solid var(--border-color)', flexShrink: 0, flexWrap: 'wrap' }}>
           {STATUS_TABS.map(tab => {
             const count = tab.id ? tabCounts[tab.id] : undefined
             return (
-              <button
-                key={tab.id}
-                type="button"
-                className={`sa-tab${statusFilter === tab.id ? ' sa-tab--active' : ''}`}
-                onClick={() => handleTabChange(tab.id)}
-              >
+              <button key={tab.id} type="button" className={`sa-tab${statusFilter === tab.id ? ' sa-tab--active' : ''}`} onClick={() => handleTabChange(tab.id)}>
                 {tab.label}
                 {count != null && count > 0 && (
                   <span className="sa-card-header-count" style={{ marginLeft: 4 }}>{count}</span>
@@ -467,7 +432,6 @@ function SuperadminEarlyAccessPanel() {
                 onMouseLeave={e => { if (!isSelected) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderLeft = '3px solid transparent' } }}
               >
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr 120px 130px', gap: 12, padding: '13px 20px', alignItems: 'center', pointerEvents: 'none' }}>
-                  {/* Applicant */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                     <div style={{ width: 34, height: 34, borderRadius: '50%', flexShrink: 0, background: isSelected ? 'linear-gradient(135deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 85%, #2563eb) 100%)' : 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 15%, var(--bg-card)) 0%, color-mix(in srgb, var(--primary) 25%, var(--bg-card)) 100%)', color: isSelected ? '#fff' : 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, border: isSelected ? '2px solid var(--primary)' : '1px solid color-mix(in srgb, var(--primary) 30%, var(--border-color))' }}>
                       {(req.name || '?')[0].toUpperCase()}
@@ -477,16 +441,13 @@ function SuperadminEarlyAccessPanel() {
                       <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.email}</div>
                     </div>
                   </div>
-                  {/* Company / role */}
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: '0.82rem', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.company || '—'}</div>
                     {req.role && <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.role}</div>}
                   </div>
-                  {/* Use case */}
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {req.useCase || '—'}
                   </div>
-                  {/* Status */}
                   <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                     <StatusBadge status={req.status} />
                   </div>
