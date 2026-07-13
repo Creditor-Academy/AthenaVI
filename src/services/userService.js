@@ -400,6 +400,43 @@ class UserService {
     }
   }
 
+  // Update (partial) security settings for current user
+  async updateSecuritySettings(patch) {
+    try {
+      if (!patch || Object.keys(patch).length === 0) {
+        const err = new Error('Request body must contain at least one field');
+        err.status = 400;
+        throw err;
+      }
+
+      console.log('Patching security settings with:', patch);
+
+      const response = await fetch(buildUrl('/api/user/settings/security'), {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(patch)
+      });
+
+      console.log('Update security settings status:', response.status);
+
+      if (!response.ok) {
+        if (response.status === 401) throw new Error('Authentication required');
+        if (response.status === 400) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.message || 'Invalid security settings');
+        }
+        throw new Error(`Failed to update security settings: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Updated security settings response:', data);
+      return data.data?.security || data.security || null;
+    } catch (error) {
+      console.error('Error updating security settings:', error);
+      throw error;
+    }
+  }
+
   // Change password for current user
   async changePassword(currentPassword, newPassword) {
     try {

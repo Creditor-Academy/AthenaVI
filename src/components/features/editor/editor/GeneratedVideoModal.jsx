@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { MdClose, MdGeneratingTokens } from 'react-icons/md';
 import './GeneratedVideoModal.css';
 
@@ -11,6 +11,43 @@ const GeneratedVideoModal = ({
   onRemake,
   sceneTitle,
 }) => {
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen || !videoUrl) return undefined;
+
+    const video = videoRef.current;
+    if (!video) return undefined;
+
+    const tryPlay = () => {
+      const playPromise = video.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(() => {});
+      }
+    };
+
+    // Native controls PiP can open while the element is still paused (e.g. unmuted
+    // autoplay was blocked). Resume on enter so the PiP window actually plays.
+    const onEnterPiP = () => {
+      tryPlay();
+    };
+
+    video.addEventListener('loadeddata', tryPlay);
+    video.addEventListener('canplay', tryPlay);
+    video.addEventListener('enterpictureinpicture', onEnterPiP);
+    tryPlay();
+
+    return () => {
+      video.removeEventListener('loadeddata', tryPlay);
+      video.removeEventListener('canplay', tryPlay);
+      video.removeEventListener('enterpictureinpicture', onEnterPiP);
+      if (typeof document !== 'undefined' && document.pictureInPictureElement === video) {
+        document.exitPictureInPicture().catch(() => {});
+      }
+      video.pause();
+    };
+  }, [isOpen, videoUrl]);
+
   if (!isOpen) return null;
 
   return (
@@ -40,7 +77,15 @@ const GeneratedVideoModal = ({
 
         {videoUrl ? (
           <div className="generated-video-modal__player">
-            <video src={videoUrl} controls autoPlay />
+            <video
+              ref={videoRef}
+              key={videoUrl}
+              src={videoUrl}
+              controls
+              autoPlay
+              playsInline
+              preload="auto"
+            />
           </div>
         ) : (
           <div className="generated-video-modal__processing">

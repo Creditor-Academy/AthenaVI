@@ -42,17 +42,28 @@ const EditorSidebarMagic = ({ onGenerateStoryboard }) => {
     const fetchVoices = async () => {
       try {
         setLoadingVoices(true);
-        const responseData = await heygenService.getVoices({ limit: 100, type: 'public' });
-        let voiceList = [];
-        const data = responseData?.data || responseData;
-        
-        if (Array.isArray(data)) {
-          voiceList = data;
-        } else if (data?.voices) {
-          voiceList = data.voices;
-        } else if (responseData?.voices) {
-          voiceList = responseData.voices;
-        }
+        const [privateData, publicData] = await Promise.all([
+          heygenService.getVoices({ limit: 100, type: 'private' }).catch(() => ({ voices: [] })),
+          heygenService.getVoices({ limit: 100, type: 'public' }),
+        ]);
+
+        const extractList = (responseData) => {
+          const data = responseData?.data || responseData;
+          if (Array.isArray(data)) return data;
+          if (data?.voices) return data.voices;
+          if (responseData?.voices) return responseData.voices;
+          return [];
+        };
+
+        const seen = new Set();
+        const voiceList = [...extractList(privateData), ...extractList(publicData)].filter((v) => {
+          const id = v?.voice_id || v?.id;
+          const status = String(v?.status || '').toLowerCase();
+          if (!id || seen.has(id)) return false;
+          if (status === 'processing' || status === 'failed') return false;
+          seen.add(id);
+          return true;
+        });
 
         if (voiceList.length > 0) {
           const mappedVoices = voiceList.map(v => ({

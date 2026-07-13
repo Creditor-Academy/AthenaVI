@@ -2,7 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MdMic, MdSearch, MdPlayArrow, MdVolumeUp } from 'react-icons/md';
 import { Loader2 } from 'lucide-react';
 import heygenService from '../../../../services/heygenService';
-import { extractHeygenVoiceList, mapHeygenVoice } from '../../../../utils/heygenVoices';
+import {
+  extractHeygenVoiceList,
+  isVoiceReadyForSelection,
+  mapHeygenVoice,
+  mergeHeygenVoiceLists,
+} from '../../../../utils/heygenVoices';
 import VoicePreviewUnavailableNotice, {
   showVoicePreviewUnavailableNotice,
 } from '../../../ui/VoicePreviewNotice/VoicePreviewNotice';
@@ -19,13 +24,30 @@ const EditorSidebarVoice = ({ activeScene, activeSceneId, updateScene }) => {
     const fetchVoices = async () => {
       setLoading(true);
       try {
-        const params = { limit: 100, type: 'public' };
-        if (activeGender !== 'all') params.gender = activeGender;
+        const publicParams = { limit: 100, type: 'public' };
+        const privateParams = { limit: 100, type: 'private' };
+        if (activeGender !== 'all') {
+          publicParams.gender = activeGender;
+          privateParams.gender = activeGender;
+        }
 
-        const responseData = await heygenService.getVoices(params);
-        const voiceList = extractHeygenVoiceList(responseData);
+        const [privateData, publicData] = await Promise.all([
+          heygenService.getVoices(privateParams).catch((err) => {
+            console.warn('Failed to load private voices:', err);
+            return { voices: [] };
+          }),
+          heygenService.getVoices(publicParams),
+        ]);
 
-        console.log(`Virtual Studio (Editor): Mapping ${voiceList.length} voices`, { raw: responseData });
+        const voiceList = mergeHeygenVoiceLists(
+          extractHeygenVoiceList(privateData),
+          extractHeygenVoiceList(publicData)
+        ).filter(isVoiceReadyForSelection);
+
+        console.log(`Virtual Studio (Editor): Mapping ${voiceList.length} voices`, {
+          private: extractHeygenVoiceList(privateData).length,
+          public: extractHeygenVoiceList(publicData).length,
+        });
 
         const mappedVoices = voiceList
           .map((v) => ({
