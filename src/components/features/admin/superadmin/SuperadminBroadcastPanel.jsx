@@ -226,6 +226,36 @@ function TemplatePickerModal({ onSelect, onClose }) {
           background: 'color-mix(in srgb, var(--text-muted) 3%, var(--bg-card))',
           padding: 16, display: 'flex', flexDirection: 'column', gap: 20,
         }}>
+          {/* Back button */}
+          <button
+            type="button"
+            onClick={() => setEditing(false)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 7,
+              padding: '7px 10px', borderRadius: 8,
+              border: '1px solid var(--border-color)',
+              background: 'transparent',
+              color: 'var(--text-muted)',
+              cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600,
+              transition: 'background 0.12s, color 0.12s, border-color 0.12s',
+              width: '100%', textAlign: 'left',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'color-mix(in srgb, var(--text-muted) 8%, transparent)'
+              e.currentTarget.style.color = 'var(--text-main)'
+              e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--text-muted) 50%, var(--border-color))'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.color = 'var(--text-muted)'
+              e.currentTarget.style.borderColor = 'var(--border-color)'
+            }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5M12 5l-7 7 7 7" />
+            </svg>
+            Back to templates
+          </button>
           {/* Gradient section */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <p style={{ margin: 0, fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)' }}>Header gradient</p>

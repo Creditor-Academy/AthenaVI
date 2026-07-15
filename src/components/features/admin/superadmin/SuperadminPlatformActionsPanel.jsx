@@ -16,16 +16,16 @@ function GrantBadge({ type }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
       padding: '3px 9px',
-      borderRadius: 99,
-      fontSize: '0.6875rem', fontWeight: 700,
-      letterSpacing: '0.02em',
+      borderRadius: 6,
+      fontSize: '0.6875rem', fontWeight: 600,
+      letterSpacing: '0.01em',
       background: isGrant
-        ? 'color-mix(in srgb, #22c55e 13%, var(--bg-card))'
-        : 'color-mix(in srgb, #ef4444 13%, var(--bg-card))',
-      color: isGrant ? '#4ade80' : '#f87171',
+        ? 'color-mix(in srgb, var(--primary) 10%, var(--bg-card))'
+        : 'color-mix(in srgb, var(--text-muted) 10%, var(--bg-card))',
+      color: isGrant ? 'var(--primary)' : 'var(--text-muted)',
       border: `1px solid ${isGrant
-        ? 'color-mix(in srgb, #22c55e 28%, var(--border-color))'
-        : 'color-mix(in srgb, #ef4444 25%, var(--border-color))'}`,
+        ? 'color-mix(in srgb, var(--primary) 22%, var(--border-color))'
+        : 'color-mix(in srgb, var(--text-muted) 25%, var(--border-color))'}`,
       whiteSpace: 'nowrap',
     }}>
       {isGrant
@@ -44,15 +44,11 @@ function Avatar({ name, isGrant }) {
   return (
     <div style={{
       width: 30, height: 30, borderRadius: 8, flexShrink: 0,
-      background: isGrant
-        ? 'color-mix(in srgb, #22c55e 12%, var(--bg-card))'
-        : 'color-mix(in srgb, #ef4444 12%, var(--bg-card))',
-      border: `1px solid ${isGrant
-        ? 'color-mix(in srgb, #22c55e 25%, var(--border-color))'
-        : 'color-mix(in srgb, #ef4444 22%, var(--border-color))'}`,
+      background: 'color-mix(in srgb, var(--primary) 10%, var(--bg-card))',
+      border: '1px solid color-mix(in srgb, var(--primary) 18%, var(--border-color))',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontSize: '0.6875rem', fontWeight: 700,
-      color: isGrant ? '#4ade80' : '#f87171',
+      color: 'var(--primary)',
     }}>
       {letters}
     </div>
@@ -122,7 +118,7 @@ function TxRow({ tx }) {
         <span style={{
           fontSize: '0.875rem', fontWeight: 700,
           letterSpacing: '-0.01em',
-          color: isGrant ? '#4ade80' : '#f87171',
+          color: isGrant ? 'var(--primary)' : 'var(--text-muted)',
         }}>
           {isGrant ? '+' : '−'}{formatAc(amount)}
         </span>
@@ -159,8 +155,8 @@ function SummaryPills({ audit }) {
 
   const pills = [
     { label: 'Total',   value: new Intl.NumberFormat().format(total),   color: 'var(--primary)' },
-    { label: 'Grants',  value: grants,  color: '#4ade80' },
-    { label: 'Revokes', value: revokes, color: '#f87171' },
+    { label: 'Grants',  value: grants,  color: 'var(--primary)' },
+    { label: 'Revokes', value: revokes, color: 'var(--text-muted)' },
   ]
 
   return (

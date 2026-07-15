@@ -27,37 +27,36 @@ function initials(label) {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function SummaryCard({ icon: Icon, label, value, sub, color }) {
+function SummaryCard({ icon: Icon, label, value, sub }) {
   return (
     <div className="sa-metric-card" style={{ position: 'relative', overflow: 'hidden' }}>
       <div style={{
         position: 'absolute', top: 12, right: 12,
-        width: 36, height: 36, borderRadius: 10,
-        background: `color-mix(in srgb, ${color} 14%, var(--bg-card))`,
-        border: `1px solid color-mix(in srgb, ${color} 28%, var(--border-color))`,
+        width: 34, height: 34, borderRadius: 9,
+        background: 'color-mix(in srgb, var(--primary) 10%, var(--bg-card))',
+        border: '1px solid color-mix(in srgb, var(--primary) 20%, var(--border-color))',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color,
+        color: 'var(--primary)',
       }}>
-        <Icon size={16} />
+        <Icon size={15} />
       </div>
       <div className="sa-metric-card-label" style={{ paddingRight: 48 }}>{label}</div>
-      <div className="sa-metric-card-value" style={{ color }}>{value}</div>
+      <div className="sa-metric-card-value" style={{ color: 'var(--text-main)' }}>{value}</div>
       {sub && <div className="sa-metric-card-note">{sub}</div>}
     </div>
   )
 }
 
-// ── Layout 1: Feature chart — horizontal bar chart, label left, filled bar, value right ──
+// ── Layout 1: Feature chart — horizontal bar chart ──
 function FeatureBarChart({ rows, maxValue }) {
   if (!rows?.length) return null
   return (
     <div style={{ padding: '8px 0' }}>
       {rows.map((row, i) => {
         const w = pct(row.totalUsageAc, maxValue)
-        const opacity = Math.max(0.45, 1 - i * 0.07)
+        const opacity = Math.max(0.4, 1 - i * 0.06)
         return (
           <div key={row.feature} style={{ padding: '7px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-            {/* Feature name */}
             <span style={{
               width: 110, flexShrink: 0,
               fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-main)',
@@ -65,35 +64,32 @@ function FeatureBarChart({ rows, maxValue }) {
             }}>
               {row.label || row.feature}
             </span>
-            {/* Bar track */}
             <div style={{
-              flex: 1, height: 20, borderRadius: 4,
-              background: 'color-mix(in srgb, #a78bfa 8%, var(--border-color))',
+              flex: 1, height: 18, borderRadius: 4,
+              background: 'color-mix(in srgb, var(--primary) 6%, var(--border-color))',
               overflow: 'hidden', position: 'relative',
             }}>
               <div style={{
                 position: 'absolute', left: 0, top: 0, bottom: 0,
                 width: `${w}%`,
                 borderRadius: 4,
-                background: `linear-gradient(90deg, #a78bfa, color-mix(in srgb, #a78bfa 65%, #6366f1))`,
+                background: 'var(--primary)',
                 opacity,
                 transition: 'width 0.5s cubic-bezier(.4,0,.2,1)',
               }} />
-              {/* Inline count label inside bar */}
               {w > 18 && (
                 <span style={{
                   position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)',
-                  fontSize: '0.625rem', fontWeight: 600, color: 'rgba(255,255,255,0.85)',
+                  fontSize: '0.625rem', fontWeight: 600, color: 'rgba(255,255,255,0.8)',
                   pointerEvents: 'none',
                 }}>
                   {new Intl.NumberFormat().format(row.transactionCount)} ev
                 </span>
               )}
             </div>
-            {/* Value */}
             <span style={{
               width: 80, flexShrink: 0, textAlign: 'right',
-              fontSize: '0.8125rem', fontWeight: 700, color: '#a78bfa',
+              fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-main)',
               letterSpacing: '-0.02em',
             }}>
               {formatAc(row.totalUsageAc)}
@@ -105,16 +101,15 @@ function FeatureBarChart({ rows, maxValue }) {
   )
 }
 
-// ── Layout 2: Daily usage — column sparkbar chart + striped table ──
+// ── Layout 2: Daily usage — sparkbar + striped table ──
 function DailyChart({ days }) {
   if (!days?.length) return null
   const maxVal = Math.max(...days.map((d) => d.totalUsageAc), 1)
 
   return (
     <div>
-      {/* Sparkbar chart */}
       <div style={{ padding: '14px 16px 0' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 72 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 68 }}>
           {days.map((day) => {
             const h = Math.max(4, pct(day.totalUsageAc, maxVal))
             return (
@@ -124,25 +119,23 @@ function DailyChart({ days }) {
                 style={{
                   flex: 1, height: `${h}%`, minWidth: 0,
                   borderRadius: '3px 3px 0 0',
-                  background: 'linear-gradient(180deg, #34d399 0%, color-mix(in srgb, #34d399 45%, transparent) 100%)',
-                  opacity: 0.75,
+                  background: 'var(--primary)',
+                  opacity: 0.55,
                   cursor: 'default',
                   transition: 'opacity 0.15s',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.opacity = '1' }}
-                onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.75' }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.55' }}
               />
             )
           })}
         </div>
-        {/* x-axis labels */}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, paddingBottom: 10, borderBottom: '1px solid var(--border-color)' }}>
           <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>{shortDate(days[0]?.date)}</span>
           <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>{shortDate(days[days.length - 1]?.date)}</span>
         </div>
       </div>
 
-      {/* Striped day table */}
       <div style={{ maxHeight: 220, overflowY: 'auto' }}>
         {[...days].reverse().map((day, i) => (
           <div key={day.date} style={{
@@ -162,7 +155,7 @@ function DailyChart({ days }) {
             }}>
               {new Intl.NumberFormat().format(day.transactionCount)} ev
             </span>
-            <span style={{ color: '#34d399', fontWeight: 600, minWidth: 72, textAlign: 'right' }}>
+            <span style={{ color: 'var(--text-main)', fontWeight: 600, minWidth: 72, textAlign: 'right' }}>
               {formatAc(day.totalUsageAc)}
             </span>
           </div>
@@ -172,95 +165,80 @@ function DailyChart({ days }) {
   )
 }
 
-// ── Layout 3: Top users — card grid, big avatar + credit number ──
-const RANK_MEDAL = ['🥇', '🥈', '🥉']
-
+// ── Layout 3: Top users — compact ranked list ──
 function UserGrid({ users, maxValue }) {
   if (!users?.length) return null
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-      gap: 10,
-      padding: 14,
-    }}>
+    <div>
       {users.map((u, i) => {
         const label = u.name || u.email || u.userId
         const ini = initials(label)
         const w = pct(u.totalUsageAc, maxValue)
+
         return (
-          <div key={u.userId} style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center',
-            padding: '14px 10px 12px',
-            borderRadius: 10,
-            border: '1px solid var(--border-color)',
-            background: i < 3
-              ? 'color-mix(in srgb, var(--primary) 5%, var(--bg-card))'
-              : 'var(--bg-card)',
-            position: 'relative',
-            transition: 'border-color 0.15s, box-shadow 0.15s',
-          }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--primary) 40%, var(--border-color))'
-              e.currentTarget.style.boxShadow = '0 2px 12px color-mix(in srgb, var(--primary) 10%, transparent)'
+          <div
+            key={u.userId}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 11,
+              padding: '9px 16px',
+              borderBottom: '1px solid var(--border-color)',
+              transition: 'background 0.1s',
             }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border-color)'
-              e.currentTarget.style.boxShadow = 'none'
-            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'color-mix(in srgb, var(--primary) 5%, transparent)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
           >
-            {/* Medal for top 3 */}
-            {i < 3 && (
-              <span style={{ position: 'absolute', top: 6, right: 8, fontSize: '0.8rem' }}>
-                {RANK_MEDAL[i]}
-              </span>
-            )}
+            {/* Rank number */}
+            <span style={{
+              width: 22, height: 22, borderRadius: 6, flexShrink: 0,
+              background: 'color-mix(in srgb, var(--text-muted) 10%, var(--bg-card))',
+              border: '1px solid var(--border-color)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '0.6875rem', fontWeight: 700, color: 'var(--text-muted)',
+            }}>
+              {i + 1}
+            </span>
+
             {/* Avatar */}
             <div style={{
-              width: 44, height: 44, borderRadius: 12,
-              background: 'linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 60%, #6366f1))',
+              width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+              background: 'color-mix(in srgb, var(--primary) 12%, var(--bg-card))',
+              border: '1px solid color-mix(in srgb, var(--primary) 20%, var(--border-color))',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '0.875rem', fontWeight: 700, color: '#fff',
-              marginBottom: 8, flexShrink: 0,
+              fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)',
             }}>
               {ini}
             </div>
-            {/* Name */}
-            <span style={{
-              fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-main)',
-              textAlign: 'center', lineHeight: 1.3,
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              maxWidth: '100%',
-            }}>
-              {label}
-            </span>
-            {/* Credit value */}
-            <span style={{
-              fontSize: '1rem', fontWeight: 800, color: 'var(--primary)',
-              letterSpacing: '-0.03em', marginTop: 4,
-            }}>
-              {formatAc(u.totalUsageAc)}
-            </span>
-            {/* Events pill */}
-            <span style={{
-              marginTop: 4,
-              fontSize: '0.625rem', color: 'var(--text-muted)',
-              background: 'color-mix(in srgb, var(--text-muted) 10%, transparent)',
-              borderRadius: 4, padding: '2px 6px',
-            }}>
-              {new Intl.NumberFormat().format(u.transactionCount)} events
-            </span>
-            {/* Mini bar at bottom */}
-            <div style={{
-              marginTop: 8, width: '100%', height: 3, borderRadius: 99,
-              background: 'color-mix(in srgb, var(--primary) 12%, var(--border-color))',
-              overflow: 'hidden',
-            }}>
+
+            {/* Name + bar */}
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{
+                fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-main)',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>
+                {label}
+              </span>
               <div style={{
-                height: '100%', width: `${w}%`, borderRadius: 99,
-                background: 'var(--primary)',
-                transition: 'width 0.5s cubic-bezier(.4,0,.2,1)',
-              }} />
+                height: 3, borderRadius: 99,
+                background: 'color-mix(in srgb, var(--primary) 10%, var(--border-color))',
+                overflow: 'hidden',
+              }}>
+                <div style={{
+                  height: '100%', width: `${w}%`, borderRadius: 99,
+                  background: 'var(--primary)',
+                  opacity: 0.7,
+                  transition: 'width 0.5s cubic-bezier(.4,0,.2,1)',
+                }} />
+              </div>
+            </div>
+
+            {/* Credits + events */}
+            <div style={{ flexShrink: 0, textAlign: 'right' }}>
+              <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
+                {formatAc(u.totalUsageAc)}
+              </div>
+              <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: 1 }}>
+                {new Intl.NumberFormat().format(u.transactionCount)} events
+              </div>
             </div>
           </div>
         )
@@ -269,7 +247,7 @@ function UserGrid({ users, maxValue }) {
   )
 }
 
-// ── Layout 4: Top workspaces — compact numbered list with share percentage pill ──
+// ── Layout 4: Top workspaces — compact numbered list ──
 function WorkspaceList({ workspaces, maxValue, total }) {
   if (!workspaces?.length) return null
   const totalAc = total || workspaces.reduce((s, w) => s + Number(w.totalUsageAc), 0) || 1
@@ -278,65 +256,73 @@ function WorkspaceList({ workspaces, maxValue, total }) {
     <div>
       {workspaces.map((w, i) => {
         const share = Math.round((Number(w.totalUsageAc) / totalAc) * 100)
-        const rs = i === 0
-          ? { color: '#f59e0b', bg: 'color-mix(in srgb, #f59e0b 15%, var(--bg-card))' }
-          : i === 1
-            ? { color: '#94a3b8', bg: 'color-mix(in srgb, #94a3b8 12%, var(--bg-card))' }
-            : i === 2
-              ? { color: '#cd7c46', bg: 'color-mix(in srgb, #cd7c46 12%, var(--bg-card))' }
-              : { color: 'var(--text-muted)', bg: 'color-mix(in srgb, var(--text-muted) 7%, var(--bg-card))' }
+        const barW = pct(w.totalUsageAc, maxValue)
 
         return (
-          <div key={w.workspaceId} style={{
-            display: 'flex', alignItems: 'center', gap: 12,
-            padding: '10px 16px',
-            borderBottom: '1px solid var(--border-color)',
-          }}>
+          <div
+            key={w.workspaceId}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 11,
+              padding: '9px 16px',
+              borderBottom: '1px solid var(--border-color)',
+              transition: 'background 0.1s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'color-mix(in srgb, var(--primary) 5%, transparent)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+          >
             {/* Rank number */}
             <span style={{
-              width: 26, height: 26, borderRadius: 8, flexShrink: 0,
-              background: rs.bg, color: rs.color,
+              width: 22, height: 22, borderRadius: 6, flexShrink: 0,
+              background: 'color-mix(in srgb, var(--text-muted) 10%, var(--bg-card))',
+              border: '1px solid var(--border-color)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '0.6875rem', fontWeight: 800,
-              border: `1px solid color-mix(in srgb, ${rs.color} 25%, transparent)`,
+              fontSize: '0.6875rem', fontWeight: 700, color: 'var(--text-muted)',
             }}>
               {i + 1}
             </span>
 
-            {/* Name + events */}
-            <div style={{ flex: 1, minWidth: 0 }}>
+            {/* Name + bar */}
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
               <span style={{
-                display: 'block',
                 fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-main)',
                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               }}>
                 {w.name || w.workspaceId}
               </span>
-              <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
-                {new Intl.NumberFormat().format(w.transactionCount)} events
-              </span>
+              <div style={{
+                height: 3, borderRadius: 99,
+                background: 'color-mix(in srgb, var(--primary) 10%, var(--border-color))',
+                overflow: 'hidden',
+              }}>
+                <div style={{
+                  height: '100%', width: `${barW}%`, borderRadius: 99,
+                  background: 'var(--primary)',
+                  opacity: 0.7,
+                  transition: 'width 0.5s cubic-bezier(.4,0,.2,1)',
+                }} />
+              </div>
             </div>
 
-            {/* Share % badge */}
-            <span style={{
-              flexShrink: 0,
-              fontSize: '0.6875rem', fontWeight: 700,
-              color: '#f59e0b',
-              background: 'color-mix(in srgb, #f59e0b 12%, var(--bg-card))',
-              border: '1px solid color-mix(in srgb, #f59e0b 22%, transparent)',
-              borderRadius: 6, padding: '2px 7px',
-            }}>
-              {share}%
-            </span>
-
-            {/* Credit value */}
-            <span style={{
-              flexShrink: 0, minWidth: 78, textAlign: 'right',
-              fontSize: '0.875rem', fontWeight: 700,
-              color: '#f59e0b', letterSpacing: '-0.02em',
-            }}>
-              {formatAc(w.totalUsageAc)}
-            </span>
+            {/* Share % + credits + events */}
+            <div style={{ flexShrink: 0, textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>
+                <span style={{
+                  fontSize: '0.6875rem', fontWeight: 600,
+                  color: 'var(--text-muted)',
+                  background: 'color-mix(in srgb, var(--text-muted) 10%, var(--bg-card))',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 5, padding: '1px 6px',
+                }}>
+                  {share}%
+                </span>
+                <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
+                  {formatAc(w.totalUsageAc)}
+                </span>
+              </div>
+              <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
+                {new Intl.NumberFormat().format(w.transactionCount)} events
+              </div>
+            </div>
           </div>
         )
       })}
@@ -479,38 +465,19 @@ function SuperadminReportsPanel() {
 
             {/* Summary row */}
             <div className="sa-metrics">
-              <SummaryCard
-                icon={Activity}
-                label="Total transactions"
-                value={new Intl.NumberFormat().format(report.transactionCount ?? 0)}
-                sub="credit events in range"
-                color="var(--primary)"
-              />
-              <SummaryCard
-                icon={Zap}
-                label="Total credits used"
-                value={formatAc(report.totalUsageAc ?? 0)}
-                sub="across all features"
-                color="#a78bfa"
-              />
-              <SummaryCard
-                icon={TrendingUp}
-                label="Est. HeyGen cost"
-                value={`$${Number(report.estimatedHeygenUsd ?? 0).toFixed(2)}`}
-                sub="PAYG / Enterprise rate"
-                color="#34d399"
-              />
+              <SummaryCard icon={Activity} label="Total transactions" value={new Intl.NumberFormat().format(report.transactionCount ?? 0)} sub="credit events in range" />
+              <SummaryCard icon={Zap} label="Total credits used" value={formatAc(report.totalUsageAc ?? 0)} sub="across all features" />
+              <SummaryCard icon={TrendingUp} label="Est. HeyGen cost" value={`$${Number(report.estimatedHeygenUsd ?? 0).toFixed(2)}`} sub="PAYG / Enterprise rate" />
             </div>
 
-            {/* Bottom two-col layout: feature + daily chart side by side */}
+            {/* Feature + daily side by side */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
 
-              {/* Usage by feature — horizontal bar chart */}
               {report.byFeature?.length > 0 && (
                 <div className="sa-card" style={{ minHeight: 0 }}>
                   <div className="sa-card-header">
                     <h3 style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                      <Zap size={14} style={{ color: '#a78bfa', flexShrink: 0 }} />
+                      <Zap size={14} style={{ color: 'var(--primary)', flexShrink: 0 }} />
                       Usage by feature
                     </h3>
                     <span className="sa-card-header-count">{report.byFeature.length}</span>
@@ -521,12 +488,11 @@ function SuperadminReportsPanel() {
                 </div>
               )}
 
-              {/* Daily usage — sparkbar + striped table */}
               {report.byDay?.length > 0 && (
                 <div className="sa-card" style={{ minHeight: 0 }}>
                   <div className="sa-card-header">
                     <h3 style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                      <Calendar size={14} style={{ color: '#34d399', flexShrink: 0 }} />
+                      <Calendar size={14} style={{ color: 'var(--primary)', flexShrink: 0 }} />
                       Daily usage
                     </h3>
                     <span className="sa-card-header-count">{report.byDay.length} days</span>
@@ -539,18 +505,17 @@ function SuperadminReportsPanel() {
             {/* Top users + top workspaces */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
 
-              {/* Top users — avatar card grid */}
               {report.topUsers?.length > 0 && (
                 <div className="sa-card" style={{ minHeight: 0 }}>
-                  <div className="sa-card-header" style={{ borderBottom: '2px solid color-mix(in srgb, var(--primary) 25%, transparent)' }}>
+                  <div className="sa-card-header">
                     <h3 style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                       <span style={{
-                        width: 26, height: 26, borderRadius: 8,
-                        background: 'color-mix(in srgb, var(--primary) 14%, var(--bg-card))',
-                        border: '1px solid color-mix(in srgb, var(--primary) 25%, var(--border-color))',
+                        width: 24, height: 24, borderRadius: 7,
+                        background: 'color-mix(in srgb, var(--primary) 10%, var(--bg-card))',
+                        border: '1px solid color-mix(in srgb, var(--primary) 20%, var(--border-color))',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                       }}>
-                        <Users size={13} style={{ color: 'var(--primary)' }} />
+                        <Users size={12} style={{ color: 'var(--primary)' }} />
                       </span>
                       Top users
                     </h3>
@@ -562,29 +527,24 @@ function SuperadminReportsPanel() {
                 </div>
               )}
 
-              {/* Top workspaces — ranked list with share % badge */}
               {report.topWorkspaces?.length > 0 && (
                 <div className="sa-card" style={{ minHeight: 0 }}>
-                  <div className="sa-card-header" style={{ borderBottom: '2px solid color-mix(in srgb, #f59e0b 25%, transparent)' }}>
+                  <div className="sa-card-header">
                     <h3 style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                       <span style={{
-                        width: 26, height: 26, borderRadius: 8,
-                        background: 'color-mix(in srgb, #f59e0b 14%, var(--bg-card))',
-                        border: '1px solid color-mix(in srgb, #f59e0b 25%, var(--border-color))',
+                        width: 24, height: 24, borderRadius: 7,
+                        background: 'color-mix(in srgb, var(--primary) 10%, var(--bg-card))',
+                        border: '1px solid color-mix(in srgb, var(--primary) 20%, var(--border-color))',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                       }}>
-                        <Building2 size={13} style={{ color: '#f59e0b' }} />
+                        <Building2 size={12} style={{ color: 'var(--primary)' }} />
                       </span>
                       Top workspaces
                     </h3>
                     <span className="sa-card-header-count">{report.topWorkspaces.length}</span>
                   </div>
                   <div style={{ maxHeight: 400, overflowY: 'auto' }}>
-                    <WorkspaceList
-                      workspaces={report.topWorkspaces}
-                      maxValue={maxWsAc}
-                      total={report.totalUsageAc}
-                    />
+                    <WorkspaceList workspaces={report.topWorkspaces} maxValue={maxWsAc} total={report.totalUsageAc} />
                   </div>
                 </div>
               )}
