@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Mail, Send, Clock, Users, Eye, X, ChevronRight, RefreshCw, AlertTriangle, CheckCircle2, LayoutTemplate, Pencil, RotateCcw } from 'lucide-react'
+import { Mail, Send, Clock, Users, Eye, X, ChevronRight, RefreshCw, AlertTriangle, CheckCircle2, LayoutTemplate } from 'lucide-react'
 import superadminService from '../../../../services/superadminService'
 import { formatDate } from './superadminUtils'
 import { EMAIL_TEMPLATES } from './broadcastTemplates'
@@ -32,49 +32,25 @@ function recipientLabel(count) {
 }
 
 // ── Template editor helpers ───────────────────────────────────────────────────
-
-function applyEdits(html, edits) {
-  let out = html
-  out = out.replace(/background:linear-gradient\(135deg,[^)]+\)/g,
-    `background:linear-gradient(135deg,${edits.gradStart},${edits.gradEnd})`)
-  if (edits.headerTitle)
-    out = out.replace(/(<h1[^>]*>)[^<]*(<\/h1>)/, `$1${edits.headerTitle}$2`)
-  if (edits.headerSub)
-    out = out.replace(/(<h1[^>]*>[^<]*<\/h1>\s*<p[^>]*>)[^<]*(<\/p>)/, `$1${edits.headerSub}$2`)
-  return out
-}
-
-function defaultEdits(template) {
-  const titleM = template.html.match(/<h1[^>]*>([^<]+)<\/h1>/)
-  const subM = template.html.match(/<h1[^>]*>[^<]*<\/h1>\s*<p[^>]*>([^<]*)<\/p>/)
-  return {
-    gradStart: '#0284c7',
-    gradEnd: '#7c3aed',
-    headerTitle: titleM ? titleM[1] : '',
-    headerSub: subM ? subM[1] : '',
-  }
-}
+// (no longer needed — templates are body-only, header/footer come from backend)
 
 // ── Template picker modal ─────────────────────────────────────────────────────
 
 function TemplatePickerModal({ onSelect, onClose }) {
   const [active, setActive] = useState(EMAIL_TEMPLATES[0].id)
-  const [editing, setEditing] = useState(false)
-  const [edits, setEdits] = useState(() => defaultEdits(EMAIL_TEMPLATES[0]))
   const activeTemplate = EMAIL_TEMPLATES.find((t) => t.id === active) || EMAIL_TEMPLATES[0]
-  const previewHtml = editing && activeTemplate.id !== 'custom' ? applyEdits(activeTemplate.html, edits) : activeTemplate.html
+  const previewHtml = activeTemplate.html
   const dotColor = (t) => t.accentColor === 'var(--text-muted)' ? '#94a3b8' : t.accentColor
 
   const switchTemplate = (id) => {
-    const t = EMAIL_TEMPLATES.find((x) => x.id === id) || EMAIL_TEMPLATES[0]
-    setActive(id); setEdits(defaultEdits(t)); setEditing(false)
+    setActive(id)
   }
 
   useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') { if (editing) setEditing(false); else onClose() } }
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [onClose, editing])
+  }, [onClose])
 
   const EditorField = ({ label, children }) => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -125,26 +101,20 @@ function TemplatePickerModal({ onSelect, onClose }) {
               border: '1px solid color-mix(in srgb, var(--primary) 28%, var(--border-color))',
               color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
             }}>
-              {editing ? <Pencil size={13} /> : <LayoutTemplate size={14} />}
+              <LayoutTemplate size={14} />
             </span>
             <div>
               <p style={{ margin: 0, fontWeight: 800, fontSize: '0.9375rem', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
-                {editing ? `Customising: ${activeTemplate.label}` : 'Email templates'}
+                Email templates
               </p>
               <p style={{ margin: 0, fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
-                {editing ? 'Edit colors & text · live preview on the right' : 'Select a template · preview it · use it'}
+                Select a template · preview it · use it
               </p>
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            {editing && (
-              <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost"
-                onClick={() => setEdits(defaultEdits(activeTemplate))} style={{ gap: 5 }}>
-                <RotateCcw size={11} /> Reset
-              </button>
-            )}
             <button
-              type="button" onClick={() => editing ? setEditing(false) : onClose()} aria-label="Close"
+              type="button" onClick={onClose} aria-label="Close"
             style={{
               width: 30, height: 30, borderRadius: 8, border: 'none', cursor: 'pointer',
               background: 'color-mix(in srgb, var(--text-muted) 10%, transparent)',
@@ -159,8 +129,7 @@ function TemplatePickerModal({ onSelect, onClose }) {
           </div>
         </div>
 
-        {/* ── Sidebar: template list OR edit controls ── */}
-        {!editing ? (
+        {/* ── Sidebar: template list ── */}
         <div style={{
           borderRight: '1px solid var(--border-color)',
           overflowY: 'auto',
@@ -219,80 +188,11 @@ function TemplatePickerModal({ onSelect, onClose }) {
             )
           })}
         </div>
-        ) : (
-        /* ── Editor controls ── */
-        <div style={{
-          borderRight: '1px solid var(--border-color)', overflowY: 'auto',
-          background: 'color-mix(in srgb, var(--text-muted) 3%, var(--bg-card))',
-          padding: 16, display: 'flex', flexDirection: 'column', gap: 20,
-        }}>
-          {/* Back button */}
-          <button
-            type="button"
-            onClick={() => setEditing(false)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 7,
-              padding: '7px 10px', borderRadius: 8,
-              border: '1px solid var(--border-color)',
-              background: 'transparent',
-              color: 'var(--text-muted)',
-              cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600,
-              transition: 'background 0.12s, color 0.12s, border-color 0.12s',
-              width: '100%', textAlign: 'left',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'color-mix(in srgb, var(--text-muted) 8%, transparent)'
-              e.currentTarget.style.color = 'var(--text-main)'
-              e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--text-muted) 50%, var(--border-color))'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent'
-              e.currentTarget.style.color = 'var(--text-muted)'
-              e.currentTarget.style.borderColor = 'var(--border-color)'
-            }}
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5M12 5l-7 7 7 7" />
-            </svg>
-            Back to templates
-          </button>
-          {/* Gradient section */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <p style={{ margin: 0, fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)' }}>Header gradient</p>
-            {[['gradStart', 'Start color'], ['gradEnd', 'End color']].map(([key, lbl]) => (
-              <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>{lbl}</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <input type="color" value={edits[key]} onChange={(e) => setEdits(p => ({ ...p, [key]: e.target.value }))}
-                    style={{ width: 34, height: 34, borderRadius: 7, border: '1px solid var(--border-color)', cursor: 'pointer', padding: 2, background: 'var(--bg-card)', flexShrink: 0 }} />
-                  <input type="text" value={edits[key]} onChange={(e) => setEdits(p => ({ ...p, [key]: e.target.value }))}
-                    className="sa-input" style={{ flex: 1, height: 32, fontSize: '0.75rem', fontFamily: 'monospace' }} />
-                </div>
-              </div>
-            ))}
-            <div style={{ height: 26, borderRadius: 7, background: `linear-gradient(135deg,${edits.gradStart},${edits.gradEnd})`, border: '1px solid var(--border-color)' }} />
-          </div>
-          {/* Header text section */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <p style={{ margin: 0, fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)' }}>Header text</p>
-            {[['headerTitle', 'Title'], ['headerSub', 'Subtitle']].map(([key, lbl]) => (
-              <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>{lbl}</label>
-                <input type="text" value={edits[key]} onChange={(e) => setEdits(p => ({ ...p, [key]: e.target.value }))}
-                  className="sa-input" style={{ height: 34, fontSize: '0.8125rem' }} placeholder={lbl} />
-              </div>
-            ))}
-          </div>
-          <p style={{ margin: 0, fontSize: '0.6875rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-            Body copy and CTA text can be edited directly in the compose area after using the template.
-          </p>
-        </div>
-        )}
 
         {/* ── Preview pane ── */}
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
           {/* Preview area */}
-          <div style={{ flex: 1, overflow: 'hidden', background: '#fff', minHeight: 0 }}>
+          <div style={{ flex: 1, overflow: 'hidden', background: '#f9fafb', minHeight: 0 }}>
             {activeTemplate.id === 'custom' ? (
               <div style={{
                 height: '100%', display: 'flex', flexDirection: 'column',
@@ -311,7 +211,7 @@ function TemplatePickerModal({ onSelect, onClose }) {
               </div>
             ) : (
               <iframe
-                key={`${activeTemplate.id}-${editing}-${edits.gradStart}-${edits.gradEnd}`}
+                key={activeTemplate.id}
                 srcDoc={previewHtml}
                 title={`${activeTemplate.label} preview`}
                 style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
@@ -338,24 +238,17 @@ function TemplatePickerModal({ onSelect, onClose }) {
               )}
             </div>
             <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-              {activeTemplate.id !== 'custom' && !editing && (
-                <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost"
-                  onClick={() => setEditing(true)} style={{ gap: 5 }}>
-                  <Pencil size={12} /> Customise
-                </button>
-              )}
               <button
                 type="button"
                 className="sa-btn sa-btn--primary"
                 onClick={() => {
-                  const finalHtml = editing ? applyEdits(activeTemplate.html, edits) : activeTemplate.html
-                  onSelect({ ...activeTemplate, html: finalHtml })
+                  onSelect({ ...activeTemplate })
                   onClose()
                 }}
                 style={{ gap: 7, height: 40, padding: '0 20px' }}
               >
                 <Send size={14} />
-                {editing ? 'Use customised' : 'Use template'}
+                Use template
               </button>
             </div>
           </div>
@@ -531,48 +424,93 @@ function BroadcastRow({ broadcast, isSelected, onClick }) {
 
 // ── Confirm overlay ───────────────────────────────────────────────────────────
 
-function ConfirmSend({ subject, recipientCount, onConfirm, onCancel, sending }) {
-  return (
-    <div style={{
-      position: 'absolute', inset: 0, zIndex: 10,
-      background: 'color-mix(in srgb, var(--bg-card) 92%, transparent)',
-      backdropFilter: 'blur(6px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      borderRadius: 12,
-    }}>
+function ConfirmSend({ subject, onConfirm, onCancel, sending }) {
+  const [typed, setTyped] = useState('')
+  const confirmed = typed.trim().toUpperCase() === 'SEND'
+
+  return createPortal(
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 10000,
+        background: 'rgba(0,0,0,0.72)',
+        backdropFilter: 'blur(6px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 24,
+      }}
+    >
       <div style={{
         background: 'var(--bg-card)',
         border: '1px solid var(--border-color)',
-        borderRadius: 14, padding: '28px 32px', maxWidth: 360, width: '90%',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.35)',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center',
+        borderRadius: 16, padding: '32px', maxWidth: 400, width: '100%',
+        boxShadow: '0 24px 80px rgba(0,0,0,0.45)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, textAlign: 'center',
       }}>
         <div style={{
           width: 52, height: 52, borderRadius: 14,
-          background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 18%, var(--bg-card)), color-mix(in srgb, var(--primary) 30%, var(--bg-card)))',
-          border: '1px solid color-mix(in srgb, var(--primary) 35%, var(--border-color))',
+          background: 'color-mix(in srgb, var(--primary) 12%, var(--bg-card))',
+          border: '1px solid color-mix(in srgb, var(--primary) 25%, var(--border-color))',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: 'var(--primary)',
         }}>
           <Send size={22} />
         </div>
-        <div>
-          <p style={{ margin: '0 0 4px', fontWeight: 700, fontSize: '1rem', color: 'var(--text-main)' }}>Ready to send?</p>
-          <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-            <strong style={{ color: 'var(--text-main)' }}>&ldquo;{subject}&rdquo;</strong> will be delivered to
-            <strong style={{ color: 'var(--primary)' }}> all active users</strong> on the platform.
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <p style={{ margin: 0, fontWeight: 700, fontSize: '1.0625rem', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
+            Ready to send?
+          </p>
+          <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+            <strong style={{ color: 'var(--text-main)' }}>&ldquo;{subject}&rdquo;</strong> will be delivered to{' '}
+            <strong style={{ color: 'var(--primary)' }}>all active users</strong> on the platform.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 10, marginTop: 4, width: '100%' }}>
+
+        {/* Type to confirm */}
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            Type <strong style={{ color: 'var(--text-main)', fontFamily: 'monospace', letterSpacing: '0.05em' }}>SEND</strong> to confirm
+          </p>
+          <input
+            type="text"
+            autoFocus
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && confirmed && !sending) onConfirm() }}
+            placeholder="Type SEND…"
+            style={{
+              width: '100%', boxSizing: 'border-box',
+              height: 40, padding: '0 12px',
+              borderRadius: 8,
+              border: `1px solid ${confirmed ? 'color-mix(in srgb, var(--primary) 50%, var(--border-color))' : 'var(--border-color)'}`,
+              background: confirmed ? 'color-mix(in srgb, var(--primary) 6%, var(--bg-card))' : 'var(--bg-card)',
+              color: 'var(--text-main)', font: 'inherit', fontSize: '0.875rem',
+              textAlign: 'center', letterSpacing: '0.05em',
+              outline: 'none',
+              transition: 'border-color 0.15s, background 0.15s',
+            }}
+          />
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, width: '100%' }}>
           <button type="button" className="sa-btn" onClick={onCancel} disabled={sending} style={{ flex: 1 }}>
             Cancel
           </button>
-          <button type="button" className="sa-btn sa-btn--primary" onClick={onConfirm} disabled={sending} style={{ flex: 1 }}>
-            {sending ? <><span className="sa-spinner" style={{ width: 14, height: 14 }} /> Sending…</> : 'Send it'}
+          <button
+            type="button"
+            className="sa-btn sa-btn--primary"
+            onClick={onConfirm}
+            disabled={!confirmed || sending}
+            style={{ flex: 1, gap: 6 }}
+          >
+            {sending
+              ? <><span className="sa-spinner" style={{ width: 13, height: 13 }} /> Sending…</>
+              : <><Send size={13} /> Send it</>
+            }
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
@@ -992,7 +930,7 @@ function ComposePane({ onSent }) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {showConfirm && (
         <ConfirmSend subject={subject} onConfirm={handleSend} onCancel={() => setShowConfirm(false)} sending={sending} />
       )}
@@ -1247,7 +1185,7 @@ function SuperadminBroadcastPanel() {
       <div style={{
         flex: 1, minHeight: 0,
         display: 'grid',
-        gridTemplateColumns: '1fr minmax(260px, 340px)',
+        gridTemplateColumns: '1fr 300px',
         gap: 16,
         overflow: 'hidden',
       }}>

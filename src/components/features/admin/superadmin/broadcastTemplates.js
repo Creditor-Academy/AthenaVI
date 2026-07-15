@@ -1,34 +1,86 @@
-// Shared blue-purple header gradient used by every template
-const HDR = `background:linear-gradient(135deg,#0284c7,#7c3aed);padding:40px 32px;text-align:center`
-const BTN = `display:inline-block;background:linear-gradient(135deg,#0284c7,#7c3aed);color:#fff;text-decoration:none;padding:13px 28px;border-radius:8px;font-weight:700;font-size:14px`
-const WRAP = `font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden`
-const FOOT = `<div style="padding:20px 32px;border-top:1px solid #f3f4f6;text-align:center"><p style="margin:0;color:#9ca3af;font-size:12px">You're receiving this because you have an Athena VI account. © Athena VI</p></div>`
+// ─────────────────────────────────────────────────────────────────────────────
+// Email broadcast templates
+//
+// The backend already wraps every broadcast with:
+//   • A dark header (Virtual Studio logo + title)
+//   • A footer (Open VS button, manage preferences, copyright)
+//
+// Templates here should ONLY contain the middle body content.
+// Do NOT add generic "Open the app" / "Get started" CTAs — the footer
+// already has "Open Virtual Studio". Only include a CTA when it links
+// somewhere specific (e.g. a direct workspace or credits page URL).
+// ─────────────────────────────────────────────────────────────────────────────
 
-function header(title, sub) {
-  return `<div style="${HDR}"><h1 style="margin:0;color:#fff;font-size:27px;font-weight:800;letter-spacing:-0.5px">${title}</h1><p style="margin:10px 0 0;color:rgba(255,255,255,0.85);font-size:15px">${sub}</p></div>`
+const BODY = `font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.65;color:#374151`
+const DIVIDER = `<div style="height:1px;background:#f3f4f6;margin:28px 0"></div>`
+
+function p(text, extra = '') {
+  return `<p style="margin:0 0 16px;${BODY}${extra ? ';' + extra : ''}">${text}</p>`
 }
 
-function cta(label, url = '[URL]') {
-  return `<div style="text-align:center;margin-top:28px"><a href="${url}" style="${BTN}">${label}</a></div>`
+function stepList(items) {
+  return `<div style="display:flex;flex-direction:column;gap:8px;margin:20px 0">${
+    items.map(([title, desc], i) =>
+      `<div style="display:flex;gap:14px;padding:14px 16px;background:#f9fafb;border-radius:8px;border:1px solid #f3f4f6">
+        <div style="width:26px;height:26px;background:#111827;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;line-height:1">${i + 1}</div>
+        <div><p style="margin:0 0 3px;font-weight:700;font-size:14px;color:#111827">${title}</p><p style="margin:0;font-size:13px;color:#6b7280;line-height:1.5">${desc}</p></div>
+      </div>`
+    ).join('')
+  }</div>`
 }
+
+function tipList(items) {
+  return `<div style="display:flex;flex-direction:column;gap:6px;margin:20px 0">${
+    items.map((tip) =>
+      `<div style="display:flex;align-items:flex-start;gap:12px;padding:11px 14px;background:#f9fafb;border-radius:7px;border:1px solid #f3f4f6">
+        <span style="color:#111827;font-size:16px;flex-shrink:0;line-height:1.4">→</span>
+        <p style="margin:0;font-size:14px;color:#374151;line-height:1.55">${tip}</p>
+      </div>`
+    ).join('')
+  }</div>`
+}
+
+function grid2(items) {
+  return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0">${
+    items.map(([title, desc]) =>
+      `<div style="padding:14px;background:#f9fafb;border-radius:8px;border:1px solid #f3f4f6">
+        <p style="margin:0 0 4px;font-weight:700;font-size:13px;color:#111827">${title}</p>
+        <p style="margin:0;font-size:12px;color:#6b7280;line-height:1.45">${desc}</p>
+      </div>`
+    ).join('')
+  }</div>`
+}
+
+function alertBox(lines) {
+  return `<div style="background:#fafafa;border:1px solid #e5e7eb;border-radius:8px;padding:16px 20px;margin:20px 0">${
+    lines.map(([label, val]) =>
+      `<p style="margin:0 0 6px;font-size:14px;color:#374151"><strong style="color:#111827">${label}:</strong> ${val}</p>`
+    ).join('')
+  }</div>`
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export const EMAIL_TEMPLATES = [
+
   // ── 1. Welcome ──────────────────────────────────────────────────────────────
   {
     id: 'welcome',
     label: 'Welcome',
     description: 'Greet new users and walk them through first steps',
     accentColor: '#38bdf8',
-    subject: 'Welcome to Athena VI 👋',
-    html: `<div style="${WRAP}">${header('Welcome to Athena VI', "We're glad you're here")}
-<div style="padding:32px">
-<p style="margin:0 0 16px;color:#374151;font-size:16px;line-height:1.6">Hi there,</p>
-<p style="margin:0 0 20px;color:#374151;font-size:16px;line-height:1.6">Welcome to Athena VI — your AI-powered virtual instructor platform. Here's how to hit the ground running:</p>
-<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:8px">
-${[['Create your workspace','Organise all your projects in one place.'],['Pick an avatar &amp; voice','Choose from a library of HeyGen avatars and natural voices.'],['Build your first project','Use the editor to compose scenes and generate your first AI video.']].map(([t,d],i)=>`<div style="display:flex;gap:12px;padding:14px;background:#f8fafc;border-radius:8px"><div style="width:28px;height:28px;background:#dbeafe;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#1d4ed8;flex-shrink:0">${i+1}</div><div><strong style="color:#111827;font-size:14px">${t}</strong><p style="margin:4px 0 0;color:#6b7280;font-size:13px">${d}</p></div></div>`).join('')}
-</div>
-${cta('Get started','[APP_URL]')}
-</div>${FOOT}</div>`,
+    subject: 'Welcome to Virtual Studio 👋',
+    html: `<div style="padding:32px 40px;max-width:600px;margin:0 auto">
+${p('Hi there,')}
+${p('Welcome to Virtual Studio — your AI-powered platform for creating professional avatar videos. We\'re glad you\'re here.')}
+${p('Here\'s how to get started:', 'font-weight:600;color:#111827')}
+${stepList([
+  ['Create your workspace', 'Set up a workspace to organise all your projects and invite collaborators.'],
+  ['Pick an avatar & voice', 'Browse the HeyGen avatar library and choose a voice that fits your brand.'],
+  ['Build your first video', 'Use the scene editor to write your script, generate your video, and export.'],
+])}
+${p('If you have any questions, just reply to this email — we\'re always happy to help.', 'font-size:13px;color:#9ca3af;text-align:center')}
+</div>`,
   },
 
   // ── 2. Feature announcement ──────────────────────────────────────────────────
@@ -38,73 +90,83 @@ ${cta('Get started','[APP_URL]')}
     description: 'Launch a new feature or product update',
     accentColor: '#a78bfa',
     subject: '✨ Introducing [Feature Name]',
-    html: `<div style="${WRAP}">${header('Introducing [Feature Name]','Something new is here')}
-<div style="padding:32px">
-<p style="margin:0 0 16px;color:#374151;font-size:16px;line-height:1.6">Hi there,</p>
-<p style="margin:0 0 16px;color:#374151;font-size:16px;line-height:1.6">We're excited to share <strong>[Feature Name]</strong> — [one sentence description of what it does and why it matters].</p>
-<p style="margin:0 0 20px;color:#374151;font-size:16px;line-height:1.6">[Add 2–3 sentences or bullet points about key benefits.]</p>
-${cta('Try it now','[CTA_URL]')}
-<p style="margin:24px 0 0;color:#6b7280;font-size:14px;line-height:1.6">Questions? Just reply to this email.</p>
-</div>${FOOT}</div>`,
+    html: `<div style="padding:32px 40px;max-width:600px;margin:0 auto">
+${p('Hi there,')}
+${p('We\'re excited to introduce <strong>[Feature Name]</strong> — [one sentence describing what it does and why it matters].')}
+${p('[Add 2–3 sentences expanding on the key benefit. What problem does it solve? What can users do now that they couldn\'t before?]')}
+${DIVIDER}
+${p('Here\'s what\'s new:', 'font-weight:600;color:#111827;margin-bottom:12px')}
+${tipList([
+  '[Key benefit or capability #1]',
+  '[Key benefit or capability #2]',
+  '[Key benefit or capability #3]',
+])}
+${p('Questions? Just reply to this email — we read every one.', 'font-size:13px;color:#9ca3af;text-align:center')}
+</div>`,
   },
 
   // ── 3. Avatar video tips ─────────────────────────────────────────────────────
   {
     id: 'avatar_tips',
     label: 'Avatar video tips',
-    description: 'Help users create better AI videos',
+    description: 'Help users get better results from AI videos',
     accentColor: '#818cf8',
-    subject: 'Get the most out of your Athena VI avatar videos',
-    html: `<div style="${WRAP}">${header('Create Better Avatar Videos','Tips to get the best results')}
-<div style="padding:32px">
-<p style="margin:0 0 20px;color:#374151;font-size:16px;line-height:1.6">Hi there,</p>
-<p style="margin:0 0 20px;color:#374151;font-size:16px;line-height:1.6">Here are a few tips to help you get the most out of avatar video generation on Athena VI:</p>
-<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:8px">
-${['Keep scripts under 500 words per scene for faster renders','Choose a voice that matches your brand tone','Use the scene editor to split long content into multiple scenes','Preview renders before final export to catch issues early','Organise projects in folders to keep your workspace tidy'].map((tip,i)=>`<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:#f8fafc;border-radius:8px;border-left:3px solid #6366f1"><span style="color:#6366f1;font-weight:800;font-size:13px;flex-shrink:0">${i+1}</span><p style="margin:0;color:#374151;font-size:14px;line-height:1.5">${tip}</p></div>`).join('')}
-</div>
-${cta('Open the editor','[APP_URL]')}
-</div>${FOOT}</div>`,
+    subject: 'Tips for better avatar videos on Virtual Studio',
+    html: `<div style="padding:32px 40px;max-width:600px;margin:0 auto">
+${p('Hi there,')}
+${p('A few tips to help you get the best out of avatar video generation on Virtual Studio:')}
+${tipList([
+  '<strong>Keep scripts concise.</strong> Under 400 words per scene gives the cleanest renders and fastest processing.',
+  '<strong>Match voice to content.</strong> Choose a voice tone that aligns with your audience — formal for training, conversational for marketing.',
+  '<strong>Split long content into scenes.</strong> Multiple shorter scenes are easier to edit and re-render than one long take.',
+  '<strong>Preview before final export.</strong> The in-editor preview catches script issues before you spend render credits.',
+  '<strong>Use folders to stay organised.</strong> Group related projects in folders so your workspace stays easy to navigate.',
+])}
+</div>`,
   },
 
-  // ── 5. Workspace tips ────────────────────────────────────────────────────────
+  // ── 4. Workspace tips ────────────────────────────────────────────────────────
   {
     id: 'workspace_tips',
     label: 'Workspace tips',
     description: 'Help users collaborate and stay organised',
     accentColor: '#22d3ee',
-    subject: 'Make the most of your Athena VI workspace',
-    html: `<div style="${WRAP}">${header('Your Workspace, Your Way','Collaborate and create at scale')}
-<div style="padding:32px">
-<p style="margin:0 0 16px;color:#374151;font-size:16px;line-height:1.6">Hi there,</p>
-<p style="margin:0 0 20px;color:#374151;font-size:16px;line-height:1.6">Did you know your Athena VI workspace has powerful collaboration features? Here's what you can do:</p>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
-${[['Invite team members','Add colleagues as Owner, Admin, or Member.'],['Shared credit pool','Team workspaces share a credit balance.'],['Folder organisation','Group projects in nested folders.'],['Role-based access','Control who can edit or view projects.']].map(([t,d])=>`<div style="padding:14px;background:#f8fafc;border-radius:8px;border:1px solid #e5e7eb"><p style="margin:0 0 4px;font-weight:700;color:#111827;font-size:13px">${t}</p><p style="margin:0;color:#6b7280;font-size:12px;line-height:1.4">${d}</p></div>`).join('')}
-</div>
-${cta('Go to workspace','[WORKSPACE_URL]')}
-</div>${FOOT}</div>`,
+    subject: 'Get more from your Virtual Studio workspace',
+    html: `<div style="padding:32px 40px;max-width:600px;margin:0 auto">
+${p('Hi there,')}
+${p('Your Virtual Studio workspace has features built for teams. Here\'s what\'s available:')}
+${grid2([
+  ['Invite team members', 'Add colleagues as Owner, Admin, or Member with different permission levels.'],
+  ['Shared credit pool', 'Team workspaces share a credit balance across all members.'],
+  ['Folder organisation', 'Group projects in folders to keep everything easy to find.'],
+  ['Role-based access', 'Control who can view, edit, or manage projects in the workspace.'],
+])}
+${p('[Add any specific tip or call to action relevant to your team here.]', 'color:#9ca3af;font-size:14px')}
+</div>`,
   },
 
-  // ── 6. Maintenance ───────────────────────────────────────────────────────────
+  // ── 5. Maintenance notice ────────────────────────────────────────────────────
   {
     id: 'maintenance',
     label: 'Maintenance notice',
     description: 'Scheduled downtime or service interruption',
     accentColor: '#fb923c',
     subject: 'Scheduled maintenance – [Date]',
-    html: `<div style="${WRAP}">${header('Scheduled Maintenance','Brief downtime coming up')}
-<div style="padding:32px">
-<p style="margin:0 0 16px;color:#374151;font-size:16px;line-height:1.6">Hi there,</p>
-<p style="margin:0 0 20px;color:#374151;font-size:16px;line-height:1.6">We have scheduled maintenance coming up. During this window Athena VI will be temporarily unavailable.</p>
-<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:16px 20px;margin-bottom:20px">
-<p style="margin:0 0 7px;color:#9a3412;font-size:14px"><strong>Date:</strong> [Date]</p>
-<p style="margin:0 0 7px;color:#9a3412;font-size:14px"><strong>Time:</strong> [Start] – [End] [Timezone]</p>
-<p style="margin:0;color:#9a3412;font-size:14px"><strong>Expected duration:</strong> [Duration]</p>
-</div>
-<p style="margin:0;color:#6b7280;font-size:14px;line-height:1.6">We recommend saving your work beforehand. We'll send a follow-up once maintenance is complete.</p>
-</div>${FOOT}</div>`,
+    html: `<div style="padding:32px 40px;max-width:600px;margin:0 auto">
+${p('Hi there,')}
+${p('We have scheduled maintenance coming up. During this window Virtual Studio will be temporarily unavailable. We\'ll keep it as brief as possible.')}
+${alertBox([
+  ['Date', '[Date, e.g. Tuesday 22 July 2026]'],
+  ['Time', '[Start time] – [End time] [Timezone]'],
+  ['Expected duration', '[e.g. ~2 hours]'],
+  ['Affected services', 'All platform features including rendering, editor, and uploads'],
+])}
+${p('We recommend saving any open work before the maintenance window begins. You\'ll receive a follow-up email once everything is back online.')}
+${p('Sorry for the inconvenience — this work will make the platform faster and more reliable.', 'color:#6b7280;font-size:14px')}
+</div>`,
   },
 
-  // ── 7. Blank ─────────────────────────────────────────────────────────────────
+  // ── 6. Blank ─────────────────────────────────────────────────────────────────
   {
     id: 'custom',
     label: 'Blank',
