@@ -43,6 +43,7 @@ import { clearWorkspaceNavigation } from '../../utils/workspaceNavigationStorage
 import {
   dashboardPathForSection,
   resolveDashboardSectionFromPath,
+  resolveSettingsTabFromSearch,
 } from '../../utils/dashboardRouting.js'
 import useDashboardSearch from '../../hooks/useDashboardSearch.js'
 import { applySearchResult } from '../../utils/dashboardSearchNavigate.js'
@@ -81,7 +82,7 @@ function Dashboard({ onCreate, initialSection }) {
     const valid = ['overview', 'users', 'workspaces', 'storage-requests', 'reports', 'platform-actions', 'heygen', 'broadcast', 'early-access']
     return valid.includes(saved) ? saved : 'overview'
   })
-  const [settingsInitialTab, setSettingsInitialTab] = useState('preferences')
+  const [settingsInitialTab, setSettingsInitialTab] = useState(() => resolveSettingsTabFromSearch())
 
   const cartCount = 2
   const { unreadCount: notificationCount, refresh: refreshInboxUnread, setUnreadCount: setInboxUnreadCount } =
@@ -113,7 +114,13 @@ function Dashboard({ onCreate, initialSection }) {
     }
     setTopbarMobileOpen(false)
     setSidebarMobileOpen(false)
-    setSection(id)
+    setSection((current) => {
+      // Leaving Settings clears the remembered tab so the next sidebar open is Appearance.
+      if (current === 'settings' && id !== 'settings') {
+        setSettingsInitialTab('preferences')
+      }
+      return id
+    })
   }, [canAccessSuperadminPortal])
 
   const openCreateAvatarLook = useCallback((ctx) => {
@@ -261,6 +268,9 @@ function Dashboard({ onCreate, initialSection }) {
       const sectionFromUrl = resolveDashboardSectionFromPath()
       if (sectionFromUrl) {
         setSection(sectionFromUrl)
+        if (sectionFromUrl === 'settings') {
+          setSettingsInitialTab(resolveSettingsTabFromSearch())
+        }
       }
     }
 

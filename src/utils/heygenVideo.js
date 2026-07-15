@@ -1,7 +1,24 @@
 import { isBackgroundClip, normalizeClipStack } from './editorLayerUtils'
 
 const HEYGEN_POLL_INTERVAL_MS = 2000
-const HEYGEN_POLL_MAX_ATTEMPTS = 60
+/** Photo / Avatar IV jobs often exceed 2 minutes; allow ~6 minutes before timeout. */
+const HEYGEN_POLL_MAX_ATTEMPTS = 180
+
+export class HeygenPlaybackTimeoutError extends Error {
+  constructor(message = 'Avatar video generation timed out') {
+    super(message)
+    this.name = 'HeygenPlaybackTimeoutError'
+    this.code = 'HEYGEN_PLAYBACK_TIMEOUT'
+  }
+}
+
+export function isHeygenPlaybackTimeoutError(error) {
+  return (
+    error?.code === 'HEYGEN_PLAYBACK_TIMEOUT' ||
+    error instanceof HeygenPlaybackTimeoutError ||
+    /timed out/i.test(String(error?.message || ''))
+  )
+}
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -45,7 +62,7 @@ export async function pollUntilHeygenPlaybackReady(
     await sleep(intervalMs)
   }
 
-  throw new Error('Avatar video generation timed out')
+  throw new HeygenPlaybackTimeoutError()
 }
 
 function isNonDefaultAvatarPlacement(clip, resolution) {

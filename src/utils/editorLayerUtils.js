@@ -260,6 +260,32 @@ export function duplicateClip(clip, overrides = {}) {
   };
 }
 
+const COMPLETED_HEYGEN_STATUSES = new Set([
+  'completed',
+  'complete',
+  'ready',
+  'success',
+  'done',
+]);
+
+function resolveSceneHeygenVideoIdLocal(scene) {
+  if (!scene) return null;
+  if (scene.heygenVideoId) return scene.heygenVideoId;
+  if (scene.generation?.heygenVideoId) return scene.generation.heygenVideoId;
+  for (const clip of scene.clips || []) {
+    const content = typeof clip?.content === 'object' ? clip.content : null;
+    if (content?.heygenVideoId) return content.heygenVideoId;
+  }
+  return null;
+}
+
+/** True when a scene already has a completed HeyGen avatar video that Duplicate can reuse. */
+export function canReuseHeygenGenerationOnDuplicate(scene) {
+  const status = String(scene?.heygenStatus || scene?.generation?.status || '').toLowerCase();
+  if (!COMPLETED_HEYGEN_STATUSES.has(status)) return false;
+  return !!resolveSceneHeygenVideoIdLocal(scene);
+}
+
 export function duplicateScene(scene, index) {
   const sceneKey = `scene_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
   const copy = structuredClone(scene);
@@ -267,11 +293,26 @@ export function duplicateScene(scene, index) {
   copy.sceneId = sceneKey;
   copy.title = `${scene.title || scene.name || 'Scene'} (copy)`;
   copy.order = index + 1;
-  copy.heygenVideoId = undefined;
-  copy.generatedVideoUrl = undefined;
-  copy.playbackUrl = undefined;
-  copy.heygenStatus = undefined;
-  copy.generation = undefined;
+
+  // Completed generations stay export-ready (same HeyGen video id is fine for identical copies).
+  // Incomplete / failed / processing scenes still clear readiness so export forces regenerate.
+  if (canReuseHeygenGenerationOnDuplicate(scene)) {
+    const videoId = resolveSceneHeygenVideoIdLocal(copy);
+    if (videoId && !copy.heygenVideoId) copy.heygenVideoId = videoId;
+    if (!copy.heygenStatus) copy.heygenStatus = 'completed';
+    copy.generation = {
+      ...(copy.generation && typeof copy.generation === 'object' ? copy.generation : {}),
+      heygenVideoId: videoId || copy.generation?.heygenVideoId,
+      status: copy.generation?.status || 'completed',
+    };
+  } else {
+    copy.heygenVideoId = undefined;
+    copy.generatedVideoUrl = undefined;
+    copy.playbackUrl = undefined;
+    copy.heygenStatus = undefined;
+    copy.generation = undefined;
+  }
+
   copy.clips = (copy.clips || []).map((clip) =>
     duplicateClip(clip, { layer: clip.layer ?? 0 })
   );

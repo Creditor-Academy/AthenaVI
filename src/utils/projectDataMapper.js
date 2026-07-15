@@ -683,7 +683,8 @@ export async function rehydrateSceneVideos(scenes, workspaceId, projectId) {
         );
         return {
           ...applyPlaybackUrlToScene(sceneWithId, playbackUrl),
-          heygenStatus: sceneWithId.heygenStatus || 'completed',
+          // Always clear sticky "failed" once playback is confirmed (export trusts heygenStatus).
+          heygenStatus: 'completed',
           generation: {
             heygenVideoId,
             status: 'completed',

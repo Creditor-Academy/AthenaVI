@@ -1042,7 +1042,12 @@ class HeygenService {
       }
 
       const blob = await response.blob();
-      return URL.createObjectURL(blob);
+      // Ensure a video MIME type so Chromium can decode reliably (incl. PiP).
+      const typed =
+        blob.type && blob.type.startsWith('video/')
+          ? blob
+          : new Blob([blob], { type: 'video/mp4' });
+      return URL.createObjectURL(typed);
     } catch (error) {
       console.error('Error in heygenService.getVideoBlobUrl:', error);
       throw sanitizeThrownError(error);

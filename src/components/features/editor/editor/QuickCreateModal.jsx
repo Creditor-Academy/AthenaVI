@@ -26,7 +26,9 @@ import { Loader2 } from 'lucide-react';
 import heygenService from '../../../../services/heygenService';
 import {
   extractHeygenVoiceList,
+  isVoiceReadyForSelection,
   mapHeygenVoice,
+  mergeHeygenVoiceLists,
   resolveVoicePreviewAudioUrl,
 } from '../../../../utils/heygenVoices';
 import {
@@ -637,11 +639,20 @@ const QuickCreateModal = ({
   const fetchVoices = async () => {
     setLoadingVoices(true);
     try {
-      const responseData = await heygenService.getVoices({
-        type: 'public',
-        limit: 100,
-      });
-      const voiceList = extractHeygenVoiceList(responseData);
+      const [privateData, publicData] = await Promise.all([
+        heygenService.getVoices({ type: 'private', limit: 100 }).catch((err) => {
+          console.warn('Failed to load private voices:', err);
+          return { voices: [] };
+        }),
+        heygenService.getVoices({ type: 'public', limit: 100 }),
+      ]);
+
+      // Private first so cloned / My Voices appear in the Create Video picker.
+      const voiceList = mergeHeygenVoiceLists(
+        extractHeygenVoiceList(privateData),
+        extractHeygenVoiceList(publicData)
+      ).filter(isVoiceReadyForSelection);
+
       const mappedVoices = voiceList.map(mapVoiceFromApi).filter((voice) => voice?.id);
       setVoices(mappedVoices);
     } catch (err) {

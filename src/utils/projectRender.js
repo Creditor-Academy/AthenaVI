@@ -1,5 +1,5 @@
 import { getSceneAvatarLookId } from './heygenAvatars';
-import { isAvatarClip } from './heygenVideo';
+import { isAvatarClip, resolveSceneHeygenVideoId } from './heygenVideo';
 import { prepareScenesForBackendExport } from './persistExternalAssets';
 import { rehydrateSceneAssetUrls } from './assetClipUtils';
 import { toBackendProjectData } from './projectDataMapper';
@@ -80,16 +80,44 @@ export function getExportReadinessIssues(projectState) {
     const sceneIssues = [];
 
     if (sceneNeedsHeygenVideo(scene)) {
-      const status = scene.heygenStatus || scene.generation?.status;
-      const videoId = scene.heygenVideoId || scene.generation?.heygenVideoId;
+      const sceneStatus = String(scene.heygenStatus || '').toLowerCase();
+      const generationStatus = String(scene.generation?.status || '').toLowerCase();
+      // Prefer scene fields, but also accept clip.content.heygenVideoId (e.g. after Duplicate).
+      const videoId = resolveSceneHeygenVideoId(scene);
+      const hasPlaybackEvidence = !!(
+        scene.playbackUrl ||
+        scene.generatedVideoUrl ||
+        COMPLETE_STATUSES.has(generationStatus) ||
+        (scene.clips || []).some((clip) => {
+          if (!isAvatarClip(clip)) return false;
+          const src = clip.src || clip.content?.src;
+          return (
+            !!clip.content?.heygenVideoId &&
+            typeof src === 'string' &&
+            src.length > 0 &&
+            !src.startsWith('blob:') &&
+            // Still image / photo look is not a generated video.
+            !/\.(png|jpe?g|webp|gif)(\?|$)/i.test(src)
+          );
+        })
+      );
 
-      if (status === 'processing') {
+      // Stale "failed" after a later successful rehydrate/playback — treat as ready.
+      const effectivelyFailed =
+        sceneStatus === 'failed' &&
+        !COMPLETE_STATUSES.has(generationStatus) &&
+        !hasPlaybackEvidence;
+
+      if (sceneStatus === 'processing' || generationStatus === 'processing') {
         sceneIssues.push('avatar video is still generating');
-      } else if (status === 'failed') {
+      } else if (effectivelyFailed) {
         sceneIssues.push('avatar video failed — regenerate it in Scene settings');
-      } else if (!videoId || status !== 'completed') {
+      } else if (sceneStatus === 'needs_regeneration') {
+        sceneIssues.push('generate the avatar video in Scene settings (script + voice + Generate)');
+      } else if (!videoId) {
         sceneIssues.push('generate the avatar video in Scene settings (script + voice + Generate)');
       }
+      // videoId present + not processing/failed/needs_regeneration → export-ready
     }
 
     (scene.clips || []).forEach((clip) => {
