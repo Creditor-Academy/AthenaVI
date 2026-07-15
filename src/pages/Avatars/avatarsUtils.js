@@ -70,10 +70,16 @@ export function applyAvatarFilters(avatars, { searchQuery, filterBy }) {
 
     if (!matchesSearch) return false;
 
-    const gender = (avatar.gender || 'Unknown').toLowerCase();
-    if (filterBy === 'female') return gender.includes('female') || gender === 'f';
-    if (filterBy === 'male') return gender.includes('male') || gender === 'm';
-    if (filterBy === 'unknown') return !gender || gender === 'unknown';
+    const raw = (avatar.gender || '').trim().toLowerCase();
+    const gender = raw.startsWith('f') || raw === 'woman' || raw === 'girl'
+      ? 'female'
+      : raw.startsWith('m') || raw === 'man' || raw === 'boy'
+        ? 'male'
+        : 'unknown';
+
+    if (filterBy === 'female') return gender === 'female';
+    if (filterBy === 'male') return gender === 'male';
+    if (filterBy === 'unknown') return gender === 'unknown';
     return true;
   });
 }

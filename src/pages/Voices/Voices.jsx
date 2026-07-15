@@ -95,9 +95,11 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
   const [statusBanner, setStatusBanner] = useState(null);
   const [previewUnavailable, setPreviewUnavailable] = useState(null);
   const [previewingVoiceId, setPreviewingVoiceId] = useState(null);
+  const [comingSoonToast, setComingSoonToast] = useState(false);
   const previewNoticeTimerRef = useRef(null);
   const previewAudioRef = useRef(null);
   const preserveSearchRef = useRef(null);
+  const comingSoonToastTimer = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -284,11 +286,15 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
   );
 
   const openVoiceTest = (voice) => {
-    if (!voice?.supportsSpeechPreview) return;
-    setTestModalError('');
-    setPreviewCreditEstimate(null);
-    setSpeechText('');
-    setSelectedVoiceForTest(voice);
+    // TEMPORARILY DISABLED — speech preview via Starfish TTS coming soon
+    // if (!voice?.supportsSpeechPreview) return;
+    // setTestModalError('');
+    // setPreviewCreditEstimate(null);
+    // setSpeechText('');
+    // setSelectedVoiceForTest(voice);
+    setComingSoonToast(true);
+    if (comingSoonToastTimer.current) clearTimeout(comingSoonToastTimer.current);
+    comingSoonToastTimer.current = setTimeout(() => setComingSoonToast(false), 3000);
   };
 
   useEffect(() => {
@@ -574,6 +580,7 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
         </main>
       </div>
 
+      {/* SPEECH PREVIEW MODAL — temporarily disabled, coming soon
       {selectedVoiceForTest ? (
         <div
           className="voice-modal-overlay"
@@ -669,6 +676,14 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
           </div>
         </div>
       ) : null}
+      END SPEECH PREVIEW MODAL */}
+
+      {comingSoonToast && (
+        <div className="voice-coming-soon-toast" role="status" aria-live="polite">
+          <MdGraphicEq size={18} />
+          <span>Text-to-speech preview — <strong>coming soon</strong></span>
+        </div>
+      )}
       <ConfirmDialog dialog={confirmDialog} onCancel={() => setConfirmDialog(null)} />
     </div>
   );

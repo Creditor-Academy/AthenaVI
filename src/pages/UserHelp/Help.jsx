@@ -95,9 +95,33 @@ function Help({ embedded = false, onOpenBilling }) {
   }, [theme, customPrimary])
 
   const [searchQuery, setSearchQuery] = useState('')
-  const [activeTopic, setActiveTopic] = useState(null)
-  const [activeArticle, setActiveArticle] = useState(null)
+
+  const [activeTopic, setActiveTopic] = useState(() => {
+    try { return sessionStorage.getItem('help_activeTopic') || null } catch { return null }
+  })
+  const [activeArticle, setActiveArticle] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('help_activeArticle')
+      return saved ? JSON.parse(saved) : null
+    } catch { return null }
+  })
   const [showContact, setShowContact] = useState(false)
+
+  // Persist active view to sessionStorage so refresh restores it
+  useEffect(() => {
+    try {
+      if (activeArticle) {
+        sessionStorage.setItem('help_activeArticle', JSON.stringify(activeArticle))
+        sessionStorage.removeItem('help_activeTopic')
+      } else if (activeTopic) {
+        sessionStorage.setItem('help_activeTopic', activeTopic)
+        sessionStorage.removeItem('help_activeArticle')
+      } else {
+        sessionStorage.removeItem('help_activeArticle')
+        sessionStorage.removeItem('help_activeTopic')
+      }
+    } catch { /* ignore */ }
+  }, [activeArticle, activeTopic])
 
   useEffect(() => {
     const ctx = consumeDashboardSearchContext('help')
