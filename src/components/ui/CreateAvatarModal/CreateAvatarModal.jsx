@@ -73,7 +73,7 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
   const [creationStatus, setCreationStatus] = useState('');
   const [previewUrl, setPreviewUrl] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false); // kept for reference, unused
   const [creationSuccess, setCreationSuccess] = useState(null);
   const [consentStep, setConsentStep] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(null);
@@ -701,9 +701,23 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
                   <div className="input-group">
                     <div className="label-with-help">
                       <label className="section-label">Portrait Image Input</label>
-                      <button type="button" className="context-help-link" onClick={() => setShowHelpModal(true)}>
-                        What makes a good photo?
-                      </button>
+                      <div className="photo-tip-anchor">
+                        <button
+                          type="button"
+                          className="context-help-link"
+                        >
+                          What makes a good photo?
+                        </button>
+                        <div className="photo-tip-popover" role="tooltip">
+                          <p className="photo-tip-heading">Good photo tips</p>
+                          <ul className="photo-tip-list">
+                            <li>Front-facing, well-lit face</li>
+                            <li>Plain or simple background</li>
+                            <li>1080×1080 px minimum</li>
+                            <li>.png, .jpg, or .webp</li>
+                          </ul>
+                        </div>
+                      </div>
                     </div>
 
                     <div
@@ -783,6 +797,7 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
         </div>
       </div>
 
+      {/* PHOTO HELP MODAL — replaced with inline tooltip popover
       {showHelpModal ? (
         <div className="creation-modal-overlay" onClick={() => setShowHelpModal(false)}>
           <div className="creation-modal-content" onClick={(event) => event.stopPropagation()}>
@@ -822,6 +837,7 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
           </div>
         </div>
       ) : null}
+      END PHOTO HELP MODAL */}
     </>
   );
 }

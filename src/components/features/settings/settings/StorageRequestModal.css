@@ -1,6 +1,15 @@
-.storage-request-overlay {
-  z-index: 2600;
+.storage-request-modal .astryd-header {
+  position: relative;
+  justify-content: center;
 }
+
+.storage-request-modal .astryd-close-btn {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+
 
 .storage-request-modal {
   width: min(100%, 520px);
@@ -71,6 +80,8 @@
   align-items: center;
   text-align: center;
   gap: 10px;
+  width: 100%;
+  align-self: stretch;
 }
 
 .storage-request-success svg {
@@ -81,6 +92,8 @@
   margin: 0;
   font-size: 1.15rem;
   color: var(--text-main);
+  text-align: center;
+  width: 100%;
 }
 
 .storage-request-success p {
@@ -98,6 +111,8 @@
   align-items: center;
   text-align: center;
   gap: 10px;
+  width: 100%;
+  align-self: stretch;
 }
 
 .storage-request-pending svg {

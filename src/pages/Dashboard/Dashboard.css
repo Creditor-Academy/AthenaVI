@@ -2229,7 +2229,7 @@
 
 .notification-item-mini--read .notif-content-mini h6 {
   font-weight: 500;
-  color: #64748b;
+  color: var(--text-muted, #64748b);
 }
 
 .notif-dot--read {
@@ -2238,7 +2238,7 @@
 }
 
 .notification-item-mini:hover {
-  background: #f8fafc;
+  background: var(--bg-surface, #f8fafc);
 }
 
 .notification-item-mini:not(.notification-item-mini--read):hover {
@@ -2262,13 +2262,13 @@
 .notif-content-mini h6 {
   font-size: 14px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--text-main, #1e293b);
   margin: 0 0 4px 0;
 }
 
 .notif-content-mini p {
   font-size: 13px;
-  color: #64748b;
+  color: var(--text-muted, #64748b);
   margin: 0 0 6px 0;
   line-height: 1.4;
 }
@@ -2276,7 +2276,7 @@
 .notif-content-mini span {
   font-size: 11px;
   font-weight: 500;
-  color: #94a3b8;
+  color: var(--text-muted, #94a3b8);
   text-transform: uppercase;
 }
 

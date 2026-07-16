@@ -67,9 +67,8 @@ export function applyVoiceFilters(voices, { searchQuery, filterBy }) {
 
     if (!matchesSearch) return false;
 
-    const gender = (voice.gender || '').toLowerCase();
-    if (filterBy === 'female') return gender.includes('female') || gender === 'f';
-    if (filterBy === 'male') return gender.includes('male') || gender === 'm';
+    if (filterBy === 'female') return normalizeVoiceGender(voice.gender) === 'female';
+    if (filterBy === 'male') return normalizeVoiceGender(voice.gender) === 'male';
     if (filterBy === 'processing') return voice.status === 'processing';
     return true;
   });

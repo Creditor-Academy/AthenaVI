@@ -201,3 +201,32 @@ html, body {
 body {
   overflow-x: hidden;
 }
+
+/* ── Global scrollbar styling ───────────────────────────────────────────────── */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--text-muted, #64748b) 30%, transparent) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text-muted, #64748b) 30%, transparent);
+  border-radius: 99px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--primary, #6366f1) 55%, var(--text-muted, #64748b));
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}

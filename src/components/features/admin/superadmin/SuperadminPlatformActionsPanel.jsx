@@ -1,8 +1,183 @@
 import { useState, useEffect } from 'react'
-import { Shield, ChevronLeft, ChevronRight } from 'lucide-react'
+import {
+  Shield, ChevronLeft, ChevronRight,
+  ArrowUpCircle, ArrowDownCircle,
+  Filter, RotateCcw,
+} from 'lucide-react'
 import superadminService from '../../../../services/superadminService'
-import { defaultReportRange, formatAc, formatDate, txTypeLabel } from './superadminUtils'
+import { defaultReportRange, formatAc, formatDate } from './superadminUtils'
 import '../../../../pages/AdminPortal/SuperadminPortal.css'
+
+// ── Small helpers ─────────────────────────────────────────────────────────────
+
+function GrantBadge({ type }) {
+  const isGrant = type === 'platform_grant'
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      padding: '3px 9px',
+      borderRadius: 6,
+      fontSize: '0.6875rem', fontWeight: 600,
+      letterSpacing: '0.01em',
+      background: isGrant
+        ? 'color-mix(in srgb, var(--primary) 10%, var(--bg-card))'
+        : 'color-mix(in srgb, var(--text-muted) 10%, var(--bg-card))',
+      color: isGrant ? 'var(--primary)' : 'var(--text-muted)',
+      border: `1px solid ${isGrant
+        ? 'color-mix(in srgb, var(--primary) 22%, var(--border-color))'
+        : 'color-mix(in srgb, var(--text-muted) 25%, var(--border-color))'}`,
+      whiteSpace: 'nowrap',
+    }}>
+      {isGrant
+        ? <ArrowUpCircle size={10} strokeWidth={2.5} />
+        : <ArrowDownCircle size={10} strokeWidth={2.5} />}
+      {isGrant ? 'Grant' : 'Revoke'}
+    </span>
+  )
+}
+
+function Avatar({ name, isGrant }) {
+  const letters = (name || '?')
+    .split(' ').slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() || '')
+    .join('')
+  return (
+    <div style={{
+      width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+      background: 'color-mix(in srgb, var(--primary) 10%, var(--bg-card))',
+      border: '1px solid color-mix(in srgb, var(--primary) 18%, var(--border-color))',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: '0.6875rem', fontWeight: 700,
+      color: 'var(--primary)',
+    }}>
+      {letters}
+    </div>
+  )
+}
+
+// ── Table row ─────────────────────────────────────────────────────────────────
+
+function TxRow({ tx }) {
+  const isGrant = tx.type === 'platform_grant'
+  const targetName = tx.workspace?.name || tx.user?.name || '—'
+  const targetSub  = tx.workspace
+    ? (tx.user?.email || tx.user?.name || null)
+    : (tx.user?.email && tx.user?.name ? tx.user.email : null)
+  const actorLabel = tx.actor?.name || tx.actor?.email || '—'
+  const amount = Math.abs(Number(tx.amount) || 0)
+
+  return (
+    <tr
+      style={{ transition: 'background 0.1s' }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = 'color-mix(in srgb, var(--primary) 4%, transparent)' }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+    >
+      {/* Type */}
+      <td style={{ padding: '11px 14px', whiteSpace: 'nowrap' }}>
+        <GrantBadge type={tx.type} />
+      </td>
+
+      {/* Target */}
+      <td style={{ padding: '11px 14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+          <Avatar name={targetName} isGrant={isGrant} />
+          <div style={{ minWidth: 0 }}>
+            <div style={{
+              fontSize: '0.8125rem', fontWeight: 650,
+              color: 'var(--text-main)',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              maxWidth: 200,
+            }}>
+              {targetName}
+            </div>
+            {targetSub && (
+              <div style={{
+                fontSize: '0.6875rem', color: 'var(--text-muted)',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                maxWidth: 200, marginTop: 1,
+              }}>
+                {targetSub}
+              </div>
+            )}
+          </div>
+        </div>
+      </td>
+
+      {/* Scope */}
+      <td style={{ padding: '11px 14px', whiteSpace: 'nowrap' }}>
+        <span style={{
+          fontSize: '0.75rem', color: 'var(--text-muted)',
+          fontWeight: 500, textTransform: 'capitalize',
+        }}>
+          {tx.scope || '—'}
+        </span>
+      </td>
+
+      {/* Amount */}
+      <td style={{ padding: '11px 14px', whiteSpace: 'nowrap', textAlign: 'right' }}>
+        <span style={{
+          fontSize: '0.875rem', fontWeight: 700,
+          letterSpacing: '-0.01em',
+          color: isGrant ? 'var(--primary)' : 'var(--text-muted)',
+        }}>
+          {isGrant ? '+' : '−'}{formatAc(amount)}
+        </span>
+      </td>
+
+      {/* Actor */}
+      <td style={{ padding: '11px 14px' }}>
+        <span style={{
+          fontSize: '0.8125rem', color: 'var(--text-muted)',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          display: 'block', maxWidth: 180,
+        }}>
+          {actorLabel}
+        </span>
+      </td>
+
+      {/* Date */}
+      <td style={{ padding: '11px 14px', whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+          {formatDate(tx.createdAt)}
+        </span>
+      </td>
+    </tr>
+  )
+}
+
+// ── Summary pills ─────────────────────────────────────────────────────────────
+
+function SummaryPills({ audit }) {
+  if (!audit?.transactions?.length) return null
+  const total   = audit.pagination?.total ?? audit.transactions.length
+  const grants  = audit.transactions.filter((t) => t.type === 'platform_grant').length
+  const revokes = audit.transactions.filter((t) => t.type === 'platform_revoke').length
+
+  const pills = [
+    { label: 'Total',   value: new Intl.NumberFormat().format(total),   color: 'var(--primary)' },
+    { label: 'Grants',  value: grants,  color: 'var(--primary)' },
+    { label: 'Revokes', value: revokes, color: 'var(--text-muted)' },
+  ]
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      {pills.map(({ label, value, color }) => (
+        <div key={label} style={{
+          display: 'flex', alignItems: 'center', gap: 7,
+          padding: '5px 12px', borderRadius: 99,
+          border: `1px solid color-mix(in srgb, ${color} 25%, var(--border-color))`,
+          background: `color-mix(in srgb, ${color} 8%, var(--bg-card))`,
+          fontSize: '0.8125rem',
+        }}>
+          <span style={{ color, fontWeight: 700 }}>{value}</span>
+          <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>{label}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── Main panel ────────────────────────────────────────────────────────────────
 
 function SuperadminPlatformActionsPanel() {
   const initial = defaultReportRange()
@@ -39,121 +214,220 @@ function SuperadminPlatformActionsPanel() {
     }
   }
 
-  // Auto-load on mount
+  const resetFilters = () => {
+    const r = defaultReportRange()
+    setAuditFrom(r.from)
+    setAuditTo(r.to)
+    setAuditScope('')
+    setAuditType('')
+    setAuditPage(1)
+  }
+
   useEffect(() => {
     runAuditReport()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  const totalPages  = audit?.pagination?.totalPages ?? 1
+  const currentPage = audit?.pagination?.page ?? auditPage
+  const totalCount  = audit?.pagination?.total ?? audit?.transactions?.length ?? 0
+
+  // Page window: up to 5 pills centred on currentPage
+  const pageStart = Math.max(1, Math.min(currentPage - 2, totalPages - 4))
+  const pageNums  = Array.from(
+    { length: Math.min(5, totalPages) },
+    (_, i) => pageStart + i
+  )
+
   return (
     <div className="sa-panel" style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+
+      {/* ── Header ── */}
       <div className="sa-panel-header" style={{ flexShrink: 0 }}>
         <div>
           <h2 className="sa-panel-title">Platform actions</h2>
-          <p className="sa-panel-desc">Platform grant and revoke audit trail.</p>
+          <p className="sa-panel-desc">Audit trail of platform credit grants and revokes.</p>
         </div>
       </div>
 
-      {/* Filter form — fixed, never scrolls */}
-      <form className="sa-card" onSubmit={runAuditReport} style={{ flexShrink: 0 }}>
-        <div className="sa-card-body">
-          <div className="sa-toolbar" style={{ flexWrap: 'wrap', gap: 12, marginBottom: 16, alignItems: 'flex-end' }}>
-            <div className="sa-field">
-              <label htmlFor="audit-from">From</label>
-              <input id="audit-from" className="sa-input" type="date" value={auditFrom} onChange={(e) => setAuditFrom(e.target.value)} />
-            </div>
-            <div className="sa-field">
-              <label htmlFor="audit-to">To</label>
-              <input id="audit-to" className="sa-input" type="date" value={auditTo} onChange={(e) => setAuditTo(e.target.value)} />
-            </div>
-            <div className="sa-field">
-              <label htmlFor="audit-scope">Scope</label>
-              <select id="audit-scope" className="sa-select" value={auditScope} onChange={(e) => setAuditScope(e.target.value)}>
-                <option value="">All</option>
-                <option value="user">User</option>
-                <option value="workspace">Workspace</option>
-              </select>
-            </div>
-            <div className="sa-field">
-              <label htmlFor="audit-type">Type</label>
-              <select id="audit-type" className="sa-select" value={auditType} onChange={(e) => setAuditType(e.target.value)}>
-                <option value="">All</option>
-                <option value="platform_grant">Grant</option>
-                <option value="platform_revoke">Revoke</option>
-              </select>
-            </div>
-            <div className="sa-field" style={{ alignSelf: 'flex-end' }}>
-              <label aria-hidden style={{ visibility: 'hidden' }}>Run</label>
-              <button type="submit" className="sa-btn sa-btn--primary" disabled={auditLoading}>
-                {auditLoading ? 'Loading…' : 'Load audit log'}
+      <div className="sa-scroll" style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+
+        {/* ── Filter card ── */}
+        <form className="sa-card" onSubmit={runAuditReport}>
+          <div className="sa-card-header">
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Filter size={13} style={{ color: 'var(--primary)', flexShrink: 0 }} />
+              Filters
+            </h3>
+            <button
+              type="button"
+              className="sa-btn sa-btn--sm sa-btn--ghost"
+              onClick={resetFilters}
+              title="Reset to default range"
+            >
+              <RotateCcw size={12} /> Reset
+            </button>
+          </div>
+
+          <div className="sa-card-body">
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
+              <div className="sa-field">
+                <label htmlFor="audit-from">From</label>
+                <input
+                  id="audit-from" className="sa-input" type="date"
+                  value={auditFrom} onChange={(e) => setAuditFrom(e.target.value)}
+                />
+              </div>
+              <div className="sa-field">
+                <label htmlFor="audit-to">To</label>
+                <input
+                  id="audit-to" className="sa-input" type="date"
+                  value={auditTo} onChange={(e) => setAuditTo(e.target.value)}
+                />
+              </div>
+              <div className="sa-field">
+                <label htmlFor="audit-scope">Scope</label>
+                <select
+                  id="audit-scope" className="sa-select"
+                  value={auditScope} onChange={(e) => setAuditScope(e.target.value)}
+                >
+                  <option value="">All</option>
+                  <option value="user">User</option>
+                  <option value="workspace">Workspace</option>
+                </select>
+              </div>
+              <div className="sa-field">
+                <label htmlFor="audit-type">Type</label>
+                <select
+                  id="audit-type" className="sa-select"
+                  value={auditType} onChange={(e) => setAuditType(e.target.value)}
+                >
+                  <option value="">All</option>
+                  <option value="platform_grant">Grant</option>
+                  <option value="platform_revoke">Revoke</option>
+                </select>
+              </div>
+              <button
+                type="submit"
+                className="sa-btn sa-btn--primary"
+                disabled={auditLoading}
+                style={{ alignSelf: 'flex-end' }}
+              >
+                {auditLoading ? 'Loading…' : 'Search'}
               </button>
             </div>
-          </div>
-          {auditError && <div className="sa-alert sa-alert--error">{auditError}</div>}
-        </div>
-      </form>
 
-      {/* Results — fills remaining height and scrolls inside */}
-      {!audit && !auditLoading && !auditError && (
-        <div className="sa-empty">
-          <Shield className="sa-empty-icon" size={36} />
-          Load platform grant and revoke actions for the selected period.
-        </div>
-      )}
-
-      {auditLoading && <div className="sa-loading"><span className="sa-spinner" /> Loading audit log…</div>}
-
-      {audit?.transactions?.length > 0 && !auditLoading && (
-        <div className="sa-card" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-          <div className="sa-card-header" style={{ flexShrink: 0 }}>
-            <h3>Platform actions <span className="sa-card-header-count">{audit.pagination?.total ?? audit.transactions.length}</span></h3>
-          </div>
-          <div className="sa-card-body sa-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
-            {audit.transactions.map((tx) => {
-              const isGrant = tx.type === 'platform_grant'
-              const target = tx.scope === 'workspace'
-                ? (tx.workspace?.name || 'Workspace')
-                : (tx.user?.email || tx.user?.name || 'User')
-              return (
-                <div key={tx.id} className="sa-tx-row">
-                  <div className="sa-tx-body">
-                    <div className="sa-tx-top">
-                      <span className="sa-tx-type" style={{ color: isGrant ? '#22c55e' : '#ef4444' }}>
-                        {txTypeLabel(tx.type)}
-                      </span>
-                      <span className="sa-tx-ref">{target}</span>
-                    </div>
-                    <div className="sa-tx-bottom">
-                      <span className="sa-tx-date">
-                        {formatDate(tx.createdAt)}
-                        {tx.actor ? ` · by ${tx.actor.name || tx.actor.email}` : ''}
-                      </span>
-                    </div>
-                  </div>
-                  <span className={`sa-tx-amount ${isGrant ? 'sa-amount--positive' : 'sa-amount--negative'}`}>
-                    {isGrant ? '+' : ''}{formatAc(tx.amount)}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-          {audit.pagination?.totalPages > 1 && (
-            <div className="sa-pagination" style={{ flexShrink: 0 }}>
-              <span>Page {audit.pagination.page} of {audit.pagination.totalPages}</span>
-              <div className="sa-toolbar">
-                <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost" disabled={auditPage <= 1}
-                  onClick={() => runAuditReport(undefined, auditPage - 1)}><ChevronLeft size={14} /></button>
-                <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost" disabled={auditPage >= audit.pagination.totalPages}
-                  onClick={() => runAuditReport(undefined, auditPage + 1)}><ChevronRight size={14} /></button>
+            {auditError && (
+              <div className="sa-alert sa-alert--error" style={{ marginTop: 12, marginBottom: 0 }}>
+                {auditError}
               </div>
-            </div>
-          )}
-        </div>
-      )}
+            )}
+          </div>
+        </form>
 
-      {audit?.transactions?.length === 0 && !auditLoading && (
-        <div className="sa-empty">No platform actions in this period.</div>
-      )}
+        {/* ── Empty / loading ── */}
+        {!audit && !auditLoading && !auditError && (
+          <div className="sa-empty" style={{ marginTop: 32 }}>
+            <Shield className="sa-empty-icon" size={38} />
+            <p style={{ marginTop: 10, color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+              Select a date range and press Search to load the audit log.
+            </p>
+          </div>
+        )}
+
+        {auditLoading && (
+          <div className="sa-loading" style={{ marginTop: 32 }}>
+            <span className="sa-spinner" /> Loading…
+          </div>
+        )}
+
+        {audit?.transactions?.length === 0 && !auditLoading && (
+          <div className="sa-empty" style={{ marginTop: 32 }}>
+            <Shield className="sa-empty-icon" size={38} />
+            <p style={{ marginTop: 10, color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+              No platform actions found for this period.
+            </p>
+          </div>
+        )}
+
+        {/* ── Results ── */}
+        {audit?.transactions?.length > 0 && !auditLoading && (
+          <div className="sa-card" style={{ marginTop: 16 }}>
+
+            {/* Card header with summary pills */}
+            <div className="sa-card-header">
+              <h3 style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                <Shield size={13} style={{ color: 'var(--primary)', flexShrink: 0 }} />
+                Audit log
+              </h3>
+              <SummaryPills audit={audit} />
+            </div>
+
+            {/* Table */}
+            <div style={{ overflowX: 'auto' }}>
+              <table className="sa-table" style={{ tableLayout: 'auto' }}>
+                <thead>
+                  <tr>
+                    {/* Override the global sticky top:49px and semi-transparent bg that causes bleed-through */}
+                    <th style={{ top: 0, background: 'var(--bg-card)' }}>Type</th>
+                    <th style={{ top: 0, background: 'var(--bg-card)' }}>Target</th>
+                    <th style={{ top: 0, background: 'var(--bg-card)' }}>Scope</th>
+                    <th style={{ top: 0, background: 'var(--bg-card)', textAlign: 'right' }}>Amount</th>
+                    <th style={{ top: 0, background: 'var(--bg-card)' }}>Actor</th>
+                    <th style={{ top: 0, background: 'var(--bg-card)' }}>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {audit.transactions.map((tx) => (
+                    <TxRow key={tx.id} tx={tx} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="sa-pagination">
+                <span>
+                  {((currentPage - 1) * 20) + 1}–{Math.min(currentPage * 20, totalCount)} of {new Intl.NumberFormat().format(totalCount)}
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <button
+                    type="button"
+                    className="sa-btn sa-btn--sm sa-btn--ghost"
+                    disabled={auditPage <= 1}
+                    onClick={() => runAuditReport(undefined, auditPage - 1)}
+                  >
+                    <ChevronLeft size={13} />
+                  </button>
+
+                  {pageNums.map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      className={`sa-btn sa-btn--sm ${p === currentPage ? 'sa-btn--primary' : 'sa-btn--ghost'}`}
+                      onClick={() => runAuditReport(undefined, p)}
+                      style={{ minWidth: 30, padding: '0 6px' }}
+                    >
+                      {p}
+                    </button>
+                  ))}
+
+                  <button
+                    type="button"
+                    className="sa-btn sa-btn--sm sa-btn--ghost"
+                    disabled={auditPage >= totalPages}
+                    onClick={() => runAuditReport(undefined, auditPage + 1)}
+                  >
+                    <ChevronRight size={13} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+      </div>
     </div>
   )
 }

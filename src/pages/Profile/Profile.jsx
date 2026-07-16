@@ -14,7 +14,8 @@ import {
   MdGeneratingTokens,
   MdDelete,
   MdPhotoCamera,
-  MdCardMembership
+  MdCardMembership,
+  MdExpandMore,
 } from 'react-icons/md'
 import userService from '../../services/userService.js'
 import creditsService from '../../services/creditsService.js'
@@ -28,6 +29,68 @@ import {
   formatCreditTransactionType,
 } from '../../utils/creditTransactions.js'
 import LoadingDots from '../../components/ui/LoadingDots/LoadingDots.jsx'
+
+// ─── Country dial-code data ───────────────────────────────────────────────────
+// digits: [min, max] for the subscriber number (after the dial code)
+const COUNTRIES = [
+  { code: 'US', name: 'United States',    dial: '1',   flag: '🇺🇸', digits: [10, 10] },
+  { code: 'CA', name: 'Canada',           dial: '1',   flag: '🇨🇦', digits: [10, 10] },
+  { code: 'GB', name: 'United Kingdom',   dial: '44',  flag: '🇬🇧', digits: [10, 10] },
+  { code: 'AU', name: 'Australia',        dial: '61',  flag: '🇦🇺', digits: [9,  9]  },
+  { code: 'IN', name: 'India',            dial: '91',  flag: '🇮🇳', digits: [10, 10] },
+  { code: 'DE', name: 'Germany',          dial: '49',  flag: '🇩🇪', digits: [10, 11] },
+  { code: 'FR', name: 'France',           dial: '33',  flag: '🇫🇷', digits: [9,  9]  },
+  { code: 'JP', name: 'Japan',            dial: '81',  flag: '🇯🇵', digits: [10, 10] },
+  { code: 'CN', name: 'China',            dial: '86',  flag: '🇨🇳', digits: [11, 11] },
+  { code: 'BR', name: 'Brazil',           dial: '55',  flag: '🇧🇷', digits: [10, 11] },
+  { code: 'MX', name: 'Mexico',           dial: '52',  flag: '🇲🇽', digits: [10, 10] },
+  { code: 'ZA', name: 'South Africa',     dial: '27',  flag: '🇿🇦', digits: [9,  9]  },
+  { code: 'NG', name: 'Nigeria',          dial: '234', flag: '🇳🇬', digits: [10, 10] },
+  { code: 'PK', name: 'Pakistan',         dial: '92',  flag: '🇵🇰', digits: [10, 10] },
+  { code: 'BD', name: 'Bangladesh',       dial: '880', flag: '🇧🇩', digits: [10, 10] },
+  { code: 'ID', name: 'Indonesia',        dial: '62',  flag: '🇮🇩', digits: [9,  12] },
+  { code: 'RU', name: 'Russia',           dial: '7',   flag: '🇷🇺', digits: [10, 10] },
+  { code: 'KR', name: 'South Korea',      dial: '82',  flag: '🇰🇷', digits: [9,  10] },
+  { code: 'IT', name: 'Italy',            dial: '39',  flag: '🇮🇹', digits: [9,  10] },
+  { code: 'ES', name: 'Spain',            dial: '34',  flag: '🇪🇸', digits: [9,  9]  },
+  { code: 'TR', name: 'Turkey',           dial: '90',  flag: '🇹🇷', digits: [10, 10] },
+  { code: 'SA', name: 'Saudi Arabia',     dial: '966', flag: '🇸🇦', digits: [9,  9]  },
+  { code: 'AE', name: 'UAE',              dial: '971', flag: '🇦🇪', digits: [9,  9]  },
+  { code: 'EG', name: 'Egypt',            dial: '20',  flag: '🇪🇬', digits: [10, 10] },
+  { code: 'AR', name: 'Argentina',        dial: '54',  flag: '🇦🇷', digits: [10, 10] },
+  { code: 'CO', name: 'Colombia',         dial: '57',  flag: '🇨🇴', digits: [10, 10] },
+  { code: 'PH', name: 'Philippines',      dial: '63',  flag: '🇵🇭', digits: [10, 10] },
+  { code: 'MY', name: 'Malaysia',         dial: '60',  flag: '🇲🇾', digits: [9,  10] },
+  { code: 'SG', name: 'Singapore',        dial: '65',  flag: '🇸🇬', digits: [8,  8]  },
+  { code: 'NZ', name: 'New Zealand',      dial: '64',  flag: '🇳🇿', digits: [8,  9]  },
+  { code: 'NL', name: 'Netherlands',      dial: '31',  flag: '🇳🇱', digits: [9,  9]  },
+  { code: 'SE', name: 'Sweden',           dial: '46',  flag: '🇸🇪', digits: [7,  9]  },
+  { code: 'NO', name: 'Norway',           dial: '47',  flag: '🇳🇴', digits: [8,  8]  },
+  { code: 'CH', name: 'Switzerland',      dial: '41',  flag: '🇨🇭', digits: [9,  9]  },
+  { code: 'PL', name: 'Poland',           dial: '48',  flag: '🇵🇱', digits: [9,  9]  },
+  { code: 'PT', name: 'Portugal',         dial: '351', flag: '🇵🇹', digits: [9,  9]  },
+  { code: 'GR', name: 'Greece',           dial: '30',  flag: '🇬🇷', digits: [10, 10] },
+  { code: 'IL', name: 'Israel',           dial: '972', flag: '🇮🇱', digits: [9,  9]  },
+  { code: 'TH', name: 'Thailand',         dial: '66',  flag: '🇹🇭', digits: [9,  9]  },
+  { code: 'VN', name: 'Vietnam',          dial: '84',  flag: '🇻🇳', digits: [9,  10] },
+  { code: 'UA', name: 'Ukraine',          dial: '380', flag: '🇺🇦', digits: [9,  9]  },
+]
+
+const DEFAULT_COUNTRY = COUNTRIES[0] // US
+
+/** Try to parse a stored value like "+11234567890" into { country, number } */
+function parseStoredPhone(stored) {
+  if (!stored) return { country: DEFAULT_COUNTRY, number: '' }
+  const digits = stored.replace(/^\+/, '')
+  // Try longest dial code first to avoid false matches
+  const sorted = [...COUNTRIES].sort((a, b) => b.dial.length - a.dial.length)
+  for (const c of sorted) {
+    if (digits.startsWith(c.dial)) {
+      return { country: c, number: digits.slice(c.dial.length) }
+    }
+  }
+  return { country: DEFAULT_COUNTRY, number: digits }
+}
 
 function formatRelativeTime(iso) {
   if (!iso) return ''
@@ -86,6 +149,13 @@ const Profile = () => {
   const [loading, setLoading] = useState(false)
   const [imageLoading, setImageLoading] = useState(true)
   const [error, setError] = useState('')
+
+  // Phone number country-code state
+  const [selectedCountry, setSelectedCountry] = useState(DEFAULT_COUNTRY)
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [countryDropdownOpen, setCountryDropdownOpen] = useState(false)
+  const [countrySearch, setCountrySearch] = useState('')
+  const countryDropdownRef = useRef(null)
   const [personalCredits, setPersonalCredits] = useState(null)
   const [storageQuota, setStorageQuota] = useState(null)
   const [videosExported, setVideosExported] = useState(null)
@@ -102,6 +172,18 @@ const Profile = () => {
       setError('User not authenticated')
     }
   }, [isAuthenticated])
+
+  // Close country dropdown on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (countryDropdownRef.current && !countryDropdownRef.current.contains(e.target)) {
+        setCountryDropdownOpen(false)
+        setCountrySearch('')
+      }
+    }
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [])
 
   const loadUserProfile = async () => {
     try {
@@ -165,20 +247,46 @@ const Profile = () => {
   const handleEdit = (field, value) => {
     setEditing(field)
     setEditValue(value)
+    if (field === 'phoneNumber') {
+      const parsed = parseStoredPhone(value)
+      setSelectedCountry(parsed.country)
+      setPhoneNumber(parsed.number)
+      setCountrySearch('')
+      setCountryDropdownOpen(false)
+    }
   }
 
   const handleSave = async (field) => {
     try {
       setLoading(true)
       setError('')
-      
-      const updatedProfile = { ...profile, [field]: editValue }
+
+      let valueToSave = editValue
+
+      if (field === 'phoneNumber') {
+        const digits = phoneNumber.replace(/\D/g, '')
+        const [minD, maxD] = selectedCountry.digits
+        if (digits) {
+          if (digits.length < minD || digits.length > maxD) {
+            const rangeMsg = minD === maxD ? `${minD}` : `${minD}–${maxD}`
+            setError(`${selectedCountry.name} phone numbers must be ${rangeMsg} digits.`)
+            setLoading(false)
+            return
+          }
+          valueToSave = `+${selectedCountry.dial}${digits}`
+        } else {
+          valueToSave = ''
+        }
+      }
+
+      const updatedProfile = { ...profile, [field]: valueToSave }
       await userService.updateUserProfile(updatedProfile)
-      
+
       setProfile(updatedProfile)
       updateUser(updatedProfile)
       setEditing(null)
       setEditValue('')
+      setPhoneNumber('')
     } catch (err) {
       setError(err.message)
     } finally {
@@ -189,6 +297,9 @@ const Profile = () => {
   const handleCancel = () => {
     setEditing(null)
     setEditValue('')
+    setPhoneNumber('')
+    setCountryDropdownOpen(false)
+    setCountrySearch('')
   }
 
   const handleFileChange = async (e) => {
@@ -880,6 +991,160 @@ const Profile = () => {
         gap: 24px;
       }
     }
+
+    /* ── Phone number country-code picker ────────────────────────── */
+    .phone-input-group {
+      display: flex;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+      position: relative;
+    }
+
+    .country-selector {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .country-trigger {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 10px;
+      height: 44px;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      background: var(--bg-surface);
+      color: var(--text-main);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .country-trigger:hover,
+    .country-trigger.open {
+      border-color: var(--primary);
+      background: var(--bg-card);
+      box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.12);
+    }
+
+    .country-trigger .flag {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .country-trigger .dial {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .country-dropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      z-index: 9999;
+      width: 260px;
+      max-height: 260px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.18);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .country-search {
+      padding: 10px 12px 8px;
+      border-bottom: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+
+    .country-search input {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--bg-surface);
+      color: var(--text-main);
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .country-search input:focus {
+      border-color: var(--primary);
+    }
+
+    .country-list {
+      overflow-y: auto;
+      flex: 1;
+      padding: 4px 0;
+      scrollbar-width: thin;
+      scrollbar-color: var(--primary) transparent;
+    }
+
+    .country-list::-webkit-scrollbar { width: 3px; }
+    .country-list::-webkit-scrollbar-track { background: transparent; }
+    .country-list::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 6px; }
+
+    .country-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-main);
+      transition: background 0.12s;
+    }
+
+    .country-option:hover {
+      background: rgba(var(--primary-rgb), 0.08);
+    }
+
+    .country-option.selected {
+      background: rgba(var(--primary-rgb), 0.12);
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .country-option .flag { font-size: 16px; }
+    .country-option .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .country-option .dial-code { color: var(--text-muted); font-size: 12px; flex-shrink: 0; }
+
+    .phone-digits-input {
+      flex: 1;
+      padding: 10px 16px;
+      height: 44px;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-main);
+      outline: none;
+      background: var(--bg-surface);
+      transition: all 0.2s;
+      font-family: inherit;
+      min-width: 0;
+    }
+
+    .phone-digits-input:focus {
+      border-color: var(--primary);
+      background: var(--bg-card);
+      box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.15);
+    }
+
+    .phone-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      padding-left: 2px;
+    }
   `
 
   return (
@@ -1108,23 +1373,94 @@ const Profile = () => {
                 <div className="profile-input-wrapper">
                   <span className="profile-detail-label">Phone Number</span>
                   <div className="profile-input-row">
-                    <input
-                      className="profile-edit-input"
-                      value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
-                      autoFocus
-                      placeholder="Enter phone number"
-                    />
+                    <div className="phone-input-group">
+                      {/* Country selector */}
+                      <div className="country-selector" ref={countryDropdownRef}>
+                        <button
+                          type="button"
+                          className={`country-trigger${countryDropdownOpen ? ' open' : ''}`}
+                          onClick={() => {
+                            setCountryDropdownOpen((o) => !o)
+                            setCountrySearch('')
+                          }}
+                          title="Select country code"
+                        >
+                          <span className="flag" style={{ fontSize: '13px', fontWeight: 700, letterSpacing: '0.03em' }}>{selectedCountry.code}</span>
+                          <span className="dial">+{selectedCountry.dial}</span>
+                          <MdExpandMore size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                        </button>
+
+                        {countryDropdownOpen && (
+                          <div className="country-dropdown">
+                            <div className="country-search">
+                              <input
+                                autoFocus
+                                type="text"
+                                placeholder="Search country…"
+                                value={countrySearch}
+                                onChange={(e) => setCountrySearch(e.target.value)}
+                              />
+                            </div>
+                            <div className="country-list">
+                              {COUNTRIES.filter((c) =>
+                                c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
+                                c.dial.includes(countrySearch.replace(/^\+/, ''))
+                              ).map((c) => (
+                                <div
+                                  key={c.code}
+                                  className={`country-option${c.code === selectedCountry.code ? ' selected' : ''}`}
+                                  onClick={() => {
+                                    setSelectedCountry(c)
+                                    setPhoneNumber('')
+                                    setCountryDropdownOpen(false)
+                                    setCountrySearch('')
+                                  }}
+                                >
+                                  <span className="flag">{c.flag}</span>
+                                  <span className="name">{c.name}</span>
+                                  <span className="dial-code">+{c.dial}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Digits input */}
+                      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                        <input
+                          className="phone-digits-input"
+                          value={phoneNumber}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/\D/g, '')
+                            setPhoneNumber(raw.slice(0, selectedCountry.digits[1]))
+                          }}
+                          autoFocus
+                          placeholder={`${selectedCountry.digits[0]}–${selectedCountry.digits[1] === selectedCountry.digits[0] ? selectedCountry.digits[0] : selectedCountry.digits[1]} digits`}
+                          maxLength={selectedCountry.digits[1]}
+                          type="tel"
+                          inputMode="numeric"
+                        />
+                        <span className="phone-hint">
+                          {selectedCountry.name} · +{selectedCountry.dial} · {
+                            selectedCountry.digits[0] === selectedCountry.digits[1]
+                              ? `${selectedCountry.digits[0]} digits`
+                              : `${selectedCountry.digits[0]}–${selectedCountry.digits[1]} digits`
+                          }
+                        </span>
+                      </div>
+                    </div>
+
                     <div className="profile-edit-actions">
-                      <button 
-                        className="profile-action-btn profile-btn-save-new" 
+                      <button
+                        className="profile-action-btn profile-btn-save-new"
                         onClick={() => handleSave('phoneNumber')}
                         title="Save"
                       >
                         <MdSave size={18} />
                       </button>
-                      <button 
-                        className="profile-action-btn profile-btn-cancel-new" 
+                      <button
+                        className="profile-action-btn profile-btn-cancel-new"
                         onClick={handleCancel}
                         title="Cancel"
                       >
