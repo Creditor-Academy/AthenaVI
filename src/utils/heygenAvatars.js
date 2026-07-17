@@ -52,14 +52,29 @@ export function lookInEngineBucket(look, bucketKey, parsed) {
   return bucket.some((item) => (getLookId(item) || item?.id) === id);
 }
 
-/** Expressive studio looks routed to HeyGen v2 (empty supported_api_engines). */
+/** Expressive / Avatar III studio looks routed to HeyGen v2 (no avatar_iv/avatar_v). */
 export function isLegacyV2Look(look, parsed = null) {
   if (!look) return false;
   if (look.isLegacyV2 || look.generatableEngine === LEGACY_V2_ENGINE) return true;
+  if (look.usesLegacyV2Video === true) return true;
+  if (String(look.videoApi || '').toLowerCase() === 'v2') return true;
   if (parsed && lookInEngineBucket(look, 'legacy_v2', parsed)) return true;
   const id = String(getLookId(look) || look?.id || '');
   if (/_expressive/i.test(id)) return true;
-  return /_expressive\d*_public$/i.test(id);
+  if (/_expressive\d*_public$/i.test(id)) return true;
+
+  const raw =
+    look?.supported_api_engines ??
+    look?.supportedApiEngines ??
+    look?.supportedEngines ??
+    [];
+  if (Array.isArray(raw) && raw.length > 0) {
+    const normalized = raw.map((e) => String(e || '').trim().toLowerCase()).filter(Boolean);
+    const hasV3 = normalized.some((e) => e === AVATAR_IV_ENGINE || e === AVATAR_V_ENGINE);
+    // e.g. supported_api_engines: ['avatar_iii'] — HeyGen v2 only
+    if (!hasV3) return true;
+  }
+  return false;
 }
 
 /** True when HeyGen transparent WebM (alpha) is allowed for this look. */
@@ -176,14 +191,24 @@ export function resolveAvatarEngine(look, preferredEngine = null, parsed = null)
   });
 }
 
+function isStudioOrDigitalTwinAvatarType(avatarType) {
+  const kind = avatarType != null ? String(avatarType).trim() : '';
+  return !kind || kind === 'studio_avatar' || kind === 'digital_twin';
+}
+
 /**
  * Engine for video create + persisted presenter (API only accepts avatar_iv | avatar_v).
- * Expressive looks: send avatar_iv — backend resolveVideoPlanForLook routes to HeyGen v2.
- * Avatar V only for photo_avatar looks that explicitly list avatar_v in supported_api_engines.
+ * - Expressive / Avatar III looks: send avatar_iv — backend routes to HeyGen v2.
+ * - studio_avatar / digital_twin with IV/V: Avatar V (HeyGen rejects Avatar IV for video avatars).
+ * - photo_avatar: prefer Avatar IV when listed; otherwise Avatar V / preferred engine.
  */
 export function resolveVideoAvatarEngine(context = {}) {
   const lookId = context.avatarLookId || context.avatarId || context.id;
   const avatarType = context.avatarType ?? context.avatar_type ?? null;
+  const preferred =
+    context.avatarEngine != null && String(context.avatarEngine).trim() !== ''
+      ? normalizeAvatarEngine(context.avatarEngine)
+      : null;
 
   const look = {
     id: lookId,
@@ -191,17 +216,29 @@ export function resolveVideoAvatarEngine(context = {}) {
     supportedEngines: context.supportedEngines,
     supported_api_engines: context.supportedEngines,
     isLegacyV2: context.isLegacyV2,
+    usesLegacyV2Video: context.isLegacyV2,
+    videoApi: context.isLegacyV2 ? 'v2' : null,
   };
 
-  if (isLegacyV2Look(look, context.parsed)) {
+  if (isLegacyV2Look(look, context.parsed) || preferred === LEGACY_V2_ENGINE) {
     return AVATAR_IV_ENGINE;
   }
 
-  if (!avatarType || avatarType === 'studio_avatar') {
-    return AVATAR_IV_ENGINE;
+  // Studio / digital-twin video avatars cannot use Avatar IV on HeyGen v3.
+  if (isStudioOrDigitalTwinAvatarType(avatarType)) {
+    return AVATAR_V_ENGINE;
   }
 
   const engines = getLookSupportedEngines(look);
+
+  if (
+    preferred === AVATAR_IV_ENGINE ||
+    preferred === AVATAR_V_ENGINE
+  ) {
+    if (engines.length === 0 || engines.includes(preferred)) {
+      return preferred;
+    }
+  }
 
   if (engines.length === 0) {
     return AVATAR_IV_ENGINE;
@@ -232,15 +269,15 @@ export function persistPresenterAvatarEngine(
     return AVATAR_IV_ENGINE;
   }
 
-  const normalized = normalizeAvatarEngine(engine);
-  if (normalized === AVATAR_V_ENGINE && kind === 'studio_avatar') {
-    return AVATAR_IV_ENGINE;
+  if (isStudioOrDigitalTwinAvatarType(kind)) {
+    return AVATAR_V_ENGINE;
   }
 
+  const normalized = normalizeAvatarEngine(engine);
   return normalized === AVATAR_V_ENGINE ? AVATAR_V_ENGINE : AVATAR_IV_ENGINE;
 }
 
-/** Sanitize engine before POST .../heygen/videos — never send avatar_v for studio/expressive. */
+/** Finalize engine before POST .../heygen/videos (studio → avatar_v; expressive → avatar_iv). */
 export function finalizeVideoCreatePayload({
   avatarId,
   avatarType,
