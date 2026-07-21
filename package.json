@@ -11,6 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@remotion/player": "^4.0.407",
     "@use-gesture/react": "^10.3.1",
     "axios": "^1.13.6",

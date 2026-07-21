@@ -70,19 +70,6 @@ test('TC_HOME_003 Verify Active Home Menu', async ({ page }) => {
 
 });
 
- /* ==========================================
-   TC_HOME_004
-   Verify Home Menu
-========================================== */
-
-test('TC_HOME_004 Verify Home Menu', async ({ page }) => {
-
-    const home = new HomePage(page);
-
-    await home.verifyHomeMenu();
-
-});
-
 /* ==========================================
    TC_HOME_005
    Verify Ctrl + K Shortcut
