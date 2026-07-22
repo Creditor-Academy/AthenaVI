@@ -56,6 +56,14 @@ export function resolveViewFromLocation(pathToViewMap) {
   const urlView = pathToViewMap[currentPath];
   if (urlView) return urlView;
 
+  if (currentPath === '/slides' || currentPath.startsWith('/slides/')) {
+    return 'slides';
+  }
+
+  if (currentPath === '/hub' || currentPath === '/products/choose') {
+    return 'product-chooser';
+  }
+
   const isSpecialPath =
     currentPath.includes('/reset-password') ||
     currentPath.includes('/invite/accept') ||

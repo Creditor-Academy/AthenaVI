@@ -14,6 +14,11 @@ import {
   readClientPath,
   resolveDashboardSectionFromPath,
 } from './utils/dashboardRouting.js'
+import {
+  isSlidesClientPath,
+  resolveSlidesSectionFromPath,
+  slidesPathForSection,
+} from './utils/slidesRouting.js'
 import { parseProjectCommentsDeepLink } from './utils/inboxNotifications.js'
 
 function mergeCreateConfigFromDeepLink(prev) {
@@ -30,6 +35,8 @@ function mergeCreateConfigFromDeepLink(prev) {
 }
 
 const Dashboard = lazy(() => import('./pages/Dashboard/Dashboard.jsx'))
+const ProductChooser = lazy(() => import('./pages/ProductChooser/ProductChooser.jsx'))
+const SlidesDashboard = lazy(() => import('./pages/Slides/SlidesDashboard.jsx'))
 const Create = lazy(() => import('./pages/Editor/Editor.jsx'))
 const Products = lazy(() => import('./pages/Products/Products.jsx'))
 const AboutUsBlog = lazy(() => import('./pages/AboutUs/AboutUs.jsx'))
@@ -54,6 +61,8 @@ const EarlyAccessPage = lazy(() => import('./pages/EarlyAccess/EarlyAccessPage.j
 const GoogleCallback = lazy(() => import('./components/features/auth/GoogleCallback.jsx'))
 const PATH_TO_VIEW_MAP = {
   '/': 'landing',
+  '/hub': 'product-chooser',
+  '/products/choose': 'product-chooser',
   '/dashboard': 'dashboard',
   '/dashboard/home': 'dashboard',
   '/dashboard/videos': 'dashboard',
@@ -72,6 +81,12 @@ const PATH_TO_VIEW_MAP = {
   '/dashboard/credits': 'dashboard',
   '/dashboard/help': 'dashboard',
   '/profile': 'dashboard',
+  '/slides': 'slides',
+  '/slides/home': 'slides',
+  '/slides/ppt-generator': 'slides',
+  '/slides/image-generator': 'slides',
+  '/slides/settings': 'slides',
+  '/slides/help': 'slides',
   '/create': 'create',
   '/products': 'products',
   '/about-us': 'about-us-blog',
@@ -256,7 +271,9 @@ function App() {
     // Update browser URL to reflect current view
     const urlMap = {
       'landing': '/',
+      'product-chooser': '/hub',
       'dashboard': '/dashboard',
+      'slides': '/slides',
       'create': '/create',
       'products': '/products',
       'about-us-blog': '/about-us',
@@ -289,7 +306,11 @@ function App() {
       currentPath.includes('/reset-password') ||
       isOAuthCallbackPath(currentPath)
     const isDashboardSubPath = isDashboardClientPath()
-    const targetUrl = (view === 'dashboard' && isDashboardSubPath) ? currentPath : newUrl
+    const isSlidesSubPath = isSlidesClientPath()
+    const targetUrl =
+      (view === 'dashboard' && isDashboardSubPath) ? currentPath
+      : (view === 'slides' && isSlidesSubPath) ? currentPath
+      : newUrl
     try {
       if (!onProtectedPath && currentPath !== targetUrl) {
         window.history.pushState({ view }, '', targetUrl)
@@ -316,7 +337,30 @@ function App() {
         localStorage.setItem('authError', err.message || 'Failed to accept workspace invitation')
       }
     }
+    setView('product-chooser')
+  }, [])
+
+  const goToStudio = useCallback(() => {
+    const path = dashboardPathForSection('home')
+    if (window.location.pathname !== path) {
+      window.history.pushState({ view: 'dashboard', section: 'home' }, '', path)
+    }
     setView('dashboard')
+  }, [])
+
+  const goToSlides = useCallback(() => {
+    const path = slidesPathForSection('home')
+    if (window.location.pathname !== path) {
+      window.history.pushState({ view: 'slides', section: 'home' }, '', path)
+    }
+    setView('slides')
+  }, [])
+
+  const goToProductChooser = useCallback(() => {
+    if (window.location.pathname !== '/hub') {
+      window.history.pushState({ view: 'product-chooser' }, '', '/hub')
+    }
+    setView('product-chooser')
   }, [])
 
   // Scroll to top whenever view changes
@@ -324,7 +368,7 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'instant' })
   }, [view])
 
-  // After Google OAuth completes, switch from callback spinner to dashboard
+  // After Google OAuth completes, switch from callback spinner to product chooser
   useEffect(() => {
     const onOAuthComplete = () => { handleAuthComplete() }
     const onOAuthError = () => setView('login')
@@ -349,6 +393,25 @@ function App() {
       if (path.startsWith('/create')) {
         setView('create')
         setCreateVideoConfig((prev) => mergeCreateConfigFromDeepLink(prev))
+        return
+      }
+
+      if (path === '/hub' || path === '/products/choose') {
+        setView('product-chooser')
+        return
+      }
+
+      const slidesSection = resolveSlidesSectionFromPath(path)
+      if (slidesSection) {
+        if (window.location.pathname !== path.split('?')[0]) {
+          window.history.pushState({ view: 'slides', section: slidesSection }, '', path.split('#')[0])
+        }
+        setView('slides')
+        window.dispatchEvent(
+          new CustomEvent('athena:slides-navigate', {
+            detail: { section: slidesSection },
+          })
+        )
         return
       }
 
@@ -507,7 +570,32 @@ function App() {
               setCreateVideoConfig(config || null)
               setView('create')
             }}
+            onSwitchToSlides={goToSlides}
+            onChooseProduct={goToProductChooser}
             initialSection={resolveDashboardSectionFromPath() ?? 'home'}
+          />
+        </ProtectedRoute>
+      )}
+
+      {view === 'product-chooser' && (
+        <ProtectedRoute view={view} setView={setView}>
+          <ProductChooser
+            onSelect={(option) => {
+              if (option?.id === 'slides') {
+                goToSlides()
+                return
+              }
+              goToStudio()
+            }}
+          />
+        </ProtectedRoute>
+      )}
+
+      {view === 'slides' && (
+        <ProtectedRoute view={view} setView={setView}>
+          <SlidesDashboard
+            onSwitchToStudio={goToStudio}
+            onChooseProduct={goToProductChooser}
           />
         </ProtectedRoute>
       )}
@@ -926,7 +1014,7 @@ function App() {
         <NotFound setView={setView} />
       )}
 
-      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings', 'login', 'early-access', 'google-callback', 'not-found'].includes(view) && (
+      {!['create', 'dashboard', 'product-chooser', 'slides', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings', 'login', 'early-access', 'google-callback', 'not-found'].includes(view) && (
         <>
           <Landing 
             onLoginClick={handleLoginClick}

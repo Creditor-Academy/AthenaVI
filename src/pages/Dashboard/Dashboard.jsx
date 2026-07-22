@@ -52,7 +52,7 @@ import './Dashboard.css'
 const AVATAR_FLOW_SECTIONS = new Set(['avatars', 'create-avatar-look', 'create-avatar'])
 
 
-function Dashboard({ onCreate, initialSection }) {
+function Dashboard({ onCreate, initialSection, onSwitchToSlides, onChooseProduct }) {
   const {
     updateUser,
     canAccessSuperadminPortal,
@@ -344,7 +344,9 @@ function Dashboard({ onCreate, initialSection }) {
             type="button"
             className="dashboard-sidebar-brand"
             onClick={() => (isAdminPortal ? handlePortalToggle() : goToSection('home'))}
+            onDoubleClick={() => onChooseProduct?.()}
             aria-label={isAdminPortal ? 'Back to platform' : 'Virtual Studio, go to home'}
+            title="Double-click to switch products"
           >
             <span className="dashboard-sidebar-brand-logo" aria-hidden>
               V
@@ -376,6 +378,7 @@ function Dashboard({ onCreate, initialSection }) {
             onOpenTranslate={() => setShowTranslateModal(true)}
             onOpenAI={() => setShowAIAssistant(true)}
             onCloseMobile={() => setSidebarMobileOpen(false)}
+            onMoveToSlides={onSwitchToSlides}
           />
         )}
       </div>
