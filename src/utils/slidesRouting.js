@@ -3,10 +3,19 @@ import { normalizeClientPath, readClientPath } from './dashboardRouting.js';
 
 export const SLIDES_SECTIONS = new Set([
   'home',
-  'ppt-generator',
-  'image-generator',
+  'ppt-ai',
+  'ppt-builder',
+  'image-ai',
+  'image-editor',
   'settings',
   'help',
+]);
+
+export const SLIDES_TOOL_SECTIONS = new Set([
+  'ppt-ai',
+  'ppt-builder',
+  'image-ai',
+  'image-editor',
 ]);
 
 /**
@@ -21,6 +30,11 @@ export function resolveSlidesSectionFromPath(pathname = window.location.pathname
   if (path.startsWith('/slides/')) {
     const slug = path.slice('/slides/'.length).split('/')[0];
     if (!slug) return 'home';
+    // Legacy parent paths → first child
+    if (slug === 'ppt-generator') return 'ppt-ai';
+    if (slug === 'ppt-normal') return 'ppt-builder';
+    if (slug === 'image-generator') return 'image-ai';
+    if (slug === 'image-normal') return 'image-editor';
     if (SLIDES_SECTIONS.has(slug)) return slug;
     return 'home';
   }

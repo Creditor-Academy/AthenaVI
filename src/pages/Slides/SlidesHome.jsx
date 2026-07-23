@@ -1,33 +1,37 @@
-import { useMemo } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import {
-  MdAdd,
-  MdAutoAwesome,
-  MdArrowForward,
-  MdLayers,
-  MdImage,
-  MdSlideshow,
-} from 'react-icons/md'
-import { Presentation, Image as ImageIcon } from 'lucide-react'
-import '../Home/Home.css'
+import { ArrowRight, Search, Sparkles } from 'lucide-react'
+import { SLIDES_TOOL_CARDS } from '../../constants/slidesNav'
+import aiPptIcon from '../../assets/slides_icons/ai_ppt_icon.png'
+import pptBuilderIcon from '../../assets/slides_icons/ppt_builder_icon.png'
+import aiImageIcon from '../../assets/slides_icons/ai_image_icon.png'
+import imageEditorIcon from '../../assets/slides_icons/image_editor_icon.png'
+import temp1 from '../../assets/Template_Image/gen_temp1.png'
+import temp2 from '../../assets/Template_Image/gen_temp2.png'
+import temp3 from '../../assets/Template_Image/gen_temp3.png'
+import temp4 from '../../assets/Template_Image/gen_temp4.png'
 import './SlidesHome.css'
 
-const FEATURE_CARDS = [
-  {
-    id: 'ppt-generator',
-    title: 'PPT Generator',
-    description: 'Generate presentation decks from a short brief.',
-    badge: 'Decks',
-    Icon: Presentation,
-  },
-  {
-    id: 'image-generator',
-    title: 'Image Generator',
-    description: 'Create visuals and brand assets for your slides.',
-    badge: 'Images',
-    Icon: ImageIcon,
-  },
+const iconMap = {
+  'ppt-ai': aiPptIcon,
+  'ppt-builder': pptBuilderIcon,
+  'image-ai': aiImageIcon,
+  'image-editor': imageEditorIcon,
+}
+
+const TEMPLATES = [
+  { id: 1, title: 'Corporate Pitch Deck', category: 'Business', image: temp1 },
+  { id: 2, title: 'Marketing Campaign', category: 'Marketing', image: temp2 },
+  { id: 3, title: 'Social Media Strategy', category: 'Social', image: temp3 },
+  { id: 4, title: 'Personal Portfolio', category: 'Personal', image: temp4 },
 ]
+
+function Sparkle({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M12 0L13.8 8.2L22 10L13.8 11.8L12 20L10.2 11.8L2 10L10.2 8.2L12 0Z" />
+    </svg>
+  )
+}
 
 function SlidesHome({ onNavigate, onCreate }) {
   const { user } = useAuth()
@@ -35,127 +39,99 @@ function SlidesHome({ onNavigate, onCreate }) {
     ? user.name.split(' ')[0]
     : user?.email
       ? user.email.split('@')[0]
-      : 'User'
-
-  const stats = useMemo(
-    () => [
-      {
-        id: 'decks',
-        label: 'PPT Decks',
-        value: '0',
-        subtitle: 'Start your first presentation',
-        trend: 'Ready to create',
-        trendVariant: 'neutral',
-        cta: 'Open PPT Generator',
-        navigateTo: 'ppt-generator',
-        icon: <MdSlideshow />,
-      },
-      {
-        id: 'images',
-        label: 'Generated Images',
-        value: '—',
-        subtitle: 'AI visuals for your slides',
-        trend: 'Coming soon',
-        trendVariant: 'neutral',
-        cta: 'Open Image Generator',
-        navigateTo: 'image-generator',
-        icon: <MdImage />,
-      },
-    ],
-    []
-  )
+      : 'Creator'
 
   return (
-    <div className="home-container slides-home">
-      <div className="welcome-banner hero-redesign slides-home-hero">
-        <div className="hero-content">
-          <div className="hero-text">
-            <h1>Welcome to Slides, {firstName}</h1>
-            <p>Generate presentations and images for your decks in one workspace.</p>
-            <div className="hero-chips">
-              <span className="hero-chip">
-                <MdLayers size={16} /> PPT Generator
-              </span>
-              <span className="hero-chip">
-                <MdAutoAwesome size={16} /> Image Generator
-              </span>
-            </div>
-          </div>
-          <div className="hero-action">
-            <button
-              type="button"
-              className="btn-create-hero"
-              onClick={() => onCreate?.() || onNavigate?.('ppt-generator')}
-            >
-              <MdAdd className="btn-create-hero-icon" /> New presentation
-            </button>
-          </div>
-        </div>
-        <div className="hero-decoration hero-circle-1" />
-        <div className="hero-decoration hero-circle-2" />
-        <div className="hero-decoration hero-circle-3" />
-      </div>
+    <div className="slides-home-fun">
+      <div className="slides-home-grid" aria-hidden="true"></div>
+      <Sparkle className="slides-home-fun__spark slides-home-fun__spark--1" />
+      <Sparkle className="slides-home-fun__spark slides-home-fun__spark--2" />
+      <Sparkle className="slides-home-fun__spark slides-home-fun__spark--3" />
+      <Sparkle className="slides-home-fun__spark slides-home-fun__spark--4" />
 
-      <div className="home-billing-stats" role="list">
-        {stats.map((stat) => (
+      <header className="slides-home-hero slides-home-hero--amazing">
+        <div className="slides-home-topbar">
+          <h2 className="slides-home-greeting">Welcome back, {firstName}</h2>
+        </div>
+        
+        <h1 className="slides-home-hero__title">
+          <span className="slides-home-hero__line">
+            Level Up Your <span className="slides-home-hero__gradient-text">Design</span>
+          </span>
+          <span className="slides-home-hero__line">
+            <span className="slides-home-hero__inline-pill" aria-hidden="true">
+              <ArrowRight size={24} strokeWidth={2.5} />
+            </span>
+            With AI Magic
+          </span>
+        </h1>
+        
+        <p className="slides-home-hero__subtitle">
+          Transform your ideas into stunning presentations and visuals in seconds.
+        </p>
+      </header>
+
+      <section className="slides-home-bento" aria-label="Creation tools">
+        {SLIDES_TOOL_CARDS.map((card) => (
           <button
-            key={stat.id}
+            key={card.id}
             type="button"
-            className="home-billing-stat-card home-billing-stat-card--action"
-            onClick={() => onNavigate?.(stat.navigateTo)}
-            role="listitem"
-            aria-label={`${stat.label}: ${stat.value}. ${stat.cta}`}
+            className={`slides-tool-card slides-tool-card--${card.accent}`}
+            onClick={() => onNavigate?.(card.id)}
+            aria-label={`Open ${card.title}`}
           >
-            <span className="home-billing-stat-bubble home-billing-stat-bubble--1" aria-hidden />
-            <span className="home-billing-stat-bubble home-billing-stat-bubble--2" aria-hidden />
-            <span className="home-billing-stat-bubble home-billing-stat-bubble--3" aria-hidden />
-            <div className="home-billing-stat-inner">
-              <div className="home-billing-stat-top">
-                <span className="home-billing-stat-label">{stat.label}</span>
-                <span className="home-billing-stat-icon" aria-hidden>
-                  {stat.icon}
-                </span>
-              </div>
-              <div className="home-billing-stat-value">{stat.value}</div>
-              <span className={`home-billing-stat-trend ${stat.trendVariant}`}>{stat.trend}</span>
-              <div className="home-billing-stat-subtitle">{stat.subtitle}</div>
-              <span className="home-billing-stat-cta">
-                {stat.cta}
-                <MdArrowForward size={16} aria-hidden />
-              </span>
-            </div>
+            <div className="slides-tool-card__glass"></div>
+            <img 
+              src={iconMap[card.id] || aiPptIcon} 
+              alt="" 
+              className="slides-tool-card__image" 
+              aria-hidden="true" 
+            />
+            <span className="slides-tool-card__copy">
+              <strong>{card.title}</strong>
+              <span>{card.subtitle}</span>
+            </span>
           </button>
         ))}
-      </div>
+      </section>
 
-      <div className="section-header slides-home-section-header">
-        <h2>Tools</h2>
-      </div>
+      <div className="slides-home-templates-wrapper">
+        <svg className="slides-wave slides-wave--top" viewBox="0 0 1440 120" preserveAspectRatio="none" aria-hidden="true">
+          <path fill="currentColor" d="M0,64L80,69.3C160,75,320,85,480,80C640,75,800,53,960,42.7C1120,32,1280,32,1360,32L1440,32L1440,0L0,0Z"></path>
+        </svg>
 
-      <div className="slides-feature-grid">
-        {FEATURE_CARDS.map((card) => {
-          const Icon = card.Icon
-          return (
-            <button
-              key={card.id}
-              type="button"
-              className="slides-feature-card"
-              onClick={() => onNavigate?.(card.id)}
-              aria-label={`Open ${card.title}`}
-            >
-              <span className="slides-feature-card__icon" aria-hidden>
-                <Icon size={22} strokeWidth={1.75} />
-              </span>
-              <span className="slides-feature-card__badge">{card.badge}</span>
-              <strong className="slides-feature-card__title">{card.title}</strong>
-              <p className="slides-feature-card__desc">{card.description}</p>
-              <span className="slides-feature-card__cta">
-                Open
-                <MdArrowForward size={16} aria-hidden />
-              </span>
-            </button>
-          )
-        })}
+        <section className="slides-home-templates" aria-labelledby="templates-heading">
+          <div className="slides-home-templates__header">
+            <h2 id="templates-heading" className="slides-home-templates__title">Trending Templates</h2>
+            <button className="slides-home-templates__view-all">View all</button>
+          </div>
+          
+          <div className="slides-home-templates__grid">
+            {TEMPLATES.map((template) => (
+              <button
+                key={template.id}
+                className="slides-template-card"
+                onClick={() => onNavigate?.('ppt-builder')}
+                aria-label={`Use ${template.title} template`}
+              >
+                <div className="slides-template-card__image-container">
+                  <img src={template.image} alt={template.title} className="slides-template-card__image" />
+                  <div className="slides-template-card__overlay">
+                    <span>Use Template</span>
+                  </div>
+                </div>
+                <div className="slides-template-card__info">
+                  <h3>{template.title}</h3>
+                  <span>{template.category}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <svg className="slides-wave slides-wave--bottom" viewBox="0 0 1440 120" preserveAspectRatio="none" aria-hidden="true">
+          <path fill="currentColor" d="M0,64L80,69.3C160,75,320,85,480,80C640,75,800,53,960,42.7C1120,32,1280,32,1360,32L1440,32L1440,0L0,0Z"></path>
+        </svg>
       </div>
     </div>
   )

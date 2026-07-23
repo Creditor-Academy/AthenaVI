@@ -1,7 +1,7 @@
-import AllTemplateImg from '../assets/Template Image/AllTemplate.png'
-import MarketingImg from '../assets/Template Image/Marketing.png'
-import EducationImg from '../assets/Template Image/Educational.png'
-import BusinessImg from '../assets/Template Image/Coporate.png'
+import AllTemplateImg from '../assets/Template_Image/AllTemplate.png'
+import MarketingImg from '../assets/Template_Image/Marketing.png'
+import EducationImg from '../assets/Template_Image/Educational.png'
+import BusinessImg from '../assets/Template_Image/Coporate.png'
 
 export const TEMPLATE_CATEGORY_IMAGES = {
   'All Templates': AllTemplateImg,

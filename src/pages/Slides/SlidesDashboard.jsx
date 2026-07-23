@@ -5,13 +5,13 @@ import Settings from '../Settings/Settings.jsx'
 import Help from '../UserHelp/Help.jsx'
 import SlidesHome from './SlidesHome.jsx'
 import SlidesComingSoon from './SlidesComingSoon.jsx'
+import AIPptGenerator from './AIPptGenerator.jsx'
 import {
   resolveSlidesSectionFromPath,
   slidesPathForSection,
+  SLIDES_TOOL_SECTIONS,
 } from '../../utils/slidesRouting.js'
 import '../Dashboard/Dashboard.css'
-
-const TOOL_SECTIONS = new Set(['ppt-generator', 'image-generator'])
 
 function SlidesDashboard({ onSwitchToStudio, onChooseProduct }) {
   const [section, setSection] = useState(() => resolveSlidesSectionFromPath() ?? 'home')
@@ -48,6 +48,10 @@ function SlidesDashboard({ onSwitchToStudio, onChooseProduct }) {
       window.removeEventListener('athena:slides-navigate', onNavigate)
     }
   }, [goToSection])
+
+  if (section === 'ppt-ai') {
+    return <AIPptGenerator onBack={() => goToSection('home')} />
+  }
 
   return (
     <div
@@ -93,7 +97,7 @@ function SlidesDashboard({ onSwitchToStudio, onChooseProduct }) {
           setSidebarMobileOpen={setSidebarMobileOpen}
           topbarMobileOpen={topbarMobileOpen}
           setTopbarMobileOpen={setTopbarMobileOpen}
-          onCreate={() => goToSection('ppt-generator')}
+          onCreate={() => goToSection('ppt-ai')}
           notificationCount={0}
           cartCount={0}
           goToSection={goToSection}
@@ -117,15 +121,15 @@ function SlidesDashboard({ onSwitchToStudio, onChooseProduct }) {
         />
 
         <main
-          className={`content with-padding ${section === 'home' ? 'content--home' : ''} content--workspace-consistent`}
+          className={`content ${section === 'home' ? 'content--home content--slides-home' : 'with-padding content--workspace-consistent'}`}
         >
           {section === 'home' && (
             <SlidesHome
               onNavigate={goToSection}
-              onCreate={() => goToSection('ppt-generator')}
+              onCreate={() => goToSection('ppt-ai')}
             />
           )}
-          {TOOL_SECTIONS.has(section) && (
+          {SLIDES_TOOL_SECTIONS.has(section) && section !== 'ppt-ai' && (
             <SlidesComingSoon
               section={section}
               onBackHome={() => goToSection('home')}

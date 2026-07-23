@@ -1,5 +1,5 @@
 import studioImage from '../../assets/digitaltwin01.png';
-import slidesImage from '../../assets/Template Image/temp1.png';
+import slidesImage from '../../assets/Template_Image/temp1.png';
 
 export const PRODUCT_OPTIONS = [
   {

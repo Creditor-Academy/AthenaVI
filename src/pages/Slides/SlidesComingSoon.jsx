@@ -2,20 +2,30 @@ import LibraryComingSoonIllustration from '../Library/LibraryComingSoonIllustrat
 import '../Library/Library.css'
 
 const COPY = {
-  'ppt-generator': {
-    badge: 'Deck generation in progress',
-    heading: 'PPT Generator coming soon',
-    sub: 'Describe a topic and generate polished PowerPoint decks. We are finishing the generator experience.',
+  'ppt-ai': {
+    badge: 'AI decks in progress',
+    heading: 'AI PPT Generation coming soon',
+    sub: 'Describe a topic and generate polished PowerPoint decks with AI. We are finishing this experience.',
   },
-  'image-generator': {
-    badge: 'Image generation on the way',
-    heading: 'Image Generator coming soon',
-    sub: 'Create branded visuals for your slides with AI. The image generator is almost ready.',
+  'ppt-builder': {
+    badge: 'Builder on the way',
+    heading: 'PPT Builder coming soon',
+    sub: 'Build presentations slide by slide with full layout control. The PPT builder workspace is almost ready.',
+  },
+  'image-ai': {
+    badge: 'AI visuals in progress',
+    heading: 'AI Image Generation coming soon',
+    sub: 'Create branded visuals for your slides from a prompt. The AI image generator is polishing up.',
+  },
+  'image-editor': {
+    badge: 'Editor on the way',
+    heading: 'Image Editor coming soon',
+    sub: 'Upload, crop, and polish images for your decks. The image editor will land here next.',
   },
 }
 
 function SlidesComingSoon({ section, onBackHome }) {
-  const copy = COPY[section] || COPY['ppt-generator']
+  const copy = COPY[section] || COPY['ppt-ai']
 
   return (
     <div className="library-coming-soon" role="status" aria-live="polite">
