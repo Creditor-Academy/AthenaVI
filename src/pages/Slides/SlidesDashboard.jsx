@@ -112,47 +112,6 @@ function SlidesDashboard({ onSwitchToStudio, onChooseProduct }) {
     )
   }
 
-  if (section === 'ppt-builder') {
-    return (
-      <PptBuilder onBack={() => goToSection('home')} />
-    )
-  }
-
-  if (section === 'editor') {
-    return (
-      <AIPptEditor 
-        outline={editorData?.outline || []}
-        config={editorData?.config || {}}
-        onBack={() => goToSection('home')}
-      />
-    )
-  }
-
-  if (section === 'ppt-builder') {
-    return (
-      <PptBuilder onBack={() => goToSection('home')} />
-    )
-  }
-
-  if (section === 'editor') {
-    return (
-      <AIPptEditor 
-        outline={editorData?.outline || []}
-        config={editorData?.config || {}}
-        onBack={() => goToSection('home')}
-      />
-    )
-  }
-
-  const shellClass = [
-    'dashboard-app-viewport',
-    'slides-app-viewport',
-    sidebarMobileOpen ? 'dashboard-shell--sidebar-open' : '',
-    sidebarCollapsed ? 'slides-shell--collapsed' : 'slides-shell--expanded',
-  ]
-    .filter(Boolean)
-    .join(' ')
-
   const shellClass = [
     'dashboard-app-viewport',
     'slides-app-viewport',
