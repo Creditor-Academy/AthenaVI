@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import DashboardTopbar from '../../components/layout/DashboardTopbar/DashboardTopbar.jsx'
 import SlidesSidebar from '../../components/layout/SlidesSidebar/SlidesSidebar.jsx'
 import Settings from '../Settings/Settings.jsx'
@@ -14,17 +15,48 @@ import {
   SLIDES_TOOL_SECTIONS,
 } from '../../utils/slidesRouting.js'
 import '../Dashboard/Dashboard.css'
+import '../../components/layout/SlidesSidebar/SlidesSidebar.css'
+
+const SLIDES_SIDEBAR_COLLAPSED_KEY = 'athena.slides.sidebarCollapsed'
 
 function SlidesDashboard({ onSwitchToStudio, onChooseProduct }) {
   const [section, setSection] = useState(() => resolveSlidesSectionFromPath() ?? 'home')
   const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false)
   const [topbarMobileOpen, setTopbarMobileOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try {
+      return window.localStorage.getItem(SLIDES_SIDEBAR_COLLAPSED_KEY) === '1'
+    } catch {
+      return false
+    }
+  })
   const [editorData, setEditorData] = useState(null)
 
   const goToSection = useCallback((id) => {
     setTopbarMobileOpen(false)
     setSidebarMobileOpen(false)
     setSection(id)
+  }, [])
+
+  const toggleSidebarCollapsed = useCallback(() => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev
+      try {
+        window.localStorage.setItem(SLIDES_SIDEBAR_COLLAPSED_KEY, next ? '1' : '0')
+      } catch {
+        /* ignore storage failures */
+      }
+      return next
+    })
+  }, [])
+
+  const expandSidebar = useCallback(() => {
+    setSidebarCollapsed(false)
+    try {
+      window.localStorage.setItem(SLIDES_SIDEBAR_COLLAPSED_KEY, '0')
+    } catch {
+      /* ignore storage failures */
+    }
   }, [])
 
   useEffect(() => {
@@ -80,10 +112,58 @@ function SlidesDashboard({ onSwitchToStudio, onChooseProduct }) {
     )
   }
 
+  if (section === 'ppt-builder') {
+    return (
+      <PptBuilder onBack={() => goToSection('home')} />
+    )
+  }
+
+  if (section === 'editor') {
+    return (
+      <AIPptEditor 
+        outline={editorData?.outline || []}
+        config={editorData?.config || {}}
+        onBack={() => goToSection('home')}
+      />
+    )
+  }
+
+  if (section === 'ppt-builder') {
+    return (
+      <PptBuilder onBack={() => goToSection('home')} />
+    )
+  }
+
+  if (section === 'editor') {
+    return (
+      <AIPptEditor 
+        outline={editorData?.outline || []}
+        config={editorData?.config || {}}
+        onBack={() => goToSection('home')}
+      />
+    )
+  }
+
+  const shellClass = [
+    'dashboard-app-viewport',
+    'slides-app-viewport',
+    sidebarMobileOpen ? 'dashboard-shell--sidebar-open' : '',
+    sidebarCollapsed ? 'slides-shell--collapsed' : 'slides-shell--expanded',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  const shellClass = [
+    'dashboard-app-viewport',
+    'slides-app-viewport',
+    sidebarMobileOpen ? 'dashboard-shell--sidebar-open' : '',
+    sidebarCollapsed ? 'slides-shell--collapsed' : 'slides-shell--expanded',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
-    <div
-      className={`dashboard-shell ${sidebarMobileOpen ? 'dashboard-shell--sidebar-open' : ''}`}
-    >
+    <div className={shellClass}>
       {sidebarMobileOpen && (
         <button
           type="button"
@@ -93,82 +173,109 @@ function SlidesDashboard({ onSwitchToStudio, onChooseProduct }) {
         />
       )}
 
-      <div className="dashboard-sidebar-column">
-        <div className="dashboard-sidebar-header">
-          <button
-            type="button"
-            className="dashboard-sidebar-brand"
-            onClick={() => goToSection('home')}
-            onDoubleClick={() => onChooseProduct?.()}
-            aria-label="Slides, go to home"
-            title="Double-click to switch products"
-          >
-            <span className="dashboard-sidebar-brand-logo" aria-hidden>
-              S
-            </span>
-            <span className="dashboard-sidebar-brand-name">Slides</span>
-          </button>
+      {/* ── 1. TOPBAR (Outside the content container, attached to top rail) ───── */}
+      <DashboardTopbar
+        sidebarMobileOpen={sidebarMobileOpen}
+        setSidebarMobileOpen={setSidebarMobileOpen}
+        topbarMobileOpen={topbarMobileOpen}
+        setTopbarMobileOpen={setTopbarMobileOpen}
+        onCreate={() => goToSection('ppt-ai')}
+        notificationCount={0}
+        cartCount={0}
+        goToSection={goToSection}
+        onNotificationClick={() => {}}
+        onCartClick={() => goToSection('settings')}
+        isAdminPortal={false}
+        searchQuery=""
+        onSearchQueryChange={() => {}}
+        searchIsOpen={false}
+        onSearchFocus={() => {}}
+        onSearchClose={() => {}}
+        onSearchSelect={() => {}}
+        searchIsIndexing={false}
+        searchIndexError={null}
+        searchResultsByCategory={{}}
+        searchFlatResults={[]}
+        searchCategoryLabels={{}}
+        searchActiveIndex={-1}
+        onSearchActiveIndexChange={() => {}}
+        onSearchMoveActive={() => {}}
+        searchPlaceholder="Search apps, games, and more"
+        className="slides-topbar"
+      />
+
+      {/* ── 2. DASHBOARD BODY (Sidebar outside + Main Page Container Card) ──── */}
+      <div className="dashboard-body slides-body">
+        {/* Sidebar Column (Outside the main page container card) */}
+        <div className="dashboard-sidebar-column slides-sidebar-column">
+          <div className="dashboard-sidebar-header slides-sidebar-header">
+            <button
+              type="button"
+              className="slides-sidebar-collapse-btn"
+              onClick={toggleSidebarCollapsed}
+              aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-expanded={!sidebarCollapsed}
+              title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              <span className="slides-nav-icon-box">
+                {sidebarCollapsed ? (
+                  <PanelLeftOpen size={20} strokeWidth={1.75} aria-hidden />
+                ) : (
+                  <PanelLeftClose size={20} strokeWidth={1.75} aria-hidden />
+                )}
+              </span>
+            </button>
+          </div>
+
+          <SlidesSidebar
+            section={section}
+            onNavigate={goToSection}
+            onCloseMobile={() => setSidebarMobileOpen(false)}
+            onMoveToVi={onSwitchToStudio}
+            collapsed={sidebarCollapsed}
+            onRequestExpand={expandSidebar}
+          />
         </div>
 
-        <SlidesSidebar
-          section={section}
-          onNavigate={goToSection}
-          onCloseMobile={() => setSidebarMobileOpen(false)}
-          onMoveToVi={onSwitchToStudio}
-        />
-      </div>
-
-      <div className="dashboard-main-column">
-        <DashboardTopbar
-          sidebarMobileOpen={sidebarMobileOpen}
-          setSidebarMobileOpen={setSidebarMobileOpen}
-          topbarMobileOpen={topbarMobileOpen}
-          setTopbarMobileOpen={setTopbarMobileOpen}
-          onCreate={() => goToSection('ppt-ai')}
-          notificationCount={0}
-          cartCount={0}
-          goToSection={goToSection}
-          onNotificationClick={() => {}}
-          onCartClick={() => goToSection('settings')}
-          isAdminPortal={false}
-          searchQuery=""
-          onSearchQueryChange={() => {}}
-          searchIsOpen={false}
-          onSearchFocus={() => {}}
-          onSearchClose={() => {}}
-          onSearchSelect={() => {}}
-          searchIsIndexing={false}
-          searchIndexError={null}
-          searchResultsByCategory={{}}
-          searchFlatResults={[]}
-          searchCategoryLabels={{}}
-          searchActiveIndex={-1}
-          onSearchActiveIndexChange={() => {}}
-          onSearchMoveActive={() => {}}
-        />
-
-        <main
-          className={`content ${section === 'home' ? 'content--home content--slides-home' : 'with-padding content--workspace-consistent'}`}
+        {/* ── 3. MAIN PAGE CONTAINER CARD (Rounded Container Card with Margins) ─ */}
+        <div
+          className="dashboard-page-card"
+          onClick={() => {
+            if (!sidebarCollapsed) {
+              setSidebarCollapsed(true)
+              try {
+                window.localStorage.setItem(SLIDES_SIDEBAR_COLLAPSED_KEY, '1')
+              } catch {
+                /* ignore storage failures */
+              }
+            }
+          }}
         >
-          {section === 'home' && (
-            <SlidesHome
-              onNavigate={goToSection}
-              onCreate={() => goToSection('ppt-ai')}
-            />
-          )}
-          {SLIDES_TOOL_SECTIONS.has(section) && section !== 'ppt-ai' && section !== 'ppt-builder' && (
-            <SlidesComingSoon
-              section={section}
-              onBackHome={() => goToSection('home')}
-            />
-          )}
-          {section === 'settings' && (
-            <Settings onBack={() => goToSection('home')} />
-          )}
-          {section === 'help' && (
-            <Help embedded onOpenBilling={() => goToSection('settings')} />
-          )}
-        </main>
+          <main
+            className={`dashboard-main-content content ${
+              section === 'home' ? 'content--home content--slides-home' : 'with-padding content--workspace-consistent'
+            }`}
+          >
+            {section === 'home' && (
+              <SlidesHome
+                onNavigate={goToSection}
+                onCreate={() => goToSection('ppt-ai')}
+              />
+            )}
+            {SLIDES_TOOL_SECTIONS.has(section) && section !== 'ppt-ai' && section !== 'ppt-builder' && (
+              <SlidesComingSoon
+                section={section}
+                onBackHome={() => goToSection('home')}
+              />
+            )}
+            {section === 'settings' && (
+              <Settings onBack={() => goToSection('home')} />
+            )}
+            {section === 'help' && (
+              <Help embedded onOpenBilling={() => goToSection('settings')} />
+            )}
+          </main>
+        </div>
       </div>
     </div>
   )
