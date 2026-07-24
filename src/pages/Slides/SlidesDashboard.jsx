@@ -6,6 +6,8 @@ import Help from '../UserHelp/Help.jsx'
 import SlidesHome from './SlidesHome.jsx'
 import SlidesComingSoon from './SlidesComingSoon.jsx'
 import AIPptGenerator from './AIPptGenerator.jsx'
+import AIPptEditor from './AIPptComponents/AIPptEditor.jsx'
+import PptBuilder from './PptBuilder/PptBuilder.jsx'
 import {
   resolveSlidesSectionFromPath,
   slidesPathForSection,
@@ -17,6 +19,7 @@ function SlidesDashboard({ onSwitchToStudio, onChooseProduct }) {
   const [section, setSection] = useState(() => resolveSlidesSectionFromPath() ?? 'home')
   const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false)
   const [topbarMobileOpen, setTopbarMobileOpen] = useState(false)
+  const [editorData, setEditorData] = useState(null)
 
   const goToSection = useCallback((id) => {
     setTopbarMobileOpen(false)
@@ -50,7 +53,31 @@ function SlidesDashboard({ onSwitchToStudio, onChooseProduct }) {
   }, [goToSection])
 
   if (section === 'ppt-ai') {
-    return <AIPptGenerator onBack={() => goToSection('home')} />
+    return (
+      <AIPptGenerator 
+        onBack={() => goToSection('home')} 
+        onComplete={(data) => {
+          setEditorData(data)
+          goToSection('editor')
+        }} 
+      />
+    )
+  }
+
+  if (section === 'ppt-builder') {
+    return (
+      <PptBuilder onBack={() => goToSection('home')} />
+    )
+  }
+
+  if (section === 'editor') {
+    return (
+      <AIPptEditor 
+        outline={editorData?.outline || []}
+        config={editorData?.config || {}}
+        onBack={() => goToSection('home')}
+      />
+    )
   }
 
   return (
@@ -129,7 +156,7 @@ function SlidesDashboard({ onSwitchToStudio, onChooseProduct }) {
               onCreate={() => goToSection('ppt-ai')}
             />
           )}
-          {SLIDES_TOOL_SECTIONS.has(section) && section !== 'ppt-ai' && (
+          {SLIDES_TOOL_SECTIONS.has(section) && section !== 'ppt-ai' && section !== 'ppt-builder' && (
             <SlidesComingSoon
               section={section}
               onBackHome={() => goToSection('home')}

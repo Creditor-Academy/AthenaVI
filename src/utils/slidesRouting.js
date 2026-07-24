@@ -7,6 +7,7 @@ export const SLIDES_SECTIONS = new Set([
   'ppt-builder',
   'image-ai',
   'image-editor',
+  'editor',
   'settings',
   'help',
 ]);
@@ -16,6 +17,7 @@ export const SLIDES_TOOL_SECTIONS = new Set([
   'ppt-builder',
   'image-ai',
   'image-editor',
+  'editor',
 ]);
 
 /**
