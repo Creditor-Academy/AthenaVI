@@ -327,7 +327,7 @@ function Dashboard({ onCreate, initialSection, onSwitchToSlides, onChooseProduct
 
   return (
     <div
-      className={`dashboard-shell ${sidebarMobileOpen ? 'dashboard-shell--sidebar-open' : ''} ${isAdminPortal ? 'dashboard-shell--admin-portal' : ''}`}
+      className={`dashboard-app-viewport ${sidebarMobileOpen ? 'dashboard-shell--sidebar-open' : ''} ${isAdminPortal ? 'dashboard-shell--admin-portal' : ''}`}
     >
       {sidebarMobileOpen && (
         <button
@@ -338,84 +338,89 @@ function Dashboard({ onCreate, initialSection, onSwitchToSlides, onChooseProduct
         />
       )}
 
-      <div className="dashboard-sidebar-column">
-        <div className="dashboard-sidebar-header">
-          <button
-            type="button"
-            className="dashboard-sidebar-brand"
-            onClick={() => (isAdminPortal ? handlePortalToggle() : goToSection('home'))}
-            onDoubleClick={() => onChooseProduct?.()}
-            aria-label={isAdminPortal ? 'Back to platform' : 'Virtual Studio, go to home'}
-            title="Double-click to switch products"
-          >
-            <span className="dashboard-sidebar-brand-logo" aria-hidden>
-              V
-            </span>
-            <span className="dashboard-sidebar-brand-name">Virtual Studio</span>
-          </button>
+      {/* ── 1. TOPBAR (Outside the content container, attached to top rail) ───── */}
+      <DashboardTopbar
+        sidebarMobileOpen={sidebarMobileOpen}
+        setSidebarMobileOpen={setSidebarMobileOpen}
+        topbarMobileOpen={topbarMobileOpen}
+        setTopbarMobileOpen={setTopbarMobileOpen}
+        onCreate={handleOpenCreateVideoModal}
+        notificationCount={notificationCount}
+        cartCount={cartCount}
+        goToSection={handleNavigationWithModal}
+        onNotificationClick={() => setShowNotificationsModal(true)}
+        onCartClick={() => setShowCreditsModal(true)}
+        isAdminPortal={isAdminPortal}
+        searchQuery={dashboardSearch.query}
+        onSearchQueryChange={dashboardSearch.setQuery}
+        searchInputRef={dashboardSearch.inputRef}
+        searchIsOpen={dashboardSearch.isOpen}
+        onSearchFocus={dashboardSearch.handleFocus}
+        onSearchClose={dashboardSearch.handleClose}
+        onSearchSelect={handleSearchResultSelect}
+        searchIsIndexing={dashboardSearch.isIndexing}
+        searchIndexError={dashboardSearch.indexError}
+        searchResultsByCategory={dashboardSearch.resultsByCategory}
+        searchFlatResults={dashboardSearch.flatResults}
+        searchCategoryLabels={dashboardSearch.categoryLabels}
+        searchActiveIndex={dashboardSearch.activeIndex}
+        onSearchActiveIndexChange={dashboardSearch.setActiveIndex}
+        onSearchMoveActive={dashboardSearch.moveActive}
+      />
 
-          {canAccessSuperadminPortal && (
-            <PortalModeSwitcher
-              mode={isAdminPortal ? 'admin' : 'main'}
-              onSelectMain={handlePortalToggle}
-              onSelectAdmin={() => goToSection('admin-portal')}
+      {/* ── 2. DASHBOARD BODY (Sidebar outside + Main Page Container Card) ──── */}
+      <div className="dashboard-body">
+        {/* Sidebar Column (Outside the main page container card) */}
+        <div className="dashboard-sidebar-column">
+          <div className="dashboard-sidebar-header">
+            <button
+              type="button"
+              className="dashboard-sidebar-brand"
+              onClick={() => (isAdminPortal ? handlePortalToggle() : goToSection('home'))}
+              onDoubleClick={() => onChooseProduct?.()}
+              aria-label={isAdminPortal ? 'Back to platform' : 'Virtual Studio, go to home'}
+              title="Double-click to switch products"
+            >
+              <span className="dashboard-sidebar-brand-logo" aria-hidden>
+                V
+              </span>
+              <span className="dashboard-sidebar-brand-name">Virtual Studio</span>
+            </button>
+
+            {canAccessSuperadminPortal && (
+              <PortalModeSwitcher
+                mode={isAdminPortal ? 'admin' : 'main'}
+                onSelectMain={handlePortalToggle}
+                onSelectAdmin={() => goToSection('admin-portal')}
+                onCloseMobile={() => setSidebarMobileOpen(false)}
+              />
+            )}
+          </div>
+
+          {isAdminPortal ? (
+            <AdminPortalSidebar
+              activeTab={adminTab}
+              onTabChange={handleAdminTabChange}
+              onNavigateHelp={() => goToSection('help')}
               onCloseMobile={() => setSidebarMobileOpen(false)}
+            />
+          ) : (
+            <DashboardSidebar
+              section={section}
+              onNavigate={goToSection}
+              onOpenTranslate={() => setShowTranslateModal(true)}
+              onOpenAI={() => setShowAIAssistant(true)}
+              onCloseMobile={() => setSidebarMobileOpen(false)}
+              onMoveToSlides={onSwitchToSlides}
             />
           )}
         </div>
 
-        {isAdminPortal ? (
-          <AdminPortalSidebar
-            activeTab={adminTab}
-            onTabChange={handleAdminTabChange}
-            onNavigateHelp={() => goToSection('help')}
-            onCloseMobile={() => setSidebarMobileOpen(false)}
-          />
-        ) : (
-          <DashboardSidebar
-            section={section}
-            onNavigate={goToSection}
-            onOpenTranslate={() => setShowTranslateModal(true)}
-            onOpenAI={() => setShowAIAssistant(true)}
-            onCloseMobile={() => setSidebarMobileOpen(false)}
-            onMoveToSlides={onSwitchToSlides}
-          />
-        )}
-      </div>
-
-      <div className="dashboard-main-column">
-        <DashboardTopbar
-          sidebarMobileOpen={sidebarMobileOpen}
-          setSidebarMobileOpen={setSidebarMobileOpen}
-          topbarMobileOpen={topbarMobileOpen}
-          setTopbarMobileOpen={setTopbarMobileOpen}
-          onCreate={handleOpenCreateVideoModal}
-          notificationCount={notificationCount}
-          cartCount={cartCount}
-          goToSection={handleNavigationWithModal}
-          onNotificationClick={() => setShowNotificationsModal(true)}
-          onCartClick={() => setShowCreditsModal(true)}
-          isAdminPortal={isAdminPortal}
-          searchQuery={dashboardSearch.query}
-          onSearchQueryChange={dashboardSearch.setQuery}
-          searchInputRef={dashboardSearch.inputRef}
-          searchIsOpen={dashboardSearch.isOpen}
-          onSearchFocus={dashboardSearch.handleFocus}
-          onSearchClose={dashboardSearch.handleClose}
-          onSearchSelect={handleSearchResultSelect}
-          searchIsIndexing={dashboardSearch.isIndexing}
-          searchIndexError={dashboardSearch.indexError}
-          searchResultsByCategory={dashboardSearch.resultsByCategory}
-          searchFlatResults={dashboardSearch.flatResults}
-          searchCategoryLabels={dashboardSearch.categoryLabels}
-          searchActiveIndex={dashboardSearch.activeIndex}
-          onSearchActiveIndexChange={dashboardSearch.setActiveIndex}
-          onSearchMoveActive={dashboardSearch.moveActive}
-        />
-
-        <main
-          className={`content ${!noPaddingSections.includes(section) ? 'with-padding' : ''} ${section === 'home' ? 'content--home' : ''} ${workspaceConsistentSections.includes(section) ? 'content--workspace-consistent' : ''} ${isAdminPortal ? 'content--superadmin' : ''}`}
-        >
+        {/* ── 3. MAIN PAGE CONTAINER CARD (Rounded Container Card with Margins) ─ */}
+        <div className="dashboard-page-card">
+          <main
+            className={`dashboard-main-content content ${!noPaddingSections.includes(section) ? 'with-padding' : ''} ${section === 'home' ? 'content--home' : ''} ${workspaceConsistentSections.includes(section) ? 'content--workspace-consistent' : ''} ${isAdminPortal ? 'content--superadmin' : ''}`}
+          >
           {section === 'home' && (
             <Home
               onCreate={handleOpenCreateVideoModal}
@@ -517,7 +522,6 @@ function Dashboard({ onCreate, initialSection, onSwitchToSlides, onChooseProduct
           )}
           {section === 'brandkits' && <BrandKits />}
           {section === 'credits' && <Settings onBack={() => goToSection('home')} initialTab="billing" />}
-          {section === 'profile' && <Profile onBack={() => goToSection('home')} />}
           {section === 'settings' && (
             <Settings
               onBack={() => goToSection('home')}
@@ -528,6 +532,7 @@ function Dashboard({ onCreate, initialSection, onSwitchToSlides, onChooseProduct
             <Help embedded onOpenBilling={() => goToSection('credits')} />
           )}
         </main>
+        </div>
       </div>
 
 

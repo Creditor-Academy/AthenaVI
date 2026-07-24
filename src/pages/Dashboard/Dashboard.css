@@ -1,26 +1,124 @@
-.dashboard-shell {
+/* ==========================================================================
+   Microsoft Store–Style Desktop Layout Architecture
+   Topbar & Sidebar are outside, while ONLY the Page Content is in a rounded container card.
+   ========================================================================== */
+
+/* Outer Viewport Container */
+.dashboard-app-viewport {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
   height: 100vh;
-  display: grid;
-  grid-template-columns: 248px 1fr;
-  grid-template-rows: 1fr;
-  background: var(--bg-surface);
-  color: var(--text-main);
-  font-family: var(--font-family);
+  height: 100dvh;
+  background: var(--bg-sidebar);
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
-  position: relative;
-  transition: background 0.3s ease, color 0.3s ease;
+  z-index: 1;
 }
 
-.dashboard-shell::before {
-  content: '';
-  position: absolute;
-  top: -10%;
-  right: -5%;
-  width: 40%;
-  height: 40%;
-  background: radial-gradient(circle, rgba(37, 99, 235, 0.05) 0%, transparent 70%);
-  z-index: 0;
-  pointer-events: none;
+/* Topbar sits OUTSIDE at top with NO separation border */
+.dashboard-app-viewport > .topbar {
+  flex: 0 0 auto;
+  width: 100%;
+  border: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: var(--bg-sidebar) !important;
+  z-index: 100;
+}
+
+.topbar-brand-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  padding: 4px 10px 4px 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-right: 8px;
+  transition: background 0.2s ease, transform 0.16s ease;
+}
+
+.topbar-brand-btn:hover {
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  transform: scale(1.02);
+}
+
+.topbar-brand-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, var(--primary, #7c3aed) 0%, #9333ea 100%);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--primary) 30%, transparent);
+}
+
+.topbar-brand-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main, #ffffff);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+/* Dashboard Body containing Sidebar (outside) & Page Container Card */
+.dashboard-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  padding: 14px 12px 12px 0;
+  box-sizing: border-box;
+  gap: 8px;
+}
+
+/* Sidebar Column OUTSIDE the page container card */
+.dashboard-app-viewport .dashboard-sidebar-column {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  width: 248px;
+  background: transparent;
+  border-right: none;
+  height: 100%;
+  overflow: hidden;
+  transition: width var(--slides-duration, 220ms) ease-in-out;
+}
+
+/* MAIN PAGE CONTAINER CARD (Rounded window containing page content) */
+.dashboard-page-card {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 85%, rgba(255, 255, 255, 0.08));
+  background: var(--bg-main);
+  box-shadow:
+    0 8px 32px rgba(var(--primary-rgb), 0.18),
+    0 2px 8px rgba(var(--primary-rgb), 0.10);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  transition: box-shadow 0.3s ease;
+}
+
+.dashboard-page-card .dashboard-main-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Topbar — SaaS dashboard header */
@@ -39,10 +137,16 @@
 .topbar {
   position: relative;
   z-index: 100;
-  min-height: 64px;
-  padding: 0 24px 0 16px;
-  background: var(--bg-topbar);
-  border-bottom: 1px solid var(--border-color);
+  min-height: 56px;
+  height: 56px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  background: var(--bg-sidebar) !important;
+  border: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  outline: none !important;
   box-sizing: border-box;
   transition: background 0.3s ease, border-color 0.3s ease;
 }
@@ -56,7 +160,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  min-height: 64px;
+  min-height: 36px;
+  height: 36px;
   max-width: 100%;
 }
 
@@ -261,7 +366,7 @@
   height: 34px;
   padding: 0 12px;
   background: var(--bg-surface);
-  border: 1px solid transparent;
+  border: 1px solid color-mix(in srgb, var(--border-color) 80%, transparent);
   border-radius: 10px;
   box-sizing: border-box;
   position: relative;
@@ -271,10 +376,15 @@
     box-shadow 0.15s ease;
 }
 
-.topbar-search:focus-within {
+.topbar-search:hover {
   background: var(--bg-card);
   border-color: var(--border-color);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.topbar-search:focus-within {
+  background: var(--bg-card);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12);
 }
 
 .topbar-search-icon {
@@ -441,27 +551,108 @@
   max-width: none;
 }
 
-@media (max-width: 900px) {
-  .dashboard-shell {
-    grid-template-columns: 1fr;
+/* ==========================================================================
+   Responsive Layout — Tablet (≤ 1024px)
+   Sidebar auto-collapses to icon-only rail
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+  .dashboard-app-viewport .dashboard-sidebar-column {
+    width: 76px;
   }
 
-  .dashboard-sidebar-column {
+  /* Shrink sidebar to icon rail on tablet — hide text labels */
+  .dashboard-sidebar-column .dashboard-sidebar-brand-name,
+  .dashboard-sidebar-column .dashboard-nav-item-label,
+  .dashboard-sidebar-column .dashboard-sidebar-section-label,
+  .dashboard-sidebar-column .sidebar-footer-label,
+  .dashboard-sidebar-column .dashboard-sidebar-storage-label,
+  .dashboard-sidebar-column .dashboard-sidebar-storage-bar-wrap {
+    display: none;
+  }
+
+  /* Center icon-only nav items */
+  .dashboard-sidebar-column .dashboard-nav-item {
+    justify-content: center;
+    padding: 8px 0;
+    gap: 0;
+  }
+
+  /* Center brand logo */
+  .dashboard-sidebar-column .dashboard-sidebar-brand {
+    justify-content: center;
+    padding: 6px 4px;
+  }
+
+  /* Reduce body side-padding on tablet */
+  .dashboard-body {
+    padding: 12px 8px 8px 0;
+    gap: 6px;
+  }
+}
+
+/* ==========================================================================
+   Responsive Layout — Mobile (≤ 768px)
+   Sidebar becomes overlay drawer, search hides to panel
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  /* Body — no left gutter, sidebar is overlay */
+  .dashboard-body {
+    padding: 10px 6px 6px 6px;
+    gap: 0;
+  }
+
+  /* Page card fills full width with smaller radius on mobile */
+  .dashboard-page-card {
+    border-radius: 10px;
+  }
+
+  /* Sidebar column — hidden off-screen as overlay drawer */
+  .dashboard-app-viewport .dashboard-sidebar-column {
     position: fixed;
+    inset-block: 0;
     left: 0;
-    top: 0;
-    bottom: 0;
     width: min(280px, 88vw);
+    height: 100%;
     z-index: 400;
-    transform: translateX(-100%);
-    transition: transform 0.22s ease;
-    box-shadow: 8px 0 40px rgba(15, 23, 42, 0.12);
+    transform: translateX(-110%);
+    transition: transform 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 8px 0 40px rgba(0, 0, 0, 0.3);
+    background: var(--bg-sidebar);
+    border-radius: 0 12px 12px 0;
+    /* Restore hidden labels in drawer */
   }
 
+  /* Sidebar drawer open */
   .dashboard-shell--sidebar-open .dashboard-sidebar-column {
     transform: translateX(0);
   }
 
+  /* Restore all text labels when drawer is open */
+  .dashboard-shell--sidebar-open .dashboard-sidebar-column .dashboard-sidebar-brand-name,
+  .dashboard-shell--sidebar-open .dashboard-sidebar-column .dashboard-nav-item-label,
+  .dashboard-shell--sidebar-open .dashboard-sidebar-column .dashboard-sidebar-section-label,
+  .dashboard-shell--sidebar-open .dashboard-sidebar-column .sidebar-footer-label,
+  .dashboard-shell--sidebar-open .dashboard-sidebar-column .dashboard-sidebar-storage-label,
+  .dashboard-shell--sidebar-open .dashboard-sidebar-column .dashboard-sidebar-storage-bar-wrap {
+    display: block;
+  }
+
+  /* Restore nav item layout in open drawer */
+  .dashboard-shell--sidebar-open .dashboard-sidebar-column .dashboard-nav-item {
+    justify-content: flex-start;
+    padding: 8px 12px;
+    gap: 10px;
+  }
+
+  /* Restore brand layout in open drawer */
+  .dashboard-shell--sidebar-open .dashboard-sidebar-column .dashboard-sidebar-brand {
+    justify-content: flex-start;
+    padding: 4px 2px;
+  }
+
+  /* Backdrop overlay behind sidebar drawer */
   .dashboard-sidebar-backdrop {
     position: fixed;
     inset: 0;
@@ -469,26 +660,29 @@
     border: none;
     padding: 0;
     margin: 0;
-    background: rgba(15, 23, 42, 0.35);
+    background: rgba(0, 0, 0, 0.5);
     cursor: pointer;
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
   }
 
-  .topbar-sidebar-toggle {
-    display: flex;
-  }
-}
-
-@media (max-width: 768px) {
+  /* Topbar — tighter horizontal padding */
   .topbar {
-    padding: 0 12px 0 8px;
+    padding: 0 10px 0 8px;
   }
 
+  /* Topbar grid collapses: lead | right (no center search column) */
   .topbar-grid--main {
     grid-template-columns: auto 1fr;
+    column-gap: 8px;
   }
 
   .topbar-grid--main .topbar-main-lead {
     grid-column: 1;
+  }
+
+  .topbar-grid--main .topbar-search-wrap {
+    display: none;
   }
 
   .topbar-grid--main .topbar-right {
@@ -496,14 +690,16 @@
     justify-self: end;
   }
 
-  .topbar-search-wrap {
-    display: none;
-  }
-
   .topbar-icon-group--desktop {
     display: none;
   }
 
+  /* Show hamburger sidebar toggle on mobile */
+  .topbar-sidebar-toggle {
+    display: flex;
+  }
+
+  /* Mobile overflow menu toggle */
   .topbar-mobile-toggle {
     display: flex;
   }
@@ -519,9 +715,38 @@
   }
 }
 
+/* Keep mobile panel hidden on larger screens */
 @media (min-width: 769px) {
   .topbar-mobile-panel {
     display: none !important;
+  }
+}
+
+/* ==========================================================================
+   Responsive Layout — Small Mobile (≤ 480px)
+   ========================================================================== */
+
+@media (max-width: 480px) {
+  .dashboard-body {
+    padding: 4px;
+  }
+
+  .dashboard-page-card {
+    border-radius: 8px;
+  }
+
+  .topbar {
+    padding: 0 8px;
+  }
+
+  /* Topbar brand: hide text, keep logo icon */
+  .topbar-brand-name {
+    display: none;
+  }
+
+  .topbar-brand-btn {
+    margin-right: 2px;
+    padding: 4px;
   }
 }
 
@@ -532,15 +757,15 @@
   min-height: 0;
   min-width: 0;
   background: var(--bg-sidebar);
-  border-right: 1px solid var(--border-color);
-  transition: background 0.3s ease, border-right 0.3s ease;
+  border-right: none;
+  transition: background 0.3s ease;
 }
 
 .dashboard-sidebar-header {
   flex-shrink: 0;
   padding: 12px 12px 10px;
-  background: var(--bg-main);
-  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  background: transparent;
+  border-bottom: none;
 }
 
 .dashboard-sidebar-brand {
