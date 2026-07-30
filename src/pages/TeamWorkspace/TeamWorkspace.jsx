@@ -1,19 +1,20 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
-  MdMail,
   MdFolderOpen,
   MdCreateNewFolder,
   MdWorkspaces,
   MdMovieCreation,
   MdVideoLibrary,
   MdInfo,
-  MdExitToApp
+  MdExitToApp,
+  MdHistory
 } from 'react-icons/md';
+import { ChevronRight } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { sanitizeUserFacingMessage } from '../../utils/userFacingMessage';
 import WorkspaceHeader from '../../components/features/workspace/workspace/WorkspaceHeader.jsx';
 import WorkspaceSection from '../../components/features/workspace/workspace/WorkspaceSection.jsx';
-import { WorkspaceCard, FolderCard, VideoCard } from '../../components/features/workspace/workspace/ViewCards.jsx';
+import { WorkspaceCard, FolderCard, VideoCard, CreateWorkspaceCard, CreateFolderCard, CreateVideoCard } from '../../components/features/workspace/workspace/ViewCards.jsx';
 import { WorkspaceRow, FolderRow, VideoRow } from '../../components/features/workspace/workspace/ViewRows.jsx';
 import CreateWorkspaceModal from '../../components/features/workspace/workspace/CreateWorkspaceModal.jsx';
 import CreateFolderModal from '../../components/features/workspace/workspace/CreateFolderModal.jsx';
@@ -67,9 +68,10 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
 
   const [viewMode, setViewMode] = useState('tile');
   const [sortBy, setSortBy] = useState('name_asc');
-  const [activeRootTab, setActiveRootTab] = useState(
-    () => sessionStorage.getItem('workspaceActiveRootTab') || 'my-workspaces'
-  );
+  const [activeRootTab, setActiveRootTab] = useState(() => {
+    const saved = sessionStorage.getItem('workspaceActiveRootTab');
+    return saved === 'recents' ? 'recents' : 'workspace';
+  });
 
   // ------------------------------------------------------------------
   // Modal / panel state
@@ -169,6 +171,33 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
     ),
     [workspaces]
   );
+
+  // Flattened, most-recently-modified videos across every workspace/folder,
+  // purely derived from data useWorkspaceData already loaded — no new API calls.
+  const recentVideoEntries = useMemo(() => {
+    const entries = [];
+
+    workspaces.forEach((workspace) => {
+      (workspace.videos || []).forEach((video) => {
+        entries.push({ video, workspace, folder: null });
+      });
+      (workspace.folders || []).forEach((folder) => {
+        (folder.videos || []).forEach((video) => {
+          entries.push({ video, workspace, folder });
+        });
+      });
+    });
+
+    const getTimestamp = (entry) => {
+      const raw = entry.video.lastModifiedAt || entry.video.lastEditedAt || entry.video.createdAt;
+      const parsed = raw ? new Date(raw).getTime() : 0;
+      return Number.isNaN(parsed) ? 0 : parsed;
+    };
+
+    return entries
+      .sort((a, b) => getTimestamp(b) - getTimestamp(a))
+      .slice(0, 24);
+  }, [workspaces]);
 
   const totalAvailableCredits = useMemo(() => {
     const personal = Number(personalCredits ?? 0);
@@ -456,10 +485,10 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
     setCreditsUsageWorkspace(workspace);
   }, []);
 
-  const renderWorkspaceItems = (items, { allowAllocate = false } = {}) => {
+  const renderWorkspaceItems = (items, { allowAllocate = false, showCreateCard = false, onCreateWorkspace } = {}) => {
     const sorted = sortItems(items);
     const Component = viewMode === 'tile' ? WorkspaceCard : WorkspaceRow;
-    return sorted.map((workspace) => (
+    const itemElements = sorted.map((workspace) => (
       <Component
         key={workspace.id}
         workspace={workspace}
@@ -493,29 +522,95 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
         }}
       />
     ));
+
+    if (viewMode === 'tile' && showCreateCard && onCreateWorkspace) {
+      return [
+        <CreateWorkspaceCard key="create-workspace-tile" onClick={onCreateWorkspace} />,
+        ...itemElements
+      ];
+    }
+
+    return itemElements;
   };
 
   const renderFolderItems = (folders, workspace) => {
     const sorted = sortItems(folders);
     const Component = viewMode === 'tile' ? FolderCard : FolderRow;
-    return sorted.map((folder) => (
+    const canEdit = workspaceCanEdit(workspace);
+    const itemElements = sorted.map((folder) => (
       <Component
         key={folder.id}
         folder={folder}
         onClick={() => setCurrentLevel({ type: 'folder', id: folder.id, folder, ws: workspace })}
         contextProps={{
           onDetails: () => setDetailsTarget({ type: 'folder', item: folder }),
-          onRename: workspaceCanEdit(workspace) ? () => renameItem('folder', folder.id, workspace) : null,
-          onDelete: workspaceCanEdit(workspace) ? () => deleteItem('folder', folder.id, workspace) : null
+          onRename: canEdit ? () => renameItem('folder', folder.id, workspace) : null,
+          onDelete: canEdit ? () => deleteItem('folder', folder.id, workspace) : null
         }}
       />
     ));
+
+    if (viewMode === 'tile' && canEdit) {
+      return [
+        <CreateFolderCard
+          key="create-folder-tile"
+          onClick={() => {
+            setSelectedWorkspaceForFolder(workspace);
+            setIsCreateFolderOpen(true);
+          }}
+        />,
+        ...itemElements
+      ];
+    }
+
+    return itemElements;
   };
 
   const renderVideoItems = (videos, workspace, folder = null) => {
     const sorted = sortItems(videos);
     const Component = viewMode === 'tile' ? VideoCard : VideoRow;
-    return sorted.map((video) => (
+    const canEdit = workspaceCanEdit(workspace);
+    const itemElements = sorted.map((video) => (
+      <Component
+        key={video.id}
+        video={video}
+        onClick={() =>
+          onEdit &&
+          onEdit({
+            ...video,
+            workspaceId: workspace.id,
+            workspace: workspace.name,
+            folderId: video.folderId || folder?.id || null,
+            folder: folder?.name || video.folderName || video.folder?.name || ''
+          })
+        }
+        contextProps={{
+          onDetails: () => setDetailsTarget({ type: 'video', item: video }),
+          onRename: canEdit ? () => renameItem('video', video.id, workspace) : null,
+          onMove: canEdit
+            ? () => { setMoveTargetVideo(video); setMoveTargetWorkspace(workspace); }
+            : null,
+          onDelete: canEdit ? () => deleteItem('video', video.id, workspace) : null
+        }}
+      />
+    ));
+
+    if (viewMode === 'tile' && canEdit) {
+      return [
+        <CreateVideoCard
+          key="create-video-tile"
+          onClick={() => openCreateVideoModal({ initialWorkspaceId: workspace.id, initialFolderId: folder?.id })}
+        />,
+        ...itemElements
+      ];
+    }
+
+    return itemElements;
+  };
+
+  const renderRecentVideoItems = (entries) => {
+    const Component = viewMode === 'tile' ? VideoCard : VideoRow;
+    const itemElements = entries.map(({ video, workspace, folder }) => (
       <Component
         key={video.id}
         video={video}
@@ -539,6 +634,18 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
         }}
       />
     ));
+
+    if (viewMode === 'tile') {
+      return [
+        <CreateVideoCard
+          key="create-recent-video-tile"
+          onClick={() => openCreateVideoModal()}
+        />,
+        ...itemElements
+      ];
+    }
+
+    return itemElements;
   };
 
   // ------------------------------------------------------------------
@@ -546,80 +653,111 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
   // ------------------------------------------------------------------
   const renderRoot = () => (
     <div>
-      <WorkspaceSection title="Personal Workspace" count={personalWorkspace ? 1 : 0} viewMode={viewMode} showCountBadge={false}>
-        {personalWorkspace && renderWorkspaceItems([personalWorkspace])}
-      </WorkspaceSection>
-
       <div className="workspace-root-tabs-wrapper">
         <div className="workspace-root-tabs">
           <button
-            className={`workspace-root-tab ${activeRootTab === 'my-workspaces' ? 'active' : ''}`}
-            onClick={() => setActiveRootTab('my-workspaces')}
+            className={`workspace-root-tab ${activeRootTab === 'recents' ? 'active' : ''}`}
+            onClick={() => setActiveRootTab('recents')}
           >
-            <MdFolderOpen size={18} /> My Workspaces
-            <span className="tab-count-badge">{myWorkspaces.length}</span>
+            <MdHistory size={18} /> Recents
+            <span className="tab-count-badge">{recentVideoEntries.length}</span>
           </button>
           <button
-            className={`workspace-root-tab ${activeRootTab === 'shared-with-me' ? 'active' : ''}`}
-            onClick={() => setActiveRootTab('shared-with-me')}
+            className={`workspace-root-tab ${activeRootTab === 'workspace' ? 'active' : ''}`}
+            onClick={() => setActiveRootTab('workspace')}
           >
-            <MdMail size={18} /> Shared with Me
-            <span className="tab-count-badge">{sharedWithMe.length}</span>
+            <MdWorkspaces size={18} /> Workspace
+            <span className="tab-count-badge">
+              {(personalWorkspace ? 1 : 0) + myWorkspaces.length + sharedWithMe.length}
+            </span>
           </button>
         </div>
       </div>
 
-      {activeRootTab === 'my-workspaces' && (
+      {activeRootTab === 'recents' && (
         <WorkspaceSection
-          title="My Workspaces"
-          count={myWorkspaces.length}
+          title="Recents"
+          count={recentVideoEntries.length}
           viewMode={viewMode}
-          emptyMessage="You do not have any custom workspaces yet."
-          emptyActionLabel="Create your first workspace"
-          emptyActionIcon={MdWorkspaces}
-          emptyActionClass="workspace-create-action-btn"
-          onEmptyAction={() => setIsCreateWorkspaceOpen(true)}
-          showCreateButton={true}
-          createButtonLabel="New Workspace"
-          createButtonIcon={MdWorkspaces}
-          createButtonClass="workspace-create-action-btn"
-          onCreateClick={() => setIsCreateWorkspaceOpen(true)}
+          listClassName="project-list-view"
+          emptyMessage="No recent videos yet."
+          emptyIcon={MdHistory}
         >
           {viewMode === 'list' && (
-            <div className="list-header">
+            <div className="list-header project-list-header">
               <div className="col" />
               <div className="col">Name</div>
-              <div className="col">Credits</div>
               <div className="col">Owner</div>
-              <div className="col">Date modified</div>
-              <div className="col">Members</div>
+              <div className="col">Date created</div>
+              <div className="col">Modified by</div>
+              <div className="col">Modified at</div>
+              <div className="col">Size</div>
               <div className="col" />
             </div>
           )}
-          {renderWorkspaceItems(myWorkspaces, { allowAllocate: true })}
+          {renderRecentVideoItems(recentVideoEntries)}
         </WorkspaceSection>
       )}
 
-      {activeRootTab === 'shared-with-me' && (
-        <WorkspaceSection
-          title="Shared with Me"
-          count={sharedWithMe.length}
-          viewMode={viewMode}
-          emptyMessage="No workspaces have been shared with you yet."
-        >
-          {viewMode === 'list' && (
-            <div className="list-header">
-              <div className="col" />
-              <div className="col">Name</div>
-              <div className="col">Credits</div>
-              <div className="col">Owner</div>
-              <div className="col">Date modified</div>
-              <div className="col">Members</div>
-              <div className="col" />
-            </div>
-          )}
-          {renderWorkspaceItems(sharedWithMe)}
-        </WorkspaceSection>
+      {activeRootTab === 'workspace' && (
+        <>
+          <WorkspaceSection title="Personal Workspace" count={personalWorkspace ? 1 : 0} viewMode={viewMode} showCountBadge={false}>
+            {personalWorkspace && renderWorkspaceItems([personalWorkspace])}
+          </WorkspaceSection>
+
+          <WorkspaceSection
+            title="My Workspaces"
+            count={myWorkspaces.length}
+            viewMode={viewMode}
+            emptyMessage="You do not have any custom workspaces yet."
+            emptyActionLabel="Create your first workspace"
+            emptyActionIcon={MdWorkspaces}
+            emptyActionClass="workspace-create-action-btn"
+            onEmptyAction={() => setIsCreateWorkspaceOpen(true)}
+            showCreateButton={viewMode === 'list'}
+            createButtonLabel="New Workspace"
+            createButtonIcon={MdWorkspaces}
+            createButtonClass="workspace-create-action-btn"
+            onCreateClick={() => setIsCreateWorkspaceOpen(true)}
+          >
+            {viewMode === 'list' && (
+              <div className="list-header">
+                <div className="col" />
+                <div className="col">Name</div>
+                <div className="col">Credits</div>
+                <div className="col">Owner</div>
+                <div className="col">Date modified</div>
+                <div className="col">Members</div>
+                <div className="col" />
+              </div>
+            )}
+            {renderWorkspaceItems(myWorkspaces, {
+              allowAllocate: true,
+              showCreateCard: true,
+              onCreateWorkspace: () => setIsCreateWorkspaceOpen(true)
+            })}
+          </WorkspaceSection>
+
+          <WorkspaceSection
+            title="Shared with Me"
+            count={sharedWithMe.length}
+            viewMode={viewMode}
+            emptyMessage="No workspaces have been shared with you yet."
+          >
+            {viewMode === 'list' && (
+              <div className="list-header">
+                <div className="col" />
+                <div className="col">Name</div>
+                <div className="col">Credits</div>
+                <div className="col">Owner</div>
+                <div className="col">Date modified</div>
+                <div className="col">Members</div>
+                <div className="col" />
+              </div>
+            )}
+            {renderWorkspaceItems(sharedWithMe)}
+          </WorkspaceSection>
+        </>
       )}
     </div>
   );
@@ -638,7 +776,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
             <span className="breadcrumb-link" onClick={() => setCurrentLevel({ type: 'root', id: null })}>
               Workspaces
             </span>
-            <span className="breadcrumb-separator">&gt;</span>
+            <ChevronRight size={14} className="breadcrumb-separator" />
             <span>{workspace.name}</span>
           </div>
           <WorkspaceStorageBreadcrumb workspaceId={workspace.id} />
@@ -666,7 +804,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
               ? () => { setSelectedWorkspaceForFolder(workspace); setIsCreateFolderOpen(true); }
               : null
           }
-          showCreateButton={canEdit}
+          showCreateButton={canEdit && viewMode === 'list'}
           createButtonLabel="New Folder"
           createButtonIcon={MdCreateNewFolder}
           createButtonClass="workspace-create-action-btn"
@@ -723,14 +861,14 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
             <span className="breadcrumb-link" onClick={() => setCurrentLevel({ type: 'root', id: null })}>
               Workspaces
             </span>
-            <span className="breadcrumb-separator">&gt;</span>
+            <ChevronRight size={14} className="breadcrumb-separator" />
             <span
               className="breadcrumb-link"
               onClick={() => setCurrentLevel({ type: 'workspace', id: workspace.id, ws: workspace })}
             >
               {workspace.name}
             </span>
-            <span className="breadcrumb-separator">&gt;</span>
+            <ChevronRight size={14} className="breadcrumb-separator" />
             <span>{folder.name}</span>
           </div>
           <WorkspaceStorageBreadcrumb workspaceId={workspace.id} />
@@ -758,7 +896,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
               ? () => openCreateVideoModal({ initialWorkspaceId: workspace.id, initialFolderId: folder.id })
               : null
           }
-          showCreateButton={canEdit}
+          showCreateButton={canEdit && viewMode === 'list'}
           createButtonLabel="New Video"
           createButtonIcon={MdMovieCreation}
           createButtonClass="workspace-create-action-btn"
@@ -824,7 +962,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
         onClose={() => setIsCreateWorkspaceOpen(false)}
         onCreate={async (params) => {
           await handleCreateWorkspace(params);
-          setActiveRootTab('my-workspaces');
+          setActiveRootTab('workspace');
         }}
         workspaces={workspaces}
       />

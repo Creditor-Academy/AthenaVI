@@ -14,11 +14,6 @@ import {
   readClientPath,
   resolveDashboardSectionFromPath,
 } from './utils/dashboardRouting.js'
-import {
-  isSlidesClientPath,
-  resolveSlidesSectionFromPath,
-  slidesPathForSection,
-} from './utils/slidesRouting.js'
 import { parseProjectCommentsDeepLink } from './utils/inboxNotifications.js'
 
 function mergeCreateConfigFromDeepLink(prev) {
@@ -35,8 +30,6 @@ function mergeCreateConfigFromDeepLink(prev) {
 }
 
 const Dashboard = lazy(() => import('./pages/Dashboard/Dashboard.jsx'))
-const ProductChooser = lazy(() => import('./pages/ProductChooser/ProductChooser.jsx'))
-const SlidesDashboard = lazy(() => import('./pages/Slides/SlidesDashboard.jsx'))
 const Create = lazy(() => import('./pages/Editor/Editor.jsx'))
 const Products = lazy(() => import('./pages/Products/Products.jsx'))
 const AboutUsBlog = lazy(() => import('./pages/AboutUs/AboutUs.jsx'))
@@ -61,8 +54,8 @@ const EarlyAccessPage = lazy(() => import('./pages/EarlyAccess/EarlyAccessPage.j
 const GoogleCallback = lazy(() => import('./components/features/auth/GoogleCallback.jsx'))
 const PATH_TO_VIEW_MAP = {
   '/': 'landing',
-  '/hub': 'product-chooser',
-  '/products/choose': 'product-chooser',
+  '/hub': 'dashboard',
+  '/products/choose': 'dashboard',
   '/dashboard': 'dashboard',
   '/dashboard/home': 'dashboard',
   '/dashboard/videos': 'dashboard',
@@ -80,19 +73,24 @@ const PATH_TO_VIEW_MAP = {
   '/dashboard/brandkits': 'dashboard',
   '/dashboard/credits': 'dashboard',
   '/dashboard/help': 'dashboard',
+  '/dashboard/ppt-ai': 'dashboard',
+  '/dashboard/ppt-builder': 'dashboard',
+  '/dashboard/editor': 'dashboard',
+  '/dashboard/image-ai': 'dashboard',
+  '/dashboard/image-editor': 'dashboard',
   '/profile': 'dashboard',
-  '/slides': 'slides',
-  '/slides/home': 'slides',
-  '/slides/ppt-ai': 'slides',
-  '/slides/ppt-builder': 'slides',
-  '/slides/image-ai': 'slides',
-  '/slides/image-editor': 'slides',
-  '/slides/ppt-normal': 'slides',
-  '/slides/image-normal': 'slides',
-  '/slides/ppt-generator': 'slides',
-  '/slides/image-generator': 'slides',
-  '/slides/settings': 'slides',
-  '/slides/help': 'slides',
+  '/slides': 'dashboard',
+  '/slides/home': 'dashboard',
+  '/slides/ppt-ai': 'dashboard',
+  '/slides/ppt-builder': 'dashboard',
+  '/slides/image-ai': 'dashboard',
+  '/slides/image-editor': 'dashboard',
+  '/slides/ppt-normal': 'dashboard',
+  '/slides/image-normal': 'dashboard',
+  '/slides/ppt-generator': 'dashboard',
+  '/slides/image-generator': 'dashboard',
+  '/slides/settings': 'dashboard',
+  '/slides/help': 'dashboard',
   '/create': 'create',
   '/products': 'products',
   '/about-us': 'about-us-blog',
@@ -277,9 +275,7 @@ function App() {
     // Update browser URL to reflect current view
     const urlMap = {
       'landing': '/',
-      'product-chooser': '/hub',
       'dashboard': '/dashboard',
-      'slides': '/slides',
       'create': '/create',
       'products': '/products',
       'about-us-blog': '/about-us',
@@ -312,10 +308,8 @@ function App() {
       currentPath.includes('/reset-password') ||
       isOAuthCallbackPath(currentPath)
     const isDashboardSubPath = isDashboardClientPath()
-    const isSlidesSubPath = isSlidesClientPath()
     const targetUrl =
       (view === 'dashboard' && isDashboardSubPath) ? currentPath
-      : (view === 'slides' && isSlidesSubPath) ? currentPath
       : newUrl
     try {
       if (!onProtectedPath && currentPath !== targetUrl) {
@@ -343,30 +337,7 @@ function App() {
         localStorage.setItem('authError', err.message || 'Failed to accept workspace invitation')
       }
     }
-    setView('product-chooser')
-  }, [])
-
-  const goToStudio = useCallback(() => {
-    const path = dashboardPathForSection('home')
-    if (window.location.pathname !== path) {
-      window.history.pushState({ view: 'dashboard', section: 'home' }, '', path)
-    }
     setView('dashboard')
-  }, [])
-
-  const goToSlides = useCallback(() => {
-    const path = slidesPathForSection('home')
-    if (window.location.pathname !== path) {
-      window.history.pushState({ view: 'slides', section: 'home' }, '', path)
-    }
-    setView('slides')
-  }, [])
-
-  const goToProductChooser = useCallback(() => {
-    if (window.location.pathname !== '/hub') {
-      window.history.pushState({ view: 'product-chooser' }, '', '/hub')
-    }
-    setView('product-chooser')
   }, [])
 
   // Scroll to top whenever view changes
@@ -402,21 +373,14 @@ function App() {
         return
       }
 
-      if (path === '/hub' || path === '/products/choose') {
-        setView('product-chooser')
-        return
-      }
-
-      const slidesSection = resolveSlidesSectionFromPath(path)
-      if (slidesSection) {
-        if (window.location.pathname !== path.split('?')[0]) {
-          window.history.pushState({ view: 'slides', section: slidesSection }, '', path.split('#')[0])
+      if (path === '/hub' || path === '/products/choose' || path === '/slides' || path.startsWith('/slides/')) {
+        const homePath = dashboardPathForSection('home')
+        if (window.location.pathname !== homePath) {
+          window.history.pushState({ view: 'dashboard', section: 'home' }, '', homePath)
         }
-        setView('slides')
+        setView('dashboard')
         window.dispatchEvent(
-          new CustomEvent('athena:slides-navigate', {
-            detail: { section: slidesSection },
-          })
+          new CustomEvent('athena:dashboard-navigate', { detail: { section: 'home' } })
         )
         return
       }
@@ -576,35 +540,11 @@ function App() {
               setCreateVideoConfig(config || null)
               setView('create')
             }}
-            onSwitchToSlides={goToSlides}
-            onChooseProduct={goToProductChooser}
             initialSection={resolveDashboardSectionFromPath() ?? 'home'}
           />
         </ProtectedRoute>
       )}
 
-      {view === 'product-chooser' && (
-        <ProtectedRoute view={view} setView={setView}>
-          <ProductChooser
-            onSelect={(option) => {
-              if (option?.id === 'slides') {
-                goToSlides()
-                return
-              }
-              goToStudio()
-            }}
-          />
-        </ProtectedRoute>
-      )}
-
-      {view === 'slides' && (
-        <ProtectedRoute view={view} setView={setView}>
-          <SlidesDashboard
-            onSwitchToStudio={goToStudio}
-            onChooseProduct={goToProductChooser}
-          />
-        </ProtectedRoute>
-      )}
       {view === 'ai-videos' && (
         <>
           <AIVideos 
@@ -1020,7 +960,7 @@ function App() {
         <NotFound setView={setView} />
       )}
 
-      {!['create', 'dashboard', 'product-chooser', 'slides', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings', 'login', 'early-access', 'google-callback', 'not-found'].includes(view) && (
+      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings', 'login', 'early-access', 'google-callback', 'not-found'].includes(view) && (
         <>
           <Landing 
             onLoginClick={handleLoginClick}

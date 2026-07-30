@@ -31,6 +31,7 @@ function DashboardTopbar({
     searchActiveIndex = 0,
     onSearchActiveIndexChange,
     onSearchMoveActive,
+    onBrandClick,
 }) {
     const wrapRef = useRef(null)
 
@@ -86,6 +87,15 @@ function DashboardTopbar({
         <header className="topbar topbar--main">
             <div className="topbar-grid topbar-grid--main">
                 <div className="topbar-main-lead">
+                    <button
+                        type="button"
+                        className="topbar-brand-btn"
+                        onClick={onBrandClick}
+                        aria-label="Virtual Studio, go to home"
+                    >
+                        <span className="topbar-brand-logo" aria-hidden>V</span>
+                        <span className="topbar-brand-name">Virtual Studio</span>
+                    </button>
                     <button
                         type="button"
                         className="topbar-sidebar-toggle"

@@ -57,11 +57,11 @@ export function resolveViewFromLocation(pathToViewMap) {
   if (urlView) return urlView;
 
   if (currentPath === '/slides' || currentPath.startsWith('/slides/')) {
-    return 'slides';
+    return 'dashboard';
   }
 
   if (currentPath === '/hub' || currentPath === '/products/choose') {
-    return 'product-chooser';
+    return 'dashboard';
   }
 
   const isSpecialPath =
