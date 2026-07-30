@@ -105,10 +105,12 @@ export default function AIImageStudio({ onBack }) {
   const [showEmpty,        setShowEmpty]        = useState(true)
 
   // Other workspace state
-  const [workPrompt,  setWorkPrompt]  = useState('')
-  const [showMedia,   setShowMedia]   = useState(false)
-  const [refImages,   setRefImages]   = useState([])   // [{id, url, name}]
-  const [favorites,   setFavorites]   = useState(new Set())
+  const [workPrompt,    setWorkPrompt]    = useState('')
+  const [showMedia,     setShowMedia]     = useState(false)
+  const [refImages,     setRefImages]     = useState([])
+  const [favorites,     setFavorites]     = useState(new Set())
+  const [downloadPanel, setDownloadPanel] = useState(null) // { genId, imageUrl } | null
+  const [dlFormat,      setDlFormat]      = useState('PNG')
 
   const historyRef  = useRef(null)
   const textRef     = useRef(null)
@@ -537,57 +539,25 @@ export default function AIImageStudio({ onBack }) {
                       <div className="aig-img-card" style={{ aspectRatio: dimToAspect(gen.dim || '1:1') }}>
                         <img src={gen.imageUrl} alt={gen.prompt} className="aig-img" />
                         <div className="aig-img-hover-bar">
-                          <button type="button" className="aig-hover-btn"><Edit3 size={13} strokeWidth={1.75} /> Edit</button>
-                          <button type="button" className="aig-hover-btn"><Shuffle size={13} strokeWidth={1.75} /> Vary</button>
-                          <button type="button" className="aig-hover-btn"><ArrowUp size={13} strokeWidth={1.75} /> Upscale</button>
-                          <a href={gen.imageUrl} download className="aig-hover-btn"><Download size={13} strokeWidth={1.75} /> Download</a>
+                          <button type="button" className="aig-hover-btn"
+                            onClick={() => { const genId = Date.now().toString(); const p = gen.prompt; setSessions(prev => prev.map(s => s.id === activeSessionId ? { ...s, generations: [...s.generations, { id: genId, prompt: p, model: gen.model, dim: gen.dim || '1:1', status: 'generating', imageUrl: null }] } : s)); setTimeout(() => { const url = `https://picsum.photos/seed/${encodeURIComponent(p + genId)}/${dimToSize(gen.dim || '1:1')}`; setSessions(prev => prev.map(s => s.id === activeSessionId ? { ...s, thumb: s.thumb || url, generations: s.generations.map(g => g.id === genId ? { ...g, status: 'done', imageUrl: url } : g) } : s)) }, 3500) }}>
+                            <RotateCcw size={13} strokeWidth={1.75} /> Retry
+                          </button>
+                          <button type="button" className="aig-hover-btn" onClick={() => setWorkPrompt(gen.prompt)}>
+                            <Shuffle size={13} strokeWidth={1.75} /> Reuse
+                          </button>
+                          <button type="button" className="aig-hover-btn"
+                            onClick={() => setDownloadPanel({ genId: gen.id, imageUrl: gen.imageUrl })}>
+                            <Download size={13} strokeWidth={1.75} /> Download
+                          </button>
+                          <button type="button" className="aig-hover-btn aig-hover-btn--danger"
+                            onClick={() => setSessions(prev => prev.map(s => s.id === activeSessionId ? { ...s, generations: s.generations.filter(g => g.id !== gen.id) } : s))}>
+                            <Trash2 size={13} strokeWidth={1.75} /> Delete
+                          </button>
                         </div>
                       </div>
                     )}
                   </div>
-                  {gen.status === 'done' && (
-                    <div className="aig-row-actions">
-                      <button
-                        type="button"
-                        className="aig-row-btn"
-                        onClick={() => {
-                          const genId = Date.now().toString()
-                          const p = gen.prompt
-                          const retryGen = { id: genId, prompt: p, model: gen.model, dim: gen.dim || '1:1', status: 'generating', imageUrl: null }
-                          setSessions(prev => prev.map(s => s.id === activeSessionId ? {
-                            ...s,
-                            generations: [...s.generations, retryGen]
-                          } : s))
-                          setTimeout(() => {
-                            const url = `https://picsum.photos/seed/${encodeURIComponent(p + genId)}/${dimToSize(gen.dim || '1:1')}`
-                            setSessions(prev => prev.map(s => s.id === activeSessionId ? {
-                              ...s,
-                              thumb: s.thumb || url,
-                              generations: s.generations.map(g => g.id === genId ? { ...g, status: 'done', imageUrl: url } : g)
-                            } : s))
-                          }, 3500)
-                        }}
-                      >
-                        <RotateCcw size={13} strokeWidth={1.75} /> Retry
-                      </button>
-                      <button type="button" className="aig-row-btn" onClick={() => setWorkPrompt(gen.prompt)}>
-                        <Shuffle size={13} strokeWidth={1.75} /> Reuse
-                      </button>
-                      <a href={gen.imageUrl} download className="aig-row-btn">
-                        <Download size={13} strokeWidth={1.75} /> Download
-                      </a>
-                      <button
-                        type="button"
-                        className="aig-row-btn aig-row-btn--danger"
-                        onClick={() => setSessions(prev => prev.map(s => s.id === activeSessionId
-                          ? { ...s, generations: s.generations.filter(g => g.id !== gen.id) }
-                          : s
-                        ))}
-                      >
-                        <Trash2 size={13} strokeWidth={1.75} /> Delete
-                      </button>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
@@ -645,6 +615,65 @@ export default function AIImageStudio({ onBack }) {
 
         </div>{/* end aig-workspace-main */}
       </div>{/* end aig-workspace-body */}
+
+      {/* ── Download panel ── */}
+      {downloadPanel && (
+        <div className="aig-dl-backdrop" onClick={() => setDownloadPanel(null)}>
+          <div className="aig-dl-panel" onClick={e => e.stopPropagation()}>
+            <div className="aig-dl-header">
+              <button type="button" className="aig-dl-back" onClick={() => setDownloadPanel(null)}>
+                <ChevronLeft size={16} strokeWidth={2} />
+              </button>
+              <span className="aig-dl-title">Download</span>
+            </div>
+
+            <div className="aig-dl-body">
+              <div className="aig-dl-section-label">File type</div>
+              <div className="aig-dl-formats">
+                {[
+                  { fmt: 'JPG',  desc: 'Best for sharing'                  },
+                  { fmt: 'PNG',  desc: 'Best for complex images'            },
+                  { fmt: 'WebP', desc: 'Smaller file size, modern browsers' },
+                  { fmt: 'PDF',  desc: 'Best for print & documents'         },
+                ].map(({ fmt, desc }) => (
+                  <button
+                    key={fmt}
+                    type="button"
+                    className={`aig-dl-fmt-row ${dlFormat === fmt ? 'aig-dl-fmt-row--active' : ''}`}
+                    onClick={() => setDlFormat(fmt)}
+                  >
+                    <div className="aig-dl-fmt-icon">
+                      <Download size={16} strokeWidth={1.75} />
+                    </div>
+                    <div className="aig-dl-fmt-info">
+                      <span className="aig-dl-fmt-name">{fmt}</span>
+                      <span className="aig-dl-fmt-desc">{desc}</span>
+                    </div>
+                    {dlFormat === fmt && <div className="aig-dl-fmt-check">✓</div>}
+                  </button>
+                ))}
+              </div>
+
+              <div className="aig-dl-section-label" style={{ marginTop: 20 }}>Preview</div>
+              <div className="aig-dl-preview">
+                <img src={downloadPanel.imageUrl} alt="Preview" />
+              </div>
+            </div>
+
+            <div className="aig-dl-footer">
+              <a
+                href={downloadPanel.imageUrl}
+                download={`athena-image.${dlFormat.toLowerCase()}`}
+                className="aig-dl-btn"
+                onClick={() => setDownloadPanel(null)}
+              >
+                <Download size={16} strokeWidth={2} />
+                Download {dlFormat}
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showMedia && (
         <SelectMediaModal
