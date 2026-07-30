@@ -163,12 +163,6 @@ export const WorkspaceCard = ({
 
                 <h4 className="wsc-workspace-card__title">{workspace.name}</h4>
 
-                <p className="wsc-workspace-card__desc">
-                    {isPersonal
-                        ? 'Your private space for drafts, exports, and personal projects.'
-                        : 'Collaborate with your team on folders, videos, and shared credits.'}
-                </p>
-
                 {/* Footer */}
                 <div className="wsc-workspace-card__footer">
                     <div className="wsc-workspace-card__people">
@@ -379,7 +373,6 @@ export const CreateWorkspaceCard = ({ onClick }) => {
                 </div>
                 <div className="wsc-create-card__content">
                     <h4 className="wsc-create-card__title">Create Workspace</h4>
-                    <p className="wsc-create-card__desc">Set up a team space for shared projects, folders & credits</p>
                 </div>
                 <div className="wsc-create-card__badge">
                     <MdWorkspaces size={13} />
@@ -410,7 +403,6 @@ export const CreateFolderCard = ({ onClick }) => {
                 </div>
                 <div className="wsc-create-card__content">
                     <h4 className="wsc-create-card__title">Create Folder</h4>
-                    <p className="wsc-create-card__desc">Organize your video projects and brand assets</p>
                 </div>
                 <div className="wsc-create-card__badge">
                     <MdCreateNewFolder size={13} />
@@ -441,7 +433,6 @@ export const CreateVideoCard = ({ onClick }) => {
                 </div>
                 <div className="wsc-create-card__content">
                     <h4 className="wsc-create-card__title">Create Project</h4>
-                    <p className="wsc-create-card__desc">Start a new video from script, AI or template</p>
                 </div>
                 <div className="wsc-create-card__badge">
                     <MdMovieCreation size={13} />
