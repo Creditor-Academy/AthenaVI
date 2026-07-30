@@ -6,6 +6,8 @@ import Help from '../UserHelp/Help.jsx'
 import SlidesHome from './SlidesHome.jsx'
 import SlidesComingSoon from './SlidesComingSoon.jsx'
 import AIPptGenerator from './AIPptGenerator.jsx'
+import ImageGeneration from './ImageGeneration.jsx'
+import AIImageStudio from './AIImageStudio.jsx'
 import {
   resolveSlidesSectionFromPath,
   slidesPathForSection,
@@ -17,6 +19,7 @@ function SlidesDashboard({ onSwitchToStudio, onChooseProduct }) {
   const [section, setSection] = useState(() => resolveSlidesSectionFromPath() ?? 'home')
   const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false)
   const [topbarMobileOpen, setTopbarMobileOpen] = useState(false)
+  const [imageGenConfig, setImageGenConfig] = useState(null)
 
   const goToSection = useCallback((id) => {
     setTopbarMobileOpen(false)
@@ -51,6 +54,25 @@ function SlidesDashboard({ onSwitchToStudio, onChooseProduct }) {
 
   if (section === 'ppt-ai') {
     return <AIPptGenerator onBack={() => goToSection('home')} />
+  }
+
+  if (section === 'image-ai' && !imageGenConfig) {
+    return (
+      <AIImageStudio
+        onBack={() => goToSection('home')}
+        onGenerate={(config) => setImageGenConfig(config)}
+      />
+    )
+  }
+
+  // Full-screen image generation — no sidebar, fixed overlay
+  if (section === 'image-ai' && imageGenConfig) {
+    return (
+      <ImageGeneration
+        config={imageGenConfig}
+        onBack={() => setImageGenConfig(null)}
+      />
+    )
   }
 
   return (
@@ -121,7 +143,13 @@ function SlidesDashboard({ onSwitchToStudio, onChooseProduct }) {
         />
 
         <main
-          className={`content ${section === 'home' ? 'content--home content--slides-home' : 'with-padding content--workspace-consistent'}`}
+          className={`content ${
+            section === 'home'
+              ? 'content--home content--slides-home'
+              : section === 'image-ai'
+              ? 'content--image-studio'
+              : 'with-padding content--workspace-consistent'
+          }`}
         >
           {section === 'home' && (
             <SlidesHome
@@ -129,7 +157,7 @@ function SlidesDashboard({ onSwitchToStudio, onChooseProduct }) {
               onCreate={() => goToSection('ppt-ai')}
             />
           )}
-          {SLIDES_TOOL_SECTIONS.has(section) && section !== 'ppt-ai' && (
+          {SLIDES_TOOL_SECTIONS.has(section) && section !== 'ppt-ai' && section !== 'image-ai' && (
             <SlidesComingSoon
               section={section}
               onBackHome={() => goToSection('home')}
