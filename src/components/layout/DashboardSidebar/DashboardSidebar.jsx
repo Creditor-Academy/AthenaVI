@@ -1,7 +1,7 @@
 import { MdHelpOutline } from 'react-icons/md'
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { mainDashboardSidebarGroups } from '../../../constants/dashboardNav'
 import DashboardSidebarStorage from './DashboardSidebarStorage.jsx'
-import ProductMoveButton from '../../ui/ProductMoveButton/ProductMoveButton.jsx'
 
 function DashboardSidebar({
   section,
@@ -9,7 +9,8 @@ function DashboardSidebar({
   onOpenTranslate,
   onOpenAI,
   onCloseMobile,
-  onMoveToSlides,
+  collapsed = false,
+  onToggleCollapse,
 }) {
   const handleItem = (item) => {
     if (item.id === '__translate__') {
@@ -29,6 +30,17 @@ function DashboardSidebar({
   return (
     <aside className="dashboard-sidebar-nav" aria-label="Dashboard navigation">
       <div className="dashboard-sidebar-nav-scroll">
+        {onToggleCollapse && collapsed && (
+          <button
+            type="button"
+            className="dashboard-nav-item dashboard-sidebar-collapse-btn"
+            onClick={onToggleCollapse}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            <PanelLeftOpen className="dashboard-nav-item-icon" size={16} strokeWidth={1.75} aria-hidden />
+          </button>
+        )}
         {mainDashboardSidebarGroups.map((group, gi) => (
           <div key={gi} className="dashboard-sidebar-group">
             {group.label && (
@@ -37,19 +49,36 @@ function DashboardSidebar({
             {group.items.map((item) => {
               const Icon = item.Icon;
               const active = isNavActive(section, item.id);
+              const showHomeCollapse = item.id === 'home' && onToggleCollapse && !collapsed;
+
               return (
-                <button
+                <div
                   key={item.id}
-                  type="button"
-                  className={`dashboard-nav-item ${active ? 'dashboard-nav-item--active' : ''}`}
-                  onClick={() => handleItem(item)}
+                  className={showHomeCollapse ? 'dashboard-sidebar-home-row' : undefined}
                 >
-                  <Icon className="dashboard-nav-item-icon" size={16} strokeWidth={1.75} aria-hidden />
-                  <span className="dashboard-nav-item-label">{item.label}</span>
-                  {item.badge && (
-                    <span className="dashboard-nav-item-badge">{item.badge}</span>
+                  <button
+                    type="button"
+                    className={`dashboard-nav-item ${active ? 'dashboard-nav-item--active' : ''}`}
+                    onClick={() => handleItem(item)}
+                  >
+                    <Icon className="dashboard-nav-item-icon" size={16} strokeWidth={1.75} aria-hidden />
+                    <span className="dashboard-nav-item-label">{item.label}</span>
+                    {item.badge && (
+                      <span className="dashboard-nav-item-badge">{item.badge}</span>
+                    )}
+                  </button>
+                  {showHomeCollapse && (
+                    <button
+                      type="button"
+                      className="dashboard-sidebar-collapse-icon-btn"
+                      onClick={onToggleCollapse}
+                      aria-label="Collapse sidebar"
+                      title="Collapse sidebar"
+                    >
+                      <PanelLeftClose size={16} strokeWidth={1.75} aria-hidden />
+                    </button>
                   )}
-                </button>
+                </div>
               );
             })}
           </div>
@@ -76,14 +105,6 @@ function DashboardSidebar({
           <MdHelpOutline className="dashboard-nav-item-icon dashboard-sidebar-help-icon" size={18} aria-hidden />
           <span className="dashboard-nav-item-label">Help</span>
         </button>
-
-        <ProductMoveButton
-          target="slides"
-          onClick={() => {
-            onMoveToSlides?.()
-            onCloseMobile?.()
-          }}
-        />
       </div>
     </aside>
   );

@@ -7,6 +7,7 @@ import {
   BookOpen,
   User,
   Volume2,
+  Palette,
   Settings
 } from 'lucide-react'
 
@@ -29,7 +30,8 @@ export const mainDashboardSidebarGroups = [
     items: [
       { id: 'library', label: 'Library', Icon: Library },
       { id: 'avatars', label: 'Avatars', Icon: User },
-      { id: 'voices', label: 'Voices', Icon: Volume2 }
+      { id: 'voices', label: 'Voices', Icon: Volume2 },
+      { id: 'brandkits', label: 'Brand Kit', Icon: Palette }
     ]
   },
   {

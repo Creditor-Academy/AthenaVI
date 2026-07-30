@@ -592,6 +592,116 @@
 }
 
 /* ==========================================================================
+   Manual sidebar collapse (desktop) — same icon-only rail as the tablet
+   breakpoint above, triggered by the sidebar's own collapse toggle instead
+   of viewport width.
+   ========================================================================== */
+
+.dashboard-app-viewport.dashboard-shell--sidebar-collapsed .dashboard-sidebar-column {
+  width: 76px;
+}
+
+.dashboard-shell--sidebar-collapsed .dashboard-sidebar-column .dashboard-sidebar-brand-name,
+.dashboard-shell--sidebar-collapsed .dashboard-sidebar-column .dashboard-sidebar-section-label {
+  display: none;
+}
+
+/* No storage widget in the icon-only rail — matches the Slides collapsed rail, which never showed it either */
+.dashboard-shell--sidebar-collapsed .dashboard-sidebar-column .dashboard-sidebar-storage {
+  display: none;
+}
+
+.dashboard-shell--sidebar-collapsed .dashboard-sidebar-column .dashboard-sidebar-brand {
+  justify-content: center;
+  padding: 6px 4px;
+}
+
+/* Stack icon above label, both centered, matching the Slides icon-rail treatment */
+.dashboard-shell--sidebar-collapsed .dashboard-sidebar-column .dashboard-nav-item {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 2px;
+  margin: 3px 0;
+  gap: 4px;
+  min-height: 56px;
+}
+
+.dashboard-shell--sidebar-collapsed .dashboard-sidebar-column .dashboard-nav-item-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.dashboard-shell--sidebar-collapsed .dashboard-sidebar-column .dashboard-nav-item-label {
+  display: block;
+  flex: none;
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1.15;
+  text-align: center;
+  max-width: 68px;
+  white-space: normal;
+}
+
+.dashboard-shell--sidebar-collapsed .dashboard-sidebar-column .dashboard-nav-item-badge {
+  display: none;
+}
+
+.dashboard-sidebar-collapse-btn {
+  border-top: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
+  border-radius: 0;
+  margin-top: 4px;
+  padding-top: 10px;
+}
+
+.dashboard-sidebar-group > div:not(.dashboard-sidebar-home-row) {
+  display: contents;
+}
+
+.dashboard-sidebar-home-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.dashboard-sidebar-home-row > .dashboard-nav-item {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+}
+
+.dashboard-sidebar-collapse-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.dashboard-sidebar-collapse-icon-btn:hover {
+  background: var(--bg-main);
+  color: var(--primary);
+}
+
+.dashboard-sidebar-collapse-icon-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.dashboard-shell--sidebar-collapsed .dashboard-sidebar-header {
+  justify-content: center;
+}
+
+/* ==========================================================================
    Responsive Layout — Mobile (≤ 768px)
    Sidebar becomes overlay drawer, search hides to panel
    ========================================================================== */
@@ -842,7 +952,7 @@
 }
 
 .dashboard-sidebar-section-label {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -851,6 +961,7 @@
 }
 
 .dashboard-nav-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -861,8 +972,8 @@
   border-radius: 8px;
   background: transparent;
   color: var(--text-main);
-  font-size: 12px;
-  font-weight: 400;
+  font-size: 13px;
+  font-weight: 500;
   font-family: inherit;
   text-align: left;
   cursor: pointer;
@@ -875,9 +986,9 @@
 }
 
 .dashboard-nav-item--active {
-  background: var(--bg-main);
+  background: color-mix(in srgb, var(--primary) 16%, transparent);
   color: var(--primary);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .dashboard-nav-item-icon {
@@ -890,6 +1001,10 @@
 }
 
 .dashboard-nav-item--active .dashboard-nav-item-icon {
+  color: var(--primary);
+}
+
+.dashboard-nav-item--active .dashboard-nav-item-label {
   color: var(--primary);
 }
 

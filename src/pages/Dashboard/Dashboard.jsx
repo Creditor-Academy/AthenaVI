@@ -25,6 +25,11 @@ import ImportPowerPointModal from '../../components/ui/ImportPowerPointModal/Imp
 import TranslateVideoModal from '../../components/ui/TranslateVideoModal/TranslateVideoModal.jsx'
 import CreateVideoModal from '../../components/ui/CreateVideoModal/CreateVideoModal.jsx'
 import CreateAvatarModal from '../../components/ui/CreateAvatarModal/CreateAvatarModal.jsx'
+import CreateMenuModal from '../../components/ui/CreateMenuModal/CreateMenuModal.jsx'
+import AIPptGenerator from '../Slides/AIPptGenerator.jsx'
+import PptBuilder from '../Slides/PptBuilder/PptBuilder.jsx'
+import AIPptEditor from '../Slides/AIPptComponents/AIPptEditor.jsx'
+import SlidesComingSoon from '../Slides/SlidesComingSoon.jsx'
 import { getAvatarTypeOption } from '../Avatars/avatarTypeOptions.js'
 import NotificationsQuickModal from '../../components/ui/NotificationsQuickModal/NotificationsQuickModal.jsx'
 import CreditsQuickModal from '../../components/ui/CreditsQuickModal/CreditsQuickModal.jsx'
@@ -52,7 +57,7 @@ import './Dashboard.css'
 const AVATAR_FLOW_SECTIONS = new Set(['avatars', 'create-avatar-look', 'create-avatar'])
 
 
-function Dashboard({ onCreate, initialSection, onSwitchToSlides, onChooseProduct }) {
+function Dashboard({ onCreate, initialSection }) {
   const {
     updateUser,
     canAccessSuperadminPortal,
@@ -64,6 +69,15 @@ function Dashboard({ onCreate, initialSection, onSwitchToSlides, onChooseProduct
   const [selectedVoice, setSelectedVoice] = useState(null)
   const [showAIAssistant, setShowAIAssistant] = useState(false)
   const [showCreateVideoModal, setShowCreateVideoModal] = useState(false)
+  const [showCreateMenu, setShowCreateMenu] = useState(false)
+  const [editorData, setEditorData] = useState(null)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try {
+      return window.localStorage.getItem('athena.dashboard.sidebarCollapsed') === '1'
+    } catch {
+      return false
+    }
+  })
   const [showImportModal, setShowImportModal] = useState(false)
   const [showTranslateModal, setShowTranslateModal] = useState(false)
   const [showProcessingModal, setShowProcessingModal] = useState(false)
@@ -97,6 +111,8 @@ function Dashboard({ onCreate, initialSection, onSwitchToSlides, onChooseProduct
     'workspace',
     'library',
     'brandkits',
+    'image-ai',
+    'image-editor',
     'avatars',
     'create-avatar',
     'create-avatar-look',
@@ -122,6 +138,18 @@ function Dashboard({ onCreate, initialSection, onSwitchToSlides, onChooseProduct
       return id
     })
   }, [canAccessSuperadminPortal])
+
+  const toggleSidebarCollapsed = useCallback(() => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev
+      try {
+        window.localStorage.setItem('athena.dashboard.sidebarCollapsed', next ? '1' : '0')
+      } catch {
+        /* ignore storage failures */
+      }
+      return next
+    })
+  }, [])
 
   const openCreateAvatarLook = useCallback((ctx) => {
     saveAvatarLookContext(ctx)
@@ -325,9 +353,35 @@ function Dashboard({ onCreate, initialSection, onSwitchToSlides, onChooseProduct
     syncProfile()
   }, [updateUser])
 
+  if (section === 'ppt-ai') {
+    return (
+      <AIPptGenerator
+        onBack={() => goToSection('home')}
+        onComplete={(data) => {
+          setEditorData(data)
+          goToSection('editor')
+        }}
+      />
+    )
+  }
+
+  if (section === 'ppt-builder') {
+    return <PptBuilder onBack={() => goToSection('home')} />
+  }
+
+  if (section === 'editor') {
+    return (
+      <AIPptEditor
+        outline={editorData?.outline || []}
+        config={editorData?.config || {}}
+        onBack={() => goToSection('home')}
+      />
+    )
+  }
+
   return (
     <div
-      className={`dashboard-app-viewport ${sidebarMobileOpen ? 'dashboard-shell--sidebar-open' : ''} ${isAdminPortal ? 'dashboard-shell--admin-portal' : ''}`}
+      className={`dashboard-app-viewport ${sidebarMobileOpen ? 'dashboard-shell--sidebar-open' : ''} ${isAdminPortal ? 'dashboard-shell--admin-portal' : ''} ${sidebarCollapsed ? 'dashboard-shell--sidebar-collapsed' : ''}`}
     >
       {sidebarMobileOpen && (
         <button
@@ -338,13 +392,12 @@ function Dashboard({ onCreate, initialSection, onSwitchToSlides, onChooseProduct
         />
       )}
 
-      {/* ── 1. TOPBAR (Outside the content container, attached to top rail) ───── */}
       <DashboardTopbar
         sidebarMobileOpen={sidebarMobileOpen}
         setSidebarMobileOpen={setSidebarMobileOpen}
         topbarMobileOpen={topbarMobileOpen}
         setTopbarMobileOpen={setTopbarMobileOpen}
-        onCreate={handleOpenCreateVideoModal}
+        onCreate={() => setShowCreateMenu(true)}
         notificationCount={notificationCount}
         cartCount={cartCount}
         goToSection={handleNavigationWithModal}
@@ -366,36 +419,21 @@ function Dashboard({ onCreate, initialSection, onSwitchToSlides, onChooseProduct
         searchActiveIndex={dashboardSearch.activeIndex}
         onSearchActiveIndexChange={dashboardSearch.setActiveIndex}
         onSearchMoveActive={dashboardSearch.moveActive}
+        onBrandClick={() => (isAdminPortal ? handlePortalToggle() : goToSection('home'))}
       />
 
-      {/* ── 2. DASHBOARD BODY (Sidebar outside + Main Page Container Card) ──── */}
       <div className="dashboard-body">
-        {/* Sidebar Column (Outside the main page container card) */}
         <div className="dashboard-sidebar-column">
-          <div className="dashboard-sidebar-header">
-            <button
-              type="button"
-              className="dashboard-sidebar-brand"
-              onClick={() => (isAdminPortal ? handlePortalToggle() : goToSection('home'))}
-              onDoubleClick={() => onChooseProduct?.()}
-              aria-label={isAdminPortal ? 'Back to platform' : 'Virtual Studio, go to home'}
-              title="Double-click to switch products"
-            >
-              <span className="dashboard-sidebar-brand-logo" aria-hidden>
-                V
-              </span>
-              <span className="dashboard-sidebar-brand-name">Virtual Studio</span>
-            </button>
-
-            {canAccessSuperadminPortal && (
+          {canAccessSuperadminPortal && (
+            <div className="dashboard-sidebar-header">
               <PortalModeSwitcher
                 mode={isAdminPortal ? 'admin' : 'main'}
                 onSelectMain={handlePortalToggle}
                 onSelectAdmin={() => goToSection('admin-portal')}
                 onCloseMobile={() => setSidebarMobileOpen(false)}
               />
-            )}
-          </div>
+            </div>
+          )}
 
           {isAdminPortal ? (
             <AdminPortalSidebar
@@ -411,12 +449,12 @@ function Dashboard({ onCreate, initialSection, onSwitchToSlides, onChooseProduct
               onOpenTranslate={() => setShowTranslateModal(true)}
               onOpenAI={() => setShowAIAssistant(true)}
               onCloseMobile={() => setSidebarMobileOpen(false)}
-              onMoveToSlides={onSwitchToSlides}
+              collapsed={sidebarCollapsed}
+              onToggleCollapse={toggleSidebarCollapsed}
             />
           )}
         </div>
 
-        {/* ── 3. MAIN PAGE CONTAINER CARD (Rounded Container Card with Margins) ─ */}
         <div className="dashboard-page-card">
           <main
             className={`dashboard-main-content content ${!noPaddingSections.includes(section) ? 'with-padding' : ''} ${section === 'home' ? 'content--home' : ''} ${workspaceConsistentSections.includes(section) ? 'content--workspace-consistent' : ''} ${isAdminPortal ? 'content--superadmin' : ''}`}
@@ -521,7 +559,14 @@ function Dashboard({ onCreate, initialSection, onSwitchToSlides, onChooseProduct
             />
           )}
           {section === 'brandkits' && <BrandKits />}
+          {section === 'image-ai' && (
+            <SlidesComingSoon section={section} onBackHome={() => goToSection('home')} />
+          )}
+          {section === 'image-editor' && (
+            <SlidesComingSoon section={section} onBackHome={() => goToSection('home')} />
+          )}
           {section === 'credits' && <Settings onBack={() => goToSection('home')} initialTab="billing" />}
+          {section === 'profile' && <Profile onBack={() => goToSection('home')} />}
           {section === 'settings' && (
             <Settings
               onBack={() => goToSection('home')}
@@ -531,10 +576,22 @@ function Dashboard({ onCreate, initialSection, onSwitchToSlides, onChooseProduct
           {section === 'help' && (
             <Help embedded onOpenBilling={() => goToSection('credits')} />
           )}
-        </main>
+          </main>
         </div>
       </div>
 
+      <CreateMenuModal
+        isOpen={showCreateMenu}
+        onClose={() => setShowCreateMenu(false)}
+        onSelectAvatarVideo={() => {
+          setShowCreateMenu(false)
+          handleOpenCreateVideoModal()
+        }}
+        onNavigateSection={(id) => {
+          setShowCreateMenu(false)
+          goToSection(id)
+        }}
+      />
 
       {showAIAssistant && (
         <AIVideoAssistant

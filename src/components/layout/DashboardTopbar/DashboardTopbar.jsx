@@ -31,8 +31,7 @@ function DashboardTopbar({
     searchActiveIndex = 0,
     onSearchActiveIndexChange,
     onSearchMoveActive,
-    searchPlaceholder = 'Search dashboard...',
-    className = '',
+    onBrandClick,
 }) {
     const wrapRef = useRef(null)
 
@@ -46,21 +45,6 @@ function DashboardTopbar({
         document.addEventListener('mousedown', handlePointerDown)
         return () => document.removeEventListener('mousedown', handlePointerDown)
     }, [searchIsOpen, onSearchClose])
-
-    /* ── Ctrl+K / Cmd+K Global Shortcut to Focus Search ────────────────────── */
-    useEffect(() => {
-        const handleGlobalShortcut = (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-                e.preventDefault()
-                if (searchInputRef?.current) {
-                    searchInputRef.current.focus()
-                    onSearchFocus?.()
-                }
-            }
-        }
-        window.addEventListener('keydown', handleGlobalShortcut)
-        return () => window.removeEventListener('keydown', handleGlobalShortcut)
-    }, [searchInputRef, onSearchFocus])
 
     const handleSearchKeyDown = (e) => {
         if (e.key === 'Escape') {
@@ -99,27 +83,19 @@ function DashboardTopbar({
         showSuggestions: !searchQuery.trim(),
     }
 
-    const headerClass = ['topbar', 'topbar--main', className].filter(Boolean).join(' ')
-
     return (
-        <header className={headerClass}>
+        <header className="topbar topbar--main">
             <div className="topbar-grid topbar-grid--main">
                 <div className="topbar-main-lead">
                     <button
                         type="button"
                         className="topbar-brand-btn"
-                        onClick={() => goToSection?.('home')}
-                        aria-label={className.includes('slides') ? 'Slides Home' : 'Virtual Studio Home'}
-                        title={className.includes('slides') ? 'Slides' : 'Virtual Studio'}
+                        onClick={onBrandClick}
+                        aria-label="Virtual Studio, go to home"
                     >
-                        <span className="topbar-brand-logo" aria-hidden>
-                            {className.includes('slides') ? 'S' : 'V'}
-                        </span>
-                        <span className="topbar-brand-name">
-                            {className.includes('slides') ? 'Slides' : 'Virtual Studio'}
-                        </span>
+                        <span className="topbar-brand-logo" aria-hidden>V</span>
+                        <span className="topbar-brand-name">Virtual Studio</span>
                     </button>
-
                     <button
                         type="button"
                         className="topbar-sidebar-toggle"
@@ -140,7 +116,7 @@ function DashboardTopbar({
                             id="dashboard-top-search"
                             className="topbar-search-input"
                             type="search"
-                            placeholder={searchPlaceholder}
+                            placeholder="Search dashboard..."
                             autoComplete="off"
                             value={searchQuery}
                             onChange={(e) => onSearchQueryChange?.(e.target.value)}
@@ -161,11 +137,40 @@ function DashboardTopbar({
                 </div>
 
                 <div className="topbar-right">
-                    <ProfileDropdown 
-                        onProfileClick={() => goToSection('profile')} 
-                        onNotificationClick={onNotificationClick}
-                        notificationCount={notificationCount}
-                    />
+                    {!isAdminPortal && (
+                        <button
+                            type="button"
+                            className="topbar-create-btn"
+                            onClick={() => onCreate && onCreate()}
+                        >
+                            Create
+                        </button>
+                    )}
+
+                    <div className="topbar-icon-group topbar-icon-group--desktop">
+                        <button 
+                            type="button" 
+                            className="topbar-icon-btn" 
+                            aria-label="Notifications"
+                            onClick={onNotificationClick}
+                        >
+                            <span className="topbar-icon-badge-wrap">
+                                <Bell size={18} strokeWidth={1.75} aria-hidden />
+                                {notificationCount > 0 && (
+                                    <span className="topbar-badge">{notificationCount > 9 ? '9+' : notificationCount}</span>
+                                )}
+                            </span>
+                        </button>
+                        <button 
+                            type="button" 
+                            className="topbar-icon-btn" 
+                            aria-label={`Cart, ${cartCount} items`}
+                            onClick={onCartClick}
+                        >
+                            <ShoppingBag size={18} strokeWidth={1.75} aria-hidden />
+                        </button>
+                    </div>
+                    <ProfileDropdown compact onProfileClick={() => goToSection('profile')} />
 
                     <button
                         type="button"
@@ -188,7 +193,7 @@ function DashboardTopbar({
                             id="dashboard-top-search-mobile"
                             className="topbar-search-input"
                             type="search"
-                            placeholder={searchPlaceholder}
+                            placeholder="Search dashboard..."
                             autoComplete="off"
                             value={searchQuery}
                             onChange={(e) => onSearchQueryChange?.(e.target.value)}

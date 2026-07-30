@@ -22,6 +22,9 @@ const WorkspaceSection = ({
 }) => {
     const isAccentCreate = createButtonClass.includes('workspace-create-action-btn');
 
+    const childCount = React.Children.count(children);
+    const showGrid = viewMode === 'tile' ? childCount > 0 : count > 0;
+
     return (
         <div className="workspace-section">
             <div className="section-header-compact">
@@ -31,7 +34,7 @@ const WorkspaceSection = ({
                         <span className="section-count-circle">{count}</span>
                     )}
                 </div>
-                {showCreateButton && onCreateClick && (
+                {showCreateButton && viewMode === 'list' && onCreateClick && (
                     <button type="button" className={createButtonClass} onClick={onCreateClick}>
                         {isAccentCreate ? (
                             <span className="workspace-create-action-btn__icon" aria-hidden>
@@ -45,7 +48,7 @@ const WorkspaceSection = ({
                 )}
             </div>
 
-            {count === 0 ? (
+            {!showGrid ? (
                 <div className="section-empty-state">
                     {EmptyIcon && <EmptyIcon className="empty-state-icon" size={48} />}
                     <p className="empty-text">{emptyMessage}</p>

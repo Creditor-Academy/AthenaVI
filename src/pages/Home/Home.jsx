@@ -13,18 +13,41 @@ import {
     MdAccountBalanceWallet,
     MdArrowForward,
     MdTrendingUp,
+    MdNorthEast,
 } from 'react-icons/md'
 import './Home.css'
 import workspaceService from '../../services/workspaceService.js'
 import videoLibraryService from '../../services/videoLibraryService.js'
 import creditsService from '../../services/creditsService.js'
 import { fetchTemplateBundles } from '../../utils/fetchTemplateBundles.js'
+import { CREATE_OPTIONS } from '../../constants/createOptions.js'
 import TemplateScenePreview from '../../components/features/editor/editor/TemplateScenePreview'
 import ProjectSceneThumbnail from '../../components/features/workspace/workspace/ProjectSceneThumbnail.jsx'
 import { SkeletonProjectCard } from '../page-skeleton/SkeletonPrimitives'
 import '../page-skeleton/skeleton.css'
+import notebookImage from '../../assets/home_quickcreate/notebook.png'
+import paintBucketImage from '../../assets/home_quickcreate/paint_bucket.png'
+import megaphoneImage from '../../assets/home_quickcreate/megaphone.png'
+import bowlingPinsImage from '../../assets/home_quickcreate/bowling_pins.png'
+import canvasToolsImage from '../../assets/home_quickcreate/canvas_tools.png'
 
-function Home({ onCreate, onEdit, onShowAIAssistant, onBrowseTemplates, onSelectTemplate, onNavigate }) {
+const QUICK_CREATE_IMAGES = {
+    'avatar-video': notebookImage,
+    'ppt-ai': paintBucketImage,
+    'ppt-builder': megaphoneImage,
+    'image-ai': bowlingPinsImage,
+    'image-editor': canvasToolsImage,
+}
+
+const QUICK_CREATE_LABELS = {
+    'avatar-video': ['Avatar', 'Video'],
+    'ppt-ai': ['AI Presentation', 'Generation'],
+    'ppt-builder': ['Presentation', 'Design'],
+    'image-ai': ['AI Image', 'Generation'],
+    'image-editor': ['Canvas', 'Editing'],
+}
+
+function Home({ onCreate, onEdit, onBrowseTemplates, onSelectTemplate, onNavigate }) {
     const { user } = useAuth();
     const firstName = user?.name ? user.name.split(' ')[0] : (user?.email ? user.email.split('@')[0] : 'User');
 
@@ -233,6 +256,14 @@ function Home({ onCreate, onEdit, onShowAIAssistant, onBrowseTemplates, onSelect
 
     const featuredTemplates = templateBundles.slice(0, 6)
 
+    const handleQuickCreate = (id) => {
+        if (id === 'avatar-video') {
+            onCreate?.()
+        } else {
+            onNavigate?.(id)
+        }
+    }
+
     return (
         <div className="home-container">
             <div className="welcome-banner hero-redesign">
@@ -258,6 +289,49 @@ function Home({ onCreate, onEdit, onShowAIAssistant, onBrowseTemplates, onSelect
                 <div className="hero-decoration hero-circle-1"></div>
                 <div className="hero-decoration hero-circle-2"></div>
                 <div className="hero-decoration hero-circle-3"></div>
+            </div>
+
+            <div className="home-quickcreate">
+                <div className="section-header">
+                    <h2>Quick Create</h2>
+                </div>
+                <div className="home-quickcreate-grid" role="list">
+                    {CREATE_OPTIONS.map((option) => {
+                        const labels = QUICK_CREATE_LABELS[option.id] || [option.title, '']
+                        const [primaryLabel, secondaryLabel] = labels
+                        return (
+                            <button
+                                key={option.id}
+                                type="button"
+                                role="listitem"
+                                className={`home-quickcreate-card option-${option.id}`}
+                                onClick={() => handleQuickCreate(option.id)}
+                                aria-label={option.title}
+                            >
+                                <div className="home-quickcreate-card-grain" aria-hidden="true" />
+                                <div className="home-quickcreate-card-copy">
+                                    <h3>
+                                        <span>{primaryLabel}</span>
+                                        <span>{secondaryLabel}</span>
+                                    </h3>
+                                    <span className="home-quickcreate-cta">
+                                        <span className="home-quickcreate-cta-icon" aria-hidden="true">
+                                            <MdNorthEast size={14} />
+                                        </span>
+                                        Learn more
+                                    </span>
+                                </div>
+                                <div className="home-quickcreate-visual" aria-hidden="true">
+                                    <img
+                                        className="home-quickcreate-image"
+                                        src={QUICK_CREATE_IMAGES[option.id]}
+                                        alt=""
+                                    />
+                                </div>
+                            </button>
+                        )
+                    })}
+                </div>
             </div>
 
             <div className="home-billing-stats" role="list">
