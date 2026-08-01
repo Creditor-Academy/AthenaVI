@@ -231,6 +231,31 @@ const superadminService = {
       `/api/superadmin/broadcasts/product-email/${broadcastId}/recipients${toQuery({ page, limit, status })}`
     )
   },
+
+  // ── Templates ────────────────────────────────────────────────────────────
+  listTemplates({ type, page = 1, limit = 50 } = {}) {
+    return superadminRequest(`/api/superadmin/templates${toQuery({ type, page, limit })}`)
+  },
+
+  getTemplate(templateId) {
+    return superadminRequest(`/api/superadmin/templates/${templateId}`)
+  },
+
+  createTemplate({ type, name, contentType, variant, isActive, schema }) {
+    return superadminRequest('/api/superadmin/templates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, name, contentType, variant, isActive, schema }),
+    })
+  },
+
+  updateTemplate(templateId, { name, contentType, variant, isActive, schema }) {
+    return superadminRequest(`/api/superadmin/templates/${templateId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, contentType, variant, isActive, schema }),
+    })
+  },
 }
 
 export { SuperadminApiError }
