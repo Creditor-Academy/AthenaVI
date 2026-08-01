@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { ChevronLeft, ChevronDown, Sparkles, ImagePlus, X, ArrowRight, Wand2, RotateCcw, Edit3, Shuffle, ArrowUp, Download, Trash2, Heart, Clock, Settings2, Zap, Plus, Image as ImageIcon } from 'lucide-react'
+import { ChevronLeft, ChevronDown, Sparkles, ImagePlus, X, Wand2, RotateCcw, Shuffle, Download, Trash2, Plus, Image as ImageIcon, Images, Check, Edit2, ArrowRight } from 'lucide-react'
 import SelectMediaModal from '../../components/features/image-generation/SelectMediaModal'
 import './AIImageStudio.css'
 
@@ -8,10 +8,33 @@ const MODELS    = ['Auto', 'Nano Banana', 'Seedream', 'Flux', 'Ideogram', 'GPT I
 const STYLES    = ['Dynamic', 'Photorealistic', 'Cinematic', '3D Render', 'Anime', 'Watercolor', 'Minimal', 'Sketch']
 const DIMS      = ['1:1', '16:9', '9:16', '4:5', '3:2', '2:3']
 const QUALITIES = ['Standard', 'Premium', 'Ultra']
+const QUALITY_META = {
+  Standard: { credits: 1, desc: 'Great for everyday posts' },
+  Premium:  { credits: 3, desc: 'Sharper detail and lighting' },
+  Ultra:    { credits: 5, desc: 'Maximum detail, print ready' },
+}
 const VIS_TYPES = ['Photo', 'Illustration', 'Icon', 'Diagram', 'Infographic']
-const COUNTS    = [1, 2, 4]
 
 const CREDIT_COST = { Standard: 1, Premium: 3, Ultra: 5 }
+
+/* Shape presets */
+const SHAPE_PRESETS = [
+  { id: 'instagram-post',      label: 'Instagram post',      ratio: '1:1',  sub: '1:1',     w: 1080, h: 1080, shape: 'square' },
+  { id: 'instagram-story',     label: 'Instagram story',     ratio: '9:16', sub: '9:16',    w: 1080, h: 1920, shape: 'portrait-tall' },
+  { id: 'linkedin-banner',     label: 'LinkedIn banner',     ratio: '4:1',  sub: '4:1',     w: 1584, h: 396,  shape: 'wide' },
+  { id: 'youtube-thumbnail',   label: 'YouTube thumbnail',   ratio: '16:9', sub: '16:9',    w: 1280, h: 720,  shape: 'landscape' },
+  { id: 'poster',              label: 'Poster',              ratio: '2:3',  sub: 'A-series', w: 794,  h: 1123, shape: 'portrait' },
+  { id: 'desktop-wallpaper',   label: 'Desktop wallpaper',   ratio: '16:9', sub: '16:9',    w: 1920, h: 1080, shape: 'landscape' },
+]
+
+/* aspect-ratio shape → preview box style */
+const SHAPE_PREVIEW_STYLES = {
+  square:          { width: '90px',  aspectRatio: '1 / 1' },
+  'portrait-tall': { width: '48px',  aspectRatio: '9 / 16' },
+  wide:            { width: '100%',  aspectRatio: '4 / 1', maxWidth: '140px' },
+  landscape:       { width: '100%',  aspectRatio: '16 / 9', maxWidth: '130px' },
+  portrait:        { width: '64px',  aspectRatio: '2 / 3' },
+}
 
 /* Map dim ratio to picsum size string */
 const DIM_SIZES = {
@@ -91,13 +114,26 @@ export default function AIImageStudio({ onBack }) {
   const [prompt, setPrompt]   = useState('')
   const [inspiring, setInspiring] = useState(false)
 
-  // Settings — shared between prompt page and workspace bar
+  // Settings
   const [model,      setModel]      = useState('Auto')
   const [style,      setStyle]      = useState('Dynamic')
   const [dim,        setDim]        = useState('1:1')
   const [quality,    setQuality]    = useState('Standard')
-  const [count,      setCount]      = useState(1)
   const [visualType, setVisualType] = useState('Photo')
+  const [count]                     = useState(1)
+
+  // Shape step
+  const [selectedShape, setSelectedShape] = useState(SHAPE_PRESETS[0])
+  const [customW, setCustomW] = useState('1200')
+  const [customH, setCustomH] = useState('800')
+  const [useCustom, setUseCustom] = useState(false)
+
+  // Options step
+  const [activeOptStep, setActiveOptStep] = useState('Quality')
+
+  // Review step
+  const [editingPrompt, setEditingPrompt] = useState(false)
+  const [draftPrompt, setDraftPrompt] = useState('')
 
   // Workspace — sessions-based
   const [sessions,         setSessions]         = useState([])
@@ -108,20 +144,24 @@ export default function AIImageStudio({ onBack }) {
   const [workPrompt,    setWorkPrompt]    = useState('')
   const [showMedia,     setShowMedia]     = useState(false)
   const [refImages,     setRefImages]     = useState([])
-  const [favorites,     setFavorites]     = useState(new Set())
-  const [downloadPanel, setDownloadPanel] = useState(null) // { genId, imageUrl } | null
-  const [dlFormat,      setDlFormat]      = useState('PNG')
+  const [downloadPanel, setDownloadPanel] = useState(null)
 
   const historyRef  = useRef(null)
   const textRef     = useRef(null)
+  const reviewTextRef = useRef(null)
   const workTextRef = useRef(null)
 
-  // Derived: active session's generations
+  // Derived
   const activeGenerations = sessions.find(s => s.id === activeSessionId)?.generations ?? []
   const isGenerating      = activeGenerations.some(g => g.status === 'generating')
   const creditCost        = CREDIT_COST[quality] * count
+  const allImages = sessions.flatMap(s =>
+    s.generations.filter(g => g.status === 'done').map(g => ({ ...g, sessionLabel: s.label, sessionId: s.id }))
+  )
 
-  // Auto-scroll when active session generations change
+  // The effective dim to use for generation (preset ratio or custom)
+  const effectiveDim = useCustom ? `${customW}:${customH}` : (selectedShape?.ratio || dim)
+
   useEffect(() => {
     if (historyRef.current) historyRef.current.scrollTop = historyRef.current.scrollHeight
   }, [sessions, activeSessionId])
@@ -143,16 +183,32 @@ export default function AIImageStudio({ onBack }) {
     }, 8)
   }
 
-  const handleGenerate = () => {
+  // Step 1 → Step 2 (shape)
+  const handleNextToShape = () => {
     if (!prompt.trim()) return
+    setStep('shape')
+  }
+
+  // Step 2 → Step 3 (options)
+  const handleNextToOptions = () => {
+    setStep('options')
+  }
+
+  // Step 3 → Step 4 (review)
+  const handleNextToReview = () => {
+    setStep('review')
+  }
+
+  // Final generate from review
+  const handleGenerate = () => {
     const p   = prompt.trim()
+    const useDim = useCustom ? dim : (selectedShape?.ratio || dim)
     const sid = Date.now().toString()
-    // create `count` generation entries
     const gens = Array.from({ length: count }, (_, i) => ({
       id: `${sid}_g${i}`,
       prompt: p,
       model,
-      dim,
+      dim: useDim,
       status: 'generating',
       imageUrl: null,
     }))
@@ -162,7 +218,7 @@ export default function AIImageStudio({ onBack }) {
     setStep('workspace')
     gens.forEach((gen, i) => {
       setTimeout(() => {
-        const url = `https://picsum.photos/seed/${encodeURIComponent(p + gen.id)}/${dimToSize(dim)}`
+        const url = `https://picsum.photos/seed/${encodeURIComponent(p + gen.id)}/${dimToSize(useDim)}`
         setSessions(prev => prev.map(s => s.id === sid ? {
           ...s,
           thumb: s.thumb || url,
@@ -218,6 +274,17 @@ export default function AIImageStudio({ onBack }) {
 
   /* ══ PROMPT PAGE ══ */
   if (step === 'prompt') {
+
+    const SUGGESTION_PILLS = [
+      'Soft daylight photography',
+      'Editorial illustration',
+      'Minimal, lots of empty space',
+      'Warm film grain',
+      'Bold graphic poster',
+      'Cinematic wide shot',
+      'Dark academia',
+    ]
+
     return (
       <div className="aig-step-shell aig-step-shell--prompt">
         <nav className="aig-step-nav">
@@ -226,6 +293,17 @@ export default function AIImageStudio({ onBack }) {
           </button>
           <span className="aig-step-nav-title">AI Image Studio</span>
           <div className="aig-step-nav-right">
+            <button
+              type="button"
+              className="aig-my-images-btn"
+              onClick={() => setStep('gallery')}
+            >
+              <Images size={14} strokeWidth={2} />
+              My Images
+              {allImages.length > 0 && (
+                <span className="aig-my-images-count">{allImages.length}</span>
+              )}
+            </button>
             <span className="aig-credits-badge">&#10022; 150 Credits</span>
           </div>
         </nav>
@@ -233,40 +311,24 @@ export default function AIImageStudio({ onBack }) {
         <div className="aig-prompt-page">
           <div className="aig-prompt-split">
 
-            {/* ── Left: Prompt + Settings ── */}
+            {/* ── Left: Hero + Prompt Card ── */}
             <div className="aig-prompt-left">
-              <div className="aig-prompt-heading">
-                <span className="aig-prompt-eyebrow">Image Studio</span>
-                <h1 className="aig-prompt-h1">What do you want to create?</h1>
-                <p className="aig-prompt-sub">
-                  Describe your image — tweak style and quality, then hit Generate.
-                </p>
+
+              {/* Hero heading — centered, Aperture style */}
+              <div className="aig-hero-heading">
+                <span className="aig-hero-eyebrow">Image Studio</span>
+                <h1 className="aig-hero-h1">Make the exact<br />image you need.</h1>
               </div>
 
-              {/* Prompt Card */}
-              <div className="aig-prompt-card">
-                {/* Top row: label + inspire */}
-                <div className="aig-prompt-card-top">
-                  <label className="aig-prompt-label" htmlFor="aig-prompt-input">Your prompt</label>
-                  <button
-                    type="button"
-                    className="aig-inspire-btn"
-                    onClick={handleInspire}
-                    disabled={inspiring}
-                  >
-                    <Wand2 size={13} strokeWidth={2} />
-                    {inspiring ? 'Writing\u2026' : 'Inspire me'}
-                  </button>
-                </div>
-
-                {/* Textarea */}
+              {/* Prompt card — large, clean */}
+              <div className="aig-lp-card">
                 <textarea
                   id="aig-prompt-input"
                   ref={textRef}
-                  className="aig-prompt-textarea"
-                  placeholder="A misty lake at dawn, lone rowboat, soft golden light, cinematic wide shot\u2026"
+                  className="aig-lp-textarea"
+                  placeholder="A quiet coastal lighthouse at golden hour, deep blue sea, painted in soft editorial brushwork…"
                   value={prompt}
-                  rows={2}
+                  rows={3}
                   onChange={e => {
                     setPrompt(e.target.value)
                     const el = textRef.current
@@ -274,21 +336,29 @@ export default function AIImageStudio({ onBack }) {
                   }}
                   autoFocus
                   onKeyDown={e => {
-                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && prompt.trim()) handleGenerate()
+                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && prompt.trim()) handleNextToShape()
                   }}
                 />
 
-                {/* Settings chips — Model, Style, Quality, Ratio */}
-                <div className="aig-prompt-chips-row">
-                  <ChipSelect value={model}   options={MODELS}    onChange={setModel}   label="Model"   />
-                  <ChipSelect value={style}   options={STYLES}    onChange={setStyle}   label="Style"   />
-                  <ChipSelect value={quality} options={QUALITIES} onChange={setQuality} label="Quality" />
-                  <ChipSelect value={dim}     options={DIMS}      onChange={setDim}     label="Ratio"   />
-                  <div className="aig-prompt-chips-sep" />
-                  <button type="button" className="aig-chip" onClick={() => setShowMedia(true)} title="Add reference image">
-                    <ImagePlus size={13} strokeWidth={1.75} />
+                {/* Bottom toolbar inside card */}
+                <div className="aig-lp-toolbar">
+                  <div className="aig-lp-toolbar-left">
+                    <ChipSelect value={model}   options={MODELS}    onChange={setModel}   label="Model"   />
+                    <ChipSelect value={style}   options={STYLES}    onChange={setStyle}   label="Style"   />
+                    <ChipSelect value={dim}     options={DIMS}      onChange={setDim}     label="Ratio"   />
+                    <button type="button" className="aig-chip" onClick={() => setShowMedia(true)} title="Add reference image">
+                      <ImagePlus size={13} strokeWidth={1.75} />
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    className={`aig-lp-generate-btn ${prompt.trim() ? 'aig-lp-generate-btn--ready' : ''}`}
+                    disabled={!prompt.trim()}
+                    onClick={handleNextToShape}
+                    aria-label="Next step"
+                  >
+                    <Sparkles size={15} strokeWidth={2} />
                   </button>
-                  <span className="aig-prompt-hint">&#8984;&#8629; to generate</span>
                 </div>
 
                 {/* Reference image thumbnails */}
@@ -309,43 +379,19 @@ export default function AIImageStudio({ onBack }) {
                     ))}
                   </div>
                 )}
-
-                {/* Footer: cost + generate */}
-                <div className="aig-prompt-card-footer">
-                  <span className="aig-prompt-cost-tag">
-                    {creditCost} credit{creditCost !== 1 ? 's' : ''}
-                  </span>
-                  <button
-                    type="button"
-                    className={`aig-next-btn ${prompt.trim() ? 'aig-next-btn--ready' : ''}`}
-                    disabled={!prompt.trim()}
-                    onClick={handleGenerate}
-                  >
-                    Generate <Sparkles size={14} strokeWidth={2} />
-                  </button>
-                </div>
               </div>
 
-              {/* Quick-start pills */}
-              <div className="aig-prompt-examples">
-                <span className="aig-prompt-examples-label">Quick starts</span>
-                <div className="aig-prompt-fan">
-                  {INSPIRATIONS.slice(0, 3).map(item => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className="aig-insp-pill"
-                      onClick={() => {
-                        setPrompt(item.prompt)
-                        const el = textRef.current
-                        if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' }
-                      }}
-                    >
-                      {item.prompt.split(',')[0].slice(0, 36)}{item.prompt.split(',')[0].length > 36 ? '\u2026' : ''}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {/* Inspire me link */}
+              <button
+                type="button"
+                className="aig-lp-inspire"
+                onClick={handleInspire}
+                disabled={inspiring}
+              >
+                <Wand2 size={13} strokeWidth={2} />
+                {inspiring ? 'Writing…' : 'Inspire me with a random prompt'}
+              </button>
+
             </div>
 
             {/* ── Right: Scrolling Gallery ── */}
@@ -414,6 +460,604 @@ export default function AIImageStudio({ onBack }) {
     )
   }
 
+  /* ══ STEP 2 — PICK A SHAPE ══ */
+  if (step === 'shape') {
+    const activePreset = useCustom ? null : selectedShape
+    const previewAspect = useCustom
+      ? `${customW} / ${customH}`
+      : (SHAPE_PREVIEW_STYLES[selectedShape.shape]?.['aspectRatio'] || '1 / 1')
+    const previewLabel = useCustom
+      ? `Custom · ${customW} × ${customH} px`
+      : `${selectedShape.label} · ${selectedShape.w} × ${selectedShape.h} px`
+
+    return (
+      <div className="aig-step-shell aig-step-shell--setup">
+        <div className="aig-setup-body">
+          {/* Left: presets grid */}
+          <div className="aig-setup-left">
+            <div className="aig-setup-heading">
+              <h2 className="aig-setup-h2">Pick a shape</h2>
+              <p className="aig-setup-sub">{prompt.length > 60 ? prompt.slice(0, 60) + '…' : prompt}</p>
+            </div>
+
+            <div className="aig-shape-grid">
+              {SHAPE_PRESETS.map(preset => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  className={`aig-shape-card ${!useCustom && activePreset?.id === preset.id ? 'aig-shape-card--active' : ''}`}
+                  onClick={() => { setSelectedShape(preset); setUseCustom(false) }}
+                >
+                  <div className="aig-shape-preview-wrap">
+                    <div
+                      className="aig-shape-preview-box"
+                      style={SHAPE_PREVIEW_STYLES[preset.shape] || { width: '80px', aspectRatio: '1/1' }}
+                    />
+                  </div>
+                  <div className="aig-shape-card-label">{preset.label}</div>
+                  <div className="aig-shape-card-sub">{preset.sub}</div>
+                  {!useCustom && activePreset?.id === preset.id && (
+                    <div className="aig-shape-card-check"><Check size={12} strokeWidth={3} /></div>
+                  )}
+                </button>
+              ))}
+
+              {/* Custom size card */}
+              <button
+                type="button"
+                className={`aig-shape-card aig-shape-card--custom ${useCustom ? 'aig-shape-card--active' : ''}`}
+                onClick={() => setUseCustom(true)}
+              >
+                <div className="aig-shape-preview-wrap">
+                  <div className="aig-custom-size-inputs" onClick={e => e.stopPropagation()}>
+                    <input
+                      className="aig-custom-input"
+                      type="number"
+                      value={customW}
+                      onChange={e => { setCustomW(e.target.value); setUseCustom(true) }}
+                      min="64"
+                      max="4096"
+                      aria-label="Width"
+                    />
+                    <span className="aig-custom-sep">×</span>
+                    <input
+                      className="aig-custom-input"
+                      type="number"
+                      value={customH}
+                      onChange={e => { setCustomH(e.target.value); setUseCustom(true) }}
+                      min="64"
+                      max="4096"
+                      aria-label="Height"
+                    />
+                  </div>
+                </div>
+                <div className="aig-shape-card-label">Custom size</div>
+                <div className="aig-shape-card-sub">Pixels</div>
+                {useCustom && (
+                  <div className="aig-shape-card-check"><Check size={12} strokeWidth={3} /></div>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Right: live preview */}
+          <div className="aig-setup-right">
+            <div className="aig-shape-preview-panel">
+              <div className="aig-shape-preview-canvas">
+                <div
+                  className="aig-shape-preview-art"
+                  style={{ aspectRatio: previewAspect }}
+                >
+                  <span className="aig-shape-preview-eyebrow">
+                    {useCustom ? 'Custom' : selectedShape.label.toUpperCase()} · {useCustom ? `${customW}:${customH}` : selectedShape.ratio}
+                  </span>
+                  <p className="aig-shape-preview-text">
+                    {prompt.length > 48 ? prompt.slice(0, 48) + '…' : prompt}
+                  </p>
+                </div>
+              </div>
+              <p className="aig-shape-preview-meta">{previewLabel}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer CTA */}
+        <div className="aig-setup-footer">
+          <span className="aig-setup-footer-hint">Choose the canvas shape for your image</span>
+          <div className="aig-setup-footer-actions">
+            <button type="button" className="aig-setup-back-btn" onClick={() => setStep('prompt')}>
+              Back
+            </button>
+            <button type="button" className="aig-setup-next-btn" onClick={handleNextToOptions}>
+              Next <ArrowRight size={15} strokeWidth={2} />
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  /* ══ STEP 3 — CHOOSE HOW IT'S MADE ══ */
+  if (step === 'options') {
+    const shapeLabel = useCustom ? `Custom · ${customW}:${customH}` : `${selectedShape.label} · ${selectedShape.ratio}`
+
+    const MODEL_META = {
+      'Auto':             { icon: '✦', desc: 'Best model chosen automatically' },
+      'Nano Banana':      { icon: '⚡', desc: 'Fast generation, great quality' },
+      'Seedream':         { icon: '🌱', desc: 'Dreamlike, painterly results' },
+      'Flux':             { icon: '◈', desc: 'Crisp realism and detail' },
+      'Ideogram':         { icon: '◉', desc: 'Excellent text in images' },
+      'GPT Image':        { icon: '◎', desc: 'Instruction-following focused' },
+      'Stable Diffusion': { icon: '◆', desc: 'Open-source, highly flexible' },
+    }
+    const STYLE_GRADIENTS = {
+      'Dynamic':       'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      'Photorealistic':'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+      'Cinematic':     'linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)',
+      '3D Render':     'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+      'Anime':         'linear-gradient(135deg, #f77062 0%, #fe5196 100%)',
+      'Watercolor':    'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
+      'Minimal':       'linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%)',
+      'Sketch':        'linear-gradient(135deg, #d3cce3 0%, #e9e4f0 100%)',
+    }
+
+    const SideItem = ({ label, value, id }) => (
+      <button
+        type="button"
+        className={`aig-opts-side-item ${activeOptStep === id ? 'aig-opts-side-item--active' : ''}`}
+        onClick={() => setActiveOptStep(id)}
+      >
+        <span className="aig-opts-side-label">{label}</span>
+        <span className="aig-opts-side-value">{value}</span>
+      </button>
+    )
+
+    return (
+      <div className="aig-step-shell aig-step-shell--setup aig-step-shell--options">
+        <header className="aig-opts-header">
+          <div className="aig-opts-header-left">
+            <span className="aig-opts-step-badge">STEP 3 OF 4</span>
+            <h2 className="aig-opts-heading">Choose how it's made</h2>
+          </div>
+          <div className="aig-opts-header-right">
+            <div className="aig-opts-shape-badge">
+              <div className="aig-opts-shape-thumb"
+                style={{ aspectRatio: useCustom ? `${customW}/${customH}` : selectedShape.ratio.replace(':', '/') }} />
+              <span>{shapeLabel}</span>
+              <button type="button" className="aig-opts-change-btn" onClick={() => setStep('shape')}>change</button>
+            </div>
+          </div>
+        </header>
+
+        <div className="aig-opts-body">
+          {/* Left sidebar */}
+          <aside className="aig-opts-sidebar">
+            <div className="aig-opts-sidebar-list">
+              <SideItem id="Model"   label="Model"   value={model} />
+              <SideItem id="Style"   label="Style"   value={style} />
+              <SideItem id="Quality" label="Quality" value={`${quality} · ${CREDIT_COST[quality]} cr`} />
+              <SideItem id="Type"    label="Type"    value={visualType} />
+            </div>
+          </aside>
+
+          {/* Right content panel */}
+          <div className="aig-opts-panel">
+            <div className="aig-opts-container-card">
+
+              {/* ── MODEL ── */}
+              {activeOptStep === 'Model' && (
+                <div className="aig-opts-section">
+                  <div className="aig-model-grid">
+                    {MODELS.map(m => (
+                      <button key={m} type="button"
+                        className={`aig-model-card ${model === m ? 'aig-model-card--active' : ''}`}
+                        onClick={() => setModel(m)}>
+                        <span className="aig-model-name">{m}</span>
+                        {m === 'Auto' && <span className="aig-model-sub">recommended</span>}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── STYLE ── */}
+              {activeOptStep === 'Style' && (
+                <div className="aig-opts-section">
+                  <div className="aig-style-grid">
+                    {STYLES.map(s => (
+                      <button key={s} type="button"
+                        className={`aig-style-card ${style === s ? 'aig-style-card--active' : ''}`}
+                        onClick={() => setStyle(s)}>
+                        <div className="aig-style-swatch" style={{ background: STYLE_GRADIENTS[s] }} />
+                        <span className="aig-style-name">{s}</span>
+                        {style === s && <span className="aig-style-check"><Check size={12} strokeWidth={3}/></span>}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── QUALITY ── */}
+              {activeOptStep === 'Quality' && (
+                <div className="aig-opts-section">
+                  <div className="aig-quality-grid">
+                    {QUALITIES.map((q, i) => (
+                      <button key={q} type="button"
+                        className={`aig-quality-card ${quality === q ? 'aig-quality-card--active' : ''}`}
+                        onClick={() => setQuality(q)}>
+                        <div className="aig-quality-tier" data-tier={i} />
+                        <div className="aig-quality-body">
+                          <div className="aig-quality-top-row">
+                            <span className="aig-quality-name">{q}</span>
+                            <span className="aig-quality-cost">{QUALITY_META[q].credits} cr</span>
+                          </div>
+                          <p className="aig-quality-desc">{QUALITY_META[q].desc}</p>
+                        </div>
+                        {quality === q && <span className="aig-quality-check"><Check size={13} strokeWidth={3}/></span>}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── TYPE ── */}
+              {activeOptStep === 'Type' && (
+                <div className="aig-opts-section">
+                  <div className="aig-type-grid">
+                    {[
+                      {
+                        id: 'Photo',
+                        desc: 'Realistic camera shot',
+                        svg: (
+                          <svg width="56" height="44" viewBox="0 0 56 44" fill="none">
+                            <rect x="4" y="8" width="48" height="32" rx="5" fill="currentColor" opacity="0.08"/>
+                            <rect x="4" y="8" width="48" height="32" rx="5" stroke="currentColor" strokeWidth="1.5" opacity="0.3"/>
+                            <circle cx="28" cy="24" r="9" stroke="currentColor" strokeWidth="1.5" opacity="0.5"/>
+                            <circle cx="28" cy="24" r="5" fill="currentColor" opacity="0.25"/>
+                            <rect x="19" y="5" width="18" height="6" rx="3" fill="currentColor" opacity="0.2"/>
+                            <circle cx="44" cy="13" r="2.5" fill="currentColor" opacity="0.4"/>
+                          </svg>
+                        )
+                      },
+                      {
+                        id: 'Illustration',
+                        desc: 'Hand-crafted artwork',
+                        svg: (
+                          <svg width="56" height="44" viewBox="0 0 56 44" fill="none">
+                            <path d="M10 34 C14 20, 22 10, 28 14 C34 18, 30 30, 36 26 C42 22, 46 30, 46 34" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.4"/>
+                            <circle cx="16" cy="16" r="6" fill="currentColor" fillOpacity="0.12" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.3"/>
+                            <path d="M32 8 L35 14 L41 14 L36 18 L38 24 L32 20 L26 24 L28 18 L23 14 L29 14 Z" fill="currentColor" opacity="0.2"/>
+                            <path d="M8 38 Q20 28 32 32 Q44 36 48 28" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 2" fill="none" opacity="0.35"/>
+                          </svg>
+                        )
+                      },
+                      {
+                        id: 'Icon',
+                        desc: 'Clean symbolic graphic',
+                        svg: (
+                          <svg width="56" height="44" viewBox="0 0 56 44" fill="none">
+                            <rect x="16" y="10" width="24" height="24" rx="7" fill="currentColor" fillOpacity="0.1" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.3"/>
+                            <path d="M22 22 L26 26 L34 18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.6"/>
+                          </svg>
+                        )
+                      },
+                      {
+                        id: 'Diagram',
+                        desc: 'Charts and flows',
+                        svg: (
+                          <svg width="56" height="44" viewBox="0 0 56 44" fill="none">
+                            <rect x="6" y="28" width="8" height="10" rx="2" fill="currentColor" opacity="0.25"/>
+                            <rect x="18" y="20" width="8" height="18" rx="2" fill="currentColor" opacity="0.35"/>
+                            <rect x="30" y="14" width="8" height="24" rx="2" fill="currentColor" opacity="0.45"/>
+                            <rect x="42" y="8" width="8" height="30" rx="2" fill="currentColor" opacity="0.55"/>
+                            <path d="M6 32 L20 24 L32 18 L44 12" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 2" opacity="0.4" fill="none"/>
+                          </svg>
+                        )
+                      },
+                      {
+                        id: 'Infographic',
+                        desc: 'Data meets design',
+                        svg: (
+                          <svg width="56" height="44" viewBox="0 0 56 44" fill="none">
+                            <circle cx="28" cy="22" r="14" stroke="currentColor" strokeWidth="1.5" opacity="0.2"/>
+                            <path d="M28 8 A14 14 0 0 1 42 22" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.6"/>
+                            <path d="M42 22 A14 14 0 0 1 28 36" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.35"/>
+                            <path d="M28 36 A14 14 0 0 1 14 22" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.2"/>
+                            <path d="M14 22 A14 14 0 0 1 28 8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.45"/>
+                            <circle cx="28" cy="22" r="5" fill="currentColor" opacity="0.15"/>
+                            <circle cx="28" cy="22" r="2" fill="currentColor" opacity="0.4"/>
+                          </svg>
+                        )
+                      },
+                    ].map(t => (
+                      <button key={t.id} type="button"
+                        className={`aig-type-card ${visualType === t.id ? 'aig-type-card--active' : ''}`}
+                        onClick={() => setVisualType(t.id)}>
+                        <div className="aig-type-visual">{t.svg}</div>
+                        <span className="aig-type-name">{t.id}</span>
+                        <span className="aig-type-desc">{t.desc}</span>
+                        {visualType === t.id && <span className="aig-type-check"><Check size={12} strokeWidth={3}/></span>}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </div>
+        </div>
+
+        <div className="aig-setup-footer">
+          <span className="aig-setup-footer-hint">Everything has a sensible default — go straight ahead if you like.</span>
+          <div className="aig-setup-footer-actions">
+            <button type="button" className="aig-setup-back-btn" onClick={() => setStep('shape')}>
+              Back
+            </button>
+            <button type="button" className="aig-setup-next-btn" onClick={handleNextToReview}>
+              Review
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  /* ══ STEP 4 — REVIEW ══ */
+  if (step === 'review') {
+
+    const shapeLabel = useCustom
+      ? `Custom · ${customW} × ${customH} px`
+      : `${selectedShape.label} · ${selectedShape.ratio}`
+    const previewAspect = useCustom
+      ? `${customW} / ${customH}`
+      : (SHAPE_PREVIEW_STYLES[selectedShape.shape]?.['aspectRatio'] || '1 / 1')
+
+    const rows = [
+      { label: 'Shape',   value: shapeLabel,          onEdit: () => setStep('shape') },
+      { label: 'Model',   value: model,                onEdit: () => setStep('options') },
+      { label: 'Style',   value: style,                onEdit: () => setStep('options') },
+      { label: 'Quality', value: `${quality} · ${CREDIT_COST[quality]} credit${CREDIT_COST[quality] > 1 ? 's' : ''}`, onEdit: () => setStep('options') },
+      { label: 'Type',    value: visualType,           onEdit: () => setStep('options') },
+    ]
+
+    return (
+      <div className="aig-step-shell aig-step-shell--setup">
+
+        {/* Nav */}
+        <nav className="aig-step-nav">
+          <button type="button" className="aig-back-btn" onClick={() => setStep('options')}>
+            <ChevronLeft size={15} /> Back
+          </button>
+          <div className="aig-wizard-steps">
+            <span className="aig-wizard-step aig-wizard-step--done">1</span>
+            <span className="aig-wizard-line aig-wizard-line--done" />
+            <span className="aig-wizard-step aig-wizard-step--done">2</span>
+            <span className="aig-wizard-line aig-wizard-line--done" />
+            <span className="aig-wizard-step aig-wizard-step--done">3</span>
+            <span className="aig-wizard-line aig-wizard-line--done" />
+            <span className="aig-wizard-step aig-wizard-step--active">4</span>
+          </div>
+          <div className="aig-step-nav-right">
+            <span className="aig-credits-badge">&#10022; 150 Credits</span>
+          </div>
+        </nav>
+
+        <div className="aig-review-body">
+          {/* Left: summary */}
+          <div className="aig-review-left">
+            <div className="aig-review-heading">
+              <h2 className="aig-setup-h2">Review &amp; generate</h2>
+              <p className="aig-setup-sub">Check everything looks right, then hit Generate.</p>
+            </div>
+
+            {/* Prompt block */}
+            <div className="aig-review-prompt-block">
+              <div className="aig-review-row-label">
+                <span>Prompt</span>
+                <button type="button" className="aig-review-edit-btn"
+                  onClick={() => { setEditingPrompt(e => !e); setDraftPrompt(prompt) }}>
+                  <Edit2 size={13} strokeWidth={2} /> {editingPrompt ? 'Cancel' : 'Edit'}
+                </button>
+              </div>
+              {editingPrompt ? (
+                <div className="aig-review-prompt-edit">
+                  <textarea
+                    ref={reviewTextRef}
+                    className="aig-review-textarea"
+                    value={draftPrompt}
+                    onChange={e => setDraftPrompt(e.target.value)}
+                    rows={3}
+                    autoFocus
+                  />
+                  <button type="button" className="aig-review-save-btn"
+                    onClick={() => { setPrompt(draftPrompt); setEditingPrompt(false) }}>
+                    Save
+                  </button>
+                </div>
+              ) : (
+                <p className="aig-review-prompt-text">{prompt}</p>
+              )}
+            </div>
+
+            {/* Settings rows */}
+            <div className="aig-review-settings">
+              {rows.map(row => (
+                <div key={row.label} className="aig-review-row">
+                  <span className="aig-review-row-key">{row.label}</span>
+                  <span className="aig-review-row-val">{row.value}</span>
+                  <button type="button" className="aig-review-edit-btn" onClick={row.onEdit}>
+                    <Edit2 size={12} strokeWidth={2} /> Edit
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Cost summary */}
+            <div className="aig-review-cost">
+              <span className="aig-review-cost-label">Total cost</span>
+              <span className="aig-review-cost-value">{creditCost} credit{creditCost !== 1 ? 's' : ''}</span>
+            </div>
+          </div>
+
+          {/* Right: canvas preview */}
+          <div className="aig-review-right">
+            <div className="aig-review-canvas-wrap">
+              <div className="aig-review-canvas" style={{ aspectRatio: previewAspect }}>
+                <div className="aig-review-canvas-inner">
+                  <Sparkles size={28} strokeWidth={1.25} className="aig-review-canvas-icon" />
+                  <p className="aig-review-canvas-label">
+                    {useCustom ? 'Custom' : selectedShape.label}<br />
+                    <span>{useCustom ? `${customW} × ${customH}` : `${selectedShape.w} × ${selectedShape.h}`} px</span>
+                  </p>
+                </div>
+              </div>
+              <p className="aig-review-canvas-meta">
+                {style} · {model} · {quality}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="aig-setup-footer aig-setup-footer--generate">
+          <span className="aig-setup-footer-hint">
+            <span className="aig-review-credit-dot" />
+            {creditCost} credit{creditCost !== 1 ? 's' : ''} will be used
+          </span>
+          <div className="aig-setup-footer-actions">
+            <button type="button" className="aig-setup-back-btn" onClick={() => setStep('options')}>
+              Back
+            </button>
+            <button type="button" className="aig-setup-generate-btn" onClick={handleGenerate}>
+              <Sparkles size={16} strokeWidth={2} /> Generate Image
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  /* ══ MY IMAGES GALLERY ══ */
+  if (step === 'gallery') {
+    return (
+      <div className="aig-step-shell aig-step-shell--gallery">
+        {/* Nav */}
+        <nav className="aig-step-nav">
+          <button
+            type="button"
+            className="aig-back-btn"
+            onClick={() => setStep(sessions.length > 0 ? 'workspace' : 'prompt')}
+          >
+            <ChevronLeft size={15} /> Back
+          </button>
+          <span className="aig-step-nav-title">My Images</span>
+          <div className="aig-step-nav-right">
+            <span className="aig-credits-badge">&#10022; 150 Credits</span>
+          </div>
+        </nav>
+
+        {/* Body */}
+        <div className="aig-gallery-page">
+          {allImages.length === 0 ? (
+            <div className="aig-gallery-empty">
+              <div className="aig-gallery-empty-icon">
+                <svg width="52" height="52" viewBox="0 0 52 52" fill="none" aria-hidden>
+                  <rect x="4" y="10" width="44" height="34" rx="5" stroke="currentColor" strokeWidth="1.5" strokeDasharray="5 3" />
+                  <circle cx="18" cy="22" r="4" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M4 34l12-9 9 7 7-6 16 14" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <p className="aig-gallery-empty-title">No images yet</p>
+              <p className="aig-gallery-empty-sub">Generate your first image to see it here.</p>
+              <button
+                type="button"
+                className="aig-gallery-empty-btn"
+                onClick={() => setStep('prompt')}
+              >
+                <Sparkles size={14} strokeWidth={2} /> Start Creating
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="aig-gallery-toolbar">
+                <span className="aig-gallery-count">{allImages.length} image{allImages.length !== 1 ? 's' : ''} generated</span>
+                <button
+                  type="button"
+                  className="aig-gallery-new-btn"
+                  onClick={() => setStep('prompt')}
+                >
+                  <Plus size={13} strokeWidth={2.5} /> New Image
+                </button>
+              </div>
+              <div className="aig-gallery-grid">
+                {allImages.map(img => (
+                  <div
+                    key={img.id}
+                    className="aig-gallery-card"
+                    onClick={() => {
+                      setActiveSessionId(img.sessionId)
+                      setShowEmpty(false)
+                      setStep('workspace')
+                    }}
+                  >
+                    <div className="aig-gallery-card-img-wrap">
+                      <img src={img.imageUrl} alt={img.prompt} className="aig-gallery-card-img" loading="lazy" />
+                      <div className="aig-gallery-card-overlay">
+                        <a
+                          href={img.imageUrl}
+                          download={`athena-image.png`}
+                          className="aig-gallery-card-btn"
+                          title="Download"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <Download size={13} strokeWidth={1.75} />
+                        </a>
+                        <button
+                          type="button"
+                          className="aig-gallery-card-btn"
+                          title="Reuse prompt"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setWorkPrompt(img.prompt)
+                            setActiveSessionId(img.sessionId)
+                            setShowEmpty(false)
+                            setStep('workspace')
+                          }}
+                        >
+                          <Shuffle size={13} strokeWidth={1.75} />
+                        </button>
+                        <button
+                          type="button"
+                          className="aig-gallery-card-btn aig-gallery-card-btn--danger"
+                          title="Delete"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSessions(prev => prev.map(s => ({
+                              ...s,
+                              generations: s.generations.filter(g => g.id !== img.id)
+                            })))
+                          }}
+                        >
+                          <Trash2 size={13} strokeWidth={1.75} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="aig-gallery-card-caption">
+                      <span className="aig-gallery-card-prompt">
+                        {img.prompt.length > 60 ? img.prompt.slice(0, 60) + '\u2026' : img.prompt}
+                      </span>
+                      <span className="aig-gallery-card-meta">{img.model}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   /* ══ WORKSPACE ══ */
   return (
     <div className="aig-step-shell aig-step-shell--workspace">
@@ -425,6 +1069,17 @@ export default function AIImageStudio({ onBack }) {
         </button>
         <span className="aig-step-nav-title">AI Image Studio</span>
         <div className="aig-step-nav-right">
+          <button
+            type="button"
+            className="aig-my-images-btn"
+            onClick={() => setStep('gallery')}
+          >
+            <Images size={14} strokeWidth={2} />
+            My Images
+            {allImages.length > 0 && (
+              <span className="aig-my-images-count">{allImages.length}</span>
+            )}
+          </button>
           <span className="aig-credits-badge">&#10022; 150 Credits</span>
         </div>
       </nav>

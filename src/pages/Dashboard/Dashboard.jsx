@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import Home from '../Home/Home.jsx'
 import Videos from '../Videos/Videos.jsx'
 import Avatars from '../Avatars/Avatars.jsx'
@@ -28,6 +29,7 @@ import CreateAvatarModal from '../../components/ui/CreateAvatarModal/CreateAvata
 import CreateMenuModal from '../../components/ui/CreateMenuModal/CreateMenuModal.jsx'
 import AIPptGenerator from '../Slides/AIPptGenerator.jsx'
 import PptBuilder from '../Slides/PptBuilder/PptBuilder.jsx'
+import AIImageStudio from '../Slides/AIImageStudio.jsx'
 import AIPptEditor from '../Slides/AIPptComponents/AIPptEditor.jsx'
 import SlidesComingSoon from '../Slides/SlidesComingSoon.jsx'
 import { getAvatarTypeOption } from '../Avatars/avatarTypeOptions.js'
@@ -559,9 +561,6 @@ function Dashboard({ onCreate, initialSection }) {
             />
           )}
           {section === 'brandkits' && <BrandKits />}
-          {section === 'image-ai' && (
-            <SlidesComingSoon section={section} onBackHome={() => goToSection('home')} />
-          )}
           {section === 'image-editor' && (
             <SlidesComingSoon section={section} onBackHome={() => goToSection('home')} />
           )}
@@ -579,6 +578,13 @@ function Dashboard({ onCreate, initialSection }) {
           </main>
         </div>
       </div>
+
+      {section === 'image-ai' && createPortal(
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, isolation: 'isolate' }}>
+          <AIImageStudio onBack={() => goToSection('home')} />
+        </div>,
+        document.body
+      )}
 
       <CreateMenuModal
         isOpen={showCreateMenu}
