@@ -47,7 +47,7 @@ const QUICK_CREATE_LABELS = {
     'image-editor': ['Canvas', 'Editing'],
 }
 
-function Home({ onCreate, onEdit, onBrowseTemplates, onSelectTemplate, onNavigate }) {
+function Home({ onCreate, onEdit, onBrowseTemplates, onSelectTemplate, onNavigate, onCreateWithLocation }) {
     const { user } = useAuth();
     const firstName = user?.name ? user.name.split(' ')[0] : (user?.email ? user.email.split('@')[0] : 'User');
 
@@ -259,6 +259,8 @@ function Home({ onCreate, onEdit, onBrowseTemplates, onSelectTemplate, onNavigat
     const handleQuickCreate = (id) => {
         if (id === 'avatar-video') {
             onCreate?.()
+        } else if (onCreateWithLocation) {
+            onCreateWithLocation(id)
         } else {
             onNavigate?.(id)
         }

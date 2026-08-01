@@ -8,13 +8,14 @@ import AIPptOutline from './AIPptComponents/AIPptOutline'
 import AIPptGenerating from './AIPptComponents/AIPptGenerating'
 import AIPptEditor from './AIPptComponents/AIPptEditor'
 
-export default function AIPptGenerator({ onBack, onComplete }) {
+export default function AIPptGenerator({ onBack, onComplete, createContext: _createContext = null }) {
   // 'wizard' | 'outline' | 'generating' | 'editor'
   const [stage, setStage] = useState('wizard')
   
   // Shared State
   const [outlineData, setOutlineData] = useState([])
   const [config, setConfig] = useState({})
+  // _createContext ({ optionId, workspaceId, folderId }) reserved for a future name/save step.
 
   const handleWizardComplete = (generatedOutline, generatorConfig) => {
     setOutlineData(generatedOutline)

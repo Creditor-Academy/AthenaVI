@@ -26,6 +26,7 @@ import TranslateVideoModal from '../../components/ui/TranslateVideoModal/Transla
 import CreateVideoModal from '../../components/ui/CreateVideoModal/CreateVideoModal.jsx'
 import CreateAvatarModal from '../../components/ui/CreateAvatarModal/CreateAvatarModal.jsx'
 import CreateMenuModal from '../../components/ui/CreateMenuModal/CreateMenuModal.jsx'
+import CreateLocationModal from '../../components/ui/CreateLocationModal/CreateLocationModal.jsx'
 import AIPptGenerator from '../Slides/AIPptGenerator.jsx'
 import PptBuilder from '../Slides/PptBuilder/PptBuilder.jsx'
 import AIPptEditor from '../Slides/AIPptComponents/AIPptEditor.jsx'
@@ -70,6 +71,13 @@ function Dashboard({ onCreate, initialSection }) {
   const [showAIAssistant, setShowAIAssistant] = useState(false)
   const [showCreateVideoModal, setShowCreateVideoModal] = useState(false)
   const [showCreateMenu, setShowCreateMenu] = useState(false)
+  const [showCreateLocationModal, setShowCreateLocationModal] = useState(false)
+  const [pendingCreateOptionId, setPendingCreateOptionId] = useState(null)
+  const [createLocationContext, setCreateLocationContext] = useState(null)
+  const [createLocationInitial, setCreateLocationInitial] = useState({
+    workspaceId: '',
+    folderId: '',
+  })
   const [editorData, setEditorData] = useState(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     try {
@@ -200,6 +208,23 @@ function Dashboard({ onCreate, initialSection }) {
     setCreateVideoModalContext(context)
     setShowCreateVideoModal(true)
   }, [])
+
+  const handleOpenCreateLocationModal = useCallback((optionId, context = null) => {
+    if (!optionId || optionId === 'avatar-video') return
+    setPendingCreateOptionId(optionId)
+    setCreateLocationInitial({
+      workspaceId: context?.initialWorkspaceId || '',
+      folderId: context?.initialFolderId || '',
+    })
+    setShowCreateLocationModal(true)
+  }, [])
+
+  const handleConfirmCreateLocation = useCallback(({ optionId, workspaceId, folderId }) => {
+    setCreateLocationContext({ optionId, workspaceId, folderId })
+    setShowCreateLocationModal(false)
+    setPendingCreateOptionId(null)
+    goToSection(optionId)
+  }, [goToSection])
 
   const handleCreateVideo = useCallback((config) => {
     setShowCreateVideoModal(false)
@@ -338,6 +363,13 @@ function Dashboard({ onCreate, initialSection }) {
     }
   }, [section, selectedTemplateForDetails, goToSection])
 
+  useEffect(() => {
+    if (!createLocationContext) return
+    if (section !== createLocationContext.optionId) {
+      setCreateLocationContext(null)
+    }
+  }, [section, createLocationContext])
+
   // Eagerly fetch and sync user profile on dashboard mount
   useEffect(() => {
     const syncProfile = async () => {
@@ -361,12 +393,22 @@ function Dashboard({ onCreate, initialSection }) {
           setEditorData(data)
           goToSection('editor')
         }}
+        createContext={
+          createLocationContext?.optionId === 'ppt-ai' ? createLocationContext : null
+        }
       />
     )
   }
 
   if (section === 'ppt-builder') {
-    return <PptBuilder onBack={() => goToSection('home')} />
+    return (
+      <PptBuilder
+        onBack={() => goToSection('home')}
+        createContext={
+          createLocationContext?.optionId === 'ppt-builder' ? createLocationContext : null
+        }
+      />
+    )
   }
 
   if (section === 'editor') {
@@ -464,6 +506,7 @@ function Dashboard({ onCreate, initialSection }) {
               onCreate={handleOpenCreateVideoModal}
               onEdit={handleEditVideo}
               onNavigate={goToSection}
+              onCreateWithLocation={handleOpenCreateLocationModal}
               onShowAIAssistant={() => setShowAIAssistant(true)}
               onBrowseTemplates={() => goToSection('templates')}
               onSelectTemplate={(bundle) => {
@@ -560,10 +603,22 @@ function Dashboard({ onCreate, initialSection }) {
           )}
           {section === 'brandkits' && <BrandKits />}
           {section === 'image-ai' && (
-            <SlidesComingSoon section={section} onBackHome={() => goToSection('home')} />
+            <SlidesComingSoon
+              section={section}
+              onBackHome={() => goToSection('home')}
+              createContext={
+                createLocationContext?.optionId === 'image-ai' ? createLocationContext : null
+              }
+            />
           )}
           {section === 'image-editor' && (
-            <SlidesComingSoon section={section} onBackHome={() => goToSection('home')} />
+            <SlidesComingSoon
+              section={section}
+              onBackHome={() => goToSection('home')}
+              createContext={
+                createLocationContext?.optionId === 'image-editor' ? createLocationContext : null
+              }
+            />
           )}
           {section === 'credits' && <Settings onBack={() => goToSection('home')} initialTab="billing" />}
           {section === 'profile' && <Profile onBack={() => goToSection('home')} />}
@@ -589,8 +644,20 @@ function Dashboard({ onCreate, initialSection }) {
         }}
         onNavigateSection={(id) => {
           setShowCreateMenu(false)
-          goToSection(id)
+          handleOpenCreateLocationModal(id)
         }}
+      />
+
+      <CreateLocationModal
+        isOpen={showCreateLocationModal}
+        onClose={() => {
+          setShowCreateLocationModal(false)
+          setPendingCreateOptionId(null)
+        }}
+        optionId={pendingCreateOptionId}
+        initialWorkspaceId={createLocationInitial.workspaceId}
+        initialFolderId={createLocationInitial.folderId}
+        onConfirm={handleConfirmCreateLocation}
       />
 
       {showAIAssistant && (

@@ -3,8 +3,9 @@ import TemplateSelector from './components/TemplateSelector';
 import AIPptEditor from '../AIPptComponents/AIPptEditor';
 import './PptBuilder.css';
 
-export default function PptBuilder({ onBack }) {
+export default function PptBuilder({ onBack, createContext: _createContext = null }) {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
+  // _createContext ({ optionId, workspaceId, folderId }) reserved for a future name/save step.
 
   if (!selectedTemplate) {
     return <TemplateSelector onSelect={setSelectedTemplate} onBack={onBack} />;
