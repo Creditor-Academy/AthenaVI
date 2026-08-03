@@ -582,13 +582,13 @@ export default function AIImageStudio({ onBack }) {
     const shapeLabel = useCustom ? `Custom · ${customW}:${customH}` : `${selectedShape.label} · ${selectedShape.ratio}`
 
     const MODEL_META = {
-      'Auto':             { icon: '✦', desc: 'Best model chosen automatically' },
-      'Nano Banana':      { icon: '⚡', desc: 'Fast generation, great quality' },
-      'Seedream':         { icon: '🌱', desc: 'Dreamlike, painterly results' },
-      'Flux':             { icon: '◈', desc: 'Crisp realism and detail' },
-      'Ideogram':         { icon: '◉', desc: 'Excellent text in images' },
-      'GPT Image':        { icon: '◎', desc: 'Instruction-following focused' },
-      'Stable Diffusion': { icon: '◆', desc: 'Open-source, highly flexible' },
+      'Auto':             { icon: '✦', desc: 'Best model chosen automatically', accent: '#7c6ff7', badge: 'Recommended' },
+      'Nano Banana':      { icon: '⚡', desc: 'Fast generation, great quality',  accent: '#f5a623', badge: 'Fastest' },
+      'Seedream':         { icon: '🌱', desc: 'Dreamlike, painterly results',     accent: '#34c87a', badge: 'Artistic' },
+      'Flux':             { icon: '◈', desc: 'Crisp realism and detail',          accent: '#4facfe', badge: 'Realistic' },
+      'Ideogram':         { icon: '◉', desc: 'Excellent text in images',          accent: '#f093fb', badge: 'Text-first' },
+      'GPT Image':        { icon: '◎', desc: 'Instruction-following focused',     accent: '#10c9a4', badge: 'Precise' },
+      'Stable Diffusion': { icon: '◆', desc: 'Open-source, highly flexible',      accent: '#ff7675', badge: 'Flexible' },
     }
     const STYLE_GRADIENTS = {
       'Dynamic':       'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -599,6 +599,16 @@ export default function AIImageStudio({ onBack }) {
       'Watercolor':    'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
       'Minimal':       'linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%)',
       'Sketch':        'linear-gradient(135deg, #d3cce3 0%, #e9e4f0 100%)',
+    }
+    const STYLE_DESC = {
+      'Dynamic':       'Bold energy, high contrast',
+      'Photorealistic':'True-to-life photography',
+      'Cinematic':     'Dark, moody film aesthetic',
+      '3D Render':     'Clean digital 3D look',
+      'Anime':         'Japanese animation style',
+      'Watercolor':    'Soft painterly washes',
+      'Minimal':       'Clean lines, lots of space',
+      'Sketch':        'Hand-drawn pencil feel',
     }
 
     const SideItem = ({ label, value, id }) => (
@@ -648,14 +658,30 @@ export default function AIImageStudio({ onBack }) {
               {activeOptStep === 'Model' && (
                 <div className="aig-opts-section">
                   <div className="aig-model-grid">
-                    {MODELS.map(m => (
-                      <button key={m} type="button"
-                        className={`aig-model-card ${model === m ? 'aig-model-card--active' : ''}`}
-                        onClick={() => setModel(m)}>
-                        <span className="aig-model-name">{m}</span>
-                        {m === 'Auto' && <span className="aig-model-sub">recommended</span>}
-                      </button>
-                    ))}
+                    {MODELS.map(m => {
+                      const meta = MODEL_META[m]
+                      const isActive = model === m
+                      return (
+                        <button key={m} type="button"
+                          className={`aig-model-card ${isActive ? 'aig-model-card--active' : ''}`}
+                          style={{ '--model-accent': meta.accent }}
+                          onClick={() => setModel(m)}>
+                          <div className="aig-model-card-top">
+                            <span className="aig-model-icon" style={{ color: meta.accent }}>{meta.icon}</span>
+                            {isActive && (
+                              <span className="aig-model-check">
+                                <Check size={11} strokeWidth={3} />
+                              </span>
+                            )}
+                          </div>
+                          <span className="aig-model-name">{m}</span>
+                          <span className="aig-model-desc">{meta.desc}</span>
+                          <span className="aig-model-badge" style={{ color: meta.accent, background: `${meta.accent}18` }}>
+                            {meta.badge}
+                          </span>
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
               )}
@@ -664,15 +690,25 @@ export default function AIImageStudio({ onBack }) {
               {activeOptStep === 'Style' && (
                 <div className="aig-opts-section">
                   <div className="aig-style-grid">
-                    {STYLES.map(s => (
-                      <button key={s} type="button"
-                        className={`aig-style-card ${style === s ? 'aig-style-card--active' : ''}`}
-                        onClick={() => setStyle(s)}>
-                        <div className="aig-style-swatch" style={{ background: STYLE_GRADIENTS[s] }} />
-                        <span className="aig-style-name">{s}</span>
-                        {style === s && <span className="aig-style-check"><Check size={12} strokeWidth={3}/></span>}
-                      </button>
-                    ))}
+                    {STYLES.map(s => {
+                      const isActive = style === s
+                      return (
+                        <button key={s} type="button"
+                          className={`aig-style-card ${isActive ? 'aig-style-card--active' : ''}`}
+                          onClick={() => setStyle(s)}>
+                          <div className="aig-style-card-top">
+                            <div className="aig-style-swatch" style={{ background: STYLE_GRADIENTS[s] }} />
+                            {isActive && (
+                              <span className="aig-style-check">
+                                <Check size={10} strokeWidth={3} />
+                              </span>
+                            )}
+                          </div>
+                          <span className="aig-style-name">{s}</span>
+                          <span className="aig-style-desc">{STYLE_DESC[s]}</span>
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
               )}
@@ -681,21 +717,35 @@ export default function AIImageStudio({ onBack }) {
               {activeOptStep === 'Quality' && (
                 <div className="aig-opts-section">
                   <div className="aig-quality-grid">
-                    {QUALITIES.map((q, i) => (
-                      <button key={q} type="button"
-                        className={`aig-quality-card ${quality === q ? 'aig-quality-card--active' : ''}`}
-                        onClick={() => setQuality(q)}>
-                        <div className="aig-quality-tier" data-tier={i} />
-                        <div className="aig-quality-body">
-                          <div className="aig-quality-top-row">
-                            <span className="aig-quality-name">{q}</span>
-                            <span className="aig-quality-cost">{QUALITY_META[q].credits} cr</span>
+                    {QUALITIES.map((q, i) => {
+                      const isActive = quality === q
+                      const meta = QUALITY_META[q]
+                      return (
+                        <button key={q} type="button"
+                          className={`aig-quality-card ${isActive ? 'aig-quality-card--active' : ''}`}
+                          data-tier={i}
+                          onClick={() => setQuality(q)}>
+                          {/* tier bar — 1, 2 or 3 filled segments */}
+                          <div className="aig-quality-tier-row">
+                            {[0,1,2].map(seg => (
+                              <div key={seg} className={`aig-quality-seg ${seg <= i ? 'aig-quality-seg--on' : ''}`} />
+                            ))}
                           </div>
-                          <p className="aig-quality-desc">{QUALITY_META[q].desc}</p>
-                        </div>
-                        {quality === q && <span className="aig-quality-check"><Check size={13} strokeWidth={3}/></span>}
-                      </button>
-                    ))}
+                          <div className="aig-quality-body">
+                            <div className="aig-quality-top-row">
+                              <span className="aig-quality-name">{q}</span>
+                              {isActive && (
+                                <span className="aig-quality-check">
+                                  <Check size={10} strokeWidth={3} />
+                                </span>
+                              )}
+                            </div>
+                            <p className="aig-quality-desc">{meta.desc}</p>
+                          </div>
+                          <span className="aig-quality-cost">{meta.credits} cr</span>
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
               )}
@@ -769,16 +819,25 @@ export default function AIImageStudio({ onBack }) {
                           </svg>
                         )
                       },
-                    ].map(t => (
-                      <button key={t.id} type="button"
-                        className={`aig-type-card ${visualType === t.id ? 'aig-type-card--active' : ''}`}
-                        onClick={() => setVisualType(t.id)}>
-                        <div className="aig-type-visual">{t.svg}</div>
-                        <span className="aig-type-name">{t.id}</span>
-                        <span className="aig-type-desc">{t.desc}</span>
-                        {visualType === t.id && <span className="aig-type-check"><Check size={12} strokeWidth={3}/></span>}
-                      </button>
-                    ))}
+                    ].map(t => {
+                      const isActive = visualType === t.id
+                      return (
+                        <button key={t.id} type="button"
+                          className={`aig-type-card ${isActive ? 'aig-type-card--active' : ''}`}
+                          onClick={() => setVisualType(t.id)}>
+                          <div className="aig-type-card-top">
+                            <div className="aig-type-visual">{t.svg}</div>
+                            {isActive && (
+                              <span className="aig-type-check">
+                                <Check size={10} strokeWidth={3} />
+                              </span>
+                            )}
+                          </div>
+                          <span className="aig-type-name">{t.id}</span>
+                          <span className="aig-type-desc">{t.desc}</span>
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
               )}
@@ -823,31 +882,19 @@ export default function AIImageStudio({ onBack }) {
     return (
       <div className="aig-step-shell aig-step-shell--setup">
 
-        {/* Nav */}
-        <nav className="aig-step-nav">
-          <button type="button" className="aig-back-btn" onClick={() => setStep('options')}>
-            <ChevronLeft size={15} /> Back
-          </button>
-          <div className="aig-wizard-steps">
-            <span className="aig-wizard-step aig-wizard-step--done">1</span>
-            <span className="aig-wizard-line aig-wizard-line--done" />
-            <span className="aig-wizard-step aig-wizard-step--done">2</span>
-            <span className="aig-wizard-line aig-wizard-line--done" />
-            <span className="aig-wizard-step aig-wizard-step--done">3</span>
-            <span className="aig-wizard-line aig-wizard-line--done" />
-            <span className="aig-wizard-step aig-wizard-step--active">4</span>
-          </div>
-          <div className="aig-step-nav-right">
-            <span className="aig-credits-badge">&#10022; 150 Credits</span>
-          </div>
-        </nav>
-
         <div className="aig-review-body">
           {/* Left: summary */}
           <div className="aig-review-left">
             <div className="aig-review-heading">
-              <h2 className="aig-setup-h2">Review &amp; generate</h2>
-              <p className="aig-setup-sub">Check everything looks right, then hit Generate.</p>
+              <div className="aig-review-heading-row">
+                <div>
+                  <h2 className="aig-setup-h2">Review &amp; generate</h2>
+                  <p className="aig-setup-sub">Check everything looks right, then hit Generate.</p>
+                </div>
+                <button type="button" className="aig-review-edit-all-btn" onClick={() => setStep('options')}>
+                  <Edit2 size={13} strokeWidth={2} /> Edit settings
+                </button>
+              </div>
             </div>
 
             {/* Prompt block */}
@@ -879,15 +926,12 @@ export default function AIImageStudio({ onBack }) {
               )}
             </div>
 
-            {/* Settings rows */}
+            {/* Settings rows — no individual edit buttons */}
             <div className="aig-review-settings">
               {rows.map(row => (
                 <div key={row.label} className="aig-review-row">
                   <span className="aig-review-row-key">{row.label}</span>
                   <span className="aig-review-row-val">{row.value}</span>
-                  <button type="button" className="aig-review-edit-btn" onClick={row.onEdit}>
-                    <Edit2 size={12} strokeWidth={2} /> Edit
-                  </button>
                 </div>
               ))}
             </div>
