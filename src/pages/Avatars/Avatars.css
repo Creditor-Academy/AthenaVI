@@ -67,8 +67,8 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  object-position: center bottom;
+  object-fit: cover;
+  object-position: center top;
   display: block;
 }
 
@@ -247,6 +247,15 @@
 
 .avatars-library-card__meta {
   align-items: center;
+}
+
+.avatars-library-card__meta .meta-left h4 {
+  margin: 0 0 1px 0;
+  line-height: 1.2;
+}
+
+.avatars-library-card__meta .meta-row-small {
+  margin-top: 0;
 }
 
 .avatars-library-card__role {
@@ -2932,6 +2941,17 @@
     background: transparent;
     color: var(--text-main);
     border: 1px solid var(--border-color);
+    height: 44px;
+    min-height: 44px;
+    max-height: 44px;
+    padding: 0 18px;
+    box-sizing: border-box;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .videos-actions .btn-secondary.videos-create-btn:hover {

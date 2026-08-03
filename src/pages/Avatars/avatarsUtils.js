@@ -51,7 +51,6 @@ export const AVATAR_FILTER_OPTIONS = [
   { value: 'all', label: 'All avatars' },
   { value: 'female', label: 'Female' },
   { value: 'male', label: 'Male' },
-  { value: 'unknown', label: 'Unknown gender' },
 ];
 
 export const AVATAR_GROUP_OPTIONS = [

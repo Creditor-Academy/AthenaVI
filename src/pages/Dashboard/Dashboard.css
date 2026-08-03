@@ -47,26 +47,18 @@
   transform: scale(1.02);
 }
 
-.topbar-brand-logo {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  background: linear-gradient(135deg, var(--primary, #7c3aed) 0%, #9333ea 100%);
-  color: #ffffff;
-  font-weight: 700;
-  font-size: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 3px 10px color-mix(in srgb, var(--primary) 30%, transparent);
+.topbar-brand-img {
+  height: 34px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  max-width: 160px;
+  transition: filter 0.2s ease;
 }
 
-.topbar-brand-name {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-main, #ffffff);
-  letter-spacing: -0.01em;
-  white-space: nowrap;
+/* Show white logo in dark mode */
+[data-mode="dark"] .topbar-brand-img {
+  filter: brightness(0) invert(1);
 }
 
 /* Dashboard Body containing Sidebar (outside) & Page Container Card */
@@ -421,23 +413,26 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   margin: 0 6px 0 0;
-  padding: 7px 14px;
+  padding: 7px 16px;
   border: none;
-  border-radius: 8px;
+  border-radius: 999px;
   background: var(--primary);
-  color: white; /* Stronger than inverse for accessibility in dark mode */
+  color: white;
   font-family: inherit;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: -0.01em;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
   white-space: nowrap;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--primary) 30%, transparent);
 }
 
 .topbar-create-btn:hover {
   background: var(--primary-hover);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 40%, transparent);
 }
 
 .topbar-create-btn:focus-visible {
@@ -1619,6 +1614,17 @@
   color: var(--primary-contrast) !important;
   border: none;
   box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.25);
+  height: 44px;
+  min-height: 44px;
+  max-height: 44px;
+  padding: 0 18px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .content.content--workspace-consistent .videos-page .videos-create-btn:hover {

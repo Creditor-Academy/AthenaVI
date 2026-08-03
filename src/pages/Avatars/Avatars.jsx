@@ -2,10 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   MdAdd,
   MdFace,
+  MdFilterList,
   MdGridView,
   MdLock,
   MdPeople,
   MdPublic,
+  MdSort,
   MdViewList,
 } from 'react-icons/md';
 import heygenService from '../../services/heygenService';
@@ -24,7 +26,7 @@ import { consumeDashboardSearchContext } from '../../utils/dashboardSearchNaviga
 import { getSanitizedErrorMessage } from '../../utils/userFacingMessage';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
 import AvatarsSkeleton from '../page-skeleton/AvatarsSkeleton';
-import VideosToolbar from '../Videos/VideosToolbar.jsx';
+import VideosToolbar, { VideosToolbarDropdown } from '../Videos/VideosToolbar.jsx';
 import '../Videos/Videos.css';
 import AvatarCreationCard from './AvatarCreationCard.jsx';
 import AvatarLibraryCard from './AvatarLibraryCard.jsx';
@@ -530,6 +532,26 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
                 <MdViewList />
               </button>
             </div>
+
+            <VideosToolbarDropdown
+              label="Filter"
+              icon={MdFilterList}
+              value={filterBy}
+              defaultValue="all"
+              options={AVATAR_FILTER_OPTIONS}
+              onChange={setFilterBy}
+              menuLabel="Filter avatars"
+            />
+
+            <VideosToolbarDropdown
+              label="Sort"
+              icon={MdSort}
+              value={sortBy}
+              defaultValue="name_asc"
+              options={AVATAR_SORT_OPTIONS}
+              onChange={setSortBy}
+              menuLabel="Sort avatars"
+            />
             {activeSection === 'private' && onCreateAvatar ? (
               <>
                 <button

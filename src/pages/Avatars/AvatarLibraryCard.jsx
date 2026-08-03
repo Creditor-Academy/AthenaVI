@@ -39,13 +39,9 @@ function AvatarLibraryCard({ avatar, onOpen, onCompleteConsent, onUseInProject, 
       <div className="workspace-item-meta avatars-library-card__meta">
         <div className="meta-left">
           <h4 title={avatar.name}>{avatar.name}</h4>
-          <p className="avatars-library-card__role" title={avatar.role}>
-            {avatar.role}
-          </p>
           <div className="meta-row-small">
-            <span className="meta-small">{avatar.gender || 'Unknown'}</span>
-            {avatar.style ? (
-              <span className="meta-small">{avatar.style}</span>
+            {avatar.gender && avatar.gender.toLowerCase() !== 'unknown' ? (
+              <span className="meta-small">{avatar.gender}</span>
             ) : null}
           </div>
         </div>

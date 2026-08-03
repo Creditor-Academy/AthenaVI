@@ -3,6 +3,7 @@ import { Search, ShoppingBag, Bell, Menu, X, PanelLeft } from 'lucide-react'
 import ProfileDropdown from '../../ui/ProfileDropdown/ProfileDropdown.jsx'
 import DashboardSearchPanel from '../DashboardSearch/DashboardSearchPanel.jsx'
 import '../DashboardSearch/DashboardSearchPanel.css'
+import LogoImg from '../../../assets/herologo.png'
 
 function DashboardTopbar({
     sidebarMobileOpen,
@@ -94,8 +95,7 @@ function DashboardTopbar({
                         onClick={onBrandClick}
                         aria-label="Virtual Studio, go to home"
                     >
-                        <span className="topbar-brand-logo" aria-hidden>V</span>
-                        <span className="topbar-brand-name">Virtual Studio</span>
+                        <img src={LogoImg} alt="Virtual Studio" className="topbar-brand-img" />
                     </button>
                     <button
                         type="button"

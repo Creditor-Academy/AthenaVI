@@ -18,7 +18,7 @@ export function VideosToolbarDropdown({
   const rootRef = useRef(null);
   const currentOption = options.find((option) => option.value === value);
   const currentText = currentOption?.label || label;
-  const isActive = value !== defaultValue && value !== 'none' && value !== 'completed_desc';
+  const isActive = false; // Intentionally not highlighting active state — cleaner UX
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -77,7 +77,9 @@ export function VideosToolbarDropdown({
 }
 
 function VideosToolbar({
-  searchQuery,
+  filterBy,
+  onFilterChange,
+  searchQuery = '',
   onSearchChange,
   sortBy,
   onSortChange,
@@ -88,7 +90,7 @@ function VideosToolbar({
   activeCategoryLabel = 'work',
   onResetFilters,
 }) {
-  const isFiltered = Boolean(searchQuery.trim()) || groupBy !== 'none' || sortBy !== 'completed_desc';
+  const isFiltered = Boolean((searchQuery || '').trim()) || (filterBy && filterBy !== 'all');
 
   return (
     <div className="videos-toolbar-wrapper">
@@ -117,42 +119,6 @@ function VideosToolbar({
           )}
         </div>
       </div>
-
-      {/* Active Filter Chips / Clear Strip */}
-      {isFiltered ? (
-        <div className="active-filters-strip fade-in-fast">
-          <span className="active-filters-label">Active Filters:</span>
-          {groupBy !== 'none' ? (
-            <span className="filter-chip">
-              Grouped: {groupOptions.find((o) => o.value === groupBy)?.label}
-              <button type="button" onClick={() => onGroupChange('none')}>
-                <MdClose size={12} />
-              </button>
-            </span>
-          ) : null}
-          {sortBy !== 'completed_desc' ? (
-            <span className="filter-chip">
-              Sort: {sortOptions.find((o) => o.value === sortBy)?.label}
-              <button type="button" onClick={() => onSortChange('completed_desc')}>
-                <MdClose size={12} />
-              </button>
-            </span>
-          ) : null}
-          {searchQuery ? (
-            <span className="filter-chip">
-              Search: "{searchQuery}"
-              <button type="button" onClick={() => onSearchChange('')}>
-                <MdClose size={12} />
-              </button>
-            </span>
-          ) : null}
-          {onResetFilters ? (
-            <button type="button" className="reset-all-filters-btn" onClick={onResetFilters}>
-              Reset all
-            </button>
-          ) : null}
-        </div>
-      ) : null}
     </div>
   );
 }

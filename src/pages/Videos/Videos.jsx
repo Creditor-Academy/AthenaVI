@@ -6,6 +6,7 @@ import {
   MdApps,
   MdClose,
   MdDownload,
+  MdFilterList,
   MdGridView,
   MdImage,
   MdPresentToAll,
@@ -315,6 +316,17 @@ function Videos({ onEdit }) {
                 <MdViewList size={18} />
               </button>
             </div>
+
+            {/* Filter Dropdown */}
+            <VideosToolbarDropdown
+              label="Filter"
+              icon={MdFilterList}
+              value={filterBy}
+              defaultValue="all"
+              options={dynamicFilterOptions}
+              onChange={setFilterBy}
+              menuLabel="Filter options"
+            />
 
             {/* Sort Dropdown */}
             <VideosToolbarDropdown
