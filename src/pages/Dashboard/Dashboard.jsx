@@ -503,21 +503,11 @@ function Dashboard({ onCreate, initialSection }) {
         onSearchActiveIndexChange={dashboardSearch.setActiveIndex}
         onSearchMoveActive={dashboardSearch.moveActive}
         onBrandClick={() => (isAdminPortal ? handlePortalToggle() : goToSection('home'))}
+        onToggleSuperadmin={handlePortalToggle}
       />
 
       <div className="dashboard-body">
         <div className="dashboard-sidebar-column">
-          {canAccessSuperadminPortal && (
-            <div className="dashboard-sidebar-header">
-              <PortalModeSwitcher
-                mode={isAdminPortal ? 'admin' : 'main'}
-                onSelectMain={handlePortalToggle}
-                onSelectAdmin={() => goToSection('admin-portal')}
-                onCloseMobile={() => setSidebarMobileOpen(false)}
-              />
-            </div>
-          )}
-
           {isAdminPortal ? (
             <AdminPortalSidebar
               activeTab={adminTab}

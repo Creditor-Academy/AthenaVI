@@ -2,10 +2,11 @@ import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../../../contexts/AuthContext'
 import { MdPerson, MdLogout, MdArrowDropDown, MdWarning } from 'react-icons/md'
+import { ShieldCheck } from 'lucide-react'
 import './ProfileDropdown.css'
 
-const ProfileDropdown = ({ onProfileClick, compact = false }) => {
-  const { user, logout } = useAuth()
+const ProfileDropdown = ({ onProfileClick, compact = false, isAdminPortal = false, onToggleSuperadmin }) => {
+  const { user, logout, canAccessSuperadminPortal } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
@@ -107,6 +108,29 @@ const ProfileDropdown = ({ onProfileClick, compact = false }) => {
             <MdPerson size={18} />
             <span>Profile</span>
           </button>
+
+          {canAccessSuperadminPortal && (
+            <div className="profile-dropdown-toggle-row">
+              <div className="profile-dropdown-toggle-label">
+                <ShieldCheck size={18} />
+                <span>Superadmin</span>
+              </div>
+              <button
+                type="button"
+                className={`profile-switch-toggle ${isAdminPortal ? 'active' : ''}`}
+                onClick={() => {
+                  onToggleSuperadmin?.(!isAdminPortal)
+                  setIsOpen(false)
+                }}
+                role="switch"
+                aria-checked={isAdminPortal}
+                aria-label="Toggle Superadmin mode"
+                title={isAdminPortal ? 'Turn off Superadmin mode' : 'Turn on Superadmin mode'}
+              >
+                <span className="profile-switch-thumb" />
+              </button>
+            </div>
+          )}
 
           <div className="dropdown-divider"></div>
 

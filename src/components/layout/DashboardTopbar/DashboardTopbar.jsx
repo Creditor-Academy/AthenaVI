@@ -16,6 +16,7 @@ function DashboardTopbar({
     onNotificationClick,
     onCartClick,
     isAdminPortal = false,
+    onToggleSuperadmin,
     searchQuery = '',
     onSearchQueryChange,
     searchInputRef,
@@ -170,7 +171,12 @@ function DashboardTopbar({
                             <ShoppingBag size={18} strokeWidth={1.75} aria-hidden />
                         </button>
                     </div>
-                    <ProfileDropdown compact onProfileClick={() => goToSection('profile')} />
+                    <ProfileDropdown
+                        compact
+                        onProfileClick={() => goToSection('profile')}
+                        isAdminPortal={isAdminPortal}
+                        onToggleSuperadmin={onToggleSuperadmin}
+                    />
 
                     <button
                         type="button"

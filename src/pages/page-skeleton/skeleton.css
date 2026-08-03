@@ -190,3 +190,129 @@
     background-position: 400px 0;
   }
 }
+
+/* Instagram-Style Granular Skeleton Loading */
+.insta-skeleton-card {
+  pointer-events: none !important;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.insta-skeleton-thumb {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  min-height: 140px;
+  overflow: hidden;
+  position: relative;
+}
+
+.insta-skeleton-media-pulse {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px 12px 0 0;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--primary) 6%, var(--bg-card)) 25%,
+    color-mix(in srgb, var(--primary) 16%, var(--bg-card)) 50%,
+    color-mix(in srgb, var(--primary) 6%, var(--bg-card)) 75%
+  );
+  background-size: 600px 100%;
+  animation: psShimmer 1.4s infinite linear;
+}
+
+.insta-skeleton-line {
+  display: block;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--primary) 8%, var(--bg-card)) 25%,
+    color-mix(in srgb, var(--primary) 20%, var(--bg-card)) 50%,
+    color-mix(in srgb, var(--primary) 8%, var(--bg-card)) 75%
+  );
+  background-size: 600px 100%;
+  animation: psShimmer 1.4s infinite linear;
+}
+
+.insta-skeleton-line--title {
+  height: 14px;
+  width: 78%;
+  margin-bottom: 8px;
+}
+
+.insta-skeleton-line--name {
+  height: 11px;
+  width: 45%;
+}
+
+.insta-skeleton-line--tag {
+  height: 10px;
+  width: 55%;
+}
+
+.insta-skeleton-line--size {
+  height: 10px;
+  width: 35%;
+}
+
+.insta-skeleton-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--primary) 10%, var(--bg-card)) 25%,
+    color-mix(in srgb, var(--primary) 22%, var(--bg-card)) 50%,
+    color-mix(in srgb, var(--primary) 10%, var(--bg-card)) 75%
+  );
+  background-size: 600px 100%;
+  animation: psShimmer 1.4s infinite linear;
+}
+
+.insta-skeleton-icon-pulse {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--primary) 10%, var(--bg-card)) 25%,
+    color-mix(in srgb, var(--primary) 22%, var(--bg-card)) 50%,
+    color-mix(in srgb, var(--primary) 10%, var(--bg-card)) 75%
+  );
+  background-size: 600px 100%;
+  animation: psShimmer 1.4s infinite linear;
+}
+
+.insta-skeleton-btn-pulse {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--primary) 10%, var(--bg-card)) 25%,
+    color-mix(in srgb, var(--primary) 22%, var(--bg-card)) 50%,
+    color-mix(in srgb, var(--primary) 10%, var(--bg-card)) 75%
+  );
+  background-size: 600px 100%;
+  animation: psShimmer 1.4s infinite linear;
+}
+
+.insta-skeleton-user-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.insta-skeleton-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.insta-skeleton-row {
+  pointer-events: none !important;
+  align-items: center;
+}

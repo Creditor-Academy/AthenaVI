@@ -1,7 +1,7 @@
 import {
   Home,
   Building2,
-  Video,
+  Briefcase,
   Trash2,
   Library,
   BookOpen,
@@ -19,10 +19,10 @@ export const mainDashboardSidebarGroups = [
     items: [{ id: 'home', label: 'Home', Icon: Home }]
   },
   {
-    label: 'Videos',
+    label: 'Work',
     items: [
       { id: 'workspace', label: 'Workspace', Icon: Building2 },
-      { id: 'videos', label: 'My videos', Icon: Video }
+      { id: 'videos', label: 'My work', Icon: Briefcase }
     ]
   },
   {

@@ -1,87 +1,134 @@
 import './skeleton.css'
 
-const THUMB_VARIANT_CLASS = {
-  workspace: 'ps-skeleton-card__thumb--workspace',
-  folder: 'ps-skeleton-card__thumb--folder',
-  video: 'ps-skeleton-card__thumb--video',
-  default: '',
-}
-
 export function SkeletonItemCard({ className = '', variant = 'default' }) {
-  const thumbVariantClass = THUMB_VARIANT_CLASS[variant] || THUMB_VARIANT_CLASS.default
-  const thumbClassName = thumbVariantClass
-    ? `ps-skeleton-card__thumb ${thumbVariantClass}`
-    : 'ps-block ps-skeleton-card__thumb'
-
   return (
-    <article className={`ps-skeleton-card workspace-item-card ${className}`.trim()} aria-hidden>
-      <div className={thumbClassName} />
-      <div className="ps-block ps-skeleton-card__meta" />
+    <article className={`workspace-item-card videos-export-card insta-skeleton-card ${className}`.trim()} aria-hidden>
+      <div className="videos-export-card__thumb-btn">
+        <div className="card-thumb-container video-thumb insta-skeleton-thumb">
+          <div className="ps-block insta-skeleton-media-pulse" />
+        </div>
+      </div>
+
+      <div className="workspace-item-meta videos-export-card__meta insta-skeleton-meta">
+        <div className="meta-left" style={{ flex: 1 }}>
+          <div className="ps-block insta-skeleton-line insta-skeleton-line--title" />
+          <div className="insta-skeleton-user-row">
+            <div className="ps-block insta-skeleton-avatar" />
+            <div className="ps-block insta-skeleton-line insta-skeleton-line--name" />
+          </div>
+          <div className="meta-row-small insta-skeleton-meta-row">
+            <div className="ps-block insta-skeleton-line insta-skeleton-line--tag" />
+            <div className="ps-block insta-skeleton-line insta-skeleton-line--size" />
+          </div>
+        </div>
+        <div className="videos-export-card__actions">
+          <div className="ps-block insta-skeleton-btn-pulse" />
+        </div>
+      </div>
     </article>
   )
 }
 
 export function SkeletonCreateCard({ className = '' }) {
   return (
-    <article
-      className={`ps-skeleton-card ps-skeleton-create-card workspace-item-card ${className}`.trim()}
-      aria-hidden
-    >
-      <div className="ps-block ps-skeleton-create-card__body" />
+    <article className={`workspace-item-card insta-skeleton-card ${className}`.trim()} aria-hidden>
+      <div className="card-thumb-container video-thumb insta-skeleton-thumb">
+        <div className="ps-block insta-skeleton-media-pulse" />
+      </div>
     </article>
   )
 }
 
 export function SkeletonListHeader({ className = 'export-list-header' }) {
   return (
-    <div className={`ps-block ps-skeleton-list-header list-header ${className}`.trim()} aria-hidden />
+    <div className={`workspace-item-row export-list-header ${className}`.trim()} aria-hidden>
+      <div style={{ width: 44 }} />
+      <div className="col col-name">ITEM NAME</div>
+      <div className="col col-workspace">WORKSPACE</div>
+      <div className="col col-completed">COMPLETED</div>
+      <div className="col col-size">SIZE</div>
+      <div className="col col-rendered-by">CREATED BY</div>
+      <div className="row-actions">ACTIONS</div>
+    </div>
   )
 }
 
 export function SkeletonListRow({ className = 'export-item-row' }) {
   return (
-    <div
-      className={`ps-block ps-skeleton-list-row workspace-item-row ${className}`.trim()}
-      aria-hidden
-    />
+    <article className={`workspace-item-row export-item-row insta-skeleton-row ${className}`.trim()} aria-hidden>
+      <div className="row-icon-container">
+        <div className="ps-block insta-skeleton-icon-pulse" />
+      </div>
+
+      <div className="col col-name">
+        <div className="ps-block insta-skeleton-line insta-skeleton-line--title" />
+      </div>
+
+      <div className="col col-workspace">
+        <div className="ps-block insta-skeleton-line insta-skeleton-line--tag" />
+      </div>
+
+      <div className="col col-completed">
+        <div className="ps-block insta-skeleton-line insta-skeleton-line--size" />
+      </div>
+
+      <div className="col col-size">
+        <div className="ps-block insta-skeleton-line insta-skeleton-line--size" />
+      </div>
+
+      <div className="col col-rendered-by">
+        <div className="insta-skeleton-user-row">
+          <div className="ps-block insta-skeleton-avatar" />
+          <div className="ps-block insta-skeleton-line insta-skeleton-line--name" />
+        </div>
+      </div>
+
+      <div className="row-actions videos-export-row__actions">
+        <div className="ps-block insta-skeleton-btn-pulse" />
+      </div>
+    </article>
   )
 }
 
-export function SkeletonSectionHeader({ withAction = false }) {
+export function SkeletonSectionHeader({ title = 'Workspace Section', withAction = false }) {
   return (
     <div className="section-header-compact">
-      <div className="ps-block ps-skeleton-section-title" aria-hidden />
-      {withAction ? <div className="ps-block ps-skeleton-section-action" aria-hidden /> : null}
+      <div className="section-header-left">
+        <h3 className="section-header-title">{title}</h3>
+      </div>
+      {withAction ? <div className="ps-block insta-skeleton-line" style={{ width: 100, height: 32 }} aria-hidden /> : null}
     </div>
   )
 }
 
 export function SkeletonTab({ active = false, className = 'workspace-root-tab' }) {
   return (
-    <div
-      className={`ps-block ps-skeleton-tab ${className} ${active ? 'active' : ''}`.trim()}
-      aria-hidden
-    />
+    <div className={`workspace-root-tab ${active ? 'active' : ''} ${className}`.trim()} aria-hidden>
+      <div className="ps-block insta-skeleton-line" style={{ width: 60, height: 16 }} />
+    </div>
   )
 }
 
 export function SkeletonTemplateCard() {
   return (
-    <article className="ps-skeleton-card template-card-premium" aria-hidden>
-      <div className="ps-block ps-skeleton-template-card__thumb" />
-      <div className="ps-block ps-skeleton-template-card__meta" />
+    <article className="workspace-item-card insta-skeleton-card" aria-hidden>
+      <div className="ps-block insta-skeleton-media-pulse" style={{ minHeight: 160 }} />
+      <div className="workspace-item-meta" style={{ padding: 12 }}>
+        <div className="ps-block insta-skeleton-line insta-skeleton-line--title" />
+        <div className="ps-block insta-skeleton-line insta-skeleton-line--name" />
+      </div>
     </article>
   )
 }
 
 export function SkeletonProjectCard() {
   return (
-    <div className="project-card project-card--skeleton" aria-hidden>
+    <div className="project-card insta-skeleton-card" aria-hidden>
       <div className="project-thumb-container">
-        <div className="ps-block ps-skeleton-card__thumb" />
+        <div className="ps-block insta-skeleton-media-pulse" />
       </div>
       <div className="project-content">
-        <div className="ps-block ps-skeleton-project-card__meta" />
+        <div className="ps-block insta-skeleton-line insta-skeleton-line--title" />
       </div>
     </div>
   )

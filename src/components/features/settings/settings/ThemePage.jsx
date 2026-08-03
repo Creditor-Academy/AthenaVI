@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { MdPalette, MdLightMode, MdDarkMode, MdCheckCircle } from 'react-icons/md';
+import { MdPalette, MdLightMode, MdDarkMode, MdCheckCircle, MdInfoOutline, MdEdit, MdAdd } from 'react-icons/md';
 import { useTheme } from '../../../../contexts/ThemeContext';
 import {
   getAccentDisabledReason,
@@ -98,8 +98,6 @@ const ThemePage = () => {
           </div>
         </div>
 
-        <div className="appearance-divider" />
-
         <div className="appearance-block">
           <header className="block-header">
             <div>
@@ -108,71 +106,93 @@ const ThemePage = () => {
             </div>
           </header>
 
-          <div className="theme-selection-square-grid">
-            {themes.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                className={`theme-card-square ${theme === t.id ? 'active' : ''}`}
-                onClick={() => setTheme(t.id)}
-              >
-                <span className="theme-swatch-pill" style={{ background: `linear-gradient(135deg, ${t.color} 0%, ${t.secondary} 100%)` }} />
-                <div className="theme-card-info">
-                  <span className="theme-card-name">{t.name}</span>
-                  <span className="theme-card-desc">{t.desc}</span>
+          <div className="theme-palette-2col-layout">
+            {/* Left Column: Custom Colour Accent Option */}
+            <div className="custom-color-panel">
+              <div className="custom-color-header">
+                <h5>Custom Accent</h5>
+                <p>Pick an exact brand color for buttons, highlights, and links.</p>
+                <div className="custom-color-mode-hint">
+                  <MdInfoOutline size={16} />
+                  <span>
+                    {mode === 'light'
+                      ? 'Light accent colors are disabled in Light mode so buttons and links stay readable.'
+                      : 'Dark accent colors are disabled in Dark mode so buttons and links stay readable.'}
+                  </span>
                 </div>
-                {theme === t.id && <MdCheckCircle className="theme-square-check" />}
-              </button>
-            ))}
-          </div>
+              </div>
 
-          <div className="custom-color-panel">
-            <div className="custom-color-header">
-              <h5>Custom Accent</h5>
-              <p>Pick an exact brand color for buttons, highlights, and links.</p>
-              <p className="custom-color-mode-hint">
-                {mode === 'light'
-                  ? 'Light accent colors are disabled in Light mode so buttons and links stay readable.'
-                  : 'Dark accent colors are disabled in Dark mode so buttons and links stay readable.'}
-              </p>
+              <div className="custom-color-controls">
+                <label
+                  className={`custom-color-picker ${customAccentBlocked ? 'custom-color-picker--blocked' : ''}`}
+                  htmlFor="settings-custom-accent"
+                >
+                  <input
+                    id="settings-custom-accent"
+                    type="color"
+                    value={customAccentBlocked ? firstAllowedSwatch : customPrimary}
+                    onChange={(event) => handleCustomAccentChange(event.target.value)}
+                  />
+                  <div className="custom-color-preview-wrapper">
+                    <span
+                      className="custom-color-preview"
+                      style={{ backgroundColor: customAccentBlocked ? firstAllowedSwatch : customPrimary }}
+                    />
+                    <span className="custom-color-edit-badge" title="Edit accent color">
+                      <MdEdit />
+                    </span>
+                  </div>
+                  <span className="custom-color-hex-text">{(customAccentBlocked ? firstAllowedSwatch : customPrimary).toUpperCase()}</span>
+                </label>
+
+                <div className="custom-color-swatches">
+                  {QUICK_SWATCHES.map((swatch) => {
+                    const disabled = !isAccentAllowedForMode(swatch, mode);
+                    const disabledReason = getAccentDisabledReason(swatch, mode);
+
+                    return (
+                      <button
+                        key={swatch}
+                        type="button"
+                        disabled={disabled}
+                        className={`custom-swatch ${customPrimary.toLowerCase() === swatch.toLowerCase() ? 'active' : ''} ${disabled ? 'disabled' : ''}`}
+                        style={{ backgroundColor: swatch }}
+                        onClick={() => handleCustomAccentChange(swatch)}
+                        aria-label={disabled ? disabledReason : `Use accent ${swatch}`}
+                        title={disabled ? disabledReason : `Use accent ${swatch}`}
+                      />
+                    );
+                  })}
+                  <label
+                    className="custom-swatch custom-swatch-add"
+                    htmlFor="settings-custom-accent"
+                    title="Choose custom accent color"
+                    aria-label="Choose custom accent color"
+                  >
+                    <MdAdd size={20} />
+                  </label>
+                </div>
+              </div>
             </div>
 
-            <div className="custom-color-controls">
-              <label
-                className={`custom-color-picker ${customAccentBlocked ? 'custom-color-picker--blocked' : ''}`}
-                htmlFor="settings-custom-accent"
-              >
-                <input
-                  id="settings-custom-accent"
-                  type="color"
-                  value={customAccentBlocked ? firstAllowedSwatch : customPrimary}
-                  onChange={(event) => handleCustomAccentChange(event.target.value)}
-                />
-                <span
-                  className="custom-color-preview"
-                  style={{ backgroundColor: customAccentBlocked ? firstAllowedSwatch : customPrimary }}
-                />
-                <span>{(customAccentBlocked ? firstAllowedSwatch : customPrimary).toUpperCase()}</span>
-              </label>
-
-              <div className="custom-color-swatches">
-                {QUICK_SWATCHES.map((swatch) => {
-                  const disabled = !isAccentAllowedForMode(swatch, mode);
-                  const disabledReason = getAccentDisabledReason(swatch, mode);
-
-                  return (
-                    <button
-                      key={swatch}
-                      type="button"
-                      disabled={disabled}
-                      className={`custom-swatch ${customPrimary.toLowerCase() === swatch.toLowerCase() ? 'active' : ''} ${disabled ? 'disabled' : ''}`}
-                      style={{ backgroundColor: swatch }}
-                      onClick={() => handleCustomAccentChange(swatch)}
-                      aria-label={disabled ? disabledReason : `Use accent ${swatch}`}
-                      title={disabled ? disabledReason : `Use accent ${swatch}`}
-                    />
-                  );
-                })}
+            {/* Right Column: Preset Themes */}
+            <div className="theme-preset-column">
+              <div className="theme-selection-square-grid">
+                {themes.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    className={`theme-card-square ${theme === t.id ? 'active' : ''}`}
+                    onClick={() => setTheme(t.id)}
+                  >
+                    <span className="theme-swatch-pill" style={{ background: `linear-gradient(135deg, ${t.color} 0%, ${t.secondary} 100%)` }} />
+                    <div className="theme-card-info">
+                      <span className="theme-card-name">{t.name}</span>
+                      <span className="theme-card-desc">{t.desc}</span>
+                    </div>
+                    {theme === t.id && <MdCheckCircle className="theme-square-check" />}
+                  </button>
+                ))}
               </div>
             </div>
           </div>

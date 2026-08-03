@@ -385,6 +385,16 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.appearance-block:hover {
+  border-color: color-mix(in srgb, var(--primary) 25%, var(--border-color));
 }
 
 .block-header h4 {
@@ -399,36 +409,42 @@
   color: var(--text-muted);
 }
 
-/* Square Mode Selection Cards */
+/* Compact 4:3 Mode Selection Cards */
 .mode-selection-square-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
+  align-items: stretch;
   gap: 20px;
+  flex-wrap: wrap;
 }
 
 .mode-card-square {
   position: relative;
+  width: 220px;
+  min-width: 200px;
+  aspect-ratio: 4 / 3;
   background: var(--bg-surface);
-  border: 2px solid var(--border-color);
-  border-radius: 20px;
+  border: 1.5px solid var(--border-color);
+  border-radius: 18px;
   padding: 12px;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  justify-content: space-between;
+  box-sizing: border-box;
 }
 
 .mode-card-square:hover {
-  transform: translateY(-4px);
-  border-color: var(--text-muted);
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border-color));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 .mode-card-square.active {
-  background: var(--bg-card);
+  background: color-mix(in srgb, var(--primary) 5%, var(--bg-card));
   border-color: var(--primary);
-  box-shadow: 0 12px 30px rgba(var(--primary-rgb), 0.12);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--primary) 18%, transparent);
 }
 
 .mode-square-check {
@@ -442,8 +458,9 @@
 
 /* Mini UI Preview Box */
 .mode-preview-box {
-  height: 100px;
-  border-radius: 12px;
+  flex: 1;
+  width: 100%;
+  border-radius: 10px;
   display: flex;
   overflow: hidden;
   border: 1px solid var(--border-color);
@@ -545,6 +562,26 @@
   color: var(--text-muted);
 }
 
+/* 2-Column Theme Palette Layout */
+.theme-palette-2col-layout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.theme-preset-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (max-width: 1024px) {
+  .theme-palette-2col-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Theme Square Grid */
 .theme-selection-square-grid {
   display: grid;
@@ -555,28 +592,37 @@
 .theme-card-square {
   position: relative;
   background: var(--bg-surface);
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   border-radius: 16px;
-  padding: 12px;
+  padding: 14px 12px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+  transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   text-align: center;
 }
 
 .theme-card-square:hover {
-  transform: translateY(-2px);
-  border-color: var(--text-muted);
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border-color));
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
 }
 
 .theme-card-square.active {
-  background: var(--bg-card);
+  background: color-mix(in srgb, var(--primary) 6%, var(--bg-card));
   border: 2px solid var(--primary);
-  box-shadow: 0 8px 24px rgba(var(--primary-rgb), 0.1);
-  padding: 11px; /* Account for 2px border */
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--primary) 18%, transparent);
+  padding: 13.5px 11.5px;
+}
+
+.theme-swatch-pill {
+  width: 100%;
+  height: 48px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 80%, transparent);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.2);
 }
 
 .theme-swatch-box {
@@ -600,20 +646,22 @@
 .theme-card-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .theme-card-name {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text-main);
+  letter-spacing: -0.01em;
 }
 
 .theme-card-desc {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
+  font-weight: 600;
 }
 
 /* Apply Changes Banner */
@@ -751,9 +799,24 @@
 }
 
 .custom-color-mode-hint {
-  margin-top: 8px !important;
-  font-size: 0.78rem !important;
+  margin-top: 10px !important;
+  font-size: 0.8rem !important;
   line-height: 1.45;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 8px !important;
+  padding: 8px 12px !important;
+  border-radius: 10px !important;
+  background: rgba(239, 68, 68, 0.08) !important;
+  border: 1px solid rgba(239, 68, 68, 0.25) !important;
+  color: #ef4444 !important;
+  font-weight: 500;
+}
+
+.custom-color-mode-hint svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #ef4444 !important;
 }
 
 .custom-color-controls {
@@ -764,62 +827,108 @@
 }
 
 .custom-color-picker {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 7px 10px;
+  gap: 12px;
+  padding: 8px 14px 8px 10px;
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: 14px;
   background: var(--bg-card);
-  font-size: 0.82rem;
+  font-size: 0.88rem;
   color: var(--text-main);
-  font-weight: 600;
-}
-
-.custom-color-picker input {
-  width: 22px;
-  height: 22px;
-  border: none;
-  padding: 0;
-  border-radius: 50%;
-  background: transparent;
+  font-weight: 700;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.custom-color-picker input::-webkit-color-swatch-wrapper {
-  padding: 0;
+.custom-color-picker:hover {
+  border-color: color-mix(in srgb, var(--primary) 50%, var(--border-color));
 }
 
-.custom-color-picker input::-webkit-color-swatch {
-  border: none;
-  border-radius: 50%;
+.custom-color-picker input[type="color"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.custom-color-preview-wrapper {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
 }
 
 .custom-color-preview {
+  display: block;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-card);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease;
+}
+
+.custom-color-edit-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-color);
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.custom-color-picker:hover .custom-color-edit-badge {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.custom-color-hex-text {
+  letter-spacing: 0.05em;
+  font-family: var(--font-family);
 }
 
 .custom-color-swatches {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
 .custom-swatch {
-  width: 24px;
-  height: 24px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   border: 2px solid transparent;
   cursor: pointer;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.custom-swatch:hover:not(:disabled) {
+  transform: scale(1.15);
 }
 
 .custom-swatch.active {
   border-color: var(--text-main);
+  box-shadow: 0 0 0 2px var(--bg-card), 0 0 0 4px var(--primary);
+  transform: scale(1.08);
 }
 
 .custom-swatch.disabled,
@@ -828,6 +937,24 @@
   cursor: not-allowed;
   filter: grayscale(0.35);
   pointer-events: none;
+}
+
+.custom-swatch-add {
+  border: 2px dashed var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.custom-swatch-add:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 8%, var(--bg-card));
+  transform: scale(1.15);
 }
 
 .custom-color-picker--blocked {
