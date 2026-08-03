@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { ChevronLeft, ChevronDown, Sparkles, ImagePlus, X, Wand2, RotateCcw, Shuffle, Download, Trash2, Plus, Image as ImageIcon, Images, Check, Edit2, ArrowRight } from 'lucide-react'
-import SelectMediaModal from '../../components/features/image-generation/SelectMediaModal'
+import SelectMediaModal from '../../../components/features/image-generation/SelectMediaModal'
 import './AIImageStudio.css'
 
 /* ── Constants ── */
@@ -191,6 +191,7 @@ export default function AIImageStudio({ onBack }) {
 
   // Step 2 → Step 3 (options)
   const handleNextToOptions = () => {
+    setActiveOptStep('Model')
     setStep('options')
   }
 

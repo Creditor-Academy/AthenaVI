@@ -1,9 +1,9 @@
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   AI Image Studio â€” 3-step flow
+﻿/* =============================================================
+   AI Image Studio -- 4-step flow
    Uses CSS vars for theme support
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ============================================================= */
 
-/* â”€â”€ Shared shell â”€â”€ */
+
 .aig-step-shell {
   position: absolute;
   inset: 0;
@@ -15,7 +15,8 @@
   overflow: hidden;
 }
 
-/* â”€â”€ Shared navbar â”€â”€ */
+
+  
 .aig-step-nav,
 .aig-work-nav {
   display: flex;
@@ -95,10 +96,6 @@
   color: var(--primary-contrast);
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   STEP 1 â€” Prompt Page (Aperture style)
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
-
 .aig-step-shell--prompt .aig-prompt-page {
   flex: 1;
   overflow: hidden;
@@ -135,7 +132,6 @@
   z-index: 1;
 }
 
-/* â”€â”€ Left column â€” vertically centered â”€â”€ */
 .aig-prompt-left {
   display: flex;
   flex-direction: column;
@@ -160,7 +156,6 @@
   pointer-events: none;
 }
 
-/* â”€â”€ Hero heading â”€â”€ */
 .aig-hero-heading {
   text-align: center;
 }
@@ -186,7 +181,6 @@
   font-family: var(--font-family);
 }
 
-/* â”€â”€ Landing prompt card â”€â”€ */
 .aig-lp-card {
   width: 100%;
   max-width: 640px;
@@ -280,7 +274,6 @@
   box-shadow: 0 6px 20px rgba(var(--primary-rgb), 0.52);
 }
 
-/* â”€â”€ Suggestion pills â”€â”€ */
 .aig-lp-pills {
   display: flex;
   flex-wrap: wrap;
@@ -313,7 +306,6 @@
   box-shadow: 0 3px 10px rgba(0,0,0,0.05);
 }
 
-/* â”€â”€ Inspire link â”€â”€ */
 .aig-lp-inspire {
   display: inline-flex;
   align-items: center;
@@ -332,7 +324,6 @@
 .aig-lp-inspire:hover:not(:disabled) { color: var(--primary); }
 .aig-lp-inspire:disabled { opacity: 0.5; cursor: wait; }
 
-/* â”€â”€ Reference thumbs â”€â”€ */
 .aig-ref-thumbs {
   display: flex;
   flex-wrap: wrap;
@@ -368,7 +359,6 @@
   padding: 0;
 }
 
-/* â”€â”€ Right column: scrolling gallery â”€â”€ */
 .aig-prompt-right {
   display: flex;
   justify-content: flex-end;
@@ -519,9 +509,6 @@
   .aig-scroll-column:nth-child(3) { margin-top: 0; }
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   WIZARD NAV â€” shared steps 2-4
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .aig-wizard-steps {
   flex: 1;
@@ -563,7 +550,6 @@
 }
 .aig-wizard-line--done { background: var(--primary); }
 
-/* â”€â”€ Shared setup shell â”€â”€ */
 .aig-step-shell--setup {
   display: flex; flex-direction: column;
   height: 100vh; overflow: hidden;
@@ -623,10 +609,6 @@
   box-shadow: 0 6px 22px rgba(var(--primary-rgb), 0.45);
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   STEP 2 â€” Shape picker
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
-
 .aig-setup-body {
   flex: 1;
   display: flex;
@@ -642,7 +624,7 @@
   padding: 48px clamp(32px, 5vw, 72px) 32px;
   overflow-y: auto;
   align-items: flex-start;
-  scrollbar-width: none; /* hide scrollbar â€” it was causing the fake "line" */
+  scrollbar-width: none; /* hide scrollbar - it was causing the fake "line" */
 }
 .aig-setup-left::-webkit-scrollbar { display: none; }
 
@@ -673,7 +655,7 @@
   width: 100%; max-width: 620px;
 }
 
-/* Shape cards â€” white tiles, reference style */
+/* Shape cards - white tiles, reference style */
 .aig-shape-card {
   position: relative;
   display: flex; flex-direction: column;
@@ -788,7 +770,6 @@
   font-size: 13px; color: var(--text-muted); font-weight: 600;
 }
 
-/* â”€â”€ Right preview panel â€” fills full height, no divider â”€â”€ */
 .aig-setup-right {
   width: 42%; min-width: 340px; flex-shrink: 0;
   display: flex; flex-direction: column;
@@ -816,7 +797,7 @@
   width: 100%; flex: 1; min-height: 0;
 }
 
-/* Preview art â€” scales to fill the panel naturally */
+/* Preview art - scales to fill the panel naturally */
 .aig-shape-preview-art {
   background: linear-gradient(160deg, rgba(var(--primary-rgb), 0.1) 0%, rgba(var(--primary-rgb), 0.04) 60%, rgba(var(--primary-rgb), 0.01) 100%);
   border: 1.5px solid rgba(var(--primary-rgb), 0.18);
@@ -860,10 +841,6 @@
   text-align: center; font-weight: 500;
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   STEP 3 â€” Options (redesigned)
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
-
 .aig-opts-shape-badge {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 5px 12px; border-radius: 999px;
@@ -888,7 +865,7 @@
   min-height: 0; overflow: hidden;
 }
 
-/* â”€â”€ Step 3 â€” Options Layout Overrides â”€â”€ */
+
 .aig-step-shell--options {
   background: #f0f4fa; /* Soft light blue-gray background */
 }
@@ -1405,11 +1382,6 @@
   line-height: 1.4;
 }
 
-/* ══════════════════════════════════════════════
-   STEP 4 — Review modal (overlays options step)
-   ══════════════════════════════════════════════ */
-
-/* ── Review page layout ── */
 .aig-review-body {
   flex: 1;
   display: grid;
@@ -1783,10 +1755,6 @@
 }
 
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   STEP 5 â€” Workspace
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
-
 .aig-step-shell--workspace {
   display: flex;
   flex-direction: column;
@@ -1808,7 +1776,7 @@
   scrollbar-color: rgba(var(--primary-rgb), 0.2) transparent;
 }
 
-/* Single generation row â€” bubble left, image right */
+/* Single generation row - bubble left, image right */
 .aig-gen-row {
   display: grid;
   grid-template-columns: 200px 1fr;
@@ -1856,7 +1824,7 @@
   width: fit-content;
 }
 
-/* Images area â€” fills the full row width */
+/* Images area - fills the full row width */
 .aig-gen-images {
   display: flex;
   gap: 12px;
@@ -1980,7 +1948,7 @@
 
 .aig-hover-btn:hover { background: rgba(255,255,255,0.28); }
 
-/* Row action bar â€” spans both columns */
+/* Row action bar - spans both columns */
 .aig-row-actions {
   grid-column: 1 / -1;
   display: flex;
@@ -2009,7 +1977,6 @@
 .aig-row-btn:hover { border-color: var(--primary-light); color: var(--primary); background: rgba(var(--primary-rgb), 0.06); }
 .aig-row-btn--danger:hover { border-color: var(--delete-red); color: var(--delete-red); background: rgba(239,68,68,0.06); }
 
-/* â”€â”€ Bottom workspace bar â”€â”€ */
 .aig-work-bar {
   flex-shrink: 0;
   padding: 10px 24px 16px;
@@ -2146,17 +2113,13 @@
   box-shadow: 0 6px 20px rgba(var(--primary-rgb), 0.55);
 }
 
-/* â”€â”€ Responsive â”€â”€ */
+
 @media (max-width: 700px) {
   .aig-gen-row { grid-template-columns: 1fr; }
   .aig-workspace-scroll { padding: 16px; }
   .aig-work-bar { padding: 8px 12px 14px; }
   .aig-setup-grid { grid-template-columns: 1fr; }
 }
-
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   Setup Modal â€” overlays the prompt page
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .aig-modal-backdrop {
   position: fixed;
@@ -2431,8 +2394,6 @@
 
 .aig-modal-generate-btn:hover { background: var(--primary-hover); }
 
-/* â”€â”€ Modal options â€” grid variants â”€â”€ */
-
 /* Override base options for grids */
 .aig-modal-options {
   padding: 8px 16px 14px;
@@ -2440,7 +2401,7 @@
   overflow-y: auto;
 }
 
-/* Image grid â€” 4 col */
+/* Image grid - 4 col */
 .aig-modal-options--img-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -2510,7 +2471,7 @@
   font-family: var(--font-family);
 }
 
-/* Dimension grid â€” 3 col */
+/* Dimension grid - 3 col */
 .aig-modal-options--dim-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -2565,7 +2526,7 @@
   font-family: var(--font-family);
 }
 
-/* Count grid â€” 3 big buttons */
+/* Count grid - 3 big buttons */
 .aig-modal-options--count-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -2604,9 +2565,6 @@
   font-family: var(--font-family);
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   Workspace body â€” sidebar + main scroll
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .aig-workspace-body {
   flex: 1;
@@ -2617,7 +2575,6 @@
   height: 0; /* force grid to respect parent flex height */
 }
 
-/* â”€â”€ Left sidebar â”€â”€ */
 .aig-work-sidebar {
   border-right: 1px solid var(--border-color);
   background: var(--bg-sidebar);
@@ -2848,7 +2805,6 @@
 
 .aig-wsb-thumb:hover .aig-wsb-reuse-btn { opacity: 1; }
 
-/* â”€â”€ Main scroll area occupies remaining space â”€â”€ */
 .aig-workspace-scroll {
   flex: 1;
   overflow-y: auto;
@@ -2862,9 +2818,9 @@
 }
 
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* -
    Single-Screen Setup Panel  (aig-sp-*)
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   - */
 
 .aig-setup-panel {
   background: var(--bg-card);
@@ -2883,7 +2839,6 @@
   font-family: var(--font-family);
 }
 
-/* â”€â”€ Header â”€â”€ */
 .aig-sp-header {
   display: flex;
   align-items: flex-start;
@@ -2938,7 +2893,6 @@
   max-width: 580px;
 }
 
-/* â”€â”€ Scrollable body â”€â”€ */
 .aig-sp-body {
   flex: 1;
   overflow-y: auto;
@@ -2950,7 +2904,6 @@
   scrollbar-color: rgba(var(--primary-rgb), 0.2) transparent;
 }
 
-/* â”€â”€ Section label â”€â”€ */
 .aig-sp-section-label {
   display: flex;
   align-items: center;
@@ -2969,7 +2922,6 @@
   line-height: 1;
 }
 
-/* â”€â”€ Row layout â”€â”€ */
 .aig-sp-row {
   display: flex;
   gap: 16px;
@@ -2988,7 +2940,6 @@
   min-width: 0;
 }
 
-/* â”€â”€ Aspect Ratio Grid â”€â”€ */
 .aig-sp-dim-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
@@ -3052,7 +3003,6 @@
   font-family: var(--font-family);
 }
 
-/* â”€â”€ Pill row â”€â”€ */
 .aig-sp-pill-row {
   display: flex;
   flex-wrap: nowrap;
@@ -3095,7 +3045,7 @@
   color: #7c3aed;
 }
 
-/* â”€â”€ Count buttons â”€â”€ */
+
 .aig-sp-count-row {
   display: flex;
   gap: 8px;
@@ -3145,7 +3095,6 @@
   font-weight: 500;
 }
 
-/* â”€â”€ Style grid â”€â”€ */
 .aig-sp-style-grid {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
@@ -3218,7 +3167,7 @@
   justify-content: center;
 }
 
-/* â”€â”€ Quality group â”€â”€ */
+
 .aig-sp-quality-group {
   display: flex;
   gap: 0;
@@ -3290,7 +3239,7 @@
   line-height: 1.5;
 }
 
-/* â”€â”€ Footer â”€â”€ */
+
 .aig-sp-footer {
   display: flex;
   align-items: center;
@@ -3364,7 +3313,7 @@
   transform: translateY(0);
 }
 
-/* â”€â”€ Responsive â”€â”€ */
+
 @media (max-width: 720px) {
   .aig-setup-panel {
     border-radius: 18px;
@@ -3381,9 +3330,7 @@
   }
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   Prompt card â€” settings chips row
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+
 
 .aig-prompt-chips-row {
   display: flex;
@@ -3413,10 +3360,10 @@
   font-family: var(--font-family);
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   Workspace Sidebar â€” full-height settings panel
+/* -
+   Workspace Sidebar - full-height settings panel
    aig-sb-* namespace
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   - */
 
 .aig-work-sidebar {
   display: flex;
@@ -3438,7 +3385,7 @@
   margin: 0;
 }
 
-/* â”€â”€ Dropdown fields (Model, Style) â”€â”€ */
+
 .aig-sb-field {
   padding: 12px 14px 10px;
   display: flex;
@@ -3510,7 +3457,6 @@
   flex-shrink: 0;
 }
 
-/* â”€â”€ Generic section wrapper â”€â”€ */
 .aig-sb-section {
   padding: 12px 14px;
   display: flex;
@@ -3535,7 +3481,6 @@
   font-family: var(--font-family);
 }
 
-/* â”€â”€ Image Dimensions grid â”€â”€ */
 .aig-sb-dim-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -3601,7 +3546,6 @@
   color: var(--primary);
 }
 
-/* â”€â”€ Count buttons â”€â”€ */
 .aig-sb-count-row {
   display: flex;
   gap: 5px;
@@ -3632,7 +3576,6 @@
   color: var(--primary);
 }
 
-/* â”€â”€ Quality buttons â”€â”€ */
 .aig-sb-quality-row {
   display: flex;
   border-radius: 10px;
@@ -3688,7 +3631,6 @@
   opacity: 0.7;
 }
 
-/* â”€â”€ Credits bar â”€â”€ */
 .aig-sb-credit-bar {
   height: 5px;
   background: var(--border-color);
@@ -3710,7 +3652,6 @@
   margin-top: -2px;
 }
 
-/* â”€â”€ History / Saved tabs â”€â”€ */
 .aig-sb-tabs {
   display: flex;
   gap: 4px;
@@ -3747,7 +3688,6 @@
   box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
 
-/* â”€â”€ Thumbnail grid â”€â”€ */
 .aig-sb-thumb-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -3823,7 +3763,6 @@
   background: rgba(239,68,68,0.9);
 }
 
-/* â”€â”€ Main column wrapper (scroll + bar, right of sidebar) â”€â”€ */
 .aig-workspace-main {
   display: flex;
   flex-direction: column;
@@ -3841,11 +3780,6 @@
   flex-shrink: 0;
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   LAYOUT OVERRIDES â€” final authority
-   Fix: blank main area, missing prompt bar,
-        sidebar width & 3D card style
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 /* Shell */
 .aig-step-shell--workspace {
@@ -3867,7 +3801,7 @@
   gap: 0 !important;
 }
 
-/* Sidebar â€” wider, floated card look */
+/* Sidebar - wider, floated card look */
 .aig-work-sidebar {
   width: 260px !important;
   min-width: 260px !important;
@@ -3892,7 +3826,7 @@
   overflow: hidden !important;
 }
 
-/* Scroll area â€” takes all remaining space */
+/* Scroll area - takes all remaining space */
 .aig-workspace-main .aig-workspace-scroll,
 .aig-workspace-scroll {
   flex: 1 1 0 !important;
@@ -3906,7 +3840,7 @@
   height: auto !important;
 }
 
-/* Prompt bar â€” pinned to bottom of main column */
+/* Prompt bar - pinned to bottom of main column */
 .aig-workspace-main .aig-work-bar,
 .aig-work-bar {
   flex-shrink: 0 !important;
@@ -3915,7 +3849,7 @@
   border-top: 1px solid var(--border-color) !important;
 }
 
-/* Sidebar field sections â€” tighter, cleaner */
+/* Sidebar field sections - tighter, cleaner */
 .aig-sb-field {
   padding: 14px 16px 12px !important;
 }
@@ -3924,7 +3858,7 @@
   padding: 12px 16px !important;
 }
 
-/* Sidebar select â€” pill-style like Leonardo */
+/* Sidebar select - pill-style like Leonardo */
 .aig-sb-select {
   background: var(--bg-card) !important;
   border: 1.5px solid var(--border-color) !important;
@@ -3944,7 +3878,7 @@
   outline: none !important;
 }
 
-/* Dim grid â€” 3 per row, taller cells */
+/* Dim grid - 3 per row, taller cells */
 .aig-sb-dim-grid {
   display: grid !important;
   grid-template-columns: repeat(3, 1fr) !important;
@@ -4095,7 +4029,6 @@
   align-content: start !important;
 }
 
-/* â”€â”€ Main canvas â€” bluish gradient background â”€â”€ */
 .aig-workspace-scroll {
   background:
     radial-gradient(ellipse 70% 55% at 10% 0%,   rgba(99, 102, 241, 0.18) 0%, transparent 65%),
@@ -4106,9 +4039,6 @@
 }
 
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   Sessions sidebar (new 3-panel layout)
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .aig-sb-sessions-head {
   padding: 20px 16px 12px;
@@ -4304,9 +4234,6 @@
   color: var(--text-muted);
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   Empty canvas state
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .aig-empty-canvas {
   flex: 1;
@@ -4361,9 +4288,6 @@
   font-family: var(--font-family);
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   Workspace body â€” flush layout matching app sidebar
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .aig-workspace-body {
   padding: 0 !important;
@@ -4390,9 +4314,6 @@
   margin-right: 0 !important;
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   Empty canvas â€” hero + inspiration grid
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .aig-empty-canvas {
   flex: 1 1 0 !important;
@@ -4516,7 +4437,6 @@
   -webkit-box-orient: vertical;
 }
 
-/* â•â• Empty canvas â€” final layout override â•â• */
 
 .aig-empty-canvas {
   flex: 1 1 0 !important;
@@ -4619,7 +4539,6 @@
   overflow: hidden !important;
 }
 
-/* â•â• 4-card grid â€” final override â•â• */
 .aig-empty-inspo-grid {
   display: grid !important;
   grid-template-columns: repeat(4, 1fr) !important;
@@ -4643,7 +4562,6 @@
   height: 100% !important;
 }
 
-/* â”€â”€ Image/skeleton cards â€” full width, aspect-ratio from inline style â”€â”€ */
 .aig-img-card,
 .aig-skeleton-card {
   flex: 1 !important;
@@ -4653,7 +4571,6 @@
   max-height: 520px !important;
 }
 
-/* â•â• 4-card fan layout â€” tall portrait cards with tilt â•â• */
 
 .aig-empty-canvas {
   justify-content: center !important;
@@ -4686,7 +4603,7 @@
   transform-origin: bottom center !important;
 }
 
-/* Fan tilt â€” outer cards lean out, inner cards pop up */
+/* Fan tilt - outer cards lean out, inner cards pop up */
 .aig-empty-inspo-card:nth-child(1) { transform: rotate(-4deg) translateY(10px) !important; }
 .aig-empty-inspo-card:nth-child(2) { transform: rotate(-1.5deg) translateY(0px) !important; }
 .aig-empty-inspo-card:nth-child(3) { transform: rotate(1.5deg) translateY(0px) !important; }
@@ -4704,7 +4621,6 @@
   grid-row: unset !important;
 }
 
-/* â”€â”€ Skeleton + image card â€” full-width flex, aspect-ratio drives height â”€â”€ */
 .aig-skeleton-card {
   flex: 1 !important;
   width: 0 !important;
@@ -4721,7 +4637,6 @@
   max-height: 520px !important;
 }
 
-/* â”€â”€ Reference image thumbnails in prompt bars â”€â”€ */
 .aig-ref-thumbs {
   display: flex;
   gap: 7px;
@@ -4784,7 +4699,6 @@
   right: 1px;
 }
 
-/* â•â• Prompt page â€” left column dark bluish gradient bg â•â• */
 .aig-prompt-left {
   background:
     radial-gradient(ellipse 90% 70% at 0% 30%,  rgba(59, 80, 180, 0.18) 0%, transparent 65%),
@@ -4793,7 +4707,6 @@
     var(--bg-main) !important;
 }
 
-/* â•â• Prompt card â€” elevated, glassy, clearly a card â•â• */
 .aig-prompt-card {
   background: var(--bg-card) !important;
   border: 1px solid var(--border-color) !important;
@@ -4816,7 +4729,7 @@
     0 2px 8px rgba(var(--primary-rgb), 0.1) !important;
 }
 
-/* Chips row inside card â€” slightly inset feel */
+/* Chips row inside card - slightly inset feel */
 .aig-prompt-chips-row {
   background: rgba(var(--primary-rgb), 0.03) !important;
   border-top: 1px solid var(--border-color) !important;
@@ -4825,7 +4738,7 @@
   margin: 0 !important;
 }
 
-/* Card footer â€” clear separation */
+/* Card footer - clear separation */
 .aig-prompt-card-footer {
   border-top: 1px solid var(--border-color) !important;
   background: var(--bg-surface) !important;
@@ -4833,7 +4746,6 @@
   padding: 10px 16px 14px !important;
 }
 
-/* â”€â”€ Prompt left column â€” scrollable when content overflows â”€â”€ */
 .aig-prompt-left {
   overflow-y: auto !important;
   overflow-x: hidden !important;
@@ -4841,7 +4753,6 @@
   scrollbar-color: rgba(var(--primary-rgb), 0.2) transparent !important;
 }
 
-/* â”€â”€ Prompt page â€” allow vertical scroll when content overflows â”€â”€ */
 .aig-step-shell--prompt .aig-prompt-page {
   overflow-y: auto !important;
   overflow-x: hidden !important;
@@ -4865,9 +4776,6 @@
   min-height: calc(100vh - 52px) !important;
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   Download panel â€” slides in from right
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .aig-dl-backdrop {
   position: fixed;
@@ -5083,7 +4991,6 @@
   background: rgba(239, 68, 68, 0.3) !important;
 }
 
-/* â”€â”€ Skeleton card â€” full-width, aspect-ratio from inline style â”€â”€ */
 .aig-skeleton-card {
   flex: 1 !important;
   width: 0 !important;
@@ -5101,9 +5008,6 @@
 }
 
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   My Images button (in nav)
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .aig-my-images-btn {
   display: inline-flex;
@@ -5142,9 +5046,6 @@
   line-height: 1;
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   My Images Gallery Page
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .aig-step-shell--gallery {
   display: flex;

@@ -29,7 +29,7 @@ import CreateAvatarModal from '../../components/ui/CreateAvatarModal/CreateAvata
 import CreateMenuModal from '../../components/ui/CreateMenuModal/CreateMenuModal.jsx'
 import AIPptGenerator from '../Slides/AIPptGenerator.jsx'
 import PptBuilder from '../Slides/PptBuilder/PptBuilder.jsx'
-import AIImageStudio from '../Slides/AIImageStudio.jsx'
+import AIImageStudio from '../Slides/AIStudio/AIImageStudio.jsx'
 import AIPptEditor from '../Slides/AIPptComponents/AIPptEditor.jsx'
 import SlidesComingSoon from '../Slides/SlidesComingSoon.jsx'
 import { getAvatarTypeOption } from '../Avatars/avatarTypeOptions.js'
