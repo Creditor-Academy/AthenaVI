@@ -1,5 +1,20 @@
 import { useState, useRef, useEffect } from 'react'
 import { Sparkles, ArrowUp, ArrowRight, Paperclip, FileText, BookOpen, TrendingUp, AlignLeft, Palette, Check, Globe, Image as ImageIcon, Box, Ban, ChevronDown, Star, Building } from 'lucide-react'
+import presentationService from '../../../services/presentationService'
+import brandKitService from '../../../services/brandKitService'
+import { isInsufficientCreditsError } from '../../../services/creditsService'
+import { resolvePresentationWorkspaceContext } from '../../../utils/presentationContext'
+import {
+  PPT_AI_SLIDE_COUNTS,
+  clampAiSlideCount,
+  derivePresentationTitle,
+  flattenPresentationPrompt,
+  mapDensity,
+  normalizeDeckPacks,
+  normalizeOutlineSlides,
+  extractPresentationId,
+  toApiThemeId,
+} from '../../../utils/presentationHelpers'
 
 // Media
 import mediaRealistic from '../../../assets/slides_icons/media_realistic.png'
@@ -14,14 +29,9 @@ import temp2 from '../../../assets/Template_Image/gen_temp2.png'
 import temp3 from '../../../assets/Template_Image/gen_temp3.png'
 import temp4 from '../../../assets/Template_Image/gen_temp4.png'
 
-import themePetrolImg from '../../../assets/Template_Image/theme_petrol.png'
-import themeStardustImg from '../../../assets/Template_Image/theme_stardust.png'
-import themeChocolateImg from '../../../assets/Template_Image/theme_chocolate.png'
-import themeMossImg from '../../../assets/Template_Image/theme_moss.png'
-import themeBlueSteelImg from '../../../assets/Template_Image/theme_blue_steel.png'
-
 import AIPptThemeModal from './AIPptThemeModal'
 import AIPptImageModal from './AIPptImageModal'
+import aiMascot from '../../../assets/slides_icons/ai_mascot.png'
 
 const SUGGESTED_PROMPTS = [
   "Turn meeting notes into a presentation",
@@ -31,20 +41,51 @@ const SUGGESTED_PROMPTS = [
 ]
 
 const TONES = ['Professional', 'Creative', 'Academic', 'Persuasive', 'Casual']
+const AUDIENCES = ['Investors', 'Customers', 'Internal Team', 'Students', 'General Public']
+const PURPOSES = ['Persuade', 'Inform', 'Educate', 'Inspire', 'Report']
+
+function makeTheme({ id, name, vibe, background, background_secondary, text_primary, text_secondary, primary, secondary, accent, border }) {
+  return {
+    id,
+    name,
+    vibe,
+    background,
+    background_secondary,
+    text_primary,
+    text_secondary,
+    primary,
+    secondary,
+    accent,
+    border,
+    // Legacy keys used by theme modal / cards
+    outer: `linear-gradient(135deg, ${primary}, ${secondary})`,
+    inner: background,
+    title: text_primary,
+    body: text_secondary,
+  }
+}
 
 export const THEMES = [
-  { id: 'petrol', name: 'Petrol', outer: 'linear-gradient(135deg, #1e293b, #0f172a)', inner: '#F9F8F6', title: '#114B5F', body: '#333333', previewImg: themePetrolImg },
-  { id: 'stardust', name: 'Stardust', outer: 'linear-gradient(135deg, #18181b, #000000)', inner: '#0A0A0A', title: '#FFFFFF', body: '#E5E5E5', previewImg: themeStardustImg },
-  { id: 'chocolate', name: 'Chocolate', outer: 'linear-gradient(135deg, #a8a29e, #78716c)', inner: '#4A3B39', title: '#FFFFFF', body: '#F9F8F6', previewImg: themeChocolateImg },
-  { id: 'moss', name: 'Moss & Mist', outer: 'linear-gradient(135deg, #1A1C19, #0f172a)', inner: '#212421', title: '#E3E3E3', body: '#FFFFFF', previewImg: themeMossImg },
-  { id: 'blue-steel', name: 'Blue Steel', outer: 'linear-gradient(135deg, #1E232B, #0f172a)', inner: '#26303B', title: '#7692B8', body: '#FFFFFF', previewImg: themeBlueSteelImg },
-  { id: 'indigo', name: 'Indigo', outer: 'linear-gradient(135deg, #1e1b4b, #312e81)', inner: '#2E1065', title: '#FFFFFF', body: '#E0E7FF' },
-  { id: 'peach', name: 'Peach', outer: 'linear-gradient(135deg, #fff1f2, #ffe4e6)', inner: '#FFFFFF', title: '#4A3B39', body: '#D84315' },
-  { id: 'incandescent', name: 'Incandescent', outer: 'linear-gradient(135deg, #1A1025, #4c1d95)', inner: '#2D1B36', title: '#E91E63', body: '#F48FB1' },
-  { id: 'oatmeal', name: 'Oatmeal', outer: 'linear-gradient(135deg, #f5f5f4, #d6d3d1)', inner: '#F5F5F0', title: '#333333', body: '#555555' },
-  { id: 'sanguine', name: 'Sanguine', outer: 'linear-gradient(135deg, #7f1d1d, #450a0a)', inner: '#2B0000', title: '#FFFFFF', body: '#FF5252' },
-  { id: 'sage', name: 'Sage', outer: 'linear-gradient(135deg, #dcfce7, #bbf7d0)', inner: '#FFFFFF', title: '#2E4F4F', body: '#333333' },
-  { id: 'verdigris', name: 'Verdigris', outer: 'linear-gradient(135deg, #134e4a, #042f2e)', inner: '#123838', title: '#4DB6AC', body: '#B2DFDB' },
+  makeTheme({ id: 'modern-professional', name: 'Modern Professional', vibe: 'corporate / clean', background: '#FFFFFF', background_secondary: '#F5F6F8', text_primary: '#1A1A1A', text_secondary: '#5C5F66', primary: '#1E3A8A', secondary: '#2563EB', accent: '#F59E0B', border: '#E2E4E9' }),
+  makeTheme({ id: 'midnight-dark', name: 'Midnight Dark Mode', vibe: 'dark / tech', background: '#0F1115', background_secondary: '#1A1D23', text_primary: '#F5F5F7', text_secondary: '#A0A4AD', primary: '#6366F1', secondary: '#8B5CF6', accent: '#22D3EE', border: '#2A2D35' }),
+  makeTheme({ id: 'humana-mint', name: 'Humana Mint', vibe: 'healthcare / wellness', background: '#FFFFFF', background_secondary: '#EAF7F0', text_primary: '#0B2E23', text_secondary: '#4C6B5F', primary: '#00A651', secondary: '#7FD8A6', accent: '#FFB800', border: '#D4EDE0' }),
+  makeTheme({ id: 'luxury-gold', name: 'Luxury Gold & Black', vibe: 'premium / finance', background: '#0B0B0B', background_secondary: '#1C1C1C', text_primary: '#F5EFE0', text_secondary: '#B8AF9A', primary: '#D4AF37', secondary: '#8A6E2F', accent: '#FFFFFF', border: '#3A3A3A' }),
+  makeTheme({ id: 'soft-blush', name: 'Soft Blush', vibe: 'feminine / soft / wellness', background: '#FFFBF8', background_secondary: '#FBEAE5', text_primary: '#4A2E2A', text_secondary: '#8B6A63', primary: '#E8A798', secondary: '#D98C9E', accent: '#F2C14E', border: '#F3DAD3' }),
+  makeTheme({ id: 'playful-pop', name: 'Playful Pop', vibe: 'fun / gamified', background: '#FFFFFF', background_secondary: '#FFF6E0', text_primary: '#26221D', text_secondary: '#6B6259', primary: '#FF6B6B', secondary: '#4ECDC4', accent: '#FFD93D', border: '#F0E4C6' }),
+  makeTheme({ id: 'pastel-dream', name: 'Pastel Dream', vibe: 'pastel / soft UI', background: '#FDFBFF', background_secondary: '#F1EEFB', text_primary: '#3B3450', text_secondary: '#8A82A3', primary: '#B8A6E8', secondary: '#A6D8E8', accent: '#F7B6C2', border: '#E6DFF5' }),
+  makeTheme({ id: 'cyberpunk-neon', name: 'Cyberpunk Neon', vibe: 'futuristic / neon', background: '#0A0A12', background_secondary: '#14141F', text_primary: '#E8E8FF', text_secondary: '#8C8CB3', primary: '#FF00FF', secondary: '#00FFF0', accent: '#FFEE00', border: '#2E2E45' }),
+  makeTheme({ id: 'earthy-sage', name: 'Earthy Sage', vibe: 'nature / organic / calm', background: '#FAF8F3', background_secondary: '#EDE7DA', text_primary: '#2E332A', text_secondary: '#6B6F5E', primary: '#6B8E63', secondary: '#A9BA9D', accent: '#C97B4A', border: '#DDD6C4' }),
+  makeTheme({ id: 'ocean-breeze', name: 'Ocean Breeze', vibe: 'cool / trust / SaaS', background: '#F7FCFF', background_secondary: '#E4F3FA', text_primary: '#0D2B3A', text_secondary: '#4E7484', primary: '#0EA5E9', secondary: '#0369A1', accent: '#F97316', border: '#CFE9F5' }),
+  makeTheme({ id: 'sunset-warmth', name: 'Sunset Warmth', vibe: 'energetic / marketing', background: '#FFF9F5', background_secondary: '#FFE9DB', text_primary: '#3A1F14', text_secondary: '#8A5C46', primary: '#FF5E5B', secondary: '#FF9F1C', accent: '#FFD166', border: '#FBD8BF' }),
+  makeTheme({ id: 'minimal-monochrome', name: 'Minimal Monochrome', vibe: 'minimal / editorial', background: '#FFFFFF', background_secondary: '#F2F2F2', text_primary: '#111111', text_secondary: '#555555', primary: '#000000', secondary: '#4D4D4D', accent: '#999999', border: '#DADADA' }),
+  makeTheme({ id: 'edtech-vibrant', name: 'EdTech Vibrant', vibe: 'education / friendly professional', background: '#FFFFFF', background_secondary: '#EEF3FF', text_primary: '#131A2A', text_secondary: '#5B6478', primary: '#3B5BFF', secondary: '#7C93FF', accent: '#FFB020', border: '#DCE3FA' }),
+  makeTheme({ id: 'finance-trust', name: 'Finance Trust', vibe: 'banking / fintech / serious', background: '#FFFFFF', background_secondary: '#F0F3F5', text_primary: '#131C2C', text_secondary: '#576372', primary: '#0B3D91', secondary: '#1A5CA8', accent: '#00B37E', border: '#D9E0E6' }),
+  makeTheme({ id: 'startup-gradient', name: 'Startup Gradient', vibe: 'modern SaaS / pitch deck', background: '#FFFFFF', background_secondary: '#F5F0FF', text_primary: '#1A1523', text_secondary: '#6B6178', primary: '#7C3AED', secondary: '#EC4899', accent: '#22C55E', border: '#E9E1FA' }),
+  makeTheme({ id: 'vintage-paper', name: 'Vintage Paper', vibe: 'retro / editorial / old-school', background: '#F7F1E3', background_secondary: '#EDE2C9', text_primary: '#3A2E1F', text_secondary: '#7A6A50', primary: '#A9432B', secondary: '#B58C3D', accent: '#4C6E4E', border: '#DDD0AC' }),
+  makeTheme({ id: 'autumn-harvest', name: 'Autumn Harvest', vibe: 'warm / seasonal', background: '#FFF8F0', background_secondary: '#F5E3CB', text_primary: '#3B2415', text_secondary: '#7C5B3E', primary: '#C1440E', secondary: '#E09F3E', accent: '#9E2A2B', border: '#EBD3AB' }),
+  makeTheme({ id: 'command-center', name: 'Command Center', vibe: 'futuristic / AI dashboard', background: '#0D0D12', background_secondary: '#17171F', text_primary: '#EDEDF2', text_secondary: '#8F8FA3', primary: '#4D4DFF', secondary: '#7A7AFF', accent: '#00FFC2', border: '#2A2A38' }),
+  makeTheme({ id: 'corporate-teal', name: 'Soft Corporate Teal', vibe: 'calm professional / consulting', background: '#FFFFFF', background_secondary: '#EAF4F4', text_primary: '#132D2D', text_secondary: '#4E6E6E', primary: '#0F766E', secondary: '#14B8A6', accent: '#F59E0B', border: '#D6E9E8' }),
+  makeTheme({ id: 'editorial-red', name: 'Bold Editorial Red', vibe: 'high-contrast / statement deck', background: '#FFFFFF', background_secondary: '#FBEAEA', text_primary: '#161616', text_secondary: '#5A5A5A', primary: '#D7263D', secondary: '#1B1B1B', accent: '#F4A259', border: '#E8D3D3' }),
 ]
 
 const TEMPLATES = [
@@ -98,19 +139,25 @@ const TEXT_AMOUNTS = [
   { id: 'Extensive', name: 'Extensive', columns: 3, lines: 4 },
 ]
 
-const SLIDE_COUNTS = [10, 15, 20, 25, 30]
+const SLIDE_COUNTS = PPT_AI_SLIDE_COUNTS
 
 const STYLE_OPTIONS = ['Abstract', 'Aesthetic', 'Black & White', 'Colorful', 'Craft & Notebook', 'Creative', 'Cute', 'Dark', 'Deluxe', 'Doodle', 'Duotone', 'Floral & Plants', 'Illustration', 'Interactive & Animated', 'Minimalist', 'Modern', 'Pattern', 'Professional', 'Simple', 'Vintage', 'Watercolor']
 const COLOR_OPTIONS = ['Red', 'Blue', 'Green', 'Yellow', 'Purple', 'Orange', 'Pink', 'Monochrome']
 const INDUSTRY_OPTIONS = ['Technology', 'Healthcare', 'Education', 'Finance', 'Real Estate', 'Marketing', 'E-commerce', 'Creative Agency']
 
-export default function AIPptWizard({ onComplete }) {
+export default function AIPptWizard({
+  onComplete,
+  initialWorkspaceId,
+  initialFolderId,
+}) {
   const [step, setStep] = useState(1)
   
   // Form Data
   const [title, setTitle] = useState('')
   const [outline, setOutline] = useState('')
   const [tone, setTone] = useState('Professional')
+  const [audience, setAudience] = useState('Internal Team')
+  const [purpose, setPurpose] = useState('Inform')
   
   // Theme Filters
   const [activeFilterDropdown, setActiveFilterDropdown] = useState(null)
@@ -119,7 +166,7 @@ export default function AIPptWizard({ onComplete }) {
   const [selectedIndustries, setSelectedIndustries] = useState([])
   
   const [baseTemplate, setBaseTemplate] = useState('corp-pitch')
-  const [theme, setTheme] = useState('petrol')
+  const [theme, setTheme] = useState('modern-professional')
   const [screenSize, setScreenSize] = useState('16:9')
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false)
 
@@ -133,8 +180,56 @@ export default function AIPptWizard({ onComplete }) {
   const [imageStyleFilter, setImageStyleFilter] = useState('Suggested')
   
   const [isGenerating, setIsGenerating] = useState(false)
+  const [apiError, setApiError] = useState('')
+  const [apiThemes, setApiThemes] = useState([])
+  const [deckPacks, setDeckPacks] = useState([])
+  const [brandKits, setBrandKits] = useState([])
+  const [selectedPackId, setSelectedPackId] = useState('')
+  const [selectedBrandKitId, setSelectedBrandKitId] = useState('')
+  const [workspaceHint, setWorkspaceHint] = useState(null)
   
   const outlineRef = useRef(null)
+
+  // Resolve workspace + load theme / pack / brand kit pickers once
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const ctx = await resolvePresentationWorkspaceContext({
+          preferredWorkspaceId: initialWorkspaceId,
+          preferredFolderId: initialFolderId,
+        })
+        if (cancelled) return
+        setWorkspaceHint(ctx)
+
+        const [themesPayload, packsPayload, kits] = await Promise.all([
+          presentationService.listThemes(ctx.workspaceId).catch(() => null),
+          presentationService.listDeckPacks(ctx.workspaceId).catch(() => null),
+          brandKitService.list(ctx.workspaceId).catch(() => []),
+        ])
+
+        const themes =
+          themesPayload?.themes ||
+          themesPayload?.items ||
+          (Array.isArray(themesPayload) ? themesPayload : [])
+        if (!cancelled && themes.length) setApiThemes(themes)
+
+        const packs = normalizeDeckPacks(packsPayload)
+        if (!cancelled) setDeckPacks(packs)
+
+        if (!cancelled) {
+          setBrandKits(kits || [])
+          const defaultKit = (kits || []).find((k) => k.isDefault) || (kits || [])[0]
+          if (defaultKit?.id) setSelectedBrandKitId(String(defaultKit.id))
+        }
+      } catch (err) {
+        if (!cancelled) setApiError(err.message || 'Could not load workspace for presentations')
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [initialWorkspaceId, initialFolderId])
   
   // Step entrance animation
   const [stepReady, setStepReady] = useState(false)
@@ -155,38 +250,188 @@ export default function AIPptWizard({ onComplete }) {
     }
   }, [outline])
 
-  const handleGenerateOutline = () => {
+  const handleGenerateOutline = async () => {
     setIsGenerating(true)
-    setTimeout(() => {
-      // Mock the outline based on slide count
-      const mockOutline = Array.from({ length: slides }).map((_, i) => ({
-        id: i + 1,
-        title: i === 0 ? (title || 'Introduction') : 
-               i === slides - 1 ? 'Conclusion & Next Steps' : 
-               `Slide Topic ${i + 1}`,
-        description: [
-          'Global shock forces rapid pivot to digital resilience',
-          'Legacy mindsets shattered by immediate necessity',
-          'Firms forced to shore up business models and accelerate cloud adoption'
-        ],
-        isEditing: false
-      }))
-      
-      const config = { title, outline, tone, baseTemplate, theme, screenSize, slides, textAmount, mediaStyle }
-      onComplete(mockOutline, config)
-    }, 2000)
+    setApiError('')
+    try {
+      const slideCount = clampAiSlideCount(slides)
+      const ctx =
+        workspaceHint ||
+        (await resolvePresentationWorkspaceContext({
+          preferredWorkspaceId: initialWorkspaceId,
+          preferredFolderId: initialFolderId,
+        }))
+      setWorkspaceHint(ctx)
+
+      // Only send themeId when it exists in the backend catalog — unknown ids are rejected (400).
+      const catalogThemeIds = apiThemes
+        .map((t) => String(t.id || t.themeId || ''))
+        .filter(Boolean)
+      const candidateThemeId = toApiThemeId(theme)
+      const themeId = catalogThemeIds.includes(candidateThemeId) ? candidateThemeId : undefined
+
+      const deckTitle = derivePresentationTitle(title)
+      const packId = selectedPackId || null
+      const brandKitId = selectedBrandKitId || null
+
+      const created = await presentationService.createPresentation(ctx.workspaceId, {
+        title: deckTitle,
+        folderId: ctx.folderId,
+        ...(themeId ? { themeId } : {}),
+        locale: 'en',
+        aspectRatio: screenSize,
+        createMode: packId ? 'pack' : 'blank',
+        ...(packId ? { packId } : {}),
+        ...(brandKitId ? { brandKitId } : {}),
+      })
+
+      const presentationId = extractPresentationId(created)
+      if (!presentationId) {
+        throw new Error('Presentation was created but no id was returned')
+      }
+
+      let creditEstimate = null
+      try {
+        creditEstimate = await presentationService.getCreditEstimate(
+          ctx.workspaceId,
+          presentationId,
+          { slideCount }
+        )
+      } catch {
+        // Estimate is optional — continue without blocking outline
+      }
+
+      const prompt = flattenPresentationPrompt({
+        title,
+        outline,
+        tone,
+        audience,
+        purpose,
+        mediaStyle,
+        textAmount,
+        imageSource,
+      })
+
+      const outlinePayload = await presentationService.createOutline(
+        ctx.workspaceId,
+        presentationId,
+        {
+          source: 'prompt',
+          prompt,
+          slideCount,
+          density: mapDensity(textAmount),
+          locale: 'en',
+        }
+      )
+
+      const cards = normalizeOutlineSlides(outlinePayload)
+      if (!cards.length) {
+        throw new Error('Outline API returned no slides')
+      }
+
+      const config = {
+        title: deckTitle,
+        prompt: title,
+        outline,
+        tone,
+        audience,
+        purpose,
+        style: selectedStyle,
+        color: selectedColor,
+        industries: selectedIndustries,
+        baseTemplate,
+        theme,
+        backendThemeId: themeId || null,
+        screenSize,
+        slides: slideCount,
+        textAmount,
+        density: mapDensity(textAmount),
+        locale: 'en',
+        mediaStyle,
+        imageSource,
+        imageStyleFilter,
+        packId,
+        brandKitId,
+        availableOptions: {
+          voiceAndTone: TONES,
+          audiences: AUDIENCES,
+          purposes: PURPOSES,
+          styles: STYLE_OPTIONS,
+          colors: COLOR_OPTIONS,
+          industries: INDUSTRY_OPTIONS,
+          colorThemes: THEMES.map((item) => ({
+            id: item.id,
+            name: item.name,
+            vibe: item.vibe,
+            background: item.background,
+            backgroundSecondary: item.background_secondary,
+            textPrimary: item.text_primary,
+            textSecondary: item.text_secondary,
+            primary: item.primary,
+            secondary: item.secondary,
+            accent: item.accent,
+            border: item.border,
+          })),
+          canvasSizes: SCREEN_SIZES.map(({ id, name, ratio }) => ({ id, name, ratio })),
+          baseTemplates: TEMPLATES.map(({ id, name }) => ({ id, name })),
+          deckPacks: deckPacks.map(({ id, name, packId: schemaPackId }) => ({
+            id,
+            name,
+            packId: schemaPackId,
+          })),
+          brandKits: brandKits.map(({ id, name, isDefault }) => ({ id, name, isDefault })),
+          imageTypes: IMAGE_SOURCES.map(({ id, title }) => ({ id, name: title })),
+          imageStyles: IMAGE_STYLES.map(({ id, name, tags }) => ({ id, name, tags })),
+          imageStyleFilters: ['Suggested', 'Photo', 'Illustration', 'Abstract'],
+          textContent: TEXT_AMOUNTS.map(({ id, name }) => ({ id, name })),
+          slideCounts: SLIDE_COUNTS,
+        },
+      }
+
+      onComplete(cards, config, {
+        workspaceId: ctx.workspaceId,
+        folderId: ctx.folderId,
+        presentationId,
+        creditEstimate,
+      })
+    } catch (error) {
+      if (isInsufficientCreditsError(error)) {
+        setApiError(error.message || 'Insufficient credits to create an outline.')
+      } else {
+        setApiError(error.message || 'Failed to generate outline.')
+      }
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   const handlePromptSubmit = () => {
     if (title.trim()) setStep(2)
   }
 
+  const themePickerThemes = THEMES
+
   return (
     <>
+      {apiError && (
+        <div className="aig-flow-error" role="alert">
+          {apiError}
+          <button type="button" onClick={() => setApiError('')}>
+            Dismiss
+          </button>
+        </div>
+      )}
       <main className="aig-main-fullscreen">
         
         {step === 1 && (
           <div className="aig-new-hero-section fade-in">
+            {/* AI Mascot — slides in from top-right on page open */}
+            <img
+              src={aiMascot}
+              alt="AI Mascot"
+              className="aig-mascot-slide"
+              aria-hidden="true"
+            />
             <div className="aig-new-header">
               <span className="aig-new-greeting">Hi Creator</span>
               <h1 className="aig-new-title">What would you like to create?</h1>
@@ -235,6 +480,36 @@ export default function AIPptWizard({ onComplete }) {
                       ))}
                     </div>
                   </div>
+                  
+                  <div className="aig-new-tone-selector" style={{ marginTop: '16px' }}>
+                    <span>Audience:</span>
+                    <div className="aig-pill-grid">
+                      {AUDIENCES.map(a => (
+                        <button 
+                          key={a}
+                          className={`aig-pill-small ${audience === a ? 'active' : ''}`}
+                          onClick={() => setAudience(a)}
+                        >
+                          {a}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="aig-new-tone-selector" style={{ marginTop: '16px' }}>
+                    <span>Purpose:</span>
+                    <div className="aig-pill-grid">
+                      {PURPOSES.map(p => (
+                        <button 
+                          key={p}
+                          className={`aig-pill-small ${purpose === p ? 'active' : ''}`}
+                          onClick={() => setPurpose(p)}
+                        >
+                          {p}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -271,7 +546,105 @@ export default function AIPptWizard({ onComplete }) {
 
             <div className={`aig-step-body ${stepReady ? 'aig-body-visible' : 'aig-body-hidden'}`}>
             <div className="aig-selection-section">
-              <div className="aig-theme-filters" style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
+              <div className="aig-theme-filters" style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }}>
+                <div className="aig-filter-dropdown-container">
+                  <button
+                    type="button"
+                    className="aig-pill-dropdown-btn"
+                    onClick={() =>
+                      setActiveFilterDropdown(activeFilterDropdown === 'brandKit' ? null : 'brandKit')
+                    }
+                  >
+                    <span>
+                      {selectedBrandKitId
+                        ? brandKits.find((k) => String(k.id) === String(selectedBrandKitId))?.name ||
+                          'Brand Kit'
+                        : 'Brand Kit (optional)'}
+                    </span>{' '}
+                    <ChevronDown size={14} />
+                  </button>
+                  {activeFilterDropdown === 'brandKit' && (
+                    <div className="aig-filter-dropdown-menu">
+                      <div
+                        className="aig-filter-dropdown-item"
+                        onClick={() => {
+                          setSelectedBrandKitId('')
+                          setActiveFilterDropdown(null)
+                        }}
+                      >
+                        None
+                      </div>
+                      {brandKits.map((kit) => (
+                        <div
+                          key={kit.id}
+                          className="aig-filter-dropdown-item"
+                          onClick={() => {
+                            setSelectedBrandKitId(String(kit.id))
+                            setActiveFilterDropdown(null)
+                          }}
+                        >
+                          {kit.name}
+                          {kit.isDefault ? ' · Default' : ''}
+                        </div>
+                      ))}
+                      {!brandKits.length && (
+                        <div className="aig-filter-dropdown-item" style={{ opacity: 0.6 }}>
+                          No brand kits yet
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="aig-filter-dropdown-container">
+                  <button
+                    type="button"
+                    className="aig-pill-dropdown-btn"
+                    onClick={() =>
+                      setActiveFilterDropdown(activeFilterDropdown === 'deckPack' ? null : 'deckPack')
+                    }
+                  >
+                    <span>
+                      {selectedPackId
+                        ? deckPacks.find((p) => String(p.id) === String(selectedPackId))?.name ||
+                          'Deck Pack'
+                        : 'Deck Pack (optional)'}
+                    </span>{' '}
+                    <ChevronDown size={14} />
+                  </button>
+                  {activeFilterDropdown === 'deckPack' && (
+                    <div className="aig-filter-dropdown-menu">
+                      <div
+                        className="aig-filter-dropdown-item"
+                        onClick={() => {
+                          setSelectedPackId('')
+                          setActiveFilterDropdown(null)
+                        }}
+                      >
+                        None
+                      </div>
+                      {deckPacks.map((pack) => (
+                        <div
+                          key={pack.id}
+                          className="aig-filter-dropdown-item"
+                          onClick={() => {
+                            setSelectedPackId(String(pack.id))
+                            setActiveFilterDropdown(null)
+                          }}
+                        >
+                          {pack.name}
+                          {pack.slideCount ? ` · ${pack.slideCount} slides` : ''}
+                        </div>
+                      ))}
+                      {!deckPacks.length && (
+                        <div className="aig-filter-dropdown-item" style={{ opacity: 0.6 }}>
+                          No deck packs available
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <div className="aig-filter-dropdown-container">
                   <button 
                     className="aig-pill-dropdown-btn" 
@@ -372,14 +745,25 @@ export default function AIPptWizard({ onComplete }) {
                     </div>
                     
                     <div className="aig-theme-card-palette">
-                      <div className="palette-color" style={{ background: t.outer.includes('gradient') ? t.outer.split(',')[1].trim() : t.outer }}></div>
-                      <div className="palette-color" style={{ background: t.title }}></div>
-                      <div className="palette-color" style={{ background: t.inner }}></div>
-                      <div className="palette-color" style={{ background: t.body }}></div>
+                      <div className="palette-color" style={{ background: t.primary }}></div>
+                      <div className="palette-color" style={{ background: t.secondary }}></div>
+                      <div className="palette-color" style={{ background: t.accent }}></div>
+                      <div className="palette-color" style={{ background: t.background }}></div>
                     </div>
                     
-                    <div className="aig-theme-card-image-wrapper">
-                       <img src={t.previewImg || temp1} alt={t.name} className="aig-theme-card-image" />
+                    <div
+                      className="aig-theme-card-image-wrapper aig-theme-card-mock"
+                      style={{ background: t.background, borderColor: t.border }}
+                    >
+                      <div className="aig-theme-mock-bar" style={{ background: t.primary }} />
+                      <div className="aig-theme-mock-title" style={{ background: t.text_primary }} />
+                      <div className="aig-theme-mock-line" style={{ background: t.text_secondary }} />
+                      <div className="aig-theme-mock-line short" style={{ background: t.text_secondary }} />
+                      <div className="aig-theme-mock-row">
+                        <div className="aig-theme-mock-chip" style={{ background: t.background_secondary, borderColor: t.border }} />
+                        <div className="aig-theme-mock-chip" style={{ background: t.secondary }} />
+                        <div className="aig-theme-mock-chip" style={{ background: t.accent }} />
+                      </div>
                     </div>
                   </button>
                 ))}
@@ -631,7 +1015,7 @@ export default function AIPptWizard({ onComplete }) {
       <AIPptThemeModal 
         isOpen={isThemeModalOpen}
         onClose={() => setIsThemeModalOpen(false)}
-        themes={THEMES}
+        themes={themePickerThemes}
         initialTheme={theme}
         onSelectTheme={setTheme}
       />

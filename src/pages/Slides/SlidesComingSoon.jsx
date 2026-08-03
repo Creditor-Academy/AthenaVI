@@ -24,8 +24,9 @@ const COPY = {
   },
 }
 
-function SlidesComingSoon({ section, onBackHome }) {
+function SlidesComingSoon({ section, onBackHome, createContext: _createContext = null }) {
   const copy = COPY[section] || COPY['ppt-ai']
+  // _createContext ({ optionId, workspaceId, folderId }) reserved for a future name/save step.
 
   return (
     <div className="library-coming-soon" role="status" aria-live="polite">

@@ -47,7 +47,7 @@ const QUICK_CREATE_LABELS = {
     'image-editor': ['Canvas', 'Editing'],
 }
 
-function Home({ onCreate, onEdit, onBrowseTemplates, onSelectTemplate, onNavigate }) {
+function Home({ onCreate, onEdit, onBrowseTemplates, onSelectTemplate, onNavigate, onCreateWithLocation }) {
     const { user } = useAuth();
     const firstName = user?.name ? user.name.split(' ')[0] : (user?.email ? user.email.split('@')[0] : 'User');
 
@@ -149,6 +149,7 @@ function Home({ onCreate, onEdit, onBrowseTemplates, onSelectTemplate, onNavigat
                             folderId: p.folderId || p.folder?.id || p.folder?._id || null,
                             title: p.name || p.title,
                             name: p.name || p.title,
+                            type: p.type || p.projectType || 'VIDEO',
                             updatedAt: p.updatedAt || p.lastModifiedAt || p.modifiedAt || p.createdAt,
                         }))
                     })
@@ -259,6 +260,8 @@ function Home({ onCreate, onEdit, onBrowseTemplates, onSelectTemplate, onNavigat
     const handleQuickCreate = (id) => {
         if (id === 'avatar-video') {
             onCreate?.()
+        } else if (onCreateWithLocation) {
+            onCreateWithLocation(id)
         } else {
             onNavigate?.(id)
         }
@@ -533,7 +536,10 @@ function Home({ onCreate, onEdit, onBrowseTemplates, onSelectTemplate, onNavigat
                                                     className="btn-edit-premium"
                                                     onClick={() => onEdit && onEdit(project)}
                                                 >
-                                                    <MdPlayArrow size={18} /> Resume Editor
+                                                    <MdPlayArrow size={18} />{' '}
+                                                    {String(project.type || '').toUpperCase() === 'PRESENTATION'
+                                                      ? 'Open Presentation'
+                                                      : 'Resume Editor'}
                                                 </button>
                                             </div>
                                         </div>
@@ -542,7 +548,11 @@ function Home({ onCreate, onEdit, onBrowseTemplates, onSelectTemplate, onNavigat
                                                 <h3>{project.title || project.name || 'Untitled Project'}</h3>
                                                 <div className="project-meta">
                                                     <MdAccessTime size={13} /> {formatDate(project.updatedAt || project.createdAt)}
-                                                    {project.data?.scenes?.length > 0 && ` • ${project.data.scenes.length} scene${project.data.scenes.length !== 1 ? 's' : ''}`}
+                                                    {String(project.type || '').toUpperCase() === 'PRESENTATION'
+                                                      ? ' • Presentation'
+                                                      : project.data?.scenes?.length > 0
+                                                        ? ` • ${project.data.scenes.length} scene${project.data.scenes.length !== 1 ? 's' : ''}`
+                                                        : ''}
                                                 </div>
                                             </div>
                                         </div>

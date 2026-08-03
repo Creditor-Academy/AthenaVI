@@ -16,7 +16,10 @@ export default function AIPptThemeModal({ isOpen, onClose, themes, initialTheme,
   if (!isOpen) return null;
 
   const activeTheme = themes.find(t => t.id === activeThemeId) || themes[0];
-  const filteredThemes = themes.filter(t => t.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const query = searchQuery.toLowerCase().trim();
+  const filteredThemes = themes.filter(t =>
+    `${t.name} ${t.vibe || ''}`.toLowerCase().includes(query)
+  );
 
   const handleSelect = () => {
     onSelectTheme(activeThemeId)
@@ -62,9 +65,14 @@ export default function AIPptThemeModal({ isOpen, onClose, themes, initialTheme,
                     onClick={() => setActiveThemeId(t.id)}
                   >
                     <div className="aig-sidebar-preview" style={{ background: t.outer }}>
-                      <div className="aig-sidebar-inner" style={{ background: t.inner }}>
+                      <div className="aig-sidebar-inner" style={{ background: t.inner, borderColor: t.border || 'transparent' }}>
                         <h4 style={{ color: t.title }}>Title</h4>
                         <p style={{ color: t.body }}>Body & link</p>
+                        <div className="aig-sidebar-swatches">
+                          <span style={{ background: t.primary }} />
+                          <span style={{ background: t.secondary }} />
+                          <span style={{ background: t.accent }} />
+                        </div>
                       </div>
                     </div>
                     <div className="aig-sidebar-footer">
@@ -121,7 +129,7 @@ export default function AIPptThemeModal({ isOpen, onClose, themes, initialTheme,
                   This is body text. You can change your fonts, colors and images later in the theme editor.
                   You can also create your own custom branded theme.
                 </p>
-                <a href="#" style={{ color: activeTheme.title, display: 'block', margin: '16px 0', textDecoration: 'underline' }}>This is a link.</a>
+                <a href="#" style={{ color: activeTheme.accent || activeTheme.title, display: 'block', margin: '16px 0', textDecoration: 'underline' }}>This is a link.</a>
                 
                 <div className="aig-slide-boxes-row">
                   <div className="aig-mock-text-box" style={{ background: 'rgba(0,0,0,0.05)', color: activeTheme.body }}>

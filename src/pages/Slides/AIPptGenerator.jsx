@@ -2,40 +2,103 @@ import { useState } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import './AIPptGenerator.css'
 
-// Sub-components
 import AIPptWizard from './AIPptComponents/AIPptWizard'
 import AIPptOutline from './AIPptComponents/AIPptOutline'
 import AIPptGenerating from './AIPptComponents/AIPptGenerating'
-import AIPptEditor from './AIPptComponents/AIPptEditor'
+import presentationService from '../../services/presentationService'
+import { isInsufficientCreditsError } from '../../services/creditsService'
+import {
+  buildPresentationGenerationPayload,
+  outlineCardsToApiPayload,
+  toApiThemeId,
+} from '../../utils/presentationHelpers'
 
-export default function AIPptGenerator({ onBack, onComplete }) {
-  // 'wizard' | 'outline' | 'generating' | 'editor'
+export default function AIPptGenerator({
+  onBack,
+  onComplete, createContext: _createContext = null,
+  initialWorkspaceId,
+  initialFolderId,
+}) {
   const [stage, setStage] = useState('wizard')
-  
-  // Shared State
   const [outlineData, setOutlineData] = useState([])
   const [config, setConfig] = useState({})
+  const [session, setSession] = useState(null) // { workspaceId, presentationId, folderId }
+  const [creditEstimate, setCreditEstimate] = useState(null)
+  const [flowError, setFlowError] = useState('')
+  const [isBusy, setIsBusy] = useState(false)
+  // _createContext ({ optionId, workspaceId, folderId }) reserved for a future name/save step.
 
-  const handleWizardComplete = (generatedOutline, generatorConfig) => {
+  const handleWizardComplete = (generatedOutline, generatorConfig, apiSession) => {
     setOutlineData(generatedOutline)
     setConfig(generatorConfig)
+    setSession(apiSession)
+    setCreditEstimate(apiSession?.creditEstimate || null)
+    setFlowError('')
     setStage('outline')
   }
 
-  const handleOutlineComplete = (finalOutline) => {
-    setOutlineData(finalOutline)
-    setStage('generating')
+  const handleOutlineComplete = async (finalOutline) => {
+    if (!session?.workspaceId || !session?.presentationId) {
+      setFlowError('Missing presentation session. Go back and generate the outline again.')
+      return
+    }
+
+    setIsBusy(true)
+    setFlowError('')
+    try {
+      await presentationService.updateOutline(
+        session.workspaceId,
+        session.presentationId,
+        outlineCardsToApiPayload(finalOutline, {
+          title: config.title,
+          density: config.textAmount,
+          locale: config.locale || 'en',
+        })
+      )
+
+      const themeId = toApiThemeId(config.backendThemeId)
+      if (themeId) {
+        await presentationService.setTheme(session.workspaceId, session.presentationId, {
+          themeId,
+        })
+      }
+
+      await presentationService.startGenerate(
+        session.workspaceId,
+        session.presentationId,
+        buildPresentationGenerationPayload(config, {
+          finalOutline,
+          overwriteManualEdits: false,
+        })
+      )
+      setOutlineData(finalOutline)
+      setStage('generating')
+    } catch (error) {
+      if (isInsufficientCreditsError(error)) {
+        setFlowError(error.message || 'Insufficient credits to generate this presentation.')
+      } else {
+        setFlowError(error.message || 'Failed to start generation.')
+      }
+    } finally {
+      setIsBusy(false)
+    }
   }
 
-  const handleGenerationComplete = () => {
+  const handleGenerationComplete = (statusPayload) => {
     if (onComplete) {
-      onComplete({ outline: outlineData, config: config })
+      onComplete({
+        outline: outlineData,
+        config,
+        workspaceId: session?.workspaceId,
+        presentationId: session?.presentationId,
+        folderId: session?.folderId,
+        status: statusPayload,
+      })
     }
   }
 
   return (
     <div className="aig-container">
-      {/* Background stays persistent across all non-editor stages */}
       {stage !== 'editor' && (
         <div className="aig-bg-sky">
           <div className="aig-bg-wave aig-bg-wave-1"></div>
@@ -43,8 +106,7 @@ export default function AIPptGenerator({ onBack, onComplete }) {
           <div className="aig-bg-wave aig-bg-wave-3"></div>
         </div>
       )}
-      
-      {/* Shared Header for Wizard & Outline */}
+
       {(stage === 'wizard' || stage === 'outline') && (
         <header className="aig-header-floating fade-in">
           <button className="aig-home-btn" onClick={onBack}>
@@ -53,21 +115,44 @@ export default function AIPptGenerator({ onBack, onComplete }) {
         </header>
       )}
 
-      {/* Stage Router */}
+      {flowError && (
+        <div className="aig-flow-error" role="alert">
+          {flowError}
+          <button type="button" onClick={() => setFlowError('')}>
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {stage === 'wizard' && (
-        <AIPptWizard onComplete={handleWizardComplete} />
+        <AIPptWizard
+          initialWorkspaceId={initialWorkspaceId}
+          initialFolderId={initialFolderId}
+          onComplete={handleWizardComplete}
+        />
       )}
 
       {stage === 'outline' && (
-        <AIPptOutline 
-          initialOutline={outlineData} 
+        <AIPptOutline
+          initialOutline={outlineData}
+          creditEstimate={creditEstimate}
+          isSubmitting={isBusy}
           onGenerate={handleOutlineComplete}
           onBack={() => setStage('wizard')}
         />
       )}
 
       {stage === 'generating' && (
-        <AIPptGenerating onComplete={handleGenerationComplete} />
+        <AIPptGenerating
+          workspaceId={session?.workspaceId}
+          presentationId={session?.presentationId}
+          expectedSlideCount={outlineData?.length || config?.slides}
+          onComplete={handleGenerationComplete}
+          onError={(message) => {
+            setFlowError(message)
+            setStage('outline')
+          }}
+        />
       )}
     </div>
   )
