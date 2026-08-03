@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { MdVideoLibrary } from 'react-icons/md';
 import workspaceService from '../../../../services/workspaceService';
 import { fromBackendProjectData } from '../../../../utils/projectDataMapper';
 import { normalizeSceneClips } from '../../../../utils/clipLayout';
 import { normalizeClipsToScene } from '../../../../utils/editorLayerUtils';
 import LiveCanvasRenderer from '../../editor/editor/LiveCanvasRenderer';
+import DefaultProjectThumbnail from './DefaultProjectThumbnail.jsx';
 
 const scenePreviewCache = new Map();
 
@@ -79,8 +79,8 @@ const ProjectSceneThumbnail = ({ video }) => {
     };
   }, [workspaceId, projectId, cacheKey, video?.data]);
 
-  if (loading || !previewScene) {
-    return <MdVideoLibrary size={48} className="video-icon" />;
+  if (!previewScene) {
+    return <DefaultProjectThumbnail title={video?.name || video?.title || video?.id} category={video?.category || 'video'} />;
   }
 
   return (

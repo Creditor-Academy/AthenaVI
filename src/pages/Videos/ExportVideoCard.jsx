@@ -1,5 +1,6 @@
 import { MdDownload, MdImage, MdOpenInNew, MdPlayArrow, MdPresentToAll, MdSlideshow, MdVideoLibrary } from 'react-icons/md';
 import ProjectSceneThumbnail from '../../components/features/workspace/workspace/ProjectSceneThumbnail.jsx';
+import DefaultProjectThumbnail from '../../components/features/workspace/workspace/DefaultProjectThumbnail.jsx';
 import UserIdentity from '../../components/features/workspace/workspace/UserIdentity.jsx';
 import { formatBytes } from '../../utils/formatSize.js';
 
@@ -16,6 +17,8 @@ function ExportVideoCard({
     workspaceId: video.workspaceId,
     id: video.projectId,
     data: video.raw?.projectData,
+    title: video.title || video.name,
+    category: category,
   };
 
   const renderBadge = () => {
@@ -47,10 +50,7 @@ function ExportVideoCard({
           {video.thumbnailUrl ? (
             <img src={video.thumbnailUrl} alt={video.title} className="work-card-image-bg" />
           ) : (
-            <div className="ppt-thumb-placeholder">
-              <MdPresentToAll size={42} className="ppt-thumb-icon" />
-              <span className="ppt-slide-counter">{video.slideCount || 10} Slides</span>
-            </div>
+            <DefaultProjectThumbnail title={video.title || video.name} category="ppt" />
           )}
           {renderBadge()}
           <div className="videos-export-overlay" aria-hidden>
@@ -66,10 +66,7 @@ function ExportVideoCard({
           {video.thumbnailUrl ? (
             <img src={video.thumbnailUrl} alt={video.title} className="work-card-image-bg" />
           ) : (
-            <div className="image-thumb-placeholder">
-              <MdImage size={42} className="image-thumb-icon" />
-              <span className="image-dim-tag">{video.dimensions || 'HD Image'}</span>
-            </div>
+            <DefaultProjectThumbnail title={video.title || video.name} category="image" />
           )}
           {renderBadge()}
           <div className="videos-export-overlay" aria-hidden>

@@ -230,3 +230,50 @@ body {
 *::-webkit-scrollbar-corner {
   background: transparent;
 }
+
+/* ── Global theme-aware View Toggle Button ──────────────────────────────────── */
+.view-toggle {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  background: var(--bg-surface) !important;
+  border: 1.5px solid var(--border-color) !important;
+  border-radius: 999px !important;
+  padding: 3px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.view-toggle-btn {
+  width: 34px !important;
+  height: 34px !important;
+  border: none !important;
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  transition: all 0.2s ease !important;
+  font-size: 18px !important;
+}
+
+.view-toggle-btn svg {
+  color: currentColor !important;
+}
+
+.view-toggle-btn:hover:not(.active) {
+  background: color-mix(in srgb, var(--primary) 12%, var(--bg-card)) !important;
+  color: var(--text-main) !important;
+}
+
+.view-toggle-btn.active {
+  background: var(--primary) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--primary) 35%, transparent) !important;
+}
+
+.view-toggle-btn.active svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
