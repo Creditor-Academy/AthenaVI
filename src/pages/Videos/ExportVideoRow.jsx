@@ -1,4 +1,4 @@
-import { MdDownload, MdOpenInNew, MdVideoLibrary } from 'react-icons/md';
+import { MdDownload, MdImage, MdOpenInNew, MdPresentToAll, MdSlideshow, MdVideoLibrary } from 'react-icons/md';
 import UserIdentity from '../../components/features/workspace/workspace/UserIdentity.jsx';
 import { formatBytes } from '../../utils/formatSize.js';
 import { formatOnlyDate } from '../../components/features/workspace/workspace/ViewRows.jsx';
@@ -10,9 +10,23 @@ function ExportVideoRow({
   onOpenProject,
   downloading = false,
 }) {
+  const category = video.category || 'avatar_video';
+
+  const renderIcon = () => {
+    if (category === 'ppt') return <MdSlideshow size={22} className="row-icon-ppt" />;
+    if (category === 'image') return <MdImage size={22} className="row-icon-image" />;
+    return <MdVideoLibrary size={22} className="row-icon-video" />;
+  };
+
+  const renderCategoryLabel = () => {
+    if (category === 'ppt') return 'PPT';
+    if (category === 'image') return 'Image';
+    return 'Avatar Video';
+  };
+
   return (
     <article
-      className="workspace-item-row export-item-row"
+      className={`workspace-item-row export-item-row work-row-${category}`}
       onClick={onPreview}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
@@ -23,12 +37,13 @@ function ExportVideoRow({
       role="button"
       tabIndex={0}
     >
-      <div className="row-icon-container" aria-hidden>
-        <MdVideoLibrary size={24} />
+      <div className={`row-icon-container row-icon-wrap-${category}`} aria-hidden>
+        {renderIcon()}
       </div>
 
       <div className="col col-name">
         <h4 title={video.title}>{video.title}</h4>
+        <span className={`row-category-pill pill-${category}`}>{renderCategoryLabel()}</span>
       </div>
 
       <div className="col col-workspace" title={video.workspaceName}>
@@ -40,7 +55,13 @@ function ExportVideoRow({
       </div>
 
       <div className="col col-size">
-        {video.fileSizeBytes ? formatBytes(video.fileSizeBytes) : '—'}
+        {category === 'ppt' && video.slideCount
+          ? `${video.slideCount} slides`
+          : category === 'image' && video.dimensions
+          ? video.dimensions
+          : video.fileSizeBytes
+          ? formatBytes(video.fileSizeBytes)
+          : '—'}
       </div>
 
       <div className="col col-rendered-by">
@@ -61,7 +82,7 @@ function ExportVideoRow({
         >
           <MdDownload size={18} />
         </button>
-        {onOpenProject ? (
+        {onOpenProject && category === 'avatar_video' ? (
           <button
             type="button"
             className="context-menu-btn"

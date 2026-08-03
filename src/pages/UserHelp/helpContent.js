@@ -18,7 +18,7 @@ export const helpArticles = {
 
 • **Home** — quick actions and recent activity
 • **Workspace** — folders and video projects
-• **My videos** — completed final exports (not drafts)
+• **My work** — avatar videos, PPT presentations, and images
 • **Library** — workspace images, video, and audio uploads
 • **Avatars / Voices** — manage AI presenters and narration
 • **Settings** — appearance, security, and billing

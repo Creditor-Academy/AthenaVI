@@ -111,6 +111,27 @@
   justify-content: center;
 }
 
+.videos-tab-btn .tab-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 99px;
+  margin-left: 2px;
+  transition: all 0.2s ease;
+}
+
+.videos-tab-btn.active .tab-count-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
 .videos-toolbar {
   --videos-toolbar-control-height: 40px;
   display: flex;
@@ -209,10 +230,22 @@
 }
 
 .videos-group__heading {
-  margin: 0 0 12px;
-  font-size: 15px;
-  font-weight: 600;
+  margin: 0 0 16px;
+  padding-bottom: 10px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   color: var(--text-main);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.videos-group__count {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
 }
 
 @media (max-width: 1100px) {
@@ -259,40 +292,31 @@
 .videos-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  height: 44px;
 }
 
-.videos-page .videos-create-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 11px 20px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  background: var(--primary) !important;
-  color: var(--primary-contrast) !important;
-  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.25);
-  transition:
-    background 0.15s ease,
-    color 0.15s ease,
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
+.videos-actions .videos-toolbar__dropdown {
+  height: 44px;
+  min-height: 44px;
+  max-height: 44px;
 }
 
-.videos-page .videos-create-btn:hover {
-  background: var(--primary-hover) !important;
-  color: var(--primary-contrast) !important;
-  box-shadow: 0 6px 16px rgba(var(--primary-rgb), 0.35);
-  transform: translateY(-1px);
+.videos-actions .videos-toolbar__dropdown .workspace-header-control__trigger {
+  height: 44px;
+  min-height: 44px;
+  max-height: 44px;
+  padding: 0 14px;
+  box-sizing: border-box;
+  border-radius: 999px;
 }
 
 .view-toggle {
   display: flex;
   align-items: center;
   gap: 2px;
+  height: 44px;
+  box-sizing: border-box;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 999px;
@@ -548,6 +572,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  cursor: pointer !important;
 }
 
 .videos-export-card__thumb-btn {
@@ -557,9 +582,23 @@
   margin: 0;
   border: none;
   background: transparent;
-  cursor: pointer;
+  cursor: pointer !important;
   font: inherit;
   text-align: left;
+}
+
+.videos-page .card-thumb-container,
+.videos-page .video-thumb,
+.videos-page .ppt-thumb,
+.videos-page .image-thumb,
+.videos-page .export-item-row {
+  cursor: pointer !important;
+}
+
+.videos-page .project-scene-thumb,
+.videos-page .project-scene-thumb * {
+  pointer-events: none !important;
+  cursor: pointer !important;
 }
 
 .videos-export-badge {
@@ -948,3 +987,454 @@
   font-size: 20px;
   flex-shrink: 0;
 }
+
+/* My Work Category Bar & Pill Buttons */
+.work-category-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.work-category-pill-btn {
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: inherit;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.work-category-pill-btn:hover {
+  color: var(--text-main);
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border-color));
+  transform: translateY(-1px);
+}
+
+.work-category-pill-btn.active {
+  color: #ffffff;
+  background: var(--primary);
+  border-color: var(--primary);
+  box-shadow: 0 4px 14px -2px color-mix(in srgb, var(--primary) 50%, transparent);
+}
+
+.pill-btn-avatar_video.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.pill-btn-ppt.active {
+  background: #f97316;
+  border-color: #f97316;
+}
+
+.pill-btn-image.active {
+  background: #10b981;
+  border-color: #10b981;
+}
+
+.category-pill-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.category-pill-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.work-category-pill-btn:not(.active) .category-pill-badge {
+  background: var(--bg-surface);
+  color: var(--text-muted);
+}
+
+/* Category Card Badges */
+.work-card-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(8px);
+}
+
+.work-card-badge.badge-video {
+  background: rgba(37, 99, 235, 0.88);
+  color: #ffffff;
+}
+
+.work-card-badge.badge-ppt {
+  background: rgba(234, 88, 12, 0.88);
+  color: #ffffff;
+}
+
+.work-card-badge.badge-image {
+  background: rgba(5, 150, 105, 0.88);
+  color: #ffffff;
+}
+
+.work-card-image-bg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ppt-thumb-placeholder,
+.image-thumb-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  color: #94a3b8;
+  position: relative;
+  gap: 8px;
+}
+
+.ppt-thumb-icon {
+  color: #f97316;
+}
+
+.image-thumb-icon {
+  color: #10b981;
+}
+
+.ppt-slide-counter,
+.image-dim-tag {
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(15, 23, 42, 0.75);
+  padding: 3px 8px;
+  border-radius: 6px;
+  color: #e2e8f0;
+}
+
+.meta-tag-highlight {
+  color: var(--primary) !important;
+  font-weight: 600;
+}
+
+/* Category List Row Badges */
+.row-category-pill {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.row-category-pill.pill-avatar_video {
+  background: rgba(59, 130, 246, 0.12);
+  color: #3b82f6;
+}
+
+.row-category-pill.pill-ppt {
+  background: rgba(249, 115, 22, 0.12);
+  color: #f97316;
+}
+
+.row-category-pill.pill-image {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+}
+
+.row-icon-wrap-avatar_video {
+  color: #3b82f6;
+}
+
+.row-icon-wrap-ppt {
+  color: #f97316;
+}
+
+.row-icon-wrap-image {
+  color: #10b981;
+}
+
+/* Work Preview Modals */
+.work-preview-panel {
+  max-width: 900px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
+}
+
+.preview-header-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.preview-cat-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.preview-cat-badge.badge-avatar_video {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.preview-cat-badge.badge-ppt {
+  background: #ea580c;
+  color: #ffffff;
+}
+
+.preview-cat-badge.badge-image {
+  background: #059669;
+  color: #ffffff;
+}
+
+.preview-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.preview-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #ffffff;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.preview-download-btn:hover {
+  background: var(--primary-hover);
+}
+
+.ppt-preview-container,
+.image-preview-container {
+  display: flex;
+  flex-direction: column;
+  background: #090d16;
+  min-height: 400px;
+}
+
+.ppt-preview-stage,
+.image-preview-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #020617;
+  max-height: 60vh;
+  overflow: hidden;
+}
+
+.ppt-slide-preview-img,
+.image-lightbox-img {
+  max-width: 100%;
+  max-height: 52vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.ppt-slide-placeholder {
+  text-align: center;
+  color: #94a3b8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.ppt-preview-footer,
+.image-preview-footer {
+  padding: 16px 20px;
+  background: #0f172a;
+  border-top: 1px solid #1e293b;
+  color: #cbd5e1;
+}
+
+.ppt-meta-info,
+.image-meta-info {
+  display: flex;
+  gap: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-bottom: 6px;
+}
+
+.ppt-desc-text {
+  margin: 0;
+  font-size: 13px;
+  color: #e2e8f0;
+}
+
+/* Header & Filter Controls Improvements */
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.total-items-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 15%, var(--bg-card));
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
+}
+
+.videos-toolbar-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.videos-toolbar__dropdown .workspace-header-control__trigger.has-active-filter {
+  border-color: color-mix(in srgb, var(--primary) 60%, var(--border-color));
+  background: color-mix(in srgb, var(--primary) 8%, var(--bg-card));
+}
+
+.videos-toolbar__dropdown .workspace-header-control__trigger.has-active-filter .workspace-header-control__icon {
+  color: var(--primary);
+}
+
+.videos-toolbar__dropdown .workspace-header-control__trigger.has-active-filter .workspace-header-control__value {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.work-root-tabs-wrapper {
+  margin-top: 4px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.search-clear-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: 50%;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.search-clear-btn:hover {
+  color: var(--text-main);
+  background: var(--bg-surface);
+}
+
+.search-kbd-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+}
+
+.active-filters-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--primary) 6%, var(--bg-card));
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border-color));
+  border-radius: 10px;
+}
+
+.active-filters-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.filter-chip button {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+
+.filter-chip button:hover {
+  color: #ef4444;
+}
+
+.reset-all-filters-btn {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-left: auto;
+  padding: 2px 6px;
+  transition: color 0.15s ease;
+}
+
+.reset-all-filters-btn:hover {
+  text-decoration: underline;
+  color: var(--primary-hover);
+}
+
+

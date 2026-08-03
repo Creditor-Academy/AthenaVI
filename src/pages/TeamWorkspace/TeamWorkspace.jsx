@@ -70,7 +70,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
   const [sortBy, setSortBy] = useState('name_asc');
   const [activeRootTab, setActiveRootTab] = useState(() => {
     const saved = sessionStorage.getItem('workspaceActiveRootTab');
-    return saved === 'recents' ? 'recents' : 'workspace';
+    return saved === 'workspace' ? 'workspace' : 'recents';
   });
 
   // ------------------------------------------------------------------
@@ -946,7 +946,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
 
       <div className="workspace-content-area" style={{ flex: 1 }}>
         {loading && workspaces.length === 0 ? (
-          <TeamWorkspaceSkeleton viewMode={viewMode} />
+          <TeamWorkspaceSkeleton viewMode={viewMode} activeRootTab={activeRootTab} />
         ) : (
           <>
             {currentLevel.type === 'root' && renderRoot()}

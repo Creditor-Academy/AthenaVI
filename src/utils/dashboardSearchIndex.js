@@ -5,7 +5,7 @@ import { helpCategories, helpArticles } from '../pages/UserHelp/helpContent.js';
 
 export const SEARCH_CATEGORIES = [
   { id: 'pages', label: 'Pages' },
-  { id: 'videos', label: 'Videos' },
+  { id: 'videos', label: 'Work' },
   { id: 'workspaces', label: 'Workspaces' },
   { id: 'avatars', label: 'Avatars' },
   { id: 'voices', label: 'Voices' },
