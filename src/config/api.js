@@ -124,7 +124,67 @@ const API_CONFIG = {
         `/api/workspaces/${workspaceId}/projects/${projectId}/comments/${commentId}`,
       MENTIONABLE_USERS: (workspaceId, projectId) =>
         `/api/workspaces/${workspaceId}/projects/${projectId}/comments/mentionable-users`,
-    }
+    },
+
+    // Brand Kits (workspace branding)
+    BRAND_KITS: {
+      LIST: (workspaceId) => `/api/workspaces/${workspaceId}/brand-kits`,
+      ONE: (workspaceId, brandKitId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}`,
+      SET_DEFAULT: (workspaceId, brandKitId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/set-default`,
+      MEDIA: (workspaceId, brandKitId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/media`,
+      MEDIA_ONE: (workspaceId, brandKitId, mediaId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/media/${mediaId}`,
+    },
+
+    // Presentations (AI PPT / Canvas)
+    PRESENTATIONS: {
+      LIST: (workspaceId) => `/api/workspaces/${workspaceId}/presentations`,
+      ONE: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}`,
+      TEMPLATES: (workspaceId) => `/api/workspaces/${workspaceId}/presentation-templates`,
+      DECK_PACKS: (workspaceId) => `/api/workspaces/${workspaceId}/presentation-deck-packs`,
+      THEMES: (workspaceId) => `/api/workspaces/${workspaceId}/presentation-themes`,
+      ELEMENT_PRESETS: (workspaceId) => `/api/workspaces/${workspaceId}/presentation-elements`,
+      STATUS: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/status`,
+      CREDIT_ESTIMATE: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/credit-estimate`,
+      OUTLINE: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/outline`,
+      THEME: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/theme`,
+      APPLY_BRAND_KIT: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/apply-brand-kit`,
+      GENERATE: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/generate`,
+      SLIDES: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides`,
+      SLIDE: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}`,
+      SLIDE_DUPLICATE: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/duplicate`,
+      SLIDES_REORDER: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/reorder`,
+      APPLY_LAYOUT: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/apply-layout`,
+      CANVAS: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/canvas`,
+      SLIDE_ELEMENTS: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/elements`,
+      SLIDE_ELEMENT: (workspaceId, presentationId, slideId, elementId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/elements/${elementId}`,
+      SLIDE_ELEMENTS_REORDER: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/elements/reorder`,
+      REGENERATE: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/regenerate`,
+      EXPORT: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/export`,
+      EXPORT_STATUS: (workspaceId, presentationId, exportId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/export/${exportId}`,
+    },
   },
   
   // Default headers

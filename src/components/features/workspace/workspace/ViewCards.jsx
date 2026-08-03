@@ -436,7 +436,7 @@ export const CreateVideoCard = ({ onClick }) => {
                 </div>
                 <div className="wsc-create-card__badge">
                     <MdMovieCreation size={13} />
-                    <span>New Video</span>
+                    <span>Video or PPT</span>
                 </div>
             </div>
         </div>

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import {
   MdAdd,
   MdMoreVert,
@@ -8,658 +8,288 @@ import {
   MdStarBorder,
   MdArrowBack,
   MdSave,
-  MdInfo,
-  MdSettings,
-  MdDeleteOutline,
-  MdColorLens,
   MdGridView,
   MdViewList,
+  MdClose,
+  MdColorLens,
+  MdTextFields,
+  MdRecordVoiceOver,
+  MdImage,
+  MdBarChart,
+  MdPalette,
+  MdInfoOutline,
 } from 'react-icons/md'
-
-const styles = `
-.brandkits-container {
-  padding: 0;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.brandkits-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 32px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.brandkits-title {
-  font-size: 28px;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0;
-  letter-spacing: -0.01em;
-}
-
-.create-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  color: #334155;
-  font-weight: 600;
-  font-size: 14px;
-  padding: 10px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.create-btn:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-}
-
-.section-label {
-  font-size: 14px;
-  color: #64748b;
-  margin: 0 0 16px;
-  font-weight: 500;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 120px 20px;
-  max-width: 500px;
-  margin: 0 auto;
-}
-
-.empty-icon {
-  width: 120px;
-  height: 120px;
-  margin: 0 auto 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #cbd5e1;
-  font-size: 64px;
-}
-
-.empty-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: #0f172a;
-  margin: 0 0 12px;
-}
-
-.empty-description {
-  font-size: 15px;
-  color: #64748b;
-  margin: 0 0 32px;
-  line-height: 1.6;
-}
-
-.empty-create-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: #3b82f6;
-  color: #ffffff;
-  font-weight: 600;
-  font-size: 15px;
-  padding: 12px 24px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.empty-create-btn:hover {
-  background: #2563eb;
-}
-
-.brandkits-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.brandkits-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
-}
-
-.view-toggle {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  background: var(--bg-card, #ffffff);
-  border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: 999px;
-  padding: 3px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.view-toggle-btn {
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: transparent;
-  color: var(--text-muted, #64748b);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-  font-size: 18px;
-}
-
-.view-toggle-btn:hover {
-  background: var(--bg-surface, #f8fafc);
-  color: var(--text-main, #0f172a);
-}
-
-.view-toggle-btn.active {
-  background: var(--primary, #3b82f6);
-  color: #ffffff;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
-}
-
-.brandkit-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  transition: all 0.2s ease;
-  position: relative;
-}
-
-.brandkit-card:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.brandkit-info {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.brandkit-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: #0f172a;
-  margin: 0 0 8px;
-}
-
-.brandkit-meta {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.default-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  background: #f3e8ff;
-  color: #7c3aed;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.brandkit-date {
-  font-size: 13px;
-  color: #64748b;
-}
-
-.brandkit-menu-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  color: #64748b;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-}
-
-.brandkit-menu-btn:hover {
-  background: #f1f5f9;
-  color: #334155;
-}
-
-.brandkit-menu {
-  position: absolute;
-  top: 50px;
-  right: 10px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
-  min-width: 180px;
-  overflow: hidden;
-  z-index: 100;
-  animation: slideDown 0.2s ease;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.menu-item {
-  padding: 10px 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  transition: background 0.15s ease;
-  border: none;
-  background: transparent;
-  width: 100%;
-  text-align: left;
-  font-size: 13px;
-  font-weight: 500;
-  color: #334155;
-}
-
-.menu-item:hover {
-  background: #f8fafc;
-}
-
-.menu-item.delete {
-  color: #ef4444;
-}
-
-.menu-item.delete:hover {
-  background: #fef2f2;
-}
-
-.menu-icon {
-  font-size: 18px;
-  color: #64748b;
-  flex-shrink: 0;
-}
-
-.menu-item.delete .menu-icon {
-  color: #ef4444;
-}
-
-/* Create/Edit Brand Kit Page */
-.brandkit-editor {
-  padding: 0;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.editor-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 0;
-  border-bottom: 1px solid #e5e7eb;
-  margin-bottom: 32px;
-}
-
-.editor-header-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.back-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  color: #334155;
-  font-weight: 500;
-  font-size: 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.back-btn:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-}
-
-.editor-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 20px;
-  font-weight: 600;
-  color: #0f172a;
-}
-
-.editor-title input {
-  border: none;
-  background: transparent;
-  font-size: 20px;
-  font-weight: 600;
-  color: #0f172a;
-  outline: none;
-  padding: 4px 8px;
-  border-radius: 4px;
-  min-width: 200px;
-}
-
-.editor-title input:focus {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-}
-
-.save-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background: #3b82f6;
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.save-btn:hover {
-  background: #2563eb;
-}
-
-.editor-content {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 32px;
-}
-
-.quick-create-section {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 24px;
-  height: fit-content;
-}
-
-.quick-create-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  color: #0f172a;
-  margin: 0 0 8px;
-}
-
-.new-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  background: #f3e8ff;
-  color: #7c3aed;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.quick-create-description {
-  font-size: 14px;
-  color: #64748b;
-  margin: 0 0 20px;
-  line-height: 1.5;
-}
-
-.search-input {
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 14px;
-  outline: none;
-  transition: all 0.2s ease;
-  background: #ffffff;
-}
-
-.search-input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.customize-section {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.customize-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 24px;
-}
-
-.customize-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #0f172a;
-  margin: 0 0 20px;
-}
-
-.upload-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.upload-box {
-  aspect-ratio: 1;
-  border: 2px dashed #cbd5e1;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background: #f8fafc;
-}
-
-.upload-box:hover {
-  border-color: #3b82f6;
-  background: #eff6ff;
-}
-
-.upload-icon {
-  font-size: 32px;
-  color: #94a3b8;
+import brandKitService, { BrandKitPermissionError } from '../../services/brandKitService'
+import { resolvePresentationWorkspaceContext } from '../../utils/presentationContext'
+import {
+  canWriteBrandKits,
+  emptyBrandKitData,
+  formatRelativeTime,
+  LOGO_ROLES,
+  newColorId,
+  validateBrandKitData,
+} from '../../utils/brandKitHelpers'
+import BrandKitsSkeleton from '../page-skeleton/BrandKitsSkeleton'
+import './BrandKits.css'
+
+function listToLines(arr) {
+  return (arr || []).join('\n')
+}
+
+function linesToList(text) {
+  return String(text || '')
+    .split('\n')
+    .map((s) => s.trim())
+    .filter(Boolean)
+}
+
+function resolveRoleHex(data, role, fallback = '#94A3B8') {
+  const id = data?.colorRoles?.[role]
+  const match = (data?.colors || []).find((c) => c.id === id)
+  return match?.hex || fallback
+}
+
+function SectionHead({ icon, title, hint }) {
+  const Icon = icon
+  return (
+    <div className="customize-card-head">
+      <div className="customize-icon" aria-hidden>
+        {Icon ? <Icon size={18} /> : null}
+      </div>
+      <div>
+        <h3 className="customize-title">{title}</h3>
+        {hint ? <p className="customize-hint">{hint}</p> : null}
+      </div>
+    </div>
+  )
+}
+
+function BrandPreview({ kitName, kitData }) {
+  const bg = resolveRoleHex(kitData, 'bg', '#0B1220')
+  const text = resolveRoleHex(kitData, 'text', '#F8FAFC')
+  const primary = resolveRoleHex(kitData, 'primary', '#3B82F6')
+  const secondary = resolveRoleHex(kitData, 'secondary', primary)
+  const accent = resolveRoleHex(kitData, 'accent', secondary)
+  const muted = resolveRoleHex(kitData, 'muted', '#94A3B8')
+  const colors = kitData?.colors || []
+
+  return (
+    <aside className="bk-preview-panel">
+      <p className="bk-preview-label">Live preview</p>
+      <div className="bk-preview-slide" style={{ background: bg, color: text }}>
+        <div>
+          <div className="bk-preview-slide-bar" style={{ background: primary }} />
+          <h4 className="bk-preview-slide-title" style={{ color: text }}>
+            {kitName?.trim() || 'Brand Kit'}
+          </h4>
+          <p className="bk-preview-slide-body" style={{ color: muted }}>
+            {kitData?.voice?.tone
+              ? `${kitData.voice.tone}${kitData.voice.audience ? ` · ${kitData.voice.audience}` : ''}`
+              : 'Colors, type, and voice applied to your decks.'}
+          </p>
+        </div>
+        <div className="bk-preview-slide-chips">
+          <span style={{ background: primary }} />
+          <span style={{ background: secondary }} />
+          <span style={{ background: accent }} />
+        </div>
+      </div>
+
+      <div className="bk-preview-swatches">
+        {colors.slice(0, 6).map((c) => (
+          <i key={c.id} style={{ background: c.hex }} title={c.name} />
+        ))}
+      </div>
+
+      <div className="bk-preview-meta">
+        <div className="bk-preview-meta-row">
+          <span>Heading</span>
+          <strong style={{ fontFamily: kitData?.fonts?.heading?.family || 'inherit' }}>
+            {kitData?.fonts?.heading?.family || 'System'}
+          </strong>
+        </div>
+        <div className="bk-preview-meta-row">
+          <span>Body</span>
+          <strong style={{ fontFamily: kitData?.fonts?.body?.family || 'inherit' }}>
+            {kitData?.fonts?.body?.family || 'System'}
+          </strong>
+        </div>
+        <div className="bk-preview-meta-row">
+          <span>Colors</span>
+          <strong>{colors.length}</strong>
+        </div>
+      </div>
+    </aside>
+  )
+}
+
+function KitCard({
+  kit,
+  viewMode,
+  canWrite,
+  menuOpen,
+  setMenuOpen,
+  setMenuRef,
+  onEdit,
+  onSetDefault,
+  onCopyId,
+  onDelete,
+  index,
+}) {
+  const colors = kit.data?.colors || []
+  const ribbonColors =
+    colors.length > 0
+      ? colors.slice(0, 5)
+      : [
+          { id: 'f1', hex: '#CBD5E1' },
+          { id: 'f2', hex: '#94A3B8' },
+          { id: 'f3', hex: '#64748B' },
+        ]
+
+  return (
+    <div
+      className="brandkit-card"
+      onClick={() => onEdit(kit)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onEdit(kit)
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      style={{ animationDelay: `${Math.min(index, 8) * 0.04}s` }}
+    >
+      <div className="brandkit-ribbon" aria-hidden>
+        {ribbonColors.map((c) => (
+          <span key={c.id} style={{ background: c.hex }} />
+        ))}
+      </div>
+
+      <div className="brandkit-card-body">
+        <div className="brandkit-info">
+          {viewMode === 'grid' && (
+            <div className="brandkit-swatches">
+              {ribbonColors.slice(0, 4).map((c) => (
+                <span
+                  key={c.id}
+                  className="brandkit-swatch"
+                  style={{ background: c.hex }}
+                  title={c.name}
+                />
+              ))}
+            </div>
+          )}
+          <div style={{ minWidth: 0 }}>
+            <h3 className="brandkit-name">{kit.name}</h3>
+            <div className="brandkit-meta">
+              {kit.isDefault && (
+                <span className="default-badge">
+                  <MdStar size={12} /> Default
+                </span>
+              )}
+              <span className="brandkit-date">
+                {kit.mediaCount || 0} media
+                {kit.updatedAt ? ` · ${formatRelativeTime(kit.updatedAt)}` : ''}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {canWrite && (
+          <div
+            className="brandkit-menu-wrap"
+            ref={(el) => setMenuRef?.(kit.id, el)}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="brandkit-menu-btn"
+              aria-label="Kit actions"
+              onClick={() => setMenuOpen(menuOpen === kit.id ? null : kit.id)}
+            >
+              <MdMoreVert size={20} />
+            </button>
+            {menuOpen === kit.id && (
+              <div className="brandkit-menu">
+                <button type="button" className="menu-item" onClick={() => onSetDefault(kit.id)}>
+                  {kit.isDefault ? (
+                    <MdStarBorder className="menu-icon" />
+                  ) : (
+                    <MdStar className="menu-icon" />
+                  )}
+                  {kit.isDefault ? 'Default kit' : 'Set as default'}
+                </button>
+                <button type="button" className="menu-item" onClick={() => onCopyId(kit.id)}>
+                  <MdContentCopy className="menu-icon" />
+                  Copy ID
+                </button>
+                <button type="button" className="menu-item delete" onClick={() => onDelete(kit.id)}>
+                  <MdDelete className="menu-icon" />
+                  Delete
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }
-
-.upload-label {
-  font-size: 13px;
-  color: #64748b;
-  font-weight: 500;
-}
-
-.upload-info {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: #94a3b8;
-  margin-top: 8px;
-}
-
-.color-upload-box {
-  aspect-ratio: 1;
-  border: 2px dashed #cbd5e1;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background: #f8fafc;
-}
-
-.color-upload-box:hover {
-  border-color: #3b82f6;
-  background: #eff6ff;
-}
-
-.color-themes {
-  margin-top: 20px;
-}
-
-.themes-label {
-  font-size: 14px;
-  font-weight: 500;
-  color: #334155;
-  margin: 0 0 12px;
-}
-
-.theme-card {
-  background: linear-gradient(90deg, #ffffff 0%, #f1f5f9 25%, #cbd5e1 50%, #64748b 75%, #0f172a 100%);
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 8px;
-  position: relative;
-}
-
-.theme-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #0f172a;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 4px 8px;
-  border-radius: 4px;
-  display: inline-block;
-}
-
-.themes-hint {
-  font-size: 13px;
-  color: #94a3b8;
-  margin-top: 12px;
-}
-
-.font-select {
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 14px;
-  outline: none;
-  transition: all 0.2s ease;
-  background: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.font-select:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.font-select-content {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.font-icon {
-  font-size: 20px;
-  color: #64748b;
-}
-
-.font-placeholder {
-  color: #94a3b8;
-}
-
-.font-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.font-action-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  color: #94a3b8;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.font-action-btn:hover {
-  background: #f1f5f9;
-  color: #64748b;
-}
-
-.settings-link {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #64748b;
-  font-size: 13px;
-  margin-top: 12px;
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.settings-link:hover {
-  color: #334155;
-}
-`
-
-const initialBrandKits = [
-  {
-    id: 'bk1',
-    name: "Workspace's brand kit",
-    isDefault: true,
-    edited: '4 seconds ago',
-  },
-]
 
 function BrandKits() {
-  const [brandKits, setBrandKits] = useState(initialBrandKits)
+  const [workspaceId, setWorkspaceId] = useState(null)
+  const [workspaceRole, setWorkspaceRole] = useState('MEMBER')
+  const [brandKits, setBrandKits] = useState([])
+  const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState('list')
   const [showEditor, setShowEditor] = useState(false)
-  const [editingKit, setEditingKit] = useState(null)
+  const [editingKitId, setEditingKitId] = useState(null)
+  const [kitName, setKitName] = useState('New Brand Kit')
+  const [kitData, setKitData] = useState(emptyBrandKitData())
+  const [kitMedia, setKitMedia] = useState([])
+  const [isDefault, setIsDefault] = useState(false)
   const [menuOpen, setMenuOpen] = useState(null)
-  const [kitName, setKitName] = useState("Workspace's brand kit")
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [logoRole, setLogoRole] = useState('primary')
   const menuRefs = useRef({})
+  const fileInputRef = useRef(null)
+  const pendingUploadKind = useRef('logo')
+
+  const canWrite = canWriteBrandKits(workspaceRole)
+
+  const setMenuRef = useCallback((id, el) => {
+    menuRefs.current[id] = el
+  }, [])
+
+  const loadKits = useCallback(async (wsId) => {
+    const list = await brandKitService.list(wsId)
+    setBrandKits(list)
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      setLoading(true)
+      setError('')
+      try {
+        const ctx = await resolvePresentationWorkspaceContext()
+        if (cancelled) return
+        setWorkspaceId(ctx.workspaceId)
+        setWorkspaceRole(ctx.workspace?.role || 'MEMBER')
+        await loadKits(ctx.workspaceId)
+      } catch (err) {
+        if (!cancelled) setError(err.message || 'Failed to load brand kits')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [loadKits])
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -673,273 +303,763 @@ function BrandKits() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const handleCreate = () => {
-    setEditingKit(null)
+  const openCreate = () => {
+    if (!canWrite) return
+    setEditingKitId(null)
     setKitName('New Brand Kit')
+    setKitData(emptyBrandKitData())
+    setKitMedia([])
+    setIsDefault(brandKits.length === 0)
+    setError('')
     setShowEditor(true)
   }
 
-  const handleEdit = (kit) => {
-    setEditingKit(kit)
+  const openEdit = async (kit) => {
+    if (!workspaceId || !kit?.id) return
+    setError('')
+    setShowEditor(true)
+    setEditingKitId(kit.id)
     setKitName(kit.name)
-    setShowEditor(true)
+    try {
+      const detail = await brandKitService.get(workspaceId, kit.id)
+      setKitName(detail.name)
+      setKitData(detail.data || emptyBrandKitData())
+      setKitMedia(detail.media || [])
+      setIsDefault(Boolean(detail.isDefault))
+    } catch (err) {
+      setError(err.message || 'Failed to load brand kit')
+    }
   }
 
-  const handleSave = () => {
-    if (editingKit) {
-      setBrandKits((prev) =>
-        prev.map((kit) =>
-          kit.id === editingKit.id ? { ...kit, name: kitName, edited: 'Just now' } : kit
-        )
-      )
-    } else {
-      const newKit = {
-        id: `bk${Date.now()}`,
-        name: kitName,
-        isDefault: false,
-        edited: 'Just now',
+  const handleSave = async () => {
+    if (!workspaceId || !canWrite) return
+    const validationError = validateBrandKitData(kitData)
+    if (validationError) {
+      setError(validationError)
+      return
+    }
+    setSaving(true)
+    setError('')
+    try {
+      if (editingKitId) {
+        await brandKitService.update(workspaceId, editingKitId, {
+          name: kitName.trim() || 'Untitled Brand Kit',
+          data: kitData,
+          isDefault,
+        })
+        if (isDefault) {
+          try {
+            await brandKitService.setDefault(workspaceId, editingKitId)
+          } catch {
+            // PATCH may already have set default
+          }
+        }
+      } else {
+        const created = await brandKitService.create(workspaceId, {
+          name: kitName.trim() || 'Untitled Brand Kit',
+          isDefault,
+          data: kitData,
+        })
+        setEditingKitId(created.id)
+        if (isDefault && created.id) {
+          try {
+            await brandKitService.setDefault(workspaceId, created.id)
+          } catch {
+            // ignore
+          }
+        }
       }
-      setBrandKits([...brandKits, newKit])
+      await loadKits(workspaceId)
+      setShowEditor(false)
+      setEditingKitId(null)
+    } catch (err) {
+      setError(
+        err instanceof BrandKitPermissionError
+          ? 'Only workspace owners and admins can edit brand kits'
+          : err.message || 'Failed to save brand kit'
+      )
+    } finally {
+      setSaving(false)
     }
-    setShowEditor(false)
-    setEditingKit(null)
   }
 
-  const handleDelete = (kitId) => {
-    if (window.confirm('Are you sure you want to delete this brand kit?')) {
-      setBrandKits((prev) => prev.filter((kit) => kit.id !== kitId))
-      setMenuOpen(null)
+  const handleDelete = async (kitId) => {
+    if (!canWrite || !workspaceId) return
+    if (
+      !window.confirm(
+        'Delete this brand kit and its media? Existing decks keep their snapshotted theme.'
+      )
+    ) {
+      return
     }
+    setError('')
+    try {
+      await brandKitService.remove(workspaceId, kitId)
+      await loadKits(workspaceId)
+      if (editingKitId === kitId) {
+        setShowEditor(false)
+        setEditingKitId(null)
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to delete brand kit')
+    }
+    setMenuOpen(null)
+  }
+
+  const handleSetDefault = async (kitId) => {
+    if (!canWrite || !workspaceId) return
+    setError('')
+    try {
+      await brandKitService.setDefault(workspaceId, kitId)
+      await loadKits(workspaceId)
+    } catch (err) {
+      setError(err.message || 'Failed to set default')
+    }
+    setMenuOpen(null)
   }
 
   const handleCopyId = (kitId) => {
     navigator.clipboard.writeText(kitId)
     setMenuOpen(null)
-    alert('Brand Kit ID copied to clipboard!')
   }
 
-  const handleRemoveDefault = (kitId) => {
-    setBrandKits((prev) =>
-      prev.map((kit) => ({
-        ...kit,
-        isDefault: kit.id === kitId ? false : kit.isDefault,
-      }))
-    )
-    setMenuOpen(null)
+  const updateColor = (index, patch) => {
+    setKitData((prev) => {
+      const colors = [...(prev.colors || [])]
+      colors[index] = { ...colors[index], ...patch }
+      return { ...prev, colors }
+    })
+  }
+
+  const addColor = () => {
+    setKitData((prev) => {
+      const colors = prev.colors || []
+      if (colors.length >= 32) return prev
+      const id = newColorId(colors)
+      return {
+        ...prev,
+        colors: [...colors, { id, name: `Color ${colors.length + 1}`, hex: '#64748B' }],
+      }
+    })
+  }
+
+  const removeColor = (index) => {
+    setKitData((prev) => {
+      const colors = [...(prev.colors || [])]
+      if (colors.length <= 2) return prev
+      const removed = colors[index]
+      colors.splice(index, 1)
+      const roles = { ...prev.colorRoles }
+      const fallback = colors[0]?.id
+      Object.keys(roles).forEach((key) => {
+        if (roles[key] === removed.id) roles[key] = fallback
+      })
+      return {
+        ...prev,
+        colors,
+        colorRoles: roles,
+        chartStyles: {
+          colorIds: (prev.chartStyles?.colorIds || []).filter((id) => id !== removed.id),
+        },
+      }
+    })
+  }
+
+  const triggerUpload = (kind) => {
+    if (!canWrite || !editingKitId) {
+      setError('Save the brand kit first, then upload media')
+      return
+    }
+    pendingUploadKind.current = kind
+    fileInputRef.current?.click()
+  }
+
+  const handleFileSelected = async (event) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file || !workspaceId || !editingKitId) return
+
+    setUploading(true)
+    setError('')
+    try {
+      const kind = pendingUploadKind.current
+      await brandKitService.uploadMedia(workspaceId, editingKitId, {
+        file,
+        kind,
+        role: kind === 'logo' ? logoRole : undefined,
+        name: file.name,
+      })
+      const detail = await brandKitService.get(workspaceId, editingKitId)
+      setKitMedia(detail.media || [])
+      await loadKits(workspaceId)
+    } catch (err) {
+      setError(err.message || 'Media upload failed')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleDeleteMedia = async (mediaId) => {
+    if (!canWrite || !workspaceId || !editingKitId) return
+    setError('')
+    try {
+      await brandKitService.deleteMedia(workspaceId, editingKitId, mediaId)
+      setKitMedia((prev) => prev.filter((m) => (m.id || m._id) !== mediaId))
+      await loadKits(workspaceId)
+    } catch (err) {
+      setError(err.message || 'Failed to remove media')
+    }
+  }
+
+  const mediaByKind = (kind) =>
+    (kitMedia || []).filter((m) => String(m.kind || m.type || '').toLowerCase() === kind)
+
+  const colorById = useMemo(() => {
+    const map = {}
+    ;(kitData.colors || []).forEach((c) => {
+      map[c.id] = c.hex
+    })
+    return map
+  }, [kitData.colors])
+
+  if (loading) {
+    return <BrandKitsSkeleton />
   }
 
   if (showEditor) {
     return (
-      <>
-        <style>{styles}</style>
-        <div className="brandkit-editor">
-          <div className="editor-header">
-            <div className="editor-header-left">
-              <button className="back-btn" onClick={() => setShowEditor(false)}>
-                <MdArrowBack size={18} />
-              </button>
-              <div className="editor-title">
-                <input
-                  type="text"
-                  value={kitName}
-                  onChange={(e) => setKitName(e.target.value)}
-                  placeholder="Brand Kit Name"
-                />
-              </div>
-            </div>
-            <button className="save-btn" onClick={handleSave}>
-              <MdSave size={18} />
-              Save
+      <div className="brandkits-page brandkit-editor">
+        <div className="editor-header">
+          <div className="editor-header-left">
+            <button className="back-btn" type="button" onClick={() => setShowEditor(false)}>
+              <MdArrowBack size={18} />
+              Back
             </button>
-          </div>
-
-          <div className="editor-content">
-            <div className="quick-create-section">
-              <h3 className="quick-create-title">
-                Create your Brand Kit in just 1 click
-                <span className="new-badge">NEW</span>
-              </h3>
-              <p className="quick-create-description">
-                Search a brand or its website and we'll create its Brand Kit for you.
-              </p>
+            <div className="editor-title">
+              <span className="editor-title-label">
+                {editingKitId ? 'Edit brand kit' : 'New brand kit'}
+              </span>
               <input
                 type="text"
-                className="search-input"
-                placeholder="Search brand or type URL"
+                value={kitName}
+                onChange={(e) => setKitName(e.target.value)}
+                placeholder="Brand Kit Name"
+                disabled={!canWrite}
               />
             </div>
-
-            <div className="customize-section">
-              <div className="customize-card">
-                <h3 className="customize-title">Logo</h3>
-                <div className="upload-grid">
-                  <div className="upload-box">
-                    <MdAdd className="upload-icon" />
-                    <span className="upload-label">Primary</span>
-                    <div className="upload-info">
-                      <MdInfo size={14} />
-                      <span>Upload logo</span>
-                    </div>
-                  </div>
-                  <div className="upload-box">
-                    <MdAdd className="upload-icon" />
-                    <span className="upload-label">Negative</span>
-                    <div className="upload-info">
-                      <MdInfo size={14} />
-                      <span>Upload logo</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="customize-card">
-                <h3 className="customize-title">Colors</h3>
-                <div className="color-upload-box" style={{ width: '100%', height: '120px' }}>
-                  <MdAdd className="upload-icon" />
-                </div>
-                <div className="color-themes">
-                  <div className="themes-label">Color themes</div>
-                  <div className="theme-card">
-                    <span className="theme-label">Theme 1</span>
-                  </div>
-                  <p className="themes-hint">Add a color to see automatically generated themes</p>
-                </div>
-              </div>
-
-              <div className="customize-card">
-                <h3 className="customize-title">Text styles</h3>
-                <div className="font-select">
-                  <div className="font-select-content">
-                    <span className="font-icon">T</span>
-                    <span className="font-placeholder">Choose primary font</span>
-                  </div>
-                  <div className="font-actions">
-                    <button className="font-action-btn">
-                      <MdDeleteOutline size={18} />
-                    </button>
-                  </div>
-                </div>
-                <div className="settings-link">
-                  <MdSettings size={16} />
-                  <span>Settings</span>
-                </div>
-              </div>
-
-              <div className="customize-card">
-                <h3 className="customize-title">Avatars</h3>
-                <div className="color-upload-box" style={{ width: '100%', height: '120px' }}>
-                  <MdAdd className="upload-icon" />
-                </div>
-              </div>
-            </div>
           </div>
+          {canWrite && (
+            <button className="save-btn" type="button" onClick={handleSave} disabled={saving}>
+              <MdSave size={18} />
+              {saving ? 'Saving…' : 'Save kit'}
+            </button>
+          )}
         </div>
-      </>
+
+        {error && (
+          <div className="bk-error-banner" role="alert">
+            <MdInfoOutline size={18} />
+            <span>{error}</span>
+          </div>
+        )}
+        {!canWrite && (
+          <div className="bk-info-banner">
+            <MdInfoOutline size={16} />
+            You can view this brand kit. Only owners and admins can edit.
+          </div>
+        )}
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/svg+xml"
+          style={{ display: 'none' }}
+          onChange={handleFileSelected}
+        />
+
+        <div className="editor-layout">
+          <div className="editor-content">
+            <section className="customize-card">
+              <SectionHead
+                icon={MdColorLens}
+                title="Colors"
+                hint="2–32 colors. Use #RGB or #RRGGBB. bg, text, and primary roles are required."
+              />
+              {(kitData.colors || []).map((color, index) => (
+                <div className="color-row" key={color.id || index}>
+                  <input
+                    type="color"
+                    value={/^#[0-9A-Fa-f]{6}$/.test(color.hex) ? color.hex : '#64748B'}
+                    disabled={!canWrite}
+                    onChange={(e) => updateColor(index, { hex: e.target.value.toUpperCase() })}
+                    aria-label={`${color.name} color`}
+                  />
+                  <input
+                    className="hex-input"
+                    value={color.hex}
+                    disabled={!canWrite}
+                    onChange={(e) => updateColor(index, { hex: e.target.value })}
+                    aria-label="Hex"
+                  />
+                  <input
+                    className="name-input"
+                    value={color.name}
+                    disabled={!canWrite}
+                    onChange={(e) => updateColor(index, { name: e.target.value })}
+                    placeholder="Name"
+                  />
+                  {canWrite && (
+                    <button
+                      type="button"
+                      className="ghost-btn danger"
+                      onClick={() => removeColor(index)}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              ))}
+              {canWrite && (
+                <button type="button" className="ghost-btn" onClick={addColor}>
+                  <MdAdd size={16} /> Add color
+                </button>
+              )}
+
+              <h4 className="media-section-label">Color roles</h4>
+              <div className="role-grid">
+                {['bg', 'text', 'primary', 'secondary', 'accent', 'muted'].map((role) => (
+                  <div className="bk-field" key={role}>
+                    <label>
+                      {colorById[kitData.colorRoles?.[role]] && (
+                        <span
+                          className="role-field-swatch"
+                          style={{ background: colorById[kitData.colorRoles?.[role]] }}
+                        />
+                      )}
+                      {role}
+                      {['bg', 'text', 'primary'].includes(role) ? ' *' : ''}
+                    </label>
+                    <select
+                      value={kitData.colorRoles?.[role] || ''}
+                      disabled={!canWrite}
+                      onChange={(e) =>
+                        setKitData((prev) => ({
+                          ...prev,
+                          colorRoles: {
+                            ...prev.colorRoles,
+                            [role]: e.target.value || undefined,
+                          },
+                        }))
+                      }
+                    >
+                      <option value="">—</option>
+                      {(kitData.colors || []).map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name} ({c.hex})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="customize-card">
+              <SectionHead
+                icon={MdTextFields}
+                title="Fonts"
+                hint="Optional font pairing id and family. Custom font file upload is not available in v1."
+              />
+              <div className="bk-field-row">
+                {['heading', 'body', 'tertiary'].map((slot) => (
+                  <div key={slot}>
+                    <div className="bk-field">
+                      <label>{slot} family</label>
+                      <input
+                        value={kitData.fonts?.[slot]?.family || ''}
+                        disabled={!canWrite}
+                        onChange={(e) =>
+                          setKitData((prev) => ({
+                            ...prev,
+                            fonts: {
+                              ...prev.fonts,
+                              [slot]: {
+                                ...prev.fonts?.[slot],
+                                family: e.target.value || null,
+                              },
+                            },
+                          }))
+                        }
+                        placeholder="e.g. Inter"
+                        style={{
+                          fontFamily: kitData.fonts?.[slot]?.family || undefined,
+                        }}
+                      />
+                    </div>
+                    <div className="bk-field" style={{ marginTop: 8 }}>
+                      <label>{slot} pairing id</label>
+                      <input
+                        value={kitData.fonts?.[slot]?.fontPairingId || ''}
+                        disabled={!canWrite}
+                        onChange={(e) =>
+                          setKitData((prev) => ({
+                            ...prev,
+                            fonts: {
+                              ...prev.fonts,
+                              [slot]: {
+                                ...prev.fonts?.[slot],
+                                fontPairingId: e.target.value || null,
+                              },
+                            },
+                          }))
+                        }
+                        placeholder="e.g. inter_space"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="customize-card">
+              <SectionHead
+                icon={MdRecordVoiceOver}
+                title="Voice"
+                hint="Tone and audience guide AI copy when this kit is applied to presentations."
+              />
+              <div className="bk-field-row">
+                <div className="bk-field">
+                  <label>Tone</label>
+                  <input
+                    value={kitData.voice?.tone || ''}
+                    disabled={!canWrite}
+                    onChange={(e) =>
+                      setKitData((prev) => ({
+                        ...prev,
+                        voice: { ...prev.voice, tone: e.target.value },
+                      }))
+                    }
+                    placeholder="Professional, confident"
+                  />
+                </div>
+                <div className="bk-field">
+                  <label>Audience</label>
+                  <input
+                    value={kitData.voice?.audience || ''}
+                    disabled={!canWrite}
+                    onChange={(e) =>
+                      setKitData((prev) => ({
+                        ...prev,
+                        voice: { ...prev.voice, audience: e.target.value },
+                      }))
+                    }
+                    placeholder="Enterprise buyers"
+                  />
+                </div>
+              </div>
+              <div className="bk-field-row">
+                <div className="bk-field">
+                  <label>Dos (one per line)</label>
+                  <textarea
+                    value={listToLines(kitData.voice?.dos)}
+                    disabled={!canWrite}
+                    onChange={(e) =>
+                      setKitData((prev) => ({
+                        ...prev,
+                        voice: { ...prev.voice, dos: linesToList(e.target.value) },
+                      }))
+                    }
+                    placeholder="Use short sentences"
+                  />
+                </div>
+                <div className="bk-field">
+                  <label>Don&apos;ts (one per line)</label>
+                  <textarea
+                    value={listToLines(kitData.voice?.donts)}
+                    disabled={!canWrite}
+                    onChange={(e) =>
+                      setKitData((prev) => ({
+                        ...prev,
+                        voice: { ...prev.voice, donts: linesToList(e.target.value) },
+                      }))
+                    }
+                    placeholder="No slang"
+                  />
+                </div>
+                <div className="bk-field">
+                  <label>Vocabulary (one per line)</label>
+                  <textarea
+                    value={listToLines(kitData.voice?.vocabulary)}
+                    disabled={!canWrite}
+                    onChange={(e) =>
+                      setKitData((prev) => ({
+                        ...prev,
+                        voice: { ...prev.voice, vocabulary: linesToList(e.target.value) },
+                      }))
+                    }
+                    placeholder="Athena VI"
+                  />
+                </div>
+              </div>
+            </section>
+
+            <section className="customize-card">
+              <SectionHead
+                icon={MdBarChart}
+                title="Charts & image style"
+                hint="Chart colors pick from your palette. Image style briefs AI visuals."
+              />
+              <div className="bk-field">
+                <label>Chart colors</label>
+                <div className="chip-row">
+                  {(kitData.colors || []).map((c) => {
+                    const selected = (kitData.chartStyles?.colorIds || []).includes(c.id)
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        className={`role-chip with-swatch ${selected ? 'active' : ''}`}
+                        disabled={!canWrite}
+                        onClick={() =>
+                          setKitData((prev) => {
+                            const ids = new Set(prev.chartStyles?.colorIds || [])
+                            if (ids.has(c.id)) ids.delete(c.id)
+                            else ids.add(c.id)
+                            return {
+                              ...prev,
+                              chartStyles: { colorIds: [...ids] },
+                            }
+                          })
+                        }
+                      >
+                        <span
+                          className="role-field-swatch"
+                          style={{ background: c.hex, marginRight: 0 }}
+                        />
+                        {c.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              <div className="bk-field">
+                <label>Image style brief</label>
+                <textarea
+                  value={kitData.imageStyle || ''}
+                  disabled={!canWrite}
+                  onChange={(e) => setKitData((prev) => ({ ...prev, imageStyle: e.target.value }))}
+                  placeholder="clean product photography, brand-safe"
+                />
+              </div>
+              <label className="bk-default-toggle">
+                <input
+                  type="checkbox"
+                  checked={isDefault}
+                  disabled={!canWrite}
+                  onChange={(e) => setIsDefault(e.target.checked)}
+                />
+                Set as workspace default brand kit
+              </label>
+            </section>
+
+            <section className="customize-card">
+              <SectionHead
+                icon={MdImage}
+                title="Media"
+                hint={
+                  uploading
+                    ? 'Uploading…'
+                    : 'Save the kit first to upload. Logos, photos, and graphics — jpeg/png/webp/svg, max 50MB.'
+                }
+              />
+
+              <div className="chip-row">
+                {LOGO_ROLES.map((role) => (
+                  <button
+                    key={role}
+                    type="button"
+                    className={`role-chip ${logoRole === role ? 'active' : ''}`}
+                    onClick={() => setLogoRole(role)}
+                  >
+                    {role}
+                  </button>
+                ))}
+              </div>
+
+              <div className="upload-grid">
+                <button
+                  type="button"
+                  className="upload-box"
+                  disabled={!canWrite}
+                  onClick={() => triggerUpload('logo')}
+                >
+                  <MdAdd size={28} color="#94a3b8" />
+                  <span className="upload-label">Upload logo ({logoRole})</span>
+                </button>
+                <button
+                  type="button"
+                  className="upload-box"
+                  disabled={!canWrite}
+                  onClick={() => triggerUpload('photo')}
+                >
+                  <MdAdd size={28} color="#94a3b8" />
+                  <span className="upload-label">Upload photo</span>
+                </button>
+                <button
+                  type="button"
+                  className="upload-box"
+                  disabled={!canWrite}
+                  onClick={() => triggerUpload('graphic')}
+                >
+                  <MdAdd size={28} color="#94a3b8" />
+                  <span className="upload-label">Upload graphic</span>
+                </button>
+              </div>
+
+              {['logo', 'photo', 'graphic'].map((kind) => {
+                const items = mediaByKind(kind)
+                if (!items.length) return null
+                return (
+                  <div key={kind}>
+                    <div className="media-section-label">{kind}s</div>
+                    <div className="upload-grid">
+                      {items.map((item) => {
+                        const id = item.id || item._id
+                        const url = item.url || item.presignedUrl || item.src
+                        return (
+                          <div
+                            className="upload-box"
+                            key={id}
+                            style={{ cursor: 'default' }}
+                          >
+                            {canWrite && (
+                              <button
+                                type="button"
+                                className="media-remove"
+                                onClick={() => handleDeleteMedia(id)}
+                                aria-label="Remove media"
+                              >
+                                <MdClose size={14} />
+                              </button>
+                            )}
+                            {url ? <img src={url} alt={item.name || kind} /> : null}
+                            <span className="upload-label">{item.role || item.name || kind}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+            </section>
+          </div>
+
+          <BrandPreview kitName={kitName} kitData={kitData} />
+        </div>
+      </div>
     )
   }
 
   return (
-    <>
-      <style>{styles}</style>
-      <div className="brandkits-container">
-        <div className="brandkits-header">
+    <div className="brandkits-page">
+      <div className="brandkits-header">
+        <div className="brandkits-header-copy">
+          <p className="brandkits-eyebrow">
+            <MdPalette size={14} /> Workspace branding
+          </p>
           <h1 className="brandkits-title">Brand Kits</h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div className="view-toggle">
-              <button
-                className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
-                onClick={() => setViewMode('list')}
-                title="List view"
-              >
-                <MdViewList size={18} />
-              </button>
-              <button
-                className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
-                onClick={() => setViewMode('grid')}
-                title="Grid view"
-              >
-                <MdGridView size={18} />
-              </button>
-            </div>
-            <button className="create-btn" onClick={handleCreate}>
+          <p className="brandkits-subtitle">
+            Define colors, fonts, voice, and logos once — then apply them across AI presentations
+            and deck packs.
+          </p>
+        </div>
+        <div className="brandkits-header-actions">
+          <div className="view-toggle">
+            <button
+              type="button"
+              className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+              onClick={() => setViewMode('list')}
+              title="List view"
+              aria-pressed={viewMode === 'list'}
+            >
+              <MdViewList size={18} />
+            </button>
+            <button
+              type="button"
+              className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
+              onClick={() => setViewMode('grid')}
+              title="Grid view"
+              aria-pressed={viewMode === 'grid'}
+            >
+              <MdGridView size={18} />
+            </button>
+          </div>
+          {canWrite && (
+            <button type="button" className="create-btn" onClick={openCreate}>
               <MdAdd size={18} />
               Create Brand Kit
             </button>
-          </div>
+          )}
         </div>
-
-        {brandKits.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">
-              <MdColorLens size={64} />
-            </div>
-            <h2 className="empty-title">Your workspace does not have any Brand Kits</h2>
-            <p className="empty-description">
-              Express your brand identity through consistent fonts, colors, and other assets so you can connect with your audience on a deeper level.
-            </p>
-            <button className="empty-create-btn" onClick={handleCreate}>
-              Create a Brand Kit
-            </button>
-          </div>
-        ) : (
-          <>
-            <p className="section-label">Workspace Brand Kits</p>
-            <div className={viewMode === 'grid' ? 'brandkits-grid' : 'brandkits-list'}>
-              {brandKits.map((kit) => (
-                <div key={kit.id} className="brandkit-card" ref={el => menuRefs.current[kit.id] = el}>
-                  <div className="brandkit-info">
-                    <div>
-                      <h3 className="brandkit-name">{kit.name}</h3>
-                      <div className="brandkit-meta">
-                        {kit.isDefault && (
-                          <span className="default-badge">DEFAULT</span>
-                        )}
-                        <span className="brandkit-date">Edited {kit.edited}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    className="brandkit-menu-btn"
-                    onClick={() => setMenuOpen(menuOpen === kit.id ? null : kit.id)}
-                  >
-                    <MdMoreVert size={20} />
-                  </button>
-                  {menuOpen === kit.id && (
-                    <div className="brandkit-menu" onClick={(e) => e.stopPropagation()}>
-                      {kit.isDefault && (
-                        <button
-                          className="menu-item"
-                          onClick={() => handleRemoveDefault(kit.id)}
-                        >
-                          <MdStarBorder className="menu-icon" />
-                          Remove as default
-                        </button>
-                      )}
-                      <button
-                        className="menu-item"
-                        onClick={() => handleCopyId(kit.id)}
-                      >
-                        <MdContentCopy className="menu-icon" />
-                        Copy ID
-                      </button>
-                      <button
-                        className="menu-item delete"
-                        onClick={() => handleDelete(kit.id)}
-                      >
-                        <MdDelete className="menu-icon" />
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </>
-        )}
       </div>
-    </>
+
+      {error && (
+        <div className="bk-error-banner" role="alert">
+          <MdInfoOutline size={18} />
+          <span>{error}</span>
+        </div>
+      )}
+      {!canWrite && (
+        <div className="bk-info-banner">
+          <MdInfoOutline size={16} />
+          View only — ask an owner or admin to create or edit brand kits.
+        </div>
+      )}
+
+      {brandKits.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-icon">
+            <MdPalette size={40} />
+          </div>
+          <h2 className="empty-title">No brand kits yet</h2>
+          <p className="empty-description">
+            Create a Brand Kit with colors, fonts, logos, and voice to keep every presentation
+            on-brand.
+          </p>
+          {canWrite && (
+            <button type="button" className="empty-create-btn" onClick={openCreate}>
+              <MdAdd size={18} />
+              Create Brand Kit
+            </button>
+          )}
+        </div>
+      ) : (
+        <>
+          <p className="section-label">
+            {brandKits.length} brand kit{brandKits.length === 1 ? '' : 's'}
+          </p>
+          <div className={viewMode === 'grid' ? 'brandkits-grid' : 'brandkits-list'}>
+            {brandKits.map((kit, index) => (
+              <KitCard
+                key={kit.id}
+                kit={kit}
+                index={index}
+                viewMode={viewMode}
+                canWrite={canWrite}
+                menuOpen={menuOpen}
+                setMenuOpen={setMenuOpen}
+                setMenuRef={setMenuRef}
+                onEdit={openEdit}
+                onSetDefault={handleSetDefault}
+                onCopyId={handleCopyId}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
   )
 }
 
 export default BrandKits
-
