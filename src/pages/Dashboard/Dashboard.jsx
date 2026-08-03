@@ -78,6 +78,8 @@ function Dashboard({ onCreate, initialSection }) {
     workspaceId: '',
     folderId: '',
   })
+  const [createMenuContext, setCreateMenuContext] = useState(null)
+  const [presentationCreateContext, setPresentationCreateContext] = useState(null)
   const [editorData, setEditorData] = useState(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     try {
@@ -235,6 +237,24 @@ function Dashboard({ onCreate, initialSection }) {
   }, [onCreate])
 
   const handleEditVideo = useCallback((video) => {
+    const projectType = String(video?.type || video?.projectType || '').toUpperCase()
+    if (projectType === 'PRESENTATION') {
+      setEditorData({
+        outline: [],
+        config: {
+          title: video.title || video.name || 'Untitled Presentation',
+          theme: video.themeId || 'petrol',
+          workspaceId: video.workspaceId,
+          presentationId: video.id || video._id,
+        },
+        workspaceId: video.workspaceId,
+        presentationId: video.id || video._id,
+        folderId: video.folderId || (video.folder && (video.folder.id || video.folder._id)) || null,
+      })
+      goToSection('editor')
+      return
+    }
+
     if (onCreate) {
       // Reuse the onCreate navigation logic
       onCreate({
@@ -247,7 +267,7 @@ function Dashboard({ onCreate, initialSection }) {
         videoData: video
       })
     }
-  }, [onCreate])
+  }, [onCreate, goToSection])
 
   const notificationNavigateHandlers = useMemo(() => ({
     onOpenEditor: (config) => {
@@ -388,7 +408,12 @@ function Dashboard({ onCreate, initialSection }) {
   if (section === 'ppt-ai') {
     return (
       <AIPptGenerator
-        onBack={() => goToSection('home')}
+        initialWorkspaceId={presentationCreateContext?.initialWorkspaceId}
+        initialFolderId={presentationCreateContext?.initialFolderId}
+        onBack={() => {
+          setPresentationCreateContext(null)
+          goToSection(presentationCreateContext ? 'workspace' : 'home')
+        }}
         onComplete={(data) => {
           setEditorData(data)
           goToSection('editor')
@@ -403,10 +428,16 @@ function Dashboard({ onCreate, initialSection }) {
   if (section === 'ppt-builder') {
     return (
       <PptBuilder
-        onBack={() => goToSection('home')}
-        createContext={
-          createLocationContext?.optionId === 'ppt-builder' ? createLocationContext : null
-        }
+        initialWorkspaceId={presentationCreateContext?.initialWorkspaceId}
+        initialFolderId={presentationCreateContext?.initialFolderId}
+        onBack={() => {
+          setPresentationCreateContext(null)
+          goToSection(presentationCreateContext ? 'workspace' : 'home')
+        }}
+        onOpenEditor={(data) => {
+          setEditorData(data)
+          goToSection('editor')
+        }}
       />
     )
   }
@@ -416,7 +447,12 @@ function Dashboard({ onCreate, initialSection }) {
       <AIPptEditor
         outline={editorData?.outline || []}
         config={editorData?.config || {}}
-        onBack={() => goToSection('home')}
+        workspaceId={editorData?.workspaceId}
+        presentationId={editorData?.presentationId}
+        onBack={() => {
+          setPresentationCreateContext(null)
+          goToSection('home')
+        }}
       />
     )
   }
@@ -439,7 +475,10 @@ function Dashboard({ onCreate, initialSection }) {
         setSidebarMobileOpen={setSidebarMobileOpen}
         topbarMobileOpen={topbarMobileOpen}
         setTopbarMobileOpen={setTopbarMobileOpen}
-        onCreate={() => setShowCreateMenu(true)}
+        onCreate={() => {
+          setCreateMenuContext(null)
+          setShowCreateMenu(true)
+        }}
         notificationCount={notificationCount}
         cartCount={cartCount}
         goToSection={handleNavigationWithModal}
@@ -487,7 +526,12 @@ function Dashboard({ onCreate, initialSection }) {
           ) : (
             <DashboardSidebar
               section={section}
-              onNavigate={goToSection}
+              onNavigate={(targetSection) => {
+                if (targetSection === 'ppt-ai' || targetSection === 'ppt-builder') {
+                  setPresentationCreateContext(null)
+                }
+                goToSection(targetSection)
+              }}
               onOpenTranslate={() => setShowTranslateModal(true)}
               onOpenAI={() => setShowAIAssistant(true)}
               onCloseMobile={() => setSidebarMobileOpen(false)}
@@ -593,7 +637,15 @@ function Dashboard({ onCreate, initialSection }) {
               }}
             />
           )}
-          {section === 'workspace' && <TeamWorkspace onCreate={handleOpenCreateVideoModal} onEdit={handleEditVideo} />}
+          {section === 'workspace' && (
+            <TeamWorkspace
+              onCreate={(context = {}) => {
+                setCreateMenuContext(context)
+                setShowCreateMenu(true)
+              }}
+              onEdit={handleEditVideo}
+            />
+          )}
           {section === 'admin-portal' && canAccessSuperadminPortal && (
             <AdminPortal
               activeTab={adminTab}
@@ -637,13 +689,22 @@ function Dashboard({ onCreate, initialSection }) {
 
       <CreateMenuModal
         isOpen={showCreateMenu}
-        onClose={() => setShowCreateMenu(false)}
+        projectOnly={Boolean(createMenuContext?.initialFolderId)}
+        onClose={() => {
+          setShowCreateMenu(false)
+          setCreateMenuContext(null)
+        }}
         onSelectAvatarVideo={() => {
           setShowCreateMenu(false)
-          handleOpenCreateVideoModal()
+          handleOpenCreateVideoModal(createMenuContext)
+          setCreateMenuContext(null)
         }}
         onNavigateSection={(id) => {
           setShowCreateMenu(false)
+          if (id === 'ppt-ai' || id === 'ppt-builder') {
+            setPresentationCreateContext(createMenuContext)
+          }
+          setCreateMenuContext(null)
           handleOpenCreateLocationModal(id)
         }}
       />

@@ -1,5 +1,52 @@
 /* AI PPT Generator Redesign - Gamma Style Fullscreen */
 
+/* ── AI Mascot Slide-In ─────────────────────────────── */
+@keyframes aig-mascot-enter {
+  0% {
+    transform: translateY(-110%);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0%);
+    opacity: 1;
+  }
+}
+
+@keyframes aig-mascot-sway {
+  0%   { transform: rotate(-3deg) translateX(-6px); }
+  50%  { transform: rotate(3deg)  translateX(6px);  }
+  100% { transform: rotate(-3deg) translateX(-6px); }
+}
+
+.aig-mascot-slide {
+  position: fixed;
+  top: 0;
+  right: 48px;
+  width: 320px;
+  height: auto;
+  z-index: 200;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 20px 56px rgba(56, 189, 248, 0.45));
+
+  /* entrance then slow hanging sway */
+  animation:
+    aig-mascot-enter 3.5s ease-out forwards,
+    aig-mascot-sway 3s ease-in-out 3.5s infinite;
+}
+
+@media (max-width: 600px) {
+  .aig-mascot-slide {
+    width: 180px;
+    right: 16px;
+  }
+}
+/* ── End AI Mascot ──────────────────────────────────── */
+
+
 /* Override dashboard shell background if needed */
 body {
   background-color: #f1f5f9;
@@ -1924,6 +1971,17 @@ body {
 }
 .aig-sidebar-inner h4 { margin: 0; font-size: 12px; }
 .aig-sidebar-inner p { margin: 0; font-size: 10px; }
+.aig-sidebar-swatches {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+.aig-sidebar-swatches span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.08);
+}
 .aig-sidebar-footer { display: flex; align-items: center; gap: 4px; padding: 0 4px; font-size: 12px; }
 
 /* Modal Right Area */
@@ -3184,6 +3242,51 @@ body {
   border: 1px solid #f1f5f9;
 }
 
+.aig-theme-card-mock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.aig-theme-mock-bar {
+  width: 28%;
+  height: 4px;
+  border-radius: 999px;
+}
+
+.aig-theme-mock-title {
+  width: 62%;
+  height: 8px;
+  border-radius: 4px;
+  opacity: 0.9;
+}
+
+.aig-theme-mock-line {
+  width: 88%;
+  height: 5px;
+  border-radius: 3px;
+  opacity: 0.45;
+}
+
+.aig-theme-mock-line.short {
+  width: 55%;
+}
+
+.aig-theme-mock-row {
+  display: flex;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.aig-theme-mock-chip {
+  flex: 1;
+  height: 22px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+}
+
 .aig-theme-card-image {
   width: 100%;
   height: 100%;
@@ -3193,4 +3296,147 @@ body {
 
 .aig-new-theme-card-premium:hover .aig-theme-card-image {
   transform: scale(1.05);
+}
+
+/* -- Presentation API integration UI --------------------------- */
+.aig-flow-error {
+  position: relative;
+  z-index: 50;
+  margin: 12px 24px 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.aig-flow-error button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.aig-credit-estimate-hint {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.aig-generating-lock {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: #0f172a;
+  color: #f8fafc;
+  text-align: center;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.aig-editor-canvas--stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+
+.aig-slide-stage {
+  position: absolute;
+  inset: 4%;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.aig-export-menu {
+  position: relative;
+}
+
+.aig-export-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  min-width: 140px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+  padding: 6px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.aig-export-dropdown button {
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #0f172a;
+}
+
+.aig-export-dropdown button:hover {
+  background: #f1f5f9;
+}
+
+.aig-preset-chip-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  max-width: 72px;
+}
+
+.aig-preset-chip {
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px 4px;
+  font-size: 10px;
+  line-height: 1.2;
+  cursor: pointer;
+  color: #334155;
+}
+
+.aig-preset-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.aig-minimap-item.active .aig-minimap-thumb {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.aig-scroll-slide-container.is-selected .aig-editor-canvas {
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.aig-canvas-image-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+}
+
+.aig-slide-mock-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
 }

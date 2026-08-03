@@ -3,7 +3,13 @@ import { ArrowUpRight, X } from 'lucide-react'
 import { CREATE_OPTIONS } from '../../../constants/createOptions.js'
 import './CreateMenuModal.css'
 
-function CreateMenuModal({ isOpen, onClose, onSelectAvatarVideo, onNavigateSection }) {
+function CreateMenuModal({
+  isOpen,
+  onClose,
+  onSelectAvatarVideo,
+  onNavigateSection,
+  projectOnly = false,
+}) {
   useEffect(() => {
     if (!isOpen) return undefined
 
@@ -22,6 +28,12 @@ function CreateMenuModal({ isOpen, onClose, onSelectAvatarVideo, onNavigateSecti
   }, [isOpen, onClose])
 
   if (!isOpen) return null
+
+  const options = projectOnly
+    ? CREATE_OPTIONS.filter((option) =>
+        ['avatar-video', 'ppt-ai', 'ppt-builder'].includes(option.id)
+      )
+    : CREATE_OPTIONS
 
   const handleSelect = (id) => {
     if (id === 'avatar-video') {
@@ -54,7 +66,7 @@ function CreateMenuModal({ isOpen, onClose, onSelectAvatarVideo, onNavigateSecti
         </div>
 
         <div className="create-menu-modal-grid">
-          {CREATE_OPTIONS.map((option) => {
+          {options.map((option) => {
             const Icon = option.icon
             return (
               <button
