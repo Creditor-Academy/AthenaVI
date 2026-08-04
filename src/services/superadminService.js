@@ -10,11 +10,22 @@ class SuperadminApiError extends Error {
 }
 
 async function superadminRequest(path, options = {}) {
+  // For multipart/form-data (FormData body), do NOT set Content-Type —
+  // the browser must set it with the correct boundary automatically.
+  const isMultipart = options.body instanceof FormData
+  const authHeaders = getAuthHeaders()
+
+  const baseHeaders = isMultipart
+    ? (authHeaders['Authorization']
+        ? { Authorization: authHeaders['Authorization'] }
+        : {})
+    : authHeaders
+
   const response = await fetch(buildUrl(path), {
     credentials: 'include',
     ...options,
     headers: {
-      ...getAuthHeaders(),
+      ...baseHeaders,
       ...options.headers,
     },
   })
@@ -230,6 +241,60 @@ const superadminService = {
     return superadminRequest(
       `/api/superadmin/broadcasts/product-email/${broadcastId}/recipients${toQuery({ page, limit, status })}`
     )
+  },
+
+  // ── Templates ────────────────────────────────────────────────────────────
+  listTemplates({ type, isActive } = {}) {
+    return superadminRequest(`/api/superadmin/templates${toQuery({ type, isActive })}`)
+  },
+
+  getTemplate(templateId) {
+    return superadminRequest(`/api/superadmin/templates/${templateId}`)
+  },
+
+  createTemplate({ type, name, contentType, variant, isActive, schema }) {
+    return superadminRequest('/api/superadmin/templates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, name, contentType, variant, isActive, schema }),
+    })
+  },
+
+  updateTemplate(templateId, { name, contentType, variant, isActive, schema }) {
+    return superadminRequest(`/api/superadmin/templates/${templateId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, contentType, variant, isActive, schema }),
+    })
+  },
+
+  // ── Template media (Canva-like baked photos for pack clone) ──────────────
+  listTemplateMedia(templateId) {
+    return superadminRequest(`/api/superadmin/templates/${templateId}/media`)
+  },
+
+  /**
+   * Upload a media item to a template.
+   * @param {string} templateId
+   * @param {{ file: File, kind: 'photo'|'preview'|'graphic', slotHint?: string, name?: string }} opts
+   */
+  uploadTemplateMedia(templateId, { file, kind, slotHint, name }) {
+    const form = new FormData()
+    form.append('file', file)
+    form.append('kind', kind)
+    if (slotHint) form.append('slotHint', slotHint)
+    if (name)     form.append('name', name)
+    return superadminRequest(`/api/superadmin/templates/${templateId}/media`, {
+      method: 'POST',
+      body: form,
+      // no Content-Type header — browser sets multipart boundary automatically
+    })
+  },
+
+  deleteTemplateMedia(templateId, mediaId) {
+    return superadminRequest(`/api/superadmin/templates/${templateId}/media/${mediaId}`, {
+      method: 'DELETE',
+    })
   },
 }
 
