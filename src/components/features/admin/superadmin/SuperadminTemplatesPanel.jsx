@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Search, Plus, X, LayoutTemplate, CheckCircle2, XCircle } from 'lucide-react'
+import { Search, Plus, X, LayoutTemplate, CheckCircle2, XCircle, Eye } from 'lucide-react'
 import superadminService, { SuperadminApiError } from '../../../../services/superadminService'
 import { formatDate } from './superadminUtils'
 import '../../../../pages/AdminPortal/SuperadminPortal.css'
@@ -12,10 +12,89 @@ const TEMPLATE_TYPES = [
   { id: 'VIDEO_SCENE', label: 'Video Scenes',  description: 'Video editor scene templates for the video project editor' },
 ]
 
-const CONTENT_TYPES = [
-  'title', 'agenda', 'bullet_list', 'comparison', 'stat', 'quote',
-  'image+text', 'timeline', 'team', 'chart', 'closing', 'section_divider',
+const LAYOUT_CATEGORIES = [
+  {
+    id: 'all',
+    label: 'All',
+    contentTypes: [],
+  },
+  {
+    id: 'simple_slides',
+    label: 'Simple slides',
+    contentTypes: ['title', 'bullet_list', 'section_divider', 'image+text', 'comparison'],
+  },
+  {
+    id: 'grid',
+    label: 'Grid',
+    contentTypes: ['grid'],
+  },
+  {
+    id: 'charts_and_data',
+    label: 'Charts and data',
+    contentTypes: ['chart', 'stat'],
+  },
+  {
+    id: 'timeline_and_plans',
+    label: 'Timeline and plans',
+    contentTypes: ['timeline', 'agenda'],
+  },
+  {
+    id: 'people_and_quotes',
+    label: 'People and quotes',
+    contentTypes: ['team', 'quote'],
+  },
+  {
+    id: 'closing',
+    label: 'Closing',
+    contentTypes: ['closing'],
+  },
 ]
+
+const CONTENT_TYPE_LABELS = {
+  title: 'Title',
+  bullet_list: 'Bullet list',
+  section_divider: 'Section divider',
+  'image+text': 'Image + text',
+  comparison: 'Comparison',
+  grid: 'Grid',
+  chart: 'Chart',
+  stat: 'Stat',
+  timeline: 'Timeline',
+  agenda: 'Agenda',
+  team: 'Team',
+  quote: 'Quote',
+  closing: 'Closing',
+}
+
+const CONTENT_TYPES = LAYOUT_CATEGORIES
+  .filter((c) => c.id !== 'all')
+  .flatMap((c) => c.contentTypes)
+
+function contentTypeLabel(id) {
+  if (!id) return ''
+  return CONTENT_TYPE_LABELS[id] || String(id).replace(/_/g, ' ')
+}
+
+function ContentTypeSelect({ value, onChange, disabled, emptyLabel = '— select —' }) {
+  return (
+    <select
+      className="sa-select"
+      value={value}
+      onChange={onChange}
+      disabled={disabled}
+      style={{ width: '100%', boxSizing: 'border-box' }}
+    >
+      <option value="">{emptyLabel}</option>
+      {LAYOUT_CATEGORIES.filter((c) => c.id !== 'all').map((cat) => (
+        <optgroup key={cat.id} label={cat.label}>
+          {cat.contentTypes.map((ct) => (
+            <option key={ct} value={ct}>{contentTypeLabel(ct)}</option>
+          ))}
+        </optgroup>
+      ))}
+    </select>
+  )
+}
 
 // All seeded themes — used for DECK_PACK themeId picker
 const THEME_OPTIONS = [
@@ -49,12 +128,26 @@ const SEEDED_LAYOUT_IDS = [
 ]
 
 const DECK_LAYOUT_PLACEHOLDER = JSON.stringify({
-  layout_id: 'my_layout_v1',
-  content_type: 'title',
+  layout_id: 'grid_insights_chart_v1',
+  content_type: 'grid',
   grid: '12-col',
   slots: [
-    { id: 'title',    region: 'cols 2-11, rows 4-7', max_lines: 3, role: 'heading' },
-    { id: 'subtitle', region: 'cols 2-11, rows 8-9',  max_lines: 2, role: 'subheading' },
+    { id: 'INSIGHT_CARD_1_BG', region: 'cols 1-3, rows 1-2', role: 'background' },
+    { id: 'INSIGHT_ICON_1',    region: 'cols 1-3, rows 1-2', role: 'icon' },
+    { id: 'INSIGHT_LABEL_1',   region: 'cols 1-3, rows 3-4', max_lines: 2, role: 'label' },
+    { id: 'INSIGHT_CARD_2_BG', region: 'cols 4-6, rows 1-2', role: 'background' },
+    { id: 'INSIGHT_ICON_2',    region: 'cols 4-6, rows 1-2', role: 'icon' },
+    { id: 'INSIGHT_LABEL_2',   region: 'cols 4-6, rows 3-4', max_lines: 2, role: 'label' },
+    { id: 'INSIGHT_CARD_3_BG', region: 'cols 7-9, rows 1-2', role: 'background' },
+    { id: 'INSIGHT_ICON_3',    region: 'cols 7-9, rows 1-2', role: 'icon' },
+    { id: 'INSIGHT_LABEL_3',   region: 'cols 7-9, rows 3-4', max_lines: 2, role: 'label' },
+    { id: 'CHART_CARD_BG',     region: 'cols 1-9, rows 5-12', role: 'background' },
+    { id: 'CHART_HEADING',     region: 'cols 1-9, rows 5-6', max_lines: 1, role: 'heading' },
+    { id: 'BAR_CHART',         region: 'cols 1-9, rows 8-12', role: 'chart' },
+    { id: 'POINT_CARD_BG',     region: 'cols 10-12, rows 1-12', role: 'background' },
+    { id: 'POINT_HEADING',     region: 'cols 10-12, rows 1-2', max_lines: 1, role: 'heading' },
+    { id: 'POINT_BODY',        region: 'cols 10-12, rows 3-4', max_lines: 2, role: 'body' },
+    { id: 'POINT_IMAGE',       region: 'cols 10-12, rows 6-12', role: 'image' },
   ],
 }, null, 2)
 
@@ -262,9 +355,21 @@ function CreateModal({ onClose, onCreated, defaultType, prefill }) {
   )
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState('')
+  const [showPreview, setShowPreview] = useState(false)
 
   // swap placeholder when type changes — only if not a duplicate
   useEffect(() => { if (!prefill) setSchemaStr(schemaPlaceholder(type)) }, [type]) // eslint-disable-line
+
+  function handlePreview() {
+    setError('')
+    const { ok, value, error: jsonErr } = parseJsonSafe(schemaStr)
+    if (!ok) { setError(`Schema is not valid JSON: ${jsonErr}`); return }
+    if (type === 'DECK_LAYOUT' && !Array.isArray(value?.slots)) {
+      setError('Layout schema must include a slots array to preview')
+      return
+    }
+    setShowPreview(true)
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -287,6 +392,11 @@ function CreateModal({ onClose, onCreated, defaultType, prefill }) {
       setLoading(false)
     }
   }
+
+  const previewParsed = parseJsonSafe(schemaStr)
+  const previewSchema = previewParsed.ok ? previewParsed.value : null
+  const previewSlots = Array.isArray(previewSchema?.slots) ? previewSchema.slots : []
+  const previewDims = getGridDims(previewSlots)
 
   return (
     <div style={{
@@ -360,11 +470,20 @@ function CreateModal({ onClose, onCreated, defaultType, prefill }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
               <div className="sa-field">
                 <label>CONTENT TYPE</label>
-                <select className="sa-select" value={contentType} onChange={e => setContentType(e.target.value)}
-                  disabled={loading} style={{ width: '100%', boxSizing: 'border-box' }}>
-                  <option value="">— select —</option>
-                  {CONTENT_TYPES.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
+                <ContentTypeSelect
+                  value={contentType}
+                  onChange={e => {
+                    const next = e.target.value
+                    setContentType(next)
+                    if (!next) return
+                    try {
+                      const p = JSON.parse(schemaStr)
+                      p.content_type = next
+                      setSchemaStr(JSON.stringify(p, null, 2))
+                    } catch { /* ignore invalid JSON while typing */ }
+                  }}
+                  disabled={loading}
+                />
               </div>
               <div className="sa-field">
                 <label>VARIANT</label>
@@ -443,15 +562,90 @@ function CreateModal({ onClose, onCreated, defaultType, prefill }) {
           <JsonEditor label="SCHEMA (JSON) *" value={schemaStr} onChange={setSchemaStr}
             placeholder={schemaPlaceholder(type)} disabled={loading} />
 
+          {/* live mini preview for layouts while editing */}
+          {type === 'DECK_LAYOUT' && previewParsed.ok && previewSlots.length > 0 && (
+            <div style={{ marginTop: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>LIVE PREVIEW</label>
+                <button type="button" className="sa-btn" onClick={handlePreview}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', padding: '4px 10px' }}>
+                  <Eye size={13} /> Open full preview
+                </button>
+              </div>
+              <div style={{
+                borderRadius: 10, overflow: 'hidden', border: '1px solid var(--border-color)',
+                maxWidth: 420,
+              }}>
+                <DeckLayoutPolishedCanvas
+                  COLS={previewDims.COLS}
+                  ROWS={previewDims.ROWS}
+                  slots={previewSlots}
+                  hasSlots={previewSlots.length > 0}
+                />
+              </div>
+            </div>
+          )}
+
           {/* footer actions */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20, flexWrap: 'wrap' }}>
             <button type="button" className="sa-btn" onClick={onClose} disabled={loading}>Cancel</button>
+            <button type="button" className="sa-btn" onClick={handlePreview} disabled={loading}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <Eye size={14} /> Preview
+            </button>
             <button type="submit" className="sa-btn sa-btn--primary" disabled={loading}>
               {loading ? <><span className="sa-spinner" style={{ width: 14, height: 14 }} /> {prefill ? 'Duplicating…' : 'Creating…'}</> : (prefill ? 'Save duplicate' : 'Create template')}
             </button>
           </div>
         </form>
       </div>
+
+      {showPreview && type === 'DECK_LAYOUT' && previewSchema && (
+        <DeckLayoutModal
+          schema={{ ...previewSchema, content_type: previewSchema.content_type || contentType || undefined }}
+          layoutName={name.trim() || previewSchema.layout_id || 'Untitled layout'}
+          slots={previewSlots}
+          hasSlots={previewSlots.length > 0}
+          COLS={previewDims.COLS}
+          ROWS={previewDims.ROWS}
+          onClose={() => setShowPreview(false)}
+        />
+      )}
+      {showPreview && type === 'DECK_PACK' && previewSchema && (
+        <DeckPackSlideModal
+          slides={previewSchema.slides ?? []}
+          theme={THEME_COLORS[previewSchema.themeId] ?? THEME_COLORS.midnight_blue}
+          packName={name.trim() || previewSchema.meta?.name || previewSchema.pack_id || 'Untitled pack'}
+          previewImageUrl={null}
+          media={[]}
+          initialSlide={0}
+          onClose={() => setShowPreview(false)}
+        />
+      )}
+      {showPreview && type === 'VIDEO_SCENE' && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1200, background: 'rgba(0,0,0,0.88)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+        }} onClick={e => { if (e.target === e.currentTarget) setShowPreview(false) }}>
+          <div style={{
+            width: 'min(560px, 95vw)', background: 'var(--bg-card)', borderRadius: 14,
+            border: '1px solid var(--border-color)', padding: 20,
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <h3 style={{ margin: 0, fontSize: '1rem' }}>Video scene preview</h3>
+              <button type="button" onClick={() => setShowPreview(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={16} /></button>
+            </div>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+              Schema is valid. Full video-scene rendering is available after save from the template detail view.
+            </p>
+            <pre style={{
+              marginTop: 12, maxHeight: 280, overflow: 'auto', padding: 12, borderRadius: 8,
+              background: 'color-mix(in srgb, var(--bg-card) 40%, #0a0f1e)', fontSize: '0.72rem',
+              color: 'var(--text-main)',
+            }}>{JSON.stringify(previewSchema, null, 2)}</pre>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -472,7 +666,70 @@ function parseRegion(region) {
   }
 }
 
-// Slot colour palette — consistent per slot id
+function getGridDims(slots = []) {
+  let maxR = 10
+  let maxC = 12
+  for (const slot of slots) {
+    const reg = parseRegion(slot.region)
+    if (!reg) continue
+    maxR = Math.max(maxR, reg.r2)
+    maxC = Math.max(maxC, reg.c2)
+  }
+  return { COLS: Math.max(12, maxC), ROWS: Math.max(10, maxR) }
+}
+
+function regionToBox(reg, COLS, ROWS, insetPct = 0) {
+  const x = ((reg.c1 - 1) / COLS) * 100 + insetPct
+  const y = ((reg.r1 - 1) / ROWS) * 100 + insetPct
+  const w = ((reg.c2 - reg.c1 + 1) / COLS) * 100 - insetPct * 2
+  const h = ((reg.r2 - reg.r1 + 1) / ROWS) * 100 - insetPct * 2
+  return { x, y, w: Math.max(w, 1), h: Math.max(h, 1) }
+}
+
+function mergeRegions(regions) {
+  return regions.reduce((acc, r) => ({
+    c1: Math.min(acc.c1, r.c1),
+    c2: Math.max(acc.c2, r.c2),
+    r1: Math.min(acc.r1, r.r1),
+    r2: Math.max(acc.r2, r.r2),
+  }), { ...regions[0] })
+}
+
+function slotKind(id = '', role = '') {
+  const s = `${id} ${role}`.toLowerCase().trim()
+  if (/(?:^|[_\-])bg$|_card_bg|card_bg|background/.test(s) && !/icon/.test(s)) return 'bg'
+  if (/icon|avatar|logo/.test(s)) return 'icon'
+  if (/(^|[_\-])(heading|title)($|[_\-])/.test(s) || role === 'heading') return 'heading'
+  if (/body|subtitle|subheading|description/.test(s) || role === 'subheading' || role === 'body') return 'body'
+  if (/label|caption/.test(s) || role === 'label') return 'label'
+  if (/bar_chart|chart|graph|series/.test(s) || role === 'chart') return 'chart'
+  if (/image|media|photo|picture/.test(s) || role === 'image') return 'image'
+  if (/stat|metric|number|value/.test(s) || role === 'stat') return 'stat'
+  return 'generic'
+}
+
+function slotFamily(id = '') {
+  const lower = String(id || '').toLowerCase()
+  const insight = lower.match(/^insight.*?(\d+)/)
+  if (insight) return `insight_${insight[1]}`
+  if (/chart|bar_chart/.test(lower)) return 'chart'
+  if (/^point/.test(lower)) return 'point'
+  const stat = lower.match(/^stat.*?(\d+)/)
+  if (stat) return `stat_${stat[1]}`
+  const bullet = lower.match(/^(?:bullet|item|card).*?(\d+)/)
+  if (bullet) return `card_${bullet[1]}`
+  return `slot_${lower || 'unknown'}`
+}
+
+const LAYOUT_POLISHED_THEME = {
+  bg: '#ffffff',
+  card: '#e9e9e9',
+  text: '#1f1f1f',
+  muted: '#6f6f6f',
+  icon: '#8a8a8a',
+  bar: '#3d3d3d',
+}
+
 const SLOT_COLORS = [
   { fill: 'rgba(99,102,241,0.18)',  stroke: 'rgba(99,102,241,0.7)',  text: '#818cf8' },
   { fill: 'rgba(34,197,94,0.15)',   stroke: 'rgba(34,197,94,0.65)',  text: '#4ade80' },
@@ -482,16 +739,214 @@ const SLOT_COLORS = [
   { fill: 'rgba(168,85,247,0.15)',  stroke: 'rgba(168,85,247,0.65)', text: '#c084fc' },
 ]
 
-// ─── Deck Layout canvas (shared by thumbnail + modal) ────────────────────────
+function buildPolishedGroups(slots) {
+  const map = new Map()
+  slots.forEach((slot, i) => {
+    const reg = parseRegion(slot.region)
+    if (!reg) return
+    const kind = slotKind(slot.id, slot.role)
+    const family = slotFamily(slot.id)
+    if (!map.has(family)) map.set(family, { family, slots: [], kinds: new Set() })
+    const g = map.get(family)
+    g.slots.push({ slot, reg, kind, i })
+    g.kinds.add(kind)
+  })
+  return [...map.values()].map(g => ({
+    ...g,
+    bounds: mergeRegions(g.slots.map(s => s.reg)),
+    isInsight: g.family.startsWith('insight_'),
+    isChart: g.family === 'chart',
+    isPoint: g.family === 'point',
+  }))
+}
 
-function DeckLayoutCanvas({ schema, COLS, ROWS, slots, hasSlots, large }) {
+function PolishedIconCircle({ size }) {
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: '50%',
+      background: LAYOUT_POLISHED_THEME.icon,
+      opacity: 0.55, flexShrink: 0,
+    }} />
+  )
+}
+
+function PolishedBarChart({ large, values = [4, 8, 6, 7, 3] }) {
+  const max = Math.max(...values, 1)
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around',
+      gap: large ? 14 : 6, width: '100%', height: '100%', padding: large ? '4% 6% 2%' : '3% 5% 1%',
+      boxSizing: 'border-box',
+    }}>
+      {values.map((v, i) => (
+        <div key={i} style={{
+          flex: 1, maxWidth: large ? 48 : 18,
+          height: `${Math.max(12, (v / max) * 100)}%`,
+          background: LAYOUT_POLISHED_THEME.bar,
+          borderRadius: large ? '6px 6px 2px 2px' : '3px 3px 1px 1px',
+          position: 'relative',
+        }}>
+          {large && (
+            <span style={{
+              position: 'absolute', top: -18, left: '50%', transform: 'translateX(-50%)',
+              fontSize: '0.7rem', fontWeight: 700, color: LAYOUT_POLISHED_THEME.text,
+            }}>{v}</span>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function renderPolishedGroupContent(group, large) {
+  const t = LAYOUT_POLISHED_THEME
+  const pad = large ? '10% 8%' : '8% 7%'
+  const titleFs = large ? '1.05rem' : '0.42rem'
+  const bodyFs = large ? '0.82rem' : '0.34rem'
+
+  if (group.isInsight) {
+    return (
+      <div style={{
+        width: '100%', height: '100%', boxSizing: 'border-box', padding: pad,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: large ? 14 : 6,
+      }}>
+        <PolishedIconCircle size={large ? 36 : 14} />
+        <div style={{
+          fontSize: bodyFs, color: t.text, textAlign: 'center', lineHeight: 1.35,
+          fontWeight: 500, maxWidth: '90%',
+          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+        }}>
+          Add a key insight here.
+        </div>
+      </div>
+    )
+  }
+
+  if (group.isChart) {
+    return (
+      <div style={{
+        width: '100%', height: '100%', boxSizing: 'border-box', padding: large ? '6% 5% 4%' : '5% 4% 3%',
+        display: 'flex', flexDirection: 'column', gap: large ? 6 : 2,
+      }}>
+        <div style={{ fontSize: titleFs, fontWeight: 700, color: t.text, lineHeight: 1.2 }}>Describe this chart</div>
+        <div style={{ fontSize: bodyFs, color: t.muted, lineHeight: 1.3, marginBottom: large ? 4 : 1 }}>
+          Explain what this section is about
+        </div>
+        <div style={{ flex: 1, minHeight: 0 }}>
+          <PolishedBarChart large={large} />
+        </div>
+      </div>
+    )
+  }
+
+  if (group.isPoint) {
+    return (
+      <div style={{
+        width: '100%', height: '100%', boxSizing: 'border-box', padding: pad,
+        display: 'flex', flexDirection: 'column',
+      }}>
+        <div style={{ fontSize: titleFs, fontWeight: 700, color: t.text, lineHeight: 1.2, marginBottom: large ? 8 : 3 }}>
+          Describe this point
+        </div>
+        <div style={{
+          fontSize: bodyFs, color: t.muted, lineHeight: 1.35,
+          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+        }}>
+          Explain what this section is about
+        </div>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
+          <PolishedIconCircle size={large ? 72 : 28} />
+        </div>
+      </div>
+    )
+  }
+
+  // Generic card: heading / body / icon / chart / image by available kinds
+  const hasChart = group.kinds.has('chart')
+  const hasIcon = group.kinds.has('icon') || group.kinds.has('image')
+  const hasHeading = group.kinds.has('heading') || group.kinds.has('label') || group.kinds.has('stat')
+  const hasBody = group.kinds.has('body') || group.kinds.has('generic')
+
+  return (
+    <div style={{
+      width: '100%', height: '100%', boxSizing: 'border-box', padding: pad,
+      display: 'flex', flexDirection: 'column', alignItems: hasIcon && !hasHeading ? 'center' : 'flex-start',
+      justifyContent: hasChart ? 'flex-start' : 'center', gap: large ? 8 : 3,
+    }}>
+      {hasHeading && (
+        <div style={{ fontSize: titleFs, fontWeight: 700, color: t.text, lineHeight: 1.2 }}>
+          {group.kinds.has('stat') ? '42%' : 'Section title'}
+        </div>
+      )}
+      {hasBody && (
+        <div style={{ fontSize: bodyFs, color: t.muted, lineHeight: 1.35 }}>
+          Explain what this section is about
+        </div>
+      )}
+      {hasChart && (
+        <div style={{ flex: 1, width: '100%', minHeight: 0 }}>
+          <PolishedBarChart large={large} />
+        </div>
+      )}
+      {hasIcon && !hasChart && (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+          <PolishedIconCircle size={large ? 48 : 18} />
+        </div>
+      )}
+      {!hasHeading && !hasBody && !hasChart && !hasIcon && (
+        <div style={{ fontSize: bodyFs, color: t.muted }}>Content</div>
+      )}
+    </div>
+  )
+}
+
+// Polished mockup — Gamma-style cards from slot regions
+function DeckLayoutPolishedCanvas({ COLS, ROWS, slots, hasSlots, large }) {
+  const groups = hasSlots ? buildPolishedGroups(slots) : []
+  const inset = large ? 0.9 : 0.7
+
+  return (
+    <div style={{
+      position: 'relative', width: '100%', aspectRatio: '16/9',
+      background: LAYOUT_POLISHED_THEME.bg,
+      overflow: 'hidden',
+      fontFamily: 'system-ui, -apple-system, Segoe UI, sans-serif',
+    }}>
+      {!hasSlots && (
+        <div style={{
+          position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: LAYOUT_POLISHED_THEME.muted, fontSize: large ? '1rem' : '0.75rem',
+        }}>
+          No slots defined
+        </div>
+      )}
+      {groups.map(group => {
+        const box = regionToBox(group.bounds, COLS, ROWS, inset)
+        return (
+          <div key={group.family} style={{
+            position: 'absolute',
+            left: `${box.x}%`, top: `${box.y}%`, width: `${box.w}%`, height: `${box.h}%`,
+            background: LAYOUT_POLISHED_THEME.card,
+            borderRadius: large ? 18 : 8,
+            overflow: 'hidden',
+          }}>
+            {renderPolishedGroupContent(group, large)}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── Deck Layout canvas (wireframe / slot authoring) ─────────────────────────
+
+function DeckLayoutCanvas({ COLS, ROWS, slots, hasSlots, large }) {
   return (
     <div style={{
       position: 'relative', width: '100%', aspectRatio: '16/9',
       background: large ? '#0c1424' : 'color-mix(in srgb, var(--bg-card) 30%, #0a0f1e)',
       overflow: 'hidden',
     }}>
-      {/* grid guide lines */}
       <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0, opacity: large ? 0.08 : 0.12 }}>
         {Array.from({ length: COLS - 1 }, (_, i) => (
           <line key={`c${i}`} x1={`${((i + 1) / COLS) * 100}%`} y1="0" x2={`${((i + 1) / COLS) * 100}%`} y2="100%" stroke="white" strokeWidth="1" />
@@ -500,7 +955,6 @@ function DeckLayoutCanvas({ schema, COLS, ROWS, slots, hasSlots, large }) {
           <line key={`r${i}`} x1="0" y1={`${((i + 1) / ROWS) * 100}%`} x2="100%" y2={`${((i + 1) / ROWS) * 100}%`} stroke="white" strokeWidth="1" />
         ))}
       </svg>
-      {/* col/row number labels when large */}
       {large && (
         <>
           {Array.from({ length: COLS }, (_, i) => (
@@ -520,13 +974,10 @@ function DeckLayoutCanvas({ schema, COLS, ROWS, slots, hasSlots, large }) {
         const reg = parseRegion(slot.region)
         if (!reg) return null
         const color = SLOT_COLORS[i % SLOT_COLORS.length]
-        const x = ((reg.c1 - 1) / COLS) * 100
-        const y = ((reg.r1 - 1) / ROWS) * 100
-        const w = ((reg.c2 - reg.c1 + 1) / COLS) * 100
-        const h = ((reg.r2 - reg.r1 + 1) / ROWS) * 100
+        const box = regionToBox(reg, COLS, ROWS, 0)
         return (
           <div key={slot.id ?? i} style={{
-            position: 'absolute', left: `${x}%`, top: `${y}%`, width: `${w}%`, height: `${h}%`,
+            position: 'absolute', left: `${box.x}%`, top: `${box.y}%`, width: `${box.w}%`, height: `${box.h}%`,
             background: color.fill, border: `${large ? 2 : 1.5}px solid ${color.stroke}`,
             borderRadius: large ? 6 : 3,
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
@@ -558,14 +1009,40 @@ function DeckLayoutCanvas({ schema, COLS, ROWS, slots, hasSlots, large }) {
   )
 }
 
+function LayoutModeToggle({ mode, onChange }) {
+  const options = [
+    { id: 'polished', label: 'Preview' },
+    { id: 'wireframe', label: 'Slots' },
+  ]
+  return (
+    <div style={{ display: 'inline-flex', padding: 3, borderRadius: 8, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', gap: 2 }}>
+      {options.map(opt => (
+        <button key={opt.id} type="button" onClick={() => onChange(opt.id)}
+          style={{
+            padding: '4px 12px', borderRadius: 6, border: 'none', cursor: 'pointer',
+            fontSize: '0.72rem', fontWeight: 700,
+            background: mode === opt.id ? 'rgba(255,255,255,0.16)' : 'transparent',
+            color: mode === opt.id ? '#fff' : 'rgba(255,255,255,0.45)',
+          }}>
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 // ─── Deck Layout full-screen modal ───────────────────────────────────────────
 
-function DeckLayoutModal({ schema, layoutName, slots, hasSlots, COLS, ROWS, onClose }) {
+function DeckLayoutModal({ schema, layoutName, slots, hasSlots, COLS, ROWS, onClose, initialMode = 'polished' }) {
+  const [mode, setMode] = useState(initialMode)
+
   useEffect(() => {
     function onKey(e) { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
+
+  const dims = COLS && ROWS ? { COLS, ROWS } : getGridDims(slots)
 
   return (
     <div style={{
@@ -574,48 +1051,40 @@ function DeckLayoutModal({ schema, layoutName, slots, hasSlots, COLS, ROWS, onCl
       display: 'flex', flexDirection: 'column',
     }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
 
-      {/* ── top bar — same style as DeckPackSlideModal ── */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '12px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)', flexShrink: 0,
+        padding: '12px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)', flexShrink: 0, gap: 12,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {/* slot colour swatches as identity instead of theme swatches */}
-          <div style={{ display: 'flex', gap: 4 }}>
-            {slots.slice(0, 4).map((_, i) => (
-              <div key={i} style={{ width: 14, height: 14, borderRadius: 4, background: SLOT_COLORS[i % SLOT_COLORS.length].fill, border: `1px solid ${SLOT_COLORS[i % SLOT_COLORS.length].stroke}` }} />
-            ))}
-          </div>
-          <span style={{ fontWeight: 700, color: '#fff', fontSize: '0.9rem' }}>{layoutName}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', minWidth: 0 }}>
+          <span style={{ fontWeight: 700, color: '#fff', fontSize: '0.9rem' }}>{layoutName || 'Layout preview'}</span>
           <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem' }}>· {slots.length} slots</span>
           {schema?.content_type && (
             <span style={{ padding: '2px 8px', borderRadius: 6, background: 'rgba(99,102,241,0.18)', border: '1px solid rgba(99,102,241,0.35)', color: '#818cf8', fontSize: '0.7rem', fontWeight: 700 }}>
-              {schema.content_type}
+              {contentTypeLabel(schema.content_type)}
             </span>
           )}
-          {schema?.grid && (
-            <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', fontFamily: 'monospace' }}>{schema.grid}</span>
-          )}
+          <LayoutModeToggle mode={mode} onChange={setMode} />
         </div>
-        <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', width: 30, height: 30, borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', width: 30, height: 30, borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <X size={15} />
         </button>
       </div>
 
-      {/* ── main: big centered slide canvas ── */}
       <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '28px 20px' }}>
         <div style={{ width: '100%', maxWidth: 900, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-          {/* slide */}
           <div style={{
             width: '100%', borderRadius: 12, overflow: 'hidden',
-            boxShadow: '0 24px 64px rgba(0,0,0,0.7), 0 0 0 1px rgba(99,102,241,0.25)',
+            boxShadow: mode === 'polished'
+              ? '0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.12)'
+              : '0 24px 64px rgba(0,0,0,0.7), 0 0 0 1px rgba(99,102,241,0.25)',
           }}>
-            <DeckLayoutCanvas schema={schema} COLS={COLS} ROWS={ROWS} slots={slots} hasSlots={hasSlots} large />
+            {mode === 'polished'
+              ? <DeckLayoutPolishedCanvas COLS={dims.COLS} ROWS={dims.ROWS} slots={slots} hasSlots={hasSlots} large />
+              : <DeckLayoutCanvas COLS={dims.COLS} ROWS={dims.ROWS} slots={slots} hasSlots={hasSlots} large />}
           </div>
-          {/* layout id badge */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ padding: '3px 10px', borderRadius: 99, background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', color: '#818cf8', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              {schema?.content_type ?? 'layout'}
+              {contentTypeLabel(schema?.content_type) || 'layout'}
             </span>
             <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', fontFamily: 'monospace' }}>
               {schema?.layout_id ?? ''}
@@ -623,24 +1092,20 @@ function DeckLayoutModal({ schema, layoutName, slots, hasSlots, COLS, ROWS, onCl
           </div>
         </div>
       </div>
-
-      {/* ── slot legend strip removed — canvas only ── */}
     </div>
   )
 }
 
 function DeckLayoutPreview({ schema, layoutName }) {
   const [showModal, setShowModal] = useState(false)
-  const COLS = 12
-  const ROWS = 10
   const slots = schema?.slots ?? []
   const hasSlots = slots.length > 0
+  const { COLS, ROWS } = getGridDims(slots)
 
   return (
     <>
-      {/* ── meta pills ── */}
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 20 }}>
-        {[['Layout ID', schema?.layout_id], ['Grid', schema?.grid], ['Content type', schema?.content_type]]
+        {[['Layout ID', schema?.layout_id], ['Grid', schema?.grid], ['Content type', contentTypeLabel(schema?.content_type) || schema?.content_type]]
           .filter(([, v]) => v)
           .map(([label, val]) => (
             <div key={label} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)' }}>
@@ -650,26 +1115,24 @@ function DeckLayoutPreview({ schema, layoutName }) {
           ))}
       </div>
 
-      {/* ── thumbnail + open button ── */}
       <div style={{ marginBottom: 16 }}>
         <button type="button" onClick={() => setShowModal(true)}
           style={{
-            cursor: 'pointer', border: 'none', padding: 0, background: 'none',
-            width: '100%', maxWidth: 380, display: 'block',
+            cursor: 'pointer', border: '1px solid var(--border-color)', padding: 0, background: 'none',
+            width: '100%', maxWidth: 420, display: 'block',
             borderRadius: 10, overflow: 'hidden',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
             transition: 'transform 0.15s, box-shadow 0.15s',
           }}
-          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 28px rgba(0,0,0,0.55)' }}
-          onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.4)' }}>
-          <DeckLayoutCanvas schema={schema} COLS={COLS} ROWS={ROWS} slots={slots} hasSlots={hasSlots} />
+          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.18)' }}
+          onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.12)' }}>
+          <DeckLayoutPolishedCanvas COLS={COLS} ROWS={ROWS} slots={slots} hasSlots={hasSlots} />
         </button>
-        <button className="sa-btn sa-btn--primary" style={{ marginTop: 12 }} onClick={() => setShowModal(true)}>
-          ▶ Preview layout
+        <button className="sa-btn sa-btn--primary" style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => setShowModal(true)}>
+          <Eye size={14} /> Preview layout
         </button>
       </div>
 
-      {/* ── slot legend ── */}
       {hasSlots && (
         <div>
           <p style={{ margin: '0 0 8px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
@@ -1453,8 +1916,8 @@ function PreviewModal({ template, onClose }) {
   // so we just render TemplateVisualPreview inside a wrapper modal for DECK_PACK.
   // For DECK_LAYOUT / VIDEO_SCENE the modals are self-contained — open them directly.
   if (template.type === 'DECK_LAYOUT') {
-    const COLS = 12, ROWS = 10
     const slots = schema?.slots ?? []
+    const { COLS, ROWS } = getGridDims(slots)
     return (
       <DeckLayoutModal
         schema={schema}
@@ -1770,10 +2233,12 @@ function TemplateDetail({ template, onUpdated, onClose, onDuplicate }) {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Content type</label>
-                  <select className="sa-select" value={contentType} onChange={e => setContentType(e.target.value)} disabled={saving} style={{ width: '100%', boxSizing: 'border-box' }}>
-                    <option value="">— none —</option>
-                    {CONTENT_TYPES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <ContentTypeSelect
+                    value={contentType}
+                    onChange={e => setContentType(e.target.value)}
+                    disabled={saving}
+                    emptyLabel="— none —"
+                  />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Variant</label>

@@ -2444,19 +2444,23 @@ body {
 }
 
 .aig-editor-nav {
-  height: 64px;
+  height: 72px;
   background: #ffffff;
   border-bottom: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
+  position: relative;
+  z-index: 250;
+  overflow: visible;
 }
 
 .aig-editor-nav-left {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 12px;
+  min-width: 0;
 }
 
 .aig-editor-title {
@@ -2847,6 +2851,7 @@ body {
   gap: 8px;
   z-index: 100;
   border: 1px solid #e2e8f0;
+  overflow: visible;
 }
 
 .aig-float-btn {
@@ -2897,7 +2902,7 @@ body {
   position: absolute;
   top: 40px;
   left: 24px;
-  z-index: 100;
+  z-index: 80;
 }
 .aig-float-btn.active {
   background: #e2e8f0;
@@ -2914,7 +2919,7 @@ body {
   border-right: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
-  z-index: 90;
+  z-index: 120;
   box-shadow: 4px 0 24px rgba(0,0,0,0.05);
 }
 
@@ -2922,7 +2927,8 @@ body {
   padding: 16px;
   border-bottom: 1px solid #e2e8f0;
   display: flex;
-  justify-content: center;
+  align-items: center;
+  gap: 8px;
 }
 
 .aig-minimap-add-btn {
@@ -2937,7 +2943,7 @@ body {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  width: 100%;
+  flex: 1;
   justify-content: center;
   transition: all 0.2s;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
@@ -2945,6 +2951,32 @@ body {
 .aig-minimap-add-btn:hover {
   border-color: #3b82f6;
   color: #3b82f6;
+}
+
+.aig-minimap-outline-btn {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  border-radius: 8px;
+  color: #64748b;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  transition: all 0.2s;
+}
+.aig-minimap-outline-btn:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  background: #f8fafc;
+}
+.aig-minimap-outline-btn--alone {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
 }
 
 .aig-minimap-scroll {
@@ -2960,6 +2992,12 @@ body {
   display: flex;
   gap: 12px;
   cursor: pointer;
+  align-items: flex-start;
+}
+
+.aig-minimap-item .ppt-status-dot--sm {
+  margin-top: 6px;
+  flex-shrink: 0;
 }
 
 .aig-minimap-num {
@@ -2967,6 +3005,7 @@ body {
   font-weight: 600;
   color: #94a3b8;
   padding-top: 4px;
+  min-width: 14px;
 }
 
 .aig-minimap-thumb {

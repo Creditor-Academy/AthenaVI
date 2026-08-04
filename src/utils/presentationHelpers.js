@@ -279,11 +279,18 @@ export function normalizeSlideForEditor(slide, index = 0) {
       version: elementsDoc?.version || 1,
       canvas: elementsDoc?.canvas || { width: 1920, height: 1080 },
       elements: [...elements].sort((a, b) => (a.layer || 0) - (b.layer || 0)),
+      ...(elementsDoc?.transition ? { transition: elementsDoc.transition } : {}),
+      ...(elementsDoc?.contributorStatus
+        ? { contributorStatus: elementsDoc.contributorStatus }
+        : {}),
     },
     manuallyEdited: Boolean(slide?.manuallyEdited),
     status: slide?.status || 'READY',
     layoutId: slide?.layoutId || null,
     imageRef: slide?.imageRef || null,
+    transition: slide?.transition || elementsDoc?.transition || 'none',
+    contributorStatus:
+      slide?.contributorStatus || elementsDoc?.contributorStatus || 'none',
   }
 }
 

@@ -53,6 +53,11 @@ import {
   resolveDashboardSectionFromPath,
   resolveSettingsTabFromSearch,
 } from '../../utils/dashboardRouting.js'
+import {
+  clearPresentationEditorSession,
+  loadPresentationEditorSession,
+  savePresentationEditorSession,
+} from '../../utils/presentationEditorSession.js'
 import useDashboardSearch from '../../hooks/useDashboardSearch.js'
 import { applySearchResult } from '../../utils/dashboardSearchNavigate.js'
 import './Dashboard.css'
@@ -82,7 +87,7 @@ function Dashboard({ onCreate, initialSection }) {
   })
   const [createMenuContext, setCreateMenuContext] = useState(null)
   const [presentationCreateContext, setPresentationCreateContext] = useState(null)
-  const [editorData, setEditorData] = useState(null)
+  const [editorData, setEditorData] = useState(() => loadPresentationEditorSession())
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     try {
       return window.localStorage.getItem('athena.dashboard.sidebarCollapsed') === '1'
@@ -238,38 +243,49 @@ function Dashboard({ onCreate, initialSection }) {
     }
   }, [onCreate])
 
-  const handleEditVideo = useCallback((video) => {
-    const projectType = String(video?.type || video?.projectType || '').toUpperCase()
-    if (projectType === 'PRESENTATION') {
-      setEditorData({
-        outline: [],
-        config: {
-          title: video.title || video.name || 'Untitled Presentation',
-          theme: video.themeId || 'petrol',
+  const openPresentationEditor = useCallback(
+    (data) => {
+      setEditorData(data)
+      savePresentationEditorSession(data)
+      goToSection('editor')
+    },
+    [goToSection]
+  )
+
+  const handleEditVideo = useCallback(
+    (video) => {
+      const projectType = String(video?.type || video?.projectType || '').toUpperCase()
+      if (projectType === 'PRESENTATION') {
+        openPresentationEditor({
+          outline: [],
+          config: {
+            title: video.title || video.name || 'Untitled Presentation',
+            theme: video.themeId || 'petrol',
+            workspaceId: video.workspaceId,
+            presentationId: video.id || video._id,
+          },
           workspaceId: video.workspaceId,
           presentationId: video.id || video._id,
-        },
-        workspaceId: video.workspaceId,
-        presentationId: video.id || video._id,
-        folderId: video.folderId || (video.folder && (video.folder.id || video.folder._id)) || null,
-      })
-      goToSection('editor')
-      return
-    }
+          folderId:
+            video.folderId || (video.folder && (video.folder.id || video.folder._id)) || null,
+        })
+        return
+      }
 
-    if (onCreate) {
-      // Reuse the onCreate navigation logic
-      onCreate({
-        videoId: video.id || video._id,
-        workspaceId: video.workspaceId,
-        folderId: video.folderId || (video.folder && (video.folder.id || video.folder._id)) || null,
-        workspace: video.workspace || video.workspaceName || '',
-        folder: video.folder?.name || video.folderName || video.folder || '',
-        name: video.title || video.name,
-        videoData: video
-      })
-    }
-  }, [onCreate, goToSection])
+      if (onCreate) {
+        onCreate({
+          videoId: video.id || video._id,
+          workspaceId: video.workspaceId,
+          folderId: video.folderId || (video.folder && (video.folder.id || video.folder._id)) || null,
+          workspace: video.workspace || video.workspaceName || '',
+          folder: video.folder?.name || video.folderName || video.folder || '',
+          name: video.title || video.name,
+          videoData: video,
+        })
+      }
+    },
+    [onCreate, openPresentationEditor]
+  )
 
   const notificationNavigateHandlers = useMemo(() => ({
     onOpenEditor: (config) => {
@@ -328,14 +344,32 @@ function Dashboard({ onCreate, initialSection }) {
     setSection((current) => (current === sectionFromUrl ? current : sectionFromUrl))
   }, [])
 
-  // Update URL when section changes
+  // Restore PPT editor session when landing on /dashboard/editor after refresh
   useEffect(() => {
-    const newPath = dashboardPathForSection(section)
+    if (section !== 'editor') return
+    if (editorData?.workspaceId && editorData?.presentationId) {
+      savePresentationEditorSession(editorData)
+      return
+    }
+    const restored = loadPresentationEditorSession()
+    if (restored?.workspaceId && restored?.presentationId) {
+      setEditorData(restored)
+    }
+  }, [section]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Update URL when section changes (preserve editor query params)
+  useEffect(() => {
+    if (section === 'editor') {
+      if (editorData?.workspaceId && editorData?.presentationId) {
+        savePresentationEditorSession(editorData)
+      }
+      return
+    }
+    const newPath = dashboardPathForSection(section)
     if (window.location.pathname !== newPath) {
       window.history.pushState({ section }, '', newPath)
     }
-  }, [section])
+  }, [section, editorData])
 
   // Handle browser back/forward for dashboard sections
   useEffect(() => {
@@ -345,6 +379,10 @@ function Dashboard({ onCreate, initialSection }) {
         setSection(sectionFromUrl)
         if (sectionFromUrl === 'settings') {
           setSettingsInitialTab(resolveSettingsTabFromSearch())
+        }
+        if (sectionFromUrl === 'editor') {
+          const restored = loadPresentationEditorSession()
+          if (restored) setEditorData(restored)
         }
       }
     }
@@ -417,8 +455,7 @@ function Dashboard({ onCreate, initialSection }) {
           goToSection(presentationCreateContext ? 'workspace' : 'home')
         }}
         onComplete={(data) => {
-          setEditorData(data)
-          goToSection('editor')
+          openPresentationEditor(data)
         }}
         createContext={
           createLocationContext?.optionId === 'ppt-ai' ? createLocationContext : null
@@ -437,8 +474,7 @@ function Dashboard({ onCreate, initialSection }) {
           goToSection(presentationCreateContext ? 'workspace' : 'home')
         }}
         onOpenEditor={(data) => {
-          setEditorData(data)
-          goToSection('editor')
+          openPresentationEditor(data)
         }}
       />
     )
@@ -453,6 +489,7 @@ function Dashboard({ onCreate, initialSection }) {
         presentationId={editorData?.presentationId}
         onBack={() => {
           setPresentationCreateContext(null)
+          clearPresentationEditorSession()
           goToSection('home')
         }}
       />

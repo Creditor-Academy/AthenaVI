@@ -5,21 +5,19 @@ import {
   FiShare2,
   FiPlus,
   FiGrid,
-  FiType,
   FiImage,
-  FiSettings,
   FiZoomIn,
   FiZoomOut,
-  FiMousePointer,
-  FiSearch,
-  FiBarChart2,
-  FiFilm,
-  FiLayout,
   FiSidebar,
+  FiCode,
 } from 'react-icons/fi'
-import { MdUndo, MdRedo, MdDragIndicator, MdOutlineColorLens } from 'react-icons/md'
+import { MdDragIndicator, MdOutlineColorLens } from 'react-icons/md'
 import { BsStars } from 'react-icons/bs'
 import { THEMES } from './AIPptWizard'
+import InsertToolbar from './insert/InsertToolbar'
+import EditorFileMenu from './insert/EditorFileMenu'
+import EditorRightRail from './insert/EditorRightRail'
+import AddSlideModal from './insert/AddSlideModal'
 import presentationService, {
   PresentationConflictError,
 } from '../../../services/presentationService'
@@ -32,6 +30,7 @@ import {
   getSlideImage,
   toApiThemeId,
 } from '../../../utils/presentationHelpers'
+import { PPT_DEFAULT_PLACEMENTS } from '../../../constants/pptInsertCatalog'
 
 const CANVAS_W = 1920
 const CANVAS_H = 1080
@@ -88,7 +87,9 @@ function CanvasElement({ el }) {
           fontStyle: c.italic ? 'italic' : 'normal',
           textAlign: c.align || 'left',
           display: 'flex',
-          alignItems: 'center',
+          alignItems: c.align === 'center' ? 'center' : 'flex-start',
+          whiteSpace: 'pre-wrap',
+          lineHeight: 1.25,
         }}
       >
         {c.text || ''}
@@ -98,7 +99,7 @@ function CanvasElement({ el }) {
 
   if (el.type === 'image' || el.type === 'icon') {
     const c = el.content || {}
-    const url = c.url || c.src
+    const url = c.url || c.src || c.thumbnailUrl || c.previewUrl
     if (!url) {
       return (
         <div style={{ ...style, background: 'rgba(148,163,184,0.16)' }}>
@@ -112,9 +113,9 @@ function CanvasElement({ el }) {
       <img
         src={url}
         alt={c.alt || ''}
-        style={{ ...style, objectFit: c.fit || 'cover' }}
+        style={{ ...style, objectFit: c.fit || (el.type === 'icon' ? 'contain' : 'cover') }}
         onError={(e) => {
-          e.currentTarget.style.visibility = 'hidden'
+          e.currentTarget.style.opacity = '0.35'
         }}
       />
     )
@@ -123,18 +124,135 @@ function CanvasElement({ el }) {
   if (el.type === 'shape') {
     const c = el.content || {}
     const shape = c.shape || 'rect'
+    const fill = c.fill || 'rgba(148,163,184,0.35)'
+    const stroke = c.stroke
+    const strokeWidth = c.strokeWidth || 3
+    const clipPaths = {
+      'triangle-up': 'polygon(50% 0%, 0% 100%, 100% 100%)',
+      'triangle-down': 'polygon(0% 0%, 100% 0%, 50% 100%)',
+      diamond: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+      star: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
+      pentagon: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
+      hexagon: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
+    }
+    const clip = clipPaths[shape]
+    const radius =
+      shape === 'ellipse' || shape === 'circle'
+        ? '50%'
+        : shape === 'pill'
+          ? 999
+          : shape === 'rounded-rect'
+            ? 12
+            : 0
+
+    if (clip) {
+      if (stroke && (fill === 'transparent' || c.variant === 'outlined')) {
+        const svgPaths = {
+          'triangle-up': 'M50 4 L96 96 L4 96 Z',
+          'triangle-down': 'M4 4 L96 4 L50 96 Z',
+          diamond: 'M50 4 L96 50 L50 96 L4 50 Z',
+          star: 'M50 4 L61 38 L96 38 L68 58 L79 92 L50 72 L21 92 L32 58 L4 38 L39 38 Z',
+          pentagon: 'M50 4 L96 38 L79 96 L21 96 L4 38 Z',
+          hexagon: 'M25 4 L75 4 L96 50 L75 96 L25 96 L4 50 Z',
+        }
+        return (
+          <svg viewBox="0 0 100 100" style={{ ...style, display: 'block' }} preserveAspectRatio="none">
+            <path
+              d={svgPaths[shape]}
+              fill="none"
+              stroke={stroke}
+              strokeWidth={strokeWidth * 1.2}
+              vectorEffect="non-scaling-stroke"
+            />
+          </svg>
+        )
+      }
+      return (
+        <div
+          style={{
+            ...style,
+            background: fill,
+            clipPath: clip,
+          }}
+        />
+      )
+    }
+
     return (
       <div
         style={{
           ...style,
-          background: c.fill || 'rgba(148,163,184,0.35)',
-          borderRadius: shape === 'ellipse' ? '50%' : 0,
+          background: fill === 'transparent' ? 'transparent' : fill,
+          borderRadius: radius,
           border:
             shape === 'line'
-              ? `2px solid ${c.line || c.fill || '#94a3b8'}`
-              : undefined,
+              ? `2px solid ${c.line || fill || '#94a3b8'}`
+              : stroke
+                ? `${strokeWidth}px solid ${stroke}`
+                : undefined,
+          boxSizing: 'border-box',
         }}
       />
+    )
+  }
+
+  if (el.type === 'chart') {
+    const c = el.content || {}
+    const series = c.data?.series?.[0]?.values || [12, 19, 14, 22]
+    const max = Math.max(...series, 1)
+    const colors = c.colors || ['#7C3AED', '#A78BFA', '#FDBA74']
+    return (
+      <div className="aig-canvas-chart" style={style}>
+        <div className="aig-canvas-embed-label">{c.chartType || 'chart'}</div>
+        <div className="aig-canvas-chart-bars">
+          {series.slice(0, 8).map((v, i) => (
+            <span
+              key={i}
+              style={{
+                height: `${Math.max(8, (Number(v) / max) * 100)}%`,
+                background: colors[i % colors.length],
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (el.type === 'table') {
+    const c = el.content || {}
+    const cells = c.cells || []
+    return (
+      <div className="aig-canvas-table" style={style}>
+        <table className="aig-canvas-table-grid">
+          <tbody>
+            {cells.map((row, ri) => (
+              <tr key={ri}>
+                {row.map((cell, ci) =>
+                  c.hasHeader && ri === 0 ? (
+                    <th key={ci}>{cell}</th>
+                  ) : (
+                    <td key={ci}>{cell}</td>
+                  )
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )
+  }
+
+  if (el.type === 'embed' || el.type === 'link') {
+    const c = el.content || {}
+    return (
+      <div className="aig-canvas-embed" style={style}>
+        <div className="aig-canvas-embed-label">
+          <FiCode size={12} style={{ marginRight: 4 }} />
+          {c.title || c.provider || 'Embed'}
+        </div>
+        <div className="aig-canvas-embed-url">{c.url || ''}</div>
+      </div>
     )
   }
 
@@ -156,7 +274,7 @@ function SlideStage({ slide, themeVisual }) {
         }}
       >
         {hasElements ? (
-          elements.map((el) => <CanvasElement key={el.id} el={el} />)
+          elements.map((el, i) => <CanvasElement key={el.id || `el-${i}`} el={el} />)
         ) : (
           <div className="aig-slide-mock">
             <h1 className="aig-slide-mock-title" style={{ color: themeVisual.title }}>
@@ -206,14 +324,20 @@ export default function AIPptEditor({
   const [busy, setBusy] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
   const [exportStatus, setExportStatus] = useState('')
-  const [elementPresets, setElementPresets] = useState([])
   const [selectedSlideId, setSelectedSlideId] = useState(null)
   const [themeTokens, setThemeTokens] = useState(null)
   const [brandKits, setBrandKits] = useState([])
   const [brandKitOpen, setBrandKitOpen] = useState(false)
   const [applyingBrandKit, setApplyingBrandKit] = useState(false)
+  const [deckTitle, setDeckTitle] = useState(config.title || 'Untitled Presentation')
+  const [addSlideOpen, setAddSlideOpen] = useState(false)
+  const [addAfterIndex, setAddAfterIndex] = useState(null)
   const exportMenuRef = useRef(null)
   const brandKitMenuRef = useRef(null)
+
+  useEffect(() => {
+    if (config.title) setDeckTitle(config.title)
+  }, [config.title])
 
   const themeVisual = useMemo(
     () => resolveThemeVisual(config.theme, themeTokens),
@@ -258,21 +382,12 @@ export default function AIPptEditor({
       try {
         await reloadPresentation()
         try {
-          const [presetsPayload, kits] = await Promise.all([
-            presentationService.listElementPresets(workspaceId).catch(() => null),
-            brandKitService.list(workspaceId).catch(() => []),
-          ])
-          const presets =
-            presetsPayload?.elements ||
-            presetsPayload?.presets ||
-            presetsPayload?.items ||
-            (Array.isArray(presetsPayload) ? presetsPayload : [])
+          const kits = await brandKitService.list(workspaceId).catch(() => [])
           if (!cancelled) {
-            setElementPresets(presets)
             setBrandKits(kits || [])
           }
         } catch {
-          // Palette / kits optional for first load
+          // kits optional for first load
         }
       } catch (err) {
         if (!cancelled) setError(err.message || 'Failed to load presentation')
@@ -320,19 +435,36 @@ export default function AIPptEditor({
     }
   }
 
-  const handleAddSlide = async (index) => {
+  const openAddSlideModal = (afterIndex = null) => {
+    if (atDeckCap || isGenerating || busy) return
+    setAddAfterIndex(afterIndex == null ? localSlides.length - 1 : afterIndex)
+    setAddSlideOpen(true)
+  }
+
+  const handleAddSlide = async (index, options = {}) => {
     if (atDeckCap || isGenerating) return
+
+    const seed = options.seed || null
+    const templateId = options.templateId || null
+    const title = seed?.title || options.name || 'Blank Slide'
+    const description = seed?.description ?? 'Double click to add content.'
+    const seedElements = Array.isArray(seed?.elements) ? seed.elements : []
 
     if (!workspaceId || !presentationId) {
       const newSlide = {
         id: `new-slide-${Date.now()}`,
-        title: 'Blank Slide',
-        description: 'Double click to add content.',
-        elements: { version: 1, canvas: { width: CANVAS_W, height: CANVAS_H }, elements: [] },
+        title,
+        description,
+        elements: {
+          version: 1,
+          canvas: { width: CANVAS_W, height: CANVAS_H },
+          elements: seedElements,
+        },
       }
       const updated = [...localSlides]
       updated.splice(index + 1, 0, newSlide)
       setLocalSlides(updated)
+      setSelectedSlideId(newSlide.id)
       return
     }
 
@@ -340,10 +472,53 @@ export default function AIPptEditor({
     setError('')
     try {
       const afterSlideId = localSlides[index]?.id
-      await presentationService.addSlide(workspaceId, presentationId, {
+      const created = await presentationService.addSlide(workspaceId, presentationId, {
         afterSlideId: afterSlideId || undefined,
+        ...(title ? { title } : {}),
       })
+      const newSlideId =
+        created?.id ||
+        created?.slideId ||
+        created?.slide?.id ||
+        created?._id ||
+        null
+
+      if (templateId && newSlideId) {
+        try {
+          await presentationService.applyLayout(
+            workspaceId,
+            presentationId,
+            newSlideId,
+            templateId
+          )
+        } catch {
+          // Layout apply optional — blank slide still created
+        }
+      }
+
       await reloadPresentation()
+
+      // Seed layout elements when backend has no layout catalog match
+      if (seedElements.length && newSlideId) {
+        try {
+          const canvasDoc = {
+            version: 1,
+            canvas: { width: CANVAS_W, height: CANVAS_H },
+            elements: seedElements,
+          }
+          await presentationService.saveCanvas(
+            workspaceId,
+            presentationId,
+            newSlideId,
+            canvasDoc
+          )
+          await reloadPresentation()
+        } catch {
+          // Keep slide even if seed canvas fails
+        }
+      }
+
+      if (newSlideId) setSelectedSlideId(newSlideId)
     } catch (err) {
       if (err instanceof PresentationConflictError) {
         setError('Presentation is generating — edits are locked until it finishes.')
@@ -353,6 +528,22 @@ export default function AIPptEditor({
     } finally {
       setBusy(false)
     }
+  }
+
+  const handlePickAddSlide = async (pick) => {
+    setAddSlideOpen(false)
+    const index = addAfterIndex == null ? localSlides.length - 1 : addAfterIndex
+    if (pick?.source === 'template') {
+      await handleAddSlide(index, {
+        templateId: pick.templateId,
+        name: pick.name || 'Template slide',
+      })
+      return
+    }
+    await handleAddSlide(index, {
+      seed: pick?.seed || null,
+      name: pick?.name || pick?.seed?.title || 'Blank Slide',
+    })
   }
 
   const handleDuplicateSlide = async (slideId) => {
@@ -415,28 +606,217 @@ export default function AIPptEditor({
     }
   }
 
-  const handleInsertPreset = async (presetId) => {
+  const handleInsertElement = async (payload) => {
     const slideId = selectedSlideId || localSlides[0]?.id
-    if (!slideId || !workspaceId || !presentationId || isGenerating) return
+    if (!slideId || isGenerating) return
 
     const slide = localSlides.find((s) => s.id === slideId)
-    const count = slide?.elements?.elements?.length || 0
-    if (count >= PPT_CAPS.ELEMENTS_PER_SLIDE) {
+    const existing = slide?.elements?.elements || []
+    if (existing.length >= PPT_CAPS.ELEMENTS_PER_SLIDE) {
       setError(`Max ${PPT_CAPS.ELEMENTS_PER_SLIDE} elements per slide`)
       return
     }
 
+    const type = payload?.type || 'text'
+    const placement =
+      payload.placement || PPT_DEFAULT_PLACEMENTS[type] || PPT_DEFAULT_PLACEMENTS.text
+    const content = { ...(payload.content || {}) }
+    // Normalize media URLs so the canvas always has something to render
+    if ((type === 'image' || type === 'icon') && !content.url && content.src) {
+      content.url = content.src
+    }
+    if ((type === 'image' || type === 'icon') && content.url && !content.src) {
+      content.src = content.url
+    }
+
+    const newEl = {
+      id: `el-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      type,
+      content,
+      placement,
+      layer: existing.length,
+      ...(payload.presetId ? { presetId: payload.presetId } : {}),
+    }
+
+    const nextElementsDoc = {
+      version: slide?.elements?.version || 1,
+      canvas: slide?.elements?.canvas || { width: CANVAS_W, height: CANVAS_H },
+      elements: [...existing, newEl],
+    }
+
+    // Optimistic: show on the slide immediately (fixes “image not appearing”)
+    setLocalSlides((prev) =>
+      prev.map((s) => (s.id === slideId ? { ...s, elements: nextElementsDoc } : s))
+    )
+    setSelectedSlideId(slideId)
+
+    if (!workspaceId || !presentationId) return
+
     setBusy(true)
+    setError('')
     try {
-      await presentationService.insertElement(workspaceId, presentationId, slideId, {
-        presetId,
-      })
-      await reloadPresentation()
+      // Prefer full canvas save so custom image/shape/chart content is kept
+      await presentationService.saveCanvas(
+        workspaceId,
+        presentationId,
+        slideId,
+        nextElementsDoc
+      )
+      try {
+        const data = await presentationService.getPresentation(workspaceId, presentationId)
+        const slides = extractSlidesFromPresentation(data)
+        const remote = slides.find((s) => s.id === slideId)
+        const remoteEls = remote?.elements?.elements || []
+        const stillHasMedia =
+          type !== 'image' && type !== 'icon'
+            ? true
+            : remoteEls.some(
+                (el) =>
+                  (el.content?.url || el.content?.src) === (content.url || content.src)
+              )
+        if (stillHasMedia && remoteEls.length >= nextElementsDoc.elements.length) {
+          setLocalSlides(slides)
+          setThemeTokens(
+            data?.deck?.themeTokens ||
+              data?.themeTokens ||
+              data?.presentation?.deck?.themeTokens ||
+              null
+          )
+        }
+        // else keep optimistic local canvas — backend dropped rich content
+      } catch {
+        // keep optimistic state
+      }
     } catch (err) {
-      setError(err.message || 'Failed to insert element')
+      // Fallback: try insertElement API, then keep optimistic UI either way
+      try {
+        await presentationService.insertElement(workspaceId, presentationId, slideId, {
+          type,
+          ...(payload.presetId ? { presetId: payload.presetId } : {}),
+          content,
+          placement,
+        })
+      } catch (insertErr) {
+        if (payload.presetId) {
+          try {
+            await presentationService.insertElement(workspaceId, presentationId, slideId, {
+              presetId: payload.presetId,
+            })
+          } catch {
+            setError(
+              insertErr.message ||
+                err.message ||
+                'Could not sync to server — element kept locally on this slide'
+            )
+          }
+        } else {
+          setError(
+            insertErr.message ||
+              err.message ||
+              'Could not sync to server — element kept locally on this slide'
+          )
+        }
+      }
     } finally {
       setBusy(false)
     }
+  }
+
+  const handleChangeTransition = async (transitionId) => {
+    const slideId = selectedSlideId || localSlides[0]?.id
+    if (!slideId || isGenerating) return
+
+    const slide = localSlides.find((s) => s.id === slideId)
+    const nextElements = {
+      version: slide?.elements?.version || 1,
+      canvas: slide?.elements?.canvas || { width: CANVAS_W, height: CANVAS_H },
+      elements: slide?.elements?.elements || [],
+      transition: transitionId,
+      ...(slide?.elements?.contributorStatus
+        ? { contributorStatus: slide.elements.contributorStatus }
+        : {}),
+    }
+
+    setLocalSlides((prev) =>
+      prev.map((s) =>
+        s.id === slideId
+          ? { ...s, transition: transitionId, elements: nextElements }
+          : s
+      )
+    )
+
+    if (!workspaceId || !presentationId) return
+
+    try {
+      await Promise.allSettled([
+        presentationService.patchSlide(workspaceId, presentationId, slideId, {
+          transition: transitionId,
+        }),
+        presentationService.saveCanvas(workspaceId, presentationId, slideId, nextElements),
+      ])
+    } catch {
+      // Keep optimistic local selection even if sync fails
+    }
+  }
+
+  const handleChangeSlideStatus = async (statusId) => {
+    const slideId = selectedSlideId || localSlides[0]?.id
+    if (!slideId || isGenerating) return
+
+    const slide = localSlides.find((s) => s.id === slideId)
+    const nextElements = {
+      version: slide?.elements?.version || 1,
+      canvas: slide?.elements?.canvas || { width: CANVAS_W, height: CANVAS_H },
+      elements: slide?.elements?.elements || [],
+      contributorStatus: statusId,
+      ...(slide?.elements?.transition ? { transition: slide.elements.transition } : {}),
+    }
+
+    setLocalSlides((prev) =>
+      prev.map((s) =>
+        s.id === slideId
+          ? { ...s, contributorStatus: statusId, elements: nextElements }
+          : s
+      )
+    )
+
+    if (!workspaceId || !presentationId) return
+
+    try {
+      await Promise.allSettled([
+        presentationService.patchSlide(workspaceId, presentationId, slideId, {
+          contributorStatus: statusId,
+        }),
+        presentationService.saveCanvas(workspaceId, presentationId, slideId, nextElements),
+      ])
+    } catch {
+      // Keep optimistic local selection
+    }
+  }
+
+  const selectedSlide =
+    localSlides.find((s) => s.id === selectedSlideId) || localSlides[0] || null
+
+  const generationPrompt =
+    config.prompt ||
+    config.generationPrompt ||
+    config.outline ||
+    [config.title, config.tone, config.audience].filter(Boolean).join(' · ')
+
+  const handleRename = () => {
+    const next = window.prompt('Rename presentation', deckTitle || 'Untitled Presentation')
+    if (next == null) return
+    const trimmed = next.trim().slice(0, 255)
+    if (!trimmed) return
+    setDeckTitle(trimmed)
+  }
+
+  const handleDuplicateDeck = async () => {
+    setError('Duplicate deck is not available yet — duplicate individual slides from the slide actions.')
+  }
+
+  const openMediaForBackground = () => {
+    setError('Use Media → Unsplash / Upload, then place the image. Dedicated slide background control is next.')
   }
 
   const handleExport = async (format) => {
@@ -514,46 +894,31 @@ export default function AIPptEditor({
         </div>
       )}
 
-      <nav className="aig-editor-nav">
+      <nav className="aig-editor-nav aig-editor-nav--gamma">
         <div className="aig-editor-nav-left">
-          <button className="aig-home-btn" onClick={onBack}>
-            Exit Editor
-          </button>
-          <div className="aig-editor-title">
-            {config.title || 'Untitled Presentation'}
-            {presentationId && <span className="aig-editor-badge">Saved</span>}
-          </div>
+          <EditorFileMenu
+            title={deckTitle}
+            privacy="Private"
+            canUndo={false}
+            canRedo={false}
+            onRename={handleRename}
+            onDuplicate={handleDuplicateDeck}
+            onExport={() => setExportOpen(true)}
+            onExit={onBack}
+          />
+          {presentationId && <span className="aig-editor-badge">Saved</span>}
         </div>
+
         <div className="aig-editor-nav-center">
-          <button className="aig-editor-btn-icon" title="Undo" type="button">
-            <MdUndo size={16} />
-          </button>
-          <button className="aig-editor-btn-icon" title="Redo" type="button">
-            <MdRedo size={16} />
-          </button>
-          <div className="aig-editor-nav-divider"></div>
-          <button className="aig-editor-btn-icon active" title="Select" type="button">
-            <FiMousePointer size={16} />
-          </button>
-          <button
-            className="aig-editor-btn-icon"
-            title="Add Text"
-            type="button"
+          <InsertToolbar
+            orientation="horizontal"
             disabled={isGenerating || busy}
-            onClick={() => handleInsertPreset('text_title')}
-          >
-            <FiType size={16} />
-          </button>
-          <button
-            className="aig-editor-btn-icon"
-            title="Add Media"
-            type="button"
-            disabled={isGenerating || busy}
-            onClick={() => handleInsertPreset('image')}
-          >
-            <FiImage size={16} />
-          </button>
+            workspaceId={workspaceId}
+            brandKits={brandKits}
+            onInsert={handleInsertElement}
+          />
         </div>
+
         <div className="aig-editor-nav-right">
           {exportStatus && <span className="aig-credit-estimate-hint">{exportStatus}</span>}
           <div className="aig-export-menu" ref={brandKitMenuRef}>
@@ -620,7 +985,10 @@ export default function AIPptEditor({
       </nav>
 
       <div className="aig-editor-workspace gamma-layout">
-        <main className="aig-editor-main-scroll" style={{ marginLeft: showMinimap ? '260px' : '0' }}>
+        <main
+          className="aig-editor-main-scroll aig-editor-main-scroll--with-rail"
+          style={{ marginLeft: showMinimap ? '260px' : '0' }}
+        >
           <div className="aig-editor-scroll-container">
             {localSlides.map((slide, idx) => (
               <div
@@ -667,19 +1035,10 @@ export default function AIPptEditor({
                     className="aig-add-slide-btn"
                     type="button"
                     disabled={atDeckCap || isGenerating || busy}
+                    onClick={() => openAddSlideModal(idx)}
                   >
                     <FiPlus size={14} /> {atDeckCap ? 'Max 40' : 'Add'}
                   </button>
-                  {!atDeckCap && (
-                    <div className="aig-add-slide-dropdown">
-                      <div
-                        className="aig-dropdown-item"
-                        onClick={() => handleAddSlide(idx)}
-                      >
-                        <span className="aig-dropdown-icon">📄</span> Blank Slide
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             ))}
@@ -700,101 +1059,41 @@ export default function AIPptEditor({
           </div>
         </main>
 
-        <div className="aig-floating-toolbar">
-          <button className="aig-float-btn" title="Search" type="button">
-            <FiSearch size={18} />
-          </button>
-          <button
-            className="aig-float-btn"
-            title="Typography"
-            type="button"
-            style={{ color: '#3b82f6' }}
-            disabled={isGenerating}
-            onClick={() => handleInsertPreset('text_title')}
-          >
-            <FiType size={18} />
-          </button>
-          <button
-            className="aig-float-btn"
-            title="Images"
-            type="button"
-            style={{ color: '#3b82f6' }}
-            disabled={isGenerating}
-            onClick={() => handleInsertPreset('image')}
-          >
-            <FiImage size={18} />
-          </button>
-          <button className="aig-float-btn" title="Layouts" type="button" style={{ color: '#3b82f6' }}>
-            <FiLayout size={18} />
-          </button>
-          <button className="aig-float-btn" title="Theme" type="button" style={{ color: '#3b82f6' }}>
-            <MdOutlineColorLens size={18} />
-          </button>
-          <button
-            className="aig-float-btn"
-            title="Charts"
-            type="button"
-            style={{ color: '#3b82f6' }}
-            disabled={isGenerating}
-            onClick={() => handleInsertPreset('chart')}
-          >
-            <FiBarChart2 size={18} />
-          </button>
-          <button className="aig-float-btn" title="Video" type="button" style={{ color: '#3b82f6' }}>
-            <FiFilm size={18} />
-          </button>
-          <button className="aig-float-btn" title="Forms" type="button" style={{ color: '#3b82f6' }}>
-            <FiGrid size={18} />
-          </button>
+        <EditorRightRail
+          zoom={100}
+          deckStatus={deckStatus}
+          generationPrompt={generationPrompt}
+          slide={selectedSlide}
+          themeVisual={themeVisual}
+          disabled={isGenerating || busy}
+          onResetBackground={() =>
+            setError('Background reset will apply once slide theme editing is connected.')
+          }
+          onAddBackgroundImage={openMediaForBackground}
+          onChangeTransition={handleChangeTransition}
+          onChangeSlideStatus={handleChangeSlideStatus}
+        />
 
-          <div className="aig-float-divider"></div>
-
-          <button className="aig-float-btn-special" title="Edit Options" type="button">
-            <FiSettings size={18} />
-          </button>
-
-          {elementPresets.length > 0 && (
-            <div className="aig-preset-chip-row">
-              {elementPresets.slice(0, 6).map((preset) => {
-                const presetId = preset.presetId || preset.id
-                return (
-                  <button
-                    key={presetId}
-                    type="button"
-                    className="aig-preset-chip"
-                    disabled={isGenerating || busy}
-                    onClick={() => handleInsertPreset(presetId)}
-                    title={preset.label || presetId}
-                  >
-                    {preset.label || presetId}
-                  </button>
-                )
-              })}
-            </div>
-          )}
-        </div>
-
-        <div className="aig-editor-minimap-toggle">
-          <button
-            className={`aig-float-btn ${showMinimap ? 'active' : ''}`}
-            onClick={() => setShowMinimap(!showMinimap)}
-            title="Toggle Outline"
-            type="button"
-          >
-            <FiSidebar size={18} />
-          </button>
-        </div>
-
-        {showMinimap && (
+        {showMinimap ? (
           <aside className="aig-editor-minimap">
             <div className="aig-minimap-header">
               <button
                 className="aig-minimap-add-btn"
                 type="button"
                 disabled={atDeckCap || isGenerating || busy}
-                onClick={() => handleAddSlide(localSlides.length - 1)}
+                onClick={() => openAddSlideModal(localSlides.length - 1)}
+                title="Add a new slide"
               >
-                <FiPlus size={16} /> {atDeckCap ? 'Deck full (40)' : 'New Slide'}
+                <FiPlus size={16} /> {atDeckCap ? 'Deck full (40)' : 'Add slide'}
+              </button>
+              <button
+                className="aig-minimap-outline-btn"
+                type="button"
+                onClick={() => setShowMinimap(false)}
+                title="Hide outline"
+                aria-label="Hide outline"
+              >
+                <FiSidebar size={16} />
               </button>
             </div>
             <div className="aig-minimap-scroll">
@@ -809,6 +1108,20 @@ export default function AIPptEditor({
                   }}
                 >
                   <span className="aig-minimap-num">{idx + 1}</span>
+                  <span
+                    className={`ppt-status-dot ppt-status-dot--sm ppt-status-dot--${
+                      slide.contributorStatus || slide.elements?.contributorStatus || 'none'
+                    }`}
+                    title={
+                      {
+                        none: 'No status',
+                        todo: 'To do',
+                        'in-progress': 'In progress',
+                        done: 'Done',
+                      }[slide.contributorStatus || slide.elements?.contributorStatus || 'none']
+                    }
+                    aria-hidden
+                  />
                   <div className="aig-minimap-thumb" style={{ background: themeVisual.outer }}>
                     <div className="aig-minimap-thumb-inner" style={{ background: themeVisual.inner }}>
                       <div className="aig-minimap-thumb-title" style={{ color: themeVisual.title }}>
@@ -820,8 +1133,28 @@ export default function AIPptEditor({
               ))}
             </div>
           </aside>
+        ) : (
+          <div className="aig-editor-minimap-toggle">
+            <button
+              className="aig-minimap-outline-btn aig-minimap-outline-btn--alone"
+              type="button"
+              onClick={() => setShowMinimap(true)}
+              title="Show outline"
+              aria-label="Show outline"
+            >
+              <FiSidebar size={16} />
+            </button>
+          </div>
         )}
       </div>
+
+      <AddSlideModal
+        open={addSlideOpen}
+        onClose={() => setAddSlideOpen(false)}
+        workspaceId={workspaceId}
+        disabled={busy || isGenerating || atDeckCap}
+        onPick={handlePickAddSlide}
+      />
     </div>
   )
 }
