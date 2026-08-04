@@ -790,21 +790,25 @@ function SlideCard({ theme, slide, index, ph, icon, imageUrl, large }) {
 
       {/* ── Stat ── */}
       {isStat && (
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: large ? 8 : 3 }}>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: large ? 8 : 3, padding: `${large ? 6 : 10}%` }}>
+          {/* title above stats */}
+          {large && ph && (
+            <div style={{ fontSize: `${fs * 1.9}rem`, fontWeight: 700, color: theme.text, marginBottom: large ? 4 : 0, textAlign: 'center' }}>{ph}</div>
+          )}
           {phStats.length > 0 ? (
             large ? (
               <div style={{ display: 'flex', gap: 32, alignItems: 'flex-end' }}>
                 {phStats.map((s, j) => (
                   <div key={j} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                    <div style={{ fontSize: `${fs * (j === 0 ? 6 : 4.5)}rem`, fontWeight: 900, color: theme.accent, lineHeight: 1 }}>{s.value ?? '—'}</div>
-                    <div style={{ fontSize: `${fs * 1.5}rem`, color: theme.text, opacity: 0.55 }}>{s.label ?? ''}</div>
+                    <div style={{ fontSize: `${fs * (j === 0 ? 5.5 : 4)}rem`, fontWeight: 900, color: theme.accent, lineHeight: 1 }}>{s.value ?? '—'}</div>
+                    <div style={{ fontSize: `${fs * 1.4}rem`, color: theme.text, opacity: 0.55 }}>{s.label ?? ''}</div>
                   </div>
                 ))}
               </div>
             ) : (
               <>
                 <div style={{ fontSize: `${fs * 6}rem`, fontWeight: 900, color: theme.accent, lineHeight: 1 }}>{phStats[0]?.value ?? '—'}</div>
-                <div style={{ fontSize: `${fs * 1.8}rem`, color: theme.text, opacity: 0.6 }}>{ph || phStats[0]?.label || 'Metric'}</div>
+                <div style={{ fontSize: `${fs * 1.8}rem`, color: theme.text, opacity: 0.6 }}>{phStats[0]?.label || ph || 'Metric'}</div>
               </>
             )
           ) : (
@@ -852,7 +856,10 @@ function SlideCard({ theme, slide, index, ph, icon, imageUrl, large }) {
           </div>
           <div style={{ order: imageOnRight ? 1 : 2, padding: `${large ? 8 : 12}%`, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: large ? 8 : 3 }}>
             <div style={{ fontSize: `${fs * 2.2}rem`, fontWeight: 700, color: theme.text }}>{ph || 'Caption'}</div>
-            {[0.55, 0.4, 0.35].map((op, j) => <div key={j} style={{ height: large ? 8 : 3, borderRadius: 2, background: theme.text, opacity: op, width: `${80 - j * 15}%` }} />)}
+            {large && phSubtitle
+              ? <div style={{ fontSize: `${fs * 1.5}rem`, color: theme.text, opacity: 0.65, lineHeight: lh }}>{phSubtitle}</div>
+              : [0.55, 0.4, 0.35].map((op, j) => <div key={j} style={{ height: large ? 8 : 3, borderRadius: 2, background: theme.text, opacity: op, width: `${80 - j * 15}%` }} />)
+            }
           </div>
         </div>
       )}
@@ -860,9 +867,12 @@ function SlideCard({ theme, slide, index, ph, icon, imageUrl, large }) {
       {/* ── Closing ── */}
       {isClosing && (
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: large ? 10 : 3 }}>
-          <div style={{ fontSize: `${fs * 3}rem`, fontWeight: 800, color: theme.text }}>{phCta || ph || 'Thank You'}</div>
+          {/* title is the main heading; cta is the call-to-action label */}
+          <div style={{ fontSize: `${fs * 3}rem`, fontWeight: 800, color: theme.text }}>{ph || 'Thank You'}</div>
+          {large && phSubtitle && <div style={{ fontSize: `${fs * 1.6}rem`, color: theme.text, opacity: 0.55, textAlign: 'center' }}>{phSubtitle}</div>}
           <div style={{ width: '40%', height: large ? 3 : 1, background: theme.accent, borderRadius: 99 }} />
-          <div style={{ fontSize: `${fs * 1.6}rem`, color: theme.accent }}>{phContact || 'contact@company.com'}</div>
+          {phCta && <div style={{ fontSize: `${fs * 1.8}rem`, fontWeight: 700, color: theme.accent, textAlign: 'center' }}>{phCta}</div>}
+          <div style={{ fontSize: `${fs * 1.4}rem`, color: theme.text, opacity: 0.5 }}>{phContact || 'contact@company.com'}</div>
         </div>
       )}
 
@@ -871,6 +881,7 @@ function SlideCard({ theme, slide, index, ph, icon, imageUrl, large }) {
         <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${theme.accent}22, ${theme.surface ?? theme.bg})`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: large ? 8 : 3 }}>
           <div style={{ width: '60%', height: large ? 3 : 1.2, background: theme.accent, borderRadius: 99 }} />
           <div style={{ fontSize: `${fs * 2.8}rem`, fontWeight: 700, color: theme.text, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{ph || 'Section'}</div>
+          {large && phSubtitle && <div style={{ fontSize: `${fs * 1.5}rem`, color: theme.text, opacity: 0.5, textAlign: 'center' }}>{phSubtitle}</div>}
           <div style={{ width: '30%', height: large ? 2 : 0.8, background: theme.accent, opacity: 0.4, borderRadius: 99 }} />
         </div>
       )}
@@ -900,14 +911,49 @@ function SlideCard({ theme, slide, index, ph, icon, imageUrl, large }) {
       {/* ── Comparison ── */}
       {isComparison && (
         <div style={{ position: 'absolute', inset: 0, padding: `${large ? 6 : 10}%`, display: 'flex', flexDirection: 'column', gap: large ? 8 : 3 }}>
-          <div style={{ fontSize: `${fs * 2}rem`, fontWeight: 700, color: theme.text, marginBottom: large ? 4 : 1 }}>{ph || 'Comparison'}</div>
+          <div>
+            <div style={{ fontSize: `${fs * 2}rem`, fontWeight: 700, color: theme.text, marginBottom: large ? 2 : 1 }}>{ph || 'Comparison'}</div>
+            {large && phSubtitle && <div style={{ fontSize: `${fs * 1.4}rem`, color: theme.text, opacity: 0.5, marginBottom: large ? 4 : 0 }}>{phSubtitle}</div>}
+          </div>
           <div style={{ display: 'flex', gap: large ? 12 : 4, flex: 1 }}>
-            {['Option A', 'Option B'].map((opt, j) => (
-              <div key={j} style={{ flex: 1, padding: large ? 12 : 4, borderRadius: large ? 8 : 3, background: j === 0 ? `${theme.accent}15` : `${theme.surface ?? theme.bg}`, border: `${large ? 1.5 : 0.6}px solid ${theme.accent}${j === 0 ? '55' : '22'}`, display: 'flex', flexDirection: 'column', gap: large ? 6 : 2 }}>
-                <div style={{ fontSize: `${fs * 1.8}rem`, fontWeight: 700, color: j === 0 ? theme.accent : theme.text, opacity: j === 0 ? 1 : 0.6 }}>{opt}</div>
-                {[0.5, 0.4, 0.35].map((op, k) => <div key={k} style={{ height: large ? 7 : 2.5, borderRadius: 2, background: theme.text, opacity: op, width: '90%' }} />)}
-              </div>
-            ))}
+            {(() => {
+              // Try to get structured comparison data from various placeholder shapes
+              const hasSides   = Array.isArray(pl.sides)   && pl.sides.length >= 2
+              const hasBefore  = pl.before  != null
+              const hasAfter   = pl.after   != null
+              const hasOptions = Array.isArray(pl.options) && pl.options.length >= 2
+
+              const sides = hasSides ? pl.sides.slice(0, 2)
+                : hasOptions ? pl.options.slice(0, 2)
+                : hasBefore || hasAfter
+                  ? [
+                      { label: pl.before_label || 'Before', items: Array.isArray(pl.before)  ? pl.before  : typeof pl.before  === 'string' ? [pl.before]  : [] },
+                      { label: pl.after_label  || 'After',  items: Array.isArray(pl.after)   ? pl.after   : typeof pl.after   === 'string' ? [pl.after]   : [] },
+                    ]
+                  // No structured data — use left/right labels from title or generic
+                  : [
+                      { label: 'Before', items: [] },
+                      { label: 'After',  items: [] },
+                    ]
+
+              return sides.map((side, j) => {
+                const label = side.label || side.title || side.name || (j === 0 ? 'Before' : 'After')
+                const items = Array.isArray(side.items) ? side.items : (Array.isArray(side.bullets) ? side.bullets : [])
+                return (
+                  <div key={j} style={{ flex: 1, padding: large ? 12 : 4, borderRadius: large ? 8 : 3, background: j === 0 ? `${theme.accent}15` : `${theme.surface ?? theme.bg}`, border: `${large ? 1.5 : 0.6}px solid ${theme.accent}${j === 0 ? '55' : '22'}`, display: 'flex', flexDirection: 'column', gap: large ? 6 : 2 }}>
+                    <div style={{ fontSize: `${fs * 1.8}rem`, fontWeight: 700, color: j === 0 ? theme.accent : theme.text, opacity: j === 0 ? 1 : 0.6 }}>{label}</div>
+                    {large && items.length > 0
+                      ? items.slice(0, 3).map((item, k) => (
+                          <div key={k} style={{ fontSize: `${fs * 1.3}rem`, color: theme.text, opacity: 0.75, lineHeight: 1.4 }}>{typeof item === 'string' ? item : item.label ?? item.text ?? String(item)}</div>
+                        ))
+                      : large
+                        ? <div style={{ fontSize: `${fs * 1.2}rem`, color: theme.text, opacity: 0.3, fontStyle: 'italic', marginTop: 4 }}>—</div>
+                        : [0.5, 0.4].map((op, k) => <div key={k} style={{ height: 2.5, borderRadius: 2, background: theme.text, opacity: op, width: `${85 - k * 15}%` }} />)
+                    }
+                  </div>
+                )
+              })
+            })()}
           </div>
         </div>
       )}
@@ -915,7 +961,10 @@ function SlideCard({ theme, slide, index, ph, icon, imageUrl, large }) {
       {/* ── Timeline ── */}
       {isTimeline && (
         <div style={{ position: 'absolute', inset: 0, padding: `${large ? 6 : 10}%`, display: 'flex', flexDirection: 'column', gap: large ? 8 : 3 }}>
-          <div style={{ fontSize: `${fs * 2}rem`, fontWeight: 700, color: theme.text }}>{ph || 'Timeline'}</div>
+          <div>
+            <div style={{ fontSize: `${fs * 2}rem`, fontWeight: 700, color: theme.text }}>{ph || 'Timeline'}</div>
+            {large && phSubtitle && <div style={{ fontSize: `${fs * 1.4}rem`, color: theme.text, opacity: 0.5, marginTop: 2 }}>{phSubtitle}</div>}
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 0, flex: 1, position: 'relative', paddingTop: large ? 12 : 4 }}>
             <div style={{ position: 'absolute', left: 0, right: 0, height: large ? 3 : 1, top: '50%', background: theme.accent, opacity: 0.4 }} />
             {(phLabels.length > 0 ? phLabels : [1, 2, 3, 4]).map((label, j) => (
@@ -1803,6 +1852,141 @@ function TemplateDetail({ template, onUpdated, onClose, onDuplicate }) {
   )
 }
 
+// ─── Inline pack slide viewer (used inside the centered preview modal) ───────
+// Same filmstrip + scrollable slides as DeckPackSlideModal but rendered inline.
+
+function InlinePackSlideViewer({ template }) {
+  const schema   = template.schema ?? {}
+  const slides   = schema.slides ?? []
+  const theme    = THEME_COLORS[schema.themeId] ?? THEME_COLORS.midnight_blue
+  const media    = Array.isArray(template.media) ? template.media : []
+
+  const [current, setCurrent] = useState(0)
+  const mainRef   = useRef(null)
+  const stripRefs = useRef([])
+  const slideRefs = useRef([])
+
+  useEffect(() => {
+    stripRefs.current[current]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  }, [current])
+
+  function goTo(i) {
+    setCurrent(i)
+    slideRefs.current[i]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  useEffect(() => {
+    if (!mainRef.current) return
+    const obs = new IntersectionObserver(
+      entries => { entries.forEach(e => { if (e.isIntersecting) { const idx = Number(e.target.dataset.idx); if (!isNaN(idx)) setCurrent(idx) } }) },
+      { root: mainRef.current, threshold: 0.5 }
+    )
+    slideRefs.current.forEach(el => el && obs.observe(el))
+    return () => obs.disconnect()
+  }, [slides.length])
+
+  if (slides.length === 0) {
+    return (
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.3)', fontSize: '0.9rem' }}>
+        No slides defined in this pack.
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden', background: 'var(--bg-main, #0d1117)' }}>
+      {/* LEFT: filmstrip */}
+      <div style={{
+        width: 150, flexShrink: 0, overflowY: 'auto', overflowX: 'hidden',
+        borderRight: '1px solid var(--border-color)',
+        background: 'color-mix(in srgb, var(--bg-card) 70%, transparent)',
+        padding: '10px 8px',
+        display: 'flex', flexDirection: 'column', gap: 8,
+        scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.15) transparent',
+      }}>
+        {slides.map((s, i) => {
+          const sct      = s.contentType ?? 'slide'
+          const sph      = extractPlaceholderTitle(s.placeholder)
+          const sicon    = CONTENT_TYPE_ICONS[sct] ?? '▣'
+          const isActive = i === current
+          const order    = s.order ?? (i + 1)
+          const imgUrl   = media.find(m => m.slotHint === `slide:${order}`)?.url
+            ?? media.find(m => m.kind === 'photo' && m.slotHint === 'image')?.url
+            ?? null
+          return (
+            <div key={i} ref={el => { stripRefs.current[i] = el }}>
+              <button type="button" onClick={() => goTo(i)} style={{
+                width: '100%', padding: 0, border: `2px solid ${isActive ? theme.accent : 'transparent'}`,
+                borderRadius: 7, overflow: 'hidden', cursor: 'pointer', background: 'none',
+                outline: 'none', transition: 'border-color 0.15s',
+                boxShadow: isActive ? `0 0 0 1px ${theme.accent}44` : 'none',
+              }}>
+                <SlideCard theme={theme} slide={s} index={i} ph={sph} icon={sicon} imageUrl={imgUrl} large={false} />
+              </button>
+              <div style={{ marginTop: 4, fontSize: '0.58rem', fontWeight: 600, textAlign: 'center', color: isActive ? theme.accent : 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', transition: 'color 0.15s' }}>
+                {i + 1} · {sct}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* RIGHT: main scroll */}
+      <div ref={mainRef} style={{
+        flex: 1, minWidth: 0, overflowY: 'auto', overflowX: 'hidden',
+        padding: '24px 28px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28,
+        background: 'var(--bg-main, color-mix(in srgb, var(--bg-card) 40%, #0d1117))',
+        scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.15) transparent',
+      }}>
+        {slides.map((s, i) => {
+          const sct   = s.contentType ?? 'slide'
+          const sph   = extractPlaceholderTitle(s.placeholder)
+          const sicon = CONTENT_TYPE_ICONS[sct] ?? '▣'
+          const order = s.order ?? (i + 1)
+          const imgUrl = media.find(m => m.slotHint === `slide:${order}`)?.url
+            ?? media.find(m => m.kind === 'photo' && m.slotHint === 'image')?.url
+            ?? null
+          return (
+            <div key={i} ref={el => { slideRefs.current[i] = el }} data-idx={i}
+              style={{ width: '100%', maxWidth: 800, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {/* slide label row */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-muted)', opacity: 0.5, fontFamily: 'monospace', minWidth: 18 }}>{i + 1}</span>
+                <div style={{ height: 1, flex: 1, background: 'var(--border-color)' }} />
+                <span style={{ padding: '2px 7px', borderRadius: 99, background: `${theme.accent}18`, border: `1px solid ${theme.accent}33`, color: theme.accent, fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{sct}</span>
+                {s.layout_id && <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', opacity: 0.5, fontFamily: 'monospace' }}>{s.layout_id}</span>}
+              </div>
+              {/* slide */}
+              <div style={{
+                width: '100%', borderRadius: 10, overflow: 'hidden',
+                boxShadow: `0 4px 20px rgba(0,0,0,0.12), 0 0 0 1px ${i === current ? theme.accent + '55' : 'var(--border-color)'}`,
+                transition: 'box-shadow 0.2s',
+              }}>
+                <SlideCard theme={theme} slide={s} index={i} ph={sph} icon={sicon} imageUrl={imgUrl} large={true} />
+              </div>
+              {/* intent strip */}
+              {(s.intent || s.generationHints?.imagePromptStyle) && (
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '7px 11px', borderRadius: 7, background: `${theme.accent}0f`, border: `1px solid ${theme.accent}22` }}>
+                  <span style={{ fontSize: '0.58rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: theme.accent, opacity: 0.7, paddingTop: 1, flexShrink: 0 }}>AI Intent</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
+                    {s.intent && <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', fontStyle: 'italic', lineHeight: 1.5 }}>{s.intent}</span>}
+                    {s.generationHints?.imagePromptStyle && (
+                      <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.32)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span style={{ opacity: 0.5 }}>🖼</span> {s.generationHints.imagePromptStyle}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })}
+        <div style={{ height: 32 }} />
+      </div>
+    </div>
+  )
+}
+
 // ─── Main panel ───────────────────────────────────────────────────────────────
 
 export default function SuperadminTemplatesPanel() {
@@ -1815,6 +1999,7 @@ export default function SuperadminTemplatesPanel() {
   const [filterActive, setFilterActive] = useState('all')
   const searchTimer = useRef(null)
   const [selected, setSelected]         = useState(null)
+  const [previewTemplate, setPreviewTemplate] = useState(null)
   const [showCreate, setShowCreate]     = useState(false)
   const [duplicatePrefill, setDuplicatePrefill] = useState(null)
 
@@ -1871,148 +2056,228 @@ export default function SuperadminTemplatesPanel() {
 
   return (
     <div className="sa-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+      <style>{`.template-card:hover .card-hover-actions { opacity: 1 !important; }`}</style>
 
       {/* ── topbar ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 20px 0', gap: 16, flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 24px 0', gap: 16, flexShrink: 0 }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, letterSpacing: '-0.02em' }}>Templates</h2>
-          <p style={{ margin: '3px 0 0', fontSize: '0.79rem', color: 'var(--text-muted)' }}>Deck layouts, packs, and video scenes for workspace pickers</p>
+          <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, letterSpacing: '-0.02em' }}>Templates</h2>
+          <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Manage deck layouts, packs, and video scenes for workspace pickers</p>
         </div>
-        <button className="sa-btn sa-btn--primary" onClick={() => setShowCreate(true)} style={{ flexShrink: 0 }}>
+        <button className="sa-btn sa-btn--primary" onClick={() => setShowCreate(true)} style={{ flexShrink: 0, height: 36, paddingLeft: 14, paddingRight: 14 }}>
           <Plus size={14} strokeWidth={2.5} /> New template
         </button>
       </div>
 
-      {/* ── underline type tabs ── */}
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', padding: '0 20px', marginTop: 16, flexShrink: 0 }}>
-        {TEMPLATE_TYPES.map(t => (
-          <button key={t.id} type="button" onClick={() => setActiveType(t.id)} style={{
-            padding: '8px 14px', border: 'none', background: 'none', cursor: 'pointer',
-            fontSize: '0.83rem', fontWeight: 600, marginBottom: -1, whiteSpace: 'nowrap',
-            color: activeType === t.id ? 'var(--primary)' : 'var(--text-muted)',
-            borderBottom: activeType === t.id ? '2px solid var(--primary)' : '2px solid transparent',
-            transition: 'color 0.12s',
-          }}>
-            {t.label}
-            {activeType === t.id && filtered.length > 0 && <span style={{ marginLeft: 5, fontSize: '0.67rem', fontWeight: 700, opacity: 0.55 }}>{filtered.length}</span>}
-          </button>
-        ))}
-      </div>
-
-      {/* ── split ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: 14, padding: '14px 20px 20px', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-
-        {/* left list */}
-        <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, border: '1px solid var(--border-color)', borderRadius: 10, overflow: 'hidden', background: 'var(--bg-card)' }}>
-          <div style={{ padding: '7px 7px 0', borderBottom: '1px solid var(--border-color)', flexShrink: 0 }}>
-            <div style={{ position: 'relative', marginBottom: 6 }}>
-              <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
-              <input className="sa-input" placeholder="Search…" value={searchInput} onChange={handleSearchInput}
-                style={{ width: '100%', boxSizing: 'border-box', height: 30, paddingLeft: 28, fontSize: '0.79rem', borderRadius: 6 }} />
-            </div>
-            <div style={{ display: 'flex', gap: 4, paddingBottom: 7 }}>
-              {[['all', 'All'], ['active', 'Active'], ['inactive', 'Inactive']].map(([val, label]) => (
-                <button key={val} type="button" onClick={() => setFilterActive(val)} style={{
-                  padding: '2px 9px', borderRadius: 99, fontSize: '0.68rem', fontWeight: 600, cursor: 'pointer', border: 'none',
-                  background: filterActive === val
-                    ? (val === 'active' ? 'color-mix(in srgb, #22c55e 18%, transparent)' : val === 'inactive' ? 'color-mix(in srgb, var(--text-muted) 15%, transparent)' : 'color-mix(in srgb, var(--primary) 15%, transparent)')
-                    : 'transparent',
-                  color: filterActive === val
-                    ? (val === 'active' ? '#4ade80' : val === 'inactive' ? 'var(--text-muted)' : 'var(--primary)')
-                    : 'var(--text-muted)',
-                  outline: filterActive === val ? `1px solid ${val === 'active' ? '#4ade8044' : val === 'inactive' ? 'var(--border-color)' : 'color-mix(in srgb, var(--primary) 35%, transparent)'}` : 'none',
-                }}>{label}</button>
-              ))}
-            </div>
-          </div>
-
-          {listError && <div className="sa-alert sa-alert--error" style={{ margin: '7px', flexShrink: 0 }}>{listError}</div>}
-
-          <ul className="sa-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', margin: 0, padding: 0, listStyle: 'none' }}>
-            {loading
-              ? Array.from({ length: 7 }).map((_, i) => (
-                  <li key={i} style={{ padding: '10px 12px', borderBottom: '1px solid var(--border-color)' }}>
-                    <div style={{ height: 11, borderRadius: 3, background: 'var(--border-color)', opacity: 0.45, marginBottom: 5, width: '72%' }} />
-                    <div style={{ height: 8, borderRadius: 3, background: 'var(--border-color)', opacity: 0.27, width: '42%' }} />
-                  </li>
-                ))
-              : filtered.length === 0
-                ? (
-                  <li style={{ padding: '36px 14px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.79rem' }}>
-                    <LayoutTemplate size={26} style={{ margin: '0 auto 8px', display: 'block', opacity: 0.25 }} />
-                    {search ? 'No results' : 'No templates yet'}
-                    {!search && <div style={{ marginTop: 8 }}><button className="sa-btn sa-btn--ghost sa-btn--sm" onClick={() => setShowCreate(true)}><Plus size={12} /> Create</button></div>}
-                  </li>
-                )
-                : filtered.map(t => (
-                  <li key={t.id}>
-                    <button type="button" onClick={() => setSelected(t)} style={{
-                      width: '100%', textAlign: 'left', border: 'none', padding: '9px 12px',
-                      background: selected?.id === t.id ? 'linear-gradient(90deg, color-mix(in srgb, var(--primary) 10%, transparent), transparent)' : 'transparent',
-                      boxShadow: selected?.id === t.id ? 'inset 3px 0 0 var(--primary)' : 'none',
-                      cursor: 'pointer', borderBottom: '1px solid var(--border-color)', transition: 'background 0.1s',
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                        {/* preview thumbnail for DECK_PACK */}
-                        {t.type === 'DECK_PACK' && (() => {
-                          const url = getTemplatePreviewUrl(t)
-                          const fallbackColor = t.schema?.preview?.color
-                          const tc = THEME_COLORS[t.schema?.themeId]
-                          return (
-                            <div style={{ width: 28, height: 16, borderRadius: 3, overflow: 'hidden', flexShrink: 0, border: '1px solid var(--border-color)' }}>
-                              {url
-                                ? <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                                    onError={e => { e.currentTarget.style.display = 'none' }} />
-                                : <div style={{ width: '100%', height: '100%', background: fallbackColor ?? (tc ? tc.bg : 'var(--border-color)') }} />
-                              }
-                            </div>
-                          )
-                        })()}
-                        <span style={{ fontSize: '0.8rem', fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-main)' }}>{t.name}</span>
-                        {t.version > 1 && <span style={{ fontSize: '0.58rem', fontWeight: 700, color: 'var(--text-muted)', opacity: 0.6, flexShrink: 0 }}>v{t.version}</span>}
-                        {/* quick active toggle */}
-                        <button type="button" title={t.isActive ? 'Deactivate' : 'Activate'} onClick={e => handleQuickToggle(e, t)}
-                          style={{ flexShrink: 0, width: 22, height: 22, borderRadius: 6, border: `1px solid ${t.isActive ? 'color-mix(in srgb, #22c55e 35%, var(--border-color))' : 'var(--border-color)'}`, background: t.isActive ? 'color-mix(in srgb, #22c55e 12%, transparent)' : 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
-                          <span style={{ width: 7, height: 7, borderRadius: '50%', background: t.isActive ? '#4ade80' : 'var(--border-color)', display: 'block' }} />
-                        </button>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: '0.69rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-                          {[t.contentType, t.variant].filter(Boolean).join(' · ') || formatDate(t.createdAt)}
-                        </span>
-                        {t.type !== 'VIDEO_SCENE' && Array.isArray(t.media) && t.media.length > 0 && (
-                          <span style={{ fontSize: '0.6rem', fontWeight: 700, padding: '1px 5px', borderRadius: 4, background: 'color-mix(in srgb, var(--primary) 12%, transparent)', color: 'var(--primary)', flexShrink: 0 }}>
-                            {t.media.length} media
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  </li>
-                ))
-            }
-          </ul>
-
-          {filtered.length > 0 && (
-            <div style={{ padding: '5px 12px', borderTop: '1px solid var(--border-color)', flexShrink: 0, fontSize: '0.68rem', color: 'var(--text-muted)', opacity: 0.7 }}>
-              {filtered.length} template{filtered.length !== 1 ? 's' : ''}{search && ` matching "${search}"`}
-            </div>
-          )}
+      {/* ── toolbar: type tabs + search + filters ── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', marginTop: 16, borderBottom: '1px solid var(--border-color)', flexShrink: 0, gap: 12 }}>
+        {/* type tabs */}
+        <div style={{ display: 'flex', gap: 0 }}>
+          {TEMPLATE_TYPES.map(t => (
+            <button key={t.id} type="button" onClick={() => setActiveType(t.id)} style={{
+              padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer',
+              fontSize: '0.85rem', fontWeight: 600, marginBottom: -1, whiteSpace: 'nowrap',
+              color: activeType === t.id ? 'var(--primary)' : 'var(--text-muted)',
+              borderBottom: activeType === t.id ? '2px solid var(--primary)' : '2px solid transparent',
+              transition: 'color 0.12s',
+            }}>
+              {t.label}
+              {activeType === t.id && filtered.length > 0 && (
+                <span style={{ marginLeft: 6, fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: 99, background: 'color-mix(in srgb, var(--primary) 15%, transparent)', color: 'var(--primary)' }}>{filtered.length}</span>
+              )}
+            </button>
+          ))}
         </div>
 
-        {/* right detail */}
-        {selected
-          ? <TemplateDetail key={selected.id} template={selected} onUpdated={handleUpdated} onClose={() => setSelected(null)} onDuplicate={t => { setDuplicatePrefill(t); setShowCreate(true) }} />
-          : (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed var(--border-color)', borderRadius: 10 }}>
-              <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
-                <LayoutTemplate size={30} style={{ margin: '0 auto 10px', display: 'block', opacity: 0.2 }} />
-                <p style={{ margin: 0, fontSize: '0.8rem' }}>Select a template to edit</p>
-                <p style={{ margin: '4px 0 0', fontSize: '0.72rem', opacity: 0.6 }}>{TEMPLATE_TYPES.find(t => t.id === activeType)?.description}</p>
-              </div>
-            </div>
-          )
-        }
+        {/* search + filter */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 10 }}>
+          <div style={{ position: 'relative' }}>
+            <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+            <input className="sa-input" placeholder="Search templates…" value={searchInput} onChange={handleSearchInput}
+              style={{ width: 220, boxSizing: 'border-box', height: 32, paddingLeft: 30, fontSize: '0.8rem', borderRadius: 8 }} />
+          </div>
+          <div style={{ display: 'flex', gap: 3, background: 'var(--border-color)', borderRadius: 8, padding: 2 }}>
+            {[['all', 'All'], ['active', '● Active'], ['inactive', '○ Inactive']].map(([val, label]) => (
+              <button key={val} type="button" onClick={() => setFilterActive(val)} style={{
+                padding: '3px 10px', borderRadius: 6, fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer', border: 'none',
+                background: filterActive === val ? 'var(--bg-card)' : 'transparent',
+                color: filterActive === val
+                  ? (val === 'active' ? '#4ade80' : val === 'inactive' ? 'var(--text-muted)' : 'var(--text-main)')
+                  : 'var(--text-muted)',
+                boxShadow: filterActive === val ? '0 1px 3px rgba(0,0,0,0.15)' : 'none',
+                transition: 'all 0.15s',
+              }}>{label}</button>
+            ))}
+          </div>
+        </div>
       </div>
+
+      {/* ── card grid ── */}
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '20px 24px 24px' }}>
+        {listError && <div className="sa-alert sa-alert--error" style={{ marginBottom: 16 }}>{listError}</div>}
+
+        {loading ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} style={{ borderRadius: 12, border: '1px solid var(--border-color)', overflow: 'hidden', background: 'var(--bg-card)' }}>
+                <div style={{ aspectRatio: '16/9', background: 'color-mix(in srgb, var(--border-color) 50%, transparent)', opacity: 0.4 }} />
+                <div style={{ padding: '12px' }}>
+                  <div style={{ height: 12, borderRadius: 4, background: 'var(--border-color)', opacity: 0.5, marginBottom: 6, width: '65%' }} />
+                  <div style={{ height: 9, borderRadius: 4, background: 'var(--border-color)', opacity: 0.3, width: '40%' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
+            <LayoutTemplate size={40} style={{ margin: '0 auto 12px', display: 'block', opacity: 0.2 }} />
+            <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600 }}>{search ? `No results for "${search}"` : 'No templates yet'}</p>
+            <p style={{ margin: '6px 0 16px', fontSize: '0.8rem', opacity: 0.7 }}>{TEMPLATE_TYPES.find(t => t.id === activeType)?.description}</p>
+            {!search && (
+              <button className="sa-btn sa-btn--primary" onClick={() => setShowCreate(true)}>
+                <Plus size={14} /> Create first template
+              </button>
+            )}
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
+            {filtered.map(t => {
+              const previewUrl = getTemplatePreviewUrl(t)
+              const fallbackColor = t.schema?.preview?.color
+              const tc = THEME_COLORS[t.schema?.themeId]
+              const isSelected = selected?.id === t.id
+              return (
+                <button key={t.id} type="button" onClick={() => {}}
+                  className="template-card"
+                  style={{
+                    textAlign: 'left', border: `2px solid ${isSelected ? 'var(--primary)' : 'var(--border-color)'}`,
+                    borderRadius: 12, overflow: 'hidden', background: 'var(--bg-card)',
+                    cursor: 'default', padding: 0, transition: 'all 0.15s',
+                    boxShadow: isSelected ? '0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent)' : '0 1px 4px rgba(0,0,0,0.06)',
+                  }}
+                >
+                  {/* thumbnail — always the themed gradient, never stock photos */}
+                  <div style={{ aspectRatio: '16/9', position: 'relative', overflow: 'hidden' }}>
+                    {/* themed gradient background */}
+                    <div style={{
+                      position: 'absolute', inset: 0,
+                      background: tc
+                        ? `linear-gradient(135deg, ${tc.bg} 0%, ${tc.surface ?? tc.bg} 60%, ${tc.accent}22 100%)`
+                        : fallbackColor
+                          ? `linear-gradient(135deg, ${fallbackColor}dd 0%, ${fallbackColor}55 100%)`
+                          : 'linear-gradient(135deg, var(--bg-card), color-mix(in srgb, var(--primary) 8%, var(--bg-card)))',
+                    }} />
+                    {/* accent stripe */}
+                    {tc && (
+                      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: tc.accent }} />
+                    )}
+                    {/* color swatches centred */}
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                      {tc ? (
+                        <>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            {[tc.accent, tc.text, tc.surface ?? tc.bg].map((c, i) => (
+                              <div key={i} style={{ width: i === 0 ? 28 : 18, height: i === 0 ? 28 : 18, borderRadius: '50%', background: c, border: '2px solid rgba(255,255,255,0.15)', boxShadow: i === 0 ? `0 0 12px ${c}66` : 'none', transition: 'all 0.2s' }} />
+                            ))}
+                          </div>
+                          {t.schema?.themeId && (
+                            <span style={{ fontSize: '0.6rem', fontWeight: 600, color: tc.text, opacity: 0.5, letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'monospace' }}>{t.schema.themeId.replace(/_/g, ' ')}</span>
+                          )}
+                        </>
+                      ) : (
+                        <LayoutTemplate size={24} style={{ opacity: 0.2, color: 'var(--text-muted)' }} />
+                      )}
+                    </div>
+                    {/* slide count badge for packs */}
+                    {t.type === 'DECK_PACK' && t.schema?.slides?.length > 0 && (
+                      <div style={{ position: 'absolute', bottom: 10, left: 10, padding: '2px 7px', borderRadius: 5, fontSize: '0.62rem', fontWeight: 700, background: 'rgba(0,0,0,0.45)', color: '#fff', backdropFilter: 'blur(4px)', letterSpacing: '0.02em' }}>
+                        {t.schema.slides.length} slides
+                      </div>
+                    )}
+                    {/* media count */}
+                    {t.type !== 'VIDEO_SCENE' && Array.isArray(t.media) && t.media.length > 0 && (
+                      <div style={{ position: 'absolute', bottom: 10, right: 10, padding: '2px 7px', borderRadius: 5, fontSize: '0.62rem', fontWeight: 700, background: 'rgba(0,0,0,0.45)', color: '#fff', backdropFilter: 'blur(4px)' }}>
+                        {t.media.length} media
+                      </div>
+                    )}
+                    {/* type badge */}
+                    <div style={{ position: 'absolute', top: 8, left: 8 }}>
+                      <TypePill type={t.type} />
+                    </div>
+
+                    {/* hover overlay with action icons */}
+                    <div className="card-hover-actions" style={{
+                      position: 'absolute', inset: 0,
+                      background: 'rgba(0,0,0,0.45)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                      opacity: 0, transition: 'opacity 0.18s',
+                    }}>
+                      <button type="button"
+                        title="Preview"
+                        onClick={e => { e.stopPropagation(); setPreviewTemplate(t) }}
+                        style={{ width: 38, height: 38, borderRadius: 10, border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)', cursor: 'pointer', color: '#fff', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.15s' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.22)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)' }}
+                      >▶</button>
+                      <button type="button"
+                        title="Edit"
+                        onClick={e => { e.stopPropagation(); setSelected(t) }}
+                        style={{ width: 38, height: 38, borderRadius: 10, border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)', cursor: 'pointer', color: '#fff', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.15s' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.22)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)' }}
+                      >✎</button>
+                    </div>
+                  </div>
+
+                  {/* card footer — clean, no buttons */}
+                  <div style={{ padding: '10px 12px 11px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                      <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{t.name}</div>
+                      {/* active dot — single small indicator */}
+                      <button type="button" title={t.isActive ? 'Deactivate' : 'Activate'}
+                        onClick={e => handleQuickToggle(e, t)}
+                        style={{ flexShrink: 0, width: 18, height: 18, borderRadius: '50%', border: 'none', background: t.isActive ? '#4ade80' : 'var(--border-color)', cursor: 'pointer', transition: 'all 0.15s', boxShadow: t.isActive ? '0 0 0 3px color-mix(in srgb, #22c55e 20%, transparent)' : 'none' }}
+                      />
+                    </div>
+                    <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {t.schema?.pack_id || t.schema?.layout_id || t.variant || t.contentType || formatDate(t.createdAt)}
+                    </div>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ── detail drawer (slides up from bottom / overlays as full-width panel) ── */}
+      {selected && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 100,
+          background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(2px)',
+          display: 'flex', alignItems: 'flex-end',
+        }} onClick={e => { if (e.target === e.currentTarget) setSelected(null) }}>
+          <div style={{
+            width: '100%', maxHeight: '88vh',
+            background: 'var(--bg-card)', borderRadius: '16px 16px 0 0',
+            border: '1px solid var(--border-color)', borderBottom: 'none',
+            display: 'flex', flexDirection: 'column',
+            boxShadow: '0 -12px 48px rgba(0,0,0,0.3)',
+          }}>
+            {/* drag handle */}
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px', flexShrink: 0 }}>
+              <div style={{ width: 36, height: 4, borderRadius: 99, background: 'var(--border-color)' }} />
+            </div>
+            <TemplateDetail
+              key={selected.id}
+              template={selected}
+              onUpdated={handleUpdated}
+              onClose={() => setSelected(null)}
+              onDuplicate={t => { setDuplicatePrefill(t); setShowCreate(true) }}
+            />
+          </div>
+        </div>
+      )}
 
       {(showCreate || duplicatePrefill) && (
         <CreateModal
@@ -2021,6 +2286,79 @@ export default function SuperadminTemplatesPanel() {
           onClose={() => { setShowCreate(false); setDuplicatePrefill(null) }}
           onCreated={handleCreated}
         />
+      )}
+
+      {/* ── preview modal — centered modal with PPT-style slide viewer for packs ── */}
+      {previewTemplate && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 500,
+          background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '20px',
+        }} onClick={e => { if (e.target === e.currentTarget) setPreviewTemplate(null) }}>
+          <div style={{
+            width: '100%',
+            maxWidth: previewTemplate.type === 'DECK_PACK' ? 1100 : 900,
+            height: previewTemplate.type === 'DECK_PACK' ? '88vh' : 'auto',
+            maxHeight: '90vh',
+            background: previewTemplate.type === 'DECK_PACK' ? 'var(--bg-card)' : 'var(--bg-card)',
+            borderRadius: 14,
+            border: '1px solid var(--border-color)',
+            boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+            display: 'flex', flexDirection: 'column', overflow: 'hidden',
+          }}>
+            {/* modal header */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '12px 16px',
+              borderBottom: '1px solid var(--border-color)',
+              flexShrink: 0,
+              background: 'var(--bg-card)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                {/* theme swatches for pack */}
+                {previewTemplate.type === 'DECK_PACK' && (() => {
+                  const tc = THEME_COLORS[previewTemplate.schema?.themeId]
+                  return tc
+                    ? <div style={{ display: 'flex', gap: 3 }}>
+                        {[tc.accent, tc.text, tc.bg].map((c, i) => (
+                          <div key={i} style={{ width: 11, height: 11, borderRadius: '50%', background: c, border: '1px solid var(--border-color)' }} />
+                        ))}
+                      </div>
+                    : null
+                })()}
+                <TypePill type={previewTemplate.type} />
+                <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-main)' }}>{previewTemplate.name}</span>
+                <ActiveBadge active={previewTemplate.isActive} />
+                {previewTemplate.version > 1 && (
+                  <span style={{ fontSize: '0.63rem', color: 'var(--text-muted)' }}>v{previewTemplate.version}</span>
+                )}
+                {previewTemplate.type === 'DECK_PACK' && previewTemplate.schema?.slides?.length > 0 && (
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>· {previewTemplate.schema.slides.length} slides</span>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="sa-btn sa-btn--ghost sa-btn--sm"
+                  onClick={() => { setPreviewTemplate(null); setSelected(previewTemplate) }}>
+                  ✎ Edit
+                </button>
+                <button onClick={() => setPreviewTemplate(null)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px 6px', borderRadius: 6, display: 'flex', alignItems: 'center' }}>
+                  <X size={15} />
+                </button>
+              </div>
+            </div>
+
+            {/* modal body */}
+            {previewTemplate.type === 'DECK_PACK' ? (
+              <InlinePackSlideViewer template={previewTemplate} />
+            ) : (
+              <div className="sa-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '20px' }}>
+                <TemplateVisualPreview template={previewTemplate} />
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   )

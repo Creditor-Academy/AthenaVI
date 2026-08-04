@@ -268,6 +268,20 @@ const superadminService = {
     })
   },
 
+  /**
+   * Publish a canvas-authored presentation as a DECK_PACK template.
+   * POST /api/superadmin/presentations/:presentationId/publish-as-pack
+   * @param {string} presentationId
+   * @param {{ name: string, packId: string, themeId?: string, variant?: string, isActive?: boolean }} opts
+   */
+  publishPresentationAsPack(presentationId, { name, packId, themeId, variant, isActive = true }) {
+    return superadminRequest(`/api/superadmin/presentations/${presentationId}/publish-as-pack`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, packId, themeId, variant, isActive }),
+    })
+  },
+
   // ── Template media (Canva-like baked photos for pack clone) ──────────────
   listTemplateMedia(templateId) {
     return superadminRequest(`/api/superadmin/templates/${templateId}/media`)
