@@ -12,7 +12,10 @@ import {
   MdDeleteOutline,
   MdVideocam,
   MdDriveFileRenameOutline,
-  MdStorage,
+  MdKeyboardArrowDown,
+  MdCheck,
+  MdGroup,
+  MdPerson,
 } from 'react-icons/md'
 import assetService, { isAssetInUseError, formatAssetInUseMessage } from '../../services/assetService'
 import workspaceService from '../../services/workspaceService'
@@ -20,10 +23,6 @@ import { useAuth } from '../../contexts/AuthContext'
 import { extractUserId, normalizeWorkspace } from '../TeamWorkspace/workspaceUtils'
 import { canManageAsset, shouldShowUploader } from '../../utils/assetPermissions'
 import { assertUploadFits, dispatchStorageRefresh, formatStorageLimitMessage, isStorageLimitError } from '../../utils/storageQuota'
-import { useWorkspaceStorage } from '../../hooks/useStorageQuota'
-import StorageUsageBar from '../../components/ui/StorageUsageBar/StorageUsageBar'
-import '../../components/ui/StorageUsageBar/StorageUsageBar.css'
-import { formatBytes } from '../../utils/formatSize'
 import { consumeDashboardSearchContext } from '../../utils/dashboardSearchNavigate.js'
 import { createAudioBlobPreview, isAudioFile } from '../../utils/audioDuration'
 import AudioPreviewPlayer from '../../components/ui/AudioPreviewPlayer/AudioPreviewPlayer'
@@ -81,6 +80,27 @@ function Library() {
   const [workspaceId, setWorkspaceId] = useState('')
   const [workspaceLoading, setWorkspaceLoading] = useState(true)
   const [workspaceMeta, setWorkspaceMeta] = useState(null)
+  const [workspaceDropdownOpen, setWorkspaceDropdownOpen] = useState(false)
+  const workspaceDropdownRef = useRef(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (workspaceDropdownRef.current && !workspaceDropdownRef.current.contains(event.target)) {
+        setWorkspaceDropdownOpen(false)
+      }
+    }
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setWorkspaceDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
 
   const [assets, setAssets] = useState([])
   const [assetsLoading, setAssetsLoading] = useState(false)
@@ -88,8 +108,6 @@ function Library() {
   const [uploading, setUploading] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
   const [renamingId, setRenamingId] = useState(null)
-
-  const { storage: workspaceStorage, loading: storageLoading } = useWorkspaceStorage(workspaceId)
 
   const loadWorkspaces = useCallback(async () => {
     setWorkspaceLoading(true)
@@ -178,6 +196,13 @@ function Library() {
     return mediaTabs
   }
 
+  const INITIAL_PAGE_SIZE = 24
+  const [visibleCount, setVisibleCount] = useState(INITIAL_PAGE_SIZE)
+
+  useEffect(() => {
+    setVisibleCount(INITIAL_PAGE_SIZE)
+  }, [activeTab, selectedCategory, searchQuery, workspaceId])
+
   const filteredAssets = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
     return assets.filter((asset) => {
@@ -190,6 +215,12 @@ function Library() {
       )
     })
   }, [assets, activeTab, searchQuery])
+
+  const visibleAssets = useMemo(() => {
+    return filteredAssets.slice(0, visibleCount)
+  }, [filteredAssets, visibleCount])
+
+  const hasMoreAssets = visibleCount < filteredAssets.length
 
   const handleDeleteAsset = async (assetId) => {
     if (!workspaceId || !assetId) return
@@ -357,13 +388,6 @@ function Library() {
     )
   }
 
-  const storageUsedBytes = Number(workspaceStorage?.quota?.usedBytes) || 0
-  const storageLimitBytes = Number(workspaceStorage?.quota?.limitBytes) || 0
-  const storagePercent =
-    storageLimitBytes > 0
-      ? Math.min(100, Math.round((storageUsedBytes / storageLimitBytes) * 100))
-      : 0
-
   const renderMasonrySkeleton = () => (
     <div className="assets-masonry" aria-busy="true" aria-label="Loading assets">
       {MASONRY_SKELETON_HEIGHTS.map((height, index) => (
@@ -392,7 +416,7 @@ function Library() {
     </div>
   )
 
-  const renderGridAsset = (asset) => {
+  const renderGridAsset = (asset, index = 0) => {
     const isAudio = asset.mediaType === 'audio'
     const showActions = showAssetActions(asset)
 
@@ -400,7 +424,12 @@ function Library() {
     <div key={asset.id} className={`asset-card grid masonry-card${isAudio ? ' masonry-card--audio' : ''}`}>
       <div className="asset-preview">
         {asset.mediaType === 'video' ? (
-          <video src={asset.url} muted playsInline />
+          <video
+            src={asset.url}
+            muted
+            playsInline
+            preload={index < 8 ? 'metadata' : 'none'}
+          />
         ) : isAudio ? (
           <div className="asset-preview-audio">
             <div className="asset-preview-audio__icon">{assetIcon(asset)}</div>
@@ -420,7 +449,12 @@ function Library() {
             </div>
           </div>
         ) : asset.url ? (
-          <img src={asset.url} alt={asset.name} loading="lazy" />
+          <img
+            src={asset.url}
+            alt={asset.name}
+            loading={index < 8 ? 'eager' : 'lazy'}
+            decoding="async"
+          />
         ) : (
           <div className="asset-preview-icon">{assetIcon(asset)}</div>
         )}
@@ -460,55 +494,78 @@ function Library() {
             <h1 className="library-page-title">Library</h1>
             <div className="library-header-actions">
               {workspaces.length > 0 ? (
-                <label className="library-workspace-select">
-                  <span className="visually-hidden">Workspace</span>
-                  <select
-                    value={workspaceId}
-                    onChange={(e) => setWorkspaceId(e.target.value)}
+                <div className="library-workspace-dropdown-container" ref={workspaceDropdownRef}>
+                  <button
+                    type="button"
+                    className={`library-workspace-trigger ${workspaceDropdownOpen ? 'is-open' : ''}`}
+                    onClick={() => setWorkspaceDropdownOpen((prev) => !prev)}
                     disabled={workspaceLoading}
+                    aria-expanded={workspaceDropdownOpen}
+                    aria-haspopup="listbox"
+                    aria-label="Select workspace"
                   >
-                    {workspaces.map((ws) => (
-                      <option key={ws.id} value={ws.id}>
-                        {ws.name || 'Workspace'}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ) : null}
-              {workspaceId ? (
-                <div
-                  className="library-storage-compact"
-                  title={
-                    workspaceStorage?.owner?.name
-                      ? `${selectedWorkspace?.name || 'Workspace'} · counts against ${workspaceStorage.owner.name}'s quota`
-                      : selectedWorkspace?.name || 'Workspace storage'
-                  }
-                >
-                  <MdStorage size={16} aria-hidden />
-                  <div className="library-storage-compact__body">
-                    <div className="library-storage-compact__row">
-                      <span className="library-storage-compact__label">Storage</span>
-                      <span className="library-storage-compact__percent">
-                        {storageLoading ? '…' : `${storagePercent}%`}
-                      </span>
-                    </div>
-                    <StorageUsageBar
-                      loading={storageLoading}
-                      usedBytes={storageUsedBytes}
-                      limitBytes={storageLimitBytes}
-                      percentUsed={storagePercent}
-                      label="Storage used"
-                      compact
-                      className="library-storage-compact__bar"
-                    />
-                    <span className="library-storage-compact__detail">
-                      {storageLoading
-                        ? 'Loading…'
-                        : storageLimitBytes > 0
-                          ? `${formatBytes(storageUsedBytes)} of ${formatBytes(storageLimitBytes)}`
-                          : 'Quota unavailable'}
+                    <span className={`library-workspace-trigger-icon ${selectedWorkspace?.type === 'personal' ? 'personal' : 'team'}`}>
+                      {selectedWorkspace?.type === 'personal' ? <MdPerson size={15} /> : <MdGroup size={15} />}
                     </span>
-                  </div>
+                    <span className="library-workspace-trigger-info">
+                      <span className="library-workspace-trigger-name">
+                        {selectedWorkspace?.name || 'Select Workspace'}
+                      </span>
+                      {selectedWorkspace?.userRole ? (
+                        <span className="library-workspace-role-pill">
+                          {selectedWorkspace.userRole}
+                        </span>
+                      ) : null}
+                    </span>
+                    <MdKeyboardArrowDown
+                      size={18}
+                      className={`library-workspace-chevron ${workspaceDropdownOpen ? 'open' : ''}`}
+                    />
+                  </button>
+
+                  {workspaceDropdownOpen ? (
+                    <div className="library-workspace-menu" role="listbox" aria-label="Workspaces">
+                      <div className="library-workspace-menu-header">
+                        <span className="library-workspace-menu-title">Workspaces</span>
+                        <span className="library-workspace-menu-count">{workspaces.length}</span>
+                      </div>
+                      <div className="library-workspace-menu-list">
+                        {workspaces.map((ws) => {
+                          const isSelected = String(ws.id) === String(workspaceId)
+                          const isTeam = ws.type !== 'personal'
+                          return (
+                            <button
+                              key={ws.id}
+                              type="button"
+                              role="option"
+                              aria-selected={isSelected}
+                              className={`library-workspace-item ${isSelected ? 'selected' : ''}`}
+                              onClick={() => {
+                                setWorkspaceId(ws.id)
+                                setWorkspaceDropdownOpen(false)
+                              }}
+                            >
+                              <span className={`library-workspace-item-icon ${isTeam ? 'team' : 'personal'}`}>
+                                {isTeam ? <MdGroup size={16} /> : <MdPerson size={16} />}
+                              </span>
+                              <span className="library-workspace-item-details">
+                                <span className="library-workspace-item-name">{ws.name || 'Workspace'}</span>
+                                <span className="library-workspace-item-sub">
+                                  {isTeam ? 'Team Workspace' : 'Personal Workspace'}
+                                  {ws.userRole ? ` · ${ws.userRole}` : ''}
+                                </span>
+                              </span>
+                              {isSelected ? (
+                                <span className="library-workspace-item-check">
+                                  <MdCheck size={16} />
+                                </span>
+                              ) : null}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
             </div>
@@ -653,83 +710,97 @@ function Library() {
                   </button>
                 </div>
               ) : (
-                <div
-                  className={
-                    activeView === 'grid'
-                      ? `assets-masonry${assetsLoading ? ' assets-masonry--refreshing' : ''}`
-                      : 'assets-list'
-                  }
-                  aria-busy={assetsLoading || undefined}
-                >
-                  {activeView === 'list' && (
-                    <div className="list-header">
-                      <div className="col name">Name</div>
-                      <div className="col owner">{showUploaderColumn ? 'Uploader' : 'Source'}</div>
-                      <div className="col modified">Date modified</div>
-                      <div className="col size">Size</div>
-                      <div className="col actions">Actions</div>
+                <>
+                  <div
+                    className={
+                      activeView === 'grid'
+                        ? `assets-masonry${assetsLoading ? ' assets-masonry--refreshing' : ''}`
+                        : 'assets-list'
+                    }
+                    aria-busy={assetsLoading || undefined}
+                  >
+                    {activeView === 'list' && (
+                      <div className="list-header">
+                        <div className="col name">Name</div>
+                        <div className="col owner">{showUploaderColumn ? 'Uploader' : 'Source'}</div>
+                        <div className="col modified">Date modified</div>
+                        <div className="col size">Size</div>
+                        <div className="col actions">Actions</div>
+                      </div>
+                    )}
+
+                    {activeView === 'grid' && !assetsLoading && workspaceId && !isUnsupportedCategory ? (
+                      <button
+                        type="button"
+                        className="upload-placeholder masonry-upload-tile"
+                        onClick={() => setShowUploadModal(true)}
+                        disabled={uploading}
+                      >
+                        <MdCloudUpload className="upload-placeholder-icon" />
+                        <div className="upload-placeholder-text">{uploading ? 'Uploading…' : 'Upload more'}</div>
+                      </button>
+                    ) : null}
+
+                    {visibleAssets.map((asset, index) =>
+                      activeView === 'grid' ? (
+                        renderGridAsset(asset, index)
+                      ) : (
+                        <div key={asset.id} className={`asset-card ${activeView}`}>
+                          <>
+                            <div className="col name" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                              <div style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, background: 'var(--bg-surface)', overflow: 'hidden' }}>
+                                {asset.mediaType === 'video' && asset.url ? (
+                                  <video src={asset.url} muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : asset.url && asset.mediaType === 'image' ? (
+                                  <img src={asset.url} alt={asset.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                  <div className="asset-preview-icon">{assetIcon(asset)}</div>
+                                )}
+                              </div>
+                              <div style={{ minWidth: 0, flex: 1 }}>
+                                <div className="asset-name" title={asset.name}>{asset.name}</div>
+                                {asset.mediaType === 'audio' && (asset.url || asset.previewBlobUrl) ? (
+                                  <AudioPreviewPlayer
+                                    src={asset.url}
+                                    previewSrc={asset.previewBlobUrl}
+                                    className="asset-audio-preview asset-audio-preview--list"
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                ) : null}
+                              </div>
+                            </div>
+
+                            <div className="col owner" style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+                              {asset.source === 'stock'
+                                ? 'Stock'
+                                : showUploaderColumn && asset.owner
+                                  ? asset.owner
+                                  : '—'}
+                            </div>
+                            <div className="col modified" style={{ color: 'var(--text-muted)', fontSize: 13 }}>{asset.modified || ''}</div>
+                            <div className="col size" style={{ color: 'var(--text-muted)', fontSize: 13 }}>{asset.sizeLabel || ''}</div>
+
+                            <div className="col actions">
+                              {renderAssetActions(asset, 'list')}
+                            </div>
+                          </>
+                        </div>
+                      )
+                    )}
+                  </div>
+
+                  {hasMoreAssets && (
+                    <div className="library-load-more-container">
+                      <button
+                        type="button"
+                        className="library-load-more-btn"
+                        onClick={() => setVisibleCount((prev) => prev + INITIAL_PAGE_SIZE)}
+                      >
+                        Load more ({filteredAssets.length - visibleAssets.length} remaining)
+                      </button>
                     </div>
                   )}
-
-                  {filteredAssets.map((asset) =>
-                    activeView === 'grid' ? (
-                      renderGridAsset(asset)
-                    ) : (
-                      <div key={asset.id} className={`asset-card ${activeView}`}>
-                        <>
-                          <div className="col name" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                            <div style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, background: 'var(--bg-surface)', overflow: 'hidden' }}>
-                              {asset.mediaType === 'video' && asset.url ? (
-                                <video src={asset.url} muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                              ) : asset.url && asset.mediaType === 'image' ? (
-                                <img src={asset.url} alt={asset.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                              ) : (
-                                <div className="asset-preview-icon">{assetIcon(asset)}</div>
-                              )}
-                            </div>
-                            <div style={{ minWidth: 0, flex: 1 }}>
-                              <div className="asset-name" title={asset.name}>{asset.name}</div>
-                              {asset.mediaType === 'audio' && (asset.url || asset.previewBlobUrl) ? (
-                                <AudioPreviewPlayer
-                                  src={asset.url}
-                                  previewSrc={asset.previewBlobUrl}
-                                  className="asset-audio-preview asset-audio-preview--list"
-                                  onClick={(e) => e.stopPropagation()}
-                                />
-                              ) : null}
-                            </div>
-                          </div>
-
-                          <div className="col owner" style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-                            {asset.source === 'stock'
-                              ? 'Stock'
-                              : showUploaderColumn && asset.owner
-                                ? asset.owner
-                                : '—'}
-                          </div>
-                          <div className="col modified" style={{ color: 'var(--text-muted)', fontSize: 13 }}>{asset.modified || ''}</div>
-                          <div className="col size" style={{ color: 'var(--text-muted)', fontSize: 13 }}>{asset.sizeLabel || ''}</div>
-
-                          <div className="col actions">
-                            {renderAssetActions(asset, 'list')}
-                          </div>
-                        </>
-                      </div>
-                    )
-                  )}
-
-                  {activeView === 'grid' && !assetsLoading && workspaceId && !isUnsupportedCategory ? (
-                    <button
-                      type="button"
-                      className="upload-placeholder masonry-upload-tile"
-                      onClick={() => setShowUploadModal(true)}
-                      disabled={uploading}
-                    >
-                      <MdCloudUpload className="upload-placeholder-icon" />
-                      <div className="upload-placeholder-text">{uploading ? 'Uploading…' : 'Upload more'}</div>
-                    </button>
-                  ) : null}
-                </div>
+                </>
               )}
             </div>
           </div>

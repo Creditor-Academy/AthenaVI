@@ -1,8 +1,7 @@
 .scene-settings {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 0 14px 20px;
+  gap: 2px;
 }
 
 .scene-settings__header {
@@ -10,40 +9,12 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding-top: 4px;
 }
 
-.scene-settings__title-block {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.scene-settings__icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: rgba(var(--primary-rgb), 0.08);
-  border: 1px solid rgba(var(--primary-rgb), 0.15);
-  color: var(--primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.scene-settings__title {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--text-main);
-  letter-spacing: -0.02em;
-}
-
-.scene-settings__subtitle {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-muted);
-  margin-top: 1px;
+.scene-settings__header .scp-panel-header {
+  padding: 14px 0 10px;
+  flex: 1;
+  min-width: 0;
 }
 
 .scene-settings__dup-btn {
@@ -58,6 +29,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  flex-shrink: 0;
 }
 
 .scene-settings__dup-btn:hover {
@@ -65,38 +37,15 @@
   color: var(--primary);
 }
 
-.scene-settings__block {
-  border-radius: 12px;
-  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
-  background: var(--bg-card);
-  overflow: hidden;
-}
-
-.scene-settings__block-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.06));
-  background: var(--bg-surface, #f8fafc);
-}
-
-.scene-settings__block-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-main);
-}
-
-.scene-settings__block-body {
-  padding: 10px 12px 12px;
+.scene-settings__fields {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+  padding-top: 10px;
+}
+
+.scene-settings__field {
+  min-width: 0;
 }
 
 .scene-settings__voice-row {

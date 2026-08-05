@@ -5,8 +5,10 @@ import {
   MdSchedule,
   MdSwapHoriz,
   MdSpeed,
+  MdRecordVoiceOver,
 } from 'react-icons/md';
 import AvatarVoiceoverSection from './AvatarVoiceoverSection';
+import PropertiesAccordion from './PropertiesAccordion';
 import projectTemplate from '../../../../constants/projectTemplate.json';
 import { buildSceneDurationPatch, estimateHeygenSceneDuration } from '../../../../utils/sceneDuration';
 import { normalizeClipsToScene } from '../../../../utils/editorLayerUtils';
@@ -17,6 +19,7 @@ import {
   normalizeSceneTransition,
 } from '../../../../utils/sceneTransitionUtils';
 import './SceneSettingsPanel.css';
+import './PropertiesAccordion.css';
 
 const DURATION_PRESETS = [5, 8, 10, 15, 30];
 const BLUR_PRESETS = [0, 4, 8, 12, 20];
@@ -26,6 +29,20 @@ const ENTRANCE_SPEED_OPTS = [
   { value: 'normal', label: 'Normal' },
   { value: 'fast', label: 'Fast' },
 ];
+
+const PANEL_GROUP = {
+  SCENE: 'Scene',
+};
+
+const PanelHeader = ({ icon, title, subtitle }) => (
+  <div className="scp-panel-header">
+    <div className="scp-panel-header__icon">{icon}</div>
+    <div>
+      <div className="scp-panel-header__title">{title}</div>
+      {subtitle ? <div className="scp-panel-header__subtitle">{subtitle}</div> : null}
+    </div>
+  </div>
+);
 
 const Stepper = ({ value, min, max, step, unit, onChange }) => (
   <div className="scene-settings__stepper">
@@ -52,6 +69,13 @@ const Stepper = ({ value, min, max, step, unit, onChange }) => (
   </div>
 );
 
+const Field = ({ label, children }) => (
+  <div className="scene-settings__field">
+    {label ? <div className="scene-settings__field-label">{label}</div> : null}
+    {children}
+  </div>
+);
+
 const SceneSettingsPanel = ({
   activeScene,
   activeSceneId,
@@ -73,44 +97,29 @@ const SceneSettingsPanel = ({
     });
   };
 
-  return (
-    <div className="scene-settings scene-config-panel">
-      <div className="scene-settings__header">
-        <div className="scene-settings__title-block">
-          <div className="scene-settings__icon">
-            <MdSettings size={18} />
-          </div>
-          <div>
-            <div className="scene-settings__title">Scene settings</div>
-            <div className="scene-settings__subtitle">No layer selected</div>
-          </div>
-        </div>
-        {onDuplicateScene ? (
-          <button type="button" className="scene-settings__dup-btn" onClick={onDuplicateScene}>
-            <MdContentCopy size={13} />
-            Duplicate
-          </button>
-        ) : null}
-      </div>
-
-      <AvatarVoiceoverSection
-        activeScene={activeScene}
-        activeSceneId={activeSceneId}
-        generateSceneVideo={generateSceneVideo}
-        onOpenQuickCreate={onOpenQuickCreate}
-      />
-
-      {/* Composition */}
-      <div className="scene-settings__block">
-        <div className="scene-settings__block-head">
-          <span className="scene-settings__block-title">
-            <MdGridView size={14} />
-            Composition
-          </span>
-        </div>
-        <div className="scene-settings__block-body">
-          <div>
-            <div className="scene-settings__field-label">Layout template</div>
+  const sections = [
+    {
+      id: 'presenter',
+      title: 'Presenter & Voice',
+      group: PANEL_GROUP.SCENE,
+      icon: <MdRecordVoiceOver size={14} />,
+      content: (
+        <AvatarVoiceoverSection
+          activeScene={activeScene}
+          activeSceneId={activeSceneId}
+          generateSceneVideo={generateSceneVideo}
+          onOpenQuickCreate={onOpenQuickCreate}
+        />
+      ),
+    },
+    {
+      id: 'composition',
+      title: 'Composition',
+      group: PANEL_GROUP.SCENE,
+      icon: <MdGridView size={14} />,
+      content: (
+        <div className="scene-settings__fields">
+          <Field label="Layout template">
             <select
               className="scene-settings__select"
               value={activeScene.layout || 'split-right'}
@@ -130,7 +139,12 @@ const SceneSettingsPanel = ({
                         (c.type === 'image' && !c.label?.toLowerCase().includes('logo'))
                     );
                     if (ai !== -1) {
-                      tc[ai] = { ...tc[ai], src: existingAvatar.src, type: existingAvatar.type, role: 'avatar' };
+                      tc[ai] = {
+                        ...tc[ai],
+                        src: existingAvatar.src,
+                        type: existingAvatar.type,
+                        role: 'avatar',
+                      };
                     }
                   }
                   const existingText = clips.find((c) => c.type === 'text' || c.role === 'main-text');
@@ -152,9 +166,8 @@ const SceneSettingsPanel = ({
                 </option>
               ))}
             </select>
-          </div>
-          <div>
-            <div className="scene-settings__field-label">Background blur</div>
+          </Field>
+          <Field label="Background blur">
             <div className="scene-settings__chips">
               {BLUR_PRESETS.map((px) => (
                 <button
@@ -167,21 +180,18 @@ const SceneSettingsPanel = ({
                 </button>
               ))}
             </div>
-          </div>
+          </Field>
         </div>
-      </div>
-
-      {/* Timing */}
-      <div className="scene-settings__block">
-        <div className="scene-settings__block-head">
-          <span className="scene-settings__block-title">
-            <MdSchedule size={14} />
-            Timing
-          </span>
-        </div>
-        <div className="scene-settings__block-body">
-          <div>
-            <div className="scene-settings__field-label">Duration</div>
+      ),
+    },
+    {
+      id: 'timing',
+      title: 'Timing',
+      group: PANEL_GROUP.SCENE,
+      icon: <MdSchedule size={14} />,
+      content: (
+        <div className="scene-settings__fields">
+          <Field label="Duration">
             <div className="scene-settings__chips">
               {DURATION_PRESETS.map((sec) => (
                 <button
@@ -204,18 +214,20 @@ const SceneSettingsPanel = ({
                 max={60}
                 step={0.5}
                 unit="s"
-                onChange={(v) => updateScene(activeSceneId, { duration: v, durationFromScript: false })}
+                onChange={(v) =>
+                  updateScene(activeSceneId, { duration: v, durationFromScript: false })
+                }
               />
             </div>
-            {activeScene.durationFromScript !== false && (activeScene.script || '').trim() && (
+            {activeScene.durationFromScript !== false && (activeScene.script || '').trim() ? (
               <p className="scene-settings__hint">
-                Auto from script (~{estimateHeygenSceneDuration(activeScene.script, activeScene.voiceSettings)}s).
+                Auto from script (~
+                {estimateHeygenSceneDuration(activeScene.script, activeScene.voiceSettings)}s).
                 Adjust above to override.
               </p>
-            )}
-          </div>
-          <div>
-            <div className="scene-settings__field-label">Entrance speed</div>
+            ) : null}
+          </Field>
+          <Field label="Entrance speed">
             <div className="scene-settings__chips">
               {ENTRANCE_SPEED_OPTS.map((opt) => (
                 <button
@@ -228,7 +240,7 @@ const SceneSettingsPanel = ({
                 </button>
               ))}
             </div>
-          </div>
+          </Field>
           <div className="scene-settings__row">
             <span className="scene-settings__field-label" style={{ marginBottom: 0 }}>
               <MdSpeed size={12} style={{ verticalAlign: -2, marginRight: 4 }} />
@@ -258,19 +270,16 @@ const SceneSettingsPanel = ({
             />
           </div>
         </div>
-      </div>
-
-      {/* Transition */}
-      <div className="scene-settings__block">
-        <div className="scene-settings__block-head">
-          <span className="scene-settings__block-title">
-            <MdSwapHoriz size={14} />
-            Into this scene
-          </span>
-        </div>
-        <div className="scene-settings__block-body">
-          <div>
-            <div className="scene-settings__field-label">Transition</div>
+      ),
+    },
+    {
+      id: 'transition',
+      title: 'Into this scene',
+      group: PANEL_GROUP.SCENE,
+      icon: <MdSwapHoriz size={14} />,
+      content: (
+        <div className="scene-settings__fields">
+          <Field label="Transition">
             <select
               className="scene-settings__select"
               value={catalogValue}
@@ -282,10 +291,9 @@ const SceneSettingsPanel = ({
                 </option>
               ))}
             </select>
-          </div>
-          {catalogValue !== 'none' && (
-            <div>
-              <div className="scene-settings__field-label">Duration</div>
+          </Field>
+          {catalogValue !== 'none' ? (
+            <Field label="Duration">
               <div className="scene-settings__chips">
                 {TRANSITION_DURATION_PRESETS.map((sec) => (
                   <button
@@ -298,9 +306,36 @@ const SceneSettingsPanel = ({
                   </button>
                 ))}
               </div>
-            </div>
-          )}
+            </Field>
+          ) : null}
         </div>
+      ),
+    },
+  ];
+
+  return (
+    <div
+      className="scene-settings scene-config-panel"
+      style={{ padding: '0 0 20px', display: 'flex', flexDirection: 'column', gap: 2 }}
+    >
+      <div className="scene-settings__header" style={{ padding: '0 14px' }}>
+        <PanelHeader
+          icon={<MdSettings size={17} />}
+          title="Scene settings"
+          subtitle="No layer selected"
+        />
+        {onDuplicateScene ? (
+          <button type="button" className="scene-settings__dup-btn" onClick={onDuplicateScene}>
+            <MdContentCopy size={13} />
+            Duplicate
+          </button>
+        ) : null}
+      </div>
+      <div style={{ padding: '0 14px' }}>
+        <PropertiesAccordion
+          sections={sections}
+          defaultExpandedIds={['presenter', 'composition', 'timing']}
+        />
       </div>
     </div>
   );
