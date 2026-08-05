@@ -7,9 +7,10 @@ import '../../../../pages/AdminPortal/SuperadminPortal.css'
 // ─── constants ────────────────────────────────────────────────────────────────
 
 const TEMPLATE_TYPES = [
-  { id: 'DECK_LAYOUT', label: 'Deck Layouts', description: 'Single-slide layouts (grid + slots) used by the AI PPT editor' },
-  { id: 'DECK_PACK',   label: 'Deck Packs',   description: 'Multi-slide branded packs referencing layouts + a theme' },
-  { id: 'VIDEO_SCENE', label: 'Video Scenes',  description: 'Video editor scene templates for the video project editor' },
+  { id: 'DECK_LAYOUT', label: 'Deck Layouts',  description: 'Single-slide layouts (grid + slots) used by the AI PPT editor' },
+  { id: 'DECK_PACK',   label: 'Deck Packs',    description: 'Multi-slide branded packs referencing layouts + a theme' },
+  { id: 'VIDEO_SCENE', label: 'Video Scenes',  description: 'Single video scene templates for the video project editor' },
+  { id: 'VIDEO_PACK',  label: 'Video Packs',   description: 'Multi-scene video packs (snapshot-only, no AI)' },
 ]
 
 const LAYOUT_CATEGORIES = [
@@ -225,10 +226,32 @@ const DECK_PACK_PLACEHOLDER = JSON.stringify({
 const VIDEO_SCENE_PLACEHOLDER = JSON.stringify({
   version: 1,
   videoSettings: { fps: 30, width: 1920, height: 1080 },
+  meta: {
+    name: 'My Video Scene',
+    description: 'Short description',
+    useCase: 'intro',
+    tone: 'professional',
+  },
   scene: {
     durationInFrames: 150,
     background: { type: 'color', value: '#0B1220' },
     elements: [],
+  },
+}, null, 2)
+
+const VIDEO_PACK_PLACEHOLDER = JSON.stringify({
+  schemaVersion: 2,
+  pack_id: 'my_video_pack',
+  meta: {
+    name: 'My Video Pack',
+    description: 'Multi-scene video pack (snapshot-only, no AI)',
+    useCase: 'onboarding',
+  },
+  videoSettings: { fps: 30, width: 1920, height: 1080 },
+  scenes: [],
+  preview: {
+    label: 'My Video Pack',
+    description: 'Brief description shown in the video picker',
   },
 }, null, 2)
 
@@ -251,6 +274,7 @@ function extractPlaceholderTitle(placeholder) {
 function schemaPlaceholder(type) {
   if (type === 'DECK_LAYOUT') return DECK_LAYOUT_PLACEHOLDER
   if (type === 'DECK_PACK')   return DECK_PACK_PLACEHOLDER
+  if (type === 'VIDEO_PACK')  return VIDEO_PACK_PLACEHOLDER
   return VIDEO_SCENE_PLACEHOLDER
 }
 
@@ -287,15 +311,17 @@ function TypePill({ type }) {
     DECK_LAYOUT: { bg: 'color-mix(in srgb, var(--primary) 15%, transparent)', color: 'var(--primary)' },
     DECK_PACK:   { bg: 'color-mix(in srgb, #a855f7 15%, transparent)',         color: '#c084fc' },
     VIDEO_SCENE: { bg: 'color-mix(in srgb, #f59e0b 15%, transparent)',         color: '#fbbf24' },
+    VIDEO_PACK:  { bg: 'color-mix(in srgb, #f97316 15%, transparent)',         color: '#fb923c' },
   }
   const c = colors[type] || colors.DECK_LAYOUT
+  const labels = { DECK_LAYOUT: 'Layout', DECK_PACK: 'Pack', VIDEO_SCENE: 'Scene', VIDEO_PACK: 'Video Pack' }
   return (
     <span style={{
       padding: '1px 7px', borderRadius: 999, fontSize: '0.6rem', fontWeight: 700,
       letterSpacing: '0.05em', textTransform: 'uppercase',
       background: c.bg, color: c.color,
     }}>
-      {type === 'DECK_LAYOUT' ? 'Layout' : type === 'DECK_PACK' ? 'Pack' : 'Video'}
+      {labels[type] ?? type}
     </span>
   )
 }
@@ -381,7 +407,7 @@ function CreateModal({ onClose, onCreated, defaultType, prefill }) {
     try {
       const created = await superadminService.createTemplate({
         type, name: name.trim(),
-        contentType: type === 'DECK_PACK' ? 'pack' : (contentType.trim() || undefined),
+        contentType: (type === 'DECK_PACK' || type === 'VIDEO_PACK') ? (type === 'DECK_PACK' ? 'pack' : 'video_pack') : (contentType.trim() || undefined),
         variant: variant.trim() || undefined,
         isActive, schema: value,
       })
@@ -493,12 +519,12 @@ function CreateModal({ onClose, onCreated, defaultType, prefill }) {
               </div>
             </div>
           )}
-          {/* variant (pack_id alias) for DECK_PACK */}
-          {type === 'DECK_PACK' && (
+          {/* variant (pack_id alias) for DECK_PACK / VIDEO_PACK */}
+          {(type === 'DECK_PACK' || type === 'VIDEO_PACK') && (
             <div className="sa-field" style={{ marginBottom: 14 }}>
-              <label>PACK ID / VARIANT</label>
+              <label>{type === 'VIDEO_PACK' ? 'PACK ID / VARIANT' : 'PACK ID / VARIANT'}</label>
               <input className="sa-input" value={variant} onChange={e => setVariant(e.target.value)}
-                placeholder="e.g. corp_pitch_midnight" disabled={loading}
+                placeholder={type === 'VIDEO_PACK' ? 'e.g. onboarding_video_v1' : 'e.g. corp_pitch_midnight'} disabled={loading}
                 style={{ width: '100%', boxSizing: 'border-box' }} />
               <p style={{ margin: '4px 0 0', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                 Should match <code>schema.pack_id</code>.
@@ -526,35 +552,49 @@ function CreateModal({ onClose, onCreated, defaultType, prefill }) {
           </div>
 
           {/* DECK_PACK quick helpers */}
-          {type === 'DECK_PACK' && (
+          {(type === 'DECK_PACK' || type === 'VIDEO_PACK') && (
             <div style={{ padding: '12px 14px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'color-mix(in srgb, var(--bg-card) 60%, transparent)', marginBottom: 4 }}>
               <p style={{ margin: '0 0 10px', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Quick helpers — set inside schema JSON</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {type === 'DECK_PACK' && (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>THEME ID</label>
+                      <select className="sa-select" style={{ width: '100%', boxSizing: 'border-box', fontSize: '0.8rem' }} defaultValue=""
+                        onChange={e => { if (!e.target.value) return; try { const p = JSON.parse(schemaStr); p.themeId = e.target.value; setSchemaStr(JSON.stringify(p, null, 2)) } catch {} }}>
+                        <option value="">— pick to inject into schema —</option>
+                        {THEME_OPTIONS.map(t => <option key={t.id} value={t.id}>{t.label} ({t.id})</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>ASPECT RATIO</label>
+                      <select className="sa-select" style={{ width: '100%', boxSizing: 'border-box', fontSize: '0.8rem' }} defaultValue=""
+                        onChange={e => { if (!e.target.value) return; try { const p = JSON.parse(schemaStr); p.aspectRatio = e.target.value; setSchemaStr(JSON.stringify(p, null, 2)) } catch {} }}>
+                        <option value="">— pick to inject —</option>
+                        {['16:9', '4:3', '9:16'].map(v => <option key={v} value={v}>{v}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <details>
+                    <summary style={{ fontSize: '0.7rem', color: 'var(--text-muted)', cursor: 'pointer', userSelect: 'none' }}>39 seeded layout_ids reference</summary>
+                    <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: '3px 6px' }}>
+                      {SEEDED_LAYOUT_IDS.map(id => (
+                        <span key={id} style={{ fontSize: '0.63rem', fontFamily: 'monospace', color: 'var(--text-muted)', background: 'color-mix(in srgb, var(--border-color) 40%, transparent)', padding: '1px 5px', borderRadius: 4 }}>{id}</span>
+                      ))}
+                    </div>
+                  </details>
+                </>
+              )}
+              {type === 'VIDEO_PACK' && (
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>THEME ID</label>
-                  <select className="sa-select" style={{ width: '100%', boxSizing: 'border-box', fontSize: '0.8rem' }} defaultValue=""
-                    onChange={e => { if (!e.target.value) return; try { const p = JSON.parse(schemaStr); p.themeId = e.target.value; setSchemaStr(JSON.stringify(p, null, 2)) } catch {} }}>
-                    <option value="">— pick to inject into schema —</option>
-                    {THEME_OPTIONS.map(t => <option key={t.id} value={t.id}>{t.label} ({t.id})</option>)}
+                  <label style={{ display: 'block', fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>VIDEO SETTINGS FPS</label>
+                  <select className="sa-select" style={{ width: '50%', boxSizing: 'border-box', fontSize: '0.8rem' }} defaultValue=""
+                    onChange={e => { if (!e.target.value) return; try { const p = JSON.parse(schemaStr); p.videoSettings = { ...(p.videoSettings ?? { width: 1920, height: 1080 }), fps: Number(e.target.value) }; setSchemaStr(JSON.stringify(p, null, 2)) } catch {} }}>
+                    <option value="">— inject fps —</option>
+                    {[24, 25, 30, 60].map(v => <option key={v} value={v}>{v} fps</option>)}
                   </select>
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>ASPECT RATIO</label>
-                  <select className="sa-select" style={{ width: '100%', boxSizing: 'border-box', fontSize: '0.8rem' }} defaultValue=""
-                    onChange={e => { if (!e.target.value) return; try { const p = JSON.parse(schemaStr); p.aspectRatio = e.target.value; setSchemaStr(JSON.stringify(p, null, 2)) } catch {} }}>
-                    <option value="">— pick to inject —</option>
-                    {['16:9', '4:3', '9:16'].map(v => <option key={v} value={v}>{v}</option>)}
-                  </select>
-                </div>
-              </div>
-              <details style={{ marginTop: 10 }}>
-                <summary style={{ fontSize: '0.7rem', color: 'var(--text-muted)', cursor: 'pointer', userSelect: 'none' }}>39 seeded layout_ids reference</summary>
-                <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: '3px 6px' }}>
-                  {SEEDED_LAYOUT_IDS.map(id => (
-                    <span key={id} style={{ fontSize: '0.63rem', fontFamily: 'monospace', color: 'var(--text-muted)', background: 'color-mix(in srgb, var(--border-color) 40%, transparent)', padding: '1px 5px', borderRadius: 4 }}>{id}</span>
-                  ))}
-                </div>
-              </details>
+              )}
             </div>
           )}
 
@@ -722,12 +762,12 @@ function slotFamily(id = '') {
 }
 
 const LAYOUT_POLISHED_THEME = {
-  bg: '#ffffff',
-  card: '#e9e9e9',
-  text: '#1f1f1f',
-  muted: '#6f6f6f',
-  icon: '#8a8a8a',
-  bar: '#3d3d3d',
+  bg: 'var(--bg-card, #ffffff)',
+  card: 'color-mix(in srgb, var(--border-color) 50%, var(--bg-card))',
+  text: 'var(--text-main, #1f1f1f)',
+  muted: 'var(--text-muted, #6f6f6f)',
+  icon: 'color-mix(in srgb, var(--text-muted) 60%, transparent)',
+  bar: 'color-mix(in srgb, var(--text-main) 55%, transparent)',
 }
 
 const SLOT_COLORS = [
@@ -938,35 +978,82 @@ function DeckLayoutPolishedCanvas({ COLS, ROWS, slots, hasSlots, large }) {
   )
 }
 
+// ─── LayoutSlotMap — clean minimal slot thumbnail for card grid ───────────────
+// Simple grey rectangles on a light background. No text, no colour, no clutter.
+
+function LayoutSlotMap({ slots }) {
+  const COLS = 12, ROWS = 10
+  const hasSomething = slots.length > 0
+
+  return (
+    <div style={{
+      width: '100%', aspectRatio: '16/9',
+      background: 'color-mix(in srgb, var(--border-color) 18%, var(--bg-card))',
+      position: 'relative', overflow: 'hidden',
+    }}>
+      {!hasSomething && (
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <LayoutTemplate size={20} style={{ opacity: 0.15, color: 'var(--text-muted)' }} />
+        </div>
+      )}
+      {slots.map((slot, i) => {
+        const reg = parseRegion(slot.region)
+        if (!reg) return null
+        const box = regionToBox(reg, COLS, ROWS, 1.5)
+        // differentiate accent_bar slots (very thin) from content slots
+        const isBar = slot.role === 'decoration' || (slot.id && String(slot.id).includes('accent'))
+        return (
+          <div key={slot.id ?? i} style={{
+            position: 'absolute',
+            left: `${box.x}%`, top: `${box.y}%`,
+            width: `${box.w}%`, height: `${box.h}%`,
+            background: isBar
+              ? 'color-mix(in srgb, var(--primary) 35%, var(--border-color))'
+              : 'color-mix(in srgb, var(--border-color) 65%, var(--bg-card))',
+            borderRadius: isBar ? 2 : 4,
+          }} />
+        )
+      })}
+    </div>
+  )
+}
+
 // ─── Deck Layout canvas (wireframe / slot authoring) ─────────────────────────
 
-function DeckLayoutCanvas({ COLS, ROWS, slots, hasSlots, large }) {
+function DeckLayoutCanvas({ COLS, ROWS, slots, hasSlots, large, light }) {
+  const bg = light ? 'var(--bg-card)' : (large ? '#0c1424' : 'color-mix(in srgb, var(--bg-card) 30%, #0a0f1e)')
+  const gridStroke = light ? 'var(--border-color)' : 'white'
+  const gridOpacity = light ? 0.6 : (large ? 0.08 : 0.12)
+  const labelColor = light ? 'var(--text-muted)' : (large ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.2)')
+  const emptyColor = light ? 'var(--text-muted)' : 'rgba(255,255,255,0.25)'
+
   return (
     <div style={{
       position: 'relative', width: '100%', aspectRatio: '16/9',
-      background: large ? '#0c1424' : 'color-mix(in srgb, var(--bg-card) 30%, #0a0f1e)',
-      overflow: 'hidden',
+      background: bg, overflow: 'hidden',
+      border: light ? '1px solid var(--border-color)' : 'none',
+      borderRadius: light ? 8 : 0,
     }}>
-      <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0, opacity: large ? 0.08 : 0.12 }}>
+      <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0, opacity: gridOpacity }}>
         {Array.from({ length: COLS - 1 }, (_, i) => (
-          <line key={`c${i}`} x1={`${((i + 1) / COLS) * 100}%`} y1="0" x2={`${((i + 1) / COLS) * 100}%`} y2="100%" stroke="white" strokeWidth="1" />
+          <line key={`c${i}`} x1={`${((i + 1) / COLS) * 100}%`} y1="0" x2={`${((i + 1) / COLS) * 100}%`} y2="100%" stroke={gridStroke} strokeWidth="1" />
         ))}
         {Array.from({ length: ROWS - 1 }, (_, i) => (
-          <line key={`r${i}`} x1="0" y1={`${((i + 1) / ROWS) * 100}%`} x2="100%" y2={`${((i + 1) / ROWS) * 100}%`} stroke="white" strokeWidth="1" />
+          <line key={`r${i}`} x1="0" y1={`${((i + 1) / ROWS) * 100}%`} x2="100%" y2={`${((i + 1) / ROWS) * 100}%`} stroke={gridStroke} strokeWidth="1" />
         ))}
       </svg>
       {large && (
         <>
           {Array.from({ length: COLS }, (_, i) => (
-            <span key={`cl${i}`} style={{ position: 'absolute', top: 4, left: `${((i + 0.5) / COLS) * 100}%`, transform: 'translateX(-50%)', fontSize: '0.55rem', color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace', pointerEvents: 'none' }}>{i + 1}</span>
+            <span key={`cl${i}`} style={{ position: 'absolute', top: 4, left: `${((i + 0.5) / COLS) * 100}%`, transform: 'translateX(-50%)', fontSize: '0.55rem', color: labelColor, fontFamily: 'monospace', pointerEvents: 'none' }}>{i + 1}</span>
           ))}
           {Array.from({ length: ROWS }, (_, i) => (
-            <span key={`rl${i}`} style={{ position: 'absolute', left: 4, top: `${((i + 0.5) / ROWS) * 100}%`, transform: 'translateY(-50%)', fontSize: '0.55rem', color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace', pointerEvents: 'none' }}>{i + 1}</span>
+            <span key={`rl${i}`} style={{ position: 'absolute', left: 4, top: `${((i + 0.5) / ROWS) * 100}%`, transform: 'translateY(-50%)', fontSize: '0.55rem', color: labelColor, fontFamily: 'monospace', pointerEvents: 'none' }}>{i + 1}</span>
           ))}
         </>
       )}
       {!hasSlots && (
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.25)', fontSize: large ? '1rem' : '0.75rem' }}>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: emptyColor, fontSize: large ? '1rem' : '0.75rem' }}>
           No slots defined
         </div>
       )}
@@ -975,6 +1062,31 @@ function DeckLayoutCanvas({ COLS, ROWS, slots, hasSlots, large }) {
         if (!reg) return null
         const color = SLOT_COLORS[i % SLOT_COLORS.length]
         const box = regionToBox(reg, COLS, ROWS, 0)
+
+        if (light) {
+          // Clean light style — grey boxes with role label as placeholder text
+          return (
+            <div key={slot.id ?? i} style={{
+              position: 'absolute', left: `${box.x}%`, top: `${box.y}%`, width: `${box.w}%`, height: `${box.h}%`,
+              background: 'color-mix(in srgb, var(--border-color) 40%, transparent)',
+              border: '1.5px solid color-mix(in srgb, var(--border-color) 80%, transparent)',
+              borderRadius: large ? 8 : 4,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              overflow: 'hidden', gap: 4, padding: '4px 6px',
+            }}>
+              {slot.role ? (
+                <span style={{ fontSize: large ? '0.7rem' : 'clamp(0.35rem, 1vw, 0.55rem)', fontWeight: 500, color: 'var(--text-muted)', textAlign: 'center', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '90%' }}>
+                  {slot.placeholder_text || slot.role}
+                </span>
+              ) : (
+                <span style={{ fontSize: large ? '0.65rem' : 'clamp(0.3rem, 0.9vw, 0.5rem)', fontWeight: 600, color: 'var(--text-muted)', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '90%' }}>
+                  {slot.id}
+                </span>
+              )}
+            </div>
+          )
+        }
+
         return (
           <div key={slot.id ?? i} style={{
             position: 'absolute', left: `${box.x}%`, top: `${box.y}%`, width: `${box.w}%`, height: `${box.h}%`,
@@ -1806,6 +1918,7 @@ function DeckPackPreview({ schema, packName, previewImageUrl, media }) {
 function VideoScenePreview({ schema }) {
   const scene = schema?.scene ?? {}
   const vs = schema?.videoSettings ?? {}
+  const meta = schema?.meta ?? {}
   const elements = scene.elements ?? []
   const bg = scene.background
 
@@ -1817,11 +1930,23 @@ function VideoScenePreview({ schema }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* meta info */}
+      {(meta.name || meta.description || meta.useCase) && (
+        <div style={{ padding: '12px 14px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {meta.name && <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)' }}>{meta.name}</div>}
+          {meta.description && <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{meta.description}</div>}
+          {(meta.useCase || meta.tone) && (
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              {meta.useCase && <span style={{ fontSize: '0.65rem', fontWeight: 600, padding: '2px 7px', borderRadius: 4, background: 'color-mix(in srgb, var(--primary) 12%, transparent)', color: 'var(--primary)' }}>{meta.useCase}</span>}
+              {meta.tone && <span style={{ fontSize: '0.65rem', fontWeight: 600, padding: '2px 7px', borderRadius: 4, background: 'color-mix(in srgb, var(--text-muted) 12%, transparent)', color: 'var(--text-muted)' }}>{meta.tone}</span>}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* canvas preview */}
       <div>
-        <p style={{ margin: '0 0 10px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-          Scene canvas
-        </p>
+        <p style={{ margin: '0 0 10px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Scene canvas</p>
         <div style={{
           width: '100%', maxWidth: 420, aspectRatio: '16/9',
           ...bgStyle, borderRadius: 10,
@@ -1853,7 +1978,7 @@ function VideoScenePreview({ schema }) {
         </div>
       </div>
 
-      {/* meta */}
+      {/* technical meta */}
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         {[
           ['FPS', vs.fps ?? 30],
@@ -1869,6 +1994,72 @@ function VideoScenePreview({ schema }) {
           </div>
         ))}
       </div>
+    </div>
+  )
+}
+
+function VideoPackPreview({ schema }) {
+  const meta = schema?.meta ?? {}
+  const scenes = Array.isArray(schema?.scenes) ? schema.scenes : []
+  const vs = schema?.videoSettings ?? {}
+  const preview = schema?.preview ?? {}
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* meta */}
+      <div style={{ padding: '12px 14px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)' }}>{preview.label || meta.name || 'Video Pack'}</div>
+        {(preview.description || meta.description) && <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{preview.description || meta.description}</div>}
+        {meta.useCase && <span style={{ alignSelf: 'flex-start', fontSize: '0.65rem', fontWeight: 600, padding: '2px 7px', borderRadius: 4, background: 'color-mix(in srgb, #f97316 12%, transparent)', color: '#fb923c' }}>{meta.useCase}</span>}
+      </div>
+
+      {/* stats */}
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        {[
+          ['Pack ID', schema?.pack_id],
+          ['Scenes', scenes.length || '—'],
+          ['FPS', vs.fps ?? 30],
+          ['Resolution', vs.width ? `${vs.width}×${vs.height}` : '1920×1080'],
+        ].filter(([, v]) => v).map(([label, val]) => (
+          <div key={label} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)' }}>
+            <div style={{ fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: 3 }}>{label}</div>
+            <div style={{ fontSize: '0.875rem', fontWeight: 700, fontFamily: 'monospace' }}>{String(val)}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* scenes list */}
+      {scenes.length > 0 && (
+        <div>
+          <p style={{ margin: '0 0 8px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Scenes ({scenes.length})</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 1, border: '1px solid var(--border-color)', borderRadius: 10, overflow: 'hidden' }}>
+            {scenes.slice(0, 12).map((sc, i) => {
+              const scBg = sc.scene?.background
+              const bgColor = scBg?.type === 'color' ? scBg.value : scBg?.from ?? '#0f172a'
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderBottom: i < scenes.length - 1 ? '1px solid var(--border-color)' : 'none', background: 'var(--bg-card)' }}>
+                  <div style={{ width: 32, height: 18, borderRadius: 4, background: bgColor, flexShrink: 0, border: '1px solid var(--border-color)' }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {sc.name || `Scene ${i + 1}`}
+                    </div>
+                    {sc.scene?.durationInFrames && (
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{sc.scene.durationInFrames} frames</div>
+                    )}
+                  </div>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', flexShrink: 0 }}>{(sc.scene?.elements ?? []).length} el</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {scenes.length === 0 && (
+        <div style={{ padding: '28px 20px', textAlign: 'center', border: '1px dashed var(--border-color)', borderRadius: 10, color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+          No scenes defined. Use canvas publish to create a VIDEO_PACK from a project.
+        </div>
+      )}
     </div>
   )
 }
@@ -1898,6 +2089,7 @@ function TemplateVisualPreview({ template }) {
   const media = Array.isArray(template.media) ? template.media : []
   if (template.type === 'DECK_LAYOUT') return <DeckLayoutPreview schema={schema} layoutName={template.name} />
   if (template.type === 'DECK_PACK')   return <DeckPackPreview schema={schema} packName={template.name} previewImageUrl={previewImageUrl} media={media} />
+  if (template.type === 'VIDEO_PACK')  return <VideoPackPreview schema={schema} />
   return <VideoScenePreview schema={schema} />
 }
 
@@ -2186,7 +2378,7 @@ function TemplateDetail({ template, onUpdated, onClose, onDuplicate }) {
       <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', padding: '0 16px', flexShrink: 0 }}>
         {[
           { id: 'edit',  label: 'Edit' },
-          { id: 'media', label: 'Media', onlyFor: ['DECK_PACK', 'DECK_LAYOUT'] },
+          { id: 'media', label: 'Media', onlyFor: ['DECK_PACK'] },
           { id: 'json',  label: 'Raw JSON' },
         ]
           .filter(t => !t.onlyFor || t.onlyFor.includes(template.type))
@@ -2246,44 +2438,59 @@ function TemplateDetail({ template, onUpdated, onClose, onDuplicate }) {
                 </div>
               </div>
             )}
-            {/* pack id / variant for DECK_PACK */}
-            {template.type === 'DECK_PACK' && (
+            {/* pack id / variant for DECK_PACK / VIDEO_PACK */}
+            {(template.type === 'DECK_PACK' || template.type === 'VIDEO_PACK') && (
               <div>
                 <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Pack ID / Variant</label>
-                <input className="sa-input" value={variant} onChange={e => setVariant(e.target.value)} disabled={saving} style={{ width: '100%', boxSizing: 'border-box' }} placeholder="e.g. corp_pitch_midnight" />
+                <input className="sa-input" value={variant} onChange={e => setVariant(e.target.value)} disabled={saving} style={{ width: '100%', boxSizing: 'border-box' }}
+                  placeholder={template.type === 'VIDEO_PACK' ? 'e.g. onboarding_video_v1' : 'e.g. corp_pitch_midnight'} />
               </div>
             )}
 
-            {/* DECK_PACK quick helpers */}
-            {template.type === 'DECK_PACK' && (
+            {/* DECK_PACK / VIDEO_PACK quick helpers */}
+            {(template.type === 'DECK_PACK' || template.type === 'VIDEO_PACK') && (
               <div style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'color-mix(in srgb, var(--bg-card) 60%, transparent)' }}>
                 <p style={{ margin: '0 0 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Quick helpers</p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                {template.type === 'DECK_PACK' && (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 3 }}>Inject themeId</label>
+                        <select className="sa-select" style={{ width: '100%', boxSizing: 'border-box', fontSize: '0.78rem' }} defaultValue=""
+                          onChange={e => { if (!e.target.value) return; try { const p = JSON.parse(schemaStr); p.themeId = e.target.value; setSchemaStr(JSON.stringify(p, null, 2)) } catch {} }}>
+                          <option value="">— select theme —</option>
+                          {THEME_OPTIONS.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 3 }}>Inject aspectRatio</label>
+                        <select className="sa-select" style={{ width: '100%', boxSizing: 'border-box', fontSize: '0.78rem' }} defaultValue=""
+                          onChange={e => { if (!e.target.value) return; try { const p = JSON.parse(schemaStr); p.aspectRatio = e.target.value; setSchemaStr(JSON.stringify(p, null, 2)) } catch {} }}>
+                          <option value="">— select —</option>
+                          {['16:9', '4:3', '9:16'].map(v => <option key={v} value={v}>{v}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <details>
+                      <summary style={{ fontSize: '0.68rem', color: 'var(--text-muted)', cursor: 'pointer', userSelect: 'none' }}>39 seeded layout_ids</summary>
+                      <div style={{ marginTop: 5, display: 'flex', flexWrap: 'wrap', gap: '2px 5px' }}>
+                        {SEEDED_LAYOUT_IDS.map(id => (
+                          <span key={id} style={{ fontSize: '0.6rem', fontFamily: 'monospace', color: 'var(--text-muted)', background: 'color-mix(in srgb, var(--border-color) 40%, transparent)', padding: '1px 4px', borderRadius: 3 }}>{id}</span>
+                        ))}
+                      </div>
+                    </details>
+                  </>
+                )}
+                {template.type === 'VIDEO_PACK' && (
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 3 }}>Inject themeId</label>
-                    <select className="sa-select" style={{ width: '100%', boxSizing: 'border-box', fontSize: '0.78rem' }} defaultValue=""
-                      onChange={e => { if (!e.target.value) return; try { const p = JSON.parse(schemaStr); p.themeId = e.target.value; setSchemaStr(JSON.stringify(p, null, 2)) } catch {} }}>
-                      <option value="">— select theme —</option>
-                      {THEME_OPTIONS.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+                    <label style={{ display: 'block', fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 3 }}>Inject FPS</label>
+                    <select className="sa-select" style={{ width: '50%', boxSizing: 'border-box', fontSize: '0.78rem' }} defaultValue=""
+                      onChange={e => { if (!e.target.value) return; try { const p = JSON.parse(schemaStr); p.videoSettings = { ...(p.videoSettings ?? { width: 1920, height: 1080 }), fps: Number(e.target.value) }; setSchemaStr(JSON.stringify(p, null, 2)) } catch {} }}>
+                      <option value="">— inject fps —</option>
+                      {[24, 25, 30, 60].map(v => <option key={v} value={v}>{v} fps</option>)}
                     </select>
                   </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 3 }}>Inject aspectRatio</label>
-                    <select className="sa-select" style={{ width: '100%', boxSizing: 'border-box', fontSize: '0.78rem' }} defaultValue=""
-                      onChange={e => { if (!e.target.value) return; try { const p = JSON.parse(schemaStr); p.aspectRatio = e.target.value; setSchemaStr(JSON.stringify(p, null, 2)) } catch {} }}>
-                      <option value="">— select —</option>
-                      {['16:9', '4:3', '9:16'].map(v => <option key={v} value={v}>{v}</option>)}
-                    </select>
-                  </div>
-                </div>
-                <details>
-                  <summary style={{ fontSize: '0.68rem', color: 'var(--text-muted)', cursor: 'pointer', userSelect: 'none' }}>39 seeded layout_ids</summary>
-                  <div style={{ marginTop: 5, display: 'flex', flexWrap: 'wrap', gap: '2px 5px' }}>
-                    {SEEDED_LAYOUT_IDS.map(id => (
-                      <span key={id} style={{ fontSize: '0.6rem', fontFamily: 'monospace', color: 'var(--text-muted)', background: 'color-mix(in srgb, var(--border-color) 40%, transparent)', padding: '1px 4px', borderRadius: 3 }}>{id}</span>
-                    ))}
-                  </div>
-                </details>
+                )}
               </div>
             )}
 
@@ -2521,7 +2728,7 @@ export default function SuperadminTemplatesPanel() {
 
   return (
     <div className="sa-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-      <style>{`.template-card:hover .card-hover-actions { opacity: 1 !important; }`}</style>
+      <style>{`.template-card:hover .card-hover-actions { opacity: 1 !important; } .template-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06) !important; transform: translateY(-1px); } .template-card:active { transform: translateY(0); }`}</style>
 
       {/* ── topbar ── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 24px 0', gap: 16, flexShrink: 0 }}>
@@ -2615,48 +2822,75 @@ export default function SuperadminTemplatesPanel() {
                 <button key={t.id} type="button" onClick={() => {}}
                   className="template-card"
                   style={{
-                    textAlign: 'left', border: `2px solid ${isSelected ? 'var(--primary)' : 'var(--border-color)'}`,
-                    borderRadius: 12, overflow: 'hidden', background: 'var(--bg-card)',
-                    cursor: 'default', padding: 0, transition: 'all 0.15s',
-                    boxShadow: isSelected ? '0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent)' : '0 1px 4px rgba(0,0,0,0.06)',
+                    textAlign: 'left',
+                    border: `1.5px solid ${isSelected ? 'var(--primary)' : 'var(--border-color)'}`,
+                    borderRadius: 14, overflow: 'hidden', background: 'var(--bg-card)',
+                    cursor: 'default', padding: 0, transition: 'all 0.18s',
+                    boxShadow: isSelected
+                      ? `0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent), 0 4px 16px rgba(0,0,0,0.08)`
+                      : '0 1px 3px rgba(0,0,0,0.05), 0 2px 8px rgba(0,0,0,0.04)',
                   }}
                 >
-                  {/* thumbnail — always the themed gradient, never stock photos */}
-                  <div style={{ aspectRatio: '16/9', position: 'relative', overflow: 'hidden' }}>
-                    {/* themed gradient background */}
-                    <div style={{
-                      position: 'absolute', inset: 0,
-                      background: tc
-                        ? `linear-gradient(135deg, ${tc.bg} 0%, ${tc.surface ?? tc.bg} 60%, ${tc.accent}22 100%)`
-                        : fallbackColor
-                          ? `linear-gradient(135deg, ${fallbackColor}dd 0%, ${fallbackColor}55 100%)`
-                          : 'linear-gradient(135deg, var(--bg-card), color-mix(in srgb, var(--primary) 8%, var(--bg-card)))',
-                    }} />
-                    {/* accent stripe */}
-                    {tc && (
-                      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: tc.accent }} />
-                    )}
-                    {/* color swatches centred */}
-                    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-                      {tc ? (
-                        <>
-                          <div style={{ display: 'flex', gap: 6 }}>
-                            {[tc.accent, tc.text, tc.surface ?? tc.bg].map((c, i) => (
-                              <div key={i} style={{ width: i === 0 ? 28 : 18, height: i === 0 ? 28 : 18, borderRadius: '50%', background: c, border: '2px solid rgba(255,255,255,0.15)', boxShadow: i === 0 ? `0 0 12px ${c}66` : 'none', transition: 'all 0.2s' }} />
-                            ))}
+                  {/* thumbnail */}
+                  <div style={{ aspectRatio: '16/9', position: 'relative', overflow: 'hidden', background: 'var(--bg-card)' }}>
+                    {t.type === 'DECK_LAYOUT' ? (
+                      // ── Layout: clean minimal slot map — grey rectangles, no text ──
+                      <LayoutSlotMap slots={t.schema?.slots ?? []} />
+                    ) : (
+                      // ── Pack / Video Scene: themed gradient ──
+                      <>
+                        <div style={{
+                          position: 'absolute', inset: 0,
+                          background: tc
+                            ? `linear-gradient(140deg, ${tc.bg} 0%, ${tc.surface ?? tc.bg} 55%, ${tc.accent}30 100%)`
+                            : fallbackColor
+                              ? `linear-gradient(140deg, ${fallbackColor}dd 0%, ${fallbackColor}44 100%)`
+                              : t.type === 'VIDEO_PACK'
+                                ? 'linear-gradient(140deg, #0f172a, #1e293b)'
+                                : t.type === 'VIDEO_SCENE'
+                                  ? 'linear-gradient(140deg, #0f0f1a, #1a1a2e)'
+                                  : 'linear-gradient(140deg, color-mix(in srgb, var(--primary) 5%, var(--bg-card)), color-mix(in srgb, var(--primary) 12%, var(--bg-card)))',
+                        }} />
+                        {/* accent bottom stripe */}
+                        {tc && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: tc.accent, opacity: 0.9 }} />}
+                        {/* content: palette + label */}
+                        {tc && (
+                          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', padding: '12px 12px 16px' }}>
+                            {/* palette row top */}
+                            <div style={{ display: 'flex', gap: 5 }}>
+                              {[tc.accent, tc.text, tc.surface ?? tc.bg].map((c, i) => (
+                                <div key={i} style={{
+                                  width: i === 0 ? 12 : 8, height: i === 0 ? 12 : 8,
+                                  borderRadius: '50%', background: c,
+                                  border: '1.5px solid rgba(255,255,255,0.2)',
+                                  boxShadow: i === 0 ? `0 0 8px ${c}99` : 'none',
+                                }} />
+                              ))}
+                            </div>
+                            {/* theme name bottom */}
+                            {t.schema?.themeId && (
+                              <span style={{ fontSize: '0.53rem', fontWeight: 600, color: tc.text, opacity: 0.4, letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: 'monospace' }}>
+                                {t.schema.themeId.replace(/_/g, ' ')}
+                              </span>
+                            )}
                           </div>
-                          {t.schema?.themeId && (
-                            <span style={{ fontSize: '0.6rem', fontWeight: 600, color: tc.text, opacity: 0.5, letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'monospace' }}>{t.schema.themeId.replace(/_/g, ' ')}</span>
-                          )}
-                        </>
-                      ) : (
-                        <LayoutTemplate size={24} style={{ opacity: 0.2, color: 'var(--text-muted)' }} />
-                      )}
-                    </div>
+                        )}
+                      </>
+                    )}
                     {/* slide count badge for packs */}
                     {t.type === 'DECK_PACK' && t.schema?.slides?.length > 0 && (
                       <div style={{ position: 'absolute', bottom: 10, left: 10, padding: '2px 7px', borderRadius: 5, fontSize: '0.62rem', fontWeight: 700, background: 'rgba(0,0,0,0.45)', color: '#fff', backdropFilter: 'blur(4px)', letterSpacing: '0.02em' }}>
                         {t.schema.slides.length} slides
+                      </div>
+                    )}
+                    {t.type === 'VIDEO_PACK' && Array.isArray(t.schema?.scenes) && t.schema.scenes.length > 0 && (
+                      <div style={{ position: 'absolute', bottom: 10, left: 10, padding: '2px 7px', borderRadius: 5, fontSize: '0.62rem', fontWeight: 700, background: 'rgba(0,0,0,0.45)', color: '#fff', backdropFilter: 'blur(4px)', letterSpacing: '0.02em' }}>
+                        {t.schema.scenes.length} scenes
+                      </div>
+                    )}
+                    {t.type === 'VIDEO_SCENE' && t.schema?.scene?.durationInFrames && (
+                      <div style={{ position: 'absolute', bottom: 10, left: 10, padding: '2px 7px', borderRadius: 5, fontSize: '0.62rem', fontWeight: 700, background: 'rgba(0,0,0,0.45)', color: '#fff', backdropFilter: 'blur(4px)' }}>
+                        {t.schema.scene.durationInFrames}f
                       </div>
                     )}
                     {/* media count */}
@@ -2665,11 +2899,6 @@ export default function SuperadminTemplatesPanel() {
                         {t.media.length} media
                       </div>
                     )}
-                    {/* type badge */}
-                    <div style={{ position: 'absolute', top: 8, left: 8 }}>
-                      <TypePill type={t.type} />
-                    </div>
-
                     {/* hover overlay with action icons */}
                     <div className="card-hover-actions" style={{
                       position: 'absolute', inset: 0,
@@ -2695,13 +2924,21 @@ export default function SuperadminTemplatesPanel() {
                   </div>
 
                   {/* card footer — clean, no buttons */}
-                  <div style={{ padding: '10px 12px 11px' }}>
+                  <div style={{
+                    padding: '10px 12px 11px',
+                    borderTop: tc ? `2px solid ${tc.accent}30` : '1px solid var(--border-color)',
+                  }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
                       <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{t.name}</div>
-                      {/* active dot — single small indicator */}
+                      {/* tiny active dot toggle */}
                       <button type="button" title={t.isActive ? 'Deactivate' : 'Activate'}
                         onClick={e => handleQuickToggle(e, t)}
-                        style={{ flexShrink: 0, width: 18, height: 18, borderRadius: '50%', border: 'none', background: t.isActive ? '#4ade80' : 'var(--border-color)', cursor: 'pointer', transition: 'all 0.15s', boxShadow: t.isActive ? '0 0 0 3px color-mix(in srgb, #22c55e 20%, transparent)' : 'none' }}
+                        style={{
+                          flexShrink: 0, width: 8, height: 8, borderRadius: '50%', border: 'none',
+                          background: t.isActive ? '#4ade80' : 'color-mix(in srgb, var(--text-muted) 40%, transparent)',
+                          cursor: 'pointer', transition: 'all 0.15s', padding: 0,
+                          boxShadow: t.isActive ? '0 0 0 2px color-mix(in srgb, #22c55e 20%, transparent)' : 'none',
+                        }}
                       />
                     </div>
                     <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -2723,7 +2960,7 @@ export default function SuperadminTemplatesPanel() {
           display: 'flex', alignItems: 'flex-end',
         }} onClick={e => { if (e.target === e.currentTarget) setSelected(null) }}>
           <div style={{
-            width: '100%', maxHeight: '88vh',
+            width: '100%', height: '82vh',
             background: 'var(--bg-card)', borderRadius: '16px 16px 0 0',
             border: '1px solid var(--border-color)', borderBottom: 'none',
             display: 'flex', flexDirection: 'column',
@@ -2753,8 +2990,19 @@ export default function SuperadminTemplatesPanel() {
         />
       )}
 
-      {/* ── preview modal — centered modal with PPT-style slide viewer for packs ── */}
+      {/* ── preview modal ── */}
       {previewTemplate && (
+        previewTemplate.type === 'DECK_LAYOUT' ? (
+          // Reuse the full DeckLayoutModal — already has Preview + Slots tabs
+          <DeckLayoutModal
+            schema={previewTemplate.schema ?? {}}
+            layoutName={previewTemplate.name}
+            slots={previewTemplate.schema?.slots ?? []}
+            hasSlots={(previewTemplate.schema?.slots ?? []).length > 0}
+            COLS={12} ROWS={10}
+            onClose={() => setPreviewTemplate(null)}
+          />
+        ) : (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 500,
           background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)',
@@ -2766,7 +3014,7 @@ export default function SuperadminTemplatesPanel() {
             maxWidth: previewTemplate.type === 'DECK_PACK' ? 1100 : 900,
             height: previewTemplate.type === 'DECK_PACK' ? '88vh' : 'auto',
             maxHeight: '90vh',
-            background: previewTemplate.type === 'DECK_PACK' ? 'var(--bg-card)' : 'var(--bg-card)',
+            background: 'var(--bg-card)',
             borderRadius: 14,
             border: '1px solid var(--border-color)',
             boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
@@ -2781,7 +3029,6 @@ export default function SuperadminTemplatesPanel() {
               background: 'var(--bg-card)',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                {/* theme swatches for pack */}
                 {previewTemplate.type === 'DECK_PACK' && (() => {
                   const tc = THEME_COLORS[previewTemplate.schema?.themeId]
                   return tc
@@ -2824,6 +3071,7 @@ export default function SuperadminTemplatesPanel() {
             )}
           </div>
         </div>
+        )
       )}
     </div>
   )

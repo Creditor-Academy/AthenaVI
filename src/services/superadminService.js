@@ -282,6 +282,30 @@ const superadminService = {
     })
   },
 
+  /**
+   * Publish one video scene → VIDEO_SCENE template.
+   * POST /api/superadmin/projects/:projectId/scenes/:sceneId/publish-as-template
+   */
+  publishSceneAsTemplate(projectId, sceneId, { name, variant, isActive = true }) {
+    return superadminRequest(`/api/superadmin/projects/${projectId}/scenes/${sceneId}/publish-as-template`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, variant, isActive }),
+    })
+  },
+
+  /**
+   * Publish all video scenes of a project → VIDEO_PACK template.
+   * POST /api/superadmin/projects/:projectId/publish-as-video-pack
+   */
+  publishProjectAsVideoPack(projectId, { name, packId, isActive = true, variant }) {
+    return superadminRequest(`/api/superadmin/projects/${projectId}/publish-as-video-pack`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, packId, isActive, variant }),
+    })
+  },
+
   // ── Template media (Canva-like baked photos for pack clone) ──────────────
   listTemplateMedia(templateId) {
     return superadminRequest(`/api/superadmin/templates/${templateId}/media`)
