@@ -139,6 +139,24 @@ const API_CONFIG = {
         `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/media/${mediaId}`,
     },
 
+    // Image Gen (AI image studio)
+    IMAGE_GEN: {
+      MODELS: '/api/image-gen/models',
+      FORMATS: '/api/image-gen/formats',
+      STYLES: '/api/image-gen/styles',
+      ESTIMATE: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/estimate`,
+      GENERATE: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/generate`,
+      GENERATIONS: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/generations`,
+      GENERATION: (workspaceId, generationId) =>
+        `/api/image-gen/workspaces/${workspaceId}/generations/${generationId}`,
+      REGENERATE: (workspaceId, generationId) =>
+        `/api/image-gen/workspaces/${workspaceId}/generations/${generationId}/regenerate`,
+      TWEAK: (workspaceId, generationId) =>
+        `/api/image-gen/workspaces/${workspaceId}/generations/${generationId}/tweak`,
+      DOWNLOAD: (workspaceId, generationId) =>
+        `/api/image-gen/workspaces/${workspaceId}/generations/${generationId}/download`,
+    },
+
     // Presentations (AI PPT / Canvas)
     PRESENTATIONS: {
       LIST: (workspaceId) => `/api/workspaces/${workspaceId}/presentations`,
