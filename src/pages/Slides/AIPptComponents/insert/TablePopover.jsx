@@ -16,6 +16,7 @@ export default function TablePopover({ onInsert, disabled }) {
     if (disabled || c < 1 || r < 1) return
     onInsert({
       type: 'table',
+      presetId: 'table_basic',
       content: {
         rows: r,
         cols: c,

@@ -32,8 +32,14 @@ const TOOLS = [
 export default function InsertToolbar({
   disabled = false,
   workspaceId,
+  presentationId,
+  slideId,
+  targetElementId = null,
   brandKits = [],
+  elementPresets = [],
   onInsert,
+  onMediaAttached,
+  insertDisabledReason,
   orientation = 'horizontal',
 }) {
   const [openTool, setOpenTool] = useState(null)
@@ -118,17 +124,33 @@ export default function InsertToolbar({
         style={{ top: panelPos.top, left: panelPos.left ?? undefined }}
         onMouseDown={(e) => e.stopPropagation()}
       >
-        {openTool === 'text' && <TextPanel onInsert={handleInsert} disabled={disabled} />}
+        {openTool === 'text' && (
+          <TextPanel
+            onInsert={handleInsert}
+            disabled={disabled}
+            elementPresets={elementPresets}
+          />
+        )}
         {openTool === 'media' && (
           <MediaPanel
             workspaceId={workspaceId}
+            presentationId={presentationId}
+            slideId={slideId}
+            targetElementId={targetElementId}
             brandKits={brandKits}
             onInsert={handleInsert}
+            onMediaAttached={onMediaAttached}
             disabled={disabled}
           />
         )}
         {openTool === 'shape' && <ShapePanel onInsert={handleInsert} disabled={disabled} />}
-        {openTool === 'chart' && <ChartPanel onInsert={handleInsert} disabled={disabled} />}
+        {openTool === 'chart' && (
+          <ChartPanel
+            onInsert={handleInsert}
+            disabled={disabled}
+            elementPresets={elementPresets}
+          />
+        )}
         {openTool === 'table' && <TablePopover onInsert={handleInsert} disabled={disabled} />}
         {openTool === 'embed' && <EmbedPanel onInsert={handleInsert} disabled={disabled} />}
       </div>,
@@ -150,7 +172,7 @@ export default function InsertToolbar({
                 buttonRefs.current[tool.id] = el
               }}
               className={`ppt-insert-tool-btn ${orientation === 'horizontal' ? 'ppt-insert-tool-btn--labeled' : 'aig-float-btn'} ${openTool === tool.id ? 'is-active' : ''}`}
-              title={tool.label}
+              title={insertDisabledReason || tool.label}
               disabled={disabled}
               aria-expanded={openTool === tool.id}
               aria-label={tool.label}

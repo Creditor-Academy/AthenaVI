@@ -40,6 +40,17 @@ export const PPT_TEXT_PRESETS = [
     },
   },
   {
+    id: 'text_body',
+    category: 'Body',
+    label: 'Body',
+    content: {
+      text: 'Add body text here.',
+      fontSize: 22,
+      bold: false,
+      align: 'left',
+    },
+  },
+  {
     id: 'text_bullets',
     category: 'Body',
     label: 'Bullet list',

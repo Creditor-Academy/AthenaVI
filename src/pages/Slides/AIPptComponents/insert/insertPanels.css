@@ -1610,10 +1610,46 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
   padding: 8px;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   font-size: 12px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ppt-slide-layer-row.is-selected {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.ppt-slide-layer-row:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.ppt-slide-layer-actions {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.ppt-slide-layer-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.ppt-slide-layout-select {
+  width: 100%;
+  margin-bottom: 8px;
 }
 
 .ppt-slide-layer-num {

@@ -29,6 +29,11 @@ import temp2 from '../../../assets/Template_Image/gen_temp2.png'
 import temp3 from '../../../assets/Template_Image/gen_temp3.png'
 import temp4 from '../../../assets/Template_Image/gen_temp4.png'
 
+import customFloat1 from '../../../assets/Template_Image/custom_float_1.png'
+import customFloat2 from '../../../assets/Template_Image/custom_float_2.png'
+import customFloat3 from '../../../assets/Template_Image/custom_float_3.png'
+import customFloat4 from '../../../assets/Template_Image/custom_float_4.png'
+
 import AIPptThemeModal from './AIPptThemeModal'
 import AIPptImageModal from './AIPptImageModal'
 import aiMascot from '../../../assets/slides_icons/ai_mascot.png'
@@ -129,7 +134,6 @@ const IMAGE_SOURCES = [
 const SCREEN_SIZES = [
   { id: '16:9', name: 'Default', ratio: '16/9' },
   { id: '4:3', name: 'Traditional', ratio: '4/3' },
-  { id: '9:16', name: 'Tall', ratio: '9/16' }
 ]
 
 const TEXT_AMOUNTS = [
@@ -425,6 +429,18 @@ export default function AIPptWizard({
         
         {step === 1 && (
           <div className="aig-new-hero-section fade-in">
+            {/* Floating Background Images */}
+            <div className="aig-floating-bg">
+              <img src={customFloat1} className="aig-float-img img-1" alt="" aria-hidden="true" />
+              <img src={customFloat2} className="aig-float-img img-2" alt="" aria-hidden="true" />
+              <img src={customFloat4} className="aig-float-img img-3" alt="" aria-hidden="true" />
+              <img src={customFloat3} className="aig-float-img img-4" alt="" aria-hidden="true" />
+              <img src={customFloat2} className="aig-float-img img-5" alt="" aria-hidden="true" />
+              <img src={customFloat1} className="aig-float-img img-6" alt="" aria-hidden="true" />
+              <img src={customFloat3} className="aig-float-img img-7" alt="" aria-hidden="true" />
+              <img src={customFloat4} className="aig-float-img img-8" alt="" aria-hidden="true" />
+            </div>
+            
             {/* AI Mascot — slides in from top-right on page open */}
             <img
               src={aiMascot}

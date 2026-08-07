@@ -5,10 +5,14 @@ import {
   FiUser,
   FiX,
   FiImage,
+  FiTrash2,
+  FiChevronUp,
+  FiChevronDown,
 } from 'react-icons/fi'
 import { MdOutlineDesignServices, MdOutlineAnimation } from 'react-icons/md'
 import { BsStars } from 'react-icons/bs'
 import { HiOutlineClipboard } from 'react-icons/hi'
+import presentationService from '../../../../services/presentationService'
 import './insertPanels.css'
 
 const RAIL_TOOLS = [
@@ -109,6 +113,13 @@ export default function EditorRightRail({
   generationPrompt = '',
   slide = null,
   themeVisual = null,
+  workspaceId,
+  selectedElementId = null,
+  onSelectElement,
+  onBringForward,
+  onSendBackward,
+  onDeleteElement,
+  onApplyLayout,
   onResetBackground,
   onAddBackgroundImage,
   onChangeTransition,
@@ -117,6 +128,9 @@ export default function EditorRightRail({
 }) {
   const [active, setActive] = useState(null)
   const [aiOpen, setAiOpen] = useState(false)
+  const [layoutTemplates, setLayoutTemplates] = useState([])
+  const [layoutLoading, setLayoutLoading] = useState(false)
+  const [selectedLayoutId, setSelectedLayoutId] = useState('')
   const rootRef = useRef(null)
 
   const currentTransition =
@@ -150,6 +164,33 @@ export default function EditorRightRail({
       document.removeEventListener('keydown', onKey)
     }
   }, [active, aiOpen])
+
+  useEffect(() => {
+    if (active !== 'design' || !workspaceId) return undefined
+    let cancelled = false
+    setLayoutLoading(true)
+    presentationService
+      .listTemplates(workspaceId, { contentType: 'Layout' })
+      .then((data) => {
+        if (cancelled) return
+        const list = Array.isArray(data)
+          ? data
+          : data?.templates || data?.items || data?.data || []
+        setLayoutTemplates(list)
+        if (list[0]?.id || list[0]?.templateId) {
+          setSelectedLayoutId(String(list[0].id || list[0].templateId))
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setLayoutTemplates([])
+      })
+      .finally(() => {
+        if (!cancelled) setLayoutLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [active, workspaceId])
 
   const toggle = (id) => {
     if (disabled) return
@@ -247,17 +288,73 @@ export default function EditorRightRail({
           </div>
 
           <div className="ppt-slide-panel-section">
+            <div className="ppt-slide-panel-label">Apply layout</div>
+            {layoutLoading ? (
+              <div className="ppt-slide-layer-empty">Loading layouts…</div>
+            ) : layoutTemplates.length ? (
+              <>
+                <select
+                  className="ppt-slide-panel-select ppt-slide-layout-select"
+                  value={selectedLayoutId}
+                  disabled={disabled}
+                  onChange={(e) => setSelectedLayoutId(e.target.value)}
+                >
+                  {layoutTemplates.map((tpl) => {
+                    const id = tpl.id || tpl.templateId || tpl._id
+                    return (
+                      <option key={id} value={id}>
+                        {tpl.name || tpl.label || id}
+                      </option>
+                    )
+                  })}
+                </select>
+                <button
+                  type="button"
+                  className="ppt-slide-panel-btn ppt-slide-panel-btn--block"
+                  disabled={disabled || !selectedLayoutId}
+                  onClick={() => onApplyLayout?.(selectedLayoutId)}
+                >
+                  Rebuild slide from layout
+                </button>
+              </>
+            ) : (
+              <div className="ppt-slide-layer-empty">No layout templates in workspace</div>
+            )}
+          </div>
+
+          <div className="ppt-slide-panel-section">
             <div className="ppt-slide-panel-label">Layers</div>
+            {selectedElementId && (
+              <div className="ppt-slide-layer-actions">
+                <button type="button" title="Bring forward" disabled={disabled} onClick={onBringForward}>
+                  <FiChevronUp size={14} />
+                </button>
+                <button type="button" title="Send backward" disabled={disabled} onClick={onSendBackward}>
+                  <FiChevronDown size={14} />
+                </button>
+                <button type="button" title="Delete" disabled={disabled} onClick={onDeleteElement}>
+                  <FiTrash2 size={14} />
+                </button>
+              </div>
+            )}
             <div className="ppt-slide-layers">
               {(slide?.elements?.elements || []).length === 0 ? (
                 <div className="ppt-slide-layer-empty">No layers yet — insert from the top bar</div>
               ) : (
-                (slide?.elements?.elements || []).map((el, i) => (
-                  <div key={el.id || i} className="ppt-slide-layer-row">
-                    <span className="ppt-slide-layer-num">{i + 1}</span>
-                    <span className="ppt-slide-layer-type">{el.type || 'element'}</span>
-                  </div>
-                ))
+                [...(slide?.elements?.elements || [])]
+                  .sort((a, b) => (b.layer || 0) - (a.layer || 0))
+                  .map((el, i) => (
+                    <button
+                      key={el.id || i}
+                      type="button"
+                      className={`ppt-slide-layer-row ${selectedElementId === el.id ? 'is-selected' : ''}`}
+                      disabled={disabled}
+                      onClick={() => onSelectElement?.(el.id)}
+                    >
+                      <span className="ppt-slide-layer-num">{el.layer ?? i + 1}</span>
+                      <span className="ppt-slide-layer-type">{el.type || 'element'}</span>
+                    </button>
+                  ))
               )}
             </div>
           </div>

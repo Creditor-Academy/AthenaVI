@@ -5,6 +5,7 @@ import { RailBrandIcon } from './insertBrandIcons'
 import stockService from '../../../../services/stockService'
 import assetService from '../../../../services/assetService'
 import brandKitService from '../../../../services/brandKitService'
+import presentationService from '../../../../services/presentationService'
 import {
   DOODLE_ICON_LIBRARY,
   ICON_CATEGORIES,
@@ -38,10 +39,15 @@ function isVideoAsset(asset) {
 
 export default function MediaPanel({
   workspaceId,
+  presentationId,
+  slideId,
+  targetElementId = null,
   brandKits = [],
   onInsert,
+  onMediaAttached,
   disabled,
 }) {
+  const canUseSlideMedia = Boolean(workspaceId && presentationId && slideId)
   const [activeId, setActiveId] = useState('unsplash')
   const [query, setQuery] = useState(PPT_STOCK_TOPICS[0]?.query || 'business')
   const [items, setItems] = useState([])
@@ -195,11 +201,27 @@ export default function MediaPanel({
     setLoading(true)
     setError('')
     try {
+      if (canUseSlideMedia) {
+        const result = await presentationService.uploadSlideMedia(
+          workspaceId,
+          presentationId,
+          slideId,
+          file,
+          { elementId: targetElementId || undefined }
+        )
+        if (onMediaAttached) {
+          await onMediaAttached(result)
+        } else {
+          onInsert({ type: 'image', presetId: 'image' })
+        }
+        return
+      }
+
       const asset = await assetService.uploadAsset(workspaceId, file)
       const url = assetUrl(asset)
       if (!url) throw new Error('Upload succeeded but no URL returned')
       onInsert({
-        type: isVideoAsset(asset) ? 'image' : 'image',
+        type: 'image',
         content: {
           url,
           src: url,
@@ -215,27 +237,147 @@ export default function MediaPanel({
     }
   }
 
+  const attachLibraryAsset = async (item) => {
+    const assetId = item.id || item._id
+    const url = assetUrl(item)
+    if (canUseSlideMedia && assetId) {
+      setLoading(true)
+      setError('')
+      try {
+        const result = await presentationService.attachSlideAsset(
+          workspaceId,
+          presentationId,
+          slideId,
+          { assetId, elementId: targetElementId || undefined }
+        )
+        if (onMediaAttached) await onMediaAttached(result)
+        else onInsert({ type: 'image', presetId: 'image' })
+      } catch (err) {
+        if (url) {
+          onInsert({
+            type: 'image',
+            content: {
+              url,
+              src: url,
+              alt: item.name || item.alt || '',
+              fit: 'cover',
+              assetId,
+            },
+          })
+        } else {
+          setError(err.message || 'Failed to attach asset')
+        }
+      } finally {
+        setLoading(false)
+      }
+      return
+    }
+
+    if (!url) return
+    onInsert({
+      type: 'image',
+      content: {
+        url,
+        src: url,
+        alt: item.name || item.alt || '',
+        fit: 'cover',
+        assetId,
+      },
+    })
+  }
+
   const insertStock = async (item) => {
+    const provider = item.provider || active.provider
+    const externalId = item.externalId || item.id || item._id
+    const previewUrl = item.url || item.src || item.thumbnailUrl || item.previewUrl
+
+    if (canUseSlideMedia && (externalId || item.query)) {
+      setLoading(true)
+      setError('')
+      try {
+        const body = externalId
+          ? {
+              provider,
+              externalId,
+              ...(targetElementId ? { elementId: targetElementId } : {}),
+            }
+          : {
+              query: item.query || query || 'business',
+              ...(targetElementId ? { elementId: targetElementId } : {}),
+            }
+        const result = await presentationService.insertStockOntoSlide(
+          workspaceId,
+          presentationId,
+          slideId,
+          body
+        )
+        if (onMediaAttached) await onMediaAttached(result)
+        else onInsert({ type: 'image', presetId: 'image' })
+        return
+      } catch (err) {
+        // Fall through to legacy import / local insert
+        if (!workspaceId && previewUrl) {
+          onInsert({
+            type: 'image',
+            content: {
+              url: previewUrl,
+              src: previewUrl,
+              alt: item.alt || item.description || '',
+              fit: 'cover',
+            },
+          })
+          setLoading(false)
+          return
+        }
+        setError(err.message || 'Stock insert failed — trying workspace import…')
+      }
+    }
+
     if (!workspaceId) {
-      const url = item.url || item.src || item.thumbnailUrl || item.previewUrl
-      if (!url) return
+      if (!previewUrl) return
       onInsert({
         type: 'image',
-        content: { url, src: url, alt: item.alt || item.description || '', fit: 'cover' },
+        content: {
+          url: previewUrl,
+          src: previewUrl,
+          alt: item.alt || item.description || '',
+          fit: 'cover',
+        },
       })
       return
     }
+
     setLoading(true)
     try {
-      const provider = item.provider || active.provider
-      const externalId = item.externalId || item.id || item._id
       const asset = await stockService.importStock(workspaceId, {
         provider,
         externalId,
         mediaType: item.mediaType || 'photo',
         name: item.description || item.alt || undefined,
       })
-      const url = assetUrl(asset) || item.url || item.thumbnailUrl
+      const url = assetUrl(asset) || previewUrl
+      if (canUseSlideMedia && (asset?.id || asset?._id)) {
+        const result = await presentationService.attachSlideAsset(
+          workspaceId,
+          presentationId,
+          slideId,
+          { assetId: asset.id || asset._id, elementId: targetElementId || undefined }
+        )
+        if (onMediaAttached) await onMediaAttached(result)
+        else
+          onInsert({
+            type: 'image',
+            content: {
+              url,
+              src: url,
+              alt: item.alt || item.description || '',
+              fit: 'cover',
+              assetId: asset?.id || asset?._id,
+              provider,
+            },
+          })
+        return
+      }
       onInsert({
         type: 'image',
         content: {
@@ -248,11 +390,10 @@ export default function MediaPanel({
         },
       })
     } catch (err) {
-      const url = item.url || item.src || item.thumbnailUrl || item.previewUrl
-      if (url) {
+      if (previewUrl) {
         onInsert({
           type: 'image',
-          content: { url, src: url, alt: item.alt || '', fit: 'cover' },
+          content: { url: previewUrl, src: previewUrl, alt: item.alt || '', fit: 'cover' },
         })
       } else {
         setError(err.message || 'Failed to import stock image')
@@ -484,7 +625,12 @@ export default function MediaPanel({
                   style={aspect ? { aspectRatio: aspect } : undefined}
                   onClick={() => {
                     if (active.kind === 'stock') insertStock(item)
-                    else
+                    else if (
+                      active.kind === 'library-images' ||
+                      active.kind === 'library-videos'
+                    ) {
+                      attachLibraryAsset(item)
+                    } else {
                       onInsert({
                         type: 'image',
                         content: {
@@ -495,6 +641,7 @@ export default function MediaPanel({
                           assetId: item.id || item._id,
                         },
                       })
+                    }
                   }}
                 >
                   {url ? (

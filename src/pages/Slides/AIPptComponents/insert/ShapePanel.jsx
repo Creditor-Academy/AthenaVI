@@ -5,19 +5,22 @@ import {
   getPptShapesForCategory,
   PPT_SHAPE_PANEL_CATEGORIES,
 } from '../../../../constants/pptInsertCatalog'
+import { normalizeApiShape } from '../../../../utils/presentationHelpers'
 
 const ESSENTIAL_SHAPES = [
   {
-    id: 'square',
-    name: 'Square',
+    id: 'rect',
+    name: 'Rectangle',
     path: 'M8 8h24v24H8z',
-    content: { shape: 'square', fill: '#475569' },
+    content: { shape: 'rect', fill: '#475569' },
+    presetId: 'shape_rect',
   },
   {
     id: 'rounded-rect',
     name: 'Rounded square',
     path: 'M12 8h16a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4V12a4 4 0 0 1 4-4z',
     content: { shape: 'rounded-rect', fill: '#475569' },
+    presetId: 'shape_rounded_rect',
   },
   {
     id: 'circle',
@@ -25,24 +28,28 @@ const ESSENTIAL_SHAPES = [
     path: 'M20 8a12 12 0 1 1 0 24 12 12 0 0 1 0-24z',
     circle: true,
     content: { shape: 'circle', fill: '#475569' },
+    presetId: 'shape_circle',
   },
   {
-    id: 'triangle-up',
+    id: 'triangle',
     name: 'Triangle',
     path: 'M20 8 L32 32 H8 Z',
-    content: { shape: 'triangle-up', fill: '#475569' },
+    content: { shape: 'triangle', fill: '#475569' },
+    presetId: 'shape_triangle',
   },
   {
     id: 'diamond',
     name: 'Diamond',
     path: 'M20 8 L32 20 L20 32 L8 20 Z',
     content: { shape: 'diamond', fill: '#475569' },
+    presetId: 'shape_diamond',
   },
   {
     id: 'star',
     name: 'Star',
     path: 'M20 7l3.5 9.5H34l-8 5.8 3 9.7L20 26.2 11 32l3-9.7-8-5.8h10.5z',
     content: { shape: 'star', fill: '#475569' },
+    presetId: 'shape_star',
   },
 ]
 
@@ -149,13 +156,15 @@ export default function ShapePanel({ onInsert, disabled }) {
   const isEssential = activeId === 'essential'
   const expanded = useMemo(() => expandWithVariants(libraryShapes), [libraryShapes])
 
-  const insertShape = (shapeId, variant, baseContent) => {
+  const insertShape = (shapeId, variant, baseContent, presetId) => {
     const outlined = variant === 'outlined'
+    const shape = normalizeApiShape(baseContent?.shape || shapeId)
     onInsert({
       type: 'shape',
+      ...(presetId ? { presetId } : {}),
       content: {
-        ...(baseContent || { shape: shapeId, fill: '#475569' }),
-        shape: baseContent?.shape || shapeId,
+        ...(baseContent || { shape, fill: '#475569' }),
+        shape,
         fill: outlined ? 'transparent' : baseContent?.fill || '#475569',
         ...(outlined
           ? { stroke: '#475569', strokeWidth: 3, variant: 'outlined' }
@@ -187,7 +196,9 @@ export default function ShapePanel({ onInsert, disabled }) {
                 className="ppt-shape-icon-btn"
                 disabled={disabled}
                 title={`${shape.name} (${variant})`}
-                onClick={() => insertShape(shape.id, variant, shape.content)}
+                onClick={() =>
+                  insertShape(shape.id, variant, shape.content, shape.presetId)
+                }
               >
                 <ShapeSvg shape={shape} variant={variant} />
               </button>
@@ -204,7 +215,12 @@ export default function ShapePanel({ onInsert, disabled }) {
               disabled={disabled}
               title={`${shape.name}${shape.variant === 'outlined' ? ' (outline)' : ''}`}
               onClick={() =>
-                insertShape(shape.id, shape.variant, shape.content || { shape: shape.id, fill: '#475569' })
+                insertShape(
+                  shape.id,
+                  shape.variant,
+                  shape.content || { shape: shape.id, fill: '#475569' },
+                  shape.presetId
+                )
               }
             >
               <span

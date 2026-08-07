@@ -10,6 +10,38 @@ export const PPT_AI_SLIDE_COUNTS = [5, 8, 10, 12, 15, 20]
 
 export const PPT_EXPORT_FORMATS = ['PPTX', 'PDF', 'PNG', 'JPEG']
 
+/** PPT canvas pixel sizes (stage must follow slide.elements.canvas). */
+export const PPT_CANVAS_SIZES = {
+  '16:9': { width: 1920, height: 1080 },
+  '4:3': { width: 1600, height: 1200 },
+}
+
+const SHAPE_ALIAS = {
+  square: 'rect',
+  'triangle-up': 'triangle',
+  'triangle-down': 'triangle',
+  'arrow-right': 'arrows',
+  'arrow_right': 'arrows',
+  plus: 'plus',
+}
+
+/** Resolve stage pixels from slide.elements.canvas, then aspectRatio, then 16:9. */
+export function resolveCanvasSize(slideOrDoc, aspectRatio = '16:9') {
+  const canvas =
+    slideOrDoc?.elements?.canvas ||
+    slideOrDoc?.canvas ||
+    null
+  const width = Number(canvas?.width)
+  const height = Number(canvas?.height)
+  if (width > 0 && height > 0) return { width, height }
+
+  const key = String(aspectRatio || '16:9')
+  if (PPT_CANVAS_SIZES[key]) return { ...PPT_CANVAS_SIZES[key] }
+  // Map legacy tall ratios to closest supported PPT size
+  if (key === '9:16') return { ...PPT_CANVAS_SIZES['16:9'] }
+  return { ...PPT_CANVAS_SIZES['16:9'] }
+}
+
 const DENSITY_MAP = {
   Minimal: 'concise',
   Concise: 'concise',
@@ -243,10 +275,18 @@ export function extractSlidesFromPresentation(presentation) {
     presentation?.deck?.slides ||
     presentation?.presentation?.slides ||
     []
-  return (slides || []).map((slide, index) => normalizeSlideForEditor(slide, index))
+  const aspectRatio =
+    presentation?.aspectRatio ||
+    presentation?.deck?.aspectRatio ||
+    presentation?.presentation?.aspectRatio ||
+    presentation?.canvasSize ||
+    '16:9'
+  return (slides || []).map((slide, index) =>
+    normalizeSlideForEditor(slide, index, aspectRatio)
+  )
 }
 
-export function normalizeSlideForEditor(slide, index = 0) {
+export function normalizeSlideForEditor(slide, index = 0, aspectRatio = '16:9') {
   const elementsDoc = slide?.elements
   const elements = Array.isArray(elementsDoc?.elements)
     ? elementsDoc.elements
@@ -257,7 +297,8 @@ export function normalizeSlideForEditor(slide, index = 0) {
   const titleFromContent =
     slide?.content?.title ||
     slide?.title ||
-    elements.find((el) => el.role === 'title' || el.type === 'text')?.content?.text ||
+    elements.find((el) => el.role === 'title' || el.role === 'heading' || el.type === 'text')
+      ?.content?.text ||
     `Slide ${index + 1}`
 
   const bodyFromContent =
@@ -265,6 +306,11 @@ export function normalizeSlideForEditor(slide, index = 0) {
     slide?.content?.bullets ||
     slide?.description ||
     []
+
+  const canvas = resolveCanvasSize(
+    { elements: { canvas: elementsDoc?.canvas } },
+    aspectRatio
+  )
 
   return {
     id: slide?.id || slide?._id || `slide-${index + 1}`,
@@ -277,7 +323,7 @@ export function normalizeSlideForEditor(slide, index = 0) {
     content: slide?.content || {},
     elements: {
       version: elementsDoc?.version || 1,
-      canvas: elementsDoc?.canvas || { width: 1920, height: 1080 },
+      canvas,
       elements: [...elements].sort((a, b) => (a.layer || 0) - (b.layer || 0)),
       ...(elementsDoc?.transition ? { transition: elementsDoc.transition } : {}),
       ...(elementsDoc?.contributorStatus
@@ -334,12 +380,130 @@ export function extractSlideImageUrl(slide) {
   return getSlideImage(slide).url
 }
 
-export function emptyCanvasDoc() {
+export function emptyCanvasDoc(aspectRatio = '16:9') {
   return {
     version: 1,
-    canvas: { width: 1920, height: 1080 },
+    canvas: { ...resolveCanvasSize(null, aspectRatio) },
     elements: [],
   }
+}
+
+export function buildCanvasDoc(slide, { aspectRatio = '16:9', elements } = {}) {
+  const canvas = resolveCanvasSize(slide, aspectRatio)
+  const list = Array.isArray(elements)
+    ? elements
+    : Array.isArray(slide?.elements?.elements)
+      ? slide.elements.elements
+      : []
+  return {
+    version: slide?.elements?.version || 1,
+    canvas,
+    elements: list,
+    ...(slide?.elements?.transition ? { transition: slide.elements.transition } : {}),
+    ...(slide?.elements?.contributorStatus
+      ? { contributorStatus: slide.elements.contributorStatus }
+      : {}),
+  }
+}
+
+/** Normalize GET .../presentation-elements payload. */
+export function normalizeElementPresets(payload) {
+  const root = payload?.data ?? payload
+  const list = Array.isArray(root)
+    ? root
+    : root?.presets || root?.items || root?.elements || []
+  const canvas = resolveCanvasSize(root, '16:9')
+  const presets = (list || [])
+    .map((p) => {
+      const presetId = p.presetId || p.id
+      if (!presetId) return null
+      return {
+        id: presetId,
+        presetId,
+        type: p.type || 'text',
+        label: p.label || p.name || presetId,
+        content: p.content || p.defaultContent || {},
+        defaultPlacement: p.defaultPlacement || p.placement || null,
+        defaultContent: p.defaultContent || {},
+        category: p.category || null,
+        raw: p,
+      }
+    })
+    .filter(Boolean)
+  return { canvas, presets }
+}
+
+export function normalizeApiShape(shape) {
+  if (!shape) return 'rect'
+  const key = String(shape)
+  return SHAPE_ALIAS[key] || key
+}
+
+/**
+ * Resolve palette token / colorRole / hex / gradient object → CSS color or gradient.
+ * Tokens: bg, surface, primary, secondary, text, muted, accent, divider, cardBg, …
+ */
+export function resolveThemeColor(value, palette = {}, fallback = undefined) {
+  if (value == null || value === '') return fallback
+  if (typeof value === 'object') {
+    if (value.type === 'gradient') return cssGradientFromFill(value, palette)
+    if (value.color) return resolveThemeColor(value.color, palette, fallback)
+    return fallback
+  }
+  const raw = String(value).trim()
+  if (
+    raw.startsWith('#') ||
+    raw.startsWith('rgb') ||
+    raw.startsWith('hsl') ||
+    raw.startsWith('url(') ||
+    raw === 'transparent' ||
+    raw.startsWith('linear-gradient')
+  ) {
+    return raw
+  }
+  if (palette?.[raw]) return palette[raw]
+  return fallback !== undefined ? fallback : raw
+}
+
+export function cssGradientFromFill(fill, palette = {}) {
+  if (!fill || typeof fill !== 'object') return null
+  const angle = fill.angle != null ? Number(fill.angle) : 135
+  const stops = Array.isArray(fill.stops) ? fill.stops : []
+  if (stops.length) {
+    const parts = stops.map((stop) => {
+      const color = resolveThemeColor(stop.color || stop, palette, '#94A3B8')
+      const at = stop.at != null ? ` ${Math.round(Number(stop.at) * (Number(stop.at) <= 1 ? 100 : 1))}%` : ''
+      return `${color}${at}`
+    })
+    return `linear-gradient(${angle}deg, ${parts.join(', ')})`
+  }
+  const start =
+    resolveThemeColor(fill.from || fill.start || palette.gradientStart, palette, '#3B82F6')
+  const end =
+    resolveThemeColor(fill.to || fill.end || palette.gradientEnd, palette, '#8B5CF6')
+  return `linear-gradient(${angle}deg, ${start}, ${end})`
+}
+
+/** Resolve shape/text fill (string token, hex, or { type: 'gradient', … }). */
+export function resolveFillCss(fill, palette = {}, fallback = 'rgba(148,163,184,0.35)') {
+  if (fill == null || fill === '') return fallback
+  if (typeof fill === 'object' && fill.type === 'gradient') {
+    return cssGradientFromFill(fill, palette) || fallback
+  }
+  return resolveThemeColor(fill, palette, fallback)
+}
+
+export function extractSlideFromMutation(payload) {
+  return (
+    payload?.slide ||
+    payload?.data?.slide ||
+    (payload?.id && payload?.elements ? payload : null) ||
+    null
+  )
+}
+
+export function extractElementFromMutation(payload) {
+  return payload?.element || payload?.data?.element || null
 }
 
 export function sleep(ms) {

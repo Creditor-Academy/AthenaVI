@@ -301,6 +301,12 @@ class PresentationService {
     )
   }
 
+  getSlide(workspaceId, presentationId, slideId) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDE(workspaceId, presentationId, slideId)
+    )
+  }
+
   patchSlide(workspaceId, presentationId, slideId, body) {
     return this.request(
       API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDE(workspaceId, presentationId, slideId),
@@ -363,6 +369,37 @@ class PresentationService {
         slideId
       ),
       { method: 'PATCH', body: JSON.stringify({ elementIds }) }
+    )
+  }
+
+  /** Multipart image upload → canvas image element (optional elementId to replace). */
+  uploadSlideMedia(workspaceId, presentationId, slideId, file, { elementId } = {}) {
+    const form = new FormData()
+    form.append('file', file)
+    if (elementId) form.append('elementId', elementId)
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDE_MEDIA(workspaceId, presentationId, slideId),
+      { method: 'POST', body: form }
+    )
+  }
+
+  attachSlideAsset(workspaceId, presentationId, slideId, { assetId, elementId } = {}) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.ATTACH_ASSET(workspaceId, presentationId, slideId),
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          assetId,
+          ...(elementId ? { elementId } : {}),
+        }),
+      }
+    )
+  }
+
+  insertStockOntoSlide(workspaceId, presentationId, slideId, body = {}) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.INSERT_STOCK(workspaceId, presentationId, slideId),
+      { method: 'POST', body: JSON.stringify(body) }
     )
   }
 

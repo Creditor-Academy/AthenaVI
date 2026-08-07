@@ -26,14 +26,22 @@ import { isInsufficientCreditsError } from '../../../services/creditsService'
 import {
   PPT_CAPS,
   PPT_EXPORT_FORMATS,
+  buildCanvasDoc,
+  extractElementFromMutation,
+  extractSlideFromMutation,
   extractSlidesFromPresentation,
   getSlideImage,
+  normalizeApiShape,
+  normalizeElementPresets,
+  normalizeSlideForEditor,
+  resolveCanvasSize,
+  resolveFillCss,
+  resolveThemeColor,
   toApiThemeId,
 } from '../../../utils/presentationHelpers'
 import { PPT_DEFAULT_PLACEMENTS } from '../../../constants/pptInsertCatalog'
 
-const CANVAS_W = 1920
-const CANVAS_H = 1080
+const CANVAS_SAVE_DEBOUNCE_MS = 600
 
 function resolveThemeVisual(themeId, themeTokens) {
   const palette = themeTokens?.palette
@@ -43,10 +51,12 @@ function resolveThemeVisual(themeId, themeTokens) {
     const secondary = palette.secondary || primary
     const text = palette.text || '#0F172A'
     const muted = palette.muted || '#64748B'
+    const gradStart = palette.gradientStart || primary
+    const gradEnd = palette.gradientEnd || secondary
     return {
       id: 'themeTokens',
       name: themeTokens?.brand?.name || 'Brand Kit',
-      outer: `linear-gradient(135deg, ${primary}, ${secondary})`,
+      outer: `linear-gradient(135deg, ${gradStart}, ${gradEnd})`,
       inner: bg,
       title: text,
       body: muted,
@@ -54,42 +64,199 @@ function resolveThemeVisual(themeId, themeTokens) {
       secondary,
       accent: palette.accent || secondary,
       background: bg,
+      palette,
     }
   }
   const id = String(themeId || '')
+  const fallback = THEMES.find((t) => t.id === id || toApiThemeId(t.id) === id) || THEMES[0]
+  return { ...fallback, palette: null }
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value))
+}
+
+function pointerToCanvas(clientX, clientY, stageEl, canvasW, canvasH) {
+  if (!stageEl) return { x: 0, y: 0 }
+  const rect = stageEl.getBoundingClientRect()
+  return {
+    x: clamp(((clientX - rect.left) / rect.width) * canvasW, 0, canvasW),
+    y: clamp(((clientY - rect.top) / rect.height) * canvasH, 0, canvasH),
+  }
+}
+
+function placementFrameStyle(p, canvasW, canvasH, { layer = 0, rotation = 0, opacity = 1 } = {}) {
+  return {
+    position: 'absolute',
+    left: `${((p.x || 0) / canvasW) * 100}%`,
+    top: `${((p.y || 0) / canvasH) * 100}%`,
+    width: `${((p.width || 100) / canvasW) * 100}%`,
+    height: `${((p.height || 40) / canvasH) * 100}%`,
+    transform: rotation ? `rotate(${rotation}deg)` : undefined,
+    opacity: opacity != null ? opacity : 1,
+    zIndex: layer || 0,
+  }
+}
+
+function InteractiveElementShell({
+  el,
+  canvasW,
+  canvasH,
+  selected,
+  editable,
+  stageRef,
+  onSelect,
+  onPlacementLive,
+  onPlacementCommit,
+  children,
+}) {
+  const p = el.placement || {}
+  const dragRef = useRef(null)
+  const lastPlacementRef = useRef(null)
+
+  useEffect(() => {
+    const onMove = (e) => {
+      const drag = dragRef.current
+      if (!drag || !stageRef?.current) return
+      const pt = pointerToCanvas(e.clientX, e.clientY, stageRef.current, canvasW, canvasH)
+      const dx = pt.x - drag.originX
+      const dy = pt.y - drag.originY
+      const start = drag.startPlacement
+      let next = { ...start }
+
+      if (drag.mode === 'move') {
+        next.x = clamp(start.x + dx, 0, canvasW - (start.width || 40))
+        next.y = clamp(start.y + dy, 0, canvasH - (start.height || 40))
+      } else if (drag.mode === 'resize') {
+        next.width = clamp(start.width + dx, 40, canvasW - start.x)
+        next.height = clamp(start.height + dy, 24, canvasH - start.y)
+      }
+
+      lastPlacementRef.current = next
+      onPlacementLive?.(el.id, next)
+    }
+
+    const onUp = () => {
+      const drag = dragRef.current
+      if (!drag) return
+      dragRef.current = null
+      onPlacementCommit?.(el.id, lastPlacementRef.current || drag.startPlacement)
+    }
+
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onUp)
+    return () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onUp)
+    }
+  }, [canvasW, canvasH, el.id, onPlacementCommit, onPlacementLive, stageRef])
+
+  const beginDrag = (e, mode) => {
+    if (!editable || !selected || !stageRef?.current) return
+    e.preventDefault()
+    e.stopPropagation()
+    const origin = pointerToCanvas(
+      e.clientX,
+      e.clientY,
+      stageRef.current,
+      canvasW,
+      canvasH
+    )
+    const startPlacement = {
+      x: p.x || 0,
+      y: p.y || 0,
+      width: p.width || 100,
+      height: p.height || 40,
+      rotation: p.rotation || 0,
+      opacity: p.opacity != null ? p.opacity : 1,
+    }
+    lastPlacementRef.current = startPlacement
+    dragRef.current = {
+      mode,
+      originX: origin.x,
+      originY: origin.y,
+      startPlacement,
+    }
+  }
+
+  const frameStyle = {
+    ...placementFrameStyle(p, canvasW, canvasH, {
+      layer: el.layer,
+      rotation: p.rotation,
+      opacity: p.opacity,
+    }),
+    outline: selected ? '2px solid #3B82F6' : undefined,
+    outlineOffset: selected ? 2 : undefined,
+    cursor: editable && selected ? 'move' : 'pointer',
+    touchAction: 'none',
+  }
+
   return (
-    THEMES.find((t) => t.id === id || toApiThemeId(t.id) === id) || THEMES[0]
+    <div
+      role="button"
+      tabIndex={0}
+      data-element-id={el.id}
+      style={frameStyle}
+      onClick={(e) => {
+        e.stopPropagation()
+        onSelect?.(el.id)
+      }}
+      onPointerDown={(e) => {
+        if (!editable || !selected) return
+        if (e.target.closest?.('.ppt-canvas-el-resize')) return
+        beginDrag(e, 'move')
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onSelect?.(el.id)
+        }
+      }}
+    >
+      <div className="ppt-canvas-el-body">{children}</div>
+      {selected && editable && (
+        <span
+          className="ppt-canvas-el-resize"
+          onPointerDown={(e) => beginDrag(e, 'resize')}
+          aria-hidden
+        />
+      )}
+    </div>
   )
 }
 
-function CanvasElement({ el }) {
-  const p = el.placement || {}
-  const style = {
-    position: 'absolute',
-    left: `${((p.x || 0) / CANVAS_W) * 100}%`,
-    top: `${((p.y || 0) / CANVAS_H) * 100}%`,
-    width: `${((p.width || 100) / CANVAS_W) * 100}%`,
-    height: `${((p.height || 40) / CANVAS_H) * 100}%`,
-    transform: p.rotation ? `rotate(${p.rotation}deg)` : undefined,
-    opacity: p.opacity != null ? p.opacity : 1,
+function CanvasElement({ el, palette, onImageAuthError }) {
+  const fillStyle = {
+    width: '100%',
+    height: '100%',
     overflow: 'hidden',
   }
 
   if (el.type === 'text') {
     const c = el.content || {}
+    const color = resolveThemeColor(
+      c.color || c.colorRole,
+      palette,
+      palette?.text || 'inherit'
+    )
+    const weight = c.fontWeight || (c.bold ? 700 : 400)
     return (
       <div
         style={{
-          ...style,
-          color: c.color || 'inherit',
+          ...fillStyle,
+          color,
           fontSize: c.fontSize ? `${Math.max(10, c.fontSize * 0.45)}px` : '16px',
-          fontWeight: c.bold ? 700 : 400,
+          fontWeight: weight,
           fontStyle: c.italic ? 'italic' : 'normal',
+          fontFamily: c.fontFamily || undefined,
           textAlign: c.align || 'left',
+          letterSpacing: c.letterSpacing != null ? `${c.letterSpacing}em` : undefined,
           display: 'flex',
           alignItems: c.align === 'center' ? 'center' : 'flex-start',
           whiteSpace: 'pre-wrap',
-          lineHeight: 1.25,
+          lineHeight: c.lineHeight != null ? c.lineHeight : 1.25,
         }}
       >
         {c.text || ''}
@@ -102,7 +269,7 @@ function CanvasElement({ el }) {
     const url = c.url || c.src || c.thumbnailUrl || c.previewUrl
     if (!url) {
       return (
-        <div style={{ ...style, background: 'rgba(148,163,184,0.16)' }}>
+        <div style={{ ...fillStyle, background: 'rgba(148,163,184,0.16)' }}>
           <div className="aig-canvas-image-fallback">
             <FiImage size={18} />
           </div>
@@ -112,22 +279,23 @@ function CanvasElement({ el }) {
     return (
       <img
         src={url}
-        alt={c.alt || ''}
-        style={{ ...style, objectFit: c.fit || (el.type === 'icon' ? 'contain' : 'cover') }}
-        onError={(e) => {
-          e.currentTarget.style.opacity = '0.35'
-        }}
+        alt={c.alt || c.icon || ''}
+        style={{ ...fillStyle, objectFit: c.fit || (el.type === 'icon' ? 'contain' : 'cover') }}
+        onError={() => onImageAuthError?.(el.id)}
       />
     )
   }
 
   if (el.type === 'shape') {
     const c = el.content || {}
-    const shape = c.shape || 'rect'
-    const fill = c.fill || 'rgba(148,163,184,0.35)'
+    const shape = normalizeApiShape(c.shape || 'rect')
+    const fill = resolveFillCss(c.fill, palette, 'rgba(148,163,184,0.35)')
     const stroke = c.stroke
+      ? resolveThemeColor(c.stroke, palette, c.stroke)
+      : undefined
     const strokeWidth = c.strokeWidth || 3
     const clipPaths = {
+      triangle: 'polygon(50% 0%, 0% 100%, 100% 100%)',
       'triangle-up': 'polygon(50% 0%, 0% 100%, 100% 100%)',
       'triangle-down': 'polygon(0% 0%, 100% 0%, 50% 100%)',
       diamond: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
@@ -135,19 +303,22 @@ function CanvasElement({ el }) {
       pentagon: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
       hexagon: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
     }
-    const clip = clipPaths[shape]
+    const clip = clipPaths[shape] || clipPaths[c.shape]
     const radius =
       shape === 'ellipse' || shape === 'circle'
         ? '50%'
         : shape === 'pill'
           ? 999
           : shape === 'rounded-rect'
-            ? 12
-            : 0
+            ? c.borderRadius != null
+              ? c.borderRadius
+              : 12
+            : c.borderRadius || 0
 
     if (clip) {
       if (stroke && (fill === 'transparent' || c.variant === 'outlined')) {
         const svgPaths = {
+          triangle: 'M50 4 L96 96 L4 96 Z',
           'triangle-up': 'M50 4 L96 96 L4 96 Z',
           'triangle-down': 'M4 4 L96 4 L50 96 Z',
           diamond: 'M50 4 L96 50 L50 96 L4 50 Z',
@@ -155,10 +326,11 @@ function CanvasElement({ el }) {
           pentagon: 'M50 4 L96 38 L79 96 L21 96 L4 38 Z',
           hexagon: 'M25 4 L75 4 L96 50 L75 96 L25 96 L4 50 Z',
         }
+        const d = svgPaths[shape] || svgPaths[c.shape]
         return (
-          <svg viewBox="0 0 100 100" style={{ ...style, display: 'block' }} preserveAspectRatio="none">
+          <svg viewBox="0 0 100 100" style={{ ...fillStyle, display: 'block' }} preserveAspectRatio="none">
             <path
-              d={svgPaths[shape]}
+              d={d}
               fill="none"
               stroke={stroke}
               strokeWidth={strokeWidth * 1.2}
@@ -167,26 +339,36 @@ function CanvasElement({ el }) {
           </svg>
         )
       }
+      return <div style={{ ...fillStyle, background: fill, clipPath: clip }} />
+    }
+
+    if (shape === 'arrows' || shape === 'plus') {
       return (
         <div
           style={{
-            ...style,
-            background: fill,
-            clipPath: clip,
+            ...fillStyle,
+            background: fill === 'transparent' ? 'transparent' : fill,
+            display: 'grid',
+            placeItems: 'center',
+            color: stroke || palette?.text || '#0F172A',
+            fontSize: 28,
+            fontWeight: 700,
           }}
-        />
+        >
+          {shape === 'plus' ? '+' : '→'}
+        </div>
       )
     }
 
     return (
       <div
         style={{
-          ...style,
+          ...fillStyle,
           background: fill === 'transparent' ? 'transparent' : fill,
           borderRadius: radius,
           border:
             shape === 'line'
-              ? `2px solid ${c.line || fill || '#94a3b8'}`
+              ? `2px solid ${resolveThemeColor(c.line || c.fill, palette, '#94a3b8')}`
               : stroke
                 ? `${strokeWidth}px solid ${stroke}`
                 : undefined,
@@ -198,11 +380,17 @@ function CanvasElement({ el }) {
 
   if (el.type === 'chart') {
     const c = el.content || {}
-    const series = c.data?.series?.[0]?.values || [12, 19, 14, 22]
-    const max = Math.max(...series, 1)
-    const colors = c.colors || ['#7C3AED', '#A78BFA', '#FDBA74']
+    const series =
+      c.data?.series?.[0]?.values ||
+      c.series?.[0]?.values ||
+      (Array.isArray(c.series) && typeof c.series[0] === 'number' ? c.series : null) ||
+      [12, 19, 14, 22]
+    const max = Math.max(...series.map(Number), 1)
+    const colors = (c.colors || ['#7C3AED', '#A78BFA', '#FDBA74']).map((col) =>
+      resolveThemeColor(col, palette, col)
+    )
     return (
-      <div className="aig-canvas-chart" style={style}>
+      <div className="aig-canvas-chart" style={fillStyle}>
         <div className="aig-canvas-embed-label">{c.chartType || 'chart'}</div>
         <div className="aig-canvas-chart-bars">
           {series.slice(0, 8).map((v, i) => (
@@ -221,14 +409,18 @@ function CanvasElement({ el }) {
 
   if (el.type === 'table') {
     const c = el.content || {}
-    const cells = c.cells || []
+    const cells = Array.isArray(c.cells)
+      ? c.cells
+      : Array.isArray(c.rows) && Array.isArray(c.rows[0])
+        ? c.rows
+        : []
     return (
-      <div className="aig-canvas-table" style={style}>
+      <div className="aig-canvas-table" style={fillStyle}>
         <table className="aig-canvas-table-grid">
           <tbody>
             {cells.map((row, ri) => (
               <tr key={ri}>
-                {row.map((cell, ci) =>
+                {(row || []).map((cell, ci) =>
                   c.hasHeader && ri === 0 ? (
                     <th key={ci}>{cell}</th>
                   ) : (
@@ -246,7 +438,7 @@ function CanvasElement({ el }) {
   if (el.type === 'embed' || el.type === 'link') {
     const c = el.content || {}
     return (
-      <div className="aig-canvas-embed" style={style}>
+      <div className="aig-canvas-embed" style={fillStyle}>
         <div className="aig-canvas-embed-label">
           <FiCode size={12} style={{ marginRight: 4 }} />
           {c.title || c.provider || 'Embed'}
@@ -256,17 +448,38 @@ function CanvasElement({ el }) {
     )
   }
 
-  return <div style={style} />
+  return <div style={fillStyle} />
 }
 
-function SlideStage({ slide, themeVisual }) {
+function SlideStage({
+  slide,
+  themeVisual,
+  aspectRatio,
+  selectedElementId,
+  editable = false,
+  onSelectElement,
+  onPlacementLive,
+  onPlacementCommit,
+  onImageAuthError,
+}) {
+  const stageRef = useRef(null)
+  const canvas = resolveCanvasSize(slide, aspectRatio)
   const elements = slide?.elements?.elements || []
   const hasElements = elements.length > 0
   const fallbackImage = hasElements ? null : getSlideImage(slide).url
+  const palette = themeVisual?.palette || null
 
   return (
-    <div className="aig-editor-canvas aig-editor-canvas--stage" style={{ background: themeVisual.outer }}>
+    <div
+      className="aig-editor-canvas aig-editor-canvas--stage"
+      style={{
+        background: themeVisual.outer,
+        aspectRatio: `${canvas.width} / ${canvas.height}`,
+      }}
+      onClick={() => onSelectElement?.(null)}
+    >
       <div
+        ref={stageRef}
         className="aig-slide-stage"
         style={{
           background: themeVisual.inner,
@@ -274,7 +487,26 @@ function SlideStage({ slide, themeVisual }) {
         }}
       >
         {hasElements ? (
-          elements.map((el, i) => <CanvasElement key={el.id || `el-${i}`} el={el} />)
+          elements.map((el, i) => (
+            <InteractiveElementShell
+              key={el.id || `el-${i}`}
+              el={el}
+              canvasW={canvas.width}
+              canvasH={canvas.height}
+              selected={selectedElementId === el.id}
+              editable={editable}
+              stageRef={stageRef}
+              onSelect={onSelectElement}
+              onPlacementLive={onPlacementLive}
+              onPlacementCommit={onPlacementCommit}
+            >
+              <CanvasElement
+                el={el}
+                palette={palette}
+                onImageAuthError={onImageAuthError}
+              />
+            </InteractiveElementShell>
+          ))
         ) : (
           <div className="aig-slide-mock">
             <h1 className="aig-slide-mock-title" style={{ color: themeVisual.title }}>
@@ -319,13 +551,16 @@ export default function AIPptEditor({
   const [localSlides, setLocalSlides] = useState(outline || [])
   const [showMinimap, setShowMinimap] = useState(true)
   const [deckStatus, setDeckStatus] = useState('READY')
+  const [aspectRatio, setAspectRatio] = useState(config.screenSize || config.aspectRatio || '16:9')
   const [loading, setLoading] = useState(Boolean(workspaceId && presentationId))
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
   const [exportStatus, setExportStatus] = useState('')
   const [selectedSlideId, setSelectedSlideId] = useState(null)
+  const [selectedElementId, setSelectedElementId] = useState(null)
   const [themeTokens, setThemeTokens] = useState(null)
+  const [elementPresets, setElementPresets] = useState([])
   const [brandKits, setBrandKits] = useState([])
   const [brandKitOpen, setBrandKitOpen] = useState(false)
   const [applyingBrandKit, setApplyingBrandKit] = useState(false)
@@ -334,6 +569,9 @@ export default function AIPptEditor({
   const [addAfterIndex, setAddAfterIndex] = useState(null)
   const exportMenuRef = useRef(null)
   const brandKitMenuRef = useRef(null)
+  const canvasSaveTimers = useRef({})
+  const elementPatchTimers = useRef({})
+  const imageRefreshInFlight = useRef(new Set())
 
   useEffect(() => {
     if (config.title) setDeckTitle(config.title)
@@ -346,11 +584,35 @@ export default function AIPptEditor({
 
   const isGenerating = String(deckStatus).toUpperCase() === 'GENERATING'
   const atDeckCap = localSlides.length >= PPT_CAPS.DECK_MAX_SLIDES
+  const selectedSlide =
+    localSlides.find((s) => s.id === selectedSlideId) || localSlides[0] || null
+  const selectedElementCount = selectedSlide?.elements?.elements?.length || 0
+  const atElementCap = selectedElementCount >= PPT_CAPS.ELEMENTS_PER_SLIDE
+
+  const applySlideUpdate = useCallback((slidePayload, indexHint = 0) => {
+    if (!slidePayload) return
+    const normalized = normalizeSlideForEditor(slidePayload, indexHint, aspectRatio)
+    setLocalSlides((prev) => {
+      const idx = prev.findIndex((s) => s.id === normalized.id)
+      if (idx === -1) return prev
+      const next = [...prev]
+      next[idx] = { ...next[idx], ...normalized }
+      return next
+    })
+  }, [aspectRatio])
 
   const reloadPresentation = useCallback(async () => {
     if (!workspaceId || !presentationId) return
     const data = await presentationService.getPresentation(workspaceId, presentationId)
     const slides = extractSlidesFromPresentation(data)
+    const nextAspect =
+      data?.aspectRatio ||
+      data?.deck?.aspectRatio ||
+      data?.presentation?.aspectRatio ||
+      config.screenSize ||
+      config.aspectRatio ||
+      '16:9'
+    setAspectRatio(nextAspect === '9:16' ? '16:9' : nextAspect)
     setLocalSlides(slides)
     setThemeTokens(
       data?.deck?.themeTokens ||
@@ -365,9 +627,109 @@ export default function AIPptEditor({
         data?.presentation?.status ||
         'READY'
     )
+    if (data?.title || data?.presentation?.title) {
+      setDeckTitle(data?.title || data?.presentation?.title)
+    }
     if (slides[0]?.id) setSelectedSlideId((prev) => prev || slides[0].id)
     return data
-  }, [workspaceId, presentationId])
+  }, [workspaceId, presentationId, config.screenSize, config.aspectRatio])
+
+  const refreshSlide = useCallback(
+    async (slideId) => {
+      if (!workspaceId || !presentationId || !slideId) return null
+      const raw = await presentationService.getSlide(workspaceId, presentationId, slideId)
+      const slide = extractSlideFromMutation(raw) || raw
+      applySlideUpdate(slide)
+      return slide
+    },
+    [workspaceId, presentationId, applySlideUpdate]
+  )
+
+  const queueCanvasSave = useCallback(
+    (slideId, canvasDoc) => {
+      if (!workspaceId || !presentationId || !slideId || isGenerating) return
+      if (canvasSaveTimers.current[slideId]) {
+        clearTimeout(canvasSaveTimers.current[slideId])
+      }
+      canvasSaveTimers.current[slideId] = setTimeout(async () => {
+        try {
+          const result = await presentationService.saveCanvas(
+            workspaceId,
+            presentationId,
+            slideId,
+            canvasDoc
+          )
+          const slide = extractSlideFromMutation(result)
+          if (slide) applySlideUpdate(slide)
+        } catch (err) {
+          if (err instanceof PresentationConflictError) {
+            setError('Presentation is generating — canvas edits are locked.')
+          } else {
+            setError(err.message || 'Failed to save canvas')
+          }
+        }
+      }, CANVAS_SAVE_DEBOUNCE_MS)
+    },
+    [workspaceId, presentationId, isGenerating, applySlideUpdate]
+  )
+
+  const handlePlacementLive = useCallback(
+    (slideId, elementId, placement) => {
+      setLocalSlides((prev) =>
+        prev.map((s) => {
+          if (s.id !== slideId) return s
+          const elements = (s.elements?.elements || []).map((el) =>
+            el.id === elementId ? { ...el, placement: { ...el.placement, ...placement } } : el
+          )
+          return { ...s, elements: buildCanvasDoc(s, { aspectRatio, elements }) }
+        })
+      )
+    },
+    [aspectRatio]
+  )
+
+  const handlePlacementCommit = useCallback(
+    (slideId, elementId, placement) => {
+      if (!workspaceId || !presentationId || isGenerating) return
+      const key = `${slideId}:${elementId}`
+      if (elementPatchTimers.current[key]) {
+        clearTimeout(elementPatchTimers.current[key])
+      }
+      elementPatchTimers.current[key] = setTimeout(async () => {
+        try {
+          const result = await presentationService.updateElement(
+            workspaceId,
+            presentationId,
+            slideId,
+            elementId,
+            { placement }
+          )
+          const slideFromApi = extractSlideFromMutation(result)
+          if (slideFromApi) applySlideUpdate(slideFromApi)
+        } catch (err) {
+          if (err instanceof PresentationConflictError) {
+            setError('Presentation is generating — canvas edits are locked.')
+            return
+          }
+          const slide = localSlides.find((s) => s.id === slideId)
+          if (!slide) return
+          const elements = (slide.elements?.elements || []).map((el) =>
+            el.id === elementId ? { ...el, placement: { ...el.placement, ...placement } } : el
+          )
+          queueCanvasSave(slideId, buildCanvasDoc(slide, { aspectRatio, elements }))
+        }
+      }, CANVAS_SAVE_DEBOUNCE_MS)
+    },
+    [
+      workspaceId,
+      presentationId,
+      isGenerating,
+      localSlides,
+      aspectRatio,
+      applySlideUpdate,
+      queueCanvasSave,
+    ]
+  )
 
   useEffect(() => {
     if (!workspaceId || !presentationId) {
@@ -381,13 +743,14 @@ export default function AIPptEditor({
     ;(async () => {
       try {
         await reloadPresentation()
-        try {
-          const kits = await brandKitService.list(workspaceId).catch(() => [])
-          if (!cancelled) {
-            setBrandKits(kits || [])
-          }
-        } catch {
-          // kits optional for first load
+        const [kits, presetsPayload] = await Promise.all([
+          brandKitService.list(workspaceId).catch(() => []),
+          presentationService.listElementPresets(workspaceId).catch(() => null),
+        ])
+        if (cancelled) return
+        setBrandKits(kits || [])
+        if (presetsPayload) {
+          setElementPresets(normalizeElementPresets(presetsPayload).presets)
         }
       } catch (err) {
         if (!cancelled) setError(err.message || 'Failed to load presentation')
@@ -398,6 +761,8 @@ export default function AIPptEditor({
 
     return () => {
       cancelled = true
+      Object.values(canvasSaveTimers.current).forEach((t) => clearTimeout(t))
+      Object.values(elementPatchTimers.current).forEach((t) => clearTimeout(t))
     }
   }, [workspaceId, presentationId, outline, reloadPresentation])
 
@@ -451,13 +816,14 @@ export default function AIPptEditor({
     const seedElements = Array.isArray(seed?.elements) ? seed.elements : []
 
     if (!workspaceId || !presentationId) {
+      const canvas = resolveCanvasSize(null, aspectRatio)
       const newSlide = {
         id: `new-slide-${Date.now()}`,
         title,
         description,
         elements: {
           version: 1,
-          canvas: { width: CANVAS_W, height: CANVAS_H },
+          canvas,
           elements: seedElements,
         },
       }
@@ -501,18 +867,17 @@ export default function AIPptEditor({
       // Seed layout elements when backend has no layout catalog match
       if (seedElements.length && newSlideId) {
         try {
-          const canvasDoc = {
-            version: 1,
-            canvas: { width: CANVAS_W, height: CANVAS_H },
-            elements: seedElements,
-          }
+          const canvasDoc = buildCanvasDoc(
+            { elements: { version: 1, elements: seedElements } },
+            { aspectRatio, elements: seedElements }
+          )
           await presentationService.saveCanvas(
             workspaceId,
             presentationId,
             newSlideId,
             canvasDoc
           )
-          await reloadPresentation()
+          await refreshSlide(newSlideId)
         } catch {
           // Keep slide even if seed canvas fails
         }
@@ -619,9 +984,14 @@ export default function AIPptEditor({
 
     const type = payload?.type || 'text'
     const placement =
-      payload.placement || PPT_DEFAULT_PLACEMENTS[type] || PPT_DEFAULT_PLACEMENTS.text
+      payload.placement ||
+      payload.defaultPlacement ||
+      PPT_DEFAULT_PLACEMENTS[type] ||
+      PPT_DEFAULT_PLACEMENTS.text
     const content = { ...(payload.content || {}) }
-    // Normalize media URLs so the canvas always has something to render
+    if (type === 'shape' && content.shape) {
+      content.shape = normalizeApiShape(content.shape)
+    }
     if ((type === 'image' || type === 'icon') && !content.url && content.src) {
       content.url = content.src
     }
@@ -629,92 +999,90 @@ export default function AIPptEditor({
       content.src = content.url
     }
 
-    const newEl = {
-      id: `el-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      type,
-      content,
-      placement,
-      layer: existing.length,
-      ...(payload.presetId ? { presetId: payload.presetId } : {}),
-    }
-
-    const nextElementsDoc = {
-      version: slide?.elements?.version || 1,
-      canvas: slide?.elements?.canvas || { width: CANVAS_W, height: CANVAS_H },
-      elements: [...existing, newEl],
-    }
-
-    // Optimistic: show on the slide immediately (fixes “image not appearing”)
-    setLocalSlides((prev) =>
-      prev.map((s) => (s.id === slideId ? { ...s, elements: nextElementsDoc } : s))
-    )
     setSelectedSlideId(slideId)
+    setError('')
 
-    if (!workspaceId || !presentationId) return
+    if (!workspaceId || !presentationId) {
+      const localEl = {
+        id: `el-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        type,
+        content,
+        placement,
+        layer: existing.length + 1,
+        ...(payload.presetId ? { presetId: payload.presetId } : {}),
+        ...(payload.role ? { role: payload.role } : {}),
+      }
+      const nextDoc = buildCanvasDoc(slide, {
+        aspectRatio,
+        elements: [...existing, localEl],
+      })
+      setLocalSlides((prev) =>
+        prev.map((s) => (s.id === slideId ? { ...s, elements: nextDoc } : s))
+      )
+      setSelectedElementId(localEl.id)
+      return
+    }
 
     setBusy(true)
-    setError('')
     try {
-      // Prefer full canvas save so custom image/shape/chart content is kept
-      await presentationService.saveCanvas(
+      const body =
+        payload.presetId && !payload.content && !payload.placement
+          ? { presetId: payload.presetId }
+          : {
+              type,
+              placement,
+              content,
+              layer: existing.length + 1,
+              ...(payload.presetId ? { presetId: payload.presetId } : {}),
+              ...(payload.role ? { role: payload.role } : {}),
+            }
+
+      const result = await presentationService.insertElement(
         workspaceId,
         presentationId,
         slideId,
-        nextElementsDoc
+        body
       )
-      try {
-        const data = await presentationService.getPresentation(workspaceId, presentationId)
-        const slides = extractSlidesFromPresentation(data)
-        const remote = slides.find((s) => s.id === slideId)
-        const remoteEls = remote?.elements?.elements || []
-        const stillHasMedia =
-          type !== 'image' && type !== 'icon'
-            ? true
-            : remoteEls.some(
-                (el) =>
-                  (el.content?.url || el.content?.src) === (content.url || content.src)
-              )
-        if (stillHasMedia && remoteEls.length >= nextElementsDoc.elements.length) {
-          setLocalSlides(slides)
-          setThemeTokens(
-            data?.deck?.themeTokens ||
-              data?.themeTokens ||
-              data?.presentation?.deck?.themeTokens ||
-              null
-          )
-        }
-        // else keep optimistic local canvas — backend dropped rich content
-      } catch {
-        // keep optimistic state
+      const slideFromApi = extractSlideFromMutation(result)
+      const elementFromApi = extractElementFromMutation(result)
+      if (slideFromApi) {
+        applySlideUpdate(slideFromApi)
+      } else {
+        await refreshSlide(slideId)
       }
+      if (elementFromApi?.id) setSelectedElementId(elementFromApi.id)
     } catch (err) {
-      // Fallback: try insertElement API, then keep optimistic UI either way
-      try {
-        await presentationService.insertElement(workspaceId, presentationId, slideId, {
-          type,
-          ...(payload.presetId ? { presetId: payload.presetId } : {}),
-          content,
-          placement,
-        })
-      } catch (insertErr) {
-        if (payload.presetId) {
-          try {
-            await presentationService.insertElement(workspaceId, presentationId, slideId, {
-              presetId: payload.presetId,
-            })
-          } catch {
-            setError(
-              insertErr.message ||
-                err.message ||
-                'Could not sync to server — element kept locally on this slide'
-            )
+      if (err instanceof PresentationConflictError) {
+        setError('Presentation is generating — edits are locked until it finishes.')
+      } else if (err?.status === 400) {
+        setError(err.message || `Max ${PPT_CAPS.ELEMENTS_PER_SLIDE} elements per slide`)
+      } else {
+        // Fallback: full canvas replace so rich local content is not lost
+        try {
+          const localEl = {
+            id: `el-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+            type,
+            content,
+            placement,
+            layer: existing.length + 1,
+            ...(payload.presetId ? { presetId: payload.presetId } : {}),
           }
-        } else {
-          setError(
-            insertErr.message ||
-              err.message ||
-              'Could not sync to server — element kept locally on this slide'
+          const canvasDoc = buildCanvasDoc(slide, {
+            aspectRatio,
+            elements: [...existing, localEl],
+          })
+          const saved = await presentationService.saveCanvas(
+            workspaceId,
+            presentationId,
+            slideId,
+            canvasDoc
           )
+          const slideFromApi = extractSlideFromMutation(saved)
+          if (slideFromApi) applySlideUpdate(slideFromApi)
+          else await refreshSlide(slideId)
+          setSelectedElementId(localEl.id)
+        } catch (saveErr) {
+          setError(saveErr.message || err.message || 'Failed to insert element')
         }
       }
     } finally {
@@ -722,15 +1090,194 @@ export default function AIPptEditor({
     }
   }
 
+  const handleDeleteElement = useCallback(async () => {
+    const slideId = selectedSlideId || localSlides[0]?.id
+    const elementId = selectedElementId
+    if (!slideId || !elementId || isGenerating) return
+
+    const slide = localSlides.find((s) => s.id === slideId)
+    const existing = slide?.elements?.elements || []
+    const nextElements = existing.filter((el) => el.id !== elementId)
+    const nextDoc = buildCanvasDoc(slide, { aspectRatio, elements: nextElements })
+    setLocalSlides((prev) =>
+      prev.map((s) => (s.id === slideId ? { ...s, elements: nextDoc } : s))
+    )
+    setSelectedElementId(null)
+
+    if (!workspaceId || !presentationId) return
+
+    try {
+      const result = await presentationService.deleteElement(
+        workspaceId,
+        presentationId,
+        slideId,
+        elementId
+      )
+      const slideFromApi = extractSlideFromMutation(result)
+      if (slideFromApi) applySlideUpdate(slideFromApi)
+    } catch (err) {
+      setError(err.message || 'Failed to delete element')
+      await refreshSlide(slideId).catch(() => {})
+    }
+  }, [
+    selectedSlideId,
+    selectedElementId,
+    localSlides,
+    isGenerating,
+    aspectRatio,
+    workspaceId,
+    presentationId,
+    applySlideUpdate,
+    refreshSlide,
+  ])
+
+  const handleReorderSelected = useCallback(
+    async (direction) => {
+      const slideId = selectedSlideId || localSlides[0]?.id
+      const elementId = selectedElementId
+      if (!slideId || !elementId || isGenerating) return
+
+      const slide = localSlides.find((s) => s.id === slideId)
+      const existing = [...(slide?.elements?.elements || [])]
+      const idx = existing.findIndex((el) => el.id === elementId)
+      if (idx < 0) return
+      const swapWith = direction === 'forward' ? idx + 1 : idx - 1
+      if (swapWith < 0 || swapWith >= existing.length) return
+      ;[existing[idx], existing[swapWith]] = [existing[swapWith], existing[idx]]
+      const elementIds = existing.map((el) => el.id)
+      const nextDoc = buildCanvasDoc(slide, {
+        aspectRatio,
+        elements: existing.map((el, i) => ({ ...el, layer: i + 1 })),
+      })
+      setLocalSlides((prev) =>
+        prev.map((s) => (s.id === slideId ? { ...s, elements: nextDoc } : s))
+      )
+
+      if (!workspaceId || !presentationId) return
+      try {
+        const result = await presentationService.reorderElements(
+          workspaceId,
+          presentationId,
+          slideId,
+          elementIds
+        )
+        const slideFromApi = extractSlideFromMutation(result)
+        if (slideFromApi) applySlideUpdate(slideFromApi)
+      } catch (err) {
+        setError(err.message || 'Failed to reorder elements')
+        await refreshSlide(slideId).catch(() => {})
+      }
+    },
+    [
+      selectedSlideId,
+      selectedElementId,
+      localSlides,
+      isGenerating,
+      aspectRatio,
+      workspaceId,
+      presentationId,
+      applySlideUpdate,
+      refreshSlide,
+    ]
+  )
+
+  const handleImageAuthError = useCallback(
+    async (elementId) => {
+      const slideId = selectedSlideId || localSlides[0]?.id
+      if (!slideId || !workspaceId || !presentationId) return
+      const key = `${slideId}:${elementId || '*'}`
+      if (imageRefreshInFlight.current.has(key)) return
+      imageRefreshInFlight.current.add(key)
+      try {
+        await refreshSlide(slideId)
+      } catch {
+        // ignore refresh failures; image stays dimmed by browser
+      } finally {
+        imageRefreshInFlight.current.delete(key)
+      }
+    },
+    [selectedSlideId, localSlides, workspaceId, presentationId, refreshSlide]
+  )
+
+  const handleMediaAttached = useCallback(
+    async (result) => {
+      const slide = extractSlideFromMutation(result)
+      if (slide) {
+        applySlideUpdate(slide)
+        return
+      }
+      const slideId = selectedSlideId || localSlides[0]?.id
+      if (slideId) await refreshSlide(slideId)
+    },
+    [applySlideUpdate, refreshSlide, selectedSlideId, localSlides]
+  )
+
+  const handleApplyLayout = useCallback(
+    async (templateId) => {
+      const slideId = selectedSlideId || localSlides[0]?.id
+      if (!slideId || !templateId || !workspaceId || !presentationId || isGenerating) return
+      setBusy(true)
+      setError('')
+      try {
+        const result = await presentationService.applyLayout(
+          workspaceId,
+          presentationId,
+          slideId,
+          templateId
+        )
+        const slide = extractSlideFromMutation(result)
+        if (slide) applySlideUpdate(slide)
+        else await refreshSlide(slideId)
+        setSelectedElementId(null)
+      } catch (err) {
+        if (err instanceof PresentationConflictError) {
+          setError('Cannot apply layout while generating.')
+        } else {
+          setError(err.message || 'Failed to apply layout')
+        }
+      } finally {
+        setBusy(false)
+      }
+    },
+    [
+      selectedSlideId,
+      localSlides,
+      workspaceId,
+      presentationId,
+      isGenerating,
+      applySlideUpdate,
+      refreshSlide,
+    ]
+  )
+
+  useEffect(() => {
+    const onKey = (e) => {
+      const tag = String(e.target?.tagName || '').toLowerCase()
+      if (tag === 'input' || tag === 'textarea' || e.target?.isContentEditable) return
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedElementId) {
+        e.preventDefault()
+        handleDeleteElement()
+      }
+      if (e.key === ']' && selectedElementId) {
+        e.preventDefault()
+        handleReorderSelected('forward')
+      }
+      if (e.key === '[' && selectedElementId) {
+        e.preventDefault()
+        handleReorderSelected('back')
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [selectedElementId, handleDeleteElement, handleReorderSelected])
+
   const handleChangeTransition = async (transitionId) => {
     const slideId = selectedSlideId || localSlides[0]?.id
     if (!slideId || isGenerating) return
 
     const slide = localSlides.find((s) => s.id === slideId)
     const nextElements = {
-      version: slide?.elements?.version || 1,
-      canvas: slide?.elements?.canvas || { width: CANVAS_W, height: CANVAS_H },
-      elements: slide?.elements?.elements || [],
+      ...buildCanvasDoc(slide, { aspectRatio }),
       transition: transitionId,
       ...(slide?.elements?.contributorStatus
         ? { contributorStatus: slide.elements.contributorStatus }
@@ -748,12 +1295,10 @@ export default function AIPptEditor({
     if (!workspaceId || !presentationId) return
 
     try {
-      await Promise.allSettled([
-        presentationService.patchSlide(workspaceId, presentationId, slideId, {
-          transition: transitionId,
-        }),
-        presentationService.saveCanvas(workspaceId, presentationId, slideId, nextElements),
-      ])
+      await presentationService.patchSlide(workspaceId, presentationId, slideId, {
+        transition: transitionId,
+      })
+      queueCanvasSave(slideId, nextElements)
     } catch {
       // Keep optimistic local selection even if sync fails
     }
@@ -765,9 +1310,7 @@ export default function AIPptEditor({
 
     const slide = localSlides.find((s) => s.id === slideId)
     const nextElements = {
-      version: slide?.elements?.version || 1,
-      canvas: slide?.elements?.canvas || { width: CANVAS_W, height: CANVAS_H },
-      elements: slide?.elements?.elements || [],
+      ...buildCanvasDoc(slide, { aspectRatio }),
       contributorStatus: statusId,
       ...(slide?.elements?.transition ? { transition: slide.elements.transition } : {}),
     }
@@ -783,19 +1326,14 @@ export default function AIPptEditor({
     if (!workspaceId || !presentationId) return
 
     try {
-      await Promise.allSettled([
-        presentationService.patchSlide(workspaceId, presentationId, slideId, {
-          contributorStatus: statusId,
-        }),
-        presentationService.saveCanvas(workspaceId, presentationId, slideId, nextElements),
-      ])
+      await presentationService.patchSlide(workspaceId, presentationId, slideId, {
+        contributorStatus: statusId,
+      })
+      queueCanvasSave(slideId, nextElements)
     } catch {
       // Keep optimistic local selection
     }
   }
-
-  const selectedSlide =
-    localSlides.find((s) => s.id === selectedSlideId) || localSlides[0] || null
 
   const generationPrompt =
     config.prompt ||
@@ -816,7 +1354,9 @@ export default function AIPptEditor({
   }
 
   const openMediaForBackground = () => {
-    setError('Use Media → Unsplash / Upload, then place the image. Dedicated slide background control is next.')
+    setError(
+      'Use Media → Upload / Library / Stock to attach an image. Select an existing image element first to replace it.'
+    )
   }
 
   const handleExport = async (format) => {
@@ -912,10 +1452,25 @@ export default function AIPptEditor({
         <div className="aig-editor-nav-center">
           <InsertToolbar
             orientation="horizontal"
-            disabled={isGenerating || busy}
+            disabled={isGenerating || busy || atElementCap}
             workspaceId={workspaceId}
+            presentationId={presentationId}
+            slideId={selectedSlide?.id}
+            targetElementId={
+              selectedSlide?.elements?.elements?.find((el) => el.id === selectedElementId)
+                ?.type === 'image'
+                ? selectedElementId
+                : null
+            }
             brandKits={brandKits}
+            elementPresets={elementPresets}
             onInsert={handleInsertElement}
+            onMediaAttached={handleMediaAttached}
+            insertDisabledReason={
+              atElementCap
+                ? `Max ${PPT_CAPS.ELEMENTS_PER_SLIDE} elements per slide`
+                : undefined
+            }
           />
         </div>
 
@@ -1027,7 +1582,26 @@ export default function AIPptEditor({
                     </button>
                   </div>
 
-                  <SlideStage slide={slide} themeVisual={themeVisual} />
+                  <SlideStage
+                    slide={slide}
+                    themeVisual={themeVisual}
+                    aspectRatio={aspectRatio}
+                    editable={!isGenerating && !busy && selectedSlideId === slide.id}
+                    selectedElementId={
+                      selectedSlideId === slide.id ? selectedElementId : null
+                    }
+                    onSelectElement={(id) => {
+                      setSelectedSlideId(slide.id)
+                      setSelectedElementId(id)
+                    }}
+                    onPlacementLive={(elementId, placement) =>
+                      handlePlacementLive(slide.id, elementId, placement)
+                    }
+                    onPlacementCommit={(elementId, placement) =>
+                      handlePlacementCommit(slide.id, elementId, placement)
+                    }
+                    onImageAuthError={handleImageAuthError}
+                  />
                 </div>
 
                 <div className="aig-scroll-add-slide-divider">
@@ -1065,7 +1639,14 @@ export default function AIPptEditor({
           generationPrompt={generationPrompt}
           slide={selectedSlide}
           themeVisual={themeVisual}
+          workspaceId={workspaceId}
           disabled={isGenerating || busy}
+          selectedElementId={selectedElementId}
+          onSelectElement={setSelectedElementId}
+          onBringForward={() => handleReorderSelected('forward')}
+          onSendBackward={() => handleReorderSelected('back')}
+          onDeleteElement={handleDeleteElement}
+          onApplyLayout={handleApplyLayout}
           onResetBackground={() =>
             setError('Background reset will apply once slide theme editing is connected.')
           }

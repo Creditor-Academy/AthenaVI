@@ -84,7 +84,13 @@ function parseCsv(text) {
   return { labels, series }
 }
 
-export default function ChartPanel({ onInsert, disabled }) {
+const CHART_PRESET_IDS = {
+  column: 'chart_bar',
+  'column-grouped': 'chart_column_grouped',
+  bar: 'chart_bar',
+}
+
+export default function ChartPanel({ onInsert, disabled, elementPresets = [] }) {
   const [sourceId, setSourceId] = useState('manual')
   const [csvData, setCsvData] = useState(null)
   const [csvError, setCsvError] = useState('')
@@ -175,16 +181,26 @@ export default function ChartPanel({ onInsert, disabled }) {
                 className="ppt-chart-tile"
                 disabled={disabled || (sourceId === 'csv' && !csvData)}
                 title={item.label}
-                onClick={() =>
+                onClick={() => {
+                  const presetFromApi = (elementPresets || []).find(
+                    (p) =>
+                      p.type === 'chart' &&
+                      (p.presetId === item.id ||
+                        p.content?.chartType === item.chartType)
+                  )
                   onInsert({
                     type: 'chart',
+                    presetId:
+                      presetFromApi?.presetId ||
+                      CHART_PRESET_IDS[item.chartType] ||
+                      undefined,
                     content: {
                       chartType: item.chartType,
                       data: dataForInsert,
                       colors: ['#7C3AED', '#A78BFA', '#FDBA74'],
                     },
                   })
-                }
+                }}
               >
                 <span className="ppt-chart-thumb-wrap">
                   <ChartThumb chartType={item.chartType} />

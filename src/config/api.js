@@ -178,6 +178,12 @@ const API_CONFIG = {
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/elements/${elementId}`,
       SLIDE_ELEMENTS_REORDER: (workspaceId, presentationId, slideId) =>
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/elements/reorder`,
+      SLIDE_MEDIA: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/media`,
+      ATTACH_ASSET: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/attach-asset`,
+      INSERT_STOCK: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/insert-stock`,
       REGENERATE: (workspaceId, presentationId, slideId) =>
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/regenerate`,
       EXPORT: (workspaceId, presentationId) =>
