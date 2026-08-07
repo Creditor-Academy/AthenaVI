@@ -683,15 +683,6 @@ function Dashboard({ onCreate, initialSection }) {
             />
           )}
           {section === 'brandkits' && <BrandKits />}
-          {section === 'image-ai' && (
-            <SlidesComingSoon
-              section={section}
-              onBackHome={() => goToSection('home')}
-              createContext={
-                createLocationContext?.optionId === 'image-ai' ? createLocationContext : null
-              }
-            />
-          )}
           {section === 'image-editor' && (
             <SlidesComingSoon
               section={section}
@@ -718,7 +709,12 @@ function Dashboard({ onCreate, initialSection }) {
 
       {section === 'image-ai' && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, isolation: 'isolate' }}>
-          <AIImageStudio onBack={() => goToSection('home')} />
+          <AIImageStudio
+            onBack={() => goToSection('home')}
+            createContext={
+              createLocationContext?.optionId === 'image-ai' ? createLocationContext : null
+            }
+          />
         </div>,
         document.body
       )}
