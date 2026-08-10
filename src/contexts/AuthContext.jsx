@@ -21,6 +21,7 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [capabilities, setCapabilities] = useState(null)
   const [capabilitiesLoading, setCapabilitiesLoading] = useState(false)
+  const [isSessionExpired, setIsSessionExpired] = useState(false)
 
   const fetchCapabilities = React.useCallback(async () => {
     if (!authService.isAuthenticated()) {
@@ -53,10 +54,18 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const onTokenRefreshed = () => {
+      setIsSessionExpired(false)
       fetchCapabilities()
     }
+    const onSessionExpired = () => {
+      setIsSessionExpired(true)
+    }
     window.addEventListener('auth:token-refreshed', onTokenRefreshed)
-    return () => window.removeEventListener('auth:token-refreshed', onTokenRefreshed)
+    window.addEventListener('auth:session-expired', onSessionExpired)
+    return () => {
+      window.removeEventListener('auth:token-refreshed', onTokenRefreshed)
+      window.removeEventListener('auth:session-expired', onSessionExpired)
+    }
   }, [fetchCapabilities])
 
   // Check authentication status on mount
@@ -279,6 +288,7 @@ export const AuthProvider = ({ children }) => {
 
   // Logout function
   const logout = async () => {
+    setIsSessionExpired(false)
     try {
       await authService.logout()
       setUser(null)
@@ -295,6 +305,7 @@ export const AuthProvider = ({ children }) => {
 
   // Logout from all devices function
   const logoutAll = async () => {
+    setIsSessionExpired(false)
     try {
       await authService.logoutAll()
       setUser(null)
@@ -308,6 +319,22 @@ export const AuthProvider = ({ children }) => {
       setCapabilities(null)
     }
   }
+
+  const handleSessionExpiredLogout = React.useCallback(async (setView) => {
+    setIsSessionExpired(false)
+    try {
+      await authService.logout()
+    } catch (e) {
+      console.error('Logout error on session expired:', e)
+    } finally {
+      setUser(null)
+      setIsAuthenticated(false)
+      setCapabilities(null)
+      if (typeof setView === 'function') {
+        setView('login')
+      }
+    }
+  }, [])
 
   // Update user data
   const updateUser = React.useCallback((newUserData) => {
@@ -323,6 +350,9 @@ export const AuthProvider = ({ children }) => {
     user,
     loading,
     isAuthenticated,
+    isSessionExpired,
+    setIsSessionExpired,
+    handleSessionExpiredLogout,
     capabilities,
     capabilitiesLoading,
     canAccessSuperadminPortal,
