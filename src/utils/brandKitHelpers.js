@@ -15,10 +15,10 @@ export function emptyBrandKitData() {
       accent: 'c2',
     },
     fonts: {
-      heading: { fontPairingId: null, family: null },
-      subheading: { fontPairingId: null, family: null },
-      body: { fontPairingId: null, family: null },
-      tertiary: { fontPairingId: null, family: null },
+      heading: { fontPairingId: null, family: null, weight: '700', size: '48px', lineHeight: '1.2' },
+      subheading: { fontPairingId: null, family: null, weight: '600', size: '20px', lineHeight: '28px' },
+      body: { fontPairingId: null, family: null, weight: '400', size: '16px', lineHeight: '24px' },
+      tertiary: { fontPairingId: null, family: null, weight: '600', size: '20px', lineHeight: '28px' },
     },
     voice: {
       tone: '',

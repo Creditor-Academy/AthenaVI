@@ -3589,12 +3589,17 @@
   border-radius: 16px;
   padding: 24px;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   gap: 16px;
   transition: border-color 0.25s ease, box-shadow 0.25s ease;
   animation: bk-rise 0.3s ease both;
+  z-index: 1;
+}
+
+.bk-type-specimen-box:has(.bk-type-metric-trigger.is-open) {
+  z-index: 12;
 }
 
 .bk-type-specimen-box::before {
@@ -3629,6 +3634,8 @@
   gap: 16px;
   border-bottom: 1px solid var(--bk-border);
   padding-bottom: 12px;
+  position: relative;
+  z-index: 6;
 }
 
 .bk-type-box-tag {
@@ -3665,20 +3672,42 @@
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.bk-type-inline-select {
-  background: var(--bk-page);
-  border: 1px solid var(--bk-border);
-  border-radius: 8px;
-  padding: 6px 10px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--bk-text);
-  outline: none;
-  cursor: pointer;
-  transition: border-color 0.15s ease;
+.bk-type-font-select {
+  --workspace-header-control-height: 40px;
+  min-width: 200px;
+  max-width: 260px;
+  width: min(100%, 260px);
 }
 
-.bk-type-inline-select:focus,
+.bk-type-font-select .workspace-header-control__trigger {
+  width: 100%;
+}
+
+.bk-type-font-select .workspace-header-control__value {
+  max-width: 140px;
+}
+
+.bk-type-font-select.is-disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.bk-type-font-menu {
+  left: 0;
+  right: auto;
+  min-width: 100%;
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 40;
+  scrollbar-width: thin;
+}
+
+.bk-type-font-menu .workspace-header-dropdown__item {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .bk-type-inline-input:focus {
   border-color: var(--bk-accent);
   box-shadow: 0 0 0 3px var(--bk-accent-soft);
@@ -3716,14 +3745,107 @@
   max-width: 48rem;
 }
 
-/* Spec Badges Row */
+/* Spec controls row — label outside above field container */
 .bk-type-box-badges {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding: 0 0 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--bk-border) 60%, transparent);
+  margin: 0;
+}
+
+.bk-type-box-badges--editable {
+  align-items: stretch;
+}
+
+.bk-type-metric {
+  position: relative;
   display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.bk-type-metric .bk-tb-lbl {
+  padding-left: 2px;
+}
+
+.bk-type-metric.is-disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.bk-type-metric-input {
+  width: 100%;
+  min-height: 40px;
+  box-sizing: border-box;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0 12px;
+  outline: none;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  font-family: inherit;
+}
+
+.bk-type-metric-input:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border-color));
+}
+
+.bk-type-metric-input:focus,
+.bk-type-metric-trigger.is-open {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent);
+}
+
+.bk-type-metric-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.bk-type-metric-trigger {
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding-top: 14px;
-  border-top: 1px solid color-mix(in srgb, var(--bk-border) 60%, transparent);
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.bk-type-metric-trigger__value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bk-type-metric-trigger__chevron {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.bk-type-metric-trigger__chevron.open {
+  transform: rotate(180deg);
+  color: var(--primary);
+}
+
+.bk-type-metric .bk-type-font-menu {
+  left: 0;
+  right: 0;
+  min-width: 100%;
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .bk-type-box-badges {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .bk-type-badge {
