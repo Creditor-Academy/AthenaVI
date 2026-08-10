@@ -6,6 +6,7 @@ import {
   MdInfoOutline,
 } from 'react-icons/md'
 import KitCard from './KitCard'
+import BrandKitsSkeleton from '../../../pages/page-skeleton/BrandKitsSkeleton'
 
 export default function BrandKitsListView({
   viewMode,
@@ -14,6 +15,7 @@ export default function BrandKitsListView({
   openCreate,
   error,
   brandKits,
+  loading = false,
   menuOpen,
   setMenuOpen,
   setMenuRef,
@@ -69,17 +71,18 @@ export default function BrandKitsListView({
             <span>{error}</span>
           </div>
         )}
-        {!canWrite && (
+        {!loading && !canWrite && (
           <div className="bk-info-banner">
             <MdInfoOutline size={16} />
             View only — ask an owner or admin to create or edit brand kits.
           </div>
         )}
 
-        {/* Main Content List / Grid Area */}
         <div className="brandkits-main-grid">
           <div className="brandkits-content-col" style={{ width: '100%' }}>
-            {brandKits.length === 0 ? (
+            {loading ? (
+              <BrandKitsSkeleton />
+            ) : brandKits.length === 0 ? (
               <div className="bk-empty-card">
                 <div className="bk-empty-icon-badge">
                   <MdPalette size={38} />
@@ -102,25 +105,25 @@ export default function BrandKitsListView({
                   {brandKits.length} brand kit{brandKits.length === 1 ? '' : 's'}
                 </p>
                 <div className={viewMode === 'grid' ? 'brandkits-grid' : 'brandkits-list'}>
-                {brandKits.map((kit, index) => (
-                  <KitCard
-                    key={kit.id}
-                    kit={kit}
-                    index={index}
-                    viewMode={viewMode}
-                    canWrite={canWrite}
-                    menuOpen={menuOpen}
-                    setMenuOpen={setMenuOpen}
-                    setMenuRef={setMenuRef}
-                    onEdit={openEdit}
-                    onSetDefault={handleSetDefault}
-                    onCopyId={handleCopyId}
-                    onDelete={handleDelete}
-                  />
-                ))}
-              </div>
-            </>
-          )}
+                  {brandKits.map((kit, index) => (
+                    <KitCard
+                      key={kit.id}
+                      kit={kit}
+                      index={index}
+                      viewMode={viewMode}
+                      canWrite={canWrite}
+                      menuOpen={menuOpen}
+                      setMenuOpen={setMenuOpen}
+                      setMenuRef={setMenuRef}
+                      onEdit={openEdit}
+                      onSetDefault={handleSetDefault}
+                      onCopyId={handleCopyId}
+                      onDelete={handleDelete}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
