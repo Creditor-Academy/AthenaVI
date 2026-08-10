@@ -217,6 +217,8 @@ const API_CONFIG = {
   }
 }
 
+import { triggerSessionExpired } from '../utils/apiError.js'
+
 // Helper function to build full URLs
 export const buildUrl = (endpoint) => {
   return `${API_CONFIG.BASE_URL}${endpoint}`
@@ -229,6 +231,14 @@ export const getAuthHeaders = () => {
     ...API_CONFIG.HEADERS,
     ...(token && { 'Authorization': `Bearer ${token}` })
   }
+}
+
+// Helper function to check fetch response status for auth expiration
+export const checkAuthResponse = (response) => {
+  if (response && response.status === 401) {
+    triggerSessionExpired()
+  }
+  return response
 }
 
 export default API_CONFIG

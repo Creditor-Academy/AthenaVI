@@ -2,7 +2,7 @@
 // This service handles all user-related API calls
 
 // Import from existing API config to maintain consistency
-import API_CONFIG, { buildUrl, getAuthHeaders } from '../config/api.js'
+import API_CONFIG, { buildUrl, getAuthHeaders, checkAuthResponse } from '../config/api.js'
 
 class UserService {
   constructor() {
@@ -23,6 +23,7 @@ class UserService {
         headers: headers
       });
 
+      checkAuthResponse(response);
       console.log('Response status:', response.status);
 
       if (!response.ok) {

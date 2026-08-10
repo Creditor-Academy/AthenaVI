@@ -16,6 +16,7 @@ export function emptyBrandKitData() {
     },
     fonts: {
       heading: { fontPairingId: null, family: null },
+      subheading: { fontPairingId: null, family: null },
       body: { fontPairingId: null, family: null },
       tertiary: { fontPairingId: null, family: null },
     },
@@ -144,5 +145,15 @@ export function canWriteBrandKits(role) {
   return r === 'OWNER' || r === 'ADMIN'
 }
 
-export const LOGO_ROLES = ['primary', 'secondary', 'icon', 'light', 'dark']
+export const LOGO_ROLES = [
+  'primary',
+  'secondary',
+  'icon',
+  'light-mode',
+  'dark-mode',
+  'with-name-below',
+  'with-name-adjacent',
+  'black',
+  'white',
+]
 export const MEDIA_KINDS = ['logo', 'photo', 'graphic']
