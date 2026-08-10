@@ -682,6 +682,7 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
           listClassName="project-list-view"
           emptyMessage="No recent videos yet."
           emptyIcon={MdHistory}
+          showHeader={false}
         >
           {viewMode === 'list' && (
             <div className="list-header project-list-header">

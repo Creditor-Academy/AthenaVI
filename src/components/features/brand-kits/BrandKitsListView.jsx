@@ -110,7 +110,6 @@ export default function BrandKitsListView({
                       key={kit.id}
                       kit={kit}
                       index={index}
-                      viewMode={viewMode}
                       canWrite={canWrite}
                       menuOpen={menuOpen}
                       setMenuOpen={setMenuOpen}

@@ -9,7 +9,6 @@ import { formatRelativeTime } from '../../../utils/brandKitHelpers'
 
 export default function KitCard({
   kit,
-  viewMode,
   canWrite,
   menuOpen,
   setMenuOpen,
@@ -52,18 +51,6 @@ export default function KitCard({
 
       <div className="brandkit-card-body">
         <div className="brandkit-info">
-          {viewMode === 'grid' && (
-            <div className="brandkit-swatches">
-              {ribbonColors.slice(0, 4).map((c) => (
-                <span
-                  key={c.id}
-                  className="brandkit-swatch"
-                  style={{ background: c.hex }}
-                  title={c.name}
-                />
-              ))}
-            </div>
-          )}
           <div style={{ minWidth: 0 }}>
             <h3 className="brandkit-name">{kit.name}</h3>
             <div className="brandkit-meta">
