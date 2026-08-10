@@ -16,6 +16,8 @@ import {
   Maximize2,
   X,
   Home,
+  Pencil,
+  Zap,
 } from 'lucide-react'
 import imageGenService, {
   ImageGenRateLimitError,
@@ -81,6 +83,30 @@ const SUGGESTION_PILLS = [
   'Cinematic wide shot',
 ]
 
+/** Visual previews for catalog style ids from GET /api/image-gen/styles */
+const STYLE_PREVIEW_BY_ID = {
+  cinematic:
+    'https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=320&auto=format&fit=crop',
+  photoreal:
+    'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=320&auto=format&fit=crop',
+  flat_illustration:
+    'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=320&auto=format&fit=crop',
+  '3d_render':
+    'https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=320&auto=format&fit=crop',
+  watercolor:
+    'https://images.unsplash.com/photo-1513364776144-60967b0f800f?q=80&w=320&auto=format&fit=crop',
+  corporate:
+    'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=320&auto=format&fit=crop',
+  playful:
+    'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=320&auto=format&fit=crop',
+  dark_moody:
+    'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=320&auto=format&fit=crop',
+  minimal:
+    'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=320&auto=format&fit=crop',
+  neon:
+    'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=320&auto=format&fit=crop',
+}
+
 const GEN_STATUS_LINES = [
   'Understanding your prompt…',
   'Composing the frame…',
@@ -128,6 +154,15 @@ function friendlyError(err) {
   return err?.message || 'Something went wrong. Please try again.'
 }
 
+function getFriendlyModelName(model) {
+  const nameMap = {
+    'gpt-image-1': 'Standard Quality',
+    'gpt-image-1-hd': 'High Quality (HD)',
+    'dall-e-3': 'DALL-E 3 (Legacy)',
+  }
+  return nameMap[model.id] || model.name
+}
+
 function StepProgress({ current, onJump }) {
   const idx = STEPS.findIndex((s) => s.id === current)
   return (
@@ -156,22 +191,16 @@ function StepProgress({ current, onJump }) {
 }
 
 function FormatCard({ format, selected, onSelect }) {
-  const ratio = format.width / format.height
-  let previewW = 36
-  let previewH = 36
-  if (ratio >= 2.2) {
-    previewW = 52
-    previewH = 18
-  } else if (ratio >= 1.4) {
-    previewW = 46
-    previewH = 28
-  } else if (ratio <= 0.7) {
-    previewW = 20
-    previewH = 36
-  } else if (ratio < 1) {
-    previewW = 26
-    previewH = 36
+  const ratio = format.width / Math.max(format.height, 1)
+  const stage = 72
+  let previewW = stage
+  let previewH = stage / ratio
+  if (previewH > stage) {
+    previewH = stage
+    previewW = stage * ratio
   }
+  previewW = Math.max(22, Math.round(previewW))
+  previewH = Math.max(22, Math.round(previewH))
 
   const aspect = formatAspect(format.width, format.height)
 
@@ -180,20 +209,30 @@ function FormatCard({ format, selected, onSelect }) {
       type="button"
       className={`aig-format-card ${selected ? 'is-selected' : ''}`}
       onClick={() => onSelect(format)}
+      aria-pressed={selected}
     >
-      <div
-        className="aig-format-preview"
-        style={{ width: previewW, height: previewH }}
-        aria-hidden
-      />
+      <div className="aig-format-stage" aria-hidden>
+        <div
+          className="aig-format-preview"
+          style={{ width: previewW, height: previewH }}
+        >
+          <span className="aig-format-preview-grid" />
+          <span className="aig-format-preview-shine" />
+        </div>
+        {selected && (
+          <span className="aig-format-check">
+            <Check size={12} strokeWidth={2.5} />
+          </span>
+        )}
+      </div>
       <div className="aig-format-meta">
-        <strong>
-          {format.name}
-          {aspect ? ` (${aspect})` : ''}
-        </strong>
-        <span>
-          {format.width}×{format.height}
-        </span>
+        <strong>{format.name}</strong>
+        <div className="aig-format-meta-row">
+          {aspect ? <span className="aig-format-aspect">{aspect}</span> : null}
+          <span className="aig-format-size">
+            {format.width}×{format.height}
+          </span>
+        </div>
       </div>
     </button>
   )
@@ -231,14 +270,18 @@ function CanvasPreview({ format, mode, prompt, infoLayoutName }) {
   if (!format) {
     return (
       <div className="aig-canvas-preview aig-canvas-preview--empty">
+        <div className="aig-canvas-empty-art">
+          <Maximize2 size={22} strokeWidth={1.75} />
+        </div>
         <p>Select a canvas</p>
+        <span>Preview will appear here</span>
       </div>
     )
   }
 
   const ratio = format.width / Math.max(format.height, 1)
-  const maxW = 320
-  const maxH = 360
+  const maxW = 340
+  const maxH = 380
   let w = maxW
   let h = w / ratio
   if (h > maxH) {
@@ -247,51 +290,79 @@ function CanvasPreview({ format, mode, prompt, infoLayoutName }) {
   }
 
   const modeLabel = MODE_TABS.find((t) => t.id === mode)?.label || mode
-  const snippet = (prompt || '').trim().slice(0, 72)
+  const snippet = (prompt || '').trim().slice(0, 120)
   const aspectLabel = formatAspect(format.width, format.height) || format.name
 
   return (
     <div className="aig-canvas-preview">
-      <motion.div
-        className="aig-canvas-preview-frame"
-        initial={false}
-        animate={{ width: w, height: h }}
-        transition={{
-          type: 'spring',
-          stiffness: 260,
-          damping: 28,
-          mass: 0.9,
-        }}
-      >
-        <AnimatePresence mode="wait">
+      <div className="aig-canvas-preview-shell">
+        <div className="aig-canvas-preview-ruler aig-canvas-preview-ruler--top" aria-hidden>
+          <span>{format.width}px</span>
+        </div>
+        <div className="aig-canvas-preview-body">
+          <div className="aig-canvas-preview-ruler aig-canvas-preview-ruler--side" aria-hidden>
+            <span>{format.height}px</span>
+          </div>
           <motion.div
-            key={`${format.id}-${mode}`}
-            className="aig-canvas-preview-copy"
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.2 }}
+            className={`aig-canvas-preview-frame aig-canvas-preview-frame--${mode}`}
+            initial={false}
+            animate={{ width: w, height: h }}
+            transition={{
+              type: 'spring',
+              stiffness: 260,
+              damping: 28,
+              mass: 0.9,
+            }}
           >
-            <span className="aig-canvas-preview-kicker">
-              {modeLabel.toUpperCase()} · {aspectLabel}
-            </span>
-            <p className="aig-canvas-preview-title">
-              {snippet || format.name}
-              {snippet.length >= 72 ? '…' : ''}
-            </p>
+            <span className="aig-canvas-preview-grid" aria-hidden />
+            <span className="aig-canvas-preview-orb aig-canvas-preview-orb--a" aria-hidden />
+            <span className="aig-canvas-preview-orb aig-canvas-preview-orb--b" aria-hidden />
+            <span className="aig-canvas-preview-orb aig-canvas-preview-orb--c" aria-hidden />
+            <span className="aig-canvas-corner aig-canvas-corner--tl" aria-hidden />
+            <span className="aig-canvas-corner aig-canvas-corner--tr" aria-hidden />
+            <span className="aig-canvas-corner aig-canvas-corner--bl" aria-hidden />
+            <span className="aig-canvas-corner aig-canvas-corner--br" aria-hidden />
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${format.id}-${mode}`}
+                className="aig-canvas-preview-copy"
+                initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                transition={{ duration: 0.22 }}
+              >
+                <span className="aig-canvas-preview-badge">
+                  <Sparkles size={12} strokeWidth={2.25} />
+                  {modeLabel}
+                  <em>{aspectLabel}</em>
+                </span>
+                <p className="aig-canvas-preview-title">
+                  {snippet || format.name}
+                  {snippet.length >= 120 ? '…' : ''}
+                </p>
+                {!snippet && (
+                  <span className="aig-canvas-preview-hint">Your prompt will preview here</span>
+                )}
+              </motion.div>
+            </AnimatePresence>
           </motion.div>
-        </AnimatePresence>
-      </motion.div>
-      <motion.p
+        </div>
+      </div>
+
+      <motion.div
         className="aig-canvas-preview-meta"
         key={`meta-${format.id}`}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
       >
-        {format.name} · {format.width} × {format.height} px
-        {mode === 'infographic' && infoLayoutName ? ` · ${infoLayoutName}` : ''}
-      </motion.p>
+        <strong>{format.name}</strong>
+        <span>
+          {format.width} × {format.height} px
+          {mode === 'infographic' && infoLayoutName ? ` · ${infoLayoutName}` : ''}
+        </span>
+      </motion.div>
     </div>
   )
 }
@@ -351,7 +422,7 @@ export default function AIImageStudio({ onBack, createContext = null }) {
   )
 
   const modelsForMode = useMemo(
-    () => models.filter((m) => !m.modes?.length || m.modes.includes(mode)),
+    () => models.filter((m) => !m.modes?.length || m.modes.includes(mode)).filter((m) => m.id !== 'dall-e-3'),
     [models, mode]
   )
   const genericFormats = useMemo(
@@ -663,6 +734,10 @@ export default function AIImageStudio({ onBack, createContext = null }) {
       setActionError('This model does not support image tweaks. Try regenerating instead.')
       return
     }
+    if (instruction.length > 2000) {
+      setActionError('Tweak instruction is too long. Maximum 2000 characters allowed.')
+      return
+    }
     const turnId = `turn_${Date.now()}`
     setChatInput('')
     setActionError('')
@@ -720,9 +795,22 @@ export default function AIImageStudio({ onBack, createContext = null }) {
   if (catalogLoading) {
     return (
       <div className="aig-shell aig-shell--loading">
+        <div className="aig-loading-backdrop" aria-hidden>
+          <span className="aig-loading-glow aig-loading-glow--a" />
+          <span className="aig-loading-glow aig-loading-glow--b" />
+        </div>
         <div className="aig-loading-card">
-          <Loader2 className="aig-spin" size={28} />
-          <p>Loading Image Studio…</p>
+          <div className="aig-loading-mark" aria-hidden>
+            <span className="aig-loading-ring" />
+            <Sparkles size={22} strokeWidth={2.1} />
+          </div>
+          <div className="aig-loading-copy">
+            <h2>Image Studio</h2>
+            <p>Preparing models, formats, and styles…</p>
+          </div>
+          <div className="aig-loading-bar" aria-hidden>
+            <span />
+          </div>
         </div>
       </div>
     )
@@ -731,9 +819,17 @@ export default function AIImageStudio({ onBack, createContext = null }) {
   if (catalogError && !formats.length) {
     return (
       <div className="aig-shell aig-shell--loading">
+        <div className="aig-loading-backdrop" aria-hidden>
+          <span className="aig-loading-glow aig-loading-glow--a" />
+        </div>
         <div className="aig-loading-card aig-loading-card--error">
-          <AlertCircle size={28} />
-          <p>{catalogError}</p>
+          <div className="aig-loading-mark aig-loading-mark--error" aria-hidden>
+            <AlertCircle size={22} strokeWidth={2.1} />
+          </div>
+          <div className="aig-loading-copy">
+            <h2>Couldn’t open Image Studio</h2>
+            <p>{catalogError}</p>
+          </div>
           <button type="button" className="aig-btn aig-btn--primary" onClick={onBack}>
             Back home
           </button>
@@ -960,7 +1056,7 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                       onClick={() => setModelId(m.id)}
                     >
                       <div className="aig-model-top">
-                        <strong>{m.name}</strong>
+                        <strong>{getFriendlyModelName(m)}</strong>
                         {m.recommended && <span className="aig-badge">Recommended</span>}
                       </div>
                       <p>{m.description}</p>
@@ -978,16 +1074,32 @@ export default function AIImageStudio({ onBack, createContext = null }) {
               <div className="aig-opt-block">
                 <h3>Style</h3>
                 <div className="aig-style-grid">
-                  {styles.map((s) => (
-                    <button
-                      key={s.id}
-                      type="button"
-                      className={`aig-style-chip ${styleId === s.id ? 'is-selected' : ''}`}
-                      onClick={() => setStyleId(s.id)}
-                    >
-                      {s.name}
-                    </button>
-                  ))}
+                  {styles.map((s) => {
+                    const selected = styleId === s.id
+                    const preview = STYLE_PREVIEW_BY_ID[s.id]
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        className={`aig-style-card ${selected ? 'is-selected' : ''}`}
+                        onClick={() => setStyleId(s.id)}
+                      >
+                        <div className="aig-style-card-thumb">
+                          {preview ? (
+                            <img src={preview} alt="" loading="lazy" />
+                          ) : (
+                            <span className="aig-style-card-fallback" aria-hidden />
+                          )}
+                          {selected && (
+                            <div className="aig-style-card-check">
+                              <Check size={14} strokeWidth={3} />
+                            </div>
+                          )}
+                        </div>
+                        <span className="aig-style-card-label">{s.name}</span>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 
@@ -1062,6 +1174,9 @@ export default function AIImageStudio({ onBack, createContext = null }) {
               {mode === 'social' && (
                 <div className="aig-opt-block aig-opt-block--social">
                   <h3>Optional text overlay</h3>
+                  <p className="aig-opt-hint">
+                    Add headline and subheadline for better on-canvas text. Keep copy short for readability.
+                  </p>
                   <div className="aig-field-row">
                     <label>
                       Headline
@@ -1084,6 +1199,12 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                       />
                     </label>
                   </div>
+                  {selectedFormat?.safeZone && (
+                    <div className="aig-safe-zone-tip">
+                      <span className="aig-safe-zone-label">Safe zone:</span>
+                      <span className="aig-safe-zone-text">{selectedFormat.safeZone}</span>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1106,116 +1227,179 @@ export default function AIImageStudio({ onBack, createContext = null }) {
           {/* ── REVIEW ── */}
           {step === 'review' && (
             <motion.section key="review" className="aig-page aig-page--review" {...stepMotion}>
-              <header className="aig-page-head">
-                <h2>Ready to generate</h2>
-                <p>One last look — then we call the studio (this can take up to a minute).</p>
-              </header>
+              <div className="aig-review-layout">
+                <div className="aig-review-main">
+                  <header className="aig-review-head">
+                    <h2>Ready to generate</h2>
+                    <p>Confirm the brief, then send it to the studio. Usually under a minute.</p>
+                  </header>
 
-              <div className="aig-review-card">
-                <div className="aig-review-prompt">
-                  <span className="aig-review-label">Prompt</span>
-                  <p>{prompt}</p>
-                  <button type="button" className="aig-link" onClick={() => setStep('prompt')}>
-                    Edit
-                  </button>
+                  <div className="aig-review-prompt-panel">
+                    <div className="aig-review-prompt-top">
+                      <span className="aig-review-label">Your prompt</span>
+                      <button
+                        type="button"
+                        className="aig-review-edit"
+                        onClick={() => setStep('prompt')}
+                      >
+                        <Pencil size={13} />
+                        Edit
+                      </button>
+                    </div>
+                    <p className="aig-review-prompt-body">
+                      {prompt.trim() ||
+                        (mode === 'infographic'
+                          ? 'Infographic will use your section content.'
+                          : 'No prompt yet.')}
+                    </p>
+                    {(headline || subheadline) && (
+                      <div className="aig-review-prompt-extra">
+                        {[headline, subheadline].filter(Boolean).join(' — ')}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="aig-review-tiles">
+                    <p className="aig-review-tiles-label">Settings</p>
+                    <div className="aig-review-tile-grid">
+                      <button
+                        type="button"
+                        className="aig-review-tile"
+                        onClick={() => setStep('canvas')}
+                      >
+                        <span>Mode</span>
+                        <strong>{MODE_TABS.find((t) => t.id === mode)?.label || mode}</strong>
+                      </button>
+                      <button
+                        type="button"
+                        className="aig-review-tile"
+                        onClick={() => setStep('canvas')}
+                      >
+                        <span>Canvas</span>
+                        <strong>
+                          {selectedFormat?.name}
+                          {selectedFormat
+                            ? ` · ${formatAspect(selectedFormat.width, selectedFormat.height)}`
+                            : ''}
+                        </strong>
+                      </button>
+                      {mode === 'infographic' && (
+                        <button
+                          type="button"
+                          className="aig-review-tile"
+                          onClick={() => setStep('canvas')}
+                        >
+                          <span>Layout</span>
+                          <strong>{selectedInfoLayout?.name || '—'}</strong>
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="aig-review-tile"
+                        onClick={() => setStep('options')}
+                      >
+                        <span>Model</span>
+                        <strong>{selectedModel ? getFriendlyModelName(selectedModel) : '—'}</strong>
+                      </button>
+                      <button
+                        type="button"
+                        className="aig-review-tile aig-review-tile--style"
+                        onClick={() => setStep('options')}
+                      >
+                        <span>Style</span>
+                        <strong>
+                          {STYLE_PREVIEW_BY_ID[styleId] && (
+                            <img src={STYLE_PREVIEW_BY_ID[styleId]} alt="" />
+                          )}
+                          {selectedStyle?.name || '—'}
+                        </strong>
+                      </button>
+                      {mode === 'infographic' &&
+                        (infoTitle || filledInfoSections.length > 0) && (
+                          <button
+                            type="button"
+                            className="aig-review-tile"
+                            onClick={() => setStep('options')}
+                          >
+                            <span>Sections</span>
+                            <strong>
+                              {infoTitle ? `${infoTitle} · ` : ''}
+                              {filledInfoSections.length} filled
+                            </strong>
+                          </button>
+                        )}
+                    </div>
+                    <p className="aig-review-tiles-hint">Tap any setting to change it</p>
+                  </div>
+
+                  {actionError && step === 'review' && (
+                    <p className="aig-error-banner">{actionError}</p>
+                  )}
+
+                  <div className="aig-review-back-row">
+                    <button
+                      type="button"
+                      className="aig-btn aig-btn--ghost"
+                      onClick={() => setStep('options')}
+                    >
+                      Back
+                    </button>
+                  </div>
                 </div>
 
-                <ul className="aig-review-list">
-                  <li>
-                    <span>Mode</span>
-                    <strong>
-                      {MODE_TABS.find((t) => t.id === mode)?.label || mode}
-                      <button type="button" onClick={() => setStep('canvas')}>
-                        change
-                      </button>
-                    </strong>
-                  </li>
-                  <li>
-                    <span>Canvas</span>
-                    <strong>
-                      {selectedFormat?.name}
-                      <button type="button" onClick={() => setStep('canvas')}>
-                        change
-                      </button>
-                    </strong>
-                  </li>
-                  {mode === 'infographic' && (
-                    <li>
-                      <span>Layout</span>
-                      <strong>
-                        {selectedInfoLayout?.name}
-                        <button type="button" onClick={() => setStep('canvas')}>
-                          change
-                        </button>
-                      </strong>
-                    </li>
-                  )}
-                  <li>
-                    <span>Model</span>
-                    <strong>
-                      {selectedModel?.name}
-                      <button type="button" onClick={() => setStep('options')}>
-                        change
-                      </button>
-                    </strong>
-                  </li>
-                  <li>
-                    <span>Style</span>
-                    <strong>
-                      {selectedStyle?.name}
-                      <button type="button" onClick={() => setStep('options')}>
-                        change
-                      </button>
-                    </strong>
-                  </li>
-                  {mode === 'infographic' && (infoTitle || filledInfoSections.length > 0) && (
-                    <li>
-                      <span>Sections</span>
-                      <strong>
-                        {infoTitle ? `${infoTitle} · ` : ''}
-                        {filledInfoSections.length} filled
-                        <button type="button" onClick={() => setStep('options')}>
-                          change
-                        </button>
-                      </strong>
-                    </li>
-                  )}
-                  {(headline || subheadline) && (
-                    <li>
-                      <span>Text</span>
-                      <strong>
-                        {[headline, subheadline].filter(Boolean).join(' — ')}
-                      </strong>
-                    </li>
-                  )}
-                  <li className="aig-review-cost">
-                    <span>Credits</span>
-                    <strong>{estimateAc != null ? `${estimateAc} AC` : '—'}</strong>
-                  </li>
-                </ul>
-              </div>
+                <aside className="aig-review-side">
+                  <div className="aig-review-stage">
+                    <div
+                      className="aig-review-stage-frame"
+                      style={{
+                        aspectRatio: selectedFormat
+                          ? `${selectedFormat.width} / ${selectedFormat.height}`
+                          : '1 / 1',
+                      }}
+                    >
+                      {STYLE_PREVIEW_BY_ID[styleId] ? (
+                        <img
+                          src={STYLE_PREVIEW_BY_ID[styleId]}
+                          alt=""
+                          className="aig-review-stage-img"
+                        />
+                      ) : (
+                        <div className="aig-review-stage-fallback" />
+                      )}
+                      <div className="aig-review-stage-veil" />
+                      <div className="aig-review-stage-meta">
+                        <span>{selectedFormat?.name || 'Canvas'}</span>
+                        {selectedFormat && (
+                          <span>
+                            {selectedFormat.width}×{selectedFormat.height}
+                          </span>
+                        )}
+                      </div>
+                    </div>
 
-              {actionError && step === 'review' && (
-                <p className="aig-error-banner">{actionError}</p>
-              )}
+                    {estimateAc != null && (
+                      <div className="aig-review-cost-pill">
+                        <Zap size={13} />
+                        ~{estimateAc} AC on success
+                      </div>
+                    )}
 
-              <div className="aig-page-footer">
-                <button type="button" className="aig-btn aig-btn--ghost" onClick={() => setStep('options')}>
-                  Back
-                </button>
-                <button
-                  type="button"
-                  className="aig-btn aig-btn--generate"
-                  disabled={
-                    isGenerating ||
-                    (!prompt.trim() && !(mode === 'infographic' && filledInfoSections.length > 0))
-                  }
-                  onClick={runGenerate}
-                >
-                  <Sparkles size={18} />
-                  Generate {mode === 'infographic' ? 'infographic' : 'image'}
-                  {estimateAc != null && <em>{estimateAc} AC</em>}
-                </button>
+                    <button
+                      type="button"
+                      className="aig-btn aig-btn--generate aig-review-generate"
+                      disabled={
+                        isGenerating ||
+                        (!prompt.trim() &&
+                          !(mode === 'infographic' && filledInfoSections.length > 0))
+                      }
+                      onClick={runGenerate}
+                    >
+                      <Sparkles size={18} />
+                      Generate {mode === 'infographic' ? 'infographic' : 'image'}
+                      {estimateAc != null && <em>{estimateAc} AC</em>}
+                    </button>
+                  </div>
+                </aside>
               </div>
             </motion.section>
           )}
@@ -1461,7 +1645,13 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                             submitChat()
                           }
                         }}
+                        maxLength={2000}
                       />
+                      <div className="aig-chat-counter">
+                        <span className={chatInput.length > 1900 ? 'aig-chat-counter--warn' : ''}>
+                          {chatInput.length}/2000
+                        </span>
+                      </div>
                       <button
                         type="button"
                         className="aig-chat-send"
