@@ -79,44 +79,46 @@ export default function KitCard({
             </div>
           </div>
         </div>
-
-        {canWrite && (
-          <div
-            className="brandkit-menu-wrap"
-            ref={(el) => setMenuRef?.(kit.id, el)}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              className="brandkit-menu-btn"
-              aria-label="Kit actions"
-              onClick={() => setMenuOpen(menuOpen === kit.id ? null : kit.id)}
-            >
-              <MdMoreVert size={20} />
-            </button>
-            {menuOpen === kit.id && (
-              <div className="brandkit-menu">
-                <button type="button" className="menu-item" onClick={() => onSetDefault(kit.id)}>
-                  {kit.isDefault ? (
-                    <MdStarBorder className="menu-icon" />
-                  ) : (
-                    <MdStar className="menu-icon" />
-                  )}
-                  {kit.isDefault ? 'Default kit' : 'Set as default'}
-                </button>
-                <button type="button" className="menu-item" onClick={() => onCopyId(kit.id)}>
-                  <MdContentCopy className="menu-icon" />
-                  Copy ID
-                </button>
-                <button type="button" className="menu-item delete" onClick={() => onDelete(kit.id)}>
-                  <MdDelete className="menu-icon" />
-                  Delete
-                </button>
-              </div>
-            )}
-          </div>
-        )}
       </div>
+
+      {/* Menu at card root so overflow clipping on ribbon/body cannot cut it off */}
+      {canWrite && (
+        <div
+          className={`brandkit-menu-wrap${menuOpen === kit.id ? ' is-open' : ''}`}
+          ref={(el) => setMenuRef?.(kit.id, el)}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            className="brandkit-menu-btn"
+            aria-label="Kit actions"
+            aria-expanded={menuOpen === kit.id}
+            onClick={() => setMenuOpen(menuOpen === kit.id ? null : kit.id)}
+          >
+            <MdMoreVert size={20} />
+          </button>
+          {menuOpen === kit.id && (
+            <div className="brandkit-menu">
+              <button type="button" className="menu-item" onClick={() => onSetDefault(kit.id)}>
+                {kit.isDefault ? (
+                  <MdStarBorder className="menu-icon" />
+                ) : (
+                  <MdStar className="menu-icon" />
+                )}
+                {kit.isDefault ? 'Default kit' : 'Set as default'}
+              </button>
+              <button type="button" className="menu-item" onClick={() => onCopyId(kit.id)}>
+                <MdContentCopy className="menu-icon" />
+                Copy ID
+              </button>
+              <button type="button" className="menu-item delete" onClick={() => onDelete(kit.id)}>
+                <MdDelete className="menu-icon" />
+                Delete
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

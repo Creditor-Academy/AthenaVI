@@ -288,7 +288,8 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
   position: relative;
   cursor: pointer;
-  overflow: hidden;
+  /* visible so the ⋮ menu + dropdown are not clipped by the card */
+  overflow: visible;
   animation: bk-rise 0.4s ease both;
   text-align: left;
   width: 100%;
@@ -307,6 +308,10 @@
   transform: translateY(-1px);
 }
 
+.brandkit-card:has(.brandkit-menu-wrap.is-open) {
+  z-index: 20;
+}
+
 .brandkit-card:focus-visible {
   outline: 2px solid var(--bk-accent);
   outline-offset: 2px;
@@ -317,6 +322,8 @@
   width: 100%;
   display: flex;
   flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 13px 13px 0 0;
 }
 
 .brandkits-list .brandkit-ribbon {
@@ -324,6 +331,7 @@
   height: auto;
   min-height: 100%;
   flex-direction: column;
+  border-radius: 13px 0 0 13px;
 }
 
 .brandkit-ribbon span {
@@ -346,7 +354,12 @@
   flex-direction: column;
   align-items: stretch;
   padding: 18px;
+  padding-right: 52px;
   gap: 14px;
+}
+
+.brandkits-list .brandkit-card-body {
+  padding-right: 52px;
 }
 
 .brandkit-info {
@@ -413,9 +426,17 @@
 }
 
 .brandkit-menu-wrap {
-  position: relative;
+  position: absolute;
+  top: 18px;
+  right: 10px;
+  z-index: 5;
   flex-shrink: 0;
-  align-self: flex-start;
+}
+
+.brandkits-list .brandkit-menu-wrap {
+  top: 50%;
+  transform: translateY(-50%);
+  right: 12px;
 }
 
 .brandkit-menu-btn {
@@ -423,7 +444,7 @@
   height: 34px;
   border-radius: 8px;
   border: 1px solid transparent;
-  background: transparent;
+  background: var(--bk-surface);
   color: var(--bk-muted);
   cursor: pointer;
   display: flex;
@@ -432,7 +453,8 @@
   transition: all 0.15s ease;
 }
 
-.brandkit-menu-btn:hover {
+.brandkit-menu-btn:hover,
+.brandkit-menu-wrap.is-open .brandkit-menu-btn {
   background: var(--bg-surface, #f8fafc);
   border-color: var(--bk-border);
   color: var(--bk-text);
@@ -450,6 +472,10 @@
   overflow: hidden;
   z-index: 100;
   animation: bk-fade-in 0.15s ease;
+}
+
+.brandkits-list .brandkit-menu {
+  top: calc(100% + 6px);
 }
 
 .menu-item {
