@@ -438,6 +438,32 @@ class PresentationService {
     }
     throw new Error('Timed out waiting for export')
   }
+
+  // ── Import / share / duplicate ─────────────────────────────────────
+
+  async importPresentation(workspaceId, file, { title } = {}) {
+    const form = new FormData()
+    form.append('file', file)
+    if (title) form.append('title', title)
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.IMPORT(workspaceId), {
+      method: 'POST',
+      body: form,
+    })
+  }
+
+  duplicatePresentation(workspaceId, presentationId) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.DUPLICATE(workspaceId, presentationId),
+      { method: 'POST' }
+    )
+  }
+
+  createShareLink(workspaceId, presentationId, { access = 'view' } = {}) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE(workspaceId, presentationId),
+      { method: 'POST', body: JSON.stringify({ access }) }
+    )
+  }
 }
 
 const presentationService = new PresentationService()

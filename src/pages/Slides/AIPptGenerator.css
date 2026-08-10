@@ -2582,18 +2582,20 @@ body {
   flex: 1;
   display: flex;
   position: relative;
-  background: #64748b; /* Darker backdrop like Gamma */
+  background: #f1f5f9;
   overflow: hidden;
 }
 
 .aig-editor-main-scroll {
   flex: 1;
   overflow-y: auto;
-  padding: 40px 0 120px 0;
+  overflow-x: hidden;
+  padding: 40px 88px 120px 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
+  min-width: 0;
 }
 
 .aig-editor-scroll-container {
@@ -2601,6 +2603,15 @@ body {
   max-width: 900px;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  transform: translateX(0) scale(var(--ppt-canvas-zoom, 1));
+  transform-origin: top center;
+  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.aig-editor-main-scroll.is-sidebar-open .aig-editor-scroll-container {
+  transform: translateX(-150px) scale(var(--ppt-canvas-zoom, 1));
 }
 
 .aig-scroll-slide-container {
@@ -2619,7 +2630,7 @@ body {
   aspect-ratio: 16/9;
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-  padding: 24px;
+  padding: 0;
   overflow: hidden;
   transition: box-shadow 0.2s;
 }
@@ -2702,6 +2713,11 @@ body {
 .aig-slide-action-btn:hover {
   background: #f1f5f9;
   color: #0f172a;
+}
+
+.aig-slide-action-btn.is-active {
+  background: #ede9fe;
+  color: #7c3aed;
 }
 
 /* Inline Add Slide Controls Between Slides */
@@ -3388,6 +3404,15 @@ body {
   overflow: hidden;
 }
 
+.aig-slide-stage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
 .ppt-canvas-el-body {
   width: 100%;
   height: 100%;
@@ -3406,13 +3431,6 @@ body {
   cursor: nwse-resize;
   pointer-events: auto;
   z-index: 2;
-}
-
-.aig-slide-stage {
-  position: absolute;
-  inset: 4%;
-  border-radius: 4px;
-  overflow: hidden;
 }
 
 .aig-export-menu {

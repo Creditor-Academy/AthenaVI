@@ -1,0 +1,363 @@
+.ppt-canvas-guides-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 999;
+}
+
+.ppt-canvas-guide-v,
+.ppt-canvas-guide-h {
+  position: absolute;
+  background: #ec4899;
+}
+
+.ppt-canvas-guide-v {
+  width: 1px;
+  top: 0;
+  bottom: 0;
+}
+
+.ppt-canvas-guide-h {
+  height: 1px;
+  left: 0;
+  right: 0;
+}
+
+.ppt-element-toolbar {
+  position: fixed;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+.ppt-element-toolbar-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  color: #334155;
+}
+
+.ppt-element-toolbar-btn.is-active {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.ppt-element-toolbar-divider {
+  width: 1px;
+  height: 24px;
+  background: #e2e8f0;
+  margin: 0 4px;
+}
+
+.ppt-element-toolbar-select {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+  max-width: 120px;
+}
+
+.ppt-element-toolbar-size {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.ppt-element-toolbar-size-input {
+  width: 44px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 12px;
+  padding: 4px;
+}
+
+.ppt-element-toolbar-color input[type='color'] {
+  width: 28px;
+  height: 28px;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.ppt-element-toolbar-spacing {
+  width: 48px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 11px;
+  padding: 4px;
+}
+
+.ppt-text-editable {
+  width: 100%;
+  height: 100%;
+  outline: none;
+  cursor: text;
+  min-height: 1em;
+}
+
+.ppt-text-editable:focus {
+  outline: 2px dashed rgba(59, 130, 246, 0.5);
+  outline-offset: 2px;
+}
+
+.ppt-table-cell-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font: inherit;
+  padding: 4px;
+  min-width: 0;
+}
+
+.ppt-table-cell-input::placeholder {
+  color: #94a3b8;
+  opacity: 0.9;
+}
+
+.ppt-table-cell-input:focus {
+  outline: 2px solid rgba(59, 130, 246, 0.35);
+  outline-offset: -2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.ppt-embed-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.ppt-canvas-el-locked {
+  cursor: not-allowed !important;
+}
+
+.ppt-chart-renderer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.ppt-chart-bars {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.ppt-chart-bars span {
+  flex: 1;
+  border-radius: 4px 4px 0 0;
+  min-height: 4px;
+}
+
+.ppt-chart-line-svg,
+.ppt-chart-pie-svg {
+  flex: 1;
+  width: 100%;
+}
+
+.ppt-chart-kpi {
+  flex: 1;
+  display: grid;
+  place-items: center;
+}
+
+.ppt-chart-kpi-value {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.ppt-share-modal-overlay,
+.ppt-crop-modal-overlay,
+.ppt-quick-menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9500;
+  background: rgba(15, 23, 42, 0.5);
+  display: grid;
+  place-items: center;
+}
+
+.ppt-share-modal,
+.ppt-crop-modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  width: min(440px, 92vw);
+}
+
+.ppt-quick-menu-overlay {
+  place-items: start center;
+  padding-top: 120px;
+}
+
+.ppt-quick-menu {
+  background: #fff;
+  border-radius: 12px;
+  width: min(420px, 92vw);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
+}
+
+.ppt-quick-menu input {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 14px 16px;
+  font-size: 15px;
+  outline: none;
+}
+
+.ppt-quick-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.ppt-quick-menu-item:hover {
+  background: #f8fafc;
+}
+
+.ppt-element-props-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ppt-element-props-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.ppt-element-props-row input[type='range'] {
+  flex: 1;
+}
+
+.ppt-variables-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ppt-variable-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 6px;
+}
+
+.ppt-variable-row input {
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.ppt-comments-panel-list {
+  max-height: 280px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ppt-comment-item {
+  padding: 8px 10px;
+  background: #f8fafc;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.ppt-comment-form textarea {
+  width: 100%;
+  min-height: 56px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 13px;
+}
+
+.ppt-slide-style-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.ppt-slide-style-row label {
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.ppt-slide-style-row input,
+.ppt-slide-style-row select {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.ppt-element-toolbar--panel {
+  position: static;
+  transform: none;
+  left: auto;
+  top: auto;
+  flex-wrap: wrap;
+  box-shadow: none;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 12px;
+  width: 100%;
+}
+
+.ppt-design-panel {
+  max-height: min(78vh, 720px);
+  overflow-y: auto;
+}
+
+.ppt-design-image-preview {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  max-height: 120px;
+  margin-bottom: 8px;
+}
+
+.ppt-design-image-preview img {
+  width: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.aig-slide-stage {
+  box-shadow: none;
+}
+
+.aig-editor-canvas--stage {
+  padding: 0 !important;
+  background: #ffffff !important;
+}

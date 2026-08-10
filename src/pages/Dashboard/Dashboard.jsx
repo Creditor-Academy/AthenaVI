@@ -795,7 +795,24 @@ function Dashboard({ onCreate, initialSection }) {
           }}
         />
       ) : null}
-      {showImportModal && <ImportPowerPointModal onClose={() => setShowImportModal(false)} />}
+      {showImportModal && (
+        <ImportPowerPointModal
+          workspaceId={
+            editorData?.workspaceId ||
+            createLocationContext?.workspaceId ||
+            createLocationInitial.workspaceId ||
+            presentationCreateContext?.workspaceId
+          }
+          onClose={() => setShowImportModal(false)}
+          onImported={({ presentationId, workspaceId, title }) => {
+            setShowImportModal(false)
+            if (presentationId && workspaceId) {
+              setEditorData({ workspaceId, presentationId, title })
+              goToSection('editor')
+            }
+          }}
+        />
+      )}
       {showTranslateModal && <TranslateVideoModal onClose={() => setShowTranslateModal(true)} />}
 
       {/* Navigation Processing Modal */}

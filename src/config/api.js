@@ -208,6 +208,11 @@ const API_CONFIG = {
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/export`,
       EXPORT_STATUS: (workspaceId, presentationId, exportId) =>
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/export/${exportId}`,
+      IMPORT: (workspaceId) => `/api/workspaces/${workspaceId}/presentations/import`,
+      DUPLICATE: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/duplicate`,
+      SHARE: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/share`,
     },
   },
   
