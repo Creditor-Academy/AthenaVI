@@ -5,6 +5,13 @@ import { formatDate } from './superadminUtils'
 import LayoutPolishedPreview, { getGridDims } from '../../../ppt/LayoutPolishedPreview'
 import PackSlidePreview from '../../../ppt/PackSlidePreview'
 import { buildLayoutSchemaMap, canPreviewDeckLayout, enrichLayoutSchemaForPreview } from '../../../../utils/deckLayoutRegistry'
+import {
+  DECK_LAYOUT_SLOT_ROLES,
+  fixDeckLayoutSchemaRoles,
+  getDeckLayoutStarter,
+  listDeckLayoutStarters,
+  validateDeckLayoutSchema,
+} from '../../../../utils/deckLayoutSchema'
 import { aspectRatioToCss, DECK_PACK_THEMES, resolveDeckPackTheme } from '../../../../utils/deckPackTheme'
 import { parseRegion, regionToBox, SLOT_COLORS } from '../../../../utils/layoutPreviewUtils'
 import '../../../../pages/AdminPortal/SuperadminPortal.css'
@@ -137,23 +144,25 @@ const DECK_LAYOUT_PLACEHOLDER = JSON.stringify({
   layout_id: 'grid_insights_chart_v1',
   content_type: 'grid',
   grid: '12-col',
+  preview: { mode: 'grid_insights_chart' },
   slots: [
     { id: 'INSIGHT_CARD_1_BG', region: 'cols 1-3, rows 1-2', role: 'background' },
-    { id: 'INSIGHT_ICON_1',    region: 'cols 1-3, rows 1-2', role: 'icon' },
-    { id: 'INSIGHT_LABEL_1',   region: 'cols 1-3, rows 3-4', max_lines: 2, role: 'label' },
+    { id: 'INSIGHT_ICON_1',    region: 'cols 1-3, rows 1-2', role: 'decoration' },
+    { id: 'INSIGHT_LABEL_1',   region: 'cols 1-3, rows 3-4', max_lines: 2, role: 'caption', placeholder_text: 'Insight one' },
     { id: 'INSIGHT_CARD_2_BG', region: 'cols 4-6, rows 1-2', role: 'background' },
-    { id: 'INSIGHT_ICON_2',    region: 'cols 4-6, rows 1-2', role: 'icon' },
-    { id: 'INSIGHT_LABEL_2',   region: 'cols 4-6, rows 3-4', max_lines: 2, role: 'label' },
+    { id: 'INSIGHT_ICON_2',    region: 'cols 4-6, rows 1-2', role: 'decoration' },
+    { id: 'INSIGHT_LABEL_2',   region: 'cols 4-6, rows 3-4', max_lines: 2, role: 'caption', placeholder_text: 'Insight two' },
     { id: 'INSIGHT_CARD_3_BG', region: 'cols 7-9, rows 1-2', role: 'background' },
-    { id: 'INSIGHT_ICON_3',    region: 'cols 7-9, rows 1-2', role: 'icon' },
-    { id: 'INSIGHT_LABEL_3',   region: 'cols 7-9, rows 3-4', max_lines: 2, role: 'label' },
-    { id: 'CHART_CARD_BG',     region: 'cols 1-9, rows 5-12', role: 'background' },
-    { id: 'CHART_HEADING',     region: 'cols 1-9, rows 5-6', max_lines: 1, role: 'heading' },
-    { id: 'BAR_CHART',         region: 'cols 1-9, rows 8-12', role: 'chart' },
-    { id: 'POINT_CARD_BG',     region: 'cols 10-12, rows 1-12', role: 'background' },
-    { id: 'POINT_HEADING',     region: 'cols 10-12, rows 1-2', max_lines: 1, role: 'heading' },
-    { id: 'POINT_BODY',        region: 'cols 10-12, rows 3-4', max_lines: 2, role: 'body' },
-    { id: 'POINT_IMAGE',       region: 'cols 10-12, rows 6-12', role: 'image' },
+    { id: 'INSIGHT_ICON_3',    region: 'cols 7-9, rows 1-2', role: 'decoration' },
+    { id: 'INSIGHT_LABEL_3',   region: 'cols 7-9, rows 3-4', max_lines: 2, role: 'caption', placeholder_text: 'Insight three' },
+    { id: 'CHART_CARD_BG',     region: 'cols 1-9, rows 5-10', role: 'background' },
+    { id: 'CHART_HEADING',     region: 'cols 1-9, rows 5-6', max_lines: 1, role: 'heading', placeholder_text: 'Revenue growth' },
+    { id: 'BAR_CHART',         region: 'cols 1-9, rows 7-10', role: 'chart' },
+    { id: 'CHART_CAPTION',     region: 'cols 1-9, rows 10-11', role: 'caption', placeholder_text: 'Monthly performance' },
+    { id: 'POINT_CARD_BG',     region: 'cols 10-12, rows 1-10', role: 'background' },
+    { id: 'POINT_HEADING',     region: 'cols 10-12, rows 1-2', max_lines: 1, role: 'heading', placeholder_text: 'Key takeaway' },
+    { id: 'POINT_BODY',        region: 'cols 10-12, rows 3-5', max_lines: 3, role: 'body', placeholder_text: 'Summarize what the chart means.' },
+    { id: 'POINT_IMAGE',       region: 'cols 10-12, rows 6-10', role: 'image' },
   ],
 }, null, 2)
 
@@ -307,6 +316,77 @@ function mergeTemplateWithSchemaStr(template, schemaStr) {
   const { ok, value } = parseJsonSafe(schemaStr)
   if (!ok) return template
   return { ...template, schema: value }
+}
+
+function DeckLayoutSchemaTools({ schemaStr, setSchemaStr, setName, setContentType, onError, disabled }) {
+  const parsed = parseJsonSafe(schemaStr)
+  const validation = parsed.ok ? validateDeckLayoutSchema(parsed.value) : null
+  const starters = listDeckLayoutStarters()
+
+  function applyStarter(starterId) {
+    if (!starterId) return
+    const full = getDeckLayoutStarter(starterId)
+    if (!full) return
+    setSchemaStr(JSON.stringify(full.schema, null, 2))
+    if (full.suggestedName && setName) setName(full.suggestedName)
+    if (full.contentType && setContentType) setContentType(full.contentType)
+    onError?.('')
+  }
+
+  function fixRoles() {
+    const { ok, value, error } = parseJsonSafe(schemaStr)
+    if (!ok) {
+      onError?.(`Schema is not valid JSON: ${error}`)
+      return
+    }
+    const { schema, changes } = fixDeckLayoutSchemaRoles(value)
+    setSchemaStr(JSON.stringify(schema, null, 2))
+    if (changes.length) {
+      onError?.(`Fixed roles: ${changes.map((c) => `${c.id || c.index} (${c.from} → ${c.to})`).join(', ')}`)
+    } else {
+      onError?.('')
+    }
+  }
+
+  return (
+    <div style={{ marginBottom: 12, padding: '12px 14px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'color-mix(in srgb, var(--primary) 6%, var(--bg-card))' }}>
+      <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        Layout starter
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+        <select
+          className="sa-select"
+          style={{ flex: '1 1 220px', minWidth: 180, fontSize: '0.8rem' }}
+          defaultValue=""
+          disabled={disabled}
+          onChange={(e) => {
+            applyStarter(e.target.value)
+            e.target.value = ''
+          }}
+        >
+          <option value="">Load a starter template…</option>
+          {starters.map((s) => (
+            <option key={s.id} value={s.id}>{s.label} ({s.layoutId})</option>
+          ))}
+        </select>
+        <button type="button" className="sa-btn" disabled={disabled || !parsed.ok} onClick={fixRoles}>
+          Fix invalid roles
+        </button>
+      </div>
+      <p style={{ margin: '0 0 8px', fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.45 }}>
+        Allowed roles: {DECK_LAYOUT_SLOT_ROLES.join(', ')}. Use <code style={{ fontSize: '0.7rem' }}>caption</code> not label, <code style={{ fontSize: '0.7rem' }}>decoration</code> not icon.
+      </p>
+      {parsed.ok && validation && !validation.ok && (
+        <div style={{ fontSize: '0.72rem', color: '#f87171', lineHeight: 1.45 }}>
+          {validation.errors.slice(0, 4).map((msg) => <div key={msg}>{msg}</div>)}
+          {validation.errors.length > 4 && <div>…and {validation.errors.length - 4} more</div>}
+        </div>
+      )}
+      {parsed.ok && validation?.ok && (
+        <div style={{ fontSize: '0.72rem', color: '#4ade80', fontWeight: 600 }}>✓ All slot roles valid for backend</div>
+      )}
+    </div>
+  )
 }
 
 function DeckPackQuickSelects({ schemaStr, setSchemaStr, onError, themeLabel = 'THEME ID', ratioLabel = 'ASPECT RATIO' }) {
@@ -466,6 +546,13 @@ function CreateModal({ onClose, onCreated, defaultType, prefill, layoutSchemaMap
       setError('Layout schema must include a slots array to preview')
       return
     }
+    if (type === 'DECK_LAYOUT') {
+      const roleCheck = validateDeckLayoutSchema(value)
+      if (!roleCheck.ok) {
+        setError(roleCheck.errors[0] || 'Invalid layout schema')
+        return
+      }
+    }
     setShowPreview(true)
   }
 
@@ -475,6 +562,13 @@ function CreateModal({ onClose, onCreated, defaultType, prefill, layoutSchemaMap
     const { ok, value, error: jsonErr } = parseJsonSafe(schemaStr)
     if (!ok) { setError(`Schema is not valid JSON: ${jsonErr}`); return }
     if (!name.trim()) { setError('Name is required'); return }
+    if (type === 'DECK_LAYOUT') {
+      const roleCheck = validateDeckLayoutSchema(value)
+      if (!roleCheck.ok) {
+        setError(roleCheck.errors.join(' · '))
+        return
+      }
+    }
     setLoading(true)
     try {
       const created = await superadminService.createTemplate({
@@ -655,6 +749,16 @@ function CreateModal({ onClose, onCreated, defaultType, prefill, layoutSchemaMap
           )}
 
           {/* schema */}
+          {type === 'DECK_LAYOUT' && (
+            <DeckLayoutSchemaTools
+              schemaStr={schemaStr}
+              setSchemaStr={setSchemaStr}
+              setName={setName}
+              setContentType={setContentType}
+              onError={setError}
+              disabled={loading}
+            />
+          )}
           <JsonEditor label="SCHEMA (JSON) *" value={schemaStr} onChange={setSchemaStr}
             placeholder={schemaPlaceholder(type)} disabled={loading} />
 
@@ -2081,6 +2185,13 @@ function TemplateDetail({ template, onUpdated, onClose, onDuplicate, layoutSchem
     setSaveErr(''); setSaveMsg('')
     const { ok, value, error: jsonErr } = parseJsonSafe(schemaStr)
     if (!ok) { setSaveErr(`Schema is not valid JSON: ${jsonErr}`); return }
+    if (template.type === 'DECK_LAYOUT') {
+      const roleCheck = validateDeckLayoutSchema(value)
+      if (!roleCheck.ok) {
+        setSaveErr(roleCheck.errors.join(' · '))
+        return
+      }
+    }
     setSaving(true)
     try {
       const updated = await superadminService.updateTemplate(template.id, {
@@ -2236,6 +2347,16 @@ function TemplateDetail({ template, onUpdated, onClose, onDuplicate, layoutSchem
             )}
 
             {/* schema */}
+            {template.type === 'DECK_LAYOUT' && (
+              <DeckLayoutSchemaTools
+                schemaStr={schemaStr}
+                setSchemaStr={setSchemaStr}
+                setName={setName}
+                setContentType={setContentType}
+                onError={(msg) => { if (msg) setSaveErr(msg); else setSaveErr('') }}
+                disabled={saving}
+              />
+            )}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                 <label style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Schema (JSON)</label>
