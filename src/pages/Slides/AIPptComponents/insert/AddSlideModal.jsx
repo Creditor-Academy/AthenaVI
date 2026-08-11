@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { FiSearch, FiX, FiPlus } from 'react-icons/fi'
+import LayoutPolishedPreview from '../../../../components/ppt/LayoutPolishedPreview'
 import presentationService from '../../../../services/presentationService'
 import { normalizeDeckPacks } from '../../../../utils/presentationHelpers'
+import { resolveLayoutPreviewSchema } from '../../../../utils/layoutPreviewSchemas'
 import themePetrol from '../../../../assets/Template_Image/theme_petrol.png'
 import themeStardust from '../../../../assets/Template_Image/theme_stardust.png'
 import themeChocolate from '../../../../assets/Template_Image/theme_chocolate.png'
@@ -270,75 +272,6 @@ function layoutSeedById(id) {
   return BUILTIN_LAYOUTS.find((l) => l.id === id)?.seed || BUILTIN_LAYOUTS[0].seed
 }
 
-function LayoutPreview({ kind }) {
-  if (kind === 'blank') {
-    return <div className="ppt-add-slide-preview ppt-add-slide-preview--blank" />
-  }
-  if (kind === 'title') {
-    return (
-      <div className="ppt-add-slide-preview">
-        <span className="ppt-add-slide-preview-bar ppt-add-slide-preview-bar--lg" />
-        <span className="ppt-add-slide-preview-bar ppt-add-slide-preview-bar--sm" />
-      </div>
-    )
-  }
-  if (kind === 'bullets') {
-    return (
-      <div className="ppt-add-slide-preview ppt-add-slide-preview--left">
-        <span className="ppt-add-slide-preview-bar" />
-        <span className="ppt-add-slide-preview-line" />
-        <span className="ppt-add-slide-preview-line" />
-        <span className="ppt-add-slide-preview-line" />
-      </div>
-    )
-  }
-  if (kind === 'two-col') {
-    return (
-      <div className="ppt-add-slide-preview ppt-add-slide-preview--split">
-        <div>
-          <span className="ppt-add-slide-preview-line" />
-          <span className="ppt-add-slide-preview-line" />
-        </div>
-        <div>
-          <span className="ppt-add-slide-preview-line" />
-          <span className="ppt-add-slide-preview-line" />
-        </div>
-      </div>
-    )
-  }
-  if (kind === 'image-right') {
-    return (
-      <div className="ppt-add-slide-preview ppt-add-slide-preview--split">
-        <div>
-          <span className="ppt-add-slide-preview-bar" />
-          <span className="ppt-add-slide-preview-line" />
-        </div>
-        <div className="ppt-add-slide-preview-media" />
-      </div>
-    )
-  }
-  if (kind === 'quote') {
-    return (
-      <div className="ppt-add-slide-preview">
-        <span className="ppt-add-slide-preview-bar ppt-add-slide-preview-bar--quote" />
-      </div>
-    )
-  }
-  if (kind === 'stats') {
-    return (
-      <div className="ppt-add-slide-preview">
-        <span className="ppt-add-slide-preview-stat">42%</span>
-        <span className="ppt-add-slide-preview-bar ppt-add-slide-preview-bar--sm" />
-      </div>
-    )
-  }
-  return (
-    <div className="ppt-add-slide-preview">
-      <span className="ppt-add-slide-preview-bar ppt-add-slide-preview-bar--lg" />
-    </div>
-  )
-}
-
 /**
  * Centered Gamma-style Templates / Layouts picker for Add slide.
  */
@@ -394,6 +327,7 @@ export default function AddSlideModal({
             name: t.name || t.label || 'Template',
             type: t.contentType || t.variant || 'Template',
             img: t.previewUrl || t.thumbnailUrl || null,
+            schema: t.schema || null,
             templateId: t.id || t.templateId,
             kind: 'template',
           })),
@@ -548,12 +482,14 @@ export default function AddSlideModal({
                     onClick={() => pickTemplate(t)}
                   >
                     <div
-                      className={`ppt-add-slide-card-thumb ${!t.img ? `ppt-add-slide-card-thumb--showcase-${idx % 6}` : ''}`}
+                      className={`ppt-add-slide-card-thumb ${!t.img && !t.schema?.slots?.length ? `ppt-add-slide-card-thumb--showcase-${idx % 6}` : ''}`}
                       style={t.img ? { backgroundImage: `url(${t.img})` } : undefined}
                     >
-                      {!t.img && (
+                      {!t.img && t.schema?.slots?.length > 0 ? (
+                        <LayoutPolishedPreview schema={t.schema} fill />
+                      ) : !t.img ? (
                         <span className="ppt-add-slide-card-fallback">{t.name}</span>
-                      )}
+                      ) : null}
                     </div>
                     <div className="ppt-add-slide-card-name">{t.name}</div>
                     {t.type ? <div className="ppt-add-slide-card-meta">{t.type}</div> : null}
@@ -587,7 +523,10 @@ export default function AddSlideModal({
                     }
                   >
                     <div className="ppt-add-slide-card-thumb ppt-add-slide-card-thumb--layout">
-                      <LayoutPreview kind={layout.preview} />
+                      <LayoutPolishedPreview
+                        schema={resolveLayoutPreviewSchema({ previewKind: layout.preview })}
+                        fill
+                      />
                     </div>
                     <div className="ppt-add-slide-card-name">{layout.name}</div>
                     <div className="ppt-add-slide-card-meta">{layout.category}</div>

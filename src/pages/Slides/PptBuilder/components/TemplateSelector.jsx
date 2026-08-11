@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { ArrowLeft } from 'lucide-react'
+import LayoutPolishedPreview from '../../../../components/ppt/LayoutPolishedPreview'
 import '../PptBuilder.css'
 import '../../AIPptGenerator.css'
 import presentationService from '../../../../services/presentationService'
 import brandKitService from '../../../../services/brandKitService'
 import { resolvePresentationWorkspaceContext } from '../../../../utils/presentationContext'
 import { normalizeDeckPacks } from '../../../../utils/presentationHelpers'
+import { getLayoutPreviewSlots } from '../../../../utils/layoutPreviewSchemas'
 
 import temp1 from '../../../../assets/Template_Image/theme_petrol.png'
 import temp2 from '../../../../assets/Template_Image/theme_stardust.png'
@@ -122,6 +124,7 @@ export default function TemplateSelector({
               name: t.name || t.label || 'Layout',
               type: t.contentType || t.variant || 'Layout',
               img: t.previewUrl || t.thumbnailUrl || null,
+              schema: t.schema || null,
               hex1: t.swatches?.[0],
               hex2: t.swatches?.[1],
               hex3: t.swatches?.[2],
@@ -288,6 +291,8 @@ export default function TemplateSelector({
                   <div className="aig-theme-card-image-wrapper">
                     {t.img ? (
                       <img src={t.img} alt={t.name} className="aig-theme-card-image" />
+                    ) : tab !== 'packs' && getLayoutPreviewSlots({ schema: t.schema }).length > 0 ? (
+                      <LayoutPolishedPreview schema={t.schema} fill style={{ borderRadius: 8 }} />
                     ) : (
                       <div
                         style={{

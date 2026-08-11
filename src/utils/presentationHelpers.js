@@ -146,6 +146,7 @@ export function normalizeDeckPacks(payload) {
           'Deck Pack',
         packId: schema.pack_id || pack.pack_id || null,
         themeId: schema.themeId || pack.themeId || null,
+        aspectRatio: schema.aspectRatio || pack.aspectRatio || '16:9',
         slideCount: Array.isArray(schema.slides) ? schema.slides.length : pack.slideCount || null,
         preview: schema.preview || pack.preview || null,
         schema,
