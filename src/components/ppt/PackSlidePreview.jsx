@@ -1,13 +1,18 @@
 import LayoutPolishedPreview from './LayoutPolishedPreview'
-import { buildPackSlidePreviewSchema, getDeckLayoutSchema } from '../../utils/deckLayoutRegistry'
+import {
+  buildPackSlidePreviewSchema,
+  resolveLayoutSchemaById,
+} from '../../utils/deckLayoutRegistry'
 import { aspectRatioToCss, deckPackThemeToCssVars, resolveDeckPackTheme } from '../../utils/deckPackTheme'
 
 /**
- * Renders a deck-pack slide using its layout_id schema (Gamma-style preview).
- * Falls back to null when layout is not in the registry — caller should use legacy SlideCard.
+ * Renders a deck-pack slide using its layout schema (Gamma-style preview).
+ * Prefers saved backend layout schema; falls back to legacy registry only when needed.
  */
 export default function PackSlidePreview({
   slide,
+  layoutSchema = null,
+  layoutSchemaMap = {},
   index = 0,
   large = false,
   badgeColor,
@@ -16,10 +21,14 @@ export default function PackSlidePreview({
   themeId,
   aspectRatio = '16:9',
 }) {
-  const layoutSchema = getDeckLayoutSchema(slide?.layout_id)
-  if (!layoutSchema) return null
+  const base =
+    layoutSchema ||
+    resolveLayoutSchemaById(slide?.layout_id, layoutSchemaMap)
+  if (!base) return null
 
-  const schema = buildPackSlidePreviewSchema(layoutSchema, slide)
+  const schema = buildPackSlidePreviewSchema(base, slide)
+  if (!schema) return null
+
   const packTheme = theme || resolveDeckPackTheme(themeId)
   const accent = badgeColor || packTheme.accent
   const cssAspect = aspectRatioToCss(aspectRatio)

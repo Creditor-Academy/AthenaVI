@@ -392,6 +392,169 @@ const REGISTRY = {
       { id: 'CONTACT', region: 'cols 4-9, rows 8-9', role: 'contact', placeholder_text: 'hello@company.com' },
     ],
   },
+
+  title_centered_v1: {
+    layout_id: 'title_centered_v1',
+    content_type: 'title',
+    preview: {
+      slots: {
+        MAIN_TITLE: { text: 'Presentation Title', variant: 'title', bold: true, uppercase: false },
+        SUBTITLE: { text: 'Tagline or company name', variant: 'subheading', bold: false, uppercase: false },
+      },
+    },
+    slots: [
+      { id: 'MAIN_TITLE', region: 'cols 2-11, rows 4-6', role: 'heading', placeholder_text: 'Presentation Title' },
+      { id: 'SUBTITLE', region: 'cols 3-10, rows 6-7', role: 'subheading', placeholder_text: 'Tagline or company name' },
+    ],
+  },
+
+  bullet_list_classic_v1: {
+    layout_id: 'bullet_list_classic_v1',
+    content_type: 'bullet_list',
+    grid: '12-col',
+    preview: {
+      slots: {
+        HEADING: { text: 'Key Points', variant: 'title', bold: true, uppercase: false },
+        BULLET_1: { text: 'First point — concise and actionable', variant: 'body', bold: false, uppercase: false },
+        BULLET_2: { text: 'Second point — build on the narrative', variant: 'body', bold: false, uppercase: false },
+        BULLET_3: { text: 'Third point — reinforce the message', variant: 'body', bold: false, uppercase: false },
+        BULLET_4: { text: 'Fourth point — optional supporting detail', variant: 'body', bold: false, uppercase: false },
+      },
+    },
+    slots: [
+      { id: 'HEADING', region: 'cols 2-11, rows 2-3', role: 'heading', placeholder_text: 'Key Points' },
+      { id: 'BULLET_1', region: 'cols 2-10, rows 4-5', role: 'body', placeholder_text: 'First point' },
+      { id: 'BULLET_2', region: 'cols 2-10, rows 5-6', role: 'body', placeholder_text: 'Second point' },
+      { id: 'BULLET_3', region: 'cols 2-10, rows 6-7', role: 'body', placeholder_text: 'Third point' },
+      { id: 'BULLET_4', region: 'cols 2-10, rows 7-8', role: 'body', placeholder_text: 'Fourth point' },
+    ],
+  },
+
+  section_divider_centered_v1: {
+    layout_id: 'section_divider_centered_v1',
+    content_type: 'section_divider',
+    grid: '12-col',
+    preview: {
+      slots: {
+        SECTION_NUMBER: { text: '01', variant: 'stat', bold: true, uppercase: false },
+        HEADING: { text: 'Section Title', variant: 'title', bold: true, uppercase: true },
+        SUBTITLE: { text: 'A short line that sets up what comes next', variant: 'subheading', bold: false, uppercase: false },
+      },
+    },
+    slots: [
+      { id: 'SECTION_NUMBER', region: 'cols 5-8, rows 3-4', role: 'stat', placeholder_text: '01' },
+      { id: 'HEADING', region: 'cols 2-11, rows 4-6', role: 'heading', placeholder_text: 'Section Title' },
+      { id: 'SUBTITLE', region: 'cols 3-10, rows 6-7', role: 'subheading', placeholder_text: 'A short line that sets up what comes next' },
+    ],
+  },
+
+  agenda_four_items_v1: {
+    layout_id: 'agenda_four_items_v1',
+    content_type: 'agenda',
+    grid: '12-col',
+    preview: {
+      slots: {
+        HEADING: { text: 'Agenda', variant: 'title', bold: true, uppercase: false },
+        ITEM_1: { text: '01 · Introduction', variant: 'body', bold: true, uppercase: false },
+        ITEM_2: { text: '02 · Problem & opportunity', variant: 'body', bold: true, uppercase: false },
+        ITEM_3: { text: '03 · Solution & proof', variant: 'body', bold: true, uppercase: false },
+        ITEM_4: { text: '04 · Next steps', variant: 'body', bold: true, uppercase: false },
+      },
+    },
+    slots: [
+      { id: 'HEADING', region: 'cols 2-11, rows 2-3', role: 'heading', placeholder_text: 'Agenda' },
+      { id: 'ITEM_1', region: 'cols 2-10, rows 4-5', role: 'body', placeholder_text: '01 · Introduction' },
+      { id: 'ITEM_2', region: 'cols 2-10, rows 5-6', role: 'body', placeholder_text: '02 · Problem & opportunity' },
+      { id: 'ITEM_3', region: 'cols 2-10, rows 6-7', role: 'body', placeholder_text: '03 · Solution & proof' },
+      { id: 'ITEM_4', region: 'cols 2-10, rows 7-8', role: 'body', placeholder_text: '04 · Next steps' },
+    ],
+  },
+
+  pros_cons_two_column_v1: {
+    layout_id: 'pros_cons_two_column_v1',
+    content_type: 'comparison',
+    grid: '12-col',
+    preview: {
+      mode: 'comparison_columns',
+      slots: {
+        HEADING: { text: 'Pros & Cons', variant: 'title', bold: true, uppercase: false },
+      },
+      columns: [
+        { label: 'Pros', items: ['Clear benefit one', 'Strong advantage two', 'Compelling reason three'] },
+        { label: 'Cons', items: ['Honest limitation one', 'Trade-off to acknowledge', 'Risk to mitigate'] },
+      ],
+    },
+    slots: [
+      { id: 'HEADING', region: 'cols 2-11, rows 2-3', role: 'heading', placeholder_text: 'Pros & Cons' },
+      { id: 'PROS_LABEL', region: 'cols 2-6, rows 4-5', role: 'heading', placeholder_text: 'Pros' },
+      { id: 'PROS_LIST', region: 'cols 2-6, rows 5-9', role: 'body', placeholder_text: 'Benefit one\nBenefit two\nBenefit three' },
+      { id: 'CONS_LABEL', region: 'cols 7-11, rows 4-5', role: 'heading', placeholder_text: 'Cons' },
+      { id: 'CONS_LIST', region: 'cols 7-11, rows 5-9', role: 'body', placeholder_text: 'Limitation one\nLimitation two\nLimitation three' },
+    ],
+  },
+
+  timeline_four_steps_v1: {
+    layout_id: 'timeline_four_steps_v1',
+    content_type: 'timeline',
+    grid: '12-col',
+    preview: {
+      slots: {
+        HEADING: { text: 'Roadmap', variant: 'title', bold: true, uppercase: false },
+        STEP_1_LABEL: { text: 'Q1', variant: 'caption', bold: true, uppercase: true },
+        STEP_1_TITLE: { text: 'Launch MVP', variant: 'body', bold: true, uppercase: false },
+        STEP_2_LABEL: { text: 'Q2', variant: 'caption', bold: true, uppercase: true },
+        STEP_2_TITLE: { text: 'Scale sales', variant: 'body', bold: true, uppercase: false },
+        STEP_3_LABEL: { text: 'Q3', variant: 'caption', bold: true, uppercase: true },
+        STEP_3_TITLE: { text: 'Expand markets', variant: 'body', bold: true, uppercase: false },
+        STEP_4_LABEL: { text: 'Q4', variant: 'caption', bold: true, uppercase: true },
+        STEP_4_TITLE: { text: 'Series B', variant: 'body', bold: true, uppercase: false },
+      },
+    },
+    slots: [
+      { id: 'HEADING', region: 'cols 2-11, rows 2-3', role: 'heading', placeholder_text: 'Roadmap' },
+      { id: 'STEP_1_LABEL', region: 'cols 2-4, rows 5-6', role: 'caption', placeholder_text: 'Q1' },
+      { id: 'STEP_1_TITLE', region: 'cols 2-4, rows 6-8', role: 'body', placeholder_text: 'Launch MVP' },
+      { id: 'STEP_2_LABEL', region: 'cols 4-6, rows 5-6', role: 'caption', placeholder_text: 'Q2' },
+      { id: 'STEP_2_TITLE', region: 'cols 4-6, rows 6-8', role: 'body', placeholder_text: 'Scale sales' },
+      { id: 'STEP_3_LABEL', region: 'cols 7-9, rows 5-6', role: 'caption', placeholder_text: 'Q3' },
+      { id: 'STEP_3_TITLE', region: 'cols 7-9, rows 6-8', role: 'body', placeholder_text: 'Expand markets' },
+      { id: 'STEP_4_LABEL', region: 'cols 9-11, rows 5-6', role: 'caption', placeholder_text: 'Q4' },
+      { id: 'STEP_4_TITLE', region: 'cols 9-11, rows 6-8', role: 'body', placeholder_text: 'Series B' },
+    ],
+  },
+
+  team_grid_four_v1: {
+    layout_id: 'team_grid_four_v1',
+    content_type: 'team',
+    grid: '12-col',
+    preview: {
+      mode: 'team_staggered',
+      slots: {
+        HEADING: { text: 'Leadership team', variant: 'title', bold: true, uppercase: false },
+      },
+      members: [
+        { name: 'Alex Morgan', role: 'CEO', email: 'alex@example.com' },
+        { name: 'Sam Rivera', role: 'CTO', email: 'sam@example.com' },
+        { name: 'Jordan Lee', role: 'COO', email: 'jordan@example.com' },
+        { name: 'Taylor Kim', role: 'CFO', email: 'taylor@example.com' },
+      ],
+    },
+    slots: [
+      { id: 'HEADING', region: 'cols 2-11, rows 2-3', role: 'heading', placeholder_text: 'Leadership team' },
+      { id: 'MEMBER_1_AVATAR', region: 'cols 2-4, rows 4-6', role: 'image' },
+      { id: 'MEMBER_1_NAME', region: 'cols 2-4, rows 6-7', role: 'heading', placeholder_text: 'Alex Morgan' },
+      { id: 'MEMBER_1_ROLE', region: 'cols 2-4, rows 7-8', role: 'caption', placeholder_text: 'CEO' },
+      { id: 'MEMBER_2_AVATAR', region: 'cols 4-6, rows 4-6', role: 'image' },
+      { id: 'MEMBER_2_NAME', region: 'cols 4-6, rows 6-7', role: 'heading', placeholder_text: 'Sam Rivera' },
+      { id: 'MEMBER_2_ROLE', region: 'cols 4-6, rows 7-8', role: 'caption', placeholder_text: 'CTO' },
+      { id: 'MEMBER_3_AVATAR', region: 'cols 7-9, rows 4-6', role: 'image' },
+      { id: 'MEMBER_3_NAME', region: 'cols 7-9, rows 6-7', role: 'heading', placeholder_text: 'Jordan Lee' },
+      { id: 'MEMBER_3_ROLE', region: 'cols 7-9, rows 7-8', role: 'caption', placeholder_text: 'COO' },
+      { id: 'MEMBER_4_AVATAR', region: 'cols 9-11, rows 4-6', role: 'image' },
+      { id: 'MEMBER_4_NAME', region: 'cols 9-11, rows 6-7', role: 'heading', placeholder_text: 'Taylor Kim' },
+      { id: 'MEMBER_4_ROLE', region: 'cols 9-11, rows 7-8', role: 'caption', placeholder_text: 'CFO' },
+    ],
+  },
 }
 
 const PLACEHOLDER_SLOT_MAP = {
@@ -409,6 +572,344 @@ const PLACEHOLDER_SLOT_MAP = {
   LOGO: ['logo'],
 }
 
+function slotPlaceholderText(slots, id) {
+  const slot = (slots || []).find((s) => s.id === id)
+  return slot?.placeholder_text ? String(slot.placeholder_text) : ''
+}
+
+function roleToPreviewVariant(role, slotId) {
+  const id = String(slotId || '').toUpperCase()
+  if (id.includes('LOGO') || role === 'decoration') return 'logo'
+  if (role === 'heading' || role === 'quote') return 'title'
+  if (role === 'subheading') return 'subheading'
+  if (role === 'caption' || role === 'eyebrow') return 'caption'
+  if (role === 'stat') return 'stat'
+  return 'body'
+}
+
+function buildPreviewSlotsFromLayoutSlots(slots, existing = {}) {
+  const out = { ...existing }
+  for (const slot of slots || []) {
+    if (!slot?.id) continue
+    const current = out[slot.id] || {}
+    if (current.text != null && String(current.text).trim()) {
+      out[slot.id] = current
+      continue
+    }
+    const text = slot.placeholder_text
+    if (!text) continue
+    out[slot.id] = {
+      ...current,
+      text: String(text),
+      variant: current.variant || roleToPreviewVariant(slot.role, slot.id),
+      bold: current.bold ?? (slot.role === 'heading' || slot.role === 'quote'),
+      uppercase: current.uppercase ?? false,
+    }
+  }
+  return out
+}
+
+function buildStatsFromLayoutSlots(slots) {
+  const stats = []
+  for (let i = 1; i <= 6; i += 1) {
+    const value = slotPlaceholderText(slots, `STAT_${i}_VALUE`) || slotPlaceholderText(slots, `STAT_${i}`)
+    const label = slotPlaceholderText(slots, `STAT_${i}_LABEL`)
+    if (value || label) {
+      stats.push({ value: value || '—', label: label || 'Metric label' })
+    }
+  }
+  return stats.length ? stats : null
+}
+
+function buildComparisonColumnsFromSlots(slots, preview) {
+  if (Array.isArray(preview?.columns) && preview.columns.length) return preview.columns
+  const pros = slotPlaceholderText(slots, 'PROS_LIST')
+  const cons = slotPlaceholderText(slots, 'CONS_LIST')
+  if (pros || cons) {
+    return [
+      {
+        label: slotPlaceholderText(slots, 'PROS_LABEL') || 'Pros',
+        items: pros ? pros.split('\n').filter(Boolean) : ['Benefit one', 'Benefit two'],
+      },
+      {
+        label: slotPlaceholderText(slots, 'CONS_LABEL') || 'Cons',
+        items: cons ? cons.split('\n').filter(Boolean) : ['Limitation one', 'Limitation two'],
+      },
+    ]
+  }
+  const labels = ['COL_1_LABEL', 'COL_2_LABEL', 'COL_3_LABEL']
+    .map((id) => slotPlaceholderText(slots, id))
+    .filter(Boolean)
+  if (labels.length) {
+    return labels.slice(0, 3).map((label, index) => ({
+      label,
+      items: [`Column ${index + 1} point`],
+    }))
+  }
+  return null
+}
+
+/** Known layout_id → polished preview mode (overrides stale preview.mode in saved schemas). */
+const LAYOUT_PREVIEW_MODES = {
+  grid_insights_chart_v1: 'grid_insights_chart',
+  chart_full_width_v1: 'chart_full_width',
+  chart_image_split_v1: 'chart_image_split',
+  image_three_gallery_v1: 'image_gallery_three',
+  process_flow_three_v1: 'process_flow',
+  stat_cards_image_v1: 'stat_cards_image',
+  eight_short_texts_split_v1: 'eight_short_texts',
+}
+
+export function resolvePreviewMode(schema) {
+  const layoutId = schema?.layout_id
+  if (layoutId && LAYOUT_PREVIEW_MODES[layoutId]) return LAYOUT_PREVIEW_MODES[layoutId]
+  if (schema?.preview?.mode) return schema.preview.mode
+  return inferPreviewMode(schema)
+}
+
+/** Infer polished preview mode from content_type + slot roles when preview.mode is absent. */
+export function inferPreviewMode(schema) {
+  const ct = schema?.content_type
+  const slots = schema?.slots || []
+  const ids = slots.map((s) => String(s.id || ''))
+  const roles = new Set(slots.map((s) => s.role))
+  const layoutId = schema?.layout_id
+
+  if (layoutId && LAYOUT_PREVIEW_MODES[layoutId]) return LAYOUT_PREVIEW_MODES[layoutId]
+
+  if (ids.includes('BAR_CHART') && ids.includes('INSIGHT_ICON_1') && ids.includes('POINT_IMAGE')) {
+    return 'grid_insights_chart'
+  }
+  if (ids.filter((id) => /^IMAGE_\d+$/.test(id)).length >= 3) return 'image_gallery_three'
+  if (ids.some((id) => /^STEP_\d+_CIRCLE$/.test(id))) return 'process_flow'
+  if (roles.has('stat') && ids.includes('HERO_IMAGE') && ids.some((id) => /^STAT_\d+_CARD$/.test(id))) {
+    return 'stat_cards_image'
+  }
+  if (roles.has('chart') && ids.includes('HERO_IMAGE') && roles.has('body')) return 'chart_image_split'
+  if (roles.has('chart') && (ids.includes('MAIN_CHART') || ids.includes('CHART_PANEL_BG'))) return 'chart_full_width'
+
+  if (schema?.highlightedPlanIndex != null || ids.some((id) => id.includes('PLAN_'))) {
+    return ids.some((id) => id.includes('PRICE')) || ct === 'comparison' ? 'pricing_plans' : 'comparison_columns'
+  }
+  if (ct === 'stat' || (roles.has('stat') && roles.has('stat_label'))) return 'stat_row'
+  if (ct === 'chart' || roles.has('chart')) return 'chart_split'
+  if (ct === 'quote' || roles.has('quote')) return 'quote_attribution'
+  if (ct === 'team' || ids.some((id) => id.startsWith('MEMBER'))) return 'team_staggered'
+  if (ct === 'closing' || roles.has('cta')) return 'closing_cta'
+  if (ids.includes('COL_1_IMAGE') && ids.includes('COL_2_IMAGE')) return 'two_image_columns'
+  if (
+    ids.includes('POINT_8_LABEL') ||
+    ids.filter((id) => /^POINT_\d+_LABEL$/.test(id)).length >= 6
+  ) {
+    return 'eight_short_texts'
+  }
+  if (ct === 'comparison') return 'comparison_columns'
+  return null
+}
+
+function fillPreviewDataFromSlots(schema) {
+  const slots = schema.slots || []
+  const preview = schema.preview || {}
+  const mode = resolvePreviewMode(schema)
+
+  if (mode === 'stat_row' && !Array.isArray(preview.stats)) {
+    preview.stats = buildStatsFromLayoutSlots(slots)
+  }
+  if (mode === 'chart_split' || mode === 'chart_full_width' || mode === 'chart_image_split' || mode === 'grid_insights_chart') {
+    preview.bodyText = preview.bodyText ?? slotPlaceholderText(slots, 'BODY') ?? slotPlaceholderText(slots, 'POINT_BODY') ?? undefined
+    preview.chartCaption = preview.chartCaption ?? slotPlaceholderText(slots, 'CHART_CAPTION') ?? undefined
+    if (!preview.slots?.HEADING?.text) {
+      preview.slots = {
+        ...(preview.slots || {}),
+        HEADING: {
+          ...(preview.slots?.HEADING || {}),
+          text:
+            preview.slots?.HEADING?.text ||
+            slotPlaceholderText(slots, 'HEADING') ||
+            slotPlaceholderText(slots, 'CHART_HEADING') ||
+            'Chart title',
+          variant: 'title',
+          bold: true,
+        },
+      }
+    }
+  }
+  if (mode === 'grid_insights_chart' && !Array.isArray(preview.insights)) {
+    preview.insights = [1, 2, 3].map((n) => ({
+      label:
+        preview.slots?.[`INSIGHT_LABEL_${n}`]?.text ||
+        slotPlaceholderText(slots, `INSIGHT_LABEL_${n}`) ||
+        `Insight ${n}`,
+    }))
+    preview.sideHeading =
+      preview.sideHeading ?? preview.slots?.POINT_HEADING?.text ?? slotPlaceholderText(slots, 'POINT_HEADING')
+    preview.sideBody =
+      preview.sideBody ?? preview.slots?.POINT_BODY?.text ?? slotPlaceholderText(slots, 'POINT_BODY')
+  }
+  if (mode === 'image_gallery_three' && !Array.isArray(preview.gallery)) {
+    preview.gallery = [1, 2, 3].map((n) => ({
+      label:
+        preview.slots?.[`IMAGE_${n}_LABEL`]?.text ||
+        slotPlaceholderText(slots, `IMAGE_${n}_LABEL`) ||
+        (n === 1 ? 'Feature A' : n === 2 ? 'Feature B' : 'Feature C'),
+    }))
+  }
+  if (mode === 'process_flow' && !Array.isArray(preview.steps)) {
+    preview.steps = [1, 2, 3].map((n) => ({
+      title:
+        preview.slots?.[`STEP_${n}_TITLE`]?.text ||
+        slotPlaceholderText(slots, `STEP_${n}_TITLE`) ||
+        (n === 1 ? 'Discover' : n === 2 ? 'Build' : 'Launch'),
+      body:
+        preview.slots?.[`STEP_${n}_BODY`]?.text ||
+        slotPlaceholderText(slots, `STEP_${n}_BODY`) ||
+        'Short step description',
+    }))
+  }
+  if (mode === 'stat_cards_image') {
+    if (!Array.isArray(preview.stats)) preview.stats = buildStatsFromLayoutSlots(slots)
+  }
+  if (mode === 'quote_attribution') {
+    preview.quoteText = preview.quoteText ?? slotPlaceholderText(slots, 'QUOTE') ?? undefined
+    preview.authorName = preview.authorName ?? slotPlaceholderText(slots, 'AUTHOR_NAME') ?? undefined
+    preview.authorTitle = preview.authorTitle ?? slotPlaceholderText(slots, 'AUTHOR_TITLE') ?? undefined
+  }
+  if (mode === 'comparison_columns' || mode === 'pricing_plans') {
+    const columns = buildComparisonColumnsFromSlots(slots, preview)
+    if (columns) preview.columns = columns
+  }
+  if (mode === 'two_image_columns' && !Array.isArray(preview.columns)) {
+    preview.columns = [
+      {
+        title: slotPlaceholderText(slots, 'COL_1_TITLE') || 'Make your point',
+        body: slotPlaceholderText(slots, 'COL_1_BODY') || 'Expand on it here.',
+      },
+      {
+        title: slotPlaceholderText(slots, 'COL_2_TITLE') || 'Make another point',
+        body: slotPlaceholderText(slots, 'COL_2_BODY') || 'You already know that it matters.',
+      },
+    ]
+  }
+  if (mode === 'eight_short_texts' && !Array.isArray(preview.points)) {
+    preview.points = Array.from({ length: 8 }, (_, index) => {
+      const n = index + 1
+      const labelId = `POINT_${n}_LABEL`
+      const descId = `POINT_${n}_DESC`
+      return {
+        label:
+          preview.slots?.[labelId]?.text ||
+          slotPlaceholderText(slots, labelId) ||
+          (n === 8 ? 'Last point' : `${['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth', 'Seventh'][index] || 'Another'} point`),
+        desc:
+          preview.slots?.[descId]?.text ||
+          slotPlaceholderText(slots, descId) ||
+          'A short description',
+      }
+    })
+  }
+  if (mode === 'closing_cta') {
+    preview.slots = {
+      ...(preview.slots || {}),
+      HEADING: {
+        ...(preview.slots?.HEADING || {}),
+        text: preview.slots?.HEADING?.text || slotPlaceholderText(slots, 'HEADING') || 'Thank you',
+        variant: 'title',
+        bold: true,
+      },
+      SUBTITLE: {
+        ...(preview.slots?.SUBTITLE || {}),
+        text: preview.slots?.SUBTITLE?.text || slotPlaceholderText(slots, 'SUBTITLE') || '',
+        variant: 'subheading',
+      },
+      CTA: {
+        ...(preview.slots?.CTA || {}),
+        text: preview.slots?.CTA?.text || slotPlaceholderText(slots, 'CTA') || '',
+        variant: 'body',
+        bold: true,
+      },
+      CONTACT: {
+        ...(preview.slots?.CONTACT || {}),
+        text: preview.slots?.CONTACT?.text || slotPlaceholderText(slots, 'CONTACT') || '',
+        variant: 'caption',
+      },
+    }
+  }
+
+  if (mode) preview.mode = mode
+  schema.preview = preview
+  return schema
+}
+
+function mergeRegistryPreviewFallback(schema) {
+  const registered = getDeckLayoutSchema(schema?.layout_id)
+  if (!registered) return schema
+
+  const merged = schema
+  const rp = registered.preview || {}
+  const mp = merged.preview || {}
+
+  merged.preview = {
+    ...mp,
+    mode: mp.mode || rp.mode || null,
+    slots: { ...(rp.slots || {}), ...(mp.slots || {}) },
+    columns: mp.columns ?? rp.columns,
+    members: mp.members ?? rp.members,
+    stats: mp.stats ?? rp.stats,
+    quoteText: mp.quoteText ?? rp.quoteText,
+    authorName: mp.authorName ?? rp.authorName,
+    authorTitle: mp.authorTitle ?? rp.authorTitle,
+    bodyText: mp.bodyText ?? rp.bodyText,
+    chartValues: mp.chartValues ?? rp.chartValues,
+    chartLabels: mp.chartLabels ?? rp.chartLabels,
+    chartCaption: mp.chartCaption ?? rp.chartCaption,
+    highlightedColumnIndex:
+      mp.highlightedColumnIndex ??
+      merged.highlightedPlanIndex ??
+      rp.highlightedColumnIndex ??
+      registered.highlightedPlanIndex,
+  }
+
+  if (!Array.isArray(merged.slots) || merged.slots.length === 0) {
+    merged.slots = registered.slots
+  }
+
+  return merged
+}
+
+/** Normalize any saved layout schema for polished preview (backend-first, registry fallback). */
+export function normalizeLayoutSchemaForPreview(schema) {
+  if (!schema || typeof schema !== 'object') return schema ?? {}
+  const merged = JSON.parse(JSON.stringify(schema))
+  if (!Array.isArray(merged.slots)) merged.slots = []
+  merged.preview = merged.preview || {}
+  merged.preview.slots = buildPreviewSlotsFromLayoutSlots(merged.slots, merged.preview.slots || {})
+  fillPreviewDataFromSlots(merged)
+  return mergeRegistryPreviewFallback(merged)
+}
+
+/** Build layout_id → schema map from DECK_LAYOUT template rows. */
+export function buildLayoutSchemaMap(templates = []) {
+  const map = {}
+  for (const template of templates) {
+    const layoutId = template?.schema?.layout_id
+    if (layoutId && template.schema) {
+      map[String(layoutId)] = template.schema
+    }
+  }
+  return map
+}
+
+/** Resolve a layout schema: saved map → legacy registry fallback. */
+export function resolveLayoutSchemaById(layoutId, layoutSchemaMap = {}) {
+  const key = String(layoutId || '').trim()
+  if (!key) return null
+  if (layoutSchemaMap[key]) {
+    return normalizeLayoutSchemaForPreview(layoutSchemaMap[key])
+  }
+  const registered = getDeckLayoutSchema(key)
+  return registered ? normalizeLayoutSchemaForPreview(registered) : null
+}
+
 /** @returns {object|null} layout schema clone for preview */
 export function getDeckLayoutSchema(layoutId) {
   const key = String(layoutId || '').trim()
@@ -419,7 +920,7 @@ export function getDeckLayoutSchema(layoutId) {
 /** Merge pack slide placeholder copy into layout preview hints. */
 export function buildPackSlidePreviewSchema(layoutSchema, slide) {
   if (!layoutSchema) return null
-  const schema = JSON.parse(JSON.stringify(layoutSchema))
+  const schema = normalizeLayoutSchemaForPreview(layoutSchema)
   const pl = slide?.placeholder && typeof slide.placeholder === 'object' ? slide.placeholder : {}
   schema.preview = schema.preview || {}
   schema.preview.slots = { ...(schema.preview.slots || {}) }
@@ -549,48 +1050,38 @@ export function buildPackSlidePreviewSchema(layoutSchema, slide) {
     schema.preview.slots.CONTACT = { ...(schema.preview.slots.CONTACT || {}), text: String(pl.contact), variant: 'caption' }
   }
 
+  if (Array.isArray(pl.members) && pl.members.length) {
+    schema.preview.mode = schema.preview.mode || 'team_staggered'
+  }
+  if (Array.isArray(pl.plans) && pl.plans.length) {
+    schema.preview.mode = 'pricing_plans'
+  }
+  if (pl.quote != null && String(pl.quote).trim()) {
+    schema.preview.mode = schema.preview.mode || 'quote_attribution'
+  }
+  if (Array.isArray(pl.chartValues) && pl.chartValues.length) {
+    schema.preview.mode = schema.preview.mode || 'chart_split'
+  }
+
+  fillPreviewDataFromSlots(schema)
   return schema
 }
 
-export function hasDeckLayoutSchema(layoutId) {
-  return Boolean(REGISTRY[String(layoutId || '').trim()])
+export function canPreviewDeckLayout({ layoutId, layoutSchema, layoutSchemaMap } = {}) {
+  if (layoutSchema && (Array.isArray(layoutSchema.slots) ? layoutSchema.slots.length : layoutSchema.preview?.mode)) {
+    return true
+  }
+  return Boolean(resolveLayoutSchemaById(layoutId, layoutSchemaMap))
 }
 
-/** Merge registry preview hints into a saved DECK_LAYOUT schema for admin preview. */
-export function enrichLayoutSchemaForPreview(schema) {
-  if (!schema || typeof schema !== 'object') return schema ?? {}
-  const registered = getDeckLayoutSchema(schema.layout_id)
-  if (!registered) return schema
+/** @deprecated Use canPreviewDeckLayout — kept for existing imports. */
+export function hasDeckLayoutSchema(layoutId, layoutSchemaMap = {}) {
+  return canPreviewDeckLayout({ layoutId, layoutSchemaMap })
+}
 
-  const merged = JSON.parse(JSON.stringify(schema))
-  merged.preview = {
-    ...(registered.preview || {}),
-    ...(merged.preview || {}),
-    slots: {
-      ...(registered.preview?.slots || {}),
-      ...(merged.preview?.slots || {}),
-    },
-    columns: merged.preview?.columns ?? registered.preview?.columns,
-    members: merged.preview?.members ?? registered.preview?.members,
-    stats: merged.preview?.stats ?? registered.preview?.stats,
-    quoteText: merged.preview?.quoteText ?? registered.preview?.quoteText,
-    authorName: merged.preview?.authorName ?? registered.preview?.authorName,
-    authorTitle: merged.preview?.authorTitle ?? registered.preview?.authorTitle,
-    bodyText: merged.preview?.bodyText ?? registered.preview?.bodyText,
-    chartValues: merged.preview?.chartValues ?? registered.preview?.chartValues,
-    chartLabels: merged.preview?.chartLabels ?? registered.preview?.chartLabels,
-    chartCaption: merged.preview?.chartCaption ?? registered.preview?.chartCaption,
-    mode: merged.preview?.mode ?? registered.preview?.mode,
-    highlightedColumnIndex:
-      merged.preview?.highlightedColumnIndex ??
-      merged.highlightedPlanIndex ??
-      registered.preview?.highlightedColumnIndex ??
-      registered.highlightedPlanIndex,
-  }
-  if (!Array.isArray(merged.slots) || merged.slots.length === 0) {
-    merged.slots = registered.slots
-  }
-  return merged
+/** Prepare a saved DECK_LAYOUT schema for polished admin preview. */
+export function enrichLayoutSchemaForPreview(schema) {
+  return normalizeLayoutSchemaForPreview(schema)
 }
 
 export default REGISTRY

@@ -54,22 +54,60 @@ export function slotKind(id = '', role = '') {
   if (role === 'caption') return 'caption'
   if (role === 'subheading' || /subtitle|subheading/.test(s)) return 'subheading'
   if (role === 'body' || /body|description|quote/.test(s)) return 'body'
-  if (role === 'stat' || /stat|metric|number|value/.test(s)) return 'stat'
-  if (/bar_chart|chart|graph|series/.test(s) || role === 'chart') return 'chart'
+  if (role === 'stat_label') return 'stat_label'
+  if (role === 'stat' || /metric|number|value/.test(s)) return 'stat'
+  if (role === 'label') return 'label'
+  if (/bar_chart|main_chart|^chart$/.test(s) || (/_chart$/.test(s) && !/heading|caption|card|panel/.test(s)) || role === 'chart') return 'chart'
   if (/image|media|photo|picture/.test(s) || role === 'image') return 'image'
+  if (role === 'decoration' || /circle|arrow|accent|badge|dot|shape/.test(s)) return 'decoration'
+  if (role === 'background') return 'bg'
   return 'generic'
 }
 
 function slotFamily(id = '') {
   const lower = String(id || '').toLowerCase()
-  const insight = lower.match(/^insight.*?(\d+)/)
-  if (insight) return `insight_${insight[1]}`
-  if (/chart|bar_chart/.test(lower)) return 'chart'
-  if (/^point/.test(lower)) return 'point'
-  const stat = lower.match(/^stat.*?(\d+)/)
-  if (stat) return `stat_${stat[1]}`
+
+  const insightNum = lower.match(/^insight_(?:card_|icon_|label_)?(\d+)/)
+  if (insightNum) return `insight_${insightNum[1]}`
+
+  const stepNum = lower.match(/^step_(\d+)_/)
+  if (stepNum) return `step_${stepNum[1]}`
+  if (/^arrow_\d+$/.test(lower)) return lower
+
+  const numberedPoint = lower.match(/^point_(\d+)_/)
+  if (numberedPoint) return `point_${numberedPoint[1]}`
+  if (/^points_bg|^points_panel|^point_grid/.test(lower)) return 'points_panel'
+  if (/^point_card_bg$/.test(lower)) return 'point_panel_bg'
+  if (/^point_heading$/.test(lower)) return 'point_panel_heading'
+  if (/^point_body$/.test(lower)) return 'point_panel_body'
+  if (/^point_image$/.test(lower)) return 'point_panel_image'
+  if (/^point$|^point[_\-](?!(\d))/.test(lower)) return 'point'
+
+  if (/^(bar_chart|main_chart)$/.test(lower) || lower === 'chart') return 'chart_main'
+  if (/^chart_card_bg$/.test(lower)) return 'chart_panel_bg'
+  if (/^chart_heading$/.test(lower)) return 'chart_panel_heading'
+  if (/^chart_caption$/.test(lower)) return 'chart_panel_caption'
+
+  const imageItem = lower.match(/^image_(\d+)$/)
+  if (imageItem) return `image_${imageItem[1]}`
+  const imagePart = lower.match(/^image_(\d+)_(frame|label)$/)
+  if (imagePart) return `image_${imagePart[1]}`
+  if (/^hero_image$/.test(lower)) return 'hero_image'
+  if (/^image_frame$/.test(lower)) return 'hero_image_frame'
+
+  const statNum = lower.match(/^stat_(\d+)_/)
+  if (statNum) return `stat_${statNum[1]}`
+
+  const colNum = lower.match(/^col_(\d+)_/)
+  if (colNum) return `col_${colNum[1]}`
+
   const bullet = lower.match(/^(?:bullet|item|card).*?(\d+)/)
   if (bullet) return `card_${bullet[1]}`
+
+  if (/^accent_bar$|^bottom_line$|^dot_accent$|^image_badge$|^image_overlay_shape$/.test(lower)) {
+    return lower
+  }
+
   return `slot_${lower || 'unknown'}`
 }
 
@@ -157,8 +195,12 @@ export function groupSlotPreview(group, previewHints = {}) {
 
 export function isTextPreviewGroup(group) {
   return [...group.kinds].every((k) =>
-    ['heading', 'body', 'eyebrow', 'caption', 'subheading', 'stat', 'generic', 'logo', 'quote'].includes(k)
+    ['heading', 'body', 'eyebrow', 'caption', 'subheading', 'stat', 'stat_label', 'generic', 'logo', 'quote', 'label'].includes(k)
   )
+}
+
+export function isShapePreviewGroup(group) {
+  return group.kinds.has('decoration') || group.kinds.has('icon')
 }
 
 /** Vertical alignment from slot position on the 10-row grid. */
