@@ -57,3 +57,28 @@ export function isSignupEmailExistsResult(result) {
     isEmailAlreadyRegisteredMessage(result?.error)
   )
 }
+
+/** Triggers global session-expired event and cleans auth storage */
+export function triggerSessionExpired() {
+  localStorage.removeItem('accessToken')
+  localStorage.removeItem('user')
+  window.dispatchEvent(new CustomEvent('auth:session-expired'))
+}
+
+/** Check if an error or status indicates token / session expiration */
+export function isTokenExpiredError(error) {
+  if (!error) return false
+  const status = error.status || error.response?.status
+  if (status === 401) return true
+
+  const msg = String(error.message || error.response?.data?.message || '').toLowerCase()
+  return (
+    msg.includes('token expired') ||
+    msg.includes('jwt expired') ||
+    msg.includes('session expired') ||
+    msg.includes('token is invalid') ||
+    msg.includes('invalid token') ||
+    msg.includes('authentication required')
+  )
+}
+

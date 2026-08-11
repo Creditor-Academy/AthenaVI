@@ -1,0 +1,79 @@
+.ppt-present-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: #0f172a;
+  display: flex;
+  flex-direction: column;
+}
+
+.ppt-present-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  color: #e2e8f0;
+  font-size: 14px;
+}
+
+.ppt-present-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ppt-present-header-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  cursor: pointer;
+}
+
+.ppt-present-stage {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  transition: opacity 0.28s ease, transform 0.28s ease;
+}
+
+.ppt-present-stage--fade {
+  opacity: 0.4;
+}
+
+.ppt-present-slide {
+  position: relative;
+  width: min(92vw, 1200px);
+  max-height: 80vh;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+}
+
+.ppt-present-notes {
+  padding: 12px 24px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+.ppt-present-nav {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+.ppt-present-nav button {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+}

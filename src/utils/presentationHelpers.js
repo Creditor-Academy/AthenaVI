@@ -16,6 +16,8 @@ export const PPT_CANVAS_SIZES = {
   '4:3': { width: 1600, height: 1200 },
 }
 
+export const DEFAULT_SLIDE_BG = '#FFFFFF'
+
 const SHAPE_ALIAS = {
   square: 'rect',
   'triangle-up': 'triangle',
@@ -144,6 +146,7 @@ export function normalizeDeckPacks(payload) {
           'Deck Pack',
         packId: schema.pack_id || pack.pack_id || null,
         themeId: schema.themeId || pack.themeId || null,
+        aspectRatio: schema.aspectRatio || pack.aspectRatio || '16:9',
         slideCount: Array.isArray(schema.slides) ? schema.slides.length : pack.slideCount || null,
         preview: schema.preview || pack.preview || null,
         schema,
@@ -286,6 +289,40 @@ export function extractSlidesFromPresentation(presentation) {
   )
 }
 
+export function normalizeElementPlacement(placement, canvas = PPT_CANVAS_SIZES['16:9']) {
+  const canvasW = canvas?.width || 1920
+  const canvasH = canvas?.height || 1080
+  const raw = placement || {}
+
+  let x = raw.x ?? raw.left ?? raw.position?.x
+  let y = raw.y ?? raw.top ?? raw.position?.y
+  let width = raw.width ?? raw.size?.width
+  let height = raw.height ?? raw.size?.height
+
+  const finite = [x, y, width, height].filter((v) => Number.isFinite(Number(v)))
+  const looksNormalized =
+    finite.length >= 2 &&
+    finite.every((v) => Number(v) >= 0 && Number(v) <= 1) &&
+    (width == null || Number(width) <= 1) &&
+    (height == null || Number(height) <= 1)
+
+  if (looksNormalized) {
+    x = Number(x || 0) * canvasW
+    y = Number(y || 0) * canvasH
+    width = Number(width || 0.5) * canvasW
+    height = Number(height || 0.12) * canvasH
+  }
+
+  return {
+    x: Number(x) || 0,
+    y: Number(y) || 0,
+    width: Math.max(Number(width) || 200, 40),
+    height: Math.max(Number(height) || 80, 24),
+    ...(raw.rotation != null ? { rotation: raw.rotation } : {}),
+    ...(raw.opacity != null ? { opacity: raw.opacity } : {}),
+  }
+}
+
 export function normalizeSlideForEditor(slide, index = 0, aspectRatio = '16:9') {
   const elementsDoc = slide?.elements
   const elements = Array.isArray(elementsDoc?.elements)
@@ -321,10 +358,16 @@ export function normalizeSlideForEditor(slide, index = 0, aspectRatio = '16:9') 
         ? [String(bodyFromContent)]
         : [],
     content: slide?.content || {},
+    backgroundColor: slide?.backgroundColor || DEFAULT_SLIDE_BG,
     elements: {
       version: elementsDoc?.version || 1,
       canvas,
-      elements: [...elements].sort((a, b) => (a.layer || 0) - (b.layer || 0)),
+      elements: [...elements]
+        .map((el) => ({
+          ...el,
+          placement: normalizeElementPlacement(el.placement, canvas),
+        }))
+        .sort((a, b) => (a.layer || 0) - (b.layer || 0)),
       ...(elementsDoc?.transition ? { transition: elementsDoc.transition } : {}),
       ...(elementsDoc?.contributorStatus
         ? { contributorStatus: elementsDoc.contributorStatus }

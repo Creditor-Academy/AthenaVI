@@ -157,6 +157,15 @@ class BrandKitService {
       { method: 'DELETE' }
     )
   }
+
+  async fetchMediaBlob(workspaceId, brandKitId, mediaId) {
+    const endpoint = `${API_CONFIG.ENDPOINTS.BRAND_KITS.MEDIA_ONE(workspaceId, brandKitId, mediaId)}/stream`
+    const response = await fetch(buildUrl(endpoint), {
+      headers: getAuthHeaders(),
+    })
+    if (!response.ok) throw new Error('Failed to stream media')
+    return response.blob()
+  }
 }
 
 const brandKitService = new BrandKitService()

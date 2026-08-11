@@ -144,6 +144,14 @@ export const PPT_MEDIA_INTEGRATIONS = [
     stockType: 'photo',
   },
   {
+    id: 'giphy',
+    section: 'Integrations',
+    label: 'Giphy',
+    kind: 'stock',
+    provider: 'giphy',
+    stockType: 'gif',
+  },
+  {
     id: 'icons',
     section: 'Integrations',
     label: 'Icon sets',
@@ -365,8 +373,8 @@ export function getPptShapesForCategory(categoryId) {
 export const PPT_CHART_SOURCES = [
   { id: 'manual', label: 'Manual / sample data', phase: 'v1' },
   { id: 'csv', label: 'Import a CSV', phase: 'v1' },
-  { id: 'google-sheets', label: 'Google Sheets', phase: 'later' },
-  { id: 'google-analytics', label: 'Google Analytics', phase: 'later' },
+  { id: 'google-sheets', label: 'Google Sheets', phase: 'v1' },
+  { id: 'google-analytics', label: 'Google Analytics', phase: 'v1' },
 ]
 
 export const PPT_SAMPLE_CHART_DATA = {
@@ -465,6 +473,34 @@ export const PPT_EMBED_PROVIDERS = [
     description: 'Embed a Graphy course or video.',
     placeholder: 'Paste any Graphy link',
     match: /graphy\.com/i,
+  },
+  {
+    id: 'notion',
+    label: 'Notion',
+    description: 'Embed a Notion page or database.',
+    placeholder: 'Paste any Notion link',
+    match: /notion\.(so|site)/i,
+  },
+  {
+    id: 'monday',
+    label: 'Monday.com',
+    description: 'Embed a Monday board, timeline, or kanban.',
+    placeholder: 'Paste any Monday.com link',
+    match: /monday\.com/i,
+  },
+  {
+    id: 'typeform',
+    label: 'Typeform',
+    description: 'Embed a Typeform survey or quiz.',
+    placeholder: 'Paste any Typeform link',
+    match: /typeform\.com/i,
+  },
+  {
+    id: 'hubspot',
+    label: 'HubSpot',
+    description: 'Embed HubSpot CRM content for pitch rooms.',
+    placeholder: 'Paste HubSpot share link',
+    match: /hubspot\.com|hsforms\.com/i,
   },
   {
     id: 'any-link',

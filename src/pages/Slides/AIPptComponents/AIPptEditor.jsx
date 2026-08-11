@@ -9,7 +9,6 @@ import {
   FiZoomIn,
   FiZoomOut,
   FiSidebar,
-  FiCode,
 } from 'react-icons/fi'
 import { MdDragIndicator, MdOutlineColorLens } from 'react-icons/md'
 import { BsStars } from 'react-icons/bs'
@@ -18,6 +17,17 @@ import InsertToolbar from './insert/InsertToolbar'
 import EditorFileMenu from './insert/EditorFileMenu'
 import EditorRightRail from './insert/EditorRightRail'
 import AddSlideModal from './insert/AddSlideModal'
+import PptCanvasElement from './PptCanvasElement'
+import PptCanvasGuidesOverlay from './PptCanvasGuidesOverlay'
+import PresentMode from './PresentMode'
+import SharePresentationModal from './SharePresentationModal'
+import ExportPresentationModal from './ExportPresentationModal'
+import ImageCropModal from './ImageCropModal'
+import PptQuickMenu from './PptQuickMenu'
+import SlideEditAiPanel from './SlideEditAiPanel'
+import { usePptEditorHistory } from '../../../hooks/usePptEditorHistory'
+import { usePptElementMutations } from './usePptElementMutations'
+import { computePptSmartGuides } from '../../../utils/pptSmartGuides'
 import presentationService, {
   PresentationConflictError,
 } from '../../../services/presentationService'
@@ -25,39 +35,39 @@ import brandKitService from '../../../services/brandKitService'
 import { isInsufficientCreditsError } from '../../../services/creditsService'
 import {
   PPT_CAPS,
-  PPT_EXPORT_FORMATS,
   buildCanvasDoc,
   extractElementFromMutation,
   extractSlideFromMutation,
   extractSlidesFromPresentation,
   getSlideImage,
-  normalizeApiShape,
   normalizeElementPresets,
+  normalizeApiShape,
+  normalizeElementPlacement,
   normalizeSlideForEditor,
   resolveCanvasSize,
-  resolveFillCss,
   resolveThemeColor,
   toApiThemeId,
 } from '../../../utils/presentationHelpers'
 import { PPT_DEFAULT_PLACEMENTS } from '../../../constants/pptInsertCatalog'
+import './pptEditorExtras.css'
 
 const CANVAS_SAVE_DEBOUNCE_MS = 600
+const DEFAULT_SLIDE_BG = '#FFFFFF'
+const DEFAULT_TEXT_COLOR = '#0F172A'
 
 function resolveThemeVisual(themeId, themeTokens) {
   const palette = themeTokens?.palette
   if (palette?.bg || palette?.primary || palette?.text) {
-    const bg = palette.bg || palette.surface || '#FFFFFF'
+    const bg = palette.bg || palette.surface || DEFAULT_SLIDE_BG
     const primary = palette.primary || '#3B82F6'
     const secondary = palette.secondary || primary
     const text = palette.text || '#0F172A'
     const muted = palette.muted || '#64748B'
-    const gradStart = palette.gradientStart || primary
-    const gradEnd = palette.gradientEnd || secondary
     return {
       id: 'themeTokens',
       name: themeTokens?.brand?.name || 'Brand Kit',
-      outer: `linear-gradient(135deg, ${gradStart}, ${gradEnd})`,
-      inner: bg,
+      outer: DEFAULT_SLIDE_BG,
+      inner: DEFAULT_SLIDE_BG,
       title: text,
       body: muted,
       primary,
@@ -69,7 +79,12 @@ function resolveThemeVisual(themeId, themeTokens) {
   }
   const id = String(themeId || '')
   const fallback = THEMES.find((t) => t.id === id || toApiThemeId(t.id) === id) || THEMES[0]
-  return { ...fallback, palette: null }
+  return {
+    ...fallback,
+    outer: DEFAULT_SLIDE_BG,
+    inner: DEFAULT_SLIDE_BG,
+    palette: null,
+  }
 }
 
 function clamp(value, min, max) {
@@ -104,10 +119,13 @@ function InteractiveElementShell({
   canvasH,
   selected,
   editable,
+  locked,
   stageRef,
+  allElements,
   onSelect,
   onPlacementLive,
   onPlacementCommit,
+  onGuidesChange,
   children,
 }) {
   const p = el.placement || {}
@@ -117,7 +135,7 @@ function InteractiveElementShell({
   useEffect(() => {
     const onMove = (e) => {
       const drag = dragRef.current
-      if (!drag || !stageRef?.current) return
+      if (!drag || !stageRef?.current || locked) return
       const pt = pointerToCanvas(e.clientX, e.clientY, stageRef.current, canvasW, canvasH)
       const dx = pt.x - drag.originX
       const dy = pt.y - drag.originY
@@ -127,6 +145,20 @@ function InteractiveElementShell({
       if (drag.mode === 'move') {
         next.x = clamp(start.x + dx, 0, canvasW - (start.width || 40))
         next.y = clamp(start.y + dy, 0, canvasH - (start.height || 40))
+        const { guides, snapDx, snapDy } = computePptSmartGuides(
+          {
+            x: next.x,
+            y: next.y,
+            width: next.width,
+            height: next.height,
+          },
+          allElements || [],
+          { width: canvasW, height: canvasH },
+          el.id
+        )
+        next.x += snapDx
+        next.y += snapDy
+        onGuidesChange?.(guides)
       } else if (drag.mode === 'resize') {
         next.width = clamp(start.width + dx, 40, canvasW - start.x)
         next.height = clamp(start.height + dy, 24, canvasH - start.y)
@@ -140,6 +172,7 @@ function InteractiveElementShell({
       const drag = dragRef.current
       if (!drag) return
       dragRef.current = null
+      onGuidesChange?.([])
       onPlacementCommit?.(el.id, lastPlacementRef.current || drag.startPlacement)
     }
 
@@ -151,10 +184,10 @@ function InteractiveElementShell({
       window.removeEventListener('pointerup', onUp)
       window.removeEventListener('pointercancel', onUp)
     }
-  }, [canvasW, canvasH, el.id, onPlacementCommit, onPlacementLive, stageRef])
+  }, [canvasW, canvasH, el.id, allElements, locked, onGuidesChange, onPlacementCommit, onPlacementLive, stageRef])
 
   const beginDrag = (e, mode) => {
-    if (!editable || !selected || !stageRef?.current) return
+    if (!editable || !selected || !stageRef?.current || locked) return
     e.preventDefault()
     e.stopPropagation()
     const origin = pointerToCanvas(
@@ -189,7 +222,7 @@ function InteractiveElementShell({
     }),
     outline: selected ? '2px solid #3B82F6' : undefined,
     outlineOffset: selected ? 2 : undefined,
-    cursor: editable && selected ? 'move' : 'pointer',
+    cursor: editable && selected && !locked ? 'move' : 'pointer',
     touchAction: 'none',
   }
 
@@ -198,6 +231,7 @@ function InteractiveElementShell({
       role="button"
       tabIndex={0}
       data-element-id={el.id}
+      className={locked ? 'ppt-canvas-el-locked' : undefined}
       style={frameStyle}
       onClick={(e) => {
         e.stopPropagation()
@@ -227,239 +261,21 @@ function InteractiveElementShell({
   )
 }
 
-function CanvasElement({ el, palette, onImageAuthError }) {
-  const fillStyle = {
-    width: '100%',
-    height: '100%',
-    overflow: 'hidden',
-  }
-
-  if (el.type === 'text') {
-    const c = el.content || {}
-    const color = resolveThemeColor(
-      c.color || c.colorRole,
-      palette,
-      palette?.text || 'inherit'
-    )
-    const weight = c.fontWeight || (c.bold ? 700 : 400)
-    return (
-      <div
-        style={{
-          ...fillStyle,
-          color,
-          fontSize: c.fontSize ? `${Math.max(10, c.fontSize * 0.45)}px` : '16px',
-          fontWeight: weight,
-          fontStyle: c.italic ? 'italic' : 'normal',
-          fontFamily: c.fontFamily || undefined,
-          textAlign: c.align || 'left',
-          letterSpacing: c.letterSpacing != null ? `${c.letterSpacing}em` : undefined,
-          display: 'flex',
-          alignItems: c.align === 'center' ? 'center' : 'flex-start',
-          whiteSpace: 'pre-wrap',
-          lineHeight: c.lineHeight != null ? c.lineHeight : 1.25,
-        }}
-      >
-        {c.text || ''}
-      </div>
-    )
-  }
-
-  if (el.type === 'image' || el.type === 'icon') {
-    const c = el.content || {}
-    const url = c.url || c.src || c.thumbnailUrl || c.previewUrl
-    if (!url) {
-      return (
-        <div style={{ ...fillStyle, background: 'rgba(148,163,184,0.16)' }}>
-          <div className="aig-canvas-image-fallback">
-            <FiImage size={18} />
-          </div>
-        </div>
-      )
-    }
-    return (
-      <img
-        src={url}
-        alt={c.alt || c.icon || ''}
-        style={{ ...fillStyle, objectFit: c.fit || (el.type === 'icon' ? 'contain' : 'cover') }}
-        onError={() => onImageAuthError?.(el.id)}
-      />
-    )
-  }
-
-  if (el.type === 'shape') {
-    const c = el.content || {}
-    const shape = normalizeApiShape(c.shape || 'rect')
-    const fill = resolveFillCss(c.fill, palette, 'rgba(148,163,184,0.35)')
-    const stroke = c.stroke
-      ? resolveThemeColor(c.stroke, palette, c.stroke)
-      : undefined
-    const strokeWidth = c.strokeWidth || 3
-    const clipPaths = {
-      triangle: 'polygon(50% 0%, 0% 100%, 100% 100%)',
-      'triangle-up': 'polygon(50% 0%, 0% 100%, 100% 100%)',
-      'triangle-down': 'polygon(0% 0%, 100% 0%, 50% 100%)',
-      diamond: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-      star: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
-      pentagon: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
-      hexagon: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
-    }
-    const clip = clipPaths[shape] || clipPaths[c.shape]
-    const radius =
-      shape === 'ellipse' || shape === 'circle'
-        ? '50%'
-        : shape === 'pill'
-          ? 999
-          : shape === 'rounded-rect'
-            ? c.borderRadius != null
-              ? c.borderRadius
-              : 12
-            : c.borderRadius || 0
-
-    if (clip) {
-      if (stroke && (fill === 'transparent' || c.variant === 'outlined')) {
-        const svgPaths = {
-          triangle: 'M50 4 L96 96 L4 96 Z',
-          'triangle-up': 'M50 4 L96 96 L4 96 Z',
-          'triangle-down': 'M4 4 L96 4 L50 96 Z',
-          diamond: 'M50 4 L96 50 L50 96 L4 50 Z',
-          star: 'M50 4 L61 38 L96 38 L68 58 L79 92 L50 72 L21 92 L32 58 L4 38 L39 38 Z',
-          pentagon: 'M50 4 L96 38 L79 96 L21 96 L4 38 Z',
-          hexagon: 'M25 4 L75 4 L96 50 L75 96 L25 96 L4 50 Z',
-        }
-        const d = svgPaths[shape] || svgPaths[c.shape]
-        return (
-          <svg viewBox="0 0 100 100" style={{ ...fillStyle, display: 'block' }} preserveAspectRatio="none">
-            <path
-              d={d}
-              fill="none"
-              stroke={stroke}
-              strokeWidth={strokeWidth * 1.2}
-              vectorEffect="non-scaling-stroke"
-            />
-          </svg>
-        )
-      }
-      return <div style={{ ...fillStyle, background: fill, clipPath: clip }} />
-    }
-
-    if (shape === 'arrows' || shape === 'plus') {
-      return (
-        <div
-          style={{
-            ...fillStyle,
-            background: fill === 'transparent' ? 'transparent' : fill,
-            display: 'grid',
-            placeItems: 'center',
-            color: stroke || palette?.text || '#0F172A',
-            fontSize: 28,
-            fontWeight: 700,
-          }}
-        >
-          {shape === 'plus' ? '+' : '→'}
-        </div>
-      )
-    }
-
-    return (
-      <div
-        style={{
-          ...fillStyle,
-          background: fill === 'transparent' ? 'transparent' : fill,
-          borderRadius: radius,
-          border:
-            shape === 'line'
-              ? `2px solid ${resolveThemeColor(c.line || c.fill, palette, '#94a3b8')}`
-              : stroke
-                ? `${strokeWidth}px solid ${stroke}`
-                : undefined,
-          boxSizing: 'border-box',
-        }}
-      />
-    )
-  }
-
-  if (el.type === 'chart') {
-    const c = el.content || {}
-    const series =
-      c.data?.series?.[0]?.values ||
-      c.series?.[0]?.values ||
-      (Array.isArray(c.series) && typeof c.series[0] === 'number' ? c.series : null) ||
-      [12, 19, 14, 22]
-    const max = Math.max(...series.map(Number), 1)
-    const colors = (c.colors || ['#7C3AED', '#A78BFA', '#FDBA74']).map((col) =>
-      resolveThemeColor(col, palette, col)
-    )
-    return (
-      <div className="aig-canvas-chart" style={fillStyle}>
-        <div className="aig-canvas-embed-label">{c.chartType || 'chart'}</div>
-        <div className="aig-canvas-chart-bars">
-          {series.slice(0, 8).map((v, i) => (
-            <span
-              key={i}
-              style={{
-                height: `${Math.max(8, (Number(v) / max) * 100)}%`,
-                background: colors[i % colors.length],
-              }}
-            />
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  if (el.type === 'table') {
-    const c = el.content || {}
-    const cells = Array.isArray(c.cells)
-      ? c.cells
-      : Array.isArray(c.rows) && Array.isArray(c.rows[0])
-        ? c.rows
-        : []
-    return (
-      <div className="aig-canvas-table" style={fillStyle}>
-        <table className="aig-canvas-table-grid">
-          <tbody>
-            {cells.map((row, ri) => (
-              <tr key={ri}>
-                {(row || []).map((cell, ci) =>
-                  c.hasHeader && ri === 0 ? (
-                    <th key={ci}>{cell}</th>
-                  ) : (
-                    <td key={ci}>{cell}</td>
-                  )
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    )
-  }
-
-  if (el.type === 'embed' || el.type === 'link') {
-    const c = el.content || {}
-    return (
-      <div className="aig-canvas-embed" style={fillStyle}>
-        <div className="aig-canvas-embed-label">
-          <FiCode size={12} style={{ marginRight: 4 }} />
-          {c.title || c.provider || 'Embed'}
-        </div>
-        <div className="aig-canvas-embed-url">{c.url || ''}</div>
-      </div>
-    )
-  }
-
-  return <div style={fillStyle} />
-}
-
 function SlideStage({
   slide,
   themeVisual,
   aspectRatio,
   selectedElementId,
+  editingTextId,
   editable = false,
+  smartGuides = [],
   onSelectElement,
   onPlacementLive,
   onPlacementCommit,
+  onGuidesChange,
+  onStartTextEdit,
+  onEndTextEdit,
+  onTableCellChange,
   onImageAuthError,
 }) {
   const stageRef = useRef(null)
@@ -468,24 +284,33 @@ function SlideStage({
   const hasElements = elements.length > 0
   const fallbackImage = hasElements ? null : getSlideImage(slide).url
   const palette = themeVisual?.palette || null
+  const slideBg = (() => {
+    if (slide?.backgroundGradientStart && slide?.backgroundGradientEnd) {
+      return `linear-gradient(135deg, ${slide.backgroundGradientStart}, ${slide.backgroundGradientEnd})`
+    }
+    return slide?.backgroundColor || DEFAULT_SLIDE_BG
+  })()
 
   return (
     <div
       className="aig-editor-canvas aig-editor-canvas--stage"
       style={{
-        background: themeVisual.outer,
+        background: slideBg,
         aspectRatio: `${canvas.width} / ${canvas.height}`,
       }}
-      onClick={() => onSelectElement?.(null)}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onSelectElement?.(null)
+      }}
     >
       <div
         ref={stageRef}
         className="aig-slide-stage"
         style={{
-          background: themeVisual.inner,
+          background: slideBg,
           color: themeVisual.body,
         }}
       >
+        <PptCanvasGuidesOverlay guides={smartGuides} canvasW={canvas.width} canvasH={canvas.height} />
         {hasElements ? (
           elements.map((el, i) => (
             <InteractiveElementShell
@@ -495,14 +320,23 @@ function SlideStage({
               canvasH={canvas.height}
               selected={selectedElementId === el.id}
               editable={editable}
+              locked={!!el.locked}
               stageRef={stageRef}
+              allElements={elements}
               onSelect={onSelectElement}
               onPlacementLive={onPlacementLive}
               onPlacementCommit={onPlacementCommit}
+              onGuidesChange={onGuidesChange}
             >
-              <CanvasElement
+              <PptCanvasElement
                 el={el}
                 palette={palette}
+                editable={editable && (el.type === 'table' || selectedElementId === el.id)}
+                editingText={editingTextId === el.id}
+                onStartTextEdit={() => onStartTextEdit?.(el.id)}
+                onEndTextEdit={(text) => onEndTextEdit?.(el.id, text)}
+                onTableCellChange={(ri, ci, val) => onTableCellChange?.(el.id, ri, ci, val)}
+                onTableActivate={() => onSelectElement?.(el.id)}
                 onImageAuthError={onImageAuthError}
               />
             </InteractiveElementShell>
@@ -555,8 +389,7 @@ export default function AIPptEditor({
   const [loading, setLoading] = useState(Boolean(workspaceId && presentationId))
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
-  const [exportOpen, setExportOpen] = useState(false)
-  const [exportStatus, setExportStatus] = useState('')
+  const [exportModalOpen, setExportModalOpen] = useState(false)
   const [selectedSlideId, setSelectedSlideId] = useState(null)
   const [selectedElementId, setSelectedElementId] = useState(null)
   const [themeTokens, setThemeTokens] = useState(null)
@@ -567,11 +400,29 @@ export default function AIPptEditor({
   const [deckTitle, setDeckTitle] = useState(config.title || 'Untitled Presentation')
   const [addSlideOpen, setAddSlideOpen] = useState(false)
   const [addAfterIndex, setAddAfterIndex] = useState(null)
-  const exportMenuRef = useRef(null)
+  const [canvasZoom, setCanvasZoom] = useState(100)
+  const [smartGuides, setSmartGuides] = useState([])
+  const [editingTextId, setEditingTextId] = useState(null)
+  const [presentOpen, setPresentOpen] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
+  const [quickMenuOpen, setQuickMenuOpen] = useState(false)
+  const [slideAiEditId, setSlideAiEditId] = useState(null)
+  const [cropModalOpen, setCropModalOpen] = useState(false)
+  const [deckVariables, setDeckVariables] = useState([])
+  const [slideStyles, setSlideStyles] = useState({
+    headerFont: 'Inter',
+    bodyFont: 'Inter',
+    headerSize: 44,
+    bodySize: 22,
+  })
+  const [multiSelectIds, setMultiSelectIds] = useState([])
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const brandKitMenuRef = useRef(null)
   const canvasSaveTimers = useRef({})
   const elementPatchTimers = useRef({})
   const imageRefreshInFlight = useRef(new Set())
+
+  const history = usePptEditorHistory()
 
   useEffect(() => {
     if (config.title) setDeckTitle(config.title)
@@ -586,6 +437,9 @@ export default function AIPptEditor({
   const atDeckCap = localSlides.length >= PPT_CAPS.DECK_MAX_SLIDES
   const selectedSlide =
     localSlides.find((s) => s.id === selectedSlideId) || localSlides[0] || null
+  const selectedElement =
+    selectedSlide?.elements?.elements?.find((el) => el.id === selectedElementId) || null
+  const designFocus = selectedElement?.type || (selectedSlideId ? 'slide' : 'slide')
   const selectedElementCount = selectedSlide?.elements?.elements?.length || 0
   const atElementCap = selectedElementCount >= PPT_CAPS.ELEMENTS_PER_SLIDE
 
@@ -595,8 +449,32 @@ export default function AIPptEditor({
     setLocalSlides((prev) => {
       const idx = prev.findIndex((s) => s.id === normalized.id)
       if (idx === -1) return prev
+      const current = prev[idx]
+      const currentEls = current?.elements?.elements || []
+      const incomingEls = normalized?.elements?.elements || []
+      const mergedElements =
+        incomingEls.length > 0
+          ? incomingEls
+          : currentEls.length > 0
+            ? currentEls
+            : incomingEls
+
       const next = [...prev]
-      next[idx] = { ...next[idx], ...normalized }
+      next[idx] = {
+        ...current,
+        ...normalized,
+        backgroundColor:
+          normalized.backgroundColor ?? current.backgroundColor ?? DEFAULT_SLIDE_BG,
+        backgroundGradientStart:
+          normalized.backgroundGradientStart ?? current.backgroundGradientStart,
+        backgroundGradientEnd:
+          normalized.backgroundGradientEnd ?? current.backgroundGradientEnd,
+        elements: {
+          ...(current?.elements || {}),
+          ...(normalized?.elements || {}),
+          elements: mergedElements,
+        },
+      }
       return next
     })
   }, [aspectRatio])
@@ -671,6 +549,208 @@ export default function AIPptEditor({
       }, CANVAS_SAVE_DEBOUNCE_MS)
     },
     [workspaceId, presentationId, isGenerating, applySlideUpdate]
+  )
+
+  const pushHistorySnapshot = useCallback(() => {
+    history.pushSnapshot({
+      slides: localSlides,
+      selectedSlideId,
+      selectedElementId,
+    })
+  }, [history, localSlides, selectedSlideId, selectedElementId])
+
+  const restoreHistorySnapshot = useCallback((snapshot) => {
+    if (!snapshot) return
+    setLocalSlides(snapshot.slides)
+    setSelectedSlideId(snapshot.selectedSlideId)
+    setSelectedElementId(snapshot.selectedElementId)
+  }, [])
+
+  const elementMutations = usePptElementMutations({
+    localSlides,
+    setLocalSlides,
+    selectedSlideId,
+    selectedElementId,
+    setSelectedElementId,
+    aspectRatio,
+    workspaceId,
+    presentationId,
+    isGenerating,
+    presentationService,
+    applySlideUpdate,
+    queueCanvasSave,
+    pushHistory: pushHistorySnapshot,
+  })
+
+  const handleUndo = useCallback(() => {
+    restoreHistorySnapshot(
+      history.undo({ slides: localSlides, selectedSlideId, selectedElementId })
+    )
+  }, [history, localSlides, selectedSlideId, selectedElementId, restoreHistorySnapshot])
+
+  const handleRedo = useCallback(() => {
+    restoreHistorySnapshot(
+      history.redo({ slides: localSlides, selectedSlideId, selectedElementId })
+    )
+  }, [history, localSlides, selectedSlideId, selectedElementId, restoreHistorySnapshot])
+
+  const handleChangeElementContent = useCallback(
+    (elementId, content) => elementMutations.patchElement(elementId, { content }),
+    [elementMutations]
+  )
+
+  const handleChangeElementPlacement = useCallback(
+    (elementId, placement) => elementMutations.patchElement(elementId, { placement }),
+    [elementMutations]
+  )
+
+  const handleEndTextEdit = useCallback(
+    (elementId, text) => {
+      setEditingTextId(null)
+      const el = selectedSlide?.elements?.elements?.find((e) => e.id === elementId)
+      elementMutations.patchElement(elementId, {
+        content: { ...(el?.content || {}), text },
+      })
+    },
+    [elementMutations, selectedSlide]
+  )
+
+  const handleTableCellChange = useCallback(
+    (elementId, rowIndex, colIndex, value) => {
+      const el = selectedSlide?.elements?.elements?.find((e) => e.id === elementId)
+      if (!el) return
+      const baseCells = Array.isArray(el.content?.cells)
+        ? el.content.cells
+        : Array.isArray(el.content?.rows)
+          ? el.content.rows
+          : []
+      const cells = baseCells.map((row, ri) =>
+        ri === rowIndex ? (row || []).map((cell, ci) => (ci === colIndex ? value : cell)) : [...(row || [])]
+      )
+      elementMutations.patchElement(elementId, {
+        content: {
+          ...el.content,
+          cells,
+          rows: cells.length,
+          cols: cells[0]?.length || 0,
+        },
+      })
+    },
+    [selectedSlide, elementMutations]
+  )
+
+  const handleQuickCommand = useCallback(
+    (cmd) => {
+      const ids = multiSelectIds.length ? multiSelectIds : [selectedElementId].filter(Boolean)
+      switch (cmd) {
+        case 'undo':
+          handleUndo()
+          break
+        case 'redo':
+          handleRedo()
+          break
+        case 'duplicate':
+          elementMutations.duplicateElement()
+          break
+        case 'group':
+          elementMutations.groupSelection(ids)
+          break
+        case 'ungroup':
+          elementMutations.ungroupSelection()
+          break
+        case 'lock':
+          elementMutations.toggleLock()
+          break
+        case 'present':
+          setPresentOpen(true)
+          break
+        case 'share':
+          setShareOpen(true)
+          break
+        case 'export':
+          setExportModalOpen(true)
+          break
+        case 'smart-tidy':
+          elementMutations.smartTidy(ids)
+          break
+        case 'smart-swap':
+          elementMutations.smartSwap()
+          break
+        case 'zoom-in':
+          setCanvasZoom((z) => Math.min(200, z + 10))
+          break
+        case 'zoom-out':
+          setCanvasZoom((z) => Math.max(40, z - 10))
+          break
+        case 'zoom-fit':
+          setCanvasZoom(100)
+          break
+        default:
+          break
+      }
+    },
+    [handleUndo, handleRedo, elementMutations, multiSelectIds, selectedElementId]
+  )
+
+  const handleCropApply = useCallback(
+    ({ fit, opacity }) => {
+      if (!selectedElementId || !selectedElement) return
+      elementMutations.patchElement(selectedElementId, {
+        content: { ...selectedElement.content, fit, opacity },
+        placement: {
+          ...selectedElement.placement,
+          opacity: opacity ?? selectedElement.placement?.opacity,
+        },
+      })
+    },
+    [selectedElementId, selectedElement, elementMutations]
+  )
+
+  const handleBackgroundGradientChange = useCallback(
+    ({ start, end }) => {
+      const slideId = selectedSlideId || localSlides[0]?.id
+      if (!slideId) return
+      setLocalSlides((prev) =>
+        prev.map((s) =>
+          s.id === slideId
+            ? {
+                ...s,
+                backgroundGradientStart: start ?? undefined,
+                backgroundGradientEnd: end ?? undefined,
+                ...(start == null && end == null
+                  ? { backgroundGradientStart: undefined, backgroundGradientEnd: undefined }
+                  : {}),
+              }
+            : s
+        )
+      )
+    },
+    [selectedSlideId, localSlides]
+  )
+
+  const handleBackgroundColorChange = useCallback(
+    (color) => {
+      const slideId = selectedSlideId || localSlides[0]?.id
+      if (!slideId) return
+      setLocalSlides((prev) =>
+        prev.map((s) =>
+          s.id === slideId
+            ? {
+                ...s,
+                backgroundColor: color,
+                backgroundGradientStart: undefined,
+                backgroundGradientEnd: undefined,
+              }
+            : s
+        )
+      )
+      if (workspaceId && presentationId) {
+        presentationService
+          .patchSlide(workspaceId, presentationId, slideId, { backgroundColor: color })
+          .catch(() => {})
+      }
+    },
+    [selectedSlideId, localSlides, workspaceId, presentationId]
   )
 
   const handlePlacementLive = useCallback(
@@ -768,9 +848,6 @@ export default function AIPptEditor({
 
   useEffect(() => {
     const onDocClick = (e) => {
-      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target)) {
-        setExportOpen(false)
-      }
       if (brandKitMenuRef.current && !brandKitMenuRef.current.contains(e.target)) {
         setBrandKitOpen(false)
       }
@@ -938,7 +1015,7 @@ export default function AIPptEditor({
     }
   }
 
-  const handleRegenerate = async (slide) => {
+  const handleSlideAiEdit = async (slide, { prompt, actionId, target = 'full' } = {}) => {
     if (!workspaceId || !presentationId || isGenerating) return
     let overwriteManualEdits = false
     if (slide.manuallyEdited) {
@@ -951,20 +1028,23 @@ export default function AIPptEditor({
     setBusy(true)
     try {
       await presentationService.regenerateSlide(workspaceId, presentationId, slide.id, {
-        target: 'full',
+        target,
         overwriteManualEdits,
+        ...(prompt ? { prompt } : {}),
+        ...(actionId ? { action: actionId } : {}),
       })
       await presentationService.pollUntilReady(workspaceId, presentationId, {
         intervalMs: 2000,
       })
       await reloadPresentation()
+      setSlideAiEditId(null)
     } catch (err) {
       if (err instanceof PresentationConflictError) {
         setError('Cannot overwrite — confirm overwrite or wait for generation to finish.')
       } else if (isInsufficientCreditsError(err)) {
         setError(err.message || 'Insufficient credits')
       } else {
-        setError(err.message || 'Regenerate failed')
+        setError(err.message || 'AI edit failed')
       }
     } finally {
       setBusy(false)
@@ -983,12 +1063,17 @@ export default function AIPptEditor({
     }
 
     const type = payload?.type || 'text'
-    const placement =
+    const placement = normalizeElementPlacement(
       payload.placement ||
-      payload.defaultPlacement ||
-      PPT_DEFAULT_PLACEMENTS[type] ||
-      PPT_DEFAULT_PLACEMENTS.text
+        payload.defaultPlacement ||
+        PPT_DEFAULT_PLACEMENTS[type] ||
+        PPT_DEFAULT_PLACEMENTS.text,
+      resolveCanvasSize(slide, aspectRatio)
+    )
     const content = { ...(payload.content || {}) }
+    if (type === 'text' && !content.color && !content.colorRole) {
+      content.color = DEFAULT_TEXT_COLOR
+    }
     if (type === 'shape' && content.shape) {
       content.shape = normalizeApiShape(content.shape)
     }
@@ -999,29 +1084,32 @@ export default function AIPptEditor({
       content.src = content.url
     }
 
-    setSelectedSlideId(slideId)
-    setError('')
-
-    if (!workspaceId || !presentationId) {
-      const localEl = {
-        id: `el-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        type,
-        content,
-        placement,
-        layer: existing.length + 1,
-        ...(payload.presetId ? { presetId: payload.presetId } : {}),
-        ...(payload.role ? { role: payload.role } : {}),
-      }
-      const nextDoc = buildCanvasDoc(slide, {
-        aspectRatio,
-        elements: [...existing, localEl],
-      })
-      setLocalSlides((prev) =>
-        prev.map((s) => (s.id === slideId ? { ...s, elements: nextDoc } : s))
-      )
-      setSelectedElementId(localEl.id)
-      return
+    const localEl = {
+      id: `el-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      type,
+      content,
+      placement,
+      layer: existing.length + 1,
+      ...(payload.presetId ? { presetId: payload.presetId } : {}),
+      ...(payload.role ? { role: payload.role } : {}),
     }
+    const optimisticDoc = buildCanvasDoc(slide, {
+      aspectRatio,
+      elements: [...existing, localEl],
+    })
+
+    setSelectedSlideId(slideId)
+    setSelectedElementId(localEl.id)
+    setError('')
+    setLocalSlides((prev) =>
+      prev.map((s) =>
+        s.id === slideId
+          ? { ...s, elements: optimisticDoc, backgroundColor: s.backgroundColor || DEFAULT_SLIDE_BG }
+          : s
+      )
+    )
+
+    if (!workspaceId || !presentationId) return
 
     setBusy(true)
     try {
@@ -1045,12 +1133,27 @@ export default function AIPptEditor({
       )
       const slideFromApi = extractSlideFromMutation(result)
       const elementFromApi = extractElementFromMutation(result)
+      if (elementFromApi?.id) {
+        setLocalSlides((prev) =>
+          prev.map((s) => {
+            if (s.id !== slideId) return s
+            const els = (s.elements?.elements || []).map((el) =>
+              el.id === localEl.id ? { ...el, ...elementFromApi, id: elementFromApi.id } : el
+            )
+            const hasServerEl = els.some((el) => el.id === elementFromApi.id)
+            const nextEls = hasServerEl
+              ? els
+              : [...els.filter((el) => el.id !== localEl.id), elementFromApi]
+            return { ...s, elements: buildCanvasDoc(s, { aspectRatio, elements: nextEls }) }
+          })
+        )
+        setSelectedElementId(elementFromApi.id)
+      }
       if (slideFromApi) {
         applySlideUpdate(slideFromApi)
-      } else {
+      } else if (!elementFromApi?.id) {
         await refreshSlide(slideId)
       }
-      if (elementFromApi?.id) setSelectedElementId(elementFromApi.id)
     } catch (err) {
       if (err instanceof PresentationConflictError) {
         setError('Presentation is generating — edits are locked until it finishes.')
@@ -1254,6 +1357,62 @@ export default function AIPptEditor({
     const onKey = (e) => {
       const tag = String(e.target?.tagName || '').toLowerCase()
       if (tag === 'input' || tag === 'textarea' || e.target?.isContentEditable) return
+
+      const mod = e.ctrlKey || e.metaKey
+
+      if (mod && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault()
+        handleUndo()
+        return
+      }
+      if ((mod && e.key === 'y') || (mod && e.shiftKey && e.key === 'z')) {
+        e.preventDefault()
+        handleRedo()
+        return
+      }
+      if (mod && e.key === 'd') {
+        e.preventDefault()
+        elementMutations.duplicateElement()
+        return
+      }
+      if (mod && e.key === 'g' && !e.shiftKey) {
+        e.preventDefault()
+        elementMutations.groupSelection(
+          multiSelectIds.length ? multiSelectIds : [selectedElementId].filter(Boolean)
+        )
+        return
+      }
+      if (mod && e.shiftKey && e.key === 'G') {
+        e.preventDefault()
+        elementMutations.ungroupSelection()
+        return
+      }
+      if (mod && e.key === 'l') {
+        e.preventDefault()
+        elementMutations.toggleLock()
+        return
+      }
+      if (mod && e.key === 'Enter') {
+        e.preventDefault()
+        setPresentOpen(true)
+        return
+      }
+      if (mod && e.key === 'k') {
+        e.preventDefault()
+        setQuickMenuOpen(true)
+        return
+      }
+      if (mod && (e.key === '=' || e.key === '+')) {
+        e.preventDefault()
+        setCanvasZoom((z) => Math.min(200, z + 10))
+        return
+      }
+      if (mod && e.key === '-') {
+        e.preventDefault()
+        setCanvasZoom((z) => Math.max(40, z - 10))
+        return
+      }
+
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedElementId) {
         e.preventDefault()
         handleDeleteElement()
@@ -1266,10 +1425,35 @@ export default function AIPptEditor({
         e.preventDefault()
         handleReorderSelected('back')
       }
+      if (selectedElementId && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault()
+        const step = e.shiftKey ? 10 : 1
+        const el = selectedSlide?.elements?.elements?.find((x) => x.id === selectedElementId)
+        if (!el?.placement || el.locked) return
+        const p = el.placement
+        const delta = {
+          ArrowUp: { y: (p.y || 0) - step },
+          ArrowDown: { y: (p.y || 0) + step },
+          ArrowLeft: { x: (p.x || 0) - step },
+          ArrowRight: { x: (p.x || 0) + step },
+        }[e.key]
+        handlePlacementCommit(selectedSlideId, selectedElementId, { ...p, ...delta })
+      }
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [selectedElementId, handleDeleteElement, handleReorderSelected])
+  }, [
+    selectedElementId,
+    selectedSlideId,
+    selectedSlide,
+    multiSelectIds,
+    handleDeleteElement,
+    handleReorderSelected,
+    handleUndo,
+    handleRedo,
+    handlePlacementCommit,
+    elementMutations,
+  ])
 
   const handleChangeTransition = async (transitionId) => {
     const slideId = selectedSlideId || localSlides[0]?.id
@@ -1350,62 +1534,26 @@ export default function AIPptEditor({
   }
 
   const handleDuplicateDeck = async () => {
-    setError('Duplicate deck is not available yet — duplicate individual slides from the slide actions.')
+    if (!workspaceId || !presentationId || isGenerating) {
+      setError('Duplicate deck requires a saved presentation')
+      return
+    }
+    setBusy(true)
+    try {
+      const result = await presentationService.duplicatePresentation(workspaceId, presentationId)
+      const newId = result?.presentationId || result?.id
+      if (newId) {
+        window.location.href = `/dashboard/editor?workspaceId=${workspaceId}&presentationId=${newId}`
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to duplicate deck')
+    } finally {
+      setBusy(false)
+    }
   }
 
   const openMediaForBackground = () => {
-    setError(
-      'Use Media → Upload / Library / Stock to attach an image. Select an existing image element first to replace it.'
-    )
-  }
-
-  const handleExport = async (format) => {
-    if (!workspaceId || !presentationId) {
-      setError('Export requires a saved presentation')
-      return
-    }
-    setExportOpen(false)
-    setExportStatus(`Exporting ${format}…`)
-    setError('')
-    try {
-      const started = await presentationService.startExport(workspaceId, presentationId, {
-        format,
-        slideId: null,
-      })
-      const exportId =
-        started?.exportId ||
-        started?.id ||
-        started?.export?.id ||
-        started?._id
-      if (!exportId) throw new Error('Export started but no exportId returned')
-
-      const ready = await presentationService.pollExportUntilReady(
-        workspaceId,
-        presentationId,
-        exportId,
-        {
-          onProgress: (s) => {
-            const st = s?.status || 'PROCESSING'
-            setExportStatus(`Export ${format}: ${st}`)
-          },
-        }
-      )
-
-      const url = ready?.presignedUrl || ready?.url || ready?.downloadUrl
-      if (url) {
-        window.open(url, '_blank', 'noopener,noreferrer')
-        setExportStatus(`${format} ready`)
-      } else {
-        setExportStatus('Export finished but no download URL was returned')
-      }
-    } catch (err) {
-      if (isInsufficientCreditsError(err)) {
-        setError(err.message || 'Insufficient credits to export')
-      } else {
-        setError(err.message || 'Export failed')
-      }
-      setExportStatus('')
-    }
+    setError('Use Media panel to insert images, or select an image and use Replace media.')
   }
 
   if (loading) {
@@ -1439,11 +1587,13 @@ export default function AIPptEditor({
           <EditorFileMenu
             title={deckTitle}
             privacy="Private"
-            canUndo={false}
-            canRedo={false}
+            canUndo={history.canUndo}
+            canRedo={history.canRedo}
             onRename={handleRename}
             onDuplicate={handleDuplicateDeck}
             onExport={() => setExportOpen(true)}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
             onExit={onBack}
           />
           {presentationId && <span className="aig-editor-badge">Saved</span>}
@@ -1475,7 +1625,6 @@ export default function AIPptEditor({
         </div>
 
         <div className="aig-editor-nav-right">
-          {exportStatus && <span className="aig-credit-estimate-hint">{exportStatus}</span>}
           <div className="aig-export-menu" ref={brandKitMenuRef}>
             <button
               className="aig-editor-btn-secondary"
@@ -1483,7 +1632,6 @@ export default function AIPptEditor({
               onClick={(e) => {
                 e.stopPropagation()
                 setBrandKitOpen((v) => !v)
-                setExportOpen(false)
               }}
               disabled={!presentationId || busy || isGenerating || applyingBrandKit}
               title="Apply Brand Kit"
@@ -1511,45 +1659,47 @@ export default function AIPptEditor({
               </div>
             )}
           </div>
-          <button className="aig-editor-btn-secondary" type="button">
+          <button className="aig-editor-btn-secondary" type="button" onClick={() => setShareOpen(true)}>
             <FiShare2 size={16} /> Share
           </button>
-          <div className="aig-export-menu" ref={exportMenuRef}>
-            <button
-              className="aig-editor-btn-secondary"
-              type="button"
-              onClick={() => setExportOpen((v) => !v)}
-              disabled={!presentationId || busy}
-            >
-              <FiDownload size={16} /> Export
-            </button>
-            {exportOpen && (
-              <div className="aig-export-dropdown">
-                {PPT_EXPORT_FORMATS.map((fmt) => (
-                  <button key={fmt} type="button" onClick={() => handleExport(fmt)}>
-                    {fmt}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <button className="aig-editor-btn-primary" type="button">
+          <button
+            className="aig-editor-btn-secondary"
+            type="button"
+            onClick={() => setExportModalOpen(true)}
+            disabled={!presentationId || busy}
+          >
+            <FiDownload size={16} /> Export
+          </button>
+          <button className="aig-editor-btn-primary" type="button" onClick={() => setPresentOpen(true)}>
             <FiPlay size={16} /> Present
           </button>
         </div>
       </nav>
 
+      <PptQuickMenu
+        open={quickMenuOpen}
+        onClose={() => setQuickMenuOpen(false)}
+        onCommand={handleQuickCommand}
+      />
+
       <div className="aig-editor-workspace gamma-layout">
         <main
-          className="aig-editor-main-scroll aig-editor-main-scroll--with-rail"
-          style={{ marginLeft: showMinimap ? '260px' : '0' }}
+          className={`aig-editor-main-scroll ${sidebarOpen ? 'is-sidebar-open' : ''}`}
+          style={{
+            marginLeft: showMinimap ? '260px' : '0',
+            '--ppt-canvas-zoom': canvasZoom / 100,
+          }}
         >
           <div className="aig-editor-scroll-container">
             {localSlides.map((slide, idx) => (
               <div
                 key={slide.id}
                 className={`aig-scroll-slide-container ${selectedSlideId === slide.id ? 'is-selected' : ''}`}
-                onClick={() => setSelectedSlideId(slide.id)}
+                onClick={() => {
+                  setSelectedSlideId(slide.id)
+                  setSelectedElementId(null)
+                  setEditingTextId(null)
+                }}
               >
                 <div className="aig-scroll-slide-wrapper">
                   <div className="aig-scroll-slide-hover-actions">
@@ -1557,13 +1707,16 @@ export default function AIPptEditor({
                       <MdDragIndicator size={16} />
                     </button>
                     <button
-                      className="aig-slide-action-btn"
+                      className={`aig-slide-action-btn ${slideAiEditId === slide.id ? 'is-active' : ''}`}
                       title="Edit with AI"
                       type="button"
                       disabled={busy || isGenerating}
                       onClick={(e) => {
                         e.stopPropagation()
-                        handleRegenerate(slide)
+                        setSelectedSlideId(slide.id)
+                        setSelectedElementId(null)
+                        setEditingTextId(null)
+                        setSlideAiEditId((prev) => (prev === slide.id ? null : slide.id))
                       }}
                     >
                       <BsStars size={16} />
@@ -1590,9 +1743,12 @@ export default function AIPptEditor({
                     selectedElementId={
                       selectedSlideId === slide.id ? selectedElementId : null
                     }
+                    editingTextId={selectedSlideId === slide.id ? editingTextId : null}
+                    smartGuides={selectedSlideId === slide.id ? smartGuides : []}
                     onSelectElement={(id) => {
                       setSelectedSlideId(slide.id)
                       setSelectedElementId(id)
+                      setEditingTextId(null)
                     }}
                     onPlacementLive={(elementId, placement) =>
                       handlePlacementLive(slide.id, elementId, placement)
@@ -1600,7 +1756,20 @@ export default function AIPptEditor({
                     onPlacementCommit={(elementId, placement) =>
                       handlePlacementCommit(slide.id, elementId, placement)
                     }
+                    onGuidesChange={selectedSlideId === slide.id ? setSmartGuides : undefined}
+                    onStartTextEdit={setEditingTextId}
+                    onEndTextEdit={handleEndTextEdit}
+                    onTableCellChange={handleTableCellChange}
                     onImageAuthError={handleImageAuthError}
+                  />
+
+                  <SlideEditAiPanel
+                    open={slideAiEditId === slide.id}
+                    slideTitle={slide.title || slide.content?.title || `Slide ${idx + 1}`}
+                    disabled={isGenerating || busy}
+                    busy={busy && slideAiEditId === slide.id}
+                    onClose={() => setSlideAiEditId(null)}
+                    onSubmit={(payload) => handleSlideAiEdit(slide, payload)}
                   />
                 </div>
 
@@ -1619,40 +1788,63 @@ export default function AIPptEditor({
           </div>
 
           <div className="aig-canvas-controls">
-            <button className="aig-canvas-ctrl-btn" type="button">
+            <button
+              className="aig-canvas-ctrl-btn"
+              type="button"
+              onClick={() => setCanvasZoom((z) => Math.max(40, z - 10))}
+            >
               <FiZoomOut size={14} />
             </button>
-            <span className="aig-canvas-zoom-level">100%</span>
-            <button className="aig-canvas-ctrl-btn" type="button">
+            <span className="aig-canvas-zoom-level">{canvasZoom}%</span>
+            <button
+              className="aig-canvas-ctrl-btn"
+              type="button"
+              onClick={() => setCanvasZoom((z) => Math.min(200, z + 10))}
+            >
               <FiZoomIn size={14} />
             </button>
             <div className="aig-canvas-ctrl-divider"></div>
-            <button className="aig-canvas-ctrl-btn" type="button">
+            <button className="aig-canvas-ctrl-btn" type="button" onClick={() => setCanvasZoom(100)}>
               Fit
             </button>
           </div>
         </main>
 
         <EditorRightRail
-          zoom={100}
+          zoom={canvasZoom}
           deckStatus={deckStatus}
           generationPrompt={generationPrompt}
           slide={selectedSlide}
           themeVisual={themeVisual}
           workspaceId={workspaceId}
+          presentationId={presentationId}
           disabled={isGenerating || busy}
+          designFocus={designFocus}
+          onOpenChange={setSidebarOpen}
+          selectedElement={selectedElement}
           selectedElementId={selectedElementId}
           onSelectElement={setSelectedElementId}
           onBringForward={() => handleReorderSelected('forward')}
           onSendBackward={() => handleReorderSelected('back')}
           onDeleteElement={handleDeleteElement}
           onApplyLayout={handleApplyLayout}
-          onResetBackground={() =>
-            setError('Background reset will apply once slide theme editing is connected.')
-          }
+          onResetBackground={() => handleBackgroundColorChange(DEFAULT_SLIDE_BG)}
           onAddBackgroundImage={openMediaForBackground}
           onChangeTransition={handleChangeTransition}
           onChangeSlideStatus={handleChangeSlideStatus}
+          onChangeElementContent={handleChangeElementContent}
+          onChangeElementPlacement={handleChangeElementPlacement}
+          onToggleElementLock={() => elementMutations.toggleLock()}
+          onReplaceImage={() => setError('Use Media panel with a selected image to replace.')}
+          onCropImage={() => setCropModalOpen(true)}
+          onSpeakerNotesChange={elementMutations.updateSpeakerNotes}
+          deckVariables={deckVariables}
+          onVariablesChange={setDeckVariables}
+          onSyncVariables={elementMutations.syncVariables}
+          slideStyles={slideStyles}
+          onSlideStylesChange={setSlideStyles}
+          onBackgroundGradientChange={handleBackgroundGradientChange}
+          onBackgroundColorChange={handleBackgroundColorChange}
         />
 
         {showMinimap ? (
@@ -1682,7 +1874,11 @@ export default function AIPptEditor({
                 <div
                   key={slide.id}
                   className={`aig-minimap-item ${selectedSlideId === slide.id ? 'active' : ''}`}
-                  onClick={() => setSelectedSlideId(slide.id)}
+                  onClick={() => {
+                    setSelectedSlideId(slide.id)
+                    setSelectedElementId(null)
+                    setEditingTextId(null)
+                  }}
                   onContextMenu={(e) => {
                     e.preventDefault()
                     handleDeleteSlide(slide.id)
@@ -1703,8 +1899,11 @@ export default function AIPptEditor({
                     }
                     aria-hidden
                   />
-                  <div className="aig-minimap-thumb" style={{ background: themeVisual.outer }}>
-                    <div className="aig-minimap-thumb-inner" style={{ background: themeVisual.inner }}>
+                  <div className="aig-minimap-thumb" style={{ background: DEFAULT_SLIDE_BG }}>
+                    <div
+                      className="aig-minimap-thumb-inner"
+                      style={{ background: slide.backgroundColor || DEFAULT_SLIDE_BG }}
+                    >
                       <div className="aig-minimap-thumb-title" style={{ color: themeVisual.title }}>
                         {slide.title}
                       </div>
@@ -1736,6 +1935,45 @@ export default function AIPptEditor({
         disabled={busy || isGenerating || atDeckCap}
         onPick={handlePickAddSlide}
       />
+
+      {presentOpen && (
+        <PresentMode
+          slides={localSlides}
+          themeVisual={themeVisual}
+          aspectRatio={aspectRatio}
+          initialSlideIndex={Math.max(
+            0,
+            localSlides.findIndex((s) => s.id === selectedSlideId)
+          )}
+          onClose={() => setPresentOpen(false)}
+        />
+      )}
+
+      {shareOpen && (
+        <SharePresentationModal
+          workspaceId={workspaceId}
+          presentationId={presentationId}
+          title={deckTitle}
+          onClose={() => setShareOpen(false)}
+        />
+      )}
+
+      {exportModalOpen && (
+        <ExportPresentationModal
+          workspaceId={workspaceId}
+          presentationId={presentationId}
+          title={deckTitle}
+          onClose={() => setExportModalOpen(false)}
+        />
+      )}
+
+      {cropModalOpen && selectedElement && (
+        <ImageCropModal
+          imageUrl={selectedElement.content?.url || selectedElement.content?.src}
+          onApply={handleCropApply}
+          onClose={() => setCropModalOpen(false)}
+        />
+      )}
     </div>
   )
 }

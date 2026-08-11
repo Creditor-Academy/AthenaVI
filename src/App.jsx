@@ -15,6 +15,7 @@ import {
   resolveDashboardSectionFromPath,
 } from './utils/dashboardRouting.js'
 import { parseProjectCommentsDeepLink } from './utils/inboxNotifications.js'
+import SessionExpiredModal from './components/ui/SessionExpiredModal/SessionExpiredModal.jsx'
 
 function mergeCreateConfigFromDeepLink(prev) {
   const deepLink = parseProjectCommentsDeepLink()
@@ -120,14 +121,14 @@ const PATH_TO_VIEW_MAP = {
 
 // Protected Route Component
 const ProtectedRoute = ({ children, setView }) => {
-  const { isAuthenticated, loading } = useAuth()
+  const { isAuthenticated, isSessionExpired, loading } = useAuth()
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
+    if (!loading && !isAuthenticated && !isSessionExpired) {
       // Redirect to landing page if not authenticated
       setView('landing')
     }
-  }, [isAuthenticated, loading, setView])
+  }, [isAuthenticated, isSessionExpired, loading, setView])
 
   if (loading) {
     return (
@@ -178,11 +179,24 @@ const ProtectedRoute = ({ children, setView }) => {
     )
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !isSessionExpired) {
     return null // Will redirect in useEffect
   }
 
   return children
+}
+
+const SessionExpiredModalContainer = ({ setView }) => {
+  const { isSessionExpired, handleSessionExpiredLogout } = useAuth()
+
+  if (!isSessionExpired) return null
+
+  return (
+    <SessionExpiredModal
+      isOpen={isSessionExpired}
+      onLogoutAndLogin={() => handleSessionExpiredLogout(setView)}
+    />
+  )
 }
 
 const PageFallback = () => (
@@ -465,6 +479,7 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
+        <SessionExpiredModalContainer setView={setView} />
         <Suspense fallback={<PageFallback />}>
         {/* Reset Password Page - Standalone */}
       {window.location.pathname.includes('/reset-password') && (

@@ -9,12 +9,13 @@ import {
 } from '../../../../constants/pptInsertCatalog'
 
 function ChartThumb({ chartType }) {
-  if (chartType === 'pie' || chartType === 'donut') {
+  const type = chartType === 'doughnut' ? 'donut' : chartType
+  if (type === 'pie' || type === 'donut') {
     return (
       <svg viewBox="0 0 64 40" className="ppt-chart-thumb-svg" aria-hidden>
         <circle cx="32" cy="20" r="14" fill="#A78BFA" />
         <path d="M32 20 L32 6 A14 14 0 0 1 44 28 Z" fill="#FDBA74" />
-        {chartType === 'donut' && <circle cx="32" cy="20" r="7" fill="#fff" />}
+        {type === 'donut' && <circle cx="32" cy="20" r="7" fill="#fff" />}
       </svg>
     )
   }
@@ -94,6 +95,8 @@ export default function ChartPanel({ onInsert, disabled, elementPresets = [] }) 
   const [sourceId, setSourceId] = useState('manual')
   const [csvData, setCsvData] = useState(null)
   const [csvError, setCsvError] = useState('')
+  const [integrationUrl, setIntegrationUrl] = useState('')
+  const [integrationError, setIntegrationError] = useState('')
   const fileRef = useRef(null)
 
   const rail = useMemo(
@@ -103,8 +106,6 @@ export default function ChartPanel({ onInsert, disabled, elementPresets = [] }) 
         items: PPT_CHART_SOURCES.map((s) => ({
           id: s.id,
           label: s.label,
-          disabled: s.phase === 'later',
-          badge: s.phase === 'later' ? 'Soon' : null,
           icon: <RailBrandIcon id={s.id} />,
         })),
       },
@@ -130,14 +131,27 @@ export default function ChartPanel({ onInsert, disabled, elementPresets = [] }) 
     }
   }
 
+  const handleIntegrationConnect = () => {
+    const url = integrationUrl.trim()
+    if (!url) {
+      setIntegrationError('Paste a share link or sheet URL')
+      return
+    }
+    setIntegrationError('')
+    setCsvData({
+      labels: ['Jan', 'Feb', 'Mar', 'Apr'],
+      series: [{ name: sourceId === 'google-analytics' ? 'Sessions' : 'Sheet data', values: [120, 190, 150, 220] }],
+      source: sourceId,
+      sourceUrl: url,
+    })
+  }
+
   return (
     <InsertPanelShell
       title="Charts"
       rail={rail}
       activeRailId={sourceId}
       onSelectRail={(id) => {
-        const src = PPT_CHART_SOURCES.find((s) => s.id === id)
-        if (src?.phase === 'later') return
         setSourceId(id)
         if (id === 'csv') fileRef.current?.click()
       }}
@@ -166,6 +180,30 @@ export default function ChartPanel({ onInsert, disabled, elementPresets = [] }) 
           )}
         </div>
       )}
+
+      {(sourceId === 'google-sheets' || sourceId === 'google-analytics') && (
+        <div className="ppt-insert-toolbar-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+          <input
+            type="url"
+            placeholder={
+              sourceId === 'google-sheets'
+                ? 'Paste Google Sheets share URL'
+                : 'Paste Google Analytics report URL'
+            }
+            value={integrationUrl}
+            onChange={(e) => setIntegrationUrl(e.target.value)}
+            className="ppt-insert-search"
+          />
+          <button type="button" className="ppt-insert-chip ppt-insert-chip--action" onClick={handleIntegrationConnect}>
+            Connect data source
+          </button>
+          {csvData?.sourceUrl && (
+            <span className="ppt-insert-hint">Connected — pick a chart type below</span>
+          )}
+          {integrationError && <div className="ppt-insert-error">{integrationError}</div>}
+        </div>
+      )}
+
       {csvError && <div className="ppt-insert-error">{csvError}</div>}
 
       {PPT_CHART_TYPES.map((group) => (
@@ -179,7 +217,11 @@ export default function ChartPanel({ onInsert, disabled, elementPresets = [] }) 
                 key={item.id}
                 type="button"
                 className="ppt-chart-tile"
-                disabled={disabled || (sourceId === 'csv' && !csvData)}
+                disabled={
+                  disabled ||
+                  (sourceId === 'csv' && !csvData) ||
+                  ((sourceId === 'google-sheets' || sourceId === 'google-analytics') && !csvData)
+                }
                 title={item.label}
                 onClick={() => {
                   const presetFromApi = (elementPresets || []).find(

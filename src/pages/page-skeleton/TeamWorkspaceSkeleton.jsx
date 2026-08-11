@@ -27,9 +27,8 @@ const TeamWorkspaceSkeleton = ({ viewMode = 'tile', activeRootTab = 'recents' })
       </div>
 
       {isRecents ? (
-        /* Recents Skeleton Section */
+        /* Recents Skeleton Section — no duplicate "Recents" header (tab already shows it) */
         <div className="workspace-section">
-          <SkeletonSectionHeader title="Recents" />
           <SkeletonMediaCollection
             viewMode={isGridMode ? 'grid' : 'list'}
             cardCount={6}

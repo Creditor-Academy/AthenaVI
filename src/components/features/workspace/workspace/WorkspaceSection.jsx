@@ -19,6 +19,7 @@ const WorkspaceSection = ({
     emptyActionClass = 'btn-secondary add-btn-small',
     listClassName = '',
     showCountBadge = true,
+    showHeader = true,
 }) => {
     const isAccentCreate = createButtonClass.includes('workspace-create-action-btn');
 
@@ -27,26 +28,28 @@ const WorkspaceSection = ({
 
     return (
         <div className="workspace-section">
-            <div className="section-header-compact">
-                <div className="section-title-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <h3>{title}</h3>
-                    {showCountBadge && count !== undefined && count !== null && (
-                        <span className="section-count-circle">{count}</span>
+            {showHeader && (
+                <div className="section-header-compact">
+                    <div className="section-title-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h3>{title}</h3>
+                        {showCountBadge && count !== undefined && count !== null && (
+                            <span className="section-count-circle">{count}</span>
+                        )}
+                    </div>
+                    {showCreateButton && viewMode === 'list' && onCreateClick && (
+                        <button type="button" className={createButtonClass} onClick={onCreateClick}>
+                            {isAccentCreate ? (
+                                <span className="workspace-create-action-btn__icon" aria-hidden>
+                                    <CreateButtonIcon size={16} />
+                                </span>
+                            ) : (
+                                <CreateButtonIcon size={16} aria-hidden />
+                            )}
+                            <span>{createButtonLabel}</span>
+                        </button>
                     )}
                 </div>
-                {showCreateButton && viewMode === 'list' && onCreateClick && (
-                    <button type="button" className={createButtonClass} onClick={onCreateClick}>
-                        {isAccentCreate ? (
-                            <span className="workspace-create-action-btn__icon" aria-hidden>
-                                <CreateButtonIcon size={16} />
-                            </span>
-                        ) : (
-                            <CreateButtonIcon size={16} aria-hidden />
-                        )}
-                        <span>{createButtonLabel}</span>
-                    </button>
-                )}
-            </div>
+            )}
 
             {!showGrid ? (
                 <div className="section-empty-state">

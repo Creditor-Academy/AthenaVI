@@ -5,6 +5,7 @@ import {
   shouldSkipTokenRefresh,
   getApiError,
   isEmailAlreadyRegisteredMessage,
+  triggerSessionExpired,
 } from '../utils/apiError.js'
 
 const SIGNUP_PRECHECK_OTP = 100000
@@ -48,8 +49,7 @@ api.interceptors.response.use(
         error.config.headers.Authorization = `Bearer ${accessToken}`
         return api.request(error.config)
       } catch {
-        localStorage.removeItem('accessToken')
-        localStorage.removeItem('user')
+        triggerSessionExpired()
       }
     }
     return Promise.reject(error)

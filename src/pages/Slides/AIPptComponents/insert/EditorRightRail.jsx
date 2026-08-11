@@ -4,22 +4,48 @@ import {
   FiCheckCircle,
   FiUser,
   FiX,
-  FiImage,
   FiTrash2,
   FiChevronUp,
   FiChevronDown,
+  FiFileText,
+  FiLayers,
+  FiType,
+  FiImage,
+  FiBarChart2,
+  FiSquare,
+  FiGrid,
+  FiCode,
 } from 'react-icons/fi'
 import { MdOutlineDesignServices, MdOutlineAnimation } from 'react-icons/md'
 import { BsStars } from 'react-icons/bs'
 import { HiOutlineClipboard } from 'react-icons/hi'
+import DesignContextPanel from './DesignContextPanel'
 import presentationService from '../../../../services/presentationService'
+import PptCommentsPanel from '../PptCommentsPanel'
+import PptVariablesPanel from '../PptVariablesPanel'
+import SpeakerNotesPanel from '../SpeakerNotesPanel'
 import './insertPanels.css'
+import '../pptEditorExtras.css'
+import '../pptPanelUi.css'
+
+const DESIGN_PANEL_TITLES = {
+  slide: 'Slide design',
+  text: 'Text',
+  image: 'Image',
+  icon: 'Image',
+  chart: 'Chart',
+  shape: 'Shape',
+  table: 'Table',
+  embed: 'Embed',
+}
 
 const RAIL_TOOLS = [
   { id: 'design', label: 'Design', Icon: MdOutlineDesignServices },
   { id: 'transition', label: 'Slide transition', Icon: MdOutlineAnimation },
   { id: 'comments', label: 'Comments', Icon: FiMessageCircle },
   { id: 'status', label: 'Status', Icon: HiOutlineClipboard },
+  { id: 'notes', label: 'Speaker notes', Icon: FiFileText },
+  { id: 'variables', label: 'Variables', Icon: FiLayers },
 ]
 
 export const PPT_SLIDE_TRANSITIONS = [
@@ -37,6 +63,26 @@ export const PPT_SLIDE_STATUSES = [
   { id: 'in-progress', label: 'In progress' },
   { id: 'done', label: 'Done' },
 ]
+
+function layerTypeIcon(type) {
+  switch (type) {
+    case 'text':
+      return FiType
+    case 'image':
+    case 'icon':
+      return FiImage
+    case 'chart':
+      return FiBarChart2
+    case 'shape':
+      return FiSquare
+    case 'table':
+      return FiGrid
+    case 'embed':
+      return FiCode
+    default:
+      return FiLayers
+  }
+}
 
 function StatusDot({ id }) {
   return <span className={`ppt-status-dot ppt-status-dot--${id}`} aria-hidden />
@@ -114,6 +160,8 @@ export default function EditorRightRail({
   slide = null,
   themeVisual = null,
   workspaceId,
+  presentationId,
+  selectedElement = null,
   selectedElementId = null,
   onSelectElement,
   onBringForward,
@@ -124,7 +172,22 @@ export default function EditorRightRail({
   onAddBackgroundImage,
   onChangeTransition,
   onChangeSlideStatus,
+  onChangeElementContent,
+  onChangeElementPlacement,
+  onToggleElementLock,
+  onReplaceImage,
+  onCropImage,
+  onSpeakerNotesChange,
+  deckVariables = [],
+  onVariablesChange,
+  onSyncVariables,
+  slideStyles = {},
+  onSlideStylesChange,
+  onBackgroundGradientChange,
+  onBackgroundColorChange,
+  designFocus = 'slide',
   disabled = false,
+  onOpenChange,
 }) {
   const [active, setActive] = useState(null)
   const [aiOpen, setAiOpen] = useState(false)
@@ -143,27 +206,30 @@ export default function EditorRightRail({
     slide?.slideStatus ||
     'none'
 
+  const panelOpen = Boolean(active) || aiOpen
+
   useEffect(() => {
-    if (!active && !aiOpen) return undefined
-    const onDoc = (e) => {
-      if (rootRef.current && !rootRef.current.contains(e.target)) {
-        setActive(null)
-        setAiOpen(false)
-      }
+    if (designFocus && selectedElementId) {
+      setActive('design')
+      setAiOpen(false)
     }
+  }, [designFocus, selectedElementId, slide?.id])
+
+  useEffect(() => {
+    onOpenChange?.(panelOpen)
+  }, [panelOpen, onOpenChange])
+
+  useEffect(() => {
+    if (!panelOpen) return undefined
     const onKey = (e) => {
       if (e.key === 'Escape') {
         setActive(null)
         setAiOpen(false)
       }
     }
-    document.addEventListener('mousedown', onDoc)
     document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('mousedown', onDoc)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [active, aiOpen])
+    return () => document.removeEventListener('keydown', onKey)
+  }, [panelOpen])
 
   useEffect(() => {
     if (active !== 'design' || !workspaceId) return undefined
@@ -198,268 +264,250 @@ export default function EditorRightRail({
     setActive((prev) => (prev === id ? null : id))
   }
 
+  const closePanel = () => {
+    setActive(null)
+    setAiOpen(false)
+  }
+
+  const panelTitle = aiOpen
+    ? 'AI prompt'
+    : active === 'design'
+      ? DESIGN_PANEL_TITLES[designFocus] || 'Design'
+      : RAIL_TOOLS.find((t) => t.id === active)?.label || ''
+
   return (
-    <div className="ppt-right-rail" ref={rootRef}>
-      <div className="ppt-right-rail-stack">
-        {RAIL_TOOLS.map((tool) => {
-          const Icon = tool.Icon
-          return (
-            <button
-              key={tool.id}
-              type="button"
-              className={`ppt-right-rail-btn ${active === tool.id ? 'is-active' : ''}`}
-              title={tool.label}
-              disabled={disabled}
-              aria-label={tool.label}
-              onClick={() => toggle(tool.id)}
-            >
-              <Icon size={18} />
-            </button>
-          )
-        })}
-        <button type="button" className="ppt-right-rail-btn" title="Assignee" disabled>
-          <FiUser size={18} />
-        </button>
-        <div className="ppt-right-rail-zoom">{Math.round(zoom)}%</div>
-      </div>
+    <aside
+      className={`ppt-editor-sidebar ppt-editor-sidebar--float ${panelOpen ? 'is-open' : ''}`}
+      ref={rootRef}
+      aria-label="Editor sidebar"
+    >
+      <div className="ppt-editor-sidebar-panel" aria-hidden={!panelOpen}>
+        <div className="ppt-editor-sidebar-panel-head">
+          <strong>{panelTitle}</strong>
+          <button type="button" className="ppt-slide-panel-close" onClick={closePanel} aria-label="Close panel">
+            <FiX size={16} />
+          </button>
+        </div>
 
-      <button
-        type="button"
-        className={`ppt-ai-fab ${aiOpen ? 'is-active' : ''}`}
-        title="AI prompt"
-        onClick={() => {
-          setActive(null)
-          setAiOpen((v) => !v)
-        }}
-      >
-        <BsStars size={20} />
-      </button>
-
-      {active === 'design' && (
-        <div className="ppt-slide-panel" role="dialog" aria-label="Slide">
-          <div className="ppt-slide-panel-head">
-            <strong>Slide</strong>
-            <button type="button" className="ppt-slide-panel-close" onClick={() => setActive(null)}>
-              <FiX size={16} />
-            </button>
-          </div>
-
-          <div className="ppt-slide-panel-section">
-            <div className="ppt-slide-panel-label">Slide style</div>
-            <div className="ppt-slide-panel-select">
-              {themeVisual?.name || 'Current theme'}
-            </div>
-          </div>
-
-          <div className="ppt-slide-panel-section">
-            <div className="ppt-slide-panel-label">Background color</div>
-            <div className="ppt-slide-panel-row">
-              <span
-                className="ppt-slide-bg-swatch"
-                style={{ background: themeVisual?.inner || themeVisual?.background || '#fff' }}
+        <div className="ppt-editor-sidebar-panel-body">
+          {active === 'design' && (
+            <div className="ppt-slide-panel ppt-design-panel" role="region" aria-label="Design">
+              <DesignContextPanel
+                focus={designFocus}
+                slide={slide}
+                element={selectedElement}
+                themeVisual={themeVisual}
+                palette={themeVisual?.palette}
+                slideStyles={slideStyles}
+                layoutTemplates={layoutTemplates}
+                layoutLoading={layoutLoading}
+                selectedLayoutId={selectedLayoutId}
+                onSelectLayoutId={setSelectedLayoutId}
+                onApplyLayout={onApplyLayout}
+                onBackgroundColorChange={onBackgroundColorChange}
+                onBackgroundGradientChange={onBackgroundGradientChange}
+                onAddBackgroundImage={onAddBackgroundImage}
+                onSlideStylesChange={onSlideStylesChange}
+                onChangeElementContent={(content) =>
+                  selectedElementId && onChangeElementContent?.(selectedElementId, content)
+                }
+                onChangeElementPlacement={(placement) =>
+                  selectedElementId && onChangeElementPlacement?.(selectedElementId, placement)
+                }
+                onToggleElementLock={() => selectedElementId && onToggleElementLock?.(selectedElementId)}
+                onReplaceImage={onReplaceImage}
+                onCropImage={onCropImage}
+                disabled={disabled}
               />
-              <button
-                type="button"
-                className="ppt-slide-panel-btn"
-                onClick={() => onResetBackground?.()}
-              >
-                Reset background
-              </button>
-            </div>
-          </div>
 
-          <div className="ppt-slide-panel-section">
-            <div className="ppt-slide-panel-label">Background image</div>
-            <button
-              type="button"
-              className="ppt-slide-panel-btn ppt-slide-panel-btn--block"
-              onClick={() => onAddBackgroundImage?.()}
-            >
-              <FiImage size={14} /> Add background image
-            </button>
-          </div>
-
-          <div className="ppt-slide-panel-section">
-            <div className="ppt-slide-panel-label">Slide number</div>
-            <label className="ppt-slide-toggle">
-              <input type="checkbox" disabled />
-              <span />
-            </label>
-          </div>
-
-          <div className="ppt-slide-panel-section">
-            <div className="ppt-slide-panel-label">Apply layout</div>
-            {layoutLoading ? (
-              <div className="ppt-slide-layer-empty">Loading layouts…</div>
-            ) : layoutTemplates.length ? (
-              <>
-                <select
-                  className="ppt-slide-panel-select ppt-slide-layout-select"
-                  value={selectedLayoutId}
-                  disabled={disabled}
-                  onChange={(e) => setSelectedLayoutId(e.target.value)}
-                >
-                  {layoutTemplates.map((tpl) => {
-                    const id = tpl.id || tpl.templateId || tpl._id
-                    return (
-                      <option key={id} value={id}>
-                        {tpl.name || tpl.label || id}
-                      </option>
-                    )
-                  })}
-                </select>
-                <button
-                  type="button"
-                  className="ppt-slide-panel-btn ppt-slide-panel-btn--block"
-                  disabled={disabled || !selectedLayoutId}
-                  onClick={() => onApplyLayout?.(selectedLayoutId)}
-                >
-                  Rebuild slide from layout
-                </button>
-              </>
-            ) : (
-              <div className="ppt-slide-layer-empty">No layout templates in workspace</div>
-            )}
-          </div>
-
-          <div className="ppt-slide-panel-section">
-            <div className="ppt-slide-panel-label">Layers</div>
-            {selectedElementId && (
-              <div className="ppt-slide-layer-actions">
-                <button type="button" title="Bring forward" disabled={disabled} onClick={onBringForward}>
-                  <FiChevronUp size={14} />
-                </button>
-                <button type="button" title="Send backward" disabled={disabled} onClick={onSendBackward}>
-                  <FiChevronDown size={14} />
-                </button>
-                <button type="button" title="Delete" disabled={disabled} onClick={onDeleteElement}>
-                  <FiTrash2 size={14} />
-                </button>
-              </div>
-            )}
-            <div className="ppt-slide-layers">
-              {(slide?.elements?.elements || []).length === 0 ? (
-                <div className="ppt-slide-layer-empty">No layers yet — insert from the top bar</div>
-              ) : (
-                [...(slide?.elements?.elements || [])]
-                  .sort((a, b) => (b.layer || 0) - (a.layer || 0))
-                  .map((el, i) => (
-                    <button
-                      key={el.id || i}
-                      type="button"
-                      className={`ppt-slide-layer-row ${selectedElementId === el.id ? 'is-selected' : ''}`}
-                      disabled={disabled}
-                      onClick={() => onSelectElement?.(el.id)}
-                    >
-                      <span className="ppt-slide-layer-num">{el.layer ?? i + 1}</span>
-                      <span className="ppt-slide-layer-type">{el.type || 'element'}</span>
+              <div className="ppt-panel-section ppt-panel-section--layers">
+                <div className="ppt-slide-panel-label">Layers</div>
+                {selectedElementId && (
+                  <div className="ppt-slide-layer-actions">
+                    <button type="button" title="Bring forward" disabled={disabled} onClick={onBringForward}>
+                      <FiChevronUp size={14} />
                     </button>
-                  ))
+                    <button type="button" title="Send backward" disabled={disabled} onClick={onSendBackward}>
+                      <FiChevronDown size={14} />
+                    </button>
+                    <button type="button" title="Delete" disabled={disabled} onClick={onDeleteElement}>
+                      <FiTrash2 size={14} />
+                    </button>
+                  </div>
+                )}
+                <div className="ppt-slide-layers">
+                  {(slide?.elements?.elements || []).length === 0 ? (
+                    <div className="ppt-slide-layer-empty">No layers yet — insert from the top bar</div>
+                  ) : (
+                    [...(slide?.elements?.elements || [])]
+                      .sort((a, b) => (b.layer || 0) - (a.layer || 0))
+                      .map((el, i) => {
+                        const LayerIcon = layerTypeIcon(el.type)
+                        return (
+                          <button
+                            key={el.id || i}
+                            type="button"
+                            className={`ppt-slide-layer-row ${selectedElementId === el.id ? 'is-selected' : ''}`}
+                            disabled={disabled}
+                            onClick={() => onSelectElement?.(el.id)}
+                          >
+                            <span className="ppt-slide-layer-icon">
+                              <LayerIcon size={14} />
+                            </span>
+                            <span className="ppt-slide-layer-num">{el.layer ?? i + 1}</span>
+                            <span className="ppt-slide-layer-type">{el.type || 'element'}</span>
+                          </button>
+                        )
+                      })
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {active === 'transition' && (
+            <div className="ppt-slide-panel ppt-transition-panel" role="region" aria-label="Slide transition">
+              <div className="ppt-transition-grid">
+                {PPT_SLIDE_TRANSITIONS.map((opt) => {
+                  const selected = currentTransition === opt.id
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      className={`ppt-transition-card ${selected ? 'is-active' : ''}`}
+                      disabled={disabled}
+                      onClick={() => onChangeTransition?.(opt.id)}
+                    >
+                      <span className="ppt-transition-thumb">
+                        <TransitionThumb id={opt.id} />
+                      </span>
+                      <span className="ppt-transition-label">{opt.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {active === 'comments' && (
+            <div className="ppt-slide-panel ppt-slide-panel--sm" role="region" aria-label="Comments">
+              <PptCommentsPanel
+                workspaceId={workspaceId}
+                presentationId={presentationId}
+                slideId={slide?.id}
+                disabled={disabled}
+              />
+            </div>
+          )}
+
+          {active === 'notes' && (
+            <div className="ppt-slide-panel" role="region" aria-label="Speaker notes">
+              <SpeakerNotesPanel
+                notes={slide?.speakerNotes || ''}
+                disabled={disabled}
+                onChange={(notes) => onSpeakerNotesChange?.(slide?.id, notes)}
+              />
+            </div>
+          )}
+
+          {active === 'variables' && (
+            <div className="ppt-slide-panel" role="region" aria-label="Variables">
+              <PptVariablesPanel
+                variables={deckVariables}
+                disabled={disabled}
+                onChange={onVariablesChange}
+                onSyncAll={onSyncVariables}
+              />
+            </div>
+          )}
+
+          {active === 'status' && (
+            <div className="ppt-slide-panel ppt-slide-panel--sm ppt-status-panel" role="region" aria-label="Status">
+              <div className="ppt-status-options">
+                {PPT_SLIDE_STATUSES.map((opt) => {
+                  const selected = currentSlideStatus === opt.id
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      className={`ppt-status-option ${selected ? 'is-active' : ''}`}
+                      disabled={disabled}
+                      onClick={() => onChangeSlideStatus?.(opt.id)}
+                    >
+                      <StatusDot id={opt.id} />
+                      <span>{opt.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className="ppt-slide-panel-section">
+                <div className="ppt-status-row">
+                  <FiCheckCircle size={16} />
+                  <span>Deck: {String(deckStatus || 'READY')}</span>
+                </div>
+                <div className="ppt-status-row">
+                  <span>Elements: {(slide?.elements?.elements || []).length}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {aiOpen && (
+            <div className="ppt-ai-prompt-panel" role="region" aria-label="AI prompt">
+              {generationPrompt?.trim() ? (
+                <p className="ppt-ai-prompt-body">{generationPrompt.trim()}</p>
+              ) : (
+                <p className="ppt-slide-panel-hint">
+                  No generation prompt was saved for this deck. Create via AI PPT wizard to capture one.
+                </p>
               )}
             </div>
-          </div>
-        </div>
-      )}
-
-      {active === 'transition' && (
-        <div className="ppt-slide-panel ppt-transition-panel" role="dialog" aria-label="Slide transition">
-          <div className="ppt-slide-panel-head">
-            <strong>Slide transition</strong>
-            <button type="button" className="ppt-slide-panel-close" onClick={() => setActive(null)}>
-              <FiX size={16} />
-            </button>
-          </div>
-
-          <div className="ppt-transition-grid">
-            {PPT_SLIDE_TRANSITIONS.map((opt) => {
-              const selected = currentTransition === opt.id
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  className={`ppt-transition-card ${selected ? 'is-active' : ''}`}
-                  disabled={disabled}
-                  onClick={() => onChangeTransition?.(opt.id)}
-                >
-                  <span className="ppt-transition-thumb">
-                    <TransitionThumb id={opt.id} />
-                  </span>
-                  <span className="ppt-transition-label">{opt.label}</span>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {active === 'comments' && (
-        <div className="ppt-slide-panel ppt-slide-panel--sm" role="dialog" aria-label="Comments">
-          <div className="ppt-slide-panel-head">
-            <strong>Comments</strong>
-            <button type="button" className="ppt-slide-panel-close" onClick={() => setActive(null)}>
-              <FiX size={16} />
-            </button>
-          </div>
-          <p className="ppt-slide-panel-hint">No comments on this slide yet.</p>
-        </div>
-      )}
-
-      {active === 'status' && (
-        <div className="ppt-slide-panel ppt-slide-panel--sm ppt-status-panel" role="dialog" aria-label="Status">
-          <div className="ppt-slide-panel-head">
-            <strong>Status</strong>
-            <button type="button" className="ppt-slide-panel-close" onClick={() => setActive(null)}>
-              <FiX size={16} />
-            </button>
-          </div>
-
-          <div className="ppt-status-options">
-            {PPT_SLIDE_STATUSES.map((opt) => {
-              const selected = currentSlideStatus === opt.id
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  className={`ppt-status-option ${selected ? 'is-active' : ''}`}
-                  disabled={disabled}
-                  onClick={() => onChangeSlideStatus?.(opt.id)}
-                >
-                  <StatusDot id={opt.id} />
-                  <span>{opt.label}</span>
-                </button>
-              )
-            })}
-          </div>
-
-          <div className="ppt-slide-panel-section">
-            <div className="ppt-status-row">
-              <FiCheckCircle size={16} />
-              <span>Deck: {String(deckStatus || 'READY')}</span>
-            </div>
-            <div className="ppt-status-row">
-              <span>Elements: {(slide?.elements?.elements || []).length}</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {aiOpen && (
-        <div className="ppt-ai-prompt-panel" role="dialog" aria-label="AI prompt">
-          <div className="ppt-slide-panel-head">
-            <strong>AI prompt</strong>
-            <button type="button" className="ppt-slide-panel-close" onClick={() => setAiOpen(false)}>
-              <FiX size={16} />
-            </button>
-          </div>
-          {generationPrompt?.trim() ? (
-            <p className="ppt-ai-prompt-body">{generationPrompt.trim()}</p>
-          ) : (
-            <p className="ppt-slide-panel-hint">
-              No generation prompt was saved for this deck. Create via AI PPT wizard to capture one.
-            </p>
           )}
         </div>
-      )}
-    </div>
+      </div>
+
+      <div className="ppt-editor-sidebar-rail">
+        <div className="ppt-editor-sidebar-rail-tools">
+          {RAIL_TOOLS.map((tool) => {
+            const Icon = tool.Icon
+            return (
+              <button
+                key={tool.id}
+                type="button"
+                className={`ppt-editor-sidebar-btn ${active === tool.id ? 'is-active' : ''}`}
+                title={tool.label}
+                disabled={disabled}
+                aria-label={tool.label}
+                aria-expanded={active === tool.id}
+                onClick={() => toggle(tool.id)}
+              >
+                <Icon size={18} />
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="ppt-editor-sidebar-rail-footer">
+          <button type="button" className="ppt-editor-sidebar-btn" title="Assignee" disabled>
+            <FiUser size={18} />
+          </button>
+          <div className="ppt-editor-sidebar-zoom">{Math.round(zoom)}%</div>
+          <button
+            type="button"
+            className={`ppt-editor-sidebar-ai ${aiOpen ? 'is-active' : ''}`}
+            title="AI prompt"
+            aria-label="AI prompt"
+            aria-expanded={aiOpen}
+            onClick={() => {
+              setActive(null)
+              setAiOpen((v) => !v)
+            }}
+          >
+            <BsStars size={18} />
+          </button>
+        </div>
+      </div>
+    </aside>
   )
 }

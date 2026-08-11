@@ -212,8 +212,9 @@
 }
 
 .ppt-add-slide-card-thumb--layout {
-  padding: 12px;
+  padding: 0;
   background: #ffffff;
+  display: block;
 }
 
 .ppt-add-slide-card-fallback {

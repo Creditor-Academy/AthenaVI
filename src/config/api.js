@@ -208,6 +208,11 @@ const API_CONFIG = {
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/export`,
       EXPORT_STATUS: (workspaceId, presentationId, exportId) =>
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/export/${exportId}`,
+      IMPORT: (workspaceId) => `/api/workspaces/${workspaceId}/presentations/import`,
+      DUPLICATE: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/duplicate`,
+      SHARE: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/share`,
     },
   },
   
@@ -216,6 +221,8 @@ const API_CONFIG = {
     'Content-Type': 'application/json'
   }
 }
+
+import { triggerSessionExpired } from '../utils/apiError.js'
 
 // Helper function to build full URLs
 export const buildUrl = (endpoint) => {
@@ -229,6 +236,14 @@ export const getAuthHeaders = () => {
     ...API_CONFIG.HEADERS,
     ...(token && { 'Authorization': `Bearer ${token}` })
   }
+}
+
+// Helper function to check fetch response status for auth expiration
+export const checkAuthResponse = (response) => {
+  if (response && response.status === 401) {
+    triggerSessionExpired()
+  }
+  return response
 }
 
 export default API_CONFIG
