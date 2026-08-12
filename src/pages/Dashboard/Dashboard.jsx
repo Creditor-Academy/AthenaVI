@@ -254,8 +254,9 @@ function Dashboard({ onCreate, initialSection }) {
 
   const handleEditVideo = useCallback(
     (video) => {
+      const kind = String(video?.kind || video?.category || '').toLowerCase()
       const projectType = String(video?.type || video?.projectType || '').toUpperCase()
-      if (projectType === 'PRESENTATION') {
+      if (kind === 'presentation' || projectType === 'PRESENTATION') {
         openPresentationEditor({
           outline: [],
           config: {
@@ -588,7 +589,23 @@ function Dashboard({ onCreate, initialSection }) {
               }}
             />
           )}
-          {section === 'videos' && <Videos onCreate={handleOpenCreateVideoModal} onEdit={handleEditVideo} />}
+          {section === 'videos' && (
+            <Videos
+              onCreate={handleOpenCreateVideoModal}
+              onEdit={handleEditVideo}
+              onOpenImage={(item) => {
+                const workspaceId = item?.workspaceId
+                if (!workspaceId) return
+                setCreateLocationContext({
+                  optionId: 'image-ai',
+                  workspaceId,
+                  folderId: item.folderId || null,
+                  generationId: item.id || null,
+                })
+                goToSection('image-ai')
+              }}
+            />
+          )}
           {section === 'avatars' && (
             <Avatars
               onCreate={handleOpenCreateVideoModal}
@@ -669,10 +686,57 @@ function Dashboard({ onCreate, initialSection }) {
           {section === 'workspace' && (
             <TeamWorkspace
               onCreate={(context = {}) => {
+                const preferred = context.preferredCreateOption
+                const workspaceId = context.workspaceId || context.initialWorkspaceId || ''
+                const folderId = context.folderId || context.initialFolderId || ''
+
+                if (preferred === 'image-ai' && workspaceId) {
+                  setCreateLocationContext({
+                    optionId: 'image-ai',
+                    workspaceId,
+                    folderId,
+                  })
+                  goToSection('image-ai')
+                  return
+                }
+
+                if ((preferred === 'ppt-ai' || preferred === 'ppt-builder') && workspaceId) {
+                  setPresentationCreateContext({
+                    ...context,
+                    initialWorkspaceId: workspaceId,
+                    initialFolderId: folderId,
+                    workspaceId,
+                    folderId,
+                  })
+                  setCreateLocationContext({
+                    optionId: preferred,
+                    workspaceId,
+                    folderId,
+                  })
+                  goToSection(preferred)
+                  return
+                }
+
+                if (preferred === 'avatar-video') {
+                  handleOpenCreateVideoModal(context)
+                  return
+                }
+
                 setCreateMenuContext(context)
                 setShowCreateMenu(true)
               }}
               onEdit={handleEditVideo}
+              onOpenImage={(item) => {
+                const workspaceId = item?.workspaceId
+                if (!workspaceId) return
+                setCreateLocationContext({
+                  optionId: 'image-ai',
+                  workspaceId,
+                  folderId: item.folderId || null,
+                  generationId: item.id || null,
+                })
+                goToSection('image-ai')
+              }}
             />
           )}
           {section === 'admin-portal' && canAccessSuperadminPortal && (

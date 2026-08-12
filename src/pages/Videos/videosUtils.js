@@ -9,10 +9,20 @@ export const VIDEO_SECTION_OPTIONS = [
 
 export const WORK_CATEGORY_TABS = [
   { id: 'all', label: 'All' },
-  { id: 'avatar_video', label: 'Videos' },
-  { id: 'ppt', label: 'Presentation' },
+  { id: 'video', label: 'Videos' },
+  { id: 'presentation', label: 'Presentations' },
   { id: 'image', label: 'Images' },
 ];
+
+/** Map legacy FE category ids → library kind ids */
+export function normalizeWorkCategoryId(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  if (raw === 'avatar_video' || raw === 'videos') return 'video';
+  if (raw === 'ppt' || raw === 'presentations') return 'presentation';
+  if (raw === 'images') return 'image';
+  if (raw === 'video' || raw === 'presentation' || raw === 'image' || raw === 'all') return raw;
+  return raw || 'video';
+}
 
 export const SAMPLE_WORK_ITEMS = [];
 
@@ -53,10 +63,11 @@ export function getVideoSection(video, workspaceById, currentUserId) {
 }
 
 export function getVideoSectionSubtitle(tabId, categoryId = 'all') {
+  const cat = normalizeWorkCategoryId(categoryId);
   let categoryLabel = 'work items';
-  if (categoryId === 'avatar_video') categoryLabel = 'videos';
-  else if (categoryId === 'ppt') categoryLabel = 'presentations';
-  else if (categoryId === 'image') categoryLabel = 'images';
+  if (cat === 'video') categoryLabel = 'videos';
+  else if (cat === 'presentation') categoryLabel = 'presentations';
+  else if (cat === 'image') categoryLabel = 'images';
 
   switch (tabId) {
     case 'personal':
@@ -66,16 +77,17 @@ export function getVideoSectionSubtitle(tabId, categoryId = 'all') {
     case 'shared-with-me':
       return `Showing ${categoryLabel} shared with you.`;
     default:
-      return `Manage, search, and export your videos, presentations, and images.`;
+      return `Manage, search, and open your videos, presentations, and images.`;
   }
 }
 
 export function getVideoEmptyTitle(tabId, hasSearch, categoryId = 'all') {
   if (hasSearch) return 'No matching items found';
+  const cat = normalizeWorkCategoryId(categoryId);
   let catText = 'items';
-  if (categoryId === 'avatar_video') catText = 'videos';
-  else if (categoryId === 'ppt') catText = 'presentations';
-  else if (categoryId === 'image') catText = 'images';
+  if (cat === 'video') catText = 'videos';
+  else if (cat === 'presentation') catText = 'presentations';
+  else if (cat === 'image') catText = 'images';
 
   switch (tabId) {
     case 'personal':
@@ -93,37 +105,38 @@ export function getVideoEmptyHint(tabId, hasSearch, categoryId = 'all') {
   if (hasSearch) {
     return 'Try adjusting your search query, clearing filters, or switching categories.';
   }
-  if (categoryId === 'avatar_video') {
-    return 'Export a video from the studio editor to populate your video library.';
+  const cat = normalizeWorkCategoryId(categoryId);
+  if (cat === 'video') {
+    return 'Create a video project in a workspace to see it here.';
   }
-  if (categoryId === 'ppt') {
-    return 'Create or export a presentation deck to view it in this category.';
+  if (cat === 'presentation') {
+    return 'Create an AI presentation to view it in this category.';
   }
-  if (categoryId === 'image') {
-    return 'Generate or upload images and graphics to populate your gallery.';
+  if (cat === 'image') {
+    return 'Generate images in Image Gen to populate this gallery.';
   }
   return 'Create videos, presentations, or images to see your work here.';
 }
 
 export function getCategoryFilterOptions(activeCategory) {
-  if (activeCategory === 'avatar_video') {
+  const cat = normalizeWorkCategoryId(activeCategory);
+  if (cat === 'video') {
     return [
       { value: 'all', label: 'All Videos' },
-      { value: 'my_renders', label: 'Rendered by me' },
+      { value: 'my_renders', label: 'Created by me' },
       { value: 'large_files', label: 'Large files (50MB+)' },
     ];
   }
-  if (activeCategory === 'ppt') {
+  if (cat === 'presentation') {
     return [
       { value: 'all', label: 'All Presentations' },
       { value: 'large_decks', label: 'Large Decks (15+ slides)' },
       { value: 'my_renders', label: 'Created by me' },
     ];
   }
-  if (activeCategory === 'image') {
+  if (cat === 'image') {
     return [
       { value: 'all', label: 'All Images' },
-      { value: '4k_images', label: '4K Ultra HD' },
       { value: 'my_renders', label: 'Created by me' },
     ];
   }
@@ -171,8 +184,9 @@ export function applyVideoFilters(
 
   return videos.filter((item) => {
     // Category filter
-    const itemCategory = item.category || 'avatar_video';
-    if (activeCategory !== 'all' && itemCategory !== activeCategory) {
+    const itemCategory = normalizeWorkCategoryId(item.category || item.kind || 'video');
+    const active = normalizeWorkCategoryId(activeCategory);
+    if (active !== 'all' && itemCategory !== active) {
       return false;
     }
 
@@ -182,29 +196,28 @@ export function applyVideoFilters(
 
     // Filter dropdown conditions
     if (filterBy === 'large_files') {
-      const bytes = Number(item.fileSizeBytes) || 0;
+      const bytes = Number(item.fileSizeBytes || item.storageBytes || item.sizeBytes) || 0;
       if (bytes < LARGE_FILE_BYTES) return false;
     }
 
     if (filterBy === 'my_renders' && currentUserId) {
       const triggeredById = getTriggeredById(item);
+      const ownerId = normalizeId(item.owner?.id || item.ownerId || item.createdById);
       if (triggeredById && triggeredById !== currentUserId) return false;
+      if (!triggeredById && ownerId && ownerId !== currentUserId) return false;
     }
 
     if (filterBy === 'large_decks') {
-      if (item.category !== 'ppt' || (item.slideCount || 0) < 15) return false;
-    }
-
-    if (filterBy === '4k_images') {
-      if (item.category !== 'image' || !String(item.dimensions || '').includes('3840')) return false;
+      if (itemCategory !== 'presentation' || (item.slideCount || 0) < 15) return false;
     }
 
     if (!q) return true;
     return (
-      (item.title || '').toLowerCase().includes(q) ||
+      (item.title || item.name || '').toLowerCase().includes(q) ||
       (item.workspaceName || '').toLowerCase().includes(q) ||
-      (item.category || '').toLowerCase().includes(q) ||
-      (item.triggeredBy?.name || '').toLowerCase().includes(q)
+      (item.category || item.kind || '').toLowerCase().includes(q) ||
+      (item.prompt || '').toLowerCase().includes(q) ||
+      (item.triggeredBy?.name || item.owner?.name || item.createdBy || '').toLowerCase().includes(q)
     );
   });
 }
@@ -247,13 +260,15 @@ export function groupVideos(videos, groupBy) {
 
   if (groupBy === 'category') {
     const categoryNames = {
+      video: 'Videos',
+      presentation: 'Presentations',
+      image: 'Images',
       avatar_video: 'Videos',
       ppt: 'Presentations',
-      image: 'Images',
     };
     const groups = new Map();
     videos.forEach((item) => {
-      const catKey = item.category || 'avatar_video';
+      const catKey = normalizeWorkCategoryId(item.category || item.kind || 'video');
       const label = categoryNames[catKey] || 'Other Work';
       if (!groups.has(label)) groups.set(label, []);
       groups.get(label).push(item);

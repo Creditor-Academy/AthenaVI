@@ -16,6 +16,7 @@ import WorkspaceHeader from '../../components/features/workspace/workspace/Works
 import WorkspaceSection from '../../components/features/workspace/workspace/WorkspaceSection.jsx';
 import { WorkspaceCard, FolderCard, VideoCard, CreateWorkspaceCard, CreateFolderCard, CreateVideoCard } from '../../components/features/workspace/workspace/ViewCards.jsx';
 import { WorkspaceRow, FolderRow, VideoRow } from '../../components/features/workspace/workspace/ViewRows.jsx';
+import WorkspaceLibrary from '../../components/features/workspace/workspace/WorkspaceLibrary.jsx';
 import CreateWorkspaceModal from '../../components/features/workspace/workspace/CreateWorkspaceModal.jsx';
 import CreateFolderModal from '../../components/features/workspace/workspace/CreateFolderModal.jsx';
 import RenameModal from '../../components/features/workspace/workspace/RenameModal.jsx';
@@ -27,6 +28,7 @@ import WorkspaceStorageBreadcrumb from '../../components/features/workspace/work
 import TeamWorkspaceSkeleton from '../page-skeleton/TeamWorkspaceSkeleton';
 
 import { extractUserId, normalizeWorkspace, normalizeFolder, normalizeVideo, workspaceCanEdit, workspaceCanManageContributors } from './workspaceUtils.js';
+import { resolveLibraryKind } from '../../utils/workspaceLibrary.js';
 import { useWorkspaceData } from './useWorkspaceData.js';
 import { useWorkspaceActions } from './useWorkspaceActions.js';
 import InvitationsPanel from './InvitationsPanel.jsx';
@@ -41,7 +43,7 @@ import creditsService from '../../services/creditsService.js';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
 import '../../components/features/workspace/workspace/PremiumModal.css';
 
-const TeamWorkspace = ({ onCreate, onEdit }) => {
+const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
   const { user: authUser, loading: authLoading } = useAuth();
   const currentUserId = extractUserId(authUser);
 
@@ -461,6 +463,86 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
     if (onCreate) onCreate(context);
   };
 
+  const openLibraryItem = useCallback(
+    (item, workspace, folder = null) => {
+      const kind = resolveLibraryKind(item);
+      const payload = {
+        ...item,
+        workspaceId: workspace.id,
+        workspace: workspace.name,
+        folderId: item.folderId || folder?.id || null,
+        folder: folder?.name || item.folderName || item.folder?.name || '',
+        type:
+          item.type ||
+          item.projectType ||
+          (kind === 'presentation' ? 'PRESENTATION' : kind === 'video' ? 'VIDEO' : item.type),
+        kind,
+        category: kind,
+      };
+
+      if (kind === 'image') {
+        onOpenImage?.(payload);
+        return;
+      }
+      onEdit?.(payload);
+    },
+    [onEdit, onOpenImage]
+  );
+
+  const renderLibraryPanel = (workspace, folder = null) => {
+    if (!workspace?.id) return null;
+    const canEdit = workspaceCanEdit(workspace);
+    const createCtx = {
+      initialWorkspaceId: workspace.id,
+      initialFolderId: folder?.id || null,
+      workspaceId: workspace.id,
+      folderId: folder?.id || null,
+    };
+
+    return (
+      <WorkspaceLibrary
+        workspace={workspace}
+        folder={folder}
+        viewMode={viewMode}
+        sortItems={sortItems}
+        onOpenItem={(item) => openLibraryItem(item, workspace, folder)}
+        onCreateVideo={
+          canEdit ? () => openCreateVideoModal(createCtx) : null
+        }
+        onCreatePresentation={
+          canEdit
+            ? () =>
+                openCreateVideoModal({
+                  ...createCtx,
+                  preferredCreateOption: 'ppt-ai',
+                })
+            : null
+        }
+        onCreateImage={
+          canEdit
+            ? () =>
+                openCreateVideoModal({
+                  ...createCtx,
+                  preferredCreateOption: 'image-ai',
+                })
+            : null
+        }
+        onDetails={(item) =>
+          setDetailsTarget({
+            type: resolveLibraryKind(item) === 'image' ? 'image' : 'video',
+            item,
+          })
+        }
+        onRename={(item) => renameItem('video', item.id, workspace)}
+        onMove={(item) => {
+          setMoveTargetVideo(item);
+          setMoveTargetWorkspace(workspace);
+        }}
+        onDelete={(item) => deleteItem('video', item.id, workspace)}
+      />
+    );
+  };
+
   const handleNavigateBack = useCallback(() => {
     if (currentLevel.type === 'folder' && activeWorkspace) {
       setCurrentLevel({ type: 'workspace', id: activeWorkspace.id, ws: activeWorkspace });
@@ -878,45 +960,11 @@ const TeamWorkspace = ({ onCreate, onEdit }) => {
         {!canEdit && (
           <div className="workspace-permission-note" style={{ marginBottom: 16 }}>
             <MdInfo size={18} />
-            <span>You have {role} access. Creating videos is disabled in this workspace.</span>
+            <span>You have {role} access. Creating content is disabled in this workspace.</span>
           </div>
         )}
 
-        <WorkspaceSection
-          title="Videos"
-          count={(folder.videos || []).length}
-          viewMode={viewMode}
-          listClassName="project-list-view"
-          emptyMessage="No videos yet"
-          emptyIcon={MdVideoLibrary}
-          emptyActionLabel="Create your first video"
-          emptyActionIcon={MdMovieCreation}
-          emptyActionClass="workspace-create-action-btn"
-          onEmptyAction={
-            canEdit
-              ? () => openCreateVideoModal({ initialWorkspaceId: workspace.id, initialFolderId: folder.id })
-              : null
-          }
-          showCreateButton={canEdit && viewMode === 'list'}
-          createButtonLabel="New Video"
-          createButtonIcon={MdMovieCreation}
-          createButtonClass="workspace-create-action-btn"
-          onCreateClick={() => openCreateVideoModal({ initialWorkspaceId: workspace.id, initialFolderId: folder.id })}
-        >
-          {viewMode === 'list' && (
-            <div className="list-header project-list-header">
-              <div className="col" />
-              <div className="col">Name</div>
-              <div className="col">Owner</div>
-              <div className="col">Date created</div>
-              <div className="col">Modified by</div>
-              <div className="col">Modified at</div>
-              <div className="col">Size</div>
-              <div className="col" />
-            </div>
-          )}
-          {renderVideoItems(folder.videos || [], workspace, folder)}
-        </WorkspaceSection>
+        {renderLibraryPanel(workspace, folder)}
       </div>
     );
   };

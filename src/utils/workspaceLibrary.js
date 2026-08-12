@@ -1,0 +1,141 @@
+/** Normalize library category ids from the workspace library API. */
+export function normalizeLibraryCategoryId(value) {
+  const raw = String(value || '')
+    .trim()
+    .toLowerCase()
+  if (raw === 'video' || raw === 'videos' || raw === 'avatar_video') return 'video'
+  if (raw === 'presentation' || raw === 'presentations' || raw === 'ppt') return 'presentation'
+  if (raw === 'image' || raw === 'images') return 'image'
+  return raw || null
+}
+
+/** Resolve item kind from library fields or project type. */
+export function resolveLibraryKind(item) {
+  if (!item || typeof item !== 'object') return 'video'
+  const fromKind = normalizeLibraryCategoryId(item.kind || item.category)
+  if (fromKind === 'video' || fromKind === 'presentation' || fromKind === 'image') {
+    return fromKind
+  }
+  const type = String(item.type || item.projectType || '').toUpperCase()
+  if (type === 'PRESENTATION') return 'presentation'
+  if (type === 'IMAGE' || type === 'IMAGE_GEN') return 'image'
+  return 'video'
+}
+
+const DEFAULT_CATEGORIES = [
+  { id: 'video', label: 'Videos', projectType: 'VIDEO', count: 0 },
+  { id: 'presentation', label: 'Presentations', projectType: 'PRESENTATION', count: 0 },
+  { id: 'image', label: 'Images', count: 0 },
+]
+
+export function normalizeLibraryCategories(categories) {
+  const byId = new Map()
+  ;(Array.isArray(categories) ? categories : []).forEach((cat) => {
+    const id = normalizeLibraryCategoryId(cat?.id || cat?.projectType)
+    if (!id) return
+    byId.set(id, {
+      id,
+      label: cat.label || DEFAULT_CATEGORIES.find((d) => d.id === id)?.label || id,
+      projectType: cat.projectType || (id === 'video' ? 'VIDEO' : id === 'presentation' ? 'PRESENTATION' : undefined),
+      count: Number(cat.count) || 0,
+    })
+  })
+
+  return DEFAULT_CATEGORIES.map((fallback) => byId.get(fallback.id) || { ...fallback })
+}
+
+/**
+ * Normalize a library list item for cards / routing.
+ * Ensures `kind`, `category`, display name, and type fields are consistent.
+ */
+export function normalizeLibraryItem(item, { workspaceId } = {}) {
+  if (!item || typeof item !== 'object') return item
+
+  const kind = resolveLibraryKind(item)
+  const id = item.id || item._id
+  const name =
+    item.name ||
+    item.title ||
+    (kind === 'image' ? truncatePrompt(item.prompt || item.revisedPrompt) : null) ||
+    (kind === 'presentation' ? 'Untitled Presentation' : kind === 'image' ? 'Untitled Image' : 'Untitled Video')
+
+  const createdAt =
+    item.createdAt || item.created_at || item.dateCreated || item.created || null
+  const lastModifiedAt =
+    item.lastModifiedAt || item.updatedAt || item.modifiedAt || item.updated_at || createdAt || null
+
+  const base = {
+    ...item,
+    id,
+    workspaceId: item.workspaceId || workspaceId || null,
+    kind,
+    category: kind,
+    name,
+    title: item.title || name,
+    type:
+      item.type ||
+      item.projectType ||
+      (kind === 'presentation' ? 'PRESENTATION' : kind === 'video' ? 'VIDEO' : item.type),
+    projectType:
+      item.projectType ||
+      item.type ||
+      (kind === 'presentation' ? 'PRESENTATION' : kind === 'video' ? 'VIDEO' : item.projectType),
+    thumbnail: item.thumbnail || item.thumbnailUrl || item.url || null,
+    thumbnailUrl: item.thumbnailUrl || item.thumbnail || item.url || null,
+    createdAt,
+    lastModifiedAt,
+    lastEditedAt: lastModifiedAt,
+    folderId: item.folderId || item.folder?.id || item.folder?._id || null,
+    folder: item.folder || null,
+  }
+
+  if (kind === 'presentation') {
+    return {
+      ...base,
+      deckStatus: item.deckStatus || null,
+      slideCount: item.slideCount ?? item.slidesCount ?? null,
+      aspectRatio: item.aspectRatio || null,
+      partial: Boolean(item.partial),
+      status: item.status || null,
+    }
+  }
+
+  if (kind === 'image') {
+    return {
+      ...base,
+      url: item.url || item.thumbnail || item.thumbnailUrl || null,
+      prompt: item.prompt || '',
+      revisedPrompt: item.revisedPrompt || null,
+      mode: item.mode || 'image',
+      status: item.status || 'SUCCEEDED',
+      downloadFormats: item.downloadFormats || null,
+      assetId: item.assetId || item.asset?.id || null,
+      asset: item.asset || null,
+    }
+  }
+
+  return {
+    ...base,
+    status: item.status || 'draft',
+    storageBytes: item.storageBytes ?? item.sizeBytes ?? null,
+  }
+}
+
+function truncatePrompt(text, max = 48) {
+  const value = String(text || '').trim()
+  if (!value) return ''
+  return value.length > max ? `${value.slice(0, max - 1)}…` : value
+}
+
+export const IMAGE_MODE_FILTERS = [
+  { id: 'all', label: 'All' },
+  { id: 'image', label: 'Image' },
+  { id: 'infographic', label: 'Infographic' },
+  { id: 'social', label: 'Social' },
+]
+
+export const LIBRARY_CATEGORY_ICONS = {
+  video: 'video',
+  presentation: 'presentation',
+  image: 'image',
+}

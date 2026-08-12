@@ -17,9 +17,13 @@ import {
   MdViewModule,
 } from 'react-icons/md'
 import { useAuth } from '../../contexts/AuthContext'
-import videoLibraryService from '../../services/videoLibraryService'
 import workspaceService from '../../services/workspaceService'
 import { extractUserId, normalizeWorkspace } from '../TeamWorkspace/workspaceUtils'
+import {
+  normalizeLibraryItem,
+  normalizeLibraryCategories,
+  normalizeLibraryCategoryId,
+} from '../../utils/workspaceLibrary.js'
 import '../../components/features/workspace/workspace/WorkspaceStyles.css'
 import VideosSkeleton from '../page-skeleton/VideosSkeleton'
 import ExportVideoCard from './ExportVideoCard.jsx'
@@ -31,30 +35,52 @@ import {
   getVideoEmptyHint,
   getVideoEmptyTitle,
   groupVideos,
+  normalizeWorkCategoryId,
   sortVideos,
   VIDEO_GROUP_OPTIONS,
-  VIDEO_SECTION_OPTIONS,
   VIDEO_SORT_OPTIONS,
   WORK_CATEGORY_TABS,
 } from './videosUtils'
 import './Videos.css'
 
-const PAGE_SIZE = 20
-
 const CATEGORY_TAB_ICONS = {
   all: MdApps,
-  avatar_video: MdVideoLibrary,
-  ppt: MdSlideshow,
+  video: MdVideoLibrary,
+  presentation: MdSlideshow,
   image: MdImage,
 }
 
-function Videos({ onEdit }) {
+function toWorkCardItem(item, workspace) {
+  const normalized = normalizeLibraryItem(item, { workspaceId: workspace?.id })
+  const kind = normalizeLibraryCategoryId(normalized.kind) || 'video'
+  return {
+    ...normalized,
+    category: kind,
+    kind,
+    title: normalized.title || normalized.name,
+    workspaceId: workspace?.id || normalized.workspaceId,
+    workspaceName: workspace?.name || item.workspaceName || '',
+    workspaceType: workspace?.type,
+    completedAt: normalized.lastModifiedAt || normalized.createdAt,
+    fileSizeBytes: normalized.storageBytes ?? normalized.sizeBytes ?? null,
+    thumbnailUrl: normalized.thumbnailUrl || normalized.thumbnail || normalized.url,
+    slideCount: normalized.slideCount,
+    triggeredBy: item.owner || item.lastModifiedBy || item.triggeredBy || null,
+  }
+}
+
+function Videos({ onEdit, onOpenImage }) {
   const { user: authUser } = useAuth()
   const currentUserId = extractUserId(authUser)
   const [fetchedVideos, setFetchedVideos] = useState([])
   const [workspaceMap, setWorkspaceMap] = useState(() => new Map())
+  const [categoryCounts, setCategoryCounts] = useState({
+    all: 0,
+    video: 0,
+    presentation: 0,
+    image: 0,
+  })
   const [loading, setLoading] = useState(true)
-  const [loadingMore, setLoadingMore] = useState(false)
   const [viewMode, setViewMode] = useState('grid')
   const [activeSection, setActiveSection] = useState('all')
   const [activeCategory, setActiveCategory] = useState('all')
@@ -62,13 +88,12 @@ function Videos({ onEdit }) {
   const [filterBy, setFilterBy] = useState('all')
   const [sortBy, setSortBy] = useState('completed_desc')
   const [groupBy, setGroupBy] = useState('none')
-  const [pagination, setPagination] = useState({ page: 1, totalPages: 1 })
   const [previewItem, setPreviewItem] = useState(null)
   const [previewUrl, setPreviewUrl] = useState('')
-  const [previewLoading, setPreviewLoading] = useState(false)
   const [actionId, setActionId] = useState(null)
   const [toast, setToast] = useState(null)
   const toastTimeoutRef = useRef(null)
+  const workspacesRef = useRef([])
 
   useEffect(() => {
     const ctx = consumeDashboardSearchContext('videos')
@@ -87,74 +112,84 @@ function Videos({ onEdit }) {
     }
   }, [])
 
-  const fetchVideos = useCallback(async ({ page = 1, append = false } = {}) => {
-    if (append) setLoadingMore(true)
-    else setLoading(true)
+  const loadLibraryForWorkspaces = useCallback(async (workspaces, category) => {
+    const catsToLoad =
+      category === 'all' ? ['video', 'presentation', 'image'] : [normalizeWorkCategoryId(category)]
 
-    try {
-      const skip = (page - 1) * PAGE_SIZE
-      const result = await videoLibraryService.listUserVideos({
-        take: PAGE_SIZE,
-        skip,
-        status: 'completed',
+    const results = await Promise.all(
+      workspaces.map(async (ws) => {
+        try {
+          const [catData, ...lists] = await Promise.all([
+            workspaceService.getLibrary(ws.id).catch(() => ({ categories: [] })),
+            ...catsToLoad.map((cat) =>
+              workspaceService
+                .getLibrary(ws.id, {
+                  category: cat,
+                  ...(cat === 'image' ? { take: 40, skip: 0 } : {}),
+                })
+                .catch(() => ({ items: [] }))
+            ),
+          ])
+
+          const categories = normalizeLibraryCategories(catData.categories)
+          const items = lists.flatMap((list, index) => {
+            const kind = catsToLoad[index]
+            return (list.items || []).map((item) =>
+              toWorkCardItem({ ...item, kind: item.kind || kind }, ws)
+            )
+          })
+
+          return { workspaceId: ws.id, categories, items }
+        } catch (error) {
+          console.warn(`Library load failed for workspace ${ws.id}:`, error)
+          return { workspaceId: ws.id, categories: normalizeLibraryCategories([]), items: [] }
+        }
       })
-      const taggedVideos = (result.videos || []).map((v) => ({
-        ...v,
-        category: 'avatar_video',
-      }))
-      setFetchedVideos((prev) => (append ? [...prev, ...taggedVideos] : taggedVideos))
-      setPagination(result.pagination)
-    } catch (error) {
-      console.error('Failed to fetch video exports:', error)
-      showToast(error.message || 'Failed to load video exports', 'error')
-      if (!append) setFetchedVideos([])
-    } finally {
-      setLoading(false)
-      setLoadingMore(false)
-    }
+    )
+
+    const counts = { all: 0, video: 0, presentation: 0, image: 0 }
+    results.forEach((result) => {
+      result.categories.forEach((cat) => {
+        if (counts[cat.id] != null) counts[cat.id] += Number(cat.count) || 0
+      })
+    })
+    counts.all = counts.video + counts.presentation + counts.image
+
+    const items = results.flatMap((r) => r.items)
+    return { counts, items }
   }, [])
 
-  useEffect(() => {
-    fetchVideos({ page: 1 })
-  }, [fetchVideos])
-
-  useEffect(() => {
-    let cancelled = false
-
-    const loadWorkspaces = async () => {
-      try {
+  const fetchWorkItems = useCallback(async () => {
+    setLoading(true)
+    try {
+      let workspaces = workspacesRef.current
+      if (!workspaces.length) {
         const rawWorkspaces = await workspaceService.listWorkspaces()
-        if (cancelled) return
-        const mapped = (rawWorkspaces || []).map((ws) =>
+        workspaces = (rawWorkspaces || []).map((ws) =>
           normalizeWorkspace(ws, currentUserId, authUser)
         )
-        setWorkspaceMap(new Map(mapped.map((ws) => [ws.id, ws])))
-      } catch (error) {
-        console.warn('Failed to load workspaces for filters:', error)
+        workspacesRef.current = workspaces
+        setWorkspaceMap(new Map(workspaces.map((ws) => [ws.id, ws])))
       }
+
+      const { counts, items } = await loadLibraryForWorkspaces(workspaces, activeCategory)
+      setCategoryCounts(counts)
+      setFetchedVideos(items)
+    } catch (error) {
+      console.error('Failed to fetch workspace library:', error)
+      showToast(error.message || 'Failed to load work items', 'error')
+      setFetchedVideos([])
+    } finally {
+      setLoading(false)
     }
+  }, [activeCategory, authUser, currentUserId, loadLibraryForWorkspaces])
 
-    loadWorkspaces()
-    return () => {
-      cancelled = true
-    }
-  }, [currentUserId, authUser])
+  useEffect(() => {
+    fetchWorkItems()
+  }, [fetchWorkItems])
 
-  const allWorkItems = useMemo(() => {
-    return fetchedVideos
-  }, [fetchedVideos])
+  const allWorkItems = fetchedVideos
 
-  // Compute category counts
-  const categoryCounts = useMemo(() => {
-    const counts = { all: allWorkItems.length, avatar_video: 0, ppt: 0, image: 0 }
-    allWorkItems.forEach((item) => {
-      const cat = item.category || 'avatar_video'
-      if (counts[cat] !== undefined) counts[cat] += 1
-    })
-    return counts
-  }, [allWorkItems])
-
-  // Dynamic filter options based on selected category
   const dynamicFilterOptions = useMemo(
     () => getCategoryFilterOptions(activeCategory),
     [activeCategory]
@@ -170,14 +205,27 @@ function Videos({ onEdit }) {
       activeCategory,
     })
     return sortVideos(filtered, sortBy)
-  }, [allWorkItems, workspaceMap, currentUserId, activeSection, activeCategory, searchQuery, filterBy, sortBy])
+  }, [
+    allWorkItems,
+    workspaceMap,
+    currentUserId,
+    activeSection,
+    activeCategory,
+    searchQuery,
+    filterBy,
+    sortBy,
+  ])
 
   const workGroups = useMemo(
     () => groupVideos(filteredWorkItems, groupBy),
     [filteredWorkItems, groupBy]
   )
 
-  const hasSearch = Boolean(searchQuery.trim()) || filterBy !== 'all' || activeCategory !== 'all' || activeSection !== 'all'
+  const hasSearch =
+    Boolean(searchQuery.trim()) ||
+    filterBy !== 'all' ||
+    activeCategory !== 'all' ||
+    activeSection !== 'all'
 
   const handleResetFilters = () => {
     setSearchQuery('')
@@ -186,46 +234,41 @@ function Videos({ onEdit }) {
     setGroupBy('none')
   }
 
-  const openPreview = async (item) => {
+  const openPreview = (item) => {
     setPreviewItem(item)
-    setPreviewUrl('')
-    if (item.category === 'avatar_video') {
-      setPreviewLoading(true)
-      try {
-        const url = await videoLibraryService.fetchPresignedDownloadUrl(item)
-        setPreviewUrl(url || item.downloadPath || '')
-      } catch (err) {
-        showToast(err.message || 'Failed to load video preview', 'error')
-        setPreviewItem(null)
-      } finally {
-        setPreviewLoading(false)
-      }
+    const kind = normalizeWorkCategoryId(item.category || item.kind)
+    if (kind === 'image' || kind === 'presentation') {
+      setPreviewUrl(item.url || item.thumbnailUrl || item.thumbnail || '')
+      return
     }
+    setPreviewUrl(item.thumbnailUrl || item.thumbnail || '')
   }
 
   const handleDownload = async (item) => {
     setActionId(item.id)
     try {
-      if (item.category === 'avatar_video') {
-        await videoLibraryService.downloadVideoFile(item, item.title)
-        showToast('Video download started', 'success')
-      } else if (item.category === 'ppt') {
-        const link = document.createElement('a')
-        link.href = item.thumbnailUrl || '#'
-        link.download = `${item.title.replace(/\s+/g, '_')}`
-        document.body.appendChild(link)
-        link.click()
-        link.remove()
-        showToast('Presentation download started', 'success')
-      } else {
-        const link = document.createElement('a')
-        link.href = item.thumbnailUrl || '#'
-        link.download = `${item.title.replace(/\s+/g, '_')}`
-        document.body.appendChild(link)
-        link.click()
-        link.remove()
-        showToast('Image download started', 'success')
+      const kind = normalizeWorkCategoryId(item.category || item.kind)
+      const href = item.url || item.thumbnailUrl || item.thumbnail
+      if (!href) {
+        showToast('No downloadable file for this item', 'error')
+        return
       }
+      const link = document.createElement('a')
+      link.href = href
+      link.download = `${String(item.title || item.name || kind).replace(/\s+/g, '_')}`
+      link.target = '_blank'
+      link.rel = 'noopener noreferrer'
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      showToast(
+        kind === 'presentation'
+          ? 'Presentation download started'
+          : kind === 'image'
+            ? 'Image download started'
+            : 'Download started',
+        'success'
+      )
     } catch (err) {
       showToast(err.message || 'Download failed', 'error')
     } finally {
@@ -234,22 +277,22 @@ function Videos({ onEdit }) {
   }
 
   const handleOpenProject = (item) => {
-    if (!onEdit || item.category !== 'avatar_video') return
+    const kind = normalizeWorkCategoryId(item.category || item.kind)
+    if (kind === 'image') {
+      onOpenImage?.(item)
+      return
+    }
+    if (!onEdit) return
     onEdit({
-      id: item.projectId,
+      ...item,
+      id: item.id,
       workspaceId: item.workspaceId,
       folderId: item.folderId,
-      title: item.title,
+      title: item.title || item.name,
+      type: item.type || (kind === 'presentation' ? 'PRESENTATION' : 'VIDEO'),
+      kind,
+      category: kind,
     })
-  }
-
-  const hasMore = pagination.page < pagination.totalPages
-
-  const categoryLabels = {
-    all: 'work items',
-    avatar_video: 'avatar videos',
-    ppt: 'PPT presentations',
-    image: 'images',
   }
 
   const renderWorkCollection = (collection) => (
@@ -263,7 +306,7 @@ function Videos({ onEdit }) {
           <div className="col" />
           <div className="col">Name & Category</div>
           <div className="col">Workspace</div>
-          <div className="col">Completed</div>
+          <div className="col">Updated</div>
           <div className="col">Details / Size</div>
           <div className="col">Author</div>
           <div className="col" />
@@ -274,30 +317,40 @@ function Videos({ onEdit }) {
         const handlers = {
           onPreview: () => openPreview(item),
           onDownload: () => handleDownload(item),
-          onOpenProject: onEdit ? () => handleOpenProject(item) : null,
+          onOpenProject: onEdit || onOpenImage ? () => handleOpenProject(item) : null,
           downloading: actionId === item.id,
         }
 
         return viewMode === 'grid' ? (
-          <ExportVideoCard key={item.id} video={item} {...handlers} />
+          <ExportVideoCard
+            key={`${item.kind}-${item.workspaceId}-${item.id}`}
+            video={item}
+            {...handlers}
+          />
         ) : (
-          <ExportVideoRow key={item.id} video={item} {...handlers} />
+          <ExportVideoRow
+            key={`${item.kind}-${item.workspaceId}-${item.id}`}
+            video={item}
+            {...handlers}
+          />
         )
       })}
     </div>
   )
 
+  const previewKind = previewItem
+    ? normalizeWorkCategoryId(previewItem.category || previewItem.kind)
+    : null
+
   return (
     <div className="videos-page my-work-page">
       <div className="videos-shell">
-        {/* Executive Header Area */}
         <header className="videos-page-header">
           <div className="videos-title-section">
             <h1 className="videos-page-title">My Work</h1>
           </div>
 
           <div className="videos-actions">
-            {/* View Mode Toggle (First) */}
             <div className="view-toggle" aria-label="View toggle">
               <button
                 className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
@@ -317,7 +370,6 @@ function Videos({ onEdit }) {
               </button>
             </div>
 
-            {/* Filter Dropdown */}
             <VideosToolbarDropdown
               label="Filter"
               icon={MdFilterList}
@@ -328,7 +380,6 @@ function Videos({ onEdit }) {
               menuLabel="Filter options"
             />
 
-            {/* Sort Dropdown */}
             <VideosToolbarDropdown
               label="Sort"
               icon={MdSort}
@@ -339,7 +390,6 @@ function Videos({ onEdit }) {
               menuLabel="Sort options"
             />
 
-            {/* Group Dropdown */}
             <VideosToolbarDropdown
               label="Group"
               icon={MdViewModule}
@@ -352,8 +402,11 @@ function Videos({ onEdit }) {
           </div>
         </header>
 
-        {/* Workspace-Style Category Switch Tabs */}
-        <div className="workspace-root-tabs-wrapper work-root-tabs-wrapper" role="tablist" aria-label="Work categories">
+        <div
+          className="workspace-root-tabs-wrapper work-root-tabs-wrapper"
+          role="tablist"
+          aria-label="Work categories"
+        >
           <div className="workspace-root-tabs">
             {WORK_CATEGORY_TABS.map((cat) => {
               const Icon = CATEGORY_TAB_ICONS[cat.id]
@@ -387,7 +440,7 @@ function Videos({ onEdit }) {
             <div className="videos-empty-state">
               <div className="videos-empty-state__card">
                 <span className="videos-empty-state__icon-wrap" aria-hidden>
-                  {activeCategory === 'ppt' ? (
+                  {activeCategory === 'presentation' ? (
                     <MdSlideshow size={28} />
                   ) : activeCategory === 'image' ? (
                     <MdImage size={28} />
@@ -430,37 +483,23 @@ function Videos({ onEdit }) {
               ))}
             </div>
           )}
-
-          {hasMore && !loading && activeCategory === 'all' ? (
-            <div className="videos-load-more">
-              <button
-                type="button"
-                className="btn-secondary"
-                disabled={loadingMore}
-                onClick={() => fetchVideos({ page: pagination.page + 1, append: true })}
-              >
-                {loadingMore ? 'Loading…' : 'Load more'}
-              </button>
-            </div>
-          ) : null}
         </main>
       </div>
 
-      {/* Preview Modals for Avatar Video, PPT Presentation, and Image */}
       {previewItem ? (
         <div className="videos-preview-modal work-preview-modal" role="dialog" aria-modal="true">
           <div className="videos-preview-backdrop" onClick={() => setPreviewItem(null)} />
           <div className="videos-preview-panel work-preview-panel">
             <header className="videos-preview-header">
               <div className="preview-header-meta">
-                <span className={`preview-cat-badge badge-${previewItem.category || 'avatar_video'}`}>
-                  {previewItem.category === 'ppt'
-                    ? 'PPT Presentation'
-                    : previewItem.category === 'image'
-                    ? 'Image Asset'
-                    : 'Avatar Video'}
+                <span className={`preview-cat-badge badge-${previewKind || 'video'}`}>
+                  {previewKind === 'presentation'
+                    ? 'Presentation'
+                    : previewKind === 'image'
+                      ? 'Image'
+                      : 'Video'}
                 </span>
-                <h3>{previewItem.title}</h3>
+                <h3>{previewItem.title || previewItem.name}</h3>
               </div>
               <div className="preview-header-actions">
                 <button
@@ -478,57 +517,103 @@ function Videos({ onEdit }) {
               </div>
             </header>
 
-            {previewItem.category === 'ppt' ? (
+            {previewKind === 'presentation' ? (
               <div className="ppt-preview-container">
                 <div className="ppt-preview-stage">
-                  {previewItem.thumbnailUrl ? (
-                    <img src={previewItem.thumbnailUrl} alt={previewItem.title} className="ppt-slide-preview-img" />
+                  {previewUrl ? (
+                    <img
+                      src={previewUrl}
+                      alt={previewItem.title || previewItem.name}
+                      className="ppt-slide-preview-img"
+                    />
                   ) : (
                     <div className="ppt-slide-placeholder">
                       <MdPresentToAll size={64} />
-                      <h4>{previewItem.title}</h4>
-                      <p>{previewItem.description || 'PowerPoint Presentation Deck'}</p>
+                      <h4>{previewItem.title || previewItem.name}</h4>
+                      <p>Presentation deck</p>
                     </div>
                   )}
                 </div>
                 <div className="ppt-preview-footer">
                   <div className="ppt-meta-info">
-                    <span>📊 {previewItem.slideCount || 14} Presentation Slides</span>
-                    <span>16:9 HD Format</span>
-                    <span>{previewItem.workspaceName}</span>
+                    {previewItem.slideCount != null ? (
+                      <span>{previewItem.slideCount} slides</span>
+                    ) : null}
+                    {previewItem.deckStatus ? <span>{previewItem.deckStatus}</span> : null}
+                    {previewItem.aspectRatio ? <span>{previewItem.aspectRatio}</span> : null}
                   </div>
-                  <p className="ppt-desc-text">{previewItem.description}</p>
+                  {(onEdit || onOpenImage) && (
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      onClick={() => {
+                        handleOpenProject(previewItem)
+                        setPreviewItem(null)
+                      }}
+                    >
+                      Open Presentation
+                    </button>
+                  )}
                 </div>
               </div>
-            ) : previewItem.category === 'image' ? (
+            ) : previewKind === 'image' ? (
               <div className="image-preview-container">
-                <div className="image-preview-stage">
-                  <img
-                    src={previewItem.thumbnailUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80'}
-                    alt={previewItem.title}
-                    className="image-lightbox-img"
-                  />
-                </div>
-                <div className="image-preview-footer">
-                  <div className="image-meta-info">
-                    <span>🖼️ Resolution: {previewItem.dimensions || '3840x2160'}</span>
-                    <span>PNG Graphic</span>
-                    <span>{previewItem.workspaceName}</span>
+                {previewUrl ? (
+                  <img src={previewUrl} alt={previewItem.title || previewItem.name} />
+                ) : (
+                  <div className="ppt-slide-placeholder">
+                    <MdImage size={64} />
+                    <p>No preview available</p>
                   </div>
-                </div>
+                )}
+                {(onEdit || onOpenImage) && (
+                  <div className="ppt-preview-footer">
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      onClick={() => {
+                        handleOpenProject(previewItem)
+                        setPreviewItem(null)
+                      }}
+                    >
+                      Open in Image Gen
+                    </button>
+                  </div>
+                )}
               </div>
-            ) : previewLoading ? (
-              <p className="videos-preview-status">Loading video preview…</p>
-            ) : previewUrl ? (
-              <video src={previewUrl} controls autoPlay className="videos-preview-player" />
             ) : (
-              <p className="videos-preview-status">Preview unavailable for this video.</p>
+              <div className="image-preview-container">
+                {previewUrl ? (
+                  <img src={previewUrl} alt={previewItem.title || previewItem.name} />
+                ) : (
+                  <div className="ppt-slide-placeholder">
+                    <MdVideoLibrary size={64} />
+                    <p>Open the project to view or edit this video.</p>
+                  </div>
+                )}
+                {onEdit && (
+                  <div className="ppt-preview-footer">
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      onClick={() => {
+                        handleOpenProject(previewItem)
+                        setPreviewItem(null)
+                      }}
+                    >
+                      Open Project
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
       ) : null}
 
-      <Toast toast={toast} />
+      {toast ? (
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+      ) : null}
     </div>
   )
 }

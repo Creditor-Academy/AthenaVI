@@ -5,6 +5,7 @@ import {
   pickUserRef,
   resolveUserDisplayName
 } from '../../utils/workspaceUsers.js';
+import { resolveLibraryKind } from '../../utils/workspaceLibrary.js';
 import workspaceService from '../../services/workspaceService.js';
 
 // ---------------------------------------------------------------------------
@@ -168,17 +169,31 @@ export function normalizeVideo(video, currentUserId, authUser, userLookup) {
     video.updatedAt || video.lastModifiedAt || video.modifiedAt || video.updated_at || createdAt || null;
   const sizeBytes = getProjectBytes(video);
 
+  const kind = resolveLibraryKind(video);
+  const defaultName =
+    kind === 'presentation'
+      ? 'Untitled Presentation'
+      : kind === 'image'
+        ? 'Untitled Image'
+        : 'Untitled Video';
+
   return {
     ...video,
     id: video.id || video._id,
-    name: video.name || video.title || 'Untitled Video',
+    name: video.name || video.title || defaultName,
+    title: video.title || video.name || defaultName,
+    type: video.type || video.projectType || (kind === 'presentation' ? 'PRESENTATION' : kind === 'video' ? 'VIDEO' : video.type),
+    kind,
+    category: kind,
     createdBy,
     createdAt,
     lastModifiedBy,
     lastModifiedAt: updatedAt,
     lastEditedBy: lastModifiedBy,
     lastEditedAt: updatedAt,
-    sizeBytes: sizeBytes ?? video.sizeBytes ?? null
+    sizeBytes: sizeBytes ?? video.sizeBytes ?? null,
+    thumbnail: video.thumbnail || video.thumbnailUrl || video.url || null,
+    thumbnailUrl: video.thumbnailUrl || video.thumbnail || video.url || null,
   };
 }
 

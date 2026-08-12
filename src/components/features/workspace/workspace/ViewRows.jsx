@@ -1,9 +1,10 @@
 import React from 'react';
-import { MdFolder, MdVideoLibrary, MdPerson, MdPeople } from 'react-icons/md';
+import { MdFolder, MdVideoLibrary, MdPerson, MdPeople, MdSlideshow, MdImage } from 'react-icons/md';
 import ContextMenu from './ContextMenu.jsx';
 import UserIdentity from './UserIdentity.jsx';
 import WorkspaceCreditsBadge from './WorkspaceCreditsBadge.jsx';
 import { formatFolderSize, formatProjectSize } from '../../../../utils/formatSize.js';
+import { resolveLibraryKind } from '../../../../utils/workspaceLibrary.js';
 
 const formatSize = (item) => {
     if (!item) return '-';
@@ -104,17 +105,23 @@ export const FolderRow = ({ folder, onClick, contextProps }) => {
 };
 
 export const VideoRow = ({ video, onClick, contextProps }) => {
+    const kind = resolveLibraryKind(video);
     const modifiedBy = video.lastModifiedBy || video.lastEditedBy || '-';
     const modifiedAt = video.lastModifiedAt || video.lastEditedAt;
+    const RowIcon =
+        kind === 'presentation' ? MdSlideshow : kind === 'image' ? MdImage : MdVideoLibrary;
+    const kindLabel =
+        kind === 'presentation' ? 'Presentation' : kind === 'image' ? 'Image' : 'Video';
 
     return (
-        <div className="workspace-item-row project-item-row" onClick={onClick}>
+        <div className={`workspace-item-row project-item-row project-item-row--${kind}`} onClick={onClick}>
             <div className="row-icon-container">
-                <MdVideoLibrary size={24} />
+                <RowIcon size={24} />
             </div>
 
             <div className="col col-name">
-                <h4>{video.name}</h4>
+                <h4>{video.name || video.title}</h4>
+                <span className={`wsc-kind-chip wsc-kind-chip--${kind}`}>{kindLabel}</span>
             </div>
 
             <div className="col col-owner">

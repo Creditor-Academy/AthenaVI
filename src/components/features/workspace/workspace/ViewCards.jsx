@@ -12,11 +12,15 @@ import {
     MdWorkspaces,
     MdCreateNewFolder,
     MdMovieCreation,
+    MdSlideshow,
+    MdImage,
 } from 'react-icons/md';
 import ContextMenu from './ContextMenu.jsx';
 import UserIdentity from './UserIdentity.jsx';
 import ProjectSceneThumbnail from './ProjectSceneThumbnail.jsx';
+import DefaultProjectThumbnail from './DefaultProjectThumbnail.jsx';
 import { formatWorkspaceCredits } from './WorkspaceCreditsBadge.jsx';
+import { resolveLibraryKind } from '../../../../utils/workspaceLibrary.js';
 
 function formatRelativeLabel(dateStr) {
     if (!dateStr) return 'Recently';
@@ -292,41 +296,109 @@ export const FolderCard = ({ folder, onClick, contextProps }) => {
 /*  VIDEO CARD                                                                  */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
+function KindBadge({ kind }) {
+    if (kind === 'presentation') {
+        return (
+            <span className="wsc-kind-badge wsc-kind-badge--presentation">
+                <MdSlideshow size={11} /> Presentation
+            </span>
+        );
+    }
+    if (kind === 'image') {
+        return (
+            <span className="wsc-kind-badge wsc-kind-badge--image">
+                <MdImage size={11} /> Image
+            </span>
+        );
+    }
+    return (
+        <span className="wsc-kind-badge wsc-kind-badge--video">
+            <MdMovieCreation size={11} /> Video
+        </span>
+    );
+}
+
+function LibraryThumb({ item, kind }) {
+    const title = item.name || item.title || '';
+    if (kind === 'image') {
+        const src = item.url || item.thumbnail || item.thumbnailUrl;
+        return src ? (
+            <img src={src} alt={title} className="wsc-library-thumb-img" />
+        ) : (
+            <DefaultProjectThumbnail title={title} category="image" />
+        );
+    }
+    if (kind === 'presentation') {
+        const src = item.thumbnail || item.thumbnailUrl;
+        return src ? (
+            <img src={src} alt={title} className="wsc-library-thumb-img" />
+        ) : (
+            <DefaultProjectThumbnail title={title} category="ppt" />
+        );
+    }
+    return <ProjectSceneThumbnail video={item} />;
+}
+
 export const VideoCard = ({ video, onClick, contextProps }) => {
-    const relative = formatRelativeLabel(video.updatedAt || video.createdAt);
-    const statusLabel = video.status
-        ? String(video.status).charAt(0).toUpperCase() + String(video.status).slice(1).toLowerCase()
+    const kind = resolveLibraryKind(video);
+    const relative = formatRelativeLabel(
+        video.lastModifiedAt || video.updatedAt || video.createdAt
+    );
+    const statusRaw =
+        kind === 'presentation'
+            ? video.deckStatus || video.status
+            : video.status;
+    const statusLabel = statusRaw
+        ? String(statusRaw).charAt(0).toUpperCase() + String(statusRaw).slice(1).toLowerCase()
         : null;
+    const openLabel =
+        kind === 'presentation'
+            ? 'Open Presentation'
+            : kind === 'image'
+                ? 'Open Image'
+                : 'Open Project';
 
     return (
-        <div className="wsc-card wsc-video-card" onClick={onClick}>
-            {/* Thumbnail — overflow:hidden clips video scale, so NO menu here */}
+        <div className={`wsc-card wsc-video-card wsc-card--${kind}`} onClick={onClick}>
             <div className="wsc-video-card__thumb" aria-hidden="true">
                 <div className="wsc-video-card__thumb-inner">
-                    <ProjectSceneThumbnail video={video} />
+                    <LibraryThumb item={video} kind={kind} />
                 </div>
 
                 <div className="wsc-card__hover-overlay">
                     <div className="wsc-video-card__play-btn">
-                        <MdPlayArrow size={22} />
+                        {kind === 'image' ? <MdImage size={20} /> : kind === 'presentation' ? <MdSlideshow size={20} /> : <MdPlayArrow size={22} />}
                     </div>
-                    <span>Open Project</span>
+                    <span>{openLabel}</span>
                 </div>
 
+                <KindBadge kind={kind} />
+
                 {statusLabel && (
-                    <div className={`wsc-video-card__status wsc-video-card__status--${(video.status || '').toLowerCase()}`}>
+                    <div className={`wsc-video-card__status wsc-video-card__status--${String(statusRaw || '').toLowerCase()}`}>
                         {statusLabel}
                     </div>
                 )}
             </div>
 
-            {/* Meta */}
             <div className="wsc-video-card__meta">
                 <div className="wsc-video-card__info">
-                    <h4 className="wsc-video-card__title">{video.name}</h4>
+                    <h4 className="wsc-video-card__title">{video.name || video.title}</h4>
                     <div className="wsc-video-card__byline">
                         <MdSchedule size={11} />
                         <span>{relative}</span>
+                        {kind === 'presentation' && video.slideCount != null && (
+                            <>
+                                <span className="wsc-card__dot" aria-hidden="true">·</span>
+                                <span>{video.slideCount} slides</span>
+                            </>
+                        )}
+                        {kind === 'image' && video.mode && (
+                            <>
+                                <span className="wsc-card__dot" aria-hidden="true">·</span>
+                                <span>{video.mode}</span>
+                            </>
+                        )}
                         {video.createdBy && (
                             <>
                                 <span className="wsc-card__dot" aria-hidden="true">·</span>
@@ -338,7 +410,6 @@ export const VideoCard = ({ video, onClick, contextProps }) => {
                 </div>
             </div>
 
-            {/* ✅ Menu at card root level — escapes thumbnail's overflow:hidden */}
             <div
                 className="wsc-card__menu"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
@@ -413,7 +484,13 @@ export const CreateFolderCard = ({ onClick }) => {
     );
 };
 
-export const CreateVideoCard = ({ onClick }) => {
+export const CreateVideoCard = ({
+    onClick,
+    label = 'Create Project',
+    badgeLabel = 'Video or PPT',
+    icon = null,
+}) => {
+    const BadgeIcon = icon || MdMovieCreation;
     return (
         <div
             className="wsc-card wsc-video-card wsc-create-card"
@@ -432,11 +509,11 @@ export const CreateVideoCard = ({ onClick }) => {
                     <MdAdd size={28} />
                 </div>
                 <div className="wsc-create-card__content">
-                    <h4 className="wsc-create-card__title">Create Project</h4>
+                    <h4 className="wsc-create-card__title">{label}</h4>
                 </div>
                 <div className="wsc-create-card__badge">
-                    <MdMovieCreation size={13} />
-                    <span>Video or PPT</span>
+                    <BadgeIcon size={13} />
+                    <span>{badgeLabel || label}</span>
                 </div>
             </div>
         </div>
