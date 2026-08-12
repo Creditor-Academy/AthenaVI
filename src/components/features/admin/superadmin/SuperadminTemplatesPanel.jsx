@@ -764,6 +764,7 @@ function DeckPackLayoutPickerModal({
   const [dragIndex, setDragIndex] = useState(null)
   const [overIndex, setOverIndex] = useState(null)
   const [showPackPreview, setShowPackPreview] = useState(false)
+  const [previewLayout, setPreviewLayout] = useState(null)
 
   useEffect(() => {
     if (layoutCatalog.length) {
@@ -800,13 +801,13 @@ function DeckPackLayoutPickerModal({
   useEffect(() => {
     const onKey = (e) => {
       if (e.key !== 'Escape') return
-      // Full-pack preview handles its own Escape; don't close compose under it.
-      if (showPackPreview) return
+      // Nested previews handle their own Escape; don't close compose under them.
+      if (showPackPreview || previewLayout) return
       onClose()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose, showPackPreview])
+  }, [onClose, showPackPreview, previewLayout])
 
   const mergedSchemaMap = useMemo(() => {
     const map = { ...layoutSchemaMap }
@@ -896,7 +897,7 @@ function DeckPackLayoutPickerModal({
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: 'rgba(0,0,0,0.62)', backdropFilter: 'blur(4px)', padding: 16,
       }}
-      onClick={(e) => { if (e.target === e.currentTarget && !showPackPreview) onClose() }}
+      onClick={(e) => { if (e.target === e.currentTarget && !showPackPreview && !previewLayout) onClose() }}
     >
       <div style={{
         width: 'min(980px, 96vw)', height: 'min(720px, 90vh)',
@@ -963,27 +964,59 @@ function DeckPackLayoutPickerModal({
                 </span>
               ) : filteredLayouts.length === 0 ? (
                 <span style={{ padding: 10, fontSize: '0.75rem', color: 'var(--text-muted)' }}>No layouts match this filter.</span>
-              ) : filteredLayouts.map((layout) => (
-                <button
-                  key={layout.id || layout.layoutId}
-                  type="button"
-                  onClick={() => setDraftIds((prev) => [...prev, layout.layoutId])}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left',
-                    padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-card)', color: 'var(--text-main)',
-                  }}
-                >
-                  <Plus size={14} style={{ color: 'var(--primary)', flexShrink: 0 }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{layout.name}</div>
-                    <div style={{ fontSize: '0.64rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
-                      {layout.layoutId} · {contentTypeLabel(layout.contentType)}
-                    </div>
+              ) : filteredLayouts.map((layout) => {
+                const layoutSchema = layout.schema || mergedSchemaMap[layout.layoutId] || null
+                const canPreview = Array.isArray(layoutSchema?.slots) && layoutSchema.slots.length > 0
+                return (
+                  <div
+                    key={layout.id || layout.layoutId}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 4,
+                      padding: '6px 6px 6px 10px', borderRadius: 8,
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-card)', color: 'var(--text-main)',
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setDraftIds((prev) => [...prev, layout.layoutId])}
+                      title="Add to pack"
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left',
+                        flex: 1, minWidth: 0, padding: '2px 0',
+                        border: 'none', background: 'transparent', color: 'inherit', cursor: 'pointer',
+                      }}
+                    >
+                      <Plus size={14} style={{ color: 'var(--primary)', flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{layout.name}</div>
+                        <div style={{ fontSize: '0.64rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                          {layout.layoutId} · {contentTypeLabel(layout.contentType)}
+                        </div>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      className="sa-btn sa-btn--ghost sa-btn--sm"
+                      disabled={!canPreview}
+                      title={canPreview ? 'Preview layout' : 'No slots to preview'}
+                      onClick={() => {
+                        if (!canPreview) return
+                        setPreviewLayout({
+                          schema: layoutSchema,
+                          name: layout.name || layout.layoutId,
+                        })
+                      }}
+                      style={{
+                        padding: 6, flexShrink: 0, opacity: canPreview ? 1 : 0.35,
+                        color: 'var(--text-muted)',
+                      }}
+                    >
+                      <Eye size={14} />
+                    </button>
                   </div>
-                </button>
-              ))}
+                )
+              })}
             </div>
           </div>
 
@@ -1155,6 +1188,24 @@ function DeckPackLayoutPickerModal({
           onClose={() => setShowPackPreview(false)}
         />
       )}
+
+      {previewLayout && (() => {
+        const enriched = enrichLayoutSchemaForPreview(previewLayout.schema)
+        const slots = Array.isArray(enriched?.slots) ? enriched.slots : []
+        const dims = getGridDims(slots)
+        return (
+          <DeckLayoutModal
+            schema={enriched}
+            layoutName={previewLayout.name}
+            slots={slots}
+            hasSlots={slots.length > 0}
+            COLS={dims.COLS}
+            ROWS={dims.ROWS}
+            zIndex={1500}
+            onClose={() => setPreviewLayout(null)}
+          />
+        )
+      })()}
     </div>,
     document.body
   )
@@ -1698,7 +1749,7 @@ function LayoutModeToggle({ mode, onChange }) {
 
 // ─── Deck Layout full-screen modal ───────────────────────────────────────────
 
-function DeckLayoutModal({ schema, layoutName, slots, hasSlots, COLS, ROWS, onClose, initialMode = 'polished' }) {
+function DeckLayoutModal({ schema, layoutName, slots, hasSlots, COLS, ROWS, onClose, initialMode = 'polished', zIndex = 1200 }) {
   const [mode, setMode] = useState(initialMode)
 
   useEffect(() => {
@@ -1712,7 +1763,7 @@ function DeckLayoutModal({ schema, layoutName, slots, hasSlots, COLS, ROWS, onCl
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, zIndex: 1200,
+      position: 'fixed', inset: 0, zIndex,
       background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(8px)',
       display: 'flex', flexDirection: 'column',
     }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
