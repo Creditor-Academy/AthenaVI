@@ -156,6 +156,8 @@ const API_CONFIG = {
         `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/suggest/logo-variants`,
       GUIDELINES: (workspaceId, brandKitId) =>
         `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/guidelines`,
+      GUIDELINES_PDF: (workspaceId, brandKitId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/guidelines/pdf`,
       GUIDELINES_GENERATE: (workspaceId, brandKitId) =>
         `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/guidelines/generate`,
     },

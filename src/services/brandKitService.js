@@ -274,6 +274,51 @@ class BrandKitService {
     return data?.guideline || data
   }
 
+  /**
+   * Download printable brand guideline PDF (style-sheet layout with logo variants).
+   * Returns { blob, filename }.
+   */
+  async downloadGuidelinePdf(workspaceId, brandKitId) {
+    const response = await fetch(
+      buildUrl(API_CONFIG.ENDPOINTS.BRAND_KITS.GUIDELINES_PDF(workspaceId, brandKitId)),
+      { headers: getAuthHeaders() }
+    )
+
+    if (response.status === 403) {
+      const payload = await this.readPayload(response)
+      throw new BrandKitPermissionError(
+        payload.message || 'Not allowed to download brand guidelines',
+        payload
+      )
+    }
+
+    if (!response.ok) {
+      const payload = await this.readPayload(response)
+      throw new Error(payload.message || `Failed to download guideline PDF (${response.status})`)
+    }
+
+    const blob = await response.blob()
+    const disposition = response.headers.get('Content-Disposition') || ''
+    const match = disposition.match(/filename\*?=(?:UTF-8''|")?([^\";]+)/i)
+    const filename = match
+      ? decodeURIComponent(match[1].replace(/"/g, ''))
+      : 'Brand_Guidelines.pdf'
+
+    return { blob, filename }
+  }
+
+  async downloadGuidelinePdfAndSave(workspaceId, brandKitId) {
+    const { blob, filename } = await this.downloadGuidelinePdf(workspaceId, brandKitId)
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  }
+
   async generateGuidelines(workspaceId, brandKitId, { folderId } = {}) {
     if (!folderId) throw new Error('folderId is required to generate brand guidelines')
     const data = await this.request(

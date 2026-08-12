@@ -1,313 +1,435 @@
-import {
-  formatFontWeightLabel,
-  getFontRole,
-  parseCssSize,
-} from './brandKitUtils'
+/**
+ * Client-side fallback brand guideline PDF (style-sheet layout).
+ * Primary path is backend GET .../guidelines/pdf (Puppeteer template).
+ */
 
-export async function downloadBrandGuidelinePdf({ kitName, kitData, setGeneratingGuideline, setError }) {
-    try {
-      setGeneratingGuideline(true)
-      const { jsPDF } = await import('jspdf')
-      const doc = new jsPDF({
-        orientation: 'landscape',
-        unit: 'pt',
-        format: [960, 540], // 16:9 Widescreen Aspect Ratio PDF Presentation!
-      })
+function normalizeHex(hex, fallback = '#64748B') {
+  const raw = String(hex || '').trim()
+  if (!raw) return fallback
+  let clean = raw.startsWith('#') ? raw.slice(1) : raw
+  if (clean.length === 3) clean = clean.split('').map((c) => c + c).join('')
+  if (!/^[0-9a-fA-F]{6}$/.test(clean)) return fallback
+  return `#${clean.toUpperCase()}`
+}
 
-      const name = kitName || 'Brand Kit'
-      const colors = kitData.colors || []
-      const headingFont = getFontRole(kitData.fonts, 'heading')
-      const subheadingFont = getFontRole(kitData.fonts, 'subheading')
-      const bodyFont = getFontRole(kitData.fonts, 'body')
+function hexToRgb(hex) {
+  const h = normalizeHex(hex).slice(1)
+  const n = Number.parseInt(h, 16)
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+}
 
-      // SLIDE 1: COVER SLIDE
-      doc.setFillColor(15, 23, 42) // #0F172A Dark Slate
-      doc.rect(0, 0, 960, 540, 'F')
+function resolveRoleHex(data, role, fallback) {
+  const id = data?.colorRoles?.[role]
+  const color = (data?.colors || []).find((c) => c.id === id)
+  return normalizeHex(color?.hex || fallback, fallback)
+}
 
-      doc.setFillColor(37, 99, 235) // Primary Blue Accent Bar
-      doc.rect(70, 160, 8, 220, 'F')
+function roleLabel(data, colorId) {
+  const roles = data?.colorRoles || {}
+  const preferred = ['primary', 'accent', 'bg', 'text', 'secondary', 'muted']
+  const hits = Object.entries(roles)
+    .filter(([, id]) => id === colorId)
+    .map(([role]) => role)
+  hits.sort((a, b) => {
+    const ai = preferred.indexOf(a)
+    const bi = preferred.indexOf(b)
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
+  })
+  return hits[0] || ''
+}
 
-      doc.setTextColor(255, 255, 255)
-      doc.setFont('helvetica', 'bold')
-      doc.setFontSize(13)
-      doc.text('BRAND IDENTITY & DESIGN SYSTEM', 95, 185)
+async function loadImageAsDataUrl(url) {
+  if (!url) return null
+  try {
+    const res = await fetch(url)
+    if (!res.ok) return null
+    const blob = await res.blob()
+    return await new Promise((resolve) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result)
+      reader.onerror = () => resolve(null)
+      reader.readAsDataURL(blob)
+    })
+  } catch {
+    return null
+  }
+}
 
-      doc.setFontSize(44)
-      doc.text(name, 95, 240)
+function formatLogoRole(role) {
+  const map = {
+    primary: 'Primary',
+    secondary: 'Secondary',
+    icon: 'Icon',
+    main: 'Main',
+    light: 'Light',
+    'light-mode': 'Light mode',
+    dark: 'Dark',
+    'dark-mode': 'Dark mode',
+    black: 'Black',
+    white: 'White',
+    'with-name-adjacent': 'With name (adjacent)',
+    'with-name-below': 'With name (below)',
+  }
+  return map[role] || String(role || 'Logo').replace(/-/g, ' ')
+}
 
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(16)
-      doc.setTextColor(148, 163, 184)
-      doc.text('Executive Brand Guidelines & Presentation Specification Deck', 95, 278)
+const FONT_ROLE_ORDER = ['heading', 'subheading', 'body', 'tertiary']
+const FONT_ROLE_LABELS = {
+  heading: 'Heading',
+  subheading: 'Subheading',
+  body: 'Body',
+  tertiary: 'Tertiary',
+}
+const FONT_ROLE_SAMPLES = {
+  heading: 'The quick brown fox jumps over the lazy dog',
+  subheading: 'Clear hierarchy for titles, decks, and section leads',
+  body: 'Body copy stays readable across presentations, guidelines, and product UI.',
+  tertiary: 'Supporting labels, captions, and compact UI text',
+}
 
-      doc.setFontSize(12)
-      doc.text(`Generated: ${new Date().toLocaleDateString()}  •  Aspect Ratio: 16:9 Widescreen  •  v1.0 Deck`, 95, 470)
-      doc.text('Page 1 of 6', 850, 470)
+function collectFontRoles(fonts = {}) {
+  const roles = []
+  const seen = new Set()
+  for (const key of FONT_ROLE_ORDER) {
+    const face = fonts[key]
+    if (!face || typeof face !== 'object') continue
+    const family = String(face.family || '').trim()
+    if (!family) continue
+    seen.add(key)
+    roles.push({
+      key,
+      label: FONT_ROLE_LABELS[key] || key,
+      family,
+      weight: Number(face.weight) || (key === 'heading' ? 700 : key === 'subheading' ? 600 : 400),
+      sizePx: Number(face.sizePx) || (key === 'heading' ? 40 : key === 'subheading' ? 20 : 14),
+      lineHeight: Number(face.lineHeight) || (key === 'heading' ? 1.2 : key === 'subheading' ? 1.4 : 1.6),
+      sample: FONT_ROLE_SAMPLES[key] || FONT_ROLE_SAMPLES.body,
+    })
+  }
+  for (const [key, face] of Object.entries(fonts)) {
+    if (seen.has(key) || !face || typeof face !== 'object') continue
+    const family = String(face.family || '').trim()
+    if (!family) continue
+    roles.push({
+      key,
+      label: String(key)
+        .replace(/[-_]/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase()),
+      family,
+      weight: Number(face.weight) || 400,
+      sizePx: Number(face.sizePx) || 14,
+      lineHeight: Number(face.lineHeight) || 1.4,
+      sample: FONT_ROLE_SAMPLES.body,
+    })
+  }
+  return roles
+}
 
-      // SLIDE 2: COLOR PALETTE
-      doc.addPage([960, 540], 'l')
-      doc.setFillColor(248, 250, 252)
-      doc.rect(0, 0, 960, 540, 'F')
+export async function downloadBrandGuidelinePdf({
+  kitName,
+  kitData,
+  kitMedia = [],
+  setGeneratingGuideline,
+  setError,
+}) {
+  try {
+    setGeneratingGuideline?.(true)
+    const { jsPDF } = await import('jspdf')
 
-      doc.setTextColor(100, 116, 139)
-      doc.setFont('helvetica', 'bold')
-      doc.setFontSize(11)
-      doc.text('02 / COLOR PALETTE', 70, 55)
+    const name = kitName || 'Brand Kit'
+    const data = kitData || {}
+    const primary = resolveRoleHex(data, 'primary', '#2563EB')
+    const pageBg = resolveRoleHex(data, 'bg', '#F7F8FC')
+    const text = resolveRoleHex(data, 'text', '#0F172A')
+    const muted = resolveRoleHex(data, 'muted', '#64748B')
+    const fontRoles = collectFontRoles(data.fonts || {})
+    const headingFamily = fontRoles.find((r) => r.key === 'heading')?.family || fontRoles[0]?.family || 'Inter'
+    const tagline = data.meta?.tagline || ''
 
-      doc.setTextColor(15, 23, 42)
-      doc.setFontSize(28)
-      doc.text('Harmonic Brand Color System', 70, 90)
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' })
+    const pageW = doc.internal.pageSize.getWidth()
+    const pageH = doc.internal.pageSize.getHeight()
+    // Content inset only — page background is full-bleed
+    const MARGIN_X = 40
+    const MARGIN_TOP = 0
+    const MARGIN_BOTTOM = 44
+    const CONTENT_PAD_TOP = 36
+    const contentW = pageW - MARGIN_X * 2
 
-      const swatchWidth = 120
-      const swatchHeight = 110
-      colors.slice(0, 6).forEach((c, idx) => {
-        const x = 70 + idx * 135
-        const y = 125
-        let hex = c.hex || '#94A3B8'
+    const fill = (hex) => {
+      const [r, g, b] = hexToRgb(hex)
+      doc.setFillColor(r, g, b)
+    }
+    const ink = (hex) => {
+      const [r, g, b] = hexToRgb(hex)
+      doc.setTextColor(r, g, b)
+    }
 
+    const paintPageBg = () => {
+      fill(pageBg)
+      doc.rect(0, 0, pageW, pageH, 'F')
+    }
+
+    let y = MARGIN_TOP
+
+    const ensureSpace = (needed) => {
+      if (y + needed <= pageH - MARGIN_BOTTOM) return
+      doc.addPage()
+      paintPageBg()
+      y = CONTENT_PAD_TOP
+    }
+
+    paintPageBg()
+
+    // Hero — rounded accent card with logo + brand name
+    const heroH = 168
+    ensureSpace(heroH + 24)
+    y = CONTENT_PAD_TOP
+    fill(primary)
+    doc.roundedRect(MARGIN_X, y, contentW, heroH, 18, 18, 'F')
+
+    const primaryLogo =
+      (kitMedia || []).find((m) => {
+        const kind = String(m.kind || m.type || '').toLowerCase()
+        const role = String(m.role || '').toLowerCase()
+        return kind === 'logo' && (role === 'primary' || role === 'main')
+      }) ||
+      (kitMedia || []).find((m) => String(m.kind || m.type || '').toLowerCase() === 'logo')
+
+    let textLeft = MARGIN_X + 24
+    if (primaryLogo) {
+      const url = primaryLogo.url || primaryLogo.src || primaryLogo.presignedUrl
+      const dataUrl = await loadImageAsDataUrl(url)
+      if (dataUrl) {
         try {
-          let clean = hex.replace('#', '')
-          if (clean.length === 3) clean = clean.split('').map((x) => x + x).join('')
-          const num = parseInt(clean, 16) || 0
-          doc.setFillColor((num >> 16) & 255, (num >> 8) & 255, num & 255)
-          doc.rect(x, y, swatchWidth, swatchHeight, 'F')
+          const fmt =
+            dataUrl.includes('image/jpeg') || dataUrl.includes('image/jpg') ? 'JPEG' : 'PNG'
+          doc.addImage(dataUrl, fmt, MARGIN_X + 24, y + 22, 44, 44, undefined, 'FAST')
+          textLeft = MARGIN_X + 24 + 44 + 14
         } catch {
-          doc.setFillColor(148, 163, 184)
-          doc.rect(x, y, swatchWidth, swatchHeight, 'F')
+          // ignore
+        }
+      }
+    }
+
+    ink('#FFFFFF')
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(16)
+    doc.text(String(name).toUpperCase(), textLeft, y + 42, {
+      maxWidth: pageW - textLeft - MARGIN_X - 20,
+    })
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(11)
+    doc.text(`accent · ${primary}`, MARGIN_X + 24, y + 88)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(32)
+    doc.text(headingFamily, MARGIN_X + 24, y + 128, { maxWidth: contentW - 48 })
+    if (tagline) {
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(11)
+      doc.text(tagline, MARGIN_X + 24, y + 152, { maxWidth: contentW - 48 })
+    }
+    y += heroH + 28
+
+    // Palette
+    const colors = data.colors || []
+    const sw = 64
+    const gap = 12
+    const paletteRows = Math.ceil(Math.max(colors.length, 1) / 6)
+    ensureSpace(28 + paletteRows * (sw + 36))
+    ink(muted)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.text('PALETTE', MARGIN_X, y)
+    y += 16
+
+    colors.forEach((c, idx) => {
+      const col = idx % 6
+      const row = Math.floor(idx / 6)
+      if (col === 0 && row > 0) y += sw + 36
+      const x = MARGIN_X + col * (sw + gap)
+      fill(normalizeHex(c.hex))
+      doc.roundedRect(x, y, sw, sw, 10, 10, 'F')
+      ink(text)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(8)
+      const role = roleLabel(data, c.id)
+      if (role) doc.text(role, x, y + sw + 12)
+      ink(muted)
+      doc.setFont('helvetica', 'normal')
+      doc.text(normalizeHex(c.hex), x, y + sw + (role ? 24 : 12))
+    })
+    y += sw + 44
+
+    // Typography — all roles
+    ensureSpace(28)
+    ink(muted)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.text('TYPOGRAPHY', MARGIN_X, y)
+    y += 14
+
+    if (!fontRoles.length) {
+      ensureSpace(20)
+      ink(muted)
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(11)
+      doc.text('No typography roles defined.', MARGIN_X, y + 12)
+      y += 28
+    } else {
+      for (const role of fontRoles) {
+        const cardH = 96
+        ensureSpace(cardH + 12)
+        doc.setFillColor(255, 255, 255)
+        doc.setDrawColor(226, 232, 240)
+        doc.roundedRect(MARGIN_X, y, contentW, cardH, 8, 8, 'FD')
+
+        ink(primary)
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(9)
+        doc.text(String(role.label).toUpperCase(), MARGIN_X + 14, y + 18)
+
+        ink(muted)
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(9)
+        doc.text(
+          `${role.family} · ${role.weight} · ${role.sizePx}px · LH ${role.lineHeight}`,
+          MARGIN_X + 90,
+          y + 18
+        )
+
+        ink(text)
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(28)
+        doc.text('Aa', MARGIN_X + 14, y + 52)
+
+        doc.setFont('helvetica', Number(role.weight) >= 600 ? 'bold' : 'normal')
+        doc.setFontSize(Math.min(16, Math.max(10, role.sizePx * 0.45)))
+        doc.text(role.sample, MARGIN_X + 70, y + 48, { maxWidth: contentW - 90 })
+
+        ink(muted)
+        doc.setFontSize(10)
+        doc.text('AaBbCcDdEeFf · 0123456789', MARGIN_X + 70, y + 72)
+
+        y += cardH + 10
+      }
+    }
+
+    // Tokens
+    ensureSpace(70)
+    ink(muted)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.text('SHAPE & TOKENS', MARGIN_X, y)
+    y += 16
+
+    fill(primary)
+    doc.roundedRect(MARGIN_X, y, 78, 28, 14, 14, 'F')
+    ink('#FFFFFF')
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.text('Button', MARGIN_X + 22, y + 18)
+
+    const pills = [
+      `SCALE ×1.333`,
+      `GRID 8px`,
+      `RADIUS 12px`,
+      `CLEAR ${data.usage?.logoClearSpace || '1.5×'}`,
+      `LOGO MIN ${data.usage?.logoMinSizePx || 24}px`,
+    ]
+    let px = MARGIN_X + 92
+    let rowY = y
+    pills.forEach((label) => {
+      const tw = doc.getTextWidth(label) + 18
+      if (px + tw > pageW - MARGIN_X) {
+        px = MARGIN_X
+        rowY += 36
+        ensureSpace(36)
+      }
+      doc.setDrawColor(...hexToRgb(muted))
+      doc.setFillColor(255, 255, 255)
+      doc.roundedRect(px, rowY, tw, 28, 14, 14, 'FD')
+      ink(text)
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(9)
+      doc.text(label, px + 9, rowY + 18)
+      px += tw + 8
+    })
+    y = rowY + 44
+
+    // Logos
+    ensureSpace(28)
+    ink(muted)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.text('LOGO VARIANTS', MARGIN_X, y)
+    y += 14
+
+    const logos = (kitMedia || []).filter(
+      (m) => String(m.kind || m.type || '').toLowerCase() === 'logo'
+    )
+    if (!logos.length) {
+      ensureSpace(24)
+      ink(muted)
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(11)
+      doc.text('No logo variants uploaded yet.', MARGIN_X, y + 12)
+      y += 28
+    } else {
+      const cardW = (contentW - 24) / 3
+      const cardH = 110
+      for (let i = 0; i < logos.length; i += 1) {
+        const logo = logos[i]
+        const col = i % 3
+        if (col === 0) ensureSpace(cardH + 16)
+        const x = MARGIN_X + col * (cardW + 12)
+        const darkBg = ['light', 'light-mode', 'white'].includes(String(logo.role || '').toLowerCase())
+
+        doc.setFillColor(255, 255, 255)
+        doc.setDrawColor(226, 232, 240)
+        doc.roundedRect(x, y, cardW, cardH, 8, 8, 'FD')
+
+        if (darkBg) doc.setFillColor(15, 23, 42)
+        else doc.setFillColor(248, 250, 252)
+        doc.roundedRect(x + 1, y + 1, cardW - 2, 72, 8, 8, 'F')
+
+        const url = logo.url || logo.src || logo.presignedUrl
+        const dataUrl = await loadImageAsDataUrl(url)
+        if (dataUrl) {
+          try {
+            const fmt =
+              dataUrl.includes('image/jpeg') || dataUrl.includes('image/jpg') ? 'JPEG' : 'PNG'
+            doc.addImage(dataUrl, fmt, x + 16, y + 12, cardW - 32, 50, undefined, 'FAST')
+          } catch {
+            // ignore
+          }
         }
 
-        doc.setTextColor(15, 23, 42)
-        doc.setFontSize(12)
+        ink(text)
         doc.setFont('helvetica', 'bold')
-        doc.text(c.name || `Color ${idx + 1}`, x, y + swatchHeight + 20)
+        doc.setFontSize(10)
+        doc.text(formatLogoRole(logo.role), x + 10, y + cardH - 14)
 
-        doc.setFont('helvetica', 'normal')
-        doc.setFontSize(11)
-        doc.setTextColor(100, 116, 139)
-        doc.text(hex, x, y + swatchHeight + 36)
-      })
-
-      doc.setFillColor(255, 255, 255)
-      doc.rect(70, 325, 820, 140, 'F')
-      doc.setDrawColor(226, 232, 240)
-      doc.rect(70, 325, 820, 140, 'D')
-
-      doc.setTextColor(15, 23, 42)
-      doc.setFont('helvetica', 'bold')
-      doc.setFontSize(14)
-      doc.text('Color Usage & Accessibility Standards', 95, 355)
-
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(11)
-      doc.setTextColor(71, 85, 105)
-      doc.text('• Primary brand colors must be used for key CTA elements, header highlights, and focal graphics.', 95, 380)
-      doc.text('• Secondary palette colors should provide contrast for secondary buttons, tags, and data visualization.', 95, 400)
-      doc.text('• Ensure all text combinations meet WCAG AA contrast ratio standards (4.5:1 minimum).', 95, 420)
-
-      doc.setTextColor(100, 116, 139)
-      doc.text('Page 2 of 6', 850, 495)
-
-      // SLIDE 3: LOGO SYSTEM
-      doc.addPage([960, 540], 'l')
-      doc.setFillColor(15, 23, 42)
-      doc.rect(0, 0, 960, 540, 'F')
-
-      doc.setTextColor(148, 163, 184)
-      doc.setFont('helvetica', 'bold')
-      doc.setFontSize(11)
-      doc.text('03 / LOGO SYSTEM', 70, 55)
-
-      doc.setTextColor(255, 255, 255)
-      doc.setFontSize(28)
-      doc.text('Logo Lockups & Clear Space Rules', 70, 90)
-
-      const logoCards = [
-        { title: 'Primary Mark', desc: 'Main logo for light/neutral backgrounds' },
-        { title: 'Light Mode', desc: 'Optimised for white backgrounds' },
-        { title: 'Dark Mode', desc: 'Optimised for dark backgrounds' },
-        { title: 'Monochrome', desc: 'Single-color black/white version' },
-      ]
-      logoCards.forEach((lc, idx) => {
-        const col = idx % 2
-        const row = Math.floor(idx / 2)
-        const x = 70 + col * 420
-        const y = 120 + row * 170
-
-        doc.setFillColor(30, 41, 59)
-        doc.rect(x, y, 400, 150, 'F')
-        doc.setDrawColor(51, 65, 85)
-        doc.rect(x, y, 400, 150, 'D')
-
-        doc.setTextColor(255, 255, 255)
-        doc.setFont('helvetica', 'bold')
-        doc.setFontSize(14)
-        doc.text(lc.title, x + 20, y + 30)
-
-        doc.setFont('helvetica', 'normal')
-        doc.setFontSize(11)
-        doc.setTextColor(148, 163, 184)
-        doc.text(lc.desc, x + 20, y + 50)
-
-        doc.setFillColor(51, 65, 85)
-        doc.rect(x + 20, y + 68, 360, 64, 'F')
-        doc.setTextColor(203, 213, 225)
-        doc.text(`[ ${name} Logo Specimen ]`, x + 125, y + 106)
-      })
-
-      doc.setTextColor(148, 163, 184)
-      doc.text('Page 3 of 6', 850, 495)
-
-      // SLIDE 4: TYPOGRAPHY SYSTEM
-      doc.addPage([960, 540], 'l')
-      doc.setFillColor(248, 250, 252)
-      doc.rect(0, 0, 960, 540, 'F')
-
-      doc.setTextColor(100, 116, 139)
-      doc.setFont('helvetica', 'bold')
-      doc.setFontSize(11)
-      doc.text('04 / TYPOGRAPHY SYSTEM', 70, 55)
-
-      doc.setTextColor(15, 23, 42)
-      doc.setFontSize(28)
-      doc.text('Typographic Hierarchy & Specimens', 70, 90)
-
-      doc.setFillColor(255, 255, 255)
-      doc.rect(70, 120, 820, 95, 'F')
-      doc.setDrawColor(226, 232, 240)
-      doc.rect(70, 120, 820, 95, 'D')
-
-      doc.setTextColor(100, 116, 139)
-      doc.setFontSize(10)
-      doc.text(
-        `HEADING  •  ${String(headingFont.family).toUpperCase()}  •  ${formatFontWeightLabel(headingFont.weight).toUpperCase()}  •  ${headingFont.size}  •  LH ${headingFont.lineHeight}`,
-        90,
-        142,
-      )
-      doc.setTextColor(15, 23, 42)
-      doc.setFontSize(Math.min(28, Math.max(14, parseCssSize(headingFont.size, 22) * 0.55)))
-      doc.setFont('helvetica', Number(headingFont.weight) >= 600 ? 'bold' : 'normal')
-      doc.text('The quick brown fox jumps over the lazy dog', 90, 180)
-
-      doc.setFillColor(255, 255, 255)
-      doc.rect(70, 230, 820, 90, 'F')
-      doc.rect(70, 230, 820, 90, 'D')
-
-      doc.setTextColor(100, 116, 139)
-      doc.setFontSize(10)
-      doc.text(
-        `SUBHEADING  •  ${String(subheadingFont.family).toUpperCase()}  •  ${formatFontWeightLabel(subheadingFont.weight).toUpperCase()}  •  ${subheadingFont.size}  •  LH ${subheadingFont.lineHeight}`,
-        90,
-        252,
-      )
-      doc.setTextColor(30, 41, 59)
-      doc.setFontSize(Math.min(20, Math.max(12, parseCssSize(subheadingFont.size, 16) * 0.7)))
-      doc.setFont('helvetica', Number(subheadingFont.weight) >= 600 ? 'bold' : 'normal')
-      doc.text('A clean, modern sans-serif perfectly paired for clarity and contrast.', 90, 285)
-
-      doc.setFillColor(255, 255, 255)
-      doc.rect(70, 335, 820, 120, 'F')
-      doc.rect(70, 335, 820, 120, 'D')
-
-      doc.setTextColor(100, 116, 139)
-      doc.setFontSize(10)
-      doc.text(
-        `BODY  •  ${String(bodyFont.family).toUpperCase()}  •  ${formatFontWeightLabel(bodyFont.weight).toUpperCase()}  •  ${bodyFont.size}  •  LH ${bodyFont.lineHeight}`,
-        90,
-        357,
-      )
-      doc.setTextColor(71, 85, 105)
-      doc.setFontSize(Math.min(14, Math.max(10, parseCssSize(bodyFont.size, 12) * 0.75)))
-      doc.setFont('helvetica', Number(bodyFont.weight) >= 600 ? 'bold' : 'normal')
-      doc.text('Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et', 90, 382)
-      doc.text('dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip', 90, 402)
-      doc.text('ex ea commodo consequat. Executive deck layouts combine display headings with readable body type.', 90, 422)
-
-      doc.setTextColor(100, 116, 139)
-      doc.text('Page 4 of 6', 850, 495)
-
-      // SLIDE 5: IMAGERY & MOOD
-      doc.addPage([960, 540], 'l')
-      doc.setFillColor(15, 23, 42)
-      doc.rect(0, 0, 960, 540, 'F')
-
-      doc.setTextColor(148, 163, 184)
-      doc.setFont('helvetica', 'bold')
-      doc.setFontSize(11)
-      doc.text('05 / IMAGERY & MOOD', 70, 55)
-
-      doc.setTextColor(255, 255, 255)
-      doc.setFontSize(28)
-      doc.text('Visual Style & Photography Guidelines', 70, 90)
-
-      doc.setFillColor(30, 41, 59)
-      doc.rect(70, 120, 820, 110, 'F')
-      doc.setDrawColor(51, 65, 85)
-      doc.rect(70, 120, 820, 110, 'D')
-
-      doc.setTextColor(255, 255, 255)
-      doc.setFontSize(14)
-      doc.setFont('helvetica', 'bold')
-      doc.text('Image Brief & Visual Philosophy', 95, 150)
-
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(12)
-      doc.setTextColor(148, 163, 184)
-      doc.text(`"${kitData.imageStyle || 'Clean product photography with natural lighting, studio quality, brand-safe minimalist aesthetics.'}"`, 95, 180)
-
-      doc.setTextColor(148, 163, 184)
-      doc.text('Page 5 of 6', 850, 495)
-
-      // SLIDE 6: GOVERNANCE
-      doc.addPage([960, 540], 'l')
-      doc.setFillColor(15, 23, 42)
-      doc.rect(0, 0, 960, 540, 'F')
-
-      doc.setFillColor(37, 99, 235)
-      doc.rect(0, 0, 960, 8, 'F')
-
-      doc.setTextColor(148, 163, 184)
-      doc.setFont('helvetica', 'bold')
-      doc.setFontSize(11)
-      doc.text('06 / GOVERNANCE & CLOSING', 70, 55)
-
-      doc.setTextColor(255, 255, 255)
-      doc.setFontSize(30)
-      doc.text('Brand Compliance & Contact', 70, 95)
-
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(14)
-      doc.setTextColor(148, 163, 184)
-      doc.text('These brand guidelines ensure consistent application across all internal and external communication.', 70, 128)
-
-      doc.setFillColor(30, 41, 59)
-      doc.rect(70, 155, 820, 270, 'F')
-      doc.setDrawColor(51, 65, 85)
-      doc.rect(70, 155, 820, 270, 'D')
-
-      doc.setTextColor(255, 255, 255)
-      doc.setFont('helvetica', 'bold')
-      doc.setFontSize(16)
-      doc.text('Brand Governance Checklist', 100, 190)
-
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(12)
-      doc.setTextColor(203, 213, 225)
-      doc.text('1. Always verify logo files are exported from official brand kit vectors.', 100, 225)
-      doc.text('2. Do not modify color hex codes or typography pairings without brand team approval.', 100, 250)
-      doc.text('3. Use designated slide templates for external presentation decks.', 100, 275)
-      doc.text(`4. Voice Tone Target: ${kitData.voice?.tone || 'Professional & Confident'}.`, 100, 300)
-      doc.text(`5. Target Audience: ${kitData.voice?.audience || 'General Enterprise Stakeholders'}.`, 100, 325)
-
-      doc.setTextColor(148, 163, 184)
-      doc.setFontSize(11)
-      doc.text(`© ${new Date().getFullYear()} ${name}. All rights reserved.`, 70, 495)
-      doc.text('Page 6 of 6', 850, 495)
-
-      doc.save(`${name.replace(/\s+/g, '_')}_Brand_Guidelines.pdf`)
-    } catch (err) {
-      console.error('Error generating PDF guideline:', err)
-      setError('Failed to generate PDF. Please try again.')
-    } finally {
-      setGeneratingGuideline(false)
+        if (col === 2 || i === logos.length - 1) y += cardH + 12
+      }
     }
+
+    ensureSpace(20)
+    ink(muted)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    doc.text(
+      `Generated by Athena Brand Kits · ${new Date().toLocaleDateString()}`,
+      MARGIN_X,
+      Math.min(y + 8, pageH - MARGIN_BOTTOM + 16)
+    )
+
+    doc.save(`${String(name).replace(/\s+/g, '_')}_Brand_Guidelines.pdf`)
+  } catch (err) {
+    console.error('Error generating PDF guideline:', err)
+    setError?.('Failed to generate PDF. Please try again.')
+    throw err
+  } finally {
+    setGeneratingGuideline?.(false)
+  }
 }

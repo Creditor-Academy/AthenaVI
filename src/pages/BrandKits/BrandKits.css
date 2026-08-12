@@ -539,6 +539,10 @@
   animation: bk-fade-in 0.3s ease both;
 }
 
+.brandkit-editor .workspace-root-tabs-wrapper {
+  margin-bottom: 24px;
+}
+
 .editor-header {
   position: sticky;
   top: 0;
@@ -5228,12 +5232,27 @@
   font-weight: 700;
   color: #0f172a;
   cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
   transition: border-color 0.15s ease, color 0.15s ease;
 }
 
 .bk-ov-missing-chips button:hover {
   border-color: var(--bk-accent, #7c3aed);
   color: var(--bk-accent, #7c3aed);
+}
+
+.bk-ov-missing-chip--more {
+  border: 1px solid rgba(15, 23, 42, 0.1) !important;
+  background: color-mix(in srgb, var(--bk-ov-accent, #7c3aed) 12%, #fff) !important;
+  color: var(--bk-ov-accent, #7c3aed) !important;
+  border-color: color-mix(in srgb, var(--bk-ov-accent, #7c3aed) 30%, transparent) !important;
+}
+
+.bk-ov-missing-chip--more:hover {
+  background: color-mix(in srgb, var(--bk-ov-accent, #7c3aed) 20%, #fff) !important;
+  border-color: var(--bk-ov-accent, #7c3aed) !important;
+  color: var(--bk-ov-accent, #7c3aed) !important;
 }
 
 .bk-ov-colors {
@@ -5275,6 +5294,7 @@
   gap: 8px;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 
 .bk-ov-swatch {
@@ -5285,7 +5305,7 @@
   flex-direction: column;
   justify-content: space-between;
   gap: 8px;
-  flex: 1 1 0;
+  flex: 0 0 auto;
   min-height: 58px;
   text-align: left;
   cursor: pointer;
@@ -5304,20 +5324,29 @@
 }
 
 .bk-ov-swatch--lg {
-  flex: 1.35 1 0;
+  flex: 0 0 auto;
   min-height: 84px;
   border-radius: 22px;
 }
 
 .bk-ov-swatch--md {
-  flex: 1.1 1 0;
+  flex: 0 0 auto;
   min-height: 70px;
 }
 
 .bk-ov-swatch--sm {
-  flex: 0.9 1 0;
+  flex: 0 0 auto;
   min-height: 54px;
   border-radius: 16px;
+}
+
+.bk-ov-swatch--more {
+  flex: 0 0 auto;
+  min-height: 40px;
+  border-radius: 14px;
+  opacity: 0.85;
+  justify-content: center;
+  align-items: center;
 }
 
 .bk-ov-swatch.is-light {
@@ -5380,9 +5409,10 @@
 
 .bk-ov-logo-tile {
   position: relative;
-  flex: 1 1 0;
-  aspect-ratio: 1 / 1;
+  flex: 0 0 auto;
+  width: 118px;
   height: 100%;
+  aspect-ratio: 1 / 1;
   max-width: 118px;
   border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: 12px;

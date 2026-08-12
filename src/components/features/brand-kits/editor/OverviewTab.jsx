@@ -58,7 +58,10 @@ export default function OverviewTab(props) {
   const heading = getFontRole(kitData.fonts, 'heading')
   const subheading = getFontRole(kitData.fonts, 'subheading')
   const body = getFontRole(kitData.fonts, 'body')
-  const colors = (kitData.colors || []).slice(0, 6)
+  const MAX_COLORS_VISIBLE = 5
+  const allColors = kitData.colors || []
+  const colors = allColors.slice(0, MAX_COLORS_VISIBLE)
+  const hiddenColorsCount = Math.max(0, allColors.length - MAX_COLORS_VISIBLE)
   const primaryFamily = heading.family || 'Outfit'
   const primaryHex = colors[0]?.hex || '#3B82F6'
   const logos = mediaByKind('logo')
@@ -199,22 +202,38 @@ export default function OverviewTab(props) {
             </div>
           </div>
 
-          {missing.length > 0 && (
-            <div className="bk-ov-missing">
-              <span className="bk-ov-missing-label">Finish your kit</span>
-              <div className="bk-ov-missing-chips">
-                {missing.map((id) => {
-                  const tab = missingTab(id)
-                  if (!tab) return null
-                  return (
-                    <button key={id} type="button" onClick={() => setEditorTab(tab)}>
-                      {missingLabel(id)}
+          {missing.length > 0 && (() => {
+            const MAX_CHIPS_VISIBLE = 4
+            const validMissing = missing.filter((id) => missingTab(id) !== null)
+            const showMore = validMissing.length > MAX_CHIPS_VISIBLE
+            const visibleChips = showMore ? validMissing.slice(0, MAX_CHIPS_VISIBLE) : validMissing
+            const overflowCount = showMore ? validMissing.length - MAX_CHIPS_VISIBLE : 0
+            return (
+              <div className="bk-ov-missing">
+                <span className="bk-ov-missing-label">Finish your kit</span>
+                <div className="bk-ov-missing-chips">
+                  {visibleChips.map((id) => {
+                    const tab = missingTab(id)
+                    return (
+                      <button key={id} type="button" onClick={() => setEditorTab(tab)}>
+                        {missingLabel(id)}
+                      </button>
+                    )
+                  })}
+                  {showMore && (
+                    <button
+                      type="button"
+                      className="bk-ov-missing-chip--more"
+                      onClick={() => setEditorTab('guideline')}
+                      title={`${overflowCount} more items to complete`}
+                    >
+                      +{overflowCount}
                     </button>
-                  )
-                })}
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )
+          })()}
         </section>
 
         <aside className="bk-ov-colors" aria-label="Color palette">
@@ -235,7 +254,7 @@ export default function OverviewTab(props) {
             ).map((color, index) => {
               const hex = color.hex || '#94A3B8'
               const ink = contrastInk(hex)
-              const sizes = ['lg', 'md', 'md', 'sm', 'sm', 'sm']
+              const sizes = ['lg', 'md', 'md', 'sm', 'sm']
               const sizeClass = sizes[Math.min(index, sizes.length - 1)]
               const isLight = ink === '#0f172a'
               const empty = color.id === 'empty'
@@ -263,6 +282,17 @@ export default function OverviewTab(props) {
                 </button>
               )
             })}
+            {hiddenColorsCount > 0 && (
+              <button
+                type="button"
+                className="bk-ov-swatch bk-ov-swatch--more"
+                style={{ background: primaryHex, color: contrastInk(primaryHex) }}
+                onClick={() => setEditorTab('identity')}
+                title={`View ${hiddenColorsCount} more colors`}
+              >
+                <span className="bk-ov-swatch-name">+{hiddenColorsCount} more</span>
+              </button>
+            )}
           </div>
         </aside>
 
