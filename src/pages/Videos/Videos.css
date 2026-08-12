@@ -598,16 +598,45 @@
   margin-top: 4px;
 }
 
+/* ── My Work tile cards: equal size, clipped media, smooth scroll ─── */
+.videos-page .videos-export-items.tile-view {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+  align-items: stretch;
+  contain: layout style;
+}
+
 .videos-page .workspace-item-card.videos-export-card {
   display: flex;
   flex-direction: column;
+  height: 100%;
+  min-height: 0;
   overflow: hidden;
   cursor: pointer !important;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  gap: 12px;
+  contain: content;
+  content-visibility: auto;
+  contain-intrinsic-size: 280px 292px;
+  transform: none;
+  transition: none;
+}
+
+.videos-page .workspace-item-card.videos-export-card:hover,
+.videos-page .workspace-item-card.videos-export-card:focus-within {
+  z-index: 2;
+  transform: none;
+  box-shadow: none;
 }
 
 .videos-export-card__thumb-btn {
   display: block;
   width: 100%;
+  flex: 0 0 auto;
   padding: 0;
   margin: 0;
   border: none;
@@ -615,6 +644,167 @@
   cursor: pointer !important;
   font: inherit;
   text-align: left;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.videos-page .videos-export-card .card-thumb-container,
+.videos-page .videos-export-card .video-thumb,
+.videos-page .videos-export-card .presentation-thumb,
+.videos-page .videos-export-card .ppt-thumb,
+.videos-page .videos-export-card .image-thumb {
+  position: relative;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  min-height: 0;
+  display: block;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 80%, transparent);
+  background: color-mix(in srgb, var(--bg-card) 88%, var(--bg-surface));
+  cursor: pointer !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.videos-page .workspace-item-card.videos-export-card:hover .card-thumb-container,
+.videos-page .workspace-item-card.videos-export-card:focus-within .card-thumb-container {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border-color));
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+}
+
+.videos-page .videos-export-card .work-card-image-bg,
+.videos-page .videos-export-card .default-project-thumbnail {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.videos-page .videos-export-card .work-card-image-bg {
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+
+.videos-page .videos-export-card .work-card-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  max-width: calc(100% - 20px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.videos-page .videos-export-card .videos-export-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 14px;
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.55), transparent 55%);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.videos-page .workspace-item-card.videos-export-card:hover .videos-export-overlay,
+.videos-page .workspace-item-card.videos-export-card:focus-within .videos-export-overlay {
+  opacity: 1;
+}
+
+.videos-page .videos-export-card .btn-edit-premium {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.videos-export-card__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-height: 76px;
+  padding: 0 2px;
+}
+
+.videos-page .videos-export-card .meta-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.videos-page .videos-export-card .meta-left h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-main);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  min-height: calc(1.35em * 2);
+  max-height: calc(1.35em * 2);
+}
+
+.videos-page .videos-export-card .meta-row-small {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.videos-page .videos-export-card .meta-small {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.videos-export-card__actions,
+.videos-export-row__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.videos-export-workspace {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.videos-page .project-scene-thumb,
+.videos-page .project-scene-thumb * {
+  pointer-events: none !important;
+  cursor: pointer !important;
 }
 
 .videos-page .card-thumb-container,
@@ -622,12 +812,6 @@
 .videos-page .ppt-thumb,
 .videos-page .image-thumb,
 .videos-page .export-item-row {
-  cursor: pointer !important;
-}
-
-.videos-page .project-scene-thumb,
-.videos-page .project-scene-thumb * {
-  pointer-events: none !important;
   cursor: pointer !important;
 }
 
@@ -644,44 +828,6 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-}
-
-.videos-export-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 16px;
-  background: linear-gradient(to top, rgba(15, 23, 42, 0.58), transparent 58%);
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  pointer-events: none;
-}
-
-.videos-page .workspace-item-card:hover .videos-export-overlay,
-.videos-page .workspace-item-card:focus-within .videos-export-overlay {
-  opacity: 1;
-}
-
-.videos-export-card__meta {
-  align-items: center;
-}
-
-.videos-export-card__actions,
-.videos-export-row__actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.videos-export-workspace {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* Modal / Rename Dialog */
@@ -1108,7 +1254,6 @@
   align-items: center;
   gap: 5px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(8px);
 }
 
 .work-card-badge.badge-video {
