@@ -3,7 +3,7 @@
 .videos-page {
   width: 100%;
   height: 100%;
-  min-height: 100%;
+  min-height: 0;
   padding: 0; /* Let .content with-padding handle it */
   display: flex;
   flex-direction: column;
@@ -11,13 +11,7 @@
   color: var(--text-main);
   box-sizing: border-box;
   font-family: var(--font-family);
-  overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.videos-page::-webkit-scrollbar {
-  display: none;
+  overflow: hidden;
 }
 
 .videos-shell {
@@ -37,6 +31,7 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 24px;
+  flex-shrink: 0;
 }
 
 .videos-page-title {
@@ -592,6 +587,15 @@
 .videos-main {
   flex: 1;
   min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 24px;
+}
+
+.videos-main::-webkit-scrollbar {
+  display: none;
 }
 
 .videos-export-items {
@@ -1545,6 +1549,7 @@
   margin-top: 4px;
   margin-bottom: 24px;
   border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
 .search-clear-btn {
