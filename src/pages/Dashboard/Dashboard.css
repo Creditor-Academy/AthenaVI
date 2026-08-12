@@ -1537,7 +1537,7 @@
   min-height: 0;
 }
 
-/* Keep header/tabs fixed; only page content scrolls (My Work, Workspace, Brand Kits) */
+/* Keep header/tabs fixed; only page content scrolls (My Work & Workspace) */
 .content.content--workspace-consistent:has(.videos-page),
 .content.content--workspace-consistent:has(.team-workspace-container) {
   overflow: hidden;
@@ -1550,8 +1550,7 @@
 .content.content--workspace-consistent:has(.team-workspace-container) > .team-workspace-container {
   flex: 1;
   min-height: 0;
-  height: auto;
-  max-height: 100%;
+  height: 100%;
 }
 
 .content.content--workspace-consistent .athena-trash-view,

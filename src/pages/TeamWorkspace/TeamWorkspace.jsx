@@ -717,16 +717,6 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
       />
     ));
 
-    if (viewMode === 'tile') {
-      return [
-        <CreateVideoCard
-          key="create-recent-video-tile"
-          onClick={() => openCreateVideoModal()}
-        />,
-        ...itemElements
-      ];
-    }
-
     return itemElements;
   };
 
@@ -743,9 +733,9 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
           listClassName="project-list-view"
           emptyMessage="No recent videos yet."
           emptyIcon={MdHistory}
-          showHeader={false}
+          showHeader={true}
         >
-          {viewMode === 'list' && (
+          {viewMode === 'list' && recentVideoEntries.length > 0 && (
             <div className="list-header project-list-header">
               <div className="col" />
               <div className="col">Name</div>
@@ -943,7 +933,7 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
         }
       />
 
-      {currentLevel.type === 'root' && (
+      {currentLevel.type === 'root' && !(loading && workspaces.length === 0) && (
         <div className="workspace-root-tabs-wrapper">
           <div className="workspace-root-tabs">
             <button
