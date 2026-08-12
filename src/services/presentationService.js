@@ -142,6 +142,16 @@ class PresentationService {
     return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.DECK_PACKS(workspaceId))
   }
 
+  /** Full pack schema (includes slides[]) when list endpoint omits them. */
+  getDeckPack(workspaceId, packId) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.DECK_PACK(workspaceId, packId))
+  }
+
+  /** Single template row — fallback when pack detail route is unavailable. */
+  getTemplate(workspaceId, templateId) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.TEMPLATE(workspaceId, templateId))
+  }
+
   listThemes(workspaceId) {
     return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.THEMES(workspaceId))
   }

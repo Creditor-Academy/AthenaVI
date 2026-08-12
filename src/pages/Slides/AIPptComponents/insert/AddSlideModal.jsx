@@ -1,279 +1,255 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { FiSearch, FiX, FiPlus } from 'react-icons/fi'
+import { FiChevronLeft, FiSearch, FiX, FiPlus } from 'react-icons/fi'
 import LayoutPolishedPreview from '../../../../components/ppt/LayoutPolishedPreview'
+import PackSlidePreview from '../../../../components/ppt/PackSlidePreview'
 import presentationService from '../../../../services/presentationService'
-import { normalizeDeckPacks } from '../../../../utils/presentationHelpers'
-import { resolveLayoutPreviewSchema } from '../../../../utils/layoutPreviewSchemas'
-import themePetrol from '../../../../assets/Template_Image/theme_petrol.png'
-import themeStardust from '../../../../assets/Template_Image/theme_stardust.png'
-import themeChocolate from '../../../../assets/Template_Image/theme_chocolate.png'
-import themeMoss from '../../../../assets/Template_Image/theme_moss.png'
-import themeBlueSteel from '../../../../assets/Template_Image/theme_blue_steel.png'
-import genTemp1 from '../../../../assets/Template_Image/gen_temp1.png'
-import genTemp2 from '../../../../assets/Template_Image/gen_temp2.png'
-import genTemp3 from '../../../../assets/Template_Image/gen_temp3.png'
+import {
+  normalizeDeckPacks,
+  normalizeDeckPackDetail,
+  resolvePackThumbnailUrl,
+  resolvePackColorFallback,
+  PPT_CAPS,
+} from '../../../../utils/presentationHelpers'
+import {
+  buildLayoutSchemaMap,
+  enrichLayoutSchemaForPreview,
+  getDeckLayoutSchema,
+} from '../../../../utils/deckLayoutRegistry'
 import './AddSlideModal.css'
 
-const SHOWCASE_TEMPLATES = [
-  {
-    id: 'showcase-industrial',
-    name: 'Industrial Design Portfolio',
-    type: 'Portfolio',
-    img: genTemp1,
-    templateId: null,
-    kind: 'showcase',
-    seedLayoutId: 'title',
-  },
-  {
-    id: 'showcase-lattice',
-    name: 'Lattice',
-    type: 'Modern',
-    img: themeStardust,
-    templateId: null,
-    kind: 'showcase',
-    seedLayoutId: 'two-column',
-  },
-  {
-    id: 'showcase-ai-native',
-    name: 'AI-Native Pitch Deck',
-    type: 'Pitch',
-    img: genTemp2,
-    templateId: null,
-    kind: 'showcase',
-    seedLayoutId: 'title-bullets',
-  },
-  {
-    id: 'showcase-editorial',
-    name: 'Editorial',
-    type: 'Creative',
-    img: genTemp3,
-    templateId: null,
-    kind: 'showcase',
-    seedLayoutId: 'image-right',
-  },
-  {
-    id: 'showcase-petrol',
-    name: 'Petrol Corporate',
-    type: 'Professional',
-    img: themePetrol,
-    templateId: null,
-    kind: 'showcase',
-    seedLayoutId: 'title-bullets',
-  },
-  {
-    id: 'showcase-moss',
-    name: 'Moss & Mist',
-    type: 'Nature',
-    img: themeMoss,
-    templateId: null,
-    kind: 'showcase',
-    seedLayoutId: 'section',
-  },
-  {
-    id: 'showcase-chocolate',
-    name: 'Chocolate Warmth',
-    type: 'Elegant',
-    img: themeChocolate,
-    templateId: null,
-    kind: 'showcase',
-    seedLayoutId: 'quote',
-  },
-  {
-    id: 'showcase-steel',
-    name: 'Blue Steel Tech',
-    type: 'Modern',
-    img: themeBlueSteel,
-    templateId: null,
-    kind: 'showcase',
-    seedLayoutId: 'stats',
-  },
+/** Internal render size — scaled down to card; large previews keep text readable. */
+const PREVIEW_BASE_W = 520
+const PREVIEW_BASE_H = 293
+
+const LAYOUT_CATEGORIES = [
+  { id: 'all', label: 'All' },
+  { id: 'simple', label: 'Simple slides' },
+  { id: 'grids', label: 'Grids' },
+  { id: 'charts', label: 'Charts and data' },
+  { id: 'timelines', label: 'Timelines and project plans' },
+  { id: 'pricing', label: 'Pricing' },
+  { id: 'people', label: 'People and teams' },
+  { id: 'quotes', label: 'Quotes' },
+  { id: 'media', label: 'Image & text' },
 ]
 
-const BUILTIN_LAYOUTS = [
-  {
-    id: 'blank',
-    name: 'Blank',
-    category: 'Basic',
-    preview: 'blank',
-    seed: { title: 'Blank Slide', description: '', elements: [] },
-  },
-  {
-    id: 'title',
-    name: 'Title',
-    category: 'Basic',
-    preview: 'title',
-    seed: {
-      title: 'Slide title',
-      description: 'Subtitle or supporting line',
-      elements: [
-        {
-          id: 'layout-title',
-          type: 'text',
-          content: { text: 'Slide title', fontSize: 64, bold: true, align: 'center' },
-          placement: { x: 160, y: 360, width: 1600, height: 140 },
-        },
-        {
-          id: 'layout-sub',
-          type: 'text',
-          content: { text: 'Subtitle or supporting line', fontSize: 28, align: 'center' },
-          placement: { x: 320, y: 520, width: 1280, height: 80 },
-        },
-      ],
-    },
-  },
-  {
-    id: 'title-bullets',
-    name: 'Title + bullets',
-    category: 'Basic',
-    preview: 'bullets',
-    seed: {
-      title: 'Section title',
-      description: ['Point one', 'Point two', 'Point three'],
-      elements: [
-        {
-          id: 'layout-h',
-          type: 'text',
-          content: { text: 'Section title', fontSize: 48, bold: true },
-          placement: { x: 120, y: 100, width: 1200, height: 100 },
-        },
-        {
-          id: 'layout-b',
-          type: 'text',
-          content: {
-            text: '• Point one\n• Point two\n• Point three',
-            fontSize: 28,
-          },
-          placement: { x: 140, y: 260, width: 1400, height: 520 },
-        },
-      ],
-    },
-  },
-  {
-    id: 'two-column',
-    name: 'Two columns',
-    category: 'Basic',
-    preview: 'two-col',
-    seed: {
-      title: 'Comparison',
-      description: '',
-      elements: [
-        {
-          id: 'layout-l',
-          type: 'text',
-          content: { text: 'Left column\n\nAdd details here.', fontSize: 28 },
-          placement: { x: 120, y: 160, width: 780, height: 700 },
-        },
-        {
-          id: 'layout-r',
-          type: 'text',
-          content: { text: 'Right column\n\nAdd details here.', fontSize: 28 },
-          placement: { x: 1020, y: 160, width: 780, height: 700 },
-        },
-      ],
-    },
-  },
-  {
-    id: 'image-right',
-    name: 'Text + image',
-    category: 'Media',
-    preview: 'image-right',
-    seed: {
-      title: 'Feature highlight',
-      description: 'Describe the feature',
-      elements: [
-        {
-          id: 'layout-copy',
-          type: 'text',
-          content: {
-            text: 'Feature highlight\n\nDescribe the feature or story.',
-            fontSize: 32,
-            bold: true,
-          },
-          placement: { x: 100, y: 200, width: 820, height: 500 },
-        },
-        {
-          id: 'layout-img',
-          type: 'shape',
-          content: { shape: 'rounded-rect', fill: '#E2E8F0' },
-          placement: { x: 1000, y: 160, width: 780, height: 720 },
-        },
-      ],
-    },
-  },
-  {
-    id: 'quote',
-    name: 'Quote',
-    category: 'Basic',
-    preview: 'quote',
-    seed: {
-      title: 'Quote',
-      description: '',
-      elements: [
-        {
-          id: 'layout-q',
-          type: 'text',
-          content: {
-            text: '“A short quote that makes your point.”',
-            fontSize: 44,
-            italic: true,
-            align: 'center',
-          },
-          placement: { x: 240, y: 360, width: 1440, height: 200 },
-        },
-      ],
-    },
-  },
-  {
-    id: 'stats',
-    name: 'Big stat',
-    category: 'Stats',
-    preview: 'stats',
-    seed: {
-      title: '42%',
-      description: 'Key metric',
-      elements: [
-        {
-          id: 'layout-stat',
-          type: 'text',
-          content: { text: '42%', fontSize: 120, bold: true, align: 'center' },
-          placement: { x: 360, y: 280, width: 1200, height: 220 },
-        },
-        {
-          id: 'layout-stat-l',
-          type: 'text',
-          content: { text: 'Key metric label', fontSize: 28, align: 'center' },
-          placement: { x: 360, y: 520, width: 1200, height: 80 },
-        },
-      ],
-    },
-  },
-  {
-    id: 'section',
-    name: 'Section divider',
-    category: 'Basic',
-    preview: 'section',
-    seed: {
-      title: 'New section',
-      description: '',
-      elements: [
-        {
-          id: 'layout-sec',
-          type: 'text',
-          content: { text: 'New section', fontSize: 72, bold: true, align: 'center' },
-          placement: { x: 200, y: 420, width: 1520, height: 160 },
-        },
-      ],
-    },
-  },
-]
+function unwrapTemplateList(payload) {
+  if (Array.isArray(payload)) return payload
+  return payload?.templates || payload?.items || payload?.data || []
+}
 
-function layoutSeedById(id) {
-  return BUILTIN_LAYOUTS.find((l) => l.id === id)?.seed || BUILTIN_LAYOUTS[0].seed
+function isDeckLayoutTemplate(template) {
+  const type = String(template?.type || '').toUpperCase()
+  if (type === 'DECK_PACK') return false
+  if (type === 'DECK_LAYOUT') return true
+  if (template?.schema?.pack_id) return false
+  if (template?.schema?.layout_id) return true
+  const contentType = String(template?.contentType || '').toLowerCase()
+  return contentType === 'layout'
+}
+
+function resolveLayoutTemplateId(layoutId, layoutTemplates = []) {
+  const key = String(layoutId || '').trim()
+  if (!key) return null
+  const match = layoutTemplates.find((template) => {
+    const id = String(template?.schema?.layout_id || template?.layout_id || '').trim()
+    return id === key
+  })
+  return match?.id || match?.templateId || null
+}
+
+function layoutCategoryId(layout) {
+  const ct = String(layout?.schema?.content_type || layout?.rawContentType || '').toLowerCase()
+  const layoutId = String(layout?.schema?.layout_id || '').toLowerCase()
+
+  if (ct === 'grid') return 'grids'
+  if (ct === 'chart' || ct === 'stat') return 'charts'
+  if (ct === 'timeline') return 'timelines'
+  if (ct === 'team') return 'people'
+  if (ct === 'quote') return 'quotes'
+  if (ct === 'image+text' || ct === 'image_text') return 'media'
+  if (layoutId.includes('pricing') || (ct === 'comparison' && layoutId.includes('plan'))) return 'pricing'
+  if (ct === 'comparison' || ct === 'pros_cons') return 'charts'
+  if (['title', 'bullet_list', 'section_divider', 'closing', 'agenda'].includes(ct)) return 'simple'
+  return 'simple'
+}
+
+function slideLabel(slide, slideIndex) {
+  return (
+    slide?.placeholder?.title ||
+    slide?.intent ||
+    slide?.contentType ||
+    `Slide ${slideIndex + 1}`
+  )
+}
+
+function buildSlidePickPayload(pack, slide, slideIndex, layoutTemplates, layoutSchemaMap = {}) {
+  const layoutTemplateId = resolveLayoutTemplateId(slide?.layout_id, layoutTemplates)
+  const layoutId = String(slide?.layout_id || '').trim() || null
+  const title = slideLabel(slide, slideIndex)
+  const schema =
+    (layoutId && layoutSchemaMap[layoutId]) ||
+    getDeckLayoutSchema(layoutId) ||
+    null
+  return {
+    source: 'pack',
+    packId: pack.id,
+    layoutTemplateId,
+    layoutId,
+    schema,
+    name: `${pack.name} · ${title}`,
+  }
+}
+
+function buildLayoutSchemaMapWithFallbacks(layoutTemplates, templatePacks) {
+  const map = buildLayoutSchemaMap(layoutTemplates.map((layout) => ({ schema: layout.schema })))
+
+  for (const pack of templatePacks) {
+    const slides = pack.schema?.slides || []
+    for (const slide of slides) {
+      const layoutId = String(slide?.layout_id || '').trim()
+      if (!layoutId || map[layoutId]) continue
+      const registered = getDeckLayoutSchema(layoutId)
+      if (registered) map[layoutId] = registered
+    }
+  }
+
+  return map
+}
+
+function resolveSchemaSlide(pack, slidePreview, slideIndex) {
+  const slides = pack?.schema?.slides || []
+  const order = slidePreview?.order ?? slideIndex + 1
+  return (
+    slides.find((s) => (s.order ?? slides.indexOf(s) + 1) === order) ||
+    slides[slideIndex] ||
+    {
+      layout_id: slidePreview?.layoutId || slidePreview?.layout_id,
+      order,
+      content_type: slidePreview?.contentType,
+    }
+  )
+}
+
+function packSlideItems(pack) {
+  if (pack?.slidePreviews?.length) {
+    return pack.slidePreviews.map((sp, index) => ({
+      key: `${pack.id}-${sp.order ?? index + 1}`,
+      preview: sp,
+      schemaSlide: resolveSchemaSlide(pack, sp, index),
+      index,
+    }))
+  }
+  return (pack?.schema?.slides || []).map((slide, index) => ({
+    key: `${pack.id}-${slide.order ?? index}`,
+    preview: {
+      order: slide.order ?? index + 1,
+      title: slideLabel(slide, index),
+      contentType: slide.content_type || slide.contentType,
+      layoutId: slide.layout_id,
+      thumbnailUrl: null,
+    },
+    schemaSlide: slide,
+    index,
+  }))
+}
+
+/** Scale a fixed-size preview canvas to fit thumbnail cards (centered, readable text). */
+function ScaledPreview({ children, baseWidth = PREVIEW_BASE_W, baseHeight = PREVIEW_BASE_H }) {
+  const hostRef = useRef(null)
+  const [transform, setTransform] = useState({ scale: 0.5, x: 0, y: 0 })
+
+  useEffect(() => {
+    const node = hostRef.current
+    if (!node) return undefined
+    const update = () => {
+      const width = node.clientWidth || 1
+      const height = node.clientHeight || 1
+      const scale = Math.min(width / baseWidth, height / baseHeight)
+      const scaledW = baseWidth * scale
+      const scaledH = baseHeight * scale
+      setTransform({
+        scale,
+        x: Math.max(0, (width - scaledW) / 2),
+        y: Math.max(0, (height - scaledH) / 2),
+      })
+    }
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [baseWidth, baseHeight])
+
+  return (
+    <div ref={hostRef} className="ppt-add-slide-preview-scaler">
+      <div
+        className="ppt-add-slide-preview-scaler-inner"
+        style={{
+          width: baseWidth,
+          height: baseHeight,
+          transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function GalleryPreview({ schema, previewUrl, fallbackName, themeId, aspectRatio = '16:9' }) {
+  if (previewUrl) {
+    return <img src={previewUrl} alt="" className="ppt-add-slide-card-image" />
+  }
+  if (schema?.slots?.length) {
+    return (
+      <ScaledPreview>
+        <LayoutPolishedPreview
+          schema={schema}
+          large
+          fill
+          aspectRatio={aspectRatio}
+          style={{ width: PREVIEW_BASE_W, height: PREVIEW_BASE_H }}
+        />
+      </ScaledPreview>
+    )
+  }
+  return <span className="ppt-add-slide-card-fallback">{fallbackName}</span>
+}
+
+function PackSlideGalleryPreview({ slide, layoutSchemaMap, themeId, aspectRatio, index = 0 }) {
+  const layoutId = String(slide?.layout_id || '').trim()
+  const hasSchema =
+    layoutId &&
+    (layoutSchemaMap[layoutId] || getDeckLayoutSchema(layoutId))
+
+  if (!hasSchema) {
+    return (
+      <div className="ppt-add-slide-slide-fallback">
+        <span>{slideLabel(slide, index)}</span>
+      </div>
+    )
+  }
+
+  return (
+    <ScaledPreview>
+      <PackSlidePreview
+        slide={slide}
+        layoutSchemaMap={layoutSchemaMap}
+        themeId={themeId}
+        aspectRatio={aspectRatio}
+        index={index}
+        large
+        fill
+        showBadge={false}
+        style={{ width: PREVIEW_BASE_W, height: PREVIEW_BASE_H }}
+      />
+    </ScaledPreview>
+  )
 }
 
 /**
- * Centered Gamma-style Templates / Layouts picker for Add slide.
+ * Templates (multi-slide packs) / Layouts (single-slide structures) picker for Add slide.
  */
 export default function AddSlideModal({
   open,
@@ -281,20 +257,34 @@ export default function AddSlideModal({
   workspaceId,
   disabled = false,
   onPick,
+  slideCount = 0,
 }) {
   const [tab, setTab] = useState('templates')
   const [query, setQuery] = useState('')
-  const [remoteTemplates, setRemoteTemplates] = useState([])
+  const [layoutCategory, setLayoutCategory] = useState('all')
+  const [templatePacks, setTemplatePacks] = useState([])
+  const [layoutTemplates, setLayoutTemplates] = useState([])
+  const [selectedPack, setSelectedPack] = useState(null)
+  const [packDetailLoading, setPackDetailLoading] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [loadError, setLoadError] = useState('')
 
   useEffect(() => {
     if (!open) {
       setQuery('')
       setTab('templates')
+      setLayoutCategory('all')
+      setSelectedPack(null)
+      setLoadError('')
       return undefined
     }
     const onKey = (e) => {
-      if (e.key === 'Escape') onClose?.()
+      if (e.key !== 'Escape') return
+      if (selectedPack) {
+        setSelectedPack(null)
+        return
+      }
+      onClose?.()
     }
     document.addEventListener('keydown', onKey)
     const prevOverflow = document.body.style.overflow
@@ -303,46 +293,42 @@ export default function AddSlideModal({
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = prevOverflow
     }
-  }, [open, onClose])
+  }, [open, onClose, selectedPack])
 
   useEffect(() => {
     if (!open || !workspaceId) return undefined
     let cancelled = false
     ;(async () => {
       setLoading(true)
+      setLoadError('')
       try {
         const [templatesPayload, packsPayload] = await Promise.all([
           presentationService.listTemplates(workspaceId).catch(() => null),
           presentationService.listDeckPacks(workspaceId).catch(() => null),
         ])
         if (cancelled) return
-        const list =
-          templatesPayload?.templates ||
-          templatesPayload?.items ||
-          (Array.isArray(templatesPayload) ? templatesPayload : [])
-        const packs = normalizeDeckPacks(packsPayload)
-        const mapped = [
-          ...list.map((t) => ({
-            id: t.id || t.templateId,
-            name: t.name || t.label || 'Template',
-            type: t.contentType || t.variant || 'Template',
-            img: t.previewUrl || t.thumbnailUrl || null,
-            schema: t.schema || null,
-            templateId: t.id || t.templateId,
-            kind: 'template',
-          })),
-          ...packs.map((p) => ({
-            id: `pack-${p.id}`,
-            name: p.name,
-            type: 'Deck pack',
-            img: p.preview?.imageUrl || p.preview?.thumbnailUrl || null,
-            templateId: p.id,
-            kind: 'pack-slide',
-          })),
-        ]
-        setRemoteTemplates(mapped)
-      } catch {
-        if (!cancelled) setRemoteTemplates([])
+
+        const templates = unwrapTemplateList(templatesPayload)
+        const layouts = templates
+          .filter(isDeckLayoutTemplate)
+          .map((template) => ({
+            id: template.id || template.templateId,
+            templateId: template.id || template.templateId,
+            name: template.name || template.label || template.schema?.layout_id || 'Layout',
+            rawContentType: template?.contentType || template?.schema?.content_type || template?.variant,
+            schema: template.schema || null,
+            previewUrl: template.previewUrl || template.thumbnailUrl || null,
+          }))
+          .filter((template) => template.id)
+
+        setLayoutTemplates(layouts)
+        setTemplatePacks(normalizeDeckPacks(packsPayload))
+      } catch (err) {
+        if (!cancelled) {
+          setLayoutTemplates([])
+          setTemplatePacks([])
+          setLoadError(err.message || 'Failed to load templates')
+        }
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -352,55 +338,117 @@ export default function AddSlideModal({
     }
   }, [open, workspaceId])
 
-  const galleryTemplates = useMemo(() => {
-    // Prefer remote cards with images; always keep local showcase so the grid looks full
-    const remoteWithArt = remoteTemplates.filter((t) => t.img)
-    const remoteWithout = remoteTemplates.filter((t) => !t.img)
-    const combined = [...remoteWithArt, ...SHOWCASE_TEMPLATES, ...remoteWithout]
-    const seen = new Set()
-    return combined.filter((t) => {
-      const key = String(t.name || t.id).toLowerCase()
-      if (seen.has(key)) return false
-      seen.add(key)
-      return true
-    })
-  }, [remoteTemplates])
+  const layoutSchemaMap = useMemo(
+    () => buildLayoutSchemaMapWithFallbacks(layoutTemplates, templatePacks),
+    [layoutTemplates, templatePacks]
+  )
 
-  const filteredTemplates = useMemo(() => {
+  const filteredPacks = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return galleryTemplates
-    return galleryTemplates.filter(
-      (t) => t.name.toLowerCase().includes(q) || String(t.type || '').toLowerCase().includes(q)
-    )
-  }, [galleryTemplates, query])
+    if (!q) return templatePacks
+    return templatePacks.filter((pack) => {
+      const haystack = [
+        pack.name,
+        pack.packId,
+        pack.themeId,
+        pack.meta?.description,
+        pack.meta?.useCase,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+      return haystack.includes(q)
+    })
+  }, [templatePacks, query])
 
   const filteredLayouts = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return BUILTIN_LAYOUTS
-    return BUILTIN_LAYOUTS.filter(
-      (l) =>
-        l.name.toLowerCase().includes(q) || String(l.category || '').toLowerCase().includes(q)
-    )
-  }, [query])
+    return layoutTemplates.filter((layout) => {
+      if (layoutCategory !== 'all' && layoutCategoryId(layout) !== layoutCategory) return false
+      if (!q) return true
+      const haystack = [layout.name, layout.rawContentType, layout.schema?.layout_id]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+      return haystack.includes(q)
+    })
+  }, [layoutTemplates, query, layoutCategory])
+
+  const remainingSlots = Math.max(0, PPT_CAPS.DECK_MAX_SLIDES - slideCount)
+
+  const openTemplatePack = async (pack) => {
+    setSelectedPack(pack)
+    if (!workspaceId || !pack?.id) return
+
+    setPackDetailLoading(true)
+    setLoadError('')
+    try {
+      const detail = await presentationService.getDeckPack(workspaceId, pack.id)
+      const full = normalizeDeckPackDetail(detail)
+      if (full) setSelectedPack(full)
+    } catch (err) {
+      if (err.status === 404) {
+        setLoadError('Presentation deck pack not found')
+        setSelectedPack(null)
+      } else {
+        setLoadError(err.message || 'Failed to load pack')
+      }
+    } finally {
+      setPackDetailLoading(false)
+    }
+  }
 
   if (!open) return null
 
-  const pickTemplate = (t) => {
-    if (t.kind === 'showcase' || !t.templateId) {
-      onPick?.({
-        source: 'layout',
-        layoutId: t.seedLayoutId || 'title-bullets',
-        seed: layoutSeedById(t.seedLayoutId || 'title-bullets'),
-        name: t.name,
-      })
-      return
-    }
+  const pickBlankSlide = () => {
+    onPick?.({ source: 'blank', name: 'Blank slide' })
+  }
+
+  const pickLayout = (layout) => {
     onPick?.({
-      source: 'template',
-      templateId: t.templateId || t.id,
-      name: t.name,
+      source: 'layout',
+      templateId: layout.templateId || layout.id,
+      layoutId: layout.schema?.layout_id || null,
+      schema: layout.schema || null,
+      name: layout.name,
     })
   }
+
+  const pickPackSlide = (pack, schemaSlide, slideIndex) => {
+    onPick?.(buildSlidePickPayload(pack, schemaSlide, slideIndex, layoutTemplates, layoutSchemaMap))
+  }
+
+  const pickAllPackSlides = (pack) => {
+    const items = packSlideItems(pack)
+    if (!items.length) return
+    const allowed = Math.min(items.length, remainingSlots)
+    onPick?.({
+      source: 'pack-all',
+      packId: pack.id,
+      slides: items.slice(0, allowed).map(({ schemaSlide, index }) =>
+        buildSlidePickPayload(pack, schemaSlide, index, layoutTemplates, layoutSchemaMap)
+      ),
+    })
+  }
+
+  const renderPackCover = (pack) => {
+    const thumb = pack.thumbnailUrl || resolvePackThumbnailUrl(pack)
+    if (thumb) {
+      return <img src={thumb} alt="" className="ppt-add-slide-card-image" />
+    }
+
+    const { color, accentColor } = resolvePackColorFallback(pack)
+    return (
+      <div
+        className="ppt-add-slide-card-fallback ppt-add-slide-card-fallback--pack"
+        style={{ background: color }}
+      >
+        <span style={{ color: accentColor }}>{pack.name}</span>
+      </div>
+    )
+  }
+
+  const selectedSlideItems = selectedPack ? packSlideItems(selectedPack) : []
 
   const modal = (
     <div className="ppt-add-slide-overlay" role="presentation" onClick={onClose}>
@@ -418,7 +466,10 @@ export default function AddSlideModal({
               role="tab"
               aria-selected={tab === 'templates'}
               className={`ppt-add-slide-tab ${tab === 'templates' ? 'is-active' : ''}`}
-              onClick={() => setTab('templates')}
+              onClick={() => {
+                setTab('templates')
+                setSelectedPack(null)
+              }}
             >
               Templates
             </button>
@@ -427,7 +478,10 @@ export default function AddSlideModal({
               role="tab"
               aria-selected={tab === 'layouts'}
               className={`ppt-add-slide-tab ${tab === 'layouts' ? 'is-active' : ''}`}
-              onClick={() => setTab('layouts')}
+              onClick={() => {
+                setTab('layouts')
+                setSelectedPack(null)
+              }}
             >
               Layouts
             </button>
@@ -437,35 +491,47 @@ export default function AddSlideModal({
           </button>
         </div>
 
-        <div className="ppt-add-slide-search">
-          <FiSearch size={16} aria-hidden />
-          <input
-            type="search"
-            placeholder="Search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            autoFocus
-          />
-        </div>
+        {!selectedPack && (
+          <div className="ppt-add-slide-search">
+            <FiSearch size={16} aria-hidden />
+            <input
+              type="search"
+              placeholder="Search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              autoFocus
+            />
+          </div>
+        )}
+
+        {tab === 'layouts' && !selectedPack && (
+          <div className="ppt-add-slide-categories" role="tablist" aria-label="Layout categories">
+            {LAYOUT_CATEGORIES.map((category) => (
+              <button
+                key={category.id}
+                type="button"
+                role="tab"
+                aria-selected={layoutCategory === category.id}
+                className={`ppt-add-slide-category ${layoutCategory === category.id ? 'is-active' : ''}`}
+                onClick={() => setLayoutCategory(category.id)}
+              >
+                {category.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="ppt-add-slide-body">
-          {tab === 'templates' && (
+          {tab === 'templates' && !selectedPack && (
             <>
-              <p className="ppt-add-slide-section-label">Pitch gallery templates</p>
               {loading && <div className="ppt-add-slide-loading">Loading templates…</div>}
-              <div className="ppt-add-slide-grid">
+              {loadError && !loading ? <div className="ppt-add-slide-empty">{loadError}</div> : null}
+              <div className="ppt-add-slide-grid ppt-add-slide-grid--templates">
                 <button
                   type="button"
                   className="ppt-add-slide-card"
                   disabled={disabled}
-                  onClick={() =>
-                    onPick?.({
-                      source: 'layout',
-                      layoutId: 'blank',
-                      seed: BUILTIN_LAYOUTS[0].seed,
-                      name: 'Blank slide',
-                    })
-                  }
+                  onClick={pickBlankSlide}
                 >
                   <div className="ppt-add-slide-card-thumb ppt-add-slide-card-thumb--blank">
                     <FiPlus size={28} />
@@ -473,66 +539,138 @@ export default function AddSlideModal({
                   <div className="ppt-add-slide-card-name">Blank slide</div>
                 </button>
 
-                {filteredTemplates.map((t, idx) => (
+                {filteredPacks.map((pack) => (
                   <button
-                    key={t.id}
+                    key={pack.id}
                     type="button"
                     className="ppt-add-slide-card"
                     disabled={disabled}
-                    onClick={() => pickTemplate(t)}
+                      onClick={() => openTemplatePack(pack)}
                   >
-                    <div
-                      className={`ppt-add-slide-card-thumb ${!t.img && !t.schema?.slots?.length ? `ppt-add-slide-card-thumb--showcase-${idx % 6}` : ''}`}
-                      style={t.img ? { backgroundImage: `url(${t.img})` } : undefined}
-                    >
-                      {!t.img && t.schema?.slots?.length > 0 ? (
-                        <LayoutPolishedPreview schema={t.schema} fill />
-                      ) : !t.img ? (
-                        <span className="ppt-add-slide-card-fallback">{t.name}</span>
-                      ) : null}
+                    <div className="ppt-add-slide-card-thumb ppt-add-slide-card-thumb--layout">
+                      {renderPackCover(pack)}
                     </div>
-                    <div className="ppt-add-slide-card-name">{t.name}</div>
-                    {t.type ? <div className="ppt-add-slide-card-meta">{t.type}</div> : null}
+                    <div className="ppt-add-slide-card-name">{pack.name}</div>
                   </button>
                 ))}
 
-                {!loading && !filteredTemplates.length && (
+                {!loading && !filteredPacks.length && (
                   <div className="ppt-add-slide-empty">No templates match your search</div>
                 )}
               </div>
             </>
           )}
 
-          {tab === 'layouts' && (
-            <>
-              <p className="ppt-add-slide-section-label">Slide layouts</p>
-              <div className="ppt-add-slide-grid ppt-add-slide-grid--layouts">
-                {filteredLayouts.map((layout) => (
+          {tab === 'templates' && selectedPack && (
+            <div className="ppt-add-slide-pack-detail">
+              <div className="ppt-add-slide-pack-detail-head">
+                <button
+                  type="button"
+                  className="ppt-add-slide-back-icon"
+                  onClick={() => setSelectedPack(null)}
+                  aria-label="Back to templates"
+                >
+                  <FiChevronLeft size={20} />
+                </button>
+                <div className="ppt-add-slide-pack-detail-title">{selectedPack.name}</div>
+                <button
+                  type="button"
+                  className="ppt-add-slide-add-all"
+                  disabled={
+                    disabled ||
+                    !selectedSlideItems.length ||
+                    remainingSlots <= 0
+                  }
+                  onClick={() => pickAllPackSlides(selectedPack)}
+                >
+                  <FiPlus size={14} />
+                  Add all slides
+                </button>
+              </div>
+
+              {packDetailLoading && (
+                <div className="ppt-add-slide-loading">Loading template slides…</div>
+              )}
+
+              {!packDetailLoading && !selectedSlideItems.length && (
+                <div className="ppt-add-slide-empty">
+                  This template has no slides yet.
+                </div>
+              )}
+
+              <div className="ppt-add-slide-grid ppt-add-slide-grid--pack-slides">
+                {selectedSlideItems.map(({ key, preview, schemaSlide, index }) => (
                   <button
-                    key={layout.id}
+                    key={key}
                     type="button"
-                    className="ppt-add-slide-card"
-                    disabled={disabled}
-                    onClick={() =>
-                      onPick?.({
-                        source: 'layout',
-                        layoutId: layout.id,
-                        seed: layout.seed,
-                        name: layout.name,
-                      })
-                    }
+                    className="ppt-add-slide-card ppt-add-slide-card--slide-only"
+                    disabled={disabled || remainingSlots <= 0}
+                    title={preview.title || slideLabel(schemaSlide, index)}
+                    onClick={() => pickPackSlide(selectedPack, schemaSlide, index)}
                   >
-                    <div className="ppt-add-slide-card-thumb ppt-add-slide-card-thumb--layout">
-                      <LayoutPolishedPreview
-                        schema={resolveLayoutPreviewSchema({ previewKind: layout.preview })}
-                        fill
-                      />
+                    <div className="ppt-add-slide-card-thumb ppt-add-slide-card-thumb--layout ppt-add-slide-card-thumb--slide">
+                      {preview.thumbnailUrl ? (
+                        <img
+                          src={preview.thumbnailUrl}
+                          alt=""
+                          className="ppt-add-slide-card-image"
+                        />
+                      ) : (
+                        <PackSlideGalleryPreview
+                          slide={schemaSlide}
+                          layoutSchemaMap={layoutSchemaMap}
+                          themeId={selectedPack.themeId}
+                          aspectRatio={selectedPack.aspectRatio || '16:9'}
+                          index={index}
+                        />
+                      )}
                     </div>
-                    <div className="ppt-add-slide-card-name">{layout.name}</div>
-                    <div className="ppt-add-slide-card-meta">{layout.category}</div>
+                    <div className="ppt-add-slide-card-name">
+                      {preview.title || slideLabel(schemaSlide, index)}
+                    </div>
                   </button>
                 ))}
               </div>
+
+              {remainingSlots <= 0 && (
+                <div className="ppt-add-slide-empty">Deck is full — remove slides to add more.</div>
+              )}
+            </div>
+          )}
+
+          {tab === 'layouts' && (
+            <>
+              {loading && <div className="ppt-add-slide-loading">Loading layouts…</div>}
+              <div className="ppt-add-slide-grid ppt-add-slide-grid--layouts">
+                {filteredLayouts.map((layout) => {
+                  const previewSchema = layout.schema
+                    ? enrichLayoutSchemaForPreview(layout.schema)
+                    : null
+                  return (
+                    <button
+                      key={layout.id}
+                      type="button"
+                      className="ppt-add-slide-card"
+                      disabled={disabled}
+                      onClick={() => pickLayout(layout)}
+                    >
+                      <div className="ppt-add-slide-card-thumb ppt-add-slide-card-thumb--layout">
+                        <GalleryPreview
+                          schema={previewSchema}
+                          previewUrl={layout.previewUrl}
+                          fallbackName={layout.name}
+                        />
+                      </div>
+                      <div className="ppt-add-slide-card-name" title={layout.name}>
+                        {layout.name}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+              {!loading && !filteredLayouts.length && (
+                <div className="ppt-add-slide-empty">No layouts match your search</div>
+              )}
             </>
           )}
         </div>

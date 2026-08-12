@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build && node scripts/render-postbuild.mjs",
     "build:render": "node scripts/render-build.mjs && vite build && node scripts/render-postbuild.mjs",
-    "lint": "eslint .",
+    "seed:deck-packs": "node scripts/seed-presentation-templates.mjs",
+    "seed:deck-packs:dry-run": "node scripts/seed-presentation-templates.mjs --dry-run --only womens_wellness_template",
+    "seed:deck-packs:verify": "node scripts/verify-deck-pack-pilot.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

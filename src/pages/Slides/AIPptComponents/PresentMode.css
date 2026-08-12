@@ -42,7 +42,57 @@
 }
 
 .ppt-present-stage--fade {
-  opacity: 0.4;
+  animation: pptPresentFade 0.32s ease;
+}
+
+.ppt-present-stage--continuity {
+  animation: pptPresentContinuity 0.34s ease;
+}
+
+.ppt-present-stage--slide-left {
+  animation: pptPresentSlideLeft 0.32s ease;
+}
+
+.ppt-present-stage--slide-right {
+  animation: pptPresentSlideRight 0.32s ease;
+}
+
+.ppt-present-stage--slide-up {
+  animation: pptPresentSlideUp 0.32s ease;
+}
+
+.ppt-present-stage--slide-down {
+  animation: pptPresentSlideDown 0.32s ease;
+}
+
+@keyframes pptPresentFade {
+  from { opacity: 0.25; }
+  to { opacity: 1; }
+}
+
+@keyframes pptPresentContinuity {
+  from { opacity: 0.85; transform: scale(0.985); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pptPresentSlideLeft {
+  from { opacity: 0.6; transform: translateX(6%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pptPresentSlideRight {
+  from { opacity: 0.6; transform: translateX(-6%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pptPresentSlideUp {
+  from { opacity: 0.6; transform: translateY(6%); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pptPresentSlideDown {
+  from { opacity: 0.6; transform: translateY(-6%); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .ppt-present-slide {

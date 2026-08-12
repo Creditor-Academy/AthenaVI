@@ -3033,6 +3033,40 @@ body {
   position: relative;
   overflow: hidden;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  background: #fff;
+}
+
+.aig-minimap-preview-host {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.aig-minimap-preview-stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.aig-minimap-preview-el {
+  pointer-events: none;
+}
+
+.aig-minimap-preview-el .ppt-canvas-el-body,
+.aig-minimap-preview-el .ppt-text-display,
+.aig-minimap-preview-el .ppt-embed-iframe {
+  pointer-events: none;
+}
+
+.aig-minimap-preview-mock {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
 }
 .aig-minimap-item:hover .aig-minimap-thumb {
   border-color: #cbd5e1;
@@ -3417,6 +3451,12 @@ body {
   width: 100%;
   height: 100%;
   pointer-events: none;
+}
+
+.ppt-canvas-el-body .ppt-text-display--editable,
+.ppt-canvas-el-body .ppt-text-editable,
+.ppt-canvas-el-body .ppt-table-cell-input {
+  pointer-events: auto;
 }
 
 .ppt-canvas-el-resize {

@@ -4,13 +4,24 @@ import {
   FiAlignLeft,
   FiAlignRight,
   FiBold,
+  FiCheck,
   FiItalic,
   FiMinus,
   FiPlus,
+  FiStar,
   FiUnderline,
 } from 'react-icons/fi'
 import { MdFormatListBulleted, MdFormatListNumbered, MdStrikethroughS } from 'react-icons/md'
+import { stripLeadingListMarkers } from '../../../../utils/textListUtils'
 import './insertPanels.css'
+
+const LIST_STYLE_OPTIONS = [
+  { id: 'bullet', title: 'Bullet list', label: '•', useIcon: MdFormatListBulleted },
+  { id: 'numbered', title: 'Numbered list', label: '1.', useIcon: MdFormatListNumbered },
+  { id: 'star', title: 'Star list', label: '★', useIcon: FiStar },
+  { id: 'check', title: 'Check list', label: '✓', useIcon: FiCheck },
+  { id: 'dash', title: 'Dash list', label: '–', useIcon: FiMinus },
+]
 
 const FONT_FAMILIES = [
   'Inter',
@@ -49,7 +60,8 @@ export default function ElementToolbar({
 
   const toggleList = (listType) => {
     const next = c.listType === listType ? null : listType
-    patch({ listType: next })
+    const text = next ? stripLeadingListMarkers(c.text) : c.text
+    patch({ listType: next, text })
   }
 
   return (
@@ -167,24 +179,18 @@ export default function ElementToolbar({
 
       <span className="ppt-element-toolbar-divider" />
 
-      <button
-        type="button"
-        className={`ppt-element-toolbar-btn ${c.listType === 'bullet' ? 'is-active' : ''}`}
-        disabled={disabled}
-        onClick={() => toggleList('bullet')}
-        title="Bullet list"
-      >
-        <MdFormatListBulleted size={16} />
-      </button>
-      <button
-        type="button"
-        className={`ppt-element-toolbar-btn ${c.listType === 'numbered' ? 'is-active' : ''}`}
-        disabled={disabled}
-        onClick={() => toggleList('numbered')}
-        title="Numbered list"
-      >
-        <MdFormatListNumbered size={16} />
-      </button>
+      {LIST_STYLE_OPTIONS.map(({ id, title, label, useIcon: Icon }) => (
+        <button
+          key={id}
+          type="button"
+          className={`ppt-element-toolbar-btn ${c.listType === id ? 'is-active' : ''}`}
+          disabled={disabled}
+          onClick={() => toggleList(id)}
+          title={title}
+        >
+          {Icon ? <Icon size={id === 'dash' ? 14 : 16} /> : label}
+        </button>
+      ))}
 
       <input
         type="number"

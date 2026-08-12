@@ -2,12 +2,11 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   FiType,
-  FiImage,
   FiBarChart2,
   FiGrid,
   FiCode,
-  FiTriangle,
 } from 'react-icons/fi'
+import { InsertMediaIcon, InsertShapeIcon } from './InsertToolIcons'
 import TextPanel from './TextPanel'
 import MediaPanel from './MediaPanel'
 import ShapePanel from './ShapePanel'
@@ -18,8 +17,8 @@ import './insertPanels.css'
 
 const TOOLS = [
   { id: 'text', label: 'Text', Icon: FiType },
-  { id: 'media', label: 'Media', Icon: FiImage },
-  { id: 'shape', label: 'Shape', Icon: FiTriangle },
+  { id: 'media', label: 'Media', Icon: InsertMediaIcon },
+  { id: 'shape', label: 'Shape', Icon: InsertShapeIcon },
   { id: 'chart', label: 'Chart', Icon: FiBarChart2 },
   { id: 'table', label: 'Table', Icon: FiGrid },
   { id: 'embed', label: 'Embed', Icon: FiCode },

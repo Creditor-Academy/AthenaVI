@@ -1,11 +1,33 @@
 import { useEffect, useRef } from 'react'
 import { FiCode, FiImage } from 'react-icons/fi'
 import PptChartRenderer, { getEmbedIframeUrl } from './PptChartRenderer'
+import ExternalLinkHoverLayer from './ExternalLinkHoverLayer'
 import {
-  normalizeApiShape,
-  resolveFillCss,
   resolveThemeColor,
+  buildCanvasShapeStyle,
 } from '../../../utils/presentationHelpers'
+import { getListMarker, splitTextLines, stripLeadingListMarkers } from '../../../utils/textListUtils'
+
+function TextListDisplay({ text, listType }) {
+  const lines = splitTextLines(text)
+  if (!listType || !lines.length) return text || null
+
+  return (
+    <div className="ppt-text-list">
+      {lines.map((line, index) => (
+        <div key={index} className="ppt-text-list-item">
+          <span
+            className={`ppt-text-list-marker ppt-text-list-marker--${listType}`}
+            aria-hidden
+          >
+            {getListMarker(listType, index)}
+          </span>
+          <span className="ppt-text-list-line">{line || '\u00A0'}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 function EditableText({
   content,
@@ -48,9 +70,21 @@ function EditableText({
     fontFamily: c.fontFamily || undefined,
     textAlign: c.align || 'left',
     textTransform: c.textTransform || undefined,
-    letterSpacing: c.letterSpacing != null ? `${c.letterSpacing}em` : undefined,
+    letterSpacing: c.letterSpacing != null ? c.letterSpacing : undefined,
     whiteSpace: c.wrap === 'nowrap' ? 'nowrap' : 'pre-wrap',
     lineHeight: c.lineHeight != null ? c.lineHeight : 1.25,
+    overflow: 'hidden',
+    boxSizing: 'border-box',
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent:
+      c.verticalAlign === 'center' ? 'center' : c.verticalAlign === 'flex-end' ? 'flex-end' : 'flex-start',
+    padding:
+      c.padding != null
+        ? `${c.padding}px ${c.paddingX != null ? c.paddingX : c.padding}px`
+        : undefined,
   }
 
   if (editing) {
@@ -61,11 +95,19 @@ function EditableText({
         contentEditable
         suppressContentEditableWarning
         style={textStyle}
-        onBlur={(e) => onEndEdit?.(e.currentTarget.innerText)}
+        onPointerDown={(e) => editable && e.stopPropagation()}
+        onBlur={(e) => {
+          let text = e.currentTarget.innerText
+          if (c.listType) text = stripLeadingListMarkers(text)
+          onEndEdit?.(text)
+        }}
         onKeyDown={(e) => {
+          e.stopPropagation()
           if (e.key === 'Escape') {
             e.preventDefault()
-            onEndEdit?.(ref.current?.innerText || c.text)
+            let text = ref.current?.innerText || c.text
+            if (c.listType) text = stripLeadingListMarkers(text)
+            onEndEdit?.(text)
           }
         }}
       >
@@ -74,9 +116,13 @@ function EditableText({
     )
   }
 
+  const displayText = c.text || (editable ? 'Double-click to edit' : '')
+
   return (
     <div
+      className={editable ? 'ppt-text-display ppt-text-display--editable' : 'ppt-text-display'}
       style={textStyle}
+      onPointerDown={(e) => editable && e.stopPropagation()}
       onDoubleClick={(e) => {
         if (editable) {
           e.stopPropagation()
@@ -84,7 +130,11 @@ function EditableText({
         }
       }}
     >
-      {c.text || (editable ? 'Double-click to edit' : '')}
+      {c.listType && c.text ? (
+        <TextListDisplay text={c.text} listType={c.listType} />
+      ) : (
+        displayText
+      )}
     </div>
   )
 }
@@ -168,10 +218,18 @@ export default function PptCanvasElement({
     const c = el.content || {}
     const url = c.url || c.src || c.thumbnailUrl || c.previewUrl
     if (!url) {
+      const radius = c.borderRadius != null ? c.borderRadius : 8
       return (
-        <div style={{ ...fillStyle, background: 'rgba(148,163,184,0.16)' }}>
-          <div className="aig-canvas-image-fallback">
-            <FiImage size={18} />
+        <div
+          style={{
+            ...fillStyle,
+            background: c.placeholderFill || 'linear-gradient(145deg, #eef2f7 0%, #e2e8f0 100%)',
+            borderRadius: radius,
+            border: '1px solid color-mix(in srgb, #94a3b8 22%, transparent)',
+          }}
+        >
+          <div className="aig-canvas-image-fallback ppt-image-placeholder">
+            <FiImage size={22} strokeWidth={1.5} />
           </div>
         </div>
       )
@@ -184,6 +242,7 @@ export default function PptCanvasElement({
           ...fillStyle,
           objectFit: c.fit || (el.type === 'icon' ? 'contain' : 'cover'),
           opacity: c.opacity != null ? c.opacity : 1,
+          borderRadius: c.borderRadius != null ? c.borderRadius : undefined,
         }}
         onError={() => onImageAuthError?.(el.id)}
       />
@@ -192,27 +251,7 @@ export default function PptCanvasElement({
 
   if (el.type === 'shape') {
     const c = el.content || {}
-    const shape = normalizeApiShape(c.shape || 'rect')
-    const fill = resolveFillCss(c.fill, palette, 'rgba(148,163,184,0.35)')
-    const stroke = c.stroke ? resolveThemeColor(c.stroke, palette, c.stroke) : undefined
-    const strokeWidth = c.strokeWidth || 3
-    const clipPaths = {
-      triangle: 'polygon(50% 0%, 0% 100%, 100% 100%)',
-      diamond: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-      star: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
-    }
-    const clip = clipPaths[shape] || clipPaths[c.shape]
-    const radius =
-      shape === 'ellipse' || shape === 'circle'
-        ? '50%'
-        : shape === 'pill'
-          ? 999
-          : shape === 'rounded-rect'
-            ? c.borderRadius != null
-              ? c.borderRadius
-              : 12
-            : c.borderRadius || 0
-
+    const rendered = buildCanvasShapeStyle(c, palette)
     const shapeLabel = c.label || c.text
     const inner = shapeLabel ? (
       <div
@@ -223,7 +262,7 @@ export default function PptCanvasElement({
           height: '100%',
           fontSize: 14,
           fontWeight: 600,
-          color: stroke || palette?.text || '#0F172A',
+          color: c.stroke || palette?.text || '#0F172A',
           padding: 8,
           textAlign: 'center',
         }}
@@ -232,24 +271,23 @@ export default function PptCanvasElement({
       </div>
     ) : null
 
-    if (clip) {
+    if (rendered.kind === 'line') {
       return (
-        <div style={{ ...fillStyle, background: fill, clipPath: clip }}>
-          {inner}
+        <div
+          style={{
+            ...fillStyle,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <div style={rendered.style} />
         </div>
       )
     }
 
     return (
-      <div
-        style={{
-          ...fillStyle,
-          background: fill === 'transparent' ? 'transparent' : fill,
-          borderRadius: radius,
-          border: stroke ? `${strokeWidth}px solid ${stroke}` : undefined,
-          boxSizing: 'border-box',
-        }}
-      >
+      <div style={{ ...fillStyle, ...rendered.style }}>
         {inner}
       </div>
     )
@@ -282,27 +320,32 @@ export default function PptCanvasElement({
     const iframeUrl = getEmbedIframeUrl(c)
     if (iframeUrl) {
       return (
-        <iframe
-          src={iframeUrl}
-          title={c.title || 'Embed'}
-          className="ppt-embed-iframe"
-          style={{
-            ...fillStyle,
-            borderRadius: c.borderRadius ?? 8,
-          }}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
+        <ExternalLinkHoverLayer content={c} style={fillStyle}>
+          <iframe
+            src={iframeUrl}
+            title={c.title || 'Embed'}
+            className="ppt-embed-iframe"
+            style={{
+              width: '100%',
+              height: '100%',
+              borderRadius: c.borderRadius ?? 8,
+            }}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </ExternalLinkHoverLayer>
       )
     }
     return (
-      <div className="aig-canvas-embed" style={fillStyle}>
-        <div className="aig-canvas-embed-label">
-          <FiCode size={12} style={{ marginRight: 4 }} />
-          {c.title || c.provider || 'Embed'}
+      <ExternalLinkHoverLayer content={c} style={fillStyle}>
+        <div className="aig-canvas-embed">
+          <div className="aig-canvas-embed-label">
+            <FiCode size={12} style={{ marginRight: 4 }} />
+            {c.title || c.provider || 'Embed'}
+          </div>
+          <div className="aig-canvas-embed-url">{c.url || ''}</div>
         </div>
-        <div className="aig-canvas-embed-url">{c.url || ''}</div>
-      </div>
+      </ExternalLinkHoverLayer>
     )
   }
 

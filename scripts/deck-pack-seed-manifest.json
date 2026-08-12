@@ -1,0 +1,15 @@
+{
+  "packs": [
+    {
+      "key": "womens_wellness_template",
+      "templateFile": "womens_wellness_template.json",
+      "assetsFile": "womens-wellness-assets.json",
+      "label": "Women's Wellness — Harmony & Health",
+      "packId": "womens_wellness",
+      "themeId": "sunset_coral",
+      "category": "Courses",
+      "filterCategory": "Training",
+      "layoutOverrides": {}
+    }
+  ]
+}

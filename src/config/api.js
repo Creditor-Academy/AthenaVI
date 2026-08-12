@@ -185,6 +185,10 @@ const API_CONFIG = {
         `/api/workspaces/${workspaceId}/presentations/${presentationId}`,
       TEMPLATES: (workspaceId) => `/api/workspaces/${workspaceId}/presentation-templates`,
       DECK_PACKS: (workspaceId) => `/api/workspaces/${workspaceId}/presentation-deck-packs`,
+      DECK_PACK: (workspaceId, packId) =>
+        `/api/workspaces/${workspaceId}/presentation-deck-packs/${packId}`,
+      TEMPLATE: (workspaceId, templateId) =>
+        `/api/workspaces/${workspaceId}/presentation-templates/${templateId}`,
       THEMES: (workspaceId) => `/api/workspaces/${workspaceId}/presentation-themes`,
       ELEMENT_PRESETS: (workspaceId) => `/api/workspaces/${workspaceId}/presentation-elements`,
       STATUS: (workspaceId, presentationId) =>

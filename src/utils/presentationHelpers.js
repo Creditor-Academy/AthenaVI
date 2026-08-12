@@ -1,4 +1,6 @@
 /** Caps from PRESENTATION_FRONTEND_INTEGRATION */
+import { SHAPE_LIBRARY } from '../constants/shapeLibrary'
+
 export const PPT_CAPS = {
   AI_SLIDE_MIN: 5,
   AI_SLIDE_MAX: 20,
@@ -18,13 +20,90 @@ export const PPT_CANVAS_SIZES = {
 
 export const DEFAULT_SLIDE_BG = '#FFFFFF'
 
+export function isSlideBackgroundElement(el, slide) {
+  if (!el) return false
+  if (el.content?.useAsBackground) return true
+  return Boolean(slide?.backgroundImageElementId && el.id === slide.backgroundImageElementId)
+}
+
+export function resolveSlideStageBackground(slide, fallback = DEFAULT_SLIDE_BG) {
+  const color = slide?.backgroundColor || fallback
+  if (slide?.backgroundImage) {
+    const fit = slide.backgroundImageFit || 'cover'
+    return {
+      backgroundColor: color,
+      backgroundImage: `url(${slide.backgroundImage})`,
+      backgroundSize: fit === 'fill' ? '100% 100%' : fit,
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+    }
+  }
+  if (slide?.backgroundGradientStart && slide?.backgroundGradientEnd) {
+    return {
+      background: `linear-gradient(135deg, ${slide.backgroundGradientStart}, ${slide.backgroundGradientEnd})`,
+    }
+  }
+  return { background: color }
+}
+
 const SHAPE_ALIAS = {
   square: 'rect',
   'triangle-up': 'triangle',
   'triangle-down': 'triangle',
-  'arrow-right': 'arrows',
-  'arrow_right': 'arrows',
   plus: 'plus',
+  // Legacy broken alias — map old saved shapes to a real library entry
+  arrows: 'arrow-right',
+}
+
+const LEGACY_SHAPE_IDS = {
+  arrows: 'arrow-right',
+}
+
+const FALLBACK_CLIP = {
+  triangle: 'polygon(50% 0%, 0% 100%, 100% 100%)',
+  diamond: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+  star: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
+}
+
+const FALLBACK_RADIUS = {
+  circle: '50%',
+  ellipse: '50%',
+  pill: 999,
+  'rounded-rect': 12,
+}
+
+function getShapeLibraryEntry(shapeId) {
+  const id = String(shapeId || 'rect')
+  const legacy = LEGACY_SHAPE_IDS[id]
+  return SHAPE_LIBRARY.find((s) => s.id === id) || (legacy ? SHAPE_LIBRARY.find((s) => s.id === legacy) : null)
+}
+
+function parseShapeRadius(value) {
+  if (value == null) return undefined
+  if (typeof value === 'number') return value
+  const raw = String(value).trim()
+  if (!raw) return undefined
+  if (raw.includes('%') || raw.includes('/') || raw.includes(' ')) return raw
+  if (raw.endsWith('px')) return parseFloat(raw) || 0
+  if (raw === '999' || raw.includes('999')) return 999
+  const n = Number(raw)
+  return Number.isFinite(n) ? n : raw
+}
+
+function isHorizontalLineShape(entry, shapeId) {
+  const id = String(shapeId || '')
+  if (entry?.category === 'lines' && entry.style?.clipPath) return false
+  if (entry?.style?.height === '0px' && entry.style?.borderTop) return true
+  return /^line-(solid|dashed|dotted)$/.test(id)
+}
+
+function resolveLineBorder(content, entry, fill, stroke, isOutlined) {
+  const libBorder = entry?.style?.borderTop || '4px solid currentColor'
+  const match = libBorder.match(/^(\d+(?:\.\d+)?)px\s+(solid|dashed|dotted)\s+/i)
+  const width = content.strokeWidth != null ? content.strokeWidth : match ? Number(match[1]) : 4
+  const style = match?.[2]?.toLowerCase() || 'solid'
+  const color = isOutlined ? stroke || fill : fill
+  return `${width}px ${style} ${color}`
 }
 
 /** Resolve stage pixels from slide.elements.canvas, then aspectRatio, then 16:9. */
@@ -125,35 +204,211 @@ export function buildPresentationGenerationPayload(
   }
 }
 
+/** Parse template schema whether object or JSON string. */
+export function parsePackSchema(raw) {
+  if (!raw) return {}
+  if (typeof raw === 'string') {
+    try {
+      return JSON.parse(raw)
+    } catch {
+      return {}
+    }
+  }
+  if (typeof raw === 'object') return raw
+  return {}
+}
+
+function extractPackSlides(pack, schema) {
+  if (Array.isArray(schema?.slides) && schema.slides.length) return schema.slides
+  if (Array.isArray(pack?.slides) && pack.slides.length) return pack.slides
+  if (Array.isArray(pack?.raw?.slides) && pack.raw.slides.length) return pack.raw.slides
+  return []
+}
+
+function readPackMedia(pack) {
+  return Array.isArray(pack?.media) ? pack.media : []
+}
+
+function readMediaSlotUrl(media, slotHint) {
+  if (!slotHint) return null
+  const entry = media.find(
+    (m) => String(m?.slotHint || m?.slot_hint || '').toLowerCase() === String(slotHint).toLowerCase()
+  )
+  return entry?.url || null
+}
+
+/** Pack card thumbnail priority (list + detail summary). */
+export function resolvePackThumbnailUrl(pack) {
+  if (!pack) return null
+  const direct = pack.previewImageUrl || pack.preview_image_url
+  if (direct) return direct
+
+  const preview = pack.preview || {}
+  if (preview.imageUrl) return preview.imageUrl
+  if (preview.thumbnailUrl) return preview.thumbnailUrl
+
+  const media = readPackMedia(pack)
+  return (
+    readMediaSlotUrl(media, 'preview') ||
+    readMediaSlotUrl(media, 'slide:1') ||
+    null
+  )
+}
+
+/** Solid-color fallback when a pack has no preview image. */
+export function resolvePackColorFallback(pack) {
+  const preview = pack?.preview || {}
+  return {
+    color: preview.color || '#f8fafc',
+    accentColor: preview.accentColor || preview.accent_color || '#94a3b8',
+  }
+}
+
+/** Slide preview thumbnail — previewImageUrl, then media slot slide:{order}. */
+export function resolveSlidePreviewThumbnail(slidePreview, media = []) {
+  if (!slidePreview) return null
+  const direct = slidePreview.previewImageUrl || slidePreview.preview_image_url
+  if (direct) return direct
+  const order = slidePreview.order ?? 1
+  return readMediaSlotUrl(media, `slide:${order}`)
+}
+
+/** Summary row from GET .../presentation-deck-packs (no schema / slidePreviews). */
+export function normalizeDeckPackListItem(pack) {
+  if (!pack) return null
+  const id = pack.id || pack._id
+  if (!id) return null
+
+  const meta = pack.meta || {}
+  const preview = pack.preview || parsePackSchema(pack.schema)?.preview || null
+
+  return {
+    id,
+    name: pack.name || meta.name || 'Deck Pack',
+    packId: pack.packId || pack.pack_id || null,
+    themeId: pack.themeId || pack.theme_id || null,
+    aspectRatio: pack.aspectRatio || pack.aspect_ratio || '16:9',
+    slideCount: pack.slideCount ?? pack.slide_count ?? null,
+    meta: {
+      description: meta.description || '',
+      useCase: meta.useCase || meta.use_case || '',
+    },
+    narrative: pack.narrative || null,
+    previewImageUrl: pack.previewImageUrl || pack.preview_image_url || null,
+    preview,
+    media: readPackMedia(pack),
+    generationDefaults: pack.generationDefaults || pack.generation_defaults || null,
+    variant: pack.variant ?? null,
+    version: pack.version ?? null,
+    thumbnailUrl: resolvePackThumbnailUrl(pack),
+  }
+}
+
+/** Full pack from GET .../presentation-deck-packs/:id */
+export function normalizeDeckPackDetail(payload) {
+  const pack = payload?.pack ?? payload?.data?.pack ?? payload
+  const base = normalizeDeckPackListItem(pack)
+  if (!base) return null
+
+  const schema = parsePackSchema(pack?.schema)
+  const slides = extractPackSlides(pack, schema)
+  const rawPreviews = pack?.slidePreviews || pack?.slide_previews || []
+  const slidePreviews = (Array.isArray(rawPreviews) ? rawPreviews : [])
+    .slice()
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    .map((sp) => ({
+      ...sp,
+      thumbnailUrl: resolveSlidePreviewThumbnail(sp, base.media),
+    }))
+
+  return {
+    ...base,
+    thumbnailUrl: resolvePackThumbnailUrl({ ...pack, preview: base.preview, media: base.media }),
+    schema: slides.length ? { ...schema, slides } : schema.slides ? schema : { ...schema, slides: [] },
+    slidePreviews,
+  }
+}
+
+/** Normalize one deck-pack / DECK_PACK template row (detail when schema present). */
+export function normalizeDeckPackRecord(pack) {
+  if (!pack) return null
+  const id = pack.id || pack._id || pack.templateId
+  if (!id) return null
+
+  if (pack.schema || pack.slidePreviews || pack.slide_previews) {
+    return normalizeDeckPackDetail({ pack })
+  }
+
+  return normalizeDeckPackListItem(pack)
+}
+
 /** Normalize deck-pack list from GET .../presentation-deck-packs */
 export function normalizeDeckPacks(payload) {
   const root = payload?.data ?? payload
   const list = Array.isArray(root)
     ? root
     : root?.packs || root?.items || root?.templates || root?.deckPacks || []
-  return (list || [])
-    .map((pack) => {
-      const id = pack.id || pack._id || pack.templateId
-      if (!id) return null
-      const schema = pack.schema || {}
-      return {
-        id,
-        name:
-          pack.name ||
-          schema.preview?.label ||
-          schema.pack_id ||
-          pack.pack_id ||
-          'Deck Pack',
-        packId: schema.pack_id || pack.pack_id || null,
-        themeId: schema.themeId || pack.themeId || null,
-        aspectRatio: schema.aspectRatio || pack.aspectRatio || '16:9',
-        slideCount: Array.isArray(schema.slides) ? schema.slides.length : pack.slideCount || null,
-        preview: schema.preview || pack.preview || null,
-        schema,
-        raw: pack,
-      }
+  return (list || []).map(normalizeDeckPackListItem).filter(Boolean)
+}
+
+/** Merge deck-pack list rows with DECK_PACK rows from presentation-templates. */
+export function mergeDeckPackCatalog(deckPacksPayload, templatesPayload) {
+  const byId = new Map()
+
+  for (const pack of normalizeDeckPacks(deckPacksPayload)) {
+    byId.set(String(pack.id), pack)
+  }
+
+  const templates = Array.isArray(templatesPayload)
+    ? templatesPayload
+    : templatesPayload?.templates ||
+      templatesPayload?.items ||
+      templatesPayload?.data ||
+      []
+
+  for (const row of templates) {
+    const type = String(row?.type || '').toUpperCase()
+    const schema = parsePackSchema(row?.schema)
+    const isPack = type === 'DECK_PACK' || Boolean(schema.pack_id)
+    if (!isPack) continue
+
+    const id = row.id || row.templateId
+    if (!id) continue
+
+    const next = normalizeDeckPackRecord(row)
+    if (!next) continue
+
+    const key = String(id)
+    const prev = byId.get(key)
+
+    if (!prev) {
+      byId.set(key, next)
+      continue
+    }
+
+    const prevDetail = prev.schema || prev.slidePreviews ? normalizeDeckPackDetail({ pack: prev }) : prev
+    const nextDetail = normalizeDeckPackRecord(row)
+    const merged = normalizeDeckPackDetail({
+      pack: {
+        ...prevDetail,
+        ...nextDetail,
+        schema:
+          nextDetail?.schema?.slides?.length
+            ? nextDetail.schema
+            : prevDetail?.schema?.slides?.length
+              ? prevDetail.schema
+              : nextDetail?.schema || prevDetail?.schema,
+        slidePreviews:
+          nextDetail?.slidePreviews?.length
+            ? nextDetail.slidePreviews
+            : prevDetail?.slidePreviews || [],
+      },
     })
-    .filter(Boolean)
+
+    byId.set(key, merged || { ...prev, ...next })
+  }
+
+  return [...byId.values()]
 }
 
 export const PPT_TITLE_MAX = 255
@@ -359,6 +614,11 @@ export function normalizeSlideForEditor(slide, index = 0, aspectRatio = '16:9') 
         : [],
     content: slide?.content || {},
     backgroundColor: slide?.backgroundColor || DEFAULT_SLIDE_BG,
+    backgroundGradientStart: slide?.backgroundGradientStart,
+    backgroundGradientEnd: slide?.backgroundGradientEnd,
+    backgroundImage: slide?.backgroundImage,
+    backgroundImageFit: slide?.backgroundImageFit || 'cover',
+    backgroundImageElementId: slide?.backgroundImageElementId,
     elements: {
       version: elementsDoc?.version || 1,
       canvas,
@@ -480,6 +740,75 @@ export function normalizeApiShape(shape) {
   if (!shape) return 'rect'
   const key = String(shape)
   return SHAPE_ALIAS[key] || key
+}
+
+/**
+ * Resolve canvas CSS for a shape element using the shape library + content overrides.
+ */
+export function buildCanvasShapeStyle(content = {}, palette = {}) {
+  const rawShape = content.shape || 'rect'
+  const shapeId = normalizeApiShape(rawShape)
+  const entry = getShapeLibraryEntry(rawShape) || getShapeLibraryEntry(shapeId)
+  const lib = entry?.style || {}
+
+  const fill = resolveFillCss(content.fill, palette, 'rgba(148,163,184,0.35)')
+  const stroke = content.stroke ? resolveThemeColor(content.stroke, palette, content.stroke) : undefined
+  const strokeWidth = content.strokeWidth != null ? content.strokeWidth : stroke ? 1 : 0
+  const isOutlined = content.variant === 'outlined'
+
+  if (isHorizontalLineShape(entry, rawShape)) {
+    return {
+      kind: 'line',
+      style: {
+        width: '100%',
+        height: 0,
+        background: 'transparent',
+        borderTop: resolveLineBorder(content, entry, fill, stroke, isOutlined),
+        alignSelf: 'center',
+        boxSizing: 'border-box',
+        flexShrink: 0,
+      },
+    }
+  }
+
+  const clipPath = content.clipPath || lib.clipPath || FALLBACK_CLIP[shapeId]
+  let borderRadius =
+    content.borderRadius != null ? content.borderRadius : parseShapeRadius(lib.borderRadius)
+  if (borderRadius == null && FALLBACK_RADIUS[shapeId] != null) {
+    borderRadius = FALLBACK_RADIUS[shapeId]
+  }
+
+  const background = isOutlined ? 'transparent' : fill
+  const border =
+    stroke || isOutlined
+      ? `${strokeWidth || (isOutlined ? 3 : 1)}px solid ${stroke || fill}`
+      : undefined
+
+  if (clipPath) {
+    return {
+      kind: 'clip',
+      style: {
+        width: '100%',
+        height: '100%',
+        background,
+        clipPath,
+        boxSizing: 'border-box',
+      },
+    }
+  }
+
+  return {
+    kind: 'box',
+    style: {
+      width: '100%',
+      height: '100%',
+      background: background === 'transparent' ? 'transparent' : background,
+      borderRadius: borderRadius ?? 0,
+      border,
+      boxShadow: content.shadow || undefined,
+      boxSizing: 'border-box',
+    },
+  }
 }
 
 /**

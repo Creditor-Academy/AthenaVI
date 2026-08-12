@@ -376,6 +376,7 @@ const REGISTRY = {
   closing_centered_cta_v1: {
     layout_id: 'closing_centered_cta_v1',
     content_type: 'closing',
+    grid: '12-col',
     preview: {
       mode: 'closing_cta',
       slots: {
