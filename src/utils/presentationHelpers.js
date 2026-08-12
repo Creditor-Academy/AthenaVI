@@ -613,9 +613,12 @@ export function normalizeSlideForEditor(slide, index = 0, aspectRatio = '16:9') 
         ? [String(bodyFromContent)]
         : [],
     content: slide?.content || {},
-    backgroundColor: slide?.backgroundColor || DEFAULT_SLIDE_BG,
-    backgroundGradientStart: slide?.backgroundGradientStart,
-    backgroundGradientEnd: slide?.backgroundGradientEnd,
+    backgroundColor:
+      slide?.backgroundColor || elementsDoc?.backgroundColor || DEFAULT_SLIDE_BG,
+    backgroundGradientStart:
+      slide?.backgroundGradientStart || elementsDoc?.backgroundGradientStart,
+    backgroundGradientEnd:
+      slide?.backgroundGradientEnd || elementsDoc?.backgroundGradientEnd,
     backgroundImage: slide?.backgroundImage,
     backgroundImageFit: slide?.backgroundImageFit || 'cover',
     backgroundImageElementId: slide?.backgroundImageElementId,
@@ -756,6 +759,21 @@ export function buildCanvasShapeStyle(content = {}, palette = {}) {
   const strokeWidth = content.strokeWidth != null ? content.strokeWidth : stroke ? 1 : 0
   const isOutlined = content.variant === 'outlined'
 
+  if (content.border && !content.clipPath) {
+    return {
+      kind: 'box',
+      style: {
+        width: '100%',
+        height: '100%',
+        background: fill === 'rgba(148,163,184,0.35)' && content.fill == null ? 'transparent' : fill,
+        border: content.border,
+        borderRadius: content.borderRadius ?? 0,
+        boxShadow: content.shadow || content.boxShadow || undefined,
+        boxSizing: 'border-box',
+      },
+    }
+  }
+
   if (isHorizontalLineShape(entry, rawShape)) {
     return {
       kind: 'line',
@@ -863,6 +881,35 @@ export function resolveFillCss(fill, palette = {}, fallback = 'rgba(148,163,184,
     return cssGradientFromFill(fill, palette) || fallback
   }
   return resolveThemeColor(fill, palette, fallback)
+}
+
+/** CSS box for template shapes authored with clip-level nativeStyle (curves, borders). */
+export function buildNativeShapeBoxStyle(nativeStyle = {}) {
+  const style = nativeStyle || {}
+  const box = {
+    width: '100%',
+    height: '100%',
+    boxSizing: 'border-box',
+    border: style.border,
+    borderRadius: style.borderRadius,
+    boxShadow: style.boxShadow,
+    opacity: style.opacity,
+  }
+  if (style.background) box.background = style.background
+  else box.backgroundColor = style.backgroundColor || 'transparent'
+  return box
+}
+
+export function shapeElementUsesNativeStyle(el) {
+  if (!el || el.type !== 'shape' || !el.nativeStyle) return false
+  const style = el.nativeStyle
+  return Boolean(
+    style.background
+    || style.backgroundColor
+    || style.border
+    || style.borderRadius
+    || style.boxShadow
+  )
 }
 
 export function extractSlideFromMutation(payload) {

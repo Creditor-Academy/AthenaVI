@@ -6,6 +6,8 @@ import {
   getSlideImage,
   isSlideBackgroundElement,
   buildCanvasShapeStyle,
+  buildNativeShapeBoxStyle,
+  shapeElementUsesNativeStyle,
   resolveCanvasSize,
   resolveSlideStageBackground,
   resolveThemeColor,
@@ -63,7 +65,12 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
       <img
         src={url}
         alt={c.alt || ''}
-        style={{ ...style, objectFit: c.fit || 'cover' }}
+        style={{
+          ...style,
+          objectFit: c.fit || 'cover',
+          borderRadius: c.borderRadius != null ? c.borderRadius : undefined,
+          boxShadow: c.boxShadow || c.shadow || undefined,
+        }}
       />
     )
   }
@@ -112,6 +119,9 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
 
   if (el.type === 'shape') {
     const c = el.content || {}
+    if (shapeElementUsesNativeStyle(el)) {
+      return <div style={{ ...style, ...buildNativeShapeBoxStyle(el.nativeStyle) }} />
+    }
     const rendered = buildCanvasShapeStyle(c, palette)
     if (rendered.kind === 'line') {
       return (

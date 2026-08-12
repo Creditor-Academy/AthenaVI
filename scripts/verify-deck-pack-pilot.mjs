@@ -14,12 +14,12 @@ import {
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const EXPECTED_LAYOUTS = [
-  'title_with_image_v1',
-  'agenda_four_items_v1',
-  'timeline_four_steps_v1',
-  'section_with_image_v1',
-  'bullet_list_classic_v1',
-  'closing_centered_cta_v1',
+  'womens_wellness_cover_v1',
+  'womens_wellness_pillars_v1',
+  'womens_wellness_timeline_v1',
+  'womens_wellness_nutrition_v1',
+  'womens_wellness_tracker_v1',
+  'womens_wellness_cta_v1',
 ]
 
 function loadDotEnv() {
@@ -90,6 +90,12 @@ async function verifyApi(token) {
   const layoutIds = new Set(layoutRows.map((r) => r?.schema?.layout_id).filter(Boolean))
   for (const expected of EXPECTED_LAYOUTS) {
     assert(layoutIds.has(expected), `backend missing DECK_LAYOUT ${expected}`)
+    const row = layoutRows.find((r) => r?.schema?.layout_id === expected)
+    const canvasElements = row?.schema?.preview?.canvasElements
+    assert(
+      canvasElements?.elements?.length,
+      `DECK_LAYOUT ${expected} missing preview.canvasElements`
+    )
   }
   console.log(`Superadmin DECK_LAYOUT rows: ${layoutIds.size} (pilot layouts present)`)
 

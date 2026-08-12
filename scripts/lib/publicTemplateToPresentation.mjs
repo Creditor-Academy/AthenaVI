@@ -2,7 +2,11 @@ import { readFileSync } from 'fs'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 import { resolveLayoutMapping } from './layoutTypeMap.mjs'
-import { videoSceneToCanvasElements } from '../../src/utils/videoTemplateToCanvasElements.js'
+import {
+  layoutPreviewCanvasElements,
+  neutralizeCanvasElements,
+  videoSceneToCanvasElements,
+} from '../../src/utils/videoTemplateToCanvasElements.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const TEMPLATES_DIR = join(__dirname, '../../public/templates')
@@ -243,6 +247,7 @@ function buildSlide(scene, order, manifestEntry, assets, aspectRatio = '16:9') {
   return {
     order,
     layout_id: layoutId,
+    layoutType: scene.layoutType,
     contentType,
     intent: DEFAULT_INTENT[contentType] || 'Advance the narrative clearly on this slide',
     designTokens: defaultDesignTokens(contentType),
@@ -364,4 +369,48 @@ export function filterManifestPacks(manifest, onlyKeys = []) {
   if (!onlyKeys?.length) return packs
   const wanted = new Set(onlyKeys.map(String))
   return packs.filter((p) => wanted.has(p.key) || wanted.has(p.packId))
+}
+
+function humanLayoutName(layoutId) {
+  return String(layoutId)
+    .replace(/_v\d+$/, '')
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+/** Build DECK_LAYOUT rows from pack slides — neutral structure (no brand colors / images). */
+export function buildDeckLayoutsFromPack(manifestEntry, opts = {}) {
+  const converted = convertPublicTemplateToDeckPack(manifestEntry, opts)
+  const layoutLabels = manifestEntry.layoutLabels || {}
+
+  return converted.schema.slides.map((slide) => {
+    const canvasElements = layoutPreviewCanvasElements(slide.elements)
+    const name =
+      layoutLabels[slide.layoutType]
+      || humanLayoutName(slide.layout_id)
+
+    return {
+      layoutId: slide.layout_id,
+      name,
+      contentType: slide.contentType || 'image+text',
+      schema: {
+        layout_id: slide.layout_id,
+        content_type: slide.contentType,
+        grid: '12-col',
+        slots: [
+          {
+            id: 'CANVAS_STRUCTURE',
+            region: 'cols 1-12, rows 1-11',
+            role: 'background',
+          },
+        ],
+        preview: {
+          mode: 'canvas_elements',
+          backgroundColor: canvasElements.backgroundColor || '#f8fafc',
+          canvasElements,
+        },
+      },
+    }
+  })
 }

@@ -9,6 +9,8 @@ import {
   regionToBox,
 } from '../../utils/layoutPreviewUtils'
 import { aspectRatioToCss } from '../../utils/deckPackTheme'
+import { layoutSchemaHasCanvasElements, resolveLayoutCanvasElementsDoc } from '../../utils/videoTemplateToCanvasElements'
+import CanvasElementsPreview from './CanvasElementsPreview'
 
 const LAYOUT_POLISHED_THEME = {
   bg: 'var(--preview-bg, var(--bg-card, #ffffff))',
@@ -1593,6 +1595,22 @@ export default function LayoutPolishedPreview({
   const frameStyle = fill
     ? { width: '100%', height: '100%', aspectRatio: 'unset', minHeight: 0 }
     : { width: '100%', aspectRatio: cssAspect }
+
+  if (previewMode === 'canvas_elements' || layoutSchemaHasCanvasElements(schema)) {
+    const elementsDoc = resolveLayoutCanvasElementsDoc(schema) || {}
+    return (
+      <CanvasElementsPreview
+        slide={{
+          elements: elementsDoc,
+          backgroundColor: schema?.preview?.backgroundColor || elementsDoc.backgroundColor,
+        }}
+        aspectRatio={aspectRatio}
+        fill={fill}
+        className={className}
+        style={{ ...frameStyle, ...style }}
+      />
+    )
+  }
 
   if (previewMode === 'stat_row') {
     return (

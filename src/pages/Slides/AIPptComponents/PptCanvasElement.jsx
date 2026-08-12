@@ -5,6 +5,8 @@ import ExternalLinkHoverLayer from './ExternalLinkHoverLayer'
 import {
   resolveThemeColor,
   buildCanvasShapeStyle,
+  buildNativeShapeBoxStyle,
+  shapeElementUsesNativeStyle,
 } from '../../../utils/presentationHelpers'
 import { getListMarker, splitTextLines, stripLeadingListMarkers } from '../../../utils/textListUtils'
 
@@ -243,6 +245,7 @@ export default function PptCanvasElement({
           objectFit: c.fit || (el.type === 'icon' ? 'contain' : 'cover'),
           opacity: c.opacity != null ? c.opacity : 1,
           borderRadius: c.borderRadius != null ? c.borderRadius : undefined,
+          boxShadow: c.boxShadow || c.shadow || undefined,
         }}
         onError={() => onImageAuthError?.(el.id)}
       />
@@ -251,6 +254,35 @@ export default function PptCanvasElement({
 
   if (el.type === 'shape') {
     const c = el.content || {}
+    if (shapeElementUsesNativeStyle(el)) {
+      const shapeLabel = c.label || c.text
+      const isImagePlaceholder = shapeLabel === 'Image placeholder'
+      const inner = shapeLabel ? (
+        <div
+          style={{
+            display: 'grid',
+            placeItems: 'center',
+            width: '100%',
+            height: '100%',
+            fontSize: isImagePlaceholder ? 13 : 14,
+            fontWeight: 600,
+            color: isImagePlaceholder ? (palette?.muted || '#6b7280') : (c.stroke || palette?.text || '#0F172A'),
+            padding: 8,
+            textAlign: 'center',
+            textTransform: isImagePlaceholder ? 'uppercase' : undefined,
+            letterSpacing: isImagePlaceholder ? '0.06em' : undefined,
+          }}
+        >
+          {shapeLabel}
+        </div>
+      ) : null
+      return (
+        <div style={{ ...fillStyle, ...buildNativeShapeBoxStyle(el.nativeStyle) }}>
+          {inner}
+        </div>
+      )
+    }
+
     const rendered = buildCanvasShapeStyle(c, palette)
     const shapeLabel = c.label || c.text
     const inner = shapeLabel ? (

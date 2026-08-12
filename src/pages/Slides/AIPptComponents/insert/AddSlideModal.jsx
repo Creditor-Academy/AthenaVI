@@ -16,6 +16,10 @@ import {
   enrichLayoutSchemaForPreview,
   getDeckLayoutSchema,
 } from '../../../../utils/deckLayoutRegistry'
+import {
+  layoutSchemaHasCanvasElements,
+  slideHasCanvasElements,
+} from '../../../../utils/videoTemplateToCanvasElements'
 import './AddSlideModal.css'
 
 /** Internal render size — scaled down to card; large previews keep text readable. */
@@ -99,6 +103,9 @@ function buildSlidePickPayload(pack, slide, slideIndex, layoutTemplates, layoutS
     layoutId,
     schema,
     name: `${pack.name} · ${title}`,
+    seed: slideHasCanvasElements(slide)
+      ? { title, elements: slide.elements?.elements || [] }
+      : null,
   }
 }
 
@@ -201,7 +208,7 @@ function GalleryPreview({ schema, previewUrl, fallbackName, themeId, aspectRatio
   if (previewUrl) {
     return <img src={previewUrl} alt="" className="ppt-add-slide-card-image" />
   }
-  if (schema?.slots?.length) {
+  if (schema?.slots?.length || layoutSchemaHasCanvasElements(schema) || schema?.preview?.mode === 'canvas_elements') {
     return (
       <ScaledPreview>
         <LayoutPolishedPreview

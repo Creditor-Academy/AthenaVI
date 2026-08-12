@@ -12,6 +12,7 @@ import {
 } from './deckLayoutRegistry'
 import { parseRegion } from './layoutPreviewUtils'
 import { buildCanvasDoc, resolveCanvasSize } from './presentationHelpers'
+import { layoutSchemaHasCanvasElements, resolveLayoutCanvasElementsDoc } from './videoTemplateToCanvasElements'
 
 function unwrapTemplateList(payload) {
   if (Array.isArray(payload)) return payload
@@ -21,7 +22,12 @@ function unwrapTemplateList(payload) {
 export function buildLayoutSchemaMapFromTemplates(templates = []) {
   const map = buildLayoutSchemaMap(
     templates
-      .filter((template) => template?.schema?.slots?.length || template?.schema?.layout_id)
+      .filter(
+        (template) =>
+          template?.schema?.slots?.length
+          || template?.schema?.layout_id
+          || layoutSchemaHasCanvasElements(template?.schema)
+      )
       .map((template) => ({ schema: template.schema }))
   )
 
@@ -70,21 +76,21 @@ export async function resolveLayoutSchema({
   schema,
   layoutSchemaMap = {},
 }) {
-  if (schema?.slots?.length) return schema
+  if (schema?.slots?.length || layoutSchemaHasCanvasElements(schema)) return schema
 
   const key = String(layoutId || '').trim()
   if (key) {
     const fromMap = resolveLayoutSchemaById(key, layoutSchemaMap)
-    if (fromMap?.slots?.length) return fromMap
+    if (fromMap?.slots?.length || layoutSchemaHasCanvasElements(fromMap)) return fromMap
     const registered = getDeckLayoutSchema(key)
-    if (registered?.slots?.length) return registered
+    if (registered?.slots?.length || layoutSchemaHasCanvasElements(registered)) return registered
   }
 
   if (templateId && workspaceId) {
     try {
       const row = await presentationService.getTemplate(workspaceId, templateId)
       const resolved = row?.schema || row?.data?.schema || row?.template?.schema
-      if (resolved?.slots?.length) return resolved
+      if (resolved?.slots?.length || layoutSchemaHasCanvasElements(resolved)) return resolved
     } catch {
       // fall through
     }
@@ -268,6 +274,26 @@ export async function applyCompiledLayoutToSlide({
     schema,
     layoutSchemaMap,
   })
+  if (layoutSchemaHasCanvasElements(resolvedSchema)) {
+    const elementsDoc = resolveLayoutCanvasElementsDoc(resolvedSchema)
+    const canvasDoc = buildCanvasDoc(
+      { elements: elementsDoc },
+      {
+        aspectRatio,
+        elements: elementsDoc.elements || [],
+      }
+    )
+    if (skipSave) return canvasDoc
+
+    const result = await presentationService.saveCanvas(
+      workspaceId,
+      presentationId,
+      slideId,
+      canvasDoc
+    )
+    return result
+  }
+
   if (!resolvedSchema?.slots?.length) return null
 
   const canvas = resolveCanvasSize(null, aspectRatio)

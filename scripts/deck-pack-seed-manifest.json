@@ -9,7 +9,22 @@
       "themeId": "sunset_coral",
       "category": "Courses",
       "filterCategory": "Training",
-      "layoutOverrides": {}
+      "layoutOverrides": {
+        "Cover": "womens_wellness_cover_v1",
+        "Pillars": "womens_wellness_pillars_v1",
+        "Timeline": "womens_wellness_timeline_v1",
+        "Nutrition": "womens_wellness_nutrition_v1",
+        "Tracker": "womens_wellness_tracker_v1",
+        "CTA": "womens_wellness_cta_v1"
+      },
+      "layoutLabels": {
+        "Cover": "Title with image and shape",
+        "Pillars": "Title with four columns and shape",
+        "Timeline": "Timeline with steps and shape",
+        "Nutrition": "Title with cards and shape",
+        "Tracker": "Tracker grid with shape",
+        "CTA": "Closing with CTA and shape"
+      }
     }
   ]
 }

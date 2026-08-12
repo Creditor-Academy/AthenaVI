@@ -3,6 +3,11 @@
  * Keyed by layout_id — add entries when new DECK_LAYOUT templates are published.
  */
 
+function layoutSchemaHasPreviewCanvas(schema) {
+  const doc = schema?.preview?.canvasElements || schema?.elements
+  return Boolean(Array.isArray(doc?.elements) && doc.elements.length)
+}
+
 const REGISTRY = {
   title_centered_meta_date_v1: {
     layout_id: 'title_centered_meta_date_v1',
@@ -1098,10 +1103,15 @@ export function buildPackSlidePreviewSchema(layoutSchema, slide, { imageUrl } = 
 }
 
 export function canPreviewDeckLayout({ layoutId, layoutSchema, layoutSchemaMap } = {}) {
+  if (layoutSchemaHasPreviewCanvas(layoutSchema)) return true
+  if (layoutSchema?.preview?.mode === 'canvas_elements') return true
   if (layoutSchema && (Array.isArray(layoutSchema.slots) ? layoutSchema.slots.length : layoutSchema.preview?.mode)) {
     return true
   }
-  return Boolean(resolveLayoutSchemaById(layoutId, layoutSchemaMap))
+  const resolved = resolveLayoutSchemaById(layoutId, layoutSchemaMap)
+  if (layoutSchemaHasPreviewCanvas(resolved)) return true
+  if (resolved?.preview?.mode === 'canvas_elements') return true
+  return Boolean(resolved && (resolved.slots?.length || resolved.preview?.mode))
 }
 
 /** @deprecated Use canPreviewDeckLayout — kept for existing imports. */

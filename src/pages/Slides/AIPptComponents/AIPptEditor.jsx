@@ -54,6 +54,10 @@ import {
 import { compileDeckLayoutToElements } from '../../../utils/compileDeckLayoutToElements'
 import { resolveLayoutSchemaById } from '../../../utils/deckLayoutRegistry'
 import {
+  layoutSchemaHasCanvasElements,
+  resolveLayoutCanvasElementsDoc,
+} from '../../../utils/videoTemplateToCanvasElements'
+import {
   applyCompiledLayoutToSlide,
   fetchLayoutSchemaMap,
   repairPresentationLayoutSlides,
@@ -1159,7 +1163,9 @@ export default function AIPptEditor({
       const schema =
         layoutSchema ||
         (layoutId ? resolveLayoutSchemaById(layoutId, layoutSchemaMap) : null)
-      if (!seedElements.length && schema?.slots?.length) {
+      if (!seedElements.length && layoutSchemaHasCanvasElements(schema)) {
+        seedElements = resolveLayoutCanvasElementsDoc(schema)?.elements || []
+      } else if (!seedElements.length && schema?.slots?.length) {
         seedElements = compileDeckLayoutToElements(schema, {
           canvas,
           palette: themeVisual?.palette,
@@ -1201,7 +1207,9 @@ export default function AIPptEditor({
         null
 
       let mergeFromElements = []
-      const hasLayoutTarget = templateId || layoutId || layoutSchema?.slots?.length
+      const hasSlotLayout = Boolean(layoutSchema?.slots?.length)
+      const hasCanvasLayout = layoutSchemaHasCanvasElements(layoutSchema)
+      const hasLayoutTarget = templateId || layoutId || hasSlotLayout || hasCanvasLayout
 
       if (templateId && newSlideId) {
         try {
@@ -1218,7 +1226,22 @@ export default function AIPptEditor({
         }
       }
 
-      if (hasLayoutTarget && newSlideId) {
+      if (seedElements.length && newSlideId) {
+        try {
+          const canvasDoc = buildCanvasDoc(
+            { elements: { version: 1, elements: seedElements } },
+            { aspectRatio, elements: seedElements }
+          )
+          await presentationService.saveCanvas(
+            workspaceId,
+            presentationId,
+            newSlideId,
+            canvasDoc
+          )
+        } catch {
+          // Keep slide even if seed canvas fails
+        }
+      } else if (hasLayoutTarget && newSlideId) {
         try {
           await applyCompiledLayoutToSlide({
             workspaceId,
@@ -1235,21 +1258,6 @@ export default function AIPptEditor({
           })
         } catch (err) {
           setError(err.message || 'Failed to apply layout structure')
-        }
-      } else if (seedElements.length && newSlideId) {
-        try {
-          const canvasDoc = buildCanvasDoc(
-            { elements: { version: 1, elements: seedElements } },
-            { aspectRatio, elements: seedElements }
-          )
-          await presentationService.saveCanvas(
-            workspaceId,
-            presentationId,
-            newSlideId,
-            canvasDoc
-          )
-        } catch {
-          // Keep slide even if seed canvas fails
         }
       }
 
@@ -1306,6 +1314,7 @@ export default function AIPptEditor({
         layoutId: pick.layoutId || null,
         schema: pick.schema || null,
         name: pick.name || 'Slide',
+        seed: pick.seed || null,
       })
       return
     }

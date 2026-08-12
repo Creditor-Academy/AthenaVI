@@ -19,24 +19,6 @@ function placementFrameStyle(p, canvasW, canvasH, { layer = 0, rotation = 0, opa
   }
 }
 
-function NativeStyledShape({ nativeStyle }) {
-  const style = nativeStyle || {}
-  return (
-    <div
-      style={{
-        width: '100%',
-        height: '100%',
-        boxSizing: 'border-box',
-        backgroundColor: style.backgroundColor || 'transparent',
-        border: style.border,
-        borderRadius: style.borderRadius,
-        boxShadow: style.boxShadow,
-        opacity: style.opacity,
-      }}
-    />
-  )
-}
-
 function CanvasElementsPreview({
   slide,
   themeVisual,
@@ -117,15 +99,10 @@ function CanvasElementsPreview({
             rotation: p.rotation,
             opacity: p.opacity,
           })
-          const useNative = el.type === 'shape' && el.nativeStyle
 
           return (
             <div key={el.id || `canvas-el-${i}`} style={frame}>
-              {useNative ? (
-                <NativeStyledShape nativeStyle={el.nativeStyle} />
-              ) : (
-                <PptCanvasElement el={el} palette={palette} editable={false} />
-              )}
+              <PptCanvasElement el={el} palette={palette} editable={false} />
             </div>
           )
         })}

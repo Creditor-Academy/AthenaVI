@@ -109,6 +109,7 @@ function imageClipToElement(clip, index, scale, assets) {
       alt: clip.alt || '',
       fit: style.objectFit || (isIcon ? 'contain' : 'cover'),
       borderRadius: style.borderRadius,
+      boxShadow: style.boxShadow,
       opacity: style.opacity,
     },
   }
@@ -123,13 +124,20 @@ function shapeClipToElement(clip, index, scale) {
     role: clip.role,
     placement: readPlacement(clip, scale),
     nativeStyle: {
+      background: style.background,
       backgroundColor: style.backgroundColor,
       border: style.border,
       borderRadius: style.borderRadius,
       boxShadow: style.boxShadow,
       opacity: style.opacity,
     },
-    content: { shape: 'rect' },
+    content: {
+      shape: 'rect',
+      fill: style.backgroundColor || style.background || 'transparent',
+      border: style.border,
+      borderRadius: style.borderRadius,
+      shadow: style.boxShadow,
+    },
   }
 }
 
@@ -180,4 +188,193 @@ export function videoSceneToCanvasElements(scene, assets = {}, aspectRatio = '16
 export function slideHasCanvasElements(slide) {
   const doc = slide?.elements
   return Boolean(Array.isArray(doc?.elements) && doc.elements.length)
+}
+
+export function resolveLayoutCanvasElementsDoc(schema) {
+  if (!schema) return null
+  return schema.preview?.canvasElements || schema.elements || null
+}
+
+export function layoutSchemaHasCanvasElements(schema) {
+  const doc = resolveLayoutCanvasElementsDoc(schema)
+  return Boolean(Array.isArray(doc?.elements) && doc.elements.length)
+}
+
+const NEUTRAL = {
+  bg: '#f8fafc',
+  surface: '#f1f5f9',
+  card: '#ffffff',
+  text: '#1f2937',
+  textMuted: '#6b7280',
+  border: 'color-mix(in srgb, #94a3b8 28%, transparent)',
+  imageFill: 'linear-gradient(145deg, #eef2f7 0%, #e2e8f0 100%)',
+  shadow: '0 4px 12px rgba(15, 23, 42, 0.06)',
+}
+
+function isBrandColor(value) {
+  if (!value || typeof value !== 'string') return false
+  const v = value.toLowerCase()
+  return (
+    v.includes('#f47')
+    || v.includes('#fda')
+    || v.includes('#ffe')
+    || v.includes('#fff5f5')
+    || v.includes('244,114,182')
+    || v.includes('253,164,175')
+    || v.includes('255,245,245')
+    || v.includes('255,228')
+  )
+}
+
+function neutralizeBorder(border) {
+  if (!border || typeof border !== 'string') return NEUTRAL.border
+  if (isBrandColor(border)) return `1px solid ${NEUTRAL.border}`
+  if (/solid/i.test(border)) return border.replace(/#[0-9a-f]{3,8}|rgba?\([^)]+\)/gi, NEUTRAL.border)
+  return NEUTRAL.border
+}
+
+function neutralizeBackgroundColor(color, { asCard = false } = {}) {
+  if (!color || color === 'transparent') return 'transparent'
+  if (isBrandColor(color)) return asCard ? NEUTRAL.card : NEUTRAL.surface
+  return color
+}
+
+/** Strip brand colors and image URLs — keep shapes, text structure, and placement. */
+export function neutralizeCanvasElements(elementsDoc) {
+  const doc = JSON.parse(JSON.stringify(elementsDoc || {}))
+  doc.backgroundColor = NEUTRAL.bg
+  delete doc.backgroundGradientStart
+  delete doc.backgroundGradientEnd
+
+  doc.elements = (doc.elements || []).map((el) => {
+    if (el.type === 'text') {
+      const weight = el.content?.fontWeight
+      const isHeading =
+        el.role === 'slide-title'
+        || Number(weight) >= 700
+        || String(weight).toLowerCase() === 'bold'
+      return {
+        ...el,
+        content: {
+          ...el.content,
+          color: isHeading ? NEUTRAL.text : NEUTRAL.textMuted,
+        },
+      }
+    }
+
+    if (el.type === 'image' || el.type === 'icon') {
+      return {
+        ...el,
+        type: 'shape',
+        role: el.role || 'image',
+        content: { shape: 'rect' },
+        nativeStyle: {
+          background: NEUTRAL.imageFill,
+          border: `1px solid ${NEUTRAL.border}`,
+          borderRadius: el.content?.borderRadius || el.nativeStyle?.borderRadius || '8px',
+          boxShadow: NEUTRAL.shadow,
+        },
+      }
+    }
+
+    if (el.type === 'shape') {
+      const style = el.nativeStyle || {}
+      const w = el.placement?.width ?? 0
+      const h = el.placement?.height ?? 0
+      const asCard = w >= 120 && h >= 80 && style.backgroundColor && style.backgroundColor !== 'transparent'
+      return {
+        ...el,
+        nativeStyle: {
+          ...style,
+          backgroundColor: neutralizeBackgroundColor(style.backgroundColor, { asCard }),
+          border: neutralizeBorder(style.border),
+          boxShadow: style.boxShadow ? NEUTRAL.shadow : undefined,
+        },
+      }
+    }
+
+    return el
+  })
+
+  return doc
+}
+
+export const LAYOUT_TITLE_PLACEHOLDER = 'Your title here'
+export const LAYOUT_IMAGE_PLACEHOLDER = 'Image placeholder'
+
+const IMAGE_LAYOUT_ROLES = new Set(['hero-image', 'image', 'photo', 'picture'])
+
+/** Neutral layout catalog preview — shapes only + title/image placeholders (no pack copy). */
+export function layoutPreviewCanvasElements(elementsDoc) {
+  const doc = neutralizeCanvasElements(elementsDoc)
+  let titleAssigned = false
+  let imagePlaceholderAssigned = false
+
+  doc.elements = (doc.elements || []).flatMap((el) => {
+    if (el.type === 'text') {
+      const weight = el.content?.fontWeight
+      const isTitle =
+        el.role === 'slide-title'
+        || Number(weight) >= 700
+        || String(weight).toLowerCase() === 'bold'
+      if (!titleAssigned && isTitle) {
+        titleAssigned = true
+        return [{
+          ...el,
+          content: {
+            ...el.content,
+            text: LAYOUT_TITLE_PLACEHOLDER,
+            color: NEUTRAL.text,
+            fontSize: Math.min(Number(el.content?.fontSize) || 48, 52),
+          },
+        }]
+      }
+      return []
+    }
+
+    if (el.type === 'shape') {
+      const role = String(el.role || '').toLowerCase()
+      if (role === 'logo' || role === 'icon') return []
+
+      if (IMAGE_LAYOUT_ROLES.has(role)) {
+        if (!imagePlaceholderAssigned) {
+          imagePlaceholderAssigned = true
+          return [{
+            ...el,
+            role: 'image',
+            content: {
+              shape: 'rect',
+              label: LAYOUT_IMAGE_PLACEHOLDER,
+            },
+          }]
+        }
+        return []
+      }
+
+      return [el]
+    }
+
+    if (el.type === 'image' || el.type === 'icon') {
+      if (!imagePlaceholderAssigned) {
+        imagePlaceholderAssigned = true
+        return [{
+          ...el,
+          type: 'shape',
+          role: 'image',
+          content: { shape: 'rect', label: LAYOUT_IMAGE_PLACEHOLDER },
+          nativeStyle: {
+            background: NEUTRAL.imageFill,
+            border: `1px solid ${NEUTRAL.border}`,
+            borderRadius: el.content?.borderRadius || '8px',
+            boxShadow: NEUTRAL.shadow,
+          },
+        }]
+      }
+      return []
+    }
+
+    return [el]
+  })
+
+  return doc
 }

@@ -12,6 +12,7 @@ import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 import REGISTRY from '../src/utils/deckLayoutRegistry.js'
 import {
+  buildDeckLayoutsFromPack,
   convertPublicTemplateToDeckPack,
   filterManifestPacks,
   loadManifest,
@@ -225,6 +226,63 @@ async function seedLayouts(requiredLayoutIds, { dryRun }) {
   return created
 }
 
+async function upsertDerivedLayout(layoutRow, existingRows, { dryRun }) {
+  const match = existingRows.find((row) => layoutIdFromTemplateRow(row) === layoutRow.layoutId)
+  const elementCount =
+    layoutRow.schema?.preview?.canvasElements?.elements?.length
+    || layoutRow.schema?.elements?.elements?.length
+    || 0
+  const payload = {
+    type: 'DECK_LAYOUT',
+    name: layoutRow.name,
+    contentType: layoutRow.contentType || 'layout',
+    variant: layoutRow.layoutId,
+    isActive: true,
+    schema: layoutRow.schema,
+  }
+
+  if (dryRun) {
+    console.log(`  [dry-run] ${match ? 'PATCH' : 'POST'} DECK_LAYOUT ${layoutRow.layoutId} (${elementCount} elements, neutral)`)
+    return { layoutId: layoutRow.layoutId, dryRun: true }
+  }
+
+  if (match) {
+    const templateId = templateRowId(match)
+    await apiRequest(`/api/superadmin/templates/${templateId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        name: payload.name,
+        contentType: payload.contentType,
+        variant: payload.variant,
+        isActive: true,
+        schema: payload.schema,
+      }),
+    })
+    console.log(`  updated DECK_LAYOUT ${layoutRow.layoutId} (${elementCount} elements) → id=${templateId}`)
+    return { layoutId: layoutRow.layoutId, id: templateId, updated: true }
+  }
+
+  const row = await apiRequest('/api/superadmin/templates', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+  console.log(`  created DECK_LAYOUT ${layoutRow.layoutId} (${elementCount} elements) → id=${templateRowId(row) || '?'}`)
+  return { layoutId: layoutRow.layoutId, id: templateRowId(row) }
+}
+
+/** Seed DECK_LAYOUT rows with neutral canvas structure (shapes/text, no brand colors/images). */
+async function seedDerivedLayouts(packs, { dryRun }) {
+  const existing = await listTemplates('DECK_LAYOUT', { offline: dryRun && !resolveAccessToken() })
+  const layoutRows = packs.flatMap((entry) => buildDeckLayoutsFromPack(entry))
+  console.log(`\n[layouts-derived] packs=${packs.length} layouts=${layoutRows.length}`)
+
+  const results = []
+  for (const layoutRow of layoutRows) {
+    results.push(await upsertDerivedLayout(layoutRow, existing, { dryRun }))
+  }
+  return results
+}
+
 async function fetchImageBlob(url) {
   const response = await fetch(url)
   if (!response.ok) throw new Error(`Failed to fetch ${url}: ${response.status}`)
@@ -368,10 +426,8 @@ async function main() {
     await ensureAccessToken()
   }
 
-  const requiredLayoutIds = collectLayoutIdsFromPacks(packs)
-
   if (!args.packsOnly) {
-    await seedLayouts(requiredLayoutIds, { dryRun: args.dryRun })
+    await seedDerivedLayouts(packs, { dryRun: args.dryRun })
   }
 
   if (!args.layoutsOnly) {
