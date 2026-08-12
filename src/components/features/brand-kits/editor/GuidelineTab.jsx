@@ -5,35 +5,25 @@ export default function GuidelineTab(props) {
   const {
     canWrite,
     kitData,
-    setKitData,
-    setEditorTab,
-    copiedHex,
-    handleCopyHex,
-    updateColor,
-    addColor,
-    removeColor,
-    primaryColors,
-    secondaryColors,
-    colorsList,
-    triggerUpload,
-    handleDeleteMedia,
     mediaByKind,
-    uploading,
-    generatingRole,
-    generating,
-    generateLogoVariants,
-    triggerAutoGenerateTypography,
-    updateFontRole,
     downloadBrandGuidelinePdf,
     generatingGuideline,
+    generateBrandGuidelines,
+    guidelineLink,
+    workspaceId,
     activeSlideIndex,
     setActiveSlideIndex,
-    slideViewMode,
-    setSlideViewMode,
     kitName,
-    kitMedia,
     logoPreviewUrl,
   } = props
+
+  const onGenerate = () => {
+    if (typeof generateBrandGuidelines === 'function') {
+      generateBrandGuidelines()
+      return
+    }
+    downloadBrandGuidelinePdf?.()
+  }
 
   return (
             <div className="editor-tab-content">
@@ -43,18 +33,25 @@ export default function GuidelineTab(props) {
                   <div className="bk-type-header-left">
                     <h2 className="bk-type-page-title">Brand Guideline Presentation Deck</h2>
                     <p className="bk-type-page-desc">
-                      Executive 16:9 widescreen presentation deck with navigation arrows and a 2-column slide scene navigator.
+                      Generate a 6-slide brand guideline deck via the Brand Kit API, then open or export it.
+                      {guidelineLink?.presentationId
+                        ? ` Linked deck: ${guidelineLink.name || guidelineLink.presentationId}`
+                        : ''}
                     </p>
                   </div>
                   <div className="bk-slides-actions">
                     <button
                       type="button"
                       className={`bk-extract-btn ${generatingGuideline ? 'generating' : ''}`}
-                      onClick={downloadBrandGuidelinePdf}
-                      disabled={generatingGuideline}
+                      onClick={onGenerate}
+                      disabled={generatingGuideline || !canWrite}
                     >
                       <MdAutoAwesome size={16} />
-                      {generatingGuideline ? 'Generating Deck…' : 'Generate Brand Guideline'}
+                      {generatingGuideline
+                        ? 'Generating Deck…'
+                        : guidelineLink?.presentationId
+                          ? 'Regenerate Brand Guideline'
+                          : 'Generate Brand Guideline'}
                     </button>
                     <button
                       type="button"
@@ -65,6 +62,15 @@ export default function GuidelineTab(props) {
                       <MdDownload size={16} />
                       Download Deck (.pdf)
                     </button>
+                    {guidelineLink?.presentationId && workspaceId && (
+                      <a
+                        className="ghost-btn"
+                        href={`/dashboard/editor?workspaceId=${encodeURIComponent(workspaceId)}&presentationId=${encodeURIComponent(guidelineLink.presentationId)}&title=${encodeURIComponent(guidelineLink.name || 'Brand Guidelines')}`}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                      >
+                        Open Deck
+                      </a>
+                    )}
                   </div>
                 </div>
 

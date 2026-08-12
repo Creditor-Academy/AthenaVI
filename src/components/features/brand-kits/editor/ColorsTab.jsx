@@ -1,12 +1,9 @@
-import { MdAutoAwesome, MdAdd, MdContentCopy, MdClose, MdCheck } from 'react-icons/md'
-import { hexToHsl, hslToHex, hexToRgb } from '../utils/brandKitUtils'
+import { MdAutoAwesome, MdAdd, MdContentCopy, MdClose, MdCheck, MdEdit } from 'react-icons/md'
+import { hexToHsl, hexToRgb } from '../utils/brandKitUtils'
 
 export default function ColorsTab(props) {
   const {
     canWrite,
-    kitData,
-    setKitData,
-    setEditorTab,
     copiedHex,
     handleCopyHex,
     updateColor,
@@ -15,23 +12,8 @@ export default function ColorsTab(props) {
     primaryColors,
     secondaryColors,
     colorsList,
-    triggerUpload,
-    handleDeleteMedia,
-    mediaByKind,
-    uploading,
-    generatingRole,
     generating,
-    generateLogoVariants,
-    triggerAutoGenerateTypography,
-    updateFontRole,
-    downloadBrandGuidelinePdf,
-    generatingGuideline,
-    activeSlideIndex,
-    setActiveSlideIndex,
-    slideViewMode,
-    setSlideViewMode,
-    kitName,
-    kitMedia,
+    triggerGenerateFromLogo,
   } = props
 
   return (
@@ -47,31 +29,12 @@ export default function ColorsTab(props) {
                   <div className="bk-colors-header-actions">
                     <button
                       type="button"
-                      className="bk-extract-btn"
-                      onClick={() => {
-                        const base = primaryColors[0]?.hex || '#2563EB'
-                        const [h, s, l] = hexToHsl(base)
-                        const gen = [
-                          hslToHex(h + 60, s, l),
-                          hslToHex(h + 180, s, l),
-                          hslToHex(h + 240, s, l),
-                        ]
-
-                        setKitData((prev) => ({
-                          ...prev,
-                          colors: [
-                            ...(prev.colors || []),
-                            ...gen.map((hex, i) => ({
-                              id: `c_gen_${Date.now()}_${i}`,
-                              name: `Harmonic Accent ${i + 1}`,
-                              hex,
-                            })),
-                          ].slice(0, 32),
-                        }))
-                      }}
+                      className={`bk-extract-btn ${generating ? 'generating' : ''}`}
+                      onClick={triggerGenerateFromLogo}
+                      disabled={generating}
                     >
                       <MdAutoAwesome size={16} />
-                      Generate Palette
+                      {generating ? 'Suggesting…' : 'Suggest from Logo'}
                     </button>
                     <button type="button" className="create-btn" onClick={addColor}>
                       <MdAdd size={18} />
@@ -99,14 +62,21 @@ export default function ColorsTab(props) {
                       return (
                         <div className="bk-color-card" key={color.id || index}>
                           <div className="bk-card-swatch-block" style={{ background: hex }}>
-                            <button
-                              type="button"
-                              className="bk-copy-hex-btn"
-                              onClick={() => handleCopyHex(hex)}
-                            >
-                              <MdContentCopy size={14} />
-                              {copiedHex === hex ? 'Copied!' : 'Copy HEX'}
-                            </button>
+                            {canWrite && (
+                              <button
+                                type="button"
+                                className="bk-edit-color-btn"
+                                onClick={(e) => {
+                                  e.currentTarget
+                                    .closest('.bk-color-card')
+                                    ?.querySelector('input[type="color"]')
+                                    ?.click()
+                                }}
+                              >
+                                <MdEdit size={14} />
+                                Edit
+                              </button>
+                            )}
                             {canWrite && (
                               <button
                                 type="button"
@@ -132,20 +102,37 @@ export default function ColorsTab(props) {
                                 <span className="bk-card-role-tag">{roleName}</span>
                               </div>
                               <div className="bk-card-hex-box">
-                                <input
-                                  type="color"
-                                  value={/^#[0-9A-Fa-f]{6}$/.test(hex) ? hex : '#0F172A'}
-                                  disabled={!canWrite}
-                                  onChange={(e) => updateColor(index, { hex: e.target.value.toUpperCase() })}
-                                  className="bk-picker-inline"
-                                />
+                                <label
+                                  className={`bk-hex-swatch-circle${!canWrite ? ' is-disabled' : ''}`}
+                                  style={{ background: hex }}
+                                  title={canWrite ? 'Edit color' : undefined}
+                                >
+                                  <input
+                                    type="color"
+                                    value={/^#[0-9A-Fa-f]{6}$/.test(hex) ? hex : '#0F172A'}
+                                    disabled={!canWrite}
+                                    onChange={(e) => updateColor(index, { hex: e.target.value.toUpperCase() })}
+                                    className="bk-picker-inline"
+                                    aria-label={`Edit ${color.name || 'color'}`}
+                                  />
+                                </label>
                                 <input
                                   type="text"
                                   value={color.hex}
                                   disabled={!canWrite}
                                   onChange={(e) => updateColor(index, { hex: e.target.value })}
                                   className="bk-card-hex-val"
+                                  aria-label={`${color.name || 'Color'} hex`}
                                 />
+                                <button
+                                  type="button"
+                                  className={`bk-hex-copy-btn${copiedHex === hex ? ' is-copied' : ''}`}
+                                  onClick={() => handleCopyHex(hex)}
+                                  title={copiedHex === hex ? 'Copied' : 'Copy HEX'}
+                                  aria-label={copiedHex === hex ? 'Copied' : 'Copy HEX'}
+                                >
+                                  {copiedHex === hex ? <MdCheck size={14} /> : <MdContentCopy size={14} />}
+                                </button>
                               </div>
                             </div>
 
@@ -178,38 +165,145 @@ export default function ColorsTab(props) {
                     <h3 className="bk-sec-title">Dark Mode & Secondary Tones</h3>
                   </div>
 
-                  <div className="bk-secondary-swatches-grid">
-                    {secondaryColors.map((color, idx) => {
-                      const actualIndex = idx + 2
-                      const hex = color.hex
-                      return (
-                        <div
-                          key={color.id || idx}
-                          className="bk-secondary-card"
-                          onClick={() => handleCopyHex(hex)}
-                          title="Click to copy HEX"
-                        >
-                          <div
-                            className="bk-sec-swatch-box"
-                            style={{ background: hex }}
-                          >
-                            <span className="bk-sec-copy-icon">
-                              {copiedHex === hex ? <MdCheck size={16} /> : <MdContentCopy size={16} />}
-                            </span>
+                  {secondaryColors.length === 0 ? (
+                    <div className="bk-secondary-empty">
+                      <p>No dark / secondary tones yet. Add colors to extend the palette.</p>
+                      {canWrite && (
+                        <button type="button" className="ghost-btn" onClick={addColor}>
+                          <MdAdd size={16} /> Add Color
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="bk-primary-swatches-grid">
+                      {secondaryColors.map((color, idx) => {
+                        const actualIndex = idx + 2
+                        const hex = color.hex || '#0F172A'
+                        const rgb = hexToRgb(hex)
+                        const [h, s, l] = hexToHsl(hex)
+                        const roleName =
+                          idx === 0
+                            ? 'Primary Color (Dark Mode)'
+                            : idx === 1
+                              ? 'Background Color (Dark Mode)'
+                              : idx === 2
+                                ? 'Text / Accent Tone'
+                                : 'Secondary Tone'
+
+                        return (
+                          <div className="bk-color-card" key={color.id || actualIndex}>
+                            <div className="bk-card-swatch-block" style={{ background: hex }}>
+                              {canWrite && (
+                                <button
+                                  type="button"
+                                  className="bk-edit-color-btn"
+                                  onClick={(e) => {
+                                    e.currentTarget
+                                      .closest('.bk-color-card')
+                                      ?.querySelector('input[type="color"]')
+                                      ?.click()
+                                  }}
+                                >
+                                  <MdEdit size={14} />
+                                  Edit
+                                </button>
+                              )}
+                              {canWrite && colorsList.length > 2 && (
+                                <button
+                                  type="button"
+                                  className="bk-card-delete-btn"
+                                  onClick={() => removeColor(actualIndex)}
+                                  title="Remove color"
+                                >
+                                  <MdClose size={16} />
+                                </button>
+                              )}
+                            </div>
+                            <div className="bk-card-body">
+                              <div className="bk-card-title-row">
+                                <div>
+                                  <input
+                                    type="text"
+                                    className="bk-card-color-name"
+                                    value={color.name}
+                                    disabled={!canWrite}
+                                    onChange={(e) =>
+                                      updateColor(actualIndex, { name: e.target.value })
+                                    }
+                                    placeholder="Color Name"
+                                  />
+                                  <span className="bk-card-role-tag">{roleName}</span>
+                                </div>
+                                <div className="bk-card-hex-box">
+                                  <label
+                                    className={`bk-hex-swatch-circle${!canWrite ? ' is-disabled' : ''}`}
+                                    style={{ background: hex }}
+                                    title={canWrite ? 'Edit color' : undefined}
+                                  >
+                                    <input
+                                      type="color"
+                                      value={/^#[0-9A-Fa-f]{6}$/.test(hex) ? hex : '#0F172A'}
+                                      disabled={!canWrite}
+                                      onChange={(e) =>
+                                        updateColor(actualIndex, {
+                                          hex: e.target.value.toUpperCase(),
+                                        })
+                                      }
+                                      className="bk-picker-inline"
+                                      aria-label={`Edit ${color.name || 'color'}`}
+                                    />
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={color.hex}
+                                    disabled={!canWrite}
+                                    onChange={(e) =>
+                                      updateColor(actualIndex, { hex: e.target.value })
+                                    }
+                                    className="bk-card-hex-val"
+                                    aria-label={`${color.name || 'Color'} hex`}
+                                  />
+                                  <button
+                                    type="button"
+                                    className={`bk-hex-copy-btn${copiedHex === hex ? ' is-copied' : ''}`}
+                                    onClick={() => handleCopyHex(hex)}
+                                    title={copiedHex === hex ? 'Copied' : 'Copy HEX'}
+                                    aria-label={copiedHex === hex ? 'Copied' : 'Copy HEX'}
+                                  >
+                                    {copiedHex === hex ? (
+                                      <MdCheck size={14} />
+                                    ) : (
+                                      <MdContentCopy size={14} />
+                                    )}
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div className="bk-card-tech-grid">
+                                <div>
+                                  <span className="bk-tech-lbl">RGB</span>
+                                  <span className="bk-tech-val">{rgb}</span>
+                                </div>
+                                <div>
+                                  <span className="bk-tech-lbl">HSL</span>
+                                  <span className="bk-tech-val">
+                                    {h}°, {s}%, {l}%
+                                  </span>
+                                </div>
+                              </div>
+                              <p className="bk-card-desc">
+                                {idx === 0
+                                  ? 'Primary accent for dark theme buttons and highlights.'
+                                  : idx === 1
+                                    ? 'Dark surface / background tone for night mode layouts.'
+                                    : 'Supporting tone for charts, accents, and secondary UI.'}
+                              </p>
+                            </div>
                           </div>
-                          <input
-                            type="text"
-                            className="bk-sec-name-input"
-                            value={color.name}
-                            disabled={!canWrite}
-                            onClick={(e) => e.stopPropagation()}
-                            onChange={(e) => updateColor(actualIndex, { name: e.target.value })}
-                          />
-                          <span className="bk-sec-hex-val">{hex}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
+                        )
+                      })}
+                    </div>
+                  )}
                 </section>
               </div>
             </div>

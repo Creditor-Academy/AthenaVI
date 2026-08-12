@@ -1,24 +1,51 @@
-/** Empty Brand Kit `data` matching the backend integration shape. */
+/** Empty Brand Kit `data` matching backend BRAND_KIT handoff shape. */
 export function emptyBrandKitData() {
   return {
+    meta: {
+      tagline: '',
+      industry: null,
+      guidelineProjectId: null,
+    },
     colors: [
-      { id: 'c1', name: 'Background', hex: '#0B1220' },
-      { id: 'c2', name: 'Primary', hex: '#3B82F6' },
-      { id: 'c3', name: 'Text', hex: '#F8FAFC' },
+      { id: 'c1', name: 'Primary (Light)', hex: '#3B82F6' },
+      { id: 'c2', name: 'Background (Light)', hex: '#F8FAFC' },
+      { id: 'c3', name: 'Text (Light)', hex: '#0F172A' },
+      { id: 'c4', name: 'Background (Dark)', hex: '#0F172A' },
+      { id: 'c5', name: 'Primary (Dark)', hex: '#60A5FA' },
+      { id: 'c6', name: 'Text (Dark)', hex: '#F8FAFC' },
     ],
     colorRoles: {
-      bg: 'c1',
+      bg: 'c2',
       text: 'c3',
-      primary: 'c2',
-      secondary: 'c2',
+      primary: 'c1',
+      secondary: 'c1',
       muted: 'c3',
-      accent: 'c2',
+      bgDark: 'c4',
+      textDark: 'c6',
+      primaryDark: 'c5',
     },
     fonts: {
-      heading: { fontPairingId: null, family: null, weight: '700', size: '48px', lineHeight: '1.2' },
-      subheading: { fontPairingId: null, family: null, weight: '600', size: '20px', lineHeight: '28px' },
-      body: { fontPairingId: null, family: null, weight: '400', size: '16px', lineHeight: '24px' },
-      tertiary: { fontPairingId: null, family: null, weight: '600', size: '20px', lineHeight: '28px' },
+      heading: {
+        fontPairingId: null,
+        family: 'Outfit',
+        weight: 700,
+        sizePx: 40,
+        lineHeight: 1.2,
+      },
+      subheading: {
+        fontPairingId: null,
+        family: 'Space Grotesk',
+        weight: 600,
+        sizePx: 20,
+        lineHeight: 1.4,
+      },
+      body: {
+        fontPairingId: null,
+        family: 'Inter',
+        weight: 400,
+        sizePx: 14,
+        lineHeight: 1.6,
+      },
     },
     voice: {
       tone: '',
@@ -27,7 +54,12 @@ export function emptyBrandKitData() {
       donts: [],
       vocabulary: [],
     },
-    chartStyles: { colorIds: [] },
+    usage: {
+      logoClearSpace: '1.5x cap height',
+      logoMinSizePx: 24,
+      doNot: [],
+    },
+    chartStyles: { colorIds: ['c1', 'c5'] },
     imageStyle: '',
   }
 }
@@ -45,6 +77,181 @@ export function newColorId(existing = []) {
   return `c${i}`
 }
 
+function parseSizePx(value, fallback = 16) {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  const raw = String(value || '').trim()
+  if (!raw) return fallback
+  const n = Number.parseFloat(raw.replace(/px$/i, ''))
+  return Number.isFinite(n) ? n : fallback
+}
+
+function parseWeight(value, fallback = 400) {
+  const n = Number(value)
+  return Number.isFinite(n) ? n : fallback
+}
+
+function parseLineHeight(value, fallback = 1.4) {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  const raw = String(value || '').trim()
+  if (!raw) return fallback
+  if (raw.endsWith('px')) {
+    const px = Number.parseFloat(raw)
+    return Number.isFinite(px) ? Number((px / 16).toFixed(2)) : fallback
+  }
+  const n = Number.parseFloat(raw)
+  return Number.isFinite(n) ? n : fallback
+}
+
+/** Normalize one font role to backend-compatible fields (keeps UI-friendly aliases). */
+export function normalizeFontRole(role = {}, defaults = {}) {
+  const sizePx = parseSizePx(role.sizePx ?? role.size, defaults.sizePx ?? 16)
+  const weight = parseWeight(role.weight, defaults.weight ?? 400)
+  const lineHeight = parseLineHeight(role.lineHeight, defaults.lineHeight ?? 1.4)
+  return {
+    fontPairingId: role.fontPairingId ?? defaults.fontPairingId ?? null,
+    family: role.family || defaults.family || null,
+    weight,
+    sizePx,
+    lineHeight,
+    // UI aliases used by existing tabs
+    size: `${sizePx}px`,
+  }
+}
+
+export function normalizeBrandKitData(data = {}) {
+  const empty = emptyBrandKitData()
+  const fontsIn = data.fonts || {}
+  const colors = Array.isArray(data.colors) && data.colors.length ? data.colors : empty.colors
+  const colorRoles = reconcileColorRoles(colors, {
+    ...empty.colorRoles,
+    ...(data.colorRoles || {}),
+  })
+  return {
+    ...empty,
+    ...data,
+    meta: {
+      ...empty.meta,
+      ...(data.meta || {}),
+      tagline: data.meta?.tagline ?? data.tagline ?? '',
+    },
+    colors,
+    colorRoles,
+    fonts: {
+      heading: normalizeFontRole(fontsIn.heading, empty.fonts.heading),
+      subheading: normalizeFontRole(
+        fontsIn.subheading || fontsIn.tertiary,
+        empty.fonts.subheading
+      ),
+      body: normalizeFontRole(fontsIn.body, empty.fonts.body),
+    },
+    voice: {
+      ...empty.voice,
+      ...(data.voice || {}),
+      dos: Array.isArray(data.voice?.dos) ? data.voice.dos : [],
+      donts: Array.isArray(data.voice?.donts) ? data.voice.donts : [],
+      vocabulary: Array.isArray(data.voice?.vocabulary) ? data.voice.vocabulary : [],
+    },
+    usage: {
+      ...empty.usage,
+      ...(data.usage || {}),
+      doNot: Array.isArray(data.usage?.doNot) ? data.usage.doNot : [],
+    },
+    chartStyles: {
+      colorIds: Array.isArray(data.chartStyles?.colorIds)
+        ? data.chartStyles.colorIds.filter((id) => colors.some((c) => c.id === id))
+        : empty.chartStyles.colorIds.filter((id) => colors.some((c) => c.id === id)),
+    },
+    imageStyle: data.imageStyle || '',
+  }
+}
+
+/**
+ * Keep colorRoles pointing at real color ids.
+ * Required roles fall back to first palette entries; optional broken refs are dropped.
+ */
+export function reconcileColorRoles(colors = [], roles = {}) {
+  const ids = (colors || []).map((c) => c?.id).filter(Boolean)
+  const has = (id) => id && ids.includes(id)
+  const pick = (...candidates) => candidates.find((id) => has(id)) || ids[0] || null
+
+  const next = { ...(roles || {}) }
+  const required = {
+    primary: pick(next.primary, ids[0]),
+    bg: pick(next.bg, ids[1], ids[0]),
+    text: pick(next.text, ids[2], ids[0]),
+  }
+  Object.assign(next, required)
+
+  for (const key of ['secondary', 'muted', 'bgDark', 'textDark', 'primaryDark', 'accent']) {
+    if (next[key] && !has(next[key])) {
+      if (key === 'secondary' || key === 'muted' || key === 'accent') {
+        next[key] = pick(required.primary, required.text)
+      } else if (key === 'bgDark') {
+        next[key] = pick(ids[3], required.text, required.bg)
+      } else if (key === 'textDark') {
+        next[key] = pick(ids[5], required.bg, required.text)
+      } else if (key === 'primaryDark') {
+        next[key] = pick(ids[4], required.primary)
+      } else {
+        delete next[key]
+      }
+    }
+  }
+
+  // Drop any leftover role that still doesn't resolve
+  Object.keys(next).forEach((key) => {
+    if (next[key] && !has(next[key])) delete next[key]
+  })
+
+  return next
+}
+
+/** Payload-ready data for POST/PATCH (full object; strips UI-only aliases). */
+export function toBrandKitApiData(data) {
+  const normalized = normalizeBrandKitData(data)
+  const mapFont = (role) => ({
+    fontPairingId: role.fontPairingId || null,
+    family: role.family || null,
+    weight: parseWeight(role.weight, 400),
+    sizePx: parseSizePx(role.sizePx ?? role.size, 16),
+    lineHeight: parseLineHeight(role.lineHeight, 1.4),
+  })
+  return {
+    meta: {
+      tagline: normalized.meta?.tagline || '',
+      industry: normalized.meta?.industry ?? null,
+      guidelineProjectId: normalized.meta?.guidelineProjectId || null,
+    },
+    colors: (normalized.colors || []).map((c) => ({
+      id: c.id,
+      name: c.name,
+      hex: String(c.hex || '').trim(),
+    })),
+    colorRoles: { ...normalized.colorRoles },
+    fonts: {
+      heading: mapFont(normalized.fonts.heading),
+      subheading: mapFont(normalized.fonts.subheading),
+      body: mapFont(normalized.fonts.body),
+    },
+    voice: {
+      tone: normalized.voice?.tone || '',
+      audience: normalized.voice?.audience || '',
+      dos: normalized.voice?.dos || [],
+      donts: normalized.voice?.donts || [],
+      vocabulary: normalized.voice?.vocabulary || [],
+    },
+    usage: {
+      logoClearSpace: normalized.usage?.logoClearSpace || '1.5x cap height',
+      logoMinSizePx: Number(normalized.usage?.logoMinSizePx) || 24,
+      doNot: normalized.usage?.doNot || [],
+    },
+    chartStyles: {
+      colorIds: normalized.chartStyles?.colorIds || [],
+    },
+    imageStyle: normalized.imageStyle || '',
+  }
+}
+
 /**
  * Client-side validation before create/update.
  * Returns an error string or null if ok.
@@ -54,19 +261,21 @@ export function validateBrandKitData(data) {
   if (colors.length < 2 || colors.length > 32) {
     return 'Brand kit needs between 2 and 32 colors'
   }
+  const seen = new Set()
   for (const c of colors) {
-    if (!c?.id || !c?.name?.trim()) return 'Each color needs an id and name'
+    if (!c?.id || !String(c?.name || '').trim()) return 'Each color needs an id and name'
+    if (seen.has(c.id)) return `Duplicate color id "${c.id}"`
+    seen.add(c.id)
     if (!isValidHex(c.hex)) return `Invalid hex for "${c.name || c.id}" (use #RGB or #RRGGBB)`
   }
-  const ids = new Set(colors.map((c) => c.id))
   const roles = data?.colorRoles || {}
   for (const key of ['bg', 'text', 'primary']) {
-    if (!roles[key] || !ids.has(roles[key])) {
+    if (!roles[key] || !seen.has(roles[key])) {
       return `Color role "${key}" must reference a color in the kit`
     }
   }
-  for (const key of ['secondary', 'accent', 'muted']) {
-    if (roles[key] && !ids.has(roles[key])) {
+  for (const key of ['secondary', 'muted', 'bgDark', 'textDark', 'primaryDark', 'accent']) {
+    if (roles[key] && !seen.has(roles[key])) {
       return `Color role "${key}" must reference a color in the kit`
     }
   }
@@ -78,7 +287,7 @@ export function normalizeBrandKitList(payload) {
   const list = Array.isArray(root)
     ? root
     : root?.brandKits || root?.items || root?.kits || []
-  return (list || []).map(normalizeBrandKitSummary)
+  return (list || []).map(normalizeBrandKitSummary).filter(Boolean)
 }
 
 export function normalizeBrandKitSummary(kit) {
@@ -89,38 +298,50 @@ export function normalizeBrandKitSummary(kit) {
     isDefault: Boolean(kit.isDefault),
     mediaCount: kit.mediaCount ?? kit.media?.length ?? 0,
     updatedAt: kit.updatedAt || kit.updated_at || kit.editedAt || null,
-    data: kit.data || null,
-    media: kit.media || [],
+    data: kit.data ? normalizeBrandKitData(kit.data) : null,
+    media: Array.isArray(kit.media) ? kit.media : [],
   }
 }
 
 export function normalizeBrandKitDetail(payload) {
   const root = payload?.data ?? payload
   const kit = root?.brandKit || root?.kit || root
-  if (!kit) return null
+  if (!kit || (!kit.id && !kit._id && !kit.name && !kit.data)) return null
   const summary = normalizeBrandKitSummary(kit)
   return {
     ...summary,
-    data: {
-      ...emptyBrandKitData(),
-      ...(kit.data || {}),
-      colorRoles: {
-        ...emptyBrandKitData().colorRoles,
-        ...(kit.data?.colorRoles || {}),
-      },
-      fonts: {
-        ...emptyBrandKitData().fonts,
-        ...(kit.data?.fonts || {}),
-      },
-      voice: {
-        ...emptyBrandKitData().voice,
-        ...(kit.data?.voice || {}),
-      },
-      chartStyles: {
-        colorIds: kit.data?.chartStyles?.colorIds || [],
-      },
-    },
+    data: normalizeBrandKitData(kit.data || {}),
     media: Array.isArray(kit.media) ? kit.media : [],
+  }
+}
+
+export function normalizeHealth(payload) {
+  const root = payload?.data ?? payload
+  const health = root?.health || root
+  if (!health || typeof health !== 'object') {
+    return {
+      score: 0,
+      label: 'Needs work',
+      checks: [],
+      missing: [],
+      guidelineProjectId: null,
+    }
+  }
+  const score = Number(health.score) || 0
+  return {
+    score,
+    label:
+      health.label ||
+      (score >= 90
+        ? 'Excellent Consistency'
+        : score >= 75
+          ? 'Good Consistency'
+          : score >= 50
+            ? 'Fair Consistency'
+            : 'Needs work'),
+    checks: Array.isArray(health.checks) ? health.checks : [],
+    missing: Array.isArray(health.missing) ? health.missing : [],
+    guidelineProjectId: health.guidelineProjectId || null,
   }
 }
 
@@ -149,6 +370,8 @@ export const LOGO_ROLES = [
   'primary',
   'secondary',
   'icon',
+  'light',
+  'dark',
   'light-mode',
   'dark-mode',
   'with-name-below',
@@ -156,4 +379,5 @@ export const LOGO_ROLES = [
   'black',
   'white',
 ]
+
 export const MEDIA_KINDS = ['logo', 'photo', 'graphic']

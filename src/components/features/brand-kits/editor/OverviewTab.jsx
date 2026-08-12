@@ -1,5 +1,39 @@
-import { MdArrowForward, MdAdd, MdCheck, MdContentCopy } from 'react-icons/md'
+import { MdArrowForward, MdAdd, MdCheck, MdContentCopy, MdAutoAwesome } from 'react-icons/md'
 import { formatFontWeightLabel, getFontRole } from '../utils/brandKitUtils'
+
+function contrastInk(hex) {
+  const raw = String(hex || '#000000').replace('#', '')
+  const full =
+    raw.length === 3
+      ? raw
+          .split('')
+          .map((c) => c + c)
+          .join('')
+      : raw
+  const num = Number.parseInt(full, 16)
+  if (!Number.isFinite(num)) return '#0f172a'
+  const r = (num >> 16) & 255
+  const g = (num >> 8) & 255
+  const b = num & 255
+  const luma = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return luma > 0.62 ? '#0f172a' : '#ffffff'
+}
+
+function missingLabel(id) {
+  return String(id || '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+function missingTab(id) {
+  if (id === 'logo_variants' || id === 'logos' || id === 'logo') return 'logos'
+  if (id === 'photos' || id === 'graphics' || id === 'imagery') return 'imagery'
+  if (id === 'fonts' || id === 'typography') return 'typography'
+  if (id === 'guidelines' || id === 'guideline') return 'guideline'
+  if (id === 'colors' || id === 'palette') return 'identity'
+  if (id === 'voice') return 'overview'
+  return null
+}
 
 export default function OverviewTab(props) {
   const {
@@ -9,197 +43,402 @@ export default function OverviewTab(props) {
     setEditorTab,
     copiedHex,
     handleCopyHex,
-    updateColor,
-    addColor,
-    removeColor,
-    primaryColors,
-    secondaryColors,
-    colorsList,
     triggerUpload,
-    handleDeleteMedia,
     mediaByKind,
-    uploading,
-    generatingRole,
     generating,
-    generateLogoVariants,
-    triggerAutoGenerateTypography,
-    updateFontRole,
-    downloadBrandGuidelinePdf,
-    generatingGuideline,
-    activeSlideIndex,
-    setActiveSlideIndex,
-    slideViewMode,
-    setSlideViewMode,
     kitName,
-    kitMedia,
     logoPreviewUrl,
+    kitHealth,
+    slogan,
+    setSlogan,
+    triggerSuggestVoice,
   } = props
 
+  const missing = Array.isArray(kitHealth?.missing) ? kitHealth.missing : []
+  const heading = getFontRole(kitData.fonts, 'heading')
+  const subheading = getFontRole(kitData.fonts, 'subheading')
+  const body = getFontRole(kitData.fonts, 'body')
+  const colors = (kitData.colors || []).slice(0, 6)
+  const primaryFamily = heading.family || 'Outfit'
+  const primaryHex = colors[0]?.hex || '#3B82F6'
+  const logos = mediaByKind('logo')
+  const primaryLogo = logos[0]
+  const logoSrc = primaryLogo?.url || primaryLogo?.src || primaryLogo?.presignedUrl || logoPreviewUrl
+  const healthScore = Math.max(0, Math.min(100, Number(kitHealth?.score) || 0))
+  const displayName = kitName?.trim() || 'Brand Kit'
+  const displayTagline = slogan?.trim() || kitData.meta?.tagline || ''
+  const ringLen = 2 * Math.PI * 14
+
   return (
-            <div className="editor-tab-content">
-              <div className="bk-bento-grid">
-                {/* Brand Health Card (Span 4) */}
-                <div className="bk-bento-card col-4">
-                  <div className="bk-bento-card-head">
-                    <h3 className="bk-bento-card-title">Brand Health</h3>
-                    <button
-                      type="button"
-                      className="bk-circle-arrow-btn"
-                      onClick={() => setEditorTab('guideline')}
-                      title="View Guideline"
-                    >
-                      <MdArrowForward size={16} />
-                    </button>
-                  </div>
-                  <div className="bk-bento-health-body">
-                    <div className="bk-health-ring-box">
-                      <svg className="bk-health-svg" viewBox="0 0 100 100">
-                        <circle className="bk-ring-bg" cx="50" cy="50" r="42" strokeWidth="8" />
-                        <circle
-                          className="bk-ring-val"
-                          cx="50"
-                          cy="50"
-                          r="42"
-                          strokeWidth="8"
-                          strokeDasharray="264"
-                          strokeDashoffset="21"
-                        />
-                      </svg>
-                      <span className="bk-health-num">92<small>%</small></span>
-                    </div>
-                    <div className="bk-health-info">
-                      <span className="bk-health-status">Excellent Consistency</span>
-                      <span className="bk-health-desc">Across 1,204 active generative assets this month.</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Primary Marks Card (Span 8) */}
-                <div className="bk-bento-card col-8 bk-bento-logo-hero">
-                  <div className="bk-bento-logo-left">
-                    <div>
-                      <h3 className="bk-bento-card-title">Primary Marks</h3>
-                      <p className="bk-bento-desc">
-                        The core visual identifier for the brand. Requires minimum clear space of 1.5x cap height.
-                      </p>
-                    </div>
-                    <div className="bk-logo-formats">
-                      <span className="bk-formats-label">FORMATS</span>
-                      <div className="bk-formats-pills">
-                        <span className="bk-format-chip">SVG</span>
-                        <span className="bk-format-chip">PNG</span>
-                        <span className="bk-format-chip">WEBP</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bk-bento-logo-right">
-                    <div className="bk-bento-logo-canvas">
-                      {mediaByKind('logo').length > 0 ? (
-                        <img
-                          src={mediaByKind('logo')[0].url || mediaByKind('logo')[0].src}
-                          alt="Primary Brand Logo"
-                          className="bk-bento-logo-img"
-                        />
-                      ) : logoPreviewUrl ? (
-                        <img src={logoPreviewUrl} alt="Primary Brand Logo" className="bk-bento-logo-img" />
-                      ) : (
-                        <button
-                          type="button"
-                          className="bk-logo-upload-placeholder"
-                          disabled={!canWrite}
-                          onClick={() => triggerUpload('logo')}
-                        >
-                          <MdAdd size={32} color="var(--bk-accent)" />
-                          <span>Upload Primary Mark</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Core Palette Card (Span 7) */}
-                <div className="bk-bento-card col-7">
-                  <div className="bk-bento-card-head">
-                    <h3 className="bk-bento-card-title">Core Palette</h3>
-                    <span className="bk-bento-tag">HEX / RGB / HSL</span>
-                  </div>
-                  <div className="bk-bento-swatch-grid">
-                    {(kitData.colors || []).slice(0, 4).map((c, i) => (
-                      <div
-                        key={c.id || i}
-                        className="bk-bento-swatch-item"
-                        onClick={() => handleCopyHex(c.hex)}
-                        title="Click to copy HEX"
-                      >
-                        <div className="bk-bento-swatch-box" style={{ background: c.hex }}>
-                          <span className="bk-bento-copy-icon">
-                            {copiedHex === c.hex ? <MdCheck size={14} /> : <MdContentCopy size={14} />}
-                          </span>
-                        </div>
-                        <span className="bk-bento-swatch-name">{c.name}</span>
-                        <span className="bk-bento-swatch-hex">{c.hex}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Typography Card (Span 5) */}
-                <div
-                  className="bk-bento-card col-5 bk-bento-type-card"
-                  onClick={() => setEditorTab('typography')}
-                  style={{ cursor: 'pointer' }}
-                  title="Click to view full Typography System"
-                >
-                  <div className="bk-bento-card-head">
-                    <h3 className="bk-bento-card-title">Typography</h3>
-                  </div>
-                  <div className="bk-bento-type-rows">
-                    <div className="bk-bento-type-item">
-                      <span className="bk-type-role">HEADINGS</span>
-                      <div className="bk-type-val-row">
-                        <span
-                          className="bk-type-font-name"
-                          style={{ fontFamily: getFontRole(kitData.fonts, 'heading').family }}
-                        >
-                          {getFontRole(kitData.fonts, 'heading').family}
-                        </span>
-                        <span className="bk-type-weights">
-                          {formatFontWeightLabel(getFontRole(kitData.fonts, 'heading').weight)} · {getFontRole(kitData.fonts, 'heading').size} · LH {getFontRole(kitData.fonts, 'heading').lineHeight}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="bk-bento-type-item">
-                      <span className="bk-type-role">SUB HEADINGS</span>
-                      <div className="bk-type-val-row">
-                        <span
-                          className="bk-type-font-name"
-                          style={{ fontFamily: getFontRole(kitData.fonts, 'subheading').family }}
-                        >
-                          {getFontRole(kitData.fonts, 'subheading').family}
-                        </span>
-                        <span className="bk-type-weights">
-                          {formatFontWeightLabel(getFontRole(kitData.fonts, 'subheading').weight)} · {getFontRole(kitData.fonts, 'subheading').size} · LH {getFontRole(kitData.fonts, 'subheading').lineHeight}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="bk-bento-type-item">
-                      <span className="bk-type-role">BODY & UI</span>
-                      <div className="bk-type-val-row">
-                        <span
-                          className="bk-type-font-name"
-                          style={{ fontFamily: getFontRole(kitData.fonts, 'body').family }}
-                        >
-                          {getFontRole(kitData.fonts, 'body').family}
-                        </span>
-                        <span className="bk-type-weights">
-                          {formatFontWeightLabel(getFontRole(kitData.fonts, 'body').weight)} · {getFontRole(kitData.fonts, 'body').size} · LH {getFontRole(kitData.fonts, 'body').lineHeight}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bk-bento-watermark">Aa</div>
-                </div>
+    <div className="editor-tab-content bk-ov">
+      <div
+        className="bk-ov-board"
+        style={{ '--bk-ov-accent': primaryHex }}
+      >
+        <section className="bk-ov-hero" aria-label="Brand overview">
+          <header className="bk-ov-hero-head">
+            <div className="bk-ov-brand">
+              <div className="bk-ov-logo-wrap">
+                {logoSrc ? (
+                  <img src={logoSrc} alt="" className="bk-ov-logo" />
+                ) : (
+                  <span className="bk-ov-logo-fallback" aria-hidden>
+                    {(displayName[0] || 'B').toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <div className="bk-ov-brand-text">
+                <p className="bk-ov-kicker">Typography &amp; Colors</p>
+                <h3 className="bk-ov-name">{displayName}</h3>
+                {displayTagline ? <p className="bk-ov-tagline">{displayTagline}</p> : null}
               </div>
             </div>
+
+            <div className="bk-ov-health" title={kitHealth?.label || 'Brand health'}>
+              <div className="bk-ov-health-ring" aria-hidden>
+                <svg viewBox="0 0 36 36">
+                  <circle className="bk-ov-ring-bg" cx="18" cy="18" r="14" />
+                  <circle
+                    className="bk-ov-ring-val"
+                    cx="18"
+                    cy="18"
+                    r="14"
+                    strokeDasharray={`${(healthScore / 100) * ringLen} ${ringLen}`}
+                  />
+                </svg>
+                <span>{healthScore}</span>
+              </div>
+              <div className="bk-ov-health-copy">
+                <strong>{kitHealth?.label || 'Needs work'}</strong>
+                <span className="bk-ov-health-sub">
+                  {missing.length
+                    ? `${missing.length} item${missing.length === 1 ? '' : 's'} to complete`
+                    : 'Kit looks solid'}
+                </span>
+                <button type="button" onClick={() => setEditorTab('guideline')}>
+                  Open guidelines <MdArrowForward size={14} />
+                </button>
+              </div>
+            </div>
+          </header>
+
+          <div className="bk-ov-hero-stage">
+            <div
+              className="bk-ov-hero-type"
+              style={{ fontFamily: primaryFamily, color: primaryHex }}
+            >
+              <span className="bk-ov-family">{primaryFamily}</span>
+              <span className="bk-ov-aa" aria-hidden>
+                Aa
+              </span>
+            </div>
+
+            <div className="bk-ov-scale" role="list">
+              <button
+                type="button"
+                className="bk-ov-scale-item"
+                role="listitem"
+                onClick={() => setEditorTab('typography')}
+              >
+                <span className="bk-ov-scale-meta">
+                  H1 · {heading.size} · {formatFontWeightLabel(heading.weight)}
+                </span>
+                <p
+                  className="bk-ov-scale-h1"
+                  style={{
+                    fontFamily: heading.family,
+                    fontWeight: heading.weight,
+                    lineHeight: heading.lineHeight,
+                  }}
+                >
+                  {displayName}
+                </p>
+              </button>
+              <button
+                type="button"
+                className="bk-ov-scale-item"
+                role="listitem"
+                onClick={() => setEditorTab('typography')}
+              >
+                <span className="bk-ov-scale-meta">
+                  H2 · {subheading.size} · {formatFontWeightLabel(subheading.weight)}
+                </span>
+                <p
+                  className="bk-ov-scale-h2"
+                  style={{
+                    fontFamily: subheading.family,
+                    fontWeight: subheading.weight,
+                    lineHeight: subheading.lineHeight,
+                  }}
+                >
+                  {displayTagline || 'Supporting headline'}
+                </p>
+              </button>
+              <button
+                type="button"
+                className="bk-ov-scale-item"
+                role="listitem"
+                onClick={() => setEditorTab('typography')}
+              >
+                <span className="bk-ov-scale-meta">
+                  Body · {body.size} · {formatFontWeightLabel(body.weight)}
+                </span>
+                <p
+                  className="bk-ov-scale-body"
+                  style={{
+                    fontFamily: body.family,
+                    fontWeight: body.weight,
+                    lineHeight: body.lineHeight,
+                  }}
+                >
+                  {kitData.voice?.tone
+                    ? `Voice: ${kitData.voice.tone}`
+                    : 'Body copy stays clear across decks and product UI.'}
+                </p>
+              </button>
+            </div>
+          </div>
+
+          {missing.length > 0 && (
+            <div className="bk-ov-missing">
+              <span className="bk-ov-missing-label">Finish your kit</span>
+              <div className="bk-ov-missing-chips">
+                {missing.map((id) => {
+                  const tab = missingTab(id)
+                  if (!tab) return null
+                  return (
+                    <button key={id} type="button" onClick={() => setEditorTab(tab)}>
+                      {missingLabel(id)}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        </section>
+
+        <aside className="bk-ov-colors" aria-label="Color palette">
+          <div className="bk-ov-panel-head">
+            <div>
+              <h4>Palette</h4>
+              <p>{colors.length || 0} colors</p>
+            </div>
+            <button type="button" className="bk-ov-link-btn" onClick={() => setEditorTab('identity')}>
+              Edit <MdArrowForward size={14} />
+            </button>
+          </div>
+
+          <div className="bk-ov-color-stack">
+            {(colors.length
+              ? colors
+              : [{ id: 'empty', name: 'Add colors', hex: '#E2E8F0' }]
+            ).map((color, index) => {
+              const hex = color.hex || '#94A3B8'
+              const ink = contrastInk(hex)
+              const sizes = ['lg', 'md', 'md', 'sm', 'sm', 'sm']
+              const sizeClass = sizes[Math.min(index, sizes.length - 1)]
+              const isLight = ink === '#0f172a'
+              const empty = color.id === 'empty'
+              return (
+                <button
+                  type="button"
+                  key={color.id || `${hex}-${index}`}
+                  className={`bk-ov-swatch bk-ov-swatch--${sizeClass}${isLight ? ' is-light' : ''}`}
+                  style={{ background: hex, color: ink }}
+                  onClick={() => {
+                    if (empty) {
+                      setEditorTab('identity')
+                      return
+                    }
+                    handleCopyHex(hex)
+                  }}
+                  title={empty ? 'Add colors' : 'Click to copy HEX'}
+                >
+                  <span className="bk-ov-swatch-name">{color.name || `Color ${index + 1}`}</span>
+                  <span className="bk-ov-swatch-hex-row">
+                    <span>{hex}</span>
+                    {!empty &&
+                      (copiedHex === hex ? <MdCheck size={14} /> : <MdContentCopy size={14} />)}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </aside>
+
+        <section className="bk-ov-logo-card">
+          <div className="bk-ov-panel-head">
+            <div>
+              <h4>Logo Marks</h4>
+              <p>Variants for decks, light, and dark surfaces</p>
+            </div>
+            <button type="button" className="bk-ov-link-btn" onClick={() => setEditorTab('logos')}>
+              Logos <MdArrowForward size={14} />
+            </button>
+          </div>
+
+          {(() => {
+            const logoItems = (logos || [])
+              .map((item, index) => ({
+                id: item.id || item._id || `logo-${index}`,
+                src: item.url || item.src || item.presignedUrl || '',
+                role: item.role || item.name || 'Logo',
+                dark:
+                  ['dark', 'dark-mode', 'white', 'black'].includes(
+                    String(item.role || '').toLowerCase()
+                  ),
+              }))
+              .filter((item) => item.src)
+
+            if (!logoItems.length && logoPreviewUrl) {
+              logoItems.push({
+                id: 'preview-primary',
+                src: logoPreviewUrl,
+                role: 'primary',
+                dark: false,
+              })
+            }
+
+            const maxVisible = 4
+            const showMore = logoItems.length > maxVisible
+            const visible = showMore ? logoItems.slice(0, maxVisible - 1) : logoItems.slice(0, maxVisible)
+            const moreCount = showMore ? logoItems.length - visible.length : 0
+
+            if (!logoItems.length) {
+              return (
+                <div className="bk-ov-logo-grid bk-ov-logo-grid--empty">
+                  <button
+                    type="button"
+                    className="bk-ov-logo-tile bk-ov-logo-tile--add"
+                    disabled={!canWrite}
+                    onClick={() => triggerUpload('logo', 'primary')}
+                  >
+                    <MdAdd size={24} />
+                    <span>Upload logo</span>
+                  </button>
+                </div>
+              )
+            }
+
+            return (
+              <div className="bk-ov-logo-grid">
+                {visible.map((item) => (
+                  <button
+                    type="button"
+                    key={item.id}
+                    className={`bk-ov-logo-tile${item.dark ? ' is-dark' : ''}`}
+                    onClick={() => setEditorTab('logos')}
+                    title={item.role}
+                  >
+                    <img src={item.src} alt={item.role} />
+                    <span className="bk-ov-logo-tile-role">{item.role}</span>
+                  </button>
+                ))}
+                {showMore ? (
+                  <button
+                    type="button"
+                    className="bk-ov-logo-tile bk-ov-logo-tile--more"
+                    onClick={() => setEditorTab('logos')}
+                    title={`View ${moreCount} more logos`}
+                  >
+                    <strong>+{moreCount}</strong>
+                    <span>more</span>
+                  </button>
+                ) : canWrite && logoItems.length < maxVisible ? (
+                  <button
+                    type="button"
+                    className="bk-ov-logo-tile bk-ov-logo-tile--add"
+                    onClick={() => triggerUpload('logo', 'primary')}
+                  >
+                    <MdAdd size={22} />
+                    <span>Add</span>
+                  </button>
+                ) : null}
+              </div>
+            )
+          })()}
+        </section>
+
+        <section className="bk-ov-voice-card">
+          <div className="bk-ov-panel-head">
+            <div>
+              <h4>Brand Voice</h4>
+              <p>Used in AI prompts and guideline decks</p>
+            </div>
+            {canWrite && (
+              <button
+                type="button"
+                className={`bk-extract-btn bk-ov-suggest-btn ${generating ? 'generating' : ''}`}
+                onClick={triggerSuggestVoice}
+                disabled={generating || !kitName?.trim()}
+              >
+                <MdAutoAwesome size={16} />
+                {generating ? 'Suggesting…' : 'Suggest'}
+              </button>
+            )}
+          </div>
+
+          <div className="bk-ov-voice-fields">
+            <label className="bk-ov-field">
+              <span>Tagline</span>
+              <input
+                type="text"
+                value={slogan ?? kitData.meta?.tagline ?? ''}
+                disabled={!canWrite}
+                onChange={(e) => {
+                  setSlogan?.(e.target.value)
+                  setKitData((prev) => ({
+                    ...prev,
+                    meta: { ...prev.meta, tagline: e.target.value },
+                  }))
+                }}
+                placeholder="Empowering Executive Decks"
+              />
+            </label>
+            <div className="bk-ov-voice-split">
+              <label className="bk-ov-field">
+                <span>Tone</span>
+                <input
+                  type="text"
+                  value={kitData.voice?.tone || ''}
+                  disabled={!canWrite}
+                  onChange={(e) =>
+                    setKitData((prev) => ({
+                      ...prev,
+                      voice: { ...prev.voice, tone: e.target.value },
+                    }))
+                  }
+                  placeholder="Professional, confident"
+                />
+              </label>
+              <label className="bk-ov-field">
+                <span>Audience</span>
+                <input
+                  type="text"
+                  value={kitData.voice?.audience || ''}
+                  disabled={!canWrite}
+                  onChange={(e) =>
+                    setKitData((prev) => ({
+                      ...prev,
+                      voice: { ...prev.voice, audience: e.target.value },
+                    }))
+                  }
+                  placeholder="Enterprise buyers"
+                />
+              </label>
+            </div>
+            {kitData.imageStyle ? (
+              <div className="bk-ov-image-style">
+                <span>Image style</span>
+                <p>{kitData.imageStyle}</p>
+                <button type="button" onClick={() => setEditorTab('imagery')}>
+                  Imagery <MdArrowForward size={14} />
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </section>
+      </div>
+    </div>
   )
 }

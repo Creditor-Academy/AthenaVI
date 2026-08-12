@@ -1,20 +1,23 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import brandKitService, { BrandKitPermissionError } from '../../services/brandKitService'
+import { InsufficientCreditsError } from '../../services/creditsService'
+import presentationService from '../../services/presentationService'
 import { resolvePresentationWorkspaceContext } from '../../utils/presentationContext'
 import {
   canWriteBrandKits,
   emptyBrandKitData,
   newColorId,
+  normalizeBrandKitData,
+  reconcileColorRoles,
   validateBrandKitData,
 } from '../../utils/brandKitHelpers'
 import {
-  extract4ColorsFromImage,
   ensureGoogleFontLoaded,
   formatFontWeightLabel,
   getFontRole,
   resolveRoleHex,
 } from '../../components/features/brand-kits/utils/brandKitUtils'
-import { FONT_PAIRINGS, FONT_ROLE_DEFAULTS } from '../../components/features/brand-kits/utils/brandKitConstants'
+import { FONT_ROLE_DEFAULTS } from '../../components/features/brand-kits/utils/brandKitConstants'
 import { downloadBrandGuidelinePdf as generateGuidelinePdf } from '../../components/features/brand-kits/utils/downloadBrandGuidelinePdf'
 import BrandKitsListView from '../../components/features/brand-kits/BrandKitsListView'
 import BrandKitWizard from '../../components/features/brand-kits/BrandKitWizard'
@@ -42,7 +45,6 @@ function BrandKits() {
   const [slogan, setSlogan] = useState('')
   const [logoFile, setLogoFile] = useState(null)
   const [logoPreviewUrl, setLogoPreviewUrl] = useState(null)
-  const [pairingIndex, setPairingIndex] = useState(0)
   const [editorTab, setEditorTab] = useState('overview')
   const [editingKitId, setEditingKitId] = useState(null)
   const [kitName, setKitName] = useState('')
@@ -53,28 +55,112 @@ function BrandKits() {
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
-  const [logoRole, setLogoRole] = useState('primary')
   const [copiedHex, setCopiedHex] = useState(null)
   const [generating, setGenerating] = useState(false)
   const [generatingRole, setGeneratingRole] = useState(null)
   const [activeSlideIndex, setActiveSlideIndex] = useState(0)
   const [slideViewMode, setSlideViewMode] = useState('deck')
   const [generatingGuideline, setGeneratingGuideline] = useState(false)
+  const [kitHealth, setKitHealth] = useState(null)
+  const [guidelineLink, setGuidelineLink] = useState(null)
+  const [folderId, setFolderId] = useState(null)
   const menuRefs = useRef({})
   const fileInputRef = useRef(null)
   const wizardLogoInputRef = useRef(null)
   const pendingUploadKind = useRef('logo')
+  const pendingUploadRole = useRef('primary')
 
   const canWrite = canWriteBrandKits(workspaceRole)
 
+  const handleApiError = useCallback((err, fallback) => {
+    if (err instanceof BrandKitPermissionError) {
+      setError('Only workspace owners and admins can edit brand kits')
+      return
+    }
+    if (err instanceof InsufficientCreditsError) {
+      setError(err.message || 'Insufficient credits for this brand kit action')
+      return
+    }
+    setError(err?.message || fallback || 'Brand kit request failed')
+  }, [])
+
+  const refreshHealth = useCallback(
+    async (wsId, kitId) => {
+      if (!wsId || !kitId) {
+        setKitHealth(null)
+        return
+      }
+      try {
+        const health = await brandKitService.getHealth(wsId, kitId)
+        setKitHealth(health)
+      } catch {
+        setKitHealth(null)
+      }
+    },
+    []
+  )
+
+  const refreshGuidelines = useCallback(async (wsId, kitId) => {
+    if (!wsId || !kitId) {
+      setGuidelineLink(null)
+      return
+    }
+    try {
+      const link = await brandKitService.getGuidelines(wsId, kitId)
+      setGuidelineLink(link)
+    } catch {
+      setGuidelineLink(null)
+    }
+  }, [])
+
   const downloadBrandGuidelinePdf = useCallback(async () => {
+    const presentationId =
+      guidelineLink?.presentationId ||
+      kitHealth?.guidelineProjectId ||
+      kitData?.meta?.guidelineProjectId ||
+      null
+
+    if (workspaceId && presentationId) {
+      setGeneratingGuideline(true)
+      setError('')
+      try {
+        const started = await presentationService.startExport(workspaceId, presentationId, {
+          format: 'PDF',
+        })
+        const exportId =
+          started?.exportId || started?.id || started?.export?.id || started?._id
+        if (!exportId) throw new Error('Export started but no export id was returned')
+        const ready = await presentationService.pollExportUntilReady(
+          workspaceId,
+          presentationId,
+          exportId
+        )
+        const url = ready?.presignedUrl || ready?.url || ready?.downloadUrl
+        if (!url) throw new Error('Export finished but no download link was returned')
+        window.open(url, '_blank', 'noopener,noreferrer')
+        return
+      } catch (err) {
+        handleApiError(err, 'Failed to export brand guideline deck')
+        // Fall through to local PDF snapshot
+      } finally {
+        setGeneratingGuideline(false)
+      }
+    }
+
     await generateGuidelinePdf({
       kitName,
       kitData,
       setGeneratingGuideline,
       setError,
     })
-  }, [kitName, kitData])
+  }, [
+    guidelineLink,
+    kitHealth,
+    kitData,
+    kitName,
+    workspaceId,
+    handleApiError,
+  ])
 
   const setMenuRef = useCallback((id, el) => {
     menuRefs.current[id] = el
@@ -107,6 +193,7 @@ function BrandKits() {
         if (cancelled) return
         setWorkspaceId(ctx.workspaceId)
         setWorkspaceRole(ctx.workspace?.role || 'MEMBER')
+        setFolderId(ctx.folderId || null)
         await loadKits(ctx.workspaceId)
       } catch (err) {
         if (!cancelled) setError(err.message || 'Failed to load brand kits')
@@ -140,6 +227,8 @@ function BrandKits() {
     setLogoPreviewUrl(null)
     setKitData(emptyBrandKitData())
     setKitMedia([])
+    setKitHealth(null)
+    setGuidelineLink(null)
     setIsDefault(brandKits.length === 0)
     setError('')
     setIsWizardMode(true)
@@ -159,19 +248,32 @@ function BrandKits() {
     setKitName(kit.name)
     try {
       const detail = await brandKitService.get(workspaceId, kit.id)
+      const data = detail.data || emptyBrandKitData()
       setKitName(detail.name)
-      setKitData(detail.data || emptyBrandKitData())
+      setKitData(data)
+      setSlogan(data.meta?.tagline || '')
       setKitMedia(detail.media || [])
       setIsDefault(Boolean(detail.isDefault))
+      await Promise.all([
+        refreshHealth(workspaceId, kit.id),
+        refreshGuidelines(workspaceId, kit.id),
+      ])
     } catch (err) {
-      setError(err.message || 'Failed to load brand kit')
+      handleApiError(err, 'Failed to load brand kit')
     }
   }
 
   const handleSave = async (redirect = true) => {
     if (!workspaceId || !canWrite) return null
     const finalName = kitName.trim() || 'My Brand Kit'
-    const validationError = validateBrandKitData(kitData)
+    const dataWithMeta = normalizeBrandKitData({
+      ...kitData,
+      meta: {
+        ...(kitData.meta || {}),
+        tagline: slogan || kitData.meta?.tagline || '',
+      },
+    })
+    const validationError = validateBrandKitData(dataWithMeta)
     if (validationError) {
       setError(validationError)
       return null
@@ -183,7 +285,7 @@ function BrandKits() {
       if (editingKitId) {
         await brandKitService.update(workspaceId, editingKitId, {
           name: finalName,
-          data: kitData,
+          data: dataWithMeta,
           isDefault,
         })
         if (isDefault) {
@@ -197,7 +299,7 @@ function BrandKits() {
         const created = await brandKitService.create(workspaceId, {
           name: finalName,
           isDefault,
-          data: kitData,
+          data: dataWithMeta,
         })
         targetKitId = created.id
         setEditingKitId(created.id)
@@ -215,28 +317,30 @@ function BrandKits() {
           await brandKitService.uploadMedia(workspaceId, targetKitId, {
             file: logoFile,
             kind: 'logo',
-            role: 'main',
+            role: 'primary',
             name: logoFile.name || 'Primary Logo',
           })
           const detail = await brandKitService.get(workspaceId, targetKitId)
           setKitMedia(detail.media || [])
-        } catch {
-          // ignore logo upload error
+          setKitData(detail.data || dataWithMeta)
+        } catch (uploadErr) {
+          handleApiError(uploadErr, 'Logo upload failed after save')
         }
+      } else {
+        setKitData(dataWithMeta)
       }
 
       await loadKits(workspaceId)
+      if (targetKitId) {
+        await refreshHealth(workspaceId, targetKitId)
+      }
       if (redirect) {
         setIsWizardMode(false)
         setEditorTab('overview')
       }
       return targetKitId
     } catch (err) {
-      setError(
-        err instanceof BrandKitPermissionError
-          ? 'Only workspace owners and admins can edit brand kits'
-          : err.message || 'Failed to save brand kit'
-      )
+      handleApiError(err, 'Failed to save brand kit')
       return null
     } finally {
       setSaving(false)
@@ -299,13 +403,25 @@ function BrandKits() {
 
   const updateFontRole = (role, patch) => {
     setKitData((prev) => {
-      const nextRole = { ...prev.fonts?.[role], ...patch }
+      const nextPatch = { ...patch }
+      if (nextPatch.size != null && nextPatch.sizePx == null) {
+        const n = Number.parseFloat(String(nextPatch.size).replace(/px$/i, ''))
+        if (Number.isFinite(n)) nextPatch.sizePx = n
+      }
+      if (nextPatch.sizePx != null && nextPatch.size == null) {
+        nextPatch.size = `${nextPatch.sizePx}px`
+      }
+      if (nextPatch.weight != null) {
+        const w = Number(nextPatch.weight)
+        if (Number.isFinite(w)) nextPatch.weight = w
+      }
+      const nextRole = { ...prev.fonts?.[role], ...nextPatch }
       const fonts = {
         ...prev.fonts,
         [role]: nextRole,
       }
       if (role === 'subheading') {
-        fonts.tertiary = { ...prev.fonts?.tertiary, ...patch }
+        fonts.tertiary = { ...prev.fonts?.tertiary, ...nextPatch }
       }
       return { ...prev, fonts }
     })
@@ -329,15 +445,10 @@ function BrandKits() {
       if (colors.length <= 2) return prev
       const removed = colors[index]
       colors.splice(index, 1)
-      const roles = { ...prev.colorRoles }
-      const fallback = colors[0]?.id
-      Object.keys(roles).forEach((key) => {
-        if (roles[key] === removed.id) roles[key] = fallback
-      })
       return {
         ...prev,
         colors,
-        colorRoles: roles,
+        colorRoles: reconcileColorRoles(colors, prev.colorRoles),
         chartStyles: {
           colorIds: (prev.chartStyles?.colorIds || []).filter((id) => id !== removed.id),
         },
@@ -352,67 +463,143 @@ function BrandKits() {
     setLogoPreviewUrl(previewUrl)
   }
 
-  const triggerGenerateFromLogo = () => {
-    if (!logoPreviewUrl) {
-      setError('Please upload a brand logo in Step 1 first to generate colors.')
+  const triggerGenerateFromLogo = async () => {
+    if (!workspaceId) {
+      setError('Workspace is required to suggest colors.')
       return
     }
-    extract4ColorsFromImage(logoPreviewUrl, (fourExtracted) => {
-      const newColors = fourExtracted.map((item, i) => ({
-        id: `c_logo_${Date.now()}_${i}`,
-        name: item.name,
-        hex: item.hex,
-      }))
-      const roles = {
-        primary: newColors[0]?.id,
-        bg: newColors[1]?.id,
-        accent: newColors[2]?.id,
-        text: newColors[3]?.id,
+    if (!logoFile && !logoPreviewUrl && !editingKitId) {
+      setError('Please upload a brand logo first to generate colors.')
+      return
+    }
+
+    setGenerating(true)
+    setError('')
+    try {
+      const primaryLogo = (kitMedia || []).find(
+        (m) =>
+          String(m.kind || '').toLowerCase() === 'logo' &&
+          ['primary', 'main', ''].includes(String(m.role || ''))
+      )
+      const suggestion = await brandKitService.suggestColors(workspaceId, {
+        file: logoFile || undefined,
+        tone: kitData.voice?.tone || undefined,
+        tagline: slogan || kitData.meta?.tagline || undefined,
+        brandKitId: editingKitId || undefined,
+        mediaId: !logoFile && primaryLogo ? primaryLogo.id || primaryLogo._id : undefined,
+      })
+
+      const colors = Array.isArray(suggestion?.colors) ? suggestion.colors : []
+      if (!colors.length) {
+        throw new Error('No color suggestion returned')
       }
-      setKitData((prev) => ({
-        ...prev,
-        colors: newColors,
-        colorRoles: roles,
-      }))
-    })
+
+      setKitData((prev) =>
+        normalizeBrandKitData({
+          ...prev,
+          colors,
+          colorRoles: {
+            ...prev.colorRoles,
+            ...(suggestion.colorRoles || {}),
+          },
+        })
+      )
+    } catch (err) {
+      handleApiError(err, 'Failed to suggest colors')
+    } finally {
+      setGenerating(false)
+    }
   }
 
-  const triggerAutoGenerateTypography = () => {
-    const nextIdx = (pairingIndex + 1) % FONT_PAIRINGS.length
-    setPairingIndex(nextIdx)
-    const pair = FONT_PAIRINGS[nextIdx]
-    setKitData((prev) => ({
-      ...prev,
-      fonts: {
-        heading: {
-          ...FONT_ROLE_DEFAULTS.heading,
-          ...prev.fonts?.heading,
-          family: pair.heading,
-          fontPairingId: pair.id,
-        },
-        subheading: {
-          ...FONT_ROLE_DEFAULTS.subheading,
-          ...prev.fonts?.subheading,
-          family: pair.subheading,
-          fontPairingId: pair.id,
-        },
-        body: {
-          ...FONT_ROLE_DEFAULTS.body,
-          ...prev.fonts?.body,
-          family: pair.body,
-          fontPairingId: pair.id,
-        },
-        tertiary: {
-          ...FONT_ROLE_DEFAULTS.subheading,
-          ...prev.fonts?.tertiary,
-          family: pair.subheading,
-          fontPairingId: pair.id,
-        },
-      },
-    }))
+  const triggerAutoGenerateTypography = async () => {
+    if (!workspaceId) {
+      setError('Workspace is required to suggest fonts.')
+      return
+    }
+    setGenerating(true)
+    setError('')
+    try {
+      const primaryHex = resolveRoleHex(kitData, 'primary') || kitData.colors?.[0]?.hex
+      const suggestion = await brandKitService.suggestFonts(workspaceId, {
+        tone: kitData.voice?.tone || undefined,
+        primaryHex: primaryHex || undefined,
+        brandKitId: editingKitId || undefined,
+      })
+      const fonts = suggestion?.fonts
+      if (!fonts?.heading && !fonts?.body) {
+        throw new Error('No font suggestion returned')
+      }
+      setKitData((prev) =>
+        normalizeBrandKitData({
+          ...prev,
+          fonts: {
+            heading: { ...FONT_ROLE_DEFAULTS.heading, ...prev.fonts?.heading, ...fonts.heading },
+            subheading: {
+              ...FONT_ROLE_DEFAULTS.subheading,
+              ...prev.fonts?.subheading,
+              ...fonts.subheading,
+            },
+            body: { ...FONT_ROLE_DEFAULTS.body, ...prev.fonts?.body, ...fonts.body },
+          },
+        })
+      )
+    } catch (err) {
+      handleApiError(err, 'Failed to suggest fonts')
+    } finally {
+      setGenerating(false)
+    }
   }
 
-  const pendingUploadRole = useRef('primary')
+  const triggerSuggestVoice = async () => {
+    if (!workspaceId) return
+    const name = kitName.trim() || 'Brand Kit'
+    setGenerating(true)
+    setError('')
+    try {
+      const suggestion = await brandKitService.suggestVoice(workspaceId, {
+        name,
+        tagline: slogan || kitData.meta?.tagline || undefined,
+        tone: kitData.voice?.tone || undefined,
+        brandKitId: editingKitId || undefined,
+      })
+      if (!suggestion?.voice) throw new Error('No voice suggestion returned')
+      setKitData((prev) =>
+        normalizeBrandKitData({
+          ...prev,
+          voice: { ...prev.voice, ...suggestion.voice },
+        })
+      )
+    } catch (err) {
+      handleApiError(err, 'Failed to suggest voice')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  const triggerSuggestImageStyle = async () => {
+    if (!workspaceId) return
+    setGenerating(true)
+    setError('')
+    try {
+      const suggestion = await brandKitService.suggestImageStyle(workspaceId, {
+        tone: kitData.voice?.tone || undefined,
+        colors: kitData.colors,
+        colorRoles: kitData.colorRoles,
+        brandKitId: editingKitId || undefined,
+      })
+      setKitData((prev) =>
+        normalizeBrandKitData({
+          ...prev,
+          imageStyle: suggestion?.imageStyle || prev.imageStyle,
+          chartStyles: suggestion?.chartStyles || prev.chartStyles,
+        })
+      )
+    } catch (err) {
+      handleApiError(err, 'Failed to suggest image style')
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   const triggerUpload = (kind, role) => {
     if (!canWrite || !editingKitId) {
@@ -442,8 +629,9 @@ function BrandKits() {
       const detail = await brandKitService.get(workspaceId, editingKitId)
       setKitMedia(detail.media || [])
       await loadKits(workspaceId)
+      await refreshHealth(workspaceId, editingKitId)
     } catch (err) {
-      setError(err.message || 'Media upload failed')
+      handleApiError(err, 'Media upload failed')
     } finally {
       setUploading(false)
     }
@@ -456,174 +644,86 @@ function BrandKits() {
       await brandKitService.deleteMedia(workspaceId, editingKitId, mediaId)
       setKitMedia((prev) => prev.filter((m) => (m.id || m._id) !== mediaId))
       await loadKits(workspaceId)
+      await refreshHealth(workspaceId, editingKitId)
     } catch (err) {
-      setError(err.message || 'Failed to remove media')
+      handleApiError(err, 'Failed to remove media')
     }
   }
 
-  // ── Canvas-based logo variant generator ─────────────────────
   const generateLogoVariants = async () => {
     if (!canWrite || !editingKitId) {
       setError('Save the brand kit first before generating variants.')
       return
     }
-    // Resolve primary logo source
-    const mainUploaded = (kitMedia || []).filter(
-      (m) => String(m.kind || m.type || '').toLowerCase() === 'logo' &&
-             ((m.role || '') === 'primary' || (m.role || '') === 'main')
+    const hasPrimary = (kitMedia || []).some(
+      (m) =>
+        String(m.kind || '').toLowerCase() === 'logo' &&
+        ['primary', 'main'].includes(String(m.role || ''))
     )
-    const mainSrc = mainUploaded[0]
-      ? (mainUploaded[0].url || mainUploaded[0].src || mainUploaded[0].presignedUrl)
-      : logoPreviewUrl
-
-    if (!mainSrc) {
-      setError('Upload or choose a Primary Logo first to generate variants.')
+    if (!hasPrimary && !logoPreviewUrl) {
+      setError('Upload a Primary Logo first to generate variants.')
       return
     }
 
     setGenerating(true)
     setError('')
-
-    const mainMediaId = mainUploaded[0]?.id || mainUploaded[0]?._id
-
-    // Helper: load image via Blob to avoid CORS tainted-canvas with S3 presigned URLs.
-    // Fetching as Blob → objectURL gives us a same-origin URL that canvas can read freely.
-    const loadImage = async (src, mediaId) => {
-      let blobUrl = null
-      let isTempBlob = false
-
-      if (src && (src.startsWith('blob:') || src.startsWith('data:'))) {
-        blobUrl = src
-      } else if (workspaceId && editingKitId && mediaId) {
-        try {
-          const blob = await brandKitService.fetchMediaBlob(workspaceId, editingKitId, mediaId)
-          blobUrl = URL.createObjectURL(blob)
-          isTempBlob = true
-        } catch {
-          // fallback
-        }
-      }
-
-      if (!blobUrl && src) {
-        try {
-          const res = await fetch(src, { credentials: 'omit' })
-          if (res.ok) {
-            const blob = await res.blob()
-            blobUrl = URL.createObjectURL(blob)
-            isTempBlob = true
-          }
-        } catch {
-          blobUrl = src
-        }
-      }
-
-      return new Promise((resolve, reject) => {
-        const img = new Image()
-        img.crossOrigin = 'Anonymous'
-        img.onload = () => {
-          const canvas = document.createElement('canvas')
-          canvas.width = img.naturalWidth || 512
-          canvas.height = img.naturalHeight || 512
-          const ctx = canvas.getContext('2d')
-          ctx.drawImage(img, 0, 0)
-          if (isTempBlob && blobUrl) URL.revokeObjectURL(blobUrl)
-          resolve({ canvas, ctx, img })
-        }
-        img.onerror = (e) => {
-          if (isTempBlob && blobUrl) URL.revokeObjectURL(blobUrl)
-          reject(e)
-        }
-        img.src = blobUrl
-      })
-    }
-
-    // Helper: canvas → File blob
-    const canvasToFile = (canvas, filename) =>
-      new Promise((resolve) => {
-        canvas.toBlob((blob) => resolve(new File([blob], filename, { type: 'image/png' })), 'image/png')
-      })
-
-    // Pixel transform helpers
-    const applyTransform = (imageData, transformFn) => {
-      const d = imageData.data
-      for (let i = 0; i < d.length; i += 4) {
-        if (d[i + 3] < 10) continue // skip fully transparent
-        const [r, g, b] = transformFn(d[i], d[i + 1], d[i + 2])
-        d[i] = r; d[i + 1] = g; d[i + 2] = b
-      }
-      return imageData
-    }
-
-    // Variants to generate: [role, label, pixelTransformFn]
-    const variants = [
-      [
-        'light-mode',
-        'logo_light_mode.png',
-        // Lighten very dark pixels so they're visible on white
-        (r, g, b) => {
-          const lum = 0.299 * r + 0.587 * g + 0.114 * b
-          if (lum < 40) return [Math.min(r + 40, 200), Math.min(g + 40, 200), Math.min(b + 40, 200)]
-          return [r, g, b]
-        },
-      ],
-      [
-        'dark-mode',
-        'logo_dark_mode.png',
-        // Lighten all pixels so they pop on dark backgrounds
-        (r, g, b) => {
-          const lum = 0.299 * r + 0.587 * g + 0.114 * b
-          const boost = lum < 128 ? 80 : 30
-          return [Math.min(r + boost, 255), Math.min(g + boost, 255), Math.min(b + boost, 255)]
-        },
-      ],
-      [
-        'black',
-        'logo_black.png',
-        () => [0, 0, 0], // every opaque pixel → pure black
-      ],
-      [
-        'white',
-        'logo_white.png',
-        () => [255, 255, 255], // every opaque pixel → pure white
-      ],
-    ]
-
     try {
-      const { canvas: srcCanvas } = await loadImage(mainSrc, mainMediaId)
-      const w = srcCanvas.width
-      const h = srcCanvas.height
+      // Free preview pass (optional UX feedback)
+      setGeneratingRole('preview')
+      await brandKitService.suggestLogoVariants(workspaceId, editingKitId, {})
 
-      for (const [role, filename, transformFn] of variants) {
-        setGeneratingRole(role)
-        const outCanvas = document.createElement('canvas')
-        outCanvas.width = w
-        outCanvas.height = h
-        const outCtx = outCanvas.getContext('2d')
-        outCtx.drawImage(srcCanvas, 0, 0)
-        const imageData = outCtx.getImageData(0, 0, w, h)
-        applyTransform(imageData, transformFn)
-        outCtx.putImageData(imageData, 0, 0)
+      // Paid apply for core roles from handoff
+      setGeneratingRole('apply')
+      const applyRoles = ['light', 'dark', 'black', 'white', 'light-mode', 'dark-mode']
+      await brandKitService.suggestLogoVariants(workspaceId, editingKitId, { applyRoles })
 
-        const file = await canvasToFile(outCanvas, filename)
-        await brandKitService.uploadMedia(workspaceId, editingKitId, {
-          file,
-          kind: 'logo',
-          role,
-          name: filename,
-        })
-      }
-
-      // Refresh media list
       const detail = await brandKitService.get(workspaceId, editingKitId)
       setKitMedia(detail.media || [])
+      await refreshHealth(workspaceId, editingKitId)
     } catch (err) {
-      setError(err.message || 'Variant generation failed')
+      handleApiError(err, 'Logo variant generation failed')
     } finally {
       setGenerating(false)
       setGeneratingRole(null)
     }
   }
-  // ─────────────────────────────────────────────────────────────
+
+  const generateBrandGuidelines = async () => {
+    if (!canWrite || !editingKitId) {
+      setError('Save the brand kit first before generating guidelines.')
+      return
+    }
+    let targetFolderId = folderId
+    if (!targetFolderId) {
+      try {
+        const ctx = await resolvePresentationWorkspaceContext({
+          preferredWorkspaceId: workspaceId,
+        })
+        targetFolderId = ctx.folderId
+        setFolderId(ctx.folderId)
+      } catch (err) {
+        handleApiError(err, 'Could not resolve a folder for guidelines')
+        return
+      }
+    }
+
+    setGeneratingGuideline(true)
+    setError('')
+    try {
+      const guideline = await brandKitService.generateGuidelines(workspaceId, editingKitId, {
+        folderId: targetFolderId,
+      })
+      setGuidelineLink(guideline)
+      const detail = await brandKitService.get(workspaceId, editingKitId)
+      if (detail?.data) setKitData(detail.data)
+      await refreshHealth(workspaceId, editingKitId)
+      await refreshGuidelines(workspaceId, editingKitId)
+    } catch (err) {
+      handleApiError(err, 'Failed to generate brand guidelines')
+    } finally {
+      setGeneratingGuideline(false)
+    }
+  }
 
   const mediaByKind = (kind) =>
     (kitMedia || []).filter((m) => String(m.kind || m.type || '').toLowerCase() === kind)
@@ -646,8 +746,10 @@ BRAND GUIDELINES SPECIFICATION: ${name.toUpperCase()}
 2. BRAND COLOR PALETTE (LIGHT & DARK MODES)
    - Primary Light: ${resolveRoleHex(kitData, 'primary', '#2563EB')}
    - Background Light: ${resolveRoleHex(kitData, 'bg', '#F8FAFC')}
-   - Primary Dark: ${resolveRoleHex(kitData, 'accent', '#38BDF8')}
-   - Background Dark: ${resolveRoleHex(kitData, 'text', '#0F172A')}
+   - Text Light: ${resolveRoleHex(kitData, 'text', '#0F172A')}
+   - Primary Dark: ${resolveRoleHex(kitData, 'primaryDark', '#60A5FA')}
+   - Background Dark: ${resolveRoleHex(kitData, 'bgDark', '#0F172A')}
+   - Text Dark: ${resolveRoleHex(kitData, 'textDark', '#F8FAFC')}
    - All Swatches:
 ${(kitData.colors || []).map((c) => `     * ${c.name}: ${c.hex}`).join('\n')}
 
@@ -729,7 +831,8 @@ Generated by Athena Brand OS
         addColor={addColor}
         removeColor={removeColor}
         triggerAutoGenerateTypography={triggerAutoGenerateTypography}
-        logoFile={logoFile}
+        triggerSuggestVoice={triggerSuggestVoice}
+        triggerSuggestImageStyle={triggerSuggestImageStyle}
         handleSave={handleSave}
         saving={saving}
       />
@@ -774,6 +877,14 @@ Generated by Athena Brand OS
         updateFontRole={updateFontRole}
         downloadBrandGuidelinePdf={downloadBrandGuidelinePdf}
         generatingGuideline={generatingGuideline}
+        generateBrandGuidelines={generateBrandGuidelines}
+        guidelineLink={guidelineLink}
+        kitHealth={kitHealth}
+        slogan={slogan}
+        setSlogan={setSlogan}
+        triggerSuggestVoice={triggerSuggestVoice}
+        triggerSuggestImageStyle={triggerSuggestImageStyle}
+        triggerGenerateFromLogo={triggerGenerateFromLogo}
         activeSlideIndex={activeSlideIndex}
         setActiveSlideIndex={setActiveSlideIndex}
         slideViewMode={slideViewMode}
