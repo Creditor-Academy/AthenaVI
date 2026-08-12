@@ -106,7 +106,22 @@ export const FolderRow = ({ folder, onClick, contextProps }) => {
 
 export const VideoRow = ({ video, onClick, contextProps }) => {
     const kind = resolveLibraryKind(video);
-    const modifiedBy = video.lastModifiedBy || video.lastEditedBy || '-';
+    const pickName = (...candidates) => {
+        for (const candidate of candidates) {
+            if (candidate == null || candidate === '') continue
+            const text =
+                typeof candidate === 'string'
+                    ? candidate.trim()
+                    : String(candidate?.name || candidate?.email || '').trim()
+            if (text && !/^[0-9a-f-]{16,}$/i.test(text) && text !== '-') return text
+        }
+        return ''
+    }
+    const createdBy =
+        pickName(video.createdBy, video.owner) ||
+        (kind === 'image' || kind === 'presentation' ? 'Athena AI' : '-')
+    const modifiedBy =
+        pickName(video.lastModifiedBy, video.lastEditedBy) || createdBy
     const modifiedAt = video.lastModifiedAt || video.lastEditedAt;
     const RowIcon =
         kind === 'presentation' ? MdSlideshow : kind === 'image' ? MdImage : MdVideoLibrary;
@@ -125,7 +140,7 @@ export const VideoRow = ({ video, onClick, contextProps }) => {
             </div>
 
             <div className="col col-owner">
-                <UserIdentity name={video.createdBy} compact />
+                <UserIdentity name={createdBy} compact />
             </div>
 
             <div className="col col-created">{formatOnlyDate(video.createdAt)}</div>
@@ -139,7 +154,7 @@ export const VideoRow = ({ video, onClick, contextProps }) => {
             <div className="col col-size">{formatProjectSize(video)}</div>
 
             <div className="row-actions">
-                <ContextMenu type="video" {...contextProps} />
+                <ContextMenu type="video" {...(contextProps || {})} />
             </div>
         </div>
     );

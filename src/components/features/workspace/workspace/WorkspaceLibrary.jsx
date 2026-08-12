@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, Fragment } from 'react'
 import {
   MdImage,
   MdMovieCreation,
@@ -107,6 +107,7 @@ export default function WorkspaceLibrary({
     if (!workspaceId || !activeCategory) return
     setLoadingItems(true)
     setError(null)
+    setItems([])
     try {
       const params = { category: activeCategory }
       if (
@@ -209,19 +210,21 @@ export default function WorkspaceLibrary({
             ? MdImage
             : MdMovieCreation
 
-      return [
-        <CreateVideoCard
-          key="create-library-tile"
-          onClick={handleCreate}
-          label={createLabel}
-          badgeLabel={createLabel}
-          icon={CreateIcon}
-        />,
-        ...itemElements,
-      ]
+      return (
+        <Fragment>
+          <CreateVideoCard
+            key="create-library-tile"
+            onClick={handleCreate}
+            label={createLabel}
+            badgeLabel={createLabel}
+            icon={CreateIcon}
+          />
+          {itemElements}
+        </Fragment>
+      )
     }
 
-    return itemElements
+    return <Fragment>{itemElements}</Fragment>
   }
 
   return (

@@ -304,7 +304,8 @@ function Videos({ onEdit, onOpenImage }) {
       {viewMode === 'list' ? (
         <div className="list-header export-list-header">
           <div className="col" />
-          <div className="col">Name & Category</div>
+          <div className="col">Name</div>
+          <div className="col">Type</div>
           <div className="col">Workspace</div>
           <div className="col">Updated</div>
           <div className="col">Details / Size</div>

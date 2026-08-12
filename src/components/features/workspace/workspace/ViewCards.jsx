@@ -17,7 +17,6 @@ import {
 } from 'react-icons/md';
 import ContextMenu from './ContextMenu.jsx';
 import UserIdentity from './UserIdentity.jsx';
-import ProjectSceneThumbnail from './ProjectSceneThumbnail.jsx';
 import DefaultProjectThumbnail from './DefaultProjectThumbnail.jsx';
 import { formatWorkspaceCredits } from './WorkspaceCreditsBadge.jsx';
 import { resolveLibraryKind } from '../../../../utils/workspaceLibrary.js';
@@ -323,7 +322,7 @@ function LibraryThumb({ item, kind }) {
     if (kind === 'image') {
         const src = item.url || item.thumbnail || item.thumbnailUrl;
         return src ? (
-            <img src={src} alt={title} className="wsc-library-thumb-img" />
+            <img src={src} alt={title} className="wsc-library-thumb-img" loading="lazy" decoding="async" />
         ) : (
             <DefaultProjectThumbnail title={title} category="image" />
         );
@@ -331,12 +330,17 @@ function LibraryThumb({ item, kind }) {
     if (kind === 'presentation') {
         const src = item.thumbnail || item.thumbnailUrl;
         return src ? (
-            <img src={src} alt={title} className="wsc-library-thumb-img" />
+            <img src={src} alt={title} className="wsc-library-thumb-img" loading="lazy" decoding="async" />
         ) : (
             <DefaultProjectThumbnail title={title} category="ppt" />
         );
     }
-    return <ProjectSceneThumbnail video={item} />;
+    const src = item.thumbnail || item.thumbnailUrl;
+    return src ? (
+        <img src={src} alt={title} className="wsc-library-thumb-img" loading="lazy" decoding="async" />
+    ) : (
+        <DefaultProjectThumbnail title={title} category="video" />
+    );
 }
 
 export const VideoCard = ({ video, onClick, contextProps }) => {
@@ -357,6 +361,19 @@ export const VideoCard = ({ video, onClick, contextProps }) => {
             : kind === 'image'
                 ? 'Open Image'
                 : 'Open Project';
+    const creatorName = (() => {
+        const candidates = [
+            typeof video.createdBy === 'string' ? video.createdBy : video.createdBy?.name,
+            video.owner?.name,
+            video.owner?.email,
+        ]
+        for (const candidate of candidates) {
+            const text = String(candidate || '').trim()
+            if (text && !/^[0-9a-f-]{16,}$/i.test(text)) return text
+        }
+        if (kind === 'image' || kind === 'presentation') return 'Athena AI'
+        return ''
+    })();
 
     return (
         <div className={`wsc-card wsc-video-card wsc-card--${kind}`} onClick={onClick}>
@@ -375,7 +392,7 @@ export const VideoCard = ({ video, onClick, contextProps }) => {
                 <KindBadge kind={kind} />
 
                 {statusLabel && (
-                    <div className={`wsc-video-card__status wsc-video-card__status--${String(statusRaw || '').toLowerCase()}`}>
+                    <div className={`wsc-video-card__status wsc-video-card__status--${String(statusRaw || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-')}`}>
                         {statusLabel}
                     </div>
                 )}
@@ -396,16 +413,16 @@ export const VideoCard = ({ video, onClick, contextProps }) => {
                         {kind === 'image' && video.mode && (
                             <>
                                 <span className="wsc-card__dot" aria-hidden="true">·</span>
-                                <span>{video.mode}</span>
+                                <span>{String(video.mode)}</span>
                             </>
                         )}
-                        {video.createdBy && (
+                        {creatorName ? (
                             <>
                                 <span className="wsc-card__dot" aria-hidden="true">·</span>
-                                <UserIdentity name={video.createdBy} compact showName={false} />
-                                <span className="wsc-video-card__creator">{video.createdBy}</span>
+                                <UserIdentity name={creatorName} compact showName={false} />
+                                <span className="wsc-video-card__creator">{creatorName}</span>
                             </>
-                        )}
+                        ) : null}
                     </div>
                 </div>
             </div>
@@ -414,7 +431,7 @@ export const VideoCard = ({ video, onClick, contextProps }) => {
                 className="wsc-card__menu"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
             >
-                <ContextMenu type="video" {...contextProps} />
+                <ContextMenu type="video" {...(contextProps || {})} />
             </div>
         </div>
     );

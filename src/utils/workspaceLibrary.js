@@ -28,6 +28,8 @@ const DEFAULT_CATEGORIES = [
   { id: 'image', label: 'Images', count: 0 },
 ]
 
+export const ATHENA_AI_OWNER = 'Athena AI'
+
 export function normalizeLibraryCategories(categories) {
   const byId = new Map()
   ;(Array.isArray(categories) ? categories : []).forEach((cat) => {
@@ -36,12 +38,70 @@ export function normalizeLibraryCategories(categories) {
     byId.set(id, {
       id,
       label: cat.label || DEFAULT_CATEGORIES.find((d) => d.id === id)?.label || id,
-      projectType: cat.projectType || (id === 'video' ? 'VIDEO' : id === 'presentation' ? 'PRESENTATION' : undefined),
+      projectType:
+        cat.projectType ||
+        (id === 'video' ? 'VIDEO' : id === 'presentation' ? 'PRESENTATION' : undefined),
       count: Number(cat.count) || 0,
     })
   })
 
   return DEFAULT_CATEGORIES.map((fallback) => byId.get(fallback.id) || { ...fallback })
+}
+
+/** UUID / CUID / Mongo ObjectId / bare hex ids that should not show as owner names. */
+export function looksLikeId(value) {
+  const text = String(value || '').trim()
+  if (!text) return false
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(text)) {
+    return true
+  }
+  if (/^[0-9a-f]{24}$/i.test(text)) return true
+  if (/^c[a-z0-9]{24,}$/i.test(text)) return true
+  if (/^[0-9a-f]{32}$/i.test(text)) return true
+  return false
+}
+
+function toDisplayName(value) {
+  if (value == null || value === '') return ''
+  if (typeof value === 'string' || typeof value === 'number') {
+    const text = String(value).trim()
+    if (!text || looksLikeId(text)) return ''
+    return text
+  }
+  if (typeof value === 'object') {
+    const text = String(
+      value.name ||
+        value.fullName ||
+        value.displayName ||
+        value.email ||
+        value.username ||
+        value.user?.name ||
+        value.user?.email ||
+        ''
+    ).trim()
+    if (!text || looksLikeId(text)) return ''
+    return text
+  }
+  return ''
+}
+
+function resolveLibraryOwnerName(item, kind) {
+  const fromPeople = toDisplayName(
+    item.createdBy ?? item.owner ?? item.creator ?? item.triggeredBy ?? item.lastModifiedBy
+  )
+  if (fromPeople) return fromPeople
+
+  // AI-generated rows often only carry a system/user id — show product name instead.
+  if (kind === 'image' || kind === 'presentation') return ATHENA_AI_OWNER
+  if (
+    item.generatedByAi ||
+    item.aiGenerated ||
+    item.source === 'ai' ||
+    item.source === 'image-gen'
+  ) {
+    return ATHENA_AI_OWNER
+  }
+  return ''
 }
 
 /**
@@ -57,12 +117,23 @@ export function normalizeLibraryItem(item, { workspaceId } = {}) {
     item.name ||
     item.title ||
     (kind === 'image' ? truncatePrompt(item.prompt || item.revisedPrompt) : null) ||
-    (kind === 'presentation' ? 'Untitled Presentation' : kind === 'image' ? 'Untitled Image' : 'Untitled Video')
+    (kind === 'presentation'
+      ? 'Untitled Presentation'
+      : kind === 'image'
+        ? 'Untitled Image'
+        : 'Untitled Video')
 
   const createdAt =
     item.createdAt || item.created_at || item.dateCreated || item.created || null
   const lastModifiedAt =
     item.lastModifiedAt || item.updatedAt || item.modifiedAt || item.updated_at || createdAt || null
+
+  const createdBy = resolveLibraryOwnerName(item, kind)
+  const lastModifiedBy =
+    toDisplayName(item.lastModifiedBy ?? item.updater ?? item.updatedBy) || createdBy
+
+  const ownerFallback =
+    kind === 'image' || kind === 'presentation' ? ATHENA_AI_OWNER : ''
 
   const base = {
     ...item,
@@ -70,8 +141,8 @@ export function normalizeLibraryItem(item, { workspaceId } = {}) {
     workspaceId: item.workspaceId || workspaceId || null,
     kind,
     category: kind,
-    name,
-    title: item.title || name,
+    name: String(name || 'Untitled'),
+    title: String(item.title || name || 'Untitled'),
     type:
       item.type ||
       item.projectType ||
@@ -85,8 +156,12 @@ export function normalizeLibraryItem(item, { workspaceId } = {}) {
     createdAt,
     lastModifiedAt,
     lastEditedAt: lastModifiedAt,
+    createdBy: createdBy || ownerFallback,
+    lastModifiedBy: lastModifiedBy || ownerFallback,
+    lastEditedBy: lastModifiedBy || ownerFallback,
     folderId: item.folderId || item.folder?.id || item.folder?._id || null,
     folder: item.folder || null,
+    owner: item.owner && typeof item.owner === 'object' ? item.owner : item.owner,
   }
 
   if (kind === 'presentation') {

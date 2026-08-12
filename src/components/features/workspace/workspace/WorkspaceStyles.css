@@ -2310,14 +2310,14 @@ button.workspace-flow-card__tool--credits:hover {
 
   .export-list-view.list-view .list-header.export-list-header,
   .export-list-view.list-view .workspace-item-row.export-item-row {
-    grid-template-columns: 48px minmax(0, 1fr) 88px 76px !important;
+    grid-template-columns: 48px minmax(0, 1fr) 100px 76px !important;
     gap: 8px !important;
     padding: 8px 10px !important;
   }
 
-  .export-list-view.list-view .list-header.export-list-header .col:nth-child(4),
   .export-list-view.list-view .list-header.export-list-header .col:nth-child(5),
   .export-list-view.list-view .list-header.export-list-header .col:nth-child(6),
+  .export-list-view.list-view .list-header.export-list-header .col:nth-child(7),
   .export-list-view.list-view .workspace-item-row.export-item-row .col-workspace,
   .export-list-view.list-view .workspace-item-row.export-item-row .col-completed,
   .export-list-view.list-view .workspace-item-row.export-item-row .col-rendered-by {
@@ -2353,7 +2353,7 @@ button.workspace-flow-card__tool--credits:hover {
 
 .export-list-view.list-view .list-header.export-list-header,
 .export-list-view.list-view .workspace-item-row.export-item-row {
-  grid-template-columns: 56px minmax(140px, 1.5fr) minmax(120px, 1fr) 112px 88px minmax(130px, 1fr) 76px;
+  grid-template-columns: 56px minmax(140px, 1.5fr) 120px minmax(110px, 1fr) 112px 88px minmax(120px, 1fr) 76px;
 }
 
 .export-list-view.list-view .list-header.export-list-header {
@@ -2372,14 +2372,33 @@ button.workspace-flow-card__tool--credits:hover {
   justify-self: end;
 }
 
+.export-list-view.list-view .col-name {
+  min-width: 0;
+  overflow: hidden;
+}
+
 .export-list-view.list-view .col-name h4 {
   margin: 0;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 14px;
   font-weight: 600;
   color: var(--text-main);
+}
+
+.project-list-view.list-view .col-name {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.project-list-view.list-view .col-name h4 {
+  margin: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .export-list-view.list-view .col-workspace,

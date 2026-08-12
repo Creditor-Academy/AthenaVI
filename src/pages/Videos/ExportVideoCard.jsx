@@ -2,7 +2,28 @@ import { MdDownload, MdImage, MdOpenInNew, MdSlideshow, MdVideoLibrary } from 'r
 import DefaultProjectThumbnail from '../../components/features/workspace/workspace/DefaultProjectThumbnail.jsx'
 import UserIdentity from '../../components/features/workspace/workspace/UserIdentity.jsx'
 import { formatBytes } from '../../utils/formatSize.js'
-import { normalizeLibraryCategoryId } from '../../utils/workspaceLibrary.js'
+import {
+  ATHENA_AI_OWNER,
+  looksLikeId,
+  normalizeLibraryCategoryId,
+} from '../../utils/workspaceLibrary.js'
+
+function resolveOwnerLabel(video) {
+  const candidates = [
+    video?.createdBy,
+    video?.owner?.name,
+    video?.owner?.email,
+    video?.triggeredBy?.name,
+  ]
+  for (const candidate of candidates) {
+    if (candidate == null || candidate === '') continue
+    const text = String(candidate).trim()
+    if (text && !looksLikeId(text)) return text
+  }
+  const kind = normalizeLibraryCategoryId(video?.kind || video?.category) || ''
+  if (kind === 'image' || kind === 'presentation') return ATHENA_AI_OWNER
+  return 'Unknown'
+}
 
 function ExportVideoCard({
   video,
@@ -14,8 +35,7 @@ function ExportVideoCard({
   const category = normalizeLibraryCategoryId(video.category || video.kind) || 'video'
   const title = video.title || video.name || 'Untitled'
   const thumbSrc = video.thumbnailUrl || video.thumbnail || video.url || null
-  const authorName =
-    video.triggeredBy?.name || video.owner?.name || video.createdBy || 'Unknown'
+  const authorName = resolveOwnerLabel(video)
 
   const badge =
     category === 'presentation' ? (
