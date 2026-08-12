@@ -182,6 +182,7 @@ export function resolveSlotPreview(slot, previewHints = {}) {
     text,
     bold: hint.bold ?? variant === 'title',
     uppercase: hint.uppercase ?? variant === 'title',
+    imageUrl: hint.imageUrl || hint.url || '',
   }
 }
 

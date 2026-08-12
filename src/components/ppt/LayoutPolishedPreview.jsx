@@ -43,8 +43,29 @@ function PolishedIconCircle({ size }) {
   )
 }
 
-function PolishedImagePlaceholder({ large, fullBleed = false }) {
+function PolishedImagePlaceholder({ large, fullBleed = false, src = '' }) {
   const iconSize = large ? 36 : 20
+  if (src) {
+    return (
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          boxSizing: 'border-box',
+          background: LAYOUT_POLISHED_THEME.imageBg,
+          borderRadius: fullBleed ? 0 : large ? 12 : 6,
+          overflow: 'hidden',
+        }}
+      >
+        <img
+          src={src}
+          alt=""
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          onError={(e) => { e.currentTarget.style.display = 'none' }}
+        />
+      </div>
+    )
+  }
   return (
     <div
       style={{
@@ -78,6 +99,19 @@ function PolishedImagePlaceholder({ large, fullBleed = false }) {
       </svg>
     </div>
   )
+}
+
+function resolvePreviewImageSrc(previewHints = {}, slotId) {
+  if (slotId && previewHints?.slots?.[slotId]?.imageUrl) return previewHints.slots[slotId].imageUrl
+  if (previewHints?.imageUrl) return previewHints.imageUrl
+  const slots = previewHints?.slots || {}
+  for (const key of ['HERO_IMAGE', 'SIDE_IMAGE', 'POINT_IMAGE', 'BACKGROUND_IMAGE', 'COL_1_IMAGE', 'COL_2_IMAGE', 'IMAGE_1']) {
+    if (slots[key]?.imageUrl) return slots[key].imageUrl
+  }
+  for (const slot of Object.values(slots)) {
+    if (slot?.imageUrl) return slot.imageUrl
+  }
+  return ''
 }
 
 function PolishedBarChart({ large, values = [4, 8, 6, 7, 3] }) {
@@ -506,13 +540,17 @@ function PolishedTeamStaggeredPreview({ previewHints, large, className, style, f
   const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
 
   function MemberCard({ member }) {
+    const avatarSrc = member.imageUrl || resolvePreviewImageSrc(previewHints)
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: large ? 5 : 2, flex: 1, minWidth: 0, textAlign: 'center' }}>
         <div style={{
           width: large ? 44 : 14, height: large ? 44 : 14, borderRadius: '50%',
           background: t.imageBg, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          overflow: 'hidden',
         }}>
-          <PolishedIconCircle size={large ? 18 : 6} />
+          {avatarSrc
+            ? <img src={avatarSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            : <PolishedIconCircle size={large ? 18 : 6} />}
         </div>
         <div style={{ fontSize: large ? '0.58rem' : '0.22rem', fontWeight: 800, letterSpacing: '0.06em', color: t.text, textTransform: 'uppercase' }}>
           {member.name}
@@ -547,6 +585,7 @@ function PolishedQuoteAttributionPreview({ previewHints, large, className, style
   const quote = previewHints.quoteText || 'A very nice quote from a very nice client. Ask your client to share some thoughts about this project.'
   const author = previewHints.authorName || 'Gemine Macberry'
   const authorTitle = previewHints.authorTitle || 'VP of Engineering at Acme Inc.'
+  const avatarSrc = resolvePreviewImageSrc(previewHints)
   const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
 
   return (
@@ -558,7 +597,13 @@ function PolishedQuoteAttributionPreview({ previewHints, large, className, style
       <div style={{ fontSize: large ? '2.5rem' : '0.8rem', color: t.muted, lineHeight: 0.8, fontWeight: 700 }}>"</div>
       <div style={{ fontSize: large ? '1.05rem' : '0.36rem', color: t.text, lineHeight: 1.45, fontWeight: 500, maxWidth: '92%' }}>{quote}</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: large ? 10 : 4, marginTop: large ? 8 : 2 }}>
-        <div style={{ width: large ? 36 : 12, height: large ? 36 : 12, borderRadius: '50%', background: t.imageBg, flexShrink: 0 }} />
+        <div style={{
+          width: large ? 36 : 12, height: large ? 36 : 12, borderRadius: '50%', background: t.imageBg, flexShrink: 0, overflow: 'hidden',
+        }}>
+          {avatarSrc
+            ? <img src={avatarSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            : null}
+        </div>
         <div>
           <div style={{ fontSize: large ? '0.82rem' : '0.3rem', fontWeight: 700, color: t.text }}>{author}</div>
           <div style={{ fontSize: large ? '0.68rem' : '0.26rem', color: t.muted }}>{authorTitle}</div>
@@ -671,7 +716,7 @@ function PolishedGridInsightsChartPreview({ previewHints, large, className, styl
         <div style={{ fontSize: large ? '0.72rem' : '0.28rem', fontWeight: 700, color: t.text }}>{sideHeading}</div>
         <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: t.muted, lineHeight: 1.35 }}>{sideBody}</div>
         <div style={{ flex: 1, minHeight: large ? 80 : 28, borderRadius: large ? 8 : 3, overflow: 'hidden' }}>
-          <PolishedImagePlaceholder large={large} />
+          <PolishedImagePlaceholder large={large} src={resolvePreviewImageSrc(previewHints, 'POINT_IMAGE')} />
         </div>
       </div>
       <div style={{ gridColumn: '1 / 2', background: t.card, borderRadius: large ? 10 : 4, padding: large ? '10px 12px' : '4px 5px', display: 'flex', flexDirection: 'column', gap: large ? 8 : 3, minHeight: 0 }}>
@@ -742,7 +787,7 @@ function PolishedChartImageSplitPreview({ previewHints, large, className, style,
         )}
       </div>
       <div style={{ position: 'relative', minHeight: 0, borderRadius: large ? 10 : 4, overflow: 'hidden' }}>
-        <PolishedImagePlaceholder large={large} />
+        <PolishedImagePlaceholder large={large} src={resolvePreviewImageSrc(previewHints)} />
         <div style={{ position: 'absolute', top: large ? 10 : 4, right: large ? 10 : 4 }}>
           <div style={{ width: large ? 18 : 8, height: large ? 18 : 8, borderRadius: '50%', background: t.accent, opacity: 0.9 }} />
         </div>
@@ -772,7 +817,7 @@ function PolishedImageGalleryThreePreview({ previewHints, large, className, styl
         {gallery.slice(0, 3).map((item, i) => (
           <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: large ? 8 : 3, minWidth: 0 }}>
             <div style={{ flex: 1, minHeight: large ? 90 : 28, borderRadius: large ? 8 : 3, overflow: 'hidden', background: t.card }}>
-              <PolishedImagePlaceholder large={large} />
+              <PolishedImagePlaceholder large={large} src={item.imageUrl || resolvePreviewImageSrc(previewHints)} />
             </div>
             <div style={{ fontSize: large ? '0.68rem' : '0.26rem', fontWeight: 700, color: t.text, textAlign: 'center' }}>{item.label}</div>
           </div>
@@ -855,7 +900,7 @@ function PolishedStatCardsImagePreview({ previewHints, large, className, style, 
         </div>
       </div>
       <div style={{ position: 'relative', minHeight: 0, borderRadius: large ? 10 : 4, overflow: 'hidden' }}>
-        <PolishedImagePlaceholder large={large} />
+        <PolishedImagePlaceholder large={large} src={resolvePreviewImageSrc(previewHints)} />
         <div style={{ position: 'absolute', left: large ? 12 : 4, bottom: large ? 12 : 4, width: large ? 36 : 14, height: large ? 36 : 14, borderRadius: '50%', background: t.accentSoft, border: `1px solid ${t.accentBorder}` }} />
       </div>
     </div>
@@ -917,7 +962,7 @@ function PolishedTwoImageColumnsPreview({ previewHints, large, className, style,
         {columns.map((col, i) => (
           <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: large ? 8 : 3, minWidth: 0 }}>
             <div style={{ flex: large ? '0 0 42%' : '0 0 38%', minHeight: large ? 80 : 24, borderRadius: large ? 8 : 3, overflow: 'hidden' }}>
-              <PolishedImagePlaceholder large={large} />
+              <PolishedImagePlaceholder large={large} src={col.imageUrl || resolvePreviewImageSrc(previewHints)} />
             </div>
             <div style={{ fontSize: large ? '0.72rem' : '0.3rem', fontWeight: 800, letterSpacing: '0.08em', color: t.text, textTransform: 'uppercase' }}>{col.title}</div>
             <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : '0.28rem', color: t.muted, lineHeight: 1.35 }}>{col.body}</div>
@@ -1026,7 +1071,7 @@ function PolishedEightShortTextsPreview({ previewHints, large, className, style,
         </div>
       </div>
       <div style={{ minHeight: 0, borderRadius: large ? 10 : 4, overflow: 'hidden' }}>
-        <PolishedImagePlaceholder large={large} />
+        <PolishedImagePlaceholder large={large} src={resolvePreviewImageSrc(previewHints)} />
       </div>
     </div>
   )
@@ -1108,7 +1153,9 @@ function renderSlotPreviewContent(group, large, previewHints) {
   }
 
   if (group.kinds.has('bg') && group.kinds.size === 1) {
-    return null
+    const src = meta.imageUrl || resolvePreviewImageSrc(previewHints)
+    if (!src) return null
+    return <PolishedImagePlaceholder large={large} fullBleed src={src} />
   }
 
   if (meta.variant === 'logo') {
@@ -1130,7 +1177,7 @@ function renderSlotPreviewContent(group, large, previewHints) {
   }
 
   if (meta.variant === 'image' || (group.kinds.has('image') && group.kinds.size === 1)) {
-    return <PolishedImagePlaceholder large={large} />
+    return <PolishedImagePlaceholder large={large} src={meta.imageUrl || previewHints?.imageUrl || ''} />
   }
 
   if (meta.variant === 'title' || group.kinds.has('heading') || group.kinds.has('quote')) {
@@ -1300,7 +1347,7 @@ function renderPolishedGroupContent(group, large, previewHints = {}) {
     !group.kinds.has('chart')
 
   if (isImageOnly) {
-    return <PolishedImagePlaceholder large={large} />
+    return <PolishedImagePlaceholder large={large} src={resolvePreviewImageSrc(previewHints)} />
   }
 
   if (group.isInsight) {
@@ -1418,7 +1465,7 @@ function renderPolishedGroupContent(group, large, previewHints = {}) {
           }}
         >
           {group.kinds.has('image') ? (
-            <PolishedImagePlaceholder large={large} />
+            <PolishedImagePlaceholder large={large} src={resolvePreviewImageSrc(previewHints)} />
           ) : (
             <PolishedIconCircle size={large ? 72 : 28} />
           )}
@@ -1460,7 +1507,7 @@ function renderPolishedGroupContent(group, large, previewHints = {}) {
     >
       {hasImage && !hasHeading && !hasBody && !hasChart && (
         <div style={{ flex: 1, minHeight: 0 }}>
-          <PolishedImagePlaceholder large={large} />
+          <PolishedImagePlaceholder large={large} src={resolvePreviewImageSrc(previewHints)} />
         </div>
       )}
       {hasHeading && (
@@ -1502,7 +1549,7 @@ function renderPolishedGroupContent(group, large, previewHints = {}) {
       )}
       {hasImage && (hasHeading || hasBody) && (
         <div style={{ flex: 1, width: '100%', minHeight: 0, marginTop: large ? 4 : 1 }}>
-          <PolishedImagePlaceholder large={large} />
+          <PolishedImagePlaceholder large={large} src={resolvePreviewImageSrc(previewHints)} />
         </div>
       )}
       {hasIcon && !hasChart && !hasImage && (
@@ -1661,9 +1708,10 @@ export default function LayoutPolishedPreview({
         const meta = groupSlotPreview(group, previewHints)
         const isImageOnly =
           meta.variant === 'image' || (group.kinds.has('image') && group.kinds.size === 1)
+        const bgHasImage = isBg && group.kinds.size === 1 && Boolean(meta.imageUrl || previewHints?.imageUrl)
         const isShape = isShapePreviewGroup(group)
-        const showPanel = (isBg && group.kinds.size === 1) || isShape
-        const transparentBg = !showPanel && (isImageOnly || isTextPreviewGroup(group) || meta.variant === 'logo')
+        const showPanel = ((isBg && group.kinds.size === 1) && !bgHasImage) || isShape
+        const transparentBg = !showPanel && (isImageOnly || bgHasImage || isTextPreviewGroup(group) || meta.variant === 'logo')
         const isText = isTextPreviewGroup(group)
         return (
           <div

@@ -918,7 +918,7 @@ export function getDeckLayoutSchema(layoutId) {
 }
 
 /** Merge pack slide placeholder copy into layout preview hints. */
-export function buildPackSlidePreviewSchema(layoutSchema, slide) {
+export function buildPackSlidePreviewSchema(layoutSchema, slide, { imageUrl } = {}) {
   if (!layoutSchema) return null
   const schema = normalizeLayoutSchemaForPreview(layoutSchema)
   const pl = slide?.placeholder && typeof slide.placeholder === 'object' ? slide.placeholder : {}
@@ -1061,6 +1061,35 @@ export function buildPackSlidePreviewSchema(layoutSchema, slide) {
   }
   if (Array.isArray(pl.chartValues) && pl.chartValues.length) {
     schema.preview.mode = schema.preview.mode || 'chart_split'
+  }
+
+  const resolvedImage =
+    (typeof imageUrl === 'string' && imageUrl.trim())
+    || (typeof pl.imageUrl === 'string' && pl.imageUrl.trim())
+    || (typeof pl.image === 'string' && pl.image.trim())
+    || ''
+
+  if (resolvedImage) {
+    schema.preview.imageUrl = resolvedImage
+    for (const slot of schema.slots || []) {
+      const role = String(slot.role || '').toLowerCase()
+      const id = String(slot.id || '').toLowerCase()
+      if (
+        role === 'image'
+        || role === 'background'
+        || id.includes('image')
+        || id.includes('hero')
+        || id.includes('photo')
+        || id.includes('avatar')
+        || id.includes('member')
+      ) {
+        schema.preview.slots[slot.id] = {
+          ...(schema.preview.slots[slot.id] || {}),
+          variant: 'image',
+          imageUrl: resolvedImage,
+        }
+      }
+    }
   }
 
   fillPreviewDataFromSlots(schema)

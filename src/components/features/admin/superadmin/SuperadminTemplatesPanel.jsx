@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Search, Plus, X, LayoutTemplate, CheckCircle2, XCircle, Eye, GripVertical, Trash2 } from 'lucide-react'
+import { Search, Plus, X, LayoutTemplate, CheckCircle2, XCircle, Eye, GripVertical, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import superadminService, { SuperadminApiError } from '../../../../services/superadminService'
 import { formatDate } from './superadminUtils'
 import LayoutPolishedPreview, { getGridDims } from '../../../ppt/LayoutPolishedPreview'
@@ -375,7 +375,7 @@ const DECK_LAYOUT_PLACEHOLDER = JSON.stringify({
   ],
 }, null, 2)
 
-const DECK_PACK_PLACEHOLDER = JSON.stringify({
+const DECK_PACK_PLACEHOLDER_BASE = {
   schemaVersion: 2,
   pack_id: 'my_pack_midnight',
   themeId: 'midnight_blue',
@@ -392,46 +392,13 @@ const DECK_PACK_PLACEHOLDER = JSON.stringify({
     arc: 'problem → solution → outcome',
     summary: 'Describe the overall story arc so the AI knows how to distribute content across slides',
   },
-  slides: [
-    {
-      order: 1,
-      layout_id: 'title_centered_v1',
-      contentType: 'title',
-      intent: 'Hook the audience with a strong opening statement',
-      designTokens: {
-        backgroundStyle: 'gradient',
-        accentPosition: 'bottom-bar',
-        overlayOpacity: 0.4,
-        textContrast: 'high',
-      },
-      generationHints: { maxTitleWords: 8, maxBodyWords: 20 },
-      placeholder: { title: 'Presentation Title', subtitle: 'Tagline or company name' },
-    },
-    {
-      order: 2,
-      layout_id: 'bullet_list_classic_v1',
-      contentType: 'bullet_list',
-      intent: 'List the top 3-4 key points concisely',
-      designTokens: { backgroundStyle: 'solid', accentPosition: 'left-bar' },
-      generationHints: { maxTitleWords: 6, maxBodyWords: 60, itemCountMin: 3, itemCountMax: 4 },
-      placeholder: { title: 'Key Points', bullets: ['Point one', 'Point two', 'Point three'] },
-    },
-    {
-      order: 3,
-      layout_id: 'closing_centered_cta_v1',
-      contentType: 'closing',
-      intent: 'End with a clear call-to-action',
-      designTokens: { backgroundStyle: 'gradient', accentPosition: 'top-bar' },
-      generationHints: { maxTitleWords: 6, maxBodyWords: 30 },
-      placeholder: { title: 'Thank You', subtitle: 'contact@company.com' },
-    },
-  ],
+  slides: [],
   generationDefaults: {
     density: 'balanced',
     imageType: 'ai',
     imageStyle: 'photo',
     preferVisuals: true,
-    layoutWhitelist: ['title_centered_v1', 'bullet_list_classic_v1', 'closing_centered_cta_v1'],
+    layoutWhitelist: [],
     slideOrder: 'fixed',
     contentDistribution: {
       maxConsecutiveBulletSlides: 2,
@@ -443,8 +410,54 @@ const DECK_PACK_PLACEHOLDER = JSON.stringify({
     label: 'My Pack',
     description: 'Brief description shown in the pack picker',
     tags: ['general'],
+    slideCount: 0,
   },
-}, null, 2)
+}
+
+/** Prefer title → mid content → closing from the live catalog; fill up to `take`. */
+function pickDefaultLayoutIds(layoutCatalog = [], take = 3) {
+  const active = (layoutCatalog || []).filter((l) => l?.layoutId && l.isActive !== false)
+  if (!active.length) return []
+
+  const unused = [...active]
+  const takeOne = (predicate) => {
+    const idx = unused.findIndex(predicate)
+    if (idx < 0) return null
+    const [item] = unused.splice(idx, 1)
+    return item.layoutId
+  }
+
+  const picks = []
+  const title = takeOne((l) => l.contentType === 'title')
+  if (title) picks.push(title)
+
+  const mid = takeOne((l) => !['title', 'closing'].includes(l.contentType))
+  if (mid) picks.push(mid)
+
+  const closing = takeOne((l) => l.contentType === 'closing')
+  if (closing) picks.push(closing)
+
+  for (const layout of unused) {
+    if (picks.length >= take) break
+    picks.push(layout.layoutId)
+  }
+  return picks.slice(0, take)
+}
+
+function buildDeckPackPlaceholder(layoutCatalog = []) {
+  const baseStr = JSON.stringify(DECK_PACK_PLACEHOLDER_BASE, null, 2)
+  const ids = pickDefaultLayoutIds(layoutCatalog, 3)
+  if (!ids.length) return baseStr
+
+  const schemaMap = {}
+  for (const item of layoutCatalog) {
+    if (item?.layoutId && item.schema) schemaMap[item.layoutId] = item.schema
+  }
+  const result = applyLayoutsToPackSchema(baseStr, ids, schemaMap)
+  return result.ok ? result.schemaStr : baseStr
+}
+
+const DECK_PACK_PLACEHOLDER = JSON.stringify(DECK_PACK_PLACEHOLDER_BASE, null, 2)
 
 const VIDEO_SCENE_PLACEHOLDER = JSON.stringify({
   version: 1,
@@ -494,9 +507,9 @@ function extractPlaceholderTitle(placeholder) {
   return String(placeholder)
 }
 
-function schemaPlaceholder(type) {
+function schemaPlaceholder(type, layoutCatalog = []) {
   if (type === 'DECK_LAYOUT') return DECK_LAYOUT_PLACEHOLDER
-  if (type === 'DECK_PACK')   return DECK_PACK_PLACEHOLDER
+  if (type === 'DECK_PACK')   return buildDeckPackPlaceholder(layoutCatalog)
   if (type === 'VIDEO_PACK')  return VIDEO_PACK_PLACEHOLDER
   return VIDEO_SCENE_PLACEHOLDER
 }
@@ -897,7 +910,6 @@ function DeckPackLayoutPickerModal({
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: 'rgba(0,0,0,0.62)', backdropFilter: 'blur(4px)', padding: 16,
       }}
-      onClick={(e) => { if (e.target === e.currentTarget && !showPackPreview && !previewLayout) onClose() }}
     >
       <div style={{
         width: 'min(980px, 96vw)', height: 'min(720px, 90vh)',
@@ -1303,14 +1315,37 @@ function CreateModal({ onClose, onCreated, defaultType, prefill, layoutSchemaMap
   const [variant, setVariant]       = useState(prefill?.variant || '')
   const [isActive, setIsActive]     = useState(true)
   const [schemaStr, setSchemaStr]   = useState(() =>
-    prefill?.schema ? JSON.stringify(prefill.schema, null, 2) : schemaPlaceholder(resolvedType)
+    prefill?.schema
+      ? JSON.stringify(prefill.schema, null, 2)
+      : schemaPlaceholder(resolvedType, layoutCatalog)
   )
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState('')
   const [showPreview, setShowPreview] = useState(false)
+  const [step, setStep]             = useState('details') // details | media
+  const [createdTemplate, setCreatedTemplate] = useState(null)
+  const [finishing, setFinishing]   = useState(false)
+  const seededPackRef = useRef(false)
 
-  // swap placeholder when type changes — only if not a duplicate
-  useEffect(() => { if (!prefill) setSchemaStr(schemaPlaceholder(type)) }, [type]) // eslint-disable-line
+  // Reset / seed schema when type changes (skip when duplicating)
+  useEffect(() => {
+    if (prefill) return
+    seededPackRef.current = false
+    if (type === 'DECK_PACK') {
+      setSchemaStr(schemaPlaceholder('DECK_PACK', layoutCatalog))
+      if (layoutCatalog.length) seededPackRef.current = true
+      return
+    }
+    setSchemaStr(schemaPlaceholder(type))
+  }, [type]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // When catalog loads after opening DECK_PACK create, seed real layouts once
+  useEffect(() => {
+    if (prefill || type !== 'DECK_PACK' || seededPackRef.current) return
+    if (!layoutCatalog.length) return
+    setSchemaStr(buildDeckPackPlaceholder(layoutCatalog))
+    seededPackRef.current = true
+  }, [layoutCatalog, type, prefill])
 
   function handlePreview() {
     setError('')
@@ -1343,6 +1378,15 @@ function CreateModal({ onClose, onCreated, defaultType, prefill, layoutSchemaMap
         return
       }
     }
+    if (type === 'DECK_PACK') {
+      const slideIds = (Array.isArray(value?.slides) ? value.slides : [])
+        .map((s) => s?.layout_id)
+        .filter(Boolean)
+      if (!slideIds.length) {
+        setError('Add at least one slide layout (Choose layouts) before creating this pack.')
+        return
+      }
+    }
     setLoading(true)
     try {
       const created = await superadminService.createTemplate({
@@ -1351,11 +1395,35 @@ function CreateModal({ onClose, onCreated, defaultType, prefill, layoutSchemaMap
         variant: variant.trim() || undefined,
         isActive, schema: value,
       })
-      onCreated(created)
+      const template = created.template ?? created
+      // Packs need an id before media upload — continue in-modal instead of closing.
+      if (type === 'DECK_PACK' || type === 'VIDEO_PACK') {
+        setCreatedTemplate(template)
+        setStep('media')
+        onCreated?.(created, { keepOpen: true })
+      } else {
+        onCreated?.(created)
+      }
     } catch (err) {
       setError(err instanceof SuperadminApiError ? err.message : 'Failed to create template')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleFinishMedia() {
+    if (!createdTemplate?.id) {
+      onClose?.()
+      return
+    }
+    setFinishing(true)
+    try {
+      const data = await superadminService.getTemplate(createdTemplate.id)
+      onCreated?.({ template: data.template ?? data }, { keepOpen: false })
+    } catch {
+      onCreated?.({ template: createdTemplate }, { keepOpen: false })
+    } finally {
+      setFinishing(false)
     }
   }
 
@@ -1364,15 +1432,19 @@ function CreateModal({ onClose, onCreated, defaultType, prefill, layoutSchemaMap
   const enrichedPreviewSchema = previewSchema ? enrichLayoutSchemaForPreview(previewSchema) : null
   const previewSlots = Array.isArray(enrichedPreviewSchema?.slots) ? enrichedPreviewSchema.slots : []
   const previewDims = getGridDims(previewSlots)
+  const createdSlideCount = Array.isArray(createdTemplate?.schema?.slides)
+    ? createdTemplate.schema.slides.length
+    : (Array.isArray(previewSchema?.slides) ? previewSchema.slides.length : 0)
+  const supportsCreateMedia = type === 'DECK_PACK' || type === 'VIDEO_PACK'
 
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 1000,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)',
-    }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+    }}>
       <div style={{
-        width: 'min(680px, 95vw)', maxHeight: '90vh',
+        width: step === 'media' ? 'min(1120px, 96vw)' : 'min(680px, 95vw)', maxHeight: '90vh',
         background: 'var(--bg-card)', borderRadius: 14,
         border: '1px solid var(--border-color)',
         boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
@@ -1384,19 +1456,70 @@ function CreateModal({ onClose, onCreated, defaultType, prefill, layoutSchemaMap
           padding: '16px 20px', borderBottom: '1px solid var(--border-color)', flexShrink: 0,
         }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>{prefill ? 'Duplicate template' : 'Create template'}</h3>
+            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>
+              {step === 'media'
+                ? 'Upload pack media'
+                : (prefill ? 'Duplicate template' : 'Create template')}
+            </h3>
             <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              {prefill ? `Duplicating "${prefill.name}" — edit before saving` : 'Add a new layout, pack, or video scene to the platform catalog'}
+              {step === 'media'
+                ? `"${createdTemplate?.name || name}" is created — add slide photos / picker thumbnail, then finish`
+                : (prefill ? `Duplicating "${prefill.name}" — edit before saving` : 'Add a new layout, pack, or video scene to the platform catalog')}
             </p>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }}>
+          <button type="button" onClick={step === 'media' ? handleFinishMedia : onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }}>
             <X size={18} />
           </button>
         </div>
 
+        {step === 'media' && createdTemplate?.id ? (
+          <>
+            <div className="sa-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+              <div style={{ padding: '12px 16px 0' }}>
+                <div style={{
+                  display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap',
+                  padding: '10px 12px', borderRadius: 8, marginBottom: 4,
+                  border: '1px solid color-mix(in srgb, #22c55e 30%, var(--border-color))',
+                  background: 'color-mix(in srgb, #22c55e 8%, transparent)',
+                  fontSize: '0.78rem', color: 'var(--text-main)',
+                }}>
+                  <CheckCircle2 size={14} style={{ color: '#4ade80', flexShrink: 0 }} />
+                  Template saved. Map photos with <code style={{ fontSize: '0.72rem' }}>slide:N</code>
+                  {createdSlideCount ? ` (this pack has ${createdSlideCount} slides)` : ''}.
+                  Use kind <code style={{ fontSize: '0.72rem' }}>preview</code> for the picker thumb.
+                </div>
+              </div>
+              <TemplateMediaTab
+                templateId={createdTemplate.id}
+                templateType={createdTemplate.type || type}
+                slideCount={createdSlideCount}
+                template={createdTemplate}
+                layoutSchemaMap={layoutSchemaMap}
+              />
+            </div>
+            <div style={{
+              display: 'flex', justifyContent: 'flex-end', gap: 10, flexWrap: 'wrap',
+              padding: '14px 20px', borderTop: '1px solid var(--border-color)', flexShrink: 0,
+            }}>
+              <button type="button" className="sa-btn sa-btn--primary" onClick={handleFinishMedia} disabled={finishing}>
+                {finishing ? <><span className="sa-spinner" style={{ width: 14, height: 14 }} /> Finishing…</> : 'Done'}
+              </button>
+            </div>
+          </>
+        ) : (
+        <>
         {/* scrollable body */}
         <form onSubmit={handleSubmit} style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '20px' }}>
           {error && <div className="sa-alert sa-alert--error" style={{ marginBottom: 16 }}>{error}</div>}
+          {supportsCreateMedia && (
+            <div style={{
+              marginBottom: 16, padding: '10px 12px', borderRadius: 8, fontSize: '0.75rem', lineHeight: 1.5,
+              border: '1px solid color-mix(in srgb, var(--primary) 25%, var(--border-color))',
+              background: 'color-mix(in srgb, var(--primary) 6%, transparent)', color: 'var(--text-muted)',
+            }}>
+              After you create this pack you’ll stay here to upload media (slide photos + preview thumb) — no need to reopen the template.
+            </div>
+          )}
 
           {/* type tabs */}
           <div style={{ marginBottom: 18 }}>
@@ -1563,13 +1686,19 @@ function CreateModal({ onClose, onCreated, defaultType, prefill, layoutSchemaMap
               <Eye size={14} /> Preview
             </button>
             <button type="submit" className="sa-btn sa-btn--primary" disabled={loading}>
-              {loading ? <><span className="sa-spinner" style={{ width: 14, height: 14 }} /> {prefill ? 'Duplicating…' : 'Creating…'}</> : (prefill ? 'Save duplicate' : 'Create template')}
+              {loading
+                ? <><span className="sa-spinner" style={{ width: 14, height: 14 }} /> {prefill ? 'Duplicating…' : 'Creating…'}</>
+                : (prefill
+                  ? 'Save duplicate'
+                  : (supportsCreateMedia ? 'Create & upload media' : 'Create template'))}
             </button>
           </div>
         </form>
+        </>
+        )}
       </div>
 
-      {showPreview && type === 'DECK_LAYOUT' && enrichedPreviewSchema && (
+      {step === 'details' && showPreview && type === 'DECK_LAYOUT' && enrichedPreviewSchema && (
         <DeckLayoutModal
           schema={{ ...enrichedPreviewSchema, content_type: enrichedPreviewSchema.content_type || contentType || undefined }}
           layoutName={name.trim() || enrichedPreviewSchema.layout_id || 'Untitled layout'}
@@ -1580,7 +1709,7 @@ function CreateModal({ onClose, onCreated, defaultType, prefill, layoutSchemaMap
           onClose={() => setShowPreview(false)}
         />
       )}
-      {showPreview && type === 'DECK_PACK' && previewSchema && (
+      {step === 'details' && showPreview && type === 'DECK_PACK' && previewSchema && (
         <DeckPackSlideModal
           slides={previewSchema.slides ?? []}
           theme={resolveDeckPackTheme(previewSchema.themeId)}
@@ -1594,7 +1723,7 @@ function CreateModal({ onClose, onCreated, defaultType, prefill, layoutSchemaMap
           onClose={() => setShowPreview(false)}
         />
       )}
-      {showPreview && type === 'VIDEO_SCENE' && (
+      {step === 'details' && showPreview && type === 'VIDEO_SCENE' && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 1200, background: 'rgba(0,0,0,0.88)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
@@ -1895,6 +2024,7 @@ function SlideCard({ theme, slide, index, ph, icon, imageUrl, large, aspectRatio
         aspectRatio={aspectRatio}
         layoutSchemaMap={layoutSchemaMap}
         badgeColor={theme.accent}
+        imageUrl={imageUrl || ''}
       />
     )
   }
@@ -2385,20 +2515,6 @@ function DeckPackSlideModal({ slides, theme, themeId, aspectRatio = '16:9', pack
                 }}>
                   <SlideCard theme={theme} slide={s} index={i} ph={sph} icon={sicon} imageUrl={imageUrl} large={true} aspectRatio={aspectRatio} layoutSchemaMap={layoutSchemaMap} />
                 </div>
-                {/* intent / AI brief if present */}
-                {(s.intent || s.generationHints?.imagePromptStyle) && (
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '8px 12px', borderRadius: 7, background: `${theme.accent}0f`, border: `1px solid ${theme.accent}22` }}>
-                    <span style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: theme.accent, opacity: 0.7, paddingTop: 1, flexShrink: 0 }}>AI Intent</span>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 3, flex: 1 }}>
-                      {s.intent && <span style={{ fontSize: '0.73rem', color: 'rgba(255,255,255,0.5)', fontStyle: 'italic', lineHeight: 1.5 }}>{s.intent}</span>}
-                      {s.generationHints?.imagePromptStyle && (
-                        <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', display: 'flex', alignItems: 'center', gap: 5 }}>
-                          <span style={{ opacity: 0.5 }}>🖼</span> {s.generationHints.imagePromptStyle}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
               </div>
             )
           })}
@@ -2799,7 +2915,13 @@ const KIND_COLORS = {
   graphic: { bg: 'color-mix(in srgb, #f59e0b 15%, transparent)', color: '#fbbf24', label: 'Graphic' },
 }
 
-function TemplateMediaTab({ templateId }) {
+function TemplateMediaTab({
+  templateId,
+  templateType,
+  slideCount = 0,
+  template = null,
+  layoutSchemaMap = {},
+}) {
   const [media, setMedia]           = useState([])
   const [loading, setLoading]       = useState(true)
   const [error, setError]           = useState('')
@@ -2808,9 +2930,25 @@ function TemplateMediaTab({ templateId }) {
   const [deletingId, setDeletingId] = useState(null)
   const fileInputRef                = useRef(null)
   const [upKind, setUpKind]         = useState('photo')
-  const [upSlotHint, setUpSlotHint] = useState('')
+  const [upSlotHint, setUpSlotHint] = useState(
+    templateType === 'VIDEO_PACK' || templateType === 'VIDEO_SCENE' ? 'scene:1' : (slideCount > 0 ? 'slide:1' : '')
+  )
   const [upName, setUpName]         = useState('')
   const [upFile, setUpFile]         = useState(null)
+  const [upPreviewUrl, setUpPreviewUrl] = useState('')
+  const [previewSlideIdx, setPreviewSlideIdx] = useState(0)
+  const [stripStart, setStripStart] = useState(0)
+  const STRIP_VISIBLE = 4
+  const isVideoTemplate = templateType === 'VIDEO_PACK' || templateType === 'VIDEO_SCENE'
+  const slotPrefix = isVideoTemplate ? 'scene' : 'slide'
+  const slides = Array.isArray(template?.schema?.slides) ? template.schema.slides : []
+  const packTheme = resolveDeckPackTheme(template?.schema?.themeId)
+  const aspectRatio = template?.schema?.aspectRatio ?? '16:9'
+  const showPackPreview = templateType === 'DECK_PACK' && slides.length > 0
+  const resolvedSlideCount = slideCount || slides.length
+  const slotOptions = resolvedSlideCount > 0
+    ? Array.from({ length: resolvedSlideCount }, (_, i) => `${slotPrefix}:${i + 1}`)
+    : []
 
   const load = useCallback(async () => {
     setLoading(true); setError('')
@@ -2824,19 +2962,92 @@ function TemplateMediaTab({ templateId }) {
 
   useEffect(() => { load() }, [load])
 
+  useEffect(() => {
+    if (!upFile) {
+      setUpPreviewUrl('')
+      return undefined
+    }
+    const url = URL.createObjectURL(upFile)
+    setUpPreviewUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [upFile])
+
+  useEffect(() => {
+    if (previewSlideIdx >= slides.length) setPreviewSlideIdx(0)
+  }, [slides.length, previewSlideIdx])
+
+  useEffect(() => {
+    const maxStart = Math.max(0, slides.length - STRIP_VISIBLE)
+    setStripStart((start) => {
+      if (previewSlideIdx < start) return Math.max(0, previewSlideIdx)
+      if (previewSlideIdx >= start + STRIP_VISIBLE) {
+        return Math.min(maxStart, previewSlideIdx - STRIP_VISIBLE + 1)
+      }
+      return Math.min(start, maxStart)
+    })
+  }, [previewSlideIdx, slides.length])
+
+  function clearSelectedFile() {
+    setUpFile(null)
+    setUpPreviewUrl('')
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  function pickFile(file) {
+    if (!file) {
+      clearSelectedFile()
+      return
+    }
+    if (!String(file.type || '').startsWith('image/')) {
+      setUploadErr('Please choose an image file (JPEG, PNG, WebP, or SVG).')
+      return
+    }
+    setUploadErr('')
+    setUpFile(file)
+  }
+
+  function mediaUrlForSlide(order) {
+    return media.find((m) => m.slotHint === `slide:${order}`)?.url
+      ?? media.find((m) => m.kind === 'photo' && m.slotHint === 'image')?.url
+      ?? ''
+  }
+
+  function selectSlideForMedia(index) {
+    const slide = slides[index]
+    if (!slide) return
+    const order = slide.order ?? (index + 1)
+    setPreviewSlideIdx(index)
+    setUpKind('photo')
+    setUpSlotHint(`slide:${order}`)
+    setUploadErr('')
+  }
+
   async function handleUpload(e) {
     e.preventDefault()
     if (!upFile) { setUploadErr('Select a file first'); return }
     setUploadErr(''); setUploading(true)
+    const resolvedSlot = upKind === 'preview'
+      ? 'preview'
+      : (upSlotHint.trim() || undefined)
     try {
       await superadminService.uploadTemplateMedia(templateId, {
         file: upFile, kind: upKind,
-        slotHint: upSlotHint.trim() || undefined,
+        slotHint: resolvedSlot,
         name: upName.trim() || undefined,
       })
       await load()
-      setUpFile(null); setUpSlotHint(''); setUpName('')
-      if (fileInputRef.current) fileInputRef.current.value = ''
+      clearSelectedFile()
+      setUpName('')
+      if (resolvedSlot && /^slide:(\d+)$/.test(resolvedSlot)) {
+        const n = Number(resolvedSlot.split(':')[1])
+        const idx = slides.findIndex((s, i) => (s.order ?? i + 1) === n)
+        if (idx >= 0) setPreviewSlideIdx(idx)
+      }
+      if (slotOptions.length > 0) {
+        setUpSlotHint(upKind === 'preview' ? 'preview' : (resolvedSlot || `${slotPrefix}:1`))
+      } else {
+        setUpSlotHint('')
+      }
     } catch (err) {
       setUploadErr(err instanceof SuperadminApiError ? err.message : 'Upload failed')
     } finally { setUploading(false) }
@@ -2852,12 +3063,20 @@ function TemplateMediaTab({ templateId }) {
     } finally { setDeletingId(null) }
   }
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, padding: '16px' }}>
+  const activeSlide = slides[previewSlideIdx]
+  const activeOrder = activeSlide ? (activeSlide.order ?? previewSlideIdx + 1) : 1
+  const activeImageUrl = mediaUrlForSlide(activeOrder)
+  const activeHasMedia = Boolean(activeImageUrl)
+
+  const uploadPanel = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
       <div style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid color-mix(in srgb, var(--primary) 25%, var(--border-color))', background: 'color-mix(in srgb, var(--primary) 6%, transparent)', fontSize: '0.77rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
         <strong style={{ color: 'var(--text-main)' }}>Template media</strong> — baked photos injected into image elements on pack clone.
         Use <code style={{ fontSize: '0.72rem', background: 'color-mix(in srgb, var(--primary) 10%, transparent)', padding: '1px 4px', borderRadius: 3 }}>slotHint: slide:N</code> to map to a specific slide.
         Use <code style={{ fontSize: '0.72rem', background: 'color-mix(in srgb, var(--primary) 10%, transparent)', padding: '1px 4px', borderRadius: 3 }}>kind: preview</code> for the pack picker thumbnail.
+        {showPackPreview && (
+          <> Click a slide on the right to target it, then upload again to replace.</>
+        )}
       </div>
 
       <form onSubmit={handleUpload} style={{ padding: '14px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--bg-card)', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -2866,7 +3085,20 @@ function TemplateMediaTab({ templateId }) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
           <div>
             <label style={{ display: 'block', fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>KIND *</label>
-            <select className="sa-select" value={upKind} onChange={e => setUpKind(e.target.value)} disabled={uploading} style={{ width: '100%', boxSizing: 'border-box' }}>
+            <select
+              className="sa-select"
+              value={upKind}
+              onChange={(e) => {
+                const next = e.target.value
+                setUpKind(next)
+                if (next === 'preview') setUpSlotHint('preview')
+                else if (!upSlotHint || upSlotHint === 'preview') {
+                  setUpSlotHint(slotOptions[0] || `${slotPrefix}:1`)
+                }
+              }}
+              disabled={uploading}
+              style={{ width: '100%', boxSizing: 'border-box' }}
+            >
               <option value="photo">photo — slide image</option>
               <option value="preview">preview — pack thumbnail</option>
               <option value="graphic">graphic — decoration</option>
@@ -2874,21 +3106,134 @@ function TemplateMediaTab({ templateId }) {
           </div>
           <div>
             <label style={{ display: 'block', fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>SLOT HINT</label>
-            <input className="sa-input" value={upSlotHint} onChange={e => setUpSlotHint(e.target.value)} placeholder="e.g. slide:1" disabled={uploading} style={{ width: '100%', boxSizing: 'border-box' }} />
+            {slotOptions.length > 0 ? (
+              <select
+                className="sa-select"
+                value={upSlotHint}
+                onChange={(e) => setUpSlotHint(e.target.value)}
+                disabled={uploading || upKind === 'preview'}
+                style={{ width: '100%', boxSizing: 'border-box' }}
+              >
+                <option value="preview">preview — picker thumb</option>
+                {slotOptions.map((slot) => (
+                  <option key={slot} value={slot}>{slot}</option>
+                ))}
+                <option value="">custom / none</option>
+              </select>
+            ) : (
+              <input
+                className="sa-input"
+                value={upSlotHint}
+                onChange={(e) => setUpSlotHint(e.target.value)}
+                placeholder={isVideoTemplate ? 'e.g. scene:1' : 'e.g. slide:1'}
+                disabled={uploading}
+                style={{ width: '100%', boxSizing: 'border-box' }}
+              />
+            )}
           </div>
           <div>
             <label style={{ display: 'block', fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>NAME</label>
             <input className="sa-input" value={upName} onChange={e => setUpName(e.target.value)} placeholder="optional label" disabled={uploading} style={{ width: '100%', boxSizing: 'border-box' }} />
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" disabled={uploading}
-            onChange={e => setUpFile(e.target.files?.[0] ?? null)} style={{ flex: 1, fontSize: '0.78rem', color: 'var(--text-main)' }} />
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/svg+xml"
+          disabled={uploading}
+          onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
+          style={{ display: 'none' }}
+        />
+
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => !uploading && fileInputRef.current?.click()}
+          onKeyDown={(e) => {
+            if (!uploading && (e.key === 'Enter' || e.key === ' ')) {
+              e.preventDefault()
+              fileInputRef.current?.click()
+            }
+          }}
+          onDragOver={(e) => { e.preventDefault(); e.stopPropagation() }}
+          onDrop={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            if (uploading) return
+            pickFile(e.dataTransfer.files?.[0] ?? null)
+          }}
+          style={{
+            position: 'relative',
+            borderRadius: 10,
+            overflow: 'hidden',
+            border: `1.5px dashed ${upFile ? 'color-mix(in srgb, var(--primary) 45%, var(--border-color))' : 'var(--border-color)'}`,
+            background: upFile
+              ? 'color-mix(in srgb, var(--primary) 5%, var(--bg-card))'
+              : 'color-mix(in srgb, var(--border-color) 18%, transparent)',
+            cursor: uploading ? 'not-allowed' : 'pointer',
+            minHeight: 168,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {upFile && upPreviewUrl ? (
+            <>
+              <img
+                src={upPreviewUrl}
+                alt={upFile.name || 'Selected media preview'}
+                style={{ width: '100%', height: 200, objectFit: 'contain', display: 'block', background: 'color-mix(in srgb, var(--border-color) 25%, transparent)' }}
+              />
+              <button
+                type="button"
+                title="Clear selection"
+                disabled={uploading}
+                onClick={(e) => { e.stopPropagation(); clearSelectedFile() }}
+                style={{
+                  position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: 8,
+                  border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(0,0,0,0.55)',
+                  color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                <X size={14} />
+              </button>
+              <div style={{
+                position: 'absolute', left: 0, right: 0, bottom: 0,
+                padding: '8px 10px',
+                background: 'linear-gradient(transparent, rgba(0,0,0,0.65))',
+                color: '#fff', fontSize: '0.72rem',
+                display: 'flex', justifyContent: 'space-between', gap: 8,
+              }}>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{upFile.name}</span>
+                <span style={{ flexShrink: 0, opacity: 0.85 }}>{(upFile.size / 1024).toFixed(0)} KB</span>
+              </div>
+            </>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '28px 16px', color: 'var(--text-muted)' }}>
+              <div style={{
+                width: 40, height: 40, borderRadius: 10, margin: '0 auto 10px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'color-mix(in srgb, var(--primary) 12%, transparent)',
+                color: 'var(--primary)',
+              }}>
+                <Plus size={18} />
+              </div>
+              <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)' }}>Choose image from device</div>
+              <div style={{ fontSize: '0.72rem', marginTop: 4 }}>Click or drop a JPEG / PNG / WebP here to preview before upload</div>
+            </div>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+          {upFile && (
+            <button type="button" className="sa-btn" onClick={clearSelectedFile} disabled={uploading}>
+              Clear
+            </button>
+          )}
           <button type="submit" className="sa-btn sa-btn--primary" disabled={uploading || !upFile} style={{ flexShrink: 0 }}>
             {uploading ? <><span className="sa-spinner" style={{ width: 13, height: 13 }} /> Uploading…</> : '↑ Upload'}
           </button>
         </div>
-        {upFile && <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-muted)' }}>{upFile.name} · {(upFile.size / 1024).toFixed(0)} KB</p>}
       </form>
 
       <div>
@@ -2909,9 +3254,18 @@ function TemplateMediaTab({ templateId }) {
             {media.map(m => {
               const kc = KIND_COLORS[m.kind] ?? KIND_COLORS.photo
               const isDeleting = deletingId === m.id
+              const slideMatch = typeof m.slotHint === 'string' ? m.slotHint.match(/^slide:(\d+)$/) : null
               return (
                 <div key={m.id} style={{ borderRadius: 10, border: '1px solid var(--border-color)', overflow: 'hidden', background: 'var(--bg-card)', display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ aspectRatio: '16/9', background: 'color-mix(in srgb, var(--border-color) 30%, transparent)', position: 'relative', overflow: 'hidden' }}>
+                  <div
+                    style={{ aspectRatio: '16/9', background: 'color-mix(in srgb, var(--border-color) 30%, transparent)', position: 'relative', overflow: 'hidden', cursor: slideMatch ? 'pointer' : 'default' }}
+                    onClick={() => {
+                      if (!slideMatch || !showPackPreview) return
+                      const n = Number(slideMatch[1])
+                      const idx = slides.findIndex((s, i) => (s.order ?? i + 1) === n)
+                      if (idx >= 0) selectSlideForMedia(idx)
+                    }}
+                  >
                     {m.url ? (
                       <img src={m.url} alt={m.name || m.kind} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                         onError={e => { e.currentTarget.style.display = 'none' }} />
@@ -2919,7 +3273,7 @@ function TemplateMediaTab({ templateId }) {
                       <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', opacity: 0.2 }}>🖼</div>
                     )}
                     <span style={{ position: 'absolute', top: 5, left: 5, padding: '1px 6px', borderRadius: 4, fontSize: '0.58rem', fontWeight: 700, background: 'rgba(0,0,0,0.65)', color: kc.color, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{kc.label}</span>
-                    <button type="button" disabled={isDeleting} onClick={() => handleDelete(m.id)}
+                    <button type="button" disabled={isDeleting} onClick={(e) => { e.stopPropagation(); handleDelete(m.id) }}
                       style={{ position: 'absolute', top: 5, right: 5, width: 22, height: 22, borderRadius: 6, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.55)', color: '#f87171', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 700, opacity: isDeleting ? 0.5 : 1 }} title="Delete">
                       {isDeleting ? '…' : '✕'}
                     </button>
@@ -2931,6 +3285,167 @@ function TemplateMediaTab({ templateId }) {
                 </div>
               )
             })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+
+  if (!showPackPreview) {
+    return <div style={{ padding: '16px' }}>{uploadPanel}</div>
+  }
+
+  return (
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: 'minmax(0, 1fr) minmax(280px, 0.95fr)',
+      gap: 16,
+      padding: '16px',
+      alignItems: 'start',
+    }}>
+      {uploadPanel}
+      <div style={{
+        position: 'sticky',
+        top: 0,
+        borderRadius: 12,
+        border: '1px solid var(--border-color)',
+        background: 'var(--bg-card)',
+        padding: 12,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10,
+        minWidth: 0,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Slide preview
+          </p>
+          <span style={{
+            fontSize: '0.68rem',
+            color: activeHasMedia ? '#4ade80' : 'var(--text-muted)',
+            fontWeight: 600,
+          }}>
+            {activeHasMedia ? `slide:${activeOrder} · image set` : `slide:${activeOrder} · no image`}
+          </span>
+        </div>
+        <div style={{
+          borderRadius: 10,
+          overflow: 'hidden',
+          border: `1px solid ${packTheme.accent}44`,
+          boxShadow: `0 0 0 1px ${packTheme.accent}22`,
+        }}>
+          {activeSlide ? (
+            <SlideCard
+              theme={packTheme}
+              slide={activeSlide}
+              index={previewSlideIdx}
+              ph={extractPlaceholderTitle(activeSlide.placeholder)}
+              icon={CONTENT_TYPE_ICONS[activeSlide.contentType] ?? '▣'}
+              imageUrl={activeImageUrl}
+              large
+              aspectRatio={aspectRatio}
+              layoutSchemaMap={layoutSchemaMap}
+            />
+          ) : (
+            <div style={{ aspectRatio: '16/9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+              No slides
+            </div>
+          )}
+        </div>
+        <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.45 }}>
+          Select a slide below to target uploads. Re-upload to the same <code style={{ fontSize: '0.68rem' }}>slide:N</code> to replace the image.
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button
+            type="button"
+            aria-label="Previous slides"
+            disabled={stripStart <= 0}
+            onClick={() => setStripStart((s) => Math.max(0, s - STRIP_VISIBLE))}
+            style={{
+              width: 28, height: 56, flexShrink: 0, borderRadius: 8, cursor: stripStart <= 0 ? 'default' : 'pointer',
+              border: '1px solid var(--border-color)', background: 'var(--bg-card)',
+              color: stripStart <= 0 ? 'var(--text-muted)' : 'var(--text-main)',
+              opacity: stripStart <= 0 ? 0.4 : 1,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <div style={{
+            flex: 1,
+            minWidth: 0,
+            display: 'grid',
+            gridTemplateColumns: `repeat(${Math.min(STRIP_VISIBLE, slides.length)}, minmax(0, 1fr))`,
+            gap: 8,
+          }}>
+            {slides.slice(stripStart, stripStart + STRIP_VISIBLE).map((s, offset) => {
+              const i = stripStart + offset
+              const order = s.order ?? (i + 1)
+              const imgUrl = mediaUrlForSlide(order)
+              const isActive = i === previewSlideIdx
+              const sct = s.contentType ?? 'slide'
+              return (
+                <button
+                  key={`${order}-${s.layout_id || i}`}
+                  type="button"
+                  onClick={() => selectSlideForMedia(i)}
+                  style={{
+                    padding: 0,
+                    border: `2px solid ${isActive ? packTheme.accent : 'transparent'}`,
+                    borderRadius: 8,
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    background: 'none',
+                    textAlign: 'left',
+                    boxShadow: isActive ? `0 0 0 1px ${packTheme.accent}44` : 'none',
+                  }}
+                >
+                  <SlideCard
+                    theme={packTheme}
+                    slide={s}
+                    index={i}
+                    ph={extractPlaceholderTitle(s.placeholder)}
+                    icon={CONTENT_TYPE_ICONS[sct] ?? '▣'}
+                    imageUrl={imgUrl}
+                    large={false}
+                    aspectRatio={aspectRatio}
+                    layoutSchemaMap={layoutSchemaMap}
+                  />
+                  <div style={{
+                    padding: '4px 6px',
+                    fontSize: '0.58rem',
+                    fontWeight: 700,
+                    color: isActive ? packTheme.accent : 'var(--text-muted)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                    background: 'color-mix(in srgb, var(--bg-card) 80%, transparent)',
+                  }}>
+                    {order} · {imgUrl ? 'img' : 'empty'}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+          <button
+            type="button"
+            aria-label="Next slides"
+            disabled={stripStart + STRIP_VISIBLE >= slides.length}
+            onClick={() => setStripStart((s) => Math.min(Math.max(0, slides.length - STRIP_VISIBLE), s + STRIP_VISIBLE))}
+            style={{
+              width: 28, height: 56, flexShrink: 0, borderRadius: 8,
+              cursor: stripStart + STRIP_VISIBLE >= slides.length ? 'default' : 'pointer',
+              border: '1px solid var(--border-color)', background: 'var(--bg-card)',
+              color: stripStart + STRIP_VISIBLE >= slides.length ? 'var(--text-muted)' : 'var(--text-main)',
+              opacity: stripStart + STRIP_VISIBLE >= slides.length ? 0.4 : 1,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+        {slides.length > STRIP_VISIBLE && (
+          <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+            {stripStart + 1}–{Math.min(stripStart + STRIP_VISIBLE, slides.length)} of {slides.length}
           </div>
         )}
       </div>
@@ -3035,7 +3550,13 @@ function TemplateDetail({ template, onUpdated, onClose, onDuplicate, layoutSchem
       <div className="sa-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: activeTab === 'media' ? 0 : '16px' }}>
 
         {activeTab === 'media' && (
-          <TemplateMediaTab templateId={template.id} templateType={template.type} />
+          <TemplateMediaTab
+            templateId={template.id}
+            templateType={template.type}
+            slideCount={Array.isArray(template.schema?.slides) ? template.schema.slides.length : 0}
+            template={template}
+            layoutSchemaMap={layoutSchemaMap}
+          />
         )}
 
         {activeTab === 'edit' && (
@@ -3279,20 +3800,6 @@ function InlinePackSlideViewer({ template, layoutSchemaMap = {} }) {
               }}>
                 <SlideCard theme={theme} slide={s} index={i} ph={sph} icon={sicon} imageUrl={imgUrl} large={true} aspectRatio={aspectRatio} layoutSchemaMap={layoutSchemaMap} />
               </div>
-              {/* intent strip */}
-              {(s.intent || s.generationHints?.imagePromptStyle) && (
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '7px 11px', borderRadius: 7, background: `${theme.accent}0f`, border: `1px solid ${theme.accent}22` }}>
-                  <span style={{ fontSize: '0.58rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: theme.accent, opacity: 0.7, paddingTop: 1, flexShrink: 0 }}>AI Intent</span>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
-                    {s.intent && <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', fontStyle: 'italic', lineHeight: 1.5 }}>{s.intent}</span>}
-                    {s.generationHints?.imagePromptStyle && (
-                      <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.32)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <span style={{ opacity: 0.5 }}>🖼</span> {s.generationHints.imagePromptStyle}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           )
         })}
@@ -3319,6 +3826,17 @@ export default function SuperadminTemplatesPanel() {
   const [duplicatePrefill, setDuplicatePrefill] = useState(null)
   const [layoutSchemaMap, setLayoutSchemaMap] = useState({})
   const [layoutCatalog, setLayoutCatalog] = useState([])
+
+  const openPreview = useCallback(async (template) => {
+    if (!template?.id) return
+    setPreviewTemplate(template)
+    try {
+      const fresh = await superadminService.getTemplate(template.id)
+      if (fresh?.id) setPreviewTemplate(fresh)
+    } catch {
+      // Keep list payload if refresh fails
+    }
+  }, [])
 
   const fetchList = useCallback(async (type, activeFilter) => {
     setLoading(true); setListError('')
@@ -3403,11 +3921,20 @@ export default function SuperadminTemplatesPanel() {
     })
   }
 
-  function handleCreated(created) {
-    setShowCreate(false); setDuplicatePrefill(null)
+  function handleCreated(created, { keepOpen = false } = {}) {
     const template = created.template ?? created
-    if (template.type === activeType) { setTemplates(prev => [template, ...prev]); setSelected(template) }
+    if (template.type === activeType) {
+      setTemplates((prev) => {
+        const rest = prev.filter((t) => t.id !== template.id)
+        return [template, ...rest]
+      })
+    }
     upsertLayoutCatalogEntry(template)
+    if (!keepOpen) {
+      setShowCreate(false)
+      setDuplicatePrefill(null)
+      setSelected(null)
+    }
   }
   function handleUpdated(updated) {
     setTemplates(prev => prev.map(t => t.id === updated.id ? updated : t)); setSelected(updated)
@@ -3609,7 +4136,7 @@ export default function SuperadminTemplatesPanel() {
                     }}>
                       <button type="button"
                         title="Preview"
-                        onClick={e => { e.stopPropagation(); setPreviewTemplate(t) }}
+                        onClick={e => { e.stopPropagation(); openPreview(t) }}
                         style={{ width: 38, height: 38, borderRadius: 10, border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)', cursor: 'pointer', color: '#fff', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.15s' }}
                         onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.22)' }}
                         onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)' }}

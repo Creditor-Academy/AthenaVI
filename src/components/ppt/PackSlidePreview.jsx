@@ -20,13 +20,14 @@ export default function PackSlidePreview({
   theme,
   themeId,
   aspectRatio = '16:9',
+  imageUrl = '',
 }) {
   const base =
     layoutSchema ||
     resolveLayoutSchemaById(slide?.layout_id, layoutSchemaMap)
   if (!base) return null
 
-  const schema = buildPackSlidePreviewSchema(base, slide)
+  const schema = buildPackSlidePreviewSchema(base, slide, { imageUrl })
   if (!schema) return null
 
   const packTheme = theme || resolveDeckPackTheme(themeId)
