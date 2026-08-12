@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Sparkles, ArrowUp, ArrowRight, Paperclip, FileText, BookOpen, TrendingUp, AlignLeft, Palette, Check, Globe, Image as ImageIcon, Box, Ban, ChevronDown, Star, Building } from 'lucide-react'
+import { Sparkles, ArrowUp, ArrowRight, Paperclip, FileText, BookOpen, TrendingUp, AlignLeft, Check, Globe, Image as ImageIcon, Box, Ban, ChevronDown, Star } from 'lucide-react'
 import presentationService from '../../../services/presentationService'
 import brandKitService from '../../../services/brandKitService'
 import { isInsufficientCreditsError } from '../../../services/creditsService'
@@ -7,7 +7,6 @@ import { resolvePresentationWorkspaceContext } from '../../../utils/presentation
 import {
   PPT_AI_SLIDE_COUNTS,
   clampAiSlideCount,
-  derivePresentationTitle,
   flattenPresentationPrompt,
   mapDensity,
   normalizeDeckPacks,
@@ -34,6 +33,7 @@ import customFloat2 from '../../../assets/Template_Image/custom_float_2.png'
 import customFloat3 from '../../../assets/Template_Image/custom_float_3.png'
 import customFloat4 from '../../../assets/Template_Image/custom_float_4.png'
 
+import AIPptVibeStep from './AIPptVibeStep'
 import AIPptThemeModal from './AIPptThemeModal'
 import AIPptImageModal from './AIPptImageModal'
 import aiMascot from '../../../assets/slides_icons/ai_mascot.png'
@@ -45,9 +45,11 @@ const SUGGESTED_PROMPTS = [
   "Create a strategy brief from planning notes"
 ]
 
-const TONES = ['Professional', 'Creative', 'Academic', 'Persuasive', 'Casual']
-const AUDIENCES = ['Investors', 'Customers', 'Internal Team', 'Students', 'General Public']
-const PURPOSES = ['Persuade', 'Inform', 'Educate', 'Inspire', 'Report']
+import {
+  WIZARD_TONES,
+  WIZARD_AUDIENCES,
+  WIZARD_PURPOSES,
+} from '../../../constants/pptWizardOptions'
 
 function makeTheme({ id, name, vibe, background, background_secondary, text_primary, text_secondary, primary, secondary, accent, border }) {
   return {
@@ -157,14 +159,13 @@ export default function AIPptWizard({
   const [step, setStep] = useState(1)
   
   // Form Data
-  const [title, setTitle] = useState('')
+  const [prompt, setPrompt] = useState('')
   const [outline, setOutline] = useState('')
   const [tone, setTone] = useState('Professional')
   const [audience, setAudience] = useState('Internal Team')
   const [purpose, setPurpose] = useState('Inform')
   
-  // Theme Filters
-  const [activeFilterDropdown, setActiveFilterDropdown] = useState(null)
+  // Theme Filters (legacy config fields)
   const [selectedStyle, setSelectedStyle] = useState('')
   const [selectedColor, setSelectedColor] = useState('')
   const [selectedIndustries, setSelectedIndustries] = useState([])
@@ -223,8 +224,6 @@ export default function AIPptWizard({
 
         if (!cancelled) {
           setBrandKits(kits || [])
-          const defaultKit = (kits || []).find((k) => k.isDefault) || (kits || [])[0]
-          if (defaultKit?.id) setSelectedBrandKitId(String(defaultKit.id))
         }
       } catch (err) {
         if (!cancelled) setApiError(err.message || 'Could not load workspace for presentations')
@@ -234,6 +233,14 @@ export default function AIPptWizard({
       cancelled = true
     }
   }, [initialWorkspaceId, initialFolderId])
+
+  useEffect(() => {
+    if (!selectedPackId) return
+    const pack = deckPacks.find((p) => String(p.id) === String(selectedPackId))
+    if (pack?.slideCount) {
+      setSlides(clampAiSlideCount(pack.slideCount))
+    }
+  }, [selectedPackId, deckPacks])
   
   // Step entrance animation
   const [stepReady, setStepReady] = useState(false)
@@ -271,15 +278,19 @@ export default function AIPptWizard({
       const catalogThemeIds = apiThemes
         .map((t) => String(t.id || t.themeId || ''))
         .filter(Boolean)
-      const candidateThemeId = toApiThemeId(theme)
-      const themeId = catalogThemeIds.includes(candidateThemeId) ? candidateThemeId : undefined
-
-      const deckTitle = derivePresentationTitle(title)
+      const userPrompt = prompt.trim()
       const packId = selectedPackId || null
       const brandKitId = selectedBrandKitId || null
 
+      const candidateThemeId = toApiThemeId(theme)
+      const useCatalogTheme = !brandKitId || !packId
+      const themeId =
+        useCatalogTheme && catalogThemeIds.includes(candidateThemeId)
+          ? candidateThemeId
+          : undefined
+
       const created = await presentationService.createPresentation(ctx.workspaceId, {
-        title: deckTitle,
+        title: 'Untitled Presentation',
         folderId: ctx.folderId,
         ...(themeId ? { themeId } : {}),
         locale: 'en',
@@ -305,8 +316,8 @@ export default function AIPptWizard({
         // Estimate is optional — continue without blocking outline
       }
 
-      const prompt = flattenPresentationPrompt({
-        title,
+      const outlineSourcePrompt = flattenPresentationPrompt({
+        prompt: userPrompt,
         outline,
         tone,
         audience,
@@ -321,10 +332,13 @@ export default function AIPptWizard({
         presentationId,
         {
           source: 'prompt',
-          prompt,
+          prompt: outlineSourcePrompt,
           slideCount,
           density: mapDensity(textAmount),
           locale: 'en',
+          voiceAndTone: tone,
+          audience,
+          purpose,
         }
       )
 
@@ -333,9 +347,16 @@ export default function AIPptWizard({
         throw new Error('Outline API returned no slides')
       }
 
+      const aiDeckTitle =
+        outlinePayload?.presentation?.title ||
+        outlinePayload?.outline?.title ||
+        outlinePayload?.data?.presentation?.title ||
+        outlinePayload?.data?.outline?.title ||
+        'Untitled Presentation'
+
       const config = {
-        title: deckTitle,
-        prompt: title,
+        title: aiDeckTitle,
+        prompt: userPrompt,
         outline,
         tone,
         audience,
@@ -357,9 +378,9 @@ export default function AIPptWizard({
         packId,
         brandKitId,
         availableOptions: {
-          voiceAndTone: TONES,
-          audiences: AUDIENCES,
-          purposes: PURPOSES,
+          voiceAndTone: WIZARD_TONES,
+          audiences: WIZARD_AUDIENCES,
+          purposes: WIZARD_PURPOSES,
           styles: STYLE_OPTIONS,
           colors: COLOR_OPTIONS,
           industries: INDUSTRY_OPTIONS,
@@ -410,10 +431,11 @@ export default function AIPptWizard({
   }
 
   const handlePromptSubmit = () => {
-    if (title.trim()) setStep(2)
+    if (prompt.trim()) setStep(2)
   }
 
   const themePickerThemes = THEMES
+  const isColorThemeOnly = !selectedBrandKitId && !selectedPackId
 
   return (
     <>
@@ -450,29 +472,29 @@ export default function AIPptWizard({
             />
             <div className="aig-new-header">
               <span className="aig-new-greeting">Hi Creator</span>
-              <h1 className="aig-new-title">What would you like to create?</h1>
-              <p className="aig-new-subtitle">Use one of the common prompts below or write your own idea</p>
+              <h1 className="aig-new-title">Create your presentation</h1>
+              <p className="aig-new-subtitle">Type your PPT prompt below, or choose a suggestion to get started</p>
             </div>
             
-            {!title.trim() && (
+            {!prompt.trim() && (
               <div className="aig-new-suggestions-grid">
-                <div className="aig-new-suggestion-card" onClick={() => setTitle('Turn meeting notes into a presentation')}>
+                <div className="aig-new-suggestion-card" onClick={() => setPrompt('Turn meeting notes into a presentation')}>
                   <FileText className="aig-suggestion-icon" size={24} />
                   <p>Turn meeting notes into a presentation</p>
                 </div>
-                <div className="aig-new-suggestion-card" onClick={() => setTitle('Summarize a research paper into key takeaways')}>
+                <div className="aig-new-suggestion-card" onClick={() => setPrompt('Summarize a research paper into key takeaways')}>
                   <BookOpen className="aig-suggestion-icon" size={24} />
                   <p>Summarize a research paper into key takeaways</p>
                 </div>
-                <div className="aig-new-suggestion-card" onClick={() => setTitle('Research industry trends')}>
+                <div className="aig-new-suggestion-card" onClick={() => setPrompt('Research industry trends')}>
                   <TrendingUp className="aig-suggestion-icon" size={24} />
                   <p>Research industry trends and market analysis</p>
                 </div>
               </div>
             )}
 
-            <div className={`aig-new-prompt-container ${title.trim() ? 'expanded' : ''}`}>
-              {title.trim() && (
+            <div className={`aig-new-prompt-container ${prompt.trim() ? 'expanded' : ''}`}>
+              {prompt.trim() && (
                 <div className="aig-new-prompt-expanded fade-in">
                   <textarea 
                     ref={outlineRef}
@@ -485,7 +507,7 @@ export default function AIPptWizard({
                   <div className="aig-new-tone-selector">
                     <span>Voice & Tone:</span>
                     <div className="aig-pill-grid">
-                      {TONES.map(t => (
+                      {WIZARD_TONES.map(t => (
                         <button 
                           key={t}
                           className={`aig-pill-small ${tone === t ? 'active' : ''}`}
@@ -500,7 +522,7 @@ export default function AIPptWizard({
                   <div className="aig-new-tone-selector" style={{ marginTop: '16px' }}>
                     <span>Audience:</span>
                     <div className="aig-pill-grid">
-                      {AUDIENCES.map(a => (
+                      {WIZARD_AUDIENCES.map(a => (
                         <button 
                           key={a}
                           className={`aig-pill-small ${audience === a ? 'active' : ''}`}
@@ -515,7 +537,7 @@ export default function AIPptWizard({
                   <div className="aig-new-tone-selector" style={{ marginTop: '16px' }}>
                     <span>Purpose:</span>
                     <div className="aig-pill-grid">
-                      {PURPOSES.map(p => (
+                      {WIZARD_PURPOSES.map(p => (
                         <button 
                           key={p}
                           className={`aig-pill-small ${purpose === p ? 'active' : ''}`}
@@ -533,16 +555,16 @@ export default function AIPptWizard({
                 <button className="aig-attach-btn"><Paperclip size={20} /></button>
                 <input 
                   className="aig-new-main-input"
-                  placeholder="Ask whatever you want..."
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Type your PPT prompt..."
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handlePromptSubmit()}
                   autoFocus
                 />
                 <button 
-                  className={`aig-new-submit-btn ${title.trim() ? 'active' : ''}`}
+                  className={`aig-new-submit-btn ${prompt.trim() ? 'active' : ''}`}
                   onClick={handlePromptSubmit}
-                  disabled={!title.trim()}
+                  disabled={!prompt.trim()}
                 >
                   <ArrowRight size={18} />
                 </button>
@@ -552,297 +574,34 @@ export default function AIPptWizard({
         )}
 
         {step === 2 && (
-          <div className={`aig-step aig-step--2 ${stepReady ? 'aig-step-revealed' : 'aig-step-intro'}`}>
-            <div className={`aig-step-header ${stepReady ? 'aig-header-settled' : 'aig-header-centered'}`}>
-              <h2 className="aig-step-title">The Vibe</h2>
-              <p className="aig-step-subtitle">Select a base template and color theme.</p>
-            </div>
-            
-
-
-            <div className={`aig-step-body ${stepReady ? 'aig-body-visible' : 'aig-body-hidden'}`}>
-            <div className="aig-selection-section">
-              <div className="aig-theme-filters" style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }}>
-                <div className="aig-filter-dropdown-container">
-                  <button
-                    type="button"
-                    className="aig-pill-dropdown-btn"
-                    onClick={() =>
-                      setActiveFilterDropdown(activeFilterDropdown === 'brandKit' ? null : 'brandKit')
-                    }
-                  >
-                    <span>
-                      {selectedBrandKitId
-                        ? brandKits.find((k) => String(k.id) === String(selectedBrandKitId))?.name ||
-                          'Brand Kit'
-                        : 'Brand Kit (optional)'}
-                    </span>{' '}
-                    <ChevronDown size={14} />
-                  </button>
-                  {activeFilterDropdown === 'brandKit' && (
-                    <div className="aig-filter-dropdown-menu">
-                      <div
-                        className="aig-filter-dropdown-item"
-                        onClick={() => {
-                          setSelectedBrandKitId('')
-                          setActiveFilterDropdown(null)
-                        }}
-                      >
-                        None
-                      </div>
-                      {brandKits.map((kit) => (
-                        <div
-                          key={kit.id}
-                          className="aig-filter-dropdown-item"
-                          onClick={() => {
-                            setSelectedBrandKitId(String(kit.id))
-                            setActiveFilterDropdown(null)
-                          }}
-                        >
-                          {kit.name}
-                          {kit.isDefault ? ' · Default' : ''}
-                        </div>
-                      ))}
-                      {!brandKits.length && (
-                        <div className="aig-filter-dropdown-item" style={{ opacity: 0.6 }}>
-                          No brand kits yet
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <div className="aig-filter-dropdown-container">
-                  <button
-                    type="button"
-                    className="aig-pill-dropdown-btn"
-                    onClick={() =>
-                      setActiveFilterDropdown(activeFilterDropdown === 'deckPack' ? null : 'deckPack')
-                    }
-                  >
-                    <span>
-                      {selectedPackId
-                        ? deckPacks.find((p) => String(p.id) === String(selectedPackId))?.name ||
-                          'Deck Pack'
-                        : 'Deck Pack (optional)'}
-                    </span>{' '}
-                    <ChevronDown size={14} />
-                  </button>
-                  {activeFilterDropdown === 'deckPack' && (
-                    <div className="aig-filter-dropdown-menu">
-                      <div
-                        className="aig-filter-dropdown-item"
-                        onClick={() => {
-                          setSelectedPackId('')
-                          setActiveFilterDropdown(null)
-                        }}
-                      >
-                        None
-                      </div>
-                      {deckPacks.map((pack) => (
-                        <div
-                          key={pack.id}
-                          className="aig-filter-dropdown-item"
-                          onClick={() => {
-                            setSelectedPackId(String(pack.id))
-                            setActiveFilterDropdown(null)
-                          }}
-                        >
-                          {pack.name}
-                          {pack.slideCount ? ` · ${pack.slideCount} slides` : ''}
-                        </div>
-                      ))}
-                      {!deckPacks.length && (
-                        <div className="aig-filter-dropdown-item" style={{ opacity: 0.6 }}>
-                          No deck packs available
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <div className="aig-filter-dropdown-container">
-                  <button 
-                    className="aig-pill-dropdown-btn" 
-                    onClick={() => setActiveFilterDropdown(activeFilterDropdown === 'style' ? null : 'style')}
-                  >
-                    <span>{selectedStyle || 'Style'}</span> <ChevronDown size={14} />
-                  </button>
-                  {activeFilterDropdown === 'style' && (
-                    <div className="aig-filter-dropdown-menu">
-                      {STYLE_OPTIONS.map(opt => (
-                        <div 
-                          key={opt} 
-                          className="aig-filter-dropdown-item" 
-                          onClick={() => { setSelectedStyle(opt); setActiveFilterDropdown(null); }}
-                        >
-                          {opt}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="aig-filter-dropdown-container">
-                  <button 
-                    className="aig-pill-dropdown-btn"
-                    onClick={() => setActiveFilterDropdown(activeFilterDropdown === 'color' ? null : 'color')}
-                  >
-                    <span>{selectedColor || 'Color'}</span> <Palette size={14} />
-                  </button>
-                  {activeFilterDropdown === 'color' && (
-                    <div className="aig-filter-dropdown-menu">
-                      {COLOR_OPTIONS.map(opt => (
-                        <div 
-                          key={opt} 
-                          className="aig-filter-dropdown-item" 
-                          onClick={() => { setSelectedColor(opt); setActiveFilterDropdown(null); }}
-                        >
-                          {opt}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="aig-filter-dropdown-container">
-                  <button 
-                    className="aig-pill-dropdown-btn"
-                    onClick={() => setActiveFilterDropdown(activeFilterDropdown === 'industry' ? null : 'industry')}
-                  >
-                    <span>{selectedIndustries.length > 0 ? `${selectedIndustries.length} Selected` : 'Industry'}</span> <Building size={14} />
-                  </button>
-                  {activeFilterDropdown === 'industry' && (
-                    <div className="aig-filter-dropdown-menu">
-                      {INDUSTRY_OPTIONS.map(opt => (
-                        <div 
-                          key={opt} 
-                          className="aig-filter-dropdown-item"
-                          onClick={() => {
-                            if (selectedIndustries.includes(opt)) {
-                              setSelectedIndustries(selectedIndustries.filter(i => i !== opt))
-                            } else {
-                              setSelectedIndustries([...selectedIndustries, opt])
-                            }
-                          }}
-                        >
-                          <div className={`aig-filter-checkbox ${selectedIndustries.includes(opt) ? 'checked' : ''}`}>
-                            {selectedIndustries.includes(opt) && <Check size={12} strokeWidth={3} />}
-                          </div>
-                          {opt}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="aig-section-header-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                <h3 className="aig-selection-label" style={{ margin: 0, fontSize: '18px', fontWeight: '700' }}>Color Themes</h3>
-                <button className="aig-view-more-btn" onClick={() => setIsThemeModalOpen(true)}>
-                  <Palette size={14} /> View more
-                </button>
-              </div>
-
-              <div className="aig-new-theme-grid-5">
-                {THEMES.slice(0, 5).map(t => (
-                  <button
-                    key={t.id}
-                    className={`aig-new-theme-card-premium ${theme === t.id ? 'active' : ''}`}
-                    onClick={() => setTheme(t.id)}
-                  >
-                    <div className="aig-theme-card-header">
-                       <span className="aig-theme-card-title">{t.name}</span>
-                       {theme === t.id && (
-                         <div className="aig-theme-card-check">
-                           <Check size={14} strokeWidth={3} color="#2563eb" />
-                         </div>
-                       )}
-                    </div>
-                    
-                    <div className="aig-theme-card-palette">
-                      <div className="palette-color" style={{ background: t.primary }}></div>
-                      <div className="palette-color" style={{ background: t.secondary }}></div>
-                      <div className="palette-color" style={{ background: t.accent }}></div>
-                      <div className="palette-color" style={{ background: t.background }}></div>
-                    </div>
-                    
-                    <div
-                      className="aig-theme-card-image-wrapper aig-theme-card-mock"
-                      style={{ background: t.background, borderColor: t.border }}
-                    >
-                      <div className="aig-theme-mock-bar" style={{ background: t.primary }} />
-                      <div className="aig-theme-mock-title" style={{ background: t.text_primary }} />
-                      <div className="aig-theme-mock-line" style={{ background: t.text_secondary }} />
-                      <div className="aig-theme-mock-line short" style={{ background: t.text_secondary }} />
-                      <div className="aig-theme-mock-row">
-                        <div className="aig-theme-mock-chip" style={{ background: t.background_secondary, borderColor: t.border }} />
-                        <div className="aig-theme-mock-chip" style={{ background: t.secondary }} />
-                        <div className="aig-theme-mock-chip" style={{ background: t.accent }} />
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="aig-selection-section">
-              <h3 className="aig-selection-label">Screen Size</h3>
-              <div className="aig-selection-grid">
-                {SCREEN_SIZES.map(s => (
-                  <button 
-                    key={s.id}
-                    className={`aig-aspect-card ${screenSize === s.id ? 'active' : ''}`}
-                    onClick={() => setScreenSize(s.id)}
-                  >
-                    <div className="aig-aspect-preview">
-                       <div className="aig-aspect-box" style={{ aspectRatio: s.ratio }}></div>
-                    </div>
-                    <div className="aig-aspect-info">
-                       <strong>{s.name}</strong>
-                       <span>{s.id}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="aig-or-divider">
-              <span>OR select a full template</span>
-            </div>
-
-            <div className="aig-selection-section">
-              <h3 className="aig-selection-label">Base Template</h3>
-              <div className="aig-selection-grid aig-template-grid">
-                {TEMPLATES.map(tmp => (
-                  <button
-                    key={tmp.id}
-                    className={`aig-template-card ${baseTemplate === tmp.id ? 'active' : ''}`}
-                    onClick={() => setBaseTemplate(tmp.id)}
-                  >
-                    <div className="aig-template-img-wrapper">
-                      <img src={tmp.img} alt={tmp.name} className="aig-template-img" />
-                      {baseTemplate === tmp.id && (
-                        <div className="aig-template-check">
-                          <Check size={16} strokeWidth={3} color="#ffffff" />
-                        </div>
-                      )}
-                    </div>
-                    <span className="aig-card-label">{tmp.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            </div>
-            
-          </div>
+          <AIPptVibeStep
+            workspaceId={workspaceHint?.workspaceId}
+            brandKits={brandKits}
+            selectedBrandKitId={selectedBrandKitId}
+            onSelectBrandKit={setSelectedBrandKitId}
+            deckPacks={deckPacks}
+            selectedPackId={selectedPackId}
+            onSelectPack={setSelectedPackId}
+            themes={THEMES}
+            theme={theme}
+            onSelectTheme={setTheme}
+            onOpenThemeModal={() => setIsThemeModalOpen(true)}
+            screenSizes={SCREEN_SIZES}
+            screenSize={screenSize}
+            onScreenSizeChange={setScreenSize}
+            stepReady={stepReady}
+          />
         )}
 
         {step === 3 && (
           <div className={`aig-step aig-step--3 ${stepReady ? 'aig-step-revealed' : 'aig-step-intro'}`}>
             <div className={`aig-step-header ${stepReady ? 'aig-header-settled' : 'aig-header-centered'}`}>
               <h2 className="aig-step-title">The Details</h2>
-              <p className="aig-step-subtitle">Fine-tune the content and media.</p>
+              <p className="aig-step-subtitle">
+                {isColorThemeOnly
+                  ? 'Choose how many slides you want.'
+                  : 'Fine-tune the content and media.'}
+              </p>
             </div>
             
             <div className={`aig-step-body ${stepReady ? 'aig-body-visible' : 'aig-body-hidden'}`}>
@@ -861,6 +620,8 @@ export default function AIPptWizard({
               </div>
             </div>
 
+            {!isColorThemeOnly && (
+            <>
             <div className="aig-selection-section">
               <div className="aig-section-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#0f172a' }}>
           
@@ -985,6 +746,8 @@ export default function AIPptWizard({
                 </button>
               </div>
             </div>
+            </>
+            )}
             </div>
           </div>
         )}

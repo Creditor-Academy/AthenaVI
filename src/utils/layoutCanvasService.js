@@ -176,7 +176,8 @@ export function extractContentBySlotFromElements(elements = [], schema) {
   return bySlotId
 }
 
-export function needsLayoutCanvasRepair(slide, elements = [], schema = null) {
+export function needsLayoutCanvasRepair(slide, elements = [], schema = null, opts = {}) {
+  if (opts?.deckPackId) return false
   if (slide?.manuallyEdited) return false
 
   const list = Array.isArray(elements) ? elements : []
@@ -323,7 +324,10 @@ export async function repairPresentationLayoutSlides({
   layoutSchemaMap = {},
   aspectRatio = '16:9',
   palette = null,
+  deckPackId = null,
 }) {
+  if (deckPackId) return false
+
   const repairs = []
 
   for (const slide of slides) {
@@ -337,7 +341,7 @@ export async function repairPresentationLayoutSlides({
       layoutSchemaMap,
     })
     if (!schema?.slots?.length) continue
-    if (!needsLayoutCanvasRepair(slide, elements, schema)) continue
+    if (!needsLayoutCanvasRepair(slide, elements, schema, { deckPackId })) continue
 
     repairs.push(
       applyCompiledLayoutToSlide({

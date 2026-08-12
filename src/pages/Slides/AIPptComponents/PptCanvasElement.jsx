@@ -202,7 +202,7 @@ export default function PptCanvasElement({
     overflow: 'hidden',
   }
 
-  if (el.type === 'text') {
+  if (el.type === 'text' || el.type === 'textbox') {
     return (
       <EditableText
         content={el.content}
@@ -254,6 +254,22 @@ export default function PptCanvasElement({
 
   if (el.type === 'shape') {
     const c = el.content || {}
+    const shapeImageUrl = c.url || c.src || c.thumbnailUrl || c.previewUrl
+    if (shapeImageUrl) {
+      return (
+        <img
+          src={shapeImageUrl}
+          alt={c.alt || ''}
+          style={{
+            ...fillStyle,
+            objectFit: c.fit || 'cover',
+            opacity: c.opacity != null ? c.opacity : 1,
+            borderRadius: c.borderRadius != null ? c.borderRadius : undefined,
+          }}
+          onError={() => onImageAuthError?.(el.id)}
+        />
+      )
+    }
     if (shapeElementUsesNativeStyle(el)) {
       const shapeLabel = c.label || c.text
       const isImagePlaceholder = shapeLabel === 'Image placeholder'

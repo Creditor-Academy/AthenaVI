@@ -136,8 +136,9 @@ const DENSITY_MAP = {
   extensive: 'detailed',
 }
 
-/** Flatten voice/tone/audience into a single prompt string (no nested prompt object). */
+/** Flatten user prompt + wizard context into the outline/generation source string. */
 export function flattenPresentationPrompt({
+  prompt = '',
   title = '',
   outline = '',
   tone = '',
@@ -147,8 +148,9 @@ export function flattenPresentationPrompt({
   textAmount = '',
   imageSource = '',
 } = {}) {
+  const userPrompt = String(prompt || title || '').trim()
   const parts = []
-  if (title?.trim()) parts.push(`Title: ${title.trim()}`)
+  if (userPrompt) parts.push(userPrompt)
   if (outline?.trim()) parts.push(`Brief / notes: ${outline.trim()}`)
   if (tone) parts.push(`Tone / voice: ${tone}`)
   if (audience) parts.push(`Audience: ${audience}`)
@@ -156,7 +158,7 @@ export function flattenPresentationPrompt({
   if (mediaStyle) parts.push(`Image style: ${mediaStyle}`)
   if (imageSource) parts.push(`Image source preference: ${imageSource}`)
   if (textAmount) parts.push(`Text density preference: ${textAmount}`)
-  return parts.join('\n') || title || 'Untitled presentation'
+  return parts.join('\n') || userPrompt || 'Untitled presentation'
 }
 
 export function mapDensity(textAmount) {
@@ -485,6 +487,8 @@ export function normalizeOutlineSlides(payload) {
         slide.layoutHint ||
         slide.layout ||
         '',
+      layoutId: slide.layoutId || slide.layout_id || null,
+      intent: slide.intent || null,
       isEditing: false,
     }
   })
@@ -509,9 +513,22 @@ export function outlineCardsToApiPayload(
           ? card.description.join(' ')
           : String(card.description || '')),
       suggestedContentType:
-        card.suggestedContentType || card.layoutHint || 'bullet_list',
+        card.suggestedContentType ||
+        card.layoutHint ||
+        (index === 0 ? 'title' : 'bullet_list'),
+      ...(card.layoutId ? { layoutId: card.layoutId } : {}),
+      ...(card.intent ? { intent: card.intent } : {}),
     })),
   }
+}
+
+export function extractDeckPackId(presentation) {
+  const metrics =
+    presentation?.deck?.generationMetrics ||
+    presentation?.generationMetrics ||
+    presentation?.presentation?.deck?.generationMetrics ||
+    null
+  return metrics?.deckPack?.packId || null
 }
 
 export function extractPresentationId(payload) {
@@ -638,7 +655,7 @@ export function normalizeSlideForEditor(slide, index = 0, aspectRatio = '16:9') 
     },
     manuallyEdited: Boolean(slide?.manuallyEdited),
     status: slide?.status || 'READY',
-    layoutId: slide?.layoutId || null,
+    layoutId: slide?.layoutId || slide?.layout_id || null,
     imageRef: slide?.imageRef || null,
     transition: slide?.transition || elementsDoc?.transition || 'none',
     contributorStatus:

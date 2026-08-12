@@ -40,6 +40,7 @@ import {
   extractElementFromMutation,
   extractSlideFromMutation,
   extractSlidesFromPresentation,
+  extractDeckPackId,
   getSlideImage,
   isSlideBackgroundElement,
   normalizeElementPresets,
@@ -430,6 +431,7 @@ export default function AIPptEditor({
   const [brandKitOpen, setBrandKitOpen] = useState(false)
   const [applyingBrandKit, setApplyingBrandKit] = useState(false)
   const [deckTitle, setDeckTitle] = useState(config.title || 'Untitled Presentation')
+  const [deckPackId, setDeckPackId] = useState(config.packId || null)
   const [addSlideOpen, setAddSlideOpen] = useState(false)
   const [addAfterIndex, setAddAfterIndex] = useState(null)
   const [canvasZoom, setCanvasZoom] = useState(100)
@@ -567,6 +569,7 @@ export default function AIPptEditor({
       null
 
     if (!generating && Object.keys(layoutSchemaMap).length) {
+      const packId = extractDeckPackId(data) || deckPackId
       const didRepair = await repairPresentationLayoutSlides({
         workspaceId,
         presentationId,
@@ -574,6 +577,7 @@ export default function AIPptEditor({
         layoutSchemaMap,
         aspectRatio: resolvedAspect,
         palette: tokens?.palette || null,
+        deckPackId: packId,
       })
       if (didRepair) {
         const refreshed = await presentationService.getPresentation(workspaceId, presentationId)
@@ -584,6 +588,7 @@ export default function AIPptEditor({
     setLocalSlides(slides)
     setThemeTokens(tokens)
     setDeckStatus(deckStatusRaw)
+    setDeckPackId(extractDeckPackId(data) || deckPackId)
     if (data?.title || data?.presentation?.title) {
       setDeckTitle(data?.title || data?.presentation?.title)
     }
@@ -608,6 +613,7 @@ export default function AIPptEditor({
         layoutSchemaMap,
         aspectRatio,
         palette: themeTokens?.palette || themeVisual?.palette || null,
+        deckPackId,
       })
       if (cancelled) return
       layoutRepairPassRef.current = passKey
@@ -632,6 +638,7 @@ export default function AIPptEditor({
     aspectRatio,
     themeTokens,
     themeVisual?.palette,
+    deckPackId,
   ])
 
   const refreshSlide = useCallback(
