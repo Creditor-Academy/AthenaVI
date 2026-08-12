@@ -10,7 +10,7 @@ import SuperadminEarlyAccessPanel from '../../components/features/admin/superadm
 import SuperadminTemplatesPanel from '../../components/features/admin/superadmin/SuperadminTemplatesPanel'
 import './SuperadminPortal.css'
 
-const VALID_TABS = new Set(['overview', 'users', 'workspaces', 'storage-requests', 'reports', 'platform-actions', 'heygen', 'broadcast', 'early-access', 'templates'])
+const VALID_TABS = new Set(['overview', 'users', 'workspaces', 'storage-requests', 'reports', 'platform-actions', 'heygen', 'broadcast', 'early-access', 'templates', 'ai-template'])
 
 function normalizeTab(tab) {
   return VALID_TABS.has(tab) ? tab : 'overview'

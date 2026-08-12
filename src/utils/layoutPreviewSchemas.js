@@ -68,7 +68,7 @@ export const BUILTIN_LAYOUT_PREVIEW_SCHEMAS = {
   stats: {
     slots: [
       { id: 'STAT', region: 'cols 4-9, rows 3-6', role: 'stat', placeholder_text: '42%' },
-      { id: 'LABEL', region: 'cols 5-8, rows 7-8', role: 'label', placeholder_text: 'Key metric' },
+      { id: 'LABEL', region: 'cols 5-8, rows 7-8', role: 'stat_label', placeholder_text: 'Key metric' },
     ],
   },
   section: {
