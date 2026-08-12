@@ -1,9 +1,10 @@
 import React from 'react';
-import { MdFolder, MdVideoLibrary, MdPerson, MdPeople } from 'react-icons/md';
+import { MdFolder, MdVideoLibrary, MdPerson, MdPeople, MdSlideshow, MdImage } from 'react-icons/md';
 import ContextMenu from './ContextMenu.jsx';
 import UserIdentity from './UserIdentity.jsx';
 import WorkspaceCreditsBadge from './WorkspaceCreditsBadge.jsx';
 import { formatFolderSize, formatProjectSize } from '../../../../utils/formatSize.js';
+import { resolveLibraryKind } from '../../../../utils/workspaceLibrary.js';
 
 const formatSize = (item) => {
     if (!item) return '-';
@@ -104,21 +105,42 @@ export const FolderRow = ({ folder, onClick, contextProps }) => {
 };
 
 export const VideoRow = ({ video, onClick, contextProps }) => {
-    const modifiedBy = video.lastModifiedBy || video.lastEditedBy || '-';
+    const kind = resolveLibraryKind(video);
+    const pickName = (...candidates) => {
+        for (const candidate of candidates) {
+            if (candidate == null || candidate === '') continue
+            const text =
+                typeof candidate === 'string'
+                    ? candidate.trim()
+                    : String(candidate?.name || candidate?.email || '').trim()
+            if (text && !/^[0-9a-f-]{16,}$/i.test(text) && text !== '-') return text
+        }
+        return ''
+    }
+    const createdBy =
+        pickName(video.createdBy, video.owner) ||
+        (kind === 'image' || kind === 'presentation' ? 'Athena AI' : '-')
+    const modifiedBy =
+        pickName(video.lastModifiedBy, video.lastEditedBy) || createdBy
     const modifiedAt = video.lastModifiedAt || video.lastEditedAt;
+    const RowIcon =
+        kind === 'presentation' ? MdSlideshow : kind === 'image' ? MdImage : MdVideoLibrary;
+    const kindLabel =
+        kind === 'presentation' ? 'Presentation' : kind === 'image' ? 'Image' : 'Video';
 
     return (
-        <div className="workspace-item-row project-item-row" onClick={onClick}>
+        <div className={`workspace-item-row project-item-row project-item-row--${kind}`} onClick={onClick}>
             <div className="row-icon-container">
-                <MdVideoLibrary size={24} />
+                <RowIcon size={24} />
             </div>
 
             <div className="col col-name">
-                <h4>{video.name}</h4>
+                <h4>{video.name || video.title}</h4>
+                <span className={`wsc-kind-chip wsc-kind-chip--${kind}`}>{kindLabel}</span>
             </div>
 
             <div className="col col-owner">
-                <UserIdentity name={video.createdBy} compact />
+                <UserIdentity name={createdBy} compact />
             </div>
 
             <div className="col col-created">{formatOnlyDate(video.createdAt)}</div>
@@ -132,7 +154,7 @@ export const VideoRow = ({ video, onClick, contextProps }) => {
             <div className="col col-size">{formatProjectSize(video)}</div>
 
             <div className="row-actions">
-                <ContextMenu type="video" {...contextProps} />
+                <ContextMenu type="video" {...(contextProps || {})} />
             </div>
         </div>
     );

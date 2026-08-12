@@ -23,8 +23,8 @@ const WorkspaceSection = ({
 }) => {
     const isAccentCreate = createButtonClass.includes('workspace-create-action-btn');
 
-    const childCount = React.Children.count(children);
-    const showGrid = viewMode === 'tile' ? childCount > 0 : count > 0;
+    const childCount = React.Children.toArray(children).length;
+    const showGrid = childCount > 0;
 
     return (
         <div className="workspace-section">

@@ -71,11 +71,14 @@ const API_CONFIG = {
       DELETE: (workspaceId, assetId) => `/api/assets/${workspaceId}/${assetId}`,
     },
 
-    // Video library (completed final renders)
+    // Video library (completed final renders / Remotion exports)
     VIDEO_LIBRARY: {
       USER: '/api/user/videos',
       WORKSPACE: (workspaceId) => `/api/workspaces/${workspaceId}/videos`,
     },
+
+    // Workspace content tabs: Videos (VIDEO projects) / Presentations / Image Gen
+    WORKSPACE_LIBRARY: (workspaceId) => `/api/workspaces/${workspaceId}/library`,
 
     // Credits API
     CREDITS: {

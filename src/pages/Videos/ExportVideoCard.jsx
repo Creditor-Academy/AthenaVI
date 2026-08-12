@@ -1,8 +1,29 @@
-import { MdDownload, MdImage, MdOpenInNew, MdPlayArrow, MdPresentToAll, MdSlideshow, MdVideoLibrary } from 'react-icons/md';
-import ProjectSceneThumbnail from '../../components/features/workspace/workspace/ProjectSceneThumbnail.jsx';
-import DefaultProjectThumbnail from '../../components/features/workspace/workspace/DefaultProjectThumbnail.jsx';
-import UserIdentity from '../../components/features/workspace/workspace/UserIdentity.jsx';
-import { formatBytes } from '../../utils/formatSize.js';
+import { MdDownload, MdImage, MdOpenInNew, MdSlideshow, MdVideoLibrary } from 'react-icons/md'
+import DefaultProjectThumbnail from '../../components/features/workspace/workspace/DefaultProjectThumbnail.jsx'
+import UserIdentity from '../../components/features/workspace/workspace/UserIdentity.jsx'
+import { formatBytes } from '../../utils/formatSize.js'
+import {
+  ATHENA_AI_OWNER,
+  looksLikeId,
+  normalizeLibraryCategoryId,
+} from '../../utils/workspaceLibrary.js'
+
+function resolveOwnerLabel(video) {
+  const candidates = [
+    video?.createdBy,
+    video?.owner?.name,
+    video?.owner?.email,
+    video?.triggeredBy?.name,
+  ]
+  for (const candidate of candidates) {
+    if (candidate == null || candidate === '') continue
+    const text = String(candidate).trim()
+    if (text && !looksLikeId(text)) return text
+  }
+  const kind = normalizeLibraryCategoryId(video?.kind || video?.category) || ''
+  if (kind === 'image' || kind === 'presentation') return ATHENA_AI_OWNER
+  return 'Unknown'
+}
 
 function ExportVideoCard({
   video,
@@ -11,82 +32,41 @@ function ExportVideoCard({
   onOpenProject,
   downloading = false,
 }) {
-  const category = video.category || 'avatar_video';
+  const category = normalizeLibraryCategoryId(video.category || video.kind) || 'video'
+  const title = video.title || video.name || 'Untitled'
+  const thumbSrc = video.thumbnailUrl || video.thumbnail || video.url || null
+  const authorName = resolveOwnerLabel(video)
 
-  const previewProject = {
-    workspaceId: video.workspaceId,
-    id: video.projectId,
-    data: video.raw?.projectData,
-    title: video.title || video.name,
-    category: category,
-  };
-
-  const renderBadge = () => {
-    if (category === 'ppt') {
-      return (
-        <span className="work-card-badge badge-ppt">
-          <MdSlideshow size={12} /> PPT
-        </span>
-      );
-    }
-    if (category === 'image') {
-      return (
-        <span className="work-card-badge badge-image">
-          <MdImage size={12} /> Image
-        </span>
-      );
-    }
-    return (
-      <span className="work-card-badge badge-video">
-        <MdVideoLibrary size={12} /> Avatar Video
+  const badge =
+    category === 'presentation' ? (
+      <span className="work-card-badge badge-ppt">
+        <MdSlideshow size={12} /> Presentation
       </span>
-    );
-  };
+    ) : category === 'image' ? (
+      <span className="work-card-badge badge-image">
+        <MdImage size={12} /> Image
+      </span>
+    ) : (
+      <span className="work-card-badge badge-video">
+        <MdVideoLibrary size={12} /> Video
+      </span>
+    )
 
-  const renderThumbnail = () => {
-    if (category === 'ppt') {
-      return (
-        <div className="card-thumb-container ppt-thumb">
-          {video.thumbnailUrl ? (
-            <img src={video.thumbnailUrl} alt={video.title} className="work-card-image-bg" />
-          ) : (
-            <DefaultProjectThumbnail title={video.title || video.name} category="ppt" />
-          )}
-          {renderBadge()}
-          <div className="videos-export-overlay" aria-hidden>
-            <span className="btn-edit-premium">Preview Deck</span>
-          </div>
-        </div>
-      );
-    }
+  const overlayLabel =
+    category === 'presentation'
+      ? 'Preview Deck'
+      : category === 'image'
+        ? 'View Image'
+        : 'Open Video'
 
-    if (category === 'image') {
-      return (
-        <div className="card-thumb-container image-thumb">
-          {video.thumbnailUrl ? (
-            <img src={video.thumbnailUrl} alt={video.title} className="work-card-image-bg" />
-          ) : (
-            <DefaultProjectThumbnail title={video.title || video.name} category="image" />
-          )}
-          {renderBadge()}
-          <div className="videos-export-overlay" aria-hidden>
-            <span className="btn-edit-premium">View Image</span>
-          </div>
-        </div>
-      );
-    }
-
-    // Default Avatar Video
-    return (
-      <div className="card-thumb-container video-thumb">
-        <ProjectSceneThumbnail video={previewProject} />
-        {renderBadge()}
-        <div className="videos-export-overlay" aria-hidden>
-          <span className="btn-edit-premium">Play Video</span>
-        </div>
-      </div>
-    );
-  };
+  const detailTag =
+    category === 'presentation' && video.slideCount
+      ? `${video.slideCount} slides`
+      : category === 'image' && video.mode
+        ? video.mode
+        : video.fileSizeBytes
+          ? formatBytes(video.fileSizeBytes)
+          : null
 
   return (
     <article className={`workspace-item-card videos-export-card work-card-${category}`}>
@@ -94,25 +74,41 @@ function ExportVideoCard({
         type="button"
         className="videos-export-card__thumb-btn"
         onClick={onPreview}
-        aria-label={`Open ${video.title}`}
+        aria-label={`Open ${title}`}
       >
-        {renderThumbnail()}
+        <div className={`card-thumb-container ${category}-thumb`}>
+          {thumbSrc ? (
+            <img
+              src={thumbSrc}
+              alt=""
+              className="work-card-image-bg"
+              loading="lazy"
+              decoding="async"
+              draggable={false}
+            />
+          ) : (
+            <DefaultProjectThumbnail
+              title={title}
+              category={category === 'presentation' ? 'ppt' : category}
+            />
+          )}
+          {badge}
+          <div className="videos-export-overlay" aria-hidden>
+            <span className="btn-edit-premium">{overlayLabel}</span>
+          </div>
+        </div>
       </button>
 
       <div className="workspace-item-meta videos-export-card__meta">
         <div className="meta-left">
-          <h4 title={video.title}>{video.title}</h4>
-          <UserIdentity name={video.triggeredBy?.name || 'Unknown'} compact />
+          <h4 title={title}>{title}</h4>
+          <UserIdentity name={authorName} compact />
           <div className="meta-row-small">
             <span className="meta-small videos-export-workspace" title={video.workspaceName}>
               {video.workspaceName || 'Workspace'}
             </span>
-            {category === 'ppt' && video.slideCount ? (
-              <span className="meta-small meta-tag-highlight">{video.slideCount} slides</span>
-            ) : category === 'image' && video.dimensions ? (
-              <span className="meta-small meta-tag-highlight">{video.dimensions}</span>
-            ) : video.fileSizeBytes ? (
-              <span className="meta-small">{formatBytes(video.fileSizeBytes)}</span>
+            {detailTag ? (
+              <span className="meta-small meta-tag-highlight">{detailTag}</span>
             ) : null}
           </div>
         </div>
@@ -122,24 +118,24 @@ function ExportVideoCard({
             type="button"
             className="context-menu-btn"
             title="Download"
-            aria-label={`Download ${video.title}`}
+            aria-label={`Download ${title}`}
             disabled={downloading}
             onClick={(event) => {
-              event.stopPropagation();
-              onDownload?.();
+              event.stopPropagation()
+              onDownload?.()
             }}
           >
             <MdDownload size={18} />
           </button>
-          {onOpenProject && category === 'avatar_video' ? (
+          {onOpenProject ? (
             <button
               type="button"
               className="context-menu-btn"
-              title="Open project"
-              aria-label={`Open project for ${video.title}`}
+              title="Open"
+              aria-label={`Open ${title}`}
               onClick={(event) => {
-                event.stopPropagation();
-                onOpenProject();
+                event.stopPropagation()
+                onOpenProject()
               }}
             >
               <MdOpenInNew size={18} />
@@ -148,7 +144,7 @@ function ExportVideoCard({
         </div>
       </div>
     </article>
-  );
+  )
 }
 
-export default ExportVideoCard;
+export default ExportVideoCard

@@ -654,12 +654,19 @@ class WorkspaceService {
     };
   }
 
-  async listProjects(workspaceId, folderId = null) {
+  async listProjects(workspaceId, folderIdOrOptions = null) {
     try {
-      let endpoint = `/api/workspaces/${workspaceId}/projects`;
-      if (folderId) {
-        endpoint += `?folderId=${encodeURIComponent(folderId)}`;
-      }
+      const options =
+        folderIdOrOptions && typeof folderIdOrOptions === 'object'
+          ? folderIdOrOptions
+          : { folderId: folderIdOrOptions };
+
+      const params = new URLSearchParams();
+      if (options.folderId) params.set('folderId', options.folderId);
+      if (options.type) params.set('type', String(options.type).toUpperCase());
+
+      const query = params.toString();
+      const endpoint = `/api/workspaces/${workspaceId}/projects${query ? `?${query}` : ''}`;
       const response = await fetch(buildUrl(endpoint), {
         method: 'GET',
         headers: getAuthHeaders(),
@@ -675,6 +682,59 @@ class WorkspaceService {
       return projects.map((p) => this.normalizeId(p));
     } catch (error) {
       console.error('Error in listProjects:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Workspace library — preferred API for Videos / Presentations / Images tabs.
+   * - No category → { categories: [{ id, label, projectType?, count }] }
+   * - With category → { category, items: [...] }
+   */
+  async getLibrary(workspaceId, { category, folderId, take, skip, mode } = {}) {
+    try {
+      const params = new URLSearchParams();
+      if (category) params.set('category', category);
+      if (folderId) params.set('folderId', folderId);
+      if (take != null) params.set('take', String(take));
+      if (skip != null) params.set('skip', String(skip));
+      if (mode) params.set('mode', mode);
+
+      const query = params.toString();
+      const endpoint =
+        (typeof API_CONFIG.ENDPOINTS.WORKSPACE_LIBRARY === 'function'
+          ? API_CONFIG.ENDPOINTS.WORKSPACE_LIBRARY(workspaceId)
+          : `/api/workspaces/${workspaceId}/library`) + (query ? `?${query}` : '');
+
+      const response = await fetch(buildUrl(endpoint), {
+        method: 'GET',
+        headers: getAuthHeaders(),
+        cache: 'no-store'
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          await this.readErrorMessage(response, `Failed to fetch workspace library: ${response.status}`)
+        );
+      }
+
+      const data = await response.json();
+      const payload = data.data || data;
+
+      if (!category) {
+        return {
+          categories: Array.isArray(payload.categories) ? payload.categories : [],
+        };
+      }
+
+      return {
+        category: payload.category || category,
+        items: Array.isArray(payload.items)
+          ? payload.items.map((item) => this.normalizeId(item))
+          : [],
+      };
+    } catch (error) {
+      console.error('Error in getLibrary:', error);
       throw error;
     }
   }

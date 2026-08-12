@@ -2310,14 +2310,14 @@ button.workspace-flow-card__tool--credits:hover {
 
   .export-list-view.list-view .list-header.export-list-header,
   .export-list-view.list-view .workspace-item-row.export-item-row {
-    grid-template-columns: 48px minmax(0, 1fr) 88px 76px !important;
+    grid-template-columns: 48px minmax(0, 1fr) 100px 76px !important;
     gap: 8px !important;
     padding: 8px 10px !important;
   }
 
-  .export-list-view.list-view .list-header.export-list-header .col:nth-child(4),
   .export-list-view.list-view .list-header.export-list-header .col:nth-child(5),
   .export-list-view.list-view .list-header.export-list-header .col:nth-child(6),
+  .export-list-view.list-view .list-header.export-list-header .col:nth-child(7),
   .export-list-view.list-view .workspace-item-row.export-item-row .col-workspace,
   .export-list-view.list-view .workspace-item-row.export-item-row .col-completed,
   .export-list-view.list-view .workspace-item-row.export-item-row .col-rendered-by {
@@ -2353,7 +2353,7 @@ button.workspace-flow-card__tool--credits:hover {
 
 .export-list-view.list-view .list-header.export-list-header,
 .export-list-view.list-view .workspace-item-row.export-item-row {
-  grid-template-columns: 56px minmax(140px, 1.5fr) minmax(120px, 1fr) 112px 88px minmax(130px, 1fr) 76px;
+  grid-template-columns: 56px minmax(140px, 1.5fr) 120px minmax(110px, 1fr) 112px 88px minmax(120px, 1fr) 76px;
 }
 
 .export-list-view.list-view .list-header.export-list-header {
@@ -2372,14 +2372,33 @@ button.workspace-flow-card__tool--credits:hover {
   justify-self: end;
 }
 
+.export-list-view.list-view .col-name {
+  min-width: 0;
+  overflow: hidden;
+}
+
 .export-list-view.list-view .col-name h4 {
   margin: 0;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 14px;
   font-weight: 600;
   color: var(--text-main);
+}
+
+.project-list-view.list-view .col-name {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.project-list-view.list-view .col-name h4 {
+  margin: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .export-list-view.list-view .col-workspace,
@@ -3096,4 +3115,117 @@ button.workspace-flow-card__tool--credits:hover {
   padding: 0 6px;
   border-radius: 99px;
   border: 1px solid var(--border-color);
+}
+
+/* ── Workspace library (Videos / Presentations / Images) ─────────────── */
+.workspace-library {
+  margin-top: 8px;
+}
+
+.workspace-library-mode-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 14px;
+}
+
+.workspace-library-mode-chip {
+  appearance: none;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.workspace-library-mode-chip:hover {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border-color));
+  color: var(--text-primary);
+}
+
+.workspace-library-mode-chip.active {
+  background: color-mix(in srgb, var(--primary) 12%, var(--bg-card));
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--border-color));
+  color: var(--primary);
+}
+
+.wsc-kind-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.wsc-kind-badge--video {
+  background: rgba(37, 99, 235, 0.82);
+}
+
+.wsc-kind-badge--presentation {
+  background: rgba(124, 58, 237, 0.82);
+}
+
+.wsc-kind-badge--image {
+  background: rgba(13, 148, 136, 0.82);
+}
+
+.wsc-library-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.wsc-video-card__status--ready,
+.wsc-video-card__status--succeeded,
+.wsc-video-card__status--completed {
+  background: rgba(16, 185, 129, 0.85);
+}
+
+.wsc-video-card__status--generating,
+.wsc-video-card__status--rendering {
+  background: rgba(245, 158, 11, 0.85);
+  color: #0f172a;
+}
+
+.wsc-video-card__status--failed {
+  background: rgba(239, 68, 68, 0.88);
+}
+
+.wsc-kind-chip {
+  display: inline-flex;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.wsc-kind-chip--presentation {
+  color: #7c3aed;
+}
+
+.wsc-kind-chip--image {
+  color: #0d9488;
+}
+
+.wsc-kind-chip--video {
+  color: #2563eb;
+}
+
+.col-name .wsc-kind-chip {
+  display: block;
 }
